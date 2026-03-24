@@ -10,7 +10,7 @@ stages:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - when: always
+    - when: on_success
 
 # ---------------------------------------------------------------------------
 # Quality - Syntax : ruff lint (syntax errors, undefined names)
