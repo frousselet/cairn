@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-03-24
+
 ### Changed
 
 - Switch Docker image publishing from Docker Hub to GitLab Container Registry
@@ -496,7 +498,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://gitlab.rslt.fr/opengrc/opengrc/-/compare/v0.17.0...HEAD
+[Unreleased]: https://gitlab.rslt.fr/opengrc/opengrc/-/compare/v0.18.0...HEAD
+[0.18.0]: https://gitlab.rslt.fr/opengrc/opengrc/-/compare/v0.17.0...v0.18.0
 [0.17.0]: https://gitlab.rslt.fr/opengrc/opengrc/-/compare/v0.16.0...v0.17.0
 [0.16.0]: https://gitlab.rslt.fr/opengrc/opengrc/-/compare/v0.15.0...v0.16.0
 [0.15.0]: https://gitlab.rslt.fr/opengrc/opengrc/-/compare/v0.14.2...v0.15.0
