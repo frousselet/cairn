@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.1] - 2026-03-24
+
 ### Changed
 
 - Redesign logo with a sailboat navigating a channel (fairway) replacing the old F-letter mark
@@ -533,6 +535,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker Hub publish workflow on version tags
 
 [Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.19.0...HEAD
+[0.19.1]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.19.0...v0.19.1
 [0.19.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.18.3...v0.19.0
 [0.18.3]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.18.2...v0.18.3
 [0.18.2]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.18.1...v0.18.2
