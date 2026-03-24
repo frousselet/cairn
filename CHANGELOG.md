@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-03-24
+
 ### Changed
 
 - Rebrand from Open GRC to Fairway across all user-facing strings, templates, documentation and CI/CD
@@ -524,7 +526,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.18.3...HEAD
+[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.19.0...HEAD
+[0.19.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.18.3...v0.19.0
 [0.18.3]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.18.2...v0.18.3
 [0.18.2]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.18.1...v0.18.2
 [0.18.1]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.18.0...v0.18.1
