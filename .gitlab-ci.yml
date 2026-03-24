@@ -1,28 +1,86 @@
 stages:
+  - quality
   - test
-  - docker
+  - deploy
 
 # ---------------------------------------------------------------------------
-# Tests - runs on pushes to main and on merge requests
+# Templates
 # ---------------------------------------------------------------------------
-test:
-  stage: test
+.not-tags:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
+
+# ---------------------------------------------------------------------------
+# Quality - Syntax : ruff lint (syntax errors, undefined names)
+# ---------------------------------------------------------------------------
+syntax:
+  extends: .not-tags
+  stage: quality
   image: python:3.12-slim
+  cache:
+    key: pip-ruff
+    paths:
+      - .cache/pip
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  before_script:
+    - pip install --quiet "ruff>=0.9,<1"
+  script:
+    - ruff check .
+
+# ---------------------------------------------------------------------------
+# Quality - Translations : verify .po files compile without errors
+# ---------------------------------------------------------------------------
+translations:
+  extends: .not-tags
+  stage: quality
+  image: python:3.12-slim
+  cache:
+    key: pip-django
+    paths:
+      - .cache/pip
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends gettext
-    - pip install -r requirements.txt
+    - pip install --quiet "Django>=5.2,<5.3"
   script:
     - python manage.py compilemessages
-    - pytest -x -v --tb=short --cov --cov-report=term-missing
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 # ---------------------------------------------------------------------------
-# Docker build & push - runs on version tags (v*)
+# Test - Unit : pytest with coverage
 # ---------------------------------------------------------------------------
-docker:
-  stage: docker
+unit:
+  extends: .not-tags
+  stage: test
+  image: python:3.12-slim
+  cache:
+    key: pip-full
+    paths:
+      - .cache/pip
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends gettext
+    - pip install --quiet -r requirements.txt
+  script:
+    - python manage.py compilemessages
+    - pytest -x -v --tb=short --cov --cov-report=term-missing --cov-report=xml:coverage.xml
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    expire_in: 30 days
+  coverage: '/^TOTAL.+?(\d+(?:\.\d+)?)%$/'
+
+# ---------------------------------------------------------------------------
+# Deploy - Docker image : build & push on version tags (v*)
+# ---------------------------------------------------------------------------
+docker-image:
+  stage: deploy
   image: docker:27
   variables:
     DOCKER_HOST: unix:///var/run/docker.sock

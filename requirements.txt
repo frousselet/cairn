@@ -14,7 +14,8 @@ channels>=4.0,<5
 channels-redis>=4.2,<5
 icalendar>=6.0,<7
 uvicorn[standard]>=0.29,<1
-# Testing
+# Testing & linting
+ruff>=0.9,<1
 pytest>=8.0,<9
 pytest-django>=4.8,<5
 pytest-cov>=5.0,<6

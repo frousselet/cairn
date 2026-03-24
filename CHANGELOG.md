@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add ruff linter with syntax-focused config in pyproject.toml
+- Split CI into quality (syntax, translations), test (unit), and deploy (docker-image) stages
+- Add translations CI job to verify .po files compile without errors
+- Add pip caching and Cobertura coverage artifact with MR badge regex
+- Factor common CI rules into `.not-tags` YAML template
+
+### Fixed
+
+- Fix undefined `HttpResponseRedirect` in compliance views
+
 ## [0.19.1] - 2026-03-24
 
 ### Changed

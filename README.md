@@ -261,7 +261,9 @@ Additional tools:
 | Frontend | Bootstrap 5.3 + HTMX |
 | Export | openpyxl, weasyprint |
 | Calendar | icalendar |
+| Linting | Ruff |
 | Container | Docker & Docker Compose |
+| CI/CD | GitLab CI (syntax + unit tests, Docker image publish) |
 
 ---
 

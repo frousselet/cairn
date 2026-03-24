@@ -90,9 +90,17 @@ python manage.py collectstatic --noinput  # Collect static files
 
 ### CI/CD
 
-GitLab CI (`.gitlab-ci.yml`):
-- `test` stage - runs `pytest -x -v --cov` on pushes to main and merge requests (Python 3.12)
-- `docker` stage - builds and pushes Docker image to GitLab Container Registry on version tags (`v*`)
+GitLab CI (`.gitlab-ci.yml`) has three stages:
+
+- `quality` stage:
+  - `syntax` job - runs `ruff check` for syntax errors and undefined names
+  - `translations` job - verifies `.po` files compile without errors
+- `test` stage:
+  - `unit` job - runs `pytest -x -v --cov` with Cobertura coverage report as MR artifact
+- `deploy` stage:
+  - `docker-image` job - builds and pushes Docker image to GitLab Container Registry on version tags (`v*`)
+
+Quality and test jobs run on every pipeline except tags (`.not-tags` template). Pip is cached per job. Ruff config lives in `pyproject.toml`.
 
 Legacy GitHub Actions are kept in `.github/workflows/` but GitLab is the primary CI.
 
