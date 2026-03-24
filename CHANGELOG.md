@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix Docker CI job by setting DOCKER_HOST to mounted socket
+
 ## [0.18.1] - 2026-03-24
 
 ### Fixed
