@@ -87,7 +87,7 @@ class TestDashboardConsumerConnect:
         consumer.accept = MagicMock()
 
         import asyncio
-        asyncio.get_event_loop().run_until_complete(consumer.connect())
+        asyncio.run(consumer.connect())
         assert close_called
 
     @pytest.mark.django_db
@@ -115,7 +115,7 @@ class TestDashboardConsumerConnect:
         consumer.send = mock_send
 
         import asyncio
-        asyncio.get_event_loop().run_until_complete(consumer.connect())
+        asyncio.run(consumer.connect())
         assert accepted
         assert len(sent_messages) == 1
         assert sent_messages[0]["type"] == "dashboard.update"
