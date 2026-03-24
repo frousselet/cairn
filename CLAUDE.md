@@ -114,4 +114,5 @@ Detailed specs live in `features_spec/` (M0–M4 markdown files covering users, 
 - **Commit messages in English**: All git commit messages must be written in English, regardless of the conversation language.
 - **English in code**: All code must use English — variable names, constant names, function names, class names, comments, docstrings. French is only used in user-facing translated strings (via `_()`, `pgettext_lazy()`, `{% trans %}`) and DB string values that are already stored.
 - **No em dash character**: Never use the em dash character `—` (U+2014) in code, strings, or display text. Use ` : ` or ` - ` instead.
+- **Keep README.md up to date**: After any change that adds, removes or modifies a feature, model, MCP tool, dependency, or configuration, update `README.md` accordingly (feature tables, MCP tools section, tech stack, installation instructions). The README is the public-facing documentation and must always reflect the current state of the codebase.
 - **Persistent instructions**: When the user asks to "always do something" or to "remember something", add it to this `CLAUDE.md` file so it persists across sessions.
