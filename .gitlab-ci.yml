@@ -77,9 +77,28 @@ unit:
   coverage: '/^TOTAL.+?(\d+(?:\.\d+)?)%$/'
 
 # ---------------------------------------------------------------------------
-# Deploy - Docker image : build & push on version tags (v*)
+# Deploy - Docker dev image : build & push on merge to main
 # ---------------------------------------------------------------------------
-docker-image:
+docker-dev:
+  stage: deploy
+  image: docker:27
+  variables:
+    DOCKER_HOST: unix:///var/run/docker.sock
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - |
+      IMAGE="${CI_REGISTRY_IMAGE}"
+      echo "dev" > version.txt
+      docker build --build-arg APP_VERSION="dev" -t "${IMAGE}:dev" .
+      docker push "${IMAGE}:dev"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# ---------------------------------------------------------------------------
+# Deploy - Docker release image : build & push on version tags (v*)
+# ---------------------------------------------------------------------------
+docker-release:
   stage: deploy
   image: docker:27
   variables:
