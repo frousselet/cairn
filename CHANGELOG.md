@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Redesign logo with a sailboat navigating a channel (fairway) replacing the old F-letter mark
+- New logo features curved sails, wind pennant, sleek hull and accentuated waves
+- Light, dark and 32x32 icon variants all updated along with all inline SVGs in templates
+
 ## [0.19.0] - 2026-03-24
 
 ### Changed
