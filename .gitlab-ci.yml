@@ -66,17 +66,21 @@ translations:
 vulnerabilities:
   extends: .not-tags
   stage: security
-  image:
-    name: ghcr.io/aquasecurity/trivy:latest
-    entrypoint: [""]
-  variables:
-    TRIVY_NO_PROGRESS: "true"
-    TRIVY_CACHE_DIR: ".trivycache/"
-  script:
-    - trivy fs --exit-code 0 --format template --template "@/contrib/gitlab.tpl" -o gl-container-scanning-report.json .
+  image: python:slim
   cache:
+    key: pip-full
     paths:
-      - .trivycache/
+      - .cache/pip
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    TRIVY_NO_PROGRESS: "true"
+  before_script:
+    - pip install --quiet -r requirements.txt
+    - pip freeze > requirements-frozen.txt
+    - apt-get update && apt-get install -y --no-install-recommends curl
+    - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+  script:
+    - trivy fs --exit-code 0 --scanners vuln --format template --template "@/contrib/gitlab.tpl" -o gl-container-scanning-report.json .
   artifacts:
     when: always
     reports:
