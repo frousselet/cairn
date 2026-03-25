@@ -91,9 +91,9 @@ vulnerabilities:
     expire_in: 30 days
 
 # ---------------------------------------------------------------------------
-# Test - Unit : pytest with coverage
+# Test - Templates
 # ---------------------------------------------------------------------------
-unit:
+.test-base:
   extends: .not-tags
   stage: test
   image: python:slim
@@ -107,16 +107,52 @@ unit:
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends gettext
     - pip install --quiet -r requirements.txt
-  script:
     - python manage.py compilemessages
-    - pytest -x -v --tb=short --cov --cov-report=term-missing --cov-report=xml:coverage.xml --junitxml=report.xml
+
+# ---------------------------------------------------------------------------
+# Test - Unit : pytest split into 4 parallel groups (~350 tests each)
+# ---------------------------------------------------------------------------
+unit:
+  extends: .test-base
+  parallel:
+    matrix:
+      - TEST_SUITE: context
+        TEST_PATHS: "context/"
+      - TEST_SUITE: accounts-core
+        TEST_PATHS: "accounts/ core/"
+      - TEST_SUITE: compliance-risks
+        TEST_PATHS: "compliance/ risks/"
+      - TEST_SUITE: assets-others
+        TEST_PATHS: "assets/ mcp/ helpers/ reports/"
+  script:
+    - pytest -x -v --tb=short --cov --junitxml=report.xml $TEST_PATHS
+  after_script:
+    - mv .coverage .coverage.$TEST_SUITE 2>/dev/null || true
+  artifacts:
+    when: always
+    paths:
+      - .coverage.*
+    reports:
+      junit: report.xml
+    expire_in: 30 days
+
+# ---------------------------------------------------------------------------
+# Test - Coverage : combine reports from parallel unit jobs
+# ---------------------------------------------------------------------------
+coverage:
+  extends: .test-base
+  needs:
+    - unit
+  script:
+    - coverage combine
+    - coverage report --show-missing
+    - coverage xml -o coverage.xml
   artifacts:
     when: always
     reports:
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
-      junit: report.xml
     expire_in: 30 days
   coverage: '/^TOTAL.+?(\d+(?:\.\d+)?)%$/'
 
