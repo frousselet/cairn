@@ -103,6 +103,7 @@ unit:
       - .cache/pip
   variables:
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    PYTHONUNBUFFERED: "1"
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends gettext
     - pip install --quiet -r requirements.txt
