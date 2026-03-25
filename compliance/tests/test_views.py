@@ -222,17 +222,15 @@ class TestRequirementDetailView:
     def test_detail_returns_200(self, client):
         req = RequirementFactory()
         url = reverse("compliance:requirement-detail", kwargs={"pk": req.pk})
-        # Known bug: view references req.action_plans which does not exist
-        # on the Requirement model. This test documents the issue.
-        with pytest.raises(AttributeError, match="action_plans"):
-            client.get(url)
+        resp = client.get(url)
+        assert resp.status_code == 200
 
     def test_detail_shows_name(self, client):
         req = RequirementFactory(name="Password Policy")
         url = reverse("compliance:requirement-detail", kwargs={"pk": req.pk})
-        # Known bug: view references req.action_plans which does not exist
-        with pytest.raises(AttributeError, match="action_plans"):
-            client.get(url)
+        resp = client.get(url)
+        assert resp.status_code == 200
+        assert "Password Policy" in resp.content.decode()
 
 
 class TestRequirementCreateView:

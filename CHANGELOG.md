@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- M2M relationship between action plans and requirements (`ComplianceActionPlan.requirements`), enabling linked requirements on action plan detail and requirement detail pages
+
+### Fixed
+
+- Fix 500 error on requirement detail page caused by missing `action_plans` reverse relation
+
 ## [0.21.0] - 2026-03-25
 
 ### Added

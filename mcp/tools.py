@@ -1289,7 +1289,7 @@ def _register_compliance_tools(server):
                  "owner_id", "is_approved", "created_at"]
     ap_writable = ["name", "description", "gap_description", "remediation_plan",
                    "priority", "target_date",
-                   "progress_percentage", "owner_id", "assignees"]
+                   "progress_percentage", "owner_id", "assignees", "requirements"]
 
     _register_crud(server, "action_plan", ComplianceActionPlan, "compliance.action_plan",
                    list_fields=ap_fields,

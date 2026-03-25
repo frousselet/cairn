@@ -235,7 +235,7 @@ class ComplianceActionPlanSerializer(serializers.ModelSerializer):
         model = ComplianceActionPlan
         fields = [
             "id", "scopes", "reference", "name", "description",
-            "risks", "findings",
+            "risks", "findings", "requirements",
             "gap_description", "remediation_plan",
             "priority", "owner", "assignees",
             "start_date", "target_date", "completion_date",

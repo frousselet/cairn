@@ -411,7 +411,7 @@ class ComplianceActionPlanForm(ScopedFormMixin, forms.ModelForm):
         model = ComplianceActionPlan
         fields = [
             "scopes", "name", "description",
-            "risks", "findings",
+            "risks", "findings", "requirements",
             "gap_description", "remediation_plan",
             "priority", "owner", "assignees",
             "start_date", "target_date", "completion_date",
@@ -423,6 +423,7 @@ class ComplianceActionPlanForm(ScopedFormMixin, forms.ModelForm):
             "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
             "risks": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
             "findings": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+            "requirements": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
             "gap_description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "remediation_plan": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "priority": forms.Select(attrs=SELECT_ATTRS),

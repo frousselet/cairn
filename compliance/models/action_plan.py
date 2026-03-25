@@ -31,6 +31,12 @@ class ComplianceActionPlan(ScopedModel):
         related_name="action_plans",
         verbose_name=_("Linked findings"),
     )
+    requirements = models.ManyToManyField(
+        "compliance.Requirement",
+        blank=True,
+        related_name="action_plans",
+        verbose_name=_("Linked requirements"),
+    )
     gap_description = models.TextField(_("Gap description"))
     remediation_plan = models.TextField(_("Remediation plan"))
     priority = models.CharField(
