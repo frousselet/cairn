@@ -81,6 +81,8 @@ vulnerabilities:
     - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
     - curl -sfL -o /tmp/gitlab.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/gitlab.tpl
   script:
+    - cat requirements.txt
+    - trivy fs --exit-code 0 --scanners vuln --format table .
     - trivy fs --exit-code 0 --scanners vuln --format template --template "@/tmp/gitlab.tpl" -o gl-container-scanning-report.json .
   artifacts:
     when: always
