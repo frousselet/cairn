@@ -1876,6 +1876,25 @@ msgstr "Modifier « %(name)s »"
 msgid "Group updated."
 msgstr "Groupe mis à jour."
 
+#: accounts/views.py
+#, python-format
+msgid "Group '%(name)s' deleted."
+msgstr "Groupe « %(name)s » supprimé."
+
+#: accounts/views.py accounts/api/views.py
+msgid "This group still has users. Remove all users before deleting."
+msgstr "Ce groupe contient encore des utilisateurs. Retirez tous les utilisateurs avant de supprimer."
+
+#: accounts/templates/accounts/group_confirm_delete.html
+msgid "This is a system group. It will not be recreated automatically."
+msgstr "Ceci est un groupe systeme. Il ne sera pas recree automatiquement."
+
+#: accounts/templates/accounts/group_confirm_delete.html
+msgid "This group still has %(count)s user. Remove all users before deleting."
+msgid_plural "This group still has %(count)s users. Remove all users before deleting."
+msgstr[0] "Ce groupe contient encore %(count)s utilisateur. Retirez tous les utilisateurs avant de supprimer."
+msgstr[1] "Ce groupe contient encore %(count)s utilisateurs. Retirez tous les utilisateurs avant de supprimer."
+
 #: accounts/views.py:357
 msgid "Permissions updated."
 msgstr "Permissions mises à jour."

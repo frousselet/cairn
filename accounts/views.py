@@ -346,17 +346,11 @@ class GroupUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def get(self, request, pk):
         group = get_object_or_404(Group, pk=pk)
-        if group.is_system:
-            messages.error(request, _("System groups cannot be modified."))
-            return redirect("accounts:group-detail", pk=group.pk)
         form = GroupForm(instance=group)
         return render(request, "accounts/group_form.html", {"form": form, "title": _("Edit '%(name)s'") % {"name": group.name}, "object": group})
 
     def post(self, request, pk):
         group = get_object_or_404(Group, pk=pk)
-        if group.is_system:
-            messages.error(request, _("System groups cannot be modified."))
-            return redirect("accounts:group-detail", pk=group.pk)
         form = GroupForm(request.POST, instance=group)
         if form.is_valid():
             form.save()
@@ -372,9 +366,6 @@ class GroupPermissionsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Vi
 
     def post(self, request, pk):
         group = get_object_or_404(Group, pk=pk)
-        if group.is_system:
-            messages.error(request, _("System groups cannot be modified."))
-            return redirect("accounts:group-detail", pk=group.pk)
 
         # Collect selected permission codenames from POST
         selected = request.POST.getlist("permissions")
@@ -438,6 +429,28 @@ class GroupScopesUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
         group.allowed_scopes.set(scopes)
         messages.success(request, _("Allowed scopes updated."))
         return redirect("accounts:group-detail", pk=group.pk)
+
+
+class GroupDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = "system.groups.delete"
+
+    def get(self, request, pk):
+        group = get_object_or_404(Group, pk=pk)
+        user_count = group.users.count()
+        return render(request, "accounts/group_confirm_delete.html", {
+            "object": group,
+            "user_count": user_count,
+        })
+
+    def post(self, request, pk):
+        group = get_object_or_404(Group, pk=pk)
+        if group.users.exists():
+            messages.error(request, _("This group still has users. Remove all users before deleting."))
+            return redirect("accounts:group-detail", pk=group.pk)
+        name = group.name
+        group.delete()
+        messages.success(request, _("Group '%(name)s' deleted.") % {"name": name})
+        return redirect("accounts:group-list")
 
 
 # ── Permissions ─────────────────────────────────────────────

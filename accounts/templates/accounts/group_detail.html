@@ -10,11 +10,13 @@
     {% if group.is_system %}<span class="badge fs-6" style="background:var(--accent-soft);color:var(--accent);font-size:.82rem;padding:.4em .8em">{% trans "System" %}</span>{% endif %}
   </h2>
   <div class="d-flex gap-2">
-    {% if not group.is_system %}
     {% has_perm "system.groups.update" as can_edit %}
     {% if can_edit %}
     <a href="{% url 'accounts:group-update' group.pk %}" class="btn btn-outline-primary">{% trans "Edit" %}</a>
     {% endif %}
+    {% has_perm "system.groups.delete" as can_delete %}
+    {% if can_delete %}
+    <a href="{% url 'accounts:group-delete' group.pk %}" class="btn btn-outline-danger">{% trans "Delete" %}</a>
     {% endif %}
     <a href="{% url 'accounts:group-list' %}" class="btn btn-outline-secondary">{% trans "Back to list" %}</a>
   </div>
@@ -37,7 +39,8 @@
     <form method="post" action="{% url 'accounts:group-permissions-update' group.pk %}" id="perm-form">
       {% csrf_token %}
 
-      {% if not group.is_system %}
+      {% has_perm "system.groups.update" as can_edit_perms %}
+      {% if can_edit_perms %}
       <div class="d-flex flex-wrap gap-2 mb-3">
         <span class="text-muted small align-self-center me-1">{% trans "Quick apply:" %}</span>
         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="presetReadOnly()">
@@ -60,7 +63,7 @@
       <div class="card mb-3" data-module="{{ module_group.grouper }}">
         <div class="card-header d-flex justify-content-between align-items-center">
           <strong>{{ module_group.grouper }}</strong>
-          {% if not group.is_system %}
+          {% if can_edit_perms %}
           <div class="form-check form-check-inline mb-0">
             <input type="checkbox" class="form-check-input module-toggle" id="module-toggle-{{ forloop.counter }}"
               data-module-idx="{{ forloop.counter }}">
@@ -73,28 +76,28 @@
             <thead class="table-light">
               <tr>
                 <th style="width:30%">{% trans "Feature" %}</th>
-                {% if not group.is_system %}
+                {% if can_edit_perms %}
                 <th style="width:4%" class="text-center">
                   <input type="checkbox" class="form-check-input row-all-toggle" title="{% trans 'Select row' %}" style="visibility:hidden">
                 </th>
                 {% endif %}
                 <th class="text-center"><span class="d-block">{% trans "Create" %}</span>
-                  {% if not group.is_system %}<input type="checkbox" class="form-check-input col-toggle" data-action="create" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="create" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
                 </th>
                 <th class="text-center"><span class="d-block">{% trans "Read" %}</span>
-                  {% if not group.is_system %}<input type="checkbox" class="form-check-input col-toggle" data-action="read" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="read" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
                 </th>
                 <th class="text-center"><span class="d-block">{% trans "Edit" %}</span>
-                  {% if not group.is_system %}<input type="checkbox" class="form-check-input col-toggle" data-action="update" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="update" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
                 </th>
                 <th class="text-center"><span class="d-block">{% trans "Delete" %}</span>
-                  {% if not group.is_system %}<input type="checkbox" class="form-check-input col-toggle" data-action="delete" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="delete" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
                 </th>
                 <th class="text-center"><span class="d-block">{% trans "Access" %}</span>
-                  {% if not group.is_system %}<input type="checkbox" class="form-check-input col-toggle" data-action="access" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="access" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
                 </th>
                 <th class="text-center"><span class="d-block">{% trans "Approve" %}</span>
-                  {% if not group.is_system %}<input type="checkbox" class="form-check-input col-toggle" data-action="approve" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="approve" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
                 </th>
               </tr>
             </thead>
@@ -102,7 +105,7 @@
               {% for row in module_group.list %}
               <tr>
                 <td>{{ row.feature_label }}</td>
-                {% if not group.is_system %}
+                {% if can_edit_perms %}
                 <td class="text-center">
                   <input type="checkbox" class="form-check-input row-toggle" data-row-idx="{{ forloop.counter }}" title="{% trans 'Select row' %}">
                 </td>
@@ -112,10 +115,10 @@
                   {% if cell.has_action %}
                   <input type="checkbox" name="permissions" value="{{ cell.codename }}"
                     {% if cell.checked %}checked{% endif %}
-                    {% if group.is_system %}disabled{% endif %}
+                    {% if not can_edit_perms %}disabled{% endif %}
                     class="form-check-input perm-cb">
                   {% else %}
-                  <span style="color:var(--text-muted)">—</span>
+                  <span style="color:var(--text-muted)">-</span>
                   {% endif %}
                 </td>
                 {% endfor %}
@@ -126,7 +129,7 @@
         </div>
       </div>
       {% endfor %}
-      {% if not group.is_system %}
+      {% if can_edit_perms %}
       <button type="submit" class="btn btn-primary">{% trans "Save permissions" %}</button>
       {% endif %}
     </form>
@@ -137,7 +140,6 @@
     <div class="card">
       <div class="card-body">
         {% if group_users %}
-        {% if not group.is_system %}
         {% has_perm "system.groups.update" as can_edit_group %}
         {% if can_edit_group %}
         <div class="d-flex align-items-center gap-2 mb-3">
@@ -150,33 +152,27 @@
           </div>
         </div>
         {% endif %}
-        {% endif %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
             <thead><tr>
-              {% if not group.is_system %}
               {% has_perm "system.groups.update" as can_edit_group %}
               {% if can_edit_group %}
               <th style="width:40px"></th>
-              {% endif %}
               {% endif %}
               <th>{% trans "Name" %}</th><th>{% trans "Email" %}</th><th></th>
             </tr></thead>
             <tbody>
               {% for u in group_users %}
               <tr>
-                {% if not group.is_system %}
                 {% has_perm "system.groups.update" as can_edit_group %}
                 {% if can_edit_group %}
                 <td>
                   <input type="checkbox" class="form-check-input user-remove-cb" value="{{ u.pk }}" onchange="updateRemoveCount()">
                 </td>
                 {% endif %}
-                {% endif %}
                 <td><a href="{% url 'accounts:user-detail' u.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ u.display_name }}</a></td>
                 <td>{{ u.email }}</td>
                 <td class="text-end">
-                  {% if not group.is_system %}
                   {% has_perm "system.groups.update" as can_edit_group %}
                   {% if can_edit_group %}
                   <form method="post" action="{% url 'accounts:group-users-update' group.pk %}" class="d-inline">
@@ -185,7 +181,6 @@
                     <input type="hidden" name="user_id" value="{{ u.pk }}">
                     <button type="submit" class="btn btn-sm btn-outline-danger" title="{% trans 'Remove' %}"><i class="bi bi-x-circle"></i></button>
                   </form>
-                  {% endif %}
                   {% endif %}
                 </td>
               </tr>
@@ -197,7 +192,6 @@
         <p style="color:var(--text-muted);font-size:.85rem" class="mb-0">{% trans "No users in this group." %}</p>
         {% endif %}
 
-        {% if not group.is_system %}
         {% has_perm "system.groups.update" as can_edit_group %}
         {% if can_edit_group and all_users %}
         <div class="mt-4 pt-3" style="border-top:1px solid var(--border-light)">
@@ -233,7 +227,6 @@
             </div>
           </form>
         </div>
-        {% endif %}
         {% endif %}
       </div>
     </div>
@@ -272,7 +265,6 @@
   </div>
 </div>
 
-{% if not group.is_system %}
 <script>
 (function() {
   // ── Permission counter ─────────────────────────────
@@ -509,14 +501,4 @@
 
 })();
 </script>
-{% else %}
-<script>
-(function() {
-  // Permission counter for system groups (read-only)
-  var count = document.querySelectorAll('.perm-cb:checked').length;
-  var badge = document.getElementById('perm-counter');
-  if (badge) badge.textContent = count;
-})();
-</script>
-{% endif %}
 {% endblock %}

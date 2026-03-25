@@ -293,10 +293,10 @@ class TestGroupViewSet:
         response = self.client.delete(f"/api/v1/groups/{group.pk}/")
         assert response.status_code == 204
 
-    def test_delete_system_group_rejected(self):
+    def test_delete_system_group_allowed(self):
         group = GroupFactory(is_system=True)
         response = self.client.delete(f"/api/v1/groups/{group.pk}/")
-        assert response.status_code == 400
+        assert response.status_code == 204
 
     def test_delete_group_with_users_rejected(self):
         group = GroupFactory()

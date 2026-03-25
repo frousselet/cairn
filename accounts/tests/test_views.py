@@ -710,13 +710,12 @@ class TestGroupUpdateView:
         resp = client.get(reverse("accounts:group-update", kwargs={"pk": group.pk}))
         assert resp.status_code == 200
 
-    def test_get_system_group_redirects(self, client):
+    def test_get_system_group_allowed(self, client):
         admin = _superuser()
         group = GroupFactory(name="System Group", is_system=True)
         client.force_login(admin)
         resp = client.get(reverse("accounts:group-update", kwargs={"pk": group.pk}))
-        assert resp.status_code == 302
-        assert str(group.pk) in resp.url
+        assert resp.status_code == 200
 
     def test_post_update_group(self, client):
         admin = _superuser()
@@ -730,17 +729,17 @@ class TestGroupUpdateView:
         group.refresh_from_db()
         assert group.name == "New Name"
 
-    def test_post_system_group_blocked(self, client):
+    def test_post_system_group_allowed(self, client):
         admin = _superuser()
         group = GroupFactory(name="Sys Group", is_system=True)
         client.force_login(admin)
         resp = client.post(
             reverse("accounts:group-update", kwargs={"pk": group.pk}),
-            {"name": "Hacked Name", "description": ""},
+            {"name": "Renamed Group", "description": ""},
         )
         assert resp.status_code == 302
         group.refresh_from_db()
-        assert group.name == "Sys Group"
+        assert group.name == "Renamed Group"
 
     def test_post_update_group_invalid(self, client):
         admin = _superuser()
@@ -785,7 +784,7 @@ class TestGroupPermissionsUpdateView:
             "context.scope.create",
         }
 
-    def test_system_group_blocked(self, client):
+    def test_system_group_allowed(self, client):
         admin = _superuser()
         group = GroupFactory(is_system=True)
         p1 = PermissionFactory(codename="context.scope.read")
@@ -795,7 +794,7 @@ class TestGroupPermissionsUpdateView:
             {"permissions": ["context.scope.read"]},
         )
         assert resp.status_code == 302
-        assert group.permissions.count() == 0  # unchanged
+        assert group.permissions.count() == 1
 
     def test_clear_permissions(self, client):
         admin = _superuser()

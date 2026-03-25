@@ -37,6 +37,7 @@ urlpatterns = [
     path("groups/create/", views.GroupCreateView.as_view(), name="group-create"),
     path("groups/<uuid:pk>/", views.GroupDetailView.as_view(), name="group-detail"),
     path("groups/<uuid:pk>/edit/", views.GroupUpdateView.as_view(), name="group-update"),
+    path("groups/<uuid:pk>/delete/", views.GroupDeleteView.as_view(), name="group-delete"),
     path("groups/<uuid:pk>/permissions/", views.GroupPermissionsUpdateView.as_view(), name="group-permissions-update"),
     path("groups/<uuid:pk>/users/", views.GroupUsersUpdateView.as_view(), name="group-users-update"),
     path("groups/<uuid:pk>/scopes/", views.GroupScopesUpdateView.as_view(), name="group-scopes-update"),

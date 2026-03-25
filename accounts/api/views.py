@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, login, logout
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -206,14 +207,9 @@ class GroupViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         group = self.get_object()
-        if group.is_system:
-            return Response(
-                {"status": "error", "error": {"message": "Les groupes système ne peuvent pas être supprimés."}},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
         if group.users.exists():
             return Response(
-                {"status": "error", "error": {"message": "Le groupe contient encore des utilisateurs."}},
+                {"status": "error", "error": {"message": _("This group still has users. Remove all users before deleting.")}},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return super().destroy(request, *args, **kwargs)
