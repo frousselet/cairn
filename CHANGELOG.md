@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-03-25
+
 ### Added
 
 - User impersonation for administrators (`system.users.impersonate` permission) with session-based switching, fixed amber banner, access log tracking, and security guards (no nesting)
 - Robot user type: users can be marked as "Robot" (API/MCP-only accounts with no web login, optional first name, dedicated badge in UI)
+- Trivy vulnerability scanning in CI security stage with GitLab container scanning report
+- JUnit test report artifacts in CI
+- Parallelize CI unit tests into one job per app directory (9 parallel jobs) with combined coverage report
 
 ## [0.20.0] - 2026-03-25
 
@@ -575,7 +580,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.20.0...HEAD
+[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.0...HEAD
+[0.21.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.20.0...v0.21.0
 [0.20.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.19.1...v0.20.0
 [0.19.1]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.19.0...v0.19.1
 [0.19.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.18.3...v0.19.0
