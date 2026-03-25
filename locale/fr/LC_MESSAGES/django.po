@@ -116,6 +116,14 @@ msgid "Passkey deleted"
 msgstr "Clé d'accès supprimée"
 
 #: accounts/constants.py
+msgid "Robot"
+msgstr "Robot"
+
+#: accounts/models/user.py
+msgid "User type"
+msgstr "Type d'utilisateur"
+
+#: accounts/constants.py
 msgid "Impersonation started"
 msgstr "Prise de contrôle démarrée"
 

@@ -25,6 +25,10 @@ class EmailAuthBackend(BaseBackend):
         if user.is_locked:
             return None
 
+        # Robot users cannot log in via the web interface
+        if user.is_robot:
+            return None
+
         if user.check_password(password):
             return user
 
@@ -61,6 +65,8 @@ class PasskeyAuthBackend(BaseBackend):
         if not user.is_active:
             return None
         if user.is_locked:
+            return None
+        if user.is_robot:
             return None
 
         return user

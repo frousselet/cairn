@@ -56,8 +56,9 @@ class UserCreateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ("email", "first_name", "last_name", "job_title", "department", "phone", "language", "timezone", "is_active")
+        fields = ("user_type", "email", "first_name", "last_name", "job_title", "department", "phone", "language", "timezone", "is_active")
         widgets = {
+            "user_type": forms.Select(attrs={"class": "form-select"}),
             "email": forms.EmailInput(attrs={"class": "form-control"}),
             "first_name": forms.TextInput(attrs={"class": "form-control"}),
             "last_name": forms.TextInput(attrs={"class": "form-control"}),
@@ -100,8 +101,9 @@ class UserUpdateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ("email", "first_name", "last_name", "job_title", "department", "phone", "language", "timezone", "is_active")
+        fields = ("user_type", "email", "first_name", "last_name", "job_title", "department", "phone", "language", "timezone", "is_active")
         widgets = {
+            "user_type": forms.Select(attrs={"class": "form-select"}),
             "email": forms.EmailInput(attrs={"class": "form-control"}),
             "first_name": forms.TextInput(attrs={"class": "form-control"}),
             "last_name": forms.TextInput(attrs={"class": "form-control"}),

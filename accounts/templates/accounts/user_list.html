@@ -56,6 +56,7 @@
           <td>{{ u.job_title|default:"-" }}</td>
           <td>{{ u.department|default:"-" }}</td>
           <td>
+            {% if u.is_robot %}<span class="badge bg-info me-1">{% trans "Robot" %}</span>{% endif %}
             {% if u.is_active %}
               {% if u.is_locked %}
               <span class="badge bg-warning text-dark">{% trans "Locked" %}</span>

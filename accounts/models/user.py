@@ -6,14 +6,20 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from accounts.constants import LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS
+from accounts.constants import LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS, UserType
 from accounts.managers import UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_type = models.CharField(
+        _("User type"),
+        max_length=10,
+        choices=UserType.choices,
+        default=UserType.HUMAN,
+    )
     email = models.EmailField(_("Email address"), unique=True)
-    first_name = models.CharField(_("First name"), max_length=150)
+    first_name = models.CharField(_("First name"), max_length=150, blank=True, default="")
     last_name = models.CharField(_("Last name"), max_length=150)
     job_title = models.CharField(_("Job title"), max_length=255, blank=True, default="")
     department = models.CharField(_("Department"), max_length=255, blank=True, default="")
@@ -90,7 +96,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["first_name", "last_name"]
+    REQUIRED_FIELDS = ["last_name"]
 
     class Meta:
         ordering = ["last_name", "first_name"]
@@ -102,8 +108,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def display_name(self):
+        if self.user_type == UserType.ROBOT:
+            return self.last_name or self.email
         full = f"{self.first_name} {self.last_name}".strip()
         return full or self.email
+
+    @property
+    def is_robot(self):
+        return self.user_type == UserType.ROBOT
 
     @property
     def is_locked(self):

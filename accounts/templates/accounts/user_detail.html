@@ -14,7 +14,9 @@
       {{ account_user.display_name|truncatechars:1 }}
     </div>
     {% endif %}
-    <h2 class="mb-0">{{ account_user.display_name }}</h2>
+    <h2 class="mb-0">{{ account_user.display_name }}
+      {% if account_user.is_robot %}<span class="badge fs-6 bg-info" style="font-size:.82rem;padding:.4em .8em">{% trans "Robot" %}</span>{% endif %}
+    </h2>
   </div>
   <div class="d-flex gap-2">
     {% has_perm "system.users.update" as can_edit %}
@@ -47,8 +49,11 @@
     <div class="card">
       <div class="card-body">
         <dl class="row mb-0">
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt><dd class="col-sm-9">{{ account_user.get_user_type_display }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Email" %}</dt><dd class="col-sm-9">{{ account_user.email }}</dd>
+          {% if not account_user.is_robot %}
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "First name" %}</dt><dd class="col-sm-9">{{ account_user.first_name }}</dd>
+          {% endif %}
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Last name" %}</dt><dd class="col-sm-9">{{ account_user.last_name }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Job title" %}</dt><dd class="col-sm-9">{{ account_user.job_title|default:"-" }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Department" %}</dt><dd class="col-sm-9">{{ account_user.department|default:"-" }}</dd>

@@ -19,7 +19,7 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            "id", "email", "first_name", "last_name", "display_name",
+            "id", "user_type", "email", "first_name", "last_name", "display_name",
             "job_title", "department", "is_active", "last_login", "groups",
         )
         read_only_fields = ("id", "display_name", "last_login")
@@ -36,7 +36,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            "id", "email", "first_name", "last_name", "display_name",
+            "id", "user_type", "email", "first_name", "last_name", "display_name",
             "job_title", "department", "phone", "language", "timezone",
             "is_active", "is_staff", "last_login", "created_at", "updated_at",
             "groups", "permissions",
@@ -58,7 +58,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            "id", "email", "first_name", "last_name", "password",
+            "id", "user_type", "email", "first_name", "last_name", "password",
             "job_title", "department", "phone", "language", "timezone",
             "is_active",
         )

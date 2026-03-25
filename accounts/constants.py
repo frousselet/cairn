@@ -3,6 +3,11 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
 
+class UserType(models.TextChoices):
+    HUMAN = "human", _("Human")
+    ROBOT = "robot", _("Robot")
+
+
 class PermissionAction(models.TextChoices):
     CREATE = "create", _("Create")
     READ = "read", _("Read")

@@ -459,6 +459,7 @@ class TestUserCreateView:
         admin = _superuser()
         client.force_login(admin)
         resp = client.post(reverse("accounts:user-create"), {
+            "user_type": "human",
             "email": "newuser@example.com",
             "first_name": "New",
             "last_name": "User",
@@ -534,6 +535,7 @@ class TestUserUpdateView:
         resp = client.post(
             reverse("accounts:user-update", kwargs={"pk": target.pk}),
             {
+                "user_type": "human",
                 "email": target.email,
                 "first_name": "New",
                 "last_name": "Name",
