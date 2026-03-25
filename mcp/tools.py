@@ -365,7 +365,17 @@ def _register_context_tools(server):
                    writable_fields=scope_writable,
                    search_fields=["name", "description"],
                    filters=["status"],
-                   field_overrides={"description": _html_field("Description")})
+                   required_fields=["name"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "status": {
+                           "type": "string",
+                           "description": "Scope status.",
+                           "enum": ["draft", "active", "archived"],
+                       },
+                       "effective_date": {"type": "string", "description": "Effective date (ISO 8601, e.g. 2025-01-15)"},
+                       "review_date": {"type": "string", "description": "Review date (ISO 8601, e.g. 2025-06-15)"},
+                   })
 
     issue_fields = ["id", "reference", "name", "description", "type", "category",
                     "impact_level", "status", "is_approved", "created_at"]
@@ -376,7 +386,35 @@ def _register_context_tools(server):
                    writable_fields=issue_writable,
                    search_fields=["name", "description"],
                    filters=["type", "category", "impact_level", "status"],
-                   field_overrides=_HTML_DESC)
+                   required_fields=["name", "type", "category", "impact_level"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "type": {
+                           "type": "string",
+                           "description": "Issue type.",
+                           "enum": ["internal", "external"],
+                       },
+                       "category": {
+                           "type": "string",
+                           "description": "Issue category.",
+                           "enum": [
+                               "strategic", "organizational", "human_resources",
+                               "technical", "financial", "cultural",
+                               "political", "economic", "social", "technological",
+                               "legal", "environmental", "competitive", "regulatory",
+                           ],
+                       },
+                       "impact_level": {
+                           "type": "string",
+                           "description": "Impact level.",
+                           "enum": ["low", "medium", "high", "critical"],
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": "Issue status.",
+                           "enum": ["identified", "active", "monitored", "closed"],
+                       },
+                   })
 
     stakeholder_fields = ["id", "reference", "name", "description", "type", "category",
                           "influence_level", "interest_level", "status", "is_approved",
@@ -389,7 +427,40 @@ def _register_context_tools(server):
                    writable_fields=stakeholder_writable,
                    search_fields=["name", "description"],
                    filters=["type", "category", "status"],
-                   field_overrides=_HTML_DESC)
+                   required_fields=["name", "type", "category", "influence_level", "interest_level"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "type": {
+                           "type": "string",
+                           "description": "Stakeholder type.",
+                           "enum": ["internal", "external"],
+                       },
+                       "category": {
+                           "type": "string",
+                           "description": "Stakeholder category.",
+                           "enum": [
+                               "executive_management", "employees", "customers",
+                               "suppliers", "partners", "regulators", "shareholders",
+                               "insurers", "public", "competitors", "unions",
+                               "auditors", "other",
+                           ],
+                       },
+                       "influence_level": {
+                           "type": "string",
+                           "description": "Influence level.",
+                           "enum": ["low", "medium", "high"],
+                       },
+                       "interest_level": {
+                           "type": "string",
+                           "description": "Interest level.",
+                           "enum": ["low", "medium", "high"],
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": "Stakeholder status.",
+                           "enum": ["active", "inactive"],
+                       },
+                   })
 
     expectation_fields = ["id", "description", "type", "priority",
                           "stakeholder_id", "created_at"]
@@ -401,7 +472,20 @@ def _register_context_tools(server):
                    search_fields=["description"],
                    filters=["stakeholder_id", "type"],
                    scope_filtered=False,
-                   field_overrides={"description": _html_field("Description")})
+                   required_fields=["description", "type", "priority", "stakeholder_id"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "type": {
+                           "type": "string",
+                           "description": "Expectation type.",
+                           "enum": ["requirement", "expectation", "need"],
+                       },
+                       "priority": {
+                           "type": "string",
+                           "description": "Priority level.",
+                           "enum": ["low", "medium", "high", "critical"],
+                       },
+                   })
 
     objective_fields = ["id", "reference", "name", "description", "category", "type",
                         "status", "target_date", "owner_id", "is_approved", "created_at"]
@@ -413,9 +497,29 @@ def _register_context_tools(server):
                    writable_fields=objective_writable,
                    search_fields=["name", "description"],
                    filters=["category", "type", "status"],
+                   required_fields=["name", "category", "type", "owner_id"],
                    field_overrides={
                        "description": _html_field("Description"),
                        "owner_id": {"type": "string", "description": "UUID of the objective owner (user)"},
+                       "category": {
+                           "type": "string",
+                           "description": "Objective category.",
+                           "enum": [
+                               "confidentiality", "integrity", "availability",
+                               "compliance", "operational", "strategic",
+                           ],
+                       },
+                       "type": {
+                           "type": "string",
+                           "description": "Objective type.",
+                           "enum": ["security", "compliance", "business", "other"],
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": "Objective status.",
+                           "enum": ["draft", "active", "achieved", "not_achieved", "cancelled"],
+                       },
+                       "target_date": {"type": "string", "description": "Target date (ISO 8601, e.g. 2025-12-31)"},
                    })
 
     swot_fields = ["id", "reference", "name", "description", "analysis_date",
@@ -427,9 +531,15 @@ def _register_context_tools(server):
                    writable_fields=swot_writable,
                    search_fields=["name", "description"],
                    filters=["status"],
+                   required_fields=["name"],
                    field_overrides={
                        "description": _html_field("Description"),
                        "analysis_date": {"type": "string", "description": "Analysis date in ISO 8601 format (e.g. 2025-06-15)"},
+                       "status": {
+                           "type": "string",
+                           "description": "SWOT analysis status.",
+                           "enum": ["draft", "validated", "archived"],
+                       },
                    })
 
     swot_item_fields = ["id", "quadrant", "description", "impact_level",
@@ -443,10 +553,19 @@ def _register_context_tools(server):
                    search_fields=["description"],
                    filters=["swot_analysis_id", "quadrant"],
                    scope_filtered=False,
+                   required_fields=["quadrant", "description", "swot_analysis_id"],
                    field_overrides={
                        "description": _html_field("Description"),
-                       "quadrant": {"type": "string", "description": "SWOT quadrant (strength, weakness, opportunity, threat)"},
-                       "impact_level": {"type": "string", "description": "Impact level (low, medium, high)"},
+                       "quadrant": {
+                           "type": "string",
+                           "description": "SWOT quadrant.",
+                           "enum": ["strength", "weakness", "opportunity", "threat"],
+                       },
+                       "impact_level": {
+                           "type": "string",
+                           "description": "Impact level.",
+                           "enum": ["low", "medium", "high"],
+                       },
                        "swot_analysis_id": {"type": "string", "description": "UUID of the parent SWOT analysis"},
                    })
 
@@ -462,8 +581,14 @@ def _register_context_tools(server):
                    search_fields=["description"],
                    filters=["swot_analysis_id", "quadrant"],
                    scope_filtered=False,
+                   required_fields=["quadrant", "description", "swot_analysis_id"],
                    field_overrides={
-                       "quadrant": {"type": "string", "description": "Strategy quadrant (so, st, wo, wt)"},
+                       "description": _html_field("Description"),
+                       "quadrant": {
+                           "type": "string",
+                           "description": "Strategy quadrant.",
+                           "enum": ["so", "st", "wo", "wt"],
+                       },
                        "swot_analysis_id": {"type": "string", "description": "UUID of the parent SWOT analysis"},
                    })
 
@@ -476,7 +601,20 @@ def _register_context_tools(server):
                    writable_fields=role_writable,
                    search_fields=["name", "description"],
                    filters=["type", "status"],
-                   field_overrides=_HTML_DESC)
+                   required_fields=["name", "type"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "type": {
+                           "type": "string",
+                           "description": "Role type.",
+                           "enum": ["governance", "operational", "support", "control"],
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": "Role status.",
+                           "enum": ["active", "inactive"],
+                       },
+                   })
 
     activity_fields = ["id", "reference", "name", "description", "type", "criticality",
                        "owner_id", "status", "is_approved", "created_at"]
@@ -488,9 +626,25 @@ def _register_context_tools(server):
                    writable_fields=activity_writable,
                    search_fields=["name", "description"],
                    filters=["type", "criticality", "status"],
+                   required_fields=["name", "type", "criticality", "owner_id"],
                    field_overrides={
                        "description": _html_field("Description"),
                        "owner_id": {"type": "string", "description": "UUID of the activity owner (user)"},
+                       "type": {
+                           "type": "string",
+                           "description": "Activity type.",
+                           "enum": ["core_business", "support", "management"],
+                       },
+                       "criticality": {
+                           "type": "string",
+                           "description": "Criticality level.",
+                           "enum": ["low", "medium", "high", "critical"],
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": "Activity status.",
+                           "enum": ["active", "inactive", "planned"],
+                       },
                    })
 
     site_fields = ["id", "reference", "name", "description", "type", "status",
@@ -503,7 +657,23 @@ def _register_context_tools(server):
                    writable_fields=site_writable,
                    search_fields=["name", "description"],
                    filters=["type", "status"],
-                   field_overrides=_HTML_DESC)
+                   required_fields=["name"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "type": {
+                           "type": "string",
+                           "description": "Site type.",
+                           "enum": [
+                               "siege", "bureau", "usine", "entrepot",
+                               "datacenter", "site_distant", "autre",
+                           ],
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": "Site status.",
+                           "enum": ["draft", "active", "archived"],
+                       },
+                   })
 
     # Tags (simple CRUD, no approve)
     server.register_tool(
@@ -552,7 +722,50 @@ def _register_context_tools(server):
                    writable_fields=indicator_writable,
                    search_fields=["reference", "name", "description"],
                    filters=["indicator_type", "status", "format", "collection_method"],
-                   field_overrides=_HTML_DESC)
+                   required_fields=["name"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "indicator_type": {
+                           "type": "string",
+                           "description": "Indicator type.",
+                           "enum": ["organizational", "technical"],
+                       },
+                       "collection_method": {
+                           "type": "string",
+                           "description": "Data collection method.",
+                           "enum": ["manual", "api", "internal"],
+                       },
+                       "format": {
+                           "type": "string",
+                           "description": "Indicator format.",
+                           "enum": ["number", "boolean"],
+                       },
+                       "review_frequency": {
+                           "type": "string",
+                           "description": "Review frequency.",
+                           "enum": ["daily", "weekly", "monthly", "quarterly", "semi_annual", "annual"],
+                       },
+                       "critical_threshold_operator": {
+                           "type": "string",
+                           "description": "Critical threshold operator.",
+                           "enum": ["below", "above", "is_false", "is_true"],
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": "Indicator status.",
+                           "enum": ["active", "inactive", "draft"],
+                       },
+                       "is_internal": {"type": "boolean", "description": "Whether this is an internal predefined indicator."},
+                       "internal_source": {
+                           "type": "string",
+                           "description": "Predefined indicator source (only for internal indicators).",
+                           "enum": [
+                               "global_compliance_rate", "framework_compliance_rate",
+                               "objective_progress", "risk_treatment_rate",
+                               "approved_scopes_rate", "mandatory_roles_coverage",
+                           ],
+                       },
+                   })
 
     # Indicator measurements (child of Indicator, no approve)
     measurement_fields = ["id", "indicator_id", "value", "recorded_at",
@@ -581,7 +794,15 @@ def _register_context_tools(server):
                    filters=["role_id", "raci_type"],
                    scope_filtered=False,
                    has_approve=False,
-                   field_overrides=_HTML_DESC)
+                   required_fields=["role_id", "description", "raci_type"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "raci_type": {
+                           "type": "string",
+                           "description": "RACI responsibility type.",
+                           "enum": ["responsible", "accountable", "consulted", "informed"],
+                       },
+                   })
 
 
 # ── Assets Module ──────────────────────────────────────────
@@ -613,7 +834,51 @@ def _register_assets_tools(server):
                    writable_fields=ea_writable,
                    search_fields=["reference", "name", "description"],
                    filters=["type", "category", "status"],
-                   field_overrides=_HTML_DESC)
+                   required_fields=["name", "type", "category", "owner_id"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "type": {
+                           "type": "string",
+                           "description": "Essential asset type.",
+                           "enum": ["business_process", "information"],
+                       },
+                       "category": {
+                           "type": "string",
+                           "description": "Essential asset category.",
+                           "enum": [
+                               "core_process", "support_process", "management_process",
+                               "strategic_data", "operational_data", "personal_data",
+                               "financial_data", "technical_data", "legal_data",
+                               "research_data", "commercial_data",
+                           ],
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": "Essential asset status.",
+                           "enum": ["identified", "active", "under_review", "decommissioned"],
+                       },
+                       "confidentiality_level": {
+                           "type": "integer",
+                           "description": "Confidentiality level (0=Negligible, 1=Low, 2=Medium, 3=High, 4=Critical). Default: 2.",
+                           "enum": [0, 1, 2, 3, 4],
+                       },
+                       "integrity_level": {
+                           "type": "integer",
+                           "description": "Integrity level (0=Negligible, 1=Low, 2=Medium, 3=High, 4=Critical). Default: 2.",
+                           "enum": [0, 1, 2, 3, 4],
+                       },
+                       "availability_level": {
+                           "type": "integer",
+                           "description": "Availability level (0=Negligible, 1=Low, 2=Medium, 3=High, 4=Critical). Default: 2.",
+                           "enum": [0, 1, 2, 3, 4],
+                       },
+                       "personal_data": {
+                           "type": "boolean",
+                           "description": "Whether this asset contains personal data.",
+                       },
+                       "owner_id": {"type": "string", "description": "UUID of the asset owner (user)"},
+                       "custodian_id": {"type": "string", "description": "UUID of the asset custodian (user)"},
+                   })
 
     sa_fields = ["id", "reference", "name", "description", "type", "category",
                  "status", "hostname", "ip_address",
@@ -628,7 +893,35 @@ def _register_assets_tools(server):
                    writable_fields=sa_writable,
                    search_fields=["reference", "name", "description", "hostname", "ip_address"],
                    filters=["type", "category", "status"],
-                   field_overrides=_HTML_DESC)
+                   required_fields=["name", "type", "category", "owner_id"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "type": {
+                           "type": "string",
+                           "description": "Support asset type.",
+                           "enum": ["hardware", "software", "network", "person", "site", "service", "paper"],
+                       },
+                       "category": {
+                           "type": "string",
+                           "description": (
+                               "Support asset category. Must match the type. "
+                               "Hardware: server, workstation, laptop, mobile_device, network_equipment, storage, peripheral, iot_device, removable_media, other_hardware. "
+                               "Software: operating_system, database, application, middleware, security_tool, development_tool, saas_application, other_software. "
+                               "Network: lan, wan, wifi, vpn, internet_link, firewall_zone, dmz, other_network. "
+                               "Person: internal_staff, contractor, external_provider, administrator, developer, other_person. "
+                               "Site: datacenter, office, remote_site, cloud_region, other_site. "
+                               "Service: cloud_service, hosting_service, managed_service, telecom_service, outsourced_service, other_service. "
+                               "Paper: archive, printed_document, form, other_paper."
+                           ),
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": "Support asset status.",
+                           "enum": ["in_stock", "deployed", "active", "under_maintenance", "decommissioned", "disposed"],
+                       },
+                       "owner_id": {"type": "string", "description": "UUID of the asset owner (user)"},
+                       "custodian_id": {"type": "string", "description": "UUID of the asset custodian (user)"},
+                   })
 
     dep_fields = ["id", "essential_asset_id", "support_asset_id", "dependency_type",
                   "criticality", "is_single_point_of_failure", "created_at"]
@@ -641,7 +934,20 @@ def _register_assets_tools(server):
                    search_fields=[],
                    filters=["essential_asset_id", "support_asset_id", "dependency_type", "criticality"],
                    scope_filtered=False,
-                   field_overrides=_HTML_DESC)
+                   required_fields=["essential_asset_id", "support_asset_id", "dependency_type", "criticality"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "dependency_type": {
+                           "type": "string",
+                           "description": "Type of dependency between essential and support asset.",
+                           "enum": ["runs_on", "stored_in", "transmitted_by", "managed_by", "hosted_at", "protected_by", "other"],
+                       },
+                       "criticality": {
+                           "type": "string",
+                           "description": "Criticality level.",
+                           "enum": ["low", "medium", "high", "critical"],
+                       },
+                   })
 
     ag_fields = ["id", "name", "description", "type", "status", "is_approved", "created_at"]
     ag_writable = ["name", "description", "type", "status", "owner_id"]
@@ -651,7 +957,16 @@ def _register_assets_tools(server):
                    writable_fields=ag_writable,
                    search_fields=["name", "description"],
                    filters=["type", "status"],
-                   field_overrides=_HTML_DESC)
+                   required_fields=["name"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "status": {
+                           "type": "string",
+                           "description": "Asset group status.",
+                           "enum": ["active", "inactive"],
+                       },
+                       "owner_id": {"type": "string", "description": "UUID of the group owner (user)"},
+                   })
 
     sup_fields = ["id", "reference", "name", "description", "type", "criticality",
                   "status", "contact_name", "contact_email", "contact_phone",
@@ -665,15 +980,30 @@ def _register_assets_tools(server):
                     "contract_reference", "contract_start_date", "contract_end_date",
                     "notes", "owner_id"]
 
+    _sup_field_overrides = {
+        "description": _html_field("Description"),
+        "notes": _html_field("Notes"),
+        "type": {"type": "string", "description": "UUID of a SupplierType. Use list_supplier_types to get valid IDs."},
+        "criticality": {
+            "type": "string",
+            "description": "Supplier criticality.",
+            "enum": ["low", "medium", "high", "critical"],
+        },
+        "status": {
+            "type": "string",
+            "description": "Supplier status.",
+            "enum": ["active", "under_evaluation", "suspended", "archived"],
+        },
+        "owner_id": {"type": "string", "description": "UUID of the supplier owner (user)"},
+    }
+
     _register_crud(server, "supplier", Supplier, "assets.supplier",
                    list_fields=sup_fields,
                    writable_fields=sup_writable,
                    search_fields=["reference", "name", "description", "contact_name"],
                    filters=["type", "criticality", "status"],
-                   field_overrides={
-                       "description": _html_field("Description"),
-                       "notes": _html_field("Notes"),
-                   })
+                   required_fields=["name", "owner_id"],
+                   field_overrides=_sup_field_overrides)
 
     # Custom tool: update supplier logo with automatic variant generation
     server.register_tool(
@@ -696,8 +1026,7 @@ def _register_assets_tools(server):
     )
 
     # Override create_supplier to support image_url
-    _sup_html = {"description": _html_field("Description"), "notes": _html_field("Notes")}
-    create_sup_props = {f: _sup_html.get(f, {"type": "string", "description": f}) for f in sup_writable}
+    create_sup_props = {f: _sup_field_overrides.get(f, {"type": "string", "description": f}) for f in sup_writable}
     create_sup_props["image_url"] = {
         "type": "string",
         "description": "Public URL of an image to use as the supplier logo (PNG, JPG, WebP, etc.). "
@@ -718,7 +1047,7 @@ def _register_assets_tools(server):
     # Override update_supplier to support image_url
     update_sup_props = {"id": {"type": "string", "description": "UUID of the object to update"}}
     for f in sup_writable:
-        update_sup_props[f] = _sup_html.get(f, {"type": "string", "description": f})
+        update_sup_props[f] = _sup_field_overrides.get(f, {"type": "string", "description": f})
     update_sup_props["image_url"] = {
         "type": "string",
         "description": "Public URL of an image to use as the supplier logo (PNG, JPG, WebP, etc.). "
@@ -747,7 +1076,23 @@ def _register_assets_tools(server):
                    search_fields=[],
                    filters=["support_asset_id", "supplier_id"],
                    scope_filtered=False,
-                   field_overrides=_HTML_DESC)
+                   required_fields=["support_asset_id", "supplier_id", "dependency_type", "criticality"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "dependency_type": {
+                           "type": "string",
+                           "description": "Type of supplier dependency.",
+                           "enum": [
+                               "hosted_by", "provided_by", "maintained_by",
+                               "developed_by", "operated_by", "monitored_by", "other",
+                           ],
+                       },
+                       "criticality": {
+                           "type": "string",
+                           "description": "Criticality level.",
+                           "enum": ["low", "medium", "high", "critical"],
+                       },
+                   })
 
     # Site-asset dependencies (has approve)
     sad_fields = ["id", "reference", "support_asset_id", "site_id", "dependency_type",
@@ -762,7 +1107,29 @@ def _register_assets_tools(server):
                    search_fields=["description"],
                    filters=["support_asset_id", "site_id", "dependency_type", "criticality"],
                    scope_filtered=False,
-                   field_overrides=_HTML_DESC)
+                   required_fields=["support_asset_id", "site_id", "dependency_type", "criticality"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "dependency_type": {
+                           "type": "string",
+                           "description": "Type of site-asset dependency.",
+                           "enum": ["located_at", "hosted_at", "deployed_at", "other"],
+                       },
+                       "criticality": {
+                           "type": "string",
+                           "description": "Criticality level.",
+                           "enum": ["low", "medium", "high", "critical"],
+                       },
+                       "redundancy_level": {
+                           "type": "string",
+                           "description": "Redundancy level.",
+                           "enum": ["none", "partial", "full"],
+                       },
+                       "is_single_point_of_failure": {
+                           "type": "boolean",
+                           "description": "Whether this is a single point of failure.",
+                       },
+                   })
 
     # Site-supplier dependencies (has approve)
     ssd_fields = ["id", "reference", "site_id", "supplier_id", "dependency_type",
@@ -778,7 +1145,29 @@ def _register_assets_tools(server):
                    search_fields=["description"],
                    filters=["site_id", "supplier_id", "dependency_type", "criticality"],
                    scope_filtered=False,
-                   field_overrides=_HTML_DESC)
+                   required_fields=["site_id", "supplier_id", "dependency_type", "criticality"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "dependency_type": {
+                           "type": "string",
+                           "description": "Type of site-supplier dependency.",
+                           "enum": ["maintained_by", "managed_by", "powered_by", "secured_by", "other"],
+                       },
+                       "criticality": {
+                           "type": "string",
+                           "description": "Criticality level.",
+                           "enum": ["low", "medium", "high", "critical"],
+                       },
+                       "redundancy_level": {
+                           "type": "string",
+                           "description": "Redundancy level.",
+                           "enum": ["none", "partial", "full"],
+                       },
+                       "is_single_point_of_failure": {
+                           "type": "boolean",
+                           "description": "Whether this is a single point of failure.",
+                       },
+                   })
 
     # Asset valuations (no approve)
     av_fields = ["id", "essential_asset_id", "evaluation_date",
@@ -796,9 +1185,27 @@ def _register_assets_tools(server):
                    filters=["essential_asset_id"],
                    scope_filtered=False,
                    has_approve=False,
+                   required_fields=["essential_asset_id"],
                    field_overrides={
                        "justification": _html_field("Justification"),
                        "context": _html_field("Context"),
+                       "confidentiality_level": {
+                           "type": "integer",
+                           "description": "Confidentiality level (0=Negligible, 1=Low, 2=Medium, 3=High, 4=Critical).",
+                           "enum": [0, 1, 2, 3, 4],
+                       },
+                       "integrity_level": {
+                           "type": "integer",
+                           "description": "Integrity level (0=Negligible, 1=Low, 2=Medium, 3=High, 4=Critical).",
+                           "enum": [0, 1, 2, 3, 4],
+                       },
+                       "availability_level": {
+                           "type": "integer",
+                           "description": "Availability level (0=Negligible, 1=Low, 2=Medium, 3=High, 4=Critical).",
+                           "enum": [0, 1, 2, 3, 4],
+                       },
+                       "evaluation_date": {"type": "string", "description": "Evaluation date (ISO 8601, e.g. 2025-01-15)"},
+                       "evaluated_by_id": {"type": "string", "description": "UUID of the evaluator (user)"},
                    })
 
     # Supplier types (config, no approve)
@@ -843,9 +1250,15 @@ def _register_assets_tools(server):
                    filters=["supplier_id", "compliance_status"],
                    scope_filtered=False,
                    has_approve=False,
+                   required_fields=["supplier_id", "title"],
                    field_overrides={
                        "description": _html_field("Description"),
                        "evidence": _html_field("Evidence"),
+                       "compliance_status": {
+                           "type": "string",
+                           "description": "Compliance status of the supplier requirement.",
+                           "enum": ["not_assessed", "compliant", "partially_compliant", "non_compliant"],
+                       },
                    })
 
     # Supplier requirement reviews (no approve)
@@ -889,7 +1302,33 @@ def _register_compliance_tools(server):
                    writable_fields=fw_writable,
                    search_fields=["reference", "name", "short_name", "description"],
                    filters=["type", "category", "status"],
-                   field_overrides=_HTML_DESC)
+                   required_fields=["name"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "type": {
+                           "type": "string",
+                           "description": "Framework type.",
+                           "enum": [
+                               "standard", "law", "regulation", "contract",
+                               "internal_policy", "industry_framework", "other",
+                           ],
+                       },
+                       "category": {
+                           "type": "string",
+                           "description": "Framework category.",
+                           "enum": [
+                               "information_security", "privacy", "risk_management",
+                               "business_continuity", "cloud_security", "sector_specific",
+                               "it_governance", "quality", "contractual", "internal", "other",
+                           ],
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": "Framework status.",
+                           "enum": ["draft", "active", "under_review", "deprecated", "archived"],
+                       },
+                       "owner_id": {"type": "string", "description": "UUID of the framework owner (user)"},
+                   })
 
     # Framework compliance summary (special tool)
     @require_perm("compliance.framework.read")
@@ -936,6 +1375,7 @@ def _register_compliance_tools(server):
                    filters=["framework_id", "parent_section_id"],
                    scope_filtered=False,
                    has_approve=False,
+                   required_fields=["name", "framework_id"],
                    field_overrides=_HTML_DESC)
 
     req_fields = ["id", "reference", "requirement_number", "name", "description", "type",
@@ -952,11 +1392,37 @@ def _register_compliance_tools(server):
                    search_fields=["reference", "requirement_number", "name", "description"],
                    filters=["framework_id", "section_id", "compliance_status", "type", "priority"],
                    scope_filtered=False,
+                   required_fields=["name", "description", "type", "framework_id"],
                    field_overrides={
                        "description": _html_field("Description"),
                        "guidance": _html_field("Implementation recommendations"),
                        "compliance_evidence": _html_field("Compliance evidence"),
                        "compliance_finding": _html_field("Finding"),
+                       "type": {
+                           "type": "string",
+                           "description": "Requirement type.",
+                           "enum": ["mandatory", "recommended", "optional"],
+                       },
+                       "compliance_status": {
+                           "type": "string",
+                           "description": "Compliance status.",
+                           "enum": [
+                               "not_assessed", "evaluated", "major_non_conformity",
+                               "minor_non_conformity", "observation",
+                               "improvement_opportunity", "compliant", "strength",
+                               "not_applicable",
+                           ],
+                       },
+                       "priority": {
+                           "type": "string",
+                           "description": "Priority level.",
+                           "enum": ["low", "medium", "high", "critical"],
+                       },
+                       "is_applicable": {
+                           "type": "boolean",
+                           "description": "Whether this requirement is applicable.",
+                       },
+                       "owner_id": {"type": "string", "description": "UUID of the requirement owner (user)"},
                    })
 
     ca_fields = ["id", "name", "description", "limitations",
@@ -1161,6 +1627,16 @@ def _register_compliance_tools(server):
         "evidence": _html_field("Evidence"),
         "assessed_by_id": {"type": "string", "description": "UUID of the assessor (user)"},
         "assessed_at": {"type": "string", "description": "Assessment date-time in ISO 8601 format (e.g. 2025-01-15T10:30:00Z)"},
+        "compliance_status": {
+            "type": "string",
+            "description": "Compliance status.",
+            "enum": [
+                "not_assessed", "evaluated", "major_non_conformity",
+                "minor_non_conformity", "observation",
+                "improvement_opportunity", "compliant", "strength",
+                "not_applicable",
+            ],
+        },
     }
 
     # List and get use generic handlers (no side-effects needed)
@@ -1278,9 +1754,20 @@ def _register_compliance_tools(server):
                    filters=["source_requirement_id", "target_requirement_id", "mapping_type"],
                    scope_filtered=False,
                    has_approve=False,
+                   required_fields=["source_requirement_id", "target_requirement_id", "mapping_type"],
                    field_overrides={
                        "description": _html_field("Description"),
                        "justification": _html_field("Justification"),
+                       "mapping_type": {
+                           "type": "string",
+                           "description": "Type of mapping between requirements.",
+                           "enum": ["equivalent", "partial_overlap", "includes", "included_by", "related"],
+                       },
+                       "coverage_level": {
+                           "type": "string",
+                           "description": "Coverage level of the mapping.",
+                           "enum": ["full", "partial", "minimal"],
+                       },
                    })
 
     ap_fields = ["id", "reference", "name", "description", "gap_description",
@@ -1296,10 +1783,30 @@ def _register_compliance_tools(server):
                    writable_fields=ap_writable,
                    search_fields=["reference", "name", "description"],
                    filters=["status", "priority"],
+                   required_fields=["name"],
                    field_overrides={
                        "description": _html_field("Description"),
                        "gap_description": _html_field("Gap description"),
                        "remediation_plan": _html_field("Remediation plan"),
+                       "priority": {
+                           "type": "string",
+                           "description": "Priority level.",
+                           "enum": ["low", "medium", "high", "critical"],
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": (
+                               "Action plan status. Use action_plan_transition tool to change status "
+                               "through the workflow instead of setting directly."
+                           ),
+                           "enum": [
+                               "new", "to_define", "to_validate", "to_implement",
+                               "implementation_to_validate", "validated", "closed", "cancelled",
+                           ],
+                       },
+                       "owner_id": {"type": "string", "description": "UUID of the action plan owner (user)"},
+                       "target_date": {"type": "string", "description": "Target completion date (ISO 8601, e.g. 2025-12-31)"},
+                       "progress_percentage": {"type": "integer", "description": "Progress percentage (0-100)"},
                    })
 
     # Action plan transition tool
@@ -1854,7 +2361,18 @@ def _register_risks_tools(server):
                    writable_fields=ra_writable,
                    search_fields=["reference", "name", "description"],
                    filters=["status"],
-                   field_overrides=_HTML_DESC)
+                   required_fields=["name"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "status": {
+                           "type": "string",
+                           "description": "Risk assessment status.",
+                           "enum": ["draft", "in_progress", "completed", "validated", "archived"],
+                       },
+                       "assessment_date": {"type": "string", "description": "Assessment date (ISO 8601, e.g. 2025-06-15)"},
+                       "risk_criteria_id": {"type": "string", "description": "UUID of the risk criteria to use"},
+                       "assessor_id": {"type": "string", "description": "UUID of the assessor (user)"},
+                   })
 
     rc_fields = ["id", "name", "description", "risk_matrix",
                  "acceptance_threshold", "is_default", "status", "created_at"]
@@ -1936,7 +2454,14 @@ def _register_risks_tools(server):
                    filters=["criteria_id", "requires_treatment"],
                    scope_filtered=False,
                    has_approve=False,
-                   field_overrides=_HTML_DESC)
+                   required_fields=["criteria_id", "level", "name"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "criteria_id": {"type": "string", "description": "UUID of the parent RiskCriteria."},
+                       "level": {"type": "integer", "description": "Numeric risk level (e.g. 1-5). Must be unique per criteria."},
+                       "color": {"type": "string", "description": "Color hex code (e.g. #ff0000)"},
+                       "requires_treatment": {"type": "boolean", "description": "Whether this risk level requires treatment."},
+                   })
 
     risk_fields = ["id", "reference", "name", "description", "status", "priority",
                    "current_risk_level", "assessment_id",
@@ -1953,7 +2478,36 @@ def _register_risks_tools(server):
                    search_fields=["reference", "name", "description"],
                    filters=["status", "priority", "assessment_id"],
                    scope_filtered=False,
-                   field_overrides=_HTML_DESC)
+                   required_fields=["name", "assessment_id"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "status": {
+                           "type": "string",
+                           "description": "Risk status.",
+                           "enum": [
+                               "identified", "analyzed", "evaluated",
+                               "treatment_planned", "treatment_in_progress",
+                               "treated", "accepted", "closed", "monitoring",
+                           ],
+                       },
+                       "priority": {
+                           "type": "string",
+                           "description": "Risk priority.",
+                           "enum": ["low", "medium", "high", "critical"],
+                       },
+                       "treatment_decision": {
+                           "type": "string",
+                           "description": "Treatment decision.",
+                           "enum": ["accept", "mitigate", "transfer", "avoid", "not_decided"],
+                       },
+                       "initial_likelihood": {"type": "integer", "description": "Initial likelihood level (matching scale levels, e.g. 1-5)"},
+                       "initial_impact": {"type": "integer", "description": "Initial impact level (matching scale levels, e.g. 1-5)"},
+                       "current_likelihood": {"type": "integer", "description": "Current likelihood level (matching scale levels, e.g. 1-5)"},
+                       "current_impact": {"type": "integer", "description": "Current impact level (matching scale levels, e.g. 1-5)"},
+                       "residual_likelihood": {"type": "integer", "description": "Residual likelihood level (matching scale levels, e.g. 1-5)"},
+                       "residual_impact": {"type": "integer", "description": "Residual impact level (matching scale levels, e.g. 1-5)"},
+                       "risk_owner_id": {"type": "string", "description": "UUID of the risk owner (user)"},
+                   })
 
     tp_fields = ["id", "reference", "name", "description", "treatment_type", "status",
                  "expected_residual_likelihood", "expected_residual_impact",
@@ -1970,13 +2524,22 @@ def _register_risks_tools(server):
                    search_fields=["reference", "name", "description"],
                    filters=["status", "risk_id"],
                    scope_filtered=False,
+                   required_fields=["name", "risk_id"],
                    field_overrides={
                        "description": _html_field("Description"),
                        "treatment_type": {
                            "type": "string",
-                           "description": "Treatment strategy type",
+                           "description": "Treatment strategy type.",
                            "enum": ["mitigate", "transfer", "avoid"],
                        },
+                       "status": {
+                           "type": "string",
+                           "description": "Treatment plan status.",
+                           "enum": ["planned", "in_progress", "completed", "cancelled", "overdue"],
+                       },
+                       "expected_residual_likelihood": {"type": "integer", "description": "Expected residual likelihood (matching scale levels, e.g. 1-5)"},
+                       "expected_residual_impact": {"type": "integer", "description": "Expected residual impact (matching scale levels, e.g. 1-5)"},
+                       "owner_id": {"type": "string", "description": "UUID of the treatment plan owner (user)"},
                    })
 
     # Treatment actions (child of RiskTreatmentPlan, no approve)
@@ -1992,7 +2555,16 @@ def _register_risks_tools(server):
                    filters=["treatment_plan_id", "status"],
                    scope_filtered=False,
                    has_approve=False,
-                   field_overrides=_HTML_DESC)
+                   required_fields=["treatment_plan_id", "description"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "status": {
+                           "type": "string",
+                           "description": "Action status.",
+                           "enum": ["planned", "in_progress", "completed", "cancelled"],
+                       },
+                       "owner_id": {"type": "string", "description": "UUID of the action owner (user)"},
+                   })
 
     acc_fields = ["id", "risk_id", "status", "justification", "conditions",
                   "valid_until", "accepted_by_id", "created_at"]
@@ -2006,9 +2578,16 @@ def _register_risks_tools(server):
                    filters=["risk_id", "status"],
                    scope_filtered=False,
                    has_approve=False,
+                   required_fields=["risk_id", "justification"],
                    field_overrides={
                        "justification": _html_field("Justification"),
                        "conditions": _html_field("Conditions"),
+                       "status": {
+                           "type": "string",
+                           "description": "Acceptance status.",
+                           "enum": ["active", "expired", "revoked", "renewed"],
+                       },
+                       "accepted_by_id": {"type": "string", "description": "UUID of the user who accepted the risk"},
                    })
 
     threat_fields = ["id", "reference", "name", "description", "type",
@@ -2720,7 +3299,7 @@ def _update_supplier_logo_handler(user, arguments):
 def _register_crud(server, entity_name, model_class, perm_prefix,
                    list_fields, writable_fields, search_fields=None,
                    filters=None, scope_filtered=True, has_approve=True,
-                   field_overrides=None):
+                   field_overrides=None, required_fields=None):
     """Register list, get, create, update, delete (and optionally approve) tools for an entity."""
 
     display_name = entity_name.replace("_", " ")
@@ -2756,7 +3335,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
     server.register_tool(
         f"create_{entity_name}",
         f"Create a new {display_name}",
-        _obj_schema(create_props),
+        _obj_schema(create_props, required_fields),
         require_perm(f"{perm_prefix}.create")(
             _create_handler(model_class, writable_fields, scope_filtered)
         ),

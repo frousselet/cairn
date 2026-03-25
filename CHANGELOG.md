@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - M2M relationship between action plans and requirements (`ComplianceActionPlan.requirements`), enabling linked requirements on action plan detail and requirement detail pages
 
+### Changed
+
+- MCP tool schemas now document all valid enum values for every choice field across all modules (context, assets, compliance, risks), with `enum` arrays in parameter definitions
+- MCP tool schemas now declare `required` fields on create operations, aligned with Django model constraints
+- MCP server returns detailed validation error messages instead of generic "Invalid params" / "Internal error" responses
+- MCP DIC level fields (`confidentiality_level`, `integrity_level`, `availability_level`) now correctly declared as `integer` type with `enum: [0, 1, 2, 3, 4]` instead of `string`
+- MCP supplier `type` field description clarified as a foreign key (UUID of SupplierType) instead of an enum
+
 ### Fixed
 
 - Fix 500 error on requirement detail page caused by missing `action_plans` reverse relation
