@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Enforce RBAC permission checks on all UI views (~200 views across context, assets, compliance, risks and reports apps) via `PermissionRequiredMixin`
+- Add parent-based scope filtering (`scope_parent_lookup`) for child models (Requirement, Risk, TreatmentPlan, Finding, etc.) in both UI and API
+- Add RBAC (`ModulePermission`) to ReportViewSet and PermissionViewSet API endpoints
+- Add `GroupDeleteView` with confirmation page, allowing deletion of any group (including system groups)
+- Allow modification of system groups (name, permissions, users, scopes)
 - Add ruff linter with syntax-focused config in pyproject.toml
 - Split CI into quality (syntax, translations), test (unit), and deploy (docker-image) stages
 - Add translations CI job to verify .po files compile without errors
@@ -17,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- System groups are no longer locked: they can be edited, have their permissions changed, and be deleted like custom groups
+- MCP `action_plan_transition` tool now requires `compliance.action_plan.update` permission instead of `.read`
 - Remove all version pins from Docker images (Dockerfile, docker-compose, CI) to always use latest
 - Remove all version constraints from Python dependencies in requirements.txt
 - PostgreSQL volume mount changed from `/var/lib/postgresql/data` to `/var/lib/postgresql` (required by PostgreSQL 18+)
