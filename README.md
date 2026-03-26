@@ -23,7 +23,7 @@ Manage your organisation's security posture, track compliance with regulatory fr
 
 | Feature | Description |
 | ------- | ----------- |
-| Scopes | Hierarchical organisational perimeters with versioning and approval workflow |
+| Scopes | Hierarchical organisational perimeters with versioning, approval workflow and assignable managers |
 | Sites | Physical and logical locations (offices, datacenters, cloud regions) with hierarchy |
 | Issues | Internal/external strategic issues (PESTLE categories) with impact and trend tracking |
 | Stakeholders | Interested parties with expectations, influence/interest levels and RACI support |
@@ -95,7 +95,7 @@ Manage your organisation's security posture, track compliance with regulatory fr
 | Custom User Model | Email-based authentication with UUID primary keys |
 | Role-Based Access Control | Granular permissions (90+) using `module.feature.action` codenames |
 | 6 System Groups | Super Admin, Admin, RSSI/DPO, Auditor, Contributor, Reader |
-| Scope-Based Tenancy | Groups can be restricted to specific organisational scopes |
+| Scope-Based Tenancy | Groups can be restricted to specific organisational scopes; scope managers automatically gain access |
 | Account Security | Failed login lockout (5 attempts / 15 min), password complexity enforcement |
 | Dual Authentication | Session-based (web UI) + JWT with token rotation (API) |
 | Passkey Authentication | FIDO2 WebAuthn passwordless login with discoverable credentials |

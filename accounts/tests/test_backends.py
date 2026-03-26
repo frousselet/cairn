@@ -102,3 +102,35 @@ class TestScopeRestriction:
         user = UserFactory(is_active=False)
         result = GroupPermissionBackend.get_allowed_scope_ids(user)
         assert result == set()
+
+    def test_manager_gets_access_to_managed_scope(self):
+        """A user who is manager of a scope should have access to it."""
+        user = UserFactory()
+        scope = ScopeFactory()
+        managed_scope = ScopeFactory()
+        group = GroupFactory()
+        group.users.add(user)
+        group.allowed_scopes.add(scope)
+        # User is also manager of managed_scope
+        managed_scope.managers.add(user)
+        result = GroupPermissionBackend.get_allowed_scope_ids(user)
+        assert result == {scope.pk, managed_scope.pk}
+
+    def test_manager_only_no_group_scopes(self):
+        """A user with no group but manager of a scope gets that scope."""
+        user = UserFactory()
+        scope = ScopeFactory()
+        scope.managers.add(user)
+        result = GroupPermissionBackend.get_allowed_scope_ids(user)
+        assert result == {scope.pk}
+
+    def test_manager_with_unrestricted_group(self):
+        """If a group has no scope restriction, manager scopes don't matter (still unrestricted)."""
+        user = UserFactory()
+        scope = ScopeFactory()
+        group = GroupFactory()
+        group.users.add(user)
+        # group has no allowed_scopes → unrestricted
+        scope.managers.add(user)
+        result = GroupPermissionBackend.get_allowed_scope_ids(user)
+        assert result is None

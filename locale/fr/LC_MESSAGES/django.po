@@ -6223,6 +6223,18 @@ msgstr "Périmètre et limites"
 msgid "Scope details"
 msgstr "Détails du périmètre"
 
+#: context/models/scope.py
+msgid "Managers"
+msgstr "Responsables"
+
+#: context/models/scope.py
+msgid "Users responsible for this scope. Managers automatically have access to this scope."
+msgstr "Utilisateurs responsables de ce périmètre. Les responsables ont automatiquement accès au périmètre."
+
+#: context/templates/context/scope_form.html
+msgid "Managers automatically have access to this scope."
+msgstr "Les responsables ont automatiquement accès au périmètre."
+
 #: context/templates/context/scope_form.html:164
 #: context/templates/context/scope_form_modal.html:117
 msgid "Search icons…"

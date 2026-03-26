@@ -119,7 +119,8 @@ class GroupPermissionBackend(BaseBackend):
         Rules:
         - Superusers → None (unrestricted)
         - If any group has an empty allowed_scopes → None (unrestricted)
-        - Otherwise → union of allowed_scopes across all groups
+        - Otherwise → union of allowed_scopes across all groups,
+          plus any scopes where the user is a manager
         """
         if not user_obj.is_active:
             return set()
@@ -139,6 +140,12 @@ class GroupPermissionBackend(BaseBackend):
                 user_obj._scope_cache = None
                 return None
             scope_ids.update(group_scopes)
+
+        # Also include scopes where the user is a manager
+        managed_scope_ids = set(
+            user_obj.managed_scopes.values_list("id", flat=True)
+        )
+        scope_ids.update(managed_scope_ids)
 
         user_obj._scope_cache = scope_ids
         return scope_ids

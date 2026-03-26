@@ -106,6 +106,17 @@
     {# ── Right column: sites, dates, tags ────────────── #}
     <div class="col-lg-4">
 
+      {# ── Managers ──────────────────────────────────── #}
+      <div class="card mb-4">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-people me-2" style="color:var(--accent)"></i>{% trans "Managers" %}</h6></div>
+        <div class="card-body">
+          <label for="{{ form.managers.id_for_label }}" class="form-label">{{ form.managers.label }}</label>
+          {{ form.managers }}
+          <small class="form-text text-muted">{% trans "Managers automatically have access to this scope." %}</small>
+          {% for error in form.managers.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+
       {# ── Sites ─────────────────────────────────────── #}
       <div class="card mb-4">
         <div class="card-header"><h6 class="mb-0"><i class="bi bi-geo-alt me-2" style="color:var(--accent)"></i>{% trans "Sites" %}</h6></div>

@@ -189,20 +189,30 @@ def _coerce_field_value(model_class, field_name, value):
     return value
 
 
-def _create_handler(model_class, writable_fields, scope_filtered=True):
+def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None):
     """Create a generic create handler."""
+    m2m_fields = m2m_fields or {}
+
     def handler(user, arguments):
         kwargs = {}
+        m2m_values = {}
         for field_name in writable_fields:
             if field_name in arguments:
-                kwargs[field_name] = _coerce_field_value(
-                    model_class, field_name, arguments[field_name])
+                if field_name in m2m_fields:
+                    m2m_values[field_name] = arguments[field_name]
+                else:
+                    kwargs[field_name] = _coerce_field_value(
+                        model_class, field_name, arguments[field_name])
         if hasattr(model_class, "created_by"):
             kwargs["created_by"] = user
         try:
             obj = model_class(**kwargs)
             obj.full_clean()
             obj.save()
+            # Set M2M fields after save
+            for param_name, ids in m2m_values.items():
+                m2m_attr = m2m_fields[param_name]
+                getattr(obj, m2m_attr).set(ids)
         except (ValidationError, Exception) as e:
             return _error(str(e))
         fields = [f.name for f in model_class._meta.fields]
@@ -210,8 +220,10 @@ def _create_handler(model_class, writable_fields, scope_filtered=True):
     return handler
 
 
-def _update_handler(model_class, writable_fields, scope_filtered=True):
+def _update_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None):
     """Create a generic update handler."""
+    m2m_fields = m2m_fields or {}
+
     def handler(user, arguments):
         pk = arguments.get("id")
         if not pk:
@@ -225,11 +237,16 @@ def _update_handler(model_class, writable_fields, scope_filtered=True):
             if not qs.exists():
                 return _error("Access denied: object is outside your allowed scopes.")
         changed_fields = set()
+        m2m_values = {}
         for field_name in writable_fields:
             if field_name in arguments:
-                setattr(obj, field_name, _coerce_field_value(
-                    model_class, field_name, arguments[field_name]))
-                changed_fields.add(field_name)
+                if field_name in m2m_fields:
+                    m2m_values[field_name] = arguments[field_name]
+                    changed_fields.add(field_name)
+                else:
+                    setattr(obj, field_name, _coerce_field_value(
+                        model_class, field_name, arguments[field_name]))
+                    changed_fields.add(field_name)
         # Reset approval on update (respects VersioningConfig)
         if hasattr(obj, "is_approved") and hasattr(obj, "version"):
             from core.models import VersioningConfig
@@ -244,6 +261,10 @@ def _update_handler(model_class, writable_fields, scope_filtered=True):
         try:
             obj.full_clean()
             obj.save()
+            # Set M2M fields after save
+            for param_name, ids in m2m_values.items():
+                m2m_attr = m2m_fields[param_name]
+                getattr(obj, m2m_attr).set(ids)
         except (ValidationError, Exception) as e:
             return _error(str(e))
         fields = [f.name for f in model_class._meta.fields]
@@ -358,7 +379,7 @@ def _register_context_tools(server):
     scope_fields = ["id", "reference", "name", "description", "status",
                     "effective_date", "review_date", "version", "is_approved", "created_at"]
     scope_writable = ["name", "description", "status", "effective_date",
-                      "review_date", "parent_scope_id"]
+                      "review_date", "parent_scope_id", "manager_ids"]
 
     _register_crud(server, "scope", Scope, "context.scope",
                    list_fields=scope_fields,
@@ -375,7 +396,13 @@ def _register_context_tools(server):
                        },
                        "effective_date": {"type": "string", "description": "Effective date (ISO 8601, e.g. 2025-01-15)"},
                        "review_date": {"type": "string", "description": "Review date (ISO 8601, e.g. 2025-06-15)"},
-                   })
+                       "manager_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "List of user UUIDs to assign as scope managers.",
+                       },
+                   },
+                   m2m_fields={"manager_ids": "managers"})
 
     issue_fields = ["id", "reference", "name", "description", "type", "category",
                     "impact_level", "status", "is_approved", "created_at"]
@@ -3299,7 +3326,8 @@ def _update_supplier_logo_handler(user, arguments):
 def _register_crud(server, entity_name, model_class, perm_prefix,
                    list_fields, writable_fields, search_fields=None,
                    filters=None, scope_filtered=True, has_approve=True,
-                   field_overrides=None, required_fields=None):
+                   field_overrides=None, required_fields=None,
+                   m2m_fields=None):
     """Register list, get, create, update, delete (and optionally approve) tools for an entity."""
 
     display_name = entity_name.replace("_", " ")
@@ -3337,7 +3365,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
         f"Create a new {display_name}",
         _obj_schema(create_props, required_fields),
         require_perm(f"{perm_prefix}.create")(
-            _create_handler(model_class, writable_fields, scope_filtered)
+            _create_handler(model_class, writable_fields, scope_filtered, m2m_fields)
         ),
     )
 
@@ -3350,7 +3378,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
         f"Update an existing {display_name}",
         _obj_schema(update_props, ["id"]),
         require_perm(f"{perm_prefix}.update")(
-            _update_handler(model_class, writable_fields, scope_filtered)
+            _update_handler(model_class, writable_fields, scope_filtered, m2m_fields)
         ),
     )
 

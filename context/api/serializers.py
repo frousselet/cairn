@@ -38,7 +38,7 @@ class ScopeSerializer(serializers.ModelSerializer):
             "version", "status", "icon",
             "boundaries", "justification_exclusions",
             "geographic_scope", "organizational_scope", "technical_scope",
-            "included_sites", "excluded_sites",
+            "included_sites", "excluded_sites", "managers",
             "is_approved", "approved_by", "approved_at",
             "effective_date", "review_date", "tags",
             "created_by", "created_at", "updated_at",

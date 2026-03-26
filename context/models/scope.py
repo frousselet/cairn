@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -45,6 +46,13 @@ class Scope(BaseModel):
         blank=True,
         related_name="excluded_from_scopes",
         verbose_name=_("Excluded sites"),
+    )
+    managers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="managed_scopes",
+        verbose_name=_("Managers"),
+        help_text=_("Users responsible for this scope. Managers automatically have access to this scope."),
     )
     # M2M to Referential omitted — module not yet implemented
     # applicable_standards = models.ManyToManyField("referential.Referential", ...)

@@ -82,6 +82,7 @@ class ScopeForm(forms.ModelForm):
             "boundaries", "justification_exclusions",
             "geographic_scope", "organizational_scope", "technical_scope",
             "included_sites", "excluded_sites",
+            "managers",
             "effective_date", "review_date", "tags",
         ]
         widgets = {
@@ -97,6 +98,7 @@ class ScopeForm(forms.ModelForm):
             "technical_scope": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "included_sites": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 6}),
             "excluded_sites": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 6}),
+            "managers": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 5}),
             "effective_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
@@ -120,6 +122,10 @@ class ScopeForm(forms.ModelForm):
         for fname in ("included_sites", "excluded_sites"):
             self.fields[fname].queryset = site_qs
             self.fields[fname].choices = site_choices
+        # Managers: only active users
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        self.fields["managers"].queryset = User.objects.filter(is_active=True).order_by("first_name", "last_name", "email")
 
 
 class IssueForm(ScopedFormMixin, forms.ModelForm):

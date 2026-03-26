@@ -89,6 +89,17 @@
   </div>
 </div>
 
+{# ── Managers ── #}
+<div class="drawer-section">
+  <div class="drawer-section-title"><i class="bi bi-people"></i> {% trans "Managers" %}</div>
+  <div class="mb-0">
+    <label for="{{ form.managers.id_for_label }}" class="form-label">{{ form.managers.label }}</label>
+    {{ form.managers }}
+    <small class="form-text text-muted">{% trans "Managers automatically have access to this scope." %}</small>
+    {% for error in form.managers.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </div>
+</div>
+
 {# ── Sites & Tags ── #}
 <div class="drawer-section">
   <div class="drawer-section-title"><i class="bi bi-geo-alt"></i> {% trans "Sites & Tags" %}</div>
