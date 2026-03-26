@@ -7,13 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.1] - 2026-03-26
+
 ### Added
 
 - Scope managers : assign one or more responsible users to a scope (`Scope.managers` M2M). Managers automatically gain access to the scope even without group-based scope assignment. Available in UI, REST API, and MCP tools
+- Reusable `{% user_badge %}` template tag displaying user avatar (with initials fallback) and display name, with configurable size, link, and layout options
 - M2M relationship between action plans and requirements (`ComplianceActionPlan.requirements`), enabling linked requirements on action plan detail and requirement detail pages
+- Generic M2M field support in MCP `_register_crud` create/update handlers (`m2m_fields` parameter)
 
 ### Changed
 
+- Redesign all 16 detail pages to a consistent 2-column card layout (left content, right metadata sidebar) replacing tab-based layouts across context, compliance, risks and assets modules
+- Replace all inline user field displays (`{{ obj.owner }}`, `{{ obj.approved_by }}`, etc.) with `{% user_badge %}` tag across 19 detail templates, showing avatar + real name
 - MCP tool schemas now document all valid enum values for every choice field across all modules (context, assets, compliance, risks), with `enum` arrays in parameter definitions
 - MCP tool schemas now declare `required` fields on create operations, aligned with Django model constraints
 - MCP server returns detailed validation error messages instead of generic "Invalid params" / "Internal error" responses
@@ -598,7 +604,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.0...HEAD
+[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.1...HEAD
+[0.21.1]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.0...v0.21.1
 [0.21.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.20.0...v0.21.0
 [0.20.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.19.1...v0.20.0
 [0.19.1]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.19.0...v0.19.1
