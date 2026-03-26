@@ -7,11 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.3] - 2026-03-26
+
 ### Added
 
 - REST API batch creation endpoints (`POST /api/v1/<module>/<entity>/batch/`) for 10 entities: Requirement, Section, EssentialAsset, SupportAsset, AssetDependency, Threat, Vulnerability, Risk, Stakeholder, Supplier. Each endpoint accepts up to 100 items with partial success support (non-atomic)
 - `BatchCreateMixin` reusable DRF mixin for adding batch creation to any ViewSet
-- MCP `help` tool providing comprehensive usage documentation (call with no args for full guide, or with topic: context, assets, compliance, risks, batch, workflow, permissions)
+- MCP `help` tool providing comprehensive usage documentation (call with no args for full guide, or with topic: context, assets, compliance, risks, batch, workflow, permissions, examples)
 
 ### Changed
 
@@ -635,7 +637,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.2...HEAD
+[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.3...HEAD
+[0.21.3]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.2...v0.21.3
 [0.21.2]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.1...v0.21.2
 [0.21.1]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.0...v0.21.1
 [0.21.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.20.0...v0.21.0
