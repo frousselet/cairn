@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{{ plan.name }} — Fairway{% endblock %}
 
@@ -31,7 +32,7 @@
         <dl class="row mb-0">
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Risk" %}</dt><dd class="col-sm-9"><a href="{% url 'risks:risk-detail' plan.risk.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ plan.risk }}</a></dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Treatment type" %}</dt><dd class="col-sm-9">{{ plan.get_treatment_type_display }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{{ plan.owner|default:"—" }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{% if plan.owner %}{% user_badge plan.owner size=24 link=True %}{% else %}—{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Start date" %}</dt><dd class="col-sm-9">{{ plan.start_date|default:"—" }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Target date" %}</dt><dd class="col-sm-9">{{ plan.target_date|default:"—" }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Completion date" %}</dt><dd class="col-sm-9">{{ plan.completion_date|default:"—" }}</dd>
@@ -70,7 +71,7 @@
             <tr>
               <td>{{ action.order }}</td>
               <td>{{ action.description }}</td>
-              <td>{{ action.owner|default:"—" }}</td>
+              <td>{% if action.owner %}{% user_badge action.owner size=20 %}{% else %}—{% endif %}</td>
               <td>{{ action.target_date|default:"—" }}</td>
               <td>
                 <span class="badge text-bg-{% if action.status == 'completed' %}success{% elif action.status == 'in_progress' %}warning{% else %}secondary{% endif %}">

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{{ requirement.name }} — Fairway{% endblock %}
 
@@ -43,7 +44,7 @@
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Justification" %}</dt><dd class="col-sm-9">{{ requirement.applicability_justification|default:"—" }}</dd>
           {% endif %}
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Priority" %}</dt><dd class="col-sm-9">{{ requirement.get_priority_display|default:"—" }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Responsible" %}</dt><dd class="col-sm-9">{{ requirement.owner|default:"—" }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Responsible" %}</dt><dd class="col-sm-9">{% if requirement.owner %}{% user_badge requirement.owner size=24 link=True %}{% else %}—{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ requirement.description|safe }}</dd>
           {% if requirement.guidance %}
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Implementation recommendations" %}</dt><dd class="col-sm-9">{{ requirement.guidance|safe }}</dd>

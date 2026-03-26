@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{% trans "Risk acceptance" %} — Fairway{% endblock %}
 
@@ -28,7 +29,7 @@
       <div class="card-body">
         <dl class="row mb-0">
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Risk" %}</dt><dd class="col-sm-9"><a href="{% url 'risks:risk-detail' acceptance.risk.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ acceptance.risk }}</a></dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Accepted by" %}</dt><dd class="col-sm-9">{{ acceptance.accepted_by|default:"—" }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Accepted by" %}</dt><dd class="col-sm-9">{% if acceptance.accepted_by %}{% user_badge acceptance.accepted_by size=24 link=True %}{% else %}—{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Acceptance date" %}</dt><dd class="col-sm-9">{{ acceptance.accepted_at|default:"—" }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Level at acceptance" %}</dt><dd class="col-sm-9">{{ acceptance.risk_level_at_acceptance|default:"—" }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>

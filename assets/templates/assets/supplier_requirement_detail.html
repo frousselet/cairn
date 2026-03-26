@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{{ req.title }} — {{ supplier.name }} — Fairway{% endblock %}
 
@@ -41,7 +42,7 @@
       <dd class="col-sm-9">{{ req.due_date|default:"—" }}</dd>
       {% if req.verified_by %}
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Last verified" %}</dt>
-      <dd class="col-sm-9">{{ req.verified_at|date:"d/m/Y H:i" }} {% trans "by" %} {{ req.verified_by }}</dd>
+      <dd class="col-sm-9">{{ req.verified_at|date:"d/m/Y H:i" }} {% trans "by" %} {% user_badge req.verified_by size=24 %}</dd>
       {% endif %}
     </dl>
   </div>

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{{ mapping }} — Fairway{% endblock %}
 
@@ -33,7 +34,7 @@
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Coverage level" %}</dt><dd class="col-sm-9">{{ mapping.get_coverage_level_display|default:"—" }}</dd>
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ mapping.description|default:"—"|safe }}</dd>
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Justification" %}</dt><dd class="col-sm-9">{{ mapping.justification|default:"—"|safe }}</dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Created by" %}</dt><dd class="col-sm-9">{{ mapping.created_by|default:"—" }}</dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Created by" %}</dt><dd class="col-sm-9">{% if mapping.created_by %}{% user_badge mapping.created_by size=24 link=True %}{% else %}—{% endif %}</dd>
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Creation date" %}</dt><dd class="col-sm-9">{{ mapping.created_at|date:"d/m/Y H:i" }}</dd>
     </dl>
   </div>

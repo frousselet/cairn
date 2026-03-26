@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{{ assessment.name }} — Fairway{% endblock %}
 
@@ -32,8 +33,7 @@
       {{ assessment.assessment_start_date|default:"—" }} → {{ assessment.assessment_end_date|default:"—" }}
     </span>
     <span>
-      <i class="bi bi-person me-1"></i>
-      {{ assessment.assessor }}
+      {% if assessment.assessor %}{% user_badge assessment.assessor size=24 %}{% else %}—{% endif %}
     </span>
   </div>
 </div>

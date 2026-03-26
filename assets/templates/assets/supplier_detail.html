@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n scope_tags %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{{ supplier.name }} — Fairway{% endblock %}
 
@@ -53,7 +54,7 @@
               {{ supplier.get_criticality_display }}
             </span>
           </dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{{ supplier.owner }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{% if supplier.owner %}{% user_badge supplier.owner size=24 link=True %}{% else %}—{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>
           <dd class="col-sm-9">
             <span class="badge text-bg-{% if supplier.status == 'active' %}success{% elif supplier.status == 'under_evaluation' %}info{% elif supplier.status == 'suspended' %}warning{% else %}dark{% endif %}">
@@ -197,7 +198,7 @@
               </td>
               <td><span class="badge text-bg-secondary">{{ req.reviews.count }}</span></td>
               <td>{{ req.due_date|default:"—" }}</td>
-              <td>{{ req.verified_by|default:"—" }}</td>
+              <td>{% if req.verified_by %}{% user_badge req.verified_by size=20 %}{% else %}—{% endif %}</td>
               <td class="text-end">
                 <a href="{% url 'assets:supplier-requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
                 <a href="{% url 'assets:supplier-requirement-delete' req.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>

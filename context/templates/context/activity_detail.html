@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n scope_tags %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{{ activity.name }} — Fairway{% endblock %}
 
@@ -36,7 +37,7 @@
               {{ activity.get_criticality_display }}
             </span>
           </dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{{ activity.owner }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{% if activity.owner %}{% user_badge activity.owner size=24 link=True %}{% else %}—{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt><dd class="col-sm-9">{{ activity.get_status_display }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ activity.description|default:"—"|safe }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Parent activity" %}</dt>

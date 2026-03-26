@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n scope_tags %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{{ objective.name }} — Fairway{% endblock %}
 
@@ -32,7 +33,7 @@
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges objective.scopes.all %}{% if not objective.scopes.all %}<span style="color:var(--text-muted)">—</span>{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Category" %}</dt><dd class="col-sm-9">{{ objective.get_category_display }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt><dd class="col-sm-9">{{ objective.get_type_display }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{{ objective.owner }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{% if objective.owner %}{% user_badge objective.owner size=24 link=True %}{% else %}—{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>
           <dd class="col-sm-9">
             <span class="badge text-bg-{% if objective.status == 'achieved' %}success{% elif objective.status == 'active' %}primary{% elif objective.status == 'not_achieved' %}danger{% else %}secondary{% endif %}">

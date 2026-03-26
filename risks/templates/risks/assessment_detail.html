@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n scope_tags %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{{ assessment.name }} — Fairway{% endblock %}
 
@@ -297,7 +298,7 @@
         <dl class="row mb-0">
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges assessment.scopes.all %}{% if not assessment.scopes.all %}<span style="color:var(--text-muted)">—</span>{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Methodology" %}</dt><dd class="col-sm-9">{{ assessment.get_methodology_display }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Assessor" %}</dt><dd class="col-sm-9">{{ assessment.assessor|default:"—" }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Assessor" %}</dt><dd class="col-sm-9">{% if assessment.assessor %}{% user_badge assessment.assessor size=24 link=True %}{% else %}—{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Assessment date" %}</dt><dd class="col-sm-9">{{ assessment.assessment_date|default:"—" }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Risk criteria" %}</dt><dd class="col-sm-9">{{ assessment.risk_criteria|default:"—" }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>

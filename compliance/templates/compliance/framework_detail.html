@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n scope_tags %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{{ framework.name }} — Fairway{% endblock %}
 
@@ -53,7 +54,7 @@
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Jurisdiction" %}</dt><dd class="col-sm-9">{{ framework.jurisdiction|default:"—" }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Mandatory" %}</dt><dd class="col-sm-9">{% if framework.is_mandatory %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Applicable" %}</dt><dd class="col-sm-9">{% if framework.is_applicable %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{{ framework.owner }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{% if framework.owner %}{% user_badge framework.owner size=24 link=True %}{% else %}—{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt><dd class="col-sm-9">{{ framework.get_status_display }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ framework.description|default:"—"|safe }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
@@ -135,7 +136,7 @@
                 </span>
                 {% else %}—{% endif %}
               </td>
-              <td>{{ req.owner.display_name|default:"—" }}</td>
+              <td>{% if req.owner %}{% user_badge req.owner size=20 %}{% else %}—{% endif %}</td>
               <td class="text-end">
                 <a href="{% url 'compliance:requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
               </td>
@@ -174,7 +175,7 @@
             <tr>
               <td><a href="{% url 'compliance:assessment-detail' a.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ a.name }}</a></td>
               <td>{{ a.assessment_start_date }}</td>
-              <td>{{ a.assessor }}</td>
+              <td>{% if a.assessor %}{% user_badge a.assessor size=20 %}{% else %}—{% endif %}</td>
               <td>{{ a.overall_compliance_level|floatformat:0 }}%</td>
               <td>{{ a.get_status_display }}</td>
             </tr>

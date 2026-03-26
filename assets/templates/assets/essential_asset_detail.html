@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n scope_tags %}
 {% load help_tags %}
+{% load accounts_tags %}
 {% load dic_tags i18n %}
 
 {% block title %}{{ asset.name }} — Fairway{% endblock %}
@@ -36,8 +37,8 @@
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges asset.scopes.all %}{% if not asset.scopes.all %}<span style="color:var(--text-muted)">—</span>{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt><dd class="col-sm-9">{{ asset.get_type_display }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Category" %}</dt><dd class="col-sm-9">{{ asset.get_category_display }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{{ asset.owner }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Custodian" %}</dt><dd class="col-sm-9">{{ asset.custodian|default:"—" }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{% if asset.owner %}{% user_badge asset.owner size=24 link=True %}{% else %}—{% endif %}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Custodian" %}</dt><dd class="col-sm-9">{% if asset.custodian %}{% user_badge asset.custodian size=24 link=True %}{% else %}—{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>
           <dd class="col-sm-9">
             <span class="badge text-bg-{% if asset.status == 'active' %}success{% elif asset.status == 'identified' %}info{% else %}secondary{% endif %}">
@@ -147,7 +148,7 @@
               <td class="text-center">{{ val.confidentiality_level|dic_badge }}</td>
               <td class="text-center">{{ val.integrity_level|dic_badge }}</td>
               <td class="text-center">{{ val.availability_level|dic_badge }}</td>
-              <td>{{ val.evaluated_by }}</td>
+              <td>{% if val.evaluated_by %}{% user_badge val.evaluated_by size=20 %}{% else %}—{% endif %}</td>
               <td>{{ val.context|default:"—" }}</td>
             </tr>
             {% endfor %}

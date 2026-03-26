@@ -56,7 +56,7 @@
           </dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ scope.description|safe }}</dd>
           {% if approval_enabled is not False %}
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Approved by" %}</dt><dd class="col-sm-9">{{ scope.approved_by|default:"—" }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Approved by" %}</dt><dd class="col-sm-9">{% if scope.approved_by %}{% user_badge scope.approved_by size=24 link=True %}{% else %}—{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Approval date" %}</dt><dd class="col-sm-9">{{ scope.approved_at|default:"—" }}</dd>
           {% endif %}
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Effective date" %}</dt><dd class="col-sm-9">{{ scope.effective_date|default:"—" }}</dd>
@@ -69,7 +69,7 @@
             </div>
             {% else %}—{% endif %}
           </dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Created by" %}</dt><dd class="col-sm-9">{{ scope.created_by|default:"—" }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Created by" %}</dt><dd class="col-sm-9">{% if scope.created_by %}{% user_badge scope.created_by size=24 link=True %}{% else %}—{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
           <dd class="col-sm-9">{% for tag in scope.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Created on" %}</dt><dd class="col-sm-9">{{ scope.created_at }}</dd>

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{{ risk.name }} — Fairway{% endblock %}
 
@@ -35,7 +36,7 @@
         <dl class="row mb-0">
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Assessment" %}</dt><dd class="col-sm-9"><a href="{% url 'risks:assessment-detail' risk.assessment.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ risk.assessment }}</a></dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Source" %}</dt><dd class="col-sm-9">{{ risk.get_risk_source_display }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{{ risk.risk_owner|default:"—" }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Owner" %}</dt><dd class="col-sm-9">{% if risk.risk_owner %}{% user_badge risk.risk_owner size=24 link=True %}{% else %}—{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Priority" %}</dt>
           <dd class="col-sm-9">
             <span class="badge text-bg-{% if risk.priority == 'critical' %}danger{% elif risk.priority == 'high' %}warning{% elif risk.priority == 'medium' %}info{% else %}secondary{% endif %}">
@@ -138,7 +139,7 @@
           <tbody>
             {% for acc in acceptances %}
             <tr>
-              <td><a href="{% url 'risks:acceptance-detail' acc.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ acc.accepted_by|default:"—" }}</a></td>
+              <td><a href="{% url 'risks:acceptance-detail' acc.pk %}" style="text-decoration:none">{% if acc.accepted_by %}{% user_badge acc.accepted_by size=20 %}{% else %}—{% endif %}</a></td>
               <td style="font-size:.85rem">{{ acc.risk_level_at_acceptance|default:"—" }}</td>
               <td style="font-size:.85rem">{{ acc.get_status_display }}</td>
               <td style="font-size:.85rem">{{ acc.valid_until|default:"—" }}</td>
