@@ -63,11 +63,11 @@
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Next review" %}</dt><dd class="col-sm-9">{{ scope.review_date|default:"—" }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Managers" %}</dt>
           <dd class="col-sm-9">
-            {% for manager in scope.managers.all %}
-            {% user_badge manager size=28 link=True %}
-            {% empty %}
-            <span style="color:var(--text-muted)">—</span>
-            {% endfor %}
+            {% if scope.managers.all %}
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              {% for manager in scope.managers.all %}{% user_badge manager size=28 link=True %}{% endfor %}
+            </div>
+            {% else %}—{% endif %}
           </dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Created by" %}</dt><dd class="col-sm-9">{{ scope.created_by|default:"—" }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
