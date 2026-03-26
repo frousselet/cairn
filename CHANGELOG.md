@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.2] - 2026-03-26
+
 ### Added
 
 - `non_compliant` and `partially_compliant` choices for requirement `compliance_status`, enabling simple compliance tracking alongside detailed audit-oriented statuses
@@ -616,7 +618,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.1...HEAD
+[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.2...HEAD
+[0.21.2]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.1...v0.21.2
 [0.21.1]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.0...v0.21.1
 [0.21.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.20.0...v0.21.0
 [0.20.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.19.1...v0.20.0
