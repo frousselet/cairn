@@ -235,6 +235,51 @@ def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_field
     return handler
 
 
+def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None):
+    """Create a generic batch create handler (atomic: all-or-nothing)."""
+    m2m_fields = m2m_fields or {}
+
+    def handler(user, arguments):
+        items = arguments.get("items", [])
+        if not isinstance(items, list) or not items:
+            return _error("'items' must be a non-empty array of objects.")
+        if len(items) > 500:
+            return _error("Batch size limited to 500 items.")
+
+        from django.db import transaction
+
+        created = []
+        fields = [f.name for f in model_class._meta.fields]
+        try:
+            with transaction.atomic():
+                for idx, item_data in enumerate(items):
+                    if not isinstance(item_data, dict):
+                        raise ValidationError(
+                            f"Item {idx}: expected an object, got {type(item_data).__name__}.")
+                    kwargs = {}
+                    m2m_values = {}
+                    for field_name in writable_fields:
+                        if field_name in item_data:
+                            if field_name in m2m_fields:
+                                m2m_values[field_name] = item_data[field_name]
+                            else:
+                                kwargs[field_name] = _coerce_field_value(
+                                    model_class, field_name, item_data[field_name])
+                    if hasattr(model_class, "created_by"):
+                        kwargs["created_by"] = user
+                    obj = model_class(**kwargs)
+                    obj.full_clean()
+                    obj.save()
+                    for param_name, ids in m2m_values.items():
+                        m2m_attr = m2m_fields[param_name]
+                        getattr(obj, m2m_attr).set(ids)
+                    created.append(_serialize_obj(obj, fields))
+        except (ValidationError, Exception) as e:
+            return _error(f"Batch creation failed at item {idx}: {e}")
+        return {"created": len(created), "items": created}
+    return handler
+
+
 def _update_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None):
     """Create a generic update handler."""
     m2m_fields = m2m_fields or {}
@@ -3381,6 +3426,27 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
         _obj_schema(create_props, required_fields),
         require_perm(f"{perm_prefix}.create")(
             _create_handler(model_class, writable_fields, scope_filtered, m2m_fields)
+        ),
+    )
+
+    # Batch Create
+    server.register_tool(
+        f"batch_create_{entity_name}s",
+        f"Create multiple {display_name}s in a single atomic transaction. "
+        f"All items are created or none if any validation fails.",
+        {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": _obj_schema(create_props, required_fields),
+                    "description": f"Array of {display_name} objects to create (max 500).",
+                },
+            },
+            "required": ["items"],
+        },
+        require_perm(f"{perm_prefix}.create")(
+            _batch_create_handler(model_class, writable_fields, scope_filtered, m2m_fields)
         ),
     )
 

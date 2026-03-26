@@ -157,6 +157,7 @@ Most domain entities expose a standard set of operations generated automatically
 | List | `list_{entity}s` | Paginated list with search, filters, limit/offset |
 | Get | `get_{entity}` | Get a single object by UUID |
 | Create | `create_{entity}` | Create a new object |
+| Batch Create | `batch_create_{entity}s` | Create up to 500 objects in a single atomic transaction |
 | Update | `update_{entity}` | Update an existing object |
 | Delete | `delete_{entity}` | Delete an object |
 | Approve | `approve_{entity}` | Approve an object (where approval workflow applies) |
