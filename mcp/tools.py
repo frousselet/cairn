@@ -440,11 +440,14 @@ def register_all_tools(server):
 def _register_help_tool(server):
     """Register the MCP help tool that describes how to use the Fairway MCP server."""
 
-    HELP_TEXT = """
+    HELP_TEXT = """\
 # Fairway MCP Server - Usage Guide
 
 Fairway is a Governance, Risk & Compliance (GRC) platform. This MCP server
 exposes its full API as tools organized by module.
+
+Call `help` with a topic for detailed field-level documentation:
+  context, assets, compliance, risks, batch, workflow, permissions, examples
 
 ## Modules
 
@@ -465,218 +468,825 @@ Every entity follows a consistent CRUD pattern:
 |-----------|-------------|-------------|
 | List | `list_{entity}s` | Paginated list. Params: search, limit (default 50), offset, plus entity-specific filters |
 | Get | `get_{entity}` | Get one by ID. Param: id (UUID) |
-| Create | `create_{entity}` | Create one. Returns the created object |
+| Create | `create_{entity}` | Create one. Returns the created object with all fields |
 | Batch Create | `batch_create_{entity}s` | Create up to 500 items. Param: items (array). Non-atomic: valid items are created even if others fail |
-| Update | `update_{entity}` | Update by ID. Param: id + fields to change |
+| Update | `update_{entity}` | Update by ID. Param: id + only the fields to change (partial update) |
 | Delete | `delete_{entity}` | Delete by ID. Param: id |
 | Approve | `approve_{entity}` | Approve (where workflow applies). Param: id |
 
 ## Key Concepts
 
 ### UUIDs
-All domain objects use UUID primary keys. Foreign key fields expect UUID strings.
-Exception: `SupplierType` uses integer auto-increment IDs.
+All domain objects use UUID primary keys (e.g. "550e8400-e29b-41d4-a716-446655440000").
+Foreign key fields expect UUID strings.
+Exception: SupplierType uses integer auto-increment IDs.
 
 ### Scopes
-Scopes represent organizational boundaries (e.g. departments, subsidiaries).
-Many entities have a `scopes` M2M field (array of scope UUIDs).
+Scopes represent organizational boundaries (departments, subsidiaries, projects).
+Most entities have a `scopes` M2M field (array of scope UUIDs).
 Users only see objects within their assigned scopes (unless superuser).
+Always pass scopes when creating scoped entities, or they will be invisible to non-superusers.
 
 ### Approval Workflow
-Entities with `is_approved` support a two-step workflow: create/update, then approve.
-Updating a major field resets approval and increments version.
+Entities with `is_approved` support a two-step workflow: create/update, then approve_*.
+Updating a major field resets approval to false and increments version.
 
 ### References
-Most entities get an auto-generated reference (e.g. RISK-1, REQT-42).
-References are read-only and sequential per entity type.
+Most entities auto-generate a unique reference on creation (e.g. RISK-1, REQT-42, SUPP-3).
+References are read-only and sequential. Reference prefixes by entity:
+  Scope=SCOP, Issue=ISSU, Stakeholder=STKH, Objective=OBJT, SwotAnalysis=SWOT,
+  Role=ROLE, Activity=ACTV, Site=SITE, Indicator=INDI,
+  EssentialAsset=EAST, SupportAsset=SAST, AssetDependency=ADEP, AssetGroup=AGRP,
+  Supplier=SUPP, SupplierType=SPTY, SupplierDependency=SDEP,
+  SiteAssetDependency=SADP, SiteSupplierDependency=SSDP,
+  Framework=FRMW, Section=SECT, Requirement=REQT, ComplianceAssessment=CASS,
+  Finding=(NCMAJ/NCMIN/OBS/OA/STR per type), ActionPlan=ACTPL,
+  RiskCriteria=RCRT, RiskAssessment=RASS, Risk=RISK,
+  RiskTreatmentPlan=RTPL, Threat=THRT, Vulnerability=VULN, ISO27005Risk=I27R
 
-## CRUD Entities by Module
-
-### Context
-- `scope` - Organizational scopes (approve, filters: type/status)
-- `issue` - Strategic issues (approve, filters: type/category/priority/status)
-- `stakeholder` - Interested parties (approve, filters: type/category/influence_level/interest_level/status)
-- `expectation` - Stakeholder expectations (filters: stakeholder_id/type/priority)
-- `objective` - Strategic objectives (approve, filters: type/priority/status)
-- `swot_analysis` - SWOT analyses (approve, filters: status)
-- `swot_item` - SWOT items (filters: analysis_id/category/priority)
-- `swot_strategy` - SWOT strategies (filters: analysis_id/strategy_type/priority/status)
-- `role` - Roles (approve, filters: type/status)
-- `activity` - Activities (approve, filters: type/status/owner_id)
-- `site` - Sites (approve, filters: type/status/country)
-- `indicator` - KPIs (approve, filters: type/frequency/status/objective_id)
-- `indicator_measurement` - Indicator data points (filters: indicator_id)
-- `responsibility` - Role responsibilities (filters: role_id)
-- `tag` - Tags (list_tags, create_tag, delete_tag only)
-
-### Assets
-- `essential_asset` - Business processes & information (approve, filters: type/category/status/owner_id/data_classification/personal_data)
-- `support_asset` - IT infrastructure (approve, filters: type/category/status/environment/exposure_level/owner_id)
-- `asset_dependency` - Essential-to-support asset links (filters: essential_asset_id/support_asset_id/dependency_type/criticality)
-- `asset_group` - Asset groups (approve, filters: type/status/owner_id)
-- `asset_valuation` - DIC valuation records (filters: essential_asset_id)
-- `supplier` - Suppliers (approve, filters: type/criticality/status/owner_id/country)
-- `supplier_type` - Supplier type categories
-- `supplier_type_requirement` - Requirements per supplier type (filters: supplier_type_id)
-- `supplier_requirement` - Requirements on a supplier (filters: supplier_id/compliance_status)
-- `supplier_requirement_review` - Supplier requirement reviews (filters: supplier_requirement_id/result)
-- `supplier_dependency` - Support asset-to-supplier links (filters: support_asset_id/supplier_id)
-- `site_asset_dependency` - Site-to-asset links (approve, filters: support_asset_id/site_id/dependency_type/criticality)
-- `site_supplier_dependency` - Site-to-supplier links (approve, filters: site_id/supplier_id/dependency_type/criticality)
-
-### Compliance
-- `framework` - Compliance frameworks (approve, filters: type/category/status)
-- `section` - Framework sections (filters: framework_id/parent_section_id)
-- `requirement` - Compliance requirements (approve, filters: framework_id/section_id/type/compliance_status/priority/is_applicable)
-- `requirement_mapping` - Cross-framework mappings (filters: source_requirement_id/target_requirement_id/mapping_type)
-- `compliance_assessment` - Compliance assessments (custom CRUD, approve)
-- `assessment_result` - Assessment results per requirement (custom CRUD)
-- `finding` - Audit findings (custom CRUD, filters: assessment_id/finding_type)
-- `action_plan` - Remediation action plans (approve, filters: status/priority/owner_id/requirement_id)
-
-### Risks
-- `risk_criteria` - Risk evaluation criteria (filters: status)
-- `risk_assessment` - Risk assessments (approve, filters: status/assessor_id/risk_criteria_id)
-- `risk` - Individual risks (approve, filters: assessment_id/status/treatment_decision/priority/risk_owner_id)
-- `risk_treatment_plan` - Treatment plans (approve, filters: risk_id/status/owner_id)
-- `treatment_action` - Treatment plan actions (filters: treatment_plan_id/status)
-- `risk_acceptance` - Risk acceptance records (filters: risk_id/status/accepted_by_id)
-- `threat` - Threat catalog (approve, filters: type/source/status)
-- `vulnerability` - Vulnerability catalog (approve, filters: category/severity/status)
-- `iso27005_risk` - ISO 27005 risk analysis (filters: assessment_id/threat_id/vulnerability_id)
-- `scale_level` - Risk criteria scale levels (filters: criteria_id)
-- `risk_level` - Risk criteria risk levels (filters: criteria_id)
-
-## Special Tools
-
-### Compliance Assessment Workflow
-- `create_compliance_assessment` - Params: name, framework_ids (array of UUIDs), assessor_id, assessment_date, status
-- `action_plan_transition` - Move action plan through workflow. Params: id, transition (e.g. "start", "submit", "approve"), comment (required for refuse/cancel)
-- `action_plan_transitions` - Get transition history for an action plan
-- `action_plan_kanban` - Get Kanban board view of action plans
-- `action_plan_allowed_transitions` - Get valid transitions for an action plan
-- `list_action_plan_comments` / `create_action_plan_comment` - Comments on action plans
-
-### Risk-Requirement Linking
-- `list_risk_requirements` - List requirements linked to a risk (param: risk_id)
-- `list_requirement_risks` - List risks linked to a requirement (param: requirement_id)
-- `link_risk_requirements` - Add links (params: risk_id, requirement_ids)
-- `unlink_risk_requirements` - Remove links (params: risk_id, requirement_ids)
-- `set_risk_requirements` - Replace all links (params: risk_id, requirement_ids)
-
-### Reports
-- `generate_soa_report` - Generate Statement of Applicability (params: framework_id, title)
-- `generate_audit_report` - Generate audit report (params: assessment_id, title)
-- `list_reports` / `delete_report` - Manage generated reports
-
-### Supplier Logo
-- `update_supplier_logo` - Upload supplier logo from URL (params: id, image_url)
-
-### Framework Compliance
-- `get_framework_compliance_summary` - Compliance stats by section (param: framework_id)
-
-### Users & System
-- `list_users` / `get_user` / `get_me` - User management
-- `list_groups` / `get_group` - Group management
-- `list_permissions` - List all available permissions
-- `list_access_logs` - Audit access logs (filters: user_id, action, limit)
-- `get_company_settings` / `update_company_settings` - Company name and address
-
-## Batch Creation
-
-Use `batch_create_{entity}s` for bulk operations. Example:
-
-```json
-{
-  "items": [
-    {"name": "Item 1", "type": "mandatory", ...},
-    {"name": "Item 2", "type": "optional", ...}
-  ]
-}
-```
-
-Response format:
-```json
-{
-  "status": "completed" or "completed_with_errors",
-  "total": 2,
-  "created": 2,
-  "errors": 0,
-  "results": [
-    {"index": 0, "status": "created", "id": "uuid", "reference": "REQT-1"},
-    {"index": 1, "status": "created", "id": "uuid", "reference": "REQT-2"}
-  ]
-}
-```
-
-Failed items include error details: `{"index": 1, "status": "error", "errors": "..."}`
-
-## Typical Workflows
-
-### Populate a compliance framework
-1. `create_framework` with name, type, category
-2. `batch_create_sections` with framework ID and section hierarchy
-3. `batch_create_requirements` with framework_id, section_id, requirement_number, name, description
-
-### Run a risk assessment
-1. `create_risk_criteria` with scale and risk levels
-2. `create_risk_assessment` with criteria reference
-3. `batch_create_threats` and `batch_create_vulnerabilitys` for the catalog
-4. `batch_create_risks` linked to the assessment
-5. `create_risk_treatment_plan` for each risk needing treatment
-
-### Perform a compliance audit
-1. `create_compliance_assessment` with framework_ids
-2. `create_assessment_result` for each requirement (compliance_status, evidence)
-3. `create_finding` for non-conformities
-4. `create_action_plan` for remediation with `action_plan_transition` to advance workflow
+### HTML Rich Text Fields
+Fields marked "(HTML)" accept HTML rich text content.
+Use standard HTML tags: <p>, <ul>, <li>, <strong>, <em>, <a>, <table>, <h3>, etc.
 
 ## Error Handling
 
-- Permission denied: `{"error": "Permission denied: <codename>"}`
-- Not found: `{"error": "<Entity> not found."}`
-- Validation error: `{"error": "<field details>"}`
-- All errors set `isError: true` in the response
-""".strip()
+- Permission denied: {"error": "Permission denied: <codename>"}
+- Not found: {"error": "<Entity> not found."}
+- Validation error: {"error": "<field details>"}
+- All errors set isError: true in the response
+"""
+
+    TOPIC_CONTEXT = """\
+# Context Module - Field Reference
+
+## scope
+Writable: name (required), description (HTML), type, status, effective_date, review_date, manager_ids
+- type: draft | active | archived
+- status: draft | active | archived
+- manager_ids: array of user UUIDs (M2M, scope managers get automatic access)
+- effective_date / review_date: ISO 8601 date (e.g. "2025-12-31")
+Filters: type, status
+
+## issue
+Writable: name (required), description (HTML), type, category, impact_level, priority, status, owner_id, review_date, scopes
+- type: internal | external
+- category (internal): strategic | organizational | human_resources | technical | financial | cultural
+- category (external): political | economic | social | technological | legal | environmental | competitive | regulatory
+- impact_level: low | medium | high | critical
+- priority: low | medium | high | critical
+- status: identified | active | monitored | closed
+Filters: type, category, priority, status
+
+## stakeholder
+Writable: name (required), type (required), category (required), description, contact_name, contact_email, contact_phone, influence_level (required), interest_level (required), status, review_date, scopes
+- type: internal | external
+- category: executive_management | employees | customers | suppliers | partners | regulators | shareholders | insurers | public | competitors | unions | auditors | other
+- influence_level: low | medium | high
+- interest_level: low | medium | high
+- status: active | inactive
+Filters: type, category, influence_level, interest_level, status
+
+## expectation (nested under stakeholder)
+Writable: stakeholder_id (required), name (required), description, type, priority
+- type: requirement | expectation | need
+- priority: low | medium | high | critical
+Filters: stakeholder_id, type, priority
+
+## objective
+Writable: name (required), description (HTML), type, category, priority, status, target_date, owner_id, linked_issues, scopes
+- type: security | compliance | business | other
+- category: confidentiality | integrity | availability | compliance | operational | strategic
+- priority: low | medium | high | critical
+- status: draft | active | achieved | not_achieved | cancelled
+- linked_issues: array of issue UUIDs (M2M)
+Filters: type, priority, status
+
+## swot_analysis
+Writable: name (required), description (HTML), scope_id, status, scopes
+- status: draft | validated | archived
+Filters: status
+
+## swot_item
+Writable: analysis_id (required), category (required), description (required), priority
+- category: strength | weakness | opportunity | threat
+- priority: low | medium | high | critical
+Filters: analysis_id, category, priority
+
+## swot_strategy
+Writable: analysis_id (required), strategy_type (required), name (required), description (HTML), priority, status, target_date, owner_id, linked_items
+- strategy_type: so | st | wo | wt (Strengths-Opportunities, Strengths-Threats, Weaknesses-Opportunities, Weaknesses-Threats)
+- priority: low | medium | high | critical
+- status: draft | active | archived
+- linked_items: array of swot_item UUIDs (M2M)
+Filters: analysis_id, strategy_type, priority, status
+
+## role
+Writable: name (required), description (HTML), type, status, holder_id, scopes
+- type: governance | operational | support | control
+- status: active | inactive
+- holder_id: UUID of the user holding this role
+Filters: type, status
+
+## responsibility (nested under role)
+Writable: role_id (required), name (required), description, raci_type
+- raci_type: responsible | accountable | consulted | informed
+Filters: role_id
+
+## activity
+Writable: name (required), description (HTML), type, status, owner_id, scopes
+- type: core_business | support | management
+- status: active | inactive | planned
+Filters: type, status, owner_id
+
+## site
+Writable: name (required), description (HTML), type, status, address, city, country, latitude, longitude, scopes
+- type: siege | bureau | usine | entrepot | datacenter | site_distant | autre
+- status: draft | active | archived
+Filters: type, status, country
+
+## indicator
+Writable: name (required), description (HTML), type, format, unit, frequency, collection_method, target_value, critical_threshold, critical_threshold_operator, status, objective_id, scopes
+- type: organizational | technical
+- format: number | boolean
+- frequency: daily | weekly | monthly | quarterly | semi_annual | annual
+- collection_method: manual | api | internal
+- critical_threshold_operator: below | above | is_false | is_true
+- status: active | inactive | draft
+Filters: type, frequency, status, objective_id
+
+## indicator_measurement
+Writable: indicator_id (required), value (required), measured_at, measured_by_id, comment
+Filters: indicator_id
+
+## tag
+Only 3 tools: list_tags, create_tag(name, color), delete_tag(id)
+"""
+
+    TOPIC_ASSETS = """\
+# Assets Module - Field Reference
+
+## essential_asset
+Writable: name (required), description (HTML), type (required), category, owner_id (required), custodian_id,
+  confidentiality_level, integrity_level, availability_level,
+  confidentiality_justification, integrity_justification, availability_justification,
+  max_tolerable_downtime, recovery_time_objective, recovery_point_objective,
+  data_classification, personal_data, personal_data_categories, regulatory_constraints,
+  related_activities, status, review_date, tags, scopes
+- type: business_process | information
+- category (process): core_process | support_process | management_process
+- category (info): strategic_data | operational_data | personal_data | financial_data | technical_data | legal_data | research_data | commercial_data
+- confidentiality/integrity/availability_level: integer 0-4 OR text: negligible | low | medium | high | critical
+- data_classification: public | internal | confidential | restricted | secret
+- personal_data: boolean
+- status: identified | active | under_review | decommissioned
+- tags: array of tag UUIDs (M2M)
+Filters: type, category, status, owner_id, data_classification, personal_data
+Ref prefix: EAST
+
+## support_asset
+Writable: name (required), description (HTML), type (required), category, owner_id (required), custodian_id,
+  location, manufacturer, model_name, serial_number, software_version,
+  ip_address, hostname, operating_system,
+  acquisition_date, end_of_life_date, warranty_expiry_date, contract_reference,
+  exposure_level, environment, parent_asset_id, status, review_date, tags, scopes
+- type: hardware | software | network | person | site | service | paper
+- category (hardware): server | workstation | laptop | mobile_device | network_equipment | storage | peripheral | iot_device | removable_media | other_hardware
+- category (software): operating_system | database | application | middleware | security_tool | development_tool | saas_application | other_software
+- category (network): lan | wan | wifi | vpn | internet_link | firewall_zone | dmz | other_network
+- category (person): internal_staff | contractor | external_provider | administrator | developer | other_person
+- category (site): datacenter | office | remote_site | cloud_region | other_site
+- category (service): cloud_service | hosting_service | managed_service | telecom_service | outsourced_service | other_service
+- category (paper): archive | printed_document | form | other_paper
+- exposure_level: internal | exposed | internet_facing | dmz
+- environment: production | staging | development | test | disaster_recovery
+- status: in_stock | deployed | active | under_maintenance | decommissioned | disposed
+Read-only computed: inherited_confidentiality, inherited_integrity, inherited_availability (inherited from essential assets via dependencies)
+Filters: type, category, status, environment, exposure_level, owner_id
+Ref prefix: SAST
+
+## asset_dependency
+Links an essential asset to a support asset.
+Writable: essential_asset_id (required), support_asset_id (required), dependency_type (required), criticality (required), description (HTML)
+- dependency_type: runs_on | stored_in | transmitted_by | managed_by | hosted_at | protected_by | other
+- criticality: low | medium | high | critical
+Read-only: is_single_point_of_failure (auto-detected), redundancy_level
+Filters: essential_asset_id, support_asset_id, dependency_type, criticality
+Ref prefix: ADEP
+
+## asset_valuation
+DIC valuation record for an essential asset.
+Writable: essential_asset_id (required), evaluation_date, confidentiality_level (0-4), integrity_level (0-4), availability_level (0-4), justification, context
+Creating a valuation automatically updates the essential asset's DIC levels.
+Filters: essential_asset_id
+
+## asset_group
+Writable: name (required), description, type, members (array of support_asset UUIDs), owner_id, status, tags, scopes
+- type: hardware | software | network | person | site | service | paper
+- status: active | inactive
+Filters: type, status, owner_id
+Ref prefix: AGRP
+
+## supplier
+Writable: name (required), description (HTML), type, criticality, owner_id (required),
+  contact_name, contact_email, contact_phone, website, address, country,
+  contract_reference, contract_start_date, contract_end_date, status, notes (HTML), tags, scopes
+- type: INTEGER (SupplierType ID, NOT a UUID). Use list_supplier_types to get valid IDs.
+- criticality: low | medium | high | critical
+- status: active | under_evaluation | suspended | archived
+Special tools: update_supplier_logo(id, image_url) - fetches and stores logo from URL
+Filters: type, criticality, status, owner_id, country
+Ref prefix: SUPP
+
+## supplier_type
+Writable: name (required), description
+Ref prefix: SPTY (integer PK, not UUID)
+
+## supplier_dependency
+Links a support asset to a supplier.
+Writable: support_asset_id (required), supplier_id (required), dependency_type (required), criticality (required), description (HTML)
+- dependency_type: provides | hosts | manages | develops | supports | licenses | maintains | other
+- criticality: low | medium | high | critical
+Filters: support_asset_id, supplier_id
+Ref prefix: SDEP
+
+## site_asset_dependency
+Links a site to a support asset.
+Writable: support_asset_id (required), site_id (required), dependency_type (required), criticality (required), description (HTML), is_single_point_of_failure (bool), redundancy_level
+- dependency_type: located_at | hosted_at | deployed_at | other
+- criticality: low | medium | high | critical
+- redundancy_level: none | partial | full
+Filters: support_asset_id, site_id, dependency_type, criticality
+Ref prefix: SADP
+
+## site_supplier_dependency
+Links a site to a supplier.
+Writable: site_id (required), supplier_id (required), dependency_type (required), criticality (required), description (HTML), is_single_point_of_failure (bool), redundancy_level
+- dependency_type: provides | hosts | manages | develops | supports | licenses | maintains | other
+- criticality: low | medium | high | critical
+- redundancy_level: none | partial | full
+Filters: site_id, supplier_id, dependency_type, criticality
+Ref prefix: SSDP
+
+## supplier_requirement
+Writable: supplier_id (required), title (required), description, requirement_id (FK to compliance requirement, optional), compliance_status, evidence, due_date
+- compliance_status: not_assessed | compliant | partially_compliant | non_compliant
+Filters: supplier_id, compliance_status
+
+## supplier_requirement_review
+Writable: supplier_requirement_id (required), review_date, reviewer_id, result, comment, evidence_file
+- result: not_assessed | compliant | partially_compliant | non_compliant
+Filters: supplier_requirement_id, result
+"""
+
+    TOPIC_COMPLIANCE = """\
+# Compliance Module - Field Reference
+
+## framework
+Writable: name (required), short_name, description (HTML), type, category, version_label, source_url, publication_date, effective_date, owner_id, status, scopes
+- type: standard | law | regulation | contract | internal_policy | industry_framework | other
+- category: information_security | privacy | risk_management | business_continuity | cloud_security | sector_specific | it_governance | quality | contractual | internal | other
+- status: draft | active | under_review | deprecated | archived
+Filters: type, category, status
+Ref prefix: FRMW
+
+## section
+Writable: framework_id (required), name (required), description, order (integer for sorting), parent_section_id (UUID for nesting)
+Sections form a tree: use parent_section_id to nest (e.g. "A.5" under "A").
+Filters: framework_id, parent_section_id
+Ref prefix: SECT
+
+## requirement
+Writable: framework_id (required), section_id, requirement_number, name (required), description (HTML, required), guidance (HTML),
+  type, category, is_applicable (bool), applicability_justification,
+  compliance_status, compliance_level (0-100), compliance_evidence (HTML), compliance_finding (HTML),
+  owner_id, priority, target_date, linked_assets (M2M), linked_stakeholder_expectations (M2M), linked_risks (M2M, required - pass [] if none),
+  status, tags
+- type: mandatory | recommended | optional
+- category: organizational | technical | physical | legal | human | other
+- compliance_status: not_assessed | evaluated | non_compliant | partially_compliant | major_non_conformity | minor_non_conformity | observation | improvement_opportunity | compliant | strength | not_applicable
+- priority: low | medium | high | critical
+- status: active | deprecated | superseded
+Filters: framework_id, section_id, type, compliance_status, priority, is_applicable
+Ref prefix: REQT
+
+## requirement_mapping
+Maps requirements across frameworks.
+Writable: source_requirement_id (required), target_requirement_id (required), mapping_type (required), coverage_level, notes
+- mapping_type: equivalent | partial_overlap | includes | included_by | related
+- coverage_level: full | partial | minimal
+Filters: source_requirement_id, target_requirement_id, mapping_type
+
+## compliance_assessment (custom CRUD)
+Writable: name (required), description (HTML), limitations (HTML), assessment_start_date, assessment_end_date, status, assessor_id, framework_ids (array of framework UUIDs)
+- status: draft | planned | in_progress | completed | closed | cancelled
+- framework_ids: when set, assessment_results are auto-created for all requirements in those frameworks
+Read-only computed: overall_compliance_level, total_requirements, compliant_count, major_non_conformity_count, minor_non_conformity_count, observation_count, improvement_opportunity_count, strength_count, not_applicable_count
+
+Assessment status transitions:
+  draft -> planned -> in_progress -> completed -> closed
+  draft -> cancelled
+  planned -> cancelled
+  (completed and closed are terminal - cannot go back)
+
+## assessment_result (custom CRUD)
+Writable: assessment_id (required), requirement_id (required), compliance_status, compliance_level (0-100), finding (HTML), auditor_recommendations (HTML), evidence (HTML), assessed_by_id, assessed_at
+- compliance_status: not_assessed | evaluated | major_non_conformity | minor_non_conformity | observation | improvement_opportunity | compliant | strength | not_applicable
+Updating a result auto-recalculates the assessment's aggregate counts.
+
+## finding (custom CRUD)
+Writable: assessment_id (required), finding_type (required), description (HTML, required), evidence (HTML), recommendation (HTML), assessor_id, requirement_ids (M2M array)
+- finding_type: major_nc | minor_nc | observation | improvement | strength
+Reference auto-generated per type: NCMAJ-x, NCMIN-x, OBS-x, OA-x, STR-x
+Creating/updating/deleting findings auto-applies to linked assessment_results.
+
+## action_plan
+Writable: name (required), description (HTML), gap_description (HTML), remediation_plan (HTML), priority, target_date, progress_percentage (0-100), owner_id, assignees (M2M user UUIDs), requirements (M2M requirement UUIDs)
+- priority: low | medium | high | critical
+- status is READ-ONLY - use action_plan_transition tool to change it (see help topic "workflow")
+Filters: status, priority, owner_id, requirement_id
+Ref prefix: ACTPL
+
+## Special compliance tools
+- get_framework_compliance_summary(framework_id) - returns per-section compliance stats
+- generate_soa_report(framework_id, title) - Statement of Applicability PDF
+- generate_audit_report(assessment_id, title) - Audit report PDF
+- list_reports / delete_report(id) - manage generated reports
+"""
+
+    TOPIC_RISKS = """\
+# Risks Module - Field Reference
+
+## risk_criteria
+Defines evaluation scales (likelihood/impact) and risk level thresholds.
+Writable: name (required), description (HTML), methodology, status, scopes
+- methodology: iso27005 | ebios_rm
+- status: draft | active | archived
+After creating criteria, add scale_levels and risk_levels.
+Filters: status
+Ref prefix: RCRT
+
+## scale_level
+Writable: criteria_id (required), scale_type (required), level (required, integer 1-5), name (required), description, color
+- scale_type: likelihood | impact
+Example: create 5 likelihood levels (1=Very Low to 5=Very High) and 5 impact levels.
+Filters: criteria_id
+
+## risk_level
+Writable: criteria_id (required), level (required, integer), name (required), color (hex, e.g. "#ff0000"), min_score, max_score, treatment_required (bool), description
+Example: level 1 "Low" (green, min=1 max=5), level 4 "Critical" (red, min=16 max=25)
+Filters: criteria_id
+
+## risk_assessment
+Writable: name (required), description (HTML), risk_criteria_id, methodology, assessment_date, assessor_id, status, scopes
+- methodology: iso27005 | ebios_rm
+- status: draft | in_progress | completed | validated | archived
+Filters: status, assessor_id, risk_criteria_id
+Ref prefix: RASS
+
+## risk
+Writable: name (required), description (HTML), assessment_id (required),
+  status, priority, treatment_decision, risk_source_type,
+  initial_likelihood (int), initial_impact (int),
+  current_likelihood (int), current_impact (int),
+  residual_likelihood (int), residual_impact (int),
+  risk_owner_id, justification (HTML)
+- status: identified | analyzed | evaluated | treatment_planned | treatment_in_progress | treated | accepted | closed | monitoring
+- priority: low | medium | high | critical
+- treatment_decision: accept | mitigate | transfer | avoid | not_decided
+- risk_source_type: iso27005_analysis | ebios_strategic | ebios_operational | incident | audit | compliance | manual
+- likelihood/impact values: integers matching scale_level.level (typically 1-5)
+Read-only computed: current_risk_level (from criteria matrix)
+Filters: assessment_id, status, treatment_decision, priority, risk_owner_id
+Ref prefix: RISK
+
+## risk_treatment_plan
+Writable: name (required), description (HTML), risk_id (required), owner_id, target_date, status, progress_percentage (0-100), expected_residual_likelihood (int), expected_residual_impact (int)
+- status: planned | in_progress | completed | cancelled | overdue
+After creating, add treatment_actions.
+Filters: risk_id, status, owner_id
+Ref prefix: RTPL
+
+## treatment_action
+Writable: treatment_plan_id (required), name (required), description (HTML), responsible_id (user UUID), due_date, status, completion_date
+- status: planned | in_progress | completed | cancelled
+Filters: treatment_plan_id, status
+
+## risk_acceptance
+Writable: risk_id (required), accepted_by_id (required), justification (HTML), conditions, valid_until (date), status
+- status: active | expired | revoked | renewed
+Filters: risk_id, status, accepted_by_id
+
+## threat
+Writable: name (required), description (HTML), type, source, category, status, scopes
+- type: deliberate | accidental | environmental | other
+- source: human_internal | human_external | natural | technical | other
+- category: malware | social_engineering | unauthorized_access | denial_of_service | data_breach | physical_attack | espionage | fraud | sabotage | human_error | system_failure | network_failure | power_failure | natural_disaster | fire | water_damage | theft | vandalism | supply_chain | insider_threat | ransomware | apt
+- status: active | inactive
+Filters: type, source, status
+Ref prefix: THRT
+
+## vulnerability
+Writable: name (required), description (HTML), category, severity, affected_asset_types (array), affected_assets (M2M support_asset UUIDs), cve_references, remediation_guidance (HTML), is_from_catalog (bool), status, tags, scopes
+- category: configuration_weakness | missing_patch | design_flaw | coding_error | weak_authentication | insufficient_logging | lack_of_encryption | physical_vulnerability | organizational_weakness | human_factor | obsolescence | insufficient_backup | network_exposure | third_party_dependency
+- severity: low | medium | high | critical
+- status: identified | confirmed | mitigated | accepted | closed
+Filters: category, severity, status
+Ref prefix: VULN
+
+## iso27005_risk
+Combines threat + vulnerability + impact for ISO 27005 analysis.
+Writable: assessment_id (required), threat_id (required), vulnerability_id (required),
+  threat_likelihood (int 1-5), vulnerability_exposure (int 1-5),
+  impact_confidentiality (int 1-5), impact_integrity (int 1-5), impact_availability (int 1-5),
+  existing_controls (HTML), risk_id (optional, link to a Risk entity), description (HTML)
+Read-only computed:
+  combined_likelihood = max(threat_likelihood, vulnerability_exposure)
+  max_impact = max(impact_confidentiality, impact_integrity, impact_availability)
+  risk_level = combined_likelihood * max_impact (mapped to risk_level thresholds)
+Filters: assessment_id, threat_id, vulnerability_id
+Ref prefix: I27R
+
+## Risk-Requirement linking tools
+- list_risk_requirements(risk_id) - list requirements linked to a risk
+- list_requirement_risks(requirement_id) - list risks linked to a requirement
+- link_risk_requirements(risk_id, requirement_ids) - add links (additive)
+- unlink_risk_requirements(risk_id, requirement_ids) - remove links
+- set_risk_requirements(risk_id, requirement_ids) - replace all links
+"""
+
+    TOPIC_WORKFLOW = """\
+# Workflow Reference
+
+## Action Plan Workflow (Kanban)
+
+Status values: new | to_define | to_validate | to_implement | implementation_to_validate | validated | closed | cancelled
+
+### Forward transitions:
+  new -> to_define (permission: compliance.action_plan.update)
+  to_define -> to_validate (permission: compliance.action_plan.update)
+  to_validate -> to_implement (permission: compliance.action_plan.validate)
+  to_implement -> implementation_to_validate (permission: compliance.action_plan.implement)
+  implementation_to_validate -> validated (permission: compliance.action_plan.validate)
+  validated -> closed (permission: compliance.action_plan.close)
+
+### Refusal transitions (comment MANDATORY):
+  to_validate -> to_define (permission: compliance.action_plan.validate)
+  implementation_to_validate -> to_implement (permission: compliance.action_plan.validate)
+
+### Cancellation (comment recommended):
+  Any status except closed/cancelled -> cancelled (permission: compliance.action_plan.cancel)
+
+### Tools:
+- action_plan_transition(action_plan_id, target_status, comment)
+  Execute a transition. Returns {id, status, reference}.
+  Example: action_plan_transition(action_plan_id="<uuid>", target_status="to_define")
+  Example with refusal: action_plan_transition(action_plan_id="<uuid>", target_status="to_define", comment="Missing evidence, please complete section 3")
+
+- action_plan_allowed_transitions(action_plan_id)
+  Returns current_status and list of allowed next statuses with permission requirements.
+
+- action_plan_transitions(action_plan_id)
+  Returns full transition history (who, when, from/to status, comment, is_refusal).
+
+- action_plan_kanban()
+  Returns Kanban board: columns grouped by status with action plans and workflow rules.
+
+### Typical action plan lifecycle:
+1. create_action_plan(name="Remediate A.8.1", priority="high", owner_id="<uuid>", target_date="2025-06-30", requirements=["<req-uuid>"])
+2. action_plan_transition(action_plan_id="<uuid>", target_status="to_define")
+3. update_action_plan(id="<uuid>", remediation_plan="<html>", gap_description="<html>")
+4. action_plan_transition(action_plan_id="<uuid>", target_status="to_validate")
+5. action_plan_transition(action_plan_id="<uuid>", target_status="to_implement")   -- or refuse back to to_define
+6. update_action_plan(id="<uuid>", progress_percentage=50)
+7. action_plan_transition(action_plan_id="<uuid>", target_status="implementation_to_validate")
+8. action_plan_transition(action_plan_id="<uuid>", target_status="validated")   -- or refuse back to to_implement
+9. action_plan_transition(action_plan_id="<uuid>", target_status="closed")
+
+## Compliance Assessment Workflow
+
+Status values: draft | planned | in_progress | completed | closed | cancelled
+
+### Transitions:
+  draft -> planned
+  draft -> cancelled
+  planned -> in_progress
+  planned -> cancelled
+  in_progress -> completed
+  completed -> closed
+
+### Assessment lifecycle:
+1. create_compliance_assessment(name="ISO 27001 Audit 2025", framework_ids=["<fw-uuid>"], assessor_id="<user-uuid>", status="draft")
+   -> Auto-creates assessment_results for every requirement in the linked frameworks
+2. update_compliance_assessment(id="<uuid>", status="planned", assessment_start_date="2025-04-01")
+3. update_compliance_assessment(id="<uuid>", status="in_progress")
+4. For each requirement: update_assessment_result(id="<result-uuid>", compliance_status="compliant", evidence="<html>")
+   Or for non-conformities: create_finding(assessment_id="<uuid>", finding_type="major_nc", description="<html>", requirement_ids=["<req-uuid>"])
+5. update_compliance_assessment(id="<uuid>", status="completed")
+6. generate_audit_report(assessment_id="<uuid>", title="ISO 27001 Audit Report 2025")
+7. update_compliance_assessment(id="<uuid>", status="closed")
+
+## Approval Workflow (all approvable entities)
+
+Any entity with approve_* tool follows:
+1. Create or update the entity
+2. Call approve_{entity}(id="<uuid>") to mark as approved
+3. If a major field is later updated, approval resets automatically (is_approved=false, version increments)
+4. Re-approve after review
+"""
+
+    TOPIC_BATCH = """\
+# Batch Creation - Detailed Reference
+
+## Endpoint
+All entities support batch_create_{entity}s(items=[...])
+Maximum: 500 items per call.
+
+## Behavior
+NON-ATOMIC: each item is processed independently.
+Valid items are created even if others fail.
+Use this for bulk import - do not worry about partial failures.
+
+## Request format
+{"items": [{field1: value1, ...}, {field1: value2, ...}, ...]}
+
+## Response format
+{
+  "status": "completed" | "completed_with_errors",
+  "total": N,         // total items submitted
+  "created": M,       // successfully created
+  "errors": E,        // failed items
+  "results": [
+    {"index": 0, "status": "created", "id": "<uuid>", "reference": "REQT-1"},
+    {"index": 1, "status": "error", "errors": "['name': ['This field is required.']]"},
+    {"index": 2, "status": "created", "id": "<uuid>", "reference": "REQT-2"}
+  ]
+}
+
+## Example: Populate ISO 27001 Annex A
+
+Step 1 - Create framework:
+  create_framework(name="ISO/IEC 27001:2022", type="standard", category="information_security")
+
+Step 2 - Create sections:
+  batch_create_sections(items=[
+    {"framework_id": "<fw-uuid>", "name": "A.5 Organizational controls", "order": 1},
+    {"framework_id": "<fw-uuid>", "name": "A.6 People controls", "order": 2},
+    {"framework_id": "<fw-uuid>", "name": "A.7 Physical controls", "order": 3},
+    {"framework_id": "<fw-uuid>", "name": "A.8 Technological controls", "order": 4}
+  ])
+
+Step 3 - Create requirements:
+  batch_create_requirements(items=[
+    {"framework_id": "<fw-uuid>", "section_id": "<a5-uuid>", "requirement_number": "A.5.1", "name": "Policies for information security", "description": "...", "type": "mandatory", "linked_risks": []},
+    {"framework_id": "<fw-uuid>", "section_id": "<a5-uuid>", "requirement_number": "A.5.2", "name": "Information security roles and responsibilities", "description": "...", "type": "mandatory", "linked_risks": []},
+    ...
+  ])
+
+## Example: Populate threat catalog
+
+  batch_create_threats(items=[
+    {"name": "Ransomware attack", "type": "deliberate", "source": "human_external", "category": "ransomware"},
+    {"name": "Phishing campaign", "type": "deliberate", "source": "human_external", "category": "social_engineering"},
+    {"name": "Power outage", "type": "environmental", "source": "technical", "category": "power_failure"},
+    {"name": "Accidental data deletion", "type": "accidental", "source": "human_internal", "category": "human_error"},
+    ...
+  ])
+
+## Example: Populate risk register
+
+  batch_create_risks(items=[
+    {"assessment_id": "<ra-uuid>", "name": "Data breach via phishing", "status": "identified", "priority": "high", "initial_likelihood": 4, "initial_impact": 5, "treatment_decision": "mitigate"},
+    {"assessment_id": "<ra-uuid>", "name": "Service disruption from power failure", "status": "identified", "priority": "medium", "initial_likelihood": 2, "initial_impact": 3, "treatment_decision": "transfer"},
+    ...
+  ])
+
+## Example: Populate suppliers
+
+  batch_create_suppliers(items=[
+    {"name": "AWS", "type": 1, "criticality": "critical", "owner_id": "<user-uuid>", "status": "active", "country": "US"},
+    {"name": "OVHcloud", "type": 1, "criticality": "high", "owner_id": "<user-uuid>", "status": "active", "country": "FR"},
+    ...
+  ])
+  Note: "type" is an integer SupplierType ID. Use list_supplier_types() first to get IDs.
+"""
+
+    TOPIC_PERMISSIONS = """\
+# Permissions Reference
+
+## Permission format
+All permissions follow: module.feature.action
+
+## Actions
+- read: view/list entities
+- create: create new entities
+- update: modify existing entities
+- delete: remove entities
+- approve: approve entities (where approval workflow applies)
+
+## Special action plan permissions
+- compliance.action_plan.validate: approve or refuse at validation stages
+- compliance.action_plan.implement: submit implementation for validation
+- compliance.action_plan.close: close a validated action plan
+- compliance.action_plan.cancel: cancel an action plan
+
+## Module permissions
+
+### Context (context.*)
+context.scope.read/create/update/delete/approve
+context.issue.read/create/update/delete/approve
+context.stakeholder.read/create/update/delete/approve
+context.objective.read/create/update/delete/approve
+context.swot.read/create/update/delete/approve
+context.role.read/create/update/delete/approve
+context.activity.read/create/update/delete/approve
+context.site.read/create/update/delete/approve
+context.indicator.read/create/update/delete/approve
+
+### Assets (assets.*)
+assets.essential_asset.read/create/update/delete/approve
+assets.support_asset.read/create/update/delete/approve
+assets.dependency.read/create/update/delete
+assets.group.read/create/update/delete/approve
+assets.supplier.read/create/update/delete/approve
+assets.supplier_dependency.read/create/update/delete
+
+### Compliance (compliance.*)
+compliance.framework.read/create/update/delete/approve
+compliance.section.read/create/update/delete
+compliance.requirement.read/create/update/delete/approve
+compliance.assessment.read/create/update/delete/approve
+compliance.action_plan.read/create/update/delete/approve/validate/implement/close/cancel
+compliance.report.read/create/delete
+
+### Risks (risks.*)
+risks.criteria.read/create/update/delete
+risks.assessment.read/create/update/delete/approve
+risks.risk.read/create/update/delete/approve
+risks.treatment.read/create/update/delete/approve
+risks.acceptance.read/create/update/delete
+risks.threat.read/create/update/delete/approve
+risks.vulnerability.read/create/update/delete/approve
+risks.iso27005.read/create/update/delete
+
+### System
+system.config.read/update
+system.users.read
+system.logs.read
+
+## System roles (predefined groups)
+- Super Admin: all permissions
+- Admin: all permissions except system config
+- RSSI/DPO: read/create/update/approve on all modules
+- Auditeur: read on all modules, create/update on compliance
+- Contributeur: read/create/update on assigned scopes
+- Lecteur: read-only on assigned scopes
+
+Superusers bypass all permission checks.
+Use list_permissions() to see all available codenames.
+"""
+
+    TOPIC_EXAMPLES = """\
+# End-to-End Examples
+
+## Example 1: Full compliance audit workflow
+
+### Step 1: Set up the framework (one-time)
+  create_framework(name="ISO/IEC 27001:2022", type="standard", category="information_security", status="active")
+  -> returns {id: "<fw-uuid>", reference: "FRMW-1", ...}
+
+  batch_create_sections(items=[
+    {"framework_id": "<fw-uuid>", "name": "A.5 Organizational controls", "order": 1},
+    {"framework_id": "<fw-uuid>", "name": "A.6 People controls", "order": 2}
+  ])
+  -> returns section UUIDs
+
+  batch_create_requirements(items=[
+    {"framework_id": "<fw-uuid>", "section_id": "<a5-uuid>", "requirement_number": "A.5.1", "name": "Policies for information security", "description": "A set of policies for information security shall be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties.", "type": "mandatory", "linked_risks": []},
+    ...93 requirements total...
+  ])
+
+### Step 2: Create and run the assessment
+  create_compliance_assessment(name="Annual ISO 27001 Audit 2025", framework_ids=["<fw-uuid>"], assessor_id="<auditor-uuid>", status="draft")
+  -> auto-creates 93 assessment_results (one per requirement)
+
+  update_compliance_assessment(id="<assess-uuid>", status="planned", assessment_start_date="2025-04-01", assessment_end_date="2025-04-30")
+  update_compliance_assessment(id="<assess-uuid>", status="in_progress")
+
+### Step 3: Record assessment results
+  list_assessment_results(assessment_id="<assess-uuid>", limit=100)
+  -> returns 93 results, each with requirement_id and status "not_assessed"
+
+  For each requirement, update its result:
+  update_assessment_result(id="<result-uuid>", compliance_status="compliant", evidence="<p>Policy document v3.2 reviewed. Last update: 2025-01-15.</p>")
+
+  For non-conformities, create findings:
+  create_finding(assessment_id="<assess-uuid>", finding_type="major_nc", description="<p>No documented policy for mobile device management.</p>", evidence="<p>Interview with IT manager confirmed no policy exists.</p>", recommendation="<p>Draft and approve a mobile device policy within 30 days.</p>", requirement_ids=["<req-a5.1-uuid>"])
+
+### Step 4: Create remediation action plans
+  create_action_plan(name="Draft mobile device policy", gap_description="<p>No documented mobile device management policy.</p>", remediation_plan="<p>1. Draft policy based on ISO 27001 A.8.1<br>2. Review with CISO<br>3. Approve and publish</p>", priority="high", owner_id="<ciso-uuid>", target_date="2025-05-30", requirements=["<req-a5.1-uuid>"])
+
+  action_plan_transition(action_plan_id="<ap-uuid>", target_status="to_define")
+  action_plan_transition(action_plan_id="<ap-uuid>", target_status="to_validate")
+  action_plan_transition(action_plan_id="<ap-uuid>", target_status="to_implement")
+  update_action_plan(id="<ap-uuid>", progress_percentage=100)
+  action_plan_transition(action_plan_id="<ap-uuid>", target_status="implementation_to_validate")
+  action_plan_transition(action_plan_id="<ap-uuid>", target_status="validated")
+  action_plan_transition(action_plan_id="<ap-uuid>", target_status="closed")
+
+### Step 5: Finalize
+  update_compliance_assessment(id="<assess-uuid>", status="completed")
+  generate_audit_report(assessment_id="<assess-uuid>", title="ISO 27001 Audit Report 2025")
+  update_compliance_assessment(id="<assess-uuid>", status="closed")
+
+## Example 2: Full risk assessment workflow
+
+### Step 1: Define risk criteria
+  create_risk_criteria(name="Standard 5x5 Matrix", methodology="iso27005", status="active")
+
+  batch_create_scale_levels(items=[
+    {"criteria_id": "<rc-uuid>", "scale_type": "likelihood", "level": 1, "name": "Very Low", "description": "Less than once every 5 years", "color": "#4caf50"},
+    {"criteria_id": "<rc-uuid>", "scale_type": "likelihood", "level": 2, "name": "Low", "description": "Once every 2-5 years", "color": "#8bc34a"},
+    {"criteria_id": "<rc-uuid>", "scale_type": "likelihood", "level": 3, "name": "Medium", "description": "Once per year", "color": "#ff9800"},
+    {"criteria_id": "<rc-uuid>", "scale_type": "likelihood", "level": 4, "name": "High", "description": "Once per quarter", "color": "#f44336"},
+    {"criteria_id": "<rc-uuid>", "scale_type": "likelihood", "level": 5, "name": "Very High", "description": "Monthly or more", "color": "#b71c1c"},
+    {"criteria_id": "<rc-uuid>", "scale_type": "impact", "level": 1, "name": "Negligible", "color": "#4caf50"},
+    {"criteria_id": "<rc-uuid>", "scale_type": "impact", "level": 2, "name": "Minor", "color": "#8bc34a"},
+    {"criteria_id": "<rc-uuid>", "scale_type": "impact", "level": 3, "name": "Moderate", "color": "#ff9800"},
+    {"criteria_id": "<rc-uuid>", "scale_type": "impact", "level": 4, "name": "Major", "color": "#f44336"},
+    {"criteria_id": "<rc-uuid>", "scale_type": "impact", "level": 5, "name": "Catastrophic", "color": "#b71c1c"}
+  ])
+
+  batch_create_risk_levels(items=[
+    {"criteria_id": "<rc-uuid>", "level": 1, "name": "Low", "color": "#4caf50", "min_score": 1, "max_score": 5, "treatment_required": false},
+    {"criteria_id": "<rc-uuid>", "level": 2, "name": "Medium", "color": "#ff9800", "min_score": 6, "max_score": 12, "treatment_required": true},
+    {"criteria_id": "<rc-uuid>", "level": 3, "name": "High", "color": "#f44336", "min_score": 13, "max_score": 19, "treatment_required": true},
+    {"criteria_id": "<rc-uuid>", "level": 4, "name": "Critical", "color": "#b71c1c", "min_score": 20, "max_score": 25, "treatment_required": true}
+  ])
+
+### Step 2: Create assessment and risks
+  create_risk_assessment(name="Annual Risk Assessment 2025", risk_criteria_id="<rc-uuid>", methodology="iso27005", status="in_progress", assessor_id="<user-uuid>")
+
+  batch_create_risks(items=[
+    {"assessment_id": "<ra-uuid>", "name": "Ransomware encrypts production data", "status": "identified", "priority": "critical", "initial_likelihood": 4, "initial_impact": 5, "current_likelihood": 3, "current_impact": 5, "treatment_decision": "mitigate", "risk_owner_id": "<ciso-uuid>"},
+    {"assessment_id": "<ra-uuid>", "name": "Employee data leak via phishing", "status": "identified", "priority": "high", "initial_likelihood": 4, "initial_impact": 4, "current_likelihood": 3, "current_impact": 4, "treatment_decision": "mitigate"},
+    {"assessment_id": "<ra-uuid>", "name": "Power failure at primary DC", "status": "identified", "priority": "medium", "initial_likelihood": 2, "initial_impact": 4, "current_likelihood": 2, "current_impact": 2, "treatment_decision": "transfer"}
+  ])
+
+### Step 3: Create treatment plans
+  create_risk_treatment_plan(name="Anti-ransomware measures", risk_id="<risk1-uuid>", owner_id="<it-uuid>", target_date="2025-09-30", status="planned")
+
+  batch_create_treatment_actions(items=[
+    {"treatment_plan_id": "<rtp-uuid>", "name": "Deploy EDR on all endpoints", "responsible_id": "<it-uuid>", "due_date": "2025-06-30", "status": "planned"},
+    {"treatment_plan_id": "<rtp-uuid>", "name": "Implement immutable backups", "responsible_id": "<it-uuid>", "due_date": "2025-07-31", "status": "planned"},
+    {"treatment_plan_id": "<rtp-uuid>", "name": "Conduct ransomware response drill", "responsible_id": "<ciso-uuid>", "due_date": "2025-09-15", "status": "planned"}
+  ])
+
+### Step 4: Link risks to requirements
+  link_risk_requirements(risk_id="<risk1-uuid>", requirement_ids=["<req-a8.7-uuid>", "<req-a8.13-uuid>"])
+
+### Step 5: Finalize
+  update_risk_assessment(id="<ra-uuid>", status="completed")
+  approve_risk_assessment(id="<ra-uuid>")
+"""
+
+    ALL_TOPICS = {
+        "context": TOPIC_CONTEXT,
+        "assets": TOPIC_ASSETS,
+        "compliance": TOPIC_COMPLIANCE,
+        "risks": TOPIC_RISKS,
+        "batch": TOPIC_BATCH,
+        "workflow": TOPIC_WORKFLOW,
+        "permissions": TOPIC_PERMISSIONS,
+        "examples": TOPIC_EXAMPLES,
+    }
 
     def help_handler(user, arguments):
         topic = arguments.get("topic", "").strip().lower()
         if not topic:
             return HELP_TEXT
 
-        # Topic-specific help
-        topic_map = {
-            "context": "## Context Module\n\nEntities: scope, issue, stakeholder, expectation, objective, swot_analysis, swot_item, swot_strategy, role, activity, site, indicator, indicator_measurement, responsibility, tag\n\nAll context entities support CRUD operations. Scopes are the foundational organizational unit - most entities reference scopes via M2M.\n\nKey tools:\n- list_scopes / create_scope / approve_scope\n- list_stakeholders / create_stakeholder - include type (internal/external), category, influence/interest levels\n- list_issues / create_issue - strategic issues with type, category, priority\n- list_objectives / create_objective - linked to issues\n- list_swot_analysiss / create_swot_analysis - SWOT with items and strategies\n- list_indicators / create_indicator - KPIs with measurements\n- list_sites / create_site - physical/logical sites",
-            "assets": "## Assets Module\n\nEntities: essential_asset, support_asset, asset_dependency, asset_group, asset_valuation, supplier, supplier_type, supplier_type_requirement, supplier_requirement, supplier_requirement_review, supplier_dependency, site_asset_dependency, site_supplier_dependency\n\nTwo asset types:\n- Essential assets: business processes and information (with DIC valuation)\n- Support assets: IT infrastructure (inherits DIC from essential assets via dependencies)\n\nKey tools:\n- create_essential_asset - type: business_process|information, with confidentiality/integrity/availability levels (0-4 or negligible/low/medium/high/critical)\n- create_support_asset - type: hardware|software|network|person|site|service|paper\n- create_asset_dependency - links essential to support assets\n- create_supplier - type field is SupplierType ID (integer, not UUID). Use list_supplier_types first\n- create_supplier_dependency - dependency_type: provides|hosts|manages|develops|supports|licenses|maintains|other",
-            "compliance": "## Compliance Module\n\nEntities: framework, section, requirement, requirement_mapping, compliance_assessment, assessment_result, finding, action_plan\n\nWorkflow:\n1. Create frameworks with sections and requirements\n2. Create assessments referencing frameworks\n3. Create assessment_results for each requirement\n4. Create findings for non-conformities\n5. Create action_plans for remediation\n\nKey tools:\n- batch_create_requirements - bulk import requirements (e.g. ISO 27001 Annex A)\n- create_compliance_assessment - framework_ids is an array of framework UUIDs\n- create_assessment_result - compliance_status: not_assessed|compliant|minor_non_conformity|major_non_conformity|observation|not_applicable\n- action_plan_transition - transitions: start, submit, approve, refuse, cancel, complete\n- get_framework_compliance_summary - compliance stats by section",
-            "risks": "## Risks Module\n\nEntities: risk_criteria, scale_level, risk_level, risk_assessment, risk, risk_treatment_plan, treatment_action, risk_acceptance, threat, vulnerability, iso27005_risk\n\nWorkflow:\n1. Define risk_criteria with scale_levels (likelihood/impact scales) and risk_levels (risk thresholds)\n2. Create risk_assessment referencing criteria\n3. Create threats and vulnerabilities catalogs\n4. Create risks with likelihood/impact scoring\n5. Create treatment plans and actions\n\nKey tools:\n- create_risk - assessment (UUID), name, initial/current/residual likelihood and impact levels\n- create_threat - type: deliberate|accidental|environmental, source: external|internal|natural\n- create_vulnerability - category: configuration_weakness|missing_patch|design_flaw|coding_error|weak_authentication|insufficient_logging|lack_of_encryption|physical_vulnerability|organizational_weakness|human_factor\n- create_iso27005_risk - combined threat/vulnerability/impact analysis",
-            "batch": "## Batch Creation\n\nUse `batch_create_{entity}s` for bulk operations (max 500 items per call).\n\nBehavior: NON-ATOMIC. Each item is processed independently.\nValid items are created even if others fail.\n\nRequest: `{\"items\": [{...}, {...}, ...]}`\n\nResponse:\n```json\n{\n  \"status\": \"completed\" | \"completed_with_errors\",\n  \"total\": N,\n  \"created\": M,\n  \"errors\": E,\n  \"results\": [\n    {\"index\": 0, \"status\": \"created\", \"id\": \"uuid\", \"reference\": \"REF-1\"},\n    {\"index\": 1, \"status\": \"error\", \"errors\": \"validation message\"}\n  ]\n}\n```\n\nAvailable for ALL entities. Most useful for:\n- batch_create_requirements (populate framework)\n- batch_create_sections (framework structure)\n- batch_create_threats / batch_create_vulnerabilitys (catalogs)\n- batch_create_risks (risk register)\n- batch_create_suppliers (supplier inventory)",
-            "workflow": "## Action Plan Workflow\n\nAction plans follow a Kanban workflow with these statuses:\nnew -> in_progress -> submitted -> approved -> completed\n                                 -> refused (back to in_progress)\nAny status -> cancelled\n\nUse `action_plan_transition` to move between states:\n- start: new -> in_progress\n- submit: in_progress -> submitted\n- approve: submitted -> approved\n- refuse: submitted -> refused (requires comment)\n- complete: approved -> completed\n- cancel: any -> cancelled (requires comment)\n- reopen: refused -> in_progress\n\nTools:\n- action_plan_allowed_transitions(id) - get valid transitions\n- action_plan_transition(id, transition, comment) - execute transition\n- action_plan_transitions(id) - get transition history\n- action_plan_kanban() - board view grouped by status",
-            "permissions": "## Permissions\n\nAll tools check permissions via the `require_perm` decorator.\nPermission codenames follow: `module.feature.action`\n\nActions: read, create, update, delete, approve\n\nExamples:\n- context.scope.read, context.scope.create, context.scope.approve\n- assets.essential_asset.read, assets.supplier.update\n- compliance.requirement.create, compliance.assessment.approve\n- risks.risk.read, risks.threat.create\n- system.config.read, system.config.update\n\nSuperusers bypass all permission checks.\nUse list_permissions to see all available codenames.",
-        }
-
-        # Try exact match, then prefix match
-        result = topic_map.get(topic)
+        result = ALL_TOPICS.get(topic)
         if not result:
-            for key, value in topic_map.items():
+            for key, value in ALL_TOPICS.items():
                 if topic in key or key in topic:
                     result = value
                     break
         if not result:
-            available = ", ".join(sorted(topic_map.keys()))
+            available = ", ".join(sorted(ALL_TOPICS.keys()))
             result = f"Unknown topic '{topic}'. Available topics: {available}\n\nCall help without a topic for the full guide."
         return result
 
     server.register_tool(
         "help",
         "Get usage documentation for the Fairway MCP server. "
-        "Call without arguments for the full guide, or with a topic for focused help.",
+        "Call without arguments for the full guide, or with a topic for focused help. "
+        "Topics: context, assets, compliance, risks, batch, workflow, permissions, examples",
         {
             "type": "object",
             "properties": {
                 "topic": {
                     "type": "string",
-                    "description": "Optional topic: context, assets, compliance, risks, batch, workflow, permissions",
+                    "description": "Optional topic: context, assets, compliance, risks, batch, workflow, permissions, examples",
                 },
             },
         },
