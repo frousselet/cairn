@@ -426,12 +426,262 @@ _HTML_DESC = {"description": _html_field("Description")}
 
 def register_all_tools(server):
     """Register all MCP tools on the given McpServer instance."""
+    _register_help_tool(server)
     _register_context_tools(server)
     _register_assets_tools(server)
     _register_compliance_tools(server)
     _register_risks_tools(server)
     _register_accounts_tools(server)
     _register_reports_tools(server)
+
+
+# ── Help Tool ─────────────────────────────────────────────
+
+def _register_help_tool(server):
+    """Register the MCP help tool that describes how to use the Fairway MCP server."""
+
+    HELP_TEXT = """
+# Fairway MCP Server - Usage Guide
+
+Fairway is a Governance, Risk & Compliance (GRC) platform. This MCP server
+exposes its full API as tools organized by module.
+
+## Modules
+
+| Module | Prefix | Description |
+|--------|--------|-------------|
+| Context | context.* | Organizational context: scopes, issues, stakeholders, objectives, SWOT, roles, activities, sites, indicators |
+| Assets | assets.* | Asset management: essential assets, support assets, dependencies, groups, suppliers |
+| Compliance | compliance.* | Compliance: frameworks, sections, requirements, assessments, findings, action plans, mappings |
+| Risks | risks.* | Risk management: criteria, assessments, risks, treatment plans, threats, vulnerabilities, ISO 27005 |
+| Accounts | system.* | Users, groups, permissions, access logs, company settings |
+| Reports | compliance.report.* | SOA and audit report generation |
+
+## Tool Naming Convention
+
+Every entity follows a consistent CRUD pattern:
+
+| Operation | Tool pattern | Description |
+|-----------|-------------|-------------|
+| List | `list_{entity}s` | Paginated list. Params: search, limit (default 50), offset, plus entity-specific filters |
+| Get | `get_{entity}` | Get one by ID. Param: id (UUID) |
+| Create | `create_{entity}` | Create one. Returns the created object |
+| Batch Create | `batch_create_{entity}s` | Create up to 500 items. Param: items (array). Non-atomic: valid items are created even if others fail |
+| Update | `update_{entity}` | Update by ID. Param: id + fields to change |
+| Delete | `delete_{entity}` | Delete by ID. Param: id |
+| Approve | `approve_{entity}` | Approve (where workflow applies). Param: id |
+
+## Key Concepts
+
+### UUIDs
+All domain objects use UUID primary keys. Foreign key fields expect UUID strings.
+Exception: `SupplierType` uses integer auto-increment IDs.
+
+### Scopes
+Scopes represent organizational boundaries (e.g. departments, subsidiaries).
+Many entities have a `scopes` M2M field (array of scope UUIDs).
+Users only see objects within their assigned scopes (unless superuser).
+
+### Approval Workflow
+Entities with `is_approved` support a two-step workflow: create/update, then approve.
+Updating a major field resets approval and increments version.
+
+### References
+Most entities get an auto-generated reference (e.g. RISK-1, REQT-42).
+References are read-only and sequential per entity type.
+
+## CRUD Entities by Module
+
+### Context
+- `scope` - Organizational scopes (approve, filters: type/status)
+- `issue` - Strategic issues (approve, filters: type/category/priority/status)
+- `stakeholder` - Interested parties (approve, filters: type/category/influence_level/interest_level/status)
+- `expectation` - Stakeholder expectations (filters: stakeholder_id/type/priority)
+- `objective` - Strategic objectives (approve, filters: type/priority/status)
+- `swot_analysis` - SWOT analyses (approve, filters: status)
+- `swot_item` - SWOT items (filters: analysis_id/category/priority)
+- `swot_strategy` - SWOT strategies (filters: analysis_id/strategy_type/priority/status)
+- `role` - Roles (approve, filters: type/status)
+- `activity` - Activities (approve, filters: type/status/owner_id)
+- `site` - Sites (approve, filters: type/status/country)
+- `indicator` - KPIs (approve, filters: type/frequency/status/objective_id)
+- `indicator_measurement` - Indicator data points (filters: indicator_id)
+- `responsibility` - Role responsibilities (filters: role_id)
+- `tag` - Tags (list_tags, create_tag, delete_tag only)
+
+### Assets
+- `essential_asset` - Business processes & information (approve, filters: type/category/status/owner_id/data_classification/personal_data)
+- `support_asset` - IT infrastructure (approve, filters: type/category/status/environment/exposure_level/owner_id)
+- `asset_dependency` - Essential-to-support asset links (filters: essential_asset_id/support_asset_id/dependency_type/criticality)
+- `asset_group` - Asset groups (approve, filters: type/status/owner_id)
+- `asset_valuation` - DIC valuation records (filters: essential_asset_id)
+- `supplier` - Suppliers (approve, filters: type/criticality/status/owner_id/country)
+- `supplier_type` - Supplier type categories
+- `supplier_type_requirement` - Requirements per supplier type (filters: supplier_type_id)
+- `supplier_requirement` - Requirements on a supplier (filters: supplier_id/compliance_status)
+- `supplier_requirement_review` - Supplier requirement reviews (filters: supplier_requirement_id/result)
+- `supplier_dependency` - Support asset-to-supplier links (filters: support_asset_id/supplier_id)
+- `site_asset_dependency` - Site-to-asset links (approve, filters: support_asset_id/site_id/dependency_type/criticality)
+- `site_supplier_dependency` - Site-to-supplier links (approve, filters: site_id/supplier_id/dependency_type/criticality)
+
+### Compliance
+- `framework` - Compliance frameworks (approve, filters: type/category/status)
+- `section` - Framework sections (filters: framework_id/parent_section_id)
+- `requirement` - Compliance requirements (approve, filters: framework_id/section_id/type/compliance_status/priority/is_applicable)
+- `requirement_mapping` - Cross-framework mappings (filters: source_requirement_id/target_requirement_id/mapping_type)
+- `compliance_assessment` - Compliance assessments (custom CRUD, approve)
+- `assessment_result` - Assessment results per requirement (custom CRUD)
+- `finding` - Audit findings (custom CRUD, filters: assessment_id/finding_type)
+- `action_plan` - Remediation action plans (approve, filters: status/priority/owner_id/requirement_id)
+
+### Risks
+- `risk_criteria` - Risk evaluation criteria (filters: status)
+- `risk_assessment` - Risk assessments (approve, filters: status/assessor_id/risk_criteria_id)
+- `risk` - Individual risks (approve, filters: assessment_id/status/treatment_decision/priority/risk_owner_id)
+- `risk_treatment_plan` - Treatment plans (approve, filters: risk_id/status/owner_id)
+- `treatment_action` - Treatment plan actions (filters: treatment_plan_id/status)
+- `risk_acceptance` - Risk acceptance records (filters: risk_id/status/accepted_by_id)
+- `threat` - Threat catalog (approve, filters: type/source/status)
+- `vulnerability` - Vulnerability catalog (approve, filters: category/severity/status)
+- `iso27005_risk` - ISO 27005 risk analysis (filters: assessment_id/threat_id/vulnerability_id)
+- `scale_level` - Risk criteria scale levels (filters: criteria_id)
+- `risk_level` - Risk criteria risk levels (filters: criteria_id)
+
+## Special Tools
+
+### Compliance Assessment Workflow
+- `create_compliance_assessment` - Params: name, framework_ids (array of UUIDs), assessor_id, assessment_date, status
+- `action_plan_transition` - Move action plan through workflow. Params: id, transition (e.g. "start", "submit", "approve"), comment (required for refuse/cancel)
+- `action_plan_transitions` - Get transition history for an action plan
+- `action_plan_kanban` - Get Kanban board view of action plans
+- `action_plan_allowed_transitions` - Get valid transitions for an action plan
+- `list_action_plan_comments` / `create_action_plan_comment` - Comments on action plans
+
+### Risk-Requirement Linking
+- `list_risk_requirements` - List requirements linked to a risk (param: risk_id)
+- `list_requirement_risks` - List risks linked to a requirement (param: requirement_id)
+- `link_risk_requirements` - Add links (params: risk_id, requirement_ids)
+- `unlink_risk_requirements` - Remove links (params: risk_id, requirement_ids)
+- `set_risk_requirements` - Replace all links (params: risk_id, requirement_ids)
+
+### Reports
+- `generate_soa_report` - Generate Statement of Applicability (params: framework_id, title)
+- `generate_audit_report` - Generate audit report (params: assessment_id, title)
+- `list_reports` / `delete_report` - Manage generated reports
+
+### Supplier Logo
+- `update_supplier_logo` - Upload supplier logo from URL (params: id, image_url)
+
+### Framework Compliance
+- `get_framework_compliance_summary` - Compliance stats by section (param: framework_id)
+
+### Users & System
+- `list_users` / `get_user` / `get_me` - User management
+- `list_groups` / `get_group` - Group management
+- `list_permissions` - List all available permissions
+- `list_access_logs` - Audit access logs (filters: user_id, action, limit)
+- `get_company_settings` / `update_company_settings` - Company name and address
+
+## Batch Creation
+
+Use `batch_create_{entity}s` for bulk operations. Example:
+
+```json
+{
+  "items": [
+    {"name": "Item 1", "type": "mandatory", ...},
+    {"name": "Item 2", "type": "optional", ...}
+  ]
+}
+```
+
+Response format:
+```json
+{
+  "status": "completed" or "completed_with_errors",
+  "total": 2,
+  "created": 2,
+  "errors": 0,
+  "results": [
+    {"index": 0, "status": "created", "id": "uuid", "reference": "REQT-1"},
+    {"index": 1, "status": "created", "id": "uuid", "reference": "REQT-2"}
+  ]
+}
+```
+
+Failed items include error details: `{"index": 1, "status": "error", "errors": "..."}`
+
+## Typical Workflows
+
+### Populate a compliance framework
+1. `create_framework` with name, type, category
+2. `batch_create_sections` with framework ID and section hierarchy
+3. `batch_create_requirements` with framework_id, section_id, requirement_number, name, description
+
+### Run a risk assessment
+1. `create_risk_criteria` with scale and risk levels
+2. `create_risk_assessment` with criteria reference
+3. `batch_create_threats` and `batch_create_vulnerabilitys` for the catalog
+4. `batch_create_risks` linked to the assessment
+5. `create_risk_treatment_plan` for each risk needing treatment
+
+### Perform a compliance audit
+1. `create_compliance_assessment` with framework_ids
+2. `create_assessment_result` for each requirement (compliance_status, evidence)
+3. `create_finding` for non-conformities
+4. `create_action_plan` for remediation with `action_plan_transition` to advance workflow
+
+## Error Handling
+
+- Permission denied: `{"error": "Permission denied: <codename>"}`
+- Not found: `{"error": "<Entity> not found."}`
+- Validation error: `{"error": "<field details>"}`
+- All errors set `isError: true` in the response
+""".strip()
+
+    def help_handler(user, arguments):
+        topic = arguments.get("topic", "").strip().lower()
+        if not topic:
+            return HELP_TEXT
+
+        # Topic-specific help
+        topic_map = {
+            "context": "## Context Module\n\nEntities: scope, issue, stakeholder, expectation, objective, swot_analysis, swot_item, swot_strategy, role, activity, site, indicator, indicator_measurement, responsibility, tag\n\nAll context entities support CRUD operations. Scopes are the foundational organizational unit - most entities reference scopes via M2M.\n\nKey tools:\n- list_scopes / create_scope / approve_scope\n- list_stakeholders / create_stakeholder - include type (internal/external), category, influence/interest levels\n- list_issues / create_issue - strategic issues with type, category, priority\n- list_objectives / create_objective - linked to issues\n- list_swot_analysiss / create_swot_analysis - SWOT with items and strategies\n- list_indicators / create_indicator - KPIs with measurements\n- list_sites / create_site - physical/logical sites",
+            "assets": "## Assets Module\n\nEntities: essential_asset, support_asset, asset_dependency, asset_group, asset_valuation, supplier, supplier_type, supplier_type_requirement, supplier_requirement, supplier_requirement_review, supplier_dependency, site_asset_dependency, site_supplier_dependency\n\nTwo asset types:\n- Essential assets: business processes and information (with DIC valuation)\n- Support assets: IT infrastructure (inherits DIC from essential assets via dependencies)\n\nKey tools:\n- create_essential_asset - type: business_process|information, with confidentiality/integrity/availability levels (0-4 or negligible/low/medium/high/critical)\n- create_support_asset - type: hardware|software|network|person|site|service|paper\n- create_asset_dependency - links essential to support assets\n- create_supplier - type field is SupplierType ID (integer, not UUID). Use list_supplier_types first\n- create_supplier_dependency - dependency_type: provides|hosts|manages|develops|supports|licenses|maintains|other",
+            "compliance": "## Compliance Module\n\nEntities: framework, section, requirement, requirement_mapping, compliance_assessment, assessment_result, finding, action_plan\n\nWorkflow:\n1. Create frameworks with sections and requirements\n2. Create assessments referencing frameworks\n3. Create assessment_results for each requirement\n4. Create findings for non-conformities\n5. Create action_plans for remediation\n\nKey tools:\n- batch_create_requirements - bulk import requirements (e.g. ISO 27001 Annex A)\n- create_compliance_assessment - framework_ids is an array of framework UUIDs\n- create_assessment_result - compliance_status: not_assessed|compliant|minor_non_conformity|major_non_conformity|observation|not_applicable\n- action_plan_transition - transitions: start, submit, approve, refuse, cancel, complete\n- get_framework_compliance_summary - compliance stats by section",
+            "risks": "## Risks Module\n\nEntities: risk_criteria, scale_level, risk_level, risk_assessment, risk, risk_treatment_plan, treatment_action, risk_acceptance, threat, vulnerability, iso27005_risk\n\nWorkflow:\n1. Define risk_criteria with scale_levels (likelihood/impact scales) and risk_levels (risk thresholds)\n2. Create risk_assessment referencing criteria\n3. Create threats and vulnerabilities catalogs\n4. Create risks with likelihood/impact scoring\n5. Create treatment plans and actions\n\nKey tools:\n- create_risk - assessment (UUID), name, initial/current/residual likelihood and impact levels\n- create_threat - type: deliberate|accidental|environmental, source: external|internal|natural\n- create_vulnerability - category: configuration_weakness|missing_patch|design_flaw|coding_error|weak_authentication|insufficient_logging|lack_of_encryption|physical_vulnerability|organizational_weakness|human_factor\n- create_iso27005_risk - combined threat/vulnerability/impact analysis",
+            "batch": "## Batch Creation\n\nUse `batch_create_{entity}s` for bulk operations (max 500 items per call).\n\nBehavior: NON-ATOMIC. Each item is processed independently.\nValid items are created even if others fail.\n\nRequest: `{\"items\": [{...}, {...}, ...]}`\n\nResponse:\n```json\n{\n  \"status\": \"completed\" | \"completed_with_errors\",\n  \"total\": N,\n  \"created\": M,\n  \"errors\": E,\n  \"results\": [\n    {\"index\": 0, \"status\": \"created\", \"id\": \"uuid\", \"reference\": \"REF-1\"},\n    {\"index\": 1, \"status\": \"error\", \"errors\": \"validation message\"}\n  ]\n}\n```\n\nAvailable for ALL entities. Most useful for:\n- batch_create_requirements (populate framework)\n- batch_create_sections (framework structure)\n- batch_create_threats / batch_create_vulnerabilitys (catalogs)\n- batch_create_risks (risk register)\n- batch_create_suppliers (supplier inventory)",
+            "workflow": "## Action Plan Workflow\n\nAction plans follow a Kanban workflow with these statuses:\nnew -> in_progress -> submitted -> approved -> completed\n                                 -> refused (back to in_progress)\nAny status -> cancelled\n\nUse `action_plan_transition` to move between states:\n- start: new -> in_progress\n- submit: in_progress -> submitted\n- approve: submitted -> approved\n- refuse: submitted -> refused (requires comment)\n- complete: approved -> completed\n- cancel: any -> cancelled (requires comment)\n- reopen: refused -> in_progress\n\nTools:\n- action_plan_allowed_transitions(id) - get valid transitions\n- action_plan_transition(id, transition, comment) - execute transition\n- action_plan_transitions(id) - get transition history\n- action_plan_kanban() - board view grouped by status",
+            "permissions": "## Permissions\n\nAll tools check permissions via the `require_perm` decorator.\nPermission codenames follow: `module.feature.action`\n\nActions: read, create, update, delete, approve\n\nExamples:\n- context.scope.read, context.scope.create, context.scope.approve\n- assets.essential_asset.read, assets.supplier.update\n- compliance.requirement.create, compliance.assessment.approve\n- risks.risk.read, risks.threat.create\n- system.config.read, system.config.update\n\nSuperusers bypass all permission checks.\nUse list_permissions to see all available codenames.",
+        }
+
+        # Try exact match, then prefix match
+        result = topic_map.get(topic)
+        if not result:
+            for key, value in topic_map.items():
+                if topic in key or key in topic:
+                    result = value
+                    break
+        if not result:
+            available = ", ".join(sorted(topic_map.keys()))
+            result = f"Unknown topic '{topic}'. Available topics: {available}\n\nCall help without a topic for the full guide."
+        return result
+
+    server.register_tool(
+        "help",
+        "Get usage documentation for the Fairway MCP server. "
+        "Call without arguments for the full guide, or with a topic for focused help.",
+        {
+            "type": "object",
+            "properties": {
+                "topic": {
+                    "type": "string",
+                    "description": "Optional topic: context, assets, compliance, risks, batch, workflow, permissions",
+                },
+            },
+        },
+        help_handler,
+    )
 
 
 # ── Context Module ─────────────────────────────────────────
@@ -3448,8 +3698,9 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
     # Batch Create
     server.register_tool(
         f"batch_create_{entity_name}s",
-        f"Create multiple {display_name}s in a single atomic transaction. "
-        f"All items are created or none if any validation fails.",
+        f"Create multiple {display_name}s in one call (max 500). "
+        f"Non-atomic: valid items are created even if others fail. "
+        f"Returns per-item status with created count and errors.",
         {
             "type": "object",
             "properties": {
