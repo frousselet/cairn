@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-04-13
+
 ### Added
 
 - Management review export (ISO 27001 clause 9.3) with two output formats : PowerPoint presentation and Word meeting minutes
@@ -656,7 +658,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.4...HEAD
+[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.22.0...HEAD
+[0.22.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.4...v0.22.0
 [0.21.4]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.3...v0.21.4
 [0.21.3]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.2...v0.21.3
 [0.21.2]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.1...v0.21.2
