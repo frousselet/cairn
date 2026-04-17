@@ -13,6 +13,7 @@ router.register(r"swot-analyses", views.SwotAnalysisViewSet)
 router.register(r"roles", views.RoleViewSet)
 router.register(r"activities", views.ActivityViewSet)
 router.register(r"indicators", views.IndicatorViewSet)
+router.register(r"stakeholder-feedback", views.StakeholderFeedbackViewSet)
 router.register(r"tags", views.TagViewSet)
 
 # Nested routes for sub-entities

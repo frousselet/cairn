@@ -4659,6 +4659,515 @@ def _register_reports_tools(server):
         generate_management_review_docx_tool,
     )
 
+    # ═══════════════════════════════════════════════════════════════
+    # Persistent management reviews (ISO 27001:2022 clause 9.3)
+    # ═══════════════════════════════════════════════════════════════
+
+    MR_FIELDS = [
+        "id", "reference", "title", "description",
+        "frequency", "period_start", "period_end",
+        "planned_date", "held_date", "location", "status",
+        "facilitator", "approver", "next_review_date",
+        "summary", "is_approved", "created_at", "updated_at",
+    ]
+
+    @require_perm("reports.management_review.read")
+    def list_management_reviews(user, arguments):
+        """List management reviews with optional filters."""
+        MR = _get_model("reports", "ManagementReview")
+        qs = MR.objects.all()
+        status_filter = arguments.get("status")
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        scope_id = arguments.get("scope_id")
+        if scope_id:
+            qs = qs.filter(scopes__id=scope_id)
+        qs = qs.order_by("-planned_date")
+        return _serialize_qs(
+            qs, fields=MR_FIELDS,
+            limit=int(arguments.get("limit", 50)),
+            offset=int(arguments.get("offset", 0)),
+        )
+
+    server.register_tool(
+        "list_management_reviews",
+        "List management reviews (ISO 27001:2022 clause 9.3). Filter by status or scope.",
+        {
+            "type": "object",
+            "properties": {
+                "status": {"type": "string", "description": "planned|in_preparation|held|closed|cancelled"},
+                "scope_id": {"type": "string"},
+                "limit": {"type": "integer", "default": 50},
+                "offset": {"type": "integer", "default": 0},
+            },
+        },
+        list_management_reviews,
+    )
+
+    @require_perm("reports.management_review.read")
+    def get_management_review(user, arguments):
+        MR = _get_model("reports", "ManagementReview")
+        review_id = arguments.get("id")
+        if not review_id:
+            return _error("id is required")
+        try:
+            review = MR.objects.get(pk=review_id)
+        except MR.DoesNotExist:
+            return _error(f"Management review {review_id} not found")
+        data = _serialize_obj(review, MR_FIELDS)
+        data["decisions_count"] = review.decisions.count()
+        data["isms_changes_count"] = review.isms_changes.count()
+        data["participants_count"] = review.participants.count()
+        data["has_snapshot"] = review.has_snapshot
+        return data
+
+    server.register_tool(
+        "get_management_review",
+        "Get a management review by ID.",
+        {"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]},
+        get_management_review,
+    )
+
+    @require_perm("reports.management_review.create")
+    def create_management_review(user, arguments):
+        MR = _get_model("reports", "ManagementReview")
+        User = _get_model("accounts", "User")
+        required = ["title", "frequency", "period_start", "period_end", "planned_date", "facilitator_id"]
+        for field in required:
+            if not arguments.get(field):
+                return _error(f"{field} is required")
+        try:
+            facilitator = User.objects.get(pk=arguments["facilitator_id"])
+        except User.DoesNotExist:
+            return _error("facilitator not found")
+        review = MR.objects.create(
+            title=arguments["title"],
+            description=arguments.get("description", ""),
+            frequency=arguments["frequency"],
+            period_start=arguments["period_start"],
+            period_end=arguments["period_end"],
+            planned_date=arguments["planned_date"],
+            location=arguments.get("location", ""),
+            facilitator=facilitator,
+            created_by=user,
+        )
+        scope_ids = arguments.get("scope_ids") or []
+        if scope_ids:
+            review.scopes.set(scope_ids)
+        return _serialize_obj(review, MR_FIELDS)
+
+    server.register_tool(
+        "create_management_review",
+        "Create a management review (ISO 27001:2022 clause 9.3).",
+        {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "description": {"type": "string"},
+                "frequency": {"type": "string", "description": "quarterly|semiannual|annual|exceptional"},
+                "period_start": {"type": "string", "description": "YYYY-MM-DD"},
+                "period_end": {"type": "string", "description": "YYYY-MM-DD"},
+                "planned_date": {"type": "string", "description": "YYYY-MM-DD"},
+                "location": {"type": "string"},
+                "facilitator_id": {"type": "string"},
+                "scope_ids": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["title", "frequency", "period_start", "period_end", "planned_date", "facilitator_id"],
+        },
+        create_management_review,
+    )
+
+    @require_perm("reports.management_review.update")
+    def transition_management_review(user, arguments):
+        MR = _get_model("reports", "ManagementReview")
+        review_id = arguments.get("id")
+        target = arguments.get("target_status")
+        comment = arguments.get("comment", "")
+        if not review_id or not target:
+            return _error("id and target_status are required")
+        try:
+            review = MR.objects.get(pk=review_id)
+        except MR.DoesNotExist:
+            return _error("review not found")
+        if target == "closed" and not user.has_perm("reports.management_review.approve"):
+            return _error("Closure requires approve permission")
+        try:
+            review.transition_to(target, user, comment=comment)
+        except ValueError as exc:
+            return _error(str(exc))
+        if review.status == "closed":
+            from reports.management_review import gather_management_review_data
+            from reports.management_review_views import _serialize_snapshot
+            try:
+                scope_ids = list(review.scopes.values_list("id", flat=True))
+                data = gather_management_review_data(
+                    user, scope_ids=scope_ids,
+                    period_start=review.period_start,
+                    period_end=review.period_end,
+                )
+                review.take_snapshot(_serialize_snapshot(data))
+            except Exception:
+                pass
+        return _serialize_obj(review, MR_FIELDS)
+
+    server.register_tool(
+        "transition_management_review",
+        "Transition a management review to a new status (planned -> in_preparation -> held -> closed, or cancelled).",
+        {
+            "type": "object",
+            "properties": {
+                "id": {"type": "string"},
+                "target_status": {"type": "string"},
+                "comment": {"type": "string"},
+            },
+            "required": ["id", "target_status"],
+        },
+        transition_management_review,
+    )
+
+    @require_perm("reports.management_review.read")
+    def export_management_review(user, arguments):
+        """Return a base64-encoded export (DOCX or PPTX) of a management review."""
+        import base64 as _b64
+        MR = _get_model("reports", "ManagementReview")
+        review_id = arguments.get("id")
+        fmt = arguments.get("format", "docx")
+        try:
+            review = MR.objects.get(pk=review_id)
+        except MR.DoesNotExist:
+            return _error("review not found")
+        scope_ids = list(review.scopes.values_list("id", flat=True))
+        from reports.management_review import (
+            generate_management_review_docx,
+            generate_management_review_pptx,
+        )
+        gen = generate_management_review_pptx if fmt == "pptx" else generate_management_review_docx
+        try:
+            filename, data = gen(
+                user, scope_ids=scope_ids,
+                period_start=review.period_start,
+                period_end=review.period_end,
+                review=review,
+            )
+        except Exception as exc:
+            return _error(f"Export failed: {exc}")
+        return {
+            "filename": filename,
+            "format": fmt,
+            "content_base64": _b64.b64encode(data).decode("ascii"),
+            "size_bytes": len(data),
+        }
+
+    server.register_tool(
+        "export_management_review",
+        "Export a management review as DOCX (meeting minutes) or PPTX (presentation). Returns base64-encoded content.",
+        {
+            "type": "object",
+            "properties": {
+                "id": {"type": "string"},
+                "format": {"type": "string", "description": "docx|pptx", "default": "docx"},
+            },
+            "required": ["id"],
+        },
+        export_management_review,
+    )
+
+    DECISION_FIELDS = [
+        "id", "reference", "review", "category", "input_clause",
+        "title", "description", "owner", "due_date", "priority",
+        "status", "linked_action_plan", "created_at", "updated_at",
+    ]
+
+    @require_perm("reports.management_review.read")
+    def list_management_review_decisions(user, arguments):
+        D = _get_model("reports", "ManagementReviewDecision")
+        qs = D.objects.all()
+        review_id = arguments.get("review_id")
+        if review_id:
+            qs = qs.filter(review_id=review_id)
+        status_filter = arguments.get("status")
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        return _serialize_qs(qs, fields=DECISION_FIELDS,
+                             limit=int(arguments.get("limit", 50)),
+                             offset=int(arguments.get("offset", 0)))
+
+    server.register_tool(
+        "list_management_review_decisions",
+        "List decisions (ISO 27001:2022 clause 9.3.3 outputs). Filter by review or status.",
+        {
+            "type": "object",
+            "properties": {
+                "review_id": {"type": "string"},
+                "status": {"type": "string"},
+                "limit": {"type": "integer", "default": 50},
+                "offset": {"type": "integer", "default": 0},
+            },
+        },
+        list_management_review_decisions,
+    )
+
+    @require_perm("reports.management_review.update")
+    def create_management_review_decision(user, arguments):
+        D = _get_model("reports", "ManagementReviewDecision")
+        MR = _get_model("reports", "ManagementReview")
+        User = _get_model("accounts", "User")
+        review_id = arguments.get("review_id")
+        if not review_id:
+            return _error("review_id is required")
+        try:
+            review = MR.objects.get(pk=review_id)
+        except MR.DoesNotExist:
+            return _error("review not found")
+        owner = None
+        if arguments.get("owner_id"):
+            try:
+                owner = User.objects.get(pk=arguments["owner_id"])
+            except User.DoesNotExist:
+                return _error("owner not found")
+        decision = D.objects.create(
+            review=review,
+            category=arguments.get("category", "improvement"),
+            input_clause=arguments.get("input_clause", ""),
+            title=arguments.get("title", ""),
+            description=arguments.get("description", ""),
+            rationale=arguments.get("rationale", ""),
+            owner=owner,
+            due_date=arguments.get("due_date") or None,
+            priority=arguments.get("priority", "medium"),
+            status=arguments.get("status", "pending"),
+        )
+        return _serialize_obj(decision, DECISION_FIELDS)
+
+    server.register_tool(
+        "create_management_review_decision",
+        "Record a decision from a management review (ISO 27001:2022 clause 9.3.3).",
+        {
+            "type": "object",
+            "properties": {
+                "review_id": {"type": "string"},
+                "category": {"type": "string", "description": "improvement|isms_change|resource_allocation|risk_acceptance|objective_adjustment|policy_update|other"},
+                "input_clause": {"type": "string", "description": "9.3.2 clause letter: a|b|c|d1|d2|d3|d4|e|f|g"},
+                "title": {"type": "string"},
+                "description": {"type": "string"},
+                "rationale": {"type": "string"},
+                "owner_id": {"type": "string"},
+                "due_date": {"type": "string"},
+                "priority": {"type": "string"},
+                "status": {"type": "string"},
+            },
+            "required": ["review_id", "title", "description"],
+        },
+        create_management_review_decision,
+    )
+
+    @require_perm("reports.management_review.update")
+    def promote_decision_to_action_plan(user, arguments):
+        """Create a ComplianceActionPlan from a decision and link them."""
+        D = _get_model("reports", "ManagementReviewDecision")
+        AP = _get_model("compliance", "ComplianceActionPlan")
+        decision_id = arguments.get("decision_id")
+        if not user.has_perm("compliance.action_plan.create"):
+            return _error("Missing compliance.action_plan.create permission")
+        try:
+            decision = D.objects.get(pk=decision_id)
+        except D.DoesNotExist:
+            return _error("decision not found")
+        if decision.linked_action_plan_id:
+            return _error("Decision already linked to an action plan")
+        plan = AP.objects.create(
+            name=decision.title,
+            description=decision.description,
+            gap_description=decision.description,
+            remediation_plan=decision.rationale or decision.description,
+            priority=decision.priority,
+            owner=decision.owner or user,
+            target_date=decision.due_date,
+            originating_review=decision.review,
+            created_by=user,
+        )
+        plan.scopes.set(decision.review.scopes.all())
+        decision.linked_action_plan = plan
+        if decision.status == "pending":
+            decision.status = "in_progress"
+        decision.save(update_fields=["linked_action_plan", "status", "updated_at"])
+        return {"action_plan_id": str(plan.pk), "action_plan_reference": plan.reference}
+
+    server.register_tool(
+        "promote_decision_to_action_plan",
+        "Create a ComplianceActionPlan from a management review decision.",
+        {
+            "type": "object",
+            "properties": {"decision_id": {"type": "string"}},
+            "required": ["decision_id"],
+        },
+        promote_decision_to_action_plan,
+    )
+
+    ISMS_CHANGE_FIELDS = [
+        "id", "reference", "review", "change_type", "title",
+        "description", "owner", "status", "target_date", "implemented_at",
+        "created_at", "updated_at",
+    ]
+
+    @require_perm("reports.management_review.read")
+    def list_isms_changes(user, arguments):
+        C = _get_model("reports", "IsmsChange")
+        qs = C.objects.all()
+        review_id = arguments.get("review_id")
+        if review_id:
+            qs = qs.filter(review_id=review_id)
+        return _serialize_qs(qs, fields=ISMS_CHANGE_FIELDS,
+                             limit=int(arguments.get("limit", 50)),
+                             offset=int(arguments.get("offset", 0)))
+
+    server.register_tool(
+        "list_isms_changes",
+        "List ISMS changes decided during management reviews (ISO 27001:2022 clause 9.3.3).",
+        {
+            "type": "object",
+            "properties": {
+                "review_id": {"type": "string"},
+                "limit": {"type": "integer", "default": 50},
+                "offset": {"type": "integer", "default": 0},
+            },
+        },
+        list_isms_changes,
+    )
+
+    @require_perm("reports.management_review.update")
+    def create_isms_change(user, arguments):
+        C = _get_model("reports", "IsmsChange")
+        MR = _get_model("reports", "ManagementReview")
+        User = _get_model("accounts", "User")
+        review_id = arguments.get("review_id")
+        owner_id = arguments.get("owner_id")
+        if not review_id or not owner_id:
+            return _error("review_id and owner_id are required")
+        try:
+            review = MR.objects.get(pk=review_id)
+            owner = User.objects.get(pk=owner_id)
+        except (MR.DoesNotExist, User.DoesNotExist):
+            return _error("review or owner not found")
+        change = C.objects.create(
+            review=review,
+            change_type=arguments.get("change_type", "other"),
+            title=arguments.get("title", ""),
+            description=arguments.get("description", ""),
+            impact_analysis=arguments.get("impact_analysis", ""),
+            affected_policies=arguments.get("affected_policies", ""),
+            owner=owner,
+            status=arguments.get("status", "proposed"),
+            target_date=arguments.get("target_date") or None,
+        )
+        return _serialize_obj(change, ISMS_CHANGE_FIELDS)
+
+    server.register_tool(
+        "create_isms_change",
+        "Record an ISMS change decided during a management review.",
+        {
+            "type": "object",
+            "properties": {
+                "review_id": {"type": "string"},
+                "change_type": {"type": "string", "description": "scope|policy|control|organization|resource|process|other"},
+                "title": {"type": "string"},
+                "description": {"type": "string"},
+                "impact_analysis": {"type": "string"},
+                "affected_policies": {"type": "string"},
+                "owner_id": {"type": "string"},
+                "status": {"type": "string"},
+                "target_date": {"type": "string"},
+            },
+            "required": ["review_id", "title", "description", "owner_id"],
+        },
+        create_isms_change,
+    )
+
+    FEEDBACK_FIELDS = [
+        "id", "reference", "stakeholder", "channel", "received_date",
+        "subject", "content", "sentiment", "severity", "status",
+        "created_at", "updated_at",
+    ]
+
+    @require_perm("context.stakeholder_feedback.read")
+    def list_stakeholder_feedback(user, arguments):
+        F = _get_model("context", "StakeholderFeedback")
+        qs = F.objects.all()
+        stakeholder_id = arguments.get("stakeholder_id")
+        if stakeholder_id:
+            qs = qs.filter(stakeholder_id=stakeholder_id)
+        status_filter = arguments.get("status")
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        return _serialize_qs(qs, fields=FEEDBACK_FIELDS,
+                             limit=int(arguments.get("limit", 50)),
+                             offset=int(arguments.get("offset", 0)))
+
+    server.register_tool(
+        "list_stakeholder_feedback",
+        "List formal stakeholder feedback (ISO 27001:2022 clause 9.3.2.e).",
+        {
+            "type": "object",
+            "properties": {
+                "stakeholder_id": {"type": "string"},
+                "status": {"type": "string"},
+                "limit": {"type": "integer", "default": 50},
+                "offset": {"type": "integer", "default": 0},
+            },
+        },
+        list_stakeholder_feedback,
+    )
+
+    @require_perm("context.stakeholder_feedback.create")
+    def create_stakeholder_feedback(user, arguments):
+        F = _get_model("context", "StakeholderFeedback")
+        S = _get_model("context", "Stakeholder")
+        stakeholder_id = arguments.get("stakeholder_id")
+        if not stakeholder_id:
+            return _error("stakeholder_id is required")
+        try:
+            stakeholder = S.objects.get(pk=stakeholder_id)
+        except S.DoesNotExist:
+            return _error("stakeholder not found")
+        feedback = F.objects.create(
+            stakeholder=stakeholder,
+            channel=arguments.get("channel", "other"),
+            received_date=arguments.get("received_date"),
+            subject=arguments.get("subject", ""),
+            content=arguments.get("content", ""),
+            sentiment=arguments.get("sentiment", ""),
+            severity=arguments.get("severity", ""),
+            status=arguments.get("status", "new"),
+            response=arguments.get("response", ""),
+            created_by=user,
+        )
+        scope_ids = arguments.get("scope_ids") or []
+        if scope_ids:
+            feedback.scopes.set(scope_ids)
+        return _serialize_obj(feedback, FEEDBACK_FIELDS)
+
+    server.register_tool(
+        "create_stakeholder_feedback",
+        "Record formal feedback from an interested party (ISO 27001:2022 clause 9.3.2.e).",
+        {
+            "type": "object",
+            "properties": {
+                "stakeholder_id": {"type": "string"},
+                "channel": {"type": "string", "description": "survey|meeting|complaint|email|audit|incident|other"},
+                "received_date": {"type": "string"},
+                "subject": {"type": "string"},
+                "content": {"type": "string"},
+                "sentiment": {"type": "string"},
+                "severity": {"type": "string"},
+                "status": {"type": "string"},
+                "response": {"type": "string"},
+                "scope_ids": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["stakeholder_id", "received_date", "subject", "content"],
+        },
+        create_stakeholder_feedback,
+    )
+
     # ── Company Settings ───────────────────────────────────
 
     company_fields = ["id", "name", "address", "updated_at"]

@@ -16,6 +16,7 @@ from context.models import (
     Site,
     Stakeholder,
     StakeholderExpectation,
+    StakeholderFeedback,
     SwotAnalysis,
     SwotItem,
     SwotStrategy,
@@ -46,6 +47,7 @@ from .serializers import (
     ScopeSerializer,
     SiteSerializer,
     StakeholderExpectationSerializer,
+    StakeholderFeedbackSerializer,
     StakeholderListSerializer,
     StakeholderSerializer,
     SwotAnalysisListSerializer,
@@ -412,3 +414,12 @@ class IndicatorMeasurementViewSet(viewsets.ModelViewSet):
         )
         indicator.current_value = measurement.value
         indicator.save(update_fields=["current_value", "updated_at"])
+
+
+class StakeholderFeedbackViewSet(ScopeFilterAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+    queryset = StakeholderFeedback.objects.select_related("stakeholder").all()
+    serializer_class = StakeholderFeedbackSerializer
+    permission_classes = [ContextPermission]
+    permission_feature = "stakeholder_feedback"
+    search_fields = ["subject", "content"]
+    ordering_fields = ["received_date", "severity", "status", "created_at"]

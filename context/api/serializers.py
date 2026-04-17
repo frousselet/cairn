@@ -12,6 +12,7 @@ from context.models import (
     Site,
     Stakeholder,
     StakeholderExpectation,
+    StakeholderFeedback,
     SwotAnalysis,
     SwotItem,
     SwotStrategy,
@@ -283,3 +284,20 @@ class IndicatorListSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "reference", "created_at"]
+
+
+class StakeholderFeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StakeholderFeedback
+        fields = [
+            "id", "reference", "stakeholder", "channel", "received_date",
+            "subject", "content", "sentiment", "severity", "status", "response",
+            "linked_issues", "linked_expectations",
+            "scopes", "tags",
+            "is_approved", "approved_by", "approved_at",
+            "created_by", "created_at", "updated_at",
+        ]
+        read_only_fields = [
+            "id", "reference", "created_by", "created_at", "updated_at",
+            "is_approved", "approved_by", "approved_at",
+        ]
