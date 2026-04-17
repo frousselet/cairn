@@ -73,6 +73,14 @@ class ComplianceActionPlan(ScopedModel):
         choices=ActionPlanStatus.choices,
         default=ActionPlanStatus.NEW,
     )
+    originating_review = models.ForeignKey(
+        "reports.ManagementReview",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="originated_action_plans",
+        verbose_name=_("Originating management review"),
+    )
 
     history = HistoricalRecords()
 

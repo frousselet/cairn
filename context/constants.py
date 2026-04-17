@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 
 
 class Status(models.TextChoices):
@@ -261,3 +262,36 @@ class SiteType(models.TextChoices):
     DATACENTER = "datacenter", _("Datacenter")
     REMOTE = "site_distant", _("Remote site")
     OTHER = "autre", _("Other")
+
+
+# ── Stakeholder feedback (ISO 27001:2022 clause 9.3.2.e) ──
+
+class FeedbackChannel(models.TextChoices):
+    SURVEY = "survey", _("Survey")
+    MEETING = "meeting", _("Meeting")
+    COMPLAINT = "complaint", _("Complaint")
+    EMAIL = "email", _("Email")
+    AUDIT = "audit", pgettext_lazy("feedback channel", "Audit")
+    INCIDENT = "incident", _("Incident")
+    OTHER = "other", pgettext_lazy("feedback channel", "Other")
+
+
+class FeedbackSentiment(models.TextChoices):
+    POSITIVE = "positive", _("Positive")
+    NEUTRAL = "neutral", _("Neutral")
+    NEGATIVE = "negative", _("Negative")
+    MIXED = "mixed", _("Mixed")
+
+
+class FeedbackSeverity(models.TextChoices):
+    LOW = "low", pgettext_lazy("feedback severity", "Low")
+    MEDIUM = "medium", pgettext_lazy("feedback severity", "Medium")
+    HIGH = "high", pgettext_lazy("feedback severity", "High")
+    CRITICAL = "critical", pgettext_lazy("feedback severity", "Critical")
+
+
+class FeedbackStatus(models.TextChoices):
+    NEW = "new", _("New")
+    UNDER_REVIEW = "under_review", pgettext_lazy("feedback status", "Under review")
+    ADDRESSED = "addressed", _("Addressed")
+    CLOSED = "closed", pgettext_lazy("feedback status", "Closed")

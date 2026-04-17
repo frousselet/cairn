@@ -68,6 +68,14 @@ class RiskTreatmentPlan(BaseModel):
         choices=TreatmentPlanStatus.choices,
         default=TreatmentPlanStatus.PLANNED,
     )
+    originating_review = models.ForeignKey(
+        "reports.ManagementReview",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="originated_treatment_plans",
+        verbose_name=_("Originating management review"),
+    )
     history = HistoricalRecords()
 
     class Meta:

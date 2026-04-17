@@ -88,6 +88,10 @@ PERMISSION_REGISTRY = {
             "actions": ["create", "read", "update", "delete", "approve"],
             "label": _("Indicators"),
         },
+        "stakeholder_feedback": {
+            "actions": ["create", "read", "update", "delete"],
+            "label": _("Stakeholder feedback"),
+        },
         "site": {
             "actions": ["create", "read", "update", "delete", "approve"],
             "label": _("Sites"),
@@ -235,6 +239,10 @@ PERMISSION_REGISTRY = {
         "report": {
             "actions": ["create", "read", "delete"],
             "label": _("Reports"),
+        },
+        "management_review": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("Management reviews"),
         },
     },
     "system": {

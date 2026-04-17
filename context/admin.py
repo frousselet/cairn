@@ -13,6 +13,7 @@ from .models import (
     Site,
     Stakeholder,
     StakeholderExpectation,
+    StakeholderFeedback,
     SwotAnalysis,
     SwotItem,
     Tag,
@@ -145,3 +146,17 @@ class IndicatorAdmin(SimpleHistoryAdmin):
     readonly_fields = ("id", "reference", "created_at", "updated_at")
     filter_horizontal = ("scopes", "tags")
     inlines = [IndicatorMeasurementInline]
+
+
+@admin.register(StakeholderFeedback)
+class StakeholderFeedbackAdmin(SimpleHistoryAdmin):
+    list_display = (
+        "reference", "subject", "stakeholder", "channel",
+        "sentiment", "severity", "status", "received_date",
+    )
+    list_filter = ("channel", "sentiment", "severity", "status")
+    search_fields = ("reference", "subject", "content")
+    readonly_fields = ("id", "reference", "created_at", "updated_at")
+    filter_horizontal = (
+        "scopes", "linked_issues", "linked_expectations", "tags",
+    )

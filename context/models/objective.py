@@ -80,6 +80,14 @@ class Objective(ScopedModel):
     # M2M to Measure omitted — module not yet implemented
     # linked_measures = models.ManyToManyField("measures.Measure", ...)
     review_date = models.DateField(_("Next review date"), null=True, blank=True)
+    originating_review = models.ForeignKey(
+        "reports.ManagementReview",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="originated_objectives",
+        verbose_name=_("Originating management review"),
+    )
 
     history = HistoricalRecords()
 

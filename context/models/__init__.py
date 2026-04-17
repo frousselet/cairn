@@ -9,6 +9,7 @@ from .swot import SwotAnalysis, SwotItem, SwotStrategy
 from .role import Role, Responsibility
 from .activity import Activity
 from .indicator import Indicator, IndicatorMeasurement
+from .stakeholder_feedback import StakeholderFeedback
 
 __all__ = [
     "Tag",
@@ -29,4 +30,5 @@ __all__ = [
     "Activity",
     "Indicator",
     "IndicatorMeasurement",
+    "StakeholderFeedback",
 ]
