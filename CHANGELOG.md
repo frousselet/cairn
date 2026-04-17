@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Persistent management review workflow (ISO 27001:2022 clause 9.3) with full life cycle (planned, in_preparation, held, closed, cancelled), horizontal stepper, snapshot-based auditability, and 2-column detail layout
+- `ManagementReview` model (title, frequency, period, planned/held dates, facilitator, approver, scopes, agenda, summary, next review date)
+- `ManagementReviewDecision` for clause 9.3.3 outputs, with category, input clause, owner, due date, priority, status, and promote-to-action-plan flow
+- `IsmsChange` for recording scope/policy/control/resource changes decided during reviews (clause 9.3.3)
+- `ManagementReviewParticipant` (internal + external) with attendance tracking and signature fields
+- `ManagementReviewComment` and `ManagementReviewTransition` for audit trail
+- `StakeholderFeedback` in the context app (formal feedback channel, clause 9.3.2.e) with channel, sentiment, severity, and status
+- Retrochaining FKs (`originating_review`) on `ComplianceActionPlan`, `RiskTreatmentPlan`, and `Objective`
+- REST API under `/api/v1/reports/management-reviews/`, `/api/v1/reports/decisions/`, `/api/v1/reports/isms-changes/`, and `/api/v1/context/stakeholder-feedback/`
+- Ten new MCP tools: `list_management_reviews`, `get_management_review`, `create_management_review`, `transition_management_review`, `export_management_review`, `list_management_review_decisions`, `create_management_review_decision`, `promote_decision_to_action_plan`, `list_isms_changes`, `create_isms_change`, `list_stakeholder_feedback`, `create_stakeholder_feedback`
+- New permissions `reports.management_review.{create,read,update,delete,approve}` and `context.stakeholder_feedback.{create,read,update,delete}`, auto-assigned to the six system groups
+- Enhanced PPTX/DOCX export consumes a persistent review: adds decisions and ISMS changes sections, pre-fills signatures from participants, replaces placeholders with actual summary and next review date
+
+### Changed
+
+- Management review export now accepts a `review` argument and hydrates from `snapshot_data` when the review is closed, ensuring exports remain immutable for audit purposes
+
 ## [0.22.0] - 2026-04-13
 
 ### Added

@@ -125,6 +125,8 @@ Manage your organisation's security posture, track compliance with regulatory fr
 | Calendar & iCal | Unified calendar view across all modules with iCal subscription feed and per-user tokens |
 | Global Search | Multi-category search across all domain objects |
 | Reports | Configurable report generation (SoA PDF, Audit report PDF, Management review PPTX/DOCX) with status tracking |
+| Management reviews | Persistent ISO 27001:2022 clause 9.3 workflow with life cycle, decisions, ISMS changes, participants, snapshot-based auditability, and retrochaining to action plans, treatment plans, and objectives |
+| Stakeholder feedback | Formal feedback channel (clause 9.3.2.e) with sentiment, severity, and traceability to issues and expectations |
 | Approval Workflows | Two-step approval (submit / approve) on all domain models with dedicated permissions |
 | Audit Trail | Full change history on every model via django-simple-history |
 | Versioning | Automatic version increment on all domain objects |
@@ -281,6 +283,18 @@ Additional tools:
 | `generate_audit_report` | Generate an audit report PDF for a completed assessment |
 | `generate_management_review_pptx` | Generate a management review PowerPoint presentation (ISO 27001 clause 9.3) |
 | `generate_management_review_docx` | Generate a management review Word meeting minutes (ISO 27001 clause 9.3) |
+| `list_management_reviews` | List persistent management reviews (ISO 27001:2022 clause 9.3) with status and scope filters |
+| `get_management_review` | Get a management review with decision/change counts and snapshot state |
+| `create_management_review` | Create a persistent management review |
+| `transition_management_review` | Transition a management review through its life cycle (auto-snapshot on closure) |
+| `export_management_review` | Export a management review as DOCX or PPTX (base64) |
+| `list_management_review_decisions` | List decisions recorded during management reviews (clause 9.3.3 outputs) |
+| `create_management_review_decision` | Record a decision from a management review |
+| `promote_decision_to_action_plan` | Create a ComplianceActionPlan from a decision and link them |
+| `list_isms_changes` | List ISMS changes decided during management reviews |
+| `create_isms_change` | Record an ISMS change decided during a management review |
+| `list_stakeholder_feedback` | List formal stakeholder feedback (clause 9.3.2.e) |
+| `create_stakeholder_feedback` | Record formal feedback from an interested party |
 | `delete_report` | Delete a generated report |
 | `get_company_settings` | Get company settings (name, address) |
 | `update_company_settings` | Update company settings |
