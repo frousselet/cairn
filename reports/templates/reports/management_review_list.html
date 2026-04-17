@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Management reviews" %} - Fairway{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="mb-0">{% trans "Management reviews" %}</h1>
+  <div class="d-flex gap-2">
+    {% if perms.reports.management_review.create %}
+    <a href="{% url 'reports:management-review-new' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>{% trans "New review" %}
+    </a>
+    {% endif %}
+    <a href="{% url 'reports:report-list' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-file-earmark-text me-1"></i>{% trans "Generated reports" %}
+    </a>
+  </div>
+</div>
+
+<form method="get" class="mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label small text-muted mb-1">{% trans "Search" %}</label>
+      <input type="text" name="q" value="{{ q }}" class="form-control"
+             placeholder="{% trans 'Title, reference, description' %}">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small text-muted mb-1">{% trans "Status" %}</label>
+      <select name="status" class="form-select">
+        <option value="">{% trans "All statuses" %}</option>
+        {% for value, label in statuses %}
+        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="submit" class="btn btn-primary flex-grow-1">
+        <i class="bi bi-search me-1"></i>{% trans "Filter" %}
+      </button>
+      <a href="{% url 'reports:management-review-list' %}" class="btn btn-outline-secondary">
+        {% trans "Clear" %}
+      </a>
+    </div>
+  </div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>{% trans "Reference" %}</th>
+          <th>{% trans "Title" %}</th>
+          <th>{% trans "Period" %}</th>
+          <th>{% trans "Planned" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Facilitator" %}</th>
+          <th class="text-end">{% trans "Decisions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for review in reviews %}
+        <tr>
+          <td><a href="{% url 'reports:management-review-detail' review.pk %}" class="ref">{{ review.reference }}</a></td>
+          <td><a href="{% url 'reports:management-review-detail' review.pk %}">{{ review.title }}</a></td>
+          <td class="small text-muted">{{ review.period_start|date:"d/m/Y" }} - {{ review.period_end|date:"d/m/Y" }}</td>
+          <td class="small">{{ review.planned_date|date:"d/m/Y" }}</td>
+          <td><span class="badge bg-secondary">{{ review.get_status_display }}</span></td>
+          <td class="small">{{ review.facilitator }}</td>
+          <td class="text-end">{{ review.decisions.count }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">{% trans "No management reviews yet." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if is_paginated %}
+<nav aria-label="pagination" class="mt-3">
+  <ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{% trans "Previous" %}</a></li>
+    {% endif %}
+    <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{% trans "Next" %}</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% if action == "update" %}{% trans "Edit decision" %}{% else %}{% trans "New decision" %}{% endif %} - Fairway{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="mb-0">
+    {% if action == "update" %}{% trans "Edit decision" %}{% else %}{% trans "New decision" %}{% endif %}
+  </h1>
+  <a href="{% url 'reports:management-review-detail' review.pk %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
+</div>
+
+<div class="card"><div class="card-body">
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">{{ form.category.label }} <span class="text-danger">*</span></label>
+        {{ form.category }}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label">{{ form.input_clause.label }}</label>
+        {{ form.input_clause }}
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
+      {{ form.title }}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">{{ form.description.label }} <span class="text-danger">*</span></label>
+      {{ form.description }}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">{{ form.rationale.label }}</label>
+      {{ form.rationale }}
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">{{ form.owner.label }}</label>
+        {{ form.owner }}
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label">{{ form.due_date.label }}</label>
+        {{ form.due_date }}
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label">{{ form.priority.label }}</label>
+        {{ form.priority }}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">{{ form.status.label }}</label>
+        {{ form.status }}
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label">{{ form.implemented_at.label }}</label>
+        {{ form.implemented_at }}
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label">{{ form.implementation_evidence.label }}</label>
+        {{ form.implementation_evidence }}
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+      <a href="{% url 'reports:management-review-detail' review.pk %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    </div>
+  </form>
+</div></div>
+{% endblock %}

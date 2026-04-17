@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% if object %}{% trans "Edit management review" %}{% else %}{% trans "New management review" %}{% endif %} - Fairway{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="mb-0">{% if object %}{% trans "Edit management review" %}{% else %}{% trans "New management review" %}{% endif %}</h1>
+  <a href="{% if object %}{% url 'reports:management-review-detail' object.pk %}{% else %}{% url 'reports:management-review-list' %}{% endif %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-md-8">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "General information" %}</h6>
+
+          <div class="mb-3">
+            <label class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
+            {{ form.title }}
+            {{ form.title.errors }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">{{ form.description.label }}</label>
+            {{ form.description }}
+            {{ form.description.errors }}
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">{{ form.frequency.label }} <span class="text-danger">*</span></label>
+              {{ form.frequency }}
+              {{ form.frequency.errors }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">{{ form.location.label }}</label>
+              {{ form.location }}
+              {{ form.location.errors }}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">{{ form.period_start.label }} <span class="text-danger">*</span></label>
+              {{ form.period_start }}
+              {{ form.period_start.errors }}
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">{{ form.period_end.label }} <span class="text-danger">*</span></label>
+              {{ form.period_end }}
+              {{ form.period_end.errors }}
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">{{ form.planned_date.label }} <span class="text-danger">*</span></label>
+              {{ form.planned_date }}
+              {{ form.planned_date.errors }}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">{{ form.facilitator.label }} <span class="text-danger">*</span></label>
+              {{ form.facilitator }}
+              {{ form.facilitator.errors }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">{{ form.approver.label }}</label>
+              {{ form.approver }}
+              {{ form.approver.errors }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">{{ form.next_review_date.label }}</label>
+            {{ form.next_review_date }}
+            {{ form.next_review_date.errors }}
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-3"><div class="card-body">
+        <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "Agenda and summary" %}</h6>
+        <div class="mb-3">
+          <label class="form-label">{{ form.agenda.label }}</label>
+          {{ form.agenda }}
+        </div>
+        <div class="mb-0">
+          <label class="form-label">{{ form.summary.label }}</label>
+          {{ form.summary }}
+        </div>
+      </div></div>
+
+      {% if participant_formset %}
+      <div class="card mb-3"><div class="card-body">
+        <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "Participants" %}</h6>
+        {{ participant_formset.management_form }}
+        <div id="participant-formset">
+        {% for pform in participant_formset %}
+        <div class="row g-2 align-items-end border-bottom pb-2 mb-2">
+          {% if pform.instance.pk %}{{ pform.id }}{% endif %}
+          <div class="col-md-3">
+            <label class="form-label small">{% trans "User" %}</label>
+            {{ pform.user }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">{% trans "External name" %}</label>
+            {{ pform.external_name }}
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small">{% trans "External role" %}</label>
+            {{ pform.external_role }}
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small">{% trans "Role" %}</label>
+            {{ pform.role }}
+          </div>
+          <div class="col-md-1 text-center">
+            <label class="form-label small">{% trans "Attended" %}</label>
+            <div>{{ pform.attended }}</div>
+          </div>
+          <div class="col-md-1 text-center">
+            {% if pform.instance.pk %}
+            <label class="form-label small text-danger">{% trans "Delete" %}</label>
+            <div>{{ pform.DELETE }}</div>
+            {% endif %}
+          </div>
+          {% if pform.non_field_errors %}<div class="col-12"><div class="text-danger small">{{ pform.non_field_errors }}</div></div>{% endif %}
+        </div>
+        {% endfor %}
+        </div>
+      </div></div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-4">
+      <div class="card mb-3"><div class="card-body">
+        <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "Scope and tags" %}</h6>
+        <div class="mb-3">
+          <label class="form-label">{{ form.scopes.label }}</label>
+          {{ form.scopes }}
+          <div class="form-text small">{% trans "Scopes determine which data is aggregated in the export." %}</div>
+        </div>
+        <div class="mb-0">
+          <label class="form-label">{{ form.tags.label }}</label>
+          {{ form.tags }}
+        </div>
+      </div></div>
+
+      <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+        <a href="{% if object %}{% url 'reports:management-review-detail' object.pk %}{% else %}{% url 'reports:management-review-list' %}{% endif %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

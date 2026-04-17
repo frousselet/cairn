@@ -48,16 +48,41 @@ def _strip(text):
 
 
 def gather_management_review_data(user, scope_ids=None,
-                                   period_start=None, period_end=None):
+                                   period_start=None, period_end=None,
+                                   review=None):
     """Gather all data needed for the management review report.
 
     Args:
-        period_start: Optional start date of the review period.
-        period_end: Optional end date of the review period (defaults to today).
+        review: Optional ManagementReview. When provided, its closed snapshot
+            is used (if any), otherwise its period/scopes override the other
+            arguments. Decisions, ISMS changes, and participants are added
+            to the output.
+        period_start: Start date of the review period (ignored if `review`).
+        period_end: End date of the review period (ignored if `review`).
+        scope_ids: Scope filter (ignored if `review`).
 
     Returns a dict with all sections pre-computed.
     """
     from datetime import datetime
+
+    # When a persistent review is provided, its own metadata takes priority.
+    if review is not None:
+        scope_ids = list(review.scopes.values_list("id", flat=True)) or None
+        period_start = review.period_start
+        period_end = review.period_end
+        if review.has_snapshot:
+            data = dict(review.snapshot_data)
+            data["review"] = review
+            data["decisions"] = list(
+                review.decisions.select_related("owner").all()
+            )
+            data["isms_changes"] = list(
+                review.isms_changes.select_related("owner").all()
+            )
+            data["participants"] = list(
+                review.participants.select_related("user").all()
+            )
+            return data
 
     from compliance.constants import (
         ActionPlanStatus,
@@ -427,12 +452,25 @@ def gather_management_review_data(user, scope_ids=None,
             "status": fw.get_status_display(),
         })
 
+    # Persistent review sections (decisions, ISMS changes, participants)
+    decisions = []
+    isms_changes = []
+    participants = []
+    if review is not None:
+        decisions = list(review.decisions.select_related("owner").all())
+        isms_changes = list(review.isms_changes.select_related("owner").all())
+        participants = list(review.participants.select_related("user").all())
+
     return {
         "company": company,
         "generated_at": now,
         "generated_by": user,
         "period_start": period_start,
         "period_end": period_end,
+        "review": review,
+        "decisions": decisions,
+        "isms_changes": isms_changes,
+        "participants": participants,
         # Section 1
         "action_plan_stats": action_plan_stats,
         "action_plan_rows": action_plan_rows,
@@ -736,7 +774,8 @@ def _format_period_label(period_start, period_end):
 
 
 def generate_management_review_pptx(user, scope_ids=None,
-                                     period_start=None, period_end=None):
+                                     period_start=None, period_end=None,
+                                     review=None):
     """Generate a management review PowerPoint presentation.
 
     Returns a tuple (filename, content_bytes).
@@ -747,6 +786,7 @@ def generate_management_review_pptx(user, scope_ids=None,
     data = gather_management_review_data(
         user, scope_ids,
         period_start=period_start, period_end=period_end,
+        review=review,
     )
     prs = Presentation()
     prs.slide_width = Inches(13.333)
@@ -989,6 +1029,48 @@ def generate_management_review_pptx(user, scope_ids=None,
             ["Aucune opportunite d'amelioration identifiee."],
         )
 
+    # ── Outputs (clause 9.3.3): decisions + ISMS changes ──
+    decisions = data.get("decisions") or []
+    isms_changes = data.get("isms_changes") or []
+    if decisions or isms_changes:
+        _pptx_add_section_slide(prs, "8.  Sorties de la revue (9.3.3)")
+
+    if decisions:
+        _pptx_add_table_slide(
+            prs, "Decisions prises",
+            ["Ref.", "Categorie", "Intitule", "Responsable", "Echeance", "Statut"],
+            [
+                [
+                    getattr(d, "reference", ""),
+                    getattr(d, "get_category_display", lambda: "")(),
+                    (getattr(d, "title", "") or "")[:50],
+                    str(getattr(d, "owner", "") or "-"),
+                    d.due_date.strftime("%d/%m/%Y") if getattr(d, "due_date", None) else "-",
+                    getattr(d, "get_status_display", lambda: "")(),
+                ]
+                for d in decisions[:15]
+            ],
+            col_widths=[1.0, 2.2, 4.5, 2.0, 1.4, 1.6],
+        )
+
+    if isms_changes:
+        _pptx_add_table_slide(
+            prs, "Changements SMSI decides",
+            ["Ref.", "Type", "Intitule", "Responsable", "Statut", "Cible"],
+            [
+                [
+                    getattr(c, "reference", ""),
+                    getattr(c, "get_change_type_display", lambda: "")(),
+                    (getattr(c, "title", "") or "")[:50],
+                    str(getattr(c, "owner", "") or "-"),
+                    getattr(c, "get_status_display", lambda: "")(),
+                    c.target_date.strftime("%d/%m/%Y") if getattr(c, "target_date", None) else "-",
+                ]
+                for c in isms_changes[:15]
+            ],
+            col_widths=[1.0, 2.2, 4.5, 2.0, 1.6, 1.4],
+        )
+
     # Save
     buf = io.BytesIO()
     prs.save(buf)
@@ -1142,7 +1224,8 @@ def _docx_add_decisions_block(doc):
 
 
 def generate_management_review_docx(user, scope_ids=None,
-                                     period_start=None, period_end=None):
+                                     period_start=None, period_end=None,
+                                     review=None):
     """Generate a management review meeting minutes document (DOCX).
 
     Returns a tuple (filename, content_bytes).
@@ -1155,6 +1238,7 @@ def generate_management_review_docx(user, scope_ids=None,
     data = gather_management_review_data(
         user, scope_ids,
         period_start=period_start, period_end=period_end,
+        review=review,
     )
     doc = Document()
     _docx_setup_styles(doc)
@@ -1484,23 +1568,90 @@ def generate_management_review_docx(user, scope_ids=None,
 
     _docx_add_decisions_block(doc)
 
+    # ── Section 9.3.3: outputs (decisions + ISMS changes) ──
+    review_obj = data.get("review")
+    decisions = data.get("decisions") or []
+    isms_changes = data.get("isms_changes") or []
+    participants = data.get("participants") or []
+
+    if review_obj or decisions or isms_changes:
+        doc.add_page_break()
+        doc.add_heading("Sorties de la revue (clause 9.3.3)", level=1)
+
+    if decisions:
+        doc.add_heading("Decisions prises", level=2)
+        _docx_add_table(doc,
+            ["Ref.", "Categorie", "Intitule", "Responsable", "Echeance", "Priorite", "Statut"],
+            [
+                [
+                    getattr(d, "reference", ""),
+                    getattr(d, "get_category_display", lambda: "")(),
+                    getattr(d, "title", ""),
+                    str(getattr(d, "owner", "") or "-"),
+                    d.due_date.strftime("%d/%m/%Y") if getattr(d, "due_date", None) else "-",
+                    getattr(d, "get_priority_display", lambda: "")(),
+                    getattr(d, "get_status_display", lambda: "")(),
+                ]
+                for d in decisions
+            ],
+        )
+
+    if isms_changes:
+        doc.add_heading("Changements SMSI decides", level=2)
+        _docx_add_table(doc,
+            ["Ref.", "Type", "Intitule", "Responsable", "Statut", "Cible"],
+            [
+                [
+                    getattr(c, "reference", ""),
+                    getattr(c, "get_change_type_display", lambda: "")(),
+                    getattr(c, "title", ""),
+                    str(getattr(c, "owner", "") or "-"),
+                    getattr(c, "get_status_display", lambda: "")(),
+                    c.target_date.strftime("%d/%m/%Y") if getattr(c, "target_date", None) else "-",
+                ]
+                for c in isms_changes
+            ],
+        )
+
     # ── Closing section ──
     doc.add_page_break()
-    doc.add_heading("Synthese des decisions", level=1)
-    p = doc.add_paragraph("[A completer]")
-    for run in p.runs:
-        run.font.color.rgb = RGBColor(*_CLR_MUTED)
+    doc.add_heading("Synthese executive", level=1)
+    if review_obj and getattr(review_obj, "summary", ""):
+        doc.add_paragraph(_strip(review_obj.summary))
+    else:
+        p = doc.add_paragraph("[A completer]")
+        for run in p.runs:
+            run.font.color.rgb = RGBColor(*_CLR_MUTED)
 
     doc.add_heading("Prochaine revue de direction", level=2)
-    p = doc.add_paragraph("Date prevue : [A completer]")
-    for run in p.runs:
-        run.font.color.rgb = RGBColor(*_CLR_MUTED)
+    if review_obj and getattr(review_obj, "next_review_date", None):
+        doc.add_paragraph(
+            f"Date prevue : {review_obj.next_review_date.strftime('%d/%m/%Y')}"
+        )
+    else:
+        p = doc.add_paragraph("Date prevue : [A completer]")
+        for run in p.runs:
+            run.font.color.rgb = RGBColor(*_CLR_MUTED)
 
+    # Signatures: pre-fill from participants when a persistent review is used
     doc.add_heading("Signatures", level=2)
-    _docx_add_table(doc,
-        ["Nom", "Fonction", "Signature"],
-        [["", "", ""], ["", "", ""]],
-    )
+    if participants:
+        _docx_add_table(doc,
+            ["Nom", "Fonction", "Signature"],
+            [
+                [
+                    p.display_name,
+                    p.display_role,
+                    "",
+                ]
+                for p in participants
+            ],
+        )
+    else:
+        _docx_add_table(doc,
+            ["Nom", "Fonction", "Signature"],
+            [["", "", ""], ["", "", ""]],
+        )
 
     # Save
     buf = io.BytesIO()

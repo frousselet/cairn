@@ -12,6 +12,7 @@ from .models import (
     Site,
     Stakeholder,
     StakeholderExpectation,
+    StakeholderFeedback,
     SwotAnalysis,
     SwotItem,
     SwotStrategy,
@@ -458,3 +459,43 @@ class IndicatorMeasurementForm(forms.ModelForm):
                 raise forms.ValidationError(_("Please enter a valid number."))
             return normalized
         return value
+
+
+class StakeholderFeedbackForm(forms.ModelForm):
+    class Meta:
+        model = StakeholderFeedback
+        fields = [
+            "stakeholder", "channel", "received_date", "subject", "content",
+            "sentiment", "severity", "status", "response",
+            "linked_issues", "linked_expectations",
+            "scopes", "tags",
+        ]
+        widgets = {
+            "stakeholder": forms.Select(attrs=SELECT_ATTRS),
+            "channel": forms.Select(attrs=SELECT_ATTRS),
+            "received_date": forms.DateInput(
+                attrs={**FORM_WIDGET_ATTRS, "type": "date"},
+            ),
+            "subject": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "content": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
+            "sentiment": forms.Select(attrs=SELECT_ATTRS),
+            "severity": forms.Select(attrs=SELECT_ATTRS),
+            "status": forms.Select(attrs=SELECT_ATTRS),
+            "response": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "linked_issues": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+            "linked_expectations": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+            "scopes": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+            "tags": TAGS_WIDGET,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["stakeholder"].queryset = Stakeholder.objects.order_by("name")
+        self.fields["scopes"].queryset = Scope.objects.exclude(
+            status="archived",
+        ).order_by("name")
+        self.fields["linked_issues"].queryset = Issue.objects.order_by("-updated_at")
+        self.fields["linked_expectations"].queryset = (
+            StakeholderExpectation.objects.select_related("stakeholder")
+            .order_by("stakeholder__name")
+        )

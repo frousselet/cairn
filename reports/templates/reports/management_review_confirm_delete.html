@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Delete management review" %} - Fairway{% endblock %}
+
+{% block content %}
+<div class="card"><div class="card-body">
+  <h1>{% trans "Delete management review" %}</h1>
+  <p>{% blocktrans with ref=object.reference title=object.title %}Are you sure you want to delete <strong>{{ ref }}: {{ title }}</strong>? This action cannot be undone.{% endblocktrans %}</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">{% trans "Delete" %}</button>
+    <a href="{% url 'reports:management-review-detail' object.pk %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+  </form>
+</div></div>
+{% endblock %}
