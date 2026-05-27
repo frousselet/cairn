@@ -310,6 +310,58 @@ class TestRiskAcceptanceViewSet:
         response = self.client.delete(f"/api/v1/risks/acceptances/{ra.pk}/")
         assert response.status_code == 204
 
+    def test_approve(self):
+        from risks.models import RiskAcceptance
+
+        risk = RiskFactory()
+        ra = RiskAcceptance.objects.create(
+            risk=risk, accepted_by=self.user,
+            justification="Approve me", status="active",
+        )
+        assert ra.is_approved is False
+        response = self.client.post(f"/api/v1/risks/acceptances/{ra.pk}/approve/")
+        assert response.status_code == 200, response.json()
+        ra.refresh_from_db()
+        assert ra.is_approved is True
+        assert ra.approved_by == self.user
+        assert ra.approved_at is not None
+
+    def test_reject(self):
+        from django.utils import timezone
+
+        from risks.models import RiskAcceptance
+
+        risk = RiskFactory()
+        ra = RiskAcceptance.objects.create(
+            risk=risk, accepted_by=self.user,
+            justification="Reject me", status="active",
+            is_approved=True, approved_by=self.user, approved_at=timezone.now(),
+        )
+        response = self.client.post(f"/api/v1/risks/acceptances/{ra.pk}/reject/")
+        assert response.status_code == 200, response.json()
+        ra.refresh_from_db()
+        assert ra.is_approved is False
+        assert ra.approved_by is None
+
+    def test_update_resets_approval(self):
+        from risks.models import RiskAcceptance
+
+        risk = RiskFactory()
+        ra = RiskAcceptance.objects.create(
+            risk=risk, accepted_by=self.user,
+            justification="Original", status="active",
+            is_approved=True, approved_by=self.user,
+        )
+        response = self.client.patch(
+            f"/api/v1/risks/acceptances/{ra.pk}/",
+            {"justification": "Reworded"},
+            format="json",
+        )
+        assert response.status_code == 200
+        ra.refresh_from_db()
+        assert ra.is_approved is False
+        assert ra.approved_by is None
+
     def test_unauthenticated(self):
         client = APIClient()
         response = client.get("/api/v1/risks/acceptances/")

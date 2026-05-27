@@ -2,7 +2,7 @@ from django.urls import path, reverse_lazy
 from django.views.generic import RedirectView
 
 from . import views
-from .models import Risk, RiskAssessment, RiskTreatmentPlan
+from .models import Risk, RiskAcceptance, RiskAssessment, RiskTreatmentPlan
 
 app_name = "risks"
 
@@ -43,6 +43,7 @@ urlpatterns = [
     path("acceptances/<uuid:pk>/", views.RiskAcceptanceDetailView.as_view(), name="acceptance-detail"),
     path("acceptances/<uuid:pk>/edit/", views.RiskAcceptanceUpdateView.as_view(), name="acceptance-update"),
     path("acceptances/<uuid:pk>/delete/", views.RiskAcceptanceDeleteView.as_view(), name="acceptance-delete"),
+    path("acceptances/<uuid:pk>/approve/", views.ApproveView.as_view(model=RiskAcceptance, permission_feature="acceptance", success_url=reverse_lazy("risks:acceptance-list")), name="acceptance-approve"),
     # Threats
     path("threats/", views.ThreatListView.as_view(), name="threat-list"),
     path("threats/create/", views.ThreatCreateView.as_view(), name="threat-create"),

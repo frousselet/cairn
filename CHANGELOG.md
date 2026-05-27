@@ -25,12 +25,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MCP tool `set_participant_signature` to attach a signature data URI programmatically
 - "Management reviews" link added to the main sidebar navigation
 - Test suites `test_management_review_api.py` and `test_management_review_mcp.py` covering the REST and MCP surfaces, plus participant signature tests in `test_management_review.py`
+- Approval workflow on `RiskAcceptance`: REST `approve` and `reject` actions, MCP tool `approve_risk_acceptance`, `/risks/acceptances/<pk>/approve/` UI endpoint with approval badge on the detail page
+- New permission `risks.acceptance.approve` assigned by default to Super Administrateur, Administrateur and RSSI / DPO groups
+- Tests for acceptance approval covering UI, REST and MCP surfaces, including a new `risks/tests/test_mcp.py`
 
 ### Changed
 
 - Management review export now accepts a `review` argument and hydrates from `snapshot_data` when the review is closed, ensuring exports remain immutable for audit purposes
 - Management review templates use the `has_perm` template tag instead of `perms.reports.management_review.*` so dotted permission codenames resolve correctly through the custom permission backend
 - Management review export query parameter renamed from `format` to `fmt` to avoid clashing with DRF's built-in renderer negotiation
+- `RiskAcceptance` updates now reset approval and bump version like other approvable risk models, via `ApprovableUpdateMixin` (UI) and `ApprovableAPIMixin` (REST)
 
 ### Fixed
 

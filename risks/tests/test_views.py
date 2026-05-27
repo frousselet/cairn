@@ -482,6 +482,75 @@ class TestRiskAcceptanceDeleteView:
         assert not RiskAcceptance.objects.filter(pk=pk).exists()
 
 
+class TestRiskAcceptanceApproveView:
+    def test_login_required(self):
+        risk = RiskFactory()
+        acceptance = RiskAcceptance.objects.create(risk=risk, justification="J")
+        resp = Client().post(reverse("risks:acceptance-approve", args=[acceptance.pk]))
+        assert resp.status_code == 302
+
+    def test_approve_acceptance(self):
+        client, user = _superuser_client()
+        risk = RiskFactory()
+        acceptance = RiskAcceptance.objects.create(
+            risk=risk, justification="J", status="active"
+        )
+        assert acceptance.is_approved is False
+        resp = client.post(reverse("risks:acceptance-approve", args=[acceptance.pk]))
+        assert resp.status_code == 302
+        acceptance.refresh_from_db()
+        assert acceptance.is_approved is True
+        assert acceptance.approved_by == user
+        assert acceptance.approved_at is not None
+
+    def test_approve_only_accepts_post(self):
+        client, _ = _superuser_client()
+        risk = RiskFactory()
+        acceptance = RiskAcceptance.objects.create(risk=risk, justification="J")
+        resp = client.get(reverse("risks:acceptance-approve", args=[acceptance.pk]))
+        assert resp.status_code == 405
+
+    def test_approve_without_permission_redirects(self):
+        user = UserFactory(is_superuser=False, is_staff=False)
+        client = Client()
+        client.force_login(user)
+        risk = RiskFactory()
+        acceptance = RiskAcceptance.objects.create(risk=risk, justification="J")
+        resp = client.post(reverse("risks:acceptance-approve", args=[acceptance.pk]))
+        # PermissionRequiredMixin denies before the view runs
+        assert resp.status_code in (302, 403)
+        acceptance.refresh_from_db()
+        assert acceptance.is_approved is False
+
+    def test_detail_exposes_approve_url(self):
+        client, _ = _superuser_client()
+        risk = RiskFactory()
+        acceptance = RiskAcceptance.objects.create(risk=risk, justification="J")
+        resp = client.get(reverse("risks:acceptance-detail", args=[acceptance.pk]))
+        assert resp.status_code == 200
+        assert reverse("risks:acceptance-approve", args=[acceptance.pk]).encode() in resp.content
+
+    def test_update_resets_approval(self):
+        client, user = _superuser_client()
+        risk = RiskFactory()
+        acceptance = RiskAcceptance.objects.create(
+            risk=risk, justification="Original", status="active",
+            is_approved=True, approved_by=user,
+        )
+        resp = client.post(
+            reverse("risks:acceptance-update", args=[acceptance.pk]),
+            {
+                "risk": str(risk.pk),
+                "justification": "Updated justification",
+                "status": "active",
+            },
+        )
+        assert resp.status_code == 302
+        acceptance.refresh_from_db()
+        assert acceptance.is_approved is False
+        assert acceptance.approved_by is None
+
+
 # ── Threat Views ────────────────────────────────────────────
 
 

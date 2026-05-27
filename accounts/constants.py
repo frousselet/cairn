@@ -211,7 +211,7 @@ PERMISSION_REGISTRY = {
             "label": _("Treatment plans"),
         },
         "acceptance": {
-            "actions": ["create", "read", "update", "delete"],
+            "actions": ["create", "read", "update", "delete", "approve"],
             "label": _("Risk acceptances"),
         },
         "threat": {

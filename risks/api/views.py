@@ -104,7 +104,7 @@ class RiskTreatmentPlanViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryA
         return RiskTreatmentPlanSerializer
 
 
-class RiskAcceptanceViewSet(ScopeFilterAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class RiskAcceptanceViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     scope_parent_lookup = "risk__assessment__scopes"
     queryset = RiskAcceptance.objects.select_related("risk", "accepted_by").all()
     filterset_class = RiskAcceptanceFilter

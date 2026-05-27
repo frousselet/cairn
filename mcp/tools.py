@@ -3538,7 +3538,7 @@ def _register_risks_tools(server):
                    search_fields=["justification"],
                    filters=["risk_id", "status"],
                    scope_filtered=False,
-                   has_approve=False,
+                   has_approve=True,
                    required_fields=["risk_id", "justification"],
                    field_overrides={
                        "justification": _html_field("Justification"),

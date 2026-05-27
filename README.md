@@ -63,7 +63,7 @@ Manage your organisation's security posture, track compliance with regulatory fr
 | Vulnerability Catalog | Reusable vulnerabilities with severity, CVE references and remediation guidance |
 | ISO 27005 Analysis | Atomic threat x vulnerability risk scenarios with combined likelihood/impact calculation |
 | Treatment Plans | Structured remediation with ordered actions, progress tracking and cost estimates |
-| Risk Acceptance | Formal acceptance records with expiry dates, conditions and review tracking |
+| Risk Acceptance | Formal acceptance records with expiry dates, conditions, review tracking and two-step approval workflow |
 | Risk Matrices | Visual heatmaps (current vs residual) |
 
 ![Risk Assessment](docs/screenshots/risk-assessment.png)

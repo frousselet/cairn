@@ -680,12 +680,15 @@ class RiskAcceptanceListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
         return qs
 
 
-class RiskAcceptanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryMixin, DetailView):
+class RiskAcceptanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, DetailView):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskAcceptance
     template_name = "risks/acceptance_detail.html"
     context_object_name = "acceptance"
     permission_required = "risks.acceptance.read"
+    approval_module = "risks"
+    approval_feature = "acceptance"
+    approve_url_name = "risks:acceptance-approve"
 
 
 class RiskAcceptanceCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -697,7 +700,7 @@ class RiskAcceptanceCreateView(LoginRequiredMixin, PermissionRequiredMixin, Htmx
     success_url = reverse_lazy("risks:acceptance-list")
 
 
-class RiskAcceptanceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UpdateView):
+class RiskAcceptanceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, ApprovableUpdateMixin, UpdateView):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskAcceptance
     form_class = RiskAcceptanceForm
