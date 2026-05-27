@@ -9,6 +9,7 @@ Fairway is a Governance, Risk and Compliance (GRC) platform built with Django 5.
 ## Development Commands
 
 ### Running with Docker
+
 ```bash
 docker compose up --build          # Start all services
 docker compose exec web python manage.py migrate
@@ -16,6 +17,7 @@ docker compose exec web python manage.py createsuperuser
 ```
 
 ### Running Tests
+
 ```bash
 pytest                             # Run all tests
 pytest accounts/tests/             # Run tests for a specific app
@@ -27,6 +29,7 @@ pytest --co                        # List tests without running them
 Tests use `core.settings_test` (configured in `pytest.ini`), which uses SQLite in-memory and fast MD5 password hashing.
 
 ### Django Management
+
 ```bash
 python manage.py runserver 0.0.0.0:8000   # Dev server (used by docker-compose)
 python manage.py makemigrations           # Generate migrations
@@ -40,7 +43,7 @@ python manage.py collectstatic --noinput  # Collect static files
 ### Django Apps
 
 | App | Purpose |
-|-----|---------|
+| ----- | --------- |
 | `core` | Project settings, root URL config, shared mixins (`SortableListMixin`), base views (dashboard, calendar) |
 | `accounts` | Custom `User` model (email-based auth, UUID PKs), groups with 6 system roles, custom permissions (`module.feature.action` codenames), passkey/WebAuthn support, access logging |
 | `context` | Organizational context: Scopes, Sites, Issues, Stakeholders, Objectives, SWOT, Roles, Activities, Tags |
@@ -53,11 +56,13 @@ python manage.py collectstatic --noinput  # Collect static files
 ### Key Patterns
 
 **Base Models** (`context/models/base.py`):
+
 - `BaseModel` — UUID PK, timestamps, `created_by`, approval workflow fields (`is_approved`, `approved_by`, `approved_at`), versioning, tags. All domain models inherit from this.
 - `ScopedModel` — extends `BaseModel` with many-to-many `scopes` for organizational tenancy.
 - `ReferenceGeneratorMixin` — auto-generates sequential references (e.g., `RISK-1`, `ASST-2`). Subclasses set a 4-char `REFERENCE_PREFIX`.
 
 **App Structure** — each domain app follows a consistent layout:
+
 - `models/` — model package with one file per model
 - `views.py` — class-based views (Django generic views)
 - `forms.py` — model forms
@@ -68,6 +73,7 @@ python manage.py collectstatic --noinput  # Collect static files
 - `tests/` — tests with `factories.py` (factory-boy) and `test_*.py` files
 
 **URL Structure**:
+
 - Web UI: `/<app>/...` (e.g., `/context/`, `/assets/`, `/risks/`)
 - REST API: `/api/v1/<app>/...`
 - Admin: `/admin/`
@@ -81,6 +87,7 @@ python manage.py collectstatic --noinput  # Collect static files
 **Frontend**: Server-rendered Django templates with Bootstrap 5.3, HTMX for dynamic partial updates, dark mode via OS preference.
 
 **View Mixins** (`core/mixins.py`, `accounts/mixins.py`):
+
 - `SortableListMixin` — server-side sorting with user preferences persisted in `User.table_preferences` JSON field
 - `CreatedByMixin` — auto-populates `created_by` on form save
 - `ApprovalContextMixin` / `ApprovableUpdateMixin` — two-step approval workflow (submit → approve)

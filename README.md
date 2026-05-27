@@ -293,6 +293,7 @@ Additional tools:
 | `promote_decision_to_action_plan` | Create a ComplianceActionPlan from a decision and link them |
 | `list_isms_changes` | List ISMS changes decided during management reviews |
 | `create_isms_change` | Record an ISMS change decided during a management review |
+| `set_participant_signature` | Attach a base64 graphical signature (non-eIDAS) to a management review participant for DOCX embedding |
 | `list_stakeholder_feedback` | List formal stakeholder feedback (clause 9.3.2.e) |
 | `create_stakeholder_feedback` | Record formal feedback from an interested party |
 | `delete_report` | Delete a generated report |

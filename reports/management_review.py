@@ -1301,6 +1301,77 @@ def _docx_add_table(doc, headers, rows):
     return table
 
 
+def _decode_signature(data_uri):
+    """Return (content_type, bytes) from a data URI or (None, None) on failure."""
+    import base64 as _b64
+    if not data_uri or not data_uri.startswith("data:"):
+        return None, None
+    try:
+        header, payload = data_uri.split(",", 1)
+        ctype = header[5:].split(";")[0] or "image/png"
+        return ctype, _b64.b64decode(payload)
+    except Exception:
+        return None, None
+
+
+def _docx_add_signature_table(doc, participants):
+    """Signature table that embeds participants' signature images when present."""
+    import io as _io
+    from docx.shared import Inches, Pt, RGBColor
+    from docx.oxml.ns import qn
+
+    headers = ["Nom", "Fonction", "Signature"]
+    table = doc.add_table(rows=len(participants) + 1, cols=len(headers))
+    table.style = "Table Grid"
+    table.autofit = True
+
+    # Header row
+    for c_idx, hdr in enumerate(headers):
+        cell = table.cell(0, c_idx)
+        cell.text = ""
+        p = cell.paragraphs[0]
+        run = p.add_run(hdr)
+        run.bold = True
+        run.font.size = Pt(9)
+        run.font.name = "Calibri"
+        run.font.color.rgb = RGBColor(*_CLR_HEADER_FG)
+        shading = cell._tc.get_or_add_tcPr()
+        shading.append(shading.makeelement(qn("w:shd"), {
+            qn("w:fill"): f"{_CLR_HEADER_BG[0]:02X}{_CLR_HEADER_BG[1]:02X}{_CLR_HEADER_BG[2]:02X}",
+            qn("w:val"): "clear",
+        }))
+
+    for i, part in enumerate(participants, start=1):
+        # Name
+        c = table.cell(i, 0)
+        c.text = ""
+        r = c.paragraphs[0].add_run(part.display_name or "")
+        r.font.size = Pt(9)
+        r.font.name = "Calibri"
+        # Role
+        c = table.cell(i, 1)
+        c.text = ""
+        r = c.paragraphs[0].add_run(part.display_role or "")
+        r.font.size = Pt(9)
+        r.font.name = "Calibri"
+        # Signature
+        c = table.cell(i, 2)
+        c.text = ""
+        ctype, data = _decode_signature(getattr(part, "signature_data", ""))
+        if ctype and data:
+            p = c.paragraphs[0]
+            run = p.add_run()
+            try:
+                run.add_picture(_io.BytesIO(data), width=Inches(1.6))
+            except Exception:
+                r = c.paragraphs[0].add_run("[signature]")
+                r.font.size = Pt(9)
+                r.font.name = "Calibri"
+
+    doc.add_paragraph()
+    return table
+
+
 def _docx_add_kv_table(doc, pairs):
     """Add a key-value metadata table (2 columns, label + value)."""
     from docx.shared import Pt
@@ -1763,17 +1834,7 @@ def generate_management_review_docx(user, scope_ids=None,
     # Signatures: pre-fill from participants when a persistent review is used
     doc.add_heading("Signatures", level=2)
     if participants:
-        _docx_add_table(doc,
-            ["Nom", "Fonction", "Signature"],
-            [
-                [
-                    p.display_name,
-                    p.display_role,
-                    "",
-                ]
-                for p in participants
-            ],
-        )
+        _docx_add_signature_table(doc, participants)
     else:
         _docx_add_table(doc,
             ["Nom", "Fonction", "Signature"],

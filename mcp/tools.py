@@ -5089,6 +5089,48 @@ def _register_reports_tools(server):
         "created_at", "updated_at",
     ]
 
+    @require_perm("reports.management_review.update")
+    def set_participant_signature(user, arguments):
+        """Set a base64 PNG/JPEG signature on a participant.
+
+        Non-eIDAS qualified signature. Any user with management_review.update
+        can sign on behalf of participants.
+        """
+        P = _get_model("reports", "ManagementReviewParticipant")
+        participant_id = arguments.get("participant_id")
+        data_uri = arguments.get("signature_data_uri", "")
+        if not participant_id or not data_uri.startswith("data:image/"):
+            return _error("participant_id and a valid signature_data_uri (data:image/...) are required")
+        try:
+            participant = P.objects.get(pk=participant_id)
+        except P.DoesNotExist:
+            return _error("participant not found")
+        participant.signature_data = data_uri
+        participant.attended = True
+        participant.save(update_fields=["signature_data", "attended"])
+        return {
+            "participant_id": str(participant.pk),
+            "signed": True,
+            "attended": participant.attended,
+        }
+
+    server.register_tool(
+        "set_participant_signature",
+        "Attach a graphical signature (data URI) to a participant for DOCX embedding.",
+        {
+            "type": "object",
+            "properties": {
+                "participant_id": {"type": "string"},
+                "signature_data_uri": {
+                    "type": "string",
+                    "description": "Data URI, e.g. data:image/png;base64,iVBORw0KGgo...",
+                },
+            },
+            "required": ["participant_id", "signature_data_uri"],
+        },
+        set_participant_signature,
+    )
+
     @require_perm("context.stakeholder_feedback.read")
     def list_stakeholder_feedback(user, arguments):
         F = _get_model("context", "StakeholderFeedback")

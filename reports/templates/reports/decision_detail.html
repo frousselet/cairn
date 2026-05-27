@@ -1,16 +1,17 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n accounts_tags %}
 
 {% block title %}{{ decision.title }} - Fairway{% endblock %}
 
 {% block content %}
+{% has_perm "reports.management_review.update" as can_update_review %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div>
     <h1 class="mb-0">{{ decision.title }}</h1>
     <small class="ref">{{ decision.reference }}</small>
   </div>
   <div class="d-flex gap-2">
-    {% if perms.reports.management_review.update %}
+    {% if can_update_review %}
     <a href="{% url 'reports:decision-edit' decision.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
     {% if not decision.linked_action_plan %}
     <a href="{% url 'reports:decision-promote' decision.pk %}" class="btn btn-outline-success">{% trans "Promote to action plan" %}</a>

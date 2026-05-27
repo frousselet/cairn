@@ -290,6 +290,33 @@ class ManagementReviewCommentForm(forms.ModelForm):
         }
 
 
+class ParticipantSignatureForm(forms.Form):
+    """Upload a PNG signature image for a participant.
+
+    The image is stored as a base64 data URI in the participant's
+    `signature_data` field and embedded in the DOCX export. This is a
+    graphical (non-qualified) signature, not an eIDAS qualified one.
+    """
+
+    signature_image = forms.ImageField(
+        label=_("Signature image"),
+        help_text=_("Upload a PNG or JPEG image of your signature (max 500 KB)."),
+        widget=forms.ClearableFileInput(attrs={
+            "class": "form-control",
+            "accept": "image/png,image/jpeg",
+        }),
+    )
+
+    def clean_signature_image(self):
+        image = self.cleaned_data["signature_image"]
+        max_size = 500 * 1024
+        if image.size > max_size:
+            raise forms.ValidationError(
+                _("Signature image must be smaller than 500 KB."),
+            )
+        return image
+
+
 class DecisionPromoteForm(forms.Form):
     """Promote a decision into a ComplianceActionPlan."""
 

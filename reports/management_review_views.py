@@ -40,6 +40,7 @@ from .forms import (
     ManagementReviewModelForm,
     ManagementReviewTransitionForm,
     ParticipantFormSet,
+    ParticipantSignatureForm,
 )
 from .management_review import (
     gather_management_review_data,
@@ -51,6 +52,7 @@ from .models import (
     ManagementReview,
     ManagementReviewComment,
     ManagementReviewDecision,
+    ManagementReviewParticipant,
 )
 
 
@@ -641,3 +643,61 @@ class IsmsChangeDeleteView(
 
     def get_success_url(self):
         return f"/reports/management-reviews/{self.object.review_id}/"
+
+
+# ─── Participant signature ────────────────────────────────────────────
+
+
+class ParticipantSignatureView(LoginRequiredMixin, View):
+    """Upload a graphical signature for a participant.
+
+    Non-eIDAS qualified; the image is stored as a base64 data URI in
+    ManagementReviewParticipant.signature_data and embedded in the DOCX.
+    Any authenticated user can sign their own participation slot; users
+    with management_review.update permission can sign on behalf of others.
+    """
+
+    def _authorized(self, request, participant):
+        if request.user.has_perm("reports.management_review.update"):
+            return True
+        # Owner signing their own slot
+        return participant.user_id == request.user.pk
+
+    def get(self, request, pk):
+        participant = get_object_or_404(ManagementReviewParticipant, pk=pk)
+        if not self._authorized(request, participant):
+            messages.error(request, _("You cannot sign for this participant."))
+            return redirect("reports:management-review-detail", pk=participant.review_id)
+        form = ParticipantSignatureForm()
+        return render(request, "reports/participant_signature_form.html", {
+            "participant": participant, "form": form,
+        })
+
+    def post(self, request, pk):
+        import base64 as _b64
+        participant = get_object_or_404(ManagementReviewParticipant, pk=pk)
+        if not self._authorized(request, participant):
+            messages.error(request, _("You cannot sign for this participant."))
+            return redirect("reports:management-review-detail", pk=participant.review_id)
+
+        if request.POST.get("remove"):
+            participant.signature_data = ""
+            participant.save(update_fields=["signature_data"])
+            messages.success(request, _("Signature removed."))
+            return redirect("reports:management-review-detail", pk=participant.review_id)
+
+        form = ParticipantSignatureForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return render(request, "reports/participant_signature_form.html", {
+                "participant": participant, "form": form,
+            })
+
+        image = form.cleaned_data["signature_image"]
+        mime = image.content_type or "image/png"
+        data = _b64.b64encode(image.read()).decode("ascii")
+        participant.signature_data = f"data:{mime};base64,{data}"
+        if not participant.attended:
+            participant.attended = True
+        participant.save(update_fields=["signature_data", "attended"])
+        messages.success(request, _("Signature saved."))
+        return redirect("reports:management-review-detail", pk=participant.review_id)

@@ -1,16 +1,17 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n accounts_tags %}
 
 {% block title %}{{ review.title }} - Fairway{% endblock %}
 
 {% block content %}
+{% has_perm "reports.management_review.update" as can_update_review %}
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
   <div>
     <h1 class="mb-0">{{ review.title }}</h1>
     <small class="ref">{{ review.reference }}</small>
   </div>
   <div class="d-flex gap-2 flex-wrap">
-    {% if perms.reports.management_review.update %}
+    {% if can_update_review %}
     <a href="{% url 'reports:management-review-edit' review.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
     {% endif %}
     <div class="btn-group">
@@ -116,7 +117,7 @@
     <div class="card mb-3"><div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h6 class="text-muted text-uppercase small fw-semibold mb-0">{% trans "Decisions (clause 9.3.3)" %}</h6>
-        {% if perms.reports.management_review.update %}
+        {% if can_update_review %}
         <a href="{% url 'reports:decision-create' review.pk %}" class="btn btn-sm btn-outline-primary">
           <i class="bi bi-plus-lg me-1"></i>{% trans "Add decision" %}
         </a>
@@ -140,7 +141,7 @@
             <td class="small">{{ d.due_date|default:"-"|date:"d/m/Y" }}</td>
             <td><span class="badge bg-secondary">{{ d.get_status_display }}</span></td>
             <td class="text-end">
-              {% if perms.reports.management_review.update %}
+              {% if can_update_review %}
               <a href="{% url 'reports:decision-edit' d.pk %}" class="btn btn-sm btn-link p-0 me-2" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
               {% if not d.linked_action_plan %}
               <a href="{% url 'reports:decision-promote' d.pk %}" class="btn btn-sm btn-link p-0" title="{% trans 'Promote to action plan' %}"><i class="bi bi-arrow-up-right-circle"></i></a>
@@ -161,7 +162,7 @@
     <div class="card mb-3"><div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h6 class="text-muted text-uppercase small fw-semibold mb-0">{% trans "ISMS changes (clause 9.3.3)" %}</h6>
-        {% if perms.reports.management_review.update %}
+        {% if can_update_review %}
         <a href="{% url 'reports:isms-change-create' review.pk %}" class="btn btn-sm btn-outline-primary">
           <i class="bi bi-plus-lg me-1"></i>{% trans "Add change" %}
         </a>
@@ -185,7 +186,7 @@
             <td class="small">{{ c.target_date|default:"-"|date:"d/m/Y" }}</td>
             <td><span class="badge bg-secondary">{{ c.get_status_display }}</span></td>
             <td class="text-end">
-              {% if perms.reports.management_review.update %}
+              {% if can_update_review %}
               <a href="{% url 'reports:isms-change-edit' c.pk %}" class="btn btn-sm btn-link p-0" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
               {% endif %}
             </td>
@@ -212,7 +213,7 @@
     {# Comments #}
     <div class="card mb-3"><div class="card-body">
       <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "Comments" %}</h6>
-      {% if perms.reports.management_review.update %}
+      {% if can_update_review %}
       <form method="post" action="{% url 'reports:management-review-comment-create' review.pk %}" class="mb-3">
         {% csrf_token %}
         {{ comment_form.content }}
@@ -304,17 +305,32 @@
         {% if participants %}
         <ul class="list-unstyled small mb-0">
           {% for p in participants %}
-          <li class="d-flex align-items-center justify-content-between mb-1">
-            <span>
+          <li class="d-flex align-items-center justify-content-between gap-2 mb-2">
+            <span class="text-truncate">
               {% if p.attended %}<i class="bi bi-check-circle-fill text-success me-1"></i>{% else %}<i class="bi bi-circle text-muted me-1"></i>{% endif %}
               {{ p.display_name }}
+              <small class="text-muted">- {{ p.display_role }}</small>
             </span>
-            <small class="text-muted">{{ p.display_role }}</small>
+            {% if p.user_id == request.user.id or can_update_review %}
+              {% if p.signature_data %}
+              <a href="{% url 'reports:participant-sign' p.pk %}" class="btn btn-sm btn-outline-success py-0 px-2" title="{% trans 'Re-sign or remove signature' %}">
+                <i class="bi bi-check2"></i> {% trans "Signed" %}
+              </a>
+              {% else %}
+              <a href="{% url 'reports:participant-sign' p.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2">
+                <i class="bi bi-pen"></i> {% trans "Sign" %}
+              </a>
+              {% endif %}
+            {% elif p.signature_data %}
+              <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">
+                <i class="bi bi-check2"></i> {% trans "Signed" %}
+              </span>
+            {% endif %}
           </li>
           {% endfor %}
         </ul>
         {% else %}
-        <p class="text-muted small mb-0">{% trans "No participants yet." %}</p>
+        <p class="text-muted small mb-0">{% trans "No participants yet. Add some via Edit." %}</p>
         {% endif %}
       </div>
     </div>

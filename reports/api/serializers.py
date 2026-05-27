@@ -94,6 +94,7 @@ class ManagementReviewDecisionSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
         read_only_fields = ["id", "reference", "created_at", "updated_at"]
+        extra_kwargs = {"review": {"required": False}}
 
 
 class IsmsChangeSerializer(serializers.ModelSerializer):
@@ -107,6 +108,7 @@ class IsmsChangeSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
         read_only_fields = ["id", "reference", "created_at", "updated_at"]
+        extra_kwargs = {"review": {"required": False}}
 
 
 class ManagementReviewCommentSerializer(serializers.ModelSerializer):

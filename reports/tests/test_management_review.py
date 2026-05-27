@@ -308,6 +308,87 @@ def _add_measurement(indicator, value, recorded_at):
     return m
 
 
+class TestParticipantSignature:
+    """Graphical (non-eIDAS) signature upload and DOCX embedding."""
+
+    def _tiny_png_bytes(self):
+        # Smallest valid PNG: 1x1 transparent pixel.
+        import base64 as _b64
+        return _b64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+        )
+
+    def _png_upload(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return SimpleUploadedFile("sig.png", self._tiny_png_bytes(), "image/png")
+
+    def test_user_can_sign_their_own_slot(self, client):
+        from accounts.tests.factories import UserFactory
+        user = UserFactory()
+        participant = ManagementReviewParticipantFactory(user=user)
+        client.force_login(user)
+        response = client.post(
+            reverse("reports:participant-sign", args=[participant.pk]),
+            {"signature_image": self._png_upload()},
+        )
+        assert response.status_code == 302
+        participant.refresh_from_db()
+        assert participant.signature_data.startswith("data:image/")
+        assert participant.attended is True
+
+    def test_user_cannot_sign_someone_elses_slot(self, client):
+        from accounts.tests.factories import UserFactory
+        owner = UserFactory()
+        other = UserFactory()
+        participant = ManagementReviewParticipantFactory(user=owner)
+        client.force_login(other)
+        response = client.post(
+            reverse("reports:participant-sign", args=[participant.pk]),
+            {"signature_image": self._png_upload()},
+        )
+        assert response.status_code == 302
+        participant.refresh_from_db()
+        assert participant.signature_data == ""
+
+    def test_signature_removed_on_request(self, client):
+        from accounts.tests.factories import UserFactory
+        user = UserFactory()
+        participant = ManagementReviewParticipantFactory(
+            user=user, signature_data="data:image/png;base64,AAA",
+        )
+        client.force_login(user)
+        response = client.post(
+            reverse("reports:participant-sign", args=[participant.pk]),
+            {"remove": "1"},
+        )
+        assert response.status_code == 302
+        participant.refresh_from_db()
+        assert participant.signature_data == ""
+
+    def test_signature_embedded_in_docx(self):
+        """The DOCX generator should include the signature image when present."""
+        from reports.management_review import generate_management_review_docx
+        review = ManagementReviewFactory()
+        ManagementReviewParticipantFactory(
+            review=review,
+            signature_data="data:image/png;base64,"
+            + "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+        )
+        user = UserFactory()
+        filename, data = generate_management_review_docx(
+            user, scope_ids=None,
+            period_start=review.period_start,
+            period_end=review.period_end,
+            review=review,
+        )
+        assert filename.endswith(".docx")
+        # DOCX is a ZIP; embedded images land under /word/media/.
+        import io, zipfile
+        zf = zipfile.ZipFile(io.BytesIO(data))
+        media_files = [n for n in zf.namelist() if n.startswith("word/media/")]
+        assert len(media_files) >= 1
+
+
 class TestIndicatorTrend:
 
     def test_insufficient_data_returns_default(self):

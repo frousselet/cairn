@@ -493,7 +493,7 @@ msgstr "Rapports"
 #, fuzzy
 #| msgid "Management review"
 msgid "Management reviews"
-msgstr "Revue de direction"
+msgstr "Revues de direction"
 
 #: accounts/constants.py:251
 msgid "Django administration"
@@ -8654,11 +8654,50 @@ msgstr "Statut"
 msgid "Participants"
 msgstr "Partiellement conforme"
 
-#: reports/templates/reports/management_review_detail.html:317
-#, fuzzy
-#| msgid "No comments yet."
-msgid "No participants yet."
-msgstr "Aucun commentaire."
+msgid "No participants yet. Add some via Edit."
+msgstr "Aucun participant. Ajoutez-en via Modifier."
+
+msgid "Sign"
+msgstr "Signer"
+
+msgid "Signed"
+msgstr "Signé"
+
+msgid "Re-sign or remove signature"
+msgstr "Resigner ou supprimer la signature"
+
+msgid "Sign management review"
+msgstr "Signer la revue de direction"
+
+msgid "Signature image"
+msgstr "Image de signature"
+
+msgid "Upload a PNG or JPEG image of your signature (max 500 KB)."
+msgstr "Téléversez une image PNG ou JPEG de votre signature (max 500 Ko)."
+
+msgid "Signature image must be smaller than 500 KB."
+msgstr "L'image de signature doit faire moins de 500 Ko."
+
+msgid "Current signature"
+msgstr "Signature actuelle"
+
+msgid "Save signature"
+msgstr "Enregistrer la signature"
+
+msgid "Remove signature"
+msgstr "Supprimer la signature"
+
+msgid "You cannot sign for this participant."
+msgstr "Vous ne pouvez pas signer pour ce participant."
+
+msgid "Signature saved."
+msgstr "Signature enregistrée."
+
+msgid "Signature removed."
+msgstr "Signature supprimée."
+
+msgid "Upload a graphical signature. This is a non-qualified signature (not eIDAS qualified) and does not carry legal weight of a qualified electronic signature."
+msgstr "Téléversez une signature graphique. Il s'agit d'une signature non qualifiée (non eIDAS) qui n'a pas la valeur juridique d'une signature électronique qualifiée."
 
 #: reports/templates/reports/management_review_detail.html:332
 #, fuzzy

@@ -21,10 +21,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ten new MCP tools: `list_management_reviews`, `get_management_review`, `create_management_review`, `transition_management_review`, `export_management_review`, `list_management_review_decisions`, `create_management_review_decision`, `promote_decision_to_action_plan`, `list_isms_changes`, `create_isms_change`, `list_stakeholder_feedback`, `create_stakeholder_feedback`
 - New permissions `reports.management_review.{create,read,update,delete,approve}` and `context.stakeholder_feedback.{create,read,update,delete}`, auto-assigned to the six system groups
 - Enhanced PPTX/DOCX export consumes a persistent review: adds decisions and ISMS changes sections, pre-fills signatures from participants, replaces placeholders with actual summary and next review date
+- Graphical (non-eIDAS) participant signature: PNG/JPEG upload (max 500 KB) per participant, stored as a base64 data URI, embedded as an actual image in the DOCX signature table
+- MCP tool `set_participant_signature` to attach a signature data URI programmatically
+- "Management reviews" link added to the main sidebar navigation
+- Test suites `test_management_review_api.py` and `test_management_review_mcp.py` covering the REST and MCP surfaces, plus participant signature tests in `test_management_review.py`
 
 ### Changed
 
 - Management review export now accepts a `review` argument and hydrates from `snapshot_data` when the review is closed, ensuring exports remain immutable for audit purposes
+- Management review templates use the `has_perm` template tag instead of `perms.reports.management_review.*` so dotted permission codenames resolve correctly through the custom permission backend
+- Management review export query parameter renamed from `format` to `fmt` to avoid clashing with DRF's built-in renderer negotiation
+
+### Fixed
+
+- Management review decision and ISMS change REST serializers no longer require the `review` field on input ; it is populated from the nested URL parameter
 
 ## [0.22.0] - 2026-04-13
 

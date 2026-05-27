@@ -254,7 +254,7 @@ class ManagementReviewViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get"], url_path="export")
     def export(self, request, pk=None):
         review = self.get_object()
-        fmt = request.query_params.get("format", "docx")
+        fmt = request.query_params.get("fmt", "docx")
         scope_ids = list(review.scopes.values_list("id", flat=True))
 
         try:

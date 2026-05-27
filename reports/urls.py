@@ -96,6 +96,11 @@ urlpatterns = [
         mrv.IsmsChangeDeleteView.as_view(),
         name="isms-change-delete",
     ),
+    path(
+        "participants/<uuid:pk>/sign/",
+        mrv.ParticipantSignatureView.as_view(),
+        name="participant-sign",
+    ),
     # Legacy download and delete
     path("<uuid:pk>/download/", views.ReportDownloadView.as_view(), name="report-download"),
     path("<uuid:pk>/delete/", views.ReportDeleteView.as_view(), name="report-delete"),

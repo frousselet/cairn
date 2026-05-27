@@ -2445,6 +2445,10 @@
         <i class="bi bi-file-earmark-text"></i> <span class="sidebar-link-text">{% trans "Reports" %}</span>
         <span class="sidebar-tooltip">{% trans "Reports" %}</span>
       </a>
+      <a href="{% url 'reports:management-review-list' %}" class="sidebar-link">
+        <i class="bi bi-clipboard-check"></i> <span class="sidebar-link-text">{% trans "Management reviews" %}</span>
+        <span class="sidebar-tooltip">{% trans "Management reviews" %}</span>
+      </a>
 
       {# ── Gouvernance ─────────────────────────────────── #}
       <div class="sidebar-section">{% trans "Governance" %}</div>
