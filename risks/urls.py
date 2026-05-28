@@ -34,6 +34,7 @@ urlpatterns = [
     # Risk register
     path("register/", views.RiskListView.as_view(), name="risk-list"),
     path("register/export/xlsx/", views.RiskRegisterExportView.as_view(), name="risk-register-export-xlsx"),
+    path("register/bulk/", views.RiskBulkActionView.as_view(), name="risk-bulk-action"),
     path("register/create/", views.RiskCreateView.as_view(), name="risk-create"),
     path("register/<uuid:pk>/", views.RiskDetailView.as_view(), name="risk-detail"),
     path("register/<uuid:pk>/edit/", views.RiskUpdateView.as_view(), name="risk-update"),

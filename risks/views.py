@@ -834,6 +834,66 @@ class RiskListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin
         return ctx
 
 
+class RiskBulkActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Run a bulk action (approve or delete) on a list of risk UUIDs.
+
+    Only operates on risks the user can see (scope-filtered). The action
+    must be one of: approve, delete. The destination URL after the action
+    is the risk list; selected_ids are read from the form's
+    `risk_ids` field (multiple).
+    """
+
+    permission_required = "risks.risk.read"
+    SUPPORTED_ACTIONS = {"approve", "delete"}
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get("action", "")
+        ids = request.POST.getlist("risk_ids")
+        if action not in self.SUPPORTED_ACTIONS:
+            messages.error(request, _("Unsupported bulk action."))
+            return redirect("risks:risk-list")
+        if not ids:
+            messages.warning(request, _("No risks selected."))
+            return redirect("risks:risk-list")
+
+        qs = Risk.objects.filter(pk__in=ids)
+        user = request.user
+        if not user.is_superuser:
+            scope_ids = user.get_allowed_scope_ids()
+            if scope_ids is not None:
+                qs = qs.filter(assessment__scopes__id__in=scope_ids).distinct()
+
+        if action == "approve":
+            if not user.is_superuser and not user.has_perm("risks.risk.approve"):
+                messages.error(request, _("You do not have permission to approve risks."))
+                return redirect("risks:risk-list")
+            count = 0
+            for risk in qs:
+                if risk.is_approved:
+                    continue
+                risk.is_approved = True
+                risk.approved_by = user
+                risk.approved_at = timezone.now()
+                risk.save(update_fields=["is_approved", "approved_by", "approved_at"])
+                count += 1
+            messages.success(
+                request,
+                _("%(count)d risk(s) approved.") % {"count": count},
+            )
+            return redirect("risks:risk-list")
+
+        # action == "delete"
+        if not user.is_superuser and not user.has_perm("risks.risk.delete"):
+            messages.error(request, _("You do not have permission to delete risks."))
+            return redirect("risks:risk-list")
+        count, _details = qs.delete()
+        messages.success(
+            request,
+            _("%(count)d risk(s) deleted.") % {"count": count},
+        )
+        return redirect("risks:risk-list")
+
+
 class RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, DetailView):
     scope_parent_lookup = "assessment__scopes"
     model = Risk

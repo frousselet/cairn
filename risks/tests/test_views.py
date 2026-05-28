@@ -654,6 +654,98 @@ class TestTreatmentPlanDeleteView:
         assert not RiskTreatmentPlan.objects.filter(pk=pk).exists()
 
 
+class TestRiskBulkActionView:
+    """C4: bulk approve / delete on the risk register."""
+
+    def test_bulk_approve_marks_all_selected(self):
+        client, user = _superuser_client()
+        r1 = RiskFactory()
+        r2 = RiskFactory()
+        r3 = RiskFactory()
+        resp = client.post(
+            reverse("risks:risk-bulk-action"),
+            {"action": "approve", "risk_ids": [str(r1.pk), str(r3.pk)]},
+        )
+        assert resp.status_code == 302
+        r1.refresh_from_db()
+        r2.refresh_from_db()
+        r3.refresh_from_db()
+        assert r1.is_approved is True
+        assert r2.is_approved is False
+        assert r3.is_approved is True
+        assert r1.approved_by == user
+
+    def test_bulk_delete_removes_selected(self):
+        client, _ = _superuser_client()
+        r1 = RiskFactory()
+        r2 = RiskFactory()
+        resp = client.post(
+            reverse("risks:risk-bulk-action"),
+            {"action": "delete", "risk_ids": [str(r1.pk)]},
+        )
+        assert resp.status_code == 302
+        assert not Risk.objects.filter(pk=r1.pk).exists()
+        assert Risk.objects.filter(pk=r2.pk).exists()
+
+    def test_bulk_unknown_action_warns(self):
+        client, _ = _superuser_client()
+        r1 = RiskFactory()
+        resp = client.post(
+            reverse("risks:risk-bulk-action"),
+            {"action": "burn", "risk_ids": [str(r1.pk)]},
+        )
+        # Redirects with a warning, no destruction.
+        assert resp.status_code == 302
+        assert Risk.objects.filter(pk=r1.pk).exists()
+
+    def test_bulk_no_selection_warns(self):
+        client, _ = _superuser_client()
+        RiskFactory()
+        resp = client.post(
+            reverse("risks:risk-bulk-action"),
+            {"action": "approve"},
+        )
+        assert resp.status_code == 302
+
+    def test_bulk_scope_filtered_ignores_outsiders(self):
+        from accounts.models import Group, Permission
+        from accounts.tests.factories import UserFactory as _UF
+        from context.tests.factories import ScopeFactory
+
+        scope_in = ScopeFactory()
+        scope_out = ScopeFactory()
+        a_in = RiskAssessmentFactory()
+        a_in.scopes.add(scope_in)
+        a_out = RiskAssessmentFactory()
+        a_out.scopes.add(scope_out)
+        r_in = RiskFactory(assessment=a_in)
+        r_out = RiskFactory(assessment=a_out)
+
+        group = Group.objects.create(name="bulk scope group")
+        group.allowed_scopes.add(scope_in)
+        for codename in ["risks.risk.read", "risks.risk.delete"]:
+            perm, _ = Permission.objects.get_or_create(
+                codename=codename,
+                defaults={
+                    "name": codename, "module": "risks", "feature": "risk",
+                    "action": codename.split(".")[-1], "is_system": True,
+                },
+            )
+            group.permissions.add(perm)
+        user = _UF(is_superuser=False, is_staff=False)
+        group.users.add(user)
+
+        client = Client()
+        client.force_login(user)
+        resp = client.post(
+            reverse("risks:risk-bulk-action"),
+            {"action": "delete", "risk_ids": [str(r_in.pk), str(r_out.pk)]},
+        )
+        assert resp.status_code == 302
+        assert not Risk.objects.filter(pk=r_in.pk).exists()
+        assert Risk.objects.filter(pk=r_out.pk).exists()
+
+
 class TestTreatmentActionViews:
     """C3: inline HTMX edit/create/delete of TreatmentAction rows."""
 

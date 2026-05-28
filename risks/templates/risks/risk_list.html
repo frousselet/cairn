@@ -115,11 +115,36 @@
 </details>
 
 {% include "includes/table_search.html" %}
+
+{% has_perm "risks.risk.approve" as can_approve_risks %}
+{% has_perm "risks.risk.delete" as can_delete_risks %}
+{% if can_approve_risks or can_delete_risks %}
+<form method="post" action="{% url 'risks:risk-bulk-action' %}" id="risk-bulk-form">
+  {% csrf_token %}
+  <div class="d-flex align-items-center gap-2 mb-2 small" id="risk-bulk-bar" style="display:none !important">
+    <span id="risk-bulk-count" class="text-muted"></span>
+    {% if can_approve_risks %}
+    <button type="submit" name="action" value="approve" class="btn btn-sm btn-outline-success">
+      <i class="bi bi-check2 me-1"></i>{% trans "Approve selected" %}
+    </button>
+    {% endif %}
+    {% if can_delete_risks %}
+    <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger"
+            onclick="return confirm('{% trans 'Delete the selected risks?' %}')">
+      <i class="bi bi-trash me-1"></i>{% trans "Delete selected" %}
+    </button>
+    {% endif %}
+  </div>
+{% endif %}
+
 <div class="card">
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead>
         <tr>
+          {% if can_approve_risks or can_delete_risks %}
+          <th style="width:1%"><input type="checkbox" id="risk-bulk-select-all" aria-label="{% trans 'Select all' %}"></th>
+          {% endif %}
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
           <th>{% trans "Assessment" %}</th>
@@ -136,6 +161,9 @@
       <tbody>
         {% for r in risks %}
         <tr>
+          {% if can_approve_risks or can_delete_risks %}
+          <td><input type="checkbox" name="risk_ids" value="{{ r.pk }}" class="risk-bulk-checkbox" form="risk-bulk-form"></td>
+          {% endif %}
           <td><a href="{% url 'risks:risk-detail' r.pk %}" class="ref" style="text-decoration:none">{{ r.reference }}</a></td>
           <td>{{ r.name }}</td>
           <td style="font-size:.85rem">{{ r.assessment.reference }}</td>
@@ -155,12 +183,37 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="11" class="text-center py-4" style="color:var(--text-muted)">{% trans "No risks recorded." %}</td></tr>
+        <tr><td colspan="12" class="text-center py-4" style="color:var(--text-muted)">{% trans "No risks recorded." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+{% if can_approve_risks or can_delete_risks %}
+</form>
+<script>
+(function() {
+  const bar = document.getElementById("risk-bulk-bar");
+  const count = document.getElementById("risk-bulk-count");
+  const checkboxes = document.querySelectorAll(".risk-bulk-checkbox");
+  const selectAll = document.getElementById("risk-bulk-select-all");
+  if (!bar) return;
+  function refresh() {
+    const checked = document.querySelectorAll(".risk-bulk-checkbox:checked").length;
+    bar.style.display = checked > 0 ? "flex" : "none";
+    if (count) count.textContent = checked + " {% trans 'selected' %}";
+  }
+  checkboxes.forEach(cb => cb.addEventListener("change", refresh));
+  if (selectAll) {
+    selectAll.addEventListener("change", function() {
+      checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
+      refresh();
+    });
+  }
+  refresh();
+})();
+</script>
+{% endif %}
 
 {% include "includes/pagination.html" %}
 {% endblock %}
