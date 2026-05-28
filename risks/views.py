@@ -329,6 +329,68 @@ class RiskAssessmentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Dele
     success_url = reverse_lazy("risks:assessment-list")
 
 
+class ISO27005ReportExportView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, View):
+    """Generate and return an ISO 27005 risk assessment DOCX report.
+
+    The export is filtered by the user's allowed scopes via the assessment's
+    `scopes` M2M; the generated file is persisted as a `Report` for
+    discoverability through the reports list.
+    """
+
+    scope_parent_lookup = "scopes"
+    permission_required = "risks.export.read"
+
+    def get_queryset(self):
+        return RiskAssessment.objects.all()
+
+    def get(self, request, pk, *args, **kwargs):
+        assessment = get_object_or_404(self.get_queryset(), pk=pk)
+        # Re-apply scope filter using the same mixin contract.
+        user = request.user
+        if not user.is_superuser:
+            scope_ids = user.get_allowed_scope_ids()
+            if scope_ids is not None:
+                if not assessment.scopes.filter(id__in=scope_ids).exists():
+                    from django.http import HttpResponseForbidden
+                    return HttpResponseForbidden(
+                        _("Assessment is outside your allowed scopes.")
+                    )
+
+        from reports.constants import ReportStatus, ReportType
+        from reports.iso27005_report import generate_iso27005_report_docx
+        from reports.models import Report
+
+        try:
+            filename, content = generate_iso27005_report_docx(assessment, user)
+        except Exception:
+            Report.objects.create(
+                report_type=ReportType.ISO27005_REPORT,
+                name=f"ISO 27005 report - {assessment.reference}",
+                status=ReportStatus.FAILED,
+                created_by=user,
+            )
+            raise
+
+        Report.objects.create(
+            report_type=ReportType.ISO27005_REPORT,
+            name=f"ISO 27005 report - {assessment.reference} - "
+                 f"{timezone.now().strftime('%Y-%m-%d %H:%M')}",
+            status=ReportStatus.COMPLETED,
+            created_by=user,
+            file_content=content,
+            file_name=filename,
+        )
+
+        response = HttpResponse(
+            content,
+            content_type=(
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            ),
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+
 # ── Risk Criteria ───────────────────────────────────────────
 
 class RiskCriteriaListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):

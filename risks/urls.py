@@ -23,6 +23,7 @@ urlpatterns = [
     path("assessments/<uuid:pk>/edit/", views.RiskAssessmentUpdateView.as_view(), name="assessment-update"),
     path("assessments/<uuid:pk>/delete/", views.RiskAssessmentDeleteView.as_view(), name="assessment-delete"),
     path("assessments/<uuid:pk>/approve/", views.ApproveView.as_view(model=RiskAssessment, permission_feature="assessment", success_url=reverse_lazy("risks:assessment-list")), name="assessment-approve"),
+    path("assessments/<uuid:pk>/export/docx/", views.ISO27005ReportExportView.as_view(), name="assessment-export-docx"),
     # Criteria
     path("criteria/", views.RiskCriteriaListView.as_view(), name="criteria-list"),
     path("criteria/create/", views.RiskCriteriaCreateView.as_view(), name="criteria-create"),

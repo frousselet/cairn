@@ -27,6 +27,12 @@
     <small class="ref">{{ assessment.reference }}</small>
   </div>
   <div class="d-flex gap-2">
+    {% has_perm "risks.export.read" as can_export_assessment %}
+    {% if can_export_assessment %}
+    <a href="{% url 'risks:assessment-export-docx' assessment.pk %}" class="btn btn-outline-primary" title="{% trans 'Export to Word' %}">
+      <i class="bi bi-file-earmark-word me-1"></i>{% trans "Export DOCX" %}
+    </a>
+    {% endif %}
     <a href="{% url 'risks:assessment-update' assessment.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
     <a href="{% url 'risks:assessment-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
   </div>

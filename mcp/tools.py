@@ -4799,6 +4799,80 @@ def _register_reports_tools(server):
         generate_risk_register,
     )
 
+    # Generate ISO 27005 report (DOCX)
+    @require_perm("risks.export.read")
+    def generate_iso27005_report(user, arguments):
+        """Generate an ISO 27005 risk assessment report (DOCX).
+
+        Parameters
+        ----------
+        assessment_id : str (required)
+            UUID of the RiskAssessment to export. Scope access is enforced.
+        """
+        assessment_id = arguments.get("assessment_id")
+        if not assessment_id:
+            raise InvalidParamsError("assessment_id is required.")
+
+        RiskAssessment = _get_model("risks", "RiskAssessment")
+        try:
+            assessment = RiskAssessment.objects.get(pk=assessment_id)
+        except RiskAssessment.DoesNotExist:
+            return _error("Assessment not found.")
+
+        # Scope check: superuser bypasses; otherwise the assessment must
+        # share at least one scope with the user.
+        if not user.is_superuser:
+            scope_ids = user.get_allowed_scope_ids()
+            if scope_ids is not None:
+                if not assessment.scopes.filter(id__in=scope_ids).exists():
+                    return _error("Access denied: assessment outside your allowed scopes.")
+
+        from reports.constants import ReportStatus, ReportType
+        from reports.iso27005_report import generate_iso27005_report_docx
+
+        try:
+            filename, content = generate_iso27005_report_docx(assessment, user)
+            report = Report.objects.create(
+                report_type=ReportType.ISO27005_REPORT,
+                name=f"ISO 27005 report - {assessment.reference} - "
+                     f"{timezone.now().strftime('%Y-%m-%d %H:%M')}",
+                status=ReportStatus.COMPLETED,
+                created_by=user,
+                file_content=content,
+                file_name=filename,
+            )
+        except Exception as exc:
+            Report.objects.create(
+                report_type=ReportType.ISO27005_REPORT,
+                name=f"ISO 27005 report - {assessment.reference}",
+                status=ReportStatus.FAILED,
+                created_by=user,
+            )
+            return _error(f"Failed to generate ISO 27005 report: {exc}")
+
+        return _serialize_obj(report, report_fields)
+
+    server.register_tool(
+        "generate_iso27005_report",
+        (
+            "Generate an ISO 27005 risk assessment DOCX report for a single "
+            "assessment. The report covers context, criteria, threats, "
+            "vulnerabilities, analyses, consolidated risks, treatment plans "
+            "and acceptances. Persisted as a Report."
+        ),
+        {
+            "type": "object",
+            "properties": {
+                "assessment_id": {
+                    "type": "string",
+                    "description": "UUID of the RiskAssessment to export.",
+                },
+            },
+            "required": ["assessment_id"],
+        },
+        generate_iso27005_report,
+    )
+
     # Delete report
     @require_perm("reports.report.delete")
     def delete_report(user, arguments):

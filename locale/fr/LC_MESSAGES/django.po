@@ -10652,6 +10652,18 @@ msgstr ""
 msgid "Export to Excel"
 msgstr "Exporter vers Excel"
 
+msgid "Export to Word"
+msgstr "Exporter vers Word"
+
+msgid "Export DOCX"
+msgstr "Exporter DOCX"
+
+msgid "ISO 27005 risk assessment report"
+msgstr "Rapport d'évaluation des risques ISO 27005"
+
+msgid "Assessment is outside your allowed scopes."
+msgstr "L'évaluation est hors de vos périmètres autorisés."
+
 #~ msgid "Compliance of evaluated requirements"
 #~ msgstr "Conformité des exigences évaluées"
 

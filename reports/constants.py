@@ -9,6 +9,7 @@ class ReportType(models.TextChoices):
     MANAGEMENT_REVIEW_PPTX = "management_review_pptx", _("Management review - Presentation")
     MANAGEMENT_REVIEW_DOCX = "management_review_docx", _("Management review - Minutes")
     RISK_REGISTER = "risk_register", _("Risk register")
+    ISO27005_REPORT = "iso27005_report", _("ISO 27005 risk assessment report")
 
 
 class ReportStatus(models.TextChoices):
