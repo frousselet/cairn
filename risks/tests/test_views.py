@@ -348,6 +348,94 @@ class TestRiskListView:
         assert b"CriticalPri" in resp.content
         assert b"LowPri" not in resp.content
 
+    def test_list_filters_by_treatment_decision(self):
+        client, _ = _superuser_client()
+        RiskFactory(name="AvoidR", treatment_decision="avoid")
+        RiskFactory(name="MitigateR", treatment_decision="mitigate")
+        resp = client.get(
+            reverse("risks:risk-list"), {"treatment_decision": "avoid"},
+        )
+        assert b"AvoidR" in resp.content
+        assert b"MitigateR" not in resp.content
+
+    def test_list_filters_by_date_range(self):
+        from datetime import timedelta
+        client, _ = _superuser_client()
+        old = RiskFactory(name="OldRisk")
+        recent = RiskFactory(name="RecentRisk")
+        # Force created_at by direct update (auto_now_add blocks normal assignment)
+        from risks.models import Risk
+        Risk.objects.filter(pk=old.pk).update(
+            created_at=timezone.now() - timedelta(days=30),
+        )
+        Risk.objects.filter(pk=recent.pk).update(
+            created_at=timezone.now() - timedelta(days=1),
+        )
+        cutoff = (timezone.now() - timedelta(days=15)).date().isoformat()
+        resp = client.get(
+            reverse("risks:risk-list"), {"date_after": cutoff},
+        )
+        assert b"RecentRisk" in resp.content
+        assert b"OldRisk" not in resp.content
+
+    def test_list_filters_by_essential_asset(self):
+        from assets.tests.factories import EssentialAssetFactory
+        client, _ = _superuser_client()
+        asset = EssentialAssetFactory()
+        in_asset = RiskFactory(name="InAsset")
+        out_asset = RiskFactory(name="OutAsset")
+        in_asset.affected_essential_assets.add(asset)
+        resp = client.get(
+            reverse("risks:risk-list"), {"essential_asset": str(asset.pk)},
+        )
+        assert b"InAsset" in resp.content
+        assert b"OutAsset" not in resp.content
+
+    def test_list_filters_by_linked_requirement(self):
+        from compliance.tests.factories import (
+            FrameworkFactory, RequirementFactory,
+        )
+        client, _ = _superuser_client()
+        fw = FrameworkFactory()
+        req = RequirementFactory(framework=fw, requirement_number="A.5.99")
+        r_with = RiskFactory(name="WithReq")
+        r_without = RiskFactory(name="WithoutReq")
+        r_with.linked_requirements.add(req)
+        resp = client.get(
+            reverse("risks:risk-list"), {"linked_requirement": str(req.pk)},
+        )
+        assert b"WithReq" in resp.content
+        assert b"WithoutReq" not in resp.content
+
+    def test_list_filters_by_threat_via_iso27005_source(self):
+        from risks.models import ISO27005Risk
+        from risks.tests.factories import ThreatFactory, VulnerabilityFactory
+        client, _ = _superuser_client()
+        threat = ThreatFactory()
+        vuln = VulnerabilityFactory()
+        assessment = RiskAssessmentFactory()
+        r_with = RiskFactory(assessment=assessment, name="ThreatHit")
+        r_without = RiskFactory(assessment=assessment, name="ThreatMiss")
+        ISO27005Risk.objects.create(
+            assessment=assessment, threat=threat, vulnerability=vuln, risk=r_with,
+        )
+        resp = client.get(
+            reverse("risks:risk-list"), {"threat": str(threat.pk)},
+        )
+        assert b"ThreatHit" in resp.content
+        assert b"ThreatMiss" not in resp.content
+
+    def test_context_exposes_choice_lists(self):
+        from assets.tests.factories import EssentialAssetFactory
+        client, _ = _superuser_client()
+        asset = EssentialAssetFactory(name="ContextEssential")
+        risk = RiskFactory()
+        risk.affected_essential_assets.add(asset)
+        resp = client.get(reverse("risks:risk-list"))
+        choices = list(resp.context["essential_asset_choices"])
+        assert asset in choices
+        assert "treatment_decision_choices" in resp.context
+
 
 class TestRiskDetailView:
     def test_login_required(self):

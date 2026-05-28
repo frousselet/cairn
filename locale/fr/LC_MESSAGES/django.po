@@ -10667,6 +10667,21 @@ msgstr "L'évaluation est hors de vos périmètres autorisés."
 msgid "Treated risks"
 msgstr "Risques traités"
 
+msgid "Advanced filters"
+msgstr "Filtres avancés"
+
+msgid "Decision:"
+msgstr "Décision :"
+
+msgid "Date from"
+msgstr "Date à partir du"
+
+msgid "Date to"
+msgstr "Date jusqu'au"
+
+msgid "Apply"
+msgstr "Appliquer"
+
 msgid "Risk dashboard"
 msgstr "Tableau de bord des risques"
 

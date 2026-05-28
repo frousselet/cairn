@@ -735,16 +735,101 @@ class RiskListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("assessment", "risk_owner")
-        assessment_id = self.request.GET.get("assessment")
+        params = self.request.GET
+
+        assessment_id = params.get("assessment")
         if assessment_id:
             qs = qs.filter(assessment_id=assessment_id)
-        status_filter = self.request.GET.get("status")
+        status_filter = params.get("status")
         if status_filter:
             qs = qs.filter(status=status_filter)
-        priority = self.request.GET.get("priority")
+        priority = params.get("priority")
         if priority:
             qs = qs.filter(priority=priority)
-        return qs
+        decision = params.get("treatment_decision")
+        if decision:
+            qs = qs.filter(treatment_decision=decision)
+
+        date_after = params.get("date_after")
+        if date_after:
+            qs = qs.filter(created_at__date__gte=date_after)
+        date_before = params.get("date_before")
+        if date_before:
+            qs = qs.filter(created_at__date__lte=date_before)
+
+        m2m_filters = {
+            "essential_asset": "affected_essential_assets__id",
+            "support_asset": "affected_support_assets__id",
+            "threat": "iso27005_sources__threat_id",
+            "vulnerability": "iso27005_sources__vulnerability_id",
+            "linked_requirement": "linked_requirements__id",
+        }
+        for param, lookup in m2m_filters.items():
+            value = params.get(param)
+            if value:
+                qs = qs.filter(**{lookup: value})
+
+        # M2M joins can produce duplicate rows; deduplicate.
+        return qs.distinct()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        params = self.request.GET
+
+        # Choices for the advanced filter dropdowns. Limited to entities
+        # actually referenced by the user's accessible risks to keep the
+        # selects manageable.
+        from assets.models import EssentialAsset, SupportAsset
+        from compliance.models import Requirement
+        from risks.models import Threat, Vulnerability
+
+        base_qs = super().get_queryset()
+        risk_ids = list(base_qs.values_list("pk", flat=True))
+
+        if risk_ids:
+            ctx["essential_asset_choices"] = (
+                EssentialAsset.objects.filter(risks__in=risk_ids)
+                .distinct()
+                .order_by("name")
+            )
+            ctx["support_asset_choices"] = (
+                SupportAsset.objects.filter(risks__in=risk_ids)
+                .distinct()
+                .order_by("name")
+            )
+            ctx["threat_choices"] = (
+                Threat.objects.filter(iso27005_risks__risk_id__in=risk_ids)
+                .distinct()
+                .order_by("name")
+            )
+            ctx["vulnerability_choices"] = (
+                Vulnerability.objects.filter(iso27005_risks__risk_id__in=risk_ids)
+                .distinct()
+                .order_by("name")
+            )
+            ctx["requirement_choices"] = (
+                Requirement.objects.filter(linked_risks__in=risk_ids)
+                .select_related("framework")
+                .distinct()
+                .order_by("requirement_number", "reference")
+            )
+        else:
+            ctx["essential_asset_choices"] = []
+            ctx["support_asset_choices"] = []
+            ctx["threat_choices"] = []
+            ctx["vulnerability_choices"] = []
+            ctx["requirement_choices"] = []
+
+        ctx["treatment_decision_choices"] = TreatmentDecision.choices
+        ctx["has_advanced_filter"] = any(
+            params.get(key)
+            for key in (
+                "treatment_decision", "date_after", "date_before",
+                "essential_asset", "support_asset", "threat",
+                "vulnerability", "linked_requirement",
+            )
+        )
+        return ctx
 
 
 class RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, DetailView):

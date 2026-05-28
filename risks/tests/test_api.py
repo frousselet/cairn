@@ -181,6 +181,93 @@ class TestRiskViewSet:
         risk.refresh_from_db()
         assert risk.is_approved is True
 
+    def test_filter_by_treatment_decision(self):
+        RiskFactory(name="A1", treatment_decision="avoid")
+        RiskFactory(name="M1", treatment_decision="mitigate")
+        response = self.client.get(
+            "/api/v1/risks/risks/", {"treatment_decision": "avoid"},
+        )
+        body = _data(response)
+        items = body["results"] if isinstance(body, dict) else body
+        names = [r["name"] for r in items]
+        assert "A1" in names
+        assert "M1" not in names
+
+    def test_filter_by_linked_requirement(self):
+        from compliance.tests.factories import (
+            FrameworkFactory, RequirementFactory,
+        )
+        fw = FrameworkFactory()
+        req = RequirementFactory(framework=fw, requirement_number="A.5.42")
+        r_with = RiskFactory(name="LinkedReqRisk")
+        RiskFactory(name="NoReqRisk")
+        r_with.linked_requirements.add(req)
+        response = self.client.get(
+            "/api/v1/risks/risks/", {"linked_requirement": str(req.pk)},
+        )
+        body = _data(response)
+        items = body["results"] if isinstance(body, dict) else body
+        names = [r["name"] for r in items]
+        assert "LinkedReqRisk" in names
+        assert "NoReqRisk" not in names
+
+    def test_filter_by_essential_asset(self):
+        from assets.tests.factories import EssentialAssetFactory
+        asset = EssentialAssetFactory()
+        r_with = RiskFactory(name="AssetRisk")
+        RiskFactory(name="NoAssetRisk")
+        r_with.affected_essential_assets.add(asset)
+        response = self.client.get(
+            "/api/v1/risks/risks/", {"essential_asset": str(asset.pk)},
+        )
+        body = _data(response)
+        items = body["results"] if isinstance(body, dict) else body
+        names = [r["name"] for r in items]
+        assert "AssetRisk" in names
+        assert "NoAssetRisk" not in names
+
+    def test_filter_by_threat(self):
+        from risks.models import ISO27005Risk
+        from risks.tests.factories import ThreatFactory, VulnerabilityFactory
+        threat = ThreatFactory()
+        vuln = VulnerabilityFactory()
+        assessment = RiskAssessmentFactory()
+        r_with = RiskFactory(assessment=assessment, name="ThreatRisk")
+        RiskFactory(assessment=assessment, name="NoThreatRisk")
+        ISO27005Risk.objects.create(
+            assessment=assessment, threat=threat, vulnerability=vuln, risk=r_with,
+        )
+        response = self.client.get(
+            "/api/v1/risks/risks/", {"threat": str(threat.pk)},
+        )
+        body = _data(response)
+        items = body["results"] if isinstance(body, dict) else body
+        names = [r["name"] for r in items]
+        assert "ThreatRisk" in names
+        assert "NoThreatRisk" not in names
+
+    def test_filter_by_date_after(self):
+        from datetime import timedelta
+        from django.utils import timezone as tz
+        from risks.models import Risk
+        old = RiskFactory(name="OldOne")
+        recent = RiskFactory(name="RecentOne")
+        Risk.objects.filter(pk=old.pk).update(
+            created_at=tz.now() - timedelta(days=30),
+        )
+        Risk.objects.filter(pk=recent.pk).update(
+            created_at=tz.now() - timedelta(days=1),
+        )
+        cutoff = (tz.now() - timedelta(days=15)).date().isoformat()
+        response = self.client.get(
+            "/api/v1/risks/risks/", {"date_after": cutoff},
+        )
+        body = _data(response)
+        items = body["results"] if isinstance(body, dict) else body
+        names = [r["name"] for r in items]
+        assert "RecentOne" in names
+        assert "OldOne" not in names
+
     def test_unauthenticated(self):
         client = APIClient()
         response = client.get("/api/v1/risks/risks/")

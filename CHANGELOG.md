@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Risk.calculate_risk_level` and `ISO27005Risk.save` now consult `criteria_snapshot` first and fall back to the live `RiskCriteria.risk_matrix` only when no snapshot has been captured
 - Statement of Applicability (SoA) PDF now lists the treated risks per control with their residual level (colour-coded low/medium/high pill) and treatment decision; when a requirement is applicable, has no action plan, but addresses linked risks, the justification falls back to "Selected to address linked risks." A small per-framework summary reports the total deduplicated risks addressed. The data-building step is exposed as a reusable `build_soa_frameworks_data` helper
 - `/risks/` now shows a `RiskDashboardView` (was a redirect to `/risks/assessments/`): top counters, current and residual heatmaps, status / priority / treatment-decision distributions, top 10 critical risks, overdue treatment plans, and acceptances expiring within 90 days. Scope-filtered through the assessment's `scopes` M2M and guarded by `risks.risk.read`
+- Advanced filters on the risk register list and REST endpoint: `treatment_decision` (chip row), `date_after` / `date_before` (creation date window), `essential_asset`, `support_asset`, `threat`, `vulnerability`, `linked_requirement`. The UI exposes them through a collapsible "Advanced filters" panel auto-opened when any of them is active
 
 ### Fixed
 

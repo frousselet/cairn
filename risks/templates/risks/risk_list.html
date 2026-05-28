@@ -26,14 +26,93 @@
 </div>
 {% help_modal "risks.risk_list" %}
 
-<div class="mb-4 d-flex gap-2 flex-wrap">
-  <a href="{% url 'risks:risk-list' %}" class="filter-chip {% if not request.GET.status and not request.GET.priority %}active{% endif %}">{% trans "All" %}</a>
+<div class="mb-3 d-flex gap-2 flex-wrap">
+  <a href="{% url 'risks:risk-list' %}" class="filter-chip {% if not request.GET.status and not request.GET.priority and not has_advanced_filter %}active{% endif %}">{% trans "All" %}</a>
   <a href="?status=identified" class="filter-chip {% if request.GET.status == 'identified' %}active{% endif %}">{% trans "Identified" %}</a>
   <a href="?status=analyzed" class="filter-chip {% if request.GET.status == 'analyzed' %}active{% endif %}">{% trans "Analyzed" %}</a>
   <a href="?status=evaluated" class="filter-chip {% if request.GET.status == 'evaluated' %}active{% endif %}">{% trans "Evaluated" %}</a>
   <a href="?priority=critical" class="filter-chip {% if request.GET.priority == 'critical' %}active-danger{% endif %}">{% trans "Critical" %}</a>
   <a href="?priority=high" class="filter-chip {% if request.GET.priority == 'high' %}active-warning{% endif %}">{% trans "High" %}</a>
 </div>
+
+<div class="mb-3 d-flex gap-2 flex-wrap">
+  <span class="small text-muted me-1 align-self-center">{% trans "Decision:" %}</span>
+  {% for key, label in treatment_decision_choices %}
+  <a href="?treatment_decision={{ key }}" class="filter-chip {% if request.GET.treatment_decision == key %}active{% endif %}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<details class="mb-3" {% if has_advanced_filter %}open{% endif %}>
+  <summary class="small text-muted" style="cursor:pointer;user-select:none">
+    <i class="bi bi-funnel me-1"></i>{% trans "Advanced filters" %}
+    {% if has_advanced_filter %}<span class="badge bg-secondary ms-1">{% trans "Active" %}</span>{% endif %}
+  </summary>
+  <form method="get" class="mt-2">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-2">
+        <label class="form-label small text-muted mb-1">{% trans "Date from" %}</label>
+        <input type="date" name="date_after" value="{{ request.GET.date_after|default:'' }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small text-muted mb-1">{% trans "Date to" %}</label>
+        <input type="date" name="date_before" value="{{ request.GET.date_before|default:'' }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small text-muted mb-1">{% trans "Essential asset" %}</label>
+        <select name="essential_asset" class="form-select form-select-sm">
+          <option value="">—</option>
+          {% for a in essential_asset_choices %}
+          <option value="{{ a.pk }}" {% if request.GET.essential_asset == a.pk|stringformat:"s" %}selected{% endif %}>{{ a.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small text-muted mb-1">{% trans "Support asset" %}</label>
+        <select name="support_asset" class="form-select form-select-sm">
+          <option value="">—</option>
+          {% for a in support_asset_choices %}
+          <option value="{{ a.pk }}" {% if request.GET.support_asset == a.pk|stringformat:"s" %}selected{% endif %}>{{ a.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small text-muted mb-1">{% trans "Threat" %}</label>
+        <select name="threat" class="form-select form-select-sm">
+          <option value="">—</option>
+          {% for t in threat_choices %}
+          <option value="{{ t.pk }}" {% if request.GET.threat == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small text-muted mb-1">{% trans "Vulnerability" %}</label>
+        <select name="vulnerability" class="form-select form-select-sm">
+          <option value="">—</option>
+          {% for v in vulnerability_choices %}
+          <option value="{{ v.pk }}" {% if request.GET.vulnerability == v.pk|stringformat:"s" %}selected{% endif %}>{{ v.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small text-muted mb-1">{% trans "Linked requirement" %}</label>
+        <select name="linked_requirement" class="form-select form-select-sm">
+          <option value="">—</option>
+          {% for r in requirement_choices %}
+          <option value="{{ r.pk }}" {% if request.GET.linked_requirement == r.pk|stringformat:"s" %}selected{% endif %}>{{ r.requirement_number|default:r.reference }} - {{ r.name|truncatechars:40 }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {# preserve existing chip-driven filters when submitting advanced ones #}
+      {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
+      {% if request.GET.priority %}<input type="hidden" name="priority" value="{{ request.GET.priority }}">{% endif %}
+      {% if request.GET.treatment_decision %}<input type="hidden" name="treatment_decision" value="{{ request.GET.treatment_decision }}">{% endif %}
+      <div class="col-md-9 d-flex gap-2 mt-2">
+        <button type="submit" class="btn btn-sm btn-primary">{% trans "Apply" %}</button>
+        <a href="{% url 'risks:risk-list' %}" class="btn btn-sm btn-outline-secondary">{% trans "Clear" %}</a>
+      </div>
+    </div>
+  </form>
+</details>
 
 {% include "includes/table_search.html" %}
 <div class="card">

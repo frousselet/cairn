@@ -39,6 +39,25 @@ class RiskFilter(django_filters.FilterSet):
     assessment = django_filters.UUIDFilter(field_name="assessment_id")
     risk_owner = django_filters.UUIDFilter(field_name="risk_owner_id")
 
+    # Date range on creation (ISO format: YYYY-MM-DD)
+    date_after = django_filters.DateFilter(field_name="created_at", lookup_expr="gte")
+    date_before = django_filters.DateFilter(field_name="created_at", lookup_expr="lte")
+
+    # Asset / requirement / methodology source filters
+    essential_asset = django_filters.UUIDFilter(
+        field_name="affected_essential_assets__id",
+    )
+    support_asset = django_filters.UUIDFilter(
+        field_name="affected_support_assets__id",
+    )
+    threat = django_filters.UUIDFilter(field_name="iso27005_sources__threat_id")
+    vulnerability = django_filters.UUIDFilter(
+        field_name="iso27005_sources__vulnerability_id",
+    )
+    linked_requirement = django_filters.UUIDFilter(
+        field_name="linked_requirements__id",
+    )
+
     class Meta:
         model = Risk
         fields = {
@@ -47,6 +66,12 @@ class RiskFilter(django_filters.FilterSet):
             "risk_source": ["exact"],
             "treatment_decision": ["exact"],
         }
+
+    @property
+    def qs(self):
+        # Joins through M2M (essential/support assets, linked requirements,
+        # iso27005 sources) can return duplicate rows; deduplicate.
+        return super().qs.distinct()
 
 
 class RiskTreatmentPlanFilter(django_filters.FilterSet):
