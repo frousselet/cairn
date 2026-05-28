@@ -215,6 +215,7 @@ class RiskTreatmentPlanForm(forms.ModelForm):
             "risk", "name", "description", "treatment_type",
             "expected_residual_likelihood", "expected_residual_impact",
             "cost_estimate", "owner", "start_date", "target_date", "status", "tags",
+            "related_action_plans",
         ]
         widgets = {
             "risk": forms.Select(attrs=SELECT_ATTRS),
@@ -229,6 +230,7 @@ class RiskTreatmentPlanForm(forms.ModelForm):
             "target_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+            "related_action_plans": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 6}),
         }
 
     def __init__(self, *args, **kwargs):

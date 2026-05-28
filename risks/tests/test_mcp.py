@@ -5,9 +5,10 @@ import json
 import pytest
 
 from accounts.tests.factories import UserFactory
+from compliance.tests.factories import ComplianceActionPlanFactory
 from mcp.server import McpServer
 from mcp.tools import register_all_tools
-from risks.models import RiskAcceptance
+from risks.models import RiskAcceptance, RiskTreatmentPlan
 from risks.tests.factories import RiskFactory
 
 
@@ -58,5 +59,119 @@ class TestRiskAcceptanceApproveMCP:
         result = _call_tool(
             self.srv, self.user, "approve_risk_acceptance",
             {"id": str(uuid.uuid4())},
+        )
+        assert "error" in result
+
+
+class TestTreatmentPlanActionPlanLinkMCP:
+    def setup_method(self):
+        self.srv = McpServer()
+        register_all_tools(self.srv)
+        self.user = UserFactory(is_superuser=True)
+
+    def _make_plan(self):
+        risk = RiskFactory()
+        return RiskTreatmentPlan.objects.create(
+            risk=risk, name="Mitigate", treatment_type="mitigate",
+        )
+
+    def test_tools_are_registered(self):
+        expected = {
+            "list_treatment_plan_action_plans",
+            "link_treatment_plan_action_plans",
+            "unlink_treatment_plan_action_plans",
+            "set_treatment_plan_action_plans",
+        }
+        assert expected.issubset(self.srv._tools.keys())
+
+    def test_list_empty(self):
+        plan = self._make_plan()
+        result = _call_tool(
+            self.srv, self.user, "list_treatment_plan_action_plans",
+            {"treatment_plan_id": str(plan.pk)},
+        )
+        assert result["total"] == 0
+        assert result["items"] == []
+
+    def test_link_and_list(self):
+        plan = self._make_plan()
+        ap1 = ComplianceActionPlanFactory()
+        ap2 = ComplianceActionPlanFactory()
+        result = _call_tool(
+            self.srv, self.user, "link_treatment_plan_action_plans",
+            {"treatment_plan_id": str(plan.pk), "action_plan_ids": [str(ap1.pk), str(ap2.pk)]},
+        )
+        assert result["added"] == 2
+        assert result["total"] == 2
+
+        listed = _call_tool(
+            self.srv, self.user, "list_treatment_plan_action_plans",
+            {"treatment_plan_id": str(plan.pk)},
+        )
+        assert listed["total"] == 2
+        refs = {item["reference"] for item in listed["items"]}
+        assert refs == {ap1.reference, ap2.reference}
+
+    def test_link_is_additive(self):
+        plan = self._make_plan()
+        ap1 = ComplianceActionPlanFactory()
+        ap2 = ComplianceActionPlanFactory()
+        plan.related_action_plans.add(ap1)
+        result = _call_tool(
+            self.srv, self.user, "link_treatment_plan_action_plans",
+            {"treatment_plan_id": str(plan.pk), "action_plan_ids": [str(ap2.pk)]},
+        )
+        assert result["added"] == 1
+        assert result["total"] == 2
+
+    def test_unlink_removes_selected(self):
+        plan = self._make_plan()
+        ap1 = ComplianceActionPlanFactory()
+        ap2 = ComplianceActionPlanFactory()
+        plan.related_action_plans.add(ap1, ap2)
+        result = _call_tool(
+            self.srv, self.user, "unlink_treatment_plan_action_plans",
+            {"treatment_plan_id": str(plan.pk), "action_plan_ids": [str(ap1.pk)]},
+        )
+        assert result["removed"] == 1
+        assert result["total"] == 1
+        assert plan.related_action_plans.first() == ap2
+
+    def test_set_replaces_all(self):
+        plan = self._make_plan()
+        ap1 = ComplianceActionPlanFactory()
+        ap2 = ComplianceActionPlanFactory()
+        ap3 = ComplianceActionPlanFactory()
+        plan.related_action_plans.add(ap1, ap2)
+        result = _call_tool(
+            self.srv, self.user, "set_treatment_plan_action_plans",
+            {"treatment_plan_id": str(plan.pk), "action_plan_ids": [str(ap3.pk)]},
+        )
+        assert result["total"] == 1
+        assert plan.related_action_plans.first() == ap3
+
+    def test_set_empty_clears(self):
+        plan = self._make_plan()
+        plan.related_action_plans.add(ComplianceActionPlanFactory())
+        result = _call_tool(
+            self.srv, self.user, "set_treatment_plan_action_plans",
+            {"treatment_plan_id": str(plan.pk), "action_plan_ids": []},
+        )
+        assert result["total"] == 0
+
+    def test_unknown_treatment_plan_returns_error(self):
+        import uuid
+        result = _call_tool(
+            self.srv, self.user, "list_treatment_plan_action_plans",
+            {"treatment_plan_id": str(uuid.uuid4())},
+        )
+        assert "error" in result
+
+    def test_link_unknown_action_plan_returns_error(self):
+        import uuid
+        plan = self._make_plan()
+        result = _call_tool(
+            self.srv, self.user, "link_treatment_plan_action_plans",
+            {"treatment_plan_id": str(plan.pk), "action_plan_ids": [str(uuid.uuid4())]},
         )
         assert "error" in result

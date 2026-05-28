@@ -222,6 +222,25 @@ class TestRiskTreatmentPlanViewSet:
         )
         assert response.status_code == 200
 
+    def test_link_action_plans_via_api(self):
+        from compliance.tests.factories import ComplianceActionPlanFactory
+        from risks.models import RiskTreatmentPlan
+
+        risk = RiskFactory()
+        rtp = RiskTreatmentPlan.objects.create(
+            risk=risk, name="Plan", treatment_type="mitigate"
+        )
+        ap1 = ComplianceActionPlanFactory()
+        ap2 = ComplianceActionPlanFactory()
+        response = self.client.patch(
+            f"/api/v1/risks/treatment-plans/{rtp.pk}/",
+            {"related_action_plans": [str(ap1.pk), str(ap2.pk)]},
+            format="json",
+        )
+        assert response.status_code == 200, response.json()
+        rtp.refresh_from_db()
+        assert set(rtp.related_action_plans.values_list("pk", flat=True)) == {ap1.pk, ap2.pk}
+
     def test_delete(self):
         from risks.models import RiskTreatmentPlan
 

@@ -91,6 +91,42 @@
       </div>
     </div>
 
+    {# ── Related action plans ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="text-muted text-uppercase small fw-semibold mb-0"><i class="bi bi-clipboard-plus me-1"></i>{% trans "Related action plans" %}</h6>
+          <a href="{% url 'risks:treatment-plan-update' plan.pk %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-pencil me-1"></i>{% trans "Manage links" %}
+          </a>
+        </div>
+        {% if related_action_plans %}
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead><tr><th>{% trans "Ref." %}</th><th>{% trans "Name" %}</th><th>{% trans "Owner" %}</th><th>{% trans "Progress" %}</th><th>{% trans "Status" %}</th></tr></thead>
+            <tbody>
+              {% for ap in related_action_plans %}
+              <tr>
+                <td style="font-weight:500;color:var(--text-muted);font-size:.82rem">{{ ap.reference }}</td>
+                <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ ap.name }}</a></td>
+                <td>{% if ap.owner %}{% user_badge ap.owner size=20 %}{% else %}—{% endif %}</td>
+                <td>
+                  <div class="progress" style="height:.65rem">
+                    <div class="progress-bar" style="width:{{ ap.progress_percentage }}%"></div>
+                  </div>
+                </td>
+                <td><span class="badge text-bg-secondary">{{ ap.get_status_display }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0" style="font-size:.85rem">{% trans "No related action plans." %}</p>
+        {% endif %}
+      </div>
+    </div>
+
   </div>
 
   {# ── RIGHT COLUMN (sidebar) ── #}

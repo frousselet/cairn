@@ -621,6 +621,9 @@ class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scope
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["actions"] = self.object.actions.select_related("owner").all()
+        ctx["related_action_plans"] = self.object.related_action_plans.select_related(
+            "owner"
+        ).all()
         return ctx
 
 

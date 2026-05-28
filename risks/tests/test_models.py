@@ -11,6 +11,52 @@ from risks.tests.factories import (
 pytestmark = pytest.mark.django_db
 
 
+class TestTreatmentPlanActionPlanLink:
+    """M2M link between RiskTreatmentPlan and compliance.ComplianceActionPlan."""
+
+    def _make_plan(self):
+        from risks.models import RiskTreatmentPlan
+        risk = RiskFactory()
+        return RiskTreatmentPlan.objects.create(
+            risk=risk, name="Mitigate", treatment_type="mitigate",
+        )
+
+    def _make_action_plan(self):
+        from compliance.tests.factories import ComplianceActionPlanFactory
+        return ComplianceActionPlanFactory()
+
+    def test_link_action_plan(self):
+        plan = self._make_plan()
+        ap = self._make_action_plan()
+        plan.related_action_plans.add(ap)
+        assert plan.related_action_plans.count() == 1
+        assert ap.related_treatment_plans.first() == plan
+
+    def test_unlink_action_plan(self):
+        plan = self._make_plan()
+        ap = self._make_action_plan()
+        plan.related_action_plans.add(ap)
+        plan.related_action_plans.remove(ap)
+        assert plan.related_action_plans.count() == 0
+        assert ap.related_treatment_plans.count() == 0
+
+    def test_set_replaces_all(self):
+        plan = self._make_plan()
+        ap1 = self._make_action_plan()
+        ap2 = self._make_action_plan()
+        plan.related_action_plans.add(ap1)
+        plan.related_action_plans.set([ap2])
+        ids = list(plan.related_action_plans.values_list("pk", flat=True))
+        assert ids == [ap2.pk]
+
+    def test_clear_removes_all(self):
+        plan = self._make_plan()
+        plan.related_action_plans.add(self._make_action_plan())
+        plan.related_action_plans.add(self._make_action_plan())
+        plan.related_action_plans.clear()
+        assert plan.related_action_plans.count() == 0
+
+
 class TestRiskMatrixRebuild:
     """P0: rebuild_risk_matrix symmetric formula."""
 

@@ -76,6 +76,17 @@ class RiskTreatmentPlan(BaseModel):
         related_name="originated_treatment_plans",
         verbose_name=_("Originating management review"),
     )
+    related_action_plans = models.ManyToManyField(
+        "compliance.ComplianceActionPlan",
+        blank=True,
+        related_name="related_treatment_plans",
+        verbose_name=_("Related action plans"),
+        help_text=_(
+            "Compliance action plans implementing or contributing to this "
+            "treatment plan. Linking is symmetric: both sides of the "
+            "relationship surface the connection."
+        ),
+    )
     history = HistoricalRecords()
 
     class Meta:

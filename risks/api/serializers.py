@@ -155,6 +155,7 @@ class RiskTreatmentPlanSerializer(serializers.ModelSerializer):
             "cost_estimate", "owner", "owner_name",
             "start_date", "target_date", "completion_date",
             "progress_percentage", "status", "actions", "tags",
+            "related_action_plans",
             "version", "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]

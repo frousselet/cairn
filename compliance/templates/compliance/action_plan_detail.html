@@ -158,12 +158,12 @@
     {% endif %}
 
     {# ── Linkages ── #}
-    {% if action_plan.risks.all or action_plan.findings.all or action_plan.requirements.all %}
+    {% if action_plan.risks.all or action_plan.findings.all or action_plan.requirements.all or action_plan.related_treatment_plans.all %}
     <div class="card mb-4">
       <div class="card-body">
         <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-link-45deg me-1"></i>{% trans "Linkages" %}</h6>
         {% if action_plan.risks.all %}
-        <div class="{% if action_plan.findings.all or action_plan.requirements.all %}mb-3 pb-3 border-bottom{% endif %}">
+        <div class="{% if action_plan.findings.all or action_plan.requirements.all or action_plan.related_treatment_plans.all %}mb-3 pb-3 border-bottom{% endif %}">
           <div class="fw-medium mb-2" style="font-size:.85rem"><i class="bi bi-exclamation-triangle me-1"></i>{% trans "Linked risks" %}</div>
           {% for risk in action_plan.risks.all %}
           <div class="d-flex align-items-baseline mb-2">
@@ -174,7 +174,7 @@
         </div>
         {% endif %}
         {% if action_plan.findings.all %}
-        <div class="{% if action_plan.requirements.all %}mb-3 pb-3 border-bottom{% endif %}">
+        <div class="{% if action_plan.requirements.all or action_plan.related_treatment_plans.all %}mb-3 pb-3 border-bottom{% endif %}">
           <div class="fw-medium mb-2" style="font-size:.85rem"><i class="bi bi-flag me-1"></i>{% trans "Linked findings" %}</div>
           {% for finding in action_plan.findings.all %}
           <div class="d-flex align-items-baseline mb-2">
@@ -185,12 +185,23 @@
         </div>
         {% endif %}
         {% if action_plan.requirements.all %}
-        <div>
+        <div class="{% if action_plan.related_treatment_plans.all %}mb-3 pb-3 border-bottom{% endif %}">
           <div class="fw-medium mb-2" style="font-size:.85rem"><i class="bi bi-clipboard-check me-1"></i>{% trans "Linked requirements" %}</div>
           {% for req in action_plan.requirements.all %}
           <div class="d-flex align-items-baseline mb-2">
             <span class="ref flex-shrink-0" style="width:5.5rem;display:inline-block">{{ req.reference }}</span>
             <a href="{% url 'compliance:requirement-detail' req.pk %}" style="text-decoration:none;color:var(--accent);font-weight:500">{{ req.name|truncatechars:80 }}</a>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if action_plan.related_treatment_plans.all %}
+        <div>
+          <div class="fw-medium mb-2" style="font-size:.85rem"><i class="bi bi-shield-check me-1"></i>{% trans "Related treatment plans" %}</div>
+          {% for tp in action_plan.related_treatment_plans.all %}
+          <div class="d-flex align-items-baseline mb-2">
+            <span class="ref flex-shrink-0" style="width:5.5rem;display:inline-block">{{ tp.reference }}</span>
+            <a href="{% url 'risks:treatment-plan-detail' tp.pk %}" style="text-decoration:none;color:var(--accent);font-weight:500">{{ tp.name|truncatechars:80 }}</a>
           </div>
           {% endfor %}
         </div>

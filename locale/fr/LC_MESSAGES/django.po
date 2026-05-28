@@ -10629,6 +10629,26 @@ msgstr ""
 msgid "Later edits to the criteria do not change this score."
 msgstr "Les modifications ultérieures du barème ne changent pas ce score."
 
+msgid "Related action plans"
+msgstr "Plans d'action liés"
+
+msgid "Related treatment plans"
+msgstr "Plans de traitement liés"
+
+msgid "Manage links"
+msgstr "Gérer les liens"
+
+msgid "No related action plans."
+msgstr "Aucun plan d'action lié."
+
+msgid ""
+"Compliance action plans implementing or contributing to this treatment "
+"plan. Linking is symmetric: both sides of the relationship surface the "
+"connection."
+msgstr ""
+"Plans d'action de conformité qui implémentent ou contribuent à ce plan de "
+"traitement. Le lien est symétrique : il apparaît des deux côtés."
+
 #~ msgid "Compliance of evaluated requirements"
 #~ msgstr "Conformité des exigences évaluées"
 

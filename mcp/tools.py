@@ -3982,6 +3982,197 @@ def _register_risks_tools(server):
         require_perm("risks.risk.update")(_set_risk_requirements),
     )
 
+    # ── RiskTreatmentPlan ↔ ComplianceActionPlan linking tools ─
+    #
+    # These tools manage the many-to-many relationship between risk
+    # treatment plans and compliance action plans
+    # (RiskTreatmentPlan.related_action_plans /
+    #  ComplianceActionPlan.related_treatment_plans).
+    #
+    # Available operations:
+    #   - list_treatment_plan_action_plans : list all action plans linked
+    #     to a treatment plan
+    #   - link_treatment_plan_action_plans : attach action plans (additive)
+    #   - unlink_treatment_plan_action_plans : detach selected action plans
+    #   - set_treatment_plan_action_plans : replace the full set of links
+
+    ComplianceActionPlan = _get_model("compliance", "ComplianceActionPlan")
+
+    action_plan_link_fields = [
+        "id", "reference", "name", "status", "priority",
+        "progress_percentage", "owner_id",
+    ]
+
+    def _list_treatment_plan_action_plans(user, arguments):
+        """Return all compliance action plans linked to a treatment plan."""
+        plan_id = arguments.get("treatment_plan_id")
+        if not plan_id:
+            raise InvalidParamsError("treatment_plan_id is required.")
+        try:
+            plan = RiskTreatmentPlan.objects.get(pk=plan_id)
+        except RiskTreatmentPlan.DoesNotExist:
+            return _error("Treatment plan not found.")
+        items = [
+            _serialize_obj(ap, action_plan_link_fields)
+            for ap in plan.related_action_plans.all()
+        ]
+        return {"treatment_plan_id": str(plan_id), "total": len(items), "items": items}
+
+    server.register_tool(
+        "list_treatment_plan_action_plans",
+        (
+            "List all compliance action plans linked to a risk treatment plan. "
+            "Returns action plan id, reference, name, status, priority, "
+            "progress_percentage and owner_id for each link."
+        ),
+        _obj_schema(
+            {"treatment_plan_id": {"type": "string", "description": "UUID of the treatment plan"}},
+            required=["treatment_plan_id"],
+        ),
+        require_perm("risks.treatment.read")(_list_treatment_plan_action_plans),
+    )
+
+    def _link_treatment_plan_action_plans(user, arguments):
+        """Attach action plans to a treatment plan. Additive: existing links are preserved."""
+        plan_id = arguments.get("treatment_plan_id")
+        ap_ids = arguments.get("action_plan_ids", [])
+        if not plan_id:
+            raise InvalidParamsError("treatment_plan_id is required.")
+        if not ap_ids:
+            raise InvalidParamsError(
+                "action_plan_ids is required and must be a non-empty list."
+            )
+        try:
+            plan = RiskTreatmentPlan.objects.get(pk=plan_id)
+        except RiskTreatmentPlan.DoesNotExist:
+            return _error("Treatment plan not found.")
+        existing = set(
+            str(pk) for pk in plan.related_action_plans.values_list("pk", flat=True)
+        )
+        action_plans = ComplianceActionPlan.objects.filter(pk__in=ap_ids)
+        if action_plans.count() != len(ap_ids):
+            found = set(str(ap.pk) for ap in action_plans)
+            missing = [aid for aid in ap_ids if aid not in found]
+            return _error(f"Action plans not found: {missing}")
+        plan.related_action_plans.add(*action_plans)
+        added = len(set(ap_ids) - existing)
+        total = plan.related_action_plans.count()
+        return {"treatment_plan_id": str(plan_id), "added": added, "total": total}
+
+    server.register_tool(
+        "link_treatment_plan_action_plans",
+        (
+            "Link one or more compliance action plans to a risk treatment plan. "
+            "This is additive - existing links are preserved. "
+            "Provide a treatment_plan_id and a list of action_plan_ids to attach."
+        ),
+        _obj_schema(
+            {
+                "treatment_plan_id": {"type": "string", "description": "UUID of the treatment plan"},
+                "action_plan_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of compliance action plan UUIDs to link",
+                },
+            },
+            required=["treatment_plan_id", "action_plan_ids"],
+        ),
+        require_perm("risks.treatment.update")(_link_treatment_plan_action_plans),
+    )
+
+    def _unlink_treatment_plan_action_plans(user, arguments):
+        """Remove specified action plans from a treatment plan. Other links remain."""
+        plan_id = arguments.get("treatment_plan_id")
+        ap_ids = arguments.get("action_plan_ids", [])
+        if not plan_id:
+            raise InvalidParamsError("treatment_plan_id is required.")
+        if not ap_ids:
+            raise InvalidParamsError(
+                "action_plan_ids is required and must be a non-empty list."
+            )
+        try:
+            plan = RiskTreatmentPlan.objects.get(pk=plan_id)
+        except RiskTreatmentPlan.DoesNotExist:
+            return _error("Treatment plan not found.")
+        existing = set(
+            str(pk) for pk in plan.related_action_plans.values_list("pk", flat=True)
+        )
+        removed = len(existing & set(ap_ids))
+        plan.related_action_plans.remove(
+            *ComplianceActionPlan.objects.filter(pk__in=ap_ids)
+        )
+        total = plan.related_action_plans.count()
+        return {"treatment_plan_id": str(plan_id), "removed": removed, "total": total}
+
+    server.register_tool(
+        "unlink_treatment_plan_action_plans",
+        (
+            "Remove one or more compliance action plans from a risk treatment plan. "
+            "Only the specified links are removed; other links are preserved."
+        ),
+        _obj_schema(
+            {
+                "treatment_plan_id": {"type": "string", "description": "UUID of the treatment plan"},
+                "action_plan_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of compliance action plan UUIDs to unlink",
+                },
+            },
+            required=["treatment_plan_id", "action_plan_ids"],
+        ),
+        require_perm("risks.treatment.update")(_unlink_treatment_plan_action_plans),
+    )
+
+    def _set_treatment_plan_action_plans(user, arguments):
+        """Replace the entire set of action plans on a treatment plan."""
+        plan_id = arguments.get("treatment_plan_id")
+        ap_ids = arguments.get("action_plan_ids", [])
+        if not plan_id:
+            raise InvalidParamsError("treatment_plan_id is required.")
+        if not isinstance(ap_ids, list):
+            raise InvalidParamsError("action_plan_ids must be a list.")
+        try:
+            plan = RiskTreatmentPlan.objects.get(pk=plan_id)
+        except RiskTreatmentPlan.DoesNotExist:
+            return _error("Treatment plan not found.")
+        if ap_ids:
+            action_plans = ComplianceActionPlan.objects.filter(pk__in=ap_ids)
+            if action_plans.count() != len(ap_ids):
+                found = set(str(ap.pk) for ap in action_plans)
+                missing = [aid for aid in ap_ids if aid not in found]
+                return _error(f"Action plans not found: {missing}")
+            plan.related_action_plans.set(action_plans)
+        else:
+            plan.related_action_plans.clear()
+        total = plan.related_action_plans.count()
+        return {"treatment_plan_id": str(plan_id), "total": total}
+
+    server.register_tool(
+        "set_treatment_plan_action_plans",
+        (
+            "Replace the full set of compliance action plans linked to a "
+            "risk treatment plan. All previous links are removed and replaced "
+            "by the supplied list. Pass an empty action_plan_ids list to clear "
+            "all links."
+        ),
+        _obj_schema(
+            {
+                "treatment_plan_id": {"type": "string", "description": "UUID of the treatment plan"},
+                "action_plan_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": (
+                        "Complete list of compliance action plan UUIDs to link. "
+                        "Pass an empty list to remove all links."
+                    ),
+                },
+            },
+            required=["treatment_plan_id", "action_plan_ids"],
+        ),
+        require_perm("risks.treatment.update")(_set_treatment_plan_action_plans),
+    )
+
 
 # ── Accounts Module ────────────────────────────────────────
 
