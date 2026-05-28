@@ -46,6 +46,10 @@ urlpatterns = [
     path("treatments/<uuid:pk>/edit/", views.TreatmentPlanUpdateView.as_view(), name="treatment-plan-update"),
     path("treatments/<uuid:pk>/delete/", views.TreatmentPlanDeleteView.as_view(), name="treatment-plan-delete"),
     path("treatments/<uuid:pk>/approve/", views.ApproveView.as_view(model=RiskTreatmentPlan, permission_feature="treatment", success_url=reverse_lazy("risks:treatment-plan-list")), name="treatment-plan-approve"),
+    # Treatment actions (inline editing under a plan)
+    path("treatments/<uuid:plan_pk>/actions/create/", views.TreatmentActionCreateView.as_view(), name="treatment-action-create"),
+    path("treatment-actions/<uuid:pk>/edit/", views.TreatmentActionUpdateView.as_view(), name="treatment-action-update"),
+    path("treatment-actions/<uuid:pk>/delete/", views.TreatmentActionDeleteView.as_view(), name="treatment-action-delete"),
     # Acceptances
     path("acceptances/", views.RiskAcceptanceListView.as_view(), name="acceptance-list"),
     path("acceptances/create/", views.RiskAcceptanceCreateView.as_view(), name="acceptance-create"),

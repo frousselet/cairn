@@ -654,6 +654,76 @@ class TestTreatmentPlanDeleteView:
         assert not RiskTreatmentPlan.objects.filter(pk=pk).exists()
 
 
+class TestTreatmentActionViews:
+    """C3: inline HTMX edit/create/delete of TreatmentAction rows."""
+
+    def _make_plan(self):
+        risk = RiskFactory()
+        return RiskTreatmentPlan.objects.create(
+            risk=risk, name="ParentPlan", treatment_type="mitigate",
+        )
+
+    def test_create_action_redirects_to_plan_detail(self):
+        client, _ = _superuser_client()
+        plan = self._make_plan()
+        resp = client.post(
+            reverse("risks:treatment-action-create", args=[plan.pk]),
+            {
+                "treatment_plan": str(plan.pk),
+                "description": "Patch server",
+                "status": "planned",
+                "order": 1,
+            },
+        )
+        assert resp.status_code == 302
+        assert plan.actions.filter(description="Patch server").exists()
+
+    def test_update_action(self):
+        from risks.tests.factories import TreatmentActionFactory
+        client, _ = _superuser_client()
+        plan = self._make_plan()
+        action = TreatmentActionFactory(
+            treatment_plan=plan, description="Old", order=2,
+        )
+        resp = client.post(
+            reverse("risks:treatment-action-update", args=[action.pk]),
+            {
+                "treatment_plan": str(plan.pk),
+                "description": "Renamed",
+                "status": "in_progress",
+                "order": 2,
+            },
+        )
+        assert resp.status_code == 302
+        action.refresh_from_db()
+        assert action.description == "Renamed"
+        assert action.status == "in_progress"
+
+    def test_delete_action(self):
+        from risks.tests.factories import TreatmentActionFactory
+        client, _ = _superuser_client()
+        plan = self._make_plan()
+        action = TreatmentActionFactory(treatment_plan=plan)
+        pk = action.pk
+        resp = client.post(
+            reverse("risks:treatment-action-delete", args=[pk]),
+        )
+        assert resp.status_code == 302
+        assert not plan.actions.filter(pk=pk).exists()
+
+    def test_detail_exposes_inline_buttons(self):
+        from risks.tests.factories import TreatmentActionFactory
+        client, _ = _superuser_client()
+        plan = self._make_plan()
+        action = TreatmentActionFactory(treatment_plan=plan)
+        resp = client.get(reverse("risks:treatment-plan-detail", args=[plan.pk]))
+        assert resp.status_code == 200
+        body = resp.content
+        assert reverse("risks:treatment-action-create", args=[plan.pk]).encode() in body
+        assert reverse("risks:treatment-action-update", args=[action.pk]).encode() in body
+        assert reverse("risks:treatment-action-delete", args=[action.pk]).encode() in body
+
+
 class TestTreatmentPlanApproveView:
     def test_approve_plan(self):
         client, user = _superuser_client()

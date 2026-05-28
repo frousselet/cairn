@@ -63,11 +63,22 @@
     {# ── Treatment actions ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-list-task me-1"></i>{% trans "Treatment actions" %}</h6>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="text-muted text-uppercase small fw-semibold mb-0"><i class="bi bi-list-task me-1"></i>{% trans "Treatment actions" %}</h6>
+          {% has_perm "risks.treatment.update" as can_edit_actions %}
+          {% if can_edit_actions %}
+          <a href="{% url 'risks:treatment-action-create' plan.pk %}"
+             class="btn btn-sm btn-outline-primary"
+             hx-get="{% url 'risks:treatment-action-create' plan.pk %}"
+             hx-target="#drawer-form-content" hx-swap="innerHTML">
+            <i class="bi bi-plus-lg me-1"></i>{% trans "Add action" %}
+          </a>
+          {% endif %}
+        </div>
         {% if actions %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
-            <thead><tr><th>#</th><th>{% trans "Description" %}</th><th>{% trans "Owner" %}</th><th>{% trans "Target date" %}</th><th>{% trans "Status" %}</th></tr></thead>
+            <thead><tr><th>#</th><th>{% trans "Description" %}</th><th>{% trans "Owner" %}</th><th>{% trans "Target date" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Actions" %}</th></tr></thead>
             <tbody>
               {% for action in actions %}
               <tr>
@@ -79,6 +90,24 @@
                   <span class="badge text-bg-{% if action.status == 'completed' %}success{% elif action.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
                     {{ action.get_status_display }}
                   </span>
+                </td>
+                <td class="text-end">
+                  {% if can_edit_actions %}
+                  <a href="{% url 'risks:treatment-action-update' action.pk %}"
+                     class="btn btn-sm btn-link p-0 me-2"
+                     hx-get="{% url 'risks:treatment-action-update' action.pk %}"
+                     hx-target="#drawer-form-content" hx-swap="innerHTML"
+                     title="{% trans 'Edit' %}">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <form method="post" action="{% url 'risks:treatment-action-delete' action.pk %}" class="d-inline"
+                        onsubmit="return confirm('{% trans 'Delete this action?' %}')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="{% trans 'Delete' %}">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                  {% endif %}
                 </td>
               </tr>
               {% endfor %}
@@ -130,7 +159,7 @@
   </div>
 
   {# ── RIGHT COLUMN (sidebar) ── #}
-  <div class="col-lg-4">
+  <div class="col-lg-4" style="position:sticky;top:1rem;align-self:flex-start;max-height:calc(100vh - 1.5rem);overflow-y:auto">
 
     {# ── Status ── #}
     <div class="card mb-4">

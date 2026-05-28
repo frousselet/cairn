@@ -40,6 +40,7 @@ from .forms import (
     RiskLevelFormSet,
     RiskTreatmentPlanForm,
     ThreatForm,
+    TreatmentActionForm,
     VulnerabilityForm,
 )
 from context.models import Scope
@@ -51,6 +52,7 @@ from .models import (
     RiskCriteria,
     RiskTreatmentPlan,
     Threat,
+    TreatmentAction,
     Vulnerability,
 )
 
@@ -1030,6 +1032,86 @@ class TreatmentPlanDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Scope
     template_name = "risks/confirm_delete.html"
     permission_required = "risks.treatment.delete"
     success_url = reverse_lazy("risks:treatment-plan-list")
+
+
+# ── Treatment Action (inline editing under a plan) ──────────
+
+
+class TreatmentActionCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
+    model = TreatmentAction
+    form_class = TreatmentActionForm
+    template_name = "risks/treatment_action_form.html"
+    modal_template_name = "risks/treatment_action_form_modal.html"
+    permission_required = "risks.treatment.update"
+
+    def get_initial(self):
+        initial = super().get_initial()
+        plan_id = self.kwargs.get("plan_pk") or self.request.GET.get("treatment_plan")
+        if plan_id:
+            initial["treatment_plan"] = plan_id
+        return initial
+
+    def get_success_url(self):
+        if self.object and self.object.treatment_plan_id:
+            return reverse_lazy(
+                "risks:treatment-plan-detail",
+                kwargs={"pk": self.object.treatment_plan_id},
+            )
+        return reverse_lazy("risks:treatment-plan-list")
+
+
+class TreatmentActionUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
+    model = TreatmentAction
+    form_class = TreatmentActionForm
+    template_name = "risks/treatment_action_form.html"
+    modal_template_name = "risks/treatment_action_form_modal.html"
+    permission_required = "risks.treatment.update"
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        if user.is_superuser:
+            return qs
+        scope_ids = user.get_allowed_scope_ids()
+        if scope_ids is None:
+            return qs
+        return qs.filter(
+            treatment_plan__risk__assessment__scopes__id__in=scope_ids,
+        ).distinct()
+
+    def get_success_url(self):
+        if self.object and self.object.treatment_plan_id:
+            return reverse_lazy(
+                "risks:treatment-plan-detail",
+                kwargs={"pk": self.object.treatment_plan_id},
+            )
+        return reverse_lazy("risks:treatment-plan-list")
+
+
+class TreatmentActionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = TreatmentAction
+    template_name = "risks/confirm_delete.html"
+    permission_required = "risks.treatment.update"
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        if user.is_superuser:
+            return qs
+        scope_ids = user.get_allowed_scope_ids()
+        if scope_ids is None:
+            return qs
+        return qs.filter(
+            treatment_plan__risk__assessment__scopes__id__in=scope_ids,
+        ).distinct()
+
+    def get_success_url(self):
+        plan_id = self.object.treatment_plan_id if self.object else None
+        if plan_id:
+            return reverse_lazy(
+                "risks:treatment-plan-detail", kwargs={"pk": plan_id},
+            )
+        return reverse_lazy("risks:treatment-plan-list")
 
 
 # ── Risk Acceptance ─────────────────────────────────────────
