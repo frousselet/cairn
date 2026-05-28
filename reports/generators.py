@@ -23,13 +23,13 @@ def _natural_sort_key(text):
     return [int(p) if p.isdigit() else p.casefold() for p in parts]
 
 
-def generate_soa_pdf(frameworks, user):
-    """Generate a Statement of Applicability (SoA) PDF for the given frameworks.
+def build_soa_frameworks_data(frameworks):
+    """Build the per-framework data structure consumed by the SoA template.
 
-    Returns a tuple (filename, content_bytes).
+    Exposed publicly so tests can assert on the structured data without
+    invoking weasyprint. Each framework dict carries `framework`, `rows`
+    (sorted by requirement number) and `linked_risk_count` (deduplicated).
     """
-    from weasyprint import HTML
-
     frameworks_data = []
     for fw in frameworks:
         requirements = fw.requirements.select_related(
@@ -40,20 +40,45 @@ def generate_soa_pdf(frameworks, user):
         ).order_by("requirement_number", "created_at")
 
         rows = []
+        framework_risk_ids = set()
         for req in requirements:
-            risks = req.linked_risks.all()
-            risk_names = ", ".join(r.name for r in risks) if risks else ""
+            risks = list(req.linked_risks.all())
+            risks_data = [
+                {
+                    "reference": r.reference,
+                    "name": r.name,
+                    "current_risk_level": r.current_risk_level,
+                    "residual_risk_level": r.residual_risk_level,
+                    "treatment_decision": (
+                        r.get_treatment_decision_display()
+                        if r.treatment_decision
+                        else ""
+                    ),
+                    "treatment_decision_key": r.treatment_decision or "",
+                    "status": r.get_status_display() if r.status else "",
+                }
+                for r in risks
+            ]
+            framework_risk_ids.update(r.pk for r in risks)
+
             if req.is_applicable:
                 plans = req.action_plans.all()
-                justification = ", ".join(p.name for p in plans) if plans else ""
+                action_plan_names = [p.name for p in plans]
+                justification = ", ".join(action_plan_names)
+                # If the requirement is selected primarily to mitigate risks,
+                # surface that as the justification when no action plan is
+                # named yet.
+                if not justification and risks_data:
+                    justification = "Selected to address linked risks."
             else:
                 justification = req.applicability_justification
+
             rows.append({
                 "number": req.requirement_number or req.reference,
                 "name": req.name,
                 "is_applicable": req.is_applicable,
                 "justification": justification,
-                "risks": risk_names,
+                "risks_data": risks_data,
             })
 
         rows.sort(key=lambda r: _natural_sort_key(r["number"]))
@@ -61,7 +86,23 @@ def generate_soa_pdf(frameworks, user):
         frameworks_data.append({
             "framework": fw,
             "rows": rows,
+            "linked_risk_count": len(framework_risk_ids),
         })
+    return frameworks_data
+
+
+def generate_soa_pdf(frameworks, user):
+    """Generate a Statement of Applicability (SoA) PDF for the given frameworks.
+
+    Each requirement row lists the risks it addresses along with their
+    residual level and treatment decision so auditors can trace control
+    selection back to the risk that drove it.
+
+    Returns a tuple (filename, content_bytes).
+    """
+    from weasyprint import HTML
+
+    frameworks_data = build_soa_frameworks_data(frameworks)
 
     now = timezone.now()
     company = CompanySettings.get()

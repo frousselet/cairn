@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Management review export query parameter renamed from `format` to `fmt` to avoid clashing with DRF's built-in renderer negotiation
 - `RiskAcceptance` updates now reset approval and bump version like other approvable risk models, via `ApprovableUpdateMixin` (UI) and `ApprovableAPIMixin` (REST)
 - `Risk.calculate_risk_level` and `ISO27005Risk.save` now consult `criteria_snapshot` first and fall back to the live `RiskCriteria.risk_matrix` only when no snapshot has been captured
+- Statement of Applicability (SoA) PDF now lists the treated risks per control with their residual level (colour-coded low/medium/high pill) and treatment decision; when a requirement is applicable, has no action plan, but addresses linked risks, the justification falls back to "Selected to address linked risks." A small per-framework summary reports the total deduplicated risks addressed. The data-building step is exposed as a reusable `build_soa_frameworks_data` helper
 
 ### Fixed
 

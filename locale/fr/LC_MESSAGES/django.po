@@ -10664,6 +10664,24 @@ msgstr "Rapport d'évaluation des risques ISO 27005"
 msgid "Assessment is outside your allowed scopes."
 msgstr "L'évaluation est hors de vos périmètres autorisés."
 
+msgid "Treated risks"
+msgstr "Risques traités"
+
+msgid "Res."
+msgstr "Rés."
+
+msgid "Res. —"
+msgstr "Rés. —"
+
+msgid "Residual level"
+msgstr "Niveau résiduel"
+
+#, python-format
+msgid "%(counter)s risk addressed by this framework's controls."
+msgid_plural "%(counter)s risks addressed by this framework's controls."
+msgstr[0] "%(counter)s risque pris en compte par les contrôles de ce référentiel."
+msgstr[1] "%(counter)s risques pris en compte par les contrôles de ce référentiel."
+
 #~ msgid "Compliance of evaluated requirements"
 #~ msgstr "Conformité des exigences évaluées"
 
