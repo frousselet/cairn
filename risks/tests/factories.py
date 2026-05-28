@@ -1,8 +1,23 @@
 import factory
 
 from context.tests.factories import ScopeFactory
-from risks.models.risk import Risk
-from risks.models.risk_assessment import RiskAssessment
+from risks.constants import (
+    AcceptanceStatus,
+    ActionStatus,
+    ThreatType,
+    TreatmentPlanStatus,
+    TreatmentType,
+)
+from risks.models import (
+    ISO27005Risk,
+    Risk,
+    RiskAcceptance,
+    RiskAssessment,
+    RiskTreatmentPlan,
+    Threat,
+    TreatmentAction,
+    Vulnerability,
+)
 from risks.models.risk_criteria import RiskCriteria, RiskLevel, ScaleLevel
 
 
@@ -74,3 +89,69 @@ class RiskFactory(factory.django.DjangoModelFactory):
     assessment = factory.SubFactory(RiskAssessmentFactory)
     reference = factory.Sequence(lambda n: f"RSK-{n:03d}")
     name = factory.Sequence(lambda n: f"Risk {n}")
+
+
+class ThreatFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Threat
+
+    name = factory.Sequence(lambda n: f"Threat {n}")
+    type = ThreatType.DELIBERATE
+
+    @factory.post_generation
+    def scopes(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.scopes.add(*extracted)
+
+
+class VulnerabilityFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Vulnerability
+
+    name = factory.Sequence(lambda n: f"Vulnerability {n}")
+    severity = "medium"
+
+    @factory.post_generation
+    def scopes(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.scopes.add(*extracted)
+
+
+class RiskTreatmentPlanFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = RiskTreatmentPlan
+
+    risk = factory.SubFactory(RiskFactory)
+    name = factory.Sequence(lambda n: f"Treatment plan {n}")
+    treatment_type = TreatmentType.MITIGATE
+    status = TreatmentPlanStatus.PLANNED
+
+
+class TreatmentActionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TreatmentAction
+
+    treatment_plan = factory.SubFactory(RiskTreatmentPlanFactory)
+    description = factory.Sequence(lambda n: f"Action {n}")
+    status = ActionStatus.PLANNED
+    order = factory.Sequence(lambda n: n)
+
+
+class RiskAcceptanceFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = RiskAcceptance
+
+    risk = factory.SubFactory(RiskFactory)
+    justification = factory.Sequence(lambda n: f"Justification {n}")
+    status = AcceptanceStatus.ACTIVE
+
+
+class ISO27005RiskFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ISO27005Risk
+
+    assessment = factory.SubFactory(RiskAssessmentFactory)
+    threat = factory.SubFactory(ThreatFactory)
+    vulnerability = factory.SubFactory(VulnerabilityFactory)

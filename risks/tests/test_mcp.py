@@ -208,6 +208,57 @@ class TestGenerateRiskRegisterMCP:
         assert report.file_content
         assert report.file_name.endswith(".xlsx")
 
+class TestRiskAssessmentRiskTreatmentPlanApproveMCP:
+    """A5: approve_risk_assessment, approve_risk, approve_risk_treatment_plan."""
+
+    def setup_method(self):
+        self.srv = McpServer()
+        register_all_tools(self.srv)
+        self.user = UserFactory(is_superuser=True)
+
+    def test_approve_tools_registered(self):
+        for tool_name in (
+            "approve_risk_assessment",
+            "approve_risk",
+            "approve_risk_treatment_plan",
+        ):
+            assert tool_name in self.srv._tools
+
+    def test_approve_risk_assessment(self):
+        assessment = RiskAssessmentFactory()
+        result = _call_tool(
+            self.srv, self.user, "approve_risk_assessment",
+            {"id": str(assessment.pk)},
+        )
+        assert "error" not in result, result
+        assessment.refresh_from_db()
+        assert assessment.is_approved is True
+        assert assessment.approved_by == self.user
+
+    def test_approve_risk(self):
+        risk = RiskFactory()
+        result = _call_tool(
+            self.srv, self.user, "approve_risk",
+            {"id": str(risk.pk)},
+        )
+        assert "error" not in result, result
+        risk.refresh_from_db()
+        assert risk.is_approved is True
+
+    def test_approve_risk_treatment_plan(self):
+        risk = RiskFactory()
+        plan = RiskTreatmentPlan.objects.create(
+            risk=risk, name="Plan-approve", treatment_type="mitigate",
+        )
+        result = _call_tool(
+            self.srv, self.user, "approve_risk_treatment_plan",
+            {"id": str(plan.pk)},
+        )
+        assert "error" not in result, result
+        plan.refresh_from_db()
+        assert plan.is_approved is True
+
+
 class TestThreatVulnerabilityIso27005ApproveMCP:
     """B1: approve_threat, approve_vulnerability, approve_iso27005_risk."""
 

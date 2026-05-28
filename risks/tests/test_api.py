@@ -114,6 +114,14 @@ class TestRiskAssessmentViewSet:
         response = self.client.delete(f"/api/v1/risks/assessments/{ra.pk}/")
         assert response.status_code == 204
 
+    def test_approve(self):
+        ra = RiskAssessmentFactory()
+        response = self.client.post(f"/api/v1/risks/assessments/{ra.pk}/approve/")
+        assert response.status_code == 200, response.json()
+        ra.refresh_from_db()
+        assert ra.is_approved is True
+        assert ra.approved_by == self.user
+
     def test_unauthenticated(self):
         client = APIClient()
         response = client.get("/api/v1/risks/assessments/")
@@ -165,6 +173,13 @@ class TestRiskViewSet:
         risk = RiskFactory()
         response = self.client.delete(f"/api/v1/risks/risks/{risk.pk}/")
         assert response.status_code == 204
+
+    def test_approve(self):
+        risk = RiskFactory()
+        response = self.client.post(f"/api/v1/risks/risks/{risk.pk}/approve/")
+        assert response.status_code == 200, response.json()
+        risk.refresh_from_db()
+        assert risk.is_approved is True
 
     def test_unauthenticated(self):
         client = APIClient()
@@ -252,6 +267,20 @@ class TestRiskTreatmentPlanViewSet:
             f"/api/v1/risks/treatment-plans/{rtp.pk}/"
         )
         assert response.status_code == 204
+
+    def test_approve(self):
+        from risks.models import RiskTreatmentPlan
+
+        risk = RiskFactory()
+        rtp = RiskTreatmentPlan.objects.create(
+            risk=risk, name="Approvable Plan", treatment_type="mitigate"
+        )
+        response = self.client.post(
+            f"/api/v1/risks/treatment-plans/{rtp.pk}/approve/",
+        )
+        assert response.status_code == 200, response.json()
+        rtp.refresh_from_db()
+        assert rtp.is_approved is True
 
     def test_unauthenticated(self):
         client = APIClient()

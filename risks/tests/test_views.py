@@ -174,6 +174,25 @@ class TestRiskAssessmentDeleteView:
         assert not RiskAssessment.objects.filter(pk=pk).exists()
 
 
+class TestRiskAssessmentApproveView:
+    def test_approve_assessment(self):
+        client, user = _superuser_client()
+        assessment = RiskAssessmentFactory()
+        assert assessment.is_approved is False
+        resp = client.post(reverse("risks:assessment-approve", args=[assessment.pk]))
+        assert resp.status_code == 302
+        assessment.refresh_from_db()
+        assert assessment.is_approved is True
+        assert assessment.approved_by == user
+
+    def test_detail_exposes_approve_url(self):
+        client, _ = _superuser_client()
+        assessment = RiskAssessmentFactory()
+        resp = client.get(reverse("risks:assessment-detail", args=[assessment.pk]))
+        assert resp.status_code == 200
+        assert reverse("risks:assessment-approve", args=[assessment.pk]).encode() in resp.content
+
+
 # ── Risk Views ──────────────────────────────────────────────
 
 
@@ -312,6 +331,25 @@ class TestRiskDeleteView:
         assert not Risk.objects.filter(pk=pk).exists()
 
 
+class TestRiskApproveView:
+    def test_approve_risk(self):
+        client, user = _superuser_client()
+        risk = RiskFactory()
+        assert risk.is_approved is False
+        resp = client.post(reverse("risks:risk-approve", args=[risk.pk]))
+        assert resp.status_code == 302
+        risk.refresh_from_db()
+        assert risk.is_approved is True
+        assert risk.approved_by == user
+
+    def test_detail_exposes_approve_url(self):
+        client, _ = _superuser_client()
+        risk = RiskFactory()
+        resp = client.get(reverse("risks:risk-detail", args=[risk.pk]))
+        assert resp.status_code == 200
+        assert reverse("risks:risk-approve", args=[risk.pk]).encode() in resp.content
+
+
 # ── Treatment Plan Views ────────────────────────────────────
 
 
@@ -418,6 +456,31 @@ class TestTreatmentPlanDeleteView:
         )
         assert resp.status_code == 302
         assert not RiskTreatmentPlan.objects.filter(pk=pk).exists()
+
+
+class TestTreatmentPlanApproveView:
+    def test_approve_plan(self):
+        client, user = _superuser_client()
+        risk = RiskFactory()
+        plan = RiskTreatmentPlan.objects.create(
+            risk=risk, name="ToApprove", treatment_type="mitigate",
+        )
+        assert plan.is_approved is False
+        resp = client.post(reverse("risks:treatment-plan-approve", args=[plan.pk]))
+        assert resp.status_code == 302
+        plan.refresh_from_db()
+        assert plan.is_approved is True
+        assert plan.approved_by == user
+
+    def test_detail_exposes_approve_url(self):
+        client, _ = _superuser_client()
+        risk = RiskFactory()
+        plan = RiskTreatmentPlan.objects.create(
+            risk=risk, name="ApproveURL", treatment_type="mitigate",
+        )
+        resp = client.get(reverse("risks:treatment-plan-detail", args=[plan.pk]))
+        assert resp.status_code == 200
+        assert reverse("risks:treatment-plan-approve", args=[plan.pk]).encode() in resp.content
 
 
 # ── Risk Acceptance Views ───────────────────────────────────
