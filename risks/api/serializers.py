@@ -107,12 +107,14 @@ class RiskSerializer(serializers.ModelSerializer):
             "residual_likelihood", "residual_impact", "residual_risk_level",
             "treatment_decision", "treatment_justification",
             "risk_owner", "risk_owner_name", "priority", "status", "review_date", "tags",
+            "criteria_snapshot",
             "version", "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
             "initial_risk_level", "current_risk_level", "residual_risk_level",
+            "criteria_snapshot",
             "is_approved", "approved_by", "approved_at", "version",
         ]
 
@@ -260,12 +262,14 @@ class ISO27005RiskSerializer(serializers.ModelSerializer):
             "impact_confidentiality", "impact_integrity", "impact_availability",
             "max_impact", "risk_level", "existing_controls",
             "risk", "description", "tags",
+            "criteria_snapshot",
             "version", "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "created_by", "created_at", "updated_at",
             "combined_likelihood", "max_impact", "risk_level",
+            "criteria_snapshot",
             "is_approved", "approved_by", "approved_at", "version",
         ]
 

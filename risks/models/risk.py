@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
@@ -123,6 +124,16 @@ class Risk(BaseModel):
         related_name="linked_risks",
         verbose_name=_("Linked requirements"),
     )
+    criteria_snapshot = models.JSONField(
+        _("Criteria snapshot"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Frozen copy of the risk matrix and criteria metadata at the time "
+            "of first evaluation. Used to keep historical scores immutable even "
+            "if the underlying criteria are edited later."
+        ),
+    )
     # FK to unimplemented modules
     # linked_measures = ...
     # linked_incidents = ...
@@ -183,20 +194,52 @@ class Risk(BaseModel):
         if errors:
             raise ValidationError(errors)
 
+    def _resolve_scoring_matrix(self):
+        """Return the matrix used for scoring: snapshot first, live criteria as fallback."""
+        if self.criteria_snapshot and self.criteria_snapshot.get("matrix"):
+            return self.criteria_snapshot["matrix"]
+        criteria = getattr(self.assessment, "risk_criteria", None) if self.assessment_id else None
+        if criteria and criteria.risk_matrix:
+            return criteria.risk_matrix
+        return None
+
     def calculate_risk_level(self, likelihood, impact):
-        """Calculate risk level using the assessment's criteria matrix."""
+        """Calculate risk level using the snapshot (if present) or the live criteria."""
         if likelihood is None or impact is None:
             return None
-        criteria = getattr(self.assessment, "risk_criteria", None)
-        if criteria and criteria.risk_matrix:
-            matrix = criteria.risk_matrix
-            key = f"{likelihood},{impact}"
-            level = matrix.get(key)
+        matrix = self._resolve_scoring_matrix()
+        if matrix:
+            level = matrix.get(f"{likelihood},{impact}")
             if level is not None:
                 return int(level)
         return None
 
+    def _capture_criteria_snapshot(self):
+        """Freeze the assessment's criteria into criteria_snapshot. No-op if already set."""
+        if self.criteria_snapshot:
+            return
+        if not self.assessment_id:
+            return
+        criteria = getattr(self.assessment, "risk_criteria", None)
+        if not criteria or not criteria.risk_matrix:
+            return
+        self.criteria_snapshot = {
+            "criteria_id": str(criteria.pk),
+            "criteria_reference": criteria.reference,
+            "criteria_name": criteria.name,
+            "criteria_version": criteria.version,
+            "matrix": dict(criteria.risk_matrix),
+            "captured_at": timezone.now().isoformat(),
+        }
+
     def save(self, *args, **kwargs):
+        has_evaluation = (
+            (self.initial_likelihood is not None and self.initial_impact is not None)
+            or (self.current_likelihood is not None and self.current_impact is not None)
+            or (self.residual_likelihood is not None and self.residual_impact is not None)
+        )
+        if has_evaluation and not self.criteria_snapshot:
+            self._capture_criteria_snapshot()
         if self.initial_likelihood is not None and self.initial_impact is not None:
             calculated = self.calculate_risk_level(
                 self.initial_likelihood, self.initial_impact

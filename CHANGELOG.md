@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Approval workflow on `RiskAcceptance`: REST `approve` and `reject` actions, MCP tool `approve_risk_acceptance`, `/risks/acceptances/<pk>/approve/` UI endpoint with approval badge on the detail page
 - New permission `risks.acceptance.approve` assigned by default to Super Administrateur, Administrateur and RSSI / DPO groups
 - Tests for acceptance approval covering UI, REST and MCP surfaces, including a new `risks/tests/test_mcp.py`
+- `Risk` and `ISO27005Risk` now freeze the risk matrix and criteria metadata (`criteria_snapshot` JSONField) at first evaluation, so later edits to `RiskCriteria` do not silently rewrite historical scores. A "Scoring snapshot" panel on the risk detail page surfaces the captured criteria name, version and timestamp
+- Data migration `risks.0016_risk_criteria_snapshot` backfills `criteria_snapshot` for every already-evaluated risk and ISO 27005 analysis using the current state of its assessment's criteria
 
 ### Changed
 
@@ -35,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Management review templates use the `has_perm` template tag instead of `perms.reports.management_review.*` so dotted permission codenames resolve correctly through the custom permission backend
 - Management review export query parameter renamed from `format` to `fmt` to avoid clashing with DRF's built-in renderer negotiation
 - `RiskAcceptance` updates now reset approval and bump version like other approvable risk models, via `ApprovableUpdateMixin` (UI) and `ApprovableAPIMixin` (REST)
+- `Risk.calculate_risk_level` and `ISO27005Risk.save` now consult `criteria_snapshot` first and fall back to the live `RiskCriteria.risk_matrix` only when no snapshot has been captured
 
 ### Fixed
 

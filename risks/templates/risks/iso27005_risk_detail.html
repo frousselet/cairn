@@ -77,6 +77,18 @@
         </div>
       </div>
     </div>
+    {% if analysis.criteria_snapshot %}
+    <div class="alert alert-light border d-flex align-items-start gap-2 small">
+      <i class="bi bi-bookmark-check mt-1"></i>
+      <div>
+        <strong>{% trans "Scoring snapshot:" %}</strong>
+        {{ analysis.criteria_snapshot.criteria_name }}
+        (v.{{ analysis.criteria_snapshot.criteria_version|default:"—" }})
+        - {% trans "captured at" %} {{ analysis.criteria_snapshot.captured_at|default:"—" }}.
+        <span class="text-muted">{% trans "Later edits to the criteria do not change this score." %}</span>
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <div class="tab-pane fade" id="assets">

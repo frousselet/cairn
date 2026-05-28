@@ -99,3 +99,119 @@ class TestRiskLevelCalculation:
         assessment = RiskAssessmentFactory(risk_criteria=None)
         risk = RiskFactory(assessment=assessment)
         assert risk.calculate_risk_level(1, 1) is None
+
+
+class TestRiskCriteriaSnapshot:
+    """P0-A2: snapshot the risk matrix at evaluation time so later criteria
+    edits do not rewrite historical scores."""
+
+    def _build_evaluated_risk(self):
+        criteria = RiskCriteriaFactory()
+        for i in range(1, 4):
+            ScaleLevelFactory(criteria=criteria, scale_type="likelihood", level=i, name=f"L{i}")
+            ScaleLevelFactory(criteria=criteria, scale_type="impact", level=i, name=f"I{i}")
+        for i in range(1, 4):
+            RiskLevelFactory(criteria=criteria, level=i, name=f"R{i}")
+        criteria.rebuild_risk_matrix()
+        assessment = RiskAssessmentFactory(risk_criteria=criteria)
+        risk = RiskFactory(assessment=assessment)
+        risk.initial_likelihood = 3
+        risk.initial_impact = 3
+        risk.save()
+        risk.refresh_from_db()
+        return risk, criteria
+
+    def test_no_snapshot_when_not_evaluated(self):
+        criteria = RiskCriteriaFactory()
+        assessment = RiskAssessmentFactory(risk_criteria=criteria)
+        risk = RiskFactory(assessment=assessment)
+        assert risk.criteria_snapshot is None
+
+    def test_snapshot_captured_on_first_evaluation(self):
+        risk, criteria = self._build_evaluated_risk()
+        assert risk.criteria_snapshot is not None
+        assert risk.criteria_snapshot["criteria_id"] == str(criteria.pk)
+        assert risk.criteria_snapshot["criteria_name"] == criteria.name
+        assert risk.criteria_snapshot["matrix"] == criteria.risk_matrix
+        assert "captured_at" in risk.criteria_snapshot
+
+    def test_score_remains_constant_after_criteria_edit(self):
+        risk, criteria = self._build_evaluated_risk()
+        original_score = risk.initial_risk_level
+        original_matrix = dict(criteria.risk_matrix)
+
+        # Mutate the criteria: rewrite the matrix so (3,3) maps to a different level.
+        criteria.risk_matrix = {key: 1 for key in original_matrix}
+        criteria.save()
+
+        risk.refresh_from_db()
+        risk.save()
+        risk.refresh_from_db()
+        assert risk.initial_risk_level == original_score
+        assert risk.initial_risk_level != 1
+
+    def test_snapshot_preserved_on_subsequent_saves(self):
+        risk, criteria = self._build_evaluated_risk()
+        first_snapshot = dict(risk.criteria_snapshot)
+        risk.name = "renamed"
+        risk.save()
+        risk.refresh_from_db()
+        assert risk.criteria_snapshot == first_snapshot
+
+    def test_calculate_uses_snapshot_when_present(self):
+        risk, criteria = self._build_evaluated_risk()
+        # Stub a snapshot that maps everything to 5; criteria stays at 3.
+        risk.criteria_snapshot = {
+            "criteria_id": str(criteria.pk),
+            "criteria_name": criteria.name,
+            "criteria_version": 1,
+            "matrix": {key: 5 for key in criteria.risk_matrix},
+            "captured_at": "2026-01-01T00:00:00",
+        }
+        assert risk.calculate_risk_level(2, 2) == 5
+
+    def test_falls_back_to_live_criteria_when_no_snapshot(self):
+        criteria = RiskCriteriaFactory()
+        for i in range(1, 4):
+            ScaleLevelFactory(criteria=criteria, scale_type="likelihood", level=i, name=f"L{i}")
+            ScaleLevelFactory(criteria=criteria, scale_type="impact", level=i, name=f"I{i}")
+        for i in range(1, 4):
+            RiskLevelFactory(criteria=criteria, level=i, name=f"R{i}")
+        criteria.rebuild_risk_matrix()
+        assessment = RiskAssessmentFactory(risk_criteria=criteria)
+        risk = RiskFactory(assessment=assessment)
+        assert risk.criteria_snapshot is None
+        assert risk.calculate_risk_level(3, 3) == 3
+
+    def test_iso27005_snapshot_captured(self):
+        from risks.models import ISO27005Risk
+        from risks.tests.factories import RiskCriteriaFactory
+
+        criteria = RiskCriteriaFactory()
+        for i in range(1, 4):
+            ScaleLevelFactory(criteria=criteria, scale_type="likelihood", level=i, name=f"L{i}")
+            ScaleLevelFactory(criteria=criteria, scale_type="impact", level=i, name=f"I{i}")
+        for i in range(1, 4):
+            RiskLevelFactory(criteria=criteria, level=i, name=f"R{i}")
+        criteria.rebuild_risk_matrix()
+        assessment = RiskAssessmentFactory(risk_criteria=criteria)
+
+        from risks.models import Threat, Vulnerability
+        threat = Threat.objects.create(name="T", type="deliberate")
+        vuln = Vulnerability.objects.create(name="V", severity=3)
+        iso = ISO27005Risk.objects.create(
+            assessment=assessment, threat=threat, vulnerability=vuln,
+            threat_likelihood=3, vulnerability_exposure=3,
+            impact_confidentiality=3, impact_integrity=2, impact_availability=1,
+        )
+        iso.refresh_from_db()
+        assert iso.risk_level is not None
+        assert iso.criteria_snapshot is not None
+        assert iso.criteria_snapshot["matrix"] == criteria.risk_matrix
+
+        original_level = iso.risk_level
+        criteria.risk_matrix = {key: 1 for key in criteria.risk_matrix}
+        criteria.save()
+        iso.save()
+        iso.refresh_from_db()
+        assert iso.risk_level == original_level

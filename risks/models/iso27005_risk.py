@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
@@ -74,6 +75,16 @@ class ISO27005Risk(BaseModel):
         verbose_name=_("Consolidated risk"),
     )
     description = models.TextField(_("Description"), blank=True)
+    criteria_snapshot = models.JSONField(
+        _("Criteria snapshot"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Frozen copy of the risk matrix and criteria metadata at the time "
+            "of first evaluation. Used to keep historical scores immutable even "
+            "if the underlying criteria are edited later."
+        ),
+    )
     history = HistoricalRecords()
 
     class Meta:
@@ -83,6 +94,35 @@ class ISO27005Risk(BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.threat} × {self.vulnerability}"
+
+    def _resolve_scoring_matrix(self):
+        """Return the matrix used for scoring: snapshot first, live criteria as fallback."""
+        if self.criteria_snapshot and self.criteria_snapshot.get("matrix"):
+            return self.criteria_snapshot["matrix"]
+        if not self.assessment_id:
+            return None
+        criteria = getattr(self.assessment, "risk_criteria", None)
+        if criteria and criteria.risk_matrix:
+            return criteria.risk_matrix
+        return None
+
+    def _capture_criteria_snapshot(self):
+        """Freeze the assessment's criteria into criteria_snapshot. No-op if already set."""
+        if self.criteria_snapshot:
+            return
+        if not self.assessment_id:
+            return
+        criteria = getattr(self.assessment, "risk_criteria", None)
+        if not criteria or not criteria.risk_matrix:
+            return
+        self.criteria_snapshot = {
+            "criteria_id": str(criteria.pk),
+            "criteria_reference": criteria.reference,
+            "criteria_name": criteria.name,
+            "criteria_version": criteria.version,
+            "matrix": dict(criteria.risk_matrix),
+            "captured_at": timezone.now().isoformat(),
+        }
 
     def save(self, *args, **kwargs):
         # Calculate combined_likelihood = max(threat_likelihood, vulnerability_exposure)
@@ -103,12 +143,19 @@ class ISO27005Risk(BaseModel):
         ]
         self.max_impact = max(impacts) if impacts else None
 
-        # Calculate risk_level via the assessment's criteria matrix
+        # Freeze the criteria the first time we have enough to score, so later
+        # criteria edits don't rewrite historical scores.
+        if (
+            self.combined_likelihood is not None
+            and self.max_impact is not None
+            and not self.criteria_snapshot
+        ):
+            self._capture_criteria_snapshot()
+
         if self.combined_likelihood is not None and self.max_impact is not None:
-            criteria = getattr(self.assessment, "risk_criteria", None)
-            if criteria and criteria.risk_matrix:
-                key = f"{self.combined_likelihood},{self.max_impact}"
-                level = criteria.risk_matrix.get(key)
+            matrix = self._resolve_scoring_matrix()
+            if matrix:
+                level = matrix.get(f"{self.combined_likelihood},{self.max_impact}")
                 if level is not None:
                     self.risk_level = int(level)
 

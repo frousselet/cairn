@@ -10592,6 +10592,43 @@ msgstr "Aucun historique disponible."
 msgid "Search…"
 msgstr "Rechercher…"
 
+msgid "Criteria snapshot"
+msgstr "Empreinte du barème"
+
+msgid ""
+"Frozen copy of the risk matrix and criteria metadata at the time of first "
+"evaluation. Used to keep historical scores immutable even if the underlying "
+"criteria are edited later."
+msgstr ""
+"Copie figée de la matrice des risques et des métadonnées du barème au "
+"moment de la première évaluation. Garantit que les scores historiques "
+"restent immuables même si le barème est modifié ultérieurement."
+
+msgid "Scoring snapshot"
+msgstr "Empreinte de notation"
+
+msgid "Scoring snapshot:"
+msgstr "Empreinte de notation :"
+
+msgid "Version at evaluation"
+msgstr "Version à l'évaluation"
+
+msgid "Captured at"
+msgstr "Capturée le"
+
+msgid "captured at"
+msgstr "capturée le"
+
+msgid ""
+"Score frozen at evaluation time. Later edits to the criteria do not change "
+"historical scores."
+msgstr ""
+"Score figé au moment de l'évaluation. Les modifications ultérieures du "
+"barème ne changent pas les scores historiques."
+
+msgid "Later edits to the criteria do not change this score."
+msgstr "Les modifications ultérieures du barème ne changent pas ce score."
+
 #~ msgid "Compliance of evaluated requirements"
 #~ msgstr "Conformité des exigences évaluées"
 
