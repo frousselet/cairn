@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- M2M link between `RiskTreatmentPlan` and `compliance.ComplianceActionPlan` (`related_action_plans` / `related_treatment_plans`). The link is exposed on the treatment plan detail page, on the action plan detail page (Linkages section), in the REST serializer and through four MCP tools: `list_treatment_plan_action_plans`, `link_treatment_plan_action_plans`, `unlink_treatment_plan_action_plans`, `set_treatment_plan_action_plans`
 - Persistent management review workflow (ISO 27001:2022 clause 9.3) with full life cycle (planned, in_preparation, held, closed, cancelled), horizontal stepper, snapshot-based auditability, and 2-column detail layout
 - `ManagementReview` model (title, frequency, period, planned/held dates, facilitator, approver, scopes, agenda, summary, next review date)
 - `ManagementReviewDecision` for clause 9.3.3 outputs, with category, input clause, owner, due date, priority, status, and promote-to-action-plan flow
@@ -31,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests for acceptance approval covering UI, REST and MCP surfaces, including a new `risks/tests/test_mcp.py`
 - `Risk` and `ISO27005Risk` now freeze the risk matrix and criteria metadata (`criteria_snapshot` JSONField) at first evaluation, so later edits to `RiskCriteria` do not silently rewrite historical scores. A "Scoring snapshot" panel on the risk detail page surfaces the captured criteria name, version and timestamp
 - Data migration `risks.0016_risk_criteria_snapshot` backfills `criteria_snapshot` for every already-evaluated risk and ISO 27005 analysis using the current state of its assessment's criteria
+- M2M link between `RiskTreatmentPlan` and `compliance.ComplianceActionPlan` (`related_action_plans` / `related_treatment_plans`). The link is exposed on the treatment plan detail page, on the action plan detail page (Linkages section), in the REST serializer and through four MCP tools: `list_treatment_plan_action_plans`, `link_treatment_plan_action_plans`, `unlink_treatment_plan_action_plans`, `set_treatment_plan_action_plans`
 
 ### Changed
 
