@@ -4,8 +4,11 @@ from risks.models import (
     BaselineGap,
     EbiosWorkshopProgress,
     FearedEvent,
+    RiskSource,
+    RiskSourceObjectivePair,
     SecurityBaseline,
     StudyFramework,
+    TargetedObjective,
 )
 
 
@@ -159,6 +162,114 @@ class BaselineGapSerializer(serializers.ModelSerializer):
             "reference",
             "severity_label",
             "status_label",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class RiskSourceSerializer(serializers.ModelSerializer):
+    category_label = serializers.CharField(source="get_category_display", read_only=True)
+    threat_level_label = serializers.CharField(source="get_threat_level_display", read_only=True)
+
+    class Meta:
+        model = RiskSource
+        fields = [
+            "id",
+            "reference",
+            "assessment",
+            "name",
+            "description",
+            "category",
+            "category_label",
+            "motivation_level",
+            "motivation_description",
+            "resources_level",
+            "activity_level",
+            "threat_level",
+            "threat_level_label",
+            "is_retained",
+            "retention_justification",
+            "is_from_catalog",
+            "is_approved",
+            "approved_by",
+            "approved_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "reference",
+            "category_label",
+            "threat_level",
+            "threat_level_label",
+            "is_approved",
+            "approved_by",
+            "approved_at",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class TargetedObjectiveSerializer(serializers.ModelSerializer):
+    category_label = serializers.CharField(source="get_category_display", read_only=True)
+
+    class Meta:
+        model = TargetedObjective
+        fields = [
+            "id",
+            "reference",
+            "risk_source",
+            "name",
+            "description",
+            "category",
+            "category_label",
+            "targeted_essential_assets",
+            "targeted_feared_events",
+            "is_retained",
+            "order",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "reference",
+            "category_label",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class RiskSourceObjectivePairSerializer(serializers.ModelSerializer):
+    relevance_label = serializers.CharField(source="get_relevance_display", read_only=True)
+
+    class Meta:
+        model = RiskSourceObjectivePair
+        fields = [
+            "id",
+            "reference",
+            "assessment",
+            "risk_source",
+            "targeted_objective",
+            "relevance",
+            "relevance_label",
+            "relevance_justification",
+            "priority_score",
+            "is_retained",
+            "retention_justification",
+            "is_approved",
+            "approved_by",
+            "approved_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "reference",
+            "relevance_label",
+            "priority_score",
+            "is_approved",
+            "approved_by",
+            "approved_at",
             "created_at",
             "updated_at",
         ]

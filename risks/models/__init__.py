@@ -12,6 +12,9 @@ from .ebios import (
     SecurityBaseline,
     FearedEvent,
     BaselineGap,
+    RiskSource,
+    TargetedObjective,
+    RiskSourceObjectivePair,
 )
 
 __all__ = [
@@ -21,4 +24,5 @@ __all__ = [
     "RiskAcceptance", "Threat", "Vulnerability", "ISO27005Risk",
     "StudyFramework", "EbiosWorkshopProgress",
     "SecurityBaseline", "FearedEvent", "BaselineGap",
+    "RiskSource", "TargetedObjective", "RiskSourceObjectivePair",
 ]

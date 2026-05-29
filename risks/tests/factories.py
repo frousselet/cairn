@@ -12,7 +12,10 @@ from risks.constants import (
     EbiosWorkshopNumber,
     EbiosWorkshopStatus,
     Methodology,
+    Relevance,
+    RiskSourceCategory,
     Severity,
+    TargetedObjectiveCategory,
     ThreatType,
     TreatmentPlanStatus,
     TreatmentType,
@@ -25,9 +28,12 @@ from risks.models import (
     Risk,
     RiskAcceptance,
     RiskAssessment,
+    RiskSource,
+    RiskSourceObjectivePair,
     RiskTreatmentPlan,
     SecurityBaseline,
     StudyFramework,
+    TargetedObjective,
     Threat,
     TreatmentAction,
     Vulnerability,
@@ -240,3 +246,40 @@ class BaselineGapFactory(factory.django.DjangoModelFactory):
     description = factory.Sequence(lambda n: f"Gap {n}")
     severity = Severity.MEDIUM
     status = BaselineGapStatus.IDENTIFIED
+
+
+class RiskSourceFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = RiskSource
+
+    assessment = factory.SubFactory(EbiosAssessmentFactory)
+    name = factory.Sequence(lambda n: f"Risk source {n}")
+    category = RiskSourceCategory.ORGANIZED_CRIME
+    motivation_level = 3
+    resources_level = 3
+    activity_level = 2
+
+
+class TargetedObjectiveFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TargetedObjective
+
+    risk_source = factory.SubFactory(RiskSourceFactory)
+    name = factory.Sequence(lambda n: f"Objective {n}")
+    category = TargetedObjectiveCategory.LUCRATIVE
+
+
+class RiskSourceObjectivePairFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = RiskSourceObjectivePair
+
+    assessment = factory.SubFactory(EbiosAssessmentFactory)
+    risk_source = factory.SubFactory(
+        RiskSourceFactory,
+        assessment=factory.SelfAttribute("..assessment"),
+    )
+    targeted_objective = factory.SubFactory(
+        TargetedObjectiveFactory,
+        risk_source=factory.SelfAttribute("..risk_source"),
+    )
+    relevance = Relevance.HIGH

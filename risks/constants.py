@@ -254,3 +254,74 @@ class BaselineGapStatus(models.TextChoices):
 
 # Total number of workshops produced for every EBIOS RM assessment (W0..W5)
 EBIOS_WORKSHOP_COUNT = 6
+
+
+# EBIOS RM workshop W2 - Risk sources and targeted objectives
+
+class RiskSourceCategory(models.TextChoices):
+    STATE = "state", _("State")
+    ORGANIZED_CRIME = "organized_crime", _("Organized crime")
+    TERRORIST = "terrorist", _("Terrorist")
+    ACTIVIST = "activist", _("Activist / hacktivist")
+    COMPETITOR = "competitor", _("Competitor")
+    EMPLOYEE = "employee", _("Internal employee")
+    SERVICE_PROVIDER = "service_provider", _("Service provider")
+    AMATEUR = "amateur", _("Amateur / script kiddie")
+    NATURAL = "natural", _("Natural phenomenon")
+    OTHER = "other", _("Other")
+
+
+class TargetedObjectiveCategory(models.TextChoices):
+    LUCRATIVE = "lucrative", _("Lucrative")
+    STRATEGIC = "strategic", _("Strategic")
+    TERRORIST = "terrorist", _("Terrorist")
+    IDEOLOGICAL = "ideological", _("Ideological")
+    REVENGE = "revenge", _("Revenge")
+    LUDIC = "ludic", _("Ludic")
+    OTHER = "other", _("Other")
+
+
+class Relevance(models.TextChoices):
+    LOW = "low", _("Low")
+    MEDIUM = "medium", _("Medium")
+    HIGH = "high", _("High")
+    CRITICAL = "critical", _("Critical")
+
+
+# ANSSI threat level scale (V1..V4). Stored as integers so they can be filtered
+# and compared by the matrix in RiskCriteria.
+class ThreatLevelV(models.IntegerChoices):
+    V1 = 1, _("V1 - Minimal")
+    V2 = 2, _("V2 - Significant")
+    V3 = 3, _("V3 - Strong")
+    V4 = 4, _("V4 - Maximal")
+
+
+# ANSSI Grid A: niveau de menace SR = grid(motivation 1..4, resources 1..4)
+# Keys: (motivation, resources) -> ThreatLevelV.value
+# Reference: M4bis spec §2.8 Grid A. Activity may add one level (capped at V4).
+ANSSI_THREAT_LEVEL_GRID = {
+    (1, 1): 1, (1, 2): 1, (1, 3): 2, (1, 4): 2,
+    (2, 1): 1, (2, 2): 2, (2, 3): 3, (2, 4): 3,
+    (3, 1): 2, (3, 2): 3, (3, 3): 3, (3, 4): 4,
+    (4, 1): 2, (4, 2): 3, (4, 3): 4, (4, 4): 4,
+}
+
+
+def compute_anssi_threat_level(motivation, resources, activity=None, grid=None):
+    """Return the ANSSI threat level (1..4) from (motivation, resources, activity).
+
+    `motivation` and `resources` are integers in 1..4. `activity` is optional
+    (1..4); when >= 3 it adds one level, capped at V4. Pass a custom `grid`
+    (dict) to override the default ANSSI grid (used by criteria_snapshot when
+    the assessment carries a paramétrable grid in RiskCriteria).
+    """
+    if motivation is None or resources is None:
+        return None
+    g = grid or ANSSI_THREAT_LEVEL_GRID
+    base = g.get((int(motivation), int(resources)))
+    if base is None:
+        return None
+    if activity and int(activity) >= 3:
+        base = min(base + 1, ThreatLevelV.V4)
+    return int(base)

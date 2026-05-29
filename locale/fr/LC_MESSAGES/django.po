@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-29 10:29+0200\n"
+"POT-Creation-Date: 2026-05-29 11:02+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -478,7 +478,6 @@ msgid "ISO 27005 analyses"
 msgstr "Analyses ISO 27005"
 
 #: accounts/constants.py:231
-#| msgid "ISO 27005 risk assessment report"
 msgid "EBIOS RM assessment pilotage"
 msgstr "Gestion des risques EBIOS RM - Pilotage de l'appréciation"
 
@@ -495,12 +494,10 @@ msgid "EBIOS RM ecosystem stakeholders (workshop 3)"
 msgstr "EBIOS RM - Parties prenantes de l'écosystème (atelier 3)"
 
 #: accounts/constants.py:247
-#| msgid "EBIOS strategic scenario"
 msgid "EBIOS RM strategic scenarios (workshop 3)"
 msgstr "EBIOS RM - Scénarios stratégiques (atelier 3)"
 
 #: accounts/constants.py:251
-#| msgid "EBIOS operational scenario"
 msgid "EBIOS RM operational scenarios (workshop 4)"
 msgstr "EBIOS RM - Scénarios opérationnels (atelier 4)"
 
@@ -810,7 +807,8 @@ msgstr ""
 #: context/models/swot.py:15 context/models/tag.py:9
 #: context/templates/context/site_list.html:29 reports/models/report.py:18
 #: reports/templates/reports/report_list.html:55
-#: risks/models/ebios/feared_event.py:32 risks/models/risk.py:28
+#: risks/models/ebios/feared_event.py:32 risks/models/ebios/risk_source.py:32
+#: risks/models/ebios/targeted_objective.py:25 risks/models/risk.py:28
 #: risks/models/risk_assessment.py:13 risks/models/risk_criteria.py:15
 #: risks/models/risk_criteria.py:87 risks/models/risk_criteria.py:110
 #: risks/models/threat.py:12 risks/models/treatment.py:29
@@ -967,11 +965,13 @@ msgstr "Paramètres de l'entreprise"
 #: reports/templates/reports/decision_detail.html:27
 #: reports/templates/reports/management_review_detail.html:104
 #: risks/models/ebios/baseline_gap.py:34 risks/models/ebios/feared_event.py:33
-#: risks/models/iso27005_risk.py:77 risks/models/risk.py:29
-#: risks/models/risk_assessment.py:14 risks/models/risk_criteria.py:16
-#: risks/models/risk_criteria.py:88 risks/models/risk_criteria.py:111
-#: risks/models/threat.py:13 risks/models/treatment.py:30
-#: risks/models/treatment.py:152 risks/models/vulnerability.py:13
+#: risks/models/ebios/risk_source.py:33
+#: risks/models/ebios/targeted_objective.py:26 risks/models/iso27005_risk.py:77
+#: risks/models/risk.py:29 risks/models/risk_assessment.py:14
+#: risks/models/risk_criteria.py:16 risks/models/risk_criteria.py:88
+#: risks/models/risk_criteria.py:111 risks/models/threat.py:13
+#: risks/models/treatment.py:30 risks/models/treatment.py:152
+#: risks/models/vulnerability.py:13
 #: risks/templates/risks/assessment_detail.html:131
 #: risks/templates/risks/criteria_detail.html:41
 #: risks/templates/risks/criteria_detail.html:55
@@ -2357,6 +2357,7 @@ msgstr "Négligeable"
 #: context/constants.py:196 context/templates/context/activity_list.html:29
 #: context/templates/context/issue_list.html:29 reports/constants.py:90
 #: risks/constants.py:48 risks/constants.py:157 risks/constants.py:190
+#: risks/constants.py:285
 msgid "Low"
 msgstr "Faible"
 
@@ -2365,7 +2366,7 @@ msgstr "Faible"
 #: context/constants.py:59 context/constants.py:95 context/constants.py:107
 #: context/constants.py:197 context/templates/context/activity_list.html:28
 #: context/templates/context/issue_list.html:30 reports/constants.py:91
-#: risks/constants.py:49 risks/constants.py:158
+#: risks/constants.py:49 risks/constants.py:158 risks/constants.py:286
 msgid "Medium"
 msgstr "Moyen"
 
@@ -2375,7 +2376,7 @@ msgstr "Moyen"
 #: context/constants.py:198 context/templates/context/activity_list.html:27
 #: context/templates/context/issue_list.html:31 reports/constants.py:92
 #: risks/constants.py:50 risks/constants.py:159 risks/constants.py:194
-#: risks/templates/risks/risk_list.html:35
+#: risks/constants.py:287 risks/templates/risks/risk_list.html:35
 msgid "High"
 msgstr "Élevé"
 
@@ -2385,7 +2386,7 @@ msgstr "Élevé"
 #: context/templates/context/activity_list.html:26
 #: context/templates/context/indicator_detail.html:91
 #: context/templates/context/issue_list.html:32 reports/constants.py:93
-#: risks/constants.py:51 risks/constants.py:160
+#: risks/constants.py:51 risks/constants.py:160 risks/constants.py:288
 #: risks/templates/risks/risk_list.html:34
 #: templates/includes/dashboard_indicators.html:87
 msgid "Critical"
@@ -2769,7 +2770,8 @@ msgstr "Protégé par"
 #: assets/constants.py:241 compliance/constants.py:15
 #: compliance/constants.py:29 compliance/constants.py:54
 #: context/constants.py:90 context/constants.py:130 context/constants.py:264
-#: risks/constants.py:98 risks/constants.py:106
+#: risks/constants.py:98 risks/constants.py:106 risks/constants.py:271
+#: risks/constants.py:281
 msgid "Other"
 msgstr "Autre"
 
@@ -3003,8 +3005,9 @@ msgstr ""
 #: reports/models/management_review.py:255
 #: reports/templates/reports/decision_detail.html:50
 #: reports/templates/reports/management_review_detail.html:131
-#: risks/models/threat.py:21 risks/models/vulnerability.py:15
-#: risks/templates/risks/threat_detail.html:34
+#: risks/models/ebios/risk_source.py:35
+#: risks/models/ebios/targeted_objective.py:28 risks/models/threat.py:21
+#: risks/models/vulnerability.py:15 risks/templates/risks/threat_detail.html:34
 #: risks/templates/risks/threat_list.html:37
 #: risks/templates/risks/vulnerability_detail.html:32
 msgid "Category"
@@ -5064,8 +5067,9 @@ msgstr "Évaluation de conformité"
 
 #: compliance/models/assessment.py:465 compliance/models/finding.py:24
 #: compliance/templates/compliance/_finding_preview.html:31 reports/forms.py:51
-#: reports/models/report.py:31 risks/models/ebios/security_baseline.py:22
-#: risks/models/ebios/study_framework.py:24
+#: reports/models/report.py:31 risks/models/ebios/risk_source.py:30
+#: risks/models/ebios/security_baseline.py:22
+#: risks/models/ebios/sr_ov_pair.py:33 risks/models/ebios/study_framework.py:24
 #: risks/models/ebios/workshop_progress.py:28 risks/models/iso27005_risk.py:16
 #: risks/models/risk.py:26 risks/templates/risks/dashboard.html:148
 #: risks/templates/risks/iso27005_risk_detail.html:33
@@ -5330,7 +5334,8 @@ msgstr "Référence"
 
 #: compliance/models/section.py:27 context/models/swot.py:75
 #: context/models/swot.py:104 risks/models/ebios/baseline_gap.py:54
-#: risks/models/ebios/feared_event.py:53 risks/models/treatment.py:169
+#: risks/models/ebios/feared_event.py:53
+#: risks/models/ebios/targeted_objective.py:46 risks/models/treatment.py:169
 msgid "Order"
 msgstr "Ordre"
 
@@ -5986,7 +5991,7 @@ msgstr "Statut mis à jour avec succès."
 msgid "External"
 msgstr "Externe"
 
-#: context/constants.py:40 context/constants.py:123
+#: context/constants.py:40 context/constants.py:123 risks/constants.py:276
 msgid "Strategic"
 msgstr "Stratégique"
 
@@ -9313,54 +9318,119 @@ msgid "Workshop 0 - Study framework"
 msgstr "Atelier 0 - Cadre de l'étude"
 
 #: risks/constants.py:211
-#| msgid "Define scope and security baseline"
 msgid "Workshop 1 - Security baseline"
 msgstr "Atelier 1 - Socle de sécurité"
 
 #: risks/constants.py:212
-#| msgid "Risk source"
 msgid "Workshop 2 - Risk sources"
 msgstr "Atelier 2 - Sources de risque"
 
 #: risks/constants.py:213
-#| msgid "Build strategic scenarios"
 msgid "Workshop 3 - Strategic scenarios"
 msgstr "Atelier 3 - Scénarios stratégiques"
 
 #: risks/constants.py:214
-#| msgid "Build operational scenarios"
 msgid "Workshop 4 - Operational scenarios"
 msgstr "Atelier 4 - Scénarios opérationnels"
 
 #: risks/constants.py:215
-#| msgid "Workshop 5 — Define and track risk treatment measures."
 msgid "Workshop 5 - Risk treatment"
 msgstr "Atelier 5 - Traitement du risque"
 
 #: risks/constants.py:219
-#| msgid "Impersonation started"
 msgid "Not started"
 msgstr "Non démarré"
 
 #: risks/constants.py:227
-#| msgid "Strategic"
 msgid "Strategic cycle"
 msgstr "Cycle stratégique"
 
 #: risks/constants.py:228
-#| msgid "Operational"
 msgid "Operational cycle"
 msgstr "Cycle opérationnel"
 
 #: risks/constants.py:251
-#| msgid "Remediation"
 msgid "In remediation"
 msgstr "En remédiation"
 
 #: risks/constants.py:252
-#| msgid "Remediation"
 msgid "Remediated"
 msgstr "Remédié"
+
+#: risks/constants.py:262
+#| msgid "Status"
+msgid "State"
+msgstr "État"
+
+#: risks/constants.py:263
+msgid "Organized crime"
+msgstr "Cybercriminalité organisée"
+
+#: risks/constants.py:264 risks/constants.py:277
+msgid "Terrorist"
+msgstr "Terroriste"
+
+#: risks/constants.py:265
+msgid "Activist / hacktivist"
+msgstr "Activiste / hacktiviste"
+
+#: risks/constants.py:266
+#| msgid "Competitors"
+msgid "Competitor"
+msgstr "Concurrent"
+
+#: risks/constants.py:267
+#| msgid "Internal policy"
+msgid "Internal employee"
+msgstr "Employé interne"
+
+#: risks/constants.py:268
+#| msgid "External provider"
+msgid "Service provider"
+msgstr "Prestataire"
+
+#: risks/constants.py:269
+msgid "Amateur / script kiddie"
+msgstr "Amateur / script kiddie"
+
+#: risks/constants.py:270
+msgid "Natural phenomenon"
+msgstr "Phénomène naturel"
+
+#: risks/constants.py:275
+#| msgid "Active"
+msgid "Lucrative"
+msgstr "Lucratif"
+
+#: risks/constants.py:278
+#| msgid "Technological"
+msgid "Ideological"
+msgstr "Idéologique"
+
+#: risks/constants.py:279
+msgid "Revenge"
+msgstr "Vengeance"
+
+#: risks/constants.py:280
+msgid "Ludic"
+msgstr "Ludique"
+
+#: risks/constants.py:294
+#| msgid "Minimal"
+msgid "V1 - Minimal"
+msgstr "V1 - Minimal"
+
+#: risks/constants.py:295
+msgid "V2 - Significant"
+msgstr "V2 - Significatif"
+
+#: risks/constants.py:296
+msgid "V3 - Strong"
+msgstr "V3 - Fort"
+
+#: risks/constants.py:297
+msgid "V4 - Maximal"
+msgstr "V4 - Maximal"
 
 #: risks/models/acceptance.py:17 risks/models/risk.py:144
 #: risks/models/treatment.py:27 risks/templates/risks/acceptance_detail.html:35
@@ -9462,14 +9532,15 @@ msgid ""
 "environmental."
 msgstr ""
 
-#: risks/models/ebios/feared_event.py:48 risks/models/iso27005_risk.py:79
-#: risks/models/risk.py:128
+#: risks/models/ebios/feared_event.py:48 risks/models/ebios/risk_source.py:73
+#: risks/models/iso27005_risk.py:79 risks/models/risk.py:128
 msgid "Criteria snapshot"
 msgstr "Empreinte du barème"
 
 #: risks/models/ebios/feared_event.py:51
 msgid "Frozen copy of the impact scale at the time of gravity capture."
-msgstr "Copie figée de l'échelle d'impact au moment de la saisie de la gravité."
+msgstr ""
+"Copie figée de l'échelle d'impact au moment de la saisie de la gravité."
 
 #: risks/models/ebios/feared_event.py:58
 msgid "EBIOS RM feared event"
@@ -9478,6 +9549,86 @@ msgstr "Événement redouté EBIOS RM"
 #: risks/models/ebios/feared_event.py:59
 msgid "EBIOS RM feared events"
 msgstr "Événements redoutés EBIOS RM"
+
+#: risks/models/ebios/risk_source.py:41
+#| msgid "Coverage level"
+msgid "Motivation level"
+msgstr "Niveau de motivation"
+
+#: risks/models/ebios/risk_source.py:45
+msgid "1 (low) .. 4 (very strong). Drives the ANSSI threat level."
+msgstr "1 (faible) à 4 (très forte). Alimente le niveau de menace ANSSI."
+
+#: risks/models/ebios/risk_source.py:47
+#| msgid "Gap description"
+msgid "Motivation description"
+msgstr "Description de la motivation"
+
+#: risks/models/ebios/risk_source.py:49
+#| msgid "Risk source"
+msgid "Resources level"
+msgstr "Niveau de ressources"
+
+#: risks/models/ebios/risk_source.py:53
+msgid "1 (limited) .. 4 (unlimited). Drives the ANSSI threat level."
+msgstr "1 (limitées) à 4 (illimitées). Alimente le niveau de menace ANSSI."
+
+#: risks/models/ebios/risk_source.py:56
+#| msgid "Impact level"
+msgid "Activity level"
+msgstr "Niveau d'activité"
+
+#: risks/models/ebios/risk_source.py:60
+msgid ""
+"Observed activity 1..4. Activity >= 3 majorates the threat level by one."
+msgstr "Activité observée de 1 à 4. Une activité >= 3 majore le niveau de menace d'un cran."
+
+#: risks/models/ebios/risk_source.py:63
+#| msgid "Current level"
+msgid "Threat level"
+msgstr "Niveau de menace"
+
+#: risks/models/ebios/risk_source.py:67
+msgid ""
+"ANSSI threat level V1..V4 computed from motivation, resources and activity."
+msgstr "Niveau de menace ANSSI V1 à V4 calculé à partir de motivation, ressources et activité."
+
+#: risks/models/ebios/risk_source.py:69
+#: risks/models/ebios/targeted_objective.py:45
+#| msgid "New analysis"
+msgid "Retained for analysis"
+msgstr "Retenu pour l'analyse"
+
+#: risks/models/ebios/risk_source.py:70 risks/models/ebios/sr_ov_pair.py:64
+#| msgid "Treatment justification"
+msgid "Retention justification"
+msgstr "Justification du maintien"
+
+#: risks/models/ebios/risk_source.py:71 risks/models/threat.py:26
+#: risks/models/vulnerability.py:41 risks/templates/risks/threat_detail.html:36
+#: risks/templates/risks/vulnerability_detail.html:39
+msgid "From catalog"
+msgstr "Issue du catalogue"
+
+#: risks/models/ebios/risk_source.py:77
+#| msgid ""
+#| "Frozen copy of the risk matrix and criteria metadata at the time of first "
+#| "evaluation. Used to keep historical scores immutable even if the "
+#| "underlying criteria are edited later."
+msgid ""
+"Frozen copy of the ANSSI threat level grid used at the time of first "
+"scoring. Keeps the threat_level immutable when the grid is edited."
+msgstr "Copie figée de la grille ANSSI de niveau de menace utilisée à la première évaluation. Préserve l'immuabilité de threat_level lorsque la grille est modifiée."
+
+#: risks/models/ebios/risk_source.py:85
+#| msgid "Risk source"
+msgid "EBIOS RM risk source"
+msgstr "Source de risque EBIOS RM"
+
+#: risks/models/ebios/risk_source.py:86
+#| msgid "EBIOS RM workshops"
+msgid "EBIOS RM risk sources"
+msgstr "Sources de risque EBIOS RM"
 
 #: risks/models/ebios/security_baseline.py:28
 #, fuzzy
@@ -9508,6 +9659,48 @@ msgstr "Définir le périmètre et le socle de sécurité"
 #| msgid "Define scope and security baseline"
 msgid "EBIOS RM security baselines"
 msgstr "Définir le périmètre et le socle de sécurité"
+
+#: risks/models/ebios/sr_ov_pair.py:39
+#: risks/models/ebios/targeted_objective.py:23 risks/models/risk.py:31
+msgid "Risk source"
+msgstr "Source du risque"
+
+#: risks/models/ebios/sr_ov_pair.py:45
+#| msgid "Parent objective"
+msgid "Targeted objective"
+msgstr "Objectif visé"
+
+#: risks/models/ebios/sr_ov_pair.py:48
+msgid "Relevance"
+msgstr "Pertinence"
+
+#: risks/models/ebios/sr_ov_pair.py:53
+#| msgid "Treatment justification"
+msgid "Relevance justification"
+msgstr "Justification de la pertinence"
+
+#: risks/models/ebios/sr_ov_pair.py:55
+#| msgid "Priority"
+msgid "Priority score"
+msgstr "Score de priorité"
+
+#: risks/models/ebios/sr_ov_pair.py:59
+msgid ""
+"Aggregated score (1..4) derived from the risk source threat level and the SR/"
+"OV relevance. Recomputed on save."
+msgstr "Score agrégé (1 à 4) dérivé du niveau de menace de la source de risque et de la pertinence SR/OV. Recalculé à la sauvegarde."
+
+#: risks/models/ebios/sr_ov_pair.py:63
+msgid "Retained for workshop 3"
+msgstr "Retenu pour l'atelier 3"
+
+#: risks/models/ebios/sr_ov_pair.py:69
+msgid "EBIOS RM SR/OV pair"
+msgstr "Couple SR/OV EBIOS RM"
+
+#: risks/models/ebios/sr_ov_pair.py:70
+msgid "EBIOS RM SR/OV pairs"
+msgstr "Couples SR/OV EBIOS RM"
 
 #: risks/models/ebios/study_framework.py:26
 #, fuzzy
@@ -9551,7 +9744,9 @@ msgstr "Facteurs externes"
 
 #: risks/models/ebios/study_framework.py:47
 msgid "List of external participants as {name, role, organization} entries."
-msgstr "Liste des participants externes sous forme d'entrées {name, role, organization}."
+msgstr ""
+"Liste des participants externes sous forme d'entrées {name, role, "
+"organization}."
 
 #: risks/models/ebios/study_framework.py:53
 #, fuzzy
@@ -9588,6 +9783,26 @@ msgstr "Référentiel sectoriel"
 #| msgid "Industry framework"
 msgid "EBIOS RM study frameworks"
 msgstr "Référentiel sectoriel"
+
+#: risks/models/ebios/targeted_objective.py:37
+#| msgid "Affected essential assets"
+msgid "Targeted essential assets"
+msgstr "Biens essentiels ciblés"
+
+#: risks/models/ebios/targeted_objective.py:43
+#| msgid "Target requirement"
+msgid "Targeted feared events"
+msgstr "Événements redoutés ciblés"
+
+#: risks/models/ebios/targeted_objective.py:51
+#| msgid "EBIOS RM feared event"
+msgid "EBIOS RM targeted objective"
+msgstr "Objectif visé EBIOS RM"
+
+#: risks/models/ebios/targeted_objective.py:52
+#| msgid "EBIOS RM feared events"
+msgid "EBIOS RM targeted objectives"
+msgstr "Objectifs visés EBIOS RM"
 
 #: risks/models/ebios/workshop_progress.py:31
 msgid "Workshop number"
@@ -9631,7 +9846,6 @@ msgstr "Direction générale"
 
 #: risks/models/ebios/workshop_progress.py:67
 #: risks/models/ebios/workshop_progress.py:68
-#| msgid "EBIOS RM workflow"
 msgid "EBIOS RM workshop progress"
 msgstr "Progression d'atelier EBIOS RM"
 
@@ -9703,10 +9917,6 @@ msgstr ""
 "Copie figée de la matrice des risques et des métadonnées du barème au moment "
 "de la première évaluation. Garantit que les scores historiques restent "
 "immuables même si le barème est modifié ultérieurement."
-
-#: risks/models/risk.py:31
-msgid "Risk source"
-msgstr "Source du risque"
 
 #: risks/models/risk.py:37
 msgid "Source entity ID"
@@ -9823,12 +10033,6 @@ msgstr "Origine"
 #: risks/models/threat.py:24 risks/templates/risks/threat_detail.html:35
 msgid "Typical likelihood"
 msgstr "Vraisemblance typique"
-
-#: risks/models/threat.py:26 risks/models/vulnerability.py:41
-#: risks/templates/risks/threat_detail.html:36
-#: risks/templates/risks/vulnerability_detail.html:39
-msgid "From catalog"
-msgstr "Issue du catalogue"
 
 #: risks/models/treatment.py:32
 #: risks/templates/risks/treatment_plan_detail.html:39
@@ -10228,7 +10432,6 @@ msgid "No acceptances expiring in the next 90 days."
 msgstr "Aucune acceptation n'expire dans les 90 prochains jours."
 
 #: risks/templates/risks/ebios/_workshop_stepper.html:11
-#| msgid "EBIOS RM workflow"
 msgid "EBIOS RM workshops"
 msgstr "Ateliers EBIOS RM"
 
@@ -10242,13 +10445,17 @@ msgstr "%(count)s contrat(s) expiré(s)"
 msgid ""
 "Workshop tracking is initializing. Save the assessment again if this message "
 "persists."
-msgstr "Le suivi des ateliers est en cours d'initialisation. Sauvegardez à nouveau l'appréciation si le message persiste."
+msgstr ""
+"Le suivi des ateliers est en cours d'initialisation. Sauvegardez à nouveau "
+"l'appréciation si le message persiste."
 
 #: risks/templates/risks/ebios/_workshop_stepper.html:36
 msgid ""
 "Workshop pages (W1 baseline, W2-W5) are delivered in subsequent lots. The "
 "data model and APIs are already available."
-msgstr "Les pages d'atelier (W1 socle, W2-W5) sont livrées dans les lots suivants. Le modèle de données et les API sont déjà disponibles."
+msgstr ""
+"Les pages d'atelier (W1 socle, W2-W5) sont livrées dans les lots suivants. "
+"Le modèle de données et les API sont déjà disponibles."
 
 #: risks/templates/risks/iso27005_risk_detail.html:23
 msgid "Calculation"

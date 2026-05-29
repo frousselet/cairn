@@ -63,6 +63,7 @@ Manage your organisation's security posture, track compliance with regulatory fr
 | Vulnerability Catalog | Reusable vulnerabilities with severity, CVE references, remediation guidance and approval workflow |
 | ISO 27005 Analysis | Atomic threat x vulnerability risk scenarios with combined likelihood/impact calculation and approval workflow |
 | EBIOS RM Foundation (ANSSI v1.5) | Workshop 0 study framework, workshop 1 security baseline with feared events (one per DIC criterion per essential asset) and baseline gaps linked to compliance requirements. Automatic bootstrap of the six workshop progress trackers on every ebios_rm assessment. Strategic vs operational iteration cycles. See `features_spec/M4bis_EBIOS_RM_Specifications.md` |
+| EBIOS RM Workshop 2 | ANSSI risk sources with motivation/resources/activity and auto-computed threat level V1..V4 via Grid A. Targeted objectives (lucrative, strategic, terrorist, ideological, revenge, ludic). SR/OV pairs with relevance scoring, priority score (max of threat level and relevance weight) and retention gate for workshop 3 |
 | Treatment Plans | Structured remediation with ordered actions, progress tracking, cost estimates and linkage to compliance action plans |
 | Risk Acceptance | Formal acceptance records with expiry dates, conditions, review tracking and two-step approval workflow |
 | Risk Matrices | Visual heatmaps (current vs residual) |

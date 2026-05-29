@@ -4359,6 +4359,119 @@ def _register_risks_tools(server):
         },
     )
 
+    # ── EBIOS RM Workshop 2 (risk sources, objectives, SR/OV pairs) ────
+    #
+    # The risk source threat_level is auto-computed at save() from
+    # (motivation_level, resources_level, activity_level) via the ANSSI
+    # Grid A. The criteria_snapshot freezes the grid used so future edits
+    # to the assessment's RiskCriteria do not silently rewrite historical
+    # scores. SR/OV pair priority_score is the max of (risk_source.threat_level,
+    # relevance_weight).
+
+    RiskSource = _get_model("risks", "RiskSource")
+    TargetedObjective = _get_model("risks", "TargetedObjective")
+    RiskSourceObjectivePair = _get_model("risks", "RiskSourceObjectivePair")
+
+    rsrc_fields = [
+        "id", "reference", "assessment_id", "name", "description", "category",
+        "motivation_level", "motivation_description", "resources_level",
+        "activity_level", "threat_level", "is_retained",
+        "retention_justification", "is_from_catalog", "is_approved",
+        "created_at", "updated_at",
+    ]
+    rsrc_writable = [
+        "assessment_id", "name", "description", "category",
+        "motivation_level", "motivation_description", "resources_level",
+        "activity_level", "is_retained", "retention_justification",
+        "is_from_catalog",
+    ]
+    _register_crud(
+        server, "ebios_risk_source", RiskSource, "risks.ebios_risk_source",
+        list_fields=rsrc_fields,
+        writable_fields=rsrc_writable,
+        search_fields=["reference", "name", "description", "motivation_description"],
+        filters=["assessment_id", "category", "is_retained", "is_from_catalog", "threat_level"],
+        scope_filtered=False,
+        has_approve=True,
+        required_fields=["assessment_id", "name"],
+        field_overrides={
+            "description": _html_field("Description"),
+            "motivation_description": _html_field("Motivation description"),
+            "retention_justification": _html_field("Retention justification"),
+            "category": {
+                "type": "string",
+                "description": "ANSSI risk source category: state, organized_crime, terrorist, activist, competitor, employee, service_provider, amateur, natural, other.",
+            },
+            "motivation_level": {
+                "type": "integer",
+                "description": "1 (low) to 4 (very strong). Drives the ANSSI threat level Grid A.",
+            },
+            "resources_level": {
+                "type": "integer",
+                "description": "1 (limited) to 4 (unlimited). Drives the ANSSI threat level Grid A.",
+            },
+            "activity_level": {
+                "type": "integer",
+                "description": "Observed activity 1 to 4. Activity >= 3 majorates the threat level by one (capped at V4).",
+            },
+        },
+    )
+
+    tov_fields = [
+        "id", "reference", "risk_source_id", "name", "description", "category",
+        "is_retained", "order", "created_at", "updated_at",
+    ]
+    tov_writable = [
+        "risk_source_id", "name", "description", "category", "is_retained", "order",
+    ]
+    _register_crud(
+        server, "ebios_targeted_objective", TargetedObjective, "risks.ebios_risk_source",
+        list_fields=tov_fields,
+        writable_fields=tov_writable,
+        search_fields=["reference", "name", "description"],
+        filters=["risk_source_id", "category", "is_retained"],
+        scope_filtered=False,
+        has_approve=False,
+        required_fields=["risk_source_id", "name"],
+        field_overrides={
+            "description": _html_field("Description"),
+            "category": {
+                "type": "string",
+                "description": "ANSSI objective category: lucrative, strategic, terrorist, ideological, revenge, ludic, other.",
+            },
+        },
+    )
+
+    sov_fields = [
+        "id", "reference", "assessment_id", "risk_source_id",
+        "targeted_objective_id", "relevance", "relevance_justification",
+        "priority_score", "is_retained", "retention_justification",
+        "is_approved", "created_at", "updated_at",
+    ]
+    sov_writable = [
+        "assessment_id", "risk_source_id", "targeted_objective_id",
+        "relevance", "relevance_justification", "is_retained",
+        "retention_justification",
+    ]
+    _register_crud(
+        server, "ebios_sr_ov_pair", RiskSourceObjectivePair, "risks.ebios_risk_source",
+        list_fields=sov_fields,
+        writable_fields=sov_writable,
+        search_fields=["reference", "relevance_justification", "retention_justification"],
+        filters=["assessment_id", "risk_source_id", "targeted_objective_id", "relevance", "is_retained"],
+        scope_filtered=False,
+        has_approve=True,
+        required_fields=["assessment_id", "risk_source_id", "targeted_objective_id"],
+        field_overrides={
+            "relevance_justification": _html_field("Relevance justification"),
+            "retention_justification": _html_field("Retention justification"),
+            "relevance": {
+                "type": "string",
+                "description": "SR/OV relevance: low, medium, high, critical. Combined with risk_source.threat_level to produce priority_score.",
+            },
+        },
+    )
+
 
 # ── Accounts Module ────────────────────────────────────────
 

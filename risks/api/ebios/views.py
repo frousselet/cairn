@@ -11,23 +11,32 @@ from risks.models import (
     BaselineGap,
     EbiosWorkshopProgress,
     FearedEvent,
+    RiskSource,
+    RiskSourceObjectivePair,
     SecurityBaseline,
     StudyFramework,
+    TargetedObjective,
 )
 
 from .filters import (
     BaselineGapFilter,
     EbiosWorkshopProgressFilter,
     FearedEventFilter,
+    RiskSourceFilter,
+    RiskSourceObjectivePairFilter,
     SecurityBaselineFilter,
     StudyFrameworkFilter,
+    TargetedObjectiveFilter,
 )
 from .serializers import (
     BaselineGapSerializer,
     EbiosWorkshopProgressSerializer,
     FearedEventSerializer,
+    RiskSourceObjectivePairSerializer,
+    RiskSourceSerializer,
     SecurityBaselineSerializer,
     StudyFrameworkSerializer,
+    TargetedObjectiveSerializer,
 )
 
 
@@ -114,3 +123,59 @@ class BaselineGapViewSet(
     permission_feature = "ebios_baseline"
     search_fields = ["reference", "reference_source", "description"]
     ordering_fields = ["reference", "order", "severity", "status", "created_at"]
+
+
+class RiskSourceViewSet(
+    BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+):
+    queryset = RiskSource.objects.select_related("assessment").all()
+    serializer_class = RiskSourceSerializer
+    filterset_class = RiskSourceFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "ebios_risk_source"
+    search_fields = ["reference", "name", "description", "motivation_description"]
+    ordering_fields = [
+        "reference",
+        "name",
+        "threat_level",
+        "is_retained",
+        "created_at",
+    ]
+
+
+class TargetedObjectiveViewSet(
+    BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+):
+    queryset = (
+        TargetedObjective.objects.select_related("risk_source")
+        .prefetch_related("targeted_essential_assets", "targeted_feared_events")
+        .all()
+    )
+    serializer_class = TargetedObjectiveSerializer
+    filterset_class = TargetedObjectiveFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "ebios_risk_source"
+    search_fields = ["reference", "name", "description"]
+    ordering_fields = ["reference", "name", "order", "is_retained", "created_at"]
+
+
+class RiskSourceObjectivePairViewSet(
+    BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+):
+    queryset = (
+        RiskSourceObjectivePair.objects.select_related(
+            "assessment", "risk_source", "targeted_objective"
+        ).all()
+    )
+    serializer_class = RiskSourceObjectivePairSerializer
+    filterset_class = RiskSourceObjectivePairFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "ebios_risk_source"
+    search_fields = ["reference", "relevance_justification", "retention_justification"]
+    ordering_fields = [
+        "reference",
+        "priority_score",
+        "relevance",
+        "is_retained",
+        "created_at",
+    ]

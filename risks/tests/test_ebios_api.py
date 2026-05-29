@@ -14,8 +14,11 @@ from risks.tests.factories import (
     BaselineGapFactory,
     EbiosAssessmentFactory,
     FearedEventFactory,
+    RiskSourceFactory,
+    RiskSourceObjectivePairFactory,
     SecurityBaselineFactory,
     StudyFrameworkFactory,
+    TargetedObjectiveFactory,
 )
 
 pytestmark = pytest.mark.django_db
@@ -81,3 +84,47 @@ class TestEbiosApiSmoke:
         anon = APIClient()
         response = anon.get("/api/v1/risks/ebios/study-frameworks/")
         assert response.status_code in (401, 403)
+
+    def test_risk_sources_endpoint(self):
+        RiskSourceFactory()
+        response = self.client.get("/api/v1/risks/ebios/risk-sources/")
+        assert response.status_code == 200
+
+    def test_risk_sources_serialize_threat_level(self):
+        rs = RiskSourceFactory(motivation_level=4, resources_level=4)
+        response = self.client.get(f"/api/v1/risks/ebios/risk-sources/{rs.pk}/")
+        assert response.status_code == 200
+        data = _data(response)
+        assert data["threat_level"] == 4
+
+    def test_risk_sources_filter_by_threat_level_min(self):
+        # Two SRs: one V1 (mot=1, res=1) and one V4 (mot=4, res=4)
+        RiskSourceFactory(motivation_level=1, resources_level=1)
+        rs_high = RiskSourceFactory(motivation_level=4, resources_level=4)
+        response = self.client.get(
+            "/api/v1/risks/ebios/risk-sources/?threat_level_min=3"
+        )
+        assert response.status_code == 200
+        data = _data(response)
+        items = data.get("results") if isinstance(data, dict) else data
+        ids = {item["id"] for item in items}
+        assert str(rs_high.pk) in ids
+        assert len(ids) == 1
+
+    def test_targeted_objectives_endpoint(self):
+        TargetedObjectiveFactory()
+        response = self.client.get("/api/v1/risks/ebios/targeted-objectives/")
+        assert response.status_code == 200
+
+    def test_sr_ov_pairs_endpoint(self):
+        RiskSourceObjectivePairFactory()
+        response = self.client.get("/api/v1/risks/ebios/sr-ov-pairs/")
+        assert response.status_code == 200
+
+    def test_sr_ov_pairs_serialize_priority_score(self):
+        # motivation 4 + resources 4 -> V4 (=4), relevance low (=1), max = 4
+        pair = RiskSourceObjectivePairFactory()
+        response = self.client.get(f"/api/v1/risks/ebios/sr-ov-pairs/{pair.pk}/")
+        assert response.status_code == 200
+        data = _data(response)
+        assert data["priority_score"] is not None

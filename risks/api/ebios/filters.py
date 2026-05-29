@@ -4,8 +4,11 @@ from risks.models import (
     BaselineGap,
     EbiosWorkshopProgress,
     FearedEvent,
+    RiskSource,
+    RiskSourceObjectivePair,
     SecurityBaseline,
     StudyFramework,
+    TargetedObjective,
 )
 
 
@@ -64,4 +67,51 @@ class BaselineGapFilter(django_filters.FilterSet):
         fields = {
             "severity": ["exact"],
             "status": ["exact"],
+        }
+
+
+class RiskSourceFilter(django_filters.FilterSet):
+    assessment = django_filters.UUIDFilter(field_name="assessment_id")
+    threat_level_min = django_filters.NumberFilter(
+        field_name="threat_level", lookup_expr="gte"
+    )
+
+    class Meta:
+        model = RiskSource
+        fields = {
+            "category": ["exact"],
+            "is_retained": ["exact"],
+            "is_from_catalog": ["exact"],
+            "is_approved": ["exact"],
+            "threat_level": ["exact"],
+        }
+
+
+class TargetedObjectiveFilter(django_filters.FilterSet):
+    risk_source = django_filters.UUIDFilter(field_name="risk_source_id")
+    assessment = django_filters.UUIDFilter(field_name="risk_source__assessment_id")
+
+    class Meta:
+        model = TargetedObjective
+        fields = {
+            "category": ["exact"],
+            "is_retained": ["exact"],
+        }
+
+
+class RiskSourceObjectivePairFilter(django_filters.FilterSet):
+    assessment = django_filters.UUIDFilter(field_name="assessment_id")
+    risk_source = django_filters.UUIDFilter(field_name="risk_source_id")
+    targeted_objective = django_filters.UUIDFilter(field_name="targeted_objective_id")
+    priority_score_min = django_filters.NumberFilter(
+        field_name="priority_score", lookup_expr="gte"
+    )
+
+    class Meta:
+        model = RiskSourceObjectivePair
+        fields = {
+            "relevance": ["exact"],
+            "is_retained": ["exact"],
+            "is_approved": ["exact"],
+            "priority_score": ["exact"],
         }
