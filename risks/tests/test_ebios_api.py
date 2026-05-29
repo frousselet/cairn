@@ -13,10 +13,13 @@ from accounts.tests.factories import UserFactory
 from assets.tests.factories import SupportAssetFactory
 from risks.tests.factories import (
     AttackPathStepFactory,
+    AttackTechniqueFactory,
     BaselineGapFactory,
     EbiosAssessmentFactory,
     EcosystemStakeholderFactory,
     FearedEventFactory,
+    MitreAttackTechniqueFactory,
+    OperationalScenarioFactory,
     RiskSourceFactory,
     RiskSourceObjectivePairFactory,
     SecurityBaselineFactory,
@@ -178,4 +181,80 @@ class TestEbiosApiSmoke:
     def test_attack_path_steps_endpoint(self):
         AttackPathStepFactory()
         response = self.client.get("/api/v1/risks/ebios/attack-path-steps/")
+        assert response.status_code == 200
+
+    def test_mitre_techniques_endpoint(self):
+        MitreAttackTechniqueFactory(tactic="initial_access")
+        response = self.client.get("/api/v1/risks/ebios/mitre-techniques/")
+        assert response.status_code == 200
+
+    def test_mitre_techniques_filter_by_tactic(self):
+        MitreAttackTechniqueFactory(tactic="initial_access")
+        MitreAttackTechniqueFactory(tactic="impact")
+        response = self.client.get("/api/v1/risks/ebios/mitre-techniques/?tactic=impact")
+        assert response.status_code == 200
+        data = _data(response)
+        items = data.get("results") if isinstance(data, dict) else data
+        assert all(item["tactic"] == "impact" for item in items)
+
+    def test_operational_scenarios_endpoint(self):
+        OperationalScenarioFactory()
+        response = self.client.get("/api/v1/risks/ebios/operational-scenarios/")
+        assert response.status_code == 200
+
+    def test_operational_scenarios_inherit_gravity(self):
+        parent = StrategicScenarioFactory(gravity_level=4)
+        scenario = OperationalScenarioFactory(
+            assessment=parent.assessment, strategic_scenario=parent,
+        )
+        response = self.client.get(
+            f"/api/v1/risks/ebios/operational-scenarios/{scenario.pk}/"
+        )
+        assert response.status_code == 200
+        data = _data(response)
+        assert data["gravity_level"] == 4
+        assert data["gravity_inherited"] is True
+
+    def test_consolidate_operational_to_risk(self):
+        scenario = OperationalScenarioFactory()
+        response = self.client.post(
+            f"/api/v1/risks/ebios/operational-scenarios/{scenario.pk}/consolidate/"
+        )
+        assert response.status_code == 201
+        body = _data(response)
+        assert body["status"] == "consolidated"
+        assert body["risk"]["reference"].startswith("RISK-")
+        # Subsequent call must be idempotent and return 200
+        again = self.client.post(
+            f"/api/v1/risks/ebios/operational-scenarios/{scenario.pk}/consolidate/"
+        )
+        assert again.status_code == 200
+        body_again = _data(again)
+        assert body_again["status"] == "already_consolidated"
+        assert body_again["risk"]["id"] == body["risk"]["id"]
+
+    def test_mitre_heatmap_endpoint(self):
+        assessment = EbiosAssessmentFactory()
+        scenario = OperationalScenarioFactory(assessment=assessment)
+        mitre_phish = MitreAttackTechniqueFactory(
+            mitre_id="T1566", tactic="initial_access", name="Phishing",
+        )
+        AttackTechniqueFactory(scenario=scenario, mitre_technique=mitre_phish)
+        AttackTechniqueFactory(scenario=scenario, mitre_technique=mitre_phish)
+        response = self.client.get(
+            f"/api/v1/risks/ebios/operational-scenarios/mitre-heatmap/?assessment={assessment.pk}"
+        )
+        assert response.status_code == 200
+        body = _data(response)
+        # 14 tactics in the heatmap
+        assert len(body["heatmap"]) == 14
+        # Total counted techniques is 2 (2 usages of T1566)
+        assert body["total_techniques"] == 2
+        initial_access = next(b for b in body["heatmap"] if b["tactic"] == "initial_access")
+        techniques = initial_access["techniques"]
+        assert any(t["mitre_id"] == "T1566" and t["count"] == 2 for t in techniques)
+
+    def test_attack_techniques_endpoint(self):
+        AttackTechniqueFactory()
+        response = self.client.get("/api/v1/risks/ebios/attack-techniques/")
         assert response.status_code == 200

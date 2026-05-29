@@ -405,3 +405,22 @@ class AttackDifficulty(models.TextChoices):
     MODERATE = "moderate", _("Moderate")
     DIFFICULT = "difficult", _("Difficult")
     VERY_DIFFICULT = "very_difficult", _("Very difficult")
+
+
+# EBIOS RM workshop W4 - MITRE ATT&CK tactics (Enterprise Matrix v15)
+
+class MitreAttackTactic(models.TextChoices):
+    RECONNAISSANCE = "reconnaissance", _("Reconnaissance")
+    RESOURCE_DEVELOPMENT = "resource_development", _("Resource development")
+    INITIAL_ACCESS = "initial_access", _("Initial access")
+    EXECUTION = "execution", _("Execution")
+    PERSISTENCE = "persistence", _("Persistence")
+    PRIVILEGE_ESCALATION = "privilege_escalation", _("Privilege escalation")
+    DEFENSE_EVASION = "defense_evasion", _("Defense evasion")
+    CREDENTIAL_ACCESS = "credential_access", _("Credential access")
+    DISCOVERY = "discovery", _("Discovery")
+    LATERAL_MOVEMENT = "lateral_movement", _("Lateral movement")
+    COLLECTION = "collection", _("Collection")
+    COMMAND_AND_CONTROL = "command_and_control", _("Command and control")
+    EXFILTRATION = "exfiltration", _("Exfiltration")
+    IMPACT = "impact", _("Impact")

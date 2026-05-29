@@ -15,21 +15,26 @@ from risks.constants import (
     EbiosWorkshopStatus,
     EcosystemStakeholderCategory,
     Methodology,
+    MitreAttackTactic,
     Relevance,
     RiskSourceCategory,
     Severity,
     TargetedObjectiveCategory,
+    ThreatLevelV,
     ThreatType,
     TreatmentPlanStatus,
     TreatmentType,
 )
 from risks.models import (
     AttackPathStep,
+    AttackTechnique,
     BaselineGap,
     EbiosWorkshopProgress,
     EcosystemStakeholder,
     FearedEvent,
     ISO27005Risk,
+    MitreAttackTechnique,
+    OperationalScenario,
     Risk,
     RiskAcceptance,
     RiskAssessment,
@@ -327,4 +332,41 @@ class AttackPathStepFactory(factory.django.DjangoModelFactory):
     order = factory.Sequence(lambda n: n)
     description = factory.Sequence(lambda n: f"Step {n}")
     action_type = AttackPathActionType.INITIAL_ACCESS
+    difficulty = AttackDifficulty.MODERATE
+
+
+class MitreAttackTechniqueFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = MitreAttackTechnique
+        django_get_or_create = ("mitre_id",)
+
+    mitre_id = factory.Sequence(lambda n: f"T{9000 + n:04d}")
+    name = factory.Sequence(lambda n: f"Technique {n}")
+    tactic = MitreAttackTactic.INITIAL_ACCESS
+    description = "Test technique"
+    version = "15.1"
+
+
+class OperationalScenarioFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = OperationalScenario
+
+    assessment = factory.SubFactory(EbiosAssessmentFactory)
+    strategic_scenario = factory.SubFactory(
+        StrategicScenarioFactory,
+        assessment=factory.SelfAttribute("..assessment"),
+    )
+    name = factory.Sequence(lambda n: f"Operational scenario {n}")
+    description = factory.Sequence(lambda n: f"Technical sequence {n}")
+    likelihood_v = ThreatLevelV.V2
+
+
+class AttackTechniqueFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = AttackTechnique
+
+    scenario = factory.SubFactory(OperationalScenarioFactory)
+    order = factory.Sequence(lambda n: n)
+    mitre_technique = factory.SubFactory(MitreAttackTechniqueFactory)
+    description = factory.Sequence(lambda n: f"Technique step {n}")
     difficulty = AttackDifficulty.MODERATE

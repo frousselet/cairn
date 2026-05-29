@@ -18,6 +18,9 @@ from .ebios import (
     EcosystemStakeholder,
     StrategicScenario,
     AttackPathStep,
+    MitreAttackTechnique,
+    OperationalScenario,
+    AttackTechnique,
 )
 
 __all__ = [
@@ -29,4 +32,5 @@ __all__ = [
     "SecurityBaseline", "FearedEvent", "BaselineGap",
     "RiskSource", "TargetedObjective", "RiskSourceObjectivePair",
     "EcosystemStakeholder", "StrategicScenario", "AttackPathStep",
+    "MitreAttackTechnique", "OperationalScenario", "AttackTechnique",
 ]

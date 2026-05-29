@@ -4607,6 +4607,192 @@ def _register_risks_tools(server):
         },
     )
 
+    # ── EBIOS RM Workshop 4 (MITRE ATT&CK, operational scenarios) ─────
+    #
+    # MitreAttackTechnique is the read-only Enterprise Matrix catalogue,
+    # seeded via risks/migrations/0022 and refreshable through the
+    # management command refresh_mitre_attack. OperationalScenario inherits
+    # gravity from its parent strategic scenario by default and computes
+    # risk_level via the assessment risk matrix. AttackTechnique requires
+    # at least a MITRE FK or a custom_name (enforced via full_clean).
+    #
+    # The custom consolidate_ebios_operational_scenario_to_risk tool
+    # materialises an OperationalScenario into the unified risk register
+    # (idempotent: returns the existing Risk if already consolidated).
+
+    MitreAttackTechnique = _get_model("risks", "MitreAttackTechnique")
+    OperationalScenario = _get_model("risks", "OperationalScenario")
+    AttackTechnique = _get_model("risks", "AttackTechnique")
+
+    mitre_fields = [
+        "id", "mitre_id", "name", "description", "tactic",
+        "parent_technique_id", "version", "url", "is_active",
+        "created_at", "updated_at",
+    ]
+    server.register_tool(
+        "list_mitre_attack_techniques",
+        "List MITRE ATT&CK techniques (Enterprise Matrix). Filterable by tactic, mitre_id and active flag.",
+        _list_schema({
+            "tactic": {"type": "string", "description": "Filter by tactic (e.g. initial_access)."},
+            "mitre_id": {"type": "string", "description": "Exact MITRE identifier (e.g. T1566.001)."},
+            "is_active": {"type": "string", "description": "Filter by active flag (true/false)."},
+        }),
+        require_perm("risks.ebios_operational.read")(
+            _list_handler(
+                MitreAttackTechnique,
+                mitre_fields,
+                search_fields=["mitre_id", "name", "description"],
+                filters=["tactic", "mitre_id", "is_active"],
+                scope_filtered=False,
+            )
+        ),
+    )
+    server.register_tool(
+        "get_mitre_attack_technique",
+        "Get a MITRE ATT&CK technique by ID.",
+        _id_schema(),
+        require_perm("risks.ebios_operational.read")(
+            _get_handler(MitreAttackTechnique, mitre_fields, scope_filtered=False)
+        ),
+    )
+
+    op_fields = [
+        "id", "reference", "assessment_id", "strategic_scenario_id", "name",
+        "description", "gravity_level", "gravity_inherited",
+        "gravity_override_justification", "likelihood_v",
+        "likelihood_justification", "risk_level", "existing_controls",
+        "consolidated_risk_id", "mitre_version", "is_approved",
+        "created_at", "updated_at",
+    ]
+    op_writable = [
+        "assessment_id", "strategic_scenario_id", "name", "description",
+        "gravity_level", "gravity_inherited", "gravity_override_justification",
+        "likelihood_v", "likelihood_justification", "existing_controls",
+        "mitre_version",
+    ]
+    _register_crud(
+        server, "ebios_operational_scenario", OperationalScenario,
+        "risks.ebios_operational",
+        list_fields=op_fields,
+        writable_fields=op_writable,
+        search_fields=[
+            "reference", "name", "description",
+            "gravity_override_justification", "likelihood_justification",
+        ],
+        filters=[
+            "assessment_id", "strategic_scenario_id",
+            "likelihood_v", "gravity_inherited", "risk_level",
+        ],
+        scope_filtered=False,
+        has_approve=True,
+        required_fields=["assessment_id", "name", "strategic_scenario_id"],
+        field_overrides={
+            "description": _html_field("Description"),
+            "gravity_override_justification": _html_field("Gravity override justification"),
+            "likelihood_justification": _html_field("Likelihood justification"),
+            "existing_controls": _html_field("Existing controls"),
+            "likelihood_v": {
+                "type": "integer",
+                "description": "ANSSI operational likelihood V1..V4 stored as integer 1..4 (M4bis Annex B).",
+            },
+            "gravity_inherited": {
+                "type": "string",
+                "description": "true when gravity_level is inherited from the parent strategic scenario; set to false and supply gravity_override_justification to override.",
+            },
+        },
+    )
+
+    at_fields = [
+        "id", "reference", "scenario_id", "order", "mitre_technique_id",
+        "custom_name", "description", "targeted_support_asset_id",
+        "difficulty", "detection_difficulty", "created_at", "updated_at",
+    ]
+    at_writable = [
+        "scenario_id", "order", "mitre_technique_id", "custom_name",
+        "description", "targeted_support_asset_id", "difficulty",
+        "detection_difficulty",
+    ]
+    _register_crud(
+        server, "ebios_attack_technique", AttackTechnique,
+        "risks.ebios_operational",
+        list_fields=at_fields,
+        writable_fields=at_writable,
+        search_fields=["reference", "custom_name", "description"],
+        filters=[
+            "scenario_id", "mitre_technique_id",
+            "targeted_support_asset_id", "difficulty", "detection_difficulty",
+        ],
+        scope_filtered=False,
+        has_approve=False,
+        required_fields=["scenario_id", "description"],
+        field_overrides={
+            "description": _html_field("Description"),
+            "difficulty": {
+                "type": "string",
+                "description": "Difficulty: trivial, easy, moderate, difficult, very_difficult.",
+            },
+            "detection_difficulty": {
+                "type": "string",
+                "description": "Detection difficulty: trivial, easy, moderate, difficult, very_difficult.",
+            },
+            "order": {
+                "type": "integer",
+                "description": "Position of the technique in the operational sequence (unique per scenario).",
+            },
+        },
+    )
+
+    # Custom consolidate tool
+    from risks.constants import RiskSourceType as _RiskSourceType
+    Risk = _get_model("risks", "Risk")
+
+    def _consolidate_operational_scenario(user, arguments):
+        scenario_id = arguments.get("id")
+        if not scenario_id:
+            raise InvalidParamsError("id is required.")
+        try:
+            scenario = OperationalScenario.objects.get(pk=scenario_id)
+        except OperationalScenario.DoesNotExist:
+            return _error(f"OperationalScenario not found: {scenario_id}")
+        if scenario.consolidated_risk_id:
+            return {
+                "status": "already_consolidated",
+                "risk_id": str(scenario.consolidated_risk_id),
+                "risk_reference": scenario.consolidated_risk.reference,
+            }
+        risk = Risk.objects.create(
+            assessment=scenario.assessment,
+            name=scenario.name,
+            description=scenario.description,
+            risk_source=_RiskSourceType.EBIOS_OPERATIONAL,
+            source_entity_id=scenario.pk,
+            source_entity_type="risks.OperationalScenario",
+            initial_likelihood=scenario.likelihood_v,
+            initial_impact=scenario.gravity_level,
+            current_likelihood=scenario.likelihood_v,
+            current_impact=scenario.gravity_level,
+            criteria_snapshot=scenario.criteria_snapshot,
+            created_by=user,
+        )
+        risk.affected_support_assets.set(scenario.targeted_support_assets.all())
+        scenario.consolidated_risk = risk
+        scenario.save(update_fields=["consolidated_risk"])
+        return {
+            "status": "consolidated",
+            "risk_id": str(risk.pk),
+            "risk_reference": risk.reference,
+        }
+
+    server.register_tool(
+        "consolidate_ebios_operational_scenario_to_risk",
+        (
+            "Materialise an EBIOS operational scenario into a Risk in the unified register. "
+            "Idempotent: returns the existing Risk if the scenario has already been consolidated."
+        ),
+        _id_schema(),
+        require_perm("risks.risk.create")(_consolidate_operational_scenario),
+    )
+
 
 # ── Accounts Module ────────────────────────────────────────
 

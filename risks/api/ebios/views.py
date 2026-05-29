@@ -1,4 +1,6 @@
-from rest_framework import viewsets
+from collections import Counter, defaultdict
+
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -9,12 +11,17 @@ from accounts.api.mixins import (
 )
 from context.api.permissions import ContextPermission
 from risks.api.views import CreatedByMixin
+from risks.constants import MitreAttackTactic, RiskSourceType
 from risks.models import (
     AttackPathStep,
+    AttackTechnique,
     BaselineGap,
     EbiosWorkshopProgress,
     EcosystemStakeholder,
     FearedEvent,
+    MitreAttackTechnique,
+    OperationalScenario,
+    Risk,
     RiskSource,
     RiskSourceObjectivePair,
     SecurityBaseline,
@@ -25,10 +32,13 @@ from risks.models import (
 
 from .filters import (
     AttackPathStepFilter,
+    AttackTechniqueFilter,
     BaselineGapFilter,
     EbiosWorkshopProgressFilter,
     EcosystemStakeholderFilter,
     FearedEventFilter,
+    MitreAttackTechniqueFilter,
+    OperationalScenarioFilter,
     RiskSourceFilter,
     RiskSourceObjectivePairFilter,
     SecurityBaselineFilter,
@@ -38,10 +48,13 @@ from .filters import (
 )
 from .serializers import (
     AttackPathStepSerializer,
+    AttackTechniqueSerializer,
     BaselineGapSerializer,
     EbiosWorkshopProgressSerializer,
     EcosystemStakeholderSerializer,
     FearedEventSerializer,
+    MitreAttackTechniqueSerializer,
+    OperationalScenarioSerializer,
     RiskSourceObjectivePairSerializer,
     RiskSourceSerializer,
     SecurityBaselineSerializer,
@@ -291,3 +304,152 @@ class AttackPathStepViewSet(
     permission_feature = "ebios_strategic"
     search_fields = ["reference", "description"]
     ordering_fields = ["reference", "order", "action_type", "created_at"]
+
+
+class MitreAttackTechniqueViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only catalogue of MITRE ATT&CK techniques (Enterprise Matrix).
+
+    The catalogue is seeded once at install via
+    `risks/migrations/0022_seed_mitre_attack_catalog.py` and can be refreshed
+    by running `python manage.py refresh_mitre_attack <json>`. No mutating
+    operation is exposed: clients reference techniques through their UUID
+    or the natural `mitre_id`.
+    """
+
+    queryset = MitreAttackTechnique.objects.select_related("parent_technique").all()
+    serializer_class = MitreAttackTechniqueSerializer
+    filterset_class = MitreAttackTechniqueFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "ebios_operational"
+    search_fields = ["mitre_id", "name", "description"]
+    ordering_fields = ["mitre_id", "name", "tactic", "version"]
+
+
+class OperationalScenarioViewSet(
+    BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+):
+    queryset = (
+        OperationalScenario.objects.select_related(
+            "assessment", "strategic_scenario", "consolidated_risk"
+        )
+        .prefetch_related("targeted_support_assets", "attack_techniques", "existing_measures")
+        .all()
+    )
+    serializer_class = OperationalScenarioSerializer
+    filterset_class = OperationalScenarioFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "ebios_operational"
+    search_fields = [
+        "reference", "name", "description",
+        "gravity_override_justification", "likelihood_justification",
+    ]
+    ordering_fields = [
+        "reference",
+        "name",
+        "risk_level",
+        "likelihood_v",
+        "gravity_level",
+        "created_at",
+    ]
+
+    @action(detail=True, methods=["post"], url_path="consolidate")
+    def consolidate(self, request, pk=None):
+        """Create a Risk in the unified register from this operational scenario.
+
+        The new risk inherits gravity, likelihood, support assets and a
+        copy of the criteria_snapshot. Idempotent: if the scenario already
+        carries a consolidated_risk, the existing Risk is returned with a
+        200 status instead of being duplicated.
+        """
+        scenario = self.get_object()
+        if scenario.consolidated_risk_id:
+            from risks.api.serializers import RiskSerializer
+            data = RiskSerializer(scenario.consolidated_risk).data
+            return Response(
+                {"status": "already_consolidated", "risk": data},
+                status=status.HTTP_200_OK,
+            )
+
+        risk = Risk.objects.create(
+            assessment=scenario.assessment,
+            name=scenario.name,
+            description=scenario.description,
+            risk_source=RiskSourceType.EBIOS_OPERATIONAL,
+            source_entity_id=scenario.pk,
+            source_entity_type="risks.OperationalScenario",
+            initial_likelihood=scenario.likelihood_v,
+            initial_impact=scenario.gravity_level,
+            current_likelihood=scenario.likelihood_v,
+            current_impact=scenario.gravity_level,
+            criteria_snapshot=scenario.criteria_snapshot,
+            created_by=request.user,
+        )
+        risk.affected_support_assets.set(scenario.targeted_support_assets.all())
+        scenario.consolidated_risk = risk
+        scenario.save(update_fields=["consolidated_risk"])
+
+        from risks.api.serializers import RiskSerializer
+        return Response(
+            {"status": "consolidated", "risk": RiskSerializer(risk).data},
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=False, methods=["get"], url_path="mitre-heatmap")
+    def mitre_heatmap(self, request):
+        """Return a MITRE ATT&CK heatmap of techniques used across scenarios.
+
+        The result groups attack techniques by tactic and counts the usages
+        per technique. Filter with `?assessment=<uuid>` to restrict the
+        aggregation to a single assessment.
+        """
+        scenario_qs = self.filter_queryset(self.get_queryset())
+        technique_qs = AttackTechnique.objects.filter(
+            scenario__in=scenario_qs,
+            mitre_technique__isnull=False,
+        ).select_related("mitre_technique")
+
+        counts = Counter()
+        labels = {}
+        tactic_for_tech = {}
+        for technique in technique_qs:
+            mid = technique.mitre_technique.mitre_id
+            counts[mid] += 1
+            labels[mid] = technique.mitre_technique.name
+            tactic_for_tech[mid] = technique.mitre_technique.tactic
+
+        grouped = defaultdict(list)
+        for mid, count in counts.items():
+            grouped[tactic_for_tech[mid]].append({
+                "mitre_id": mid,
+                "name": labels[mid],
+                "count": count,
+            })
+
+        heatmap = []
+        for tactic in MitreAttackTactic:
+            heatmap.append({
+                "tactic": tactic.value,
+                "tactic_label": tactic.label,
+                "techniques": sorted(
+                    grouped.get(tactic.value, []),
+                    key=lambda item: (-item["count"], item["mitre_id"]),
+                ),
+            })
+        return Response({
+            "heatmap": heatmap,
+            "total_techniques": sum(counts.values()),
+        })
+
+
+class AttackTechniqueViewSet(
+    BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+):
+    queryset = AttackTechnique.objects.select_related(
+        "scenario", "mitre_technique", "targeted_support_asset",
+    ).all()
+    serializer_class = AttackTechniqueSerializer
+    filterset_class = AttackTechniqueFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "ebios_operational"
+    search_fields = ["reference", "custom_name", "description"]
+    ordering_fields = ["reference", "order", "difficulty", "created_at"]

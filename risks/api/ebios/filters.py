@@ -2,10 +2,13 @@ import django_filters
 
 from risks.models import (
     AttackPathStep,
+    AttackTechnique,
     BaselineGap,
     EbiosWorkshopProgress,
     EcosystemStakeholder,
     FearedEvent,
+    MitreAttackTechnique,
+    OperationalScenario,
     RiskSource,
     RiskSourceObjectivePair,
     SecurityBaseline,
@@ -165,4 +168,53 @@ class AttackPathStepFilter(django_filters.FilterSet):
         fields = {
             "action_type": ["exact"],
             "difficulty": ["exact"],
+        }
+
+
+class MitreAttackTechniqueFilter(django_filters.FilterSet):
+    parent_technique = django_filters.UUIDFilter(field_name="parent_technique_id")
+    parent_mitre_id = django_filters.CharFilter(field_name="parent_technique__mitre_id")
+    is_root = django_filters.BooleanFilter(
+        field_name="parent_technique", lookup_expr="isnull"
+    )
+
+    class Meta:
+        model = MitreAttackTechnique
+        fields = {
+            "mitre_id": ["exact", "icontains"],
+            "tactic": ["exact"],
+            "is_active": ["exact"],
+        }
+
+
+class OperationalScenarioFilter(django_filters.FilterSet):
+    assessment = django_filters.UUIDFilter(field_name="assessment_id")
+    strategic_scenario = django_filters.UUIDFilter(field_name="strategic_scenario_id")
+    risk_level_min = django_filters.NumberFilter(
+        field_name="risk_level", lookup_expr="gte"
+    )
+
+    class Meta:
+        model = OperationalScenario
+        fields = {
+            "likelihood_v": ["exact", "gte"],
+            "gravity_level": ["exact", "gte", "lte"],
+            "gravity_inherited": ["exact"],
+            "is_approved": ["exact"],
+            "risk_level": ["exact"],
+        }
+
+
+class AttackTechniqueFilter(django_filters.FilterSet):
+    scenario = django_filters.UUIDFilter(field_name="scenario_id")
+    mitre_technique = django_filters.UUIDFilter(field_name="mitre_technique_id")
+    mitre_id = django_filters.CharFilter(field_name="mitre_technique__mitre_id")
+    tactic = django_filters.CharFilter(field_name="mitre_technique__tactic")
+    targeted_support_asset = django_filters.UUIDFilter(field_name="targeted_support_asset_id")
+
+    class Meta:
+        model = AttackTechnique
+        fields = {
+            "difficulty": ["exact"],
+            "detection_difficulty": ["exact"],
         }

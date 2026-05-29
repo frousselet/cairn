@@ -16,6 +16,9 @@ router.register(r"sr-ov-pairs", views.RiskSourceObjectivePairViewSet)
 router.register(r"ecosystem-stakeholders", views.EcosystemStakeholderViewSet)
 router.register(r"strategic-scenarios", views.StrategicScenarioViewSet)
 router.register(r"attack-path-steps", views.AttackPathStepViewSet)
+router.register(r"mitre-techniques", views.MitreAttackTechniqueViewSet)
+router.register(r"operational-scenarios", views.OperationalScenarioViewSet)
+router.register(r"attack-techniques", views.AttackTechniqueViewSet)
 
 
 urlpatterns = [

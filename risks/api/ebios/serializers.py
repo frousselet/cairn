@@ -2,10 +2,13 @@ from rest_framework import serializers
 
 from risks.models import (
     AttackPathStep,
+    AttackTechnique,
     BaselineGap,
     EbiosWorkshopProgress,
     EcosystemStakeholder,
     FearedEvent,
+    MitreAttackTechnique,
+    OperationalScenario,
     RiskSource,
     RiskSourceObjectivePair,
     SecurityBaseline,
@@ -389,6 +392,111 @@ class StrategicScenarioSerializer(serializers.ModelSerializer):
             "reference",
             "risk_level",
             "attack_path_steps",
+            "is_approved",
+            "approved_by",
+            "approved_at",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class MitreAttackTechniqueSerializer(serializers.ModelSerializer):
+    tactic_label = serializers.CharField(source="get_tactic_display", read_only=True)
+
+    class Meta:
+        model = MitreAttackTechnique
+        fields = [
+            "id",
+            "mitre_id",
+            "name",
+            "description",
+            "tactic",
+            "tactic_label",
+            "parent_technique",
+            "version",
+            "url",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "tactic_label", "created_at", "updated_at"]
+
+
+class AttackTechniqueSerializer(serializers.ModelSerializer):
+    difficulty_label = serializers.CharField(source="get_difficulty_display", read_only=True)
+    detection_difficulty_label = serializers.CharField(
+        source="get_detection_difficulty_display", read_only=True
+    )
+    display_name = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = AttackTechnique
+        fields = [
+            "id",
+            "reference",
+            "scenario",
+            "order",
+            "mitre_technique",
+            "custom_name",
+            "display_name",
+            "description",
+            "targeted_support_asset",
+            "difficulty",
+            "difficulty_label",
+            "detection_difficulty",
+            "detection_difficulty_label",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "reference",
+            "display_name",
+            "difficulty_label",
+            "detection_difficulty_label",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class OperationalScenarioSerializer(serializers.ModelSerializer):
+    likelihood_v_label = serializers.CharField(source="get_likelihood_v_display", read_only=True)
+    attack_techniques = AttackTechniqueSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = OperationalScenario
+        fields = [
+            "id",
+            "reference",
+            "assessment",
+            "strategic_scenario",
+            "name",
+            "description",
+            "targeted_support_assets",
+            "gravity_level",
+            "gravity_inherited",
+            "gravity_override_justification",
+            "likelihood_v",
+            "likelihood_v_label",
+            "likelihood_justification",
+            "risk_level",
+            "existing_controls",
+            "existing_measures",
+            "consolidated_risk",
+            "mitre_version",
+            "attack_techniques",
+            "is_approved",
+            "approved_by",
+            "approved_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "reference",
+            "likelihood_v_label",
+            "risk_level",
+            "attack_techniques",
             "is_approved",
             "approved_by",
             "approved_at",

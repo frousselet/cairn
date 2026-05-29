@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-29 11:25+0200\n"
+"POT-Creation-Date: 2026-05-29 11:37+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -808,7 +808,9 @@ msgstr ""
 #: context/templates/context/site_list.html:29 reports/models/report.py:18
 #: reports/templates/reports/report_list.html:55
 #: risks/models/ebios/ecosystem_stakeholder.py:63
-#: risks/models/ebios/feared_event.py:32 risks/models/ebios/risk_source.py:32
+#: risks/models/ebios/feared_event.py:32 risks/models/ebios/mitre_attack.py:23
+#: risks/models/ebios/operational_scenario.py:38
+#: risks/models/ebios/risk_source.py:32
 #: risks/models/ebios/strategic_scenario.py:29
 #: risks/models/ebios/targeted_objective.py:25 risks/models/risk.py:28
 #: risks/models/risk_assessment.py:13 risks/models/risk_criteria.py:15
@@ -845,7 +847,7 @@ msgstr "Nom"
 #: reports/models/management_review.py:470
 #: reports/models/management_review_transition.py:25
 #: reports/models/report.py:56 reports/templates/reports/report_list.html:58
-#: risks/models/treatment.py:170
+#: risks/models/ebios/mitre_attack.py:42 risks/models/treatment.py:170
 msgid "Created at"
 msgstr "Créé le"
 
@@ -903,7 +905,8 @@ msgstr "Logo 128×128"
 #: context/models/role.py:68 context/models/stakeholder.py:75
 #: context/models/swot.py:77 context/models/swot.py:106 mcp/models/oauth.py:56
 #: reports/models/management_review.py:327
-#: reports/models/management_review.py:417 risks/models/treatment.py:171
+#: reports/models/management_review.py:417
+#: risks/models/ebios/mitre_attack.py:43 risks/models/treatment.py:171
 msgid "Updated at"
 msgstr "Mis à jour le"
 
@@ -967,9 +970,12 @@ msgstr "Paramètres de l'entreprise"
 #: reports/templates/reports/decision_detail.html:27
 #: reports/templates/reports/management_review_detail.html:104
 #: risks/models/ebios/attack_path_step.py:34
+#: risks/models/ebios/attack_technique.py:41
 #: risks/models/ebios/baseline_gap.py:34
 #: risks/models/ebios/ecosystem_stakeholder.py:64
-#: risks/models/ebios/feared_event.py:33 risks/models/ebios/risk_source.py:33
+#: risks/models/ebios/feared_event.py:33 risks/models/ebios/mitre_attack.py:24
+#: risks/models/ebios/operational_scenario.py:39
+#: risks/models/ebios/risk_source.py:33
 #: risks/models/ebios/strategic_scenario.py:30
 #: risks/models/ebios/targeted_objective.py:26 risks/models/iso27005_risk.py:77
 #: risks/models/risk.py:29 risks/models/risk_assessment.py:14
@@ -1160,6 +1166,7 @@ msgstr "Fuseau horaire"
 #: context/templates/context/scope_list.html:26
 #: context/templates/context/stakeholder_list.html:29 mcp/models/oauth.py:53
 #: risks/constants.py:20 risks/constants.py:88 risks/constants.py:135
+#: risks/models/ebios/mitre_attack.py:41
 #: risks/templates/risks/acceptance_list.html:22
 #: risks/templates/risks/criteria_list.html:21
 #: risks/templates/risks/risk_list.html:48
@@ -5076,6 +5083,7 @@ msgstr "Évaluation de conformité"
 #: compliance/models/assessment.py:465 compliance/models/finding.py:24
 #: compliance/templates/compliance/_finding_preview.html:31 reports/forms.py:51
 #: reports/models/report.py:31 risks/models/ebios/ecosystem_stakeholder.py:43
+#: risks/models/ebios/operational_scenario.py:30
 #: risks/models/ebios/risk_source.py:30
 #: risks/models/ebios/security_baseline.py:22
 #: risks/models/ebios/sr_ov_pair.py:33
@@ -5345,6 +5353,7 @@ msgstr "Référence"
 
 #: compliance/models/section.py:27 context/models/swot.py:75
 #: context/models/swot.py:104 risks/models/ebios/attack_path_step.py:25
+#: risks/models/ebios/attack_technique.py:26
 #: risks/models/ebios/baseline_gap.py:54 risks/models/ebios/feared_event.py:53
 #: risks/models/ebios/targeted_objective.py:46 risks/models/treatment.py:169
 msgid "Order"
@@ -5406,7 +5415,7 @@ msgid "Likelihood"
 msgstr "Vraisemblance"
 
 #: compliance/templates/compliance/_risk_preview.html:34 risks/constants.py:26
-#: risks/templates/risks/includes/risk_matrix.html:12
+#: risks/constants.py:426 risks/templates/risks/includes/risk_matrix.html:12
 #: risks/templates/risks/iso27005_risk_detail.html:63
 #: risks/templates/risks/risk_detail.html:232
 #: risks/templates/risks/risk_form_modal.html:64
@@ -7033,7 +7042,7 @@ msgstr "Indicateurs techniques"
 msgid "New predefined indicator"
 msgstr "Nouvel indicateur prédéfini"
 
-#: context/templates/context/indicator_list.html:58
+#: context/templates/context/indicator_list.html:58 risks/constants.py:423
 msgid "Collection"
 msgstr "Collecte"
 
@@ -9437,42 +9446,34 @@ msgid "V4 - Maximal"
 msgstr "V4 - Maximal"
 
 #: risks/constants.py:334
-#| msgid "Partners"
 msgid "Partner"
 msgstr "Partenaire"
 
 #: risks/constants.py:335
-#| msgid "Contractor"
 msgid "Subcontractor"
 msgstr "Sous-traitant"
 
 #: risks/constants.py:336
-#| msgid "Customers"
 msgid "Customer"
 msgstr "Client"
 
 #: risks/constants.py:337
-#| msgid "Regulatory"
 msgid "Regulator"
 msgstr "Régulateur"
 
 #: risks/constants.py:338
-#| msgid "Save signature"
 msgid "Shared infrastructure"
 msgstr "Infrastructure mutualisée"
 
 #: risks/constants.py:339
-#| msgid "Internal employee"
 msgid "Client employee"
 msgstr "Salarié du client"
 
 #: risks/constants.py:344
-#| msgid "Control"
 msgid "Control zone"
 msgstr "Zone de contrôle"
 
 #: risks/constants.py:345
-#| msgid "Monitoring"
 msgid "Monitoring zone"
 msgstr "Zone de surveillance"
 
@@ -9480,41 +9481,35 @@ msgstr "Zone de surveillance"
 msgid "Danger zone"
 msgstr "Zone de danger"
 
-#: risks/constants.py:391
-#| msgid "Initial impact"
+#: risks/constants.py:391 risks/constants.py:415
 msgid "Initial access"
 msgstr "Accès initial"
 
-#: risks/constants.py:392
+#: risks/constants.py:392 risks/constants.py:413
 msgid "Reconnaissance"
 msgstr "Reconnaissance"
 
-#: risks/constants.py:393
-#| msgid "Contractual requirements"
+#: risks/constants.py:393 risks/constants.py:422
 msgid "Lateral movement"
 msgstr "Mouvement latéral"
 
-#: risks/constants.py:394
+#: risks/constants.py:394 risks/constants.py:418
 msgid "Privilege escalation"
 msgstr "Élévation de privilèges"
 
 #: risks/constants.py:395
-#| msgid "Data classification"
 msgid "Data exfiltration"
 msgstr "Exfiltration de données"
 
 #: risks/constants.py:396
-#| msgid "Description"
 msgid "Disruption"
 msgstr "Perturbation"
 
 #: risks/constants.py:397
-#| msgid "Calculation"
 msgid "Manipulation"
 msgstr "Manipulation"
 
-#: risks/constants.py:398
-#| msgid "Preferences"
+#: risks/constants.py:398 risks/constants.py:417
 msgid "Persistence"
 msgstr "Persistance"
 
@@ -9533,6 +9528,40 @@ msgstr "Difficile"
 #: risks/constants.py:407
 msgid "Very difficult"
 msgstr "Très difficile"
+
+#: risks/constants.py:414
+#| msgid "Resources level"
+msgid "Resource development"
+msgstr "Développement de ressources"
+
+#: risks/constants.py:416
+#| msgid "Expectation"
+msgid "Execution"
+msgstr "Exécution"
+
+#: risks/constants.py:419
+#| msgid "Treatment decision"
+msgid "Defense evasion"
+msgstr "Évasion défensive"
+
+#: risks/constants.py:420
+#| msgid "Initial access"
+msgid "Credential access"
+msgstr "Accès aux identifiants"
+
+#: risks/constants.py:421
+#| msgid "Disaster recovery"
+msgid "Discovery"
+msgstr "Découverte"
+
+#: risks/constants.py:424
+msgid "Command and control"
+msgstr "Commande et contrôle"
+
+#: risks/constants.py:425
+#| msgid "Data exfiltration"
+msgid "Exfiltration"
+msgstr "Exfiltration"
 
 #: risks/models/acceptance.py:17 risks/models/risk.py:144
 #: risks/models/treatment.py:27 risks/templates/risks/acceptance_detail.html:35
@@ -9573,21 +9602,19 @@ msgid "Valid until"
 msgstr "Valide jusqu'au"
 
 #: risks/models/ebios/attack_path_step.py:23
-#| msgid "EBIOS strategic scenario"
 msgid "Strategic scenario"
 msgstr "Scénario stratégique"
 
 #: risks/models/ebios/attack_path_step.py:32
-#| msgid "Related stakeholders"
 msgid "Involved stakeholder"
 msgstr "Partie prenante impliquée"
 
 #: risks/models/ebios/attack_path_step.py:36
-#| msgid "Action plans"
 msgid "Action type"
 msgstr "Type d'action"
 
 #: risks/models/ebios/attack_path_step.py:42
+#: risks/models/ebios/attack_technique.py:51
 msgid "Difficulty"
 msgstr "Difficulté"
 
@@ -9598,6 +9625,53 @@ msgstr "Étape de chemin d'attaque EBIOS RM"
 #: risks/models/ebios/attack_path_step.py:53
 msgid "EBIOS RM attack path steps"
 msgstr "Étapes de chemin d'attaque EBIOS RM"
+
+#: risks/models/ebios/attack_technique.py:24
+#| msgid "EBIOS operational scenario"
+msgid "Operational scenario"
+msgstr "Scénario opérationnel"
+
+#: risks/models/ebios/attack_technique.py:33
+msgid "MITRE technique"
+msgstr "Technique MITRE"
+
+#: risks/models/ebios/attack_technique.py:36
+#| msgid "Customer"
+msgid "Custom name"
+msgstr "Nom personnalisé"
+
+#: risks/models/ebios/attack_technique.py:39
+msgid "Free-form technique name when no MITRE mapping is available."
+msgstr "Nom libre de la technique lorsqu'aucune correspondance MITRE n'est disponible."
+
+#: risks/models/ebios/attack_technique.py:48
+#| msgid "Parent support asset"
+msgid "Targeted support asset"
+msgstr "Bien support ciblé"
+
+#: risks/models/ebios/attack_technique.py:58
+#| msgid "Difficulty"
+msgid "Detection difficulty"
+msgstr "Difficulté de détection"
+
+#: risks/models/ebios/attack_technique.py:68
+#| msgid "EBIOS RM attack path step"
+msgid "EBIOS RM attack technique"
+msgstr "Technique d'attaque EBIOS RM"
+
+#: risks/models/ebios/attack_technique.py:69
+#| msgid "EBIOS RM attack path steps"
+msgid "EBIOS RM attack techniques"
+msgstr "Techniques d'attaque EBIOS RM"
+
+#: risks/models/ebios/attack_technique.py:84
+msgid "Custom technique"
+msgstr "Technique personnalisée"
+
+#: risks/models/ebios/attack_technique.py:90
+msgid ""
+"An attack technique must reference either a MITRE technique or a custom name."
+msgstr "Une technique d'attaque doit référencer une technique MITRE ou porter un nom personnalisé."
 
 #: risks/models/ebios/baseline_gap.py:23 risks/models/ebios/feared_event.py:24
 #, fuzzy
@@ -9632,16 +9706,15 @@ msgid "EBIOS RM baseline gaps"
 msgstr "Écarts au socle EBIOS RM"
 
 #: risks/models/ebios/ecosystem_stakeholder.py:51
-#| msgid "New stakeholder"
 msgid "Linked stakeholder"
 msgstr "Partie intéressée liée"
 
 #: risks/models/ebios/ecosystem_stakeholder.py:52
 msgid "Optional link to a Module 1 interested party already on file."
-msgstr "Lien optionnel vers une partie intéressée déjà enregistrée dans le Module 1."
+msgstr ""
+"Lien optionnel vers une partie intéressée déjà enregistrée dans le Module 1."
 
 #: risks/models/ebios/ecosystem_stakeholder.py:60
-#| msgid "New supplier"
 msgid "Linked supplier"
 msgstr "Fournisseur lié"
 
@@ -9654,7 +9727,6 @@ msgid "Organisation dependency on the stakeholder (1..4)."
 msgstr "Dépendance de l'organisation vis-à-vis de la partie prenante (1 à 4)."
 
 #: risks/models/ebios/ecosystem_stakeholder.py:79
-#| msgid "Presentation"
 msgid "Penetration"
 msgstr "Pénétration"
 
@@ -9685,10 +9757,10 @@ msgstr "Niveau de menace"
 
 #: risks/models/ebios/ecosystem_stakeholder.py:105
 msgid "(dependency * penetration) / (maturity * trust), computed at save."
-msgstr "(dépendance × pénétration) / (maturité × confiance), calculé à la sauvegarde."
+msgstr ""
+"(dépendance × pénétration) / (maturité × confiance), calculé à la sauvegarde."
 
 #: risks/models/ebios/ecosystem_stakeholder.py:108
-#| msgid "Threat"
 msgid "Threat zone"
 msgstr "Zone de menace"
 
@@ -9697,7 +9769,6 @@ msgid "ANSSI zone derived from threat_level: control, monitoring or danger."
 msgstr "Zone ANSSI dérivée de threat_level : contrôle, surveillance ou danger."
 
 #: risks/models/ebios/ecosystem_stakeholder.py:119
-#| msgid "Associated support assets"
 msgid "Accessible support assets"
 msgstr "Biens supports accessibles"
 
@@ -9706,12 +9777,13 @@ msgid "Identified as attack vector"
 msgstr "Identifiée comme vecteur d'attaque"
 
 #: risks/models/ebios/ecosystem_stakeholder.py:122
-#| msgid "Retention justification"
 msgid "Attack vector justification"
 msgstr "Justification du vecteur d'attaque"
 
 #: risks/models/ebios/ecosystem_stakeholder.py:124
-#: risks/models/ebios/feared_event.py:48 risks/models/ebios/risk_source.py:73
+#: risks/models/ebios/feared_event.py:48
+#: risks/models/ebios/operational_scenario.py:97
+#: risks/models/ebios/risk_source.py:73
 #: risks/models/ebios/strategic_scenario.py:69 risks/models/iso27005_risk.py:79
 #: risks/models/risk.py:128
 msgid "Criteria snapshot"
@@ -9721,15 +9793,16 @@ msgstr "Empreinte du barème"
 msgid ""
 "Frozen copy of the ecosystem thresholds used at first scoring so later edits "
 "to the criteria do not silently move stakeholders between zones."
-msgstr "Copie figée des seuils de zonage utilisés à la première évaluation. Empêche un déplacement silencieux des parties prenantes entre zones lors d'une édition ultérieure des critères."
+msgstr ""
+"Copie figée des seuils de zonage utilisés à la première évaluation. Empêche "
+"un déplacement silencieux des parties prenantes entre zones lors d'une "
+"édition ultérieure des critères."
 
 #: risks/models/ebios/ecosystem_stakeholder.py:137
-#| msgid "EBIOS RM ecosystem stakeholders (workshop 3)"
 msgid "EBIOS RM ecosystem stakeholder"
 msgstr "Partie prenante de l'écosystème EBIOS RM"
 
 #: risks/models/ebios/ecosystem_stakeholder.py:138
-#| msgid "EBIOS RM ecosystem stakeholders (workshop 3)"
 msgid "EBIOS RM ecosystem stakeholders"
 msgstr "Parties prenantes de l'écosystème EBIOS RM"
 
@@ -9740,6 +9813,7 @@ msgid "DIC criterion"
 msgstr "critères"
 
 #: risks/models/ebios/feared_event.py:39
+#: risks/models/ebios/operational_scenario.py:47
 #: risks/models/ebios/strategic_scenario.py:44
 #, fuzzy
 #| msgid "Impact level"
@@ -9777,6 +9851,128 @@ msgstr "Événement redouté EBIOS RM"
 #: risks/models/ebios/feared_event.py:59
 msgid "EBIOS RM feared events"
 msgstr "Événements redoutés EBIOS RM"
+
+#: risks/models/ebios/mitre_attack.py:22
+#| msgid "Model identifier"
+msgid "MITRE identifier"
+msgstr "Identifiant MITRE"
+
+#: risks/models/ebios/mitre_attack.py:26
+msgid "Tactic"
+msgstr "Tactique"
+
+#: risks/models/ebios/mitre_attack.py:37
+#| msgid "Parent objective"
+msgid "Parent technique"
+msgstr "Technique parente"
+
+#: risks/models/ebios/mitre_attack.py:39
+#: risks/models/ebios/operational_scenario.py:91
+#| msgid "Model / version"
+msgid "MITRE version"
+msgstr "Version MITRE"
+
+#: risks/models/ebios/mitre_attack.py:40 templates/calendar_subscribe.html:15
+msgid "URL"
+msgstr "URL"
+
+#: risks/models/ebios/mitre_attack.py:47
+msgid "MITRE ATT&CK technique"
+msgstr "Technique MITRE ATT&CK"
+
+#: risks/models/ebios/mitre_attack.py:48
+msgid "MITRE ATT&CK techniques"
+msgstr "Techniques MITRE ATT&CK"
+
+#: risks/models/ebios/operational_scenario.py:36
+#| msgid "Strategic scenario"
+msgid "Parent strategic scenario"
+msgstr "Scénario stratégique parent"
+
+#: risks/models/ebios/operational_scenario.py:44
+#| msgid "Parent support asset"
+msgid "Targeted support assets"
+msgstr "Biens supports ciblés"
+
+#: risks/models/ebios/operational_scenario.py:50
+msgid "Inherits from the parent strategic scenario by default."
+msgstr "Hérite par défaut du scénario stratégique parent."
+
+#: risks/models/ebios/operational_scenario.py:53
+#| msgid "inherited from"
+msgid "Gravity inherited from parent"
+msgstr "Gravité héritée du parent"
+
+#: risks/models/ebios/operational_scenario.py:55
+msgid ""
+"False when the scenario carries its own gravity that overrides the parent."
+msgstr "Faux lorsque le scénario porte sa propre gravité qui surcharge celle du parent."
+
+#: risks/models/ebios/operational_scenario.py:58
+#| msgid "Integrity justification"
+msgid "Gravity override justification"
+msgstr "Justification de la dérogation de gravité"
+
+#: risks/models/ebios/operational_scenario.py:62
+#| msgid "Initial likelihood"
+msgid "Operational likelihood (V)"
+msgstr "Vraisemblance opérationnelle (V)"
+
+#: risks/models/ebios/operational_scenario.py:66
+msgid "ANSSI V1..V4 operational likelihood scale (M4bis Annex B)."
+msgstr "Échelle ANSSI V1 à V4 de vraisemblance opérationnelle (M4bis Annexe B)."
+
+#: risks/models/ebios/operational_scenario.py:68
+#: risks/models/ebios/strategic_scenario.py:52
+msgid "Likelihood justification"
+msgstr "Justification de la vraisemblance"
+
+#: risks/models/ebios/operational_scenario.py:70
+#: risks/models/ebios/strategic_scenario.py:54 risks/models/iso27005_risk.py:64
+#: risks/models/risk_criteria.py:118
+#: risks/templates/risks/iso27005_risk_detail.html:75
+msgid "Risk level"
+msgstr "Niveau de risque"
+
+#: risks/models/ebios/operational_scenario.py:73
+#| msgid "Computed via the assessment risk matrix."
+msgid ""
+"Computed via the assessment risk matrix from likelihood_v x gravity_level."
+msgstr "Calculé via la matrice de risque de l'appréciation à partir de likelihood_v × gravity_level."
+
+#: risks/models/ebios/operational_scenario.py:75
+#: risks/models/iso27005_risk.py:67
+#: risks/templates/risks/iso27005_risk_detail.html:38
+msgid "Existing controls"
+msgstr "Mesures existantes"
+
+#: risks/models/ebios/operational_scenario.py:80
+#| msgid "Existing security measures"
+msgid "Existing compliance measures"
+msgstr "Mesures de conformité existantes"
+
+#: risks/models/ebios/operational_scenario.py:88
+#: risks/models/ebios/strategic_scenario.py:66 risks/models/iso27005_risk.py:75
+#: risks/templates/risks/assessment_detail.html:161
+#: risks/templates/risks/iso27005_risk_detail.html:36
+#: risks/templates/risks/iso27005_risk_list.html:36
+msgid "Consolidated risk"
+msgstr "Risque consolidé"
+
+#: risks/models/ebios/operational_scenario.py:94
+msgid ""
+"Version of the MITRE ATT&CK catalogue referenced by attached techniques."
+msgstr "Version du catalogue MITRE ATT&CK référencée par les techniques attachées."
+
+#: risks/models/ebios/operational_scenario.py:105
+#| msgid "EBIOS operational scenario"
+msgid "EBIOS RM operational scenario"
+msgstr "Scénario opérationnel EBIOS RM"
+
+#: risks/models/ebios/operational_scenario.py:106
+#| msgid "EBIOS operational scenario"
+msgid "EBIOS RM operational scenarios"
+msgstr "Scénarios opérationnels EBIOS RM"
 
 #: risks/models/ebios/risk_source.py:41
 msgid "Motivation level"
@@ -9921,7 +10117,6 @@ msgid "EBIOS RM SR/OV pairs"
 msgstr "Couples SR/OV EBIOS RM"
 
 #: risks/models/ebios/strategic_scenario.py:35
-#| msgid "EBIOS RM SR/OV pair"
 msgid "SR/OV pair"
 msgstr "Couple SR/OV"
 
@@ -9935,7 +10130,6 @@ msgid "Gravity on the assessment impact scale."
 msgstr "Gravité sur l'échelle d'impact de l'appréciation."
 
 #: risks/models/ebios/strategic_scenario.py:49
-#| msgid "Threat likelihood"
 msgid "Strategic likelihood"
 msgstr "Vraisemblance stratégique"
 
@@ -9943,55 +10137,32 @@ msgstr "Vraisemblance stratégique"
 msgid "Likelihood on the assessment likelihood scale."
 msgstr "Vraisemblance sur l'échelle de vraisemblance de l'appréciation."
 
-#: risks/models/ebios/strategic_scenario.py:52
-#| msgid "Retention justification"
-msgid "Likelihood justification"
-msgstr "Justification de la vraisemblance"
-
-#: risks/models/ebios/strategic_scenario.py:54 risks/models/iso27005_risk.py:64
-#: risks/models/risk_criteria.py:118
-#: risks/templates/risks/iso27005_risk_detail.html:75
-msgid "Risk level"
-msgstr "Niveau de risque"
-
 #: risks/models/ebios/strategic_scenario.py:55
-#| msgid "Compliance assessments"
 msgid "Computed via the assessment risk matrix."
 msgstr "Calculé via la matrice de risque de l'appréciation."
 
 #: risks/models/ebios/strategic_scenario.py:57
-#| msgid "Existing controls"
 msgid "Existing security measures"
 msgstr "Mesures de sécurité existantes"
 
 #: risks/models/ebios/strategic_scenario.py:58
-#| msgid "Retained for workshop 3"
 msgid "Retained for workshop 4"
 msgstr "Retenu pour l'atelier 4"
 
-#: risks/models/ebios/strategic_scenario.py:66 risks/models/iso27005_risk.py:75
-#: risks/templates/risks/assessment_detail.html:161
-#: risks/templates/risks/iso27005_risk_detail.html:36
-#: risks/templates/risks/iso27005_risk_list.html:36
-msgid "Consolidated risk"
-msgstr "Risque consolidé"
-
 #: risks/models/ebios/strategic_scenario.py:73
-#| msgid ""
-#| "Frozen copy of the ANSSI threat level grid used at the time of first "
-#| "scoring. Keeps the threat_level immutable when the grid is edited."
 msgid ""
 "Frozen copy of the risk matrix used at first scoring. Keeps risk_level "
 "immutable when the criteria are later edited."
-msgstr "Copie figée de la matrice de risque utilisée à la première évaluation. Préserve l'immuabilité de risk_level lors d'une édition ultérieure des critères."
+msgstr ""
+"Copie figée de la matrice de risque utilisée à la première évaluation. "
+"Préserve l'immuabilité de risk_level lors d'une édition ultérieure des "
+"critères."
 
 #: risks/models/ebios/strategic_scenario.py:81
-#| msgid "EBIOS strategic scenario"
 msgid "EBIOS RM strategic scenario"
 msgstr "Scénario stratégique EBIOS RM"
 
 #: risks/models/ebios/strategic_scenario.py:82
-#| msgid "EBIOS strategic scenario"
 msgid "EBIOS RM strategic scenarios"
 msgstr "Scénarios stratégiques EBIOS RM"
 
@@ -10175,11 +10346,6 @@ msgstr "Impact sur la disponibilité"
 #: risks/models/iso27005_risk.py:61
 msgid "Maximum impact"
 msgstr "Impact maximum"
-
-#: risks/models/iso27005_risk.py:67
-#: risks/templates/risks/iso27005_risk_detail.html:38
-msgid "Existing controls"
-msgstr "Mesures existantes"
 
 #: risks/models/iso27005_risk.py:83 risks/models/risk.py:132
 msgid ""
@@ -11339,10 +11505,6 @@ msgstr "dans %%(days)s jours"
 msgid "Token created. Copy the password now, it will not be shown again."
 msgstr ""
 "Jeton créé. Copiez le mot de passe maintenant, il ne sera plus affiché."
-
-#: templates/calendar_subscribe.html:15
-msgid "URL"
-msgstr ""
 
 #: templates/calendar_subscribe.html:28
 #, fuzzy
