@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ workshop.get_workshop_number_display }} : {{ assessment.name }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-list' %}">{% trans "Assessments" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-detail' pk=assessment.pk %}">{{ assessment.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ workshop.get_workshop_number_display }}</li>
+  </ol>
+</nav>
+
+{% include "risks/ebios/_workshop_stepper.html" %}
+
+<div class="row g-4">
+  {# Main column #}
+  <div class="col-lg-8">
+    {% block workshop_main %}{% endblock %}
+  </div>
+
+  {# Sidebar with status + transitions #}
+  <div class="col-lg-4">
+    <div class="card mb-3 ebios-sidebar-card">
+      <div class="card-body">
+        <div class="small text-muted text-uppercase mb-2">{% trans "Status" %}</div>
+        <h5 class="mb-1">
+          <span class="badge text-bg-{% if workshop.status == 'validated' %}success{% elif workshop.status == 'in_progress' %}primary{% elif workshop.status == 'under_review' %}warning{% elif workshop.status == 'rejected' %}danger{% else %}secondary{% endif %}">
+            {{ workshop.get_status_display }}
+          </span>
+        </h5>
+        <div class="small text-muted mb-3">
+          {% trans "Iteration" %} #{{ workshop.iteration_number }} ({{ workshop.get_iteration_type_display }})
+        </div>
+
+        <hr>
+
+        {# Transition CTA buttons #}
+        <div class="d-grid gap-2">
+          {% if can_start %}
+          <form method="post" action="{% url 'risks:ebios-workshop-start' assessment_pk=assessment.pk workshop_pk=workshop.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-play-fill me-1"></i>{% trans "Start workshop" %}
+            </button>
+          </form>
+          {% endif %}
+          {% if can_submit %}
+          <form method="post" action="{% url 'risks:ebios-workshop-submit' assessment_pk=assessment.pk workshop_pk=workshop.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-warning w-100">
+              <i class="bi bi-send me-1"></i>{% trans "Submit for review" %}
+            </button>
+          </form>
+          {% endif %}
+          {% if can_validate %}
+          <form method="post" action="{% url 'risks:ebios-workshop-validate' assessment_pk=assessment.pk workshop_pk=workshop.pk %}"
+                onsubmit="return confirm('{% trans "Validate this workshop? This action is recorded in the audit trail." %}')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success w-100">
+              <i class="bi bi-check-circle me-1"></i>{% trans "Validate workshop" %}
+            </button>
+          </form>
+          {% endif %}
+          {% if can_reject %}
+          <button type="button" class="btn btn-outline-danger w-100"
+                  data-bs-toggle="modal" data-bs-target="#workshopRejectModal">
+            <i class="bi bi-x-circle me-1"></i>{% trans "Reject workshop" %}
+          </button>
+          {% endif %}
+        </div>
+
+        {% if workshop.validated_by %}
+        <hr>
+        <div class="small text-muted">
+          {% trans "Validated by" %} {{ workshop.validated_by.get_full_name|default:workshop.validated_by.email }}
+          {% if workshop.validated_at %}{% trans "on" %} {{ workshop.validated_at|date:"d/m/Y H:i" }}{% endif %}
+        </div>
+        {% endif %}
+
+        {% if workshop.rejection_reason %}
+        <hr>
+        <div class="small">
+          <div class="text-danger fw-bold mb-1">{% trans "Rejection reason" %}</div>
+          <div class="text-muted">{{ workshop.rejection_reason|linebreaksbr }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% block workshop_sidebar_extra %}{% endblock %}
+  </div>
+</div>
+
+{# Reject modal #}
+{% if can_reject %}
+<div class="modal fade" id="workshopRejectModal" tabindex="-1" aria-labelledby="workshopRejectModalLabel">
+  <div class="modal-dialog">
+    <form method="post" action="{% url 'risks:ebios-workshop-reject' assessment_pk=assessment.pk workshop_pk=workshop.pk %}">
+      {% csrf_token %}
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="workshopRejectModalLabel">{% trans "Reject workshop" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small">
+            {% trans "Document the reason for rejection. The workshop will move to the rejected state and can be restarted later." %}
+          </p>
+          <div class="mb-3">
+            <label for="rejection_reason" class="form-label">{% trans "Rejection reason" %}</label>
+            <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="submit" class="btn btn-danger">{% trans "Reject" %}</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

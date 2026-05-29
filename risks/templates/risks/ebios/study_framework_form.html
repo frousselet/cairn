@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Edit study framework" %}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-list' %}">{% trans "Assessments" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-detail' pk=object.assessment.pk %}">{{ object.assessment.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{% trans "Edit study framework" %}</li>
+  </ol>
+</nav>
+
+<div class="card">
+  <div class="card-header">
+    <h4 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>{% trans "Workshop 0 - Study framework" %}</h4>
+  </div>
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% endif %}
+      <div class="row g-3">
+        <div class="col-md-12">
+          <label for="{{ form.mission_statement.id_for_label }}" class="form-label">{{ form.mission_statement.label }}</label>
+          {{ form.mission_statement }}
+          {% for err in form.mission_statement.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.business_perimeter.id_for_label }}" class="form-label">{{ form.business_perimeter.label }}</label>
+          {{ form.business_perimeter }}
+          {% for err in form.business_perimeter.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.technical_perimeter.id_for_label }}" class="form-label">{{ form.technical_perimeter.label }}</label>
+          {{ form.technical_perimeter }}
+          {% for err in form.technical_perimeter.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="col-md-8">
+          <label for="{{ form.temporal_perimeter.id_for_label }}" class="form-label">{{ form.temporal_perimeter.label }}</label>
+          {{ form.temporal_perimeter }}
+          {% for err in form.temporal_perimeter.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="col-md-4">
+          <label for="{{ form.financial_envelope.id_for_label }}" class="form-label">{{ form.financial_envelope.label }}</label>
+          {{ form.financial_envelope }}
+          {% for err in form.financial_envelope.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.participants.id_for_label }}" class="form-label">{{ form.participants.label }}</label>
+          {{ form.participants }}
+          <div class="form-text small">{% trans "Hold Ctrl / Cmd to select multiple participants." %}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.applicable_frameworks.id_for_label }}" class="form-label">{{ form.applicable_frameworks.label }}</label>
+          {{ form.applicable_frameworks }}
+          <div class="form-text small">{% trans "Hold Ctrl / Cmd to select multiple frameworks." %}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.assumptions.id_for_label }}" class="form-label">{{ form.assumptions.label }}</label>
+          {{ form.assumptions }}
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.constraints.id_for_label }}" class="form-label">{{ form.constraints.label }}</label>
+          {{ form.constraints }}
+        </div>
+        <div class="col-md-12">
+          <label for="{{ form.expected_deliverables.id_for_label }}" class="form-label">{{ form.expected_deliverables.label }}</label>
+          {{ form.expected_deliverables }}
+        </div>
+      </div>
+      <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'risks:assessment-detail' pk=object.assessment.pk %}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>{% trans "Cancel" %}
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg me-1"></i>{% trans "Save" %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

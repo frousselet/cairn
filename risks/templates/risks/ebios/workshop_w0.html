@@ -1,0 +1,100 @@
+{% extends "risks/ebios/_workshop_base.html" %}
+{% load i18n %}
+
+{% block workshop_main %}
+<div class="card">
+  <div class="card-header d-flex align-items-center">
+    <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>{% trans "Study framework" %}</h5>
+    <span class="ms-auto badge text-bg-{% if study_framework.status == 'validated' %}success{% else %}secondary{% endif %}">
+      {{ study_framework.get_status_display }}
+    </span>
+  </div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">
+      {% trans "Define the pre-requisites of the EBIOS RM study: mission, perimeters, participants, applicable frameworks and constraints." %}
+    </p>
+    <dl class="row mb-3">
+      <dt class="col-sm-4">{% trans "Reference" %}</dt>
+      <dd class="col-sm-8"><code>{{ study_framework.reference }}</code></dd>
+
+      {% if study_framework.mission_statement %}
+      <dt class="col-sm-4">{% trans "Mission statement" %}</dt>
+      <dd class="col-sm-8">{{ study_framework.mission_statement|linebreaksbr }}</dd>
+      {% endif %}
+
+      {% if study_framework.business_perimeter %}
+      <dt class="col-sm-4">{% trans "Business perimeter" %}</dt>
+      <dd class="col-sm-8">{{ study_framework.business_perimeter|linebreaksbr }}</dd>
+      {% endif %}
+
+      {% if study_framework.technical_perimeter %}
+      <dt class="col-sm-4">{% trans "Technical perimeter" %}</dt>
+      <dd class="col-sm-8">{{ study_framework.technical_perimeter|linebreaksbr }}</dd>
+      {% endif %}
+
+      {% if study_framework.temporal_perimeter %}
+      <dt class="col-sm-4">{% trans "Temporal perimeter" %}</dt>
+      <dd class="col-sm-8">{{ study_framework.temporal_perimeter|linebreaksbr }}</dd>
+      {% endif %}
+
+      {% if study_framework.financial_envelope %}
+      <dt class="col-sm-4">{% trans "Financial envelope" %}</dt>
+      <dd class="col-sm-8">{{ study_framework.financial_envelope }}</dd>
+      {% endif %}
+    </dl>
+
+    {% if study_framework.participants.all %}
+    <div class="mb-3">
+      <div class="small text-muted text-uppercase mb-2">{% trans "Internal participants" %}</div>
+      <div class="d-flex flex-wrap gap-2">
+        {% for user in study_framework.participants.all %}
+          <span class="badge text-bg-secondary">
+            <i class="bi bi-person me-1"></i>{{ user.get_full_name|default:user.email }}
+          </span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if study_framework.applicable_frameworks.all %}
+    <div class="mb-3">
+      <div class="small text-muted text-uppercase mb-2">{% trans "Applicable frameworks" %}</div>
+      <div class="d-flex flex-wrap gap-2">
+        {% for framework in study_framework.applicable_frameworks.all %}
+          <span class="badge text-bg-info">
+            <i class="bi bi-bookmark me-1"></i>{{ framework.name }}
+          </span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if study_framework.assumptions %}
+    <details class="mb-2">
+      <summary class="text-muted small">{% trans "Assumptions" %}</summary>
+      <p class="mt-2">{{ study_framework.assumptions|linebreaksbr }}</p>
+    </details>
+    {% endif %}
+
+    {% if study_framework.constraints %}
+    <details class="mb-2">
+      <summary class="text-muted small">{% trans "Constraints" %}</summary>
+      <p class="mt-2">{{ study_framework.constraints|linebreaksbr }}</p>
+    </details>
+    {% endif %}
+
+    {% if study_framework.expected_deliverables %}
+    <details class="mb-0">
+      <summary class="text-muted small">{% trans "Expected deliverables" %}</summary>
+      <p class="mt-2">{{ study_framework.expected_deliverables|linebreaksbr }}</p>
+    </details>
+    {% endif %}
+  </div>
+  <div class="card-footer text-end">
+    <a href="{% url 'risks:ebios-study-framework-update' pk=study_framework.pk %}"
+       class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-pencil me-1"></i>{% trans "Edit study framework" %}
+    </a>
+  </div>
+</div>
+{% endblock %}

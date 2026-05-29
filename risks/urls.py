@@ -1,6 +1,6 @@
 from django.urls import path, reverse_lazy
 
-from . import views
+from . import views, views_ebios
 from .models import (
     ISO27005Risk,
     Risk,
@@ -80,4 +80,75 @@ urlpatterns = [
     path("iso27005/<uuid:pk>/delete/", views.ISO27005RiskDeleteView.as_view(), name="iso27005-delete"),
     path("iso27005/<uuid:pk>/approve/", views.ApproveView.as_view(model=ISO27005Risk, permission_feature="iso27005", success_url=reverse_lazy("risks:iso27005-list")), name="iso27005-approve"),
     path("iso27005/<uuid:pk>/consolidate/", views.ISO27005ConsolidateView.as_view(), name="iso27005-consolidate"),
+
+    # EBIOS RM workshop transitions and detail pages
+    path(
+        "assessments/<uuid:assessment_pk>/ebios/workshops/<uuid:workshop_pk>/",
+        views_ebios.WorkshopDetailView.as_view(),
+        name="ebios-workshop-detail",
+    ),
+    path(
+        "assessments/<uuid:assessment_pk>/ebios/workshops/<uuid:workshop_pk>/start/",
+        views_ebios.WorkshopStartView.as_view(),
+        name="ebios-workshop-start",
+    ),
+    path(
+        "assessments/<uuid:assessment_pk>/ebios/workshops/<uuid:workshop_pk>/submit/",
+        views_ebios.WorkshopSubmitView.as_view(),
+        name="ebios-workshop-submit",
+    ),
+    path(
+        "assessments/<uuid:assessment_pk>/ebios/workshops/<uuid:workshop_pk>/validate/",
+        views_ebios.WorkshopValidateView.as_view(),
+        name="ebios-workshop-validate",
+    ),
+    path(
+        "assessments/<uuid:assessment_pk>/ebios/workshops/<uuid:workshop_pk>/reject/",
+        views_ebios.WorkshopRejectView.as_view(),
+        name="ebios-workshop-reject",
+    ),
+
+    # EBIOS RM Workshop 0 (Study framework)
+    path(
+        "ebios/study-frameworks/<uuid:pk>/edit/",
+        views_ebios.StudyFrameworkUpdateView.as_view(),
+        name="ebios-study-framework-update",
+    ),
+
+    # EBIOS RM Workshop 1 (Security baseline + feared events + gaps)
+    path(
+        "ebios/baselines/<uuid:pk>/edit/",
+        views_ebios.SecurityBaselineUpdateView.as_view(),
+        name="ebios-baseline-update",
+    ),
+    path(
+        "ebios/baselines/<uuid:baseline_pk>/feared-events/create/",
+        views_ebios.FearedEventCreateView.as_view(),
+        name="ebios-feared-event-create",
+    ),
+    path(
+        "ebios/feared-events/<uuid:pk>/edit/",
+        views_ebios.FearedEventUpdateView.as_view(),
+        name="ebios-feared-event-update",
+    ),
+    path(
+        "ebios/feared-events/<uuid:pk>/delete/",
+        views_ebios.FearedEventDeleteView.as_view(),
+        name="ebios-feared-event-delete",
+    ),
+    path(
+        "ebios/baselines/<uuid:baseline_pk>/gaps/create/",
+        views_ebios.BaselineGapCreateView.as_view(),
+        name="ebios-baseline-gap-create",
+    ),
+    path(
+        "ebios/gaps/<uuid:pk>/edit/",
+        views_ebios.BaselineGapUpdateView.as_view(),
+        name="ebios-baseline-gap-update",
+    ),
+    path(
+        "ebios/gaps/<uuid:pk>/delete/",
+        views_ebios.BaselineGapDeleteView.as_view(),
+        name="ebios-baseline-gap-delete",
+    ),
 ]

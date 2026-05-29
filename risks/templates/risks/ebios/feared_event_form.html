@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% if feared_event %}{% trans "Edit feared event" %}{% else %}{% trans "Add feared event" %}{% endif %}{% endblock %}
+
+{% block content %}
+{% with assessment=baseline.assessment %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-list' %}">{% trans "Assessments" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-detail' pk=assessment.pk %}">{{ assessment.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{% trans "Feared event" %}</li>
+  </ol>
+</nav>
+
+<div class="card">
+  <div class="card-header">
+    <h4 class="mb-0">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {% if feared_event %}{% trans "Edit feared event" %}{% else %}{% trans "Add feared event" %}{% endif %}
+    </h4>
+  </div>
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="{{ form.essential_asset.id_for_label }}" class="form-label">{{ form.essential_asset.label }}</label>
+          {{ form.essential_asset }}
+          {% for err in form.essential_asset.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.dic_criterion.id_for_label }}" class="form-label">{{ form.dic_criterion.label }}</label>
+          {{ form.dic_criterion }}
+          {% for err in form.dic_criterion.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="col-md-12">
+          <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% for err in form.name.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+        </div>
+        <div class="col-md-12">
+          <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+          {{ form.description }}
+        </div>
+        <div class="col-md-4">
+          <label for="{{ form.gravity_level.id_for_label }}" class="form-label">{{ form.gravity_level.label }}</label>
+          {{ form.gravity_level }}
+        </div>
+        <div class="col-md-8">
+          <label for="{{ form.gravity_justification.id_for_label }}" class="form-label">{{ form.gravity_justification.label }}</label>
+          {{ form.gravity_justification }}
+        </div>
+      </div>
+      <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'risks:assessment-detail' pk=assessment.pk %}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>{% trans "Cancel" %}
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg me-1"></i>{% trans "Save" %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends "risks/ebios/_workshop_base.html" %}
+{% load i18n %}
+
+{% block workshop_main %}
+{# Security baseline summary card #}
+<div class="card mb-3">
+  <div class="card-header d-flex align-items-center">
+    <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>{% trans "Security baseline" %}</h5>
+    <span class="ms-auto badge text-bg-{% if baseline.status == 'completed' %}success{% elif baseline.status == 'in_progress' %}primary{% else %}secondary{% endif %}">
+      {{ baseline.get_status_display }}
+    </span>
+  </div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">
+      {% trans "Capture the business values and support assets in scope plus the referential security baseline." %}
+    </p>
+    <dl class="row mb-3">
+      <dt class="col-sm-4">{% trans "Reference" %}</dt>
+      <dd class="col-sm-8"><code>{{ baseline.reference }}</code></dd>
+
+      <dt class="col-sm-4">{% trans "Business values (activities)" %}</dt>
+      <dd class="col-sm-8">{{ baseline.business_values.count }}</dd>
+
+      <dt class="col-sm-4">{% trans "Essential assets" %}</dt>
+      <dd class="col-sm-8">{{ baseline.essential_assets.count }}</dd>
+
+      <dt class="col-sm-4">{% trans "Support assets" %}</dt>
+      <dd class="col-sm-8">{{ baseline.support_assets.count }}</dd>
+
+      <dt class="col-sm-4">{% trans "Baseline references" %}</dt>
+      <dd class="col-sm-8">{{ baseline.baseline_references.count }}</dd>
+    </dl>
+    {% if baseline.dic_summary %}
+    <details class="mb-0">
+      <summary class="text-muted small">{% trans "DIC needs summary" %}</summary>
+      <p class="mt-2">{{ baseline.dic_summary|linebreaksbr }}</p>
+    </details>
+    {% endif %}
+  </div>
+  <div class="card-footer text-end">
+    <a href="{% url 'risks:ebios-baseline-update' pk=baseline.pk %}"
+       class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-pencil me-1"></i>{% trans "Edit baseline" %}
+    </a>
+  </div>
+</div>
+
+{# Feared events table #}
+<div class="card mb-3">
+  <div class="card-header d-flex align-items-center">
+    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>{% trans "Feared events" %}</h5>
+    <span class="ms-auto badge text-bg-secondary me-2">{{ feared_events|length }}</span>
+    <a href="{% url 'risks:ebios-feared-event-create' baseline_pk=baseline.pk %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>{% trans "Add" %}
+    </a>
+  </div>
+  <div class="card-body p-0">
+    {% if feared_events %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Reference" %}</th>
+            <th>{% trans "Essential asset" %}</th>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "DIC criterion" %}</th>
+            <th class="text-end">{% trans "Gravity" %}</th>
+            <th class="text-end">{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fe in feared_events %}
+          <tr>
+            <td><code class="small">{{ fe.reference }}</code></td>
+            <td>{{ fe.essential_asset }}</td>
+            <td>{{ fe.name }}</td>
+            <td>
+              <span class="badge text-bg-{% if fe.dic_criterion == 'confidentiality' %}info{% elif fe.dic_criterion == 'integrity' %}warning{% else %}primary{% endif %}">
+                {{ fe.get_dic_criterion_display }}
+              </span>
+            </td>
+            <td class="text-end">
+              {% if fe.gravity_level %}
+                <span class="badge text-bg-secondary">{{ fe.gravity_level }}</span>
+              {% else %}
+                <span class="text-muted small">-</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'risks:ebios-feared-event-update' pk=fe.pk %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'Edit' %}">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'risks:ebios-feared-event-delete' pk=fe.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}">
+                <i class="bi bi-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-4 text-center text-muted">
+      <i class="bi bi-info-circle me-1"></i>
+      {% trans "No feared event yet. Add at least one feared event per essential asset and DIC criterion." %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{# Baseline gaps table #}
+<div class="card mb-3">
+  <div class="card-header d-flex align-items-center">
+    <h5 class="mb-0"><i class="bi bi-bug me-2"></i>{% trans "Baseline gaps" %}</h5>
+    <span class="ms-auto badge text-bg-secondary me-2">{{ baseline_gaps|length }}</span>
+    <a href="{% url 'risks:ebios-baseline-gap-create' baseline_pk=baseline.pk %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>{% trans "Add" %}
+    </a>
+  </div>
+  <div class="card-body p-0">
+    {% if baseline_gaps %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Reference" %}</th>
+            <th>{% trans "Source" %}</th>
+            <th>{% trans "Description" %}</th>
+            <th>{% trans "Severity" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th class="text-end">{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for gap in baseline_gaps %}
+          <tr>
+            <td><code class="small">{{ gap.reference }}</code></td>
+            <td>{{ gap.reference_source }}</td>
+            <td class="small">{{ gap.description|truncatechars:80 }}</td>
+            <td>
+              <span class="badge text-bg-{% if gap.severity == 'critical' %}danger{% elif gap.severity == 'high' %}warning{% elif gap.severity == 'medium' %}primary{% else %}secondary{% endif %}">
+                {{ gap.get_severity_display }}
+              </span>
+            </td>
+            <td>
+              <span class="badge text-bg-{% if gap.status == 'remediated' %}success{% elif gap.status == 'in_remediation' %}primary{% elif gap.status == 'accepted' %}info{% else %}secondary{% endif %}">
+                {{ gap.get_status_display }}
+              </span>
+            </td>
+            <td class="text-end">
+              <a href="{% url 'risks:ebios-baseline-gap-update' pk=gap.pk %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'Edit' %}">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'risks:ebios-baseline-gap-delete' pk=gap.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}">
+                <i class="bi bi-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-4 text-center text-muted">
+      <i class="bi bi-info-circle me-1"></i>
+      {% trans "No baseline gap recorded yet. Document any deviation from the applicable security baseline." %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

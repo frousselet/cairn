@@ -1,0 +1,272 @@
+"""Tests for the EBIOS RM GUI views (workshop transitions, detail pages, forms).
+
+Covers:
+- Workshop transitions (start / submit / validate / reject) with porte de
+  validation enforcement.
+- Workshop detail dispatcher routes to the correct template per workshop_number.
+- W0 study framework edit form.
+- W1 security baseline + FearedEvent + BaselineGap CRUD views.
+- Permission gating on every endpoint.
+"""
+
+import pytest
+from django.urls import reverse
+
+from accounts.tests.factories import UserFactory
+from assets.tests.factories import EssentialAssetFactory
+from risks.constants import (
+    DICCriterion,
+    EbiosWorkshopNumber,
+    EbiosWorkshopStatus,
+)
+from risks.models import (
+    BaselineGap,
+    EbiosWorkshopProgress,
+    FearedEvent,
+)
+from risks.tests.factories import (
+    EbiosAssessmentFactory,
+    FearedEventFactory,
+)
+
+
+pytestmark = pytest.mark.django_db
+
+
+def _workshop_for(assessment, number):
+    return assessment.ebios_workshops.get(workshop_number=number)
+
+
+class TestWorkshopDetailDispatcher:
+    def setup_method(self):
+        self.user = UserFactory(is_superuser=True)
+
+    def test_w0_renders_study_framework_template(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        workshop = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        url = reverse(
+            "risks:ebios-workshop-detail",
+            kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk},
+        )
+        response = client.get(url)
+        assert response.status_code == 200
+        # The W0 page includes the study framework reference
+        assert assessment.ebios_study_framework.reference.encode() in response.content
+
+    def test_w1_renders_security_baseline_template(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        workshop = _workshop_for(assessment, EbiosWorkshopNumber.W1)
+        url = reverse(
+            "risks:ebios-workshop-detail",
+            kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk},
+        )
+        response = client.get(url)
+        assert response.status_code == 200
+        assert b"Feared events" in response.content or b"redout" in response.content.lower()
+
+    def test_w4_renders_placeholder(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        workshop = _workshop_for(assessment, EbiosWorkshopNumber.W4)
+        url = reverse(
+            "risks:ebios-workshop-detail",
+            kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk},
+        )
+        response = client.get(url)
+        assert response.status_code == 200
+
+    def test_anonymous_user_is_redirected(self, client):
+        assessment = EbiosAssessmentFactory()
+        workshop = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        url = reverse(
+            "risks:ebios-workshop-detail",
+            kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk},
+        )
+        response = client.get(url)
+        assert response.status_code in (302, 403)
+
+
+class TestWorkshopTransitions:
+    def setup_method(self):
+        self.user = UserFactory(is_superuser=True)
+
+    def test_start_w0_succeeds(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        workshop = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        url = reverse(
+            "risks:ebios-workshop-start",
+            kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk},
+        )
+        response = client.post(url)
+        assert response.status_code == 302
+        workshop.refresh_from_db()
+        assert workshop.status == EbiosWorkshopStatus.IN_PROGRESS
+        assert workshop.started_at is not None
+
+    def test_start_w1_blocked_when_w0_not_validated(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        w1 = _workshop_for(assessment, EbiosWorkshopNumber.W1)
+        url = reverse(
+            "risks:ebios-workshop-start",
+            kwargs={"assessment_pk": assessment.pk, "workshop_pk": w1.pk},
+        )
+        response = client.post(url, follow=True)
+        # The view redirects back; W1 stays not_started
+        w1.refresh_from_db()
+        assert w1.status == EbiosWorkshopStatus.NOT_STARTED
+
+    def test_start_w1_allowed_after_w0_validated(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        w0 = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        w0.status = EbiosWorkshopStatus.VALIDATED
+        w0.save()
+        w1 = _workshop_for(assessment, EbiosWorkshopNumber.W1)
+        url = reverse(
+            "risks:ebios-workshop-start",
+            kwargs={"assessment_pk": assessment.pk, "workshop_pk": w1.pk},
+        )
+        response = client.post(url)
+        assert response.status_code == 302
+        w1.refresh_from_db()
+        assert w1.status == EbiosWorkshopStatus.IN_PROGRESS
+
+    def test_submit_requires_in_progress(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        workshop = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        url = reverse(
+            "risks:ebios-workshop-submit",
+            kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk},
+        )
+        # Not started: submit must not transition
+        client.post(url)
+        workshop.refresh_from_db()
+        assert workshop.status == EbiosWorkshopStatus.NOT_STARTED
+
+    def test_validate_records_user_and_timestamp(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        workshop = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        workshop.status = EbiosWorkshopStatus.IN_PROGRESS
+        workshop.save()
+        url = reverse(
+            "risks:ebios-workshop-validate",
+            kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk},
+        )
+        client.post(url)
+        workshop.refresh_from_db()
+        assert workshop.status == EbiosWorkshopStatus.VALIDATED
+        assert workshop.validated_by_id == self.user.pk
+        assert workshop.validated_at is not None
+
+    def test_reject_requires_reason(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        workshop = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        workshop.status = EbiosWorkshopStatus.IN_PROGRESS
+        workshop.save()
+        url = reverse(
+            "risks:ebios-workshop-reject",
+            kwargs={"assessment_pk": assessment.pk, "workshop_pk": workshop.pk},
+        )
+        # Without reason -> redirect back, status unchanged
+        client.post(url)
+        workshop.refresh_from_db()
+        assert workshop.status == EbiosWorkshopStatus.IN_PROGRESS
+        # With reason -> transitions to rejected
+        client.post(url, {"rejection_reason": "Missing participants"})
+        workshop.refresh_from_db()
+        assert workshop.status == EbiosWorkshopStatus.REJECTED
+        assert "Missing participants" in workshop.rejection_reason
+
+
+class TestStudyFrameworkForm:
+    def setup_method(self):
+        self.user = UserFactory(is_superuser=True)
+
+    def test_get_renders_form(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        sf = assessment.ebios_study_framework
+        url = reverse("risks:ebios-study-framework-update", kwargs={"pk": sf.pk})
+        response = client.get(url)
+        assert response.status_code == 200
+
+    def test_post_saves_changes(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        sf = assessment.ebios_study_framework
+        url = reverse("risks:ebios-study-framework-update", kwargs={"pk": sf.pk})
+        response = client.post(url, {
+            "mission_statement": "Audit annuel",
+            "business_perimeter": "Tous les services",
+            "technical_perimeter": "SI corporate",
+            "temporal_perimeter": "2026",
+            "assumptions": "",
+            "constraints": "",
+            "expected_deliverables": "",
+        })
+        assert response.status_code == 302
+        sf.refresh_from_db()
+        assert sf.mission_statement == "Audit annuel"
+
+
+class TestFearedEventViews:
+    def setup_method(self):
+        self.user = UserFactory(is_superuser=True)
+
+    def test_create_feared_event(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        baseline = assessment.ebios_security_baseline
+        asset = EssentialAssetFactory()
+        url = reverse("risks:ebios-feared-event-create", kwargs={"baseline_pk": baseline.pk})
+        response = client.post(url, {
+            "essential_asset": asset.pk,
+            "name": "Data leak",
+            "description": "Customer data exposed externally",
+            "dic_criterion": DICCriterion.CONFIDENTIALITY,
+            "gravity_level": 3,
+            "gravity_justification": "Regulatory impact",
+        })
+        assert response.status_code == 302
+        assert baseline.feared_events.count() == 1
+        feared = baseline.feared_events.first()
+        assert feared.created_by == self.user
+
+    def test_delete_feared_event(self, client):
+        client.force_login(self.user)
+        feared = FearedEventFactory()
+        url = reverse("risks:ebios-feared-event-delete", kwargs={"pk": feared.pk})
+        # GET shows confirm page
+        get_response = client.get(url)
+        assert get_response.status_code == 200
+        # POST deletes
+        del_response = client.post(url)
+        assert del_response.status_code == 302
+        assert not FearedEvent.objects.filter(pk=feared.pk).exists()
+
+
+class TestBaselineGapViews:
+    def setup_method(self):
+        self.user = UserFactory(is_superuser=True)
+
+    def test_create_baseline_gap(self, client):
+        client.force_login(self.user)
+        assessment = EbiosAssessmentFactory()
+        baseline = assessment.ebios_security_baseline
+        url = reverse("risks:ebios-baseline-gap-create", kwargs={"baseline_pk": baseline.pk})
+        response = client.post(url, {
+            "reference_source": "ISO 27002 A.5.1",
+            "description": "Information security policies missing",
+            "severity": "high",
+            "status": "identified",
+            "recommended_remediation": "Draft and publish policies",
+        })
+        assert response.status_code == 302
+        assert baseline.gaps.count() == 1

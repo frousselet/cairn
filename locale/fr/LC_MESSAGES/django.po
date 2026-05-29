@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-29 14:18+0200\n"
+"POT-Creation-Date: 2026-05-29 14:30+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -79,6 +79,9 @@ msgstr "Modifier"
 #: reports/templates/reports/report_list.html:81
 #: risks/templates/risks/confirm_delete.html:4
 #: risks/templates/risks/confirm_delete.html:14
+#: risks/templates/risks/ebios/confirm_delete.html:21
+#: risks/templates/risks/ebios/workshop_w1.html:93
+#: risks/templates/risks/ebios/workshop_w1.html:154
 #: risks/templates/risks/treatment_plan_detail.html:106
 #: templates/core/versioning_config_confirm_delete.html:18
 #: templates/core/versioning_config_list.html:59
@@ -286,7 +289,8 @@ msgstr "Piste d'audit du contexte"
 #: accounts/constants.py:115 assets/models/essential_asset.py:105
 #: assets/templates/assets/essential_asset_list.html:4
 #: assets/templates/assets/essential_asset_list.html:9
-#: risks/models/ebios/security_baseline.py:34 templates/base.html:2493
+#: risks/models/ebios/security_baseline.py:34
+#: risks/templates/risks/ebios/workshop_w1.html:24 templates/base.html:2493
 #: templates/home.html:427
 msgid "Essential assets"
 msgstr "Biens essentiels"
@@ -298,7 +302,8 @@ msgstr "Évaluation des biens essentiels"
 #: accounts/constants.py:123 assets/models/support_asset.py:122
 #: assets/templates/assets/support_asset_list.html:4
 #: assets/templates/assets/support_asset_list.html:9
-#: risks/models/ebios/security_baseline.py:40 templates/base.html:2494
+#: risks/models/ebios/security_baseline.py:40
+#: risks/templates/risks/ebios/workshop_w1.html:27 templates/base.html:2494
 #: templates/home.html:438
 msgid "Support assets"
 msgstr "Biens supports"
@@ -822,6 +827,7 @@ msgstr ""
 #: risks/templates/risks/criteria_detail.html:81
 #: risks/templates/risks/dashboard.html:147
 #: risks/templates/risks/dashboard.html:184
+#: risks/templates/risks/ebios/workshop_w1.html:65
 #: risks/templates/risks/risk_detail.html:116
 #: risks/templates/risks/treatment_plan_detail.html:135
 msgid "Name"
@@ -989,6 +995,7 @@ msgstr "Paramètres de l'entreprise"
 #: risks/templates/risks/criteria_detail.html:81
 #: risks/templates/risks/criteria_form.html:58
 #: risks/templates/risks/criteria_form.html:95
+#: risks/templates/risks/ebios/workshop_w1.html:128
 #: risks/templates/risks/iso27005_risk_detail.html:39
 #: risks/templates/risks/risk_detail.html:53
 #: risks/templates/risks/threat_detail.html:43
@@ -1432,6 +1439,8 @@ msgstr "Identifiant client"
 #: risks/templates/risks/assessment_detail.html:226
 #: risks/templates/risks/assessment_list.html:45
 #: risks/templates/risks/criteria_list.html:38
+#: risks/templates/risks/ebios/workshop_w1.html:68
+#: risks/templates/risks/ebios/workshop_w1.html:131
 #: risks/templates/risks/iso27005_risk_list.html:37
 #: risks/templates/risks/risk_list.html:158
 #: risks/templates/risks/threat_list.html:42
@@ -1520,6 +1529,10 @@ msgstr "Informations de l'entreprise"
 #: risks/templates/risks/acceptance_form.html:31
 #: risks/templates/risks/assessment_form.html:31
 #: risks/templates/risks/criteria_form.html:160
+#: risks/templates/risks/ebios/baseline_gap_form.html:60
+#: risks/templates/risks/ebios/feared_event_form.html:61
+#: risks/templates/risks/ebios/security_baseline_form.html:52
+#: risks/templates/risks/ebios/study_framework_form.html:79
 #: risks/templates/risks/iso27005_risk_form.html:31
 #: risks/templates/risks/risk_form.html:31
 #: risks/templates/risks/threat_form.html:31
@@ -1537,6 +1550,8 @@ msgstr "Enregistrer"
 #: context/templates/context/confirm_delete.html:9
 #: reports/templates/reports/report_confirm_delete.html:9
 #: risks/templates/risks/confirm_delete.html:9
+#: risks/templates/risks/ebios/confirm_delete.html:4
+#: risks/templates/risks/ebios/confirm_delete.html:9
 msgid "Confirm deletion"
 msgstr "Confirmer la suppression"
 
@@ -1623,6 +1638,12 @@ msgstr[1] ""
 #: risks/templates/risks/assessment_form.html:32
 #: risks/templates/risks/confirm_delete.html:15
 #: risks/templates/risks/criteria_form.html:161
+#: risks/templates/risks/ebios/_workshop_base.html:117
+#: risks/templates/risks/ebios/baseline_gap_form.html:57
+#: risks/templates/risks/ebios/confirm_delete.html:18
+#: risks/templates/risks/ebios/feared_event_form.html:58
+#: risks/templates/risks/ebios/security_baseline_form.html:49
+#: risks/templates/risks/ebios/study_framework_form.html:76
 #: risks/templates/risks/iso27005_risk_form.html:33
 #: risks/templates/risks/iso27005_risk_form.html:35
 #: risks/templates/risks/iso27005_risk_form.html:37
@@ -1711,6 +1732,8 @@ msgstr "Annuler"
 #: risks/templates/risks/assessment_form.html:4
 #: risks/templates/risks/criteria_detail.html:14
 #: risks/templates/risks/criteria_form.html:4
+#: risks/templates/risks/ebios/workshop_w1.html:90
+#: risks/templates/risks/ebios/workshop_w1.html:151
 #: risks/templates/risks/iso27005_risk_detail.html:14
 #: risks/templates/risks/iso27005_risk_form.html:4
 #: risks/templates/risks/risk_detail.html:15
@@ -2023,6 +2046,8 @@ msgstr "Aucune permission."
 #: compliance/templates/compliance/framework_detail.html:107
 #: context/templates/context/swot_detail.html:99
 #: context/templates/context/swot_detail.html:156
+#: risks/templates/risks/ebios/workshop_w1.html:54
+#: risks/templates/risks/ebios/workshop_w1.html:117
 msgid "Add"
 msgstr "Ajouter"
 
@@ -2158,6 +2183,8 @@ msgstr "Information"
 #: risks/templates/risks/assessment_detail.html:283
 #: risks/templates/risks/assessment_detail.html:285
 #: risks/templates/risks/criteria_detail.html:35
+#: risks/templates/risks/ebios/_workshop_base.html:27
+#: risks/templates/risks/ebios/workshop_w1.html:130
 #: risks/templates/risks/risk_detail.html:116
 #: risks/templates/risks/risk_detail.html:144
 #: risks/templates/risks/risk_detail.html:258
@@ -2893,6 +2920,7 @@ msgstr "Téléverser un document justificatif (certificat, rapport, etc.)."
 #: assets/templates/assets/dependency_graph.html:140
 #: assets/templates/assets/support_asset_detail.html:138
 #: risks/models/ebios/feared_event.py:30
+#: risks/templates/risks/ebios/workshop_w1.html:64
 #: risks/templates/risks/risk_list.html:61
 msgid "Essential asset"
 msgstr "Bien essentiel"
@@ -5357,6 +5385,10 @@ msgstr "Section parente"
 #: context/models/base.py:14 reports/models/management_review.py:246
 #: reports/models/management_review.py:367
 #: reports/templates/reports/management_review_list.html:54
+#: risks/templates/risks/ebios/workshop_w0.html:17
+#: risks/templates/risks/ebios/workshop_w1.html:18
+#: risks/templates/risks/ebios/workshop_w1.html:63
+#: risks/templates/risks/ebios/workshop_w1.html:126
 #: risks/templates/risks/risk_detail.html:198
 msgid "Reference"
 msgstr "Référence"
@@ -5709,6 +5741,11 @@ msgid "No requirement defined for this framework."
 msgstr "Aucune exigence définie pour ce référentiel."
 
 #: compliance/templates/compliance/framework_detail.html:176
+#: risks/templates/risks/ebios/_workshop_base.html:9
+#: risks/templates/risks/ebios/baseline_gap_form.html:10
+#: risks/templates/risks/ebios/feared_event_form.html:10
+#: risks/templates/risks/ebios/security_baseline_form.html:9
+#: risks/templates/risks/ebios/study_framework_form.html:9
 #: templates/base.html:2530 templates/base.html:2532 templates/base.html:2535
 #: templates/home.html:510
 msgid "Assessments"
@@ -5906,6 +5943,7 @@ msgstr "Direction"
 
 #: compliance/templates/compliance/requirement_detail.html:146
 #: context/models/issue.py:33 context/templates/context/issue_detail.html:41
+#: risks/templates/risks/ebios/workshop_w1.html:127
 #: risks/templates/risks/risk_detail.html:39
 #: risks/templates/risks/risk_list.html:151
 msgid "Source"
@@ -6838,6 +6876,7 @@ msgstr "Traitement"
 
 #: context/models/stakeholder_feedback.py:45
 #: risks/models/ebios/baseline_gap.py:42 risks/models/vulnerability.py:21
+#: risks/templates/risks/ebios/workshop_w1.html:129
 #: risks/templates/risks/vulnerability_detail.html:33
 msgid "Severity"
 msgstr "Sévérité"
@@ -6868,6 +6907,7 @@ msgstr "Date d'analyse"
 #: risks/models/ebios/ebios_summary.py:58
 #: risks/models/ebios/workshop_progress.py:57
 #: risks/models/risk_assessment.py:50
+#: risks/templates/risks/ebios/_workshop_base.html:77
 msgid "Validated by"
 msgstr "Validé par"
 
@@ -9346,10 +9386,12 @@ msgid "Moderate-High"
 msgstr "Modéré-Élevé"
 
 #: risks/constants.py:210
+#: risks/templates/risks/ebios/study_framework_form.html:17
 msgid "Workshop 0 - Study framework"
 msgstr "Atelier 0 - Cadre de l'étude"
 
 #: risks/constants.py:211
+#: risks/templates/risks/ebios/security_baseline_form.html:17
 msgid "Workshop 1 - Security baseline"
 msgstr "Atelier 1 - Socle de sécurité"
 
@@ -9570,23 +9612,28 @@ msgid "Exfiltration"
 msgstr "Exfiltration"
 
 #: risks/constants.py:440
-#| msgid "Production"
 msgid "Protection"
 msgstr "Protection"
 
 #: risks/constants.py:441
-#| msgid "Defense evasion"
 msgid "Defense"
 msgstr "Défense"
 
 #: risks/constants.py:442
-#| msgid "Persistence"
 msgid "Resilience"
 msgstr "Résilience"
 
 #: risks/constants.py:443
 msgid "Awareness"
 msgstr "Sensibilisation"
+
+#: risks/forms_ebios.py:116 risks/models/ebios/workshop_progress.py:60
+#: risks/templates/risks/ebios/_workshop_base.html:85
+#: risks/templates/risks/ebios/_workshop_base.html:112
+#, fuzzy
+#| msgid "Cancel action plan"
+msgid "Rejection reason"
+msgstr "Annuler le plan d'action"
 
 #: risks/models/acceptance.py:17 risks/models/risk.py:144
 #: risks/models/treatment.py:27 risks/templates/risks/acceptance_detail.html:35
@@ -9697,6 +9744,8 @@ msgstr ""
 "personnalisé."
 
 #: risks/models/ebios/baseline_gap.py:23 risks/models/ebios/feared_event.py:24
+#: risks/templates/risks/ebios/security_baseline_form.html:11
+#: risks/templates/risks/ebios/workshop_w1.html:8
 #, fuzzy
 #| msgid "Security tool"
 msgid "Security baseline"
@@ -9729,47 +9778,38 @@ msgid "EBIOS RM baseline gaps"
 msgstr "Écarts au socle EBIOS RM"
 
 #: risks/models/ebios/ebios_summary.py:31
-#| msgid "Residual risks"
 msgid "Residual risk strategy"
 msgstr "Stratégie résiduelle de risque"
 
 #: risks/models/ebios/ebios_summary.py:32
-#| msgid "Monitoring zone"
 msgid "Monitoring plan"
 msgstr "Plan de suivi"
 
 #: risks/models/ebios/ebios_summary.py:33
-#| msgid "Summary"
 msgid "PACS summary"
 msgstr "Synthèse du PACS"
 
 #: risks/models/ebios/ebios_summary.py:35
-#| msgid "Current risks (before treatment)"
 msgid "Risk mapping before treatment"
 msgstr "Cartographie des risques avant traitement"
 
 #: risks/models/ebios/ebios_summary.py:38
-#| msgid "Promote analyses to the risk register for treatment planning."
 msgid "Snapshot of the risk register before treatment, captured on demand."
 msgstr "Capture du registre des risques avant traitement, prise à la demande."
 
 #: risks/models/ebios/ebios_summary.py:41
-#| msgid "Residual risks (after treatment)"
 msgid "Risk mapping after treatment"
 msgstr "Cartographie des risques après traitement"
 
 #: risks/models/ebios/ebios_summary.py:44
-#| msgid "Promote analyses to the risk register for treatment planning."
 msgid "Snapshot of the risk register after treatment, captured on demand."
 msgstr "Capture du registre des risques après traitement, prise à la demande."
 
 #: risks/models/ebios/ebios_summary.py:47
-#| msgid "Strategic cycle"
 msgid "Next strategic cycle date"
 msgstr "Prochaine date de cycle stratégique"
 
 #: risks/models/ebios/ebios_summary.py:50
-#| msgid "Operational cycle"
 msgid "Next operational cycle date"
 msgstr "Prochaine date de cycle opérationnel"
 
@@ -9781,12 +9821,10 @@ msgid "Validated at"
 msgstr "Validé"
 
 #: risks/models/ebios/ebios_summary.py:71
-#| msgid "EBIOS RM risk source"
 msgid "EBIOS RM summary"
 msgstr "Synthèse EBIOS RM"
 
 #: risks/models/ebios/ebios_summary.py:72
-#| msgid "EBIOS RM risk sources"
 msgid "EBIOS RM summaries"
 msgstr "Synthèses EBIOS RM"
 
@@ -9892,6 +9930,7 @@ msgid "EBIOS RM ecosystem stakeholders"
 msgstr "Parties prenantes de l'écosystème EBIOS RM"
 
 #: risks/models/ebios/feared_event.py:35
+#: risks/templates/risks/ebios/workshop_w1.html:66
 #, fuzzy
 #| msgid "criteria"
 msgid "DIC criterion"
@@ -10054,32 +10093,26 @@ msgid "EBIOS RM operational scenarios"
 msgstr "Scénarios opérationnels EBIOS RM"
 
 #: risks/models/ebios/pacs_measure.py:29
-#| msgid "Summary"
 msgid "EBIOS summary"
 msgstr "Synthèse EBIOS"
 
 #: risks/models/ebios/pacs_measure.py:34
-#| msgid "Measurement"
 msgid "Measure type"
 msgstr "Type de mesure"
 
 #: risks/models/ebios/pacs_measure.py:43
-#| msgid "New treatment plan"
 msgid "Linked treatment plans"
 msgstr "Plans de traitement liés"
 
 #: risks/models/ebios/pacs_measure.py:49
-#| msgid "EBIOS RM baseline gaps"
 msgid "Linked baseline gaps"
 msgstr "Écarts au socle liés"
 
 #: risks/models/ebios/pacs_measure.py:55
-#| msgid "Linked requirements"
 msgid "Linked compliance requirements"
 msgstr "Exigences de conformité liées"
 
 #: risks/models/ebios/pacs_measure.py:75
-#| msgid "Expectation"
 msgid "Expected gain"
 msgstr "Gain attendu"
 
@@ -10088,12 +10121,10 @@ msgid "Progress percentage"
 msgstr "Pourcentage d'avancement"
 
 #: risks/models/ebios/pacs_measure.py:96
-#| msgid "EBIOS RM risk source"
 msgid "EBIOS RM PACS measure"
 msgstr "Mesure du PACS EBIOS RM"
 
 #: risks/models/ebios/pacs_measure.py:97
-#| msgid "EBIOS RM risk sources"
 msgid "EBIOS RM PACS measures"
 msgstr "Mesures du PACS EBIOS RM"
 
@@ -10169,18 +10200,21 @@ msgid "EBIOS RM risk sources"
 msgstr "Sources de risque EBIOS RM"
 
 #: risks/models/ebios/security_baseline.py:28
+#: risks/templates/risks/ebios/workshop_w1.html:21
 #, fuzzy
 #| msgid "Business activities"
 msgid "Business values (activities)"
 msgstr "Activités métier"
 
 #: risks/models/ebios/security_baseline.py:42
+#: risks/templates/risks/ebios/workshop_w1.html:35
 #, fuzzy
 #| msgid "Management summary"
 msgid "DIC needs summary"
 msgstr "Synthèse managériale"
 
 #: risks/models/ebios/security_baseline.py:47
+#: risks/templates/risks/ebios/workshop_w1.html:30
 #, fuzzy
 #| msgid "Table preferences"
 msgid "Baseline references"
@@ -10290,34 +10324,40 @@ msgid "EBIOS RM strategic scenarios"
 msgstr "Scénarios stratégiques EBIOS RM"
 
 #: risks/models/ebios/study_framework.py:26
+#: risks/templates/risks/ebios/workshop_w0.html:21
 #, fuzzy
 #| msgid "Missing patch"
 msgid "Mission statement"
 msgstr "Correctif manquant"
 
 #: risks/models/ebios/study_framework.py:27
+#: risks/templates/risks/ebios/workshop_w0.html:26
 #, fuzzy
 #| msgid "Business process"
 msgid "Business perimeter"
 msgstr "Processus métier"
 
 #: risks/models/ebios/study_framework.py:28
+#: risks/templates/risks/ebios/workshop_w0.html:31
 #, fuzzy
 #| msgid "Technical scope"
 msgid "Technical perimeter"
 msgstr "Périmètre technique"
 
 #: risks/models/ebios/study_framework.py:29
+#: risks/templates/risks/ebios/workshop_w0.html:36
 msgid "Temporal perimeter"
 msgstr "Périmètre temporel"
 
 #: risks/models/ebios/study_framework.py:31
+#: risks/templates/risks/ebios/workshop_w0.html:41
 #, fuzzy
 #| msgid "Financial"
 msgid "Financial envelope"
 msgstr "Financier"
 
 #: risks/models/ebios/study_framework.py:41
+#: risks/templates/risks/ebios/workshop_w0.html:48
 #, fuzzy
 #| msgid "Internal policies"
 msgid "Internal participants"
@@ -10336,24 +10376,28 @@ msgstr ""
 "organization}."
 
 #: risks/models/ebios/study_framework.py:53
+#: risks/templates/risks/ebios/workshop_w0.html:61
 #, fuzzy
 #| msgid "Active frameworks"
 msgid "Applicable frameworks"
 msgstr "Référentiels actifs"
 
 #: risks/models/ebios/study_framework.py:55
+#: risks/templates/risks/ebios/workshop_w0.html:74
 #, fuzzy
 #| msgid "Actions"
 msgid "Assumptions"
 msgstr "Actions"
 
 #: risks/models/ebios/study_framework.py:56
+#: risks/templates/risks/ebios/workshop_w0.html:81
 #, fuzzy
 #| msgid "Consulting"
 msgid "Constraints"
 msgstr "Conseil"
 
 #: risks/models/ebios/study_framework.py:57
+#: risks/templates/risks/ebios/workshop_w0.html:88
 #, fuzzy
 #| msgid "Expected level"
 msgid "Expected deliverables"
@@ -10404,12 +10448,6 @@ msgstr "Numéro de série"
 #| msgid "Start date"
 msgid "Started at"
 msgstr "Date de début"
-
-#: risks/models/ebios/workshop_progress.py:60
-#, fuzzy
-#| msgid "Cancel action plan"
-msgid "Rejection reason"
-msgstr "Annuler le plan d'action"
 
 #: risks/models/ebios/workshop_progress.py:61
 #, fuzzy
@@ -10987,17 +11025,63 @@ msgstr "Acceptations expirant sous 90 jours"
 msgid "No acceptances expiring in the next 90 days."
 msgstr "Aucune acceptation n'expire dans les 90 prochains jours."
 
-#: risks/templates/risks/ebios/_workshop_stepper.html:11
+#: risks/templates/risks/ebios/_workshop_base.html:34
+#| msgid "Item type"
+msgid "Iteration"
+msgstr "Itération"
+
+#: risks/templates/risks/ebios/_workshop_base.html:45
+#| msgid "Retained for workshop 3"
+msgid "Start workshop"
+msgstr "Démarrer l'atelier"
+
+#: risks/templates/risks/ebios/_workshop_base.html:53
+#| msgid "Supplier reviews"
+msgid "Submit for review"
+msgstr "Soumettre en revue"
+
+#: risks/templates/risks/ebios/_workshop_base.html:59
+msgid "Validate this workshop? This action is recorded in the audit trail."
+msgstr "Valider cet atelier ? L'action est enregistrée dans le journal d'audit."
+
+#: risks/templates/risks/ebios/_workshop_base.html:62
+#| msgid "Validate"
+msgid "Validate workshop"
+msgstr "Valider l'atelier"
+
+#: risks/templates/risks/ebios/_workshop_base.html:69
+#: risks/templates/risks/ebios/_workshop_base.html:104
+#| msgid "Cancel action plan"
+msgid "Reject workshop"
+msgstr "Rejeter l'atelier"
+
+#: risks/templates/risks/ebios/_workshop_base.html:78
+#| msgid "Mon"
+msgid "on"
+msgstr "le"
+
+#: risks/templates/risks/ebios/_workshop_base.html:109
+msgid ""
+"Document the reason for rejection. The workshop will move to the rejected "
+"state and can be restarted later."
+msgstr "Documentez le motif du rejet. L'atelier passe à l'état rejeté et peut être redémarré ultérieurement."
+
+#: risks/templates/risks/ebios/_workshop_base.html:118
+#| msgid "Restricted"
+msgid "Reject"
+msgstr "Rejeter"
+
+#: risks/templates/risks/ebios/_workshop_stepper.html:18
 msgid "EBIOS RM workshops"
 msgstr "Ateliers EBIOS RM"
 
-#: risks/templates/risks/ebios/_workshop_stepper.html:13
+#: risks/templates/risks/ebios/_workshop_stepper.html:20
 #, fuzzy, python-format
 #| msgid "%(count)s expired contract(s)"
 msgid "%(current)s workshop tracker(s)"
 msgstr "%(count)s contrat(s) expiré(s)"
 
-#: risks/templates/risks/ebios/_workshop_stepper.html:20
+#: risks/templates/risks/ebios/_workshop_stepper.html:27
 msgid ""
 "Workshop tracking is initializing. Save the assessment again if this message "
 "persists."
@@ -11005,13 +11089,216 @@ msgstr ""
 "Le suivi des ateliers est en cours d'initialisation. Sauvegardez à nouveau "
 "l'appréciation si le message persiste."
 
-#: risks/templates/risks/ebios/_workshop_stepper.html:36
+#: risks/templates/risks/ebios/baseline_gap_form.html:4
+#: risks/templates/risks/ebios/baseline_gap_form.html:20
+#| msgid "Linked baseline gaps"
+msgid "Edit baseline gap"
+msgstr "Modifier l'écart au socle"
+
+#: risks/templates/risks/ebios/baseline_gap_form.html:4
+#: risks/templates/risks/ebios/baseline_gap_form.html:20
+#| msgid "Linked baseline gaps"
+msgid "Add baseline gap"
+msgstr "Ajouter un écart au socle"
+
+#: risks/templates/risks/ebios/baseline_gap_form.html:12
+#| msgid "EBIOS RM baseline gap"
+msgid "Baseline gap"
+msgstr "Écart au socle"
+
+#: risks/templates/risks/ebios/baseline_gap_form.html:31
 msgid ""
-"Workshop pages (W1 baseline, W2-W5) are delivered in subsequent lots. The "
-"data model and APIs are already available."
-msgstr ""
-"Les pages d'atelier (W1 socle, W2-W5) sont livrées dans les lots suivants. "
-"Le modèle de données et les API sont déjà disponibles."
+"Example: ISO 27002:2022 A.5.1, ANSSI hygiene guide #12, internal policy "
+"POL-007."
+msgstr "Exemple : ISO 27002:2022 A.5.1, guide d'hygiène ANSSI #12, politique interne POL-007."
+
+#: risks/templates/risks/ebios/baseline_gap_form.html:48
+#| msgid "Custom title when not linked to a compliance requirement."
+msgid "Optional link to a compliance requirement for traceability."
+msgstr "Lien optionnel vers une exigence de conformité pour la traçabilité."
+
+#: risks/templates/risks/ebios/confirm_delete.html:12
+#, fuzzy, python-format
+#| msgid "Are you sure you want to delete <strong>%(object)s</strong>?"
+msgid "Are you sure you want to delete <strong>%(obj)s</strong>?"
+msgstr "Êtes-vous sûr de vouloir supprimer <strong>%(object)s</strong> ?"
+
+#: risks/templates/risks/ebios/confirm_delete.html:13
+#| msgid "This assessment is locked and cannot be modified."
+msgid "This action cannot be undone."
+msgstr "Cette action est irréversible."
+
+#: risks/templates/risks/ebios/feared_event_form.html:4
+#: risks/templates/risks/ebios/feared_event_form.html:20
+#| msgid "EBIOS RM feared event"
+msgid "Edit feared event"
+msgstr "Modifier l'événement redouté"
+
+#: risks/templates/risks/ebios/feared_event_form.html:4
+#: risks/templates/risks/ebios/feared_event_form.html:20
+#| msgid "Targeted feared events"
+msgid "Add feared event"
+msgstr "Ajouter un événement redouté"
+
+#: risks/templates/risks/ebios/feared_event_form.html:12
+#| msgid "EBIOS RM feared event"
+msgid "Feared event"
+msgstr "Événement redouté"
+
+#: risks/templates/risks/ebios/security_baseline_form.html:4
+#| msgid "Security tool"
+msgid "Edit security baseline"
+msgstr "Modifier le socle de sécurité"
+
+#: risks/templates/risks/ebios/security_baseline_form.html:27
+msgid "Activities representing the business values in scope."
+msgstr "Activités représentant les valeurs métier dans le périmètre."
+
+#: risks/templates/risks/ebios/security_baseline_form.html:40
+msgid ""
+"Frameworks composing the applicable baseline (ISO 27002, ANSSI hygiene, "
+"etc.)."
+msgstr "Référentiels composant le socle applicable (ISO 27002, hygiène ANSSI, etc.)."
+
+#: risks/templates/risks/ebios/study_framework_form.html:4
+#: risks/templates/risks/ebios/study_framework_form.html:11
+#: risks/templates/risks/ebios/workshop_w0.html:96
+#| msgid "Edit framework"
+msgid "Edit study framework"
+msgstr "Modifier le cadre de l'étude"
+
+#: risks/templates/risks/ebios/study_framework_form.html:54
+msgid "Hold Ctrl / Cmd to select multiple participants."
+msgstr "Maintenez Ctrl / Cmd pour sélectionner plusieurs participants."
+
+#: risks/templates/risks/ebios/study_framework_form.html:59
+msgid "Hold Ctrl / Cmd to select multiple frameworks."
+msgstr "Maintenez Ctrl / Cmd pour sélectionner plusieurs référentiels."
+
+#: risks/templates/risks/ebios/workshop_generic.html:9
+msgid ""
+"This workshop does not have a dedicated page yet. Use the REST API or MCP "
+"tools to interact with the underlying entities."
+msgstr "Cet atelier n'a pas encore de page dédiée. Utilisez l'API REST ou les outils MCP pour interagir avec les entités sous-jacentes."
+
+#: risks/templates/risks/ebios/workshop_w0.html:7
+#, fuzzy
+#| msgid "Source framework"
+msgid "Study framework"
+msgstr "Référentiel source"
+
+#: risks/templates/risks/ebios/workshop_w0.html:14
+msgid ""
+"Define the pre-requisites of the EBIOS RM study: mission, perimeters, "
+"participants, applicable frameworks and constraints."
+msgstr "Définissez les prérequis de l'étude EBIOS RM : mission, périmètres, participants, référentiels applicables et contraintes."
+
+#: risks/templates/risks/ebios/workshop_w1.html:15
+msgid ""
+"Capture the business values and support assets in scope plus the referential "
+"security baseline."
+msgstr "Recensez les valeurs métier et les biens supports dans le périmètre ainsi que le socle de sécurité référentiel."
+
+#: risks/templates/risks/ebios/workshop_w1.html:43
+#| msgid "Security tool"
+msgid "Edit baseline"
+msgstr "Modifier le socle"
+
+#: risks/templates/risks/ebios/workshop_w1.html:51
+#| msgid "EBIOS RM feared events"
+msgid "Feared events"
+msgstr "Événements redoutés"
+
+#: risks/templates/risks/ebios/workshop_w1.html:67
+#, fuzzy
+#| msgid "Impact level"
+msgid "Gravity"
+msgstr "Niveau d'impact"
+
+#: risks/templates/risks/ebios/workshop_w1.html:105
+msgid ""
+"No feared event yet. Add at least one feared event per essential asset and "
+"DIC criterion."
+msgstr "Aucun événement redouté pour le moment. Ajoutez au moins un événement redouté par bien essentiel et par critère DIC."
+
+#: risks/templates/risks/ebios/workshop_w1.html:114
+#| msgid "EBIOS RM baseline gaps"
+msgid "Baseline gaps"
+msgstr "Écarts au socle"
+
+#: risks/templates/risks/ebios/workshop_w1.html:166
+msgid ""
+"No baseline gap recorded yet. Document any deviation from the applicable "
+"security baseline."
+msgstr "Aucun écart au socle pour le moment. Documentez tout écart par rapport au socle de sécurité applicable."
+
+#: risks/templates/risks/ebios/workshop_w2.html:7
+#| msgid "EBIOS RM targeted objectives"
+msgid "Risk sources and targeted objectives"
+msgstr "Sources de risque et objectifs visés"
+
+#: risks/templates/risks/ebios/workshop_w2.html:12
+msgid ""
+"The risk sources, targeted objectives and SR/OV pair management UI is under "
+"construction."
+msgstr "L'interface de gestion des sources de risque, objectifs visés et couples SR/OV est en cours de construction."
+
+#: risks/templates/risks/ebios/workshop_w2.html:15
+msgid "The backend is fully available through the REST API and MCP tools:"
+msgstr "Le backend est entièrement disponible via l'API REST et les outils MCP :"
+
+#: risks/templates/risks/ebios/workshop_w3.html:7
+#| msgid "Parent strategic scenario"
+msgid "Ecosystem and strategic scenarios"
+msgstr "Écosystème et scénarios stratégiques"
+
+#: risks/templates/risks/ebios/workshop_w3.html:12
+msgid ""
+"The ecosystem cartography and strategic scenarios UI is under construction."
+msgstr "L'interface de cartographie de l'écosystème et des scénarios stratégiques est en cours de construction."
+
+#: risks/templates/risks/ebios/workshop_w3.html:15
+msgid "The backend exposes the ecosystem graph at"
+msgstr "Le backend expose le graphe de l'écosystème via"
+
+#: risks/templates/risks/ebios/workshop_w4.html:7
+#| msgid "Operational scenario"
+msgid "Operational scenarios"
+msgstr "Scénarios opérationnels"
+
+#: risks/templates/risks/ebios/workshop_w4.html:12
+msgid ""
+"The operational scenarios UI with MITRE ATT&CK autocomplete is under "
+"construction."
+msgstr "L'interface des scénarios opérationnels avec autocomplétion MITRE ATT&CK est en cours de construction."
+
+#: risks/templates/risks/ebios/workshop_w4.html:15
+msgid "The backend exposes the MITRE heatmap at"
+msgstr "Le backend expose la heatmap MITRE via"
+
+#: risks/templates/risks/ebios/workshop_w4.html:17
+#| msgid "Validation date"
+msgid "and consolidation at"
+msgstr "et la consolidation via"
+
+#: risks/templates/risks/ebios/workshop_w5.html:7
+#| msgid "Summary"
+msgid "Summary and PACS"
+msgstr "Synthèse et PACS"
+
+#: risks/templates/risks/ebios/workshop_w5.html:12
+msgid ""
+"The summary editor and PACS measure management UI is under construction."
+msgstr "L'interface d'édition de la synthèse et de gestion des mesures du PACS est en cours de construction."
+
+#: risks/templates/risks/ebios/workshop_w5.html:15
+msgid "The backend exposes capture mappings at"
+msgstr "Le backend expose la capture des cartographies via"
+
+#: risks/templates/risks/ebios/workshop_w5.html:17
+#| msgid "EBIOS RM PACS measures"
+msgid "and PACS measures at"
+msgstr "et les mesures du PACS via"
 
 #: risks/templates/risks/iso27005_risk_detail.html:23
 msgid "Calculation"
@@ -11377,6 +11664,42 @@ msgstr "Cette analyse est déjà liée à un risque."
 #, python-format
 msgid "Risk \"%(ref)s\" created from the ISO 27005 analysis."
 msgstr "Risque « %(ref)s » créé à partir de l'analyse ISO 27005."
+
+#: risks/views_ebios.py:82
+#| msgid "Start date"
+msgid "Workshop status updated."
+msgstr "Statut de l'atelier mis à jour."
+
+#: risks/views_ebios.py:97
+msgid "Workshop is already in progress or beyond."
+msgstr "L'atelier est déjà en cours ou au-delà."
+
+#: risks/views_ebios.py:107
+#, python-format
+msgid "Workshop %(num)d must be validated before workshop %(next)d can start."
+msgstr "L'atelier %(num)d doit être validé avant que l'atelier %(next)d puisse démarrer."
+
+#: risks/views_ebios.py:120
+msgid "Only in-progress workshops can be submitted for review."
+msgstr "Seuls les ateliers en cours peuvent être soumis en revue."
+
+#: risks/views_ebios.py:133
+msgid "Only in-progress or under-review workshops can be validated."
+msgstr "Seuls les ateliers en cours ou en revue peuvent être validés."
+
+#: risks/views_ebios.py:146
+msgid "Only in-progress or under-review workshops can be rejected."
+msgstr "Seuls les ateliers en cours ou en revue peuvent être rejetés."
+
+#: risks/views_ebios.py:165
+#| msgid "The email address is required."
+msgid "A rejection reason is required."
+msgstr "Un motif de rejet est requis."
+
+#: risks/views_ebios.py:173
+#| msgid "No risks selected."
+msgid "Workshop rejected."
+msgstr "Atelier rejeté."
 
 #: templates/base.html:2398
 #, python-format
