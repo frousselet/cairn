@@ -4173,6 +4173,192 @@ def _register_risks_tools(server):
         require_perm("risks.treatment.update")(_set_treatment_plan_action_plans),
     )
 
+    # ── EBIOS RM Foundation (workshops W0 and W1) ──────────────
+    #
+    # Tools cover the study framework (W0), workshop progress tracking, the
+    # security baseline (W1) and its feared events and baseline gaps. The
+    # post_save signal on RiskAssessment already creates one StudyFramework,
+    # one SecurityBaseline and six EbiosWorkshopProgress rows when an
+    # assessment with methodology=ebios_rm is saved - the create_* tools
+    # below are typically only needed for edge cases (manual recreation
+    # after a deletion, or a fresh iteration).
+
+    StudyFramework = _get_model("risks", "StudyFramework")
+    EbiosWorkshopProgress = _get_model("risks", "EbiosWorkshopProgress")
+    SecurityBaseline = _get_model("risks", "SecurityBaseline")
+    FearedEvent = _get_model("risks", "FearedEvent")
+    BaselineGap = _get_model("risks", "BaselineGap")
+
+    sf_fields = [
+        "id", "reference", "assessment_id", "mission_statement",
+        "business_perimeter", "technical_perimeter", "temporal_perimeter",
+        "financial_envelope", "assumptions", "constraints",
+        "expected_deliverables", "status", "created_at", "updated_at",
+    ]
+    sf_writable = [
+        "assessment_id", "mission_statement", "business_perimeter",
+        "technical_perimeter", "temporal_perimeter", "financial_envelope",
+        "assumptions", "constraints", "expected_deliverables", "status",
+    ]
+    _register_crud(
+        server, "ebios_study_framework", StudyFramework, "risks.ebios_assessment",
+        list_fields=sf_fields,
+        writable_fields=sf_writable,
+        search_fields=["reference", "mission_statement", "business_perimeter"],
+        filters=["assessment_id", "status"],
+        scope_filtered=False,
+        has_approve=False,
+        required_fields=["assessment_id"],
+        field_overrides={
+            "mission_statement": _html_field("Mission statement"),
+            "business_perimeter": _html_field("Business perimeter"),
+            "technical_perimeter": _html_field("Technical perimeter"),
+            "status": {
+                "type": "string",
+                "description": "Study framework status: draft, validated.",
+            },
+        },
+    )
+
+    wp_fields = [
+        "id", "reference", "assessment_id", "workshop_number",
+        "iteration_type", "iteration_number", "status", "started_at",
+        "validated_by_id", "validated_at", "rejection_reason",
+        "deliverables_summary", "notes", "created_at", "updated_at",
+    ]
+    wp_writable = [
+        "assessment_id", "workshop_number", "iteration_type",
+        "iteration_number", "status", "started_at",
+        "deliverables_summary", "notes",
+    ]
+    _register_crud(
+        server, "ebios_workshop", EbiosWorkshopProgress, "risks.ebios_assessment",
+        list_fields=wp_fields,
+        writable_fields=wp_writable,
+        search_fields=["reference", "notes"],
+        filters=[
+            "assessment_id", "workshop_number", "iteration_type",
+            "iteration_number", "status",
+        ],
+        scope_filtered=False,
+        has_approve=False,
+        required_fields=["assessment_id", "workshop_number"],
+        field_overrides={
+            "workshop_number": {
+                "type": "integer",
+                "description": "Workshop number 0..5 (0=study framework, 1=baseline, 5=treatment).",
+            },
+            "iteration_type": {
+                "type": "string",
+                "description": "Iteration type: strategic (annual) or operational (semestrial).",
+            },
+            "iteration_number": {
+                "type": "integer",
+                "description": "Iteration number (starts at 1).",
+            },
+            "status": {
+                "type": "string",
+                "description": "Workshop status: not_started, in_progress, under_review, validated, rejected.",
+            },
+        },
+    )
+
+    sb_fields = [
+        "id", "reference", "assessment_id", "dic_summary", "status",
+        "is_approved", "created_at", "updated_at",
+    ]
+    sb_writable = ["assessment_id", "dic_summary", "status"]
+    _register_crud(
+        server, "ebios_security_baseline", SecurityBaseline, "risks.ebios_baseline",
+        list_fields=sb_fields,
+        writable_fields=sb_writable,
+        search_fields=["reference", "dic_summary"],
+        filters=["assessment_id", "status"],
+        scope_filtered=False,
+        has_approve=True,
+        required_fields=["assessment_id"],
+        field_overrides={
+            "dic_summary": _html_field("DIC needs summary"),
+            "status": {
+                "type": "string",
+                "description": "Baseline status: draft, in_progress, completed.",
+            },
+        },
+    )
+
+    fe_fields = [
+        "id", "reference", "baseline_id", "essential_asset_id", "name",
+        "description", "dic_criterion", "gravity_level",
+        "gravity_justification", "order", "created_at", "updated_at",
+    ]
+    fe_writable = [
+        "baseline_id", "essential_asset_id", "name", "description",
+        "dic_criterion", "gravity_level", "gravity_justification",
+        "business_impacts", "order",
+    ]
+    _register_crud(
+        server, "ebios_feared_event", FearedEvent, "risks.ebios_baseline",
+        list_fields=fe_fields,
+        writable_fields=fe_writable,
+        search_fields=["reference", "name", "description"],
+        filters=["baseline_id", "essential_asset_id", "dic_criterion"],
+        scope_filtered=False,
+        has_approve=False,
+        required_fields=["baseline_id", "essential_asset_id", "name", "dic_criterion"],
+        field_overrides={
+            "description": _html_field("Description"),
+            "gravity_justification": _html_field("Gravity justification"),
+            "dic_criterion": {
+                "type": "string",
+                "description": "DIC criterion impaired: confidentiality, integrity, availability.",
+            },
+            "gravity_level": {
+                "type": "integer",
+                "description": "Gravity level on the assessment impact scale (e.g. 1-4 or 1-5).",
+            },
+            "business_impacts": {
+                "type": "object",
+                "description": (
+                    "Optional business impact breakdown. Accepts a JSON object with keys "
+                    "such as financial, legal, reputation, operational, human, environmental."
+                ),
+            },
+        },
+    )
+
+    bg_fields = [
+        "id", "reference", "baseline_id", "reference_source",
+        "linked_requirement_id", "description", "severity", "status",
+        "recommended_remediation", "order", "created_at", "updated_at",
+    ]
+    bg_writable = [
+        "baseline_id", "reference_source", "linked_requirement_id",
+        "description", "severity", "recommended_remediation", "status",
+        "order",
+    ]
+    _register_crud(
+        server, "ebios_baseline_gap", BaselineGap, "risks.ebios_baseline",
+        list_fields=bg_fields,
+        writable_fields=bg_writable,
+        search_fields=["reference", "reference_source", "description"],
+        filters=["baseline_id", "linked_requirement_id", "severity", "status"],
+        scope_filtered=False,
+        has_approve=False,
+        required_fields=["baseline_id", "reference_source", "description"],
+        field_overrides={
+            "description": _html_field("Description"),
+            "recommended_remediation": _html_field("Recommended remediation"),
+            "severity": {
+                "type": "string",
+                "description": "Severity: low, medium, high, critical.",
+            },
+            "status": {
+                "type": "string",
+                "description": "Gap status: identified, accepted, in_remediation, remediated.",
+            },
+        },
+    )
+
 
 # ── Accounts Module ────────────────────────────────────────
 

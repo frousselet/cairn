@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- EBIOS RM (ANSSI v1.5) foundation (workshops W0 and W1): new sub-package `risks/models/ebios/` with `StudyFramework` (EFRA), `EbiosWorkshopProgress` (EWSP), `SecurityBaseline` (EBSL), `FearedEvent` (EFER) and `BaselineGap` (EBGP). A `post_save` signal on `RiskAssessment` automatically bootstraps one study framework, one security baseline and six workshop progress trackers (W0..W5, strategic cycle, iteration 1) whenever an assessment with `methodology = ebios_rm` is saved
+- EBIOS RM REST API under `/api/v1/risks/ebios/` for study frameworks, workshops, baselines, feared events and baseline gaps, with filters per assessment, DIC criterion, severity and status
+- 31 new MCP tools covering CRUD plus batch-create on every W0/W1 entity (`list_*`, `get_*`, `create_*`, `update_*`, `delete_*`, `batch_create_*` and `approve_ebios_security_baseline`)
+- 7 new permission features under `risks` module (`ebios_assessment`, `ebios_baseline`, `ebios_risk_source`, `ebios_ecosystem`, `ebios_strategic`, `ebios_operational`, `ebios_summary`) covering workshops W0 to W5 in one shot, with sensible grants for each of the six system groups
+- EBIOS RM workshop stepper component (`risks/templates/risks/ebios/_workshop_stepper.html`) rendered on the assessment detail page when `methodology = ebios_rm`, replacing the previous static placeholder. It shows the live status of W0..W5 with light/dark-aware styling
+- `M4bis_EBIOS_RM_Specifications.md` ANSSI-aligned spec replacing section 4 of the M4 document. Covers the 16 EBIOS entities, ANSSI scoring grids (motivation x ressources x activite, threat zone (dependency x penetration) / (maturity x trust), V1-V4 likelihood), iterative cycles (strategic vs operational) and validation gates per workshop
 - Persistent management review workflow (ISO 27001:2022 clause 9.3) with full life cycle (planned, in_preparation, held, closed, cancelled), horizontal stepper, snapshot-based auditability, and 2-column detail layout
 - `ManagementReview` model (title, frequency, period, planned/held dates, facilitator, approver, scopes, agenda, summary, next review date)
 - `ManagementReviewDecision` for clause 9.3.3 outputs, with category, input clause, owner, due date, priority, status, and promote-to-action-plan flow

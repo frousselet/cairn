@@ -226,6 +226,34 @@ PERMISSION_REGISTRY = {
             "actions": ["create", "read", "update", "delete", "approve"],
             "label": _("ISO 27005 analyses"),
         },
+        "ebios_assessment": {
+            "actions": ["read", "update", "validate"],
+            "label": _("EBIOS RM assessment pilotage"),
+        },
+        "ebios_baseline": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("EBIOS RM security baseline (workshop 1)"),
+        },
+        "ebios_risk_source": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("EBIOS RM risk sources and objectives (workshop 2)"),
+        },
+        "ebios_ecosystem": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("EBIOS RM ecosystem stakeholders (workshop 3)"),
+        },
+        "ebios_strategic": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("EBIOS RM strategic scenarios (workshop 3)"),
+        },
+        "ebios_operational": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("EBIOS RM operational scenarios (workshop 4)"),
+        },
+        "ebios_summary": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("EBIOS RM summary and PACS (workshop 5)"),
+        },
         "export": {
             "actions": ["read"],
             "label": _("Risk export"),
@@ -300,6 +328,10 @@ ACTION_LABELS = {
     "cancel": pgettext_lazy("permission", "Cancel"),
     "impersonate": _("Impersonate"),
 }
+
+# Convenience: EBIOS RM feature names share the `ebios_` prefix so the UI can
+# group them in dedicated sections under the Risks module.
+EBIOS_FEATURE_PREFIX = "ebios_"
 
 # Module labels for display
 MODULE_LABELS = {

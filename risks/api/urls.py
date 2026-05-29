@@ -20,4 +20,5 @@ app_name = "risks-api"
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("ebios/", include("risks.api.ebios.urls")),
 ]

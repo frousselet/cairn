@@ -202,3 +202,55 @@ DEFAULT_RISK_MATRIX = {
     (2, 1): 2, (2, 2): 2, (2, 3): 3, (2, 4): 3, (2, 5): 4,
     (1, 1): 1, (1, 2): 2, (1, 3): 2, (1, 4): 3, (1, 5): 3,
 }
+
+
+# EBIOS RM (ANSSI v1.5) constants - workshops W0 and W1
+
+class EbiosWorkshopNumber(models.IntegerChoices):
+    W0 = 0, _("Workshop 0 - Study framework")
+    W1 = 1, _("Workshop 1 - Security baseline")
+    W2 = 2, _("Workshop 2 - Risk sources")
+    W3 = 3, _("Workshop 3 - Strategic scenarios")
+    W4 = 4, _("Workshop 4 - Operational scenarios")
+    W5 = 5, _("Workshop 5 - Risk treatment")
+
+
+class EbiosWorkshopStatus(models.TextChoices):
+    NOT_STARTED = "not_started", _("Not started")
+    IN_PROGRESS = "in_progress", _("In progress")
+    UNDER_REVIEW = "under_review", _("Under review")
+    VALIDATED = "validated", _("Validated")
+    REJECTED = "rejected", _("Rejected")
+
+
+class EbiosIterationType(models.TextChoices):
+    STRATEGIC = "strategic", _("Strategic cycle")
+    OPERATIONAL = "operational", _("Operational cycle")
+
+
+class EbiosStudyFrameworkStatus(models.TextChoices):
+    DRAFT = "draft", _("Draft")
+    VALIDATED = "validated", _("Validated")
+
+
+class EbiosBaselineStatus(models.TextChoices):
+    DRAFT = "draft", _("Draft")
+    IN_PROGRESS = "in_progress", _("In progress")
+    COMPLETED = "completed", _("Completed")
+
+
+class DICCriterion(models.TextChoices):
+    CONFIDENTIALITY = "confidentiality", _("Confidentiality")
+    INTEGRITY = "integrity", _("Integrity")
+    AVAILABILITY = "availability", _("Availability")
+
+
+class BaselineGapStatus(models.TextChoices):
+    IDENTIFIED = "identified", _("Identified")
+    ACCEPTED = "accepted", _("Accepted")
+    IN_REMEDIATION = "in_remediation", _("In remediation")
+    REMEDIATED = "remediated", _("Remediated")
+
+
+# Total number of workshops produced for every EBIOS RM assessment (W0..W5)
+EBIOS_WORKSHOP_COUNT = 6

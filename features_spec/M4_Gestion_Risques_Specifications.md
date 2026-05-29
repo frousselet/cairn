@@ -321,6 +321,8 @@ Représente l'analyse détaillée d'un scénario de risque selon la méthodologi
 
 ## 4. Modèle de données — Sous-module EBIOS RM
 
+> **Note de remplacement (29 mai 2026)** : la présente section est **obsolète** et entièrement remplacée par le document dédié [M4bis_EBIOS_RM_Specifications.md](M4bis_EBIOS_RM_Specifications.md), qui aligne le sous-module EBIOS RM sur le guide ANSSI v1.5 (2024). Le M4bis ajoute notamment le cadre d'étude (atelier 0), le suivi des portes de validation par atelier, les formules de scoring ANSSI (niveau de menace SR, niveau de menace écosystème, vraisemblance V1-V4), le cycle stratégique vs opérationnel, l'intégration MITRE ATT&CK et la structuration du PACS. Toute implémentation EBIOS RM doit se référer au M4bis. Les sections §2 (socle commun), §3 (ISO 27005), §5 (règles), §6 (API), §7 (UI), §8 (permissions), §10 (export) du présent document restent valides pour les parties non EBIOS.
+
 ### 4.1 Atelier 1 — Socle de sécurité
 
 L'atelier 1 s'appuie principalement sur les données des Modules 1 (Contexte) et 2 (Actifs). Il ajoute une couche d'analyse spécifique.

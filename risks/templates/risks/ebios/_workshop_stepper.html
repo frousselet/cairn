@@ -1,0 +1,68 @@
+{% load i18n %}
+{# EBIOS RM workshop stepper (workshops W0..W5).
+
+   Renders a horizontal sequence of pills based on the EbiosWorkshopProgress
+   rows attached to the current assessment. Workshop pages are not yet
+   implemented for W1..W5 - this template only displays the progression
+   produced by the Foundation lot.
+#}
+<div class="card mb-4" style="border-left:4px solid var(--info)">
+  <div class="card-header d-flex align-items-center flex-wrap gap-2">
+    <h5 class="mb-0"><i class="bi bi-signpost-2 me-2"></i>{% trans "EBIOS RM workshops" %}</h5>
+    <span class="badge text-bg-info ms-auto">
+      {% blocktrans with current=ebios_workshops|length %}{{ current }} workshop tracker(s){% endblocktrans %}
+    </span>
+  </div>
+  <div class="card-body">
+    {% if not ebios_workshops %}
+      <div class="alert alert-warning mb-0">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {% trans "Workshop tracking is initializing. Save the assessment again if this message persists." %}
+      </div>
+    {% else %}
+      <ol class="ebios-stepper list-unstyled d-flex flex-wrap gap-2 mb-3">
+        {% for w in ebios_workshops %}
+          <li class="ebios-step ebios-step-{{ w.status }}">
+            <span class="ebios-step-num">W{{ w.workshop_number }}</span>
+            <div class="ebios-step-body">
+              <div class="ebios-step-title">{{ w.get_workshop_number_display }}</div>
+              <div class="ebios-step-status small text-muted">{{ w.get_status_display }}</div>
+            </div>
+          </li>
+        {% endfor %}
+      </ol>
+      <p class="text-muted small mb-0">
+        <i class="bi bi-info-circle me-1"></i>
+        {% trans "Workshop pages (W1 baseline, W2-W5) are delivered in subsequent lots. The data model and APIs are already available." %}
+      </p>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+.ebios-stepper { counter-reset: ebios; }
+.ebios-step {
+  display: flex; gap: .6rem; align-items: center;
+  padding: .5rem .75rem; border-radius: .5rem;
+  border: 1px solid var(--bs-border-color, rgba(0,0,0,.15));
+  background: var(--bs-body-bg, transparent);
+  min-width: 200px;
+}
+.ebios-step-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.25rem; height: 2.25rem; border-radius: 50%;
+  font-weight: 600;
+  background: var(--bs-secondary-bg, rgba(0,0,0,.06));
+  color: var(--bs-secondary-color, currentColor);
+}
+.ebios-step-title { font-weight: 600; font-size: .9rem; }
+.ebios-step-not_started { opacity: .65; border-style: dashed; }
+.ebios-step-in_progress { border-color: var(--bs-primary, #0d6efd); }
+.ebios-step-in_progress .ebios-step-num { background: var(--bs-primary-bg-subtle, rgba(13,110,253,.15)); color: var(--bs-primary, #0d6efd); }
+.ebios-step-under_review { border-color: var(--bs-warning, #ffc107); }
+.ebios-step-under_review .ebios-step-num { background: var(--bs-warning-bg-subtle, rgba(255,193,7,.18)); color: var(--bs-warning-text-emphasis, #997404); }
+.ebios-step-validated { border-color: var(--bs-success, #198754); }
+.ebios-step-validated .ebios-step-num { background: var(--bs-success-bg-subtle, rgba(25,135,84,.15)); color: var(--bs-success, #198754); }
+.ebios-step-rejected { border-color: var(--bs-danger, #dc3545); }
+.ebios-step-rejected .ebios-step-num { background: var(--bs-danger-bg-subtle, rgba(220,53,69,.15)); color: var(--bs-danger, #dc3545); }
+</style>

@@ -25,6 +25,8 @@ from .constants import (
     DEFAULT_LIKELIHOOD_SCALES,
     DEFAULT_RISK_LEVELS,
     DEFAULT_RISK_MATRIX,
+    EbiosIterationType,
+    Methodology,
     RiskPriority,
     RiskStatus,
     TreatmentDecision,
@@ -452,6 +454,14 @@ class RiskAssessmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scop
         # Catalog counts for methodology workflow steps
         ctx["threat_count"] = Threat.objects.count()
         ctx["vulnerability_count"] = Vulnerability.objects.count()
+
+        # EBIOS RM workshop progress (only meaningful for ebios_rm assessments)
+        if self.object.methodology == Methodology.EBIOS_RM:
+            ctx["ebios_workshops"] = list(
+                self.object.ebios_workshops.filter(
+                    iteration_type=EbiosIterationType.STRATEGIC,
+                ).order_by("iteration_number", "workshop_number")
+            )
 
         # Risk matrices for this assessment
         criteria = self.object.risk_criteria

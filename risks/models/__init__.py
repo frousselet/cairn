@@ -6,10 +6,19 @@ from .acceptance import RiskAcceptance
 from .threat import Threat
 from .vulnerability import Vulnerability
 from .iso27005_risk import ISO27005Risk
+from .ebios import (
+    StudyFramework,
+    EbiosWorkshopProgress,
+    SecurityBaseline,
+    FearedEvent,
+    BaselineGap,
+)
 
 __all__ = [
     "RiskCriteria", "ScaleLevel", "RiskLevel",
     "RiskAssessment", "Risk",
     "RiskTreatmentPlan", "TreatmentAction",
     "RiskAcceptance", "Threat", "Vulnerability", "ISO27005Risk",
+    "StudyFramework", "EbiosWorkshopProgress",
+    "SecurityBaseline", "FearedEvent", "BaselineGap",
 ]

@@ -4,16 +4,30 @@ from context.tests.factories import ScopeFactory
 from risks.constants import (
     AcceptanceStatus,
     ActionStatus,
+    BaselineGapStatus,
+    DICCriterion,
+    EbiosBaselineStatus,
+    EbiosIterationType,
+    EbiosStudyFrameworkStatus,
+    EbiosWorkshopNumber,
+    EbiosWorkshopStatus,
+    Methodology,
+    Severity,
     ThreatType,
     TreatmentPlanStatus,
     TreatmentType,
 )
 from risks.models import (
+    BaselineGap,
+    EbiosWorkshopProgress,
+    FearedEvent,
     ISO27005Risk,
     Risk,
     RiskAcceptance,
     RiskAssessment,
     RiskTreatmentPlan,
+    SecurityBaseline,
+    StudyFramework,
     Threat,
     TreatmentAction,
     Vulnerability,
@@ -155,3 +169,74 @@ class ISO27005RiskFactory(factory.django.DjangoModelFactory):
     assessment = factory.SubFactory(RiskAssessmentFactory)
     threat = factory.SubFactory(ThreatFactory)
     vulnerability = factory.SubFactory(VulnerabilityFactory)
+
+
+# EBIOS RM factories (workshops W0 and W1)
+
+class EbiosAssessmentFactory(RiskAssessmentFactory):
+    """RiskAssessment with methodology=ebios_rm.
+
+    The post_save signal `bootstrap_ebios_artifacts` automatically creates
+    one StudyFramework, one SecurityBaseline and six EbiosWorkshopProgress
+    rows when the assessment is persisted.
+    """
+
+    methodology = Methodology.EBIOS_RM
+
+
+class StudyFrameworkFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = StudyFramework
+        django_get_or_create = ("assessment",)
+
+    assessment = factory.SubFactory(EbiosAssessmentFactory)
+    mission_statement = factory.Sequence(lambda n: f"Mission {n}")
+    status = EbiosStudyFrameworkStatus.DRAFT
+
+
+class EbiosWorkshopProgressFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EbiosWorkshopProgress
+        django_get_or_create = (
+            "assessment",
+            "workshop_number",
+            "iteration_type",
+            "iteration_number",
+        )
+
+    assessment = factory.SubFactory(EbiosAssessmentFactory)
+    workshop_number = EbiosWorkshopNumber.W0
+    iteration_type = EbiosIterationType.STRATEGIC
+    iteration_number = 1
+    status = EbiosWorkshopStatus.NOT_STARTED
+
+
+class SecurityBaselineFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = SecurityBaseline
+        django_get_or_create = ("assessment",)
+
+    assessment = factory.SubFactory(EbiosAssessmentFactory)
+    status = EbiosBaselineStatus.DRAFT
+
+
+class FearedEventFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = FearedEvent
+
+    baseline = factory.SubFactory(SecurityBaselineFactory)
+    essential_asset = factory.SubFactory("assets.tests.factories.EssentialAssetFactory")
+    name = factory.Sequence(lambda n: f"Feared event {n}")
+    description = factory.Sequence(lambda n: f"Description {n}")
+    dic_criterion = DICCriterion.CONFIDENTIALITY
+
+
+class BaselineGapFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = BaselineGap
+
+    baseline = factory.SubFactory(SecurityBaselineFactory)
+    reference_source = factory.Sequence(lambda n: f"ISO 27002 - A.{n}")
+    description = factory.Sequence(lambda n: f"Gap {n}")
+    severity = Severity.MEDIUM
+    status = BaselineGapStatus.IDENTIFIED
