@@ -4472,6 +4472,141 @@ def _register_risks_tools(server):
         },
     )
 
+    # ── EBIOS RM Workshop 3 (ecosystem, strategic scenarios) ──────────
+    #
+    # EcosystemStakeholder.threat_level is auto-computed at save() as
+    # (dependency * penetration) / (maturity * trust). threat_zone is
+    # derived from threat_level via DEFAULT_ECOSYSTEM_THRESHOLDS, both
+    # overridable through RiskCriteria.risk_matrix["ebios_ecosystem_thresholds"].
+    # StrategicScenario.risk_level is computed via the assessment risk
+    # matrix (likelihood x gravity).
+
+    EcosystemStakeholder = _get_model("risks", "EcosystemStakeholder")
+    StrategicScenario = _get_model("risks", "StrategicScenario")
+    AttackPathStep = _get_model("risks", "AttackPathStep")
+
+    ecos_fields = [
+        "id", "reference", "assessment_id", "stakeholder_id", "supplier_id",
+        "name", "description", "category", "dependency", "penetration",
+        "maturity", "trust", "threat_level", "threat_zone",
+        "is_attack_vector", "attack_vector_justification", "is_approved",
+        "created_at", "updated_at",
+    ]
+    ecos_writable = [
+        "assessment_id", "stakeholder_id", "supplier_id", "name", "description",
+        "category", "dependency", "penetration", "maturity", "trust",
+        "is_attack_vector", "attack_vector_justification",
+    ]
+    _register_crud(
+        server, "ebios_ecosystem_stakeholder", EcosystemStakeholder, "risks.ebios_ecosystem",
+        list_fields=ecos_fields,
+        writable_fields=ecos_writable,
+        search_fields=["reference", "name", "description", "attack_vector_justification"],
+        filters=["assessment_id", "category", "threat_zone", "is_attack_vector"],
+        scope_filtered=False,
+        has_approve=True,
+        required_fields=["assessment_id", "name"],
+        field_overrides={
+            "description": _html_field("Description"),
+            "attack_vector_justification": _html_field("Attack vector justification"),
+            "category": {
+                "type": "string",
+                "description": "Ecosystem category: supplier, partner, subcontractor, customer, regulator, shared_infrastructure, client_employee, other.",
+            },
+            "dependency": {
+                "type": "integer",
+                "description": "Organisation dependency on the stakeholder (1..4). Numerator in (D*P)/(M*T).",
+            },
+            "penetration": {
+                "type": "integer",
+                "description": "Stakeholder penetration into the ecosystem (1..4). Numerator in (D*P)/(M*T).",
+            },
+            "maturity": {
+                "type": "integer",
+                "description": "Stakeholder cyber maturity (1..4). Denominator in (D*P)/(M*T).",
+            },
+            "trust": {
+                "type": "integer",
+                "description": "Trust placed in the stakeholder (1..4). Denominator in (D*P)/(M*T).",
+            },
+        },
+    )
+
+    ssc_fields = [
+        "id", "reference", "assessment_id", "name", "description",
+        "sr_ov_pair_id", "gravity_level", "likelihood_level", "risk_level",
+        "is_retained", "consolidated_risk_id", "is_approved",
+        "created_at", "updated_at",
+    ]
+    ssc_writable = [
+        "assessment_id", "name", "description", "sr_ov_pair_id",
+        "gravity_level", "gravity_justification", "likelihood_level",
+        "likelihood_justification", "existing_security_measures",
+        "is_retained", "retention_justification", "consolidated_risk_id",
+    ]
+    _register_crud(
+        server, "ebios_strategic_scenario", StrategicScenario, "risks.ebios_strategic",
+        list_fields=ssc_fields,
+        writable_fields=ssc_writable,
+        search_fields=[
+            "reference", "name", "description",
+            "gravity_justification", "likelihood_justification",
+        ],
+        filters=["assessment_id", "sr_ov_pair_id", "is_retained", "risk_level"],
+        scope_filtered=False,
+        has_approve=True,
+        required_fields=["assessment_id", "name", "sr_ov_pair_id"],
+        field_overrides={
+            "description": _html_field("Description"),
+            "gravity_justification": _html_field("Gravity justification"),
+            "likelihood_justification": _html_field("Likelihood justification"),
+            "existing_security_measures": _html_field("Existing security measures"),
+            "gravity_level": {
+                "type": "integer",
+                "description": "Gravity on the assessment impact scale. Combined with likelihood via the matrix to compute risk_level.",
+            },
+            "likelihood_level": {
+                "type": "integer",
+                "description": "Likelihood on the assessment likelihood scale. Combined with gravity via the matrix to compute risk_level.",
+            },
+        },
+    )
+
+    aps_fields = [
+        "id", "reference", "scenario_id", "order", "stakeholder_id",
+        "description", "action_type", "difficulty",
+        "created_at", "updated_at",
+    ]
+    aps_writable = [
+        "scenario_id", "order", "stakeholder_id", "description",
+        "action_type", "difficulty",
+    ]
+    _register_crud(
+        server, "ebios_attack_path_step", AttackPathStep, "risks.ebios_strategic",
+        list_fields=aps_fields,
+        writable_fields=aps_writable,
+        search_fields=["reference", "description"],
+        filters=["scenario_id", "stakeholder_id", "action_type", "difficulty"],
+        scope_filtered=False,
+        has_approve=False,
+        required_fields=["scenario_id", "description"],
+        field_overrides={
+            "description": _html_field("Description"),
+            "action_type": {
+                "type": "string",
+                "description": "Action type: initial_access, reconnaissance, lateral_movement, privilege_escalation, data_exfiltration, disruption, manipulation, persistence, other.",
+            },
+            "difficulty": {
+                "type": "string",
+                "description": "Difficulty: trivial, easy, moderate, difficult, very_difficult.",
+            },
+            "order": {
+                "type": "integer",
+                "description": "Position of the step in the attack path (unique per scenario).",
+            },
+        },
+    )
+
 
 # ── Accounts Module ────────────────────────────────────────
 

@@ -6,6 +6,9 @@ from .baseline_gap import BaselineGap
 from .risk_source import RiskSource
 from .targeted_objective import TargetedObjective
 from .sr_ov_pair import RiskSourceObjectivePair
+from .ecosystem_stakeholder import EcosystemStakeholder
+from .strategic_scenario import StrategicScenario
+from .attack_path_step import AttackPathStep
 
 __all__ = [
     "StudyFramework",
@@ -16,4 +19,7 @@ __all__ = [
     "RiskSource",
     "TargetedObjective",
     "RiskSourceObjectivePair",
+    "EcosystemStakeholder",
+    "StrategicScenario",
+    "AttackPathStep",
 ]

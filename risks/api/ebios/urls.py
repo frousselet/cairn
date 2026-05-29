@@ -13,6 +13,9 @@ router.register(r"baseline-gaps", views.BaselineGapViewSet)
 router.register(r"risk-sources", views.RiskSourceViewSet)
 router.register(r"targeted-objectives", views.TargetedObjectiveViewSet)
 router.register(r"sr-ov-pairs", views.RiskSourceObjectivePairViewSet)
+router.register(r"ecosystem-stakeholders", views.EcosystemStakeholderViewSet)
+router.register(r"strategic-scenarios", views.StrategicScenarioViewSet)
+router.register(r"attack-path-steps", views.AttackPathStepViewSet)
 
 
 urlpatterns = [

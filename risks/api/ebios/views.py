@@ -1,4 +1,6 @@
 from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from accounts.api.mixins import (
     ApprovableAPIMixin,
@@ -8,33 +10,42 @@ from accounts.api.mixins import (
 from context.api.permissions import ContextPermission
 from risks.api.views import CreatedByMixin
 from risks.models import (
+    AttackPathStep,
     BaselineGap,
     EbiosWorkshopProgress,
+    EcosystemStakeholder,
     FearedEvent,
     RiskSource,
     RiskSourceObjectivePair,
     SecurityBaseline,
+    StrategicScenario,
     StudyFramework,
     TargetedObjective,
 )
 
 from .filters import (
+    AttackPathStepFilter,
     BaselineGapFilter,
     EbiosWorkshopProgressFilter,
+    EcosystemStakeholderFilter,
     FearedEventFilter,
     RiskSourceFilter,
     RiskSourceObjectivePairFilter,
     SecurityBaselineFilter,
+    StrategicScenarioFilter,
     StudyFrameworkFilter,
     TargetedObjectiveFilter,
 )
 from .serializers import (
+    AttackPathStepSerializer,
     BaselineGapSerializer,
     EbiosWorkshopProgressSerializer,
+    EcosystemStakeholderSerializer,
     FearedEventSerializer,
     RiskSourceObjectivePairSerializer,
     RiskSourceSerializer,
     SecurityBaselineSerializer,
+    StrategicScenarioSerializer,
     StudyFrameworkSerializer,
     TargetedObjectiveSerializer,
 )
@@ -179,3 +190,104 @@ class RiskSourceObjectivePairViewSet(
         "is_retained",
         "created_at",
     ]
+
+
+class EcosystemStakeholderViewSet(
+    BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+):
+    queryset = (
+        EcosystemStakeholder.objects.select_related("assessment", "stakeholder", "supplier")
+        .prefetch_related("accessible_support_assets")
+        .all()
+    )
+    serializer_class = EcosystemStakeholderSerializer
+    filterset_class = EcosystemStakeholderFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "ebios_ecosystem"
+    search_fields = ["reference", "name", "description", "attack_vector_justification"]
+    ordering_fields = [
+        "reference",
+        "name",
+        "threat_level",
+        "threat_zone",
+        "is_attack_vector",
+        "created_at",
+    ]
+
+    @action(detail=False, methods=["get"], url_path="graph")
+    def graph(self, request):
+        """Return the ecosystem graph as nodes + edges + zone metadata.
+
+        Filter by `?assessment=<uuid>` to scope the graph to a single
+        assessment (the only meaningful aggregation today).
+        """
+        qs = self.filter_queryset(self.get_queryset())
+        nodes = []
+        edges = []
+        for stakeholder in qs.prefetch_related("accessible_support_assets"):
+            nodes.append({
+                "id": str(stakeholder.pk),
+                "reference": stakeholder.reference,
+                "name": stakeholder.name,
+                "category": stakeholder.category,
+                "threat_level": (
+                    float(stakeholder.threat_level)
+                    if stakeholder.threat_level is not None
+                    else None
+                ),
+                "threat_zone": stakeholder.threat_zone,
+                "is_attack_vector": stakeholder.is_attack_vector,
+            })
+            for asset in stakeholder.accessible_support_assets.all():
+                edges.append({
+                    "source": str(stakeholder.pk),
+                    "target": str(asset.pk),
+                    "target_kind": "support_asset",
+                    "target_reference": asset.reference,
+                })
+        return Response({
+            "nodes": nodes,
+            "edges": edges,
+            "zones": ["control", "monitoring", "danger"],
+        })
+
+
+class StrategicScenarioViewSet(
+    BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+):
+    queryset = (
+        StrategicScenario.objects.select_related(
+            "assessment", "sr_ov_pair", "consolidated_risk"
+        )
+        .prefetch_related("targeted_feared_events", "attack_path_steps")
+        .all()
+    )
+    serializer_class = StrategicScenarioSerializer
+    filterset_class = StrategicScenarioFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "ebios_strategic"
+    search_fields = [
+        "reference", "name", "description",
+        "gravity_justification", "likelihood_justification",
+    ]
+    ordering_fields = [
+        "reference",
+        "name",
+        "risk_level",
+        "gravity_level",
+        "likelihood_level",
+        "is_retained",
+        "created_at",
+    ]
+
+
+class AttackPathStepViewSet(
+    BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+):
+    queryset = AttackPathStep.objects.select_related("scenario", "stakeholder").all()
+    serializer_class = AttackPathStepSerializer
+    filterset_class = AttackPathStepFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "ebios_strategic"
+    search_fields = ["reference", "description"]
+    ordering_fields = ["reference", "order", "action_type", "created_at"]

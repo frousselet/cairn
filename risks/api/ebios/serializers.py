@@ -1,12 +1,15 @@
 from rest_framework import serializers
 
 from risks.models import (
+    AttackPathStep,
     BaselineGap,
     EbiosWorkshopProgress,
+    EcosystemStakeholder,
     FearedEvent,
     RiskSource,
     RiskSourceObjectivePair,
     SecurityBaseline,
+    StrategicScenario,
     StudyFramework,
     TargetedObjective,
 )
@@ -267,6 +270,125 @@ class RiskSourceObjectivePairSerializer(serializers.ModelSerializer):
             "reference",
             "relevance_label",
             "priority_score",
+            "is_approved",
+            "approved_by",
+            "approved_at",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class EcosystemStakeholderSerializer(serializers.ModelSerializer):
+    category_label = serializers.CharField(source="get_category_display", read_only=True)
+    threat_zone_label = serializers.CharField(source="get_threat_zone_display", read_only=True)
+
+    class Meta:
+        model = EcosystemStakeholder
+        fields = [
+            "id",
+            "reference",
+            "assessment",
+            "stakeholder",
+            "supplier",
+            "name",
+            "description",
+            "category",
+            "category_label",
+            "dependency",
+            "penetration",
+            "maturity",
+            "trust",
+            "threat_level",
+            "threat_zone",
+            "threat_zone_label",
+            "accessible_support_assets",
+            "is_attack_vector",
+            "attack_vector_justification",
+            "is_approved",
+            "approved_by",
+            "approved_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "reference",
+            "category_label",
+            "threat_level",
+            "threat_zone",
+            "threat_zone_label",
+            "is_approved",
+            "approved_by",
+            "approved_at",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class AttackPathStepSerializer(serializers.ModelSerializer):
+    action_type_label = serializers.CharField(source="get_action_type_display", read_only=True)
+    difficulty_label = serializers.CharField(source="get_difficulty_display", read_only=True)
+
+    class Meta:
+        model = AttackPathStep
+        fields = [
+            "id",
+            "reference",
+            "scenario",
+            "order",
+            "stakeholder",
+            "description",
+            "action_type",
+            "action_type_label",
+            "difficulty",
+            "difficulty_label",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "reference",
+            "action_type_label",
+            "difficulty_label",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class StrategicScenarioSerializer(serializers.ModelSerializer):
+    attack_path_steps = AttackPathStepSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = StrategicScenario
+        fields = [
+            "id",
+            "reference",
+            "assessment",
+            "name",
+            "description",
+            "sr_ov_pair",
+            "targeted_feared_events",
+            "gravity_level",
+            "gravity_justification",
+            "likelihood_level",
+            "likelihood_justification",
+            "risk_level",
+            "existing_security_measures",
+            "is_retained",
+            "retention_justification",
+            "consolidated_risk",
+            "attack_path_steps",
+            "is_approved",
+            "approved_by",
+            "approved_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "reference",
+            "risk_level",
+            "attack_path_steps",
             "is_approved",
             "approved_by",
             "approved_at",

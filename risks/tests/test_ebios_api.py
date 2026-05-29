@@ -10,13 +10,17 @@ import pytest
 from rest_framework.test import APIClient
 
 from accounts.tests.factories import UserFactory
+from assets.tests.factories import SupportAssetFactory
 from risks.tests.factories import (
+    AttackPathStepFactory,
     BaselineGapFactory,
     EbiosAssessmentFactory,
+    EcosystemStakeholderFactory,
     FearedEventFactory,
     RiskSourceFactory,
     RiskSourceObjectivePairFactory,
     SecurityBaselineFactory,
+    StrategicScenarioFactory,
     StudyFrameworkFactory,
     TargetedObjectiveFactory,
 )
@@ -128,3 +132,50 @@ class TestEbiosApiSmoke:
         assert response.status_code == 200
         data = _data(response)
         assert data["priority_score"] is not None
+
+    def test_ecosystem_stakeholders_endpoint(self):
+        EcosystemStakeholderFactory()
+        response = self.client.get("/api/v1/risks/ebios/ecosystem-stakeholders/")
+        assert response.status_code == 200
+
+    def test_ecosystem_stakeholders_serialize_threat_zone(self):
+        s = EcosystemStakeholderFactory(
+            dependency=4, penetration=4, maturity=1, trust=1,
+        )
+        response = self.client.get(
+            f"/api/v1/risks/ebios/ecosystem-stakeholders/{s.pk}/"
+        )
+        assert response.status_code == 200
+        data = _data(response)
+        assert data["threat_zone"] == "danger"
+        assert float(data["threat_level"]) == 16.0
+
+    def test_ecosystem_graph_endpoint(self):
+        assessment = EbiosAssessmentFactory()
+        asset = SupportAssetFactory()
+        stakeholder = EcosystemStakeholderFactory(
+            assessment=assessment, dependency=3, penetration=3, maturity=2, trust=2,
+        )
+        stakeholder.accessible_support_assets.add(asset)
+        response = self.client.get(
+            f"/api/v1/risks/ebios/ecosystem-stakeholders/graph/?assessment={assessment.pk}"
+        )
+        assert response.status_code == 200
+        body = _data(response)
+        nodes = body["nodes"]
+        edges = body["edges"]
+        zones = body["zones"]
+        assert any(node["id"] == str(stakeholder.pk) for node in nodes)
+        assert any(edge["source"] == str(stakeholder.pk) and edge["target"] == str(asset.pk)
+                   for edge in edges)
+        assert "control" in zones and "monitoring" in zones and "danger" in zones
+
+    def test_strategic_scenarios_endpoint(self):
+        StrategicScenarioFactory()
+        response = self.client.get("/api/v1/risks/ebios/strategic-scenarios/")
+        assert response.status_code == 200
+
+    def test_attack_path_steps_endpoint(self):
+        AttackPathStepFactory()
+        response = self.client.get("/api/v1/risks/ebios/attack-path-steps/")
+        assert response.status_code == 200

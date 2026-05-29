@@ -1,12 +1,15 @@
 import django_filters
 
 from risks.models import (
+    AttackPathStep,
     BaselineGap,
     EbiosWorkshopProgress,
+    EcosystemStakeholder,
     FearedEvent,
     RiskSource,
     RiskSourceObjectivePair,
     SecurityBaseline,
+    StrategicScenario,
     StudyFramework,
     TargetedObjective,
 )
@@ -114,4 +117,52 @@ class RiskSourceObjectivePairFilter(django_filters.FilterSet):
             "is_retained": ["exact"],
             "is_approved": ["exact"],
             "priority_score": ["exact"],
+        }
+
+
+class EcosystemStakeholderFilter(django_filters.FilterSet):
+    assessment = django_filters.UUIDFilter(field_name="assessment_id")
+    stakeholder = django_filters.UUIDFilter(field_name="stakeholder_id")
+    supplier = django_filters.UUIDFilter(field_name="supplier_id")
+    threat_level_min = django_filters.NumberFilter(
+        field_name="threat_level", lookup_expr="gte"
+    )
+
+    class Meta:
+        model = EcosystemStakeholder
+        fields = {
+            "category": ["exact"],
+            "threat_zone": ["exact"],
+            "is_attack_vector": ["exact"],
+            "is_approved": ["exact"],
+        }
+
+
+class StrategicScenarioFilter(django_filters.FilterSet):
+    assessment = django_filters.UUIDFilter(field_name="assessment_id")
+    sr_ov_pair = django_filters.UUIDFilter(field_name="sr_ov_pair_id")
+    risk_level_min = django_filters.NumberFilter(
+        field_name="risk_level", lookup_expr="gte"
+    )
+
+    class Meta:
+        model = StrategicScenario
+        fields = {
+            "is_retained": ["exact"],
+            "is_approved": ["exact"],
+            "risk_level": ["exact"],
+            "gravity_level": ["exact", "gte", "lte"],
+            "likelihood_level": ["exact", "gte", "lte"],
+        }
+
+
+class AttackPathStepFilter(django_filters.FilterSet):
+    scenario = django_filters.UUIDFilter(field_name="scenario_id")
+    stakeholder = django_filters.UUIDFilter(field_name="stakeholder_id")
+
+    class Meta:
+        model = AttackPathStep
+        fields = {
+            "action_type": ["exact"],
+            "difficulty": ["exact"],
         }

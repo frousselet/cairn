@@ -325,3 +325,83 @@ def compute_anssi_threat_level(motivation, resources, activity=None, grid=None):
     if activity and int(activity) >= 3:
         base = min(base + 1, ThreatLevelV.V4)
     return int(base)
+
+
+# EBIOS RM workshop W3 - Ecosystem stakeholders and strategic scenarios
+
+class EcosystemStakeholderCategory(models.TextChoices):
+    SUPPLIER = "supplier", _("Supplier")
+    PARTNER = "partner", _("Partner")
+    SUBCONTRACTOR = "subcontractor", _("Subcontractor")
+    CUSTOMER = "customer", _("Customer")
+    REGULATOR = "regulator", _("Regulator")
+    SHARED_INFRASTRUCTURE = "shared_infrastructure", _("Shared infrastructure")
+    CLIENT_EMPLOYEE = "client_employee", _("Client employee")
+    OTHER = "other", _("Other")
+
+
+class ThreatZone(models.TextChoices):
+    CONTROL = "control", _("Control zone")
+    MONITORING = "monitoring", _("Monitoring zone")
+    DANGER = "danger", _("Danger zone")
+
+
+# ANSSI ecosystem threat zone thresholds.
+# threat_level = (dependency * penetration) / (maturity * trust), each input in 1..4.
+# The result lies in ]0.0625, 16.0]. Defaults below are taken from M4bis spec §2.6
+# Annex C. Override per assessment via RiskCriteria.risk_matrix["ebios_ecosystem_thresholds"].
+DEFAULT_ECOSYSTEM_THRESHOLDS = {
+    "control": 0.5,     # threat_level < 0.5  => control zone (green)
+    "monitoring": 1.5,  # 0.5 <= threat_level < 1.5 => monitoring zone (orange)
+                        # threat_level >= 1.5 => danger zone (red)
+}
+
+
+def compute_ecosystem_threat_level(dependency, penetration, maturity, trust):
+    """Return the raw threat level for an ecosystem stakeholder.
+
+    Formula (M4bis spec §2.6): (dependency * penetration) / (maturity * trust).
+    Returns None if any input is missing or if the denominator is zero.
+    """
+    if None in (dependency, penetration, maturity, trust):
+        return None
+    denominator = float(maturity) * float(trust)
+    if denominator <= 0:
+        return None
+    return (float(dependency) * float(penetration)) / denominator
+
+
+def compute_ecosystem_threat_zone(threat_level, thresholds=None):
+    """Return the ecosystem ThreatZone enum value from a raw threat_level.
+
+    `thresholds` is a dict with keys "control" and "monitoring"
+    (cf. DEFAULT_ECOSYSTEM_THRESHOLDS). Pass None to use the ANSSI defaults.
+    """
+    if threat_level is None:
+        return None
+    t = thresholds or DEFAULT_ECOSYSTEM_THRESHOLDS
+    if threat_level < t["control"]:
+        return ThreatZone.CONTROL
+    if threat_level < t["monitoring"]:
+        return ThreatZone.MONITORING
+    return ThreatZone.DANGER
+
+
+class AttackPathActionType(models.TextChoices):
+    INITIAL_ACCESS = "initial_access", _("Initial access")
+    RECONNAISSANCE = "reconnaissance", _("Reconnaissance")
+    LATERAL_MOVEMENT = "lateral_movement", _("Lateral movement")
+    PRIVILEGE_ESCALATION = "privilege_escalation", _("Privilege escalation")
+    DATA_EXFILTRATION = "data_exfiltration", _("Data exfiltration")
+    DISRUPTION = "disruption", _("Disruption")
+    MANIPULATION = "manipulation", _("Manipulation")
+    PERSISTENCE = "persistence", _("Persistence")
+    OTHER = "other", _("Other")
+
+
+class AttackDifficulty(models.TextChoices):
+    TRIVIAL = "trivial", _("Trivial")
+    EASY = "easy", _("Easy")
+    MODERATE = "moderate", _("Moderate")
+    DIFFICULT = "difficult", _("Difficult")
+    VERY_DIFFICULT = "very_difficult", _("Very difficult")

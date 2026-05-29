@@ -4,6 +4,8 @@ from context.tests.factories import ScopeFactory
 from risks.constants import (
     AcceptanceStatus,
     ActionStatus,
+    AttackDifficulty,
+    AttackPathActionType,
     BaselineGapStatus,
     DICCriterion,
     EbiosBaselineStatus,
@@ -11,6 +13,7 @@ from risks.constants import (
     EbiosStudyFrameworkStatus,
     EbiosWorkshopNumber,
     EbiosWorkshopStatus,
+    EcosystemStakeholderCategory,
     Methodology,
     Relevance,
     RiskSourceCategory,
@@ -21,8 +24,10 @@ from risks.constants import (
     TreatmentType,
 )
 from risks.models import (
+    AttackPathStep,
     BaselineGap,
     EbiosWorkshopProgress,
+    EcosystemStakeholder,
     FearedEvent,
     ISO27005Risk,
     Risk,
@@ -32,6 +37,7 @@ from risks.models import (
     RiskSourceObjectivePair,
     RiskTreatmentPlan,
     SecurityBaseline,
+    StrategicScenario,
     StudyFramework,
     TargetedObjective,
     Threat,
@@ -283,3 +289,42 @@ class RiskSourceObjectivePairFactory(factory.django.DjangoModelFactory):
         risk_source=factory.SelfAttribute("..risk_source"),
     )
     relevance = Relevance.HIGH
+
+
+class EcosystemStakeholderFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EcosystemStakeholder
+
+    assessment = factory.SubFactory(EbiosAssessmentFactory)
+    name = factory.Sequence(lambda n: f"Stakeholder {n}")
+    category = EcosystemStakeholderCategory.SUPPLIER
+    dependency = 2
+    penetration = 2
+    maturity = 2
+    trust = 2
+
+
+class StrategicScenarioFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = StrategicScenario
+
+    assessment = factory.SubFactory(EbiosAssessmentFactory)
+    sr_ov_pair = factory.SubFactory(
+        RiskSourceObjectivePairFactory,
+        assessment=factory.SelfAttribute("..assessment"),
+    )
+    name = factory.Sequence(lambda n: f"Strategic scenario {n}")
+    description = factory.Sequence(lambda n: f"Path {n}")
+    gravity_level = 3
+    likelihood_level = 2
+
+
+class AttackPathStepFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = AttackPathStep
+
+    scenario = factory.SubFactory(StrategicScenarioFactory)
+    order = factory.Sequence(lambda n: n)
+    description = factory.Sequence(lambda n: f"Step {n}")
+    action_type = AttackPathActionType.INITIAL_ACCESS
+    difficulty = AttackDifficulty.MODERATE
