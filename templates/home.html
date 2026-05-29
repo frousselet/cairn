@@ -83,6 +83,10 @@
     </span>
   </span>
 {% endpage_header %}
+
+<a href="{% url 'risks:risk-create' %}" class="fw-fab" title="{% trans 'New risk' %}" aria-label="{% trans 'New risk' %}">
+  <i class="bi bi-plus-lg" aria-hidden="true"></i>
+</a>
 <style>
   .ws-dot-wrapper {
     position: relative;
@@ -163,15 +167,16 @@
   .overall-compliance {
     position: relative;
     padding: 2.75rem 2.5rem;
-    border-radius: var(--radius-xl);
+    border: 2px solid var(--color-ink-900);
+    border-radius: 1.75rem;
     color: #fff;
     overflow: hidden;
-    box-shadow: 0 16px 40px -10px var(--hero-bg, var(--accent));
+    box-shadow: var(--shadow-block);
   }
-  .overall-compliance--good { --hero-bg: var(--success); }
-  .overall-compliance--warn { --hero-bg: var(--warning); }
-  .overall-compliance--bad  { --hero-bg: var(--danger); }
-  .overall-compliance { background: var(--hero-bg, var(--accent)); }
+  .overall-compliance--good { --hero-bg: var(--color-mint-500); color: var(--color-ink-900); }
+  .overall-compliance--warn { --hero-bg: var(--color-mustard-500); color: var(--color-ink-900); }
+  .overall-compliance--bad  { --hero-bg: var(--color-coral-500); }
+  .overall-compliance { background: var(--hero-bg, var(--color-violet-500)); }
   .overall-compliance__ornament {
     position: absolute;
     top: -50%;
@@ -184,42 +189,46 @@
   }
   .overall-compliance__body { position: relative; z-index: 1; }
   .overall-compliance__eyebrow {
-    font-size: .75rem; letter-spacing: .22em; text-transform: uppercase;
-    color: rgba(255,255,255,.78); font-weight: 800; margin-bottom: 1rem;
+    font-size: .8125rem; letter-spacing: .28em; text-transform: uppercase;
+    color: currentColor; opacity: .85;
+    font-weight: 900; margin-bottom: 1rem;
   }
   .overall-compliance__big {
     display: flex; align-items: baseline; gap: 1rem; line-height: 1;
   }
   .overall-compliance__value {
-    font-size: 5.5rem;
-    letter-spacing: -.045em;
-    line-height: 1;
-    font-weight: 800;
-    color: #fff;
+    font-size: 6.5rem;
+    letter-spacing: -.05em;
+    line-height: .95;
+    font-weight: 900;
+    color: currentColor;
   }
   .overall-compliance__hint {
-    color: rgba(255,255,255,.82); font-size: .9375rem;
+    color: currentColor; opacity: .82; font-size: .9375rem;
     margin: 1.125rem 0 0; max-width: 32rem;
   }
   .overall-compliance__bar {
-    height: .625rem;
-    background: rgba(255,255,255,.18);
+    height: .75rem;
+    background: rgba(22,19,18,.16);
+    border: 1.5px solid var(--color-ink-900);
     border-radius: 100px;
     overflow: hidden;
   }
+  .overall-compliance--bad .overall-compliance__bar { background: rgba(255,255,255,.18); }
   .overall-compliance__bar-fill {
     height: 100%;
     border-radius: 100px;
-    background: #fff;
+    background: var(--color-ink-900);
     transition: width .6s var(--ease-out-expo);
   }
+  .overall-compliance--bad .overall-compliance__bar-fill { background: #fff; }
   .overall-compliance__bar-legend {
     display: flex; justify-content: space-between;
-    font-size: .75rem; color: rgba(255,255,255,.7);
-    margin-top: .625rem; font-variant-numeric: tabular-nums;
-    letter-spacing: .04em;
+    font-size: .75rem; color: currentColor; opacity: .8;
+    margin-top: .75rem; font-variant-numeric: tabular-nums;
+    letter-spacing: .12em;
     text-transform: uppercase;
-    font-weight: 600;
+    font-weight: 800;
   }
   @media (max-width: 575.98px) {
     .overall-compliance { padding: 1.75rem 1.5rem; }
