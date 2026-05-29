@@ -2363,6 +2363,65 @@
     .scope-pop-btn .bi { font-size: .65rem; }
     .scope-pop-panel { display: none; position: fixed; z-index: 1050; background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: .5rem .6rem; box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: max-content; max-width: 360px; }
     .scope-pop-panel.show { display: flex; flex-wrap: wrap; gap: .3em; align-items: center; }
+
+    /* ── Utilities ─────────────────────────────────── */
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .text-on-accent { color: #fff; }
+
+    /* ── Approval badge ────────────────────────────── */
+    .approval-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: .3em .6875em;
+      font-size: .75rem;
+      font-weight: 500;
+      border-radius: var(--radius-xs);
+      line-height: 1.2;
+    }
+    .approval-badge .bi { margin-right: .25rem; }
+    .approval-badge--approved { background: var(--success-soft); color: var(--success); }
+    .approval-badge--pending { background: var(--warning-soft); color: var(--warning); }
+    .approval-badge-meta { color: var(--text-muted); font-size: .75rem; margin-left: .5rem; }
+
+    /* ── Impersonation banner ──────────────────────── */
+    .impersonation-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10000;
+      background: linear-gradient(90deg, var(--warning) 0%, #d97706 100%);
+      color: #fff;
+      padding: .5rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      font-weight: 600;
+      font-size: .875rem;
+      height: var(--imp-h, 38px);
+    }
+    .impersonation-banner__stop {
+      background: rgba(255, 255, 255, .2);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, .4);
+      font-weight: 600;
+    }
+    .impersonation-banner__stop:hover,
+    .impersonation-banner__stop:focus-visible {
+      background: rgba(255, 255, 255, .3);
+      color: #fff;
+    }
+
+    /* ── Reduced motion (WCAG 2.3.3) ───────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
   </style>
   <script>
     function scopePopToggle(btn) {
@@ -2392,14 +2451,15 @@
   {% block extra_css %}{% endblock %}
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <div id="hx-live" role="status" aria-live="polite" aria-atomic="true" class="visually-hidden"></div>
   {% if request.impersonator %}
-  <div id="impersonation-banner" style="position:fixed;top:0;left:0;right:0;z-index:10000;background:linear-gradient(90deg,#f59e0b,#d97706);color:#fff;padding:.5rem 1rem;display:flex;align-items:center;justify-content:center;gap:1rem;font-weight:600;font-size:.875rem;height:38px">
-    <i class="bi bi-eye-fill"></i>
+  <div id="impersonation-banner" class="impersonation-banner">
+    <i class="bi bi-eye-fill" aria-hidden="true"></i>
     {% blocktrans with name=user.display_name %}Impersonating {{ name }}{% endblocktrans %}
-    <form method="post" action="{% url 'accounts:impersonate-stop' %}" style="margin:0">
+    <form method="post" action="{% url 'accounts:impersonate-stop' %}" class="m-0">
       {% csrf_token %}
-      <button type="submit" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4);font-weight:600">
-        <i class="bi bi-x-circle me-1"></i>{% trans "Stop" %}
+      <button type="submit" class="btn btn-sm impersonation-banner__stop">
+        <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{% trans "Stop" %}
       </button>
     </form>
   </div>
@@ -2771,6 +2831,38 @@
   <script src="https://unpkg.com/htmx.org@2.0.4"
           integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
           crossorigin="anonymous"></script>
+  <script>
+  /* ── ARIA live announcer for HTMX swaps (WCAG 4.1.3 Status Messages) ── */
+  (function() {
+    var liveRegion = document.getElementById('hx-live');
+    if (!liveRegion) return;
+    var clearTimer;
+    function announce(msg) {
+      if (!msg) return;
+      liveRegion.textContent = '';
+      requestAnimationFrame(function() { liveRegion.textContent = msg; });
+      clearTimeout(clearTimer);
+      clearTimer = setTimeout(function() { liveRegion.textContent = ''; }, 4000);
+    }
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+      var detail = evt.detail || {};
+      var xhr = detail.xhr;
+      if (!xhr || !detail.successful) return;
+      var verb = (detail.requestConfig && detail.requestConfig.verb || '').toUpperCase();
+      var customMsg = xhr.getResponseHeader && xhr.getResponseHeader('X-Live-Announce');
+      if (customMsg) { announce(customMsg); return; }
+      if (verb === 'POST' || verb === 'PUT' || verb === 'PATCH') {
+        announce('{% trans "Saved" %}');
+      } else if (verb === 'DELETE') {
+        announce('{% trans "Deleted" %}');
+      }
+    });
+    document.body.addEventListener('htmx:responseError', function(evt) {
+      announce('{% trans "An error occurred" %}');
+    });
+    window.fwAnnounce = announce;
+  })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/js/tom-select.complete.min.js"></script>
   <script>
   /* ── Tag input (Tom Select) ──────────────────────── */

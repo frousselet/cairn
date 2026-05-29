@@ -149,7 +149,7 @@
       </div>
     </div>
     <div class="col-lg-2 col-md-4 col-sm-4 text-lg-end text-md-end text-sm-end">
-      <span class="display-4" style="color:#fff;font-variant-numeric:tabular-nums" data-ws-field="overall_compliance" data-ws-suffix="%">{{ overall_compliance|floatformat:0 }}%</span>
+      <span class="display-4 tabular-nums text-on-accent" data-ws-field="overall_compliance" data-ws-suffix="%">{{ overall_compliance|floatformat:0 }}%</span>
     </div>
   </div>
 </div>
@@ -235,7 +235,7 @@ window.initSparklines = function(root) {
           <small class="ms-2" style="color:var(--text-muted);font-size:.75rem">{% blocktrans with count=fw.req_count %}{{ count }} requirement{{ count|pluralize:"s" }}{% endblocktrans %}</small>
           {% grouped_scope_badges fw.scopes.all %}
         </div>
-        <span class="fw-semibold" style="font-size:.8125rem;font-variant-numeric:tabular-nums;color:var(--text-primary)">
+        <span class="fw-semibold tabular-nums" style="font-size:.8125rem;color:var(--text-primary)">
           {{ fw.computed_compliance|default:0 }}%
         </span>
       </div>
@@ -274,7 +274,7 @@ window.initSparklines = function(root) {
           {% endif %}
           {% grouped_scope_badges obj.scopes.all %}
         </div>
-        <span class="fw-semibold" style="font-size:.8125rem;font-variant-numeric:tabular-nums;{% if obj.progress_percentage >= 80 %}color:var(--success){% elif obj.progress_percentage >= 50 %}color:var(--warning){% else %}color:var(--danger){% endif %}">
+        <span class="fw-semibold tabular-nums" style="font-size:.8125rem;{% if obj.progress_percentage >= 80 %}color:var(--success){% elif obj.progress_percentage >= 50 %}color:var(--warning){% else %}color:var(--danger){% endif %}">
           {{ obj.progress_percentage|default:0 }}%
         </span>
       </div>

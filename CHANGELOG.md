@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- UX audit Phase 0 (quick wins): global `.tabular-nums` utility class; ARIA live region (`#hx-live`, `role="status"`, `aria-live="polite"`) wired to HTMX `afterRequest` so successful POST/PUT/PATCH/DELETE announce a localized status ("Saved", "Deleted") to assistive tech (WCAG 4.1.3 Status Messages). Backends can override the announcement via the `X-Live-Announce` response header
+- Global `prefers-reduced-motion: reduce` guard in `templates/base.html` to neutralize animations and transitions for users who request reduced motion (WCAG 2.3.3)
+
+### Changed
+
+- Impersonation banner styles moved from inline `style="..."` to reusable `.impersonation-banner` / `.impersonation-banner__stop` classes; the hardcoded `#f59e0b` gradient stop now uses `var(--warning)` so it tracks the theme token
+- `templates/includes/approval_badge.html` no longer relies on inline styles; rendering now uses dedicated `.approval-badge`, `.approval-badge--approved`, `.approval-badge--pending` and `.approval-badge-meta` classes. Icons are flagged `aria-hidden="true"` to prevent screen-reader duplication of the visible label
+- `templates/home.html` dashboard hero and framework / objective progress numbers now rely on the `.tabular-nums` utility instead of inline `font-variant-numeric: tabular-nums` style attributes
+
 ## [0.23.0] - 2026-05-29
 
 ### Added

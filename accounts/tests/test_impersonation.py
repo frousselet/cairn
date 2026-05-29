@@ -135,7 +135,7 @@ class TestImpersonationMiddleware:
         # Access a page and check the banner is present
         resp = client.get("/")
         assert resp.status_code == 200
-        assert b"impersonation-banner" in resp.content
+        assert b'id="impersonation-banner"' in resp.content
 
     def test_no_banner_when_not_impersonating(self):
         admin = _admin_with_impersonate_perm()
@@ -143,4 +143,4 @@ class TestImpersonationMiddleware:
         client.force_login(admin)
         resp = client.get("/")
         assert resp.status_code == 200
-        assert b"impersonation-banner" not in resp.content
+        assert b'id="impersonation-banner"' not in resp.content
