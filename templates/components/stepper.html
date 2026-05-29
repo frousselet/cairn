@@ -1,0 +1,101 @@
+{% load i18n %}
+<div class="card mb-3 stepper">
+  <div class="card-body py-2 px-3">
+    <div class="stepper__container" id="{{ container_id }}" data-stepper-container>
+      {# ── Main flow ── #}
+      <div class="stepper__row d-flex align-items-center gap-0" role="list" aria-label="{% trans 'Workflow steps' %}">
+        {% for step in steps %}
+          {% if not forloop.first %}
+            <div class="stepper__line stepper__line--{% if step.state == 'done' or step.state == 'current' %}done{% else %}pending{% endif %}" aria-hidden="true"></div>
+          {% endif %}
+          {% if step.state == 'next' and next_status and transition_url %}
+            <form method="post" action="{{ transition_url }}" class="stepper__pill-form" data-stepper-step="{{ step.value }}" role="listitem">
+              {% csrf_token %}
+              <input type="hidden" name="target_status" value="{{ next_status }}">
+              <button type="submit" class="btn btn-sm btn-outline-success stepper__pill stepper__pill--next">
+                <i class="bi bi-arrow-right-circle" aria-hidden="true"></i> {{ step.label }}
+              </button>
+            </form>
+          {% else %}
+            <span class="stepper__pill stepper__pill--{{ step.state }}"
+                  data-stepper-step="{{ step.value }}"
+                  role="listitem"
+                  {% if step.state == 'current' %}aria-current="step"{% endif %}>
+              {% if step.state == 'done' %}<i class="bi bi-check-circle-fill stepper__pill-icon" aria-hidden="true"></i>{% elif step.state == 'current' %}<i class="bi bi-circle-fill stepper__pill-icon stepper__pill-icon--current" aria-hidden="true"></i>{% else %}<i class="bi bi-circle stepper__pill-icon stepper__pill-icon--future" aria-hidden="true"></i>{% endif %}
+              {{ step.label }}
+            </span>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      {# ── Cancelled branch ── #}
+      {% if cancelled %}
+      <div class="stepper__cancelled-row" data-stepper-cancelled-row>
+        {% if can_cancel and transition_modal_callback and entity_id %}
+          <button type="button" class="btn btn-sm btn-outline-danger stepper__pill stepper__pill--cancel"
+                  data-stepper-step="{{ cancelled.value }}"
+                  onclick="{{ transition_modal_callback }}('{{ entity_id }}', '{{ cancelled.value }}', false, '{% trans "Cancel" %}: {{ cancelled.label }}')">
+            <i class="bi bi-x-circle" aria-hidden="true"></i> {{ cancelled.label }}
+          </button>
+        {% else %}
+          <span class="stepper__pill stepper__pill--{% if cancelled.state == 'current' %}cancelled-current{% else %}future{% endif %}"
+                data-stepper-step="{{ cancelled.value }}"
+                {% if cancelled.state == 'current' %}aria-current="step"{% endif %}>
+            {% if cancelled.state == 'current' %}<i class="bi bi-x-circle-fill stepper__pill-icon" aria-hidden="true"></i>{% else %}<i class="bi bi-circle stepper__pill-icon stepper__pill-icon--future" aria-hidden="true"></i>{% endif %}
+            {{ cancelled.label }}
+          </span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {# ── Refusal button ── #}
+      {% if can_refuse and refusal and transition_modal_callback and entity_id %}
+      <div class="stepper__refuse-row">
+        <button type="button" class="btn btn-sm btn-outline-warning stepper__pill stepper__pill--refuse"
+                onclick="{{ transition_modal_callback }}('{{ entity_id }}', '{{ refusal.status }}', true, '{% trans 'Refuse' %}: {{ refusal.label }}')">
+          <i class="bi bi-arrow-return-left" aria-hidden="true"></i> {% trans "Refuse" %}
+        </button>
+      </div>
+      {% endif %}
+
+      {# ── SVG branch overlay ── #}
+      {% if cancelled and start_value and branch_value and terminal_value %}
+      <svg class="stepper__svg" data-stepper-svg aria-hidden="true"></svg>
+      <script>
+      (function(){
+        var c=document.getElementById('{{ container_id }}');
+        if(!c) return;
+        var svg=c.querySelector('[data-stepper-svg]');
+        var row=c.querySelector('[data-stepper-cancelled-row]');
+        var startPill=c.querySelector('[data-stepper-step="{{ start_value }}"]');
+        var branchPill=c.querySelector('[data-stepper-step="{{ branch_value }}"]');
+        var terminalPill=c.querySelector('[data-stepper-step="{{ terminal_value }}"]');
+        var cancelWrap=c.querySelector('[data-stepper-step="{{ cancelled.value }}"]');
+        if(!startPill||!branchPill||!terminalPill||!cancelWrap||!svg||!row) return;
+        var cancelPill=cancelWrap.tagName==='FORM'?cancelWrap.querySelector('button'):cancelWrap;
+        function draw(){
+          var cr=c.getBoundingClientRect();
+          var tr=terminalPill.getBoundingClientRect();
+          var terminalCenterX=tr.left+tr.width/2-cr.left;
+          var cancelWidth=cancelPill.getBoundingClientRect().width;
+          row.style.paddingLeft=Math.max(0,terminalCenterX-cancelWidth/2)+'px';
+          var ca=cancelPill.getBoundingClientRect();
+          var sr=startPill.getBoundingClientRect(), br=branchPill.getBoundingClientRect();
+          var sx=sr.left+sr.width/2-cr.left, sy=sr.bottom-cr.top;
+          var bx=br.left+br.width/2-cr.left, by=br.bottom-cr.top;
+          var ax=ca.left-cr.left, ay=ca.top+ca.height/2-cr.top;
+          var s='stroke:var(--border-light);stroke-width:2;opacity:.5';
+          svg.innerHTML=
+            '<line x1="'+sx+'" y1="'+sy+'" x2="'+sx+'" y2="'+ay+'" style="'+s+'"/>'+
+            '<line x1="'+bx+'" y1="'+by+'" x2="'+bx+'" y2="'+ay+'" style="'+s+'"/>'+
+            '<line x1="'+sx+'" y1="'+ay+'" x2="'+ax+'" y2="'+ay+'" style="'+s+'"/>';
+        }
+        requestAnimationFrame(draw);
+        window.addEventListener('resize',draw);
+        document.body.addEventListener('htmx:afterSettle',draw);
+      })();
+      </script>
+      {% endif %}
+    </div>
+  </div>
+</div>

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load ui %}
+
+{% block title %}{% trans "Styleguide" %} - Fairway{% endblock %}
+
+{% block extra_css %}
+<style>
+  .sg-section { margin-bottom: 3rem; }
+  .sg-section__title { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); font-weight: 600; margin-bottom: .75rem; padding-bottom: .375rem; border-bottom: 1px solid var(--border-light); }
+  .sg-row { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; padding: 1rem 0; }
+  .sg-swatch { display: flex; flex-direction: column; gap: .25rem; min-width: 9rem; }
+  .sg-swatch__box { width: 100%; height: 3rem; border-radius: var(--radius-md); border: 1px solid var(--border-light); }
+  .sg-swatch__label { font-size: .75rem; color: var(--text-muted); font-family: 'SFMono-Regular','Menlo','Consolas',monospace; }
+  .sg-divider { height: 1px; background: var(--border-light); margin: 1rem 0; }
+  .sg-card-shell { padding: 1.25rem; background: var(--surface-muted); border-radius: var(--radius-md); border: 1px solid var(--border-light); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% page_header _("Styleguide") subtitle=_("Shared UI primitives used across Fairway") icon="palette" %}
+  <a href="{% url 'home' %}" class="btn-header-action" title="{% trans 'Back to home' %}"><i class="bi bi-house" aria-hidden="true"></i></a>
+{% endpage_header %}
+
+<div class="alert alert-info">
+  <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+  {% trans "This page is the living reference of every shared UI primitive. Each section below shows a component in its supported variants. Templates SHOULD reuse these primitives instead of reinventing patterns." %}
+</div>
+
+{# ── Design tokens ───────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Design tokens - surfaces & text" %}</div>
+  <div class="sg-row">
+    <div class="sg-swatch"><div class="sg-swatch__box" style="background:var(--surface)"></div><span class="sg-swatch__label">--surface</span></div>
+    <div class="sg-swatch"><div class="sg-swatch__box" style="background:var(--surface-raised)"></div><span class="sg-swatch__label">--surface-raised</span></div>
+    <div class="sg-swatch"><div class="sg-swatch__box" style="background:var(--surface-muted)"></div><span class="sg-swatch__label">--surface-muted</span></div>
+    <div class="sg-swatch"><div class="sg-swatch__box" style="background:var(--surface-subtle)"></div><span class="sg-swatch__label">--surface-subtle</span></div>
+    <div class="sg-swatch"><div class="sg-swatch__box" style="background:var(--bg-page)"></div><span class="sg-swatch__label">--bg-page</span></div>
+  </div>
+  <div class="sg-section__title">{% trans "Design tokens - semantic" %}</div>
+  <div class="sg-row">
+    <div class="sg-swatch"><div class="sg-swatch__box" style="background:var(--accent)"></div><span class="sg-swatch__label">--accent</span></div>
+    <div class="sg-swatch"><div class="sg-swatch__box" style="background:var(--success)"></div><span class="sg-swatch__label">--success</span></div>
+    <div class="sg-swatch"><div class="sg-swatch__box" style="background:var(--warning)"></div><span class="sg-swatch__label">--warning</span></div>
+    <div class="sg-swatch"><div class="sg-swatch__box" style="background:var(--danger)"></div><span class="sg-swatch__label">--danger</span></div>
+    <div class="sg-swatch"><div class="sg-swatch__box" style="background:var(--info)"></div><span class="sg-swatch__label">--info</span></div>
+  </div>
+</section>
+
+{# ── Page header ─────────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - page_header" %}</div>
+  <div class="sg-card-shell">
+    {% page_header _("Risk register") subtitle=_("Top-level register of identified risks") reference="MOD-RISK" icon="exclamation-triangle" %}
+      <a href="#" class="btn-header-action" title="{% trans 'Export' %}"><i class="bi bi-download" aria-hidden="true"></i></a>
+      <a href="#" class="btn-header-action" title="{% trans 'New' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></a>
+    {% endpage_header %}
+  </div>
+</section>
+
+{# ── Badges ──────────────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - badge" %}</div>
+  {% for t in badge_types %}
+    <h6 class="mt-3 mb-1">{% trans "Type" %}: <code>{{ t }}</code></h6>
+    <div class="sg-row">
+      {% if t == "approval" %}
+        {% badge "approved" type="approval" %}
+        {% badge "pending" type="approval" %}
+        {% badge "rejected" type="approval" %}
+      {% elif t == "severity" %}
+        {% badge "low" type="severity" %}
+        {% badge "medium" type="severity" %}
+        {% badge "high" type="severity" %}
+        {% badge "critical" type="severity" %}
+      {% elif t == "risk" %}
+        {% badge "negligible" type="risk" %}
+        {% badge "low" type="risk" %}
+        {% badge "moderate" type="risk" %}
+        {% badge "high" type="risk" %}
+        {% badge "critical" type="risk" %}
+      {% elif t == "status" %}
+        {% badge "draft" type="status" %}
+        {% badge "in_progress" type="status" %}
+        {% badge "under_review" type="status" %}
+        {% badge "validated" type="status" %}
+        {% badge "closed" type="status" %}
+        {% badge "cancelled" type="status" %}
+        {% badge "overdue" type="status" %}
+      {% endif %}
+    </div>
+  {% endfor %}
+</section>
+
+{# ── Empty state ─────────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - empty_state" %}</div>
+  <div class="sg-card-shell">
+    {% empty_state icon="inbox" title=_("Nothing yet") message=_("No items match the active filters. Try removing one or create a new entry.") cta_url="#" cta_label=_("New entry") %}
+  </div>
+</section>
+
+{# ── KPI cards ───────────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - kpi_card" %}</div>
+  <div class="row g-3">
+    {% for v in kpi_variants %}
+      <div class="col-md-4 col-lg-3">
+        {% kpi_card icon="graph-up" value="1,234" label=v variant=v trend=12 trend_label=_("vs last month") %}
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+{# ── Approval banner ─────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - approval_banner" %}</div>
+  <div class="sg-card-shell">
+    {% approval_banner pending_obj can_approve=True approve_url="#" %}
+    {% approval_banner approved_obj %}
+  </div>
+</section>
+
+{# ── Sidebar card ────────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - sidebar_card" %}</div>
+  <div class="row g-3">
+    <div class="col-md-6">
+      {% sidebar_card _("Status") icon="info-circle" %}
+        <div class="mb-2">{% badge "in_progress" type="status" %}</div>
+        <div class="small text-muted">{% trans "Owner:" %} John Doe</div>
+      {% endsidebar_card %}
+    </div>
+    <div class="col-md-6">
+      {% sidebar_card _("Tags") icon="tags" %}
+        <span class="badge bg-secondary">demo</span>
+        <span class="badge bg-secondary">priority-2</span>
+      {% endsidebar_card %}
+    </div>
+  </div>
+</section>
+
+{# ── Filter chips ───────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - filter_chip" %}</div>
+  <div class="sg-row">
+    {% filter_chip label=_("All") param="status" value="" icon="grid-3x3-gap" %}
+    {% filter_chip label=_("Open") param="status" value="open" count=42 %}
+    {% filter_chip label=_("In progress") param="status" value="in_progress" count=17 icon="play-circle" %}
+    {% filter_chip label=_("Closed") param="status" value="closed" count=83 icon="lock" %}
+  </div>
+</section>
+
+{# ── Bulk actions bar ───────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - bulk_actions_bar" %}</div>
+  <div class="sg-card-shell" id="demo-table">
+    <p class="text-muted small mb-2">{% trans "The bar is initially hidden. In a real list, JS toggles it when checkboxes are ticked." %}</p>
+    {% bulk_actions_bar target_id="demo-table" actions=bulk_actions %}
+    <script>
+      document.querySelector('#bulk-actions-bar-demo-table').hidden = false;
+      document.querySelector('#bulk-actions-bar-demo-table [data-bulk-count]').textContent = '3';
+    </script>
+  </div>
+</section>
+
+{# ── Stepper ────────────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - stepper" %}</div>
+  {% stepper steps=stepper_steps next_status="under_review" transition_url="#" cancelled=stepper_cancelled can_cancel=True transition_modal_callback="alert" entity_id="demo" start_value="draft" branch_value="planned" terminal_value="closed" %}
+</section>
+
+{# ── Confirm delete ─────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - confirm_delete" %}</div>
+  <div class="sg-card-shell d-flex gap-2 align-items-center">
+    {% confirm_delete url="#" name="MY-1234 demo item" label=_("Delete demo") %}
+    <span class="text-muted small">{% trans "The trigger opens a confirmation modal with the object name." %}</span>
+  </div>
+</section>
+{% endblock %}

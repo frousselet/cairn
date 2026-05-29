@@ -1,0 +1,12 @@
+{% load i18n %}
+<div class="sidebar-card{% if sticky %} sidebar-card--sticky{% endif %} card mb-3">
+  {% if title %}
+  <div class="card-header sidebar-card__header">
+    {% if icon %}<i class="bi bi-{{ icon }}" aria-hidden="true"></i>{% endif %}
+    <span class="sidebar-card__title">{{ title }}</span>
+  </div>
+  {% endif %}
+  <div class="card-body sidebar-card__body">
+    {{ body_html }}
+  </div>
+</div>

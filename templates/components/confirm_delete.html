@@ -1,0 +1,28 @@
+{% load i18n %}
+<button type="button" class="{{ classes }}" data-bs-toggle="modal" data-bs-target="#{{ modal_id }}" aria-label="{% trans 'Delete' %}: {{ name|default:'' }}">
+  <i class="bi bi-{{ icon }}" aria-hidden="true"></i>{% if label %} {{ label }}{% endif %}
+</button>
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ modal_id }}-title"><i class="bi bi-exclamation-triangle me-2 text-danger" aria-hidden="true"></i>{% trans "Confirm deletion" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        {% if name %}
+          <p>{% blocktrans %}This will permanently delete <strong>{{ name }}</strong>. This action cannot be undone.{% endblocktrans %}</p>
+        {% else %}
+          <p>{% trans "This will permanently delete the selected item. This action cannot be undone." %}</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <form method="post" action="{{ url }}" class="d-inline m-0">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

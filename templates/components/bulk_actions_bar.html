@@ -1,0 +1,23 @@
+{% load i18n %}
+<div class="bulk-actions-bar" id="bulk-actions-bar-{{ target_id }}" data-bulk-target="{{ target_id }}" hidden role="region" aria-label="{% trans 'Bulk actions' %}">
+  <div class="bulk-actions-bar__inner">
+    <span class="bulk-actions-bar__count">
+      <span class="tabular-nums" data-bulk-count>0</span>
+      <span>{{ label }}</span>
+    </span>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-bulk-clear>
+      <i class="bi bi-x-lg me-1" aria-hidden="true"></i>{% trans "Clear" %}
+    </button>
+    <div class="bulk-actions-bar__actions">
+      {% for action in actions %}
+        <button type="button"
+                class="btn btn-sm btn-{{ action.variant|default:'primary' }}"
+                data-bulk-action
+                data-bulk-url="{{ action.url }}"
+                {% if action.confirm %}data-bulk-confirm="{{ action.confirm }}"{% endif %}>
+          {% if action.icon %}<i class="bi bi-{{ action.icon }} me-1" aria-hidden="true"></i>{% endif %}{{ action.label }}
+        </button>
+      {% endfor %}
+    </div>
+  </div>
+</div>

@@ -907,3 +907,45 @@ class GlobalSearchView(LoginRequiredMixin, View):
                 })
 
         return JsonResponse({"results": grouped})
+
+
+class StyleGuideView(LoginRequiredMixin, TemplateView):
+    """Internal styleguide rendering every shared UI component in its variants.
+
+    Used as a living visual reference and a regression checkpoint when
+    components evolve. Restricted to authenticated users (the page leaks
+    no business data, only design primitives).
+    """
+
+    template_name = "core/styleguide.html"
+
+    def get_context_data(self, **kwargs):
+        from core.templatetags.ui import Step
+
+        ctx = super().get_context_data(**kwargs)
+        ctx["badge_types"] = ["approval", "severity", "risk", "status"]
+        ctx["kpi_variants"] = ["accent", "success", "warning", "danger", "info", "secondary"]
+        ctx["stepper_steps"] = [
+            Step(value="draft", label=_("Draft"), state="done"),
+            Step(value="planned", label=_("Planned"), state="done"),
+            Step(value="in_progress", label=_("In progress"), state="current"),
+            Step(value="under_review", label=_("Under review"), state="next"),
+            Step(value="closed", label=_("Closed"), state="future"),
+        ]
+        ctx["stepper_cancelled"] = Step(value="cancelled", label=_("Cancelled"), state="future")
+
+        class _DemoObject:
+            is_approved = False
+
+        ctx["pending_obj"] = _DemoObject()
+        approved = _DemoObject()
+        approved.is_approved = True
+        approved.approved_by = self.request.user
+        approved.approved_at = timezone.now()
+        ctx["approved_obj"] = approved
+        ctx["bulk_actions"] = [
+            {"label": _("Export"), "url": "#", "variant": "secondary", "icon": "download"},
+            {"label": _("Approve"), "url": "#", "variant": "success", "icon": "check-lg"},
+            {"label": _("Delete"), "url": "#", "variant": "danger", "icon": "trash", "confirm": _("Confirm deletion?")},
+        ]
+        return ctx

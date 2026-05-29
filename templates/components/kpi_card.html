@@ -1,0 +1,15 @@
+{% load i18n %}
+<{% if href %}a href="{{ href }}"{% else %}div{% endif %} class="kpi-card kpi-card--{{ variant }}{% if href %} kpi-card--linked{% endif %}">
+  <div class="kpi-card__icon" aria-hidden="true"><i class="bi bi-{{ icon }}"></i></div>
+  <div class="kpi-card__body">
+    <div class="kpi-card__value tabular-nums">{{ value }}</div>
+    <div class="kpi-card__label">{{ label }}</div>
+    {% if trend is not None %}
+    <div class="kpi-card__trend kpi-card__trend--{{ trend_direction|default:'flat' }}">
+      <i class="bi bi-{% if trend_direction == 'up' %}arrow-up-right{% elif trend_direction == 'down' %}arrow-down-right{% else %}dash{% endif %}" aria-hidden="true"></i>
+      <span class="tabular-nums">{{ trend }}</span>
+      {% if trend_label %}<span class="kpi-card__trend-label">{{ trend_label }}</span>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</{% if href %}a{% else %}div{% endif %}>

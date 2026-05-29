@@ -11,7 +11,7 @@ from .views import (
     CalendarEventsView, CalendarSubscribeView, CalendarView,
     ChangelogDismissView, DashboardIndicatorsPartialView,
     GeneralDashboardView, GlobalSearchView,
-    ICalFeedView,
+    ICalFeedView, StyleGuideView,
 )
 
 urlpatterns = [
@@ -30,6 +30,7 @@ urlpatterns = [
     path("calendar.ics", ICalFeedView.as_view(), name="calendar-ical"),
     path("api/calendar-events/", CalendarEventsView.as_view(), name="calendar-events"),
     path("api/search/", GlobalSearchView.as_view(), name="global-search"),
+    path("styleguide/", StyleGuideView.as_view(), name="styleguide"),
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")),
     path("helpers/", include("helpers.urls")),
