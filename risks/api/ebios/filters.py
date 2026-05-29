@@ -4,11 +4,13 @@ from risks.models import (
     AttackPathStep,
     AttackTechnique,
     BaselineGap,
+    EbiosSummary,
     EbiosWorkshopProgress,
     EcosystemStakeholder,
     FearedEvent,
     MitreAttackTechnique,
     OperationalScenario,
+    PACSMeasure,
     RiskSource,
     RiskSourceObjectivePair,
     SecurityBaseline,
@@ -217,4 +219,29 @@ class AttackTechniqueFilter(django_filters.FilterSet):
         fields = {
             "difficulty": ["exact"],
             "detection_difficulty": ["exact"],
+        }
+
+
+class EbiosSummaryFilter(django_filters.FilterSet):
+    assessment = django_filters.UUIDFilter(field_name="assessment_id")
+
+    class Meta:
+        model = EbiosSummary
+        fields = {
+            "status": ["exact"],
+        }
+
+
+class PACSMeasureFilter(django_filters.FilterSet):
+    summary = django_filters.UUIDFilter(field_name="summary_id")
+    assessment = django_filters.UUIDFilter(field_name="summary__assessment_id")
+    owner = django_filters.UUIDFilter(field_name="owner_id")
+
+    class Meta:
+        model = PACSMeasure
+        fields = {
+            "measure_type": ["exact"],
+            "priority": ["exact"],
+            "status": ["exact"],
+            "target_date": ["exact", "gte", "lte"],
         }

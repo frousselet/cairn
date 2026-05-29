@@ -19,6 +19,8 @@ router.register(r"attack-path-steps", views.AttackPathStepViewSet)
 router.register(r"mitre-techniques", views.MitreAttackTechniqueViewSet)
 router.register(r"operational-scenarios", views.OperationalScenarioViewSet)
 router.register(r"attack-techniques", views.AttackTechniqueViewSet)
+router.register(r"summaries", views.EbiosSummaryViewSet)
+router.register(r"pacs-measures", views.PACSMeasureViewSet)
 
 
 urlpatterns = [

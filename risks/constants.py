@@ -424,3 +424,35 @@ class MitreAttackTactic(models.TextChoices):
     COMMAND_AND_CONTROL = "command_and_control", _("Command and control")
     EXFILTRATION = "exfiltration", _("Exfiltration")
     IMPACT = "impact", _("Impact")
+
+
+# EBIOS RM workshop W5 - Summary and PACS
+
+class EbiosSummaryStatus(models.TextChoices):
+    DRAFT = "draft", _("Draft")
+    IN_PROGRESS = "in_progress", _("In progress")
+    UNDER_REVIEW = "under_review", _("Under review")
+    VALIDATED = "validated", _("Validated")
+
+
+class PACSMeasureType(models.TextChoices):
+    GOVERNANCE = "governance", _("Governance")
+    PROTECTION = "protection", _("Protection")
+    DEFENSE = "defense", _("Defense")
+    RESILIENCE = "resilience", _("Resilience")
+    AWARENESS = "awareness", _("Awareness")
+
+
+class PACSMeasureStatus(models.TextChoices):
+    PLANNED = "planned", _("Planned")
+    IN_PROGRESS = "in_progress", _("In progress")
+    COMPLETED = "completed", _("Completed")
+    CANCELLED = "cancelled", _("Cancelled")
+    OVERDUE = "overdue", _("Overdue")
+
+
+class PACSMeasurePriority(models.TextChoices):
+    LOW = "low", _("Low")
+    MEDIUM = "medium", _("Medium")
+    HIGH = "high", _("High")
+    CRITICAL = "critical", _("Critical")

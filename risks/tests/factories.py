@@ -11,11 +11,15 @@ from risks.constants import (
     EbiosBaselineStatus,
     EbiosIterationType,
     EbiosStudyFrameworkStatus,
+    EbiosSummaryStatus,
     EbiosWorkshopNumber,
     EbiosWorkshopStatus,
     EcosystemStakeholderCategory,
     Methodology,
     MitreAttackTactic,
+    PACSMeasurePriority,
+    PACSMeasureStatus,
+    PACSMeasureType,
     Relevance,
     RiskSourceCategory,
     Severity,
@@ -29,12 +33,14 @@ from risks.models import (
     AttackPathStep,
     AttackTechnique,
     BaselineGap,
+    EbiosSummary,
     EbiosWorkshopProgress,
     EcosystemStakeholder,
     FearedEvent,
     ISO27005Risk,
     MitreAttackTechnique,
     OperationalScenario,
+    PACSMeasure,
     Risk,
     RiskAcceptance,
     RiskAssessment,
@@ -370,3 +376,24 @@ class AttackTechniqueFactory(factory.django.DjangoModelFactory):
     mitre_technique = factory.SubFactory(MitreAttackTechniqueFactory)
     description = factory.Sequence(lambda n: f"Technique step {n}")
     difficulty = AttackDifficulty.MODERATE
+
+
+class EbiosSummaryFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EbiosSummary
+        django_get_or_create = ("assessment",)
+
+    assessment = factory.SubFactory(EbiosAssessmentFactory)
+    status = EbiosSummaryStatus.DRAFT
+
+
+class PACSMeasureFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = PACSMeasure
+
+    summary = factory.SubFactory(EbiosSummaryFactory)
+    name = factory.Sequence(lambda n: f"PACS measure {n}")
+    description = factory.Sequence(lambda n: f"Description {n}")
+    measure_type = PACSMeasureType.PROTECTION
+    priority = PACSMeasurePriority.MEDIUM
+    status = PACSMeasureStatus.PLANNED

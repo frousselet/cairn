@@ -21,6 +21,8 @@ from .ebios import (
     MitreAttackTechnique,
     OperationalScenario,
     AttackTechnique,
+    EbiosSummary,
+    PACSMeasure,
 )
 
 __all__ = [
@@ -33,4 +35,5 @@ __all__ = [
     "RiskSource", "TargetedObjective", "RiskSourceObjectivePair",
     "EcosystemStakeholder", "StrategicScenario", "AttackPathStep",
     "MitreAttackTechnique", "OperationalScenario", "AttackTechnique",
+    "EbiosSummary", "PACSMeasure",
 ]

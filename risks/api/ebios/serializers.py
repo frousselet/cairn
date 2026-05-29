@@ -4,11 +4,13 @@ from risks.models import (
     AttackPathStep,
     AttackTechnique,
     BaselineGap,
+    EbiosSummary,
     EbiosWorkshopProgress,
     EcosystemStakeholder,
     FearedEvent,
     MitreAttackTechnique,
     OperationalScenario,
+    PACSMeasure,
     RiskSource,
     RiskSourceObjectivePair,
     SecurityBaseline,
@@ -500,6 +502,89 @@ class OperationalScenarioSerializer(serializers.ModelSerializer):
             "is_approved",
             "approved_by",
             "approved_at",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class PACSMeasureSerializer(serializers.ModelSerializer):
+    measure_type_label = serializers.CharField(source="get_measure_type_display", read_only=True)
+    status_label = serializers.CharField(source="get_status_display", read_only=True)
+    priority_label = serializers.CharField(source="get_priority_display", read_only=True)
+
+    class Meta:
+        model = PACSMeasure
+        fields = [
+            "id",
+            "reference",
+            "summary",
+            "name",
+            "description",
+            "measure_type",
+            "measure_type_label",
+            "linked_treatment_plans",
+            "linked_baseline_gaps",
+            "linked_requirements",
+            "owner",
+            "start_date",
+            "target_date",
+            "completion_date",
+            "cost_estimate",
+            "expected_gain",
+            "priority",
+            "priority_label",
+            "status",
+            "status_label",
+            "progress_percentage",
+            "order",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "reference",
+            "measure_type_label",
+            "status_label",
+            "priority_label",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class EbiosSummarySerializer(serializers.ModelSerializer):
+    status_label = serializers.CharField(source="get_status_display", read_only=True)
+    pacs_measures = PACSMeasureSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = EbiosSummary
+        fields = [
+            "id",
+            "reference",
+            "assessment",
+            "residual_risk_strategy",
+            "monitoring_plan",
+            "pacs_summary",
+            "risk_mapping_before",
+            "risk_mapping_after",
+            "next_strategic_cycle_date",
+            "next_operational_cycle_date",
+            "validated_by",
+            "validated_at",
+            "status",
+            "status_label",
+            "pacs_measures",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "reference",
+            "status_label",
+            "validated_by",
+            "validated_at",
+            "risk_mapping_before",
+            "risk_mapping_after",
+            "pacs_measures",
             "created_at",
             "updated_at",
         ]

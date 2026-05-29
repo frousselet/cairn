@@ -4793,6 +4793,147 @@ def _register_risks_tools(server):
         require_perm("risks.risk.create")(_consolidate_operational_scenario),
     )
 
+    # ── EBIOS RM Workshop 5 (summary, PACS) ───────────────────────────
+    #
+    # EbiosSummary is auto-created by the post_save signal on ebios_rm
+    # assessments. PACSMeasure links to RiskTreatmentPlans, BaselineGaps
+    # and Requirements so the PACS doubles as a treatment roadmap and a
+    # traceability matrix. The custom capture_ebios_risk_mappings tool
+    # snapshots the assessment risk register into before / after slots.
+
+    EbiosSummary = _get_model("risks", "EbiosSummary")
+    PACSMeasure = _get_model("risks", "PACSMeasure")
+
+    summary_fields = [
+        "id", "reference", "assessment_id", "residual_risk_strategy",
+        "monitoring_plan", "pacs_summary", "next_strategic_cycle_date",
+        "next_operational_cycle_date", "validated_by_id", "validated_at",
+        "status", "is_approved", "created_at", "updated_at",
+    ]
+    summary_writable = [
+        "assessment_id", "residual_risk_strategy", "monitoring_plan",
+        "pacs_summary", "next_strategic_cycle_date",
+        "next_operational_cycle_date", "status",
+    ]
+    _register_crud(
+        server, "ebios_summary", EbiosSummary, "risks.ebios_summary",
+        list_fields=summary_fields,
+        writable_fields=summary_writable,
+        search_fields=[
+            "reference", "residual_risk_strategy",
+            "monitoring_plan", "pacs_summary",
+        ],
+        filters=["assessment_id", "status"],
+        scope_filtered=False,
+        has_approve=True,
+        required_fields=["assessment_id"],
+        field_overrides={
+            "residual_risk_strategy": _html_field("Residual risk strategy"),
+            "monitoring_plan": _html_field("Monitoring plan"),
+            "pacs_summary": _html_field("PACS summary"),
+            "status": {
+                "type": "string",
+                "description": "Summary status: draft, in_progress, under_review, validated.",
+            },
+        },
+    )
+
+    pacs_fields = [
+        "id", "reference", "summary_id", "name", "description",
+        "measure_type", "owner_id", "start_date", "target_date",
+        "completion_date", "cost_estimate", "expected_gain", "priority",
+        "status", "progress_percentage", "order",
+        "created_at", "updated_at",
+    ]
+    pacs_writable = [
+        "summary_id", "name", "description", "measure_type", "owner_id",
+        "start_date", "target_date", "completion_date", "cost_estimate",
+        "expected_gain", "priority", "status", "progress_percentage", "order",
+    ]
+    _register_crud(
+        server, "ebios_pacs_measure", PACSMeasure, "risks.ebios_summary",
+        list_fields=pacs_fields,
+        writable_fields=pacs_writable,
+        search_fields=["reference", "name", "description", "expected_gain"],
+        filters=["summary_id", "measure_type", "priority", "status", "owner_id"],
+        scope_filtered=False,
+        has_approve=False,
+        required_fields=["summary_id", "name"],
+        field_overrides={
+            "description": _html_field("Description"),
+            "expected_gain": _html_field("Expected gain"),
+            "measure_type": {
+                "type": "string",
+                "description": "PACS measure type: governance, protection, defense, resilience, awareness.",
+            },
+            "priority": {
+                "type": "string",
+                "description": "Priority: low, medium, high, critical.",
+            },
+            "status": {
+                "type": "string",
+                "description": "Status: planned, in_progress, completed, cancelled, overdue.",
+            },
+            "progress_percentage": {
+                "type": "integer",
+                "description": "Progress in percent (0 to 100).",
+            },
+        },
+    )
+
+    # Custom tool: capture the risk register snapshots into the summary.
+    def _capture_ebios_risk_mappings(user, arguments):
+        summary_id = arguments.get("id")
+        if not summary_id:
+            raise InvalidParamsError("id is required.")
+        try:
+            summary = EbiosSummary.objects.get(pk=summary_id)
+        except EbiosSummary.DoesNotExist:
+            return _error(f"EbiosSummary not found: {summary_id}")
+        capture_before = arguments.get("capture_before", True)
+        capture_after = arguments.get("capture_after", True)
+        if isinstance(capture_before, str):
+            capture_before = capture_before.lower() in ("1", "true", "yes")
+        if isinstance(capture_after, str):
+            capture_after = capture_after.lower() in ("1", "true", "yes")
+        summary.capture_risk_mappings(
+            capture_before=bool(capture_before),
+            capture_after=bool(capture_after),
+        )
+        summary.refresh_from_db()
+        return {
+            "id": str(summary.pk),
+            "reference": summary.reference,
+            "risk_mapping_before": summary.risk_mapping_before,
+            "risk_mapping_after": summary.risk_mapping_after,
+        }
+
+    server.register_tool(
+        "capture_ebios_risk_mappings",
+        (
+            "Snapshot the assessment's risk register into the EbiosSummary "
+            "before / after JSON slots so the cartography can render the "
+            "treatment effect. Pass capture_before / capture_after to scope "
+            "the update; both default to true."
+        ),
+        {
+            "type": "object",
+            "properties": {
+                "id": {"type": "string", "description": "UUID of the EbiosSummary to update."},
+                "capture_before": {
+                    "type": "string",
+                    "description": "Update risk_mapping_before (default true).",
+                },
+                "capture_after": {
+                    "type": "string",
+                    "description": "Update risk_mapping_after (default true).",
+                },
+            },
+            "required": ["id"],
+        },
+        require_perm("risks.ebios_summary.update")(_capture_ebios_risk_mappings),
+    )
+
 
 # ── Accounts Module ────────────────────────────────────────
 

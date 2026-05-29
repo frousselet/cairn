@@ -21,6 +21,7 @@ def bootstrap_ebios_artifacts(sender, instance, created, **kwargs):
         return
 
     from risks.models import (
+        EbiosSummary,
         EbiosWorkshopProgress,
         SecurityBaseline,
         StudyFramework,
@@ -31,6 +32,10 @@ def bootstrap_ebios_artifacts(sender, instance, created, **kwargs):
         defaults={"created_by": instance.created_by},
     )
     SecurityBaseline.objects.get_or_create(
+        assessment=instance,
+        defaults={"created_by": instance.created_by},
+    )
+    EbiosSummary.objects.get_or_create(
         assessment=instance,
         defaults={"created_by": instance.created_by},
     )

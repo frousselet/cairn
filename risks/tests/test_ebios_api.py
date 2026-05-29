@@ -16,10 +16,13 @@ from risks.tests.factories import (
     AttackTechniqueFactory,
     BaselineGapFactory,
     EbiosAssessmentFactory,
+    EbiosSummaryFactory,
     EcosystemStakeholderFactory,
     FearedEventFactory,
     MitreAttackTechniqueFactory,
     OperationalScenarioFactory,
+    PACSMeasureFactory,
+    RiskFactory,
     RiskSourceFactory,
     RiskSourceObjectivePairFactory,
     SecurityBaselineFactory,
@@ -258,3 +261,50 @@ class TestEbiosApiSmoke:
         AttackTechniqueFactory()
         response = self.client.get("/api/v1/risks/ebios/attack-techniques/")
         assert response.status_code == 200
+
+    def test_summaries_endpoint(self):
+        EbiosSummaryFactory()
+        response = self.client.get("/api/v1/risks/ebios/summaries/")
+        assert response.status_code == 200
+
+    def test_summary_auto_created_with_assessment(self):
+        assessment = EbiosAssessmentFactory()
+        response = self.client.get(
+            f"/api/v1/risks/ebios/summaries/?assessment={assessment.pk}"
+        )
+        assert response.status_code == 200
+        data = _data(response)
+        items = data.get("results") if isinstance(data, dict) else data
+        assert len(items) == 1
+        assert items[0]["reference"].startswith("ESUM-")
+
+    def test_capture_mappings_endpoint(self):
+        summary = EbiosSummaryFactory()
+        RiskFactory(assessment=summary.assessment, current_risk_level=3)
+        RiskFactory(assessment=summary.assessment, current_risk_level=3)
+        response = self.client.post(
+            f"/api/v1/risks/ebios/summaries/{summary.pk}/capture-mappings/",
+            {"capture_before": True, "capture_after": False},
+            format="json",
+        )
+        assert response.status_code == 200
+        body = _data(response)
+        assert body["risk_mapping_before"]["total"] == 2
+        # capture_after was explicitly False, so the slot must remain None
+        assert body["risk_mapping_after"] is None
+
+    def test_pacs_measures_endpoint(self):
+        PACSMeasureFactory()
+        response = self.client.get("/api/v1/risks/ebios/pacs-measures/")
+        assert response.status_code == 200
+
+    def test_pacs_measures_filter_by_status(self):
+        PACSMeasureFactory(status="planned")
+        PACSMeasureFactory(status="completed")
+        response = self.client.get(
+            "/api/v1/risks/ebios/pacs-measures/?status=completed"
+        )
+        assert response.status_code == 200
+        data = _data(response)
+        items = data.get("results") if isinstance(data, dict) else data
+        assert all(item["status"] == "completed" for item in items)

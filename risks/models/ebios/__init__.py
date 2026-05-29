@@ -12,6 +12,8 @@ from .attack_path_step import AttackPathStep
 from .mitre_attack import MitreAttackTechnique
 from .operational_scenario import OperationalScenario
 from .attack_technique import AttackTechnique
+from .ebios_summary import EbiosSummary
+from .pacs_measure import PACSMeasure
 
 __all__ = [
     "StudyFramework",
@@ -28,4 +30,6 @@ __all__ = [
     "MitreAttackTechnique",
     "OperationalScenario",
     "AttackTechnique",
+    "EbiosSummary",
+    "PACSMeasure",
 ]

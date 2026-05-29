@@ -16,11 +16,13 @@ from risks.models import (
     AttackPathStep,
     AttackTechnique,
     BaselineGap,
+    EbiosSummary,
     EbiosWorkshopProgress,
     EcosystemStakeholder,
     FearedEvent,
     MitreAttackTechnique,
     OperationalScenario,
+    PACSMeasure,
     Risk,
     RiskSource,
     RiskSourceObjectivePair,
@@ -34,11 +36,13 @@ from .filters import (
     AttackPathStepFilter,
     AttackTechniqueFilter,
     BaselineGapFilter,
+    EbiosSummaryFilter,
     EbiosWorkshopProgressFilter,
     EcosystemStakeholderFilter,
     FearedEventFilter,
     MitreAttackTechniqueFilter,
     OperationalScenarioFilter,
+    PACSMeasureFilter,
     RiskSourceFilter,
     RiskSourceObjectivePairFilter,
     SecurityBaselineFilter,
@@ -50,11 +54,13 @@ from .serializers import (
     AttackPathStepSerializer,
     AttackTechniqueSerializer,
     BaselineGapSerializer,
+    EbiosSummarySerializer,
     EbiosWorkshopProgressSerializer,
     EcosystemStakeholderSerializer,
     FearedEventSerializer,
     MitreAttackTechniqueSerializer,
     OperationalScenarioSerializer,
+    PACSMeasureSerializer,
     RiskSourceObjectivePairSerializer,
     RiskSourceSerializer,
     SecurityBaselineSerializer,
@@ -453,3 +459,71 @@ class AttackTechniqueViewSet(
     permission_feature = "ebios_operational"
     search_fields = ["reference", "custom_name", "description"]
     ordering_fields = ["reference", "order", "difficulty", "created_at"]
+
+
+class EbiosSummaryViewSet(
+    ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+):
+    queryset = (
+        EbiosSummary.objects.select_related("assessment", "validated_by")
+        .prefetch_related("pacs_measures")
+        .all()
+    )
+    serializer_class = EbiosSummarySerializer
+    filterset_class = EbiosSummaryFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "ebios_summary"
+    search_fields = ["reference", "residual_risk_strategy", "monitoring_plan", "pacs_summary"]
+    ordering_fields = ["reference", "status", "created_at"]
+
+    @action(detail=True, methods=["post"], url_path="capture-mappings")
+    def capture_mappings(self, request, pk=None):
+        """Capture the current risk register into the before / after JSON slots.
+
+        Query params (POST body fields):
+        - `capture_before` (bool, default true)
+        - `capture_after` (bool, default true)
+        """
+        summary = self.get_object()
+        capture_before = request.data.get("capture_before", True)
+        capture_after = request.data.get("capture_after", True)
+        # DRF parses JSON booleans natively; tolerate strings too.
+        if isinstance(capture_before, str):
+            capture_before = capture_before.lower() in ("1", "true", "yes")
+        if isinstance(capture_after, str):
+            capture_after = capture_after.lower() in ("1", "true", "yes")
+        summary.capture_risk_mappings(
+            capture_before=capture_before,
+            capture_after=capture_after,
+        )
+        summary.refresh_from_db()
+        serializer = self.get_serializer(summary)
+        return Response(serializer.data)
+
+
+class PACSMeasureViewSet(
+    BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+):
+    queryset = (
+        PACSMeasure.objects.select_related("summary", "owner")
+        .prefetch_related(
+            "linked_treatment_plans",
+            "linked_baseline_gaps",
+            "linked_requirements",
+        )
+        .all()
+    )
+    serializer_class = PACSMeasureSerializer
+    filterset_class = PACSMeasureFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "ebios_summary"
+    search_fields = ["reference", "name", "description", "expected_gain"]
+    ordering_fields = [
+        "reference",
+        "name",
+        "priority",
+        "status",
+        "target_date",
+        "order",
+        "created_at",
+    ]
