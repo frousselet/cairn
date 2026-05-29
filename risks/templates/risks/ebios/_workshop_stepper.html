@@ -1,13 +1,14 @@
 {% load i18n %}
-{# EBIOS RM workshop stepper (compliance-style pills + connectors).
+{% comment %}
+EBIOS RM workshop stepper (compliance-style pills + connectors).
 
-   Context:
-   - assessment: the RiskAssessment
-   - ebios_stepper_steps: list of dicts (pk, workshop_number, label, status, state, is_current)
-   - ebios_rejected_steps: list of dicts for the bottom branch
-   - ebios_next_action: the workshop ready to be started, or None
-   - ebios_branch_line_color / ebios_branch_line_opacity: SVG branch styling
-#}
+Context:
+- assessment: the RiskAssessment
+- ebios_stepper_steps: list of dicts (pk, workshop_number, label, status, state, is_current)
+- ebios_rejected_steps: list of dicts for the bottom branch
+- ebios_next_action: the workshop ready to be started, or None
+- ebios_branch_line_color / ebios_branch_line_opacity: SVG branch styling
+{% endcomment %}
 <div class="card mb-3">
   <div class="card-body py-2 px-3">
     <div style="overflow-x:auto;position:relative" data-ebios-stepper>
