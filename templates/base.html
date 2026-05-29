@@ -23,7 +23,45 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jodit@4.2.27/es2021/jodit.min.css">
   <style>
     /* ── Design tokens ────────────────────────────────── */
+    /*
+     * Three-layer token system:
+     *   1. Primitive  (--color-*)  — raw palette, opt-in for component-level overrides
+     *   2. Semantic   (--surface, --text-*, --accent, --success, ...)
+     *   3. Component  (declared near each component definition)
+     *
+     * Templates should consume semantic tokens. The primitive layer
+     * exists so new components or one-off treatments can pull a stable
+     * scale without inventing new hex codes.
+     */
     :root {
+      /* Primitive scale (Tailwind-aligned for familiarity) */
+      --color-slate-50:  #f8fafc;
+      --color-slate-100: #f1f5f9;
+      --color-slate-200: #e2e8f0;
+      --color-slate-300: #cbd5e1;
+      --color-slate-400: #94a3b8;
+      --color-slate-500: #64748b;
+      --color-slate-600: #475569;
+      --color-slate-700: #334155;
+      --color-slate-800: #1e293b;
+      --color-slate-900: #0f172a;
+      --color-charcoal-900: #0E1116;
+      --color-charcoal-800: #16181C;
+      --color-charcoal-700: #1B1E24;
+      --color-charcoal-600: #2A2D32;
+      --color-charcoal-500: #3A3D42;
+      --color-charcoal-100: #E6E8EB;
+      --color-charcoal-300: #9AA0A6;
+      --color-charcoal-400: #6B7280;
+      --color-indigo-300: #a5b4fc;
+      --color-indigo-400: #818cf8;
+      --color-indigo-500: #6366f1;
+      --color-indigo-600: #4f46e5;
+      --color-emerald-500: #10b981;
+      --color-amber-500: #f59e0b;
+      --color-red-500: #ef4444;
+      --color-cyan-500: #06b6d4;
+
       --sidebar-w: 264px;
       --sidebar-collapsed-w: 4.25rem;
       --sidebar-inset: .4375rem;
@@ -41,28 +79,28 @@
       --shadow-glow: 0 0 0 1px rgba(99,102,241,.08), 0 4px 16px rgba(99,102,241,.08);
       --surface: #ffffff;
       --surface-raised: #ffffff;
-      --surface-muted: #f8fafc;
-      --surface-subtle: #f1f5f9;
+      --surface-muted: var(--color-slate-50);
+      --surface-subtle: var(--color-slate-100);
       --surface-glass: rgba(255,255,255,.78);
       --bg-page: #f0f4f8;
-      --border-light: #e2e8f0;
+      --border-light: var(--color-slate-200);
       --border-subtle: #edf2f7;
       --border-glass: rgba(255,255,255,.5);
-      --text-primary: #0f172a;
-      --text-secondary: #475569;
-      --text-muted: #94a3b8;
+      --text-primary: var(--color-slate-900);
+      --text-secondary: var(--color-slate-600);
+      --text-muted: var(--color-slate-400);
       --text-xs: #a0aec0;
-      --accent: #6366f1;
+      --accent: var(--color-indigo-500);
       --accent-soft: #eef2ff;
-      --accent-hover: #4f46e5;
+      --accent-hover: var(--color-indigo-600);
       --accent-glow: rgba(99,102,241,.2);
-      --success: #10b981;
+      --success: var(--color-emerald-500);
       --success-soft: #ecfdf5;
-      --warning: #f59e0b;
+      --warning: var(--color-amber-500);
       --warning-soft: #fffbeb;
-      --danger: #ef4444;
+      --danger: var(--color-red-500);
       --danger-soft: #fef2f2;
-      --info: #06b6d4;
+      --info: var(--color-cyan-500);
       --info-soft: #ecfeff;
       --transition-fast: .15s cubic-bezier(.4,0,.2,1);
       --transition-normal: .25s cubic-bezier(.4,0,.2,1);
@@ -72,22 +110,25 @@
     }
 
     [data-bs-theme="dark"] {
-      --surface: #1a2332;
-      --surface-raised: #1e293b;
-      --surface-muted: #0f172a;
-      --surface-subtle: #162032;
-      --surface-glass: rgba(26,35,50,.82);
-      --bg-page: #0c1220;
-      --border-light: #2d3d50;
-      --border-subtle: #1e293b;
+      /* Warm-charcoal palette (2026 B2B SaaS convention).
+       * Pure black is dead for product UI — these warm grays read
+       * better in long sessions and on OLED panels without halation. */
+      --bg-page: var(--color-charcoal-900);
+      --surface: var(--color-charcoal-800);
+      --surface-raised: var(--color-charcoal-700);
+      --surface-muted: var(--color-charcoal-900);
+      --surface-subtle: var(--color-charcoal-700);
+      --surface-glass: rgba(22,24,28,.82);
+      --border-light: var(--color-charcoal-600);
+      --border-subtle: var(--color-charcoal-700);
       --border-glass: rgba(255,255,255,.06);
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
-      --text-xs: #4a5568;
-      --accent: #818cf8;
+      --text-primary: var(--color-charcoal-100);
+      --text-secondary: var(--color-charcoal-300);
+      --text-muted: var(--color-charcoal-400);
+      --text-xs: var(--color-charcoal-500);
+      --accent: var(--color-indigo-400);
       --accent-soft: rgba(99,102,241,.1);
-      --accent-hover: #a5b4fc;
+      --accent-hover: var(--color-indigo-300);
       --accent-glow: rgba(129,140,248,.15);
       --success-soft: rgba(16,185,129,.1);
       --warning-soft: rgba(245,158,11,.1);
@@ -99,13 +140,13 @@
       --shadow-lg: 0 12px 32px rgba(0,0,0,.32);
       --shadow-xl: 0 20px 48px rgba(0,0,0,.4);
       --shadow-glow: 0 0 0 1px rgba(129,140,248,.1), 0 4px 16px rgba(129,140,248,.06);
-      --text-sidebar-sub: #64748b;
+      --text-sidebar-sub: var(--color-charcoal-400);
     }
     [data-bs-theme="dark"] .sidebar-link,
-    [data-bs-theme="dark"] .sidebar-collapse-btn { color: #e2e8f0; }
+    [data-bs-theme="dark"] .sidebar-collapse-btn { color: var(--color-charcoal-100); }
     [data-bs-theme="dark"] .sidebar-link i,
-    [data-bs-theme="dark"] .sidebar-collapse-btn i:first-child { color: #94a3b8; }
-    [data-bs-theme="dark"] .sidebar-link.sidebar-sub { color: #94a3b8; }
+    [data-bs-theme="dark"] .sidebar-collapse-btn i:first-child { color: var(--color-charcoal-300); }
+    [data-bs-theme="dark"] .sidebar-link.sidebar-sub { color: var(--color-charcoal-300); }
 
     /* ── Logo light/dark toggle ───────────────────────── */
     .logo-dark { display: none; }

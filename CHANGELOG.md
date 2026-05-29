@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/styleguide/` page (`core.views.StyleGuideView`) rendering every shared component in its supported variants and the design-token palette: serves as the living reference and a regression checkpoint
 - 38 new tests in `core/tests/test_ui_tags.py` covering registry lookup, override semantics, ARIA attributes, query-string toggling, sticky / non-sticky sidebar, modal id uniqueness, build_steps state inference and the `/styleguide/` end-to-end render
 - French translations for every new user-facing string introduced by the component library and styleguide
+- UX audit Phase 2 (design tokens): three-layer token system in `templates/base.html`. The new primitive layer exposes a curated Tailwind-aligned palette (`--color-slate-*`, `--color-charcoal-*`, `--color-indigo-*`, `--color-emerald-*`, `--color-amber-*`, `--color-red-*`, `--color-cyan-*`) that the semantic tokens now consume via `var()`. The component layer remains co-located with each component definition. Templates should still consume semantic tokens; the primitive scale is available for new components that need fine-grained control without inventing hex codes
+
+### Changed
+
+- UX audit Phase 2 (dark mode): repainted the `[data-bs-theme="dark"]` palette from cool slate-blue surfaces to the warm-charcoal band considered the 2026 B2B SaaS convention (`#0E1116` page, `#16181C` surface, `#1B1E24` raised, `#E6E8EB` text). Pure black is dead for product UI: warm grays read better in long sessions and avoid OLED halation. All sidebar overrides now reference the new charcoal primitives so dark mode contrast tracks the design system
 
 ### Changed
 
