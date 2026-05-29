@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-29 16:40+0200\n"
+"POT-Creation-Date: 2026-05-29 16:57+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,7 +37,7 @@ msgid "Robot"
 msgstr "Robot"
 
 #: accounts/constants.py:12 accounts/constants.py:318
-#: accounts/templates/accounts/group_detail.html:84 templates/base.html:3294
+#: accounts/templates/accounts/group_detail.html:84 templates/base.html:3305
 #: templates/calendar_subscribe.html:100
 msgid "Create"
 msgstr "Créer"
@@ -205,16 +205,16 @@ msgstr "Utilisateur non trouvé"
 #: risks/templates/risks/threat_detail.html:31
 #: risks/templates/risks/threat_list.html:38
 #: risks/templates/risks/vulnerability_detail.html:31
-#: risks/templates/risks/vulnerability_list.html:37 templates/base.html:2902
+#: risks/templates/risks/vulnerability_list.html:37 templates/base.html:2913
 #: templates/calendar.html:213 templates/calendar.html:242
-#: templates/home.html:331 templates/home.html:733
+#: templates/home.html:379 templates/home.html:781
 msgid "Scopes"
 msgstr "Périmètres"
 
 #: accounts/constants.py:57 context/models/issue.py:49
 #: context/templates/context/issue_list.html:5
 #: context/templates/context/issue_list.html:13 core/views.py:738
-#: core/views.py:822 templates/base.html:2903 templates/home.html:339
+#: core/views.py:822 templates/base.html:2914 templates/home.html:387
 msgid "Issues"
 msgstr "Enjeux"
 
@@ -222,7 +222,7 @@ msgstr "Enjeux"
 #: context/models/objective.py:70 context/models/stakeholder.py:54
 #: context/templates/context/stakeholder_list.html:5
 #: context/templates/context/stakeholder_list.html:13 core/views.py:740
-#: core/views.py:829 templates/base.html:2904 templates/home.html:347
+#: core/views.py:829 templates/base.html:2915 templates/home.html:395
 msgid "Stakeholders"
 msgstr "Parties prenantes"
 
@@ -234,24 +234,24 @@ msgstr "Attentes"
 #: context/templates/context/objective_list.html:5
 #: context/templates/context/objective_list.html:13 core/views.py:600
 #: core/views.py:739 core/views.py:815
-#: risks/templates/risks/ebios/workshop_w2.html:25 templates/base.html:2905
+#: risks/templates/risks/ebios/workshop_w2.html:25 templates/base.html:2916
 #: templates/calendar.html:216 templates/calendar.html:242
-#: templates/home.html:355 templates/home.html:733
+#: templates/home.html:403 templates/home.html:781
 msgid "Objectives"
 msgstr "Objectifs"
 
 #: accounts/constants.py:73 context/models/swot.py:36
 #: context/templates/context/swot_list.html:5
 #: context/templates/context/swot_list.html:13 core/views.py:602
-#: templates/base.html:2906 templates/calendar.html:222
-#: templates/calendar.html:243 templates/home.html:384 templates/home.html:734
+#: templates/base.html:2917 templates/calendar.html:222
+#: templates/calendar.html:243 templates/home.html:432 templates/home.html:782
 msgid "SWOT analyses"
 msgstr "Analyses SWOT"
 
 #: accounts/constants.py:77 context/models/role.py:36
 #: context/templates/context/role_list.html:5 core/views.py:741
-#: core/views.py:836 templates/base.html:2909 templates/base.html:2910
-#: templates/home.html:365
+#: core/views.py:836 templates/base.html:2920 templates/base.html:2921
+#: templates/home.html:413
 msgid "Roles"
 msgstr "Rôles"
 
@@ -261,12 +261,12 @@ msgstr "Attribution de rôle"
 
 #: accounts/constants.py:85 context/models/activity.py:59
 #: context/templates/context/activity_list.html:5 core/views.py:843
-#: templates/base.html:2913 templates/base.html:2914 templates/home.html:392
+#: templates/base.html:2924 templates/base.html:2925 templates/home.html:440
 msgid "Activities"
 msgstr "Activités"
 
 #: accounts/constants.py:89 context/models/indicator.py:128 core/views.py:857
-#: templates/base.html:2917 templates/base.html:2919
+#: templates/base.html:2928 templates/base.html:2930
 #: templates/includes/dashboard_indicators.html:22
 msgid "Indicators"
 msgstr "Indicateurs"
@@ -284,8 +284,8 @@ msgstr "Partie prenante"
 #: context/templates/context/scope_form.html:122
 #: context/templates/context/site_list.html:5
 #: context/templates/context/site_list.html:13 core/views.py:808
-#: templates/base.html:2939 templates/base.html:2941 templates/base.html:2944
-#: templates/home.html:376
+#: templates/base.html:2950 templates/base.html:2952 templates/base.html:2955
+#: templates/home.html:424
 msgid "Sites"
 msgstr "Sites"
 
@@ -305,8 +305,8 @@ msgstr "Piste d'audit du contexte"
 #: assets/templates/assets/essential_asset_list.html:4
 #: assets/templates/assets/essential_asset_list.html:9 core/views.py:742
 #: risks/models/ebios/security_baseline.py:34
-#: risks/templates/risks/ebios/workshop_w1.html:24 templates/base.html:2934
-#: templates/home.html:427
+#: risks/templates/risks/ebios/workshop_w1.html:24 templates/base.html:2945
+#: templates/home.html:475
 msgid "Essential assets"
 msgstr "Biens essentiels"
 
@@ -318,20 +318,20 @@ msgstr "Évaluation des biens essentiels"
 #: assets/templates/assets/support_asset_list.html:4
 #: assets/templates/assets/support_asset_list.html:9 core/views.py:743
 #: risks/models/ebios/security_baseline.py:40
-#: risks/templates/risks/ebios/workshop_w1.html:27 templates/base.html:2935
-#: templates/home.html:438
+#: risks/templates/risks/ebios/workshop_w1.html:27 templates/base.html:2946
+#: templates/home.html:486
 msgid "Support assets"
 msgstr "Biens supports"
 
 #: accounts/constants.py:127 assets/templates/assets/dependency_list.html:4
-#: templates/base.html:2956 templates/base.html:2958 templates/home.html:449
+#: templates/base.html:2967 templates/base.html:2969 templates/home.html:497
 msgid "Dependencies"
 msgstr "Dépendances"
 
 #: accounts/constants.py:131 assets/models/group.py:43
 #: assets/templates/assets/group_list.html:5
-#: assets/templates/assets/group_list.html:13 templates/base.html:2936
-#: templates/home.html:492
+#: assets/templates/assets/group_list.html:13 templates/base.html:2947
+#: templates/home.html:540
 msgid "Asset groups"
 msgstr "Groupes d'actifs"
 
@@ -340,15 +340,15 @@ msgstr "Groupes d'actifs"
 #: assets/templates/assets/supplier_list.html:12
 #: assets/templates/assets/supplier_requirement_detail.html:11
 #: assets/templates/assets/supplier_type_list.html:29 context/constants.py:81
-#: core/views.py:744 core/views.py:885 templates/base.html:2947
-#: templates/base.html:2949 templates/base.html:2952 templates/home.html:460
+#: core/views.py:744 core/views.py:885 templates/base.html:2958
+#: templates/base.html:2960 templates/base.html:2963 templates/home.html:508
 msgid "Suppliers"
 msgstr "Fournisseurs"
 
 #: accounts/constants.py:139 assets/models/supplier.py:339
 #: assets/templates/assets/supplier_dependency_list.html:7
 #: assets/templates/assets/supplier_dependency_list.html:12
-#: templates/base.html:2962 templates/home.html:473
+#: templates/base.html:2973 templates/home.html:521
 msgid "Supplier dependencies"
 msgstr "Dépendances fournisseurs"
 
@@ -376,9 +376,9 @@ msgstr "Piste d'audit des actifs"
 #: compliance/views.py:688 compliance/views.py:693 compliance/views.py:698
 #: compliance/views.py:703 core/views.py:601 core/views.py:745
 #: core/views.py:892 reports/forms.py:37 reports/models/report.py:36
-#: reports/templates/reports/audit_report_pdf.html:292 templates/base.html:3002
-#: templates/base.html:3004 templates/calendar.html:219
-#: templates/calendar.html:243 templates/home.html:611 templates/home.html:734
+#: reports/templates/reports/audit_report_pdf.html:292 templates/base.html:3013
+#: templates/base.html:3015 templates/calendar.html:219
+#: templates/calendar.html:243 templates/home.html:659 templates/home.html:782
 msgid "Frameworks"
 msgstr "Référentiels"
 
@@ -395,18 +395,18 @@ msgstr "Sections"
 #: compliance/templates/compliance/framework_detail.html:103
 #: compliance/templates/compliance/requirement_list.html:5
 #: compliance/templates/compliance/requirement_list.html:13 core/views.py:746
-#: core/views.py:899 templates/base.html:3011 templates/base.html:3012
-#: templates/home.html:619
+#: core/views.py:899 templates/base.html:3022 templates/base.html:3023
+#: templates/home.html:667
 msgid "Requirements"
 msgstr "Exigences"
 
 #: accounts/constants.py:173 compliance/models/assessment.py:78
 #: core/views.py:596 core/views.py:747 templates/calendar.html:204
-#: templates/calendar.html:240 templates/home.html:731
+#: templates/calendar.html:240 templates/home.html:779
 msgid "Compliance assessments"
 msgstr "Évaluations de conformité"
 
-#: accounts/constants.py:177 templates/home.html:651
+#: accounts/constants.py:177 templates/home.html:699
 msgid "Inter-framework mappings"
 msgstr "Correspondances inter-référentiels"
 
@@ -416,9 +416,9 @@ msgstr "Correspondances inter-référentiels"
 #: compliance/templates/compliance/action_plan_list.html:5
 #: compliance/templates/compliance/action_plan_list.html:13
 #: compliance/templates/compliance/requirement_detail.html:172
-#: core/views.py:597 core/views.py:748 templates/base.html:3023
-#: templates/base.html:3024 templates/calendar.html:207
-#: templates/calendar.html:241 templates/home.html:638 templates/home.html:732
+#: core/views.py:597 core/views.py:748 templates/base.html:3034
+#: templates/base.html:3035 templates/calendar.html:207
+#: templates/calendar.html:241 templates/home.html:686 templates/home.html:780
 msgid "Action plans"
 msgstr "Plans d'action"
 
@@ -438,7 +438,7 @@ msgstr "Piste d'audit de la conformité"
 #: risks/models/risk_assessment.py:60
 #: risks/templates/risks/assessment_list.html:4
 #: risks/templates/risks/assessment_list.html:12 templates/calendar.html:201
-#: templates/calendar.html:240 templates/home.html:731
+#: templates/calendar.html:240 templates/home.html:779
 msgid "Risk assessments"
 msgstr "Appréciations des risques"
 
@@ -460,9 +460,9 @@ msgstr "Registre des risques"
 #: risks/models/treatment.py:95 risks/templates/risks/dashboard.html:47
 #: risks/templates/risks/risk_detail.html:110
 #: risks/templates/risks/treatment_plan_list.html:4
-#: risks/templates/risks/treatment_plan_list.html:10 templates/base.html:2986
+#: risks/templates/risks/treatment_plan_list.html:10 templates/base.html:2997
 #: templates/calendar.html:210 templates/calendar.html:241
-#: templates/home.html:529 templates/home.html:732
+#: templates/home.html:577 templates/home.html:780
 msgid "Treatment plans"
 msgstr "Plans de traitement"
 
@@ -470,7 +470,7 @@ msgstr "Plans de traitement"
 #: risks/templates/risks/acceptance_list.html:4
 #: risks/templates/risks/acceptance_list.html:10
 #: risks/templates/risks/risk_detail.html:140 templates/calendar.html:225
-#: templates/calendar.html:244 templates/home.html:735
+#: templates/calendar.html:244 templates/home.html:783
 msgid "Risk acceptances"
 msgstr "Acceptations de risque"
 
@@ -479,15 +479,15 @@ msgstr "Acceptations de risque"
 #: context/templates/context/swot_table_body.html:13 context/views.py:611
 #: core/views.py:934 risks/models/threat.py:38
 #: risks/templates/risks/threat_list.html:4
-#: risks/templates/risks/threat_list.html:10 templates/base.html:2995
-#: templates/home.html:553
+#: risks/templates/risks/threat_list.html:10 templates/base.html:3006
+#: templates/home.html:601
 msgid "Threats"
 msgstr "Menaces"
 
 #: accounts/constants.py:223 core/views.py:941 risks/models/vulnerability.py:53
 #: risks/templates/risks/vulnerability_list.html:4
-#: risks/templates/risks/vulnerability_list.html:10 templates/base.html:2996
-#: templates/home.html:561
+#: risks/templates/risks/vulnerability_list.html:10 templates/base.html:3007
+#: templates/home.html:609
 msgid "Vulnerabilities"
 msgstr "Vulnérabilités"
 
@@ -536,15 +536,15 @@ msgstr "Piste d'audit des risques"
 
 #: accounts/constants.py:269 accounts/constants.py:342 reports/apps.py:8
 #: reports/models/report.py:71 reports/templates/reports/report_list.html:4
-#: reports/templates/reports/report_list.html:8 templates/base.html:2886
-#: templates/base.html:2887
+#: reports/templates/reports/report_list.html:8 templates/base.html:2897
+#: templates/base.html:2898
 msgid "Reports"
 msgstr "Rapports"
 
 #: accounts/constants.py:273 reports/models/management_review.py:83
 #: reports/templates/reports/management_review_list.html:4
 #: reports/templates/reports/management_review_list.html:9
-#: templates/base.html:2890 templates/base.html:2891
+#: templates/base.html:2901 templates/base.html:2902
 #, fuzzy
 #| msgid "Management review"
 msgid "Management reviews"
@@ -558,15 +558,15 @@ msgstr "Administration Django"
 #: accounts/models/user.py:111 accounts/templates/accounts/group_list.html:32
 #: accounts/templates/accounts/user_list.html:10
 #: context/templates/context/role_detail.html:71
-#: context/templates/context/role_list.html:44 templates/base.html:3049
-#: templates/base.html:3050
+#: context/templates/context/role_list.html:44 templates/base.html:3060
+#: templates/base.html:3061
 msgid "Users"
 msgstr "Utilisateurs"
 
 #: accounts/constants.py:287 accounts/models/group.py:45
 #: accounts/templates/accounts/group_list.html:10
-#: accounts/templates/accounts/user_detail.html:42 templates/base.html:3056
-#: templates/base.html:3057
+#: accounts/templates/accounts/user_detail.html:42 templates/base.html:3067
+#: templates/base.html:3068
 msgid "Groups"
 msgstr "Groupes"
 
@@ -624,18 +624,18 @@ msgstr "Se connecter en tant que"
 
 #: accounts/constants.py:338 context/apps.py:8 context/constants.py:171
 #: context/templates/context/role_list.html:26 risks/constants.py:439
-#: templates/base.html:2895 templates/home.html:325
+#: templates/base.html:2906 templates/home.html:373
 msgid "Governance"
 msgstr "Gouvernance"
 
 #: accounts/constants.py:339 assets/apps.py:10
-#: risks/templates/risks/iso27005_risk_detail.html:24 templates/base.html:2927
-#: templates/home.html:421
+#: risks/templates/risks/iso27005_risk_detail.html:24 templates/base.html:2938
+#: templates/home.html:469
 msgid "Assets"
 msgstr "Actifs"
 
 #: accounts/constants.py:340 compliance/constants.py:21 risks/apps.py:8
-#: templates/base.html:2969 templates/home.html:504
+#: templates/base.html:2980 templates/home.html:552
 msgid "Risk management"
 msgstr "Gestion des risques"
 
@@ -648,8 +648,8 @@ msgstr "Gestion des risques"
 #: compliance/templates/compliance/requirement_detail.html:77
 #: context/constants.py:121 context/constants.py:128
 #: reports/templates/reports/audit_report_pdf.html:432 risks/constants.py:35
-#: risks/templates/risks/risk_detail.html:198 templates/base.html:3000
-#: templates/home.html:605
+#: risks/templates/risks/risk_detail.html:198 templates/base.html:3011
+#: templates/home.html:653
 msgid "Compliance"
 msgstr "Conformité"
 
@@ -796,7 +796,7 @@ msgstr "Métadonnées"
 
 #: accounts/models/access_log.py:45
 #: accounts/templates/accounts/access_log_list.html:9
-#: accounts/templates/accounts/user_detail.html:44 templates/base.html:3078
+#: accounts/templates/accounts/user_detail.html:44 templates/base.html:3089
 msgid "Access log"
 msgstr "Journal d'accès"
 
@@ -1033,8 +1033,8 @@ msgstr "Groupe système"
 #: accounts/models/group.py:17 accounts/models/permission.py:31
 #: accounts/templates/accounts/group_detail.html:31
 #: accounts/templates/accounts/group_list.html:33
-#: accounts/templates/accounts/permission_list.html:8 templates/base.html:3060
-#: templates/base.html:3061
+#: accounts/templates/accounts/permission_list.html:8 templates/base.html:3071
+#: templates/base.html:3072
 msgid "Permissions"
 msgstr "Permissions"
 
@@ -1340,7 +1340,7 @@ msgstr "Aucun événement."
 msgid "Action log — Fairway"
 msgstr "Journal des actions — Fairway"
 
-#: accounts/templates/accounts/action_log_list.html:8 templates/base.html:3079
+#: accounts/templates/accounts/action_log_list.html:8 templates/base.html:3090
 msgid "Action log"
 msgstr "Journal des actions"
 
@@ -2943,7 +2943,7 @@ msgstr "Archivé"
 #: assets/constants.py:268 assets/templates/assets/supplier_detail.html:184
 #: compliance/constants.py:58 compliance/models/assessment.py:65
 #: compliance/templates/compliance/assessment_results_table_body.html:78
-#: templates/home.html:247 templates/home.html:256
+#: templates/home.html:295 templates/home.html:304
 msgid "Not assessed"
 msgstr "Non évalué"
 
@@ -2951,7 +2951,7 @@ msgstr "Non évalué"
 #: compliance/constants.py:66 compliance/models/assessment.py:52
 #: compliance/templates/compliance/assessment_detail.html:202
 #: compliance/templates/compliance/assessment_results_table_body.html:66
-#: templates/home.html:243 templates/home.html:252
+#: templates/home.html:291 templates/home.html:300
 msgid "Compliant"
 msgstr "Conforme"
 
@@ -3072,7 +3072,7 @@ msgstr "Date d'approbation"
 #: assets/templates/assets/support_asset_detail.html:194
 #: compliance/templates/compliance/framework_detail.html:212
 #: context/models/base.py:78 context/templates/context/scope_detail.html:165
-#: context/templates/context/site_detail.html:86 templates/base.html:3152
+#: context/templates/context/site_detail.html:86 templates/base.html:3163
 msgid "Version"
 msgstr "Version"
 
@@ -3260,7 +3260,7 @@ msgstr "Dépendance site–bien"
 #: assets/models/site_dependency.py:80
 #: assets/templates/assets/site_asset_dependency_list.html:7
 #: assets/templates/assets/site_asset_dependency_list.html:12
-#: templates/base.html:2963
+#: templates/base.html:2974
 msgid "Site–asset dependencies"
 msgstr "Dépendances site–bien"
 
@@ -3279,7 +3279,7 @@ msgstr "Dépendance site–fournisseur"
 #: assets/models/site_dependency.py:156
 #: assets/templates/assets/site_supplier_dependency_list.html:7
 #: assets/templates/assets/site_supplier_dependency_list.html:12
-#: templates/base.html:2964
+#: templates/base.html:2975
 msgid "Site–supplier dependencies"
 msgstr "Dépendances site–fournisseur"
 
@@ -3291,8 +3291,8 @@ msgstr "Type de fournisseur"
 
 #: assets/models/supplier.py:33
 #: assets/templates/assets/supplier_type_list.html:6
-#: assets/templates/assets/supplier_type_list.html:10 templates/base.html:2953
-#: templates/home.html:484
+#: assets/templates/assets/supplier_type_list.html:10 templates/base.html:2964
+#: templates/home.html:532
 msgid "Supplier types"
 msgstr "Types de fournisseurs"
 
@@ -3935,8 +3935,8 @@ msgstr "Aucune évaluation enregistrée."
 #: risks/templates/risks/treatment_plan_list.html:41
 #: risks/templates/risks/vulnerability_detail.html:43
 #: risks/templates/risks/vulnerability_form_modal.html:66
-#: risks/templates/risks/vulnerability_list.html:40 templates/base.html:3032
-#: templates/base.html:3033 templates/core/styleguide.html:135
+#: risks/templates/risks/vulnerability_list.html:40 templates/base.html:3043
+#: templates/base.html:3044 templates/core/styleguide.html:135
 msgid "Tags"
 msgstr "Tags"
 
@@ -4612,13 +4612,13 @@ msgid "Optional"
 msgstr "Optionnel"
 
 #: compliance/constants.py:49 context/constants.py:41 context/constants.py:209
-#: context/templates/context/scope_detail.html:66 templates/base.html:2922
+#: context/templates/context/scope_detail.html:66 templates/base.html:2933
 msgid "Organizational"
 msgstr "Organisationnel"
 
 #: compliance/constants.py:50 context/constants.py:43 context/constants.py:210
 #: context/templates/context/scope_detail.html:72 risks/constants.py:105
-#: templates/base.html:2923
+#: templates/base.html:2934
 msgid "Technical"
 msgstr "Technique"
 
@@ -4633,14 +4633,14 @@ msgstr "Juridique"
 #: compliance/constants.py:59
 #: compliance/templates/compliance/assessment_detail.html:232
 #: compliance/templates/compliance/assessment_results_table_body.html:70
-#: templates/home.html:246 templates/home.html:255
+#: templates/home.html:294 templates/home.html:303
 msgid "Evaluation planned"
 msgstr "Évaluation prévue"
 
 #: compliance/constants.py:62 compliance/constants.py:224
 #: compliance/models/assessment.py:54
 #: compliance/templates/compliance/assessment_detail.html:226
-#: templates/home.html:245 templates/home.html:254
+#: templates/home.html:293 templates/home.html:302
 msgid "Major non-conformity"
 msgstr "Non-conformité majeure"
 
@@ -5660,7 +5660,7 @@ msgstr "Transition non autorisée"
 
 #: compliance/templates/compliance/action_plan_kanban.html:456
 #: compliance/templates/compliance/action_plan_kanban.html:516
-#: templates/base.html:3252
+#: templates/base.html:3263
 msgid "An error occurred"
 msgstr "Une erreur est survenue"
 
@@ -5732,7 +5732,7 @@ msgstr "Nouvelle évaluation"
 
 #: compliance/templates/compliance/assessment_list.html:5
 #: compliance/templates/compliance/assessment_list.html:13
-#: templates/base.html:3015 templates/base.html:3016 templates/home.html:630
+#: templates/base.html:3026 templates/base.html:3027 templates/home.html:678
 msgid "Audits & compliance"
 msgstr "Audits et conformité"
 
@@ -5843,8 +5843,8 @@ msgstr "Aucune exigence définie pour ce référentiel."
 #: risks/templates/risks/ebios/strategic_scenario_form.html:10
 #: risks/templates/risks/ebios/study_framework_form.html:9
 #: risks/templates/risks/ebios/targeted_objective_form.html:10
-#: templates/base.html:2971 templates/base.html:2973 templates/base.html:2976
-#: templates/home.html:510
+#: templates/base.html:2982 templates/base.html:2984 templates/base.html:2987
+#: templates/home.html:558
 msgid "Assessments"
 msgstr "Appréciations"
 
@@ -6048,6 +6048,7 @@ msgstr "Source"
 
 #: compliance/templates/compliance/requirement_detail.html:154
 #: reports/templates/reports/management_review_detail.html:177
+#: templates/home.html:156
 msgid "Target"
 msgstr "Cible"
 
@@ -7542,8 +7543,8 @@ msgstr "Nouvelle analyse SWOT"
 #: context/templates/context/swot_item_form_modal.html:7
 #: context/templates/context/swot_strategy_form_modal.html:7
 #: reports/templates/reports/management_review_detail.html:358
-#: templates/base.html:3159 templates/components/confirm_delete.html:10
-#: templates/home.html:668 templates/includes/dashboard_indicators.html:124
+#: templates/base.html:3170 templates/components/confirm_delete.html:10
+#: templates/home.html:716 templates/includes/dashboard_indicators.html:124
 #: templates/includes/dashboard_indicators.html:168
 #: templates/includes/help_modal.html:9 templates/includes/modal_form.html:7
 msgid "Close"
@@ -7813,7 +7814,7 @@ msgid "Expiry: "
 msgstr "Expiration : "
 
 #: core/views.py:604 templates/calendar.html:228 templates/calendar.html:245
-#: templates/home.html:736
+#: templates/home.html:784
 msgid "Supplier reviews"
 msgstr "Revues fournisseurs"
 
@@ -7821,12 +7822,12 @@ msgstr "Revues fournisseurs"
 msgid "Calendar subscription"
 msgstr "Abonnement au calendrier"
 
-#: core/views.py:736 templates/base.html:2878 templates/base.html:2879
+#: core/views.py:736 templates/base.html:2889 templates/base.html:2890
 #: templates/home.html:4 templates/home.html:79
 msgid "Dashboard"
 msgstr "Tableau de bord"
 
-#: core/views.py:752 templates/base.html:2882 templates/base.html:2883
+#: core/views.py:752 templates/base.html:2893 templates/base.html:2894
 #: templates/calendar.html:4 templates/calendar.html:167
 msgid "Calendar"
 msgstr "Calendrier"
@@ -7896,8 +7897,8 @@ msgid "Risk Assessments"
 msgstr "Analyses de risques"
 
 #: core/views.py:927 risks/models/risk.py:145
-#: risks/templates/risks/dashboard.html:40 templates/base.html:2985
-#: templates/home.html:518
+#: risks/templates/risks/dashboard.html:40 templates/base.html:2996
+#: templates/home.html:566
 msgid "Risks"
 msgstr "Risques"
 
@@ -8303,7 +8304,7 @@ msgstr "Politique"
 msgid "Security control"
 msgstr "Outil de sécurité"
 
-#: reports/constants.py:109 templates/base.html:2897 templates/base.html:2899
+#: reports/constants.py:109 templates/base.html:2908 templates/base.html:2910
 msgid "Organization"
 msgstr "Organisation"
 
@@ -9095,7 +9096,7 @@ msgid "Generated reports"
 msgstr "Rapports générés"
 
 #: reports/templates/reports/management_review_list.html:25
-#: templates/base.html:3110 templates/includes/table_search.html:7
+#: templates/base.html:3121 templates/includes/table_search.html:7
 msgid "Search"
 msgstr "Rechercher"
 
@@ -10788,7 +10789,7 @@ msgid "Default"
 msgstr "Par défaut"
 
 #: risks/models/risk_criteria.py:81 risks/models/risk_criteria.py:107
-#: risks/templates/risks/risk_detail.html:280 templates/base.html:2977
+#: risks/templates/risks/risk_detail.html:280 templates/base.html:2988
 msgid "Criteria"
 msgstr "Critères"
 
@@ -11053,15 +11054,15 @@ msgstr "Traitement"
 msgid "No associated risk."
 msgstr "Aucun risque associé."
 
-#: risks/templates/risks/assessment_detail.html:254 templates/home.html:571
+#: risks/templates/risks/assessment_detail.html:254 templates/home.html:619
 msgid "Risk matrices"
 msgstr "Matrices de risques"
 
-#: risks/templates/risks/assessment_detail.html:260 templates/home.html:581
+#: risks/templates/risks/assessment_detail.html:260 templates/home.html:629
 msgid "Current risks (before treatment)"
 msgstr "Risques réels (avant traitement)"
 
-#: risks/templates/risks/assessment_detail.html:266 templates/home.html:591
+#: risks/templates/risks/assessment_detail.html:266 templates/home.html:639
 msgid "Residual risks (after treatment)"
 msgstr "Risques résiduels (après traitement)"
 
@@ -12097,128 +12098,128 @@ msgstr "Scénario opérationnel consolidé comme risque %(ref)s."
 msgid "Risk mapping snapshot captured."
 msgstr "Cartographie des risques capturée."
 
-#: templates/base.html:2839
+#: templates/base.html:2850
 #, python-format
 msgid "Impersonating %(name)s"
 msgstr "Connecté en tant que %(name)s"
 
-#: templates/base.html:2843
+#: templates/base.html:2854
 msgid "Stop"
 msgstr "Arrêter"
 
-#: templates/base.html:2929 templates/base.html:2931
+#: templates/base.html:2940 templates/base.html:2942
 msgid "Goods"
 msgstr "Biens"
 
-#: templates/base.html:2961
+#: templates/base.html:2972
 msgid "Asset dependencies"
 msgstr "Dépendances d'actifs"
 
-#: templates/base.html:2965
+#: templates/base.html:2976
 msgid "Graph view"
 msgstr "Vue graphe"
 
-#: templates/base.html:2980 templates/base.html:2982
+#: templates/base.html:2991 templates/base.html:2993
 msgid "Register"
 msgstr "Registre"
 
-#: templates/base.html:2987 templates/home.html:540
+#: templates/base.html:2998 templates/home.html:588
 msgid "Acceptances"
 msgstr "Acceptations"
 
-#: templates/base.html:2990 templates/base.html:2992
+#: templates/base.html:3001 templates/base.html:3003
 msgid "Catalogs"
 msgstr "Catalogues"
 
-#: templates/base.html:3007
+#: templates/base.html:3018
 msgid "List"
 msgstr "Liste"
 
-#: templates/base.html:3008
+#: templates/base.html:3019
 msgid "Import"
 msgstr "Importer"
 
-#: templates/base.html:3019 templates/base.html:3020
+#: templates/base.html:3030 templates/base.html:3031
 msgid "Mappings"
 msgstr "Correspondances"
 
-#: templates/base.html:3030
+#: templates/base.html:3041
 msgid "Administration"
 msgstr "Administration"
 
-#: templates/base.html:3038 templates/base.html:3039
+#: templates/base.html:3049 templates/base.html:3050
 msgid "Company"
 msgstr "Entreprise"
 
-#: templates/base.html:3042 templates/base.html:3043
+#: templates/base.html:3053 templates/base.html:3054
 msgid "Versioning"
 msgstr "Versioning"
 
-#: templates/base.html:3066 templates/base.html:3067
+#: templates/base.html:3077 templates/base.html:3078
 msgid "Subscriptions"
 msgstr "Abonnements"
 
-#: templates/base.html:3073 templates/base.html:3075
+#: templates/base.html:3084 templates/base.html:3086
 msgid "Logs"
 msgstr "Journaux"
 
-#: templates/base.html:3085 templates/base.html:3086
+#: templates/base.html:3096 templates/base.html:3097
 msgid "Django admin"
 msgstr "Admin Django"
 
-#: templates/base.html:3093
+#: templates/base.html:3104
 msgid "Toggle sidebar"
 msgstr "Réduire le menu"
 
-#: templates/base.html:3113
+#: templates/base.html:3124
 msgid "About"
 msgstr "À propos"
 
-#: templates/base.html:3116
+#: templates/base.html:3127
 msgid "User menu"
 msgstr "Menu utilisateur"
 
-#: templates/base.html:3129
+#: templates/base.html:3140
 msgid "Profile"
 msgstr "Profil"
 
-#: templates/base.html:3135
+#: templates/base.html:3146
 msgid "Sign out"
 msgstr "Déconnexion"
 
-#: templates/base.html:3155
+#: templates/base.html:3166
 msgid "MIT License"
 msgstr "Licence MIT"
 
-#: templates/base.html:3170
+#: templates/base.html:3181
 msgid "Command palette"
 msgstr "Palette de commandes"
 
-#: templates/base.html:3174
+#: templates/base.html:3185
 msgid "Search or jump to..."
 msgstr "Rechercher ou naviguer..."
 
-#: templates/base.html:3181
+#: templates/base.html:3192
 msgid "Search across the application"
 msgstr "Recherche dans toute l'application"
 
-#: templates/base.html:3186
+#: templates/base.html:3197
 msgid "Search results"
 msgstr "Résultats de la recherche"
 
-#: templates/base.html:3246
+#: templates/base.html:3257
 #, fuzzy
 #| msgid "Save"
 msgid "Saved"
 msgstr "Enregistrer"
 
-#: templates/base.html:3248
+#: templates/base.html:3259
 #, fuzzy
 #| msgid "Delete"
 msgid "Deleted"
 msgstr "Supprimer"
 
-#: templates/base.html:4006
+#: templates/base.html:4017
 msgid "No results found"
 msgstr "Aucun résultat trouvé"
 
@@ -12322,31 +12323,31 @@ msgstr "Aujourd'hui"
 msgid "No events for this period"
 msgstr "Aucun événement pour cette période"
 
-#: templates/calendar.html:253 templates/home.html:316 templates/home.html:724
+#: templates/calendar.html:253 templates/home.html:364 templates/home.html:772
 msgid "Upcoming events"
 msgstr "Événements à venir"
 
-#: templates/calendar.html:253 templates/home.html:725
+#: templates/calendar.html:253 templates/home.html:773
 msgid "next 30 days"
 msgstr "30 prochains jours"
 
-#: templates/calendar.html:254 templates/home.html:726
+#: templates/calendar.html:254 templates/home.html:774
 msgid "No upcoming events"
 msgstr "Aucun événement à venir"
 
-#: templates/calendar.html:254 templates/home.html:727
+#: templates/calendar.html:254 templates/home.html:775
 msgid "today"
 msgstr "aujourd'hui"
 
-#: templates/calendar.html:255 templates/home.html:728
+#: templates/calendar.html:255 templates/home.html:776
 msgid "tomorrow"
 msgstr "demain"
 
-#: templates/calendar.html:255 templates/home.html:729
+#: templates/calendar.html:255 templates/home.html:777
 msgid "Show all"
 msgstr "Tout afficher"
 
-#: templates/calendar.html:256 templates/home.html:730
+#: templates/calendar.html:256 templates/home.html:778
 #, python-format
 msgid "in %%(days)s days"
 msgstr "dans %%(days)s jours"
@@ -12612,8 +12613,8 @@ msgstr ""
 #: templates/core/styleguide.html:220
 msgid "icon-only buttons are 2rem (32x32 px), well above the 24x24 minimum."
 msgstr ""
-"les boutons icône-seul font 2 rem (32 x 32 px), bien au-dessus du minimum "
-"de 24 x 24."
+"les boutons icône-seul font 2 rem (32 x 32 px), bien au-dessus du minimum de "
+"24 x 24."
 
 #: templates/core/versioning_config_confirm_delete.html:3
 #: templates/core/versioning_config_confirm_delete.html:7
@@ -12713,169 +12714,169 @@ msgstr "Connexion temps réel"
 msgid "Alerts"
 msgstr "Alertes"
 
-#: templates/home.html:137
+#: templates/home.html:138
 msgid "Overall compliance"
 msgstr "Conformité globale"
 
-#: templates/home.html:138
-#, python-format
+#: templates/home.html:143
+#, fuzzy, python-format
 msgid ""
-"Average of active frameworks — %(count)s "
-"requirement%(count|pluralize:\"s\")s total"
+"Average across all active frameworks - %(count)s "
+"requirement%(count|pluralize:\"s\")s tracked."
 msgstr ""
-"Moyenne des référentiels actifs — %(count)s "
-"exigence%(count|pluralize:\"s\")s au total"
+"Moyenne sur l'ensemble des référentiels actifs - %(count)s "
+"exigence%(count|pluralize:\"s\")s suivie%(count|pluralize:\"s\")s."
 
-#: templates/home.html:228
+#: templates/home.html:276
 msgid "Compliance by framework"
 msgstr "Conformité par référentiel"
 
-#: templates/home.html:235
+#: templates/home.html:283
 #, python-format
 msgid "%(count)s requirement%(count|pluralize:\"s\")s"
 msgstr "%(count)s exigence%(count|pluralize:\"s\")s"
 
-#: templates/home.html:244 templates/home.html:253
+#: templates/home.html:292 templates/home.html:301
 msgid "Partial compliance"
 msgstr "Conformité partielle"
 
-#: templates/home.html:266
+#: templates/home.html:314
 msgid "Active objectives progression"
 msgstr "Progression des objectifs actifs"
 
-#: templates/home.html:273
+#: templates/home.html:321
 msgid "Target:"
 msgstr "Échéance :"
 
-#: templates/home.html:300
+#: templates/home.html:348
 msgid "Points of attention"
 msgstr "Points d'attention"
 
-#: templates/home.html:302
+#: templates/home.html:350
 msgid "single point(s) of failure (SPOF) detected across your dependencies."
 msgstr "point(s) de défaillance unique (SPOF) détecté(s) dans vos dépendances."
 
-#: templates/home.html:304
+#: templates/home.html:352
 msgid "asset dependency(ies)"
 msgstr "dépendance(s) d'actifs"
 
-#: templates/home.html:304 templates/home.html:305 templates/home.html:306
-#: templates/home.html:307
+#: templates/home.html:352 templates/home.html:353 templates/home.html:354
+#: templates/home.html:355
 msgid "View"
 msgstr "Voir"
 
-#: templates/home.html:305
+#: templates/home.html:353
 msgid "supplier dependency(ies)"
 msgstr "dépendance(s) fournisseurs"
 
-#: templates/home.html:306
+#: templates/home.html:354
 msgid "site–asset dependency(ies)"
 msgstr "dépendance(s) site–bien"
 
-#: templates/home.html:307
+#: templates/home.html:355
 msgid "site–supplier dependency(ies)"
 msgstr "dépendance(s) site–fournisseur"
 
-#: templates/home.html:318
+#: templates/home.html:366
 msgid "Loading..."
 msgstr "Chargement…"
 
-#: templates/home.html:333 templates/home.html:341 templates/home.html:349
-#: templates/home.html:357 templates/home.html:370 templates/home.html:378
-#: templates/home.html:386 templates/home.html:397 templates/home.html:432
-#: templates/home.html:443 templates/home.html:454 templates/home.html:465
-#: templates/home.html:478 templates/home.html:486 templates/home.html:494
-#: templates/home.html:512 templates/home.html:523 templates/home.html:534
-#: templates/home.html:545 templates/home.html:555 templates/home.html:563
-#: templates/home.html:613 templates/home.html:624 templates/home.html:632
-#: templates/home.html:643 templates/home.html:653
+#: templates/home.html:381 templates/home.html:389 templates/home.html:397
+#: templates/home.html:405 templates/home.html:418 templates/home.html:426
+#: templates/home.html:434 templates/home.html:445 templates/home.html:480
+#: templates/home.html:491 templates/home.html:502 templates/home.html:513
+#: templates/home.html:526 templates/home.html:534 templates/home.html:542
+#: templates/home.html:560 templates/home.html:571 templates/home.html:582
+#: templates/home.html:593 templates/home.html:603 templates/home.html:611
+#: templates/home.html:661 templates/home.html:672 templates/home.html:680
+#: templates/home.html:691 templates/home.html:701
 msgid "View all"
 msgstr "Voir tout"
 
-#: templates/home.html:368
+#: templates/home.html:416
 #, python-format
 msgid "%(count)s mandatory role(s) with no user"
 msgstr "%(count)s rôle(s) obligatoire(s) sans utilisateur"
 
-#: templates/home.html:395
+#: templates/home.html:443
 #, python-format
 msgid "%(count)s critical without owner"
 msgstr "%(count)s critique(s) sans propriétaire"
 
-#: templates/home.html:405
+#: templates/home.html:453
 msgid "Active scopes"
 msgstr "Périmètres actifs"
 
-#: templates/home.html:409
+#: templates/home.html:457
 msgid "No active scope"
 msgstr "Aucun périmètre actif"
 
-#: templates/home.html:430
+#: templates/home.html:478
 #, python-format
 msgid "%(count)s with personal data"
 msgstr "%(count)s avec données personnelles"
 
-#: templates/home.html:441
+#: templates/home.html:489
 #, python-format
 msgid "%(count)s past end of life"
 msgstr "%(count)s en fin de vie"
 
-#: templates/home.html:463
+#: templates/home.html:511
 #, python-format
 msgid "%(count)s expired contract(s)"
 msgstr "%(count)s contrat(s) expiré(s)"
 
-#: templates/home.html:521
+#: templates/home.html:569
 #, python-format
 msgid "%(count)s critical"
 msgstr "%(count)s critique(s)"
 
-#: templates/home.html:532
+#: templates/home.html:580
 #, python-format
 msgid "%(count)s in progress"
 msgstr "%(count)s en cours"
 
-#: templates/home.html:543
+#: templates/home.html:591
 #, python-format
 msgid "%(count)s expiring soon"
 msgstr "%(count)s expirant bientôt"
 
-#: templates/home.html:573
+#: templates/home.html:621
 msgid "Configure scales"
 msgstr "Configurer les échelles"
 
-#: templates/home.html:573 templates/includes/dashboard_indicators.html:24
+#: templates/home.html:621 templates/includes/dashboard_indicators.html:24
 msgid "Configure"
 msgstr "Configurer"
 
-#: templates/home.html:622
+#: templates/home.html:670
 #, python-format
 msgid "%(count)s non-compliant"
 msgstr "%(count)s non conforme(s)"
 
-#: templates/home.html:641
+#: templates/home.html:689
 #, python-format
 msgid "%(count)s overdue"
 msgstr "%(count)s en retard"
 
-#: templates/home.html:666
+#: templates/home.html:714
 #, python-format
 msgid "What's new in v%(version)s"
 msgstr "Nouveautes de la v%(version)s"
 
-#: templates/home.html:693
+#: templates/home.html:741
 msgid "Got it!"
 msgstr "Compris !"
 
-#: templates/home.html:737
+#: templates/home.html:785
 msgid "View calendar"
 msgstr "Voir le calendrier"
 
-#: templates/home.html:834
+#: templates/home.html:882
 msgid "Connected"
 msgstr "Connecté"
 
-#: templates/home.html:835
+#: templates/home.html:883
 msgid "Reconnecting..."
 msgstr "Reconnexion…"
 

@@ -130,29 +130,77 @@
 </div>
 {% endif %}
 
-{# ── Overall compliance (hero) ─────────────────────────────── #}
-<div class="hero-section mb-4">
-  <div class="row align-items-center">
-    <div class="col-lg-4 col-md-12 mb-2 mb-lg-0">
-      <h2 class="mb-1" style="color:#fff;font-size:1.125rem"><i class="bi bi-shield-check me-2" style="opacity:.85"></i>{% trans "Overall compliance" %}</h2>
-      <p class="mb-0" style="font-size:.8125rem;color:rgba(255,255,255,.65)">{% blocktrans with count=requirement_count %}Average of active frameworks — {{ count }} requirement{{ count|pluralize:"s" }} total{% endblocktrans %}</p>
-    </div>
-    <div class="col-lg-6 col-md-8 col-sm-8 mb-2 mb-lg-0">
-      <div class="progress" style="height:1.125rem;background:rgba(255,255,255,.15)">
-        <div class="progress-bar bg-{% if overall_compliance >= 80 %}success{% elif overall_compliance >= 50 %}warning{% else %}danger{% endif %}"
-             role="progressbar"
-             style="width: {{ overall_compliance|floatformat:0 }}%;font-size:.75rem"
-             aria-valuenow="{{ overall_compliance|floatformat:0 }}"
-             aria-valuemin="0" aria-valuemax="100">
-          {{ overall_compliance|floatformat:0 }}%
+{# ── Overall compliance (sober hero card) ─────────────────── #}
+<div class="card overall-compliance mb-4">
+  <div class="card-body">
+    <div class="row align-items-end g-4">
+      <div class="col-lg-7">
+        <div class="overall-compliance__eyebrow">{% trans "Overall compliance" %}</div>
+        <div class="overall-compliance__big">
+          <span class="display-4 tabular-nums" data-ws-field="overall_compliance" data-ws-suffix="%">{{ overall_compliance|floatformat:0 }}%</span>
+          <span class="overall-compliance__delta-icon overall-compliance__delta-icon--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}" aria-hidden="true"></span>
+        </div>
+        <p class="overall-compliance__hint">{% blocktrans with count=requirement_count %}Average across all active frameworks - {{ count }} requirement{{ count|pluralize:"s" }} tracked.{% endblocktrans %}</p>
+      </div>
+      <div class="col-lg-5">
+        <div class="overall-compliance__bar">
+          <div class="overall-compliance__bar-fill overall-compliance__bar-fill--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}"
+               role="progressbar"
+               style="width: {{ overall_compliance|floatformat:0 }}%"
+               aria-valuenow="{{ overall_compliance|floatformat:0 }}"
+               aria-valuemin="0"
+               aria-valuemax="100"></div>
+        </div>
+        <div class="overall-compliance__bar-legend">
+          <span>0%</span>
+          <span class="text-muted">{% trans "Target" %} 80%</span>
+          <span>100%</span>
         </div>
       </div>
     </div>
-    <div class="col-lg-2 col-md-4 col-sm-4 text-lg-end text-md-end text-sm-end">
-      <span class="display-4 tabular-nums text-on-accent" data-ws-field="overall_compliance" data-ws-suffix="%">{{ overall_compliance|floatformat:0 }}%</span>
-    </div>
   </div>
 </div>
+<style>
+  .overall-compliance .card-body { padding: 2rem 2rem; }
+  .overall-compliance__eyebrow {
+    font-size: .75rem; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--text-muted); font-weight: 600; margin-bottom: .5rem;
+  }
+  .overall-compliance__big {
+    display: flex; align-items: center; gap: .75rem; line-height: 1;
+  }
+  .overall-compliance__big .display-4 { line-height: 1; }
+  .overall-compliance__delta-icon {
+    width: 2rem; height: 2rem; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: .75rem;
+  }
+  .overall-compliance__delta-icon--good { background: var(--success-soft); color: var(--success); }
+  .overall-compliance__delta-icon--good::before { content: "\2197"; font-weight: 700; }
+  .overall-compliance__delta-icon--warn { background: var(--warning-soft); color: var(--warning); }
+  .overall-compliance__delta-icon--warn::before { content: "\2192"; font-weight: 700; }
+  .overall-compliance__delta-icon--bad { background: var(--danger-soft); color: var(--danger); }
+  .overall-compliance__delta-icon--bad::before { content: "\2198"; font-weight: 700; }
+  .overall-compliance__hint {
+    color: var(--text-muted); font-size: .875rem; margin: .75rem 0 0;
+  }
+  .overall-compliance__bar {
+    height: .625rem; background: var(--surface-subtle);
+    border-radius: 100px; overflow: hidden;
+  }
+  .overall-compliance__bar-fill {
+    height: 100%; border-radius: 100px;
+    transition: width .6s var(--ease-out-expo);
+  }
+  .overall-compliance__bar-fill--good { background: var(--success); }
+  .overall-compliance__bar-fill--warn { background: var(--warning); }
+  .overall-compliance__bar-fill--bad { background: var(--danger); }
+  .overall-compliance__bar-legend {
+    display: flex; justify-content: space-between;
+    font-size: .75rem; color: var(--text-muted);
+    margin-top: .5rem; font-variant-numeric: tabular-nums;
+  }
+</style>
 
 {# ── Sparkline init (global, callable after WebSocket refresh) ── #}
 <script>

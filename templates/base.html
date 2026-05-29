@@ -35,6 +35,16 @@
      */
     :root {
       /* Primitive scale (Tailwind-aligned for familiarity) */
+      --color-stone-50:  #FAFAF8;
+      --color-stone-100: #F4F4F2;
+      --color-stone-200: #EFEEEC;
+      --color-stone-300: #D6D3D1;
+      --color-stone-400: #A8A29E;
+      --color-stone-500: #78716C;
+      --color-stone-600: #57534E;
+      --color-stone-700: #44403C;
+      --color-stone-800: #292524;
+      --color-stone-900: #1C1917;
       --color-slate-50:  #f8fafc;
       --color-slate-100: #f1f5f9;
       --color-slate-200: #e2e8f0;
@@ -68,50 +78,51 @@
       --radius-xs: .375rem;
       --radius-sm: .5rem;
       --radius-md: .75rem;
-      --radius-lg: 1rem;
-      --radius-xl: 1.25rem;
-      --radius-2xl: 1.5rem;
-      --shadow-xs: 0 1px 2px rgba(0,0,0,.03);
-      --shadow-sm: 0 1px 3px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.03);
-      --shadow-md: 0 4px 16px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
-      --shadow-lg: 0 12px 32px rgba(0,0,0,.08), 0 4px 8px rgba(0,0,0,.04);
-      --shadow-xl: 0 20px 48px rgba(0,0,0,.1), 0 8px 16px rgba(0,0,0,.05);
-      --shadow-glow: 0 0 0 1px rgba(99,102,241,.08), 0 4px 16px rgba(99,102,241,.08);
+      --radius-lg: 1.125rem;
+      --radius-xl: 1.375rem;
+      --radius-2xl: 1.75rem;
+      /* Softer shadows: less Y, more spread, lower opacity. Borders are now subtle rgba so shadow does the depth work. */
+      --shadow-xs: 0 1px 2px rgba(28,25,23,.04);
+      --shadow-sm: 0 2px 4px rgba(28,25,23,.04), 0 1px 2px rgba(28,25,23,.03);
+      --shadow-md: 0 6px 20px rgba(28,25,23,.05), 0 2px 4px rgba(28,25,23,.03);
+      --shadow-lg: 0 16px 40px rgba(28,25,23,.07), 0 4px 8px rgba(28,25,23,.04);
+      --shadow-xl: 0 24px 56px rgba(28,25,23,.09), 0 8px 16px rgba(28,25,23,.05);
+      --shadow-glow: 0 0 0 3px rgba(99,102,241,.10);
       --surface: #ffffff;
       --surface-raised: #ffffff;
-      --surface-muted: var(--color-slate-50);
-      --surface-subtle: var(--color-slate-100);
-      --surface-glass: rgba(255,255,255,.78);
-      --bg-page: #f0f4f8;
-      --border-light: var(--color-slate-200);
-      --border-subtle: #edf2f7;
+      --surface-muted: var(--color-stone-100);
+      --surface-subtle: var(--color-stone-200);
+      --surface-glass: rgba(255,255,255,.82);
+      --bg-page: var(--color-stone-50);
+      --border-light: rgba(28,25,23,.07);
+      --border-subtle: rgba(28,25,23,.04);
       --border-glass: rgba(255,255,255,.5);
-      --text-primary: var(--color-slate-900);
-      --text-secondary: var(--color-slate-600);
-      --text-muted: var(--color-slate-400);
-      --text-xs: #a0aec0;
+      --text-primary: var(--color-stone-900);
+      --text-secondary: var(--color-stone-600);
+      --text-muted: var(--color-stone-400);
+      --text-xs: var(--color-stone-400);
       --accent: var(--color-indigo-500);
       --accent-soft: #eef2ff;
       --accent-hover: var(--color-indigo-600);
-      --accent-glow: rgba(99,102,241,.2);
-      --success: var(--color-emerald-500);
-      --success-soft: #ecfdf5;
-      --warning: var(--color-amber-500);
-      --warning-soft: #fffbeb;
-      --danger: var(--color-red-500);
-      --danger-soft: #fef2f2;
-      --info: var(--color-cyan-500);
-      --info-soft: #ecfeff;
+      --accent-glow: rgba(99,102,241,.18);
+      --success: #059669;
+      --success-soft: #ECFDF5;
+      --warning: #D97706;
+      --warning-soft: #FFFBEB;
+      --danger: #DC2626;
+      --danger-soft: #FEF2F2;
+      --info: #0891B2;
+      --info-soft: #ECFEFF;
       --transition-fast: .15s cubic-bezier(.4,0,.2,1);
       --transition-normal: .25s cubic-bezier(.4,0,.2,1);
       --transition-spring: .35s cubic-bezier(.34,1.56,.64,1);
-      --text-sidebar-sub: #8494a7;
+      --text-sidebar-sub: var(--color-stone-500);
       --ease-out-expo: cubic-bezier(.16,1,.3,1);
     }
 
     [data-bs-theme="dark"] {
       /* Warm-charcoal palette (2026 B2B SaaS convention).
-       * Pure black is dead for product UI — these warm grays read
+       * Pure black is dead for product UI - these warm grays read
        * better in long sessions and on OLED panels without halation. */
       --bg-page: var(--color-charcoal-900);
       --surface: var(--color-charcoal-800);
@@ -119,8 +130,8 @@
       --surface-muted: var(--color-charcoal-900);
       --surface-subtle: var(--color-charcoal-700);
       --surface-glass: rgba(22,24,28,.82);
-      --border-light: var(--color-charcoal-600);
-      --border-subtle: var(--color-charcoal-700);
+      --border-light: rgba(255,255,255,.08);
+      --border-subtle: rgba(255,255,255,.05);
       --border-glass: rgba(255,255,255,.06);
       --text-primary: var(--color-charcoal-100);
       --text-secondary: var(--color-charcoal-300);
@@ -129,7 +140,11 @@
       --accent: var(--color-indigo-400);
       --accent-soft: rgba(99,102,241,.1);
       --accent-hover: var(--color-indigo-300);
-      --accent-glow: rgba(129,140,248,.15);
+      --accent-glow: rgba(129,140,248,.18);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #06b6d4;
       --success-soft: rgba(16,185,129,.1);
       --warning-soft: rgba(245,158,11,.1);
       --danger-soft: rgba(239,68,68,.1);
@@ -161,6 +176,8 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg-page);
       color: var(--text-primary);
+      font-size: .9375rem;
+      line-height: 1.6;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
@@ -169,14 +186,14 @@
     ::selection { background: var(--accent-soft); color: var(--accent); }
 
     /* ── Typography ────────────────────────────────────── */
-    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.02em; color: var(--text-primary); line-height: 1.3; }
-    h2 { font-size: 1.25rem; font-weight: 650; letter-spacing: -.015em; color: var(--text-primary); line-height: 1.35; }
-    h3 { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
-    h4 { font-size: 1rem; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
-    h5 { font-size: .875rem; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
-    h6 { font-size: .8125rem; font-weight: 600; color: var(--text-secondary); line-height: 1.5; }
-    .display-4 { font-size: 2rem; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
-    .display-6 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.025em; line-height: 1.15; }
+    h1 { font-size: 2rem; font-weight: 700; letter-spacing: -.028em; color: var(--text-primary); line-height: 1.2; }
+    h2 { font-size: 1.5rem; font-weight: 650; letter-spacing: -.02em; color: var(--text-primary); line-height: 1.25; }
+    h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -.015em; color: var(--text-primary); line-height: 1.3; }
+    h4 { font-size: 1.0625rem; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
+    h5 { font-size: .9375rem; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
+    h6 { font-size: .8125rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); line-height: 1.4; }
+    .display-4 { font-size: 2.5rem; font-weight: 700; letter-spacing: -.035em; line-height: 1.05; }
+    .display-6 { font-size: 1.875rem; font-weight: 700; letter-spacing: -.028em; line-height: 1.1; }
     small, .small { font-size: .8125rem; }
     .text-xs { font-size: .75rem; }
 
@@ -255,14 +272,14 @@
     .sidebar-link {
       display: flex;
       align-items: center;
-      gap: .625rem;
-      padding: .4375rem 1.25rem;
+      gap: .75rem;
+      padding: .625rem 1.25rem;
       color: var(--text-secondary);
       text-decoration: none;
-      font-size: .8125rem;
-      font-weight: 450;
+      font-size: .875rem;
+      font-weight: 500;
       border-radius: 0;
-      transition: all var(--transition-fast);
+      transition: color var(--transition-fast), background-color var(--transition-fast);
       margin: 0;
       position: relative;
       white-space: nowrap;
@@ -632,19 +649,25 @@
     .main-content .mb-4 { margin-bottom: 2rem !important; }
 
     /* ── Cards — Soft UI ───────────────────────────────── */
+    /*
+     * Cards no longer lift on hover by default. Lifting reads as
+     * "this is clickable" - applying it to every content card is a
+     * dated admin-template mannerism. Cards that ARE clickable opt in
+     * via .card--linked (or component-specific modifiers like
+     * .kpi-card--linked).
+     */
     .card {
       border: 1px solid var(--border-light);
       border-radius: var(--radius-lg);
       background: var(--surface-raised);
       box-shadow: var(--shadow-xs);
-      transition: box-shadow .3s var(--ease-out-expo), transform .3s var(--ease-out-expo);
     }
-    .card:hover {
-      box-shadow: var(--shadow-md);
-    }
-    .card > .card-header { background: transparent; border-bottom: 1px solid var(--border-light); }
-    .card-body { padding: 1.375rem 1.5rem; }
-    .card-title { font-weight: 600; color: var(--text-primary); font-size: .875rem; }
+    .card--linked,
+    .card.card--linked { transition: box-shadow .25s var(--ease-out-expo), transform .25s var(--ease-out-expo); cursor: pointer; }
+    .card--linked:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .card > .card-header { background: transparent; border-bottom: 1px solid var(--border-light); padding: 1rem 1.5rem; }
+    .card-body { padding: 1.625rem 1.75rem; }
+    .card-title { font-weight: 600; color: var(--text-primary); font-size: .9375rem; letter-spacing: -.01em; }
 
     /* ── List group — theme-aware ──────────────────────── */
     .list-group-item {
@@ -661,48 +684,32 @@
     code { color: var(--accent); }
 
     /* ── Stat cards (bento) ────────────────────────────── */
+    /*
+     * No rainbow ribbon on top, no full-card hover lift, no icon
+     * scale animation. The icon's colored chip is enough to carry
+     * the semantic; the card itself stays calm.
+     */
     .stat-card {
       border: 1px solid var(--border-light);
       border-radius: var(--radius-lg);
       background: var(--surface-raised);
       box-shadow: var(--shadow-xs);
-      padding: 1.25rem 1.375rem;
-      transition: all .3s var(--ease-out-expo);
+      padding: 1.625rem 1.625rem;
       display: flex;
       flex-direction: column;
       height: 100%;
       position: relative;
-      overflow: hidden;
     }
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
-      opacity: 0;
-      transition: opacity .3s var(--ease-out-expo);
-    }
-    .stat-card:hover {
-      box-shadow: var(--shadow-md);
-      transform: translateY(-2px);
-      border-color: var(--border-subtle);
-    }
-    .stat-card:hover::before { opacity: 1; }
     .stat-card-icon {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 2.375rem;
-      height: 2.375rem;
+      width: 2.5rem;
+      height: 2.5rem;
       border-radius: var(--radius-md);
-      font-size: 1.0625rem;
-      margin-bottom: .75rem;
-      transition: transform .3s var(--ease-out-expo);
+      font-size: 1.125rem;
+      margin-bottom: 1rem;
     }
-    .stat-card:hover .stat-card-icon { transform: scale(1.05); }
     .stat-card-icon.accent { background: var(--accent-soft); color: var(--accent); }
     .stat-card-icon.success { background: var(--success-soft); color: var(--success); }
     .stat-card-icon.warning { background: var(--warning-soft); color: var(--warning); }
@@ -717,11 +724,11 @@
       letter-spacing: .04em;
     }
     .stat-card-value {
-      font-size: 1.75rem;
+      font-size: 2rem;
       font-weight: 700;
-      letter-spacing: -.025em;
+      letter-spacing: -.03em;
       color: var(--text-primary);
-      line-height: 1.15;
+      line-height: 1.1;
       font-variant-numeric: tabular-nums;
     }
     .stat-card-footer {
@@ -905,35 +912,38 @@
     /* ── Buttons ───────────────────────────────────────── */
     .btn {
       border-radius: var(--radius-sm);
-      font-weight: 500;
-      font-size: .8125rem;
-      padding: .4375rem 1rem;
-      transition: all var(--transition-fast);
-      letter-spacing: .005em;
+      font-weight: 550;
+      font-size: .875rem;
+      padding: .5rem 1.125rem;
+      transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+      letter-spacing: -.005em;
+      line-height: 1.4;
     }
+    .btn-sm { font-size: .8125rem; padding: .375rem .8125rem; }
     .btn-primary {
       background: var(--accent);
       border-color: var(--accent);
-      box-shadow: 0 1px 2px var(--accent-glow);
+      color: #fff;
+      box-shadow: none;
     }
     .btn-primary:hover {
       background: var(--accent-hover);
       border-color: var(--accent-hover);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px var(--accent-glow);
+      box-shadow: 0 1px 2px rgba(0,0,0,.06);
     }
     .btn-primary:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px var(--accent-glow);
+      background: var(--accent-hover);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
     }
     .btn-outline-primary {
       color: var(--accent);
-      border-color: var(--accent);
+      border-color: var(--border-light);
+      background: var(--surface-raised);
     }
     .btn-outline-primary:hover {
-      background: var(--accent);
+      background: var(--accent-soft);
       border-color: var(--accent);
-      box-shadow: 0 4px 12px var(--accent-glow);
+      color: var(--accent);
     }
     .btn-outline-secondary {
       color: var(--text-secondary);
@@ -1844,11 +1854,20 @@
     }
 
     /* ── User header bubble ────────────────────────────── */
+    /*
+     * z-index discipline (low to high):
+     *   100   page-sticky bulk-actions-bar
+     *   900   user-header-bubble (sits above content but below modals)
+     *   1020  sticky sub-headers
+     *   1040  Bootstrap modals
+     *   1080  toast stack (always wins for transient feedback)
+     *  10000  impersonation banner (security signal)
+     */
     .user-header-bubble {
       position: fixed;
       top: .875rem;
       right: 1.25rem;
-      z-index: 1040;
+      z-index: 900;
       display: flex;
       align-items: center;
       gap: .5rem;
@@ -2094,22 +2113,14 @@
       .sidebar-collapsed .sidebar-sub { display: block; padding-left: 3.125rem; }
       .sidebar-collapsed .sidebar-tooltip { display: none !important; }
       .main-content { margin-left: 0; padding: 4.5rem 1rem 3.5rem; }
-      .main-content h1 { font-size: 1.25rem; }
-      .main-content h2 { font-size: 1.0625rem; }
+      .main-content h1 { font-size: 1.625rem; }
+      .main-content h2 { font-size: 1.25rem; }
       .main-content hr { margin: 1.5rem 0; }
 
       /* Stat cards: compact on mobile */
-      .stat-card { padding: 1rem 1.125rem; }
-      .stat-card-value { font-size: 1.5rem; }
-      .stat-card-icon { width: 2rem; height: 2rem; font-size: .9375rem; margin-bottom: .5rem; }
-      .stat-card::before { display: none; }
-
-      /* Hero section responsive */
-      .hero-section { padding: 1.25rem 1.125rem; }
-      .hero-section::before { display: none; }
-      .hero-section .display-4 { font-size: 1.5rem; }
-      .hero-section h2 { font-size: 1.0625rem; }
-      .hero-section p { font-size: .78rem !important; }
+      .stat-card { padding: 1.25rem 1.25rem; }
+      .stat-card-value { font-size: 1.625rem; }
+      .stat-card-icon { width: 2.125rem; height: 2.125rem; font-size: 1rem; margin-bottom: .625rem; }
 
       /* Cards compact */
       .card-body { padding: 1rem 1.125rem; }
@@ -2580,11 +2591,11 @@
     /* ── Component: bulk-actions-bar ───────────────── */
     .bulk-actions-bar {
       position: sticky;
-      top: 0;
+      top: 1rem;
       z-index: 100;
-      margin: -1rem -1rem 1rem;
-      padding: .5rem 1rem;
-      background: var(--accent-soft);
+      margin: 0 0 1rem;
+      padding: .625rem 1rem;
+      background: var(--surface-raised);
       border: 1px solid var(--accent);
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-md);
