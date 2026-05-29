@@ -270,3 +270,70 @@ class TestBaselineGapViews:
         })
         assert response.status_code == 302
         assert baseline.gaps.count() == 1
+
+
+class TestStepperContext:
+    """build_ebios_stepper_context assigns one of done / current / review / next / future / rejected."""
+
+    def test_fresh_assessment_first_workshop_is_next_cta(self):
+        from risks.views_ebios import build_ebios_stepper_context
+        assessment = EbiosAssessmentFactory()
+        ctx = build_ebios_stepper_context(assessment)
+        steps = ctx["ebios_stepper_steps"]
+        # W0 must be the next CTA, W1..W5 future
+        assert steps[0]["state"] == "next"
+        for s in steps[1:]:
+            assert s["state"] == "future"
+        # next_action references W0
+        assert ctx["ebios_next_action"].workshop_number == 0
+        # No rejected pills
+        assert ctx["ebios_rejected_steps"] == []
+
+    def test_done_current_next_progression(self):
+        from risks.views_ebios import build_ebios_stepper_context
+        assessment = EbiosAssessmentFactory()
+        w0 = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        w0.status = EbiosWorkshopStatus.VALIDATED
+        w0.save()
+        w1 = _workshop_for(assessment, EbiosWorkshopNumber.W1)
+        w1.status = EbiosWorkshopStatus.IN_PROGRESS
+        w1.save()
+        ctx = build_ebios_stepper_context(assessment)
+        steps = ctx["ebios_stepper_steps"]
+        assert steps[0]["state"] == "done"
+        assert steps[1]["state"] == "current"
+        # W2..W5 future (no "next" CTA because W1 is in_progress, not validated)
+        for s in steps[2:]:
+            assert s["state"] == "future"
+        assert ctx["ebios_next_action"] is None
+
+    def test_under_review_state(self):
+        from risks.views_ebios import build_ebios_stepper_context
+        assessment = EbiosAssessmentFactory()
+        w0 = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        w0.status = EbiosWorkshopStatus.UNDER_REVIEW
+        w0.save()
+        ctx = build_ebios_stepper_context(assessment)
+        assert ctx["ebios_stepper_steps"][0]["state"] == "review"
+
+    def test_rejected_workshop_moves_to_branch(self):
+        from risks.views_ebios import build_ebios_stepper_context
+        assessment = EbiosAssessmentFactory()
+        w0 = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        w0.status = EbiosWorkshopStatus.REJECTED
+        w0.save()
+        ctx = build_ebios_stepper_context(assessment)
+        # W0 is no longer in the main flow
+        numbers_in_main = [s["workshop_number"] for s in ctx["ebios_stepper_steps"]]
+        assert 0 not in numbers_in_main
+        # It lives on the rejected branch
+        rejected_numbers = [s["workshop_number"] for s in ctx["ebios_rejected_steps"]]
+        assert 0 in rejected_numbers
+
+    def test_current_workshop_highlight(self):
+        from risks.views_ebios import build_ebios_stepper_context
+        assessment = EbiosAssessmentFactory()
+        w0 = _workshop_for(assessment, EbiosWorkshopNumber.W0)
+        ctx = build_ebios_stepper_context(assessment, current_workshop=w0)
+        # The first step must be flagged as is_current for the box-shadow highlight
+        assert ctx["ebios_stepper_steps"][0]["is_current"] is True

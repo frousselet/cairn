@@ -1,82 +1,127 @@
 {% load i18n %}
-{# EBIOS RM workshop stepper (workshops W0..W5).
-
-   Renders a clickable horizontal sequence of pills based on the
-   EbiosWorkshopProgress rows attached to the current assessment. Each pill
-   links to the workshop detail page where the user can view entities and
-   trigger start / submit / validate / reject transitions.
+{# EBIOS RM workshop stepper (compliance-style pills + connectors).
 
    Context:
    - assessment: the RiskAssessment
-   - ebios_workshops: queryset of EbiosWorkshopProgress (already ordered)
-   - workshop (optional): the currently focused workshop, highlighted in the
-     stepper. Defaults to no highlight when the user is on the assessment
-     detail page.
+   - ebios_stepper_steps: list of dicts (pk, workshop_number, label, status, state, is_current)
+   - ebios_rejected_steps: list of dicts for the bottom branch
+   - ebios_next_action: the workshop ready to be started, or None
+   - ebios_branch_line_color / ebios_branch_line_opacity: SVG branch styling
 #}
-<div class="card mb-4" style="border-left:4px solid var(--info)">
-  <div class="card-header d-flex align-items-center flex-wrap gap-2">
-    <h5 class="mb-0"><i class="bi bi-signpost-2 me-2"></i>{% trans "EBIOS RM workshops" %}</h5>
-    <span class="badge text-bg-info ms-auto">
-      {% blocktrans with current=ebios_workshops|length %}{{ current }} workshop tracker(s){% endblocktrans %}
-    </span>
-  </div>
-  <div class="card-body">
-    {% if not ebios_workshops %}
-      <div class="alert alert-warning mb-0">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        {% trans "Workshop tracking is initializing. Save the assessment again if this message persists." %}
-      </div>
-    {% else %}
-      <ol class="ebios-stepper list-unstyled d-flex flex-wrap gap-2 mb-0">
-        {% for w in ebios_workshops %}
-          <li class="ebios-step ebios-step-{{ w.status }} {% if workshop and workshop.pk == w.pk %}ebios-step-current{% endif %}">
-            <a class="ebios-step-link"
-               href="{% url 'risks:ebios-workshop-detail' assessment_pk=assessment.pk workshop_pk=w.pk %}">
-              <span class="ebios-step-num">W{{ w.workshop_number }}</span>
-              <div class="ebios-step-body">
-                <div class="ebios-step-title">{{ w.get_workshop_number_display }}</div>
-                <div class="ebios-step-status small text-muted">{{ w.get_status_display }}</div>
-              </div>
+<div class="card mb-3">
+  <div class="card-body py-2 px-3">
+    <div style="overflow-x:auto;position:relative" data-ebios-stepper>
+      {# ── Main flow row ── #}
+      <div class="d-flex align-items-center gap-0">
+        {% for step in ebios_stepper_steps %}
+          {% if not forloop.first %}
+            <div class="flex-shrink-0"
+                 style="width:32px;height:2px;{% if step.state == 'done' or step.state == 'current' or step.state == 'review' %}background:var(--accent){% else %}background:var(--border-light){% endif %}"></div>
+          {% endif %}
+
+          {% if step.state == 'next' and ebios_next_action %}
+            {# Next CTA: green outline button that posts a start transition #}
+            <form method="post"
+                  action="{% url 'risks:ebios-workshop-start' assessment_pk=assessment.pk workshop_pk=ebios_next_action.pk %}"
+                  class="flex-shrink-0 m-0"
+                  data-ebios-stepper-step="{{ step.workshop_number }}">
+              {% csrf_token %}
+              <button type="submit"
+                      class="btn btn-sm btn-outline-success d-flex align-items-center gap-1 rounded-pill px-3"
+                      style="white-space:nowrap;font-size:.8rem;border-width:2px"
+                      title="{% trans 'Start this workshop' %}">
+                <i class="bi bi-arrow-right-circle"></i>
+                <span class="fw-semibold">W{{ step.workshop_number }}</span>
+                <span class="d-none d-md-inline">- {{ step.short_label }}</span>
+              </button>
+            </form>
+          {% else %}
+            {# Past / current / future pill: link to the workshop detail page #}
+            <a class="flex-shrink-0 d-inline-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none"
+               data-ebios-stepper-step="{{ step.workshop_number }}"
+               href="{% url 'risks:ebios-workshop-detail' assessment_pk=assessment.pk workshop_pk=step.pk %}"
+               title="{{ step.label }} ({{ step.status }})"
+               style="white-space:nowrap;font-size:.8rem;padding:.3rem 0;
+                 {% if step.state == 'done' %}color:var(--text-muted);background:var(--bg-subtle);border:1px solid var(--border-light)
+                 {% elif step.state == 'current' %}color:#fff;background:var(--accent);font-weight:600;border:2px solid var(--accent)
+                 {% elif step.state == 'review' %}color:#fff;background:var(--warning);font-weight:600;border:2px solid var(--warning)
+                 {% else %}color:var(--text-muted);opacity:.55;background:var(--bg-subtle);border:1px dashed var(--border-light){% endif %}
+                 {% if step.is_current %}box-shadow:0 0 0 2px var(--info){% endif %}">
+              {% if step.state == 'done' %}<i class="bi bi-check-circle-fill" style="font-size:.7rem"></i>
+              {% elif step.state == 'current' %}<i class="bi bi-circle-fill" style="font-size:.5rem"></i>
+              {% elif step.state == 'review' %}<i class="bi bi-eye-fill" style="font-size:.7rem"></i>
+              {% else %}<i class="bi bi-circle" style="font-size:.5rem"></i>{% endif %}
+              <span>W{{ step.workshop_number }}</span>
+              <span class="d-none d-md-inline">- {{ step.short_label }}</span>
             </a>
-          </li>
+          {% endif %}
         {% endfor %}
-      </ol>
-    {% endif %}
+      </div>
+
+      {# ── Rejected branch row ── #}
+      {% if ebios_rejected_steps %}
+        <div style="margin-top:16px" data-ebios-stepper-branch>
+          <div class="d-flex flex-wrap gap-2">
+            {% for step in ebios_rejected_steps %}
+              <a class="flex-shrink-0 d-inline-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none"
+                 data-ebios-stepper-step="rejected-{{ step.workshop_number }}"
+                 href="{% url 'risks:ebios-workshop-detail' assessment_pk=assessment.pk workshop_pk=step.pk %}"
+                 title="{{ step.label }} ({% trans 'Rejected' %})"
+                 style="white-space:nowrap;font-size:.8rem;padding:.3rem 0;
+                   color:#fff;background:var(--danger);font-weight:600;border:2px solid var(--danger)
+                   {% if step.is_current %};box-shadow:0 0 0 2px var(--info){% endif %}">
+                <i class="bi bi-x-circle-fill" style="font-size:.7rem"></i>
+                <span>W{{ step.workshop_number }}</span>
+                <span class="d-none d-md-inline">- {{ step.short_label }}</span>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      {# ── SVG overlay for the branch lines (drawn by JS) ── #}
+      <svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible"
+           data-ebios-stepper-svg></svg>
+
+      <script>
+      (function(){
+        var container = document.currentScript.closest('[data-ebios-stepper]');
+        var svg = container.querySelector('[data-ebios-stepper-svg]');
+        var branchRow = container.querySelector('[data-ebios-stepper-branch]');
+        if (!svg || !branchRow) return;
+        var mainPills = container.querySelectorAll('.d-flex.align-items-center > [data-ebios-stepper-step]');
+        var rejectedPills = branchRow.querySelectorAll('[data-ebios-stepper-step]');
+        if (!mainPills.length || !rejectedPills.length) return;
+        function draw(){
+          var rect = container.getBoundingClientRect();
+          var lines = '';
+          var color = '{{ ebios_branch_line_color }}';
+          var opacity = '{{ ebios_branch_line_opacity }}';
+          var s = 'stroke:' + color + ';stroke-width:2;opacity:' + opacity;
+          rejectedPills.forEach(function(rp){
+            var rpr = rp.getBoundingClientRect();
+            var ax = rpr.left + rpr.width / 2 - rect.left;
+            var ay = rpr.top + rpr.height / 2 - rect.top;
+            /* Drop a vertical from the closest main-row pill (same workshop number) */
+            var num = rp.getAttribute('data-ebios-stepper-step').replace('rejected-', '');
+            var match = container.querySelector('.d-flex.align-items-center > [data-ebios-stepper-step="' + num + '"]');
+            if (!match) {
+              /* Fall back to the first pill (mirrors the "cancelled from draft" case) */
+              match = mainPills[0];
+            }
+            var mr = match.getBoundingClientRect();
+            var mx = mr.left + mr.width / 2 - rect.left;
+            var my = mr.bottom - rect.top;
+            lines +=
+              '<line x1="' + mx + '" y1="' + my + '" x2="' + mx + '" y2="' + ay + '" style="' + s + '"/>' +
+              '<line x1="' + mx + '" y1="' + ay + '" x2="' + ax + '" y2="' + ay + '" style="' + s + '"/>';
+          });
+          svg.innerHTML = lines;
+        }
+        requestAnimationFrame(draw);
+        window.addEventListener('resize', draw);
+      })();
+      </script>
+    </div>
   </div>
 </div>
-
-<style>
-.ebios-stepper { counter-reset: ebios; }
-.ebios-step {
-  border-radius: .5rem;
-  border: 1px solid var(--bs-border-color, rgba(0,0,0,.15));
-  background: var(--bs-body-bg, transparent);
-  min-width: 220px;
-  transition: transform .15s ease, box-shadow .15s ease;
-}
-.ebios-step:hover { transform: translateY(-1px); box-shadow: 0 .25rem .75rem rgba(0,0,0,.12); }
-.ebios-step-link {
-  display: flex; gap: .6rem; align-items: center;
-  padding: .5rem .75rem; text-decoration: none; color: inherit;
-}
-.ebios-step-link:hover { color: inherit; text-decoration: none; }
-.ebios-step-num {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 2.25rem; height: 2.25rem; border-radius: 50%;
-  font-weight: 600;
-  background: var(--bs-secondary-bg, rgba(0,0,0,.06));
-  color: var(--bs-secondary-color, currentColor);
-  flex-shrink: 0;
-}
-.ebios-step-title { font-weight: 600; font-size: .9rem; }
-.ebios-step-not_started { opacity: .85; border-style: dashed; }
-.ebios-step-in_progress { border-color: var(--bs-primary, #0d6efd); }
-.ebios-step-in_progress .ebios-step-num { background: var(--bs-primary-bg-subtle, rgba(13,110,253,.15)); color: var(--bs-primary, #0d6efd); }
-.ebios-step-under_review { border-color: var(--bs-warning, #ffc107); }
-.ebios-step-under_review .ebios-step-num { background: var(--bs-warning-bg-subtle, rgba(255,193,7,.18)); color: var(--bs-warning-text-emphasis, #997404); }
-.ebios-step-validated { border-color: var(--bs-success, #198754); }
-.ebios-step-validated .ebios-step-num { background: var(--bs-success-bg-subtle, rgba(25,135,84,.15)); color: var(--bs-success, #198754); }
-.ebios-step-rejected { border-color: var(--bs-danger, #dc3545); }
-.ebios-step-rejected .ebios-step-num { background: var(--bs-danger-bg-subtle, rgba(220,53,69,.15)); color: var(--bs-danger, #dc3545); }
-.ebios-step-current { box-shadow: 0 0 0 2px var(--bs-info, #0dcaf0); }
-</style>

@@ -31,6 +31,7 @@ from .constants import (
     RiskStatus,
     TreatmentDecision,
 )
+from .views_ebios import build_ebios_stepper_context
 from .forms import (
     ImpactFormSet,
     ISO27005RiskForm,
@@ -457,11 +458,7 @@ class RiskAssessmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scop
 
         # EBIOS RM workshop progress (only meaningful for ebios_rm assessments)
         if self.object.methodology == Methodology.EBIOS_RM:
-            ctx["ebios_workshops"] = list(
-                self.object.ebios_workshops.filter(
-                    iteration_type=EbiosIterationType.STRATEGIC,
-                ).order_by("iteration_number", "workshop_number")
-            )
+            ctx.update(build_ebios_stepper_context(self.object))
 
         # Risk matrices for this assessment
         criteria = self.object.risk_criteria

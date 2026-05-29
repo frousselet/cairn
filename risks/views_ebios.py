@@ -21,9 +21,97 @@ from accounts.views import PermissionRequiredMixin
 from core.mixins import HtmxFormMixin
 from risks.constants import (
     EBIOS_WORKSHOP_COUNT,
+    EbiosIterationType,
     EbiosWorkshopNumber,
     EbiosWorkshopStatus,
 )
+
+
+# ── Stepper context builder ──────────────────────────────────
+
+
+_WORKSHOP_SHORT_LABELS = {
+    0: _("Framework"),
+    1: _("Baseline"),
+    2: _("Sources"),
+    3: _("Strategic"),
+    4: _("Operational"),
+    5: _("Treatment"),
+}
+
+
+def build_ebios_stepper_context(assessment, current_workshop=None):
+    """Return the dict consumed by `risks/ebios/_workshop_stepper.html`.
+
+    Mirrors the structure of `compliance.AssessmentDetailView`:
+    - `ebios_workshops` (list of dicts with state in done/current/next/future)
+    - `rejected_workshops` (list of dicts for the bottom branch)
+    - `ebios_next_workshop` (the workshop ready to be started, or None)
+    - `branch_line_color`, `branch_line_opacity` (SVG branch styling hints)
+    """
+    qs = assessment.ebios_workshops.filter(
+        iteration_type=EbiosIterationType.STRATEGIC,
+    ).order_by("iteration_number", "workshop_number")
+    workshops = list(qs)
+
+    # Identify the "current" workshop = the lowest-numbered non-validated.
+    current_idx = None
+    for i, w in enumerate(workshops):
+        if w.status != EbiosWorkshopStatus.VALIDATED:
+            current_idx = i
+            break
+
+    next_action = None
+    steps = []
+    rejected = []
+    for i, w in enumerate(workshops):
+        short_label = _WORKSHOP_SHORT_LABELS.get(w.workshop_number, "")
+        if w.status == EbiosWorkshopStatus.REJECTED:
+            # Rejected workshops live on the bottom branch, mirroring the
+            # compliance "cancelled" pill. They keep their workshop_number
+            # as the label so the user can navigate back to them.
+            rejected.append({
+                "pk": str(w.pk),
+                "workshop_number": w.workshop_number,
+                "label": w.get_workshop_number_display(),
+                "short_label": short_label,
+                "status": w.status,
+                "state": "rejected",
+                "is_current": current_workshop is not None and current_workshop.pk == w.pk,
+            })
+            continue
+
+        if w.status == EbiosWorkshopStatus.VALIDATED:
+            state = "done"
+        elif w.status == EbiosWorkshopStatus.IN_PROGRESS:
+            state = "current"
+        elif w.status == EbiosWorkshopStatus.UNDER_REVIEW:
+            state = "review"
+        elif current_idx is not None and i == current_idx:
+            # not_started AND it's the first non-validated workshop -> next CTA
+            state = "next"
+            next_action = w
+        else:
+            state = "future"
+
+        steps.append({
+            "pk": str(w.pk),
+            "workshop_number": w.workshop_number,
+            "label": w.get_workshop_number_display(),
+            "short_label": short_label,
+            "status": w.status,
+            "state": state,
+            "is_current": current_workshop is not None and current_workshop.pk == w.pk,
+        })
+
+    return {
+        "ebios_workshops": workshops,  # backwards-compat for templates expecting the queryset
+        "ebios_stepper_steps": steps,
+        "ebios_rejected_steps": rejected,
+        "ebios_next_action": next_action,
+        "ebios_branch_line_color": "var(--danger)" if rejected else "var(--border-light)",
+        "ebios_branch_line_opacity": "1" if rejected else "0.3",
+    }
 from risks.forms_ebios import (
     BaselineGapForm,
     FearedEventForm,
@@ -217,12 +305,7 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
         assessment = workshop.assessment
         ctx["assessment"] = assessment
         ctx["reject_form"] = WorkshopRejectForm()
-        ctx["ebios_workshops"] = list(
-            assessment.ebios_workshops.filter(
-                iteration_type=workshop.iteration_type,
-                iteration_number=workshop.iteration_number,
-            ).order_by("workshop_number")
-        )
+        ctx.update(build_ebios_stepper_context(assessment, current_workshop=workshop))
 
         # Action eligibility flags consumed by the sidebar template
         ctx["can_start"] = workshop.status in (
