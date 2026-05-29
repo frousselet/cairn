@@ -56,6 +56,44 @@
       <a href="#" class="btn-header-action" title="{% trans 'New' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></a>
     {% endpage_header %}
   </div>
+  <h6 class="mt-4 mb-2 text-muted">{% trans "Module accent variants - editorial signal per module" %}</h6>
+  <div class="d-flex flex-column gap-3">
+    {% page_header _("Risk register") eyebrow=_("Risks") icon="exclamation-triangle" accent="risks" %}{% endpage_header %}
+    {% page_header _("Requirements") eyebrow=_("Compliance") icon="list-check" accent="compliance" %}{% endpage_header %}
+    {% page_header _("Essential assets") eyebrow=_("Assets") icon="gem" accent="assets" %}{% endpage_header %}
+    {% page_header _("Stakeholders") eyebrow=_("Context") icon="people" accent="context" %}{% endpage_header %}
+    {% page_header _("Management reviews") eyebrow=_("Reports") icon="clipboard-check" accent="reports" %}{% endpage_header %}
+    {% page_header _("Users") eyebrow=_("Accounts") icon="person-badge" accent="accounts" %}{% endpage_header %}
+  </div>
+</section>
+
+{# ── Reference pills ─────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - .ref reference pills" %}</div>
+  <div class="sg-row">
+    <span class="ref">RISK-001</span>
+    <span class="ref">ASST-042</span>
+    <span class="ref">REQ-128</span>
+    <span class="ref">ACTION-007</span>
+    <a href="#" class="ref">SUPP-019</a>
+  </div>
+  <p class="text-muted small mt-1 mb-0">{% trans "Audit-grade primary keys deserve to look like one. Mono uppercase, subtle surface, hoverable when linked." %}</p>
+</section>
+
+{# ── Illustrations ───────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - illustrations" %}</div>
+  <p class="text-muted small mb-3">{% trans "Editorial line-art SVGs for empty states. Inherit text-muted by default, accent stroke for the meaningful element. Pass illustration=\"name\" to the empty_state tag, or render directly with the illustration tag." %}</p>
+  <div class="row g-3">
+    {% for name in illustration_names %}
+      <div class="col-md-3 col-sm-6">
+        <div class="sg-card-shell d-flex flex-column align-items-center text-center">
+          {% illustration name size="5rem" %}
+          <code class="small mt-2">{{ name }}</code>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
 </section>
 
 {# ── Badges ──────────────────────────────────────────────── #}
@@ -95,8 +133,19 @@
 {# ── Empty state ─────────────────────────────────────────── #}
 <section class="sg-section">
   <div class="sg-section__title">{% trans "Component - empty_state" %}</div>
-  <div class="sg-card-shell">
-    {% empty_state icon="inbox" title=_("Nothing yet") message=_("No items match the active filters. Try removing one or create a new entry.") cta_url="#" cta_label=_("New entry") %}
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="sg-card-shell">
+        <p class="text-muted small mb-2"><code>icon</code> variant</p>
+        {% empty_state icon="inbox" title=_("Nothing yet") message=_("No items match the active filters. Try removing one or create a new entry.") cta_url="#" cta_label=_("New entry") %}
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="sg-card-shell">
+        <p class="text-muted small mb-2"><code>illustration="shield"</code> variant</p>
+        {% empty_state illustration="shield" title=_("No risks recorded yet.") message=_("Risks are identified through methodology-driven assessments.") cta_url="#" cta_label=_("Open an assessment") %}
+      </div>
+    </div>
   </div>
 </section>
 

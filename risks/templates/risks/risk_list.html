@@ -7,7 +7,7 @@
 
 {% block content %}
 {% has_perm "risks.export.read" as can_export_risks %}
-{% page_header _("Risk register") icon="exclamation-triangle" %}
+{% page_header _("Risk register") eyebrow=_("Risks") icon="exclamation-triangle" accent="risks" %}
   <a href="{% url 'risks:assessment-list' %}" class="btn-header-action" title="{% trans 'Go to assessments' %}" aria-label="{% trans 'Go to assessments' %}">
     <i class="bi bi-clipboard-data" aria-hidden="true"></i>
   </a>
@@ -178,7 +178,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state icon="shield-check" title=_("No risks recorded yet.") message=_("Risks are identified through methodology-driven assessments. Open an assessment and use its workflow to create them.") colspan=12 %}
+        {% empty_state illustration="shield" title=_("No risks recorded yet.") message=_("Risks are identified through methodology-driven assessments. Open an assessment and use its workflow to create them.") colspan=12 %}
         {% endfor %}
       </tbody>
     </table>

@@ -1,10 +1,12 @@
 {% load i18n %}
-<div class="page-header">
+<div class="page-header{% if accent %} page-header--accent page-header--accent-{{ accent }}{% endif %}">
+  {% if accent %}<div class="page-header__bar" aria-hidden="true"></div>{% endif %}
   <div class="page-header__main">
     {% if icon %}<i class="bi bi-{{ icon }} page-header__icon" aria-hidden="true"></i>{% endif %}
     <div class="page-header__text">
+      {% if eyebrow %}<div class="page-header__eyebrow">{{ eyebrow }}</div>{% endif %}
       <h1 class="page-header__title mb-0">{{ title }}</h1>
-      {% if reference %}<small class="ref page-header__reference">{{ reference }}</small>{% endif %}
+      {% if reference %}<span class="ref page-header__reference">{{ reference }}</span>{% endif %}
       {% if subtitle %}<div class="page-header__subtitle">{{ subtitle }}</div>{% endif %}
     </div>
   </div>

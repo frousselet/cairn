@@ -979,11 +979,12 @@ class StyleGuideView(LoginRequiredMixin, TemplateView):
     template_name = "core/styleguide.html"
 
     def get_context_data(self, **kwargs):
-        from core.templatetags.ui import Step
+        from core.templatetags.ui import ILLUSTRATIONS, Step
 
         ctx = super().get_context_data(**kwargs)
         ctx["badge_types"] = ["approval", "severity", "risk", "status"]
         ctx["kpi_variants"] = ["accent", "success", "warning", "danger", "info", "secondary"]
+        ctx["illustration_names"] = sorted(ILLUSTRATIONS.keys())
         ctx["stepper_steps"] = [
             Step(value="draft", label=_("Draft"), state="done"),
             Step(value="planned", label=_("Planned"), state="done"),

@@ -7,7 +7,7 @@ from django.test import Client, RequestFactory
 from django.urls import reverse
 
 from accounts.tests.factories import UserFactory
-from core.templatetags.ui import Step, build_steps
+from core.templatetags.ui import ILLUSTRATIONS, MODULE_ACCENTS, Step, build_steps
 
 pytestmark = pytest.mark.django_db
 
@@ -77,6 +77,56 @@ class TestEmptyStateTag:
         out = render('{% empty_state icon="inbox" cta_url="/new/" %}')
         assert 'href="/new/"' not in out
 
+    def test_illustration_supersedes_icon(self):
+        out = render('{% empty_state illustration="shield" title="No risks" %}')
+        assert "empty-state__illustration" in out
+        assert "empty-state--illustrated" in out
+        assert "<svg" in out
+        assert "empty-state__icon" not in out
+
+    def test_unknown_illustration_falls_back_to_icon(self):
+        out = render('{% empty_state illustration="bogus" icon="inbox" title="Nothing" %}')
+        assert "empty-state__icon" in out
+        assert "empty-state__illustration" not in out
+
+
+# ───────────────────────── illustration ────────────────────────────────
+
+
+class TestIllustrationTag:
+    def test_renders_svg_for_known_name(self):
+        out = render('{% illustration "shield" %}')
+        assert "<svg" in out
+        assert "viewBox" in out
+        assert "fw-illustration" in out
+
+    def test_returns_empty_for_unknown_name(self):
+        out = render('{% illustration "frobnicate" %}').strip()
+        assert out == ""
+
+    def test_size_kwarg_threads_into_css_variable(self):
+        out = render('{% illustration "shield" size="8rem" %}')
+        assert "--illustration-size:8rem" in out
+
+    def test_every_registered_illustration_has_an_svg(self):
+        assert ILLUSTRATIONS, "ILLUSTRATIONS dict must not be empty"
+        for name, svg in ILLUSTRATIONS.items():
+            assert "<svg" in svg, f"illustration {name!r} is missing its <svg>"
+            assert "viewBox" in svg, f"illustration {name!r} has no viewBox"
+
+    def test_module_accents_are_a_closed_enum(self):
+        # All module accents must be referenced from CSS in base.html, but
+        # at the data level we at least ensure the set is non-empty and
+        # contains the seven business modules + the dashboard alias.
+        assert "risks" in MODULE_ACCENTS
+        assert "compliance" in MODULE_ACCENTS
+        assert "assets" in MODULE_ACCENTS
+        assert "context" in MODULE_ACCENTS
+        assert "reports" in MODULE_ACCENTS
+        assert "accounts" in MODULE_ACCENTS
+        assert "helpers" in MODULE_ACCENTS
+        assert "dashboard" in MODULE_ACCENTS
+
 
 # ───────────────────────── page_header ─────────────────────────────────
 
@@ -103,6 +153,26 @@ class TestPageHeaderTag:
         out = render('{% page_header "Risk-1" reference="RISK-1" %}{% endpage_header %}')
         assert "RISK-1" in out
         assert "ref" in out
+
+    def test_module_accent_applies_modifier_class_and_bar(self):
+        out = render('{% page_header "Risk register" accent="risks" %}{% endpage_header %}')
+        assert "page-header--accent" in out
+        assert "page-header--accent-risks" in out
+        assert "page-header__bar" in out
+
+    def test_unknown_accent_is_silently_dropped(self):
+        out = render('{% page_header "Title" accent="bogus" %}{% endpage_header %}')
+        assert "page-header--accent" not in out
+        assert "page-header__bar" not in out
+
+    def test_eyebrow_renders_when_set(self):
+        out = render('{% page_header "Risk register" eyebrow="Risks" accent="risks" %}{% endpage_header %}')
+        assert "page-header__eyebrow" in out
+        assert "Risks" in out
+
+    def test_no_eyebrow_block_when_omitted(self):
+        out = render('{% page_header "Title" %}{% endpage_header %}')
+        assert "page-header__eyebrow" not in out
 
 
 # ───────────────────────── kpi_card ────────────────────────────────────

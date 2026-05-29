@@ -19,6 +19,149 @@ from django.utils.translation import gettext_lazy as _
 register = template.Library()
 
 
+# ───────────────────────── Module accents ──────────────────────────────────
+#
+# Editorial signal for each business module. Used by {% page_header %}
+# to render a 4 px left accent bar plus a subtle tinted band so users
+# get an immediate "where am I" cue on top of the calm neutral canvas.
+#
+# The values are validated identifiers; the actual colours live in CSS
+# variables (--module-accent-* / --module-accent-*-soft) defined in
+# templates/base.html so light + dark mode can each tune the hue.
+
+MODULE_ACCENTS = {
+    "risks", "compliance", "assets", "context",
+    "reports", "accounts", "helpers", "dashboard",
+}
+
+
+# ───────────────────────── Illustrations ───────────────────────────────────
+#
+# Editorial line-art SVGs for empty states. The style is deliberate:
+# stroke-only (no fill), 1.5 px stroke weight, currentColor for the
+# base lines + var(--accent) for the one element that carries meaning.
+# Recognisable but abstract: shields, folders, scrolls, seals, networks,
+# calendars, buildings, magnifiers. They speak audit-grade tooling, not
+# consumer mascots, and they inherit text colour so they work in both
+# light and dark mode without overrides.
+
+ILLUSTRATIONS = {
+    "shield": """
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M50 12 L78 22 V46 C78 64 66 78 50 86 C34 78 22 64 22 46 V22 Z"
+                  opacity=".25" fill="currentColor" stroke="none"/>
+            <path d="M50 12 L78 22 V46 C78 64 66 78 50 86 C34 78 22 64 22 46 V22 Z"/>
+            <path d="M40 50 L48 58 L62 42" stroke="var(--accent)" stroke-width="2"/>
+        </svg>
+    """,
+    "folder-check": """
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M14 30 H38 L46 38 H86 V80 H14 Z"
+                  opacity=".25" fill="currentColor" stroke="none"/>
+            <path d="M14 30 H38 L46 38 H86 V80 H14 Z"/>
+            <path d="M40 58 L48 66 L62 50" stroke="var(--accent)" stroke-width="2"/>
+        </svg>
+    """,
+    "scroll": """
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <rect x="22" y="18" width="56" height="68" rx="4"
+                  opacity=".25" fill="currentColor" stroke="none"/>
+            <rect x="22" y="18" width="56" height="68" rx="4"/>
+            <line x1="32" y1="34" x2="68" y2="34"/>
+            <line x1="32" y1="46" x2="68" y2="46"/>
+            <line x1="32" y1="58" x2="58" y2="58"/>
+            <line x1="32" y1="70" x2="50" y2="70" stroke="var(--accent)" stroke-width="2"/>
+        </svg>
+    """,
+    "seal": """
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <circle cx="50" cy="42" r="22"
+                    opacity=".25" fill="currentColor" stroke="none"/>
+            <circle cx="50" cy="42" r="22"/>
+            <circle cx="50" cy="42" r="13" stroke="var(--accent)" stroke-width="2"/>
+            <path d="M38 74 L32 92 L44 86 L50 92 L56 86 L68 92 L62 74"/>
+        </svg>
+    """,
+    "network": """
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <line x1="50" y1="26" x2="50" y2="78"/>
+            <line x1="50" y1="26" x2="22" y2="62"/>
+            <line x1="50" y1="26" x2="78" y2="62"/>
+            <line x1="22" y1="62" x2="78" y2="62" stroke="var(--accent)" stroke-width="2"/>
+            <circle cx="50" cy="22" r="6" fill="currentColor" opacity=".15"/>
+            <circle cx="50" cy="22" r="6"/>
+            <circle cx="22" cy="62" r="6" fill="currentColor" opacity=".15"/>
+            <circle cx="22" cy="62" r="6"/>
+            <circle cx="78" cy="62" r="6" fill="currentColor" opacity=".15"/>
+            <circle cx="78" cy="62" r="6"/>
+            <circle cx="50" cy="82" r="6" fill="var(--accent)" opacity=".15"/>
+            <circle cx="50" cy="82" r="6" stroke="var(--accent)" stroke-width="2"/>
+        </svg>
+    """,
+    "calendar": """
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <rect x="18" y="22" width="64" height="62" rx="4"
+                  opacity=".25" fill="currentColor" stroke="none"/>
+            <rect x="18" y="22" width="64" height="62" rx="4"/>
+            <line x1="18" y1="38" x2="82" y2="38"/>
+            <line x1="32" y1="14" x2="32" y2="28"/>
+            <line x1="68" y1="14" x2="68" y2="28"/>
+            <circle cx="50" cy="60" r="7" fill="var(--accent)" opacity=".2"/>
+            <circle cx="50" cy="60" r="7" stroke="var(--accent)" stroke-width="2"/>
+        </svg>
+    """,
+    "building": """
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M22 32 L50 14 L78 32 V84 H22 Z"
+                  opacity=".25" fill="currentColor" stroke="none"/>
+            <path d="M22 32 L50 14 L78 32"/>
+            <rect x="22" y="32" width="56" height="52"/>
+            <rect x="34" y="44" width="8" height="10"/>
+            <rect x="58" y="44" width="8" height="10"/>
+            <rect x="34" y="60" width="8" height="10"/>
+            <rect x="58" y="60" width="8" height="10"/>
+            <rect x="44" y="70" width="12" height="14" stroke="var(--accent)" stroke-width="2"/>
+        </svg>
+    """,
+    "search-chart": """
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <circle cx="42" cy="42" r="22"
+                    opacity=".25" fill="currentColor" stroke="none"/>
+            <circle cx="42" cy="42" r="22"/>
+            <polyline points="30,52 38,42 46,46 56,32" stroke="var(--accent)" stroke-width="2"/>
+            <line x1="58" y1="58" x2="76" y2="76"/>
+        </svg>
+    """,
+}
+
+
+@register.simple_tag
+def illustration(name, *, size="6rem"):
+    """Render an editorial line-art SVG by name.
+
+    Usage::
+
+        {% illustration "shield" %}
+        {% illustration "scroll" size="8rem" %}
+
+    Returns an empty string for unknown names (graceful degrade).
+    """
+    svg = ILLUSTRATIONS.get(name)
+    if not svg:
+        return ""
+    return mark_safe(
+        f'<span class="fw-illustration" style="--illustration-size:{size}">{svg}</span>'
+    )
+
+
 # ───────────────────────── Badge registry ──────────────────────────────────
 #
 # A semantic enum value (e.g. "approved", "high", "critical") is mapped to:
@@ -110,14 +253,22 @@ def badge(value=None, *, type=None, variant=None, icon=None, label=None, classes
 
 
 @register.inclusion_tag("components/empty_state.html")
-def empty_state(*, icon="inbox", title=None, message=None, cta_url=None, cta_label=None, colspan=None):
+def empty_state(*, icon="inbox", illustration=None, title=None, message=None, cta_url=None, cta_label=None, colspan=None):
     """Render a standardized empty state.
 
     Use inside a ``<tbody>`` by setting ``colspan`` to the number of
     columns; otherwise render at block level.
+
+    Pass ``illustration="shield"`` (or any key in ``ILLUSTRATIONS``)
+    to render the editorial line-art illustration instead of the
+    Bootstrap Icon - more characterful when there's room for it.
     """
+    illustration_svg = None
+    if illustration and illustration in ILLUSTRATIONS:
+        illustration_svg = mark_safe(ILLUSTRATIONS[illustration])
     return {
         "icon": icon,
+        "illustration_svg": illustration_svg,
         "title": title,
         "message": message,
         "cta_url": cta_url,
@@ -241,11 +392,18 @@ class PageHeaderNode(template.Node):
         title = self.title_expr.resolve(context) if self.title_expr else ""
         resolved_kwargs = {k: v.resolve(context) for k, v in self.kwargs.items()}
         actions_html = self.nodelist.render(context).strip()
+        accent = resolved_kwargs.get("accent")
+        if accent is not None:
+            accent = str(accent)
+            if accent not in MODULE_ACCENTS:
+                accent = None
         with context.push(
             title=title,
             subtitle=resolved_kwargs.get("subtitle"),
             reference=resolved_kwargs.get("reference"),
             icon=resolved_kwargs.get("icon"),
+            accent=accent,
+            eyebrow=resolved_kwargs.get("eyebrow"),
             actions_html=mark_safe(actions_html) if actions_html else "",
         ):
             tpl = context.template.engine.get_template("components/page_header.html")

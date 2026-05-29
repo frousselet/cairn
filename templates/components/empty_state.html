@@ -1,6 +1,10 @@
 {% load i18n %}{% if colspan %}<tr class="empty-state-row"><td colspan="{{ colspan }}">{% endif %}
-<div class="empty-state">
-  <div class="empty-state__icon" aria-hidden="true"><i class="bi bi-{{ icon }}"></i></div>
+<div class="empty-state{% if illustration_svg %} empty-state--illustrated{% endif %}">
+  {% if illustration_svg %}
+    <div class="empty-state__illustration" aria-hidden="true">{{ illustration_svg }}</div>
+  {% else %}
+    <div class="empty-state__icon" aria-hidden="true"><i class="bi bi-{{ icon }}"></i></div>
+  {% endif %}
   {% if title %}<div class="empty-state__title">{{ title }}</div>{% endif %}
   {% if message %}<p class="empty-state__message">{{ message }}</p>{% endif %}
   {% if cta_url and cta_label %}<a href="{{ cta_url }}" class="btn btn-sm btn-primary mt-2"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{{ cta_label }}</a>{% endif %}
