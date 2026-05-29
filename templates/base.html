@@ -3103,14 +3103,23 @@
   {# ── Search overlay ─────────────────────────────────────── #}
   {% if user.is_authenticated %}
   <div class="search-overlay" id="searchOverlay">
-    <div class="search-dialog" role="dialog" aria-label="{% trans 'Search' %}">
+    <div class="search-dialog" role="dialog" aria-label="{% trans 'Command palette' %}" aria-modal="true">
       <div class="search-input-wrap">
-        <i class="bi bi-search"></i>
-        <input type="text" id="searchInput" placeholder="{% trans 'Search across all items…' %}" autocomplete="off" spellcheck="false">
-        <div class="search-spinner" id="searchSpinner"></div>
-        <span class="search-kbd">Esc</span>
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input type="text" id="searchInput"
+               placeholder="{% trans 'Search or jump to...' %}"
+               autocomplete="off"
+               spellcheck="false"
+               role="combobox"
+               aria-controls="searchResults"
+               aria-expanded="true"
+               aria-autocomplete="list"
+               aria-label="{% trans 'Search across the application' %}"
+               aria-activedescendant="">
+        <div class="search-spinner" id="searchSpinner" aria-hidden="true"></div>
+        <span class="search-kbd" aria-hidden="true">Esc</span>
       </div>
-      <div class="search-results" id="searchResults"></div>
+      <div class="search-results" id="searchResults" role="listbox" aria-label="{% trans 'Search results' %}"></div>
     </div>
   </div>
   {% endif %}
@@ -3834,12 +3843,24 @@
     var activeIndex = -1;
     var currentQuery = '';
 
+    function fetchDefault() {
+      /* Fetch navigation + actions list when the query is empty. */
+      fetch('{% url "global-search" %}?q=')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (input.value.trim().length >= 2) return;
+          renderResults(data.results, '');
+        })
+        .catch(function() {});
+    }
+
     function openSearch() {
       overlay.classList.add('show');
       input.value = '';
       results.innerHTML = '';
       activeIndex = -1;
       setTimeout(function() { input.focus(); }, 60);
+      fetchDefault();
     }
 
     function closeSearch() {
@@ -3848,6 +3869,7 @@
       results.innerHTML = '';
       activeIndex = -1;
       currentQuery = '';
+      input.setAttribute('aria-activedescendant', '');
     }
 
     toggleBtn.addEventListener('click', openSearch);
@@ -3874,10 +3896,10 @@
       var q = input.value.trim();
       clearTimeout(debounceTimer);
       if (q.length < 2) {
-        results.innerHTML = '';
         spinner.classList.remove('show');
         activeIndex = -1;
         currentQuery = '';
+        fetchDefault();
         return;
       }
       spinner.classList.add('show');
@@ -3913,17 +3935,23 @@
 
     function renderResults(groups, q) {
       activeIndex = -1;
+      input.setAttribute('aria-activedescendant', '');
       if (!groups || groups.length === 0) {
-        results.innerHTML = '<div class="search-empty"><i class="bi bi-search"></i>{% trans "No results found" %}</div>';
+        results.innerHTML = '<div class="search-empty"><i class="bi bi-search" aria-hidden="true"></i>{% trans "No results found" %}</div>';
         return;
       }
       var html = '';
-      groups.forEach(function(group) {
-        html += '<div class="search-group-label"><i class="' + group.icon + '"></i> ' + escapeHtml(group.label) + '</div>';
+      var optionIndex = 0;
+      groups.forEach(function(group, groupIdx) {
+        var groupId = 'cmdk-group-' + groupIdx;
+        html += '<div class="search-group-label" role="presentation"><i class="' + group.icon + '" aria-hidden="true"></i> ' + escapeHtml(group.label) + '</div>';
         group.items.forEach(function(item) {
-          html += '<a class="search-result-item" href="' + item.url + '">'
-            + '<i class="' + item.icon + '"></i>'
-            + '<span>' + highlightMatch(item.title, q) + '</span></a>';
+          var optionId = 'cmdk-opt-' + optionIndex;
+          var rendered = q ? highlightMatch(item.title, q) : escapeHtml(item.title);
+          html += '<a class="search-result-item" id="' + optionId + '" role="option" aria-selected="false" href="' + item.url + '">'
+            + '<i class="' + item.icon + '" aria-hidden="true"></i>'
+            + '<span>' + rendered + '</span></a>';
+          optionIndex += 1;
         });
       });
       results.innerHTML = html;
@@ -3950,10 +3978,16 @@
 
     function updateActive(items) {
       items.forEach(function(el, i) {
-        el.classList.toggle('active', i === activeIndex);
+        var isActive = i === activeIndex;
+        el.classList.toggle('active', isActive);
+        el.setAttribute('aria-selected', isActive ? 'true' : 'false');
       });
-      if (items[activeIndex]) {
-        items[activeIndex].scrollIntoView({ block: 'nearest' });
+      var current = items[activeIndex];
+      if (current) {
+        current.scrollIntoView({ block: 'nearest' });
+        input.setAttribute('aria-activedescendant', current.id);
+      } else {
+        input.setAttribute('aria-activedescendant', '');
       }
     }
   })();

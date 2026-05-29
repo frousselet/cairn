@@ -290,24 +290,44 @@ class TestGlobalSearchView:
         data = json.loads(resp.content)
         assert "results" in data
 
-    def test_short_query_returns_empty(self):
-        """Queries shorter than 2 characters should return empty results."""
+    def test_short_query_returns_navigation_and_actions(self):
+        """Queries shorter than 2 characters fall back to navigation + actions."""
         client, user = _superuser_client()
         resp = client.get(reverse("global-search"), {"q": "a"})
         data = json.loads(resp.content)
-        assert data["results"] == []
+        labels = {g["label"] for g in data["results"]}
+        assert "Navigation" in labels
+        # Actions group is gated by per-entry permissions, superuser sees them all
+        assert "Actions" in labels
 
-    def test_empty_query_returns_empty(self):
+    def test_empty_query_returns_navigation_and_actions(self):
         client, user = _superuser_client()
         resp = client.get(reverse("global-search"), {"q": ""})
         data = json.loads(resp.content)
-        assert data["results"] == []
+        labels = {g["label"] for g in data["results"]}
+        assert "Navigation" in labels
+        assert "Actions" in labels
 
-    def test_no_query_param_returns_empty(self):
+    def test_no_query_param_returns_navigation_and_actions(self):
         client, user = _superuser_client()
         resp = client.get(reverse("global-search"))
         data = json.loads(resp.content)
-        assert data["results"] == []
+        labels = {g["label"] for g in data["results"]}
+        assert "Navigation" in labels
+        assert "Actions" in labels
+
+    def test_actions_filtered_by_permissions_for_regular_user(self):
+        """A regular user without create perms only sees the styleguide action."""
+        client, user = _authenticated_client()
+        resp = client.get(reverse("global-search"))
+        data = json.loads(resp.content)
+        actions = next((g for g in data["results"] if g["label"] == "Actions"), None)
+        assert actions is not None
+        titles = {item["title"] for item in actions["items"]}
+        # Styleguide is permission-free, the create actions require permissions
+        assert "Open styleguide" in titles
+        for create_label in ["Create a risk", "Create an action plan"]:
+            assert create_label not in titles
 
     def test_search_finds_scope(self):
         client, user = _superuser_client()

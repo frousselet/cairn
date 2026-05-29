@@ -732,10 +732,69 @@ class GlobalSearchView(LoginRequiredMixin, View):
             })
         return results
 
+    NAVIGATION_ENTRIES = [
+        ("home", _("Dashboard"), "bi-grid", None),
+        ("context:scope-list", _("Scopes"), "bi-bullseye", None),
+        ("context:issue-list", _("Issues"), "bi-exclamation-diamond", None),
+        ("context:objective-list", _("Objectives"), "bi-flag", None),
+        ("context:stakeholder-list", _("Stakeholders"), "bi-people", None),
+        ("context:role-list", _("Roles"), "bi-person-badge", None),
+        ("assets:essential-asset-list", _("Essential assets"), "bi-gem", None),
+        ("assets:support-asset-list", _("Support assets"), "bi-hdd-network", None),
+        ("assets:supplier-list", _("Suppliers"), "bi-truck", None),
+        ("compliance:framework-list", _("Frameworks"), "bi-journal-check", None),
+        ("compliance:requirement-list", _("Requirements"), "bi-list-check", None),
+        ("compliance:assessment-list", _("Compliance assessments"), "bi-clipboard-check", None),
+        ("compliance:action-plan-kanban", _("Action plans"), "bi-card-checklist", None),
+        ("risks:assessment-list", _("Risk assessments"), "bi-shield-exclamation", None),
+        ("risks:risk-list", _("Risk register"), "bi-exclamation-triangle", None),
+        ("risks:treatment-plan-list", _("Treatment plans"), "bi-bandaid", None),
+        ("calendar", _("Calendar"), "bi-calendar3", None),
+    ]
+
+    ACTION_ENTRIES = [
+        ("risks:risk-create", _("Create a risk"), "bi-plus-circle", "risks.risk.create"),
+        ("risks:assessment-create", _("Create a risk assessment"), "bi-plus-circle", "risks.assessment.create"),
+        ("compliance:requirement-create", _("Create a requirement"), "bi-plus-circle", "compliance.requirement.create"),
+        ("compliance:assessment-create", _("Create a compliance assessment"), "bi-plus-circle", "compliance.assessment.create"),
+        ("compliance:action-plan-create", _("Create an action plan"), "bi-plus-circle", "compliance.action_plan.create"),
+        ("assets:essential-asset-create", _("Create an essential asset"), "bi-plus-circle", "assets.essential_asset.create"),
+        ("context:objective-create", _("Create an objective"), "bi-plus-circle", "context.objective.create"),
+        ("styleguide", _("Open styleguide"), "bi-palette", None),
+    ]
+
+    def _navigation_group(self):
+        items = []
+        for name, label, icon, _required in self.NAVIGATION_ENTRIES:
+            try:
+                items.append({"title": str(label), "url": reverse(name), "icon": icon})
+            except Exception:
+                continue
+        return {"label": str(_("Navigation")), "icon": "bi-compass", "items": items} if items else None
+
+    def _actions_group(self, user):
+        items = []
+        for name, label, icon, perm in self.ACTION_ENTRIES:
+            if perm and not user.has_perm(perm):
+                continue
+            try:
+                items.append({"title": str(label), "url": reverse(name), "icon": icon})
+            except Exception:
+                continue
+        return {"label": str(_("Actions")), "icon": "bi-lightning-charge", "items": items} if items else None
+
     def get(self, request):
         q = request.GET.get("q", "").strip()
         if len(q) < 2:
-            return JsonResponse({"results": []})
+            # Empty / short query: show navigation + actions instead of nothing.
+            groups = []
+            nav = self._navigation_group()
+            if nav:
+                groups.append(nav)
+            actions = self._actions_group(request.user)
+            if actions:
+                groups.append(actions)
+            return JsonResponse({"results": groups})
 
         categories = [
             {
