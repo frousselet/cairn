@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Inline add / edit / delete of `TreatmentAction` rows directly from the treatment plan detail page (HTMX-driven drawer form), gated by `risks.treatment.update`
 - Bulk approve and bulk delete on the risk register list with select-all and a sticky toolbar; the server-side `RiskBulkActionView` scope-filters the queryset before acting and enforces `risks.risk.approve` / `risks.risk.delete`
 - Sticky right sidebar on the four risks detail pages (assessment, risk, treatment plan, acceptance) so the metadata stays in view while the main content scrolls
+- Test suite startup no longer replays the ~150 historical migrations: `core.settings_test` bypasses them with `MIGRATION_MODULES`, and a session-scoped `conftest.py` fixture re-seeds the `accounts.Permission` rows and the six system groups from `accounts.constants.PERMISSION_REGISTRY` / `SYSTEM_GROUPS`. Combined with `pytest-xdist` (`-n auto` on the CI matrix), the full suite drops from ~37 min to a few seconds per parallel job
 
 ### Fixed
 

@@ -118,7 +118,7 @@ unit:
     matrix:
       - TEST_SUITE: [accounts, assets, compliance, context, core, helpers, mcp, reports, risks]
   script:
-    - pytest -x -v --tb=short --cov --junitxml=report.xml $TEST_SUITE/
+    - pytest -n auto -x -v --tb=short --cov --junitxml=report.xml $TEST_SUITE/
   after_script:
     - mv .coverage .coverage.$TEST_SUITE 2>/dev/null || true
   artifacts:

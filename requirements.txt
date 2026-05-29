@@ -22,4 +22,5 @@ pytest
 pytest-django
 pytest-cov
 pytest-asyncio
+pytest-xdist
 factory-boy
