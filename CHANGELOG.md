@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-05-29
+
 ### Added
 
 - EBIOS RM GUI W2-W5: full pages for workshops 2 to 5 replacing the placeholders. W2 lists risk sources with their auto-computed ANSSI threat level V1..V4 badge, the targeted objectives nested per source and the SR/OV pairs with their priority score. W3 shows the ecosystem stakeholders with their threat zone badge (control / monitoring / danger) and the strategic scenarios with their attack path steps. W4 shows the operational scenarios with inline attack technique chips, the inherited gravity flag and a one-click consolidation button that materialises the scenario into a Risk in the unified register (idempotent). W5 shows the EbiosSummary detail card with edit form, the before/after risk mapping snapshots with capture buttons per slot, and the PACS measures table. 30+ new URL routes under `/risks/assessments/<uuid>/ebios/{risk-sources,sr-ov-pairs,ecosystem,strategic-scenarios,operational-scenarios}/create/` and `/risks/ebios/<entity>/<uuid>/{edit,delete}/`. The W4 page also exposes a per-scenario `consolidate` POST that mirrors the API action. 10 new tests in `risks/tests/test_ebios_views.TestWorkshopW2W5Views` covering the dispatcher templates, the create flows for risk sources / ecosystem stakeholders / PACS measures, the consolidate idempotency and the capture-mappings slot toggle
@@ -722,6 +724,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker Hub publish workflow on version tags
 
 [Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.22.0...HEAD
+[0.23.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.22.0...v0.23.0
 [0.22.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.4...v0.22.0
 [0.21.4]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.3...v0.21.4
 [0.21.3]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.2...v0.21.3
