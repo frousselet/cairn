@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.1] - 2026-05-31
+
 ### Fixed
 
 - **EBIOS backfill migration `risks.0024`**: the data migration that backfills `StudyFramework`, `SecurityBaseline`, `EbiosSummary` and the six `EbiosWorkshopProgress` rows on pre-existing `ebios_rm` assessments was inserting new rows with an empty `reference`. Historical models obtained via `apps.get_model` bypass `ReferenceGeneratorMixin.save()`, so the second insert collided on the `unique=True` constraint (`duplicate key value violates unique constraint "risks_ebiosworkshopprogress_reference_key" DETAIL: Key (reference)=() already exists.`). References are now assigned explicitly per model (`EFRA`, `EBSL`, `ESUM`, `EWSP`) with a locally incremented counter seeded from the current DB max; the migration also heals any `reference=""` rows left by a prior failed run, so it is safe to re-apply
@@ -773,7 +775,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.24.0...HEAD
+[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.24.1...HEAD
+[0.24.1]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.24.0...v0.24.1
 [0.24.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.23.0...v0.24.0
 [0.23.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.22.0...v0.23.0
 [0.22.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.21.4...v0.22.0
