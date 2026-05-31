@@ -77,7 +77,9 @@ class TestManagementReviewModel:
             held_date=None,
         )
         review.transition_to(ManagementReviewStatus.HELD, user)
-        assert review.held_date == date.today()
+        # Match the model: it writes timezone.now().date() (Django timezone).
+        # Naive date.today() (system clock) can disagree across midnight.
+        assert review.held_date == timezone.localdate()
 
     def test_closure_requires_complete_decisions(self):
         user = UserFactory()
