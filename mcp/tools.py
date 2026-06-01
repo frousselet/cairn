@@ -3195,7 +3195,7 @@ def _register_compliance_tools(server):
 
     ap_fields = ["id", "reference", "scopes", "name", "description",
                  "gap_description", "remediation_plan",
-                 "priority", "status",
+                 "priority", "status", "is_overdue",
                  "start_date", "target_date", "completion_date",
                  "cost_estimate", "progress_percentage",
                  "owner_id", "assignees", "requirements", "findings", "risks",
