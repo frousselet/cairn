@@ -270,21 +270,29 @@ class ComplianceAssessment(ScopedModel):
                     prior_map[req_id] = (status, level)
 
         def _effective_level(result):
+            # NOT_APPLICABLE requirements are excluded from the compliance
+            # ratio entirely (CAIRN-ASM-04) — the SoA convention is that the
+            # requirement does not apply to the scope and must not skew the
+            # average toward 100 %. Callers filter the None back out.
             if result.compliance_status == ComplianceStatus.NOT_APPLICABLE:
-                return 100
+                return None
             if result.compliance_status == ComplianceStatus.NOT_ASSESSED:
                 return 0
             if result.compliance_status == ComplianceStatus.EVALUATED:
                 prior = prior_map.get(result.requirement_id)
                 if prior:
                     status, level = prior
-                    return 100 if status == ComplianceStatus.NOT_APPLICABLE else (level or 0)
+                    if status == ComplianceStatus.NOT_APPLICABLE:
+                        return None
+                    return level or 0
                 return 0
             return result.compliance_level or 0
 
-        if self.total_requirements > 0:
-            total_level = sum(_effective_level(r) for r in results)
-            self.overall_compliance_level = total_level / self.total_requirements
+        applicable_levels = [
+            lvl for lvl in (_effective_level(r) for r in results) if lvl is not None
+        ]
+        if applicable_levels:
+            self.overall_compliance_level = sum(applicable_levels) / len(applicable_levels)
         else:
             self.overall_compliance_level = 0
         ComplianceAssessment.objects.filter(pk=self.pk).update(
@@ -354,9 +362,29 @@ class ComplianceAssessment(ScopedModel):
                 affected_section_ids.add(req.section_id)
 
         # ── Propagate to sections ──
+        # The immediate sections of the affected requirements need a refresh,
+        # and so do every ancestor up to the root section: Section.recalculate_compliance
+        # mixes the average of its applicable requirements with the levels of its
+        # children, so a parent section's level was previously stuck at zero while
+        # its sub-sections were correctly recomputed (QA report CAIRN-REQ-04).
+        # We compute the root of each affected branch and recalc only the root —
+        # recalc cascades down to every descendant.
         from compliance.models.section import Section
 
-        for section in Section.objects.filter(pk__in=affected_section_ids):
+        root_section_ids = set()
+        section_parent_lookup = dict(
+            Section.objects.filter(framework_id__in=self.frameworks.values_list("pk", flat=True))
+            .values_list("pk", "parent_section_id")
+        )
+        for section_id in affected_section_ids:
+            current = section_id
+            parent = section_parent_lookup.get(current)
+            while parent is not None:
+                current = parent
+                parent = section_parent_lookup.get(current)
+            root_section_ids.add(current)
+
+        for section in Section.objects.filter(pk__in=root_section_ids):
             section.recalculate_compliance()
 
         # ── Propagate to frameworks ──

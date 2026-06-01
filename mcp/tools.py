@@ -2557,20 +2557,35 @@ def _register_compliance_tools(server):
     RequirementMapping = _get_model("compliance", "RequirementMapping")
     ComplianceActionPlan = _get_model("compliance", "ComplianceActionPlan")
 
-    fw_fields = ["id", "reference", "name", "short_name", "description", "type",
-                 "category", "compliance_level", "status", "logo_32",
+    fw_fields = ["id", "reference", "scopes", "name", "short_name", "description", "type",
+                 "category", "framework_version",
+                 "publication_date", "effective_date", "expiry_date",
+                 "issuing_body", "jurisdiction", "url",
+                 "is_mandatory", "is_applicable", "applicability_justification",
+                 "owner_id", "related_stakeholders",
+                 "compliance_level", "last_assessment_date",
+                 "status", "review_date", "logo_32",
                  "is_approved", "created_at"]
-    fw_writable = ["name", "short_name", "description", "type", "category", "status",
-                   "owner_id", "logo"]
+    fw_writable = ["name", "short_name", "description", "type", "category",
+                   "framework_version",
+                   "publication_date", "effective_date", "expiry_date",
+                   "issuing_body", "jurisdiction", "url",
+                   "is_mandatory", "is_applicable", "applicability_justification",
+                   "status", "review_date", "owner_id", "logo",
+                   "scope_ids", "related_stakeholder_ids"]
 
     _register_crud(server, "framework", Framework, "compliance.framework",
                    list_fields=fw_fields,
                    writable_fields=fw_writable,
                    search_fields=["reference", "name", "short_name", "description"],
-                   filters=["type", "category", "status"],
+                   filters=["type", "category", "status",
+                            "is_mandatory", "is_applicable"],
                    required_fields=["name"],
+                   m2m_fields={"scope_ids": "scopes",
+                               "related_stakeholder_ids": "related_stakeholders"},
                    field_overrides={
                        "description": _html_field("Description"),
+                       "applicability_justification": _html_field("Applicability justification"),
                        "type": {
                            "type": "string",
                            "description": "Framework type.",
@@ -2593,7 +2608,33 @@ def _register_compliance_tools(server):
                            "description": "Framework status.",
                            "enum": ["draft", "active", "under_review", "deprecated", "archived"],
                        },
+                       "framework_version": {"type": "string", "description": "Version of the framework (e.g. '2022')."},
+                       "publication_date": {"type": "string", "description": "Publication date (ISO 8601)."},
+                       "effective_date": {"type": "string", "description": "Effective date (ISO 8601)."},
+                       "expiry_date": {"type": "string", "description": "Expiry date (ISO 8601)."},
+                       "issuing_body": {"type": "string", "description": "Standards body or regulator that issued the framework."},
+                       "jurisdiction": {"type": "string", "description": "Jurisdiction the framework applies to."},
+                       "url": {"type": "string", "description": "Official link to the framework."},
+                       "is_mandatory": {
+                           "type": "boolean",
+                           "description": "Whether the framework is mandatory (drives RC-05 non-compliance alert).",
+                       },
+                       "is_applicable": {
+                           "type": "boolean",
+                           "description": "Whether the framework applies to the organisation (drives Statement of Applicability inclusion).",
+                       },
+                       "review_date": {"type": "string", "description": "Next review date (ISO 8601)."},
                        "owner_id": {"type": "string", "description": "UUID of the framework owner (user)"},
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Scopes this framework applies to (RG-01).",
+                       },
+                       "related_stakeholder_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Stakeholders interested in this framework.",
+                       },
                    })
 
     # Framework compliance summary (special tool)
@@ -2632,7 +2673,8 @@ def _register_compliance_tools(server):
 
     sec_fields = ["id", "reference", "name", "description", "order", "compliance_level",
                   "framework_id", "parent_section_id", "created_at"]
-    sec_writable = ["name", "description", "order", "framework_id", "parent_section_id"]
+    sec_writable = ["reference", "name", "description", "order",
+                    "framework_id", "parent_section_id"]
 
     _register_crud(server, "section", Section, "compliance.section",
                    list_fields=sec_fields,
@@ -2642,32 +2684,64 @@ def _register_compliance_tools(server):
                    scope_filtered=False,
                    has_approve=False,
                    required_fields=["name", "framework_id"],
-                   field_overrides=_HTML_DESC)
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "reference": {
+                           "type": "string",
+                           "description": (
+                               "Section reference / number within the framework "
+                               "(e.g. 'A.5', '6.1.2'). Auto-generated as SEC-N if omitted; "
+                               "unique per framework when non-empty."
+                           ),
+                       },
+                   })
 
-    req_fields = ["id", "reference", "requirement_number", "name", "description", "type",
-                  "compliance_status", "compliance_level", "priority", "is_applicable",
-                  "framework_id", "section_id", "is_approved", "created_at"]
+    req_fields = ["id", "reference", "requirement_number", "name", "description",
+                  "guidance", "type", "category",
+                  "compliance_status", "compliance_level",
+                  "compliance_evidence", "compliance_finding",
+                  "priority", "is_applicable", "applicability_justification",
+                  "target_date", "last_assessment_date", "last_assessed_by_id",
+                  "owner_id", "status",
+                  "framework_id", "section_id",
+                  "linked_assets", "linked_stakeholder_expectations",
+                  "is_approved", "created_at"]
     req_writable = ["requirement_number", "name", "description", "guidance", "type",
-                    "compliance_status", "compliance_level",
-                    "priority", "is_applicable", "compliance_evidence", "compliance_finding",
-                    "framework_id", "section_id", "owner_id"]
+                    "category", "compliance_status", "compliance_level",
+                    "priority", "is_applicable", "applicability_justification",
+                    "compliance_evidence", "compliance_finding",
+                    "target_date", "status",
+                    "framework_id", "section_id", "owner_id",
+                    "linked_asset_ids", "linked_stakeholder_expectation_ids"]
 
     _register_crud(server, "requirement", Requirement, "compliance.requirement",
                    list_fields=req_fields,
                    writable_fields=req_writable,
                    search_fields=["reference", "requirement_number", "name", "description"],
-                   filters=["framework_id", "section_id", "compliance_status", "type", "priority"],
+                   filters=["framework_id", "section_id", "compliance_status",
+                            "type", "category", "priority", "is_applicable", "status"],
                    scope_filtered=False,
                    required_fields=["name", "description", "type", "framework_id"],
+                   m2m_fields={
+                       "linked_asset_ids": "linked_assets",
+                       "linked_stakeholder_expectation_ids": "linked_stakeholder_expectations",
+                   },
                    field_overrides={
                        "description": _html_field("Description"),
                        "guidance": _html_field("Implementation recommendations"),
                        "compliance_evidence": _html_field("Compliance evidence"),
                        "compliance_finding": _html_field("Finding"),
+                       "applicability_justification": _html_field("Applicability justification"),
                        "type": {
                            "type": "string",
                            "description": "Requirement type.",
                            "enum": ["mandatory", "recommended", "optional"],
+                       },
+                       "category": {
+                           "type": "string",
+                           "description": "Requirement category.",
+                           "enum": ["organizational", "technical", "physical",
+                                    "legal", "human", "other"],
                        },
                        "compliance_status": {
                            "type": "string",
@@ -2685,20 +2759,38 @@ def _register_compliance_tools(server):
                            "description": "Priority level.",
                            "enum": ["low", "medium", "high", "critical"],
                        },
+                       "status": {
+                           "type": "string",
+                           "description": "Requirement lifecycle status.",
+                           "enum": ["active", "deprecated", "superseded"],
+                       },
                        "is_applicable": {
                            "type": "boolean",
                            "description": "Whether this requirement is applicable.",
                        },
+                       "target_date": {"type": "string", "description": "Target date for implementation (ISO 8601)."},
                        "owner_id": {"type": "string", "description": "UUID of the requirement owner (user)"},
+                       "linked_asset_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Essential assets this requirement protects.",
+                       },
+                       "linked_stakeholder_expectation_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Stakeholder expectations satisfied by this requirement.",
+                       },
                    })
 
-    ca_fields = ["id", "name", "description", "limitations",
+    ca_fields = ["id", "reference", "scopes", "frameworks",
+                 "name", "description", "limitations",
                  "assessment_start_date", "assessment_end_date", "status",
+                 "assessor_id",
                  "overall_compliance_level", "total_requirements",
                  "compliant_count", "major_non_conformity_count",
                  "minor_non_conformity_count", "observation_count",
                  "improvement_opportunity_count", "strength_count",
-                 "not_applicable_count",
+                 "evaluated_count", "not_assessed_count", "not_applicable_count",
                  "is_approved", "created_at"]
     ca_writable = ["name", "description", "limitations",
                    "assessment_start_date", "assessment_end_date",
@@ -2764,10 +2856,12 @@ def _register_compliance_tools(server):
             automatically created for all requirements in these frameworks.
         """
         framework_ids = arguments.pop("framework_ids", None)
+        scope_ids = arguments.pop("scope_ids", None)
         kwargs = {}
         for field_name in ca_writable:
             if field_name in arguments:
-                kwargs[field_name] = _coerce_field_value(
+                target = _fk_kwarg_name(ComplianceAssessment, field_name)
+                kwargs[target] = _coerce_field_value(
                     ComplianceAssessment, field_name, arguments[field_name])
         kwargs["created_by"] = user
         try:
@@ -2784,7 +2878,9 @@ def _register_compliance_tools(server):
                 return _error(f"Frameworks not found: {missing}")
             obj.frameworks.set(frameworks)
             obj.sync_results(user)
-        fields = [f.name for f in ComplianceAssessment._meta.fields]
+        if scope_ids:
+            obj.scopes.set(scope_ids)
+        fields = [f.name for f in ComplianceAssessment._meta.fields] + ["scopes", "frameworks"]
         return _serialize_obj(obj, fields)
 
     ca_create_props = {}
@@ -2794,6 +2890,11 @@ def _register_compliance_tools(server):
         "type": "array",
         "items": {"type": "string"},
         "description": "List of framework UUIDs to link to this assessment",
+    }
+    ca_create_props["scope_ids"] = {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "List of scope UUIDs this assessment covers (RG-01).",
     }
     server.register_tool(
         "create_compliance_assessment",
@@ -2827,11 +2928,13 @@ def _register_compliance_tools(server):
         if not qs.exists():
             return _error("Access denied: object is outside your allowed scopes.")
         framework_ids = arguments.pop("framework_ids", None)
+        scope_ids = arguments.pop("scope_ids", None)
         new_status = arguments.pop("status", None)
         changed_fields = set()
         for field_name in ca_writable:
             if field_name in arguments:
-                setattr(obj, field_name, _coerce_field_value(
+                target = _fk_kwarg_name(ComplianceAssessment, field_name)
+                setattr(obj, target, _coerce_field_value(
                     ComplianceAssessment, field_name, arguments[field_name]))
                 changed_fields.add(field_name)
         if hasattr(obj, "is_approved") and hasattr(obj, "version"):
@@ -2864,7 +2967,9 @@ def _register_compliance_tools(server):
                 return _error(f"Frameworks not found: {missing}")
             obj.frameworks.set(frameworks)
             obj.sync_results(user)
-        fields = [f.name for f in ComplianceAssessment._meta.fields]
+        if scope_ids is not None:
+            obj.scopes.set(scope_ids)
+        fields = [f.name for f in ComplianceAssessment._meta.fields] + ["scopes", "frameworks"]
         return _serialize_obj(obj, fields)
 
     ca_update_props = {"id": {"type": "string", "description": "UUID of the assessment to update"}}
@@ -2874,6 +2979,11 @@ def _register_compliance_tools(server):
         "type": "array",
         "items": {"type": "string"},
         "description": "List of framework UUIDs to link (replaces existing links)",
+    }
+    ca_update_props["scope_ids"] = {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "List of scope UUIDs (replaces existing scopes).",
     }
     server.register_tool(
         "update_compliance_assessment",
@@ -3037,20 +3147,35 @@ def _register_compliance_tools(server):
                        },
                    })
 
-    ap_fields = ["id", "reference", "name", "description", "gap_description",
-                 "remediation_plan", "priority", "status",
-                 "target_date", "progress_percentage",
-                 "owner_id", "is_approved", "created_at"]
+    ap_fields = ["id", "reference", "scopes", "name", "description",
+                 "gap_description", "remediation_plan",
+                 "priority", "status",
+                 "start_date", "target_date", "completion_date",
+                 "cost_estimate", "progress_percentage",
+                 "owner_id", "assignees", "requirements", "findings", "risks",
+                 "originating_review_id",
+                 "is_approved", "created_at"]
     ap_writable = ["name", "description", "gap_description", "remediation_plan",
-                   "priority", "target_date",
-                   "progress_percentage", "owner_id", "assignees", "requirements"]
+                   "priority", "start_date", "target_date", "completion_date",
+                   "cost_estimate", "progress_percentage", "owner_id",
+                   "originating_review_id",
+                   "scope_ids", "assignee_ids", "requirement_ids",
+                   "finding_ids", "risk_ids"]
 
     _register_crud(server, "action_plan", ComplianceActionPlan, "compliance.action_plan",
                    list_fields=ap_fields,
                    writable_fields=ap_writable,
                    search_fields=["reference", "name", "description"],
                    filters=["status", "priority"],
-                   required_fields=["name"],
+                   required_fields=["name", "gap_description", "remediation_plan",
+                                    "priority", "target_date", "owner_id"],
+                   m2m_fields={
+                       "scope_ids": "scopes",
+                       "assignee_ids": "assignees",
+                       "requirement_ids": "requirements",
+                       "finding_ids": "findings",
+                       "risk_ids": "risks",
+                   },
                    field_overrides={
                        "description": _html_field("Description"),
                        "gap_description": _html_field("Gap description"),
@@ -3072,8 +3197,37 @@ def _register_compliance_tools(server):
                            ],
                        },
                        "owner_id": {"type": "string", "description": "UUID of the action plan owner (user)"},
+                       "originating_review_id": {"type": "string", "description": "UUID of the management review that spawned this plan (optional)."},
+                       "start_date": {"type": "string", "description": "Start date (ISO 8601)."},
                        "target_date": {"type": "string", "description": "Target completion date (ISO 8601, e.g. 2025-12-31)"},
+                       "completion_date": {"type": "string", "description": "Actual completion date (ISO 8601). Auto-set when transitioning to CLOSED."},
+                       "cost_estimate": {"type": "number", "description": "Estimated cost of the action plan."},
                        "progress_percentage": {"type": "integer", "description": "Progress percentage (0-100)"},
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Scopes this plan applies to.",
+                       },
+                       "assignee_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "UUIDs of assignees (users) for this plan.",
+                       },
+                       "requirement_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Compliance requirements this plan addresses.",
+                       },
+                       "finding_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Audit findings this plan addresses.",
+                       },
+                       "risk_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Risks this plan helps mitigate.",
+                       },
                    })
 
     # Action plan transition tool

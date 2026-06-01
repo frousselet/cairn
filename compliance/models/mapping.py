@@ -62,6 +62,19 @@ class RequirementMapping(models.Model):
     def __str__(self):
         return f"{self.source_requirement.reference} → {self.target_requirement.reference}"
 
+    # Inverse mapping_type used when auto-mirroring (RM-02 / RM-03):
+    # equivalent and partial_overlap mirror as themselves, includes flips
+    # to included_by and vice-versa, and related stays related. The dict
+    # is defined as a class-level constant so callers (tests, signals)
+    # can reuse it.
+    INVERSE_MAPPING_TYPE = {
+        "equivalent": "equivalent",
+        "partial_overlap": "partial_overlap",
+        "includes": "included_by",
+        "included_by": "includes",
+        "related": "related",
+    }
+
     def clean(self):
         super().clean()
         # RM-01: mapping only between different frameworks
@@ -76,4 +89,34 @@ class RequirementMapping(models.Model):
 
     def save(self, *args, **kwargs):
         self.clean()
+        is_new = self._state.adding
         super().save(*args, **kwargs)
+        if is_new:
+            self._ensure_inverse_mapping()
+
+    def _ensure_inverse_mapping(self):
+        """RM-02 / RM-03: create the symmetric reverse mapping if missing.
+
+        Mappings are stored as directed rows so they can be filtered from
+        either side, but the relation is conceptually bidirectional. Creating
+        the source->target row also creates a target->source row with the
+        flipped mapping_type, so analysing coverage from the target framework
+        finds the link without a second manual entry.
+        """
+        inverse_type = self.INVERSE_MAPPING_TYPE.get(self.mapping_type)
+        if inverse_type is None:
+            return
+        if RequirementMapping.objects.filter(
+            source_requirement=self.target_requirement,
+            target_requirement=self.source_requirement,
+        ).exists():
+            return
+        RequirementMapping.objects.create(
+            source_requirement=self.target_requirement,
+            target_requirement=self.source_requirement,
+            mapping_type=inverse_type,
+            coverage_level=self.coverage_level,
+            description=self.description,
+            justification=self.justification,
+            created_by=self.created_by,
+        )

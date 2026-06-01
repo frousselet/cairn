@@ -180,9 +180,15 @@ class RequirementViewSet(
         for attr, value in update_data.items():
             setattr(requirement, attr, value)
         requirement.save()
-        # Trigger recalculation up the chain
+        # Trigger recalculation up the chain. recalculate_compliance walks
+        # down a branch but not up it, so we must climb to the root section
+        # of the affected requirement to keep ancestor sections accurate
+        # (CAIRN-REQ-04).
         if requirement.section:
-            requirement.section.recalculate_compliance()
+            root = requirement.section
+            while root.parent_section_id:
+                root = root.parent_section
+            root.recalculate_compliance()
         requirement.framework.recalculate_compliance()
         return Response(RequirementSerializer(requirement).data)
 
@@ -226,22 +232,16 @@ class ComplianceAssessmentViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # When closing, propagate results to requirements and frameworks
+        # via the canonical recalculate_counts pipeline. That pipeline keeps
+        # NOT_ASSESSED results from clobbering previously-evaluated
+        # requirement states (QA report CAIRN-ASM-03), and respects the
+        # cross-assessment fallback rules for NOT_APPLICABLE / EVALUATED.
         if new_status == "closed":
-            for result in assessment.results.all():
-                req = result.requirement
-                req.compliance_status = result.compliance_status
-                req.compliance_level = result.compliance_level
-                req.compliance_evidence = result.evidence
-                req.compliance_finding = result.finding
-                req.last_assessment_date = result.assessed_at.date()
-                req.last_assessed_by = result.assessed_by
-                req.save()
-            for fw in assessment.frameworks.all():
-                fw.recalculate_compliance()
-                if assessment.assessment_end_date:
-                    Framework.objects.filter(pk=fw.pk).update(
-                        last_assessment_date=assessment.assessment_end_date,
-                    )
+            assessment.recalculate_counts()
+            if assessment.assessment_end_date:
+                Framework.objects.filter(
+                    pk__in=assessment.frameworks.values_list("pk", flat=True)
+                ).update(last_assessment_date=assessment.assessment_end_date)
         return Response(ComplianceAssessmentSerializer(assessment).data)
 
     @action(detail=True, methods=["get"])

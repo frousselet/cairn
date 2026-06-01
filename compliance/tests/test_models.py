@@ -126,3 +126,60 @@ class TestRequirementMapping:
         mapping = MappingFactory.build(source_requirement=req1, target_requirement=req2)
         with pytest.raises(ValidationError, match="different frameworks"):
             mapping.clean()
+
+    def test_mapping_creates_inverse_includes_to_included_by(self):
+        """RM-03: 'includes' on source -> 'included_by' inverse row."""
+        from compliance.models.mapping import RequirementMapping
+        fw1 = FrameworkFactory()
+        fw2 = FrameworkFactory()
+        req1 = RequirementFactory(framework=fw1)
+        req2 = RequirementFactory(framework=fw2)
+        MappingFactory(
+            source_requirement=req1,
+            target_requirement=req2,
+            mapping_type="includes",
+        )
+        inverse = RequirementMapping.objects.filter(
+            source_requirement=req2, target_requirement=req1
+        )
+        assert inverse.count() == 1
+        assert inverse.first().mapping_type == "included_by"
+
+    def test_mapping_creates_inverse_equivalent_stays_equivalent(self):
+        """RM-02: 'equivalent' on source -> 'equivalent' inverse row."""
+        from compliance.models.mapping import RequirementMapping
+        fw1 = FrameworkFactory()
+        fw2 = FrameworkFactory()
+        req1 = RequirementFactory(framework=fw1)
+        req2 = RequirementFactory(framework=fw2)
+        MappingFactory(
+            source_requirement=req1,
+            target_requirement=req2,
+            mapping_type="equivalent",
+        )
+        inverse = RequirementMapping.objects.filter(
+            source_requirement=req2, target_requirement=req1
+        )
+        assert inverse.count() == 1
+        assert inverse.first().mapping_type == "equivalent"
+
+    def test_mapping_inverse_creation_idempotent(self):
+        """Creating the second direction first should not double-create."""
+        from compliance.models.mapping import RequirementMapping
+        fw1 = FrameworkFactory()
+        fw2 = FrameworkFactory()
+        req1 = RequirementFactory(framework=fw1)
+        req2 = RequirementFactory(framework=fw2)
+        MappingFactory(
+            source_requirement=req1,
+            target_requirement=req2,
+            mapping_type="includes",
+        )
+        # The reverse row already exists. Creating a "manual" inverse should
+        # not loop: the unique constraint would reject a duplicate anyway.
+        assert RequirementMapping.objects.filter(
+            source_requirement=req1, target_requirement=req2
+        ).count() == 1
+        assert RequirementMapping.objects.filter(
+            source_requirement=req2, target_requirement=req1
+        ).count() == 1
