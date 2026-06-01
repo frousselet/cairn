@@ -1354,32 +1354,61 @@ def _register_context_tools(server):
     Tag = _get_model("context", "Tag")
 
     scope_fields = ["id", "reference", "name", "description", "status",
-                    "effective_date", "review_date", "version", "is_approved", "created_at"]
-    scope_writable = ["name", "description", "status", "effective_date",
-                      "review_date", "parent_scope_id", "manager_ids"]
+                    "parent_scope_id", "icon",
+                    "boundaries", "justification_exclusions",
+                    "geographic_scope", "organizational_scope", "technical_scope",
+                    "included_sites", "excluded_sites", "managers",
+                    "effective_date", "review_date",
+                    "version", "is_approved", "created_at"]
+    scope_writable = ["name", "description", "status", "icon",
+                      "boundaries", "justification_exclusions",
+                      "geographic_scope", "organizational_scope", "technical_scope",
+                      "effective_date", "review_date", "parent_scope_id",
+                      "manager_ids", "included_site_ids", "excluded_site_ids"]
 
     _register_crud(server, "scope", Scope, "context.scope",
                    list_fields=scope_fields,
                    writable_fields=scope_writable,
                    search_fields=["name", "description"],
-                   filters=["status"],
+                   filters=["status", "parent_scope_id"],
                    required_fields=["name"],
                    field_overrides={
                        "description": _html_field("Description"),
+                       "boundaries": _html_field("Boundaries and exclusions"),
+                       "justification_exclusions": _html_field("Justification for exclusions"),
+                       "geographic_scope": _html_field("Geographic scope"),
+                       "organizational_scope": _html_field("Organizational scope"),
+                       "technical_scope": _html_field("Technical scope"),
                        "status": {
                            "type": "string",
                            "description": "Scope status.",
                            "enum": ["draft", "active", "archived"],
                        },
+                       "icon": {"type": "string", "description": "Bootstrap Icons class (e.g. bi-building, bi-globe)."},
                        "effective_date": {"type": "string", "description": "Effective date (ISO 8601, e.g. 2025-01-15)"},
                        "review_date": {"type": "string", "description": "Review date (ISO 8601, e.g. 2025-06-15)"},
+                       "parent_scope_id": {"type": "string", "description": "UUID of the parent scope (for nested perimeters)."},
                        "manager_ids": {
                            "type": "array",
                            "items": {"type": "string"},
                            "description": "List of user UUIDs to assign as scope managers.",
                        },
+                       "included_site_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Sites explicitly included in this scope.",
+                       },
+                       "excluded_site_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Sites explicitly excluded from this scope.",
+                       },
                    },
-                   m2m_fields={"manager_ids": "managers"})
+                   m2m_fields={
+                       "manager_ids": "managers",
+                       "included_site_ids": "included_sites",
+                       "excluded_site_ids": "excluded_sites",
+                   })
 
     issue_fields = ["id", "reference", "scopes", "name", "description", "type", "category",
                     "impact_level", "trend", "source", "related_stakeholders",
@@ -2242,17 +2271,17 @@ def _register_assets_tools(server):
                        },
                    })
 
-    sup_fields = ["id", "reference", "name", "description", "type", "criticality",
+    sup_fields = ["id", "reference", "scopes", "name", "description", "type", "criticality",
                   "status", "contact_name", "contact_email", "contact_phone",
                   "website", "address", "country",
                   "contract_reference", "contract_start_date", "contract_end_date",
                   "logo", "logo_16", "logo_32", "logo_64",
-                  "notes", "is_approved", "created_at"]
+                  "notes", "owner_id", "is_approved", "created_at"]
     sup_writable = ["name", "description", "type", "criticality", "status",
                     "contact_name", "contact_email", "contact_phone",
                     "website", "address", "country",
                     "contract_reference", "contract_start_date", "contract_end_date",
-                    "notes", "owner_id"]
+                    "notes", "owner_id", "scope_ids"]
 
     _sup_field_overrides = {
         "description": _html_field("Description"),
@@ -2269,6 +2298,11 @@ def _register_assets_tools(server):
             "enum": ["active", "under_evaluation", "suspended", "archived"],
         },
         "owner_id": {"type": "string", "description": "UUID of the supplier owner (user)"},
+        "scope_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Scopes this supplier belongs to (RG-01).",
+        },
     }
 
     _register_crud(server, "supplier", Supplier, "assets.supplier",
@@ -2277,6 +2311,7 @@ def _register_assets_tools(server):
                    search_fields=["reference", "name", "description", "contact_name"],
                    filters=["type", "criticality", "status"],
                    required_fields=["name", "owner_id"],
+                   m2m_fields={"scope_ids": "scopes"},
                    field_overrides=_sup_field_overrides)
 
     # Custom tool: update supplier logo with automatic variant generation
@@ -5987,13 +6022,15 @@ def _register_reports_tools(server):
     # List reports
     @require_perm("reports.report.read")
     def list_reports(user, arguments):
-        qs = Report.objects.all()
+        qs = Report.objects.all().order_by("-created_at")
         report_type = arguments.get("report_type")
         if report_type:
             qs = qs.filter(report_type=report_type)
         limit = min(int(arguments.get("limit", 50)), 200)
         offset = int(arguments.get("offset", 0))
-        return _serialize_qs(qs, report_fields, limit, offset)
+        total = qs.count()
+        items = _serialize_qs(qs, report_fields, limit, offset)
+        return {"total": total, "items": items, "limit": limit, "offset": offset}
 
     server.register_tool(
         "list_reports",
@@ -6312,6 +6349,51 @@ def _register_reports_tools(server):
         "Delete a generated report",
         _id_schema(),
         delete_report,
+    )
+
+    # Download report content (base64) — CAIRN-RPT-01
+    @require_perm("reports.report.read")
+    def download_report(user, arguments):
+        import base64
+        import os
+        pk = arguments.get("id")
+        if not pk:
+            raise InvalidParamsError("id is required.")
+        try:
+            report = Report.objects.get(pk=pk)
+        except Report.DoesNotExist:
+            return _error("Report not found.")
+        if not report.file_content:
+            return _error(
+                "Report has no content (status may be 'failed' or 'pending')."
+            )
+        content_types = {
+            ".pdf": "application/pdf",
+            ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        }
+        ext = os.path.splitext(report.file_name or "")[1].lower()
+        content_type = content_types.get(ext, "application/octet-stream")
+        raw = bytes(report.file_content)
+        return {
+            "id": str(report.pk),
+            "file_name": report.file_name,
+            "content_type": content_type,
+            "size_bytes": len(raw),
+            "content_base64": base64.b64encode(raw).decode("ascii"),
+        }
+
+    server.register_tool(
+        "download_report",
+        (
+            "Retrieve the binary content of a previously generated report. "
+            "Returns the file as a base64-encoded string along with its "
+            "content type, size and original filename. Use list_reports first "
+            "to discover available report IDs."
+        ),
+        _id_schema(),
+        download_report,
     )
 
     # Generate management review (PPTX)
