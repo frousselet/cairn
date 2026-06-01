@@ -38,20 +38,34 @@ def _error(message):
 
 
 def _serialize_obj(obj, fields=None):
-    """Simple serialization of a model instance to dict."""
+    """Simple serialization of a model instance to dict.
+
+    Handles regular fields, FKs (returns PK string), M2M / reverse FK managers
+    (returns list of PK strings), datetimes (ISO format), and JSONField dicts.
+    """
     if fields is None:
         fields = [f.name for f in obj._meta.fields]
     data = {}
     for field_name in fields:
         val = getattr(obj, field_name, None)
+        if val is None:
+            data[field_name] = None
+            continue
         if hasattr(val, "isoformat"):
             val = val.isoformat()
         elif hasattr(val, "pk"):
             val = str(val.pk)
-        elif isinstance(val, (list, set)):
-            val = list(val)
+        elif hasattr(val, "all") and callable(val.all):
+            # ManyRelatedManager (M2M) or reverse-FK manager: expand to PK list
+            try:
+                val = [str(item.pk) for item in val.all()]
+            except (AttributeError, TypeError):
+                val = None
+        elif isinstance(val, (list, dict, set, bool, int, float)):
+            if isinstance(val, set):
+                val = list(val)
         else:
-            val = str(val) if val is not None else None
+            val = str(val)
         data[field_name] = val
     return data
 
@@ -1340,9 +1354,12 @@ def _register_context_tools(server):
                    },
                    m2m_fields={"manager_ids": "managers"})
 
-    issue_fields = ["id", "reference", "name", "description", "type", "category",
-                    "impact_level", "status", "is_approved", "created_at"]
-    issue_writable = ["name", "description", "type", "category", "impact_level", "status"]
+    issue_fields = ["id", "reference", "scopes", "name", "description", "type", "category",
+                    "impact_level", "trend", "source", "related_stakeholders",
+                    "review_date", "status", "is_approved", "created_at"]
+    issue_writable = ["name", "description", "type", "category", "impact_level",
+                      "trend", "source", "review_date", "status",
+                      "scope_ids", "related_stakeholder_ids"]
 
     _register_crud(server, "issue", Issue, "context.issue",
                    list_fields=issue_fields,
@@ -1350,6 +1367,8 @@ def _register_context_tools(server):
                    search_fields=["name", "description"],
                    filters=["type", "category", "impact_level", "status"],
                    required_fields=["name", "type", "category", "impact_level"],
+                   m2m_fields={"scope_ids": "scopes",
+                               "related_stakeholder_ids": "related_stakeholders"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "type": {
@@ -1372,18 +1391,45 @@ def _register_context_tools(server):
                            "description": "Impact level.",
                            "enum": ["low", "medium", "high", "critical"],
                        },
+                       "trend": {
+                           "type": "string",
+                           "description": "Issue trend over time.",
+                           "enum": ["improving", "stable", "degrading"],
+                       },
+                       "source": {
+                           "type": "string",
+                           "description": "Where the issue was identified (PESTEL workshop, audit, etc.).",
+                       },
+                       "review_date": {
+                           "type": "string",
+                           "description": "Next review date (YYYY-MM-DD).",
+                       },
                        "status": {
                            "type": "string",
                            "description": "Issue status.",
                            "enum": ["identified", "active", "monitored", "closed"],
                        },
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "List of scope UUIDs this issue belongs to (RG-01).",
+                       },
+                       "related_stakeholder_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "List of stakeholder UUIDs related to this issue.",
+                       },
                    })
 
-    stakeholder_fields = ["id", "reference", "name", "description", "type", "category",
-                          "influence_level", "interest_level", "status", "is_approved",
+    stakeholder_fields = ["id", "reference", "scopes", "name", "description", "type", "category",
+                          "contact_name", "contact_email", "contact_phone",
+                          "influence_level", "interest_level",
+                          "review_date", "status", "is_approved",
                           "created_at"]
-    stakeholder_writable = ["name", "description", "type", "category", "influence_level",
-                            "interest_level", "status"]
+    stakeholder_writable = ["name", "description", "type", "category",
+                            "contact_name", "contact_email", "contact_phone",
+                            "influence_level", "interest_level", "review_date", "status",
+                            "scope_ids"]
 
     _register_crud(server, "stakeholder", Stakeholder, "context.stakeholder",
                    list_fields=stakeholder_fields,
@@ -1391,6 +1437,7 @@ def _register_context_tools(server):
                    search_fields=["name", "description"],
                    filters=["type", "category", "status"],
                    required_fields=["name", "type", "category", "influence_level", "interest_level"],
+                   m2m_fields={"scope_ids": "scopes"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "type": {
@@ -1450,10 +1497,19 @@ def _register_context_tools(server):
                        },
                    })
 
-    objective_fields = ["id", "reference", "name", "description", "category", "type",
-                        "status", "target_date", "owner_id", "is_approved", "created_at"]
-    objective_writable = ["name", "description", "category", "type", "status",
-                          "target_date", "owner_id"]
+    objective_fields = ["id", "reference", "scopes", "name", "description", "category", "type",
+                        "target_value", "current_value", "unit",
+                        "measurement_method", "measurement_frequency",
+                        "status", "progress_percentage", "target_date", "owner_id",
+                        "related_issues", "related_stakeholders",
+                        "parent_objective_id", "review_date",
+                        "is_approved", "created_at"]
+    objective_writable = ["name", "description", "category", "type",
+                          "target_value", "current_value", "unit",
+                          "measurement_method", "measurement_frequency",
+                          "status", "progress_percentage", "target_date",
+                          "owner_id", "parent_objective_id", "review_date",
+                          "scope_ids", "related_issue_ids", "related_stakeholder_ids"]
 
     _register_crud(server, "objective", Objective, "context.objective",
                    list_fields=objective_fields,
@@ -1461,6 +1517,9 @@ def _register_context_tools(server):
                    search_fields=["name", "description"],
                    filters=["category", "type", "status"],
                    required_fields=["name", "category", "type", "owner_id"],
+                   m2m_fields={"scope_ids": "scopes",
+                               "related_issue_ids": "related_issues",
+                               "related_stakeholder_ids": "related_stakeholders"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "owner_id": {"type": "string", "description": "UUID of the objective owner (user)"},
@@ -1479,36 +1538,80 @@ def _register_context_tools(server):
                        },
                        "status": {
                            "type": "string",
-                           "description": "Objective status.",
+                           "description": "Objective status. To set 'achieved' you must also pass progress_percentage=100.",
                            "enum": ["draft", "active", "achieved", "not_achieved", "cancelled"],
                        },
+                       "progress_percentage": {
+                           "type": "integer",
+                           "description": "Progress percentage (0-100). Required to be 100 when status=achieved.",
+                           "minimum": 0,
+                           "maximum": 100,
+                       },
+                       "measurement_frequency": {
+                           "type": "string",
+                           "description": "How often the objective is measured.",
+                           "enum": ["continuous", "daily", "weekly", "monthly",
+                                    "quarterly", "biannual", "annual", "on_demand"],
+                       },
+                       "target_value": {"type": "string", "description": "Target value (free-form, e.g. '95%' or '< 30 days')"},
+                       "current_value": {"type": "string", "description": "Current value (free-form, same format as target_value)"},
+                       "unit": {"type": "string", "description": "Unit of measure (e.g. '%', 'days')"},
+                       "measurement_method": {"type": "string", "description": "How the objective is measured."},
                        "target_date": {"type": "string", "description": "Target date (ISO 8601, e.g. 2025-12-31)"},
+                       "review_date": {"type": "string", "description": "Next review date (ISO 8601)."},
+                       "parent_objective_id": {"type": "string", "description": "Parent objective UUID (for objective hierarchies)."},
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "List of scope UUIDs this objective belongs to (RG-01).",
+                       },
+                       "related_issue_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "List of issue UUIDs addressed by this objective.",
+                       },
+                       "related_stakeholder_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "List of stakeholder UUIDs related to this objective.",
+                       },
                    })
 
-    swot_fields = ["id", "reference", "name", "description", "analysis_date",
-                   "status", "is_approved", "created_at"]
-    swot_writable = ["name", "description", "analysis_date", "status"]
+    swot_fields = ["id", "reference", "scopes", "name", "description", "analysis_date",
+                   "status", "validated_by_id", "validated_at", "review_date",
+                   "is_approved", "created_at"]
+    swot_writable = ["name", "description", "analysis_date", "status",
+                     "review_date", "scope_ids"]
 
     _register_crud(server, "swot_analysis", SwotAnalysis, "context.swot",
                    list_fields=swot_fields,
                    writable_fields=swot_writable,
                    search_fields=["name", "description"],
                    filters=["status"],
-                   required_fields=["name"],
+                   required_fields=["name", "analysis_date"],
+                   m2m_fields={"scope_ids": "scopes"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "analysis_date": {"type": "string", "description": "Analysis date in ISO 8601 format (e.g. 2025-06-15)"},
+                       "review_date": {"type": "string", "description": "Next review date (ISO 8601)."},
                        "status": {
                            "type": "string",
                            "description": "SWOT analysis status.",
                            "enum": ["draft", "validated", "archived"],
                        },
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "List of scope UUIDs this SWOT belongs to (RG-01).",
+                       },
                    })
 
     swot_item_fields = ["id", "quadrant", "description", "impact_level",
+                        "related_issues", "related_objectives",
                         "order", "swot_analysis_id", "created_at"]
     swot_item_writable = ["quadrant", "description", "impact_level", "order",
-                          "swot_analysis_id"]
+                          "swot_analysis_id",
+                          "related_issue_ids", "related_objective_ids"]
 
     _register_crud(server, "swot_item", SwotItem, "context.swot",
                    list_fields=swot_item_fields,
@@ -1517,6 +1620,8 @@ def _register_context_tools(server):
                    filters=["swot_analysis_id", "quadrant"],
                    scope_filtered=False,
                    required_fields=["quadrant", "description", "swot_analysis_id"],
+                   m2m_fields={"related_issue_ids": "related_issues",
+                               "related_objective_ids": "related_objectives"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "quadrant": {
@@ -1530,6 +1635,16 @@ def _register_context_tools(server):
                            "enum": ["low", "medium", "high"],
                        },
                        "swot_analysis_id": {"type": "string", "description": "UUID of the parent SWOT analysis"},
+                       "related_issue_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Issues this item connects to.",
+                       },
+                       "related_objective_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Objectives this item informs.",
+                       },
                    })
 
     SwotStrategy = _get_model("context", "SwotStrategy")
@@ -1555,9 +1670,11 @@ def _register_context_tools(server):
                        "swot_analysis_id": {"type": "string", "description": "UUID of the parent SWOT analysis"},
                    })
 
-    role_fields = ["id", "reference", "name", "description", "type", "status",
+    role_fields = ["id", "reference", "scopes", "name", "description", "type",
+                   "assigned_users", "is_mandatory", "source_standard", "status",
                    "is_approved", "created_at"]
-    role_writable = ["name", "description", "type", "status"]
+    role_writable = ["name", "description", "type", "is_mandatory", "source_standard",
+                     "status", "scope_ids", "assigned_user_ids"]
 
     _register_crud(server, "role", Role, "context.role",
                    list_fields=role_fields,
@@ -1565,6 +1682,8 @@ def _register_context_tools(server):
                    search_fields=["name", "description"],
                    filters=["type", "status"],
                    required_fields=["name", "type"],
+                   m2m_fields={"scope_ids": "scopes",
+                               "assigned_user_ids": "assigned_users"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "type": {
@@ -1577,12 +1696,33 @@ def _register_context_tools(server):
                            "description": "Role status.",
                            "enum": ["active", "inactive"],
                        },
+                       "is_mandatory": {
+                           "type": "boolean",
+                           "description": "Whether this role is mandatory (enables the 'mandatory role without assigned user' compliance alert).",
+                       },
+                       "source_standard": {
+                           "type": "string",
+                           "description": "Standard or regulation that requires this role (e.g. 'ISO 27001:2022 §5.3').",
+                       },
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "List of scope UUIDs this role belongs to (RG-01).",
+                       },
+                       "assigned_user_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "UUIDs of users assigned to this role.",
+                       },
                    })
 
-    activity_fields = ["id", "reference", "name", "description", "type", "criticality",
-                       "owner_id", "status", "is_approved", "created_at"]
+    activity_fields = ["id", "reference", "scopes", "name", "description", "type", "criticality",
+                       "owner_id", "parent_activity_id",
+                       "related_stakeholders", "related_objectives",
+                       "status", "is_approved", "created_at"]
     activity_writable = ["name", "description", "type", "criticality", "owner_id",
-                         "status", "parent_activity_id"]
+                         "status", "parent_activity_id", "scope_ids",
+                         "related_stakeholder_ids", "related_objective_ids"]
 
     _register_crud(server, "activity", Activity, "context.activity",
                    list_fields=activity_fields,
@@ -1590,9 +1730,13 @@ def _register_context_tools(server):
                    search_fields=["name", "description"],
                    filters=["type", "criticality", "status"],
                    required_fields=["name", "type", "criticality", "owner_id"],
+                   m2m_fields={"scope_ids": "scopes",
+                               "related_stakeholder_ids": "related_stakeholders",
+                               "related_objective_ids": "related_objectives"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "owner_id": {"type": "string", "description": "UUID of the activity owner (user)"},
+                       "parent_activity_id": {"type": "string", "description": "Parent activity UUID (must share at least one scope)."},
                        "type": {
                            "type": "string",
                            "description": "Activity type.",
@@ -1607,6 +1751,21 @@ def _register_context_tools(server):
                            "type": "string",
                            "description": "Activity status.",
                            "enum": ["active", "inactive", "planned"],
+                       },
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "List of scope UUIDs this activity belongs to (RG-01).",
+                       },
+                       "related_stakeholder_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Stakeholders involved in this activity.",
+                       },
+                       "related_objective_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Objectives this activity contributes to.",
                        },
                    })
 
@@ -1665,7 +1824,7 @@ def _register_context_tools(server):
     )
 
     # Indicator (scoped, with approve)
-    indicator_fields = ["id", "reference", "name", "description", "indicator_type",
+    indicator_fields = ["id", "reference", "scopes", "name", "description", "indicator_type",
                         "collection_method", "format", "unit", "current_value",
                         "expected_level", "critical_threshold_operator",
                         "critical_threshold_value", "critical_threshold_min",
@@ -1678,15 +1837,27 @@ def _register_context_tools(server):
                           "critical_threshold_operator", "critical_threshold_value",
                           "critical_threshold_min", "critical_threshold_max",
                           "review_frequency", "first_review_date", "status",
-                          "is_internal", "internal_source", "internal_source_parameter"]
+                          "is_internal", "internal_source", "internal_source_parameter",
+                          "scope_ids"]
 
     _register_crud(server, "indicator", Indicator, "context.indicator",
                    list_fields=indicator_fields,
                    writable_fields=indicator_writable,
                    search_fields=["reference", "name", "description"],
                    filters=["indicator_type", "status", "format", "collection_method"],
-                   required_fields=["name"],
+                   required_fields=["name", "indicator_type", "format",
+                                    "review_frequency", "first_review_date"],
+                   m2m_fields={"scope_ids": "scopes"},
                    field_overrides={
+                       "first_review_date": {
+                           "type": "string",
+                           "description": "First review date (ISO 8601, e.g. 2026-06-30). Required.",
+                       },
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Scopes this indicator belongs to.",
+                       },
                        "description": _html_field("Description"),
                        "indicator_type": {
                            "type": "string",
@@ -1742,7 +1913,13 @@ def _register_context_tools(server):
                    search_fields=["notes"],
                    filters=["indicator_id"],
                    scope_filtered=False,
-                   has_approve=False)
+                   has_approve=False,
+                   required_fields=["indicator_id", "value"],
+                   field_overrides={
+                       "indicator_id": {"type": "string", "description": "UUID of the indicator this measurement belongs to (required)."},
+                       "value": {"type": "string", "description": "Measured value (number or boolean as string)."},
+                       "notes": {"type": "string", "description": "Free-form notes."},
+                   })
 
     # Responsibility (child of Role, no approve)
     responsibility_fields = ["id", "role_id", "description", "raci_type",
