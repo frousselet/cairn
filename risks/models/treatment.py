@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
@@ -139,6 +140,25 @@ class RiskTreatmentPlan(BaseModel):
             )
         if errors:
             raise ValidationError(errors)
+
+    _TERMINAL_STATUSES = frozenset({
+        TreatmentPlanStatus.COMPLETED,
+        TreatmentPlanStatus.CANCELLED,
+        TreatmentPlanStatus.OVERDUE,
+    })
+
+    def save(self, *args, **kwargs):
+        # RS-04: in-flight plans whose target_date is in the past flip to
+        # overdue at save time. The daily mark_overdue_treatment_plans cron
+        # still picks up dormant rows, this hook just keeps the status
+        # accurate as soon as the row is touched.
+        if (
+            self.target_date is not None
+            and self.status not in self._TERMINAL_STATUSES
+            and self.target_date < timezone.localdate()
+        ):
+            self.status = TreatmentPlanStatus.OVERDUE
+        super().save(*args, **kwargs)
 
 
 class TreatmentAction(models.Model):

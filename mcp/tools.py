@@ -3618,33 +3618,52 @@ def _register_risks_tools(server):
     Vulnerability = _get_model("risks", "Vulnerability")
     ISO27005Risk = _get_model("risks", "ISO27005Risk")
 
-    ra_fields = ["id", "reference", "name", "description", "status", "assessment_date",
-                 "risk_criteria_id", "is_approved", "created_at"]
-    ra_writable = ["name", "description", "status", "assessment_date",
-                   "risk_criteria_id", "assessor_id"]
+    ra_fields = ["id", "reference", "scopes", "name", "description", "methodology",
+                 "status", "assessment_date", "next_review_date",
+                 "risk_criteria_id", "assessor_id",
+                 "validated_by_id", "validated_at", "summary",
+                 "is_approved", "created_at"]
+    ra_writable = ["name", "description", "methodology", "status",
+                   "assessment_date", "next_review_date",
+                   "risk_criteria_id", "assessor_id", "summary",
+                   "scope_ids"]
 
     _register_crud(server, "risk_assessment", RiskAssessment, "risks.assessment",
                    list_fields=ra_fields,
                    writable_fields=ra_writable,
                    search_fields=["reference", "name", "description"],
-                   filters=["status"],
+                   filters=["status", "methodology"],
                    required_fields=["name"],
+                   m2m_fields={"scope_ids": "scopes"},
                    field_overrides={
                        "description": _html_field("Description"),
+                       "summary": _html_field("Summary"),
+                       "methodology": {
+                           "type": "string",
+                           "description": "Risk assessment methodology. Default: iso27005.",
+                           "enum": ["iso27005", "ebios_rm"],
+                       },
                        "status": {
                            "type": "string",
                            "description": "Risk assessment status.",
                            "enum": ["draft", "in_progress", "completed", "validated", "archived"],
                        },
                        "assessment_date": {"type": "string", "description": "Assessment date (ISO 8601, e.g. 2025-06-15)"},
+                       "next_review_date": {"type": "string", "description": "Next review date (ISO 8601)."},
                        "risk_criteria_id": {"type": "string", "description": "UUID of the risk criteria to use"},
                        "assessor_id": {"type": "string", "description": "UUID of the assessor (user)"},
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Scopes this assessment covers (RG-01).",
+                       },
                    })
 
-    rc_fields = ["id", "name", "description", "risk_matrix",
+    rc_fields = ["id", "scopes", "name", "description", "risk_matrix",
                  "acceptance_threshold", "is_default", "status", "created_at"]
     rc_writable = ["name", "description", "risk_matrix",
-                   "acceptance_threshold", "is_default", "status"]
+                   "acceptance_threshold", "is_default", "status",
+                   "scope_ids"]
 
     _register_crud(server, "risk_criteria", RiskCriteria, "risks.criteria",
                    list_fields=rc_fields,
@@ -3652,7 +3671,13 @@ def _register_risks_tools(server):
                    search_fields=["name", "description"],
                    filters=["status"],
                    has_approve=False,
+                   m2m_fields={"scope_ids": "scopes"},
                    field_overrides={
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Scopes these criteria apply to (RG-01).",
+                       },
                        "description": _html_field("Description"),
                        "risk_matrix": {
                            "type": "object",
@@ -3730,24 +3755,46 @@ def _register_risks_tools(server):
                        "requires_treatment": {"type": "boolean", "description": "Whether this risk level requires treatment."},
                    })
 
-    risk_fields = ["id", "reference", "name", "description", "status", "priority",
-                   "current_risk_level", "assessment_id",
+    risk_fields = ["id", "reference", "name", "description",
+                   "risk_source", "source_entity_id", "source_entity_type",
+                   "status", "priority",
+                   "initial_likelihood", "initial_impact", "initial_risk_level",
+                   "current_likelihood", "current_impact", "current_risk_level",
+                   "residual_likelihood", "residual_impact", "residual_risk_level",
+                   "impact_confidentiality", "impact_integrity", "impact_availability",
+                   "treatment_decision", "treatment_justification",
+                   "review_date",
+                   "affected_essential_assets", "affected_support_assets",
+                   "linked_requirements",
+                   "assessment_id", "risk_owner_id",
                    "is_approved", "created_at"]
     risk_writable = ["name", "description", "status", "priority",
+                     "risk_source", "source_entity_id", "source_entity_type",
                      "initial_likelihood", "initial_impact",
                      "current_likelihood", "current_impact",
                      "residual_likelihood", "residual_impact",
-                     "treatment_decision", "assessment_id", "risk_owner_id"]
+                     "impact_confidentiality", "impact_integrity", "impact_availability",
+                     "treatment_decision", "treatment_justification",
+                     "review_date",
+                     "assessment_id", "risk_owner_id",
+                     "affected_essential_asset_ids", "affected_support_asset_ids",
+                     "linked_requirement_ids"]
 
     _register_crud(server, "risk", Risk, "risks.risk",
                    list_fields=risk_fields,
                    writable_fields=risk_writable,
                    search_fields=["reference", "name", "description"],
-                   filters=["status", "priority", "assessment_id"],
+                   filters=["status", "priority", "assessment_id", "risk_source"],
                    scope_filtered=False,
                    required_fields=["name", "assessment_id"],
+                   m2m_fields={
+                       "affected_essential_asset_ids": "affected_essential_assets",
+                       "affected_support_asset_ids": "affected_support_assets",
+                       "linked_requirement_ids": "linked_requirements",
+                   },
                    field_overrides={
                        "description": _html_field("Description"),
+                       "treatment_justification": _html_field("Treatment justification"),
                        "status": {
                            "type": "string",
                            "description": "Risk status.",
@@ -3762,11 +3809,23 @@ def _register_risks_tools(server):
                            "description": "Risk priority.",
                            "enum": ["low", "medium", "high", "critical"],
                        },
+                       "risk_source": {
+                           "type": "string",
+                           "description": "How this risk entered the register (manual, consolidated from an analysis, etc.).",
+                           "enum": ["iso27005_analysis", "ebios_strategic", "ebios_operational",
+                                    "incident", "audit", "compliance", "manual"],
+                       },
+                       "source_entity_id": {"type": "string", "description": "UUID of the source entity (ISO 27005 analysis, EBIOS scenario, ...) when risk_source is not 'manual'."},
+                       "source_entity_type": {"type": "string", "description": "Class name of the source entity (e.g. 'ISO27005Risk', 'OperationalScenario')."},
                        "treatment_decision": {
                            "type": "string",
                            "description": "Treatment decision.",
                            "enum": ["accept", "mitigate", "transfer", "avoid", "not_decided"],
                        },
+                       "impact_confidentiality": {"type": "boolean", "description": "Whether this risk impacts confidentiality."},
+                       "impact_integrity": {"type": "boolean", "description": "Whether this risk impacts integrity."},
+                       "impact_availability": {"type": "boolean", "description": "Whether this risk impacts availability."},
+                       "review_date": {"type": "string", "description": "Next review date (ISO 8601)."},
                        "initial_likelihood": {"type": "integer", "description": "Initial likelihood level (matching scale levels, e.g. 1-5)"},
                        "initial_impact": {"type": "integer", "description": "Initial impact level (matching scale levels, e.g. 1-5)"},
                        "current_likelihood": {"type": "integer", "description": "Current likelihood level (matching scale levels, e.g. 1-5)"},
@@ -3774,6 +3833,21 @@ def _register_risks_tools(server):
                        "residual_likelihood": {"type": "integer", "description": "Residual likelihood level (matching scale levels, e.g. 1-5)"},
                        "residual_impact": {"type": "integer", "description": "Residual impact level (matching scale levels, e.g. 1-5)"},
                        "risk_owner_id": {"type": "string", "description": "UUID of the risk owner (user)"},
+                       "affected_essential_asset_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Essential assets affected by this risk.",
+                       },
+                       "affected_support_asset_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Support assets affected by this risk.",
+                       },
+                       "linked_requirement_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Compliance requirements linked to this risk.",
+                       },
                    })
 
     tp_fields = ["id", "reference", "name", "description", "treatment_type", "status",
@@ -3833,10 +3907,12 @@ def _register_risks_tools(server):
                        "owner_id": {"type": "string", "description": "UUID of the action owner (user)"},
                    })
 
-    acc_fields = ["id", "risk_id", "status", "justification", "conditions",
-                  "valid_until", "accepted_by_id", "created_at"]
+    acc_fields = ["id", "reference", "risk_id", "status", "justification", "conditions",
+                  "valid_until", "review_date",
+                  "accepted_by_id", "accepted_at", "risk_level_at_acceptance",
+                  "is_approved", "created_at"]
     acc_writable = ["risk_id", "justification", "conditions", "valid_until",
-                    "accepted_by_id"]
+                    "review_date", "accepted_by_id"]
 
     _register_crud(server, "risk_acceptance", RiskAcceptance, "risks.acceptance",
                    list_fields=acc_fields,
@@ -3854,19 +3930,24 @@ def _register_risks_tools(server):
                            "description": "Acceptance status.",
                            "enum": ["active", "expired", "revoked", "renewed"],
                        },
+                       "valid_until": {"type": "string", "description": "Last day the acceptance remains in force (ISO 8601)."},
+                       "review_date": {"type": "string", "description": "Date the acceptance should be reviewed (ISO 8601)."},
                        "accepted_by_id": {"type": "string", "description": "UUID of the user who accepted the risk"},
                    })
 
-    threat_fields = ["id", "reference", "name", "description", "type",
-                     "origin", "category", "typical_likelihood", "status", "created_at"]
+    threat_fields = ["id", "reference", "scopes", "name", "description", "type",
+                     "origin", "category", "typical_likelihood",
+                     "is_from_catalog", "status", "created_at"]
     threat_writable = ["name", "description", "type", "origin", "category",
-                       "typical_likelihood", "status"]
+                       "typical_likelihood", "is_from_catalog", "status",
+                       "scope_ids"]
 
     _register_crud(server, "threat", Threat, "risks.threat",
                    list_fields=threat_fields,
                    writable_fields=threat_writable,
                    search_fields=["reference", "name", "description"],
-                   filters=["type", "status"],
+                   filters=["type", "status", "is_from_catalog"],
+                   m2m_fields={"scope_ids": "scopes"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "type": {
@@ -3889,30 +3970,45 @@ def _register_risks_tools(server):
                                "system_failure", "network_failure", "power_failure",
                                "natural_disaster", "fire", "water_damage", "theft",
                                "vandalism", "supply_chain", "insider_threat",
-                               "ransomware", "apt",
+                               "ransomware", "apt", "other",
                            ],
                        },
                        "typical_likelihood": {
                            "type": "integer",
                            "description": "Typical likelihood level (integer, e.g. 1-5).",
                        },
+                       "is_from_catalog": {
+                           "type": "boolean",
+                           "description": "Whether this threat comes from a predefined ISO 27005 catalog.",
+                       },
                        "status": {
                            "type": "string",
                            "description": "Threat status.",
                            "enum": ["active", "inactive"],
                        },
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Scopes this threat applies to (RG-01).",
+                       },
                    })
 
-    vuln_fields = ["id", "reference", "name", "description", "category",
-                   "severity", "status", "remediation_guidance", "created_at"]
+    vuln_fields = ["id", "reference", "scopes", "name", "description", "category",
+                   "severity", "status", "affected_asset_types", "affected_assets",
+                   "cve_references", "is_from_catalog",
+                   "remediation_guidance", "created_at"]
     vuln_writable = ["name", "description", "category", "severity", "status",
-                     "remediation_guidance"]
+                     "affected_asset_types", "cve_references", "is_from_catalog",
+                     "remediation_guidance",
+                     "scope_ids", "affected_asset_ids"]
 
     _register_crud(server, "vulnerability", Vulnerability, "risks.vulnerability",
                    list_fields=vuln_fields,
                    writable_fields=vuln_writable,
                    search_fields=["reference", "name", "description"],
-                   filters=["category", "severity", "status"],
+                   filters=["category", "severity", "status", "is_from_catalog"],
+                   m2m_fields={"scope_ids": "scopes",
+                               "affected_asset_ids": "affected_assets"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "remediation_guidance": _html_field("Remediation guidance"),
@@ -3938,20 +4034,46 @@ def _register_risks_tools(server):
                            "description": "Vulnerability status.",
                            "enum": ["identified", "confirmed", "mitigated", "accepted", "closed"],
                        },
+                       "affected_asset_types": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Support asset types this vulnerability affects (free-form list).",
+                       },
+                       "cve_references": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "List of CVE identifiers (e.g. 'CVE-2024-1234').",
+                       },
+                       "is_from_catalog": {
+                           "type": "boolean",
+                           "description": "Whether this vulnerability comes from a predefined catalog.",
+                       },
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Scopes this vulnerability applies to (RG-01).",
+                       },
+                       "affected_asset_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "UUIDs of support assets affected by this vulnerability.",
+                       },
                    })
 
-    iso_fields = ["id", "assessment_id", "threat_id", "vulnerability_id",
+    iso_fields = ["id", "reference", "assessment_id", "threat_id", "vulnerability_id",
+                  "affected_essential_assets", "affected_support_assets",
                   "threat_likelihood", "vulnerability_exposure",
                   "combined_likelihood",
                   "impact_confidentiality", "impact_integrity",
                   "impact_availability", "max_impact",
                   "risk_level", "existing_controls", "risk_id",
-                  "description", "created_at"]
+                  "description", "is_approved", "created_at"]
     iso_writable = ["assessment_id", "threat_id", "vulnerability_id",
                     "threat_likelihood", "vulnerability_exposure",
                     "impact_confidentiality", "impact_integrity",
                     "impact_availability",
-                    "existing_controls", "risk_id", "description"]
+                    "existing_controls", "risk_id", "description",
+                    "affected_essential_asset_ids", "affected_support_asset_ids"]
 
     _register_crud(server, "iso27005_risk", ISO27005Risk, "risks.iso27005",
                    list_fields=iso_fields,
@@ -3960,9 +4082,23 @@ def _register_risks_tools(server):
                    filters=["assessment_id", "threat_id", "vulnerability_id"],
                    scope_filtered=False,
                    has_approve=True,
+                   m2m_fields={
+                       "affected_essential_asset_ids": "affected_essential_assets",
+                       "affected_support_asset_ids": "affected_support_assets",
+                   },
                    field_overrides={
                        "description": _html_field("Description"),
                        "existing_controls": _html_field("Existing controls"),
+                       "affected_essential_asset_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Essential assets impacted by this triplet.",
+                       },
+                       "affected_support_asset_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Support assets impacted by this triplet.",
+                       },
                        "threat_likelihood": {
                            "type": "integer",
                            "description": (
@@ -3990,6 +4126,70 @@ def _register_risks_tools(server):
                            "description": "Availability impact level (integer matching a scale level, e.g. 1-5).",
                        },
                    })
+
+    # ── ISO 27005 → Risk consolidation ────────────────────────
+    # The EBIOS workshop W4 exposes a dedicated consolidate tool that
+    # materialises a scenario into a Risk in the unified register and
+    # preserves the source link (source_entity_id / source_entity_type).
+    # The QA report (CAIRN-RSK-02) noted that no equivalent existed for
+    # ISO 27005 analyses, forcing manual create-then-attach. This tool
+    # closes the gap and is idempotent.
+
+    from risks.constants import RiskSourceType as _RiskSourceTypeIso
+    _Risk_for_iso = _get_model("risks", "Risk")
+
+    def _consolidate_iso27005_risk(user, arguments):
+        analysis_id = arguments.get("id")
+        if not analysis_id:
+            raise InvalidParamsError("id is required.")
+        try:
+            analysis = ISO27005Risk.objects.get(pk=analysis_id)
+        except ISO27005Risk.DoesNotExist:
+            return _error(f"ISO27005Risk not found: {analysis_id}")
+        if analysis.risk_id:
+            return {
+                "status": "already_consolidated",
+                "risk_id": str(analysis.risk_id),
+                "risk_reference": analysis.risk.reference,
+            }
+        risk = _Risk_for_iso.objects.create(
+            assessment=analysis.assessment,
+            name=f"{analysis.threat.name} × {analysis.vulnerability.name}"[:255],
+            description=analysis.description,
+            risk_source=_RiskSourceTypeIso.ISO27005_ANALYSIS,
+            source_entity_id=analysis.pk,
+            source_entity_type="risks.ISO27005Risk",
+            initial_likelihood=analysis.combined_likelihood,
+            initial_impact=analysis.max_impact,
+            current_likelihood=analysis.combined_likelihood,
+            current_impact=analysis.max_impact,
+            impact_confidentiality=bool(analysis.impact_confidentiality),
+            impact_integrity=bool(analysis.impact_integrity),
+            impact_availability=bool(analysis.impact_availability),
+            criteria_snapshot=analysis.criteria_snapshot,
+            created_by=user,
+        )
+        risk.affected_essential_assets.set(analysis.affected_essential_assets.all())
+        risk.affected_support_assets.set(analysis.affected_support_assets.all())
+        analysis.risk = risk
+        analysis.save(update_fields=["risk"])
+        return {
+            "status": "consolidated",
+            "risk_id": str(risk.pk),
+            "risk_reference": risk.reference,
+        }
+
+    server.register_tool(
+        "consolidate_iso27005_risk",
+        (
+            "Materialise an ISO 27005 analysis (threat × vulnerability) into a Risk "
+            "in the unified register. Idempotent: returns the existing Risk if the "
+            "analysis has already been consolidated. The source link is preserved "
+            "via source_entity_id / source_entity_type on the resulting Risk."
+        ),
+        _id_schema(),
+        require_perm("risks.risk.create")(_consolidate_iso27005_risk),
+    )
 
     # ── Risk ↔ Requirement linking tools ──────────────────────
     #

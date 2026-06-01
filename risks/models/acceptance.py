@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
@@ -47,3 +48,18 @@ class RiskAcceptance(BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.risk}"
+
+    def save(self, *args, **kwargs):
+        # RV-05: when an acceptance is active, capture the moment and the
+        # current risk level. The QA report (CAIRN-RAC-01) flagged that
+        # accepted_at and risk_level_at_acceptance were never populated, so
+        # the acceptance instant was lost the moment the linked risk score
+        # moved.
+        if self.status == AcceptanceStatus.ACTIVE:
+            if self.accepted_at is None:
+                self.accepted_at = timezone.now()
+            if self.risk_level_at_acceptance is None and self.risk_id:
+                current = getattr(self.risk, "current_risk_level", None)
+                if current is not None:
+                    self.risk_level_at_acceptance = current
+        super().save(*args, **kwargs)

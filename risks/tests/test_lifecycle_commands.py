@@ -121,12 +121,29 @@ class TestExpireRiskAcceptances:
 
 
 class TestMarkOverdueTreatmentPlans:
-    def test_marks_past_target_as_overdue(self):
+    def _make_stale_plan(self, days_past=1, status=None):
+        """Create a plan whose target_date crossed silently.
+
+        RiskTreatmentPlan.save() now flips in-flight plans to OVERDUE the
+        moment they touch the database with a past target_date, so the
+        only way to exercise the daily cron is to mutate the row directly
+        via a queryset update() which bypasses save() and signals.
+        """
+        from risks.models import RiskTreatmentPlan
         today = timezone.localdate()
         plan = RiskTreatmentPlanFactory(
-            target_date=today - timedelta(days=1),
-            status=TreatmentPlanStatus.IN_PROGRESS,
+            target_date=today + timedelta(days=10),
+            status=status or TreatmentPlanStatus.IN_PROGRESS,
         )
+        RiskTreatmentPlan.objects.filter(pk=plan.pk).update(
+            target_date=today - timedelta(days=days_past),
+            status=status or TreatmentPlanStatus.IN_PROGRESS,
+        )
+        plan.refresh_from_db()
+        return plan
+
+    def test_marks_past_target_as_overdue(self):
+        plan = self._make_stale_plan()
         out = StringIO()
         call_command("mark_overdue_treatment_plans", stdout=out)
         plan.refresh_from_db()
@@ -160,11 +177,7 @@ class TestMarkOverdueTreatmentPlans:
         assert cancelled.status == TreatmentPlanStatus.CANCELLED
 
     def test_is_idempotent(self):
-        today = timezone.localdate()
-        plan = RiskTreatmentPlanFactory(
-            target_date=today - timedelta(days=2),
-            status=TreatmentPlanStatus.PLANNED,
-        )
+        plan = self._make_stale_plan(days_past=2, status=TreatmentPlanStatus.PLANNED)
         call_command("mark_overdue_treatment_plans", stdout=StringIO())
         plan.refresh_from_db()
         first_updated_at = plan.updated_at
@@ -185,13 +198,53 @@ class TestMarkOverdueTreatmentPlans:
         assert plan.status == TreatmentPlanStatus.PLANNED
 
     def test_dry_run_does_not_write(self):
-        today = timezone.localdate()
-        plan = RiskTreatmentPlanFactory(
-            target_date=today - timedelta(days=1),
-            status=TreatmentPlanStatus.IN_PROGRESS,
-        )
+        plan = self._make_stale_plan()
         out = StringIO()
         call_command("mark_overdue_treatment_plans", "--dry-run", stdout=out)
         plan.refresh_from_db()
         assert plan.status == TreatmentPlanStatus.IN_PROGRESS
         assert "Would mark" in out.getvalue()
+
+
+# ── Model save() hooks (RS-04, RV-05) ─────────────────────────
+
+
+class TestRiskTreatmentPlanOverdueHook:
+    """RS-04: save() flips in-flight plans to OVERDUE when target_date is past."""
+
+    def test_create_with_past_target_date_flips_to_overdue(self):
+        today = timezone.localdate()
+        plan = RiskTreatmentPlanFactory(
+            target_date=today - timedelta(days=3),
+            status=TreatmentPlanStatus.IN_PROGRESS,
+        )
+        assert plan.status == TreatmentPlanStatus.OVERDUE
+
+    def test_terminal_statuses_not_overridden(self):
+        today = timezone.localdate()
+        for terminal in (
+            TreatmentPlanStatus.COMPLETED,
+            TreatmentPlanStatus.CANCELLED,
+            TreatmentPlanStatus.OVERDUE,
+        ):
+            plan = RiskTreatmentPlanFactory(
+                target_date=today - timedelta(days=3),
+                status=terminal,
+            )
+            assert plan.status == terminal
+
+
+class TestRiskAcceptanceCaptureHook:
+    """RV-05: save() stamps accepted_at and risk_level_at_acceptance on ACTIVE."""
+
+    def test_active_creation_captures_timestamp_and_level(self):
+        risk = RiskFactory(current_risk_level=8)
+        acc = RiskAcceptanceFactory(risk=risk, status=AcceptanceStatus.ACTIVE)
+        assert acc.accepted_at is not None
+        assert acc.risk_level_at_acceptance == 8
+
+    def test_inactive_creation_does_not_capture(self):
+        risk = RiskFactory(current_risk_level=8)
+        acc = RiskAcceptanceFactory(risk=risk, status=AcceptanceStatus.EXPIRED)
+        assert acc.accepted_at is None
+        assert acc.risk_level_at_acceptance is None

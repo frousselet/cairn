@@ -129,6 +129,7 @@ class ThreatCategory(models.TextChoices):
     INSIDER_THREAT = "insider_threat", _("Insider threat")
     RANSOMWARE = "ransomware", _("Ransomware")
     APT = "apt", _("Advanced persistent threat (APT)")
+    OTHER = "other", _("Other")
 
 
 class ThreatStatus(models.TextChoices):
