@@ -43,8 +43,8 @@ class Activity(ScopedModel):
         related_name="related_activities",
         verbose_name=_("Contributing objectives"),
     )
-    # M2M to EssentialAsset omitted — module not yet implemented
-    # linked_assets = models.ManyToManyField("assets.EssentialAsset", ...)
+    # Linked essential assets are exposed via the reverse manager
+    # `essential_assets` set up by EssentialAsset.related_activities.
     status = models.CharField(
         _("Status"),
         max_length=20,

@@ -63,8 +63,15 @@ class SupportAsset(ScopedModel):
     warranty_expiry_date = models.DateField(
         _("Warranty expiry"), null=True, blank=True
     )
-    # FK to Supplier omitted — module not yet implemented
-    # supplier = models.ForeignKey("suppliers.Supplier", ...)
+    supplier = models.ForeignKey(
+        "assets.Supplier",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="support_assets",
+        verbose_name=_("Supplier"),
+        help_text=_("Supplier that provides, hosts or maintains this asset."),
+    )
     contract_reference = models.CharField(
         _("Contract reference"), max_length=255, blank=True, default=""
     )

@@ -1774,11 +1774,12 @@ def _register_context_tools(server):
 
     activity_fields = ["id", "reference", "scopes", "name", "description", "type", "criticality",
                        "owner_id", "parent_activity_id",
-                       "related_stakeholders", "related_objectives",
+                       "related_stakeholders", "related_objectives", "essential_assets",
                        "status", "is_approved", "created_at"]
     activity_writable = ["name", "description", "type", "criticality", "owner_id",
                          "status", "parent_activity_id", "scope_ids",
-                         "related_stakeholder_ids", "related_objective_ids"]
+                         "related_stakeholder_ids", "related_objective_ids",
+                         "linked_essential_asset_ids"]
 
     _register_crud(server, "activity", Activity, "context.activity",
                    list_fields=activity_fields,
@@ -1788,7 +1789,8 @@ def _register_context_tools(server):
                    required_fields=["name", "type", "criticality", "owner_id"],
                    m2m_fields={"scope_ids": "scopes",
                                "related_stakeholder_ids": "related_stakeholders",
-                               "related_objective_ids": "related_objectives"},
+                               "related_objective_ids": "related_objectives",
+                               "linked_essential_asset_ids": "essential_assets"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "owner_id": {"type": "string", "description": "UUID of the activity owner (user)"},
@@ -1822,6 +1824,11 @@ def _register_context_tools(server):
                            "type": "array",
                            "items": {"type": "string"},
                            "description": "Objectives this activity contributes to.",
+                       },
+                       "linked_essential_asset_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Essential assets supporting this activity (uses the reverse manager of EssentialAsset.related_activities).",
                        },
                    })
 
@@ -2119,7 +2126,7 @@ def _register_assets_tools(server):
                    })
 
     sa_fields = ["id", "reference", "scopes", "name", "description", "type", "category",
-                 "owner_id", "custodian_id",
+                 "owner_id", "custodian_id", "supplier_id",
                  "location", "manufacturer", "model_name", "serial_number",
                  "software_version", "operating_system",
                  "hostname", "ip_address",
@@ -2139,7 +2146,7 @@ def _register_assets_tools(server):
                    "contract_reference",
                    "exposure_level", "environment",
                    "review_date",
-                   "owner_id", "custodian_id", "parent_asset_id",
+                   "owner_id", "custodian_id", "supplier_id", "parent_asset_id",
                    "scope_ids"]
 
     _register_crud(server, "support_asset", SupportAsset, "assets.support_asset",
@@ -2197,6 +2204,7 @@ def _register_assets_tools(server):
                        "review_date": {"type": "string", "description": "Next review date (ISO 8601)."},
                        "owner_id": {"type": "string", "description": "UUID of the asset owner (user)"},
                        "custodian_id": {"type": "string", "description": "UUID of the asset custodian (user)"},
+                       "supplier_id": {"type": "string", "description": "UUID of the supplier that provides / hosts / maintains this asset."},
                        "parent_asset_id": {"type": "string", "description": "UUID of the parent support asset (must share at least one scope)."},
                        "scope_ids": {
                            "type": "array",
