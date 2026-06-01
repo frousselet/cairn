@@ -154,6 +154,37 @@ def _get_handler(model_class, fields, scope_filtered=True):
     return handler
 
 
+def _resolve_model_field(model_class, field_name):
+    """Resolve a Django model field by name, accepting both 'foo' and 'foo_id'.
+
+    Returns the field object, or None if unknown.
+    """
+    try:
+        return model_class._meta.get_field(field_name)
+    except Exception:
+        if field_name.endswith("_id"):
+            try:
+                return model_class._meta.get_field(field_name[:-3])
+            except Exception:
+                return None
+        return None
+
+
+def _fk_kwarg_name(model_class, field_name):
+    """Return the kwarg name to use when constructing model_class.
+
+    For ForeignKey fields, Django's __init__ refuses raw PK values when the
+    kwarg key is the field name ('type=12'); it only accepts the descriptor
+    suffix form ('type_id=12'). This helper rewrites 'type' to 'type_id' for
+    every FK so the MCP layer can keep exposing the natural attribute name.
+    """
+    from django.db.models import ForeignKey
+    field = _resolve_model_field(model_class, field_name)
+    if isinstance(field, ForeignKey) and not field_name.endswith("_id"):
+        return field_name + "_id"
+    return field_name
+
+
 def _coerce_field_value(model_class, field_name, value):
     """Coerce a value to the correct Python type for a Django model field.
 
@@ -162,18 +193,9 @@ def _coerce_field_value(model_class, field_name, value):
     """
     if value is None:
         return value
-    # Resolve the Django field object — field_name may be 'foo_id' for FK 'foo'
-    try:
-        field = model_class._meta.get_field(field_name)
-    except Exception:
-        # For _id suffixed FK fields, try the base field name
-        if field_name.endswith("_id"):
-            try:
-                field = model_class._meta.get_field(field_name[:-3])
-            except Exception:
-                return value
-        else:
-            return value
+    field = _resolve_model_field(model_class, field_name)
+    if field is None:
+        return value
     from django.db.models import (
         IntegerField, PositiveIntegerField, PositiveSmallIntegerField,
         SmallIntegerField, BigIntegerField, BooleanField, FloatField,
@@ -230,7 +252,8 @@ def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_field
                 if field_name in m2m_fields:
                     m2m_values[field_name] = arguments[field_name]
                 else:
-                    kwargs[field_name] = _coerce_field_value(
+                    target = _fk_kwarg_name(model_class, field_name)
+                    kwargs[target] = _coerce_field_value(
                         model_class, field_name, arguments[field_name])
         if hasattr(model_class, "created_by"):
             kwargs["created_by"] = user
@@ -276,7 +299,8 @@ def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m
                         if field_name in m2m_fields:
                             m2m_values[field_name] = item_data[field_name]
                         else:
-                            kwargs[field_name] = _coerce_field_value(
+                            target = _fk_kwarg_name(model_class, field_name)
+                            kwargs[target] = _coerce_field_value(
                                 model_class, field_name, item_data[field_name])
                 if hasattr(model_class, "created_by"):
                     kwargs["created_by"] = user
@@ -334,7 +358,8 @@ def _update_handler(model_class, writable_fields, scope_filtered=True, m2m_field
                     m2m_values[field_name] = arguments[field_name]
                     changed_fields.add(field_name)
                 else:
-                    setattr(obj, field_name, _coerce_field_value(
+                    target = _fk_kwarg_name(model_class, field_name)
+                    setattr(obj, target, _coerce_field_value(
                         model_class, field_name, arguments[field_name]))
                     changed_fields.add(field_name)
         # Reset approval on update (respects VersioningConfig)
@@ -725,7 +750,8 @@ Ref prefix: SDEP
 
 ## site_asset_dependency
 Links a site to a support asset.
-Writable: support_asset_id (required), site_id (required), dependency_type (required), criticality (required), description (HTML), is_single_point_of_failure (bool), redundancy_level
+Writable: support_asset_id (required), site_id (required), dependency_type (required), criticality (required), description (HTML), redundancy_level
+Read-only: is_single_point_of_failure (auto-detected by the SPOF detection service).
 - dependency_type: located_at | hosted_at | deployed_at | other
 - criticality: low | medium | high | critical
 - redundancy_level: none | partial | full
@@ -734,7 +760,8 @@ Ref prefix: SADP
 
 ## site_supplier_dependency
 Links a site to a supplier.
-Writable: site_id (required), supplier_id (required), dependency_type (required), criticality (required), description (HTML), is_single_point_of_failure (bool), redundancy_level
+Writable: site_id (required), supplier_id (required), dependency_type (required), criticality (required), description (HTML), redundancy_level
+Read-only: is_single_point_of_failure (auto-detected by the SPOF detection service).
 - dependency_type: provides | hosts | manages | develops | supports | licenses | maintains | other
 - criticality: low | medium | high | critical
 - redundancy_level: none | partial | full
@@ -1962,12 +1989,24 @@ def _register_assets_tools(server):
     SupplierRequirement = _get_model("assets", "SupplierRequirement")
     SupplierRequirementReview = _get_model("assets", "SupplierRequirementReview")
 
-    ea_fields = ["id", "reference", "name", "description", "type", "category",
-                 "status", "confidentiality_level", "integrity_level",
-                 "availability_level", "personal_data", "is_approved", "created_at"]
+    ea_fields = ["id", "reference", "scopes", "name", "description", "type", "category",
+                 "owner_id", "custodian_id", "status",
+                 "confidentiality_level", "integrity_level", "availability_level",
+                 "confidentiality_justification", "integrity_justification",
+                 "availability_justification",
+                 "max_tolerable_downtime", "recovery_time_objective", "recovery_point_objective",
+                 "data_classification", "personal_data", "personal_data_categories",
+                 "regulatory_constraints", "related_activities", "review_date",
+                 "is_approved", "created_at"]
     ea_writable = ["name", "description", "type", "category", "status",
                    "confidentiality_level", "integrity_level", "availability_level",
-                   "personal_data", "owner_id", "custodian_id"]
+                   "confidentiality_justification", "integrity_justification",
+                   "availability_justification",
+                   "max_tolerable_downtime", "recovery_time_objective", "recovery_point_objective",
+                   "data_classification", "personal_data", "personal_data_categories",
+                   "regulatory_constraints", "review_date",
+                   "owner_id", "custodian_id",
+                   "scope_ids", "related_activity_ids"]
 
     _register_crud(server, "essential_asset", EssentialAsset, "assets.essential_asset",
                    list_fields=ea_fields,
@@ -1975,6 +2014,8 @@ def _register_assets_tools(server):
                    search_fields=["reference", "name", "description"],
                    filters=["type", "category", "status"],
                    required_fields=["name", "type", "category", "owner_id"],
+                   m2m_fields={"scope_ids": "scopes",
+                               "related_activity_ids": "related_activities"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "type": {
@@ -2009,28 +2050,73 @@ def _register_assets_tools(server):
                            "type": ["integer", "string"],
                            "description": "Availability level. Accepts integers (0-4) or text labels: 0/negligible, 1/low, 2/medium, 3/high, 4/critical. Default: 2.",
                        },
+                       "confidentiality_justification": {"type": "string", "description": "Why this confidentiality level was chosen."},
+                       "integrity_justification": {"type": "string", "description": "Why this integrity level was chosen."},
+                       "availability_justification": {"type": "string", "description": "Why this availability level was chosen."},
+                       "max_tolerable_downtime": {"type": "string", "description": "Max tolerable downtime (MTD), free form e.g. '4 hours'."},
+                       "recovery_time_objective": {"type": "string", "description": "Recovery Time Objective (RTO), free form."},
+                       "recovery_point_objective": {"type": "string", "description": "Recovery Point Objective (RPO), free form."},
+                       "data_classification": {
+                           "type": "string",
+                           "description": "Data classification label.",
+                           "enum": ["public", "internal", "confidential", "secret", "restricted"],
+                       },
                        "personal_data": {
                            "type": "boolean",
                            "description": "Whether this asset contains personal data.",
                        },
+                       "personal_data_categories": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "GDPR categories of personal data (free-form list).",
+                       },
+                       "regulatory_constraints": {"type": "string", "description": "Applicable regulatory constraints."},
+                       "review_date": {"type": "string", "description": "Next review date (ISO 8601)."},
                        "owner_id": {"type": "string", "description": "UUID of the asset owner (user)"},
                        "custodian_id": {"type": "string", "description": "UUID of the asset custodian (user)"},
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Scopes this asset belongs to (RG-01).",
+                       },
+                       "related_activity_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Business activities this asset supports.",
+                       },
                    })
 
-    sa_fields = ["id", "reference", "name", "description", "type", "category",
-                 "status", "hostname", "ip_address",
-                 "inherited_confidentiality", "inherited_integrity",
-                 "inherited_availability", "end_of_life_date", "is_approved", "created_at"]
+    sa_fields = ["id", "reference", "scopes", "name", "description", "type", "category",
+                 "owner_id", "custodian_id",
+                 "location", "manufacturer", "model_name", "serial_number",
+                 "software_version", "operating_system",
+                 "hostname", "ip_address",
+                 "acquisition_date", "end_of_life_date", "warranty_expiry_date",
+                 "contract_reference",
+                 "exposure_level", "environment",
+                 "parent_asset_id",
+                 "status",
+                 "inherited_confidentiality", "inherited_integrity", "inherited_availability",
+                 "review_date",
+                 "is_approved", "created_at"]
     sa_writable = ["name", "description", "type", "category", "status",
-                   "hostname", "ip_address", "end_of_life_date",
-                   "owner_id", "custodian_id", "parent_asset_id"]
+                   "location", "manufacturer", "model_name", "serial_number",
+                   "software_version", "operating_system",
+                   "hostname", "ip_address",
+                   "acquisition_date", "end_of_life_date", "warranty_expiry_date",
+                   "contract_reference",
+                   "exposure_level", "environment",
+                   "review_date",
+                   "owner_id", "custodian_id", "parent_asset_id",
+                   "scope_ids"]
 
     _register_crud(server, "support_asset", SupportAsset, "assets.support_asset",
                    list_fields=sa_fields,
                    writable_fields=sa_writable,
                    search_fields=["reference", "name", "description", "hostname", "ip_address"],
-                   filters=["type", "category", "status"],
+                   filters=["type", "category", "status", "environment", "exposure_level"],
                    required_fields=["name", "type", "category", "owner_id"],
+                   m2m_fields={"scope_ids": "scopes"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "type": {
@@ -2056,14 +2142,42 @@ def _register_assets_tools(server):
                            "description": "Support asset status.",
                            "enum": ["in_stock", "deployed", "active", "under_maintenance", "decommissioned", "disposed"],
                        },
+                       "exposure_level": {
+                           "type": "string",
+                           "description": "Exposure level (network reachability).",
+                           "enum": ["internet", "extranet", "intranet", "isolated"],
+                       },
+                       "environment": {
+                           "type": "string",
+                           "description": "Environment hosting this asset.",
+                           "enum": ["production", "preproduction", "test", "development", "training"],
+                       },
+                       "location": {"type": "string", "description": "Physical or logical location of the asset."},
+                       "manufacturer": {"type": "string", "description": "Manufacturer / vendor."},
+                       "model_name": {"type": "string", "description": "Model or version designation."},
+                       "serial_number": {"type": "string", "description": "Serial number."},
+                       "software_version": {"type": "string", "description": "Software version."},
+                       "operating_system": {"type": "string", "description": "Operating system."},
+                       "acquisition_date": {"type": "string", "description": "Acquisition date (ISO 8601)."},
+                       "end_of_life_date": {"type": "string", "description": "End-of-life date (ISO 8601)."},
+                       "warranty_expiry_date": {"type": "string", "description": "Warranty expiry (ISO 8601)."},
+                       "contract_reference": {"type": "string", "description": "Procurement / support contract reference."},
+                       "review_date": {"type": "string", "description": "Next review date (ISO 8601)."},
                        "owner_id": {"type": "string", "description": "UUID of the asset owner (user)"},
                        "custodian_id": {"type": "string", "description": "UUID of the asset custodian (user)"},
+                       "parent_asset_id": {"type": "string", "description": "UUID of the parent support asset (must share at least one scope)."},
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Scopes this asset belongs to (RG-01).",
+                       },
                    })
 
     dep_fields = ["id", "essential_asset_id", "support_asset_id", "dependency_type",
-                  "criticality", "is_single_point_of_failure", "created_at"]
+                  "criticality", "redundancy_level",
+                  "is_single_point_of_failure", "created_at"]
     dep_writable = ["essential_asset_id", "support_asset_id", "dependency_type",
-                    "criticality", "description"]
+                    "criticality", "redundancy_level", "description"]
 
     _register_crud(server, "asset_dependency", AssetDependency, "assets.dependency",
                    list_fields=dep_fields,
@@ -2084,25 +2198,48 @@ def _register_assets_tools(server):
                            "description": "Criticality level.",
                            "enum": ["low", "medium", "high", "critical"],
                        },
+                       "redundancy_level": {
+                           "type": "string",
+                           "description": "Redundancy level for this dependency.",
+                           "enum": ["none", "partial", "full"],
+                       },
                    })
 
-    ag_fields = ["id", "name", "description", "type", "status", "is_approved", "created_at"]
-    ag_writable = ["name", "description", "type", "status", "owner_id"]
+    ag_fields = ["id", "reference", "scopes", "name", "description", "type",
+                 "owner_id", "members", "status", "is_approved", "created_at"]
+    ag_writable = ["name", "description", "type", "status", "owner_id",
+                   "scope_ids", "member_ids"]
 
     _register_crud(server, "asset_group", AssetGroup, "assets.group",
                    list_fields=ag_fields,
                    writable_fields=ag_writable,
                    search_fields=["name", "description"],
                    filters=["type", "status"],
-                   required_fields=["name"],
+                   required_fields=["name", "type"],
+                   m2m_fields={"scope_ids": "scopes", "member_ids": "members"},
                    field_overrides={
                        "description": _html_field("Description"),
+                       "type": {
+                           "type": "string",
+                           "description": "Asset group type (matches SupportAsset.type).",
+                           "enum": ["hardware", "software", "network", "person", "site", "service", "paper"],
+                       },
                        "status": {
                            "type": "string",
                            "description": "Asset group status.",
                            "enum": ["active", "inactive"],
                        },
                        "owner_id": {"type": "string", "description": "UUID of the group owner (user)"},
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Scopes this asset group belongs to (RG-01).",
+                       },
+                       "member_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "UUIDs of support assets to include in this group.",
+                       },
                    })
 
     sup_fields = ["id", "reference", "name", "description", "type", "criticality",
@@ -2236,7 +2373,7 @@ def _register_assets_tools(server):
                   "criticality", "description", "is_single_point_of_failure",
                   "redundancy_level", "is_approved", "created_at"]
     sad_writable = ["support_asset_id", "site_id", "dependency_type", "criticality",
-                    "description", "is_single_point_of_failure", "redundancy_level"]
+                    "description", "redundancy_level"]
 
     _register_crud(server, "site_asset_dependency", SiteAssetDependency, "assets.dependency",
                    list_fields=sad_fields,
@@ -2262,10 +2399,6 @@ def _register_assets_tools(server):
                            "description": "Redundancy level.",
                            "enum": ["none", "partial", "full"],
                        },
-                       "is_single_point_of_failure": {
-                           "type": "boolean",
-                           "description": "Whether this is a single point of failure.",
-                       },
                    })
 
     # Site-supplier dependencies (has approve)
@@ -2273,7 +2406,7 @@ def _register_assets_tools(server):
                   "criticality", "description", "is_single_point_of_failure",
                   "redundancy_level", "is_approved", "created_at"]
     ssd_writable = ["site_id", "supplier_id", "dependency_type", "criticality",
-                    "description", "is_single_point_of_failure", "redundancy_level"]
+                    "description", "redundancy_level"]
 
     _register_crud(server, "site_supplier_dependency", SiteSupplierDependency,
                    "assets.supplier_dependency",
@@ -2299,10 +2432,6 @@ def _register_assets_tools(server):
                            "type": "string",
                            "description": "Redundancy level.",
                            "enum": ["none", "partial", "full"],
-                       },
-                       "is_single_point_of_failure": {
-                           "type": "boolean",
-                           "description": "Whether this is a single point of failure.",
                        },
                    })
 
