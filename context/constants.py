@@ -255,13 +255,13 @@ PREDEFINED_SOURCE_FORMAT = {
 
 
 class SiteType(models.TextChoices):
-    HEADQUARTERS = "siege", _("Headquarters")
-    OFFICE = "bureau", _("Office")
-    FACTORY = "usine", _("Factory")
-    WAREHOUSE = "entrepot", _("Warehouse")
+    HEADQUARTERS = "headquarters", _("Headquarters")
+    OFFICE = "office", _("Office")
+    FACTORY = "factory", _("Factory")
+    WAREHOUSE = "warehouse", _("Warehouse")
     DATACENTER = "datacenter", _("Datacenter")
-    REMOTE = "site_distant", _("Remote site")
-    OTHER = "autre", _("Other")
+    REMOTE = "remote", _("Remote site")
+    OTHER = "other", _("Other")
 
 
 # ── Stakeholder feedback (ISO 27001:2022 clause 9.3.2.e) ──

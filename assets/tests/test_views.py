@@ -711,7 +711,7 @@ class TestSiteCreateView:
         url = reverse("assets:site-create")
         data = {
             "name": "New Site",
-            "type": "siege",
+            "type": "headquarters",
             "status": "draft",
         }
         response = client.post(url, data)
@@ -731,7 +731,7 @@ class TestSiteUpdateView:
         url = reverse("assets:site-update", kwargs={"pk": site.pk})
         data = {
             "name": "Updated Site",
-            "type": "bureau",
+            "type": "office",
             "status": "draft",
         }
         response = client.post(url, data)

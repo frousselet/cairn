@@ -1849,8 +1849,8 @@ def _register_context_tools(server):
                            "type": "string",
                            "description": "Site type.",
                            "enum": [
-                               "siege", "bureau", "usine", "entrepot",
-                               "datacenter", "site_distant", "autre",
+                               "headquarters", "office", "factory", "warehouse",
+                               "datacenter", "remote", "other",
                            ],
                        },
                        "status": {

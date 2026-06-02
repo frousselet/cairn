@@ -155,7 +155,7 @@ class TestSiteViewSet:
     def test_create_site(self):
         response = self.client.post(
             "/api/v1/context/sites/",
-            {"name": "HQ", "type": "siege"},
+            {"name": "HQ", "type": "headquarters"},
             format="json",
         )
         assert response.status_code == 201
@@ -164,7 +164,7 @@ class TestSiteViewSet:
     def test_retrieve_site(self):
         from context.models import Site
 
-        site = Site.objects.create(name="Office A", type="bureau")
+        site = Site.objects.create(name="Office A", type="office")
         response = self.client.get(f"/api/v1/context/sites/{site.pk}/")
         assert response.status_code == 200
         assert _data(response)["name"] == "Office A"
@@ -172,7 +172,7 @@ class TestSiteViewSet:
     def test_update_site(self):
         from context.models import Site
 
-        site = Site.objects.create(name="Old", type="autre")
+        site = Site.objects.create(name="Old", type="other")
         response = self.client.patch(
             f"/api/v1/context/sites/{site.pk}/",
             {"name": "New Name"},
@@ -184,7 +184,7 @@ class TestSiteViewSet:
     def test_delete_site(self):
         from context.models import Site
 
-        site = Site.objects.create(name="Delete Me", type="autre")
+        site = Site.objects.create(name="Delete Me", type="other")
         response = self.client.delete(f"/api/v1/context/sites/{site.pk}/")
         assert response.status_code == 204
 
