@@ -742,10 +742,12 @@ Ref prefix: SPTY (integer PK, not UUID)
 
 ## supplier_dependency
 Links a support asset to a supplier.
-Writable: support_asset_id (required), supplier_id (required), dependency_type (required), criticality (required), description (HTML)
+Writable: support_asset_id (required), supplier_id (required), dependency_type (required), criticality (required), description (HTML), redundancy_level
+Read-only: is_single_point_of_failure (auto-detected by the SPOF detection service).
 - dependency_type: provides | hosts | manages | develops | supports | licenses | maintains | other
 - criticality: low | medium | high | critical
-Filters: support_asset_id, supplier_id
+- redundancy_level: none | partial | full
+Filters: support_asset_id, supplier_id, dependency_type, criticality
 Ref prefix: SDEP
 
 ## site_asset_dependency
@@ -2417,16 +2419,18 @@ def _register_assets_tools(server):
         ),
     )
 
-    sd_fields = ["id", "support_asset_id", "supplier_id", "dependency_type",
-                 "criticality", "created_at"]
+    sd_fields = ["id", "reference", "support_asset_id", "supplier_id", "dependency_type",
+                 "criticality", "description",
+                 "is_single_point_of_failure", "redundancy_level",
+                 "is_approved", "created_at"]
     sd_writable = ["support_asset_id", "supplier_id", "dependency_type",
-                   "criticality", "description"]
+                   "criticality", "description", "redundancy_level"]
 
     _register_crud(server, "supplier_dependency", SupplierDependency, "assets.supplier_dependency",
                    list_fields=sd_fields,
                    writable_fields=sd_writable,
-                   search_fields=[],
-                   filters=["support_asset_id", "supplier_id"],
+                   search_fields=["description"],
+                   filters=["support_asset_id", "supplier_id", "dependency_type", "criticality"],
                    scope_filtered=False,
                    required_fields=["support_asset_id", "supplier_id", "dependency_type", "criticality"],
                    field_overrides={
@@ -2443,6 +2447,11 @@ def _register_assets_tools(server):
                            "type": "string",
                            "description": "Criticality level.",
                            "enum": ["low", "medium", "high", "critical"],
+                       },
+                       "redundancy_level": {
+                           "type": "string",
+                           "description": "Redundancy level (operator-set).",
+                           "enum": ["none", "partial", "full"],
                        },
                    })
 

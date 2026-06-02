@@ -16,7 +16,9 @@
 - [AssetGroup](./asset-group.md)
 - [AssetValuation](./asset-valuation.md)
 - [Site](./site.md) (geographic / physical location, defined in the context app)
-- ⚠ Supplier and related entities : implemented but not specced, see [issue #35](https://gitlab.rslt.fr/fairway/fairway/-/issues/35)
+- [Supplier](./supplier.md) (third-party vendor, with `SupplierType` and `SupplierTypeRequirement` sub-entities)
+- [SupplierRequirement](./supplier-requirement.md) (security requirement enforced on a supplier, with `SupplierRequirementReview` sub-entity)
+- [SupplierDependency](./supplier-dependency.md) (support-asset to supplier link)
 
 ---
 
