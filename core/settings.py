@@ -105,9 +105,21 @@ WSGI_APPLICATION = "core.wsgi.application"
 ASGI_APPLICATION = "core.asgi.application"
 
 # Django Channels
+#
+# RedisPubSubChannelLayer instead of the historical RedisChannelLayer:
+# the former uses Redis pub/sub (push) and the latter polls BLPOP with
+# a finite socket read timeout. With BLPOP the dashboard WebSocket
+# consumer crashed every few seconds with redis.exceptions.TimeoutError
+# when no event was published in the polling window, the WS reconnected,
+# and the boot log filled with stack traces. PubSub has no polling
+# timeout because there is nothing to poll: Redis pushes when a message
+# arrives. Trade-off: messages are not queued for consumers that drop
+# briefly, which is fine here because the broadcast events are dashboard
+# refresh hints (the next save broadcasts another one) rather than
+# durable work items.
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "BACKEND": "channels_redis.pubsub.RedisPubSubChannelLayer",
         "CONFIG": {
             "hosts": [(os.environ.get("REDIS_HOST", "redis"), int(os.environ.get("REDIS_PORT", 6379)))],
         },
