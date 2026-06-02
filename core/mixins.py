@@ -22,7 +22,19 @@ class HtmxFormMixin:
     modal_title_update = ""
 
     def _is_htmx(self):
-        return self.request.headers.get("HX-Request") == "true"
+        # The drawer flow uses hx-target="#drawer-form-content"; HTMX puts
+        # the target id into the HX-Target header. The body carries
+        # `hx-boost="true"` for soft-nav, which also sends HX-Request=true
+        # but with HX-Boosted=true and HX-Target=page-shell. Distinguishing
+        # the two prevents the modal partial (designed to be swapped into
+        # the drawer container) from being mistakenly returned for a
+        # boosted full-page navigation, which would otherwise render the
+        # bare drawer markup full-bleed without the page chrome.
+        if self.request.headers.get("HX-Request") != "true":
+            return False
+        if self.request.headers.get("HX-Boosted") == "true":
+            return False
+        return self.request.headers.get("HX-Target") == "drawer-form-content"
 
     def get_template_names(self):
         if self._is_htmx() and self.modal_template_name:

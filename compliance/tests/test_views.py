@@ -669,7 +669,7 @@ class TestFindingCreateView:
             "compliance:finding-create",
             kwargs={"assessment_pk": assessment.pk},
         )
-        response = client.get(url, HTTP_HX_REQUEST="true")
+        response = client.get(url, HTTP_HX_REQUEST="true", HTTP_HX_TARGET="drawer-form-content")
         assert response.status_code == 200
 
     def test_create_post_valid(self, client, superuser):

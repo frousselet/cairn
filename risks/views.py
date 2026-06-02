@@ -1276,6 +1276,16 @@ class ThreatListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMix
             qs = qs.filter(status=status_filter)
         return qs
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # When opened via "Manage" from a risk assessment workflow, keep a
+        # back link so the user does not lose the assessment context.
+        assessment_id = self.request.GET.get("assessment")
+        ctx["parent_assessment"] = None
+        if assessment_id:
+            ctx["parent_assessment"] = RiskAssessment.objects.filter(pk=assessment_id).first()
+        return ctx
+
 
 class ThreatDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, DetailView):
     model = Threat
@@ -1349,6 +1359,14 @@ class VulnerabilityListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFi
         if status_filter:
             qs = qs.filter(status=status_filter)
         return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        assessment_id = self.request.GET.get("assessment")
+        ctx["parent_assessment"] = None
+        if assessment_id:
+            ctx["parent_assessment"] = RiskAssessment.objects.filter(pk=assessment_id).first()
+        return ctx
 
 
 class VulnerabilityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, DetailView):

@@ -3787,6 +3787,22 @@
         var live = document.getElementById('hx-live');
         if (live) live.textContent = '{% filter escapejs %}{% trans "Network error. Check your connection." %}{% endfilter %}';
       });
+
+      /* bfcache restore: when the user navigates Back into a page that
+       * was served via a boosted swap, browsers may restore the live DOM
+       * from the back-forward cache. That snapshot can include the
+       * mid-flight skeleton placeholder (if the user hit Back before the
+       * boosted response settled) or stale async list state. Force a
+       * fresh fetch so the page recomposes from the network and the
+       * stuck skeleton disappears. event.persisted === true means the
+       * page came from bfcache; a normal load (persisted === false) is
+       * left alone so we do not double-fetch.
+       */
+      window.addEventListener('pageshow', function(evt) {
+        if (evt.persisted === true) {
+          window.location.reload();
+        }
+      });
     })();
   </script>
   <script>
@@ -4074,12 +4090,22 @@
     var tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
     if (!tabs.length) return;
     var storageKey = 'activeTab:' + location.pathname;
+    /* Suppress the pushState on programmatic tab activations (initial
+     * restore, popstate replay). Without this, every popstate would
+     * re-push the activated tab and overshoot the next Back. */
+    var suppressPush = false;
 
-    /* On tab change → update URL hash */
+    /* On tab change → push a history entry per tab switch so Back
+     * traverses tab history one step at a time. The initial render
+     * and popstate-driven restores use suppressPush to avoid stacking
+     * extra entries on top of the user's actual navigation. */
     tabs.forEach(function(tab) {
       tab.addEventListener('shown.bs.tab', function(e) {
+        if (suppressPush) return;
         var id = e.target.getAttribute('href') || e.target.dataset.bsTarget;
-        if (id) history.replaceState(null, '', id);
+        if (!id) return;
+        if (location.hash === id) return;
+        try { history.pushState({ tab: id }, '', id); } catch (_) {}
       });
     });
 
@@ -4091,21 +4117,30 @@
       }
     });
 
+    function activateTabFromHash(hash) {
+      if (!hash) return false;
+      var target = document.querySelector('[data-bs-toggle="tab"][href="' + hash + '"]');
+      if (!target) return false;
+      suppressPush = true;
+      try { new bootstrap.Tab(target).show(); } finally { suppressPush = false; }
+      return true;
+    }
+
     /* On page load → restore from hash (manual refresh) or sessionStorage (post-redirect, consumed once) */
-    var hash = location.hash;
-    if (!hash) {
+    var initialHash = location.hash;
+    if (!initialHash) {
       try {
-        hash = sessionStorage.getItem(storageKey);
+        initialHash = sessionStorage.getItem(storageKey);
         sessionStorage.removeItem(storageKey);
       } catch(ex) {}
     }
-    if (hash) {
-      var target = document.querySelector('[data-bs-toggle="tab"][href="' + hash + '"]');
-      if (target) {
-        var bsTab = new bootstrap.Tab(target);
-        bsTab.show();
-      }
-    }
+    activateTabFromHash(initialHash);
+
+    /* Back/Forward across tab entries: re-activate the tab matching
+     * the URL hash without pushing a new entry. */
+    window.addEventListener('popstate', function() {
+      activateTabFromHash(location.hash);
+    });
   })();
 
   /* ── Sort preference persistence ────────────────── */
@@ -4129,45 +4164,56 @@
   })();
 
   /* ── Dynamic client-side table filtering ──────────── */
-  (function() {
-    var input = document.querySelector('.table-toolbar-input');
-    if (!input) return;
-    var tbody = document.querySelector('.table-toolbar ~ .card tbody');
+  /* Rebinds on every htmx:afterSettle so a boost-navigation that brings
+   * up a list page with a brand-new .table-toolbar-input wires its filter
+   * even though the IIFE-style initial run already happened on the old
+   * DOM (issue #65). A `data-search-bound` flag prevents stacking
+   * listeners on the same input across multiple settles.
+   */
+  function initTableSearch(root) {
+    root = root || document;
+    var input = root.querySelector('.table-toolbar-input');
+    if (!input || input.dataset.searchBound === 'true') return;
+    var tbody = root.querySelector('.table-toolbar ~ .card tbody');
     if (!tbody) return;
-    var rows = Array.from(tbody.querySelectorAll('tr'));
-    var emptyRow = tbody.querySelector('tr td[colspan]');
-    if (emptyRow) emptyRow = emptyRow.closest('tr');
 
-    /* Build text index once */
-    var rowData = rows.filter(function(r) { return r !== emptyRow; }).map(function(r) {
-      return { el: r, text: r.textContent.toLowerCase() };
-    });
+    function snapshotRows() {
+      var rows = Array.from(tbody.querySelectorAll('tr'));
+      var emptyRow = tbody.querySelector('tr td[colspan]');
+      if (emptyRow) emptyRow = emptyRow.closest('tr');
+      var rowData = rows.filter(function(r) { return r !== emptyRow; }).map(function(r) {
+        return { el: r, text: r.textContent.toLowerCase() };
+      });
+      return { rowData: rowData, emptyRow: emptyRow };
+    }
 
     var clearBtn = input.parentElement.querySelector('.table-toolbar-clear');
 
     function filter() {
+      /* Re-snapshot every keystroke so a partial table-body swap
+       * (hx-swap from a filter chip or HTMX trigger) doesn't strand
+       * the filter on a stale row list. */
+      var snap = snapshotRows();
       var q = input.value.trim().toLowerCase();
       var visible = 0;
-      rowData.forEach(function(rd) {
+      snap.rowData.forEach(function(rd) {
         var show = !q || rd.text.indexOf(q) !== -1;
         rd.el.style.display = show ? '' : 'none';
         if (show) visible++;
       });
-      /* Show/hide empty message */
-      if (emptyRow) {
-        emptyRow.style.display = (visible === 0 && q) ? '' : (rowData.length === 0 ? '' : 'none');
+      if (snap.emptyRow) {
+        snap.emptyRow.style.display = (visible === 0 && q) ? '' : (snap.rowData.length === 0 ? '' : 'none');
       }
-      /* Show/hide clear button */
       if (clearBtn) clearBtn.style.display = q ? '' : 'none';
     }
 
     input.addEventListener('input', filter);
+    input.dataset.searchBound = 'true';
 
-    /* Prevent form submission — filtering is client-side */
+    /* Prevent form submission, the filter is client-side. */
     var form = input.closest('form');
     if (form) form.addEventListener('submit', function(e) { e.preventDefault(); });
 
-    /* Handle clear button click */
     if (clearBtn) {
       clearBtn.addEventListener('click', function(e) {
         e.preventDefault();
@@ -4177,9 +4223,11 @@
       });
     }
 
-    /* Initial filter in case of browser back-fill */
     filter();
-  })();
+  }
+
+  initTableSearch();
+  document.body.addEventListener('htmx:afterSettle', function() { initTableSearch(); });
 
   /* ── Combinable filter chips ─────────────────────── */
   (function() {
@@ -4540,21 +4588,48 @@
   (function() {
     var drawerEl = document.getElementById('itemDrawer');
     var bsDrawer = null;
+    /* When the drawer is opened, we push a synthetic history entry
+     * tagged with DRAWER_MARKER. Back then maps to "close the drawer"
+     * instead of "leave the page". `internalHide` lets us distinguish
+     * a popstate-driven close (user pressed Back) from a UI-driven
+     * close (user clicked the X or submitted the form): in the
+     * UI-driven case we must call history.back() to pop our entry, in
+     * the popstate-driven case we must NOT, otherwise we skip a real
+     * history entry.
+     */
+    var DRAWER_MARKER = '__drawer_open__';
+    var internalHide = false;
 
     function getDrawer() {
       if (!bsDrawer) bsDrawer = new bootstrap.Offcanvas(drawerEl);
       return bsDrawer;
     }
 
-    /* After HTMX loads content into drawer, show it */
+    function pushDrawerEntry() {
+      try {
+        var state = { drawer: DRAWER_MARKER };
+        history.pushState(state, '', location.href);
+      } catch (_) { /* SecurityError in sandboxed contexts; ignore */ }
+    }
+
+    function isOnDrawerEntry() {
+      return !!(history.state && history.state.drawer === DRAWER_MARKER);
+    }
+
+    /* After HTMX loads content into drawer, show it and push a
+     * matching history entry so Back closes it. */
     document.body.addEventListener('htmx:afterSettle', function(evt) {
       if (evt.detail.target && evt.detail.target.id === 'drawer-form-content') {
+        if (!drawerEl.classList.contains('show')) {
+          pushDrawerEntry();
+        }
         getDrawer().show();
       }
     });
 
     /* On formSaved trigger from server, close drawer and refresh table */
     document.body.addEventListener('formSaved', function() {
+      internalHide = true;
       getDrawer().hide();
       var tableBody = document.getElementById('item-table-body');
       if (tableBody && tableBody.hasAttribute('hx-trigger')) {
@@ -4564,9 +4639,28 @@
       }
     });
 
-    /* Cleanup drawer content on hide */
+    /* Cleanup drawer content on hide. If the close was UI-driven (X
+     * button, form save, ESC) and our marker is still on top of the
+     * stack, pop it so Back returns to the page state that preceded
+     * the drawer instead of replaying the drawer-open entry. */
     drawerEl.addEventListener('hidden.bs.offcanvas', function() {
       document.getElementById('drawer-form-content').innerHTML = '';
+      if (internalHide && isOnDrawerEntry()) {
+        internalHide = false;
+        history.back();
+      } else {
+        internalHide = false;
+      }
+    });
+
+    /* Browser Back while the drawer is open: close it, do not navigate
+     * away. The marker has already been popped by the browser, so we
+     * must NOT push or pop again here. */
+    window.addEventListener('popstate', function() {
+      if (drawerEl.classList.contains('show') && !isOnDrawerEntry()) {
+        internalHide = false;
+        getDrawer().hide();
+      }
     });
   })();
   </script>

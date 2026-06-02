@@ -905,9 +905,17 @@ window.initSparklines = function(root) {
   var retryTimer = null;
 
   function setStatus(connected) {
+    // Guard both wsStatus and dot: the dashboard's WebSocket connection
+    // stays alive across HTMX boost navigations, but the status indicator
+    // UI is page-local. Once the user navigates away, ws.onclose still
+    // fires (during reconnects, network blips, etc.) and tries to update
+    // a status element that no longer exists in the DOM. Without the dot
+    // guard, ws.onclose throws `Cannot read properties of null (reading
+    // 'style')` and pollutes the console (issue #67).
     if (!wsStatus) return;
     wsStatus.style.display = '';
     var dot = document.getElementById('ws-dot');
+    if (!dot) return;
     if (connected) {
       wsStatus.title = TXT_CONNECTED;
       dot.style.color = 'var(--bs-success)';

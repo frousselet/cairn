@@ -51,7 +51,7 @@
         <div class="text-muted small">{% trans "Define or select threats from the catalog that apply to your scope." %}</div>
       </div>
       <span class="ms-auto badge text-bg-{% if threat_count > 0 %}success{% else %}secondary{% endif %}">{{ threat_count }} {% trans "threat(s)" %}</span>
-      <a href="{% url 'risks:threat-list' %}" class="btn btn-sm btn-outline-primary ms-2">{% trans "Manage" %}</a>
+      <a href="{% url 'risks:threat-list' %}?assessment={{ assessment.pk }}" class="btn btn-sm btn-outline-primary ms-2">{% trans "Manage" %}</a>
     </div>
     <div class="workflow-step {% if vulnerability_count > 0 %}workflow-step-done{% elif threat_count > 0 %}workflow-step-active{% else %}workflow-step-pending{% endif %}">
       <span class="step-number">2</span>
@@ -60,7 +60,7 @@
         <div class="text-muted small">{% trans "Define or select vulnerabilities from the catalog." %}</div>
       </div>
       <span class="ms-auto badge text-bg-{% if vulnerability_count > 0 %}success{% else %}secondary{% endif %}">{{ vulnerability_count }} {% trans "vulnerability(ies)" %}</span>
-      <a href="{% url 'risks:vulnerability-list' %}" class="btn btn-sm btn-outline-primary ms-2">{% trans "Manage" %}</a>
+      <a href="{% url 'risks:vulnerability-list' %}?assessment={{ assessment.pk }}" class="btn btn-sm btn-outline-primary ms-2">{% trans "Manage" %}</a>
     </div>
     <div class="workflow-step {% if iso27005_risks %}workflow-step-done{% elif vulnerability_count > 0 %}workflow-step-active{% else %}workflow-step-pending{% endif %}">
       <span class="step-number">3</span>

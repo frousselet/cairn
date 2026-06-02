@@ -8581,3 +8581,22 @@ msgstr "Aucun historique disponible."
 
 msgid "Search…"
 msgstr "Rechercher…"
+
+msgid "Back to analysis"
+msgstr "Retour à l'analyse"
+
+#, python-format
+msgid ""
+"Browsing the threat catalog in the context of analysis <strong>%(ref)s : "
+"%(name)s</strong>."
+msgstr ""
+"Consultation du catalogue de menaces dans le contexte de l'analyse "
+"<strong>%(ref)s : %(name)s</strong>."
+
+#, python-format
+msgid ""
+"Browsing the vulnerability catalog in the context of analysis <strong>"
+"%(ref)s : %(name)s</strong>."
+msgstr ""
+"Consultation du catalogue de vulnérabilités dans le contexte de l'analyse "
+"<strong>%(ref)s : %(name)s</strong>."

@@ -336,7 +336,7 @@ class TestAssessmentResultCreateView:
         create_url = reverse("compliance:assessment-result-create", args=[assessment.pk])
 
         # GET returns modal form
-        response = client.get(create_url + f"?requirement={req.pk}", HTTP_HX_REQUEST="true")
+        response = client.get(create_url + f"?requirement={req.pk}", HTTP_HX_REQUEST="true", HTTP_HX_TARGET="drawer-form-content")
         assert response.status_code == 200
         assert b"clipboard-check" in response.content
 
@@ -351,7 +351,7 @@ class TestAssessmentResultCreateView:
                 "finding": "",
                 "auditor_recommendations": "",
             },
-            HTTP_HX_REQUEST="true",
+            HTTP_HX_REQUEST="true", HTTP_HX_TARGET="drawer-form-content",
         )
         assert response.status_code == 204
         assert assessment.results.count() == 1
@@ -390,7 +390,7 @@ class TestAssessmentResultUpdateView:
                 "finding": "Missing controls",
                 "auditor_recommendations": "",
             },
-            HTTP_HX_REQUEST="true",
+            HTTP_HX_REQUEST="true", HTTP_HX_TARGET="drawer-form-content",
         )
         assert response.status_code == 204
         result.refresh_from_db()
