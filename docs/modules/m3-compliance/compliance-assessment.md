@@ -100,6 +100,30 @@ L'API REST `POST /assessments/<uuid>/transition/` et le MCP `update_compliance_a
 
 Le report des résultats sur les exigences (RC-06) est déclenché à la **clôture** (`completed -> closed`), pas à l'approbation. `approve_compliance_assessment` ne déclenche aucun calcul, c'est purement une signature de validation. Cette séparation permet de relire et corriger une évaluation closed avant de l'approuver sans que l'approbation ait à recalculer quoi que ce soit.
 
+## Divergences par rapport à la spec d'origine
+
+La spec M3 §2.4 décrivait une évaluation mono-référentielle, datée d'une seule date, portant un champ `methodology` et sans rattachement explicite au périmètre. L'implémentation a évolué sur ces quatre axes ; les choix sont actés.
+
+### Multi-référentiel (`frameworks` M2M)
+
+Une évaluation peut couvrir plusieurs référentiels simultanément. Cas d'usage : un audit annuel ISO 27001 + RGPD + une norme sectorielle (ex. HDS pour la santé) est une seule campagne, pas trois. Permet de mutualiser le travail terrain (les preuves recueillies pour ISO 27001 §A.5.34 servent aussi à l'article 32 du RGPD) et de partager une seule fenêtre d'audit auprès des audités.
+
+**Impact sur RC-06.** À la clôture, `recalculate_counts()` propage chaque `AssessmentResult` vers son `Requirement` cible, peu importe le framework auquel cette exigence appartient. Tous les frameworks rattachés voient ainsi leur `Framework.compliance_level` recalculé, et leur `Framework.last_assessment_date` mis à jour avec l'`assessment_end_date` de la campagne.
+
+Côté requête : `assessment.frameworks.all()` énumère les référentiels couverts ; `assessment.results.all()` énumère les résultats tous référentiels confondus ; pour scoper par référentiel utiliser `assessment.results.filter(requirement__framework=fw)`.
+
+### Période d'audit (`assessment_start_date` / `assessment_end_date`)
+
+La spec d'origine n'avait qu'une `assessment_date` ponctuelle. L'implémentation utilise une **période** car un audit s'étale typiquement sur plusieurs jours (cycle terrain + revue documentaire + restitution), parfois sur plusieurs semaines pour les frameworks lourds. La `assessment_end_date` sert de référence pour la fraîcheur (`Framework.last_assessment_date` reprend cette valeur à la clôture) ; la `assessment_start_date` documente le début de fenêtre pour les exports d'audit.
+
+### `limitations` au lieu de `methodology`
+
+La spec d'origine avait un champ `methodology` pour décrire la méthode d'audit. L'implémentation a remplacé par `limitations` (réserves, exclusions, portée non couverte). La méthodologie est plutôt portée au niveau de la documentation d'audit attachée (modèle de preuve, plan d'audit) ou au niveau du Framework (un framework ISO 27001 implique une méthodologie connue, inutile de la dupliquer à chaque campagne). `limitations` capte ce qui doit obligatoirement apparaître dans le rapport d'audit : « la salle serveur du site B n'a pas pu être inspectée », « le scope exclut les filiales acquises en 2025 ».
+
+### Rattachement au périmètre (`scopes` M2M)
+
+L'évaluation est `ScopedModel` et accepte `scope_ids` comme toutes les autres entités domaine (rattachement transverse RG-01). Permet de cloisonner les audits par périmètre SMSI : un audit du périmètre « France » ne pollue pas les KPI du périmètre « Allemagne ». Un audit transverse peut rester sans périmètre (liste vide).
+
 ## AssessmentResult
 
 `compliance.models.assessment.AssessmentResult`
