@@ -1,10 +1,21 @@
-# Module 0 — Gestion des Utilisateurs et Contrôle d'Accès
+# Module 0 : Gestion des Utilisateurs et Contrôle d'Accès
 
 ## Spécifications fonctionnelles et techniques
 
 **Version :** 1.0
 **Date :** 27 février 2026
 **Statut :** Draft
+
+---
+
+## Entities in this module
+
+- [User](user.md)
+- [Group](group.md)
+- [Permission](permission.md)
+- [SpecialPermission](special-permission.md)
+- [Session](session.md)
+- [AccessLog](access-log.md)
 
 ---
 
@@ -40,123 +51,6 @@ Le module couvre cinq sous-domaines :
 - **Admin Django réservée :** l'accès à l'interface d'administration Django est contrôlé par une permission dédiée, destinée exclusivement aux opérations techniques avancées (debug, configuration bas niveau).
 - **Extensibilité de l'authentification :** l'architecture est conçue pour intégrer ultérieurement des mécanismes SSO (SAML 2.0, OIDC) sans impact majeur sur le modèle de données.
 - **Granularité maximale :** chaque feature de chaque module dispose de 4 permissions élémentaires (create, read, update, delete), attribuées exclusivement via des groupes.
-
----
-
-## 2. Modèle de données
-
-### 2.1 Entité : User (Utilisateur)
-
-Représente un utilisateur de la plateforme Cairn.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `email` | string | requis, unique, format email | Adresse email (identifiant de connexion) |
-| `first_name` | string | requis, max 150 | Prénom |
-| `last_name` | string | requis, max 150 | Nom de famille |
-| `display_name` | string | calculé ou surchargé, max 255 | Nom d'affichage (`first_name last_name` par défaut) |
-| `job_title` | string | optionnel, max 255 | Fonction / poste |
-| `department` | string | optionnel, max 255 | Direction / service |
-| `phone` | string | optionnel, max 50 | Numéro de téléphone |
-| `avatar` | image | optionnel | Photo de profil |
-| `password` | string | requis, hashé | Mot de passe (bcrypt/argon2) |
-| `is_active` | boolean | requis, défaut true | Compte actif |
-| `is_staff` | boolean | requis, défaut false | Accès à l'interface d'administration Django |
-| `groups` | relation | M2M → Group | Groupes d'appartenance |
-| `language` | enum | requis, défaut `fr` | Langue d'interface préférée (`fr`, `en`) |
-| `timezone` | string | requis, défaut `Europe/Paris` | Fuseau horaire |
-| `notification_preferences` | json | optionnel | Préférences de notification (email, in-app) |
-| `last_login` | datetime | auto | Date de dernière connexion |
-| `password_changed_at` | datetime | auto | Date du dernier changement de mot de passe |
-| `failed_login_attempts` | integer | auto, défaut 0 | Nombre de tentatives de connexion échouées consécutives |
-| `locked_until` | datetime | optionnel | Date de fin de verrouillage du compte |
-| `created_by` | relation | FK → User, optionnel | Créateur du compte (null si auto-inscription) |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-> Note : Le champ `email` est l'identifiant unique de connexion. Il remplace le champ `username` par défaut de Django.
-
-### 2.2 Entité : Group (Groupe)
-
-Représente un groupe de permissions. Les droits d'accès sont attribués exclusivement via les groupes, jamais directement à un utilisateur.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `name` | string | requis, unique, max 255 | Nom du groupe |
-| `description` | text | optionnel | Description du groupe et de sa vocation |
-| `is_system` | boolean | requis, défaut false | Groupe système (non modifiable, non supprimable) |
-| `permissions` | relation | M2M → Permission | Permissions associées |
-| `users` | relation | M2M → User | Utilisateurs membres |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-### 2.3 Entité : Permission (Permission)
-
-Représente une permission élémentaire sur une feature d'un module. Les permissions sont générées par le système et ne sont pas créées manuellement.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `codename` | string | requis, unique, max 255 | Code technique (ex. `context.scope.create`) |
-| `name` | string | requis, max 255 | Libellé lisible (ex. « Créer un périmètre ») |
-| `module` | string | requis, max 100 | Module d'appartenance (ex. `context`, `assets`) |
-| `feature` | string | requis, max 100 | Feature concernée (ex. `scope`, `essential_asset`) |
-| `action` | enum | requis | `create`, `read`, `update`, `delete` |
-| `description` | text | optionnel | Description détaillée de la permission |
-| `is_system` | boolean | requis, défaut true | Permission système (non supprimable) |
-
-> Note : Le format du `codename` suit la convention `{module}.{feature}.{action}`. Les permissions sont auto-générées à partir du registre des modules.
-
-### 2.4 Entité : SpecialPermission (Permission spéciale)
-
-Certaines permissions ne suivent pas le modèle CRUD standard et couvrent des actions transversales ou spécifiques.
-
-| Codename | Description |
-|---|---|
-| `system.admin_django.access` | Afficher le bouton d'accès et accéder à l'interface d'administration Django |
-| `system.users.manage` | Gérer les utilisateurs (créer, modifier, désactiver) |
-| `system.groups.manage` | Gérer les groupes et affecter des permissions |
-| `system.audit_trail.read` | Consulter le journal d'audit global |
-| `system.config.manage` | Accéder à la configuration globale de l'application |
-| `system.webhooks.manage` | Gérer les webhooks |
-| `system.notifications.manage` | Gérer les modèles de notifications |
-
-> Ces permissions spéciales sont créées en tant qu'enregistrements `Permission` avec `module = system` et sont traitées de la même manière que les permissions CRUD par le moteur d'autorisation.
-
-### 2.5 Entité : Session (Session utilisateur)
-
-Représente une session active d'un utilisateur authentifié.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `user_id` | relation | FK → User, requis | Utilisateur |
-| `token_jti` | string | requis, unique | Identifiant unique du JWT (JTI claim) |
-| `ip_address` | string | requis | Adresse IP de connexion |
-| `user_agent` | string | optionnel | User-agent du navigateur/client |
-| `created_at` | datetime | auto | Date de création (connexion) |
-| `expires_at` | datetime | requis | Date d'expiration |
-| `revoked_at` | datetime | optionnel | Date de révocation (déconnexion explicite) |
-| `is_active` | boolean | requis, défaut true | Session active |
-
-### 2.6 Entité : AccessLog (Journal des accès)
-
-Enregistre chaque événement d'authentification pour la traçabilité et la détection d'anomalies.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `timestamp` | datetime | auto | Horodatage UTC |
-| `user_id` | relation | FK → User, optionnel | Utilisateur (null si login échoué sur un compte inexistant) |
-| `email_attempted` | string | requis | Email utilisé pour la tentative |
-| `event_type` | enum | requis | `login_success`, `login_failed`, `logout`, `token_refresh`, `password_change`, `password_reset_request`, `password_reset_complete`, `account_locked`, `account_unlocked` |
-| `ip_address` | string | requis | Adresse IP |
-| `user_agent` | string | optionnel | User-agent |
-| `failure_reason` | string | optionnel | Raison de l'échec (ex. `invalid_password`, `account_locked`, `account_inactive`) |
-| `metadata` | json | optionnel | Données complémentaires |
 
 ---
 
@@ -209,7 +103,7 @@ Enregistre chaque événement d'authentification pour la traçabilité et la dé
 | RG-04 | Les groupes personnalisés (non système) peuvent être créés, modifiés et supprimés par les utilisateurs disposant de la permission `system.groups.manage`. |
 | RG-05 | La suppression d'un groupe est interdite s'il contient encore des utilisateurs. Les utilisateurs doivent d'abord être retirés ou réaffectés. |
 | RG-06 | Les **permissions sont générées automatiquement** par le système à partir du registre des modules et features. Elles ne peuvent pas être créées ou supprimées manuellement. |
-| RG-07 | Chaque feature de chaque module génère exactement **4 permissions** : `create`, `read`, `update`, `delete`. Les permissions spéciales (§2.4) sont ajoutées manuellement au registre. |
+| RG-07 | Chaque feature de chaque module génère exactement **4 permissions** : `create`, `read`, `update`, `delete`. Les permissions spéciales ([SpecialPermission](special-permission.md)) sont ajoutées manuellement au registre. |
 | RG-08 | Toute modification d'un groupe (ajout/retrait de permission, ajout/retrait de membre) génère une entrée dans le journal d'audit. |
 | RG-09 | Le bouton d'accès à l'**admin Django** n'est visible dans l'interface que pour les utilisateurs disposant de la permission `system.admin_django.access`. |
 
@@ -292,33 +186,33 @@ Chaque permission suit le format : `{module}.{feature}.{action}`
 | Feature | create | read | update | delete |
 |---|---|---|---|---|
 | `scope` | `context.scope.create` | `context.scope.read` | `context.scope.update` | `context.scope.delete` |
-| `scope_approve` | — | — | `context.scope_approve.update` | — |
+| `scope_approve` | : | : | `context.scope_approve.update` | : |
 | `issue` | `context.issue.create` | `context.issue.read` | `context.issue.update` | `context.issue.delete` |
 | `stakeholder` | `context.stakeholder.create` | `context.stakeholder.read` | `context.stakeholder.update` | `context.stakeholder.delete` |
 | `expectation` | `context.expectation.create` | `context.expectation.read` | `context.expectation.update` | `context.expectation.delete` |
 | `objective` | `context.objective.create` | `context.objective.read` | `context.objective.update` | `context.objective.delete` |
 | `swot` | `context.swot.create` | `context.swot.read` | `context.swot.update` | `context.swot.delete` |
-| `swot_validate` | — | — | `context.swot_validate.update` | — |
+| `swot_validate` | : | : | `context.swot_validate.update` | : |
 | `role` | `context.role.create` | `context.role.read` | `context.role.update` | `context.role.delete` |
-| `role_assign` | — | — | `context.role_assign.update` | — |
+| `role_assign` | : | : | `context.role_assign.update` | : |
 | `activity` | `context.activity.create` | `context.activity.read` | `context.activity.update` | `context.activity.delete` |
-| `config` | — | `context.config.read` | `context.config.update` | — |
-| `export` | — | `context.export.read` | — | — |
-| `audit_trail` | — | `context.audit_trail.read` | — | — |
+| `config` | : | `context.config.read` | `context.config.update` | : |
+| `export` | : | `context.export.read` | : | : |
+| `audit_trail` | : | `context.audit_trail.read` | : | : |
 
 #### Module Gestion des Actifs (`assets`)
 
 | Feature | create | read | update | delete |
 |---|---|---|---|---|
 | `essential_asset` | `assets.essential_asset.create` | `assets.essential_asset.read` | `assets.essential_asset.update` | `assets.essential_asset.delete` |
-| `essential_asset_evaluate` | — | — | `assets.essential_asset_evaluate.update` | — |
+| `essential_asset_evaluate` | : | : | `assets.essential_asset_evaluate.update` | : |
 | `support_asset` | `assets.support_asset.create` | `assets.support_asset.read` | `assets.support_asset.update` | `assets.support_asset.delete` |
 | `dependency` | `assets.dependency.create` | `assets.dependency.read` | `assets.dependency.update` | `assets.dependency.delete` |
 | `group` | `assets.group.create` | `assets.group.read` | `assets.group.update` | `assets.group.delete` |
-| `import` | `assets.import.create` | — | — | — |
-| `config` | — | `assets.config.read` | `assets.config.update` | — |
-| `export` | — | `assets.export.read` | — | — |
-| `audit_trail` | — | `assets.audit_trail.read` | — | — |
+| `import` | `assets.import.create` | : | : | : |
+| `config` | : | `assets.config.read` | `assets.config.update` | : |
+| `export` | : | `assets.export.read` | : | : |
+| `audit_trail` | : | `assets.audit_trail.read` | : | : |
 
 > Note : Les modules Risques, Conformité, Mesures, Fournisseurs, Audits, Incidents et Formations suivront la même convention. Le registre complet sera établi lors de la spécification de chaque module.
 
@@ -343,7 +237,7 @@ Chaque permission suit le format : `{module}.{feature}.{action}`
 - **Base URL :** `/api/v1/`
 - Conventions identiques aux autres modules (pagination, tri, filtrage, format de réponse).
 
-### 6.2 Endpoints — Authentification
+### 6.2 Endpoints : Authentification
 
 | Méthode | Endpoint | Description | Authentification requise |
 |---|---|---|---|
@@ -419,7 +313,7 @@ Chaque permission suit le format : `{module}.{feature}.{action}`
 }
 ```
 
-### 6.3 Endpoints — Utilisateurs
+### 6.3 Endpoints : Utilisateurs
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -446,7 +340,7 @@ Chaque permission suit le format : `{module}.{feature}.{action}`
 - `?department=DSI`
 - `?has_permission={codename}` (utilisateurs disposant d'une permission spécifique)
 
-### 6.4 Endpoints — Groupes
+### 6.4 Endpoints : Groupes
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -464,7 +358,7 @@ Chaque permission suit le format : `{module}.{feature}.{action}`
 | `POST` | `/groups/{id}/users` | Ajouter des utilisateurs au groupe |
 | `DELETE` | `/groups/{id}/users/{user_id}` | Retirer un utilisateur du groupe |
 
-### 6.5 Endpoints — Permissions
+### 6.5 Endpoints : Permissions
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -479,7 +373,7 @@ Chaque permission suit le format : `{module}.{feature}.{action}`
 - `?action=create`
 - `?search=terme`
 
-### 6.6 Endpoints — Journal des accès
+### 6.6 Endpoints : Journal des accès
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -560,12 +454,12 @@ Le bouton d'accès à l'admin Django est affiché **uniquement** si l'utilisateu
 | Mesure | Description |
 |---|---|
 | Rate limiting | Limitation des tentatives de connexion : max 10 requêtes par minute par IP sur `/auth/login` |
-| Verrouillage de compte | Verrouillage temporaire après N échecs consécutifs (§3.1 RA-04) |
+| Verrouillage de compte | Verrouillage temporaire après N échecs consécutifs ([RA-04](#31-règles-dauthentification)) |
 | Protection CSRF | Token CSRF sur les formulaires (mode session) ; non applicable en mode JWT pur |
 | Protection XSS | Échappement des données utilisateur, Content-Security-Policy stricte |
 | Transport sécurisé | HTTPS obligatoire en production |
 | Cookies sécurisés | Flags `HttpOnly`, `Secure`, `SameSite=Strict` sur les cookies de session/refresh |
-| Rotation des tokens | Refresh token rotatif avec invalidation de l'ancien (§3.1 RA-06) |
+| Rotation des tokens | Refresh token rotatif avec invalidation de l'ancien ([RA-06](#31-règles-dauthentification)) |
 
 ### 8.2 Politique de mots de passe par défaut
 
@@ -623,7 +517,7 @@ Les actions d'administration suivantes sont tracées dans le journal d'audit glo
 
 ### 9.2 Journal des accès
 
-Le journal des accès (AccessLog, §2.6) est distinct du journal d'audit et se concentre sur les événements d'authentification. Sa rétention est paramétrable (défaut : 2 ans).
+Le journal des accès ([AccessLog](access-log.md)) est distinct du journal d'audit et se concentre sur les événements d'authentification. Sa rétention est paramétrable (défaut : 2 ans).
 
 ### 9.3 Rétention
 
@@ -738,4 +632,4 @@ Chaque utilisateur est rattaché à un tenant (`tenant_id`). Un utilisateur ne p
 
 ---
 
-*Fin des spécifications du Module 0 — Gestion des Utilisateurs et Contrôle d'Accès*
+*Fin des spécifications du Module 0 : Gestion des Utilisateurs et Contrôle d'Accès*

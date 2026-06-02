@@ -113,7 +113,7 @@ Legacy GitHub Actions are kept in `.github/workflows/` but GitLab is the primary
 
 ### Feature Specifications
 
-Detailed specs live in `features_spec/` (M0–M4 markdown files covering users, context, assets, compliance, and risk modules). Reference these when implementing new features in a module.
+Detailed specs live in `docs/modules/` : one directory per module (`m0-accounts/`, `m1-context/`, `m2-assets/`, `m3-compliance/`, `m4-risks/` with the `ebios-rm/` sub-module, `management-review/`), and one Markdown file per domain entity inside each. Each module's `README.md` holds the cross-cutting sections (business rules, API conventions, permissions, UI, notifications, technical considerations). Reference the right entity file when implementing a feature change, and update it in the same commit. See `docs/modules/README.md` for the layout conventions.
 
 ## Development Guidelines
 

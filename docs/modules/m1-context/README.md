@@ -1,10 +1,22 @@
-# Module 1 — Contexte et Organisation
+# Module 1 : Contexte et Organisation
 
 ## Spécifications fonctionnelles et techniques
 
 **Version :** 1.0
 **Date :** 27 février 2026
 **Statut :** Draft
+
+---
+
+## Entities in this module
+
+- [Scope](scope.md)
+- [Issue](issue.md)
+- [Stakeholder](stakeholder.md) (et `StakeholderExpectation`)
+- [Objective](objective.md)
+- [SwotAnalysis](swot.md) (et `SwotItem`)
+- [Role](role.md) (et `Responsibility`)
+- [Activity](activity.md)
 
 ---
 
@@ -41,233 +53,9 @@ Le module couvre sept sous-domaines :
 
 ---
 
-## 2. Modèle de données
+## Règles de gestion
 
-### 2.1 Entité : Scope (Domaine d'application)
-
-Représente le périmètre couvert par le dispositif GRC.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `name` | string | requis, max 255 | Nom du périmètre |
-| `description` | text | requis | Description détaillée du périmètre |
-| `version` | string | requis | Version du document de périmètre |
-| `status` | enum | requis | `draft`, `active`, `archived` |
-| `boundaries` | text | optionnel | Limites et exclusions du périmètre |
-| `justification_exclusions` | text | optionnel | Justification des exclusions |
-| `geographic_scope` | text | optionnel | Périmètre géographique |
-| `organizational_scope` | text | optionnel | Périmètre organisationnel |
-| `technical_scope` | text | optionnel | Périmètre technique |
-| `applicable_standards` | relation | M2M → Referential | Référentiels applicables |
-| `approved_by` | relation | FK → User | Approbateur |
-| `approved_at` | datetime | optionnel | Date d'approbation |
-| `effective_date` | date | optionnel | Date d'entrée en vigueur |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-### 2.2 Entité : Issue (Enjeu)
-
-Représente un enjeu interne ou externe pouvant influencer la capacité de l'organisme à atteindre les résultats attendus de son dispositif GRC.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `name` | string | requis, max 255 | Intitulé de l'enjeu |
-| `description` | text | optionnel | Description détaillée |
-| `type` | enum | requis | `internal`, `external` |
-| `category` | enum | requis | Voir liste ci-dessous |
-| `impact_level` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `trend` | enum | optionnel | `improving`, `stable`, `degrading` |
-| `source` | string | optionnel | Source de l'identification de l'enjeu |
-| `related_stakeholders` | relation | M2M → Stakeholder | Parties intéressées liées |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `status` | enum | requis | `identified`, `active`, `monitored`, `closed` |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-**Catégories d'enjeux (valeurs de `category`) :**
-
-- *Enjeux internes :* `strategic`, `organizational`, `human_resources`, `technical`, `financial`, `cultural`
-- *Enjeux externes :* `political`, `economic`, `social`, `technological`, `legal`, `environmental`, `competitive`, `regulatory`
-
-> Note : Les catégories doivent être paramétrables par l'administrateur (ajout/modification/suppression).
-
-### 2.3 Entité : Stakeholder (Partie intéressée)
-
-Représente toute personne ou organisme pouvant affecter, être affecté ou se sentir affecté par une décision ou une activité.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `name` | string | requis, max 255 | Nom de la partie intéressée |
-| `type` | enum | requis | `internal`, `external` |
-| `category` | enum | requis | Voir liste ci-dessous |
-| `description` | text | optionnel | Description |
-| `contact_name` | string | optionnel | Nom du contact principal |
-| `contact_email` | string | optionnel, format email | Email du contact |
-| `contact_phone` | string | optionnel | Téléphone du contact |
-| `influence_level` | enum | requis | `low`, `medium`, `high` |
-| `interest_level` | enum | requis | `low`, `medium`, `high` |
-| `expectations` | relation | O2M → StakeholderExpectation | Attentes et exigences |
-| `related_issues` | relation | M2M → Issue | Enjeux associés |
-| `status` | enum | requis | `active`, `inactive` |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-**Catégories de parties intéressées (valeurs de `category`) :**
-
-`executive_management`, `employees`, `customers`, `suppliers`, `partners`, `regulators`, `shareholders`, `insurers`, `public`, `competitors`, `unions`, `auditors`, `other`
-
-> Note : Les catégories doivent être paramétrables par l'administrateur.
-
-### 2.4 Sous-entité : StakeholderExpectation (Attente d'une partie intéressée)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `stakeholder_id` | relation | FK → Stakeholder, requis | Partie intéressée parente |
-| `description` | text | requis | Description de l'attente ou exigence |
-| `type` | enum | requis | `requirement`, `expectation`, `need` |
-| `priority` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `is_applicable` | boolean | requis, défaut true | Applicable au périmètre |
-| `linked_requirements` | relation | M2M → Requirement | Exigences de conformité liées (module Conformité) |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-### 2.5 Entité : Objective (Objectif)
-
-Représente un objectif de sécurité de l'information ou de conformité.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `reference` | string | requis, unique | Code de référence (ex. OBJ-001) |
-| `name` | string | requis, max 255 | Intitulé de l'objectif |
-| `description` | text | optionnel | Description détaillée |
-| `category` | enum | requis | `confidentiality`, `integrity`, `availability`, `compliance`, `operational`, `strategic` |
-| `type` | enum | requis | `security`, `compliance`, `business`, `other` |
-| `target_value` | string | optionnel | Valeur cible mesurable |
-| `current_value` | string | optionnel | Valeur actuelle |
-| `unit` | string | optionnel | Unité de mesure |
-| `measurement_method` | text | optionnel | Méthode de mesure |
-| `measurement_frequency` | enum | optionnel | `monthly`, `quarterly`, `semi_annual`, `annual` |
-| `target_date` | date | optionnel | Date cible d'atteinte |
-| `owner_id` | relation | FK → User, requis | Responsable de l'objectif |
-| `status` | enum | requis | `draft`, `active`, `achieved`, `not_achieved`, `cancelled` |
-| `progress_percentage` | integer | optionnel, 0-100 | Pourcentage d'avancement |
-| `related_issues` | relation | M2M → Issue | Enjeux adressés |
-| `related_stakeholders` | relation | M2M → Stakeholder | Parties intéressées concernées |
-| `parent_objective_id` | relation | FK → Objective, optionnel | Objectif parent (hiérarchie) |
-| `linked_measures` | relation | M2M → Measure | Mesures contribuant à l'objectif (module Mesures) |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-### 2.6 Entité : SwotAnalysis (Analyse SWOT)
-
-Représente une analyse SWOT réalisée pour un périmètre donné.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `name` | string | requis, max 255 | Intitulé de l'analyse |
-| `description` | text | optionnel | Contexte de l'analyse |
-| `analysis_date` | date | requis | Date de réalisation |
-| `status` | enum | requis | `draft`, `validated`, `archived` |
-| `validated_by` | relation | FK → User | Validateur |
-| `validated_at` | datetime | optionnel | Date de validation |
-| `items` | relation | O2M → SwotItem | Éléments SWOT |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-### 2.7 Sous-entité : SwotItem (Élément SWOT)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `swot_analysis_id` | relation | FK → SwotAnalysis, requis | Analyse parente |
-| `quadrant` | enum | requis | `strength`, `weakness`, `opportunity`, `threat` |
-| `description` | text | requis | Description de l'élément |
-| `impact_level` | enum | requis | `low`, `medium`, `high` |
-| `related_issues` | relation | M2M → Issue | Enjeux associés |
-| `related_objectives` | relation | M2M → Objective | Objectifs associés |
-| `order` | integer | requis | Ordre d'affichage dans le quadrant |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-### 2.8 Entité : Role (Rôle)
-
-Représente un rôle au sein du dispositif GRC.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `name` | string | requis, max 255 | Intitulé du rôle |
-| `description` | text | optionnel | Description du rôle |
-| `type` | enum | requis | `governance`, `operational`, `support`, `control` |
-| `responsibilities` | relation | O2M → Responsibility | Responsabilités associées |
-| `assigned_users` | relation | M2M → User | Utilisateurs affectés |
-| `is_mandatory` | boolean | requis, défaut false | Rôle obligatoire (exigé par un référentiel) |
-| `source_standard` | string | optionnel | Référentiel d'origine (ex. "ISO 27001 - §5.3") |
-| `status` | enum | requis | `active`, `inactive` |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-### 2.9 Sous-entité : Responsibility (Responsabilité)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `role_id` | relation | FK → Role, requis | Rôle parent |
-| `description` | text | requis | Description de la responsabilité |
-| `raci_type` | enum | requis | `responsible`, `accountable`, `consulted`, `informed` |
-| `related_activity_id` | relation | FK → Activity, optionnel | Activité associée |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-### 2.10 Entité : Activity (Activité / Processus métier)
-
-Représente une activité ou un processus métier de l'organisme.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `reference` | string | requis, unique | Code de référence (ex. ACT-001) |
-| `name` | string | requis, max 255 | Nom de l'activité |
-| `description` | text | optionnel | Description détaillée |
-| `type` | enum | requis | `core_business`, `support`, `management` |
-| `criticality` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `owner_id` | relation | FK → User, requis | Responsable de l'activité |
-| `parent_activity_id` | relation | FK → Activity, optionnel | Activité parente (hiérarchie) |
-| `related_stakeholders` | relation | M2M → Stakeholder | Parties intéressées impliquées |
-| `related_objectives` | relation | M2M → Objective | Objectifs contributifs |
-| `linked_assets` | relation | M2M → EssentialAsset | Biens essentiels supportant l'activité (module Actifs) |
-| `status` | enum | requis | `active`, `inactive`, `planned` |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
----
-
-## 3. Règles de gestion
-
-### 3.1 Règles générales
+### Règles générales
 
 | ID | Règle |
 |---|---|
@@ -279,7 +67,7 @@ Représente une activité ou un processus métier de l'organisme.
 | RG-06 | Les listes de valeurs de type `enum` paramétrables (catégories d'enjeux, catégories de parties intéressées) sont gérées via une table de configuration dédiée. |
 | RG-07 | Les relations M2M (many-to-many) sont stockées dans des tables de jointure dédiées. |
 
-### 3.2 Règles spécifiques
+### Règles spécifiques
 
 | ID | Règle |
 |---|---|
@@ -293,9 +81,9 @@ Représente une activité ou un processus métier de l'organisme.
 
 ---
 
-## 4. Spécifications API REST
+## Spécifications API REST
 
-### 4.1 Conventions générales
+### Conventions générales
 
 - **Base URL :** `/api/v1/context/`
 - **Format :** JSON (application/json)
@@ -308,7 +96,7 @@ Représente une activité ou un processus métier de l'organisme.
 - **Format de date :** ISO 8601 (`2026-02-27T14:30:00Z`)
 - **Codes HTTP :** 200 (OK), 201 (Created), 204 (No Content), 400 (Bad Request), 401 (Unauthorized), 403 (Forbidden), 404 (Not Found), 409 (Conflict), 422 (Unprocessable Entity)
 
-### 4.2 Structure de réponse standard
+### Structure de réponse standard
 
 ```json
 {
@@ -341,7 +129,7 @@ Représente une activité ou un processus métier de l'organisme.
 }
 ```
 
-### 4.3 Endpoints — Scope (Domaine d'application)
+### Endpoints : Scope (Domaine d'application)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -356,7 +144,7 @@ Représente une activité ou un processus métier de l'organisme.
 | `GET` | `/scopes/{id}/history` | Historique des modifications |
 | `GET` | `/scopes/{id}/export` | Export (PDF, DOCX, JSON) |
 
-### 4.4 Endpoints — Issues (Enjeux)
+### Endpoints : Issues (Enjeux)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -369,7 +157,7 @@ Représente une activité ou un processus métier de l'organisme.
 | `GET` | `/issues` | Lister tous les enjeux (tous périmètres, filtrable) |
 | `GET` | `/issues/categories` | Lister les catégories disponibles |
 
-### 4.5 Endpoints — Stakeholders (Parties intéressées)
+### Endpoints : Stakeholders (Parties intéressées)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -385,7 +173,7 @@ Représente une activité ou un processus métier de l'organisme.
 | `DELETE` | `/stakeholders/{id}/expectations/{exp_id}` | Supprimer une attente |
 | `GET` | `/stakeholders/matrix` | Matrice influence/intérêt (données agrégées) |
 
-### 4.6 Endpoints — Objectives (Objectifs)
+### Endpoints : Objectives (Objectifs)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -400,7 +188,7 @@ Représente une activité ou un processus métier de l'organisme.
 | `GET` | `/objectives/tree` | Arborescence complète des objectifs |
 | `GET` | `/objectives/dashboard` | Données de tableau de bord (KPIs agrégés) |
 
-### 4.7 Endpoints — SWOT
+### Endpoints : SWOT
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -417,7 +205,7 @@ Représente une activité ou un processus métier de l'organisme.
 | `PATCH` | `/swot-analyses/{id}/items/reorder` | Réordonner les éléments |
 | `GET` | `/swot-analyses/{id}/export` | Export (PDF, image, JSON) |
 
-### 4.8 Endpoints — Roles (Rôles et responsabilités)
+### Endpoints : Roles (Rôles et responsabilités)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -436,7 +224,7 @@ Représente une activité ou un processus métier de l'organisme.
 | `GET` | `/scopes/{scope_id}/raci-matrix` | Matrice RACI complète du périmètre |
 | `GET` | `/roles/compliance-check` | Vérifier les rôles obligatoires non pourvus |
 
-### 4.9 Endpoints — Activities (Activités)
+### Endpoints : Activities (Activités)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -450,7 +238,7 @@ Représente une activité ou un processus métier de l'organisme.
 | `GET` | `/activities/tree` | Arborescence complète |
 | `GET` | `/activities/{id}/assets` | Lister les biens essentiels liés |
 
-### 4.10 Endpoints transversaux
+### Endpoints transversaux
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -462,59 +250,59 @@ Représente une activité ou un processus métier de l'organisme.
 
 ---
 
-## 5. Spécifications d'interface utilisateur
+## Spécifications d'interface utilisateur
 
-### 5.1 Navigation
+### Navigation
 
 Le module est accessible via un élément de navigation principal « Contexte & Organisation » se décomposant en sous-menus correspondant à chaque sous-domaine (Périmètre, Enjeux, Parties intéressées, Objectifs, SWOT, Rôles, Activités).
 
-### 5.2 Vue « Périmètre » (Scope)
+### Vue « Périmètre » (Scope)
 
 - **Liste :** Tableau avec colonnes (Nom, Version, Statut, Date d'approbation, Date de revue) avec filtres et tri.
 - **Détail / Édition :** Formulaire avec onglets : Informations générales, Périmètres (géographique, organisationnel, technique), Exclusions, Référentiels applicables, Historique.
 - **Actions :** Créer, Modifier, Approuver, Archiver, Exporter.
 
-### 5.3 Vue « Enjeux » (Issues)
+### Vue « Enjeux » (Issues)
 
 - **Liste :** Tableau filtrable par type (interne/externe), catégorie, niveau d'impact, statut et tendance. Vue alternative en diagramme de type « radar » ou « heatmap ».
 - **Détail / Édition :** Formulaire avec les champs définis dans le modèle de données, section de liaison aux parties intéressées.
 - **Visualisation :** Vue matricielle interne/externe avec code couleur par impact.
 
-### 5.4 Vue « Parties intéressées » (Stakeholders)
+### Vue « Parties intéressées » (Stakeholders)
 
 - **Liste :** Tableau filtrable par type, catégorie, influence, intérêt.
 - **Matrice Influence/Intérêt :** Visualisation graphique positionnant chaque PI sur un quadrant (Informer, Satisfaire, Surveiller, Collaborer).
 - **Détail / Édition :** Formulaire avec onglets : Informations, Attentes & Exigences, Relations (enjeux, référentiels).
 
-### 5.5 Vue « Objectifs » (Objectives)
+### Vue « Objectifs » (Objectives)
 
 - **Liste :** Tableau avec barre de progression visuelle, filtrable par catégorie, type, statut, responsable.
 - **Arborescence :** Vue hiérarchique (tree view) des objectifs parent/enfant.
 - **Tableau de bord :** Graphiques de progression globale, répartition par catégorie, objectifs en retard.
 - **Détail / Édition :** Formulaire avec section KPI (valeur cible, actuelle, méthode de mesure).
 
-### 5.6 Vue « SWOT »
+### Vue « SWOT »
 
 - **Liste :** Tableau des analyses SWOT avec date, statut.
 - **Vue matrice :** Affichage classique en 4 quadrants (Forces, Faiblesses, Opportunités, Menaces) avec drag & drop pour réordonner.
 - **Détail :** Chaque élément affiche son impact et ses liaisons vers les enjeux et objectifs.
 - **Export :** Image (PNG/SVG), PDF.
 
-### 5.7 Vue « Rôles et responsabilités »
+### Vue « Rôles et responsabilités »
 
 - **Liste :** Tableau des rôles avec nombre d'utilisateurs affectés, type, statut.
 - **Matrice RACI :** Vue croisée Activités × Rôles avec cellules RACI colorées. Possibilité de modifier directement dans la matrice.
 - **Alertes :** Indicateurs visuels pour les rôles obligatoires non pourvus et les violations de la règle RACI (plusieurs Accountable).
 - **Détail / Édition :** Formulaire avec section responsabilités et affectation d'utilisateurs.
 
-### 5.8 Vue « Activités »
+### Vue « Activités »
 
 - **Liste :** Tableau filtrable par type, criticité, responsable, statut.
 - **Arborescence :** Vue hiérarchique des processus et sous-processus.
 - **Cartographie :** Vue graphique des interdépendances entre activités (optionnel, v2).
 - **Détail / Édition :** Formulaire avec liaisons vers les parties intéressées, objectifs et biens essentiels.
 
-### 5.9 Tableau de bord du module
+### Tableau de bord du module
 
 Un tableau de bord synthétique agrège les informations clés :
 
@@ -528,9 +316,9 @@ Un tableau de bord synthétique agrège les informations clés :
 
 ---
 
-## 6. Permissions et contrôle d'accès
+## Permissions et contrôle d'accès
 
-### 6.1 Modèle RBAC
+### Modèle RBAC
 
 Le module s'appuie sur un modèle de contrôle d'accès basé sur les rôles (RBAC) défini au niveau global de l'application.
 
@@ -564,7 +352,7 @@ Le module s'appuie sur un modèle de contrôle d'accès basé sur les rôles (RB
 | `context.export` | Exporter les données du module |
 | `context.audit_trail.read` | Consulter le journal d'audit |
 
-### 6.2 Rôles applicatifs suggérés
+### Rôles applicatifs suggérés
 
 | Rôle | Permissions |
 |---|---|
@@ -576,9 +364,9 @@ Le module s'appuie sur un modèle de contrôle d'accès basé sur les rôles (RB
 
 ---
 
-## 7. Journalisation et traçabilité
+## Journalisation et traçabilité
 
-### 7.1 Audit Trail
+### Audit Trail
 
 Chaque opération de création, modification ou suppression génère un enregistrement d'audit contenant :
 
@@ -594,15 +382,15 @@ Chaque opération de création, modification ou suppression génère un enregist
 | `ip_address` | Adresse IP de l'utilisateur |
 | `user_agent` | User-agent du navigateur/client |
 
-### 7.2 Rétention
+### Rétention
 
 Les entrées d'audit sont conservées pendant une durée paramétrable (défaut : 7 ans) conformément aux exigences réglementaires.
 
 ---
 
-## 8. Export et reporting
+## Export et reporting
 
-### 8.1 Formats d'export
+### Formats d'export
 
 | Format | Contenu |
 |---|---|
@@ -611,7 +399,7 @@ Les entrées d'audit sont conservées pendant une durée paramétrable (défaut 
 | **DOCX** | Document éditable au format Word |
 | **CSV** | Export tabulaire par entité (enjeux, PI, objectifs, activités) |
 
-### 8.2 Rapports prédéfinis
+### Rapports prédéfinis
 
 | Rapport | Description |
 |---|---|
@@ -624,7 +412,7 @@ Les entrées d'audit sont conservées pendant une durée paramétrable (défaut 
 
 ---
 
-## 9. Notifications et alertes
+## Notifications et alertes
 
 | Événement | Destinataires | Canal |
 |---|---|---|
@@ -637,27 +425,27 @@ Les entrées d'audit sont conservées pendant une durée paramétrable (défaut 
 
 ---
 
-## 10. Considérations techniques
+## Considérations techniques
 
-### 10.1 Versioning des données
+### Versioning des données
 
 Le périmètre (Scope) supporte un mécanisme de versioning pour conserver l'historique des évolutions. Chaque version est un snapshot horodaté des données du périmètre à un instant T.
 
-### 10.2 Multi-tenant
+### Multi-tenant
 
 Le modèle de données supporte le multi-tenant via un champ `tenant_id` (ou organisation) au niveau de chaque entité racine, permettant l'isolation des données entre organisations.
 
-### 10.3 Internationalisation (i18n)
+### Internationalisation (i18n)
 
 Tous les libellés d'interface, messages d'erreur et labels d'enums sont externalisés et traduisibles. Le système supporte à minima le français et l'anglais.
 
-### 10.4 Performances
+### Performances
 
 - Les listes paginées ne doivent pas dépasser un temps de réponse de **200 ms** pour 1 000 enregistrements.
 - Les tableaux de bord agrégés sont mis en cache avec un TTL de **5 minutes**.
 - Les exports volumineux (> 500 enregistrements) sont traités de manière asynchrone avec notification à l'utilisateur.
 
-### 10.5 Webhooks
+### Webhooks
 
 Chaque événement de mutation (création, modification, suppression, changement de statut) peut déclencher un webhook configurable, permettant l'intégration avec des outils tiers (SIEM, ITSM, outils de BI, etc.).
 
@@ -683,9 +471,9 @@ Payload type :
 
 ---
 
-## 11. Critères d'acceptation
+## Critères d'acceptation
 
-### 11.1 Fonctionnels
+### Fonctionnels
 
 - [ ] CRUD complet sur les 7 entités du module
 - [ ] Toutes les relations entre entités sont fonctionnelles
@@ -698,7 +486,7 @@ Payload type :
 - [ ] Les exports sont opérationnels dans tous les formats prévus
 - [ ] Le tableau de bord synthétique affiche les données correctes
 
-### 11.2 API
+### API
 
 - [ ] Tous les endpoints documentés sont implémentés et fonctionnels
 - [ ] La documentation OpenAPI (Swagger) est générée automatiquement
@@ -706,17 +494,17 @@ Payload type :
 - [ ] La pagination, le tri et le filtrage fonctionnent sur tous les endpoints de liste
 - [ ] Les webhooks sont déclenchés pour chaque événement de mutation
 
-### 11.3 Sécurité
+### Sécurité
 
 - [ ] Le contrôle d'accès RBAC est appliqué sur chaque endpoint et chaque vue
 - [ ] Le journal d'audit enregistre toutes les opérations
 - [ ] Les données sont isolées entre tenants
 
-### 11.4 Performance
+### Performance
 
-- [ ] Les temps de réponse respectent les seuils définis (§10.4)
+- [ ] Les temps de réponse respectent les seuils définis (Performances)
 - [ ] Les exports volumineux sont traités de manière asynchrone
 
 ---
 
-*Fin des spécifications du Module 1 — Contexte et Organisation*
+*Fin des spécifications du Module 1 : Contexte et Organisation*

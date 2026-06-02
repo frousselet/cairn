@@ -5,7 +5,34 @@
 **Version :** 1.0
 **Date :** 29 mai 2026
 **Statut :** Draft
-**Remplace :** Section 4 du document M4_Gestion_Risques_Specifications.md
+**Remplace :** Section 4 du document M4 (voir [../README.md](../README.md))
+
+---
+
+## Entities in this sub-module
+
+- **W0 : Cadre de l'étude**
+  - [StudyFramework](study-framework.md) (EFRA)
+  - [EbiosWorkshopProgress](workshop-progress.md) (EWSP)
+- **W1 : Socle de sécurité**
+  - [SecurityBaseline](security-baseline.md) (EBSL)
+  - [FearedEvent](feared-event.md) (EFER)
+  - [BaselineGap](baseline-gap.md) (EBGP)
+- **W2 : Sources de risque et objectifs visés**
+  - [RiskSource](risk-source.md) (ERSC)
+  - [TargetedObjective](targeted-objective.md) (ETOV)
+  - [RiskSourceObjectivePair](sr-ov-pair.md) (ESOV)
+- **W3 : Écosystème et scénarios stratégiques**
+  - [EcosystemStakeholder](ecosystem-stakeholder.md) (EECS)
+  - [StrategicScenario](strategic-scenario.md) (ESTS)
+  - [AttackPathStep](attack-path-step.md) (EAPS)
+- **W4 : Scénarios opérationnels**
+  - [MitreAttackTechnique](mitre-attack-technique.md)
+  - [OperationalScenario](operational-scenario.md) (EOPS)
+  - [AttackTechnique](attack-technique.md) (EATT)
+- **W5 : Synthèse et PACS**
+  - [EbiosSummary](ebios-summary.md) (ESUM)
+  - [PACSMeasure](pacs-measure.md) (EPAC)
 
 ---
 
@@ -15,7 +42,7 @@
 
 Le module **EBIOS Risk Manager** implémente la méthode d'appréciation et de traitement des risques numériques publiée par l'ANSSI (Agence Nationale de la Sécurité des Systèmes d'Information). Il vise une **conformité stricte au guide ANSSI EBIOS RM v1.5 (édition 2024)**, qui actualise la méthode v1.0 (2018) avec une intégration explicite de MITRE ATT&CK pour la modélisation des scénarios opérationnels et un raffinement des grilles de scoring.
 
-Ce document est autonome : sa lecture ne suppose pas la connaissance préalable du document M4_Gestion_Risques_Specifications.md. Il s'inscrit néanmoins dans le module 4 « Gestion des Risques » et réutilise le socle commun (registre des risques, critères, traitement, acceptation) défini dans M4 §2.
+Ce document est autonome : sa lecture ne suppose pas la connaissance préalable du document M4 (voir [../README.md](../README.md)). Il s'inscrit néanmoins dans le module 4 « Gestion des Risques » et réutilise le socle commun (registre des risques, critères, traitement, acceptation) défini dans M4 §2.
 
 ### 1.2 Positionnement vs ISO 27005
 
@@ -28,7 +55,7 @@ EBIOS RM et ISO 27005:2022 cohabitent dans le module 4 selon le principe suivant
 | Cycle | Itération unique par appréciation | 5 ateliers chaînés, cycle stratégique et cycle opérationnel itératifs |
 | Sortie commune | Risk (registre) | Risk (registre) |
 
-Les deux méthodes alimentent un **registre des risques unifié** (entité `Risk` du socle commun). Une appréciation (`RiskAssessment`) est conduite selon une méthodologie unique : champ `methodology` à `iso27005` ou `ebios_rm`.
+Les deux méthodes alimentent un **registre des risques unifié** (entité [`Risk`](../risk.md) du socle commun). Une appréciation ([`RiskAssessment`](../risk-assessment.md)) est conduite selon une méthodologie unique : champ `methodology` à `iso27005` ou `ebios_rm`.
 
 ### 1.3 Périmètre fonctionnel
 
@@ -48,17 +75,17 @@ Le sous-module EBIOS RM couvre :
 | Module 1 - Contexte | Le `Scope` ancre l'appréciation. Les `Activity` et `Stakeholder` alimentent l'atelier 1 (valeurs métier) et 3 (écosystème). |
 | Module 2 - Gestion des actifs | Les `EssentialAsset` portent les besoins de sécurité DIC. Les `SupportAsset` et `AssetDependency` structurent l'atelier 4. |
 | Module 3 - Conformité | Les `Framework` et `Requirement` constituent le socle de sécurité référentiel (atelier 1). Un `BaselineGap` peut référencer un `Requirement`. |
-| Module 4 - Socle risques | Les `RiskCriteria`, `Risk`, `RiskTreatmentPlan`, `RiskAcceptance` du socle commun sont réutilisés. Les scénarios stratégiques et opérationnels se consolident en `Risk`. |
+| Module 4 - Socle risques | Les [`RiskCriteria`](../risk-criteria.md), [`Risk`](../risk.md), [`RiskTreatmentPlan`](../risk-treatment-plan.md), [`RiskAcceptance`](../risk-acceptance.md) du socle commun sont réutilisés. Les scénarios stratégiques et opérationnels se consolident en `Risk`. |
 | Fournisseurs | Les `Supplier` apparaissent comme parties prenantes de l'écosystème (atelier 3). |
 
 ### 1.5 Intégration au registre des risques unifié
 
 La consolidation vers le registre unifié obéit aux règles suivantes :
 
-- Un `StrategicScenario` peut être consolidé en `Risk` (champ `Risk.risk_source = ebios_strategic_scenario`).
-- Un `OperationalScenario` peut être consolidé en `Risk` (champ `Risk.risk_source = ebios_operational_scenario`).
+- Un [`StrategicScenario`](strategic-scenario.md) peut être consolidé en [`Risk`](../risk.md) (champ `Risk.risk_source = ebios_strategic_scenario`).
+- Un [`OperationalScenario`](operational-scenario.md) peut être consolidé en [`Risk`](../risk.md) (champ `Risk.risk_source = ebios_operational_scenario`).
 - En pratique, la consolidation s'opère majoritairement au niveau opérationnel (atelier 4) car il porte la vraisemblance technique mesurée.
-- Les `PACSMeasure` (mesures du PACS) sont reliées à un ou plusieurs `RiskTreatmentPlan` du socle commun.
+- Les [`PACSMeasure`](pacs-measure.md) (mesures du PACS) sont reliées à un ou plusieurs [`RiskTreatmentPlan`](../risk-treatment-plan.md) du socle commun.
 
 ---
 
@@ -104,7 +131,7 @@ EBIOS RM est itératif :
 - **Cycle stratégique (long)** : reprise complète des ateliers 1, 2, 3 et 5. Déclenché par un changement majeur de contexte (nouvelle activité, fusion, évolution réglementaire). Cadence typique : annuelle.
 - **Cycle opérationnel (court)** : reprise des ateliers 4 et 5 uniquement, en s'appuyant sur les sorties du cycle stratégique en cours. Cadence typique : semestrielle ou trimestrielle.
 
-Le modèle `EbiosWorkshopProgress` porte les champs `iteration_type` (strategic, operational) et `iteration_number` (entier incrémenté) pour tracer ces cycles.
+Le modèle [`EbiosWorkshopProgress`](workshop-progress.md) porte les champs `iteration_type` (strategic, operational) et `iteration_number` (entier incrémenté) pour tracer ces cycles.
 
 ### 2.4 Sources de risque vs objectifs visés
 
@@ -154,7 +181,7 @@ Seuils de zonage (paramétrables) :
 
 ### 2.7 PACS (Plan d'Amélioration Continue de la Sécurité)
 
-Le PACS est le livrable structurant de l'atelier 5. Il liste les **mesures** de sécurité décidées pour traiter les risques résiduels au-delà du socle existant. Chaque mesure est portée par une instance `PACSMeasure` avec échéance, responsable, coût, gain attendu, statut, et lien vers un `RiskTreatmentPlan` du socle commun.
+Le PACS est le livrable structurant de l'atelier 5. Il liste les **mesures** de sécurité décidées pour traiter les risques résiduels au-delà du socle existant. Chaque mesure est portée par une instance [`PACSMeasure`](pacs-measure.md) avec échéance, responsable, coût, gain attendu, statut, et lien vers un [`RiskTreatmentPlan`](../risk-treatment-plan.md) du socle commun.
 
 ### 2.8 Grilles de scoring ANSSI
 
@@ -222,7 +249,7 @@ Les vues, formulaires, templates et API sont organisés en miroir : `risks/views
 
 ### 3.2 Intégration au socle commun
 
-L'entité parente reste `RiskAssessment` (existante, M4 §2.1) avec `methodology = ebios_rm`. Les entités EBIOS sont rattachées via FK à `RiskAssessment` (directement ou indirectement). Aucune duplication des critères, du registre ou des plans de traitement : tout passe par les entités du socle commun (M4 §2.5 à §2.8).
+L'entité parente reste [`RiskAssessment`](../risk-assessment.md) (existante, M4 §2.1) avec `methodology = ebios_rm`. Les entités EBIOS sont rattachées via FK à `RiskAssessment` (directement ou indirectement). Aucune duplication des critères, du registre ou des plans de traitement : tout passe par les entités du socle commun.
 
 ### 3.3 Réutilisation des entités existantes
 
@@ -230,19 +257,19 @@ L'entité parente reste `RiskAssessment` (existante, M4 §2.1) avec `methodology
 |---|---|
 | `context.Scope` | Ancrage de l'appréciation. |
 | `context.Activity` | Source des valeurs métier (atelier 1). |
-| `context.Stakeholder` | FK optionnel depuis `EcosystemStakeholder` (atelier 3). |
+| `context.Stakeholder` | FK optionnel depuis [`EcosystemStakeholder`](ecosystem-stakeholder.md) (atelier 3). |
 | `assets.EssentialAsset` | Cible des événements redoutés (atelier 1) et des objectifs visés (atelier 2). |
 | `assets.SupportAsset` | Cible des scénarios opérationnels (atelier 4). |
 | `assets.AssetDependency` | Lit la cartographie technique pour suggérer les biens supports impactés. |
-| `assets.Supplier` | Candidat naturel pour `EcosystemStakeholder` (atelier 3). |
-| `compliance.Requirement` | FK depuis `BaselineGap` (atelier 1). |
-| `risks.Risk` | Cible de consolidation depuis `StrategicScenario` et `OperationalScenario`. |
-| `risks.RiskTreatmentPlan` | FK depuis `PACSMeasure` (atelier 5). |
-| `risks.RiskCriteria` | Source des échelles likelihood/impact et de la matrice de calcul. |
+| `assets.Supplier` | Candidat naturel pour [`EcosystemStakeholder`](ecosystem-stakeholder.md) (atelier 3). |
+| `compliance.Requirement` | FK depuis [`BaselineGap`](baseline-gap.md) (atelier 1). |
+| [`risks.Risk`](../risk.md) | Cible de consolidation depuis [`StrategicScenario`](strategic-scenario.md) et [`OperationalScenario`](operational-scenario.md). |
+| [`risks.RiskTreatmentPlan`](../risk-treatment-plan.md) | FK depuis [`PACSMeasure`](pacs-measure.md) (atelier 5). |
+| [`risks.RiskCriteria`](../risk-criteria.md) | Source des échelles likelihood/impact et de la matrice de calcul. |
 
 ### 3.4 Workflow `EbiosWorkshopProgress`
 
-À la création d'une appréciation `methodology = ebios_rm`, le système crée automatiquement **6 instances** de `EbiosWorkshopProgress` (W0 à W5). Chaque instance porte un état (`not_started`, `in_progress`, `under_review`, `validated`, `rejected`) et alimente le stepper UI (pattern compliance/assessment_detail.html).
+À la création d'une appréciation `methodology = ebios_rm`, le système crée automatiquement **6 instances** de [`EbiosWorkshopProgress`](workshop-progress.md) (W0 à W5). Chaque instance porte un état (`not_started`, `in_progress`, `under_review`, `validated`, `rejected`) et alimente le stepper UI (pattern compliance/assessment_detail.html).
 
 Une porte de validation est franchie par un appel POST `/risks/ebios/workshops/{id}/validate` qui :
 1. Vérifie que les livrables obligatoires de l'atelier sont présents.
@@ -270,358 +297,24 @@ Une porte de validation est franchie par un appel POST `/risks/ebios/workshops/{
 | EbiosSummary | ESUM | ESUM-1 |
 | PACSMeasure | EPAC | EPAC-1 |
 
-Le modèle `MitreAttackTechnique` (catalogue) n'utilise pas de préfixe interne : sa clé naturelle est `mitre_id` (ex. T1566.001).
+Le modèle [`MitreAttackTechnique`](mitre-attack-technique.md) (catalogue) n'utilise pas de préfixe interne : sa clé naturelle est `mitre_id` (ex. T1566.001).
 
 ---
 
 ## 4. Modèle de données par atelier
 
-Toutes les entités EBIOS héritent de `BaseModel` (UUID, timestamps, `created_by`, approbation, versioning, tags) ou de `ScopedModel` (idem + M2M `scopes`) selon leur portée. Sauf indication contraire, les entités EBIOS sont rattachées à un `RiskAssessment` et héritent du scope de celui-ci (pas de `scopes` propre).
+Toutes les entités EBIOS héritent de `BaseModel` (UUID, timestamps, `created_by`, approbation, versioning, tags) ou de `ScopedModel` (idem + M2M `scopes`) selon leur portée. Sauf indication contraire, les entités EBIOS sont rattachées à un [`RiskAssessment`](../risk-assessment.md) et héritent du scope de celui-ci (pas de `scopes` propre).
 
-### 4.0 Atelier 0 - Cadre de l'étude
+Les définitions détaillées de chaque entité sont publiées dans des fichiers dédiés :
 
-#### 4.0.1 Entité : StudyFramework (Cadre de l'étude)
+- **W0** : [StudyFramework](study-framework.md), [EbiosWorkshopProgress](workshop-progress.md)
+- **W1** : [SecurityBaseline](security-baseline.md), [FearedEvent](feared-event.md), [BaselineGap](baseline-gap.md)
+- **W2** : [RiskSource](risk-source.md), [TargetedObjective](targeted-objective.md), [RiskSourceObjectivePair](sr-ov-pair.md)
+- **W3** : [EcosystemStakeholder](ecosystem-stakeholder.md), [StrategicScenario](strategic-scenario.md), [AttackPathStep](attack-path-step.md)
+- **W4** : [MitreAttackTechnique](mitre-attack-technique.md), [OperationalScenario](operational-scenario.md), [AttackTechnique](attack-technique.md)
+- **W5** : [EbiosSummary](ebios-summary.md), [PACSMeasure](pacs-measure.md)
 
-Formalise les pré-requis exigés par ANSSI avant l'atelier 1 : participants, référentiels, hypothèses, contraintes.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> RiskAssessment, requis, unique | Appréciation parente (1 framework par appréciation) |
-| `reference` | string | requis, unique, préfixe EFRA | Code (ex. EFRA-1) |
-| `mission_statement` | text | requis | Description de la mission étudiée |
-| `business_perimeter` | text | requis | Périmètre métier (activités, processus) |
-| `technical_perimeter` | text | requis | Périmètre technique (biens supports, infrastructures) |
-| `temporal_perimeter` | text | requis | Horizon temporel (date de début / fin d'étude) |
-| `financial_envelope` | decimal | optionnel | Enveloppe budgétaire allouée |
-| `participants` | M2M -> User | optionnel | Participants à l'étude |
-| `participants_external` | json | optionnel | Liste de participants externes (nom, rôle, organisation) |
-| `applicable_frameworks` | M2M -> Framework | optionnel | Référentiels applicables (ISO 27001, NIS2, RGPD, etc.) |
-| `assumptions` | text | optionnel | Hypothèses retenues |
-| `constraints` | text | optionnel | Contraintes (organisationnelles, techniques, légales) |
-| `expected_deliverables` | text | optionnel | Livrables attendus |
-| `status` | enum | requis | `draft`, `validated` |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards `BaseModel` |
-
-#### 4.0.2 Entité : EbiosWorkshopProgress (Suivi atelier)
-
-Tracker de progression par atelier. 6 instances créées automatiquement par appréciation (W0 à W5).
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> RiskAssessment, requis | Appréciation parente |
-| `reference` | string | requis, unique, préfixe EWSP | Code (ex. EWSP-1) |
-| `workshop_number` | integer | requis, 0 à 5 | Numéro d'atelier |
-| `iteration_type` | enum | requis | `strategic`, `operational` |
-| `iteration_number` | integer | requis, >= 1 | Numéro d'itération du cycle |
-| `status` | enum | requis | `not_started`, `in_progress`, `under_review`, `validated`, `rejected` |
-| `started_at` | datetime | optionnel | Date de démarrage |
-| `validated_by_id` | relation | FK -> User, optionnel | Validateur |
-| `validated_at` | datetime | optionnel | Date de validation |
-| `rejection_reason` | text | optionnel | Motif de rejet (si `status = rejected`) |
-| `deliverables_summary` | text | optionnel | Synthèse des livrables produits |
-| `attachments` | M2M -> File | optionnel | Pièces jointes (rapports atelier) |
-| `notes` | text | optionnel | Notes de l'animateur |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
-
-> Contrainte d'unicité : `(assessment_id, workshop_number, iteration_type, iteration_number)`.
-
-### 4.1 Atelier 1 - Socle de sécurité
-
-#### 4.1.1 Entité : SecurityBaseline (Socle de sécurité)
-
-Racine de l'atelier 1. Une seule par appréciation.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> RiskAssessment, requis, unique | Appréciation parente |
-| `reference` | string | requis, unique, préfixe EBSL | Code (ex. EBSL-1) |
-| `business_values` | M2M -> Activity | requis | Valeurs métier retenues |
-| `essential_assets` | M2M -> EssentialAsset | requis | Biens essentiels retenus |
-| `support_assets` | M2M -> SupportAsset | requis | Biens supports retenus |
-| `dic_summary` | text | optionnel | Synthèse des besoins de sécurité DIC |
-| `baseline_references` | M2M -> Framework | optionnel | Référentiels du socle (ISO 27002, ANSSI, NIST, etc.) |
-| `status` | enum | requis | `draft`, `in_progress`, `completed` |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
-
-#### 4.1.2 Entité : FearedEvent (Événement redouté)
-
-Caractérise une atteinte DIC sur un bien essentiel avec gravité.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `baseline_id` | relation | FK -> SecurityBaseline, requis | Socle parent |
-| `reference` | string | requis, unique, préfixe EFER | Code (ex. EFER-1) |
-| `essential_asset_id` | relation | FK -> EssentialAsset, requis | Bien essentiel concerné |
-| `name` | string | requis, max 255 | Intitulé court |
-| `description` | text | requis | Description |
-| `dic_criterion` | enum | requis | `confidentiality`, `integrity`, `availability` |
-| `gravity_level` | integer | requis, calculé/saisi | Gravité (échelle impact RiskCriteria) |
-| `gravity_justification` | text | optionnel | Justification de la gravité |
-| `business_impacts` | json | optionnel | Impacts détaillés (clés : `financial`, `legal`, `reputation`, `operational`, `human`, `environmental`) |
-| `criteria_snapshot` | json | calculé | Snapshot du barème au moment de la saisie |
-| `order` | integer | requis | Ordre d'affichage |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
-
-> Règle : pour un même `essential_asset_id`, au plus 3 `FearedEvent` (un par critère DIC). Géré par contrainte d'unicité `(baseline_id, essential_asset_id, dic_criterion)`.
-
-#### 4.1.3 Entité : BaselineGap (Écart au socle)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `baseline_id` | relation | FK -> SecurityBaseline, requis | Socle parent |
-| `reference` | string | requis, unique, préfixe EBGP | Code (ex. EBGP-1) |
-| `reference_source` | string | requis | Source du socle (ex. « ISO 27002:2022 A.5.1 », « Guide d'hygiène ANSSI #12 ») |
-| `linked_requirement_id` | relation | FK -> Requirement, optionnel | Exigence de conformité liée |
-| `description` | text | requis | Description de l'écart |
-| `affected_support_assets` | M2M -> SupportAsset | optionnel | Biens supports concernés |
-| `severity` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `recommended_remediation` | text | optionnel | Remédiation recommandée |
-| `status` | enum | requis | `identified`, `accepted`, `in_remediation`, `remediated` |
-| `linked_pacs_measures` | M2M -> PACSMeasure | optionnel | Mesures PACS traitant l'écart |
-| `order` | integer | requis | Ordre d'affichage |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
-
-### 4.2 Atelier 2 - Sources de risque et objectifs visés
-
-#### 4.2.1 Entité : RiskSource (Source de risque)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> RiskAssessment, requis | Appréciation parente |
-| `reference` | string | requis, unique, préfixe ERSC | Code (ex. ERSC-1) |
-| `name` | string | requis, max 255 | Nom de la SR |
-| `description` | text | optionnel | Description |
-| `category` | enum | requis | `state`, `organized_crime`, `terrorist`, `activist`, `competitor`, `employee`, `service_provider`, `amateur`, `natural`, `other` |
-| `motivation_level` | integer | requis, 1 à 4 | Niveau de motivation (1 faible, 4 très forte) |
-| `motivation_description` | text | optionnel | Description qualitative |
-| `resources_level` | integer | requis, 1 à 4 | Niveau de ressources (1 limitées, 4 illimitées) |
-| `activity_level` | integer | requis, 1 à 4 | Niveau d'activité observée |
-| `threat_level` | integer | calculé, 1 à 4 (V1-V4) | Niveau de menace ANSSI (grille A §2.8) |
-| `is_retained` | boolean | requis, défaut true | SR retenue pour l'analyse |
-| `retention_justification` | text | optionnel | Justification |
-| `is_from_catalog` | boolean | requis, défaut false | Issue du catalogue ANSSI prédéfini |
-| `criteria_snapshot` | json | calculé | Snapshot de la grille de calcul |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
-
-> `threat_level` est calculé dans `save()` selon la grille A (§2.8). Le résultat est stocké pour usage en filtrage/index. La grille est paramétrable via un champ JSON sur `RiskCriteria` (clé `ebios_threat_grid`).
-
-#### 4.2.2 Entité : TargetedObjective (Objectif visé)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `risk_source_id` | relation | FK -> RiskSource, requis | SR parente |
-| `reference` | string | requis, unique, préfixe ETOV | Code (ex. ETOV-1) |
-| `name` | string | requis, max 255 | Intitulé |
-| `description` | text | optionnel | Description |
-| `category` | enum | requis | `lucrative`, `strategic`, `terrorist`, `ideological`, `revenge`, `ludic`, `other` |
-| `targeted_essential_assets` | M2M -> EssentialAsset | optionnel | Biens essentiels ciblés |
-| `targeted_feared_events` | M2M -> FearedEvent | optionnel | Événements redoutés associés |
-| `is_retained` | boolean | requis, défaut true | OV retenu |
-| `order` | integer | requis | Ordre |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
-
-#### 4.2.3 Entité : RiskSourceObjectivePair (Couple SR/OV)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> RiskAssessment, requis | Appréciation parente |
-| `reference` | string | requis, unique, préfixe ESOV | Code (ex. ESOV-1) |
-| `risk_source_id` | relation | FK -> RiskSource, requis | SR |
-| `targeted_objective_id` | relation | FK -> TargetedObjective, requis | OV |
-| `relevance` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `relevance_justification` | text | optionnel | Justification |
-| `priority_score` | integer | calculé, 1 à 4 | Score agrégé : f(`risk_source.threat_level`, `relevance`) |
-| `is_retained` | boolean | requis, défaut true | Retenu pour l'atelier 3 |
-| `retention_justification` | text | optionnel | Justification |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
-
-> Contrainte d'unicité : `(assessment_id, risk_source_id, targeted_objective_id)`.
-
-### 4.3 Atelier 3 - Scénarios stratégiques
-
-#### 4.3.1 Entité : EcosystemStakeholder (Partie prenante de l'écosystème)
-
-Modèle indépendant du `context.Stakeholder` (parties intéressées ISO 9001/27001). Lien optionnel via FK.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> RiskAssessment, requis | Appréciation parente |
-| `reference` | string | requis, unique, préfixe EECS | Code (ex. EECS-1) |
-| `stakeholder_id` | relation | FK -> Stakeholder, optionnel | Lien Module 1 (si déjà recensé) |
-| `supplier_id` | relation | FK -> Supplier, optionnel | Lien Module 2 (si fournisseur) |
-| `name` | string | requis, max 255 | Nom |
-| `description` | text | optionnel | Description du rôle dans l'écosystème |
-| `category` | enum | requis | `supplier`, `partner`, `subcontractor`, `customer`, `regulator`, `shared_infrastructure`, `client_employee`, `other` |
-| `dependency` | integer | requis, 1 à 4 | Dépendance de l'organisme vis-à-vis de la PP |
-| `penetration` | integer | requis, 1 à 4 | Pénétration de la PP dans l'écosystème |
-| `maturity` | integer | requis, 1 à 4 | Maturité cyber de la PP |
-| `trust` | integer | requis, 1 à 4 | Confiance accordée à la PP |
-| `threat_level` | decimal(4,2) | calculé | `(dependency * penetration) / (maturity * trust)` |
-| `threat_zone` | enum | calculé | `control`, `monitoring`, `danger` (seuils §2.6) |
-| `accessible_support_assets` | M2M -> SupportAsset | optionnel | Biens supports accessibles |
-| `is_attack_vector` | boolean | requis, défaut false | Identifié comme vecteur d'attaque |
-| `attack_vector_justification` | text | optionnel | Justification |
-| `criteria_snapshot` | json | calculé | Snapshot des seuils de zonage |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
-
-> `threat_level` et `threat_zone` sont calculés dans `save()` selon la formule §2.6. Les seuils sont paramétrables sur `RiskCriteria` (clé JSON `ebios_ecosystem_thresholds`).
-
-#### 4.3.2 Entité : StrategicScenario (Scénario stratégique)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> RiskAssessment, requis | Appréciation parente |
-| `reference` | string | requis, unique, préfixe ESTS | Code (ex. ESTS-1) |
-| `name` | string | requis, max 255 | Intitulé |
-| `description` | text | requis | Description narrative |
-| `sr_ov_pair_id` | relation | FK -> RiskSourceObjectivePair, requis | Couple SR/OV source |
-| `targeted_feared_events` | M2M -> FearedEvent | requis | Événements redoutés visés |
-| `gravity_level` | integer | requis | Gravité (échelle impact) |
-| `gravity_justification` | text | optionnel | Justification |
-| `likelihood_level` | integer | requis | Vraisemblance stratégique (échelle likelihood) |
-| `likelihood_justification` | text | optionnel | Justification |
-| `risk_level` | integer | calculé | Niveau de risque via matrice `RiskCriteria` |
-| `existing_security_measures` | text | optionnel | Mesures existantes prises en compte |
-| `is_retained` | boolean | requis, défaut true | Retenu pour l'atelier 4 |
-| `retention_justification` | text | optionnel | Justification |
-| `consolidated_risk_id` | relation | FK -> Risk, optionnel | Risque consolidé dans le registre |
-| `criteria_snapshot` | json | calculé | Snapshot du barème |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
-
-#### 4.3.3 Entité : AttackPathStep (Étape du chemin d'attaque)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `scenario_id` | relation | FK -> StrategicScenario, requis | Scénario parent |
-| `reference` | string | requis, unique, préfixe EAPS | Code (ex. EAPS-1) |
-| `order` | integer | requis | Position dans le chemin (1 = première étape) |
-| `stakeholder_id` | relation | FK -> EcosystemStakeholder, optionnel | Partie prenante impliquée |
-| `description` | text | requis | Description |
-| `action_type` | enum | requis | `initial_access`, `reconnaissance`, `lateral_movement`, `privilege_escalation`, `data_exfiltration`, `disruption`, `manipulation`, `persistence`, `other` |
-| `difficulty` | enum | optionnel | `trivial`, `easy`, `moderate`, `difficult`, `very_difficult` |
-| `created_at`, `updated_at` | - | auto | Standards |
-
-### 4.4 Atelier 4 - Scénarios opérationnels
-
-#### 4.4.1 Entité : OperationalScenario (Scénario opérationnel)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> RiskAssessment, requis | Appréciation parente |
-| `strategic_scenario_id` | relation | FK -> StrategicScenario, requis | Scénario stratégique parent |
-| `reference` | string | requis, unique, préfixe EOPS | Code (ex. EOPS-1) |
-| `name` | string | requis, max 255 | Intitulé |
-| `description` | text | requis | Description technique |
-| `targeted_support_assets` | M2M -> SupportAsset | requis | Biens supports ciblés |
-| `gravity_level` | integer | requis | Gravité (héritée du parent par défaut) |
-| `gravity_inherited` | boolean | requis, défaut true | Indique si la gravité est héritée |
-| `gravity_override_justification` | text | optionnel | Justification si gravité ajustée |
-| `likelihood_v` | enum | requis | `V1`, `V2`, `V3`, `V4` (grille B §2.8) |
-| `likelihood_justification` | text | optionnel | Justification |
-| `risk_level` | integer | calculé | Niveau de risque (matrice gravity x likelihood mappée) |
-| `existing_controls` | text | optionnel | Mesures techniques existantes |
-| `existing_measures` | M2M -> Requirement | optionnel | Mesures formalisées (réutilise Module 3) |
-| `consolidated_risk_id` | relation | FK -> Risk, optionnel | Risque consolidé dans le registre |
-| `mitre_version` | string | optionnel | Version MITRE ATT&CK référencée (ex. v15.1) |
-| `criteria_snapshot` | json | calculé | Snapshot |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
-
-> Mapping `likelihood_v` -> valeur entière utilisée par la matrice : V1=1, V2=2, V3=3, V4=4.
-
-#### 4.4.2 Entité : AttackTechnique (Technique d'attaque)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `scenario_id` | relation | FK -> OperationalScenario, requis | Scénario parent |
-| `reference` | string | requis, unique, préfixe EATT | Code (ex. EATT-1) |
-| `order` | integer | requis | Position dans la séquence |
-| `mitre_technique_id` | relation | FK -> MitreAttackTechnique, optionnel | Technique MITRE référencée |
-| `custom_name` | string | optionnel, max 255 | Nom libre si pas de mapping MITRE |
-| `description` | text | requis | Description |
-| `targeted_support_asset_id` | relation | FK -> SupportAsset, optionnel | Bien support ciblé |
-| `difficulty` | enum | optionnel | `trivial`, `easy`, `moderate`, `difficult`, `very_difficult` |
-| `detection_difficulty` | enum | optionnel | `trivial`, `easy`, `moderate`, `difficult`, `very_difficult` |
-| `created_at`, `updated_at` | - | auto | Standards |
-
-> Au moins un des deux champs `mitre_technique_id` ou `custom_name` est requis (contrainte applicative).
-
-#### 4.4.3 Entité : MitreAttackTechnique (Catalogue)
-
-Catalogue référentiel MITRE ATT&CK Enterprise Matrix. Seedé via fixture `risks/fixtures/mitre_attack_v15.json` lors de l'installation, mis à jour par la commande `python manage.py refresh_mitre_attack`.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `mitre_id` | string | requis, unique | Identifiant MITRE (ex. T1566, T1566.001) |
-| `name` | string | requis, max 255 | Nom |
-| `description` | text | requis | Description |
-| `tactic` | enum | requis | `reconnaissance`, `resource_development`, `initial_access`, `execution`, `persistence`, `privilege_escalation`, `defense_evasion`, `credential_access`, `discovery`, `lateral_movement`, `collection`, `command_and_control`, `exfiltration`, `impact` |
-| `parent_technique_id` | relation | FK -> self, optionnel | Technique parente (sous-techniques) |
-| `version` | string | requis, max 16 | Version MITRE (ex. 15.1) |
-| `url` | string | optionnel, max 500 | Lien vers la fiche MITRE |
-| `is_active` | boolean | requis, défaut true | Désactivable si retirée de MITRE |
-| `created_at`, `updated_at` | - | auto | Standards |
-
-### 4.5 Atelier 5 - Traitement du risque
-
-L'atelier 5 réutilise les entités du socle commun : `Risk`, `RiskTreatmentPlan`, `TreatmentAction`, `RiskAcceptance` (M4 §2.5 à §2.8). Il ajoute deux entités EBIOS spécifiques.
-
-#### 4.5.1 Entité : EbiosSummary (Synthèse de l'appréciation)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> RiskAssessment, requis, unique | Appréciation parente |
-| `reference` | string | requis, unique, préfixe ESUM | Code (ex. ESUM-1) |
-| `residual_risk_strategy` | text | requis | Stratégie globale de traitement du risque résiduel |
-| `monitoring_plan` | text | optionnel | Plan de suivi et d'amélioration continue |
-| `pacs_summary` | text | optionnel | Synthèse narrative du PACS |
-| `risk_mapping_before` | json | calculé | Snapshot cartographie des risques avant traitement |
-| `risk_mapping_after` | json | calculé | Snapshot cartographie après traitement |
-| `next_strategic_cycle_date` | date | optionnel | Prochaine itération stratégique prévue |
-| `next_operational_cycle_date` | date | optionnel | Prochaine itération opérationnelle prévue |
-| `validated_by_id` | relation | FK -> User, optionnel | Validateur direction générale |
-| `validated_at` | datetime | optionnel | Date de validation |
-| `status` | enum | requis | `draft`, `in_progress`, `under_review`, `validated` |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
-
-#### 4.5.2 Entité : PACSMeasure (Mesure du PACS)
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `summary_id` | relation | FK -> EbiosSummary, requis | Synthèse parente |
-| `reference` | string | requis, unique, préfixe EPAC | Code (ex. EPAC-1) |
-| `name` | string | requis, max 255 | Intitulé de la mesure |
-| `description` | text | requis | Description |
-| `measure_type` | enum | requis | `governance`, `protection`, `defense`, `resilience`, `awareness` |
-| `linked_treatment_plans` | M2M -> RiskTreatmentPlan | optionnel | Plans de traitement portant la mesure |
-| `linked_baseline_gaps` | M2M -> BaselineGap | optionnel | Écarts au socle traités par la mesure |
-| `linked_requirements` | M2M -> Requirement | optionnel | Exigences de conformité couvertes |
-| `owner_id` | relation | FK -> User, requis | Responsable de la mesure |
-| `start_date` | date | optionnel | Date de début |
-| `target_date` | date | requis | Date cible |
-| `completion_date` | date | optionnel | Date de réalisation effective |
-| `cost_estimate` | decimal | optionnel | Coût estimé |
-| `expected_gain` | text | optionnel | Gain attendu (réduction de risque) |
-| `priority` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `status` | enum | requis | `planned`, `in_progress`, `completed`, `cancelled`, `overdue` |
-| `progress_percentage` | integer | optionnel, 0 à 100 | Avancement |
-| `order` | integer | requis | Ordre d'affichage dans le PACS |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
+L'atelier 5 réutilise également les entités du socle commun : [`Risk`](../risk.md), [`RiskTreatmentPlan`](../risk-treatment-plan.md), [`TreatmentAction`](../risk-treatment-plan.md), [`RiskAcceptance`](../risk-acceptance.md).
 
 ---
 
@@ -629,31 +322,31 @@ L'atelier 5 réutilise les entités du socle commun : `Risk`, `RiskTreatmentPlan
 
 | ID | Règle |
 |---|---|
-| RE-01 | Toutes les entités EBIOS sont rattachées à une `RiskAssessment` dont `methodology = ebios_rm`. La création est refusée si l'appréciation est `iso27005`. |
-| RE-02 | À la création d'une `RiskAssessment` ebios_rm, le système crée automatiquement : 1 `StudyFramework` (status draft), 6 `EbiosWorkshopProgress` (W0 à W5, status not_started). |
+| RE-01 | Toutes les entités EBIOS sont rattachées à une [`RiskAssessment`](../risk-assessment.md) dont `methodology = ebios_rm`. La création est refusée si l'appréciation est `iso27005`. |
+| RE-02 | À la création d'une [`RiskAssessment`](../risk-assessment.md) ebios_rm, le système crée automatiquement : 1 [`StudyFramework`](study-framework.md) (status draft), 6 [`EbiosWorkshopProgress`](workshop-progress.md) (W0 à W5, status not_started). |
 | RE-03 | Une porte de validation d'atelier ne peut être franchie que si tous les ateliers précédents sont en état `validated`. |
 | RE-04 | Pour `EbiosWorkshopProgress.workshop_number = N`, les livrables obligatoires sont contrôlés avant validation : W0 = StudyFramework status validated ; W1 = SecurityBaseline + au moins 1 FearedEvent par EssentialAsset retenu ; W2 = au moins 1 RiskSourceObjectivePair is_retained ; W3 = au moins 1 StrategicScenario is_retained ; W4 = au moins 1 OperationalScenario par StrategicScenario retenu ; W5 = EbiosSummary status validated + au moins 1 PACSMeasure. |
-| RE-05 | Un `FearedEvent` est unique par couple `(essential_asset, dic_criterion)` au sein d'un même `SecurityBaseline`. |
-| RE-06 | `RiskSource.threat_level` est calculé dans `save()` via la grille A ANSSI (§2.8). Le snapshot du barème est conservé dans `criteria_snapshot`. |
-| RE-07 | `EcosystemStakeholder.threat_level` et `threat_zone` sont calculés dans `save()` via la formule (dependency x penetration) / (maturity x trust) et les seuils paramétrables (§2.6). |
-| RE-08 | Seuls les couples SR/OV `is_retained = true` peuvent être référencés par un `StrategicScenario`. |
-| RE-09 | Seuls les `StrategicScenario` `is_retained = true` peuvent être déclinés en `OperationalScenario`. |
-| RE-10 | `OperationalScenario.gravity_level` hérite par défaut de `strategic_scenario.gravity_level`. Toute modification doit renseigner `gravity_override_justification` et bascule `gravity_inherited` à false. |
-| RE-11 | La consolidation d'un `OperationalScenario` en `Risk` est l'opération privilégiée. La consolidation d'un `StrategicScenario` est possible pour les scénarios non déclinés en opérationnel. |
-| RE-12 | La consolidation crée un `Risk` avec `risk_source = ebios_operational_scenario` (ou `ebios_strategic_scenario`), pré-remplit les champs (gravité, vraisemblance via mapping V1-V4, biens, DIC) et établit le lien bidirectionnel `consolidated_risk_id`. |
-| RE-13 | Une `AttackTechnique` doit référencer soit une `MitreAttackTechnique` (recommandé) soit un `custom_name`. Si MITRE est référencé, le champ `mitre_version` du `OperationalScenario` parent doit être figé pour traçabilité. |
-| RE-14 | Le passage d'un cycle stratégique à un cycle opérationnel crée de nouvelles `EbiosWorkshopProgress` (W4 et W5) avec `iteration_number` incrémenté, sans toucher aux entités W1-W3 du cycle stratégique en cours. |
+| RE-05 | Un [`FearedEvent`](feared-event.md) est unique par couple `(essential_asset, dic_criterion)` au sein d'un même [`SecurityBaseline`](security-baseline.md). |
+| RE-06 | [`RiskSource.threat_level`](risk-source.md) est calculé dans `save()` via la grille A ANSSI (§2.8). Le snapshot du barème est conservé dans `criteria_snapshot`. |
+| RE-07 | [`EcosystemStakeholder.threat_level`](ecosystem-stakeholder.md) et `threat_zone` sont calculés dans `save()` via la formule (dependency x penetration) / (maturity x trust) et les seuils paramétrables (§2.6). |
+| RE-08 | Seuls les couples SR/OV `is_retained = true` peuvent être référencés par un [`StrategicScenario`](strategic-scenario.md). |
+| RE-09 | Seuls les [`StrategicScenario`](strategic-scenario.md) `is_retained = true` peuvent être déclinés en [`OperationalScenario`](operational-scenario.md). |
+| RE-10 | [`OperationalScenario.gravity_level`](operational-scenario.md) hérite par défaut de `strategic_scenario.gravity_level`. Toute modification doit renseigner `gravity_override_justification` et bascule `gravity_inherited` à false. |
+| RE-11 | La consolidation d'un [`OperationalScenario`](operational-scenario.md) en [`Risk`](../risk.md) est l'opération privilégiée. La consolidation d'un [`StrategicScenario`](strategic-scenario.md) est possible pour les scénarios non déclinés en opérationnel. |
+| RE-12 | La consolidation crée un [`Risk`](../risk.md) avec `risk_source = ebios_operational_scenario` (ou `ebios_strategic_scenario`), pré-remplit les champs (gravité, vraisemblance via mapping V1-V4, biens, DIC) et établit le lien bidirectionnel `consolidated_risk_id`. |
+| RE-13 | Une [`AttackTechnique`](attack-technique.md) doit référencer soit une [`MitreAttackTechnique`](mitre-attack-technique.md) (recommandé) soit un `custom_name`. Si MITRE est référencé, le champ `mitre_version` du [`OperationalScenario`](operational-scenario.md) parent doit être figé pour traçabilité. |
+| RE-14 | Le passage d'un cycle stratégique à un cycle opérationnel crée de nouvelles [`EbiosWorkshopProgress`](workshop-progress.md) (W4 et W5) avec `iteration_number` incrémenté, sans toucher aux entités W1-W3 du cycle stratégique en cours. |
 | RE-15 | La suppression d'une entité EBIOS est refusée si elle est référencée par une entité d'atelier supérieur (ex. SR utilisée dans un couple SR/OV retenu). Désactivation via `is_retained = false` à la place. |
 | RE-16 | La validation finale (W5) verrouille en lecture seule toutes les entités EBIOS de l'appréciation. Une nouvelle itération est nécessaire pour modifier. |
 | RE-17 | Toute modification d'une entité avec champ calculé déclenche le recalcul automatique au save() et incrémente la version simple_history. |
-| RE-18 | Une `PACSMeasure` `target_date` dépassée et `status not in [completed, cancelled]` passe automatiquement en `overdue` (tâche planifiée quotidienne). |
-| RE-19 | Toute modification du barème `RiskCriteria.ebios_threat_grid` ou `ebios_ecosystem_thresholds` propose le recalcul de toutes les entités EBIOS de l'appréciation associée (action manuelle, jamais automatique pour préserver l'historique). |
+| RE-18 | Une [`PACSMeasure`](pacs-measure.md) `target_date` dépassée et `status not in [completed, cancelled]` passe automatiquement en `overdue` (tâche planifiée quotidienne). |
+| RE-19 | Toute modification du barème [`RiskCriteria.ebios_threat_grid`](../risk-criteria.md) ou `ebios_ecosystem_thresholds` propose le recalcul de toutes les entités EBIOS de l'appréciation associée (action manuelle, jamais automatique pour préserver l'historique). |
 
 ---
 
 ## 6. Spécifications API REST
 
-Base URL : `/api/v1/risks/ebios/`. Toutes les routes héritent de la pagination, du filtrage, du tri et de l'authentification définis pour le module Risques (M4 §6.1).
+Base URL : `/api/v1/risks/ebios/`. Toutes les routes héritent de la pagination, du filtrage, du tri et de l'authentification définis pour le module Risques (voir [../README.md](../README.md#6-spécifications-api-rest)).
 
 ### 6.1 Atelier 0 - Cadre d'étude et progression
 
@@ -816,7 +509,7 @@ Total : environ 90 à 100 tools CRUD.
 
 ### 8.1 Navigation
 
-Le sous-module EBIOS RM est accessible depuis le détail d'une `RiskAssessment` dont `methodology = ebios_rm`. La page de détail affiche en bandeau supérieur :
+Le sous-module EBIOS RM est accessible depuis le détail d'une [`RiskAssessment`](../risk-assessment.md) dont `methodology = ebios_rm`. La page de détail affiche en bandeau supérieur :
 - Le **stepper 5 ateliers** (W1 à W5, avec branche cancelled si rejet).
 - L'indicateur **cycle stratégique vs opérationnel** (badge).
 - Le bouton « Nouvelle itération » (RSSI/Admin).
@@ -1094,7 +787,7 @@ La commande prend en argument le fichier JSON local (téléchargé manuellement 
 
 ### 11.5 Compatibilité historique
 
-Pour les `RiskAssessment` existantes avec `methodology = ebios_rm` (uniquement la coquille pour l'instant) :
+Pour les [`RiskAssessment`](../risk-assessment.md) existantes avec `methodology = ebios_rm` (uniquement la coquille pour l'instant) :
 - Data migration `00NN_backfill_ebios_workshops.py` : crée pour chaque appréciation ebios_rm existante 1 StudyFramework status draft + 6 EbiosWorkshopProgress not_started.
 - Aucune migration des entités EBIOS antérieures (il n'y en a pas).
 
@@ -1104,7 +797,7 @@ Pour les `RiskAssessment` existantes avec `methodology = ebios_rm` (uniquement l
 
 ### Annexe A - Grille ANSSI niveau de menace SR (Grille A)
 
-Détail de la grille de calcul `RiskSource.threat_level` (4 motivations x 4 ressources x 3 activités = 48 combinaisons aplaties). Tableau de référence (extrait) :
+Détail de la grille de calcul [`RiskSource.threat_level`](risk-source.md) (4 motivations x 4 ressources x 3 activités = 48 combinaisons aplaties). Tableau de référence (extrait) :
 
 | Motivation | Ressources | Activité | Niveau menace |
 |---|---|---|---|
@@ -1115,7 +808,7 @@ Détail de la grille de calcul `RiskSource.threat_level` (4 motivations x 4 ress
 | Forte (3) | Importantes (3) | Élevée | V4 |
 | Très forte (4) | Illimitées (4) | Élevée | V4 |
 
-La grille complète est fournie dans le fichier `risks/constants/ebios_grids.py` et alimente le calcul de `threat_level`. Paramétrable au niveau `RiskCriteria.ebios_threat_grid`.
+La grille complète est fournie dans le fichier `risks/constants/ebios_grids.py` et alimente le calcul de `threat_level`. Paramétrable au niveau [`RiskCriteria.ebios_threat_grid`](../risk-criteria.md).
 
 ### Annexe B - Grille ANSSI vraisemblance opérationnelle V1-V4 (Grille B)
 
@@ -1134,7 +827,7 @@ La grille complète est fournie dans le fichier `risks/constants/ebios_grids.py`
 | Surveillance (monitoring) | `0.5 <= threat_level < 1.5` | Orange | Partie prenante à surveiller. Mesures de réduction recommandées. |
 | Danger (danger) | `threat_level >= 1.5` | Rouge | Partie prenante critique. Mesures de réduction obligatoires. |
 
-Les seuils sont paramétrables sur `RiskCriteria.ebios_ecosystem_thresholds` (JSON : `{"control": 0.5, "monitoring": 1.5}`).
+Les seuils sont paramétrables sur [`RiskCriteria.ebios_ecosystem_thresholds`](../risk-criteria.md) (JSON : `{"control": 0.5, "monitoring": 1.5}`).
 
 ### Annexe D - Exemples de scénarios types ANSSI
 
@@ -1213,7 +906,7 @@ Les seuils sont paramétrables sur `RiskCriteria.ebios_ecosystem_thresholds` (JS
 
 ### Annexe G - Note de remplacement de M4 §4
 
-La section 4 du document M4_Gestion_Risques_Specifications.md (« Modèle de données - Sous-module EBIOS RM ») est obsolète. La présente spec M4bis la remplace intégralement. Les implémentations à venir doivent se référer à ce document. Les références croisées vers M4 §2 (socle commun), §5 (règles), §6 (API), §7 (UI), §10 (export) restent valides pour les parties non EBIOS.
+La section 4 du document M4 (« Modèle de données - Sous-module EBIOS RM ») est obsolète. La présente spec M4bis la remplace intégralement. Les implémentations à venir doivent se référer à ce document. Les références croisées vers M4 §2 (socle commun), §5 (règles), §6 (API), §7 (UI), §10 (export) restent valides pour les parties non EBIOS.
 
 ---
 

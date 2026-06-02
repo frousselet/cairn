@@ -1,4 +1,4 @@
-# Revue de direction — Conformité ISO 27001:2022 (clause 9.3)
+# Revue de direction : Conformité ISO 27001:2022 (clause 9.3)
 
 ## Spécifications fonctionnelles et techniques
 
@@ -6,6 +6,16 @@
 **Date :** 17 avril 2026
 **Statut :** Draft
 **Module concerné :** `reports` (transverse : context, compliance, risks, accounts)
+
+## Entities in this module
+
+- [ManagementReview](management-review.md) : `reports.models.management_review.ManagementReview`
+- [ManagementReviewParticipant](participant.md) : `reports.models.management_review.ManagementReviewParticipant`
+- [ManagementReviewDecision](decision.md) : `reports.models.management_review.ManagementReviewDecision`
+- [IsmsChange](isms-change.md) : `reports.models.management_review.IsmsChange`
+- [StakeholderFeedback](stakeholder-feedback.md) : `context.models.stakeholder_feedback.StakeholderFeedback`
+- [ManagementReviewComment](comment.md) : `reports.models.management_review.ManagementReviewComment`
+- [ManagementReviewTransition](transition.md) : `reports.models.management_review_transition.ManagementReviewTransition`
 
 ---
 
@@ -25,10 +35,10 @@ Doter Cairn d'un processus complet de **revue de direction** conforme à la clau
 
 Le module couvre six sous-domaines :
 
-1. **Revues de direction** (cycle de vie complet : entité persistante `ManagementReview`)
-2. **Décisions** issues d'une revue (entité `ManagementReviewDecision`)
-3. **Changements SMSI** identifiés (entité `IsmsChange`)
-4. **Retours des parties intéressées** (entité `StakeholderFeedback`)
+1. **Revues de direction** (cycle de vie complet : entité persistante [ManagementReview](management-review.md))
+2. **Décisions** issues d'une revue (entité [ManagementReviewDecision](decision.md))
+3. **Changements SMSI** identifiés (entité [IsmsChange](isms-change.md))
+4. **Retours des parties intéressées** (entité [StakeholderFeedback](stakeholder-feedback.md))
 5. **Export enrichi** (PPTX/DOCX) consommant les données persistantes
 6. **Rétrochaînage** des plans d'actions, plans de traitement des risques et objectifs vers la revue décisionnaire
 
@@ -55,206 +65,14 @@ Le module couvre six sous-domaines :
 |---|---|
 | `accounts` | Revue ≠ limitée au créateur : participants multiples, rédacteur, approbateur. Permissions `reports.management_review.*`. |
 | `context` | Indicateurs (tendance), objectifs, enjeux, parties intéressées, retours. |
-| `compliance` | Plans d'actions, constats, audits, référentiels — rétrochaînés à une revue. |
-| `risks` | Appréciations, risques critiques, plans de traitement — rétrochaînés à une revue. |
+| `compliance` | Plans d'actions, constats, audits, référentiels : rétrochaînés à une revue. |
+| `risks` | Appréciations, risques critiques, plans de traitement : rétrochaînés à une revue. |
 | `reports` | Génération des exports PPTX/DOCX enrichis. |
 | `mcp` | Exposition des revues, décisions, retours, changements SMSI. |
 
 ---
 
-## 2. Modèle de données
-
-### 2.1 Entité : `ManagementReview` (Revue de direction)
-
-Représente une revue de direction planifiée ou tenue. Objet racine persistant qui remplace le fonctionnement "export éphémère" actuel.
-
-Fichier : `reports/models/management_review.py`
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `reference` | string | auto (préfixe `MRVW`), unique | Référence séquentielle (ex. `MRVW-1`) |
-| `title` | string | requis, max 255 | Intitulé (ex. « Revue de direction annuelle 2026 ») |
-| `description` | text | optionnel | Contexte, objet de la revue |
-| `scopes` | relation | M2M → Scope, au moins 1 | Périmètres couverts par la revue |
-| `frequency` | enum | requis | `quarterly`, `semiannual`, `annual`, `exceptional` |
-| `period_start` | date | requis | Début de la période examinée |
-| `period_end` | date | requis | Fin de la période examinée |
-| `planned_date` | date | requis | Date planifiée de la revue |
-| `held_date` | date | optionnel | Date effective de tenue |
-| `location` | string | optionnel, max 255 | Lieu (physique ou visio) |
-| `status` | enum | requis | `planned`, `in_preparation`, `held`, `closed`, `cancelled` |
-| `facilitator` | FK → User | requis | Animateur / rédacteur |
-| `approver` | FK → User | optionnel | Approbateur (typiquement direction) |
-| `approved_at` | datetime | optionnel | Date d'approbation |
-| `next_review_date` | date | optionnel | Date prévue de la prochaine revue |
-| `summary` | text | optionnel | Synthèse exécutive rédigée par l'animateur |
-| `agenda` | text | optionnel | Ordre du jour (HTML rich text) |
-| `minutes` | text | optionnel | Compte rendu détaillé (HTML rich text) |
-| `snapshot_data` | JSONField | optionnel | Snapshot des données agrégées au moment de la clôture (pour geler l'auditabilité) |
-| `created_by` | FK → User | auto | Créateur |
-| `created_at`, `updated_at` | datetime | auto | Traçabilité |
-| `tags` | M2M → Tag | optionnel | Étiquetage libre |
-
-**Historique** : `django-simple-history` (`HistoricalRecords`) pour audit-trail.
-
-**Cycle de vie (workflow)** :
-
-```
-planned ─► in_preparation ─► held ─► closed
-       └──────────────────────────► cancelled
-```
-
-Transitions :
-
-- `planned → in_preparation` : l'animateur verrouille l'ordre du jour et déclenche la collecte des données.
-- `in_preparation → held` : sur saisie de `held_date`. Les données entrées de clause 9.3.2 sont gelées dans `snapshot_data`.
-- `held → closed` : toutes les décisions doivent avoir un responsable et une échéance ; le statut bascule si `approver` valide. Capture `approved_at`.
-- `* → cancelled` : motif obligatoire, stocké via commentaire (cf. 2.6).
-
-L'UI doit utiliser le **stepper horizontal** décrit dans `CLAUDE.md` (cf. `compliance/templates/compliance/assessment_detail.html`).
-
-### 2.2 Entité : `ManagementReviewParticipant`
-
-Table de liaison enrichie entre `ManagementReview` et `User` (participants internes ou externes).
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK | |
-| `review` | FK → ManagementReview | requis, `on_delete=CASCADE` | Revue parente |
-| `user` | FK → User | optionnel | Participant interne (null pour externes) |
-| `external_name` | string | max 255, optionnel | Nom en clair pour participant externe |
-| `external_role` | string | max 255, optionnel | Fonction en clair pour participant externe |
-| `role` | enum | requis | `facilitator`, `decision_maker`, `contributor`, `observer` |
-| `attended` | boolean | défaut false | A assisté à la réunion |
-| `signature_data` | text | optionnel | Signature (base64 PNG ou texte) pour le DOCX |
-
-> Contrainte : `user` ou (`external_name` + `external_role`) doit être renseigné (`CheckConstraint`).
-
-### 2.3 Entité : `ManagementReviewDecision` (Décision)
-
-Capture structurée des décisions exigées par la clause 9.3.3. Sert à produire le bloc « Décisions » du compte rendu et alimente automatiquement les plans d'actions.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK | |
-| `reference` | string | auto (préfixe `DECS`), unique | ex. `DECS-1` |
-| `review` | FK → ManagementReview | requis, CASCADE | Revue d'origine |
-| `category` | enum | requis | `improvement`, `isms_change`, `resource_allocation`, `risk_acceptance`, `objective_adjustment`, `policy_update`, `other` |
-| `input_clause` | enum | optionnel | Entrée 9.3.2 à laquelle se rattache la décision (`a`–`g`) |
-| `title` | string | requis, max 255 | Intitulé synthétique |
-| `description` | text | requis | Texte complet de la décision |
-| `rationale` | text | optionnel | Justification, éléments de contexte |
-| `owner` | FK → User | requis | Responsable de la mise en œuvre |
-| `due_date` | date | requis | Échéance |
-| `priority` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `status` | enum | requis | `pending`, `in_progress`, `implemented`, `cancelled` |
-| `implemented_at` | date | optionnel | Date de mise en œuvre effective |
-| `implementation_evidence` | text | optionnel | Preuve (lien vers document, URL) |
-| `linked_action_plan` | FK → ComplianceActionPlan | optionnel, SET_NULL | Plan d'action généré depuis cette décision |
-| `linked_treatment_plan` | FK → RiskTreatmentPlan | optionnel, SET_NULL | Plan de traitement généré |
-| `linked_objective` | FK → Objective | optionnel, SET_NULL | Objectif SSI créé/ajusté |
-| `linked_isms_change` | FK → IsmsChange | optionnel, SET_NULL | Changement SMSI associé |
-| `created_at`, `updated_at` | datetime | auto | |
-
-**Historique** : `HistoricalRecords`.
-
-**Règles de gestion** :
-
-- Une revue ne peut passer en `closed` que si **toutes ses décisions** ont `owner` ET `due_date` renseignés.
-- Lorsqu'une décision passe à `implemented`, si `linked_action_plan` est renseigné, son statut doit être `CLOSED` ou `VALIDATED` (garde-fou métier, avertissement UI non bloquant).
-- Une action « Créer un plan d'action depuis cette décision » génère un `ComplianceActionPlan` pré-rempli et renseigne `linked_action_plan` + `originating_review` (cf. §2.9).
-
-### 2.4 Entité : `IsmsChange` (Changement SMSI)
-
-Exigence 9.3.3 : « toute nécessité de modifier le SMSI ». Formalisation des changements décidés en revue.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK | |
-| `reference` | string | auto (préfixe `ICHG`), unique | ex. `ICHG-1` |
-| `review` | FK → ManagementReview | requis, CASCADE | Revue d'origine |
-| `change_type` | enum | requis | `scope`, `policy`, `control`, `organization`, `resource`, `process`, `other` |
-| `title` | string | requis, max 255 | Intitulé |
-| `description` | text | requis | Description du changement |
-| `impact_analysis` | text | optionnel | Analyse d'impact (PI, risques, actifs) |
-| `affected_scopes` | M2M → Scope | optionnel | Périmètres impactés |
-| `affected_frameworks` | M2M → Framework | optionnel | Référentiels impactés |
-| `affected_policies` | text | optionnel | Liste des politiques à réviser (texte libre, évolution future vers un modèle `Policy`) |
-| `status` | enum | requis | `proposed`, `approved`, `in_progress`, `implemented`, `rejected` |
-| `owner` | FK → User | requis | Responsable de mise en œuvre |
-| `target_date` | date | optionnel | Date cible |
-| `implemented_at` | date | optionnel | Date de mise en œuvre effective |
-| `created_at`, `updated_at` | datetime | auto | |
-
-**Historique** : `HistoricalRecords`.
-
-### 2.5 Entité : `StakeholderFeedback` (Retour de partie intéressée)
-
-Formalisation du canal de feedback exigé par la clause 9.3.2.e (distinct des attentes `StakeholderExpectation`, qui sont des exigences permanentes).
-
-Fichier : `context/models/stakeholder_feedback.py`
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK | |
-| `reference` | string | auto (préfixe `FBCK`), unique | ex. `FBCK-1` |
-| `stakeholder` | FK → Stakeholder | requis, CASCADE | Partie intéressée émettrice |
-| `channel` | enum | requis | `survey`, `meeting`, `complaint`, `email`, `audit`, `incident`, `other` |
-| `received_date` | date | requis | Date de réception |
-| `subject` | string | requis, max 255 | Objet du retour |
-| `content` | text | requis | Contenu détaillé (HTML rich text) |
-| `sentiment` | enum | optionnel | `positive`, `neutral`, `negative`, `mixed` |
-| `severity` | enum | optionnel | `low`, `medium`, `high`, `critical` |
-| `status` | enum | requis | `new`, `under_review`, `addressed`, `closed` |
-| `response` | text | optionnel | Réponse apportée |
-| `linked_issues` | M2M → Issue | optionnel | Enjeux associés |
-| `linked_expectations` | M2M → StakeholderExpectation | optionnel | Attentes renforcées |
-| `scopes` | M2M → Scope | requis, au moins 1 | Périmètres concernés |
-| `created_by`, `created_at`, `updated_at` | auto | | Traçabilité |
-
-**Historique** : `HistoricalRecords`.
-
-**Agrégation en revue** : la section 5 de l'export devient :
-- tableau des `StakeholderFeedback` sur la période (priorité aux `negative` + `critical`)
-- plus la vue actuelle des attentes applicables (inchangée).
-
-### 2.6 Entité : `ManagementReviewComment`
-
-Fil de discussion attaché à une revue (utile pour arbitrage pré-réunion, justification d'annulation, etc.).
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK | |
-| `review` | FK → ManagementReview | requis, CASCADE | |
-| `author` | FK → User | requis, SET_NULL | |
-| `content` | text | requis | HTML rich text |
-| `created_at` | datetime | auto | |
-
-Pattern identique à `ComplianceActionPlanComment`.
-
-### 2.7 Entité : `ManagementReviewTransition`
-
-Journal des transitions de statut, aligné sur `ComplianceActionPlanTransition`.
-
-| Champ | Type | Description |
-|---|---|---|
-| `id` | UUID | PK |
-| `review` | FK → ManagementReview | CASCADE |
-| `from_status`, `to_status` | enum | - |
-| `user` | FK → User | Auteur |
-| `comment` | text | Commentaire obligatoire pour `cancelled` |
-| `created_at` | datetime | auto |
-
-### 2.8 Extension de `Indicator` / `IndicatorMeasurement`
-
-**Aucun changement de modèle**. `IndicatorMeasurement` existe déjà (`context/models/indicator.py:352`). La spec impose uniquement d'exploiter ces mesures côté export :
-
-- Calcul de la tendance sur la période de revue : comparaison de la **moyenne des mesures** `period_start → period_end` vs. la période précédente équivalente.
-- Marqueur `trend` calculé : `improving`, `stable`, `degrading`, `insufficient_data` (< 2 mesures).
-- Calcul du **respect de la fréquence** : nombre attendu de mesures sur la période (selon `review_frequency`) vs. nombre réel. Remonté en `measurement_compliance_pct`.
-
-### 2.9 Modifications de modèles existants
+## Modifications de modèles existants
 
 Ajout de clés étrangères de **rétrochaînage** (nullable, `SET_NULL`). Permet de répondre au 9.3.2.a et de tracer l'origine décisionnelle.
 
@@ -317,31 +135,31 @@ Pattern **2 colonnes, pas d'onglets** (cf. `CLAUDE.md` : prefer 2-column card la
 
 **Colonne principale** : sections `<details>` repliables, chacune correspondant à une entrée de 9.3.2 :
 
-1. **9.3.2.a Actions des revues précédentes** — tableau des décisions `pending`/`in_progress` issues de revues antérieures, avec statut et échéance.
-2. **9.3.2.b Enjeux** — internes/externes (utilise `Issue` filtré sur la période).
-3. **9.3.2.c Attentes des parties intéressées** — utilise `StakeholderExpectation` filtré.
-4. **9.3.2.d.1 Non-conformités** — utilise `Finding`.
-5. **9.3.2.d.2 Surveillance et mesurage** — tableau avec **colonne « Tendance »** (🔺 amélioration, = stable, 🔻 dégradation) et **« Conformité fréquence »**.
-6. **9.3.2.d.3 Audits** — utilise `ComplianceAssessment`.
-7. **9.3.2.d.4 Objectifs** — utilise `Objective`.
-8. **9.3.2.e Retours des PI** — nouvelle section consommant `StakeholderFeedback`.
-9. **9.3.2.f Risques et plan de traitement** — synthèse + risques critiques.
-10. **9.3.2.g Opportunités d'amélioration** — constats type `IMPROVEMENT_OPPORTUNITY` + champ texte libre `summary`.
-11. **Décisions (sortie 9.3.3)** — tableau éditable, actions inline « Promouvoir en plan d'action ».
-12. **Changements SMSI (sortie 9.3.3)** — liste des `IsmsChange`.
-13. **Synthèse et prochaine revue** — `summary`, `next_review_date`.
-14. **Commentaires** — fil (`ManagementReviewComment`).
-15. **Historique** — `HistoricalRecords` de la revue et de ses décisions.
+1. **9.3.2.a Actions des revues précédentes** : tableau des décisions `pending`/`in_progress` issues de revues antérieures, avec statut et échéance.
+2. **9.3.2.b Enjeux** : internes/externes (utilise `Issue` filtré sur la période).
+3. **9.3.2.c Attentes des parties intéressées** : utilise `StakeholderExpectation` filtré.
+4. **9.3.2.d.1 Non-conformités** : utilise `Finding`.
+5. **9.3.2.d.2 Surveillance et mesurage** : tableau avec **colonne « Tendance »** (🔺 amélioration, = stable, 🔻 dégradation) et **« Conformité fréquence »**.
+6. **9.3.2.d.3 Audits** : utilise `ComplianceAssessment`.
+7. **9.3.2.d.4 Objectifs** : utilise `Objective`.
+8. **9.3.2.e Retours des PI** : nouvelle section consommant `StakeholderFeedback`.
+9. **9.3.2.f Risques et plan de traitement** : synthèse + risques critiques.
+10. **9.3.2.g Opportunités d'amélioration** : constats type `IMPROVEMENT_OPPORTUNITY` + champ texte libre `summary`.
+11. **Décisions (sortie 9.3.3)** : tableau éditable, actions inline « Promouvoir en plan d'action ».
+12. **Changements SMSI (sortie 9.3.3)** : liste des `IsmsChange`.
+13. **Synthèse et prochaine revue** : `summary`, `next_review_date`.
+14. **Commentaires** : fil (`ManagementReviewComment`).
+15. **Historique** : `HistoricalRecords` de la revue et de ses décisions.
 
 ### 3.3 Formulaires
 
-- `ManagementReviewForm` — création/édition (title, description, scopes, frequency, period_start, period_end, planned_date, location, facilitator, approver, next_review_date, agenda, summary, tags).
-- `ManagementReviewParticipantFormSet` — gestion inline des participants.
-- `ManagementReviewTransitionForm` — statut cible + commentaire (obligatoire si `cancelled`).
-- `ManagementReviewDecisionForm` — tous les champs §2.3.
-- `IsmsChangeForm` — tous les champs §2.4.
-- `StakeholderFeedbackForm` — tous les champs §2.5.
-- `DecisionPromoteForm` — modal générant un `ComplianceActionPlan` pré-rempli depuis une décision.
+- `ManagementReviewForm` : création/édition (title, description, scopes, frequency, period_start, period_end, planned_date, location, facilitator, approver, next_review_date, agenda, summary, tags).
+- `ManagementReviewParticipantFormSet` : gestion inline des participants.
+- `ManagementReviewTransitionForm` : statut cible + commentaire (obligatoire si `cancelled`).
+- `ManagementReviewDecisionForm` : tous les champs de [decision.md](decision.md).
+- `IsmsChangeForm` : tous les champs de [isms-change.md](isms-change.md).
+- `StakeholderFeedbackForm` : tous les champs de [stakeholder-feedback.md](stakeholder-feedback.md).
+- `DecisionPromoteForm` : modal générant un `ComplianceActionPlan` pré-rempli depuis une décision.
 
 ### 3.4 Liste `ManagementReviewListView`
 
@@ -367,7 +185,7 @@ Rationale : une revue clôturée ne doit plus varier avec le temps (exigence d'a
 
 ### 4.1 Source des données
 
-Fichier : `reports/management_review.py` — refactoring de `gather_management_review_data` en **deux modes** :
+Fichier : `reports/management_review.py` : refactoring de `gather_management_review_data` en **deux modes** :
 
 - `gather_live(...)` : mode actuel, agrégation live (pour revues `planned`/`in_preparation`/`held`).
 - `gather_from_snapshot(review)` : rehydrate depuis `snapshot_data` (pour revues `closed`).
@@ -391,23 +209,23 @@ Si `review` est fourni :
 
 ### 4.2 Ajouts dans l'export
 
-**Section 4b (mesurage)** — nouvelles colonnes :
+**Section 4b (mesurage)** : nouvelles colonnes :
 
 | Ref. | Indicateur | Valeur actuelle | Valeur précédente | Tendance | Cible | Conf. fréquence |
 |---|---|---|---|---|---|---|
 
-**Section 5 (retours PI)** — deux blocs :
+**Section 5 (retours PI)** : deux blocs :
 - Tableau `StakeholderFeedback` (canal, sujet, sentiment, sévérité, statut)
 - Tableau existant des attentes applicables
 
-**Section 9.3.3 (sorties)** — nouvelles slides / sections DOCX :
+**Section 9.3.3 (sorties)** : nouvelles slides / sections DOCX :
 
-- **Décisions prises** — tableau (référence, catégorie, titre, responsable, échéance, priorité, statut)
-- **Changements SMSI** — tableau (référence, type, titre, responsable, statut, cible)
-- **Synthèse exécutive** — insertion de `review.summary` (rich text stripé)
-- **Prochaine revue** — `review.next_review_date`
+- **Décisions prises** : tableau (référence, catégorie, titre, responsable, échéance, priorité, statut)
+- **Changements SMSI** : tableau (référence, type, titre, responsable, statut, cible)
+- **Synthèse exécutive** : insertion de `review.summary` (rich text stripé)
+- **Prochaine revue** : `review.next_review_date`
 
-**Page de signatures (DOCX)** — remplacer la table vide actuelle par une table pré-remplie avec les participants (nom, fonction, case signature). Si `signature_data` contient une image base64, l'intégrer.
+**Page de signatures (DOCX)** : remplacer la table vide actuelle par une table pré-remplie avec les participants (nom, fonction, case signature). Si `signature_data` contient une image base64, l'intégrer.
 
 ### 4.3 Placeholders `[A completer]`
 
@@ -446,8 +264,8 @@ Et dans `context` :
 
 ### 5.2 Sérialisation
 
-- `ManagementReviewSerializer` — exhaustif, inclut `decisions_count`, `participants`, `status_display`, `snapshot_available`.
-- `ManagementReviewDetailSerializer` — étend avec décisions et changements SMSI imbriqués.
+- `ManagementReviewSerializer` : exhaustif, inclut `decisions_count`, `participants`, `status_display`, `snapshot_available`.
+- `ManagementReviewDetailSerializer` : étend avec décisions et changements SMSI imbriqués.
 - Permissions : classe `ManagementReviewPermission` héritant de `ModulePermission`.
 - Approval workflow (`ApprovableAPIMixin`) réutilisé pour la transition `held → closed`.
 
@@ -529,11 +347,11 @@ Couverture minimale attendue :
 
 ### 10.1 Unitaires
 
-- `reports/tests/test_management_review_model.py` — cycle de vie, snapshot, contrainte de clôture (toutes décisions doivent avoir owner+due_date).
-- `reports/tests/test_decision_model.py` — lien vers plan d'action, rétrochaînage.
-- `reports/tests/test_isms_change_model.py` — workflow.
-- `context/tests/test_stakeholder_feedback_model.py` — intégrité, liens.
-- `reports/tests/test_indicator_trend.py` — calcul de tendance, conformité fréquence.
+- `reports/tests/test_management_review_model.py` : cycle de vie, snapshot, contrainte de clôture (toutes décisions doivent avoir owner+due_date).
+- `reports/tests/test_decision_model.py` : lien vers plan d'action, rétrochaînage.
+- `reports/tests/test_isms_change_model.py` : workflow.
+- `context/tests/test_stakeholder_feedback_model.py` : intégrité, liens.
+- `reports/tests/test_indicator_trend.py` : calcul de tendance, conformité fréquence.
 
 ### 10.2 Vues
 
@@ -567,12 +385,12 @@ Couverture minimale attendue :
 
 Ordre :
 
-1. `reports/migrations/0002_management_review.py` — création des 5 tables (`ManagementReview`, `ManagementReviewParticipant`, `ManagementReviewDecision`, `IsmsChange`, `ManagementReviewComment`, `ManagementReviewTransition`).
-2. `context/migrations/XXXX_stakeholder_feedback.py` — création `StakeholderFeedback`.
-3. `compliance/migrations/XXXX_action_plan_originating_review.py` — ajout FK nullable.
-4. `risks/migrations/XXXX_treatment_plan_originating_review.py` — ajout FK nullable.
-5. `context/migrations/XXXX_objective_originating_review.py` — ajout FK nullable.
-6. `accounts/migrations/XXXX_management_review_permissions.py` — data migration populant `PERMISSION_REGISTRY` et groupes système.
+1. `reports/migrations/0002_management_review.py` : création des 5 tables (`ManagementReview`, `ManagementReviewParticipant`, `ManagementReviewDecision`, `IsmsChange`, `ManagementReviewComment`, `ManagementReviewTransition`).
+2. `context/migrations/XXXX_stakeholder_feedback.py` : création `StakeholderFeedback`.
+3. `compliance/migrations/XXXX_action_plan_originating_review.py` : ajout FK nullable.
+4. `risks/migrations/XXXX_treatment_plan_originating_review.py` : ajout FK nullable.
+5. `context/migrations/XXXX_objective_originating_review.py` : ajout FK nullable.
+6. `accounts/migrations/XXXX_management_review_permissions.py` : data migration populant `PERMISSION_REGISTRY` et groupes système.
 
 Toutes additives. Aucune donnée existante perdue.
 
@@ -588,13 +406,13 @@ L'export actuel reste **fonctionnel sans revue** : si `review=None`, l'API conse
 
 Conformément à `CLAUDE.md` :
 
-- **CHANGELOG.md** — ajouter sous `## [Unreleased]` :
+- **CHANGELOG.md** : ajouter sous `## [Unreleased]` :
   - `### Added` : « Persistent management review workflow (ISO 27001:2022 clause 9.3) with decisions, ISMS changes, participants, and snapshot-based auditability. »
   - `### Added` : « Stakeholder feedback module. »
   - `### Added` : « Indicator trend analysis in management review exports. »
   - `### Changed` : « Management review export now consumes persistent review data when available. »
 
-- **README.md** — mettre à jour :
+- **README.md** : mettre à jour :
   - Tableau des fonctionnalités (colonne Reports : + Management reviews).
   - Tableau des MCP tools : ajouter les 14 nouveaux tools.
   - Tech stack : aucune nouvelle dépendance (python-pptx, python-docx déjà présents).
@@ -611,7 +429,7 @@ La feature est considérée livrée quand **tous** les critères suivants sont v
 - [ ] Ajouter participants (internes et externes), décisions, changements SMSI.
 - [ ] Promouvoir une décision en `ComplianceActionPlan` via bouton inline ; le plan créé porte `originating_review` et `originating_decision`.
 - [ ] Créer des `StakeholderFeedback` indépendamment d'une revue.
-- [ ] L'export DOCX/PPTX d'une revue `closed` contient : décisions, changements SMSI, participants, synthèse, prochaine revue — zéro placeholder `[A completer]`.
+- [ ] L'export DOCX/PPTX d'une revue `closed` contient : décisions, changements SMSI, participants, synthèse, prochaine revue : zéro placeholder `[A completer]`.
 - [ ] La tendance des indicateurs apparaît dans la section 4b.
 - [ ] Clôture interdite si une décision est incomplète (message d'erreur clair).
 - [ ] Les données d'une revue `closed` sont gelées (ne varient pas avec modifications ultérieures en base).
@@ -640,7 +458,7 @@ La feature est considérée livrée quand **tous** les critères suivants sont v
 
 ## 14. Hors périmètre (pour une v+1)
 
-- Signatures électroniques qualifiées (eIDAS) intégrées — restent manuelles dans le DOCX.
+- Signatures électroniques qualifiées (eIDAS) intégrées : restent manuelles dans le DOCX.
 - Modèle `Policy` formalisé (actuellement `IsmsChange.affected_policies` = texte libre).
 - Rappels automatiques par mail des participants avant la revue.
 - Modèles de revue préconfigurés par industrie/certification.

@@ -1,4 +1,4 @@
-# Module 2 — Gestion des Actifs
+# Module 2 : Gestion des Actifs
 
 ## Spécifications fonctionnelles et techniques
 
@@ -8,13 +8,25 @@
 
 ---
 
+## Entities in this module
+
+- [EssentialAsset](./essential-asset.md)
+- [SupportAsset](./support-asset.md)
+- [AssetDependency](./asset-dependency.md)
+- [AssetGroup](./asset-group.md)
+- [AssetValuation](./asset-valuation.md)
+- ⚠ Site : implemented but not specced, see [issue #30](https://gitlab.rslt.fr/fairway/fairway/-/issues/30)
+- ⚠ Supplier and related entities : implemented but not specced, see [issue #35](https://gitlab.rslt.fr/fairway/fairway/-/issues/35)
+
+---
+
 ## 1. Présentation générale
 
 ### 1.1 Objectif du module
 
-Le module **Gestion des Actifs** permet d'identifier, classifier et maintenir à jour l'inventaire des actifs informationnels de l'organisme. Il distingue les **biens essentiels** (processus métier, informations) des **biens supports** (matériels, logiciels, réseaux, personnes, sites) conformément aux approches ISO 27001 (annexe A — A.5.9 à A.5.14), ISO 27005 et EBIOS RM (socle de sécurité et identification des biens supports).
+Le module **Gestion des Actifs** permet d'identifier, classifier et maintenir à jour l'inventaire des actifs informationnels de l'organisme. Il distingue les **biens essentiels** (processus métier, informations) des **biens supports** (matériels, logiciels, réseaux, personnes, sites) conformément aux approches ISO 27001 (annexe A : A.5.9 à A.5.14), ISO 27005 et EBIOS RM (socle de sécurité et identification des biens supports).
 
-Ce module constitue le socle de l'appréciation des risques : les biens essentiels portent les besoins de sécurité (critères DIC — Disponibilité, Intégrité, Confidentialité) et les biens supports héritent de ces besoins via leurs relations de dépendance.
+Ce module constitue le socle de l'appréciation des risques : les biens essentiels portent les besoins de sécurité (critères DIC : Disponibilité, Intégrité, Confidentialité) et les biens supports héritent de ces besoins via leurs relations de dépendance.
 
 ### 1.2 Périmètre fonctionnel
 
@@ -35,162 +47,6 @@ Le module couvre quatre sous-domaines :
 | Mesures | Les mesures de sécurité sont appliquées sur des biens supports pour protéger les biens essentiels. |
 | Fournisseurs | Les biens supports de type service externalisé sont liés aux fournisseurs. |
 | Incidents | Les incidents sont rattachés aux actifs impactés. |
-
----
-
-## 2. Modèle de données
-
-### 2.1 Entité : EssentialAsset (Bien essentiel)
-
-Représente un processus métier ou un type d'information essentiel pour l'organisme dont la compromission aurait un impact significatif.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `reference` | string | requis, unique | Code de référence (ex. BE-001) |
-| `name` | string | requis, max 255 | Nom du bien essentiel |
-| `description` | text | optionnel | Description détaillée |
-| `type` | enum | requis | `business_process`, `information` |
-| `category` | enum | requis | Voir liste ci-dessous |
-| `owner_id` | relation | FK → User, requis | Propriétaire du bien essentiel |
-| `custodian_id` | relation | FK → User, optionnel | Dépositaire / responsable opérationnel |
-| `confidentiality_level` | enum | requis | `negligible` (0), `low` (1), `medium` (2), `high` (3), `critical` (4) |
-| `integrity_level` | enum | requis | `negligible` (0), `low` (1), `medium` (2), `high` (3), `critical` (4) |
-| `availability_level` | enum | requis | `negligible` (0), `low` (1), `medium` (2), `high` (3), `critical` (4) |
-| `confidentiality_justification` | text | optionnel | Justification du niveau de confidentialité |
-| `integrity_justification` | text | optionnel | Justification du niveau d'intégrité |
-| `availability_justification` | text | optionnel | Justification du niveau de disponibilité |
-| `max_tolerable_downtime` | string | optionnel | Durée maximale d'indisponibilité tolérable (DMIT / MTD) |
-| `recovery_time_objective` | string | optionnel | Objectif de temps de reprise (RTO) |
-| `recovery_point_objective` | string | optionnel | Objectif de point de reprise (RPO) |
-| `data_classification` | enum | optionnel | `public`, `internal`, `confidential`, `restricted`, `secret` |
-| `personal_data` | boolean | requis, défaut false | Contient des données à caractère personnel |
-| `personal_data_categories` | json | optionnel | Catégories de données personnelles (RGPD) |
-| `regulatory_constraints` | text | optionnel | Contraintes réglementaires spécifiques |
-| `related_activities` | relation | M2M → Activity | Activités métier associées (Module 1) |
-| `supporting_assets` | relation | M2M → SupportAsset (via AssetDependency) | Biens supports associés |
-| `status` | enum | requis | `identified`, `active`, `under_review`, `decommissioned` |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-**Catégories de biens essentiels (valeurs de `category`) :**
-
-- *Type `business_process` :* `core_process`, `support_process`, `management_process`
-- *Type `information` :* `strategic_data`, `operational_data`, `personal_data`, `financial_data`, `technical_data`, `legal_data`, `research_data`, `commercial_data`
-
-> Note : Les catégories doivent être paramétrables par l'administrateur.
-
-### 2.2 Entité : SupportAsset (Bien support)
-
-Représente un actif technique, humain ou physique qui supporte les biens essentiels et sur lequel les vulnérabilités peuvent être exploitées.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `reference` | string | requis, unique | Code de référence (ex. BS-001) |
-| `name` | string | requis, max 255 | Nom du bien support |
-| `description` | text | optionnel | Description détaillée |
-| `type` | enum | requis | `hardware`, `software`, `network`, `person`, `site`, `service`, `paper` |
-| `category` | enum | requis | Voir liste ci-dessous |
-| `owner_id` | relation | FK → User, requis | Propriétaire du bien support |
-| `custodian_id` | relation | FK → User, optionnel | Dépositaire / responsable opérationnel |
-| `location` | string | optionnel | Localisation physique |
-| `manufacturer` | string | optionnel | Fabricant / éditeur |
-| `model` | string | optionnel | Modèle / version |
-| `serial_number` | string | optionnel | Numéro de série |
-| `version` | string | optionnel | Version (logiciel, firmware) |
-| `ip_address` | string | optionnel | Adresse IP (si applicable) |
-| `hostname` | string | optionnel | Nom d'hôte (si applicable) |
-| `operating_system` | string | optionnel | Système d'exploitation |
-| `acquisition_date` | date | optionnel | Date d'acquisition |
-| `end_of_life_date` | date | optionnel | Date de fin de vie / fin de support |
-| `warranty_expiry_date` | date | optionnel | Date d'expiration de la garantie |
-| `supplier_id` | relation | FK → Supplier, optionnel | Fournisseur associé (Module Fournisseurs) |
-| `contract_reference` | string | optionnel | Référence du contrat associé |
-| `inherited_confidentiality` | enum | calculé | Niveau hérité max des biens essentiels |
-| `inherited_integrity` | enum | calculé | Niveau hérité max des biens essentiels |
-| `inherited_availability` | enum | calculé | Niveau hérité max des biens essentiels |
-| `exposure_level` | enum | optionnel | `internal`, `exposed`, `internet_facing`, `dmz` |
-| `environment` | enum | optionnel | `production`, `staging`, `development`, `test`, `disaster_recovery` |
-| `essential_assets` | relation | M2M → EssentialAsset (via AssetDependency) | Biens essentiels supportés |
-| `parent_asset_id` | relation | FK → SupportAsset, optionnel | Bien support parent (composition) |
-| `related_measures` | relation | M2M → Measure | Mesures de sécurité appliquées (Module Mesures) |
-| `status` | enum | requis | `in_stock`, `deployed`, `active`, `under_maintenance`, `decommissioned`, `disposed` |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-**Catégories de biens supports (valeurs de `category`) :**
-
-- *`hardware` :* `server`, `workstation`, `laptop`, `mobile_device`, `network_equipment`, `storage`, `peripheral`, `iot_device`, `removable_media`, `other_hardware`
-- *`software` :* `operating_system`, `database`, `application`, `middleware`, `security_tool`, `development_tool`, `saas_application`, `other_software`
-- *`network` :* `lan`, `wan`, `wifi`, `vpn`, `internet_link`, `firewall_zone`, `dmz`, `other_network`
-- *`person` :* `internal_staff`, `contractor`, `external_provider`, `administrator`, `developer`, `other_person`
-- *`site` :* `datacenter`, `office`, `remote_site`, `cloud_region`, `other_site`
-- *`service` :* `cloud_service`, `hosting_service`, `managed_service`, `telecom_service`, `outsourced_service`, `other_service`
-- *`paper` :* `archive`, `printed_document`, `form`, `other_paper`
-
-> Note : Les catégories doivent être paramétrables par l'administrateur.
-
-### 2.3 Entité : AssetDependency (Relation de dépendance)
-
-Représente le lien de dépendance entre un bien essentiel et un bien support. C'est via cette relation que les besoins de sécurité DIC sont hérités par les biens supports.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `essential_asset_id` | relation | FK → EssentialAsset, requis | Bien essentiel source |
-| `support_asset_id` | relation | FK → SupportAsset, requis | Bien support cible |
-| `dependency_type` | enum | requis | `runs_on`, `stored_in`, `transmitted_by`, `managed_by`, `hosted_at`, `protected_by`, `other` |
-| `criticality` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `description` | text | optionnel | Description de la relation de dépendance |
-| `is_single_point_of_failure` | boolean | requis, défaut false | Point unique de défaillance |
-| `redundancy_level` | enum | optionnel | `none`, `partial`, `full` |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-> Contrainte d'unicité : le couple (`essential_asset_id`, `support_asset_id`) doit être unique.
-
-### 2.4 Entité : AssetGroup (Groupe d'actifs)
-
-Permet de regrouper des biens supports par lot logique (ex. « Serveurs de production », « Postes de travail site Paris ») pour faciliter la gestion et l'appréciation des risques.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `name` | string | requis, max 255 | Nom du groupe |
-| `description` | text | optionnel | Description du groupe |
-| `type` | enum | requis | Même typologie que SupportAsset.type |
-| `members` | relation | M2M → SupportAsset | Biens supports membres |
-| `owner_id` | relation | FK → User, optionnel | Responsable du groupe |
-| `status` | enum | requis | `active`, `inactive` |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-### 2.5 Sous-entité : AssetValuation (Historique de valorisation)
-
-Conserve l'historique des évaluations DIC d'un bien essentiel, permettant de suivre l'évolution des besoins de sécurité dans le temps.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `essential_asset_id` | relation | FK → EssentialAsset, requis | Bien essentiel évalué |
-| `evaluation_date` | date | requis | Date de l'évaluation |
-| `confidentiality_level` | enum | requis | Niveau C à cette date |
-| `integrity_level` | enum | requis | Niveau I à cette date |
-| `availability_level` | enum | requis | Niveau D à cette date |
-| `evaluated_by` | relation | FK → User, requis | Évaluateur |
-| `justification` | text | optionnel | Justification globale de l'évaluation |
-| `context` | text | optionnel | Contexte de l'évaluation (revue annuelle, incident, changement…) |
-| `created_at` | datetime | auto | Date de création |
 
 ---
 
@@ -242,7 +98,7 @@ Conserve l'historique des évaluations DIC d'un bien essentiel, permettant de su
 
 Identiques au Module 1. Base URL : `/api/v1/assets/`
 
-### 4.2 Endpoints — Essential Assets (Biens essentiels)
+### 4.2 Endpoints : Essential Assets (Biens essentiels)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -275,7 +131,7 @@ Identiques au Module 1. Base URL : `/api/v1/assets/`
 - `?has_supporting_assets=true|false`
 - `?activity_id={uuid}` (biens essentiels liés à une activité)
 
-### 4.3 Endpoints — Support Assets (Biens supports)
+### 4.3 Endpoints : Support Assets (Biens supports)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -313,7 +169,7 @@ Identiques au Module 1. Base URL : `/api/v1/assets/`
 - `?is_orphan=true` (pas de bien essentiel associé)
 - `?group_id={uuid}`
 
-### 4.4 Endpoints — Asset Dependencies (Relations de dépendance)
+### 4.4 Endpoints : Asset Dependencies (Relations de dépendance)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -326,7 +182,7 @@ Identiques au Module 1. Base URL : `/api/v1/assets/`
 | `GET` | `/dependencies/spof` | Lister les points uniques de défaillance |
 | `GET` | `/dependencies/graph` | Graphe de dépendances (données pour visualisation) |
 
-### 4.5 Endpoints — Asset Groups (Groupes d'actifs)
+### 4.5 Endpoints : Asset Groups (Groupes d'actifs)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -669,7 +525,3 @@ Identique au Module 1 (§10.5). Événements spécifiques :
 - [ ] Les temps de réponse respectent les seuils définis (§10.6)
 - [ ] Le calcul d'héritage DIC respecte le seuil de 500 ms
 - [ ] Les imports volumineux sont traités de manière asynchrone
-
----
-
-*Fin des spécifications du Module 2 — Gestion des Actifs*

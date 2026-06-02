@@ -1,10 +1,22 @@
-# Module 3 — Conformité
+# Module 3 : Conformité
 
 ## Spécifications fonctionnelles et techniques
 
 **Version :** 1.0
 **Date :** 27 février 2026
 **Statut :** Draft
+
+---
+
+## Entités
+
+- [Framework](framework.md) : `compliance.models.framework.Framework`
+- [Section](section.md) : `compliance.models.section.Section`
+- [Requirement](requirement.md) : `compliance.models.requirement.Requirement`
+- [ComplianceAssessment](compliance-assessment.md) : `compliance.models.assessment.ComplianceAssessment` (inclut `AssessmentResult`)
+- [RequirementMapping](requirement-mapping.md) : `compliance.models.mapping.RequirementMapping`
+- [ComplianceActionPlan](compliance-action-plan.md) : `compliance.models.action_plan.ComplianceActionPlan`
+- [Attachment](attachment.md) : `compliance.models.assessment.AssessmentResultAttachment`
 
 ---
 
@@ -38,242 +50,6 @@ Le module couvre cinq sous-domaines :
 | Audits | Les audits évaluent la conformité aux référentiels. Les constats d'audit sont liés aux exigences. |
 | Incidents | Certains incidents révèlent des non-conformités à tracer. |
 | Formations | Certaines exigences imposent des obligations de formation. |
-
----
-
-## 2. Modèle de données
-
-### 2.1 Entité : Framework (Référentiel)
-
-Représente un référentiel normatif, légal, réglementaire, contractuel ou interne auquel l'organisme doit ou choisit de se conformer.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `reference` | string | requis, unique | Code de référence (ex. REF-001) |
-| `name` | string | requis, max 255 | Nom du référentiel (ex. « ISO 27001:2022 ») |
-| `short_name` | string | optionnel, max 50 | Abréviation (ex. « ISO 27001 ») |
-| `description` | text | optionnel | Description du référentiel |
-| `type` | enum | requis | `standard`, `law`, `regulation`, `contract`, `internal_policy`, `industry_framework`, `other` |
-| `category` | enum | requis | Voir liste ci-dessous |
-| `version` | string | optionnel | Version du référentiel (ex. « 2022 ») |
-| `publication_date` | date | optionnel | Date de publication officielle |
-| `effective_date` | date | optionnel | Date d'entrée en vigueur |
-| `expiry_date` | date | optionnel | Date d'expiration ou d'abrogation |
-| `issuing_body` | string | optionnel | Organisme émetteur (ex. « ISO », « Parlement européen ») |
-| `jurisdiction` | string | optionnel | Juridiction applicable (ex. « France », « Union européenne », « International ») |
-| `url` | string | optionnel, format URL | Lien vers le texte officiel |
-| `is_mandatory` | boolean | requis, défaut false | Référentiel obligatoire (contrainte légale/réglementaire) |
-| `is_applicable` | boolean | requis, défaut true | Applicable au périmètre |
-| `applicability_justification` | text | optionnel | Justification de l'applicabilité ou de la non-applicabilité |
-| `owner_id` | relation | FK → User, requis | Responsable du suivi de conformité pour ce référentiel |
-| `related_stakeholders` | relation | M2M → Stakeholder | Parties intéressées à l'origine de ce référentiel |
-| `compliance_level` | decimal | calculé, 0-100 | Niveau de conformité global calculé (%) |
-| `last_assessment_date` | date | calculé | Date de la dernière évaluation |
-| `status` | enum | requis | `draft`, `active`, `under_review`, `deprecated`, `archived` |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-**Catégories de référentiels (valeurs de `category`) :**
-
-- `information_security` (Sécurité de l'information — ISO 27001, ISO 27002, etc.)
-- `privacy` (Protection des données — RGPD, CCPA, etc.)
-- `risk_management` (Gestion des risques — ISO 27005, ISO 31000, etc.)
-- `business_continuity` (Continuité d'activité — ISO 22301, etc.)
-- `cloud_security` (Sécurité cloud — ISO 27017, ISO 27018, SecNumCloud, etc.)
-- `sector_specific` (Réglementations sectorielles — NIS 2, DORA, HDS, PCI DSS, etc.)
-- `it_governance` (Gouvernance IT — COBIT, ITIL, etc.)
-- `quality` (Qualité — ISO 9001, etc.)
-- `contractual` (Exigences contractuelles)
-- `internal` (Politiques et procédures internes)
-- `other`
-
-> Note : Les catégories et les types doivent être paramétrables par l'administrateur.
-
-### 2.2 Entité : Section (Section / Chapitre du référentiel)
-
-Représente la structure hiérarchique d'un référentiel (chapitres, sections, sous-sections). Permet de reproduire fidèlement le plan du référentiel original.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `framework_id` | relation | FK → Framework, requis | Référentiel parent |
-| `parent_section_id` | relation | FK → Section, optionnel | Section parente (hiérarchie) |
-| `reference` | string | requis | Numéro de section (ex. « A.5 », « 4.2.1 ») |
-| `name` | string | requis, max 255 | Intitulé de la section |
-| `description` | text | optionnel | Description ou texte de la section |
-| `order` | integer | requis | Ordre d'affichage au sein du parent |
-| `compliance_level` | decimal | calculé, 0-100 | Niveau de conformité agrégé de la section (%) |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-> Contrainte : la combinaison (`framework_id`, `reference`) doit être unique.
-
-### 2.3 Entité : Requirement (Exigence)
-
-Représente une exigence individuelle extraite d'un référentiel. C'est l'unité élémentaire d'évaluation de la conformité.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `framework_id` | relation | FK → Framework, requis | Référentiel parent |
-| `section_id` | relation | FK → Section, optionnel | Section de rattachement |
-| `reference` | string | requis | Numéro de l'exigence (ex. « A.5.1.1 », « Art. 32.1.a ») |
-| `name` | string | requis, max 500 | Intitulé court de l'exigence |
-| `description` | text | requis | Texte complet de l'exigence |
-| `guidance` | text | optionnel | Recommandations de mise en œuvre / notes d'interprétation |
-| `type` | enum | requis | `mandatory`, `recommended`, `optional` |
-| `category` | enum | optionnel | `organizational`, `technical`, `physical`, `legal`, `human`, `other` |
-| `is_applicable` | boolean | requis, défaut true | Applicable au périmètre |
-| `applicability_justification` | text | optionnel | Justification de la non-applicabilité (DdA) |
-| `compliance_status` | enum | requis | `not_assessed`, `non_compliant`, `partially_compliant`, `compliant`, `not_applicable` |
-| `compliance_level` | integer | optionnel, 0-100 | Niveau de conformité (%) |
-| `compliance_evidence` | text | optionnel | Preuves / éléments de conformité |
-| `compliance_gaps` | text | optionnel | Écarts constatés |
-| `last_assessment_date` | date | optionnel | Date de la dernière évaluation |
-| `last_assessed_by` | relation | FK → User, optionnel | Dernier évaluateur |
-| `owner_id` | relation | FK → User, optionnel | Responsable de la mise en conformité |
-| `priority` | enum | optionnel | `low`, `medium`, `high`, `critical` |
-| `target_date` | date | optionnel | Date cible de mise en conformité |
-| `linked_measures` | relation | M2M → Measure | Mesures contribuant à la conformité (Module Mesures) |
-| `linked_assets` | relation | M2M → EssentialAsset | Biens essentiels concernés (Module Actifs) |
-| `linked_risks` | relation | M2M → Risk | Risques associés (Module Risques) |
-| `linked_stakeholder_expectations` | relation | M2M → StakeholderExpectation | Attentes de PI associées (Module Contexte) |
-| `mapped_requirements` | relation | M2M → Requirement (via RequirementMapping) | Exigences d'autres référentiels mappées |
-| `order` | integer | requis | Ordre d'affichage au sein de la section |
-| `status` | enum | requis | `active`, `deprecated`, `superseded` |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-> Contrainte : la combinaison (`framework_id`, `reference`) doit être unique.
-
-### 2.4 Entité : ComplianceAssessment (Évaluation de conformité)
-
-Représente une campagne d'évaluation de conformité pour un référentiel donné. Permet de conserver l'historique des évaluations successives.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `framework_id` | relation | FK → Framework, requis | Référentiel évalué |
-| `name` | string | requis, max 255 | Intitulé de l'évaluation (ex. « Évaluation annuelle 2026 ») |
-| `description` | text | optionnel | Contexte et objectif de l'évaluation |
-| `assessment_date` | date | requis | Date de réalisation |
-| `assessor_id` | relation | FK → User, requis | Évaluateur principal |
-| `methodology` | text | optionnel | Méthodologie utilisée |
-| `overall_compliance_level` | decimal | calculé, 0-100 | Niveau de conformité global (%) |
-| `total_requirements` | integer | calculé | Nombre total d'exigences applicables |
-| `compliant_count` | integer | calculé | Nombre d'exigences conformes |
-| `partially_compliant_count` | integer | calculé | Nombre d'exigences partiellement conformes |
-| `non_compliant_count` | integer | calculé | Nombre d'exigences non conformes |
-| `not_assessed_count` | integer | calculé | Nombre d'exigences non évaluées |
-| `status` | enum | requis | `draft`, `in_progress`, `completed`, `validated`, `archived` |
-| `validated_by` | relation | FK → User, optionnel | Validateur |
-| `validated_at` | datetime | optionnel | Date de validation |
-| `results` | relation | O2M → AssessmentResult | Résultats par exigence |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-### 2.5 Sous-entité : AssessmentResult (Résultat d'évaluation par exigence)
-
-Représente le résultat d'évaluation d'une exigence dans le cadre d'une campagne d'évaluation.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `assessment_id` | relation | FK → ComplianceAssessment, requis | Évaluation parente |
-| `requirement_id` | relation | FK → Requirement, requis | Exigence évaluée |
-| `compliance_status` | enum | requis | `not_assessed`, `non_compliant`, `partially_compliant`, `compliant`, `not_applicable` |
-| `compliance_level` | integer | optionnel, 0-100 | Niveau de conformité (%) |
-| `evidence` | text | optionnel | Preuves constatées |
-| `gaps` | text | optionnel | Écarts identifiés |
-| `observations` | text | optionnel | Observations complémentaires |
-| `assessed_by` | relation | FK → User, requis | Évaluateur |
-| `assessed_at` | datetime | requis | Date et heure de l'évaluation |
-| `attachments` | relation | O2M → Attachment | Pièces jointes (preuves documentaires) |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-> Contrainte d'unicité : le couple (`assessment_id`, `requirement_id`) doit être unique.
-
-### 2.6 Entité : RequirementMapping (Mapping inter-référentiels)
-
-Représente une correspondance entre deux exigences de référentiels différents. Permet de mutualiser les efforts de conformité et de visualiser les recouvrements.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `source_requirement_id` | relation | FK → Requirement, requis | Exigence source |
-| `target_requirement_id` | relation | FK → Requirement, requis | Exigence cible |
-| `mapping_type` | enum | requis | `equivalent`, `partial_overlap`, `includes`, `included_by`, `related` |
-| `coverage_level` | enum | optionnel | `full`, `partial`, `minimal` |
-| `description` | text | optionnel | Description de la correspondance |
-| `justification` | text | optionnel | Justification du mapping |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-> Contrainte d'unicité : le couple (`source_requirement_id`, `target_requirement_id`) doit être unique.
-> Contrainte : `source_requirement_id` et `target_requirement_id` doivent appartenir à des référentiels différents.
-
-**Types de mapping :**
-
-| Type | Description |
-|---|---|
-| `equivalent` | Les deux exigences sont équivalentes (couverture mutuelle) |
-| `partial_overlap` | Les exigences se recouvrent partiellement |
-| `includes` | L'exigence source inclut / couvre l'exigence cible |
-| `included_by` | L'exigence source est incluse / couverte par l'exigence cible |
-| `related` | Les exigences sont liées sans recouvrement direct |
-
-### 2.7 Entité : ComplianceActionPlan (Plan d'action de conformité)
-
-Représente un plan d'action visant à corriger les écarts de conformité constatés lors d'une évaluation.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `reference` | string | requis, unique | Code de référence (ex. PAC-001) |
-| `name` | string | requis, max 255 | Intitulé du plan d'action |
-| `description` | text | optionnel | Description détaillée |
-| `assessment_id` | relation | FK → ComplianceAssessment, optionnel | Évaluation source |
-| `requirement_id` | relation | FK → Requirement, optionnel | Exigence concernée |
-| `gap_description` | text | requis | Description de l'écart à combler |
-| `remediation_plan` | text | requis | Plan de remédiation |
-| `priority` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `owner_id` | relation | FK → User, requis | Responsable de l'action |
-| `start_date` | date | optionnel | Date de début prévue |
-| `target_date` | date | requis | Date cible d'achèvement |
-| `completion_date` | date | optionnel | Date d'achèvement effective |
-| `progress_percentage` | integer | optionnel, 0-100 | Pourcentage d'avancement |
-| `cost_estimate` | decimal | optionnel | Estimation du coût |
-| `linked_measures` | relation | M2M → Measure | Mesures à mettre en place (Module Mesures) |
-| `status` | enum | requis | `planned`, `in_progress`, `completed`, `cancelled`, `overdue` |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
-
-### 2.8 Sous-entité : Attachment (Pièce jointe)
-
-Utilisée pour stocker les preuves documentaires associées aux évaluations de conformité.
-
-| Champ | Type | Contraintes | Description |
-|---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `entity_type` | string | requis | Type d'entité parente (ex. `AssessmentResult`, `ComplianceActionPlan`) |
-| `entity_id` | UUID | requis | Identifiant de l'entité parente |
-| `file_name` | string | requis, max 255 | Nom du fichier |
-| `file_path` | string | requis | Chemin de stockage |
-| `file_size` | integer | requis | Taille en octets |
-| `mime_type` | string | requis | Type MIME |
-| `description` | text | optionnel | Description de la pièce jointe |
-| `uploaded_by` | relation | FK → User, requis | Utilisateur ayant téléversé |
-| `created_at` | datetime | auto | Date de création |
 
 ---
 
@@ -329,7 +105,7 @@ Utilisée pour stocker les preuves documentaires associées aux évaluations de 
 
 Identiques aux modules précédents. Base URL : `/api/v1/compliance/`
 
-### 4.2 Endpoints — Frameworks (Référentiels)
+### 4.2 Endpoints : Frameworks (Référentiels)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -360,7 +136,7 @@ Identiques aux modules précédents. Base URL : `/api/v1/compliance/`
 - `?compliance_level_min=50&compliance_level_max=80`
 - `?search=terme`
 
-### 4.3 Endpoints — Sections
+### 4.3 Endpoints : Sections
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -374,7 +150,7 @@ Identiques aux modules précédents. Base URL : `/api/v1/compliance/`
 | `GET` | `/frameworks/{framework_id}/sections/tree` | Arborescence complète des sections |
 | `PATCH` | `/frameworks/{framework_id}/sections/reorder` | Réordonner les sections |
 
-### 4.4 Endpoints — Requirements (Exigences)
+### 4.4 Endpoints : Requirements (Exigences)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -406,7 +182,7 @@ Identiques aux modules précédents. Base URL : `/api/v1/compliance/`
 - `?has_mappings=true|false`
 - `?search=terme`
 
-### 4.5 Endpoints — Compliance Assessments (Évaluations)
+### 4.5 Endpoints : Compliance Assessments (Évaluations)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -424,7 +200,7 @@ Identiques aux modules précédents. Base URL : `/api/v1/compliance/`
 | `GET` | `/assessments/{id}/export` | Export (PDF, DOCX, JSON) |
 | `GET` | `/assessments/{id}/comparison` | Comparaison avec l'évaluation précédente |
 
-### 4.6 Endpoints — Requirement Mappings (Mappings inter-référentiels)
+### 4.6 Endpoints : Requirement Mappings (Mappings inter-référentiels)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -445,7 +221,7 @@ Identiques aux modules précédents. Base URL : `/api/v1/compliance/`
 - `?mapping_type=equivalent|partial_overlap`
 - `?coverage_level=full|partial`
 
-### 4.7 Endpoints — Action Plans (Plans d'action)
+### 4.7 Endpoints : Action Plans (Plans d'action)
 
 | Méthode | Endpoint | Description |
 |---|---|---|
@@ -539,7 +315,7 @@ Le module est accessible via un élément de navigation principal « Conformité
 - **Détail / Édition :** Formulaire avec description de l'écart, plan de remédiation, liens vers mesures et exigence.
 - **Actions :** Créer, Modifier, Clôturer, Exporter.
 
-### 5.7 Vue « Déclaration d'applicabilité » (Statement of Applicability — DdA)
+### 5.7 Vue « Déclaration d'applicabilité » (Statement of Applicability : DdA)
 
 Vue dédiée spécifique à l'ISO 27001 :
 
@@ -679,7 +455,7 @@ L'import supporte les modes : création uniquement, mise à jour uniquement, ou 
 | Nouvelle évaluation disponible pour un référentiel | Responsable du référentiel | In-app |
 | Import en masse terminé | Utilisateur ayant lancé l'import | In-app, email |
 | Mapping créé sur une exigence dont on est responsable | Responsable de l'exigence | In-app |
-| Plan d'action complété — suggestion de réévaluation | Responsable de l'exigence | In-app |
+| Plan d'action complété : suggestion de réévaluation | Responsable de l'exigence | In-app |
 | Niveau de conformité passé sous un seuil paramétrable | RSSI, Responsable du référentiel | In-app, email |
 
 ---
@@ -807,4 +583,4 @@ Identique aux modules précédents. Événements spécifiques :
 
 ---
 
-*Fin des spécifications du Module 3 — Conformité*
+*Fin des spécifications du Module 3 : Conformité*
