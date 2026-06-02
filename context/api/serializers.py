@@ -259,6 +259,7 @@ class IndicatorSerializer(serializers.ModelSerializer):
             "critical_threshold_min", "critical_threshold_max",
             "review_frequency", "first_review_date", "status",
             "is_internal", "internal_source", "internal_source_parameter",
+            "owner", "linked_objectives", "linked_requirements",
             "is_critical", "measurements",
             "version", "tags",
             "is_approved", "approved_by", "approved_at",

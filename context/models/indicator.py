@@ -120,6 +120,29 @@ class Indicator(ScopedModel):
         default="",
         help_text=_("Optional parameter, e.g. framework ID for compliance rate by framework."),
     )
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="owned_indicators",
+        verbose_name=_("Owner"),
+        null=True,
+        blank=True,
+        help_text=_("Person accountable for the indicator's measurement and review."),
+    )
+    linked_objectives = models.ManyToManyField(
+        "context.Objective",
+        blank=True,
+        related_name="indicators",
+        verbose_name=_("Linked objectives"),
+        help_text=_("Objectives this indicator measures progress against (ISO 27001 §6.2 / §9.1)."),
+    )
+    linked_requirements = models.ManyToManyField(
+        "compliance.Requirement",
+        blank=True,
+        related_name="indicators",
+        verbose_name=_("Linked requirements"),
+        help_text=_("Compliance requirements this indicator measures the satisfaction of."),
+    )
 
     history = HistoricalRecords()
 

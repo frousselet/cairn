@@ -1894,6 +1894,7 @@ def _register_context_tools(server):
                         "critical_threshold_max", "review_frequency",
                         "first_review_date", "status", "is_internal",
                         "internal_source", "internal_source_parameter",
+                        "owner_id", "linked_objectives", "linked_requirements",
                         "is_approved", "created_at"]
     indicator_writable = ["name", "description", "indicator_type", "collection_method",
                           "format", "unit", "expected_level",
@@ -1901,7 +1902,9 @@ def _register_context_tools(server):
                           "critical_threshold_min", "critical_threshold_max",
                           "review_frequency", "first_review_date", "status",
                           "is_internal", "internal_source", "internal_source_parameter",
-                          "scope_ids"]
+                          "owner_id",
+                          "scope_ids",
+                          "linked_objective_ids", "linked_requirement_ids"]
 
     _register_crud(server, "indicator", Indicator, "context.indicator",
                    list_fields=indicator_fields,
@@ -1910,16 +1913,32 @@ def _register_context_tools(server):
                    filters=["indicator_type", "status", "format", "collection_method"],
                    required_fields=["name", "indicator_type", "format",
                                     "review_frequency", "first_review_date"],
-                   m2m_fields={"scope_ids": "scopes"},
+                   m2m_fields={"scope_ids": "scopes",
+                               "linked_objective_ids": "linked_objectives",
+                               "linked_requirement_ids": "linked_requirements"},
                    field_overrides={
                        "first_review_date": {
                            "type": "string",
                            "description": "First review date (ISO 8601, e.g. 2026-06-30). Required.",
                        },
+                       "owner_id": {
+                           "type": "string",
+                           "description": "UUID of the user accountable for measuring and reviewing this indicator.",
+                       },
                        "scope_ids": {
                            "type": "array",
                            "items": {"type": "string"},
                            "description": "Scopes this indicator belongs to.",
+                       },
+                       "linked_objective_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Objectives this indicator measures progress against (ISO 27001 §6.2 / §9.1).",
+                       },
+                       "linked_requirement_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Compliance requirements this indicator measures the satisfaction of.",
                        },
                        "description": _html_field("Description"),
                        "indicator_type": {
