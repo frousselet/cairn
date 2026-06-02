@@ -2,35 +2,103 @@
 
 `compliance.models.assessment.ComplianceAssessment`
 
-Campagne d'évaluation de conformité pour un [Framework](framework.md) donné.
+Campagne d'évaluation de conformité, **multi-référentiels**, pour un ou plusieurs [Framework](framework.md).
 
-## Entité : ComplianceAssessment (Évaluation de conformité)
-
-Représente une campagne d'évaluation de conformité pour un référentiel donné. Permet de conserver l'historique des évaluations successives.
+## Champs
 
 | Champ | Type | Contraintes | Description |
 |---|---|---|---|
 | `id` | UUID | PK, auto-généré | Identifiant unique |
-| `framework_id` | relation | FK → Framework, requis | Référentiel évalué |
+| `reference` | string | auto-généré `CAST-N`, unique | Référence métier |
+| `scopes` | relation | M2M -> Scope | Périmètres SMSI couverts |
+| `frameworks` | relation | M2M -> Framework | Référentiels évalués dans cette campagne. L'implémentation est multi-référentielle (un audit peut couvrir ISO 27001 + RGPD simultanément), divergence assumée vs la spec d'origine mono-référentielle (voir l'écart documenté plus bas). |
 | `name` | string | requis, max 255 | Intitulé de l'évaluation (ex. « Évaluation annuelle 2026 ») |
-| `description` | text | optionnel | Contexte et objectif de l'évaluation |
-| `assessment_date` | date | requis | Date de réalisation |
-| `assessor_id` | relation | FK → User, requis | Évaluateur principal |
-| `methodology` | text | optionnel | Méthodologie utilisée |
-| `overall_compliance_level` | decimal | calculé, 0-100 | Niveau de conformité global (%) |
-| `total_requirements` | integer | calculé | Nombre total d'exigences applicables |
-| `compliant_count` | integer | calculé | Nombre d'exigences conformes |
-| `partially_compliant_count` | integer | calculé | Nombre d'exigences partiellement conformes |
-| `non_compliant_count` | integer | calculé | Nombre d'exigences non conformes |
-| `not_assessed_count` | integer | calculé | Nombre d'exigences non évaluées |
-| `status` | enum | requis | `draft`, `in_progress`, `completed`, `validated`, `archived` |
-| `validated_by` | relation | FK → User, optionnel | Validateur |
-| `validated_at` | datetime | optionnel | Date de validation |
-| `results` | relation | O2M → AssessmentResult | Résultats par exigence |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `description` | text | optionnel, HTML | Contexte et objectif de l'évaluation |
+| `limitations` | text | optionnel, HTML | Limitations / périmètre exclu / réserves de l'évaluation. Remplace le champ `methodology` de la spec d'origine ; la méthodologie est plutôt portée au niveau du framework ou de la documentation d'audit. |
+| `assessment_start_date` | date | optionnel | Début de la période d'audit |
+| `assessment_end_date` | date | optionnel | Fin de la période d'audit. La spec d'origine n'avait qu'une seule `assessment_date` ; l'implémentation utilise une période pour capter les audits qui s'étalent sur plusieurs jours / semaines. |
+| `assessor` | relation | FK -> User, requis, PROTECT | Évaluateur principal (lead assessor) |
+| `overall_compliance_level` | decimal(5,2) | calculé, 0-100 | Niveau de conformité global (%). Recalculé par `recalculate_counts()`. Exclut les `NOT_APPLICABLE` du numérateur et du dénominateur (issue #46). |
+| `total_requirements` | integer | calculé | Nombre total d'exigences applicables couvertes |
+| `compliant_count` | integer | calculé | Nombre d'exigences `compliant` |
+| `major_non_conformity_count` | integer | calculé | Nombre d'exigences `major_non_conformity` |
+| `minor_non_conformity_count` | integer | calculé | Nombre d'exigences `minor_non_conformity` |
+| `observation_count` | integer | calculé | Nombre d'exigences `observation` |
+| `improvement_opportunity_count` | integer | calculé | Nombre d'exigences `improvement_opportunity` |
+| `strength_count` | integer | calculé | Nombre d'exigences `strength` |
+| `evaluated_count` | integer | calculé | Nombre d'exigences `evaluated` (placeholder) |
+| `not_assessed_count` | integer | calculé | Nombre d'exigences `not_assessed` |
+| `not_applicable_count` | integer | calculé | Nombre d'exigences `not_applicable` |
+| `status` | enum | requis, défaut `draft` | Voir « Cycle de vie » ci-dessous |
+| `results` | reverse FK | O2M -> AssessmentResult | Résultats par exigence |
+| `findings` | reverse M2M | <- compliance.Finding (`Finding.assessment`) | Constats d'audit rattachés |
+| `is_approved` / `approved_by` / `approved_at` | bool / FK -> User / datetime | optionnel | Indicateur d'approbation, axe orthogonal au `status` (voir « Cycle de vie ») |
+| `version` | int | auto-incrémenté | Bumpé à chaque modification majeure |
+| `tags` | relation | M2M -> Tag | |
+| `created_by` | relation | FK -> User | Créateur |
+| `created_at` / `updated_at` | datetime | auto | |
+
+## Cycle de vie
+
+`status` suit le workflow réel : `draft -> planned -> in_progress -> completed -> closed`, plus `cancelled` comme branche terminale accessible depuis `draft` et `planned`. Une fois `completed` ou `closed`, l'évaluation ne peut plus reculer.
+
+```text
+  draft -> planned -> in_progress -> completed -> closed
+    \         \
+     +---------+----> cancelled  (terminal)
+```
+
+| Statut | Sens |
+|---|---|
+| `draft` | Brouillon de configuration : champs métier modifiables, pas encore lancée |
+| `planned` | Configuration validée, planifiée, en attente de démarrage |
+| `in_progress` | En cours : les `AssessmentResult` sont en train d'être remplis par l'évaluateur |
+| `completed` | Évaluation conduite, résultats saisis, en attente de validation / clôture |
+| `closed` | Terminée et clôturée (terminal). Le report RC-06 (`recalculate_counts`) est déclenché ici |
+| `cancelled` | Évaluation annulée (terminal). Aucun report ne se déclenche |
+
+### Validation et approbation
+
+`is_approved` est un **axe orthogonal** au `status`, capté par l'action `approve_compliance_assessment` (REST `POST /assessments/<uuid>/approve/`, MCP `approve_compliance_assessment`). L'approbation peut être posée à n'importe quel moment (typiquement quand l'évaluation est `completed` ou `closed`) et représente la validation formelle du résultat par un approbateur (RSSI, DPO, comité de direction).
+
+Le statut `validated` listé dans la spec d'origine M3 §2.4 n'existe pas dans l'enum implémentée : la « validation » est portée par le couple (`status=closed`, `is_approved=true`). Cette séparation a été retenue pour permettre :
+
+- de **clôturer** une évaluation sans la valider formellement (audit interne récurrent dont les résultats sont consommés tout de suite sans signature d'approbateur) ;
+- d'**approuver** une évaluation à plusieurs niveaux successifs (l'auditeur la passe en `completed`, le RSSI la passe en `closed`, le DPO ou le comité l'approuve plus tard via `is_approved`).
+
+Le statut `archived` de la spec d'origine n'a pas été repris non plus : `closed` joue le rôle terminal, et un éventuel besoin d'archivage explicite peut être ajouté ultérieurement par un drapeau ou un statut séparé sans casser le workflow actuel.
+
+| Spec d'origine | Implémentation actuelle |
+|---|---|
+| `draft` | `draft` |
+| `in_progress` | `planned` ou `in_progress` (l'implémentation distingue la planification de l'exécution) |
+| `completed` | `completed` |
+| `validated` | `closed` + `is_approved=true` |
+| `archived` | `closed` (terminal). Pas de statut dédié pour l'instant |
+
+### Transitions autorisées
+
+`ComplianceAssessment.transition_to(new_status)` valide la transition contre `ASSESSMENT_STATUS_TRANSITIONS` (`compliance/constants.py`) :
+
+```text
+draft        -> planned, cancelled
+planned      -> in_progress, cancelled
+in_progress  -> completed
+completed    -> closed
+closed       -> (terminal)
+cancelled    -> (terminal)
+```
+
+L'API REST `POST /assessments/<uuid>/transition/` et le MCP `update_compliance_assessment` (via le champ `status`) appliquent ces règles. Une transition non autorisée lève une `ValueError` reformatée en `400 Bad Request`.
+
+### Effets de bord par transition
+
+- `in_progress -> completed` : reset les `AssessmentResult.compliance_status` qui sont restés en `EVALUATED` sans finding rattaché vers `NOT_ASSESSED` (cohérence : un placeholder « évaluation planifiée » qui n'a pas reçu de constat redevient « non évalué »). Appelle `recalculate_counts()`.
+- `completed -> closed` : déclenche `recalculate_counts()` (RC-06). Les `AssessmentResult` sont reportés sur les `Requirement` ; `Framework.last_assessment_date` est mis à jour avec `assessment_end_date`.
+
+### Déclencheur RC-06
+
+Le report des résultats sur les exigences (RC-06) est déclenché à la **clôture** (`completed -> closed`), pas à l'approbation. `approve_compliance_assessment` ne déclenche aucun calcul, c'est purement une signature de validation. Cette séparation permet de relire et corriger une évaluation closed avant de l'approuver sans que l'approbation ait à recalculer quoi que ce soit.
 
 ## AssessmentResult
 
