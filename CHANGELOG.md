@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.2] - 2026-06-02
+
 ### Added
 
 - **MCP server URL surfaced in the profile UI**. The OAuth credentials card on the profile page now exposes the MCP endpoint URL (`{scheme}://{host}/api/v1/mcp`) with a copy button at the top of the card and inside the secret-display modal that opens after creating credentials. A short hint clarifies that the URL is what gets pasted into Claude Desktop / Claude Code (which register themselves automatically via PKCE), while the manually created credentials are only needed for server-to-server scripts using the `client_credentials` grant. Resolves user confusion about which URL to point their MCP client at after creating credentials
@@ -831,7 +833,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.24.1...HEAD
+[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.24.2...HEAD
+[0.24.2]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.24.1...v0.24.2
 [0.24.1]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.24.0...v0.24.1
 [0.24.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.23.0...v0.24.0
 [0.23.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.22.0...v0.23.0
