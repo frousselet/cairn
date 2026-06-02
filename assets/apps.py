@@ -10,21 +10,26 @@ class AssetsConfig(AppConfig):
     verbose_name = _("Assets")
 
     def ready(self):
-        # Only start the SPOF scheduler when running the dev server or
-        # production WSGI/ASGI — never during management commands (migrate,
-        # compilemessages, etc.) or tests.
+        # Only start the SPOF scheduler when running an actual server
+        # process. The previous blocklist approach ("everything that is
+        # not manage.py is a server") wrongly classified ad-hoc inline
+        # scripts as servers, including the `python -c "..."` invocations
+        # the Docker entrypoint runs before `migrate` to apply schema
+        # fixups. Those scripts called django.setup(), triggered ready(),
+        # started the scheduler, which queried tables that were still
+        # missing the columns the about-to-run migrations would add.
+        # Switch to an explicit allowlist of server processes so this
+        # cannot happen again.
         import sys
 
         if "pytest" in sys.modules or "test" in sys.argv:
             return
 
-        # When invoked via `manage.py <command>`, only start for runserver.
-        # In production (gunicorn/uvicorn), sys.argv[0] won't be manage.py
-        # and RUN_MAIN is not set — always start in that case.
-        is_managepy = any(
-            arg.endswith("manage.py") or arg == "django" for arg in sys.argv[:1]
-        )
-        if is_managepy and "runserver" not in sys.argv:
+        proc = sys.argv[0] if sys.argv else ""
+        server_binaries = ("uvicorn", "gunicorn", "daphne", "hypercorn")
+        is_server = any(proc.endswith(name) for name in server_binaries)
+        is_runserver = proc.endswith("manage.py") and "runserver" in sys.argv
+        if not (is_server or is_runserver):
             return
 
         if os.environ.get("RUN_MAIN", "true") == "true":
