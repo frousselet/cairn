@@ -50,4 +50,13 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
+    # In DEBUG, serve static files through Django so uvicorn / daphne /
+    # gunicorn (which, unlike runserver, do not auto-serve them) can hand
+    # out static/js/* etc. The runserver convenience injection only runs
+    # under `manage.py runserver`; the entries below take care of every
+    # other dev server. STATICFILES_DIRS and collected files at STATIC_ROOT
+    # both end up reachable via STATIC_URL.
+    from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+
+    urlpatterns += staticfiles_urlpatterns()
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
