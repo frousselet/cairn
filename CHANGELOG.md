@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.3] - 2026-06-02
+
 ### Fixed
 
 - **Browser Back getting stuck after the first pop**. The previous fix (v0.24.2) disabled the HTMX history cache so every popstate triggers a fresh GET, but `loadHistoryFromServer` was falling back to a whole-body innerHTML swap (no `hx-history-elt` was set). That re-injected every inline `<script>` block that lives in `<body>` (boost wiring, drawer, tabs, sort persistence) on each Back, stacking duplicate listeners and silently breaking the second pop. `#page-shell` now carries `hx-history-elt` so popstate restores stay scoped to the shell, and a new `htmx:historyCacheMissLoad` listener syncs `document.title` from the response (our boosted `htmx:beforeSwap` hook does not fire on popstate-driven swaps because the request is not marked `boosted`).
@@ -842,7 +844,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.24.2...HEAD
+[Unreleased]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.24.3...HEAD
+[0.24.3]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.24.2...v0.24.3
 [0.24.2]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.24.1...v0.24.2
 [0.24.1]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.24.0...v0.24.1
 [0.24.0]: https://gitlab.rslt.fr/fairway/fairway/-/compare/v0.23.0...v0.24.0
