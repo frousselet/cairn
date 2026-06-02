@@ -833,7 +833,7 @@ Assessment status transitions:
 
 ## assessment_result (custom CRUD)
 Writable: assessment_id (required), requirement_id (required), compliance_status, compliance_level (0-100), finding (HTML), auditor_recommendations (HTML), evidence (HTML), assessed_by_id, assessed_at
-- compliance_status: not_assessed | evaluated | major_non_conformity | minor_non_conformity | observation | improvement_opportunity | compliant | strength | not_applicable
+- compliance_status: same 11-value enum as Requirement.compliance_status: not_assessed | evaluated | non_compliant | partially_compliant | major_non_conformity | minor_non_conformity | observation | improvement_opportunity | compliant | strength | not_applicable. Audit statuses map onto the conformance averages via the table in docs/modules/m3-compliance/requirement.md.
 Updating a result auto-recalculates the assessment's aggregate counts.
 
 ## finding (custom CRUD)
@@ -3093,11 +3093,20 @@ def _register_compliance_tools(server):
         "assessed_at": {"type": "string", "description": "Assessment date-time in ISO 8601 format (e.g. 2025-01-15T10:30:00Z)"},
         "compliance_status": {
             "type": "string",
-            "description": "Compliance status.",
+            "description": (
+                "Compliance status. Same 11-value enum as Requirement.compliance_status: "
+                "the 5 conformance-oriented values (not_assessed, non_compliant, "
+                "partially_compliant, compliant, not_applicable) plus the 6 audit-oriented "
+                "values (evaluated, major_non_conformity, minor_non_conformity, observation, "
+                "improvement_opportunity, strength). See docs/modules/m3-compliance/requirement.md "
+                "for the audit -> conformance mapping used by RC-01 / RC-02 averages."
+            ),
             "enum": [
-                "not_assessed", "evaluated", "major_non_conformity",
-                "minor_non_conformity", "observation",
-                "improvement_opportunity", "compliant", "strength",
+                "not_assessed", "evaluated",
+                "non_compliant", "partially_compliant",
+                "major_non_conformity", "minor_non_conformity",
+                "observation", "improvement_opportunity",
+                "compliant", "strength",
                 "not_applicable",
             ],
         },
