@@ -8600,3 +8600,18 @@ msgid ""
 msgstr ""
 "Consultation du catalogue de vulnérabilités dans le contexte de l'analyse "
 "<strong>%(ref)s : %(name)s</strong>."
+
+msgid "Light"
+msgstr "Clair"
+
+msgid "Dark"
+msgstr "Sombre"
+
+msgid "Display theme"
+msgstr "Thème d'affichage"
+
+msgid "Light, Dark, or System (follows the OS preference)."
+msgstr "Clair, Sombre, ou Système (suit la préférence du système d'exploitation)."
+
+msgid "System follows your OS preference and reacts to its changes in real time."
+msgstr "Système suit la préférence de votre système d'exploitation et réagit à ses changements en temps réel."

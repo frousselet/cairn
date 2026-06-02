@@ -138,7 +138,7 @@ Manage your organisation's security posture, track compliance with regulatory fr
 | Company Settings | Centralised platform configuration (organisation name, logo, defaults) |
 | Bilingual UI | Full French/English interface with contextual help banners |
 | Excel Export | Export assets, risks, compliance data to Excel |
-| Dark Mode | Automatic theme switching based on OS preference |
+| Display Theme | Per-user Light / Dark / System preference (System follows the OS), persisted server-side and exposed through the API |
 | Responsive UI | Collapsible sidebar, mobile-friendly layout |
 | REST API | Full CRUD + filtering, search, pagination, batch creation and export on all resources |
 | HTMX Integration | Dynamic partial updates without full page reloads |
@@ -274,6 +274,7 @@ Additional tools:
 | `list_users` | List users with search and active status filter |
 | `get_user` | Get detailed user information |
 | `get_me` | Get the currently authenticated user |
+| `update_me` | Update the current user's profile (first_name, last_name, phone, language, timezone, theme_preference) |
 | `list_groups` | List all groups |
 | `get_group` | Get group details including permissions |
 | `list_permissions` | List all available permissions with module filter |

@@ -6,7 +6,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from accounts.constants import LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS, UserType
+from accounts.constants import LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS, ThemePreference, UserType
 from accounts.managers import UserManager
 
 
@@ -39,6 +39,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         _("Timezone"),
         max_length=50,
         default="Europe/Paris",
+    )
+    theme_preference = models.CharField(
+        _("Display theme"),
+        max_length=10,
+        choices=ThemePreference.choices,
+        default=ThemePreference.SYSTEM,
+        help_text=_("Light, Dark, or System (follows the OS preference)."),
     )
     is_active = models.BooleanField(_("Active"), default=True)
     is_staff = models.BooleanField(_("Django admin access"), default=False)

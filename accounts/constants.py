@@ -8,6 +8,12 @@ class UserType(models.TextChoices):
     ROBOT = "robot", _("Robot")
 
 
+class ThemePreference(models.TextChoices):
+    SYSTEM = "system", _("System")
+    LIGHT = "light", _("Light")
+    DARK = "dark", _("Dark")
+
+
 class PermissionAction(models.TextChoices):
     CREATE = "create", _("Create")
     READ = "read", _("Read")

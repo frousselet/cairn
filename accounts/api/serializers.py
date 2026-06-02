@@ -37,7 +37,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             "id", "user_type", "email", "first_name", "last_name", "display_name",
-            "job_title", "department", "phone", "language", "timezone",
+            "job_title", "department", "phone", "language", "timezone", "theme_preference",
             "is_active", "is_staff", "last_login", "created_at", "updated_at",
             "groups", "permissions",
         )
@@ -59,7 +59,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             "id", "user_type", "email", "first_name", "last_name", "password",
-            "job_title", "department", "phone", "language", "timezone",
+            "job_title", "department", "phone", "language", "timezone", "theme_preference",
             "is_active",
         )
         read_only_fields = ("id",)
@@ -137,7 +137,7 @@ class MeSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             "id", "email", "first_name", "last_name", "display_name",
-            "job_title", "department", "phone", "language", "timezone",
+            "job_title", "department", "phone", "language", "timezone", "theme_preference",
             "permissions",
         )
         read_only_fields = ("id", "email", "display_name", "permissions")

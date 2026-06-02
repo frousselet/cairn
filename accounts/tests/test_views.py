@@ -139,6 +139,7 @@ class TestProfileView:
             "phone": "+33123456789",
             "language": "",
             "timezone": "Europe/Paris",
+            "theme_preference": "system",
         })
         assert resp.status_code == 302
         user.refresh_from_db()
@@ -153,6 +154,7 @@ class TestProfileView:
             "phone": "",
             "language": "fr",
             "timezone": "Europe/Paris",
+            "theme_preference": "system",
         })
         assert resp.status_code == 302
         assert resp.cookies.get("django_language") is not None
@@ -167,8 +169,25 @@ class TestProfileView:
             "phone": "",
             "language": "",
             "timezone": "Europe/Paris",
+            "theme_preference": "system",
         })
         assert resp.status_code == 200  # re-renders form with errors
+
+    def test_post_profile_updates_theme_preference(self, client):
+        user = UserFactory()
+        assert user.theme_preference == "system"
+        client.force_login(user)
+        resp = client.post(reverse("accounts:profile"), {
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "phone": user.phone,
+            "language": user.language,
+            "timezone": user.timezone,
+            "theme_preference": "dark",
+        })
+        assert resp.status_code == 302
+        user.refresh_from_db()
+        assert user.theme_preference == "dark"
 
     def test_profile_context_includes_groups_and_permissions(self, client):
         user = UserFactory()

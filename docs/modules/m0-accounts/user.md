@@ -21,6 +21,7 @@ Représente un utilisateur de la plateforme Cairn.
 | `groups` | relation | M2M → Group | Groupes d'appartenance |
 | `language` | enum | requis, défaut `fr` | Langue d'interface préférée (`fr`, `en`) |
 | `timezone` | string | requis, défaut `Europe/Paris` | Fuseau horaire |
+| `theme_preference` | enum | requis, défaut `system` | Thème d'affichage préféré (`light`, `dark`, `system`). `system` suit la préférence du système d'exploitation via `prefers-color-scheme` et réagit à ses changements en temps réel. La préférence est rendue côté serveur (attribut `data-theme-preference` sur `<html>`) pour éviter tout flash de thème incorrect au chargement, avec repli `localStorage` puis `prefers-color-scheme` pour les pages non authentifiées (login, OAuth authorize) |
 | `notification_preferences` | json | optionnel | Préférences de notification (email, in-app) |
 | `last_login` | datetime | auto | Date de dernière connexion |
 | `password_changed_at` | datetime | auto | Date du dernier changement de mot de passe |

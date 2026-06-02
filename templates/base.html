@@ -2,10 +2,40 @@
 {% load accounts_tags %}
 {% load i18n %}
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE }}">
+<html lang="{{ LANGUAGE_CODE }}"{% if user.is_authenticated %} data-theme-preference="{{ user.theme_preference|default:'system' }}"{% endif %}>
 <head>
   <meta charset="utf-8">
   <script>try{if(localStorage.getItem('sidebar-collapsed')==='1')document.documentElement.classList.add('sidebar-collapsed')}catch(e){}</script>
+  <script>
+  (function(){
+    var root = document.documentElement;
+    var STORAGE_KEY = 'theme-preference';
+    var mql = window.matchMedia('(prefers-color-scheme: dark)');
+    function getPreference(){
+      var server = root.getAttribute('data-theme-preference');
+      if (server === 'light' || server === 'dark' || server === 'system') return server;
+      try { var saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === 'light' || saved === 'dark' || saved === 'system') return saved;
+      } catch(e){}
+      return 'system';
+    }
+    function resolve(pref){
+      if (pref === 'light' || pref === 'dark') return pref;
+      return mql.matches ? 'dark' : 'light';
+    }
+    function apply(pref){
+      var theme = resolve(pref);
+      root.setAttribute('data-bs-theme', theme);
+      root.setAttribute('data-theme-preference', pref);
+      try { localStorage.setItem(STORAGE_KEY, pref); } catch(e){}
+    }
+    apply(getPreference());
+    mql.addEventListener('change', function(){
+      if (root.getAttribute('data-theme-preference') === 'system') apply('system');
+    });
+    window.cairnTheme = { apply: apply, get: function(){ return root.getAttribute('data-theme-preference') || 'system'; } };
+  })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Cairn{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%231E3A8A'/%3E%3Cpath d='M 19 38 A 14 14 0 1 1 45 38' stroke='%23FFFFFF' stroke-width='6' stroke-linecap='round' fill='none'/%3E%3Cpath d='M 22 44 L 32 26 L 42 44 Z' fill='%23FFFFFF'/%3E%3C/svg%3E">
@@ -3106,14 +3136,6 @@
     document.addEventListener('click', function() {
       document.querySelectorAll('.scope-pop-panel.show').forEach(function(p) { p.classList.remove('show'); });
     });
-    (function(){
-      var m = window.matchMedia('(prefers-color-scheme: dark)');
-      function apply(dark) {
-        document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
-      }
-      apply(m.matches);
-      m.addEventListener('change', function(e) { apply(e.matches); });
-    })();
   </script>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'

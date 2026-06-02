@@ -64,6 +64,7 @@ class LoginAPIView(APIView):
                         "email": user.email,
                         "display_name": user.display_name,
                         "language": user.language,
+                        "theme_preference": user.theme_preference,
                         "permissions": permissions,
                     },
                 },

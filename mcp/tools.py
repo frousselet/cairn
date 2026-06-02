@@ -5733,13 +5733,58 @@ def _register_accounts_tools(server):
     # Get current user info
     def get_me(user, arguments):
         return _serialize_obj(user, ["id", "email", "first_name", "last_name",
-                                     "job_title", "department", "language", "timezone"])
+                                     "job_title", "department", "language", "timezone",
+                                     "theme_preference"])
 
     server.register_tool(
         "get_me",
         "Get information about the currently authenticated user",
         {"type": "object", "properties": {}},
         get_me,
+    )
+
+    # Update current user profile
+    def update_me(user, arguments):
+        from accounts.constants import ThemePreference
+
+        editable = ["first_name", "last_name", "phone", "language", "timezone", "theme_preference"]
+        valid_themes = {choice.value for choice in ThemePreference}
+        changed = []
+        for field in editable:
+            if field not in arguments:
+                continue
+            value = arguments[field]
+            if field == "theme_preference" and value not in valid_themes:
+                raise InvalidParamsError(
+                    "theme_preference must be one of: " + ", ".join(sorted(valid_themes))
+                )
+            setattr(user, field, value)
+            changed.append(field)
+        if changed:
+            user.save(update_fields=changed + ["updated_at"])
+        return _serialize_obj(user, ["id", "email", "first_name", "last_name",
+                                     "job_title", "department", "language", "timezone",
+                                     "theme_preference"])
+
+    server.register_tool(
+        "update_me",
+        "Update the currently authenticated user's profile (self-service). Accepts first_name, last_name, phone, language, timezone, theme_preference.",
+        {
+            "type": "object",
+            "properties": {
+                "first_name": {"type": "string", "description": "First name."},
+                "last_name": {"type": "string", "description": "Last name."},
+                "phone": {"type": "string", "description": "Phone number."},
+                "language": {"type": "string", "description": "Interface language code (empty for auto, 'fr', 'en')."},
+                "timezone": {"type": "string", "description": "IANA timezone, e.g. 'Europe/Paris'."},
+                "theme_preference": {
+                    "type": "string",
+                    "enum": ["system", "light", "dark"],
+                    "description": "Display theme. 'system' follows the OS preference.",
+                },
+            },
+        },
+        update_me,
     )
 
     # List groups

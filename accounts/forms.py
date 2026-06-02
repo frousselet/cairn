@@ -140,13 +140,14 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ("first_name", "last_name", "phone", "language", "timezone")
+        fields = ("first_name", "last_name", "phone", "language", "timezone", "theme_preference")
         widgets = {
             "first_name": forms.TextInput(attrs={"class": "form-control"}),
             "last_name": forms.TextInput(attrs={"class": "form-control"}),
             "phone": forms.TextInput(attrs={"class": "form-control"}),
             "language": forms.Select(attrs={"class": "form-select"}),
             "timezone": forms.TextInput(attrs={"class": "form-control"}),
+            "theme_preference": forms.Select(attrs={"class": "form-select", "data-theme-selector": "1"}),
         }
 
     def save(self, commit=True):

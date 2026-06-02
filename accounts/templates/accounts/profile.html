@@ -83,17 +83,25 @@
         <div class="card-body">
           <div class="row">
             <div class="col-sm-6">
-              <div class="mb-3 mb-sm-0">
+              <div class="mb-3">
                 <label for="{{ form.language.id_for_label }}" class="form-label">{{ form.language.label }}</label>
                 {{ form.language }}
                 {% if form.language.errors %}<div class="invalid-feedback d-block">{{ form.language.errors.0 }}</div>{% endif %}
               </div>
             </div>
             <div class="col-sm-6">
-              <div class="mb-3 mb-sm-0">
+              <div class="mb-3">
                 <label for="{{ form.timezone.id_for_label }}" class="form-label">{{ form.timezone.label }}</label>
                 {{ form.timezone }}
                 {% if form.timezone.errors %}<div class="invalid-feedback d-block">{{ form.timezone.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="mb-3 mb-sm-0">
+                <label for="{{ form.theme_preference.id_for_label }}" class="form-label">{{ form.theme_preference.label }}</label>
+                {{ form.theme_preference }}
+                <div class="form-text" style="font-size:.78rem;color:var(--text-muted)">{% trans "System follows your OS preference and reacts to its changes in real time." %}</div>
+                {% if form.theme_preference.errors %}<div class="invalid-feedback d-block">{{ form.theme_preference.errors.0 }}</div>{% endif %}
               </div>
             </div>
           </div>
@@ -276,6 +284,13 @@ function removeAvatar() {
   var btn = document.getElementById('remove-avatar-btn');
   if (btn) btn.style.display = 'none';
 }
+
+/* ── Theme preference instant apply ─────────────── */
+(function() {
+  var sel = document.querySelector('select[data-theme-selector]');
+  if (!sel || !window.cairnTheme) return;
+  sel.addEventListener('change', function() { window.cairnTheme.apply(sel.value); });
+})();
 
 /* ── Passkey management ─────────────────────────── */
 {% trans "Name for this passkey:" as tr_passkey_name %}
