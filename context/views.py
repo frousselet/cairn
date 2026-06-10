@@ -27,12 +27,15 @@ from .constants import CollectionMethod, IndicatorType, PREDEFINED_SOURCE_FORMAT
 from .forms import (
     ActivityCreateForm,
     ActivityUpdateForm,
-    IndicatorForm,
+    IndicatorCreateForm,
+    IndicatorUpdateForm,
     IndicatorMeasurementForm,
-    PredefinedIndicatorForm,
+    PredefinedIndicatorCreateForm,
+    PredefinedIndicatorUpdateForm,
     IssueCreateForm,
     IssueUpdateForm,
-    ObjectiveForm,
+    ObjectiveCreateForm,
+    ObjectiveUpdateForm,
     RoleCreateForm,
     RoleUpdateForm,
     ScopeForm,
@@ -527,7 +530,7 @@ class ObjectiveDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilt
 class ObjectiveCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = Objective
     permission_required = "context.objective.create"
-    form_class = ObjectiveForm
+    form_class = ObjectiveCreateForm
     template_name = "context/objective_form.html"
     modal_template_name = "context/objective_form_modal.html"
     modal_title_create = _l("New objective")
@@ -543,7 +546,7 @@ class ObjectiveCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
 class ObjectiveUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
     model = Objective
     permission_required = "context.objective.update"
-    form_class = ObjectiveForm
+    form_class = ObjectiveUpdateForm
     template_name = "context/objective_form.html"
     modal_template_name = "context/objective_form_modal.html"
     modal_title_create = _l("New objective")
@@ -1303,7 +1306,7 @@ class IndicatorDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilt
 class IndicatorCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = Indicator
     permission_required = "context.indicator.create"
-    form_class = IndicatorForm
+    form_class = IndicatorCreateForm
     template_name = "context/indicator_form.html"
     modal_template_name = "context/indicator_form_modal.html"
     modal_title_create = _l("New indicator")
@@ -1331,7 +1334,7 @@ class IndicatorCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
 class PredefinedIndicatorCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = Indicator
     permission_required = "context.indicator.create"
-    form_class = PredefinedIndicatorForm
+    form_class = PredefinedIndicatorCreateForm
     template_name = "context/indicator_predefined_form.html"
     modal_template_name = "context/indicator_predefined_form_modal.html"
     modal_title_create = _l("New predefined indicator")
@@ -1377,8 +1380,8 @@ class IndicatorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
 
     def get_form_class(self):
         if self.object.is_internal:
-            return PredefinedIndicatorForm
-        return IndicatorForm
+            return PredefinedIndicatorUpdateForm
+        return IndicatorUpdateForm
 
     def get_template_names(self):
         if self._is_htmx() and self.object.is_internal:
