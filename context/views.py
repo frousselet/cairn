@@ -25,17 +25,20 @@ from accounts.views import PermissionRequiredMixin
 from core.mixins import HtmxFormMixin, SortableListMixin
 from .constants import CollectionMethod, IndicatorType, PREDEFINED_SOURCE_FORMAT
 from .forms import (
-    ActivityForm,
+    ActivityCreateForm,
+    ActivityUpdateForm,
     IndicatorForm,
     IndicatorMeasurementForm,
     PredefinedIndicatorForm,
-    IssueForm,
+    IssueCreateForm,
+    IssueUpdateForm,
     ObjectiveForm,
     RoleCreateForm,
     RoleUpdateForm,
     ScopeForm,
     StakeholderForm,
-    SwotAnalysisForm,
+    SwotAnalysisCreateForm,
+    SwotAnalysisUpdateForm,
     SwotItemForm,
     SwotStrategyForm,
 )
@@ -365,7 +368,7 @@ class IssueDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMi
 class IssueCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = Issue
     permission_required = "context.issue.create"
-    form_class = IssueForm
+    form_class = IssueCreateForm
     template_name = "context/issue_form.html"
     modal_template_name = "context/issue_form_modal.html"
     modal_title_create = _l("New issue")
@@ -381,7 +384,7 @@ class IssueCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin
 class IssueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
     model = Issue
     permission_required = "context.issue.update"
-    form_class = IssueForm
+    form_class = IssueUpdateForm
     template_name = "context/issue_form.html"
     modal_template_name = "context/issue_form_modal.html"
     modal_title_create = _l("New issue")
@@ -626,7 +629,7 @@ class SwotDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMix
 class SwotCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = SwotAnalysis
     permission_required = "context.swot.create"
-    form_class = SwotAnalysisForm
+    form_class = SwotAnalysisCreateForm
     template_name = "context/swot_form.html"
     modal_template_name = "context/swot_form_modal.html"
     modal_title_create = _l("New SWOT analysis")
@@ -642,7 +645,7 @@ class SwotCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
 class SwotUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
     model = SwotAnalysis
     permission_required = "context.swot.update"
-    form_class = SwotAnalysisForm
+    form_class = SwotAnalysisUpdateForm
     template_name = "context/swot_form.html"
     modal_template_name = "context/swot_form_modal.html"
     modal_title_create = _l("New SWOT analysis")
@@ -914,7 +917,7 @@ class ActivityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
 class ActivityCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = Activity
     permission_required = "context.activity.create"
-    form_class = ActivityForm
+    form_class = ActivityCreateForm
     template_name = "context/activity_form.html"
     modal_template_name = "context/activity_form_modal.html"
     modal_title_create = _l("New activity")
@@ -930,7 +933,7 @@ class ActivityCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMi
 class ActivityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
     model = Activity
     permission_required = "context.activity.update"
-    form_class = ActivityForm
+    form_class = ActivityUpdateForm
     template_name = "context/activity_form.html"
     modal_template_name = "context/activity_form_modal.html"
     modal_title_create = _l("New activity")

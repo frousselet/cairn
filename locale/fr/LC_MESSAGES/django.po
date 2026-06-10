@@ -8669,3 +8669,78 @@ msgstr "Résumé facultatif du rapprochement."
 
 msgid "Why this mapping holds."
 msgstr "Justification de ce rapprochement."
+
+msgid "Assessment & status"
+msgstr "Évaluation et statut"
+
+msgid "Short title summarizing the issue."
+msgstr "Titre court résumant l'enjeu."
+
+msgid "Whether the issue is internal or external."
+msgstr "Enjeu interne ou externe."
+
+msgid "Domain the issue belongs to."
+msgstr "Domaine auquel se rattache l'enjeu."
+
+msgid "Where this issue was identified."
+msgstr "Origine de l'identification de l'enjeu."
+
+msgid "What the issue is and why it matters."
+msgstr "Nature de l'enjeu et son importance."
+
+msgid "How strongly this issue affects the organization."
+msgstr "Intensité de l'effet de l'enjeu sur l'organisation."
+
+msgid "Whether the issue is improving, stable or worsening."
+msgstr "Tendance de l'enjeu : en amélioration, stable ou en dégradation."
+
+msgid "Next date this issue should be reviewed."
+msgstr "Prochaine date de revue de l'enjeu."
+
+msgid "Lifecycle state of the issue."
+msgstr "État du cycle de vie de l'enjeu."
+
+msgid "Organizational scopes this issue applies to."
+msgstr "Périmètres organisationnels concernés par l'enjeu."
+
+msgid "Short, recognizable name of the activity."
+msgstr "Nom court et reconnaissable de l'activité."
+
+msgid "Business, support or management nature."
+msgstr "Nature : métier, support ou management."
+
+msgid "How critical this activity is to the organization."
+msgstr "Criticité de l'activité pour l'organisation."
+
+msgid "Person accountable for the activity."
+msgstr "Personne responsable de l'activité."
+
+msgid "Parent activity, if this is a sub-process."
+msgstr "Activité parente, s'il s'agit d'un sous-processus."
+
+msgid "What the activity covers."
+msgstr "Ce que recouvre l'activité."
+
+msgid "Organizational scopes this activity applies to."
+msgstr "Périmètres organisationnels concernés par l'activité."
+
+msgid "Lifecycle state of the activity."
+msgstr "État du cycle de vie de l'activité."
+
+msgid "Title of the SWOT analysis."
+msgstr "Titre de l'analyse SWOT."
+
+msgid "Date the analysis was conducted."
+msgstr "Date de réalisation de l'analyse."
+
+msgid "Next date this analysis should be reviewed."
+msgstr "Prochaine date de revue de l'analyse."
+
+msgid "Purpose and context of the analysis."
+msgstr "Objet et contexte de l'analyse."
+
+msgid "Lifecycle state of the analysis."
+msgstr "État du cycle de vie de l'analyse."
+
+msgid "Organizational scopes this analysis applies to."
+msgstr "Périmètres organisationnels concernés par l'analyse."
