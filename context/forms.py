@@ -130,7 +130,14 @@ class ScopeForm(forms.ModelForm):
         self.fields["managers"].queryset = User.objects.filter(is_active=True).order_by("first_name", "last_name", "email")
 
 
-class IssueForm(ScopedFormMixin, forms.ModelForm):
+class IssueBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    steps = [
+        Step(_("Identity"), "flag",
+             ["name", "type", "category", "source", "description"]),
+        Step(_("Assessment & status"), "graph-up",
+             ["impact_level", "trend", "review_date", "status", "scopes", "tags"]),
+    ]
+
     class Meta:
         model = Issue
         fields = [
@@ -150,6 +157,27 @@ class IssueForm(ScopedFormMixin, forms.ModelForm):
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        help_texts = {
+            "name": _("Short title summarizing the issue."),
+            "type": _("Whether the issue is internal or external."),
+            "category": _("Domain the issue belongs to."),
+            "source": _("Where this issue was identified."),
+            "description": _("What the issue is and why it matters."),
+            "impact_level": _("How strongly this issue affects the organization."),
+            "trend": _("Whether the issue is improving, stable or worsening."),
+            "review_date": _("Next date this issue should be reviewed."),
+            "status": _("Lifecycle state of the issue."),
+            "scopes": _("Organizational scopes this issue applies to."),
+            "tags": _("Free-form labels for filtering and grouping."),
+        }
+
+
+class IssueCreateForm(IssueBaseForm):
+    """Issue creation modal form."""
+
+
+class IssueUpdateForm(IssueBaseForm):
+    """Issue edition modal form."""
 
 
 class StakeholderForm(ScopedFormMixin, forms.ModelForm):
@@ -220,7 +248,13 @@ class ObjectiveForm(ScopedFormMixin, forms.ModelForm):
         }
 
 
-class SwotAnalysisForm(ScopedFormMixin, forms.ModelForm):
+class SwotAnalysisBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    steps = [
+        Step(_("Identity"), "grid-3x3",
+             ["name", "analysis_date", "review_date", "description"]),
+        Step(_("Scope & status"), "diagram-3", ["status", "scopes", "tags"]),
+    ]
+
     class Meta:
         model = SwotAnalysis
         fields = [
@@ -236,6 +270,23 @@ class SwotAnalysisForm(ScopedFormMixin, forms.ModelForm):
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        help_texts = {
+            "name": _("Title of the SWOT analysis."),
+            "analysis_date": _("Date the analysis was conducted."),
+            "review_date": _("Next date this analysis should be reviewed."),
+            "description": _("Purpose and context of the analysis."),
+            "status": _("Lifecycle state of the analysis."),
+            "scopes": _("Organizational scopes this analysis applies to."),
+            "tags": _("Free-form labels for filtering and grouping."),
+        }
+
+
+class SwotAnalysisCreateForm(SwotAnalysisBaseForm):
+    """SWOT analysis creation modal form."""
+
+
+class SwotAnalysisUpdateForm(SwotAnalysisBaseForm):
+    """SWOT analysis edition modal form."""
 
 
 class SwotItemForm(forms.ModelForm):
@@ -315,7 +366,13 @@ class RoleUpdateForm(RoleBaseForm):
     """Role edition modal form."""
 
 
-class ActivityForm(ScopedFormMixin, forms.ModelForm):
+class ActivityBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    steps = [
+        Step(_("Identity"), "activity",
+             ["name", "type", "criticality", "owner", "parent_activity", "description"]),
+        Step(_("Scope & status"), "diagram-3", ["scopes", "status", "tags"]),
+    ]
+
     class Meta:
         model = Activity
         fields = [
@@ -333,6 +390,25 @@ class ActivityForm(ScopedFormMixin, forms.ModelForm):
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        help_texts = {
+            "name": _("Short, recognizable name of the activity."),
+            "type": _("Business, support or management nature."),
+            "criticality": _("How critical this activity is to the organization."),
+            "owner": _("Person accountable for the activity."),
+            "parent_activity": _("Parent activity, if this is a sub-process."),
+            "description": _("What the activity covers."),
+            "scopes": _("Organizational scopes this activity applies to."),
+            "status": _("Lifecycle state of the activity."),
+            "tags": _("Free-form labels for filtering and grouping."),
+        }
+
+
+class ActivityCreateForm(ActivityBaseForm):
+    """Activity creation modal form."""
+
+
+class ActivityUpdateForm(ActivityBaseForm):
+    """Activity edition modal form."""
 
 
 def _site_tree_choices(queryset):
