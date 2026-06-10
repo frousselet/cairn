@@ -247,7 +247,17 @@ class StakeholderExpectationForm(forms.ModelForm):
         }
 
 
-class ObjectiveForm(ScopedFormMixin, forms.ModelForm):
+class ObjectiveBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    steps = [
+        Step(_("Identity"), "bullseye",
+             ["name", "category", "type", "owner", "parent_objective", "description"]),
+        Step(_("Measurement"), "rulers",
+             ["target_value", "current_value", "unit", "progress_percentage",
+              "measurement_method", "measurement_frequency"]),
+        Step(_("Scope & status"), "diagram-3",
+             ["target_date", "review_date", "status", "scopes", "tags"]),
+    ]
+
     class Meta:
         model = Objective
         fields = [
@@ -276,6 +286,33 @@ class ObjectiveForm(ScopedFormMixin, forms.ModelForm):
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        help_texts = {
+            "name": _("Name of the objective."),
+            "category": _("Category of the objective."),
+            "type": _("Type of objective."),
+            "owner": _("Person accountable for the objective."),
+            "parent_objective": _("Parent objective, if this is a sub-objective."),
+            "description": _("What the objective aims to achieve."),
+            "target_value": _("Value to reach."),
+            "current_value": _("Current measured value."),
+            "unit": _("Unit of measure."),
+            "progress_percentage": _("Completion from 0 to 100."),
+            "measurement_method": _("How the value is measured."),
+            "measurement_frequency": _("How often it is measured."),
+            "target_date": _("Date the objective should be reached."),
+            "review_date": _("Next date this objective should be reviewed."),
+            "status": _("Lifecycle state of the objective."),
+            "scopes": _("Organizational scopes this objective applies to."),
+            "tags": _("Free-form labels for filtering and grouping."),
+        }
+
+
+class ObjectiveCreateForm(ObjectiveBaseForm):
+    """Objective creation modal form."""
+
+
+class ObjectiveUpdateForm(ObjectiveBaseForm):
+    """Objective edition modal form."""
 
 
 class SwotAnalysisBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
@@ -503,7 +540,18 @@ class TagForm(forms.ModelForm):
         }
 
 
-class IndicatorForm(ScopedFormMixin, forms.ModelForm):
+class IndicatorBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    steps = [
+        Step(_("Identity"), "bar-chart-line",
+             ["name", "collection_method", "format", "description"]),
+        Step(_("Format & thresholds"), "sliders",
+             ["unit", "expected_level", "critical_threshold_operator",
+              "critical_threshold_value", "critical_threshold_min",
+              "critical_threshold_max"]),
+        Step(_("Review & status"), "calendar-event",
+             ["review_frequency", "first_review_date", "status", "scopes", "tags"]),
+    ]
+
     class Meta:
         model = Indicator
         fields = [
@@ -532,10 +580,46 @@ class IndicatorForm(ScopedFormMixin, forms.ModelForm):
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        help_texts = {
+            "name": _("Name of the indicator."),
+            "collection_method": _("How the indicator is collected."),
+            "format": _("Data format of the indicator."),
+            "description": _("What the indicator measures."),
+            "unit": _("Unit of measure."),
+            "expected_level": _("Target level to reach."),
+            "critical_threshold_operator": _("Comparison used to flag a critical value."),
+            "critical_threshold_value": _("Value beyond which the indicator is critical."),
+            "critical_threshold_min": _("Lower bound of the acceptable range."),
+            "critical_threshold_max": _("Upper bound of the acceptable range."),
+            "review_frequency": _("How often the indicator is reviewed."),
+            "first_review_date": _("Date of the first review."),
+            "status": _("Lifecycle state of the indicator."),
+            "scopes": _("Organizational scopes this indicator applies to."),
+            "tags": _("Free-form labels for filtering and grouping."),
+        }
 
 
-class PredefinedIndicatorForm(ScopedFormMixin, forms.ModelForm):
+class IndicatorCreateForm(IndicatorBaseForm):
+    """Indicator creation modal form."""
+
+
+class IndicatorUpdateForm(IndicatorBaseForm):
+    """Indicator edition modal form."""
+
+
+class PredefinedIndicatorBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     """Form for creating predefined Cairn indicators."""
+
+    steps = [
+        Step(_("Identity"), "bar-chart-line",
+             ["name", "internal_source", "internal_source_parameter", "description"]),
+        Step(_("Format & thresholds"), "sliders",
+             ["expected_level", "critical_threshold_operator",
+              "critical_threshold_value", "critical_threshold_min",
+              "critical_threshold_max"]),
+        Step(_("Review & status"), "calendar-event",
+             ["review_frequency", "first_review_date", "status", "scopes", "tags"]),
+    ]
 
     class Meta:
         model = Indicator
@@ -564,6 +648,30 @@ class PredefinedIndicatorForm(ScopedFormMixin, forms.ModelForm):
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        help_texts = {
+            "name": _("Name of the indicator."),
+            "internal_source": _("Cairn data source feeding this indicator."),
+            "internal_source_parameter": _("Parameter passed to the data source."),
+            "description": _("What the indicator measures."),
+            "expected_level": _("Target level to reach."),
+            "critical_threshold_operator": _("Comparison used to flag a critical value."),
+            "critical_threshold_value": _("Value beyond which the indicator is critical."),
+            "critical_threshold_min": _("Lower bound of the acceptable range."),
+            "critical_threshold_max": _("Upper bound of the acceptable range."),
+            "review_frequency": _("How often the indicator is reviewed."),
+            "first_review_date": _("Date of the first review."),
+            "status": _("Lifecycle state of the indicator."),
+            "scopes": _("Organizational scopes this indicator applies to."),
+            "tags": _("Free-form labels for filtering and grouping."),
+        }
+
+
+class PredefinedIndicatorCreateForm(PredefinedIndicatorBaseForm):
+    """Predefined indicator creation modal form."""
+
+
+class PredefinedIndicatorUpdateForm(PredefinedIndicatorBaseForm):
+    """Predefined indicator edition modal form."""
 
 
 class IndicatorMeasurementForm(forms.ModelForm):

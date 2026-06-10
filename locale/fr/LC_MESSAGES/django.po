@@ -8780,3 +8780,102 @@ msgstr "État du cycle de vie de la partie intéressée."
 
 msgid "Organizational scopes this stakeholder applies to."
 msgstr "Périmètres organisationnels concernés par la partie intéressée."
+
+msgid "Format & thresholds"
+msgstr "Format et seuils"
+
+msgid "Review & status"
+msgstr "Revue et statut"
+
+msgid "Name of the objective."
+msgstr "Nom de l'objectif."
+
+msgid "Category of the objective."
+msgstr "Catégorie de l'objectif."
+
+msgid "Type of objective."
+msgstr "Type d'objectif."
+
+msgid "Person accountable for the objective."
+msgstr "Personne responsable de l'objectif."
+
+msgid "Parent objective, if this is a sub-objective."
+msgstr "Objectif parent, s'il s'agit d'un sous-objectif."
+
+msgid "What the objective aims to achieve."
+msgstr "Ce que l'objectif vise à atteindre."
+
+msgid "Value to reach."
+msgstr "Valeur à atteindre."
+
+msgid "Current measured value."
+msgstr "Valeur mesurée actuelle."
+
+msgid "Unit of measure."
+msgstr "Unité de mesure."
+
+msgid "Completion from 0 to 100."
+msgstr "Avancement de 0 à 100."
+
+msgid "How the value is measured."
+msgstr "Méthode de mesure de la valeur."
+
+msgid "How often it is measured."
+msgstr "Fréquence de mesure."
+
+msgid "Date the objective should be reached."
+msgstr "Date à laquelle l'objectif doit être atteint."
+
+msgid "Next date this objective should be reviewed."
+msgstr "Prochaine date de revue de l'objectif."
+
+msgid "Lifecycle state of the objective."
+msgstr "État du cycle de vie de l'objectif."
+
+msgid "Organizational scopes this objective applies to."
+msgstr "Périmètres organisationnels concernés par l'objectif."
+
+msgid "Name of the indicator."
+msgstr "Nom de l'indicateur."
+
+msgid "How the indicator is collected."
+msgstr "Mode de collecte de l'indicateur."
+
+msgid "Data format of the indicator."
+msgstr "Format des données de l'indicateur."
+
+msgid "What the indicator measures."
+msgstr "Ce que mesure l'indicateur."
+
+msgid "Target level to reach."
+msgstr "Niveau cible à atteindre."
+
+msgid "Comparison used to flag a critical value."
+msgstr "Comparaison utilisée pour signaler une valeur critique."
+
+msgid "Value beyond which the indicator is critical."
+msgstr "Valeur au-delà de laquelle l'indicateur est critique."
+
+msgid "Lower bound of the acceptable range."
+msgstr "Borne inférieure de la plage acceptable."
+
+msgid "Upper bound of the acceptable range."
+msgstr "Borne supérieure de la plage acceptable."
+
+msgid "How often the indicator is reviewed."
+msgstr "Fréquence de revue de l'indicateur."
+
+msgid "Date of the first review."
+msgstr "Date de la première revue."
+
+msgid "Lifecycle state of the indicator."
+msgstr "État du cycle de vie de l'indicateur."
+
+msgid "Organizational scopes this indicator applies to."
+msgstr "Périmètres organisationnels concernés par l'indicateur."
+
+msgid "Cairn data source feeding this indicator."
+msgstr "Source de données Cairn alimentant cet indicateur."
+
+msgid "Parameter passed to the data source."
+msgstr "Paramètre transmis à la source de données."
