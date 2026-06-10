@@ -353,8 +353,8 @@ class RequirementMappingBaseForm(SteppedFormMixin, forms.ModelForm):
             _("Requirements"),
             "arrow-left-right",
             [
-                "source_requirement", "target_requirement",
-                "mapping_type", "coverage_level",
+                ["source_requirement", "target_requirement"],
+                ["mapping_type", "coverage_level"],
                 "description", "justification",
             ],
         ),

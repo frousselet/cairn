@@ -84,9 +84,9 @@ class ScopeBaseForm(SteppedFormMixin, forms.ModelForm):
              ["boundaries", "justification_exclusions",
               "geographic_scope", "organizational_scope", "technical_scope"]),
         Step(_("Sites & people"), "geo-alt",
-             ["included_sites", "excluded_sites", "managers"]),
+             [["included_sites", "excluded_sites"], "managers"]),
         Step(_("Dates & tags"), "calendar-event",
-             ["effective_date", "review_date", "tags"]),
+             [["effective_date", "review_date"], "tags"]),
     ]
 
     class Meta:
@@ -121,7 +121,7 @@ class ScopeBaseForm(SteppedFormMixin, forms.ModelForm):
             "name": _("Name of the scope."),
             "parent_scope": _("Parent scope, if this is a sub-scope."),
             "status": _("Lifecycle state of the scope."),
-            "icon": _("Icon representing the scope."),
+            "icon": "",  # self-evident adornment: no helper (overrides model help_text)
             "description": _("What this scope covers."),
             "boundaries": _("Where the scope starts and stops."),
             "justification_exclusions": _("Why certain elements are excluded."),
@@ -171,9 +171,9 @@ class ScopeUpdateForm(ScopeBaseForm):
 class IssueBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     steps = [
         Step(_("Identity"), "flag",
-             ["name", "type", "category", "source", "description"]),
+             ["name", ["type", "category"], "source", "description"]),
         Step(_("Assessment & status"), "graph-up",
-             ["impact_level", "trend", "review_date", "status", "scopes", "tags"]),
+             [["impact_level", "trend"], ["status", "review_date"], "scopes", "tags"]),
     ]
 
     class Meta:
@@ -220,10 +220,10 @@ class IssueUpdateForm(IssueBaseForm):
 
 class StakeholderBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     steps = [
-        Step(_("Identity"), "person-badge", ["name", "type", "category", "description"]),
-        Step(_("Contact"), "envelope", ["contact_name", "contact_email", "contact_phone"]),
+        Step(_("Identity"), "person-badge", ["name", ["type", "category"], "description"]),
+        Step(_("Contact"), "envelope", ["contact_name", ["contact_email", "contact_phone"]]),
         Step(_("Assessment & status"), "graph-up",
-             ["influence_level", "interest_level", "review_date", "status", "scopes", "tags"]),
+             [["influence_level", "interest_level"], ["status", "review_date"], "scopes", "tags"]),
     ]
 
     class Meta:
@@ -288,12 +288,13 @@ class StakeholderExpectationForm(forms.ModelForm):
 class ObjectiveBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     steps = [
         Step(_("Identity"), "bullseye",
-             ["name", "category", "type", "owner", "parent_objective", "description"]),
+             ["name", ["category", "type"], ["owner", "parent_objective"], "description"]),
         Step(_("Measurement"), "rulers",
-             ["target_value", "current_value", "unit", "progress_percentage",
-              "measurement_method", "measurement_frequency"]),
+             [["target_value", "current_value", "unit"],
+              ["progress_percentage", "measurement_frequency"],
+              "measurement_method"]),
         Step(_("Scope & status"), "diagram-3",
-             ["target_date", "review_date", "status", "scopes", "tags"]),
+             [["target_date", "review_date"], "status", "scopes", "tags"]),
     ]
 
     class Meta:
@@ -356,7 +357,7 @@ class ObjectiveUpdateForm(ObjectiveBaseForm):
 class SwotAnalysisBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     steps = [
         Step(_("Identity"), "grid-3x3",
-             ["name", "analysis_date", "review_date", "description"]),
+             ["name", ["analysis_date", "review_date"], "description"]),
         Step(_("Scope & status"), "diagram-3", ["status", "scopes", "tags"]),
     ]
 
@@ -428,7 +429,7 @@ class RoleBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         Step(
             _("Identity"),
             "shield-check",
-            ["name", "type", "source_standard", "description", "is_mandatory"],
+            ["name", ["type", "source_standard"], "description", "is_mandatory"],
         ),
         Step(_("Scope & status"), "diagram-3", ["scopes", "status", "tags"]),
     ]
@@ -474,7 +475,7 @@ class RoleUpdateForm(RoleBaseForm):
 class ActivityBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     steps = [
         Step(_("Identity"), "activity",
-             ["name", "type", "criticality", "owner", "parent_activity", "description"]),
+             ["name", ["type", "criticality"], ["owner", "parent_activity"], "description"]),
         Step(_("Scope & status"), "diagram-3", ["scopes", "status", "tags"]),
     ]
 
@@ -581,13 +582,13 @@ class TagForm(forms.ModelForm):
 class IndicatorBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     steps = [
         Step(_("Identity"), "bar-chart-line",
-             ["name", "collection_method", "format", "description"]),
+             ["name", ["collection_method", "format"], "description"]),
         Step(_("Format & thresholds"), "sliders",
-             ["unit", "expected_level", "critical_threshold_operator",
-              "critical_threshold_value", "critical_threshold_min",
-              "critical_threshold_max"]),
+             [["unit", "expected_level"],
+              ["critical_threshold_operator", "critical_threshold_value"],
+              ["critical_threshold_min", "critical_threshold_max"]]),
         Step(_("Review & status"), "calendar-event",
-             ["review_frequency", "first_review_date", "status", "scopes", "tags"]),
+             [["review_frequency", "first_review_date"], "status", "scopes", "tags"]),
     ]
 
     class Meta:
@@ -650,13 +651,13 @@ class PredefinedIndicatorBaseForm(SteppedFormMixin, ScopedFormMixin, forms.Model
 
     steps = [
         Step(_("Identity"), "bar-chart-line",
-             ["name", "internal_source", "internal_source_parameter", "description"]),
+             ["name", ["internal_source", "internal_source_parameter"], "description"]),
         Step(_("Format & thresholds"), "sliders",
-             ["expected_level", "critical_threshold_operator",
-              "critical_threshold_value", "critical_threshold_min",
-              "critical_threshold_max"]),
+             ["expected_level",
+              ["critical_threshold_operator", "critical_threshold_value"],
+              ["critical_threshold_min", "critical_threshold_max"]]),
         Step(_("Review & status"), "calendar-event",
-             ["review_frequency", "first_review_date", "status", "scopes", "tags"]),
+             [["review_frequency", "first_review_date"], "status", "scopes", "tags"]),
     ]
 
     class Meta:

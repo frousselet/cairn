@@ -377,7 +377,7 @@ far they have left to go.
 | 4 | **One form per action** | Create and edit are distinct forms - distinct form classes, distinct endpoints, distinct modals, distinct titles. No single template branches on `instance.pk` to do both jobs. |
 | 5 | **No vertical scroll, visible progress** | Every step fits within the viewport on a 13-inch laptop. A form too large for one step becomes a multi-step modal, and the user always sees where they are and what remains. |
 | 6 | **Required fields are unmistakable** | Required fields are marked at the label and counted in the progress meter. The user never discovers a field was mandatory only after submitting. |
-| 7 | **Every field has a helper** | Each field carries a short, always-visible helper under the control. Guidance is never hidden behind a tooltip or an info icon. |
+| 7 | **Every field has a helper** | Each data field carries a short, always-visible helper under the control. Guidance is never hidden behind a tooltip or an info icon. A self-evident adornment control (e.g. the icon picker, whose label and affordance already say what it is) may omit it. |
 
 ### One model, everywhere : the form modal
 
@@ -479,9 +479,10 @@ without scrolling regardless of step height.
 ### Anatomy of a field
 
 The four parts of any field, always in this order: label, control,
-helper, error. Helper is **mandatory** : every field defines `help_text`,
-and the partial renders it unconditionally. A field with no helper is an
-unfinished field.
+helper, error. Helper is **mandatory on data fields** : every such field
+defines `help_text` and the partial renders it. A data field with no
+helper is an unfinished field; only a self-evident adornment control
+(e.g. the icon picker) may omit it.
 
 ```django
 <div class="mb-3">
