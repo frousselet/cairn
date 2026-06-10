@@ -273,7 +273,7 @@
 <script>
 document.body.addEventListener('refreshItems', function() {
   var drawerEl = document.getElementById('itemDrawer');
-  var drawer = bootstrap.Offcanvas.getInstance(drawerEl);
+  var drawer = bootstrap.Modal.getInstance(drawerEl);
   if (drawer) drawer.hide();
 });
 </script>

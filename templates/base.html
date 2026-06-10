@@ -2301,18 +2301,22 @@
        Single-column flow, metadata bar, clean sections
        ══════════════════════════════════════════════════ */
 
-    /* ── Container — Refined drawer ────────────────── */
-    #itemDrawer {
-      width: min(42rem, 96vw);
-      border: 1px solid var(--border-light) !important;
-      outline: none !important;
+    /* ── Container — Centered modal form ───────────── */
+    #itemDrawer .modal-dialog {
+      max-width: min(42rem, 96vw);
+    }
+    #itemDrawer .modal-content {
+      max-height: calc(100dvh - 3rem);
       background: var(--surface);
-      box-shadow: var(--shadow-lg);
+      overflow: hidden;
     }
-    #itemDrawer.offcanvas-end {
-      transition: transform .3s cubic-bezier(.2,.9,.3,1);
+    #itemDrawer .modal-content > form {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      max-height: 100%;
     }
-    .offcanvas-backdrop.show { opacity: .25; }
+    .modal-backdrop.show { opacity: .25; }
     .modal-content {
       border: 1px solid var(--border-light);
       border-radius: 1rem;
@@ -2328,24 +2332,20 @@
     }
     .modal-title { font-weight: 700; letter-spacing: -.01em; }
 
-    /* ── Drawer header ────────────────────────────── */
-    #itemDrawer .offcanvas-header {
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid var(--border-light);
+    /* ── Modal form header ─────────────────────────── */
+    #itemDrawer .modal-header {
       background: var(--surface);
       gap: .625rem;
       flex-shrink: 0;
     }
-    #itemDrawer .offcanvas-header .offcanvas-title {
-      font-weight: 700;
+    #itemDrawer .modal-title {
       font-size: 1rem;
-      letter-spacing: -.01em;
       color: var(--text-primary);
       display: flex;
       align-items: center;
       gap: .5rem;
     }
-    #itemDrawer .offcanvas-header .drawer-title-icon {
+    #itemDrawer .drawer-title-icon {
       width: 28px;
       height: 28px;
       border-radius: .625rem;
@@ -2357,18 +2357,20 @@
       font-size: .8rem;
       flex-shrink: 0;
     }
-    #itemDrawer .offcanvas-header .btn-close {
+    #itemDrawer .modal-header .btn-close {
       opacity: .5;
       transition: opacity .15s;
       font-size: .75rem;
+      margin: 0;
     }
-    #itemDrawer .offcanvas-header .btn-close:hover { opacity: 1; }
+    #itemDrawer .modal-header .btn-close:hover { opacity: 1; }
 
     /* ── Drawer body ──────────────────────────────── */
     #itemDrawer .drawer-body {
       padding: 1.375rem 1.5rem 1.5rem;
       overflow-y: auto;
       flex: 1 1 auto;
+      min-height: 0;
       background: var(--surface);
       scrollbar-width: thin;
       scrollbar-color: var(--border-light) transparent;
@@ -4649,29 +4651,32 @@
   {% endif %}
   {# extra_js now lives inside main#page-shell so it ships with the boosted swap. #}
 
-  {# ── Generic HTMX offcanvas drawer for create/edit forms ── #}
-  <div class="offcanvas offcanvas-end" tabindex="-1" id="itemDrawer" aria-hidden="true">
-    <div id="drawer-form-content" class="d-flex flex-column h-100">
+  {# ── Generic HTMX modal for create/edit forms ──────────────────────
+       The container id stays `itemDrawer` and the swap region stays
+       `drawer-form-content` for backward compatibility: every list
+       trigger targets `#drawer-form-content` and the shared
+       HtmxFormMixin keys on that id. The container is now a centered
+       Bootstrap modal (was an offcanvas drawer). #}
+  <div class="modal fade" tabindex="-1" id="itemDrawer" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div id="drawer-form-content" class="modal-content"></div>
     </div>
   </div>
   <script>
   (function() {
     var drawerEl = document.getElementById('itemDrawer');
     var bsDrawer = null;
-    /* When the drawer is opened, we push a synthetic history entry
-     * tagged with DRAWER_MARKER. Back then maps to "close the drawer"
-     * instead of "leave the page". `internalHide` lets us distinguish
-     * a popstate-driven close (user pressed Back) from a UI-driven
-     * close (user clicked the X or submitted the form): in the
-     * UI-driven case we must call history.back() to pop our entry, in
-     * the popstate-driven case we must NOT, otherwise we skip a real
-     * history entry.
-     */
+    /* When the modal opens we push a synthetic history entry tagged
+     * with DRAWER_MARKER so Back maps to "close the modal" instead of
+     * "leave the page". isOnDrawerEntry() distinguishes a UI-driven
+     * close (entry still on top, we must pop it) from a popstate-driven
+     * close (browser already popped it). `internalHide` stays as
+     * documentation for the formSaved path. */
     var DRAWER_MARKER = '__drawer_open__';
     var internalHide = false;
 
     function getDrawer() {
-      if (!bsDrawer) bsDrawer = new bootstrap.Offcanvas(drawerEl);
+      if (!bsDrawer) bsDrawer = new bootstrap.Modal(drawerEl);
       return bsDrawer;
     }
 
@@ -4686,7 +4691,7 @@
       return !!(history.state && history.state.drawer === DRAWER_MARKER);
     }
 
-    /* After HTMX loads content into drawer, show it and push a
+    /* After HTMX loads content into the modal, show it and push a
      * matching history entry so Back closes it. */
     document.body.addEventListener('htmx:afterSettle', function(evt) {
       if (evt.detail.target && evt.detail.target.id === 'drawer-form-content') {
@@ -4697,7 +4702,7 @@
       }
     });
 
-    /* On formSaved trigger from server, close drawer and refresh table */
+    /* On formSaved trigger from server, close modal and refresh table */
     document.body.addEventListener('formSaved', function() {
       internalHide = true;
       getDrawer().hide();
@@ -4709,17 +4714,8 @@
       }
     });
 
-    /* Cleanup drawer content on hide. If the close was UI-driven (X
-     * button, ESC, form save) and our marker is still on top of the
-     * stack, pop it so Back returns to the page state that preceded
-     * the drawer instead of replaying the drawer-open entry. The
-     * isOnDrawerEntry() check distinguishes UI-driven close (entry
-     * still on top, must pop) from popstate-driven close (entry
-     * already popped by the browser when Back was pressed). The
-     * `internalHide` flag is no longer load-bearing now that we key
-     * off history.state directly; it stays as documentation for the
-     * formSaved path. */
-    drawerEl.addEventListener('hidden.bs.offcanvas', function() {
+    /* Cleanup modal content on hide (X, ESC, backdrop, or form save). */
+    drawerEl.addEventListener('hidden.bs.modal', function() {
       document.getElementById('drawer-form-content').innerHTML = '';
       if (isOnDrawerEntry()) {
         internalHide = false;
@@ -4729,7 +4725,7 @@
       }
     });
 
-    /* Browser Back while the drawer is open: close it, do not navigate
+    /* Browser Back while the modal is open: close it, do not navigate
      * away. The marker has already been popped by the browser, so we
      * must NOT push or pop again here. */
     window.addEventListener('popstate', function() {
