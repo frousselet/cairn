@@ -18,6 +18,7 @@ from risks.constants import (
 
 class Risk(BaseModel):
     REFERENCE_PREFIX = "RISK"
+    WORKFLOW_NAME = "risk"
 
     assessment = models.ForeignKey(
         "risks.RiskAssessment",
@@ -258,4 +259,7 @@ class Risk(BaseModel):
             )
             if calculated is not None:
                 self.residual_risk_level = calculated
+        from core.workflow import sync_legacy_status
+
+        sync_legacy_status(self, kwargs, RiskStatus.IDENTIFIED)
         super().save(*args, **kwargs)
