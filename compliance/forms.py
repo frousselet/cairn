@@ -230,9 +230,21 @@ class RequirementForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        from core.workflow import linkable_or_linked
         from risks.models import Risk
-        self.fields["linked_risks"].queryset = Risk.objects.all()
-        if self.instance and self.instance.pk:
+
+        editing = bool(self.instance and self.instance.pk)
+        self.fields["linked_risks"].queryset = linkable_or_linked(
+            Risk.objects.all(),
+            self.instance.linked_risks.all() if editing else None,
+        )
+        for fname in ("linked_assets", "linked_stakeholder_expectations"):
+            field = self.fields[fname]
+            field.queryset = linkable_or_linked(
+                field.queryset,
+                getattr(self.instance, fname).all() if editing else None,
+            )
+        if editing:
             self.fields["linked_risks"].initial = self.instance.linked_risks.all()
 
     def save(self, commit=True):

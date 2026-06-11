@@ -258,8 +258,22 @@ class RiskBaseForm(SteppedFormMixin, forms.ModelForm):
                 empty_value=None, label=self.fields[fname].label,
                 widget=forms.Select(attrs=SELECT_ATTRS),
             )
+        # Link pickers only offer linkable elements (existing links are kept)
+        from core.workflow import linkable_or_linked
+
+        editing = bool(self.instance and self.instance.pk)
+        for fname in (
+            "linked_requirements",
+            "affected_essential_assets",
+            "affected_support_assets",
+        ):
+            field = self.fields[fname]
+            field.queryset = linkable_or_linked(
+                field.queryset,
+                getattr(self.instance, fname).all() if editing else None,
+            )
         # When editing an existing risk, lock the assessment and source fields
-        if self.instance and self.instance.pk:
+        if editing:
             self.fields["assessment"].disabled = True
             self.fields["risk_source"].disabled = True
 
@@ -362,6 +376,16 @@ class RiskTreatmentPlanBaseForm(SteppedFormMixin, forms.ModelForm):
             coerce=int, required=False, empty_value=None,
             label=self.fields["expected_residual_impact"].label,
             widget=forms.Select(attrs=SELECT_ATTRS),
+        )
+        # Link picker only offers linkable action plans (existing links are kept)
+        from core.workflow import linkable_or_linked
+
+        field = self.fields["related_action_plans"]
+        field.queryset = linkable_or_linked(
+            field.queryset,
+            self.instance.related_action_plans.all()
+            if self.instance and self.instance.pk
+            else None,
         )
 
 

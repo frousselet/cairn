@@ -4586,12 +4586,27 @@ def _register_risks_tools(server):
             risk = Risk.objects.get(pk=risk_id)
         except Risk.DoesNotExist:
             return _error("Risk not found.")
+        from core.workflow import linkable_states
+        if risk.get_lifecycle_state().is_terminal:
+            return _error(
+                f"Risk is in the terminal '{risk.workflow_state}' lifecycle state "
+                "and cannot gain new links."
+            )
         existing = set(str(pk) for pk in risk.linked_requirements.values_list("pk", flat=True))
         reqs = Requirement.objects.filter(pk__in=req_ids)
         if reqs.count() != len(req_ids):
             found = set(str(r.pk) for r in reqs)
             missing = [rid for rid in req_ids if rid not in found]
             return _error(f"Requirements not found: {missing}")
+        allowed = linkable_states(Requirement)
+        not_linkable = sorted(
+            str(r.pk) for r in reqs
+            if r.workflow_state not in allowed and str(r.pk) not in existing
+        )
+        if not_linkable:
+            return _error(
+                f"Requirements not in a linkable lifecycle state: {not_linkable}"
+            )
         risk.linked_requirements.add(*reqs)
         added = len(set(req_ids) - existing)
         total = risk.linked_requirements.count()
@@ -4708,11 +4723,29 @@ def _register_risks_tools(server):
         except Risk.DoesNotExist:
             return _error("Risk not found.")
         if req_ids:
+            from core.workflow import linkable_states
+            if risk.get_lifecycle_state().is_terminal:
+                return _error(
+                    f"Risk is in the terminal '{risk.workflow_state}' lifecycle state "
+                    "and cannot gain new links."
+                )
             reqs = Requirement.objects.filter(pk__in=req_ids)
             if reqs.count() != len(req_ids):
                 found = set(str(r.pk) for r in reqs)
                 missing = [rid for rid in req_ids if rid not in found]
                 return _error(f"Requirements not found: {missing}")
+            existing = set(
+                str(pk) for pk in risk.linked_requirements.values_list("pk", flat=True)
+            )
+            allowed = linkable_states(Requirement)
+            not_linkable = sorted(
+                str(r.pk) for r in reqs
+                if r.workflow_state not in allowed and str(r.pk) not in existing
+            )
+            if not_linkable:
+                return _error(
+                    f"Requirements not in a linkable lifecycle state: {not_linkable}"
+                )
             risk.linked_requirements.set(reqs)
         else:
             risk.linked_requirements.clear()
@@ -4807,6 +4840,12 @@ def _register_risks_tools(server):
             plan = RiskTreatmentPlan.objects.get(pk=plan_id)
         except RiskTreatmentPlan.DoesNotExist:
             return _error("Treatment plan not found.")
+        from core.workflow import linkable_states
+        if plan.get_lifecycle_state().is_terminal:
+            return _error(
+                f"Treatment plan is in the terminal '{plan.workflow_state}' lifecycle "
+                "state and cannot gain new links."
+            )
         existing = set(
             str(pk) for pk in plan.related_action_plans.values_list("pk", flat=True)
         )
@@ -4815,6 +4854,15 @@ def _register_risks_tools(server):
             found = set(str(ap.pk) for ap in action_plans)
             missing = [aid for aid in ap_ids if aid not in found]
             return _error(f"Action plans not found: {missing}")
+        allowed = linkable_states(ComplianceActionPlan)
+        not_linkable = sorted(
+            str(ap.pk) for ap in action_plans
+            if ap.workflow_state not in allowed and str(ap.pk) not in existing
+        )
+        if not_linkable:
+            return _error(
+                f"Action plans not in a linkable lifecycle state: {not_linkable}"
+            )
         plan.related_action_plans.add(*action_plans)
         added = len(set(ap_ids) - existing)
         total = plan.related_action_plans.count()
@@ -4898,11 +4946,29 @@ def _register_risks_tools(server):
         except RiskTreatmentPlan.DoesNotExist:
             return _error("Treatment plan not found.")
         if ap_ids:
+            from core.workflow import linkable_states
+            if plan.get_lifecycle_state().is_terminal:
+                return _error(
+                    f"Treatment plan is in the terminal '{plan.workflow_state}' "
+                    "lifecycle state and cannot gain new links."
+                )
             action_plans = ComplianceActionPlan.objects.filter(pk__in=ap_ids)
             if action_plans.count() != len(ap_ids):
                 found = set(str(ap.pk) for ap in action_plans)
                 missing = [aid for aid in ap_ids if aid not in found]
                 return _error(f"Action plans not found: {missing}")
+            existing = set(
+                str(pk) for pk in plan.related_action_plans.values_list("pk", flat=True)
+            )
+            allowed = linkable_states(ComplianceActionPlan)
+            not_linkable = sorted(
+                str(ap.pk) for ap in action_plans
+                if ap.workflow_state not in allowed and str(ap.pk) not in existing
+            )
+            if not_linkable:
+                return _error(
+                    f"Action plans not in a linkable lifecycle state: {not_linkable}"
+                )
             plan.related_action_plans.set(action_plans)
         else:
             plan.related_action_plans.clear()

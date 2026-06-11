@@ -402,14 +402,48 @@ def deletable_states(model_or_label) -> frozenset:
     return resolve_workflow(model_or_label).deletable_state_codes
 
 
+def _has_lifecycle_field(model) -> bool:
+    """Whether a model carries the ``workflow_state`` lifecycle field.
+
+    Plain child models (e.g. stakeholder expectations) have no lifecycle and are
+    not governed: the queryset helpers below leave them untouched.
+    """
+    try:
+        model._meta.get_field("workflow_state")
+    except Exception:
+        return False
+    return True
+
+
 def reportable(queryset):
     """Restrict a queryset to elements whose state counts in reports / KPIs / calendar."""
+    if not _has_lifecycle_field(queryset.model):
+        return queryset
     return queryset.filter(workflow_state__in=reportable_states(queryset.model))
 
 
 def linkable(queryset):
     """Restrict a queryset to elements that may currently be linked."""
+    if not _has_lifecycle_field(queryset.model):
+        return queryset
     return queryset.filter(workflow_state__in=linkable_states(queryset.model))
+
+
+def linkable_or_linked(queryset, linked_qs=None):
+    """Linkable elements, plus those already linked to the edited object.
+
+    Link pickers use this so a new link can only target a linkable element,
+    while existing links survive a target leaving its linkable state (RG-LC-04:
+    archiving an element never silently drops the links it already has).
+    """
+    from django.db.models import Q
+
+    if not _has_lifecycle_field(queryset.model):
+        return queryset
+    allowed = Q(workflow_state__in=linkable_states(queryset.model))
+    if linked_qs is not None:
+        allowed |= Q(pk__in=linked_qs.values_list("pk", flat=True))
+    return queryset.filter(allowed)
 
 
 # --- Default workflow -------------------------------------------------------
