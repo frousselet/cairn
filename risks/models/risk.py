@@ -158,7 +158,7 @@ class Risk(BaseModel):
         if not criteria:
             criteria = (
                 RiskCriteria.objects.filter(is_default=True).first()
-                or RiskCriteria.objects.filter(status="active").first()
+                or RiskCriteria.objects.filter(workflow_state="validated").first()
             )
         if criteria:
             l_levels = set(

@@ -5,7 +5,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.constants import ImpactLevel, SwotQuadrant, SwotStatus, SwotStrategyQuadrant
+from context.constants import ImpactLevel, SwotQuadrant, SwotStrategyQuadrant
 from .base import ScopedModel
 
 
@@ -15,9 +15,6 @@ class SwotAnalysis(ScopedModel):
     name = models.CharField(_("Name"), max_length=255)
     description = models.TextField(_("Description"), blank=True, default="")
     analysis_date = models.DateField(_("Analysis date"))
-    status = models.CharField(
-        _("Status"), max_length=20, choices=SwotStatus.choices, default=SwotStatus.DRAFT
-    )
     validated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

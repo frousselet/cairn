@@ -345,10 +345,10 @@ class Indicator(ScopedModel):
 
     def _compute_approved_scopes_rate(self):
         from context.models import Scope
-        total = Scope.objects.exclude(status="archived").count()
+        total = Scope.objects.exclude(workflow_state="archived").count()
         if total == 0:
             return "0"
-        approved = Scope.objects.exclude(status="archived").filter(is_approved=True).count()
+        approved = Scope.objects.exclude(workflow_state="archived").filter(is_approved=True).count()
         return str(round(approved / total * 100, 1))
 
     def _compute_mandatory_roles_coverage(self):

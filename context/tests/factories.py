@@ -11,7 +11,6 @@ from context.constants import (
     ObjectiveStatus,
     ObjectiveType,
     SwotQuadrant,
-    SwotStatus,
     SwotStrategyQuadrant,
 )
 from context.models.issue import Issue
@@ -59,7 +58,6 @@ class SwotAnalysisFactory(factory.django.DjangoModelFactory):
     name = factory.Sequence(lambda n: f"SWOT Analysis {n}")
     description = "Test SWOT analysis"
     analysis_date = factory.LazyFunction(datetime.date.today)
-    status = SwotStatus.DRAFT
 
     @factory.post_generation
     def scopes(self, create, extracted, **kwargs):

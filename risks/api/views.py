@@ -61,7 +61,7 @@ class RiskCriteriaViewSet(ScopeFilterAPIMixin, HistoryAPIMixin, CreatedByMixin, 
     permission_classes = [ContextPermission]
     permission_feature = "criteria"
     search_fields = ["name", "description"]
-    ordering_fields = ["name", "status", "created_at"]
+    ordering_fields = ["name", "workflow_state", "created_at"]
 
     def get_serializer_class(self):
         if self.action == "list":

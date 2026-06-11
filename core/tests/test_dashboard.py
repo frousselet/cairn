@@ -86,8 +86,8 @@ class TestDashboardWithPopulatedData:
         assert resp.context["scope_count"] == 2
 
     def test_active_scopes_returned(self):
-        ScopeFactory(status="active")
-        ScopeFactory(status="draft")
+        ScopeFactory(is_approved=True)
+        ScopeFactory()
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
         assert len(resp.context["active_scopes"]) == 1
@@ -430,9 +430,9 @@ class TestFilterScoped:
 
     def test_scope_count_matches_filter(self):
         """Superuser sees all scopes."""
-        ScopeFactory(status="active")
-        ScopeFactory(status="draft")
-        ScopeFactory(status="archived")
+        ScopeFactory(is_approved=True)
+        ScopeFactory()
+        ScopeFactory(workflow_state="archived")
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
         assert resp.context["scope_count"] == 3

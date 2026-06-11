@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import ScopedModel
-from risks.constants import CriteriaStatus, ScaleType
+from risks.constants import ScaleType
 
 
 class RiskCriteria(ScopedModel):
@@ -19,9 +19,6 @@ class RiskCriteria(ScopedModel):
         _("Acceptance threshold"), default=0
     )
     is_default = models.BooleanField(_("Default"), default=False)
-    status = models.CharField(
-        _("Status"), max_length=20, choices=CriteriaStatus.choices, default=CriteriaStatus.DRAFT
-    )
     history = HistoricalRecords()
 
     class Meta:

@@ -36,7 +36,7 @@ class ScopeSerializer(serializers.ModelSerializer):
         model = Scope
         fields = [
             "id", "name", "description", "parent_scope", "parent_scope_name",
-            "version", "status", "icon",
+            "version", "workflow_state", "icon",
             "boundaries", "justification_exclusions",
             "geographic_scope", "organizational_scope", "technical_scope",
             "included_sites", "excluded_sites", "managers",
@@ -56,7 +56,7 @@ class SiteSerializer(serializers.ModelSerializer):
         model = Site
         fields = [
             "id", "name", "type", "address", "description",
-            "parent_site", "parent_site_name", "status", "version", "tags",
+            "parent_site", "parent_site_name", "workflow_state", "version", "tags",
             "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
@@ -160,7 +160,7 @@ class SwotAnalysisSerializer(serializers.ModelSerializer):
         model = SwotAnalysis
         fields = [
             "id", "scopes", "name", "description", "analysis_date",
-            "status", "validated_by", "validated_at", "items", "strategies",
+            "workflow_state", "validated_by", "validated_at", "items", "strategies",
             "review_date", "version", "tags",
             "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
@@ -174,7 +174,7 @@ class SwotAnalysisListSerializer(serializers.ModelSerializer):
     class Meta:
         model = SwotAnalysis
         fields = [
-            "id", "scopes", "name", "analysis_date", "status",
+            "id", "scopes", "name", "analysis_date", "workflow_state",
             "created_at",
         ]
         read_only_fields = ["id", "created_at"]

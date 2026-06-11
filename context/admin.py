@@ -29,8 +29,8 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Scope)
 class ScopeAdmin(SimpleHistoryAdmin):
-    list_display = ("name", "version", "status", "effective_date", "review_date", "created_at")
-    list_filter = ("status",)
+    list_display = ("name", "version", "workflow_state", "effective_date", "review_date", "created_at")
+    list_filter = ("workflow_state",)
     search_fields = ("name", "description")
     readonly_fields = ("id", "reference", "created_at", "updated_at")
     filter_horizontal = ("included_sites", "excluded_sites", "tags")
@@ -38,8 +38,8 @@ class ScopeAdmin(SimpleHistoryAdmin):
 
 @admin.register(Site)
 class SiteAdmin(SimpleHistoryAdmin):
-    list_display = ("name", "type", "status", "parent_site", "is_approved", "created_at")
-    list_filter = ("type", "status")
+    list_display = ("name", "type", "workflow_state", "parent_site", "is_approved", "created_at")
+    list_filter = ("type", "workflow_state")
     search_fields = ("name", "description", "address")
     readonly_fields = ("id", "reference", "created_at", "updated_at")
     filter_horizontal = ("tags",)
@@ -92,8 +92,8 @@ class SwotItemInline(admin.TabularInline):
 
 @admin.register(SwotAnalysis)
 class SwotAnalysisAdmin(SimpleHistoryAdmin):
-    list_display = ("name", "analysis_date", "status", "validated_by", "validated_at")
-    list_filter = ("status",)
+    list_display = ("name", "analysis_date", "workflow_state", "validated_by", "validated_at")
+    list_filter = ("workflow_state",)
     search_fields = ("name", "description")
     readonly_fields = ("id", "reference", "created_at", "updated_at")
     filter_horizontal = ("scopes", "tags")

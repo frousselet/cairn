@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n ui %}
+{% load i18n ui workflow_tags %}
 {% load help_tags %}
 {% load accounts_tags %}
 
@@ -131,9 +131,7 @@
           {% for child in children %}
           <li class="list-group-item px-0{% if forloop.first %} pt-0{% endif %}{% if forloop.last %} pb-0{% endif %}">
             <a href="{% url 'context:scope-detail' child.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ child.name }}</a>
-            <span class="badge text-bg-{% if child.status == 'active' %}success{% elif child.status == 'draft' %}secondary{% else %}dark{% endif %} ms-2">
-              {{ child.get_status_display }}
-            </span>
+            {% workflow_badge child %}
           </li>
           {% endfor %}
         </ul>
@@ -153,9 +151,7 @@
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">
-            <span class="badge text-bg-{% if scope.status == 'active' %}success{% elif scope.status == 'draft' %}secondary{% else %}dark{% endif %}">
-              {{ scope.get_status_display }}
-            </span>
+            {% workflow_badge scope %}
           </dd>
           <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
           <dd class="mb-3">{{ scope.version }}</dd>

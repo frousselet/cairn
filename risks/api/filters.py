@@ -21,7 +21,7 @@ class RiskCriteriaFilter(django_filters.FilterSet):
     class Meta:
         model = RiskCriteria
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "is_default": ["exact"],
         }
 

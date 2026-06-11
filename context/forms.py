@@ -60,7 +60,7 @@ class ScopedFormMixin:
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if "scopes" in self.fields:
-            qs = Scope.objects.exclude(status="archived")
+            qs = Scope.objects.exclude(workflow_state="archived")
             if user and not user.is_superuser:
                 scope_ids = user.get_allowed_scope_ids()
                 if scope_ids is not None:
@@ -79,7 +79,7 @@ class ScopedFormMixin:
 class ScopeBaseForm(SteppedFormMixin, forms.ModelForm):
     steps = [
         Step(_("Identity"), "diagram-3",
-             [[("icon", "auto"), "name"], "parent_scope", "status", "description"]),
+             [[("icon", "auto"), "name"], "parent_scope", "description"]),
         Step(_("Boundaries"), "bounding-box",
              ["boundaries", "justification_exclusions",
               "geographic_scope", "organizational_scope", "technical_scope"]),
@@ -92,7 +92,7 @@ class ScopeBaseForm(SteppedFormMixin, forms.ModelForm):
     class Meta:
         model = Scope
         fields = [
-            "name", "description", "parent_scope", "status", "icon",
+            "name", "description", "parent_scope", "icon",
             "boundaries", "justification_exclusions",
             "geographic_scope", "organizational_scope", "technical_scope",
             "included_sites", "excluded_sites",
@@ -103,7 +103,6 @@ class ScopeBaseForm(SteppedFormMixin, forms.ModelForm):
             "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
             "parent_scope": ScopeTreeRadioWidget(),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "icon": IconPickerWidget(),
             "boundaries": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "justification_exclusions": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
@@ -120,7 +119,6 @@ class ScopeBaseForm(SteppedFormMixin, forms.ModelForm):
         help_texts = {
             "name": _("Name of the scope."),
             "parent_scope": _("Parent scope, if this is a sub-scope."),
-            "status": _("Lifecycle state of the scope."),
             "icon": "",  # self-evident adornment: no helper (overrides model help_text)
             "description": _("What this scope covers."),
             "boundaries": _("Where the scope starts and stops."),
@@ -138,7 +136,7 @@ class ScopeBaseForm(SteppedFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        qs = Scope.objects.exclude(status="archived")
+        qs = Scope.objects.exclude(workflow_state="archived")
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         field = self.fields["parent_scope"]
@@ -149,7 +147,7 @@ class ScopeBaseForm(SteppedFormMixin, forms.ModelForm):
             selected_id = self.data.get(self.add_prefix("parent_scope"))
         field.widget.build_tree_data(qs, selected_id)
         # Site tree choices for included/excluded
-        site_qs = Site.objects.exclude(status="archived")
+        site_qs = Site.objects.exclude(workflow_state="archived")
         site_choices = _site_tree_choices(site_qs)
         for fname in ("included_sites", "excluded_sites"):
             self.fields[fname].queryset = site_qs
@@ -358,21 +356,20 @@ class SwotAnalysisBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     steps = [
         Step(_("Identity"), "grid-3x3",
              ["name", ["analysis_date", "review_date"], "description"]),
-        Step(_("Scope & status"), "diagram-3", ["status", "scopes", "tags"]),
+        Step(_("Scope & status"), "diagram-3", ["scopes", "tags"]),
     ]
 
     class Meta:
         model = SwotAnalysis
         fields = [
             "scopes", "name", "description", "analysis_date",
-            "status", "review_date", "tags",
+            "review_date", "tags",
         ]
         widgets = {
             "scopes": ScopeTreeWidget(),
             "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4, "class": "form-control no-jodit"}),
             "analysis_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
@@ -381,7 +378,6 @@ class SwotAnalysisBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "analysis_date": _("Date the analysis was conducted."),
             "review_date": _("Next date this analysis should be reviewed."),
             "description": _("Purpose and context of the analysis."),
-            "status": _("Lifecycle state of the analysis."),
             "scopes": _("Organizational scopes this analysis applies to."),
             "tags": _("Free-form labels for filtering and grouping."),
         }
@@ -547,7 +543,7 @@ class SiteForm(forms.ModelForm):
     class Meta:
         model = Site
         fields = [
-            "name", "type", "address", "description", "parent_site", "status", "tags",
+            "name", "type", "address", "description", "parent_site", "tags",
         ]
         widgets = {
             "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
@@ -555,13 +551,12 @@ class SiteForm(forms.ModelForm):
             "address": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
             "parent_site": forms.Select(attrs=SELECT_ATTRS),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        qs = Site.objects.exclude(status="archived")
+        qs = Site.objects.exclude(workflow_state="archived")
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         field = self.fields["parent_site"]
@@ -781,7 +776,7 @@ class StakeholderFeedbackForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["stakeholder"].queryset = Stakeholder.objects.order_by("name")
         self.fields["scopes"].queryset = Scope.objects.exclude(
-            status="archived",
+            workflow_state="archived",
         ).order_by("name")
         self.fields["linked_issues"].queryset = Issue.objects.order_by("-updated_at")
         self.fields["linked_expectations"].queryset = (

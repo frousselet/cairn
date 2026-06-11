@@ -17,7 +17,7 @@ class ScopeFilter(django_filters.FilterSet):
     class Meta:
         model = Scope
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "effective_date": ["gte", "lte"],
             "review_date": ["gte", "lte"],
         }
@@ -28,7 +28,7 @@ class SiteFilter(django_filters.FilterSet):
         model = Site
         fields = {
             "type": ["exact"],
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "parent_site": ["exact"],
         }
 
@@ -81,7 +81,7 @@ class SwotAnalysisFilter(django_filters.FilterSet):
     class Meta:
         model = SwotAnalysis
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "analysis_date": ["gte", "lte"],
         }
 

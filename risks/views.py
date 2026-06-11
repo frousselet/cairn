@@ -362,7 +362,7 @@ class RiskDashboardView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVie
         # Heatmaps reusing the same helpers as the global dashboard
         criteria = (
             RiskCriteria.objects.filter(is_default=True).first()
-            or RiskCriteria.objects.filter(status="active").first()
+            or RiskCriteria.objects.filter(workflow_state="validated").first()
         )
         if criteria:
             ctx["matrix_criteria"] = criteria
@@ -594,7 +594,7 @@ class RiskCriteriaListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFil
     sortable_fields = {
         "reference": "reference",
         "name": "name",
-        "status": "status",
+        "status": "workflow_state",
     }
     default_sort = "reference"
     search_fields = ["reference", "name"]
@@ -603,7 +603,7 @@ class RiskCriteriaListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFil
         qs = super().get_queryset().prefetch_related("scopes")
         status_filter = self.request.GET.get("status")
         if status_filter:
-            qs = qs.filter(status=status_filter)
+            qs = qs.filter(workflow_state=status_filter)
         return qs
 
 

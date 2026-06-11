@@ -1,4 +1,4 @@
-{% load i18n ui %}
+{% load i18n ui workflow_tags %}
 {% load versioning_tags %}
 {% approval_enabled_for "context.swotanalysis" as show_approval %}
 {% for analysis in analyses %}
@@ -16,9 +16,7 @@
   </td>
   <td>{{ analysis.analysis_date }}</td>
   <td>
-    <span class="badge text-bg-{% if analysis.status == 'validated' %}success{% elif analysis.status == 'draft' %}secondary{% else %}dark{% endif %}">
-      {{ analysis.get_status_display }}
-    </span>
+    {% workflow_badge analysis %}
   </td>
   <td>{{ analysis.validated_by|default:"—" }}</td>
   <td>{% for tag in analysis.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>

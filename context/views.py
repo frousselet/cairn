@@ -229,7 +229,7 @@ class ScopeListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixi
         "reference": "reference",
         "name": "name",
         "version": "version",
-        "status": "status",
+        "status": "workflow_state",
         "effective_date": "effective_date",
         "review_date": "review_date",
     }
@@ -241,7 +241,7 @@ class ScopeListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixi
         qs = super().get_queryset().select_related("parent_scope")
         status_filter = self.request.GET.get("status")
         if status_filter:
-            qs = qs.filter(status=status_filter)
+            qs = qs.filter(workflow_state=status_filter)
         return qs
 
     def get_context_data(self, **kwargs):
@@ -296,7 +296,7 @@ class ScopeDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMi
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["ancestors"] = self.object.get_ancestors()
-        ctx["children"] = self.object.children.exclude(status="archived")
+        ctx["children"] = self.object.children.exclude(workflow_state="archived")
         return ctx
 
 
@@ -579,7 +579,7 @@ class SwotListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin
         "reference": "reference",
         "name": "name",
         "date": "analysis_date",
-        "status": "status",
+        "status": "workflow_state",
     }
     default_sort = "reference"
     search_fields = ["reference", "name"]
@@ -594,7 +594,7 @@ class SwotListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin
         )
         status_filter = self.request.GET.get("status")
         if status_filter:
-            qs = qs.filter(status=status_filter)
+            qs = qs.filter(workflow_state=status_filter)
         return qs
 
 
@@ -974,7 +974,7 @@ class ScopeTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
         qs = super().get_queryset().select_related("parent_scope").prefetch_related("tags")
         status_filter = self.request.GET.get("status")
         if status_filter:
-            qs = qs.filter(status=status_filter)
+            qs = qs.filter(workflow_state=status_filter)
         return qs
 
     def get_context_data(self, **kwargs):
@@ -1060,7 +1060,7 @@ class SwotTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
         )
         status_filter = self.request.GET.get("status")
         if status_filter:
-            qs = qs.filter(status=status_filter)
+            qs = qs.filter(workflow_state=status_filter)
         return qs
 
 

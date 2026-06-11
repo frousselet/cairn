@@ -3,7 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.constants import SiteType, Status
+from context.constants import SiteType
 from .base import ScopedModel
 
 
@@ -24,10 +24,6 @@ class Site(ScopedModel):
         related_name="children",
         verbose_name=_("Parent site"),
     )
-    status = models.CharField(
-        _("Status"), max_length=20, choices=Status.choices, default=Status.DRAFT
-    )
-
     history = HistoricalRecords()
 
     class Meta(ScopedModel.Meta):
