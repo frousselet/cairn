@@ -89,7 +89,7 @@ class ManagementReviewForm(forms.Form):
     )
 
     scopes = forms.ModelMultipleChoiceField(
-        queryset=Scope.objects.filter(status="active").order_by("name"),
+        queryset=Scope.objects.filter(workflow_state="validated").order_by("name"),
         label=_("Scopes"),
         required=False,
         help_text=_("Optionally filter data by scope. Leave empty to include all data."),

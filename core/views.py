@@ -80,7 +80,7 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         # ── Gouvernance ──────────────────────────────────
         scopes = self._filter_scopes(Scope.objects.all())
         ctx["scope_count"] = scopes.count()
-        ctx["active_scopes"] = scopes.filter(status="active").select_related("parent_scope")[:5]
+        ctx["active_scopes"] = scopes.filter(workflow_state="validated").select_related("parent_scope")[:5]
         ctx["issue_count"] = self._filter_scoped(Issue.objects.all()).count()
         ctx["stakeholder_count"] = self._filter_scoped(Stakeholder.objects.all()).count()
         ctx["objective_count"] = self._filter_scoped(Objective.objects.all()).count()
@@ -155,7 +155,7 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         # Risk matrices
         criteria = RiskCriteria.objects.filter(is_default=True).first()
         if not criteria:
-            criteria = RiskCriteria.objects.filter(status="active").first()
+            criteria = RiskCriteria.objects.filter(workflow_state="validated").first()
         all_risks = Risk.objects.all()
         if criteria:
             ctx["matrix_criteria"] = criteria

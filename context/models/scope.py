@@ -4,7 +4,6 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.constants import Status
 from .base import BaseModel
 
 
@@ -20,9 +19,6 @@ class Scope(BaseModel):
         blank=True,
         related_name="children",
         verbose_name=_("Parent scope"),
-    )
-    status = models.CharField(
-        _("Status"), max_length=20, choices=Status.choices, default=Status.DRAFT
     )
     boundaries = models.TextField(_("Boundaries and exclusions"), blank=True, default="")
     justification_exclusions = models.TextField(

@@ -36,7 +36,6 @@ from context.constants import (
     RoleType,
     StakeholderCategory,
     StakeholderStatus,
-    Status,
     Trend,
 )
 from context.models import (
@@ -146,8 +145,8 @@ class TestScopeListView:
 
     def test_list_with_status_filter(self):
         client, _ = _superuser_client()
-        ScopeFactory(status=Status.ACTIVE)
-        ScopeFactory(status=Status.DRAFT)
+        ScopeFactory(workflow_state="validated")
+        ScopeFactory()
         resp = client.get(reverse("context:scope-list") + "?status=active")
         assert resp.status_code == 200
 
@@ -214,7 +213,6 @@ class TestScopeCreateView:
             {
                 "name": "New Scope",
                 "description": "A brand new scope",
-                "status": Status.DRAFT,
             },
         )
         assert resp.status_code == 302
@@ -227,7 +225,6 @@ class TestScopeCreateView:
             {
                 "name": "Owned Scope",
                 "description": "Check created_by",
-                "status": Status.DRAFT,
             },
         )
         scope = Scope.objects.get(name="Owned Scope")
@@ -249,7 +246,7 @@ class TestScopeUpdateView:
             {
                 "name": "Updated Name",
                 "description": scope.description,
-                "status": scope.status,
+                
             },
         )
         assert resp.status_code == 302
@@ -305,7 +302,7 @@ class TestScopeTableBodyView:
 
     def test_with_status_filter(self):
         client, _ = _superuser_client()
-        ScopeFactory(status=Status.ACTIVE)
+        ScopeFactory(workflow_state="validated")
         resp = client.get(reverse("context:scope-table-body") + "?status=active")
         assert resp.status_code == 200
 

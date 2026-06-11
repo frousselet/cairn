@@ -52,7 +52,7 @@ def get_scale_choices(scale_type, criteria=None):
     default_c = RiskCriteria.objects.filter(is_default=True).first()
     if default_c and default_c not in candidates:
         candidates.append(default_c)
-    active_c = RiskCriteria.objects.filter(status="active").first()
+    active_c = RiskCriteria.objects.filter(workflow_state="validated").first()
     if active_c and active_c not in candidates:
         candidates.append(active_c)
 
@@ -83,7 +83,7 @@ class ScopedFormMixin:
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if "scopes" in self.fields:
-            qs = Scope.objects.exclude(status="archived")
+            qs = Scope.objects.exclude(workflow_state="archived")
             if user and not user.is_superuser:
                 scope_ids = user.get_allowed_scope_ids()
                 if scope_ids is not None:
@@ -103,7 +103,7 @@ class RiskCriteriaForm(ScopedFormMixin, forms.ModelForm):
         model = RiskCriteria
         fields = [
             "scopes", "name", "description", "acceptance_threshold",
-            "is_default", "status", "tags",
+            "is_default", "tags",
         ]
         widgets = {
             "scopes": ScopeTreeWidget(),
@@ -111,7 +111,6 @@ class RiskCriteriaForm(ScopedFormMixin, forms.ModelForm):
             "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
             "acceptance_threshold": forms.NumberInput(attrs=FORM_WIDGET_ATTRS),
             "is_default": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
 

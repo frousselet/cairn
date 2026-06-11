@@ -526,9 +526,9 @@ class TestComputeInternalValue:
         assert result == "0"
 
     def test_approved_scopes_rate_with_data(self):
-        ScopeFactory(status="active", is_approved=True)
-        ScopeFactory(status="active", is_approved=False)
-        ScopeFactory(status="active", is_approved=False)
+        ScopeFactory(is_approved=True)
+        ScopeFactory()
+        ScopeFactory()
         ind = _make_indicator(
             is_internal=True,
             indicator_type=IndicatorType.ORGANIZATIONAL,

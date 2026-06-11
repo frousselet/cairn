@@ -57,7 +57,7 @@ class ScopedFormMixin:
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if "scopes" in self.fields:
-            qs = Scope.objects.exclude(status="archived")
+            qs = Scope.objects.exclude(workflow_state="archived")
             if user and not user.is_superuser:
                 scope_ids = user.get_allowed_scope_ids()
                 if scope_ids is not None:

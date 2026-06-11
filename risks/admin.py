@@ -38,8 +38,8 @@ class TreatmentActionInline(admin.TabularInline):
 
 @admin.register(RiskCriteria)
 class RiskCriteriaAdmin(SimpleHistoryAdmin):
-    list_display = ("name", "is_default", "status", "acceptance_threshold")
-    list_filter = ("status", "is_default")
+    list_display = ("name", "is_default", "workflow_state", "acceptance_threshold")
+    list_filter = ("workflow_state", "is_default")
     search_fields = ("name", "description")
     readonly_fields = ("id", "reference", "created_at", "updated_at")
     filter_horizontal = ("scopes", "tags")

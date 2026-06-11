@@ -113,7 +113,7 @@ class RiskTreatmentPlan(BaseModel):
         if not criteria:
             criteria = (
                 RiskCriteria.objects.filter(is_default=True).first()
-                or RiskCriteria.objects.filter(status="active").first()
+                or RiskCriteria.objects.filter(workflow_state="validated").first()
             )
         l_levels = {level for level, _ in DEFAULT_LIKELIHOOD_SCALES}
         i_levels = {level for level, _ in DEFAULT_IMPACT_SCALES}

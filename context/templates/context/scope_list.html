@@ -17,7 +17,7 @@
 <div class="mb-3 d-flex gap-2 flex-wrap">
   <a href="{% url 'context:scope-list' %}" class="filter-chip {% if not request.GET.status %}active{% endif %}">{% trans "All" %}</a>
   <a href="?status=draft" class="filter-chip {% if request.GET.status == 'draft' %}active{% endif %}">{% trans "Draft" %}</a>
-  <a href="?status=active" class="filter-chip {% if request.GET.status == 'active' %}active{% endif %}">{% trans "Active" %}</a>
+  <a href="?status=validated" class="filter-chip {% if request.GET.status == 'validated' %}active{% endif %}">{% trans "Validated" %}</a>
   <a href="?status=archived" class="filter-chip {% if request.GET.status == 'archived' %}active{% endif %}">{% trans "Archived" %}</a>
 </div>
 
@@ -30,7 +30,7 @@
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
           {% sortable_th "version" "Version" %}
-          {% sortable_th "status" "Status" %}
+          {% sortable_th "workflow_state" "Status" %}
           {% sortable_th "effective_date" "Effective date" %}
           {% sortable_th "review_date" "Review date" %}
           <th>{% trans "Tags" %}</th>

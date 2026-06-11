@@ -15,12 +15,6 @@ class AssessmentStatus(models.TextChoices):
     ARCHIVED = "archived", _("Archived")
 
 
-class CriteriaStatus(models.TextChoices):
-    DRAFT = "draft", _("Draft")
-    ACTIVE = "active", _("Active")
-    ARCHIVED = "archived", _("Archived")
-
-
 class ScaleType(models.TextChoices):
     LIKELIHOOD = "likelihood", _("Likelihood")
     IMPACT = "impact", _("Impact")

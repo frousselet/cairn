@@ -41,7 +41,7 @@ class RiskCriteriaSerializer(serializers.ModelSerializer):
         model = RiskCriteria
         fields = [
             "id", "scopes", "name", "description", "risk_matrix",
-            "acceptance_threshold", "is_default", "status",
+            "acceptance_threshold", "is_default", "workflow_state",
             "scale_levels", "risk_levels", "tags",
             "version", "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
@@ -56,7 +56,7 @@ class RiskCriteriaListSerializer(serializers.ModelSerializer):
     class Meta:
         model = RiskCriteria
         fields = [
-            "id", "scopes", "name", "is_default", "status", "created_at",
+            "id", "scopes", "name", "is_default", "workflow_state", "created_at",
         ]
         read_only_fields = ["id", "created_at"]
 

@@ -1,4 +1,4 @@
-{% load i18n ui %}
+{% load i18n ui workflow_tags %}
 {% load versioning_tags %}
 {% approval_enabled_for "context.scope" as show_approval %}
 {% for scope in scopes %}
@@ -12,9 +12,7 @@
   </td>
   <td>{{ scope.version }}</td>
   <td>
-    <span class="badge text-bg-{% if scope.status == 'active' %}success{% elif scope.status == 'draft' %}secondary{% else %}dark{% endif %}">
-      {{ scope.get_status_display }}
-    </span>
+    {% workflow_badge scope %}
   </td>
   <td>{{ scope.effective_date|default:"—" }}</td>
   <td>{{ scope.review_date|default:"—" }}</td>

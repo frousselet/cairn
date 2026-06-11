@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n ui %}
+{% load i18n ui workflow_tags %}
 {% load table_tags %}
 
 {% block title %}{% trans "Sites" %} — Cairn{% endblock %}
@@ -42,9 +42,7 @@
           </td>
           <td>{{ site.get_type_display }}</td>
           <td>
-            <span class="badge text-bg-{% if site.status == 'active' %}success{% elif site.status == 'draft' %}secondary{% else %}dark{% endif %}">
-              {{ site.get_status_display }}
-            </span>
+            {% workflow_badge site %}
           </td>
           <td>{% for tag in site.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
           {% if show_approval %}

@@ -79,13 +79,17 @@ class ScopeViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, Cre
     filterset_class = ScopeFilter
     permission_classes = [ContextPermission]
     search_fields = ["name", "description"]
-    ordering_fields = ["name", "version", "status", "created_at", "effective_date"]
+    ordering_fields = ["name", "version", "workflow_state", "created_at", "effective_date"]
 
     @action(detail=True, methods=["post"])
     def archive(self, request, pk=None):
         scope = self.get_object()
-        scope.status = "archived"
-        scope.save()
+        from core.workflow import WorkflowError
+
+        try:
+            scope.transition_to("archived", request.user)
+        except WorkflowError as exc:
+            return Response({"detail": str(exc)}, status=400)
         return Response(ScopeSerializer(scope).data)
 
 
@@ -95,7 +99,7 @@ class SiteViewSet(ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.
     filterset_class = SiteFilter
     permission_classes = [ContextPermission]
     search_fields = ["name", "description", "address"]
-    ordering_fields = ["name", "type", "status", "created_at"]
+    ordering_fields = ["name", "type", "workflow_state", "created_at"]
 
 
 class IssueViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
@@ -189,7 +193,7 @@ class SwotAnalysisViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMix
     permission_classes = [ContextPermission]
     permission_feature = "swot"
     search_fields = ["name", "description"]
-    ordering_fields = ["name", "analysis_date", "status", "created_at"]
+    ordering_fields = ["name", "analysis_date", "workflow_state", "created_at"]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -201,7 +205,12 @@ class SwotAnalysisViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMix
         analysis = self.get_object()
         analysis.validated_by = request.user
         analysis.validated_at = timezone.now()
-        analysis.status = "validated"
+        # Legacy alias of the lifecycle validation: on the default workflow
+        # the approval axis drives the state (the save sync promotes
+        # draft -> validated when is_approved is set).
+        analysis.is_approved = True
+        analysis.approved_by = request.user
+        analysis.approved_at = timezone.now()
         analysis.save()
         return Response(SwotAnalysisSerializer(analysis).data)
 

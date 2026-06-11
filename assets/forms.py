@@ -52,7 +52,7 @@ class ScopedFormMixin:
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if "scopes" in self.fields:
-            qs = Scope.objects.exclude(status="archived")
+            qs = Scope.objects.exclude(workflow_state="archived")
             if user and not user.is_superuser:
                 scope_ids = user.get_allowed_scope_ids()
                 if scope_ids is not None:
@@ -521,14 +521,14 @@ def _site_tree_choices(queryset):
 class SiteBaseForm(SteppedFormMixin, forms.ModelForm):
     steps = [
         Step(_("Identity"), "geo-alt",
-             ["name", ["type", "status"], "parent_site", "description"]),
+             ["name", "type", "parent_site", "description"]),
         Step(_("Location & tags"), "pin-map", ["address", "tags"]),
     ]
 
     class Meta:
         model = Site
         fields = [
-            "name", "type", "address", "description", "parent_site", "status", "tags",
+            "name", "type", "address", "description", "parent_site", "tags",
         ]
         widgets = {
             "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
@@ -536,13 +536,11 @@ class SiteBaseForm(SteppedFormMixin, forms.ModelForm):
             "address": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
             "parent_site": forms.Select(attrs=SELECT_ATTRS),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
         help_texts = {
             "name": _("Name of the site."),
             "type": _("Kind of site."),
-            "status": _("Lifecycle state of the site."),
             "parent_site": _("Parent site, if this is a sub-site."),
             "description": _("What this site is."),
             "address": _("Postal address of the site."),
@@ -551,7 +549,7 @@ class SiteBaseForm(SteppedFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        qs = Site.objects.exclude(status="archived")
+        qs = Site.objects.exclude(workflow_state="archived")
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         field = self.fields["parent_site"]

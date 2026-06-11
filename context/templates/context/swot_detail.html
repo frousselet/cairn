@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n scope_tags ui %}
+{% load i18n scope_tags ui workflow_tags %}
 {% load help_tags %}
 
 {% block title %}{{ analysis.name }} — Cairn{% endblock %}
@@ -252,9 +252,7 @@
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Analysis date" %}</dt><dd class="col-sm-9">{{ analysis.analysis_date }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>
           <dd class="col-sm-9">
-            <span class="badge text-bg-{% if analysis.status == 'validated' %}success{% elif analysis.status == 'draft' %}secondary{% else %}dark{% endif %}">
-              {{ analysis.get_status_display }}
-            </span>
+            {% workflow_badge analysis %}
           </dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ analysis.description|default:"—"|linebreaksbr }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>

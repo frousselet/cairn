@@ -63,7 +63,7 @@ class RiskCriteriaFactory(factory.django.DjangoModelFactory):
         model = RiskCriteria
 
     name = factory.Sequence(lambda n: f"Criteria {n}")
-    status = "active"
+    workflow_state = "validated"
 
     @factory.post_generation
     def scope(self, create, extracted, **kwargs):

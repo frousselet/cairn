@@ -1465,14 +1465,14 @@ def _register_context_tools(server):
     IndicatorMeasurement = _get_model("context", "IndicatorMeasurement")
     Tag = _get_model("context", "Tag")
 
-    scope_fields = ["id", "reference", "name", "description", "status",
+    scope_fields = ["id", "reference", "name", "description", "workflow_state",
                     "parent_scope_id", "icon",
                     "boundaries", "justification_exclusions",
                     "geographic_scope", "organizational_scope", "technical_scope",
                     "included_sites", "excluded_sites", "managers",
                     "effective_date", "review_date",
                     "version", "is_approved", "created_at"]
-    scope_writable = ["name", "description", "status", "icon",
+    scope_writable = ["name", "description", "icon",
                       "boundaries", "justification_exclusions",
                       "geographic_scope", "organizational_scope", "technical_scope",
                       "effective_date", "review_date", "parent_scope_id",
@@ -1482,7 +1482,7 @@ def _register_context_tools(server):
                    list_fields=scope_fields,
                    writable_fields=scope_writable,
                    search_fields=["name", "description"],
-                   filters=["status", "parent_scope_id"],
+                   filters=["workflow_state", "parent_scope_id"],
                    required_fields=["name"],
                    field_overrides={
                        "description": _html_field("Description"),
@@ -1491,11 +1491,6 @@ def _register_context_tools(server):
                        "geographic_scope": _html_field("Geographic scope"),
                        "organizational_scope": _html_field("Organizational scope"),
                        "technical_scope": _html_field("Technical scope"),
-                       "status": {
-                           "type": "string",
-                           "description": "Scope status.",
-                           "enum": ["draft", "active", "archived"],
-                       },
                        "icon": {"type": "string", "description": "Bootstrap Icons class (e.g. bi-building, bi-globe)."},
                        "effective_date": {"type": "string", "description": "Effective date (ISO 8601, e.g. 2025-01-15)"},
                        "review_date": {"type": "string", "description": "Review date (ISO 8601, e.g. 2025-06-15)"},
@@ -1746,27 +1741,22 @@ def _register_context_tools(server):
                    })
 
     swot_fields = ["id", "reference", "scopes", "name", "description", "analysis_date",
-                   "status", "validated_by_id", "validated_at", "review_date",
+                   "workflow_state", "validated_by_id", "validated_at", "review_date",
                    "is_approved", "created_at"]
-    swot_writable = ["name", "description", "analysis_date", "status",
+    swot_writable = ["name", "description", "analysis_date",
                      "review_date", "scope_ids"]
 
     _register_crud(server, "swot_analysis", SwotAnalysis, "context.swot",
                    list_fields=swot_fields,
                    writable_fields=swot_writable,
                    search_fields=["name", "description"],
-                   filters=["status"],
+                   filters=["workflow_state"],
                    required_fields=["name", "analysis_date"],
                    m2m_fields={"scope_ids": "scopes"},
                    field_overrides={
                        "description": _html_field("Description"),
                        "analysis_date": {"type": "string", "description": "Analysis date in ISO 8601 format (e.g. 2025-06-15)"},
                        "review_date": {"type": "string", "description": "Next review date (ISO 8601)."},
-                       "status": {
-                           "type": "string",
-                           "description": "SWOT analysis status.",
-                           "enum": ["draft", "validated", "archived"],
-                       },
                        "scope_ids": {
                            "type": "array",
                            "items": {"type": "string"},
@@ -1944,16 +1934,16 @@ def _register_context_tools(server):
                        },
                    })
 
-    site_fields = ["id", "reference", "scopes", "name", "description", "type", "status",
+    site_fields = ["id", "reference", "scopes", "name", "description", "type", "workflow_state",
                    "address", "parent_site_id", "is_approved", "created_at"]
-    site_writable = ["name", "description", "type", "status", "address",
+    site_writable = ["name", "description", "type", "address",
                      "parent_site_id", "scope_ids"]
 
     _register_crud(server, "site", Site, "context.site",
                    list_fields=site_fields,
                    writable_fields=site_writable,
                    search_fields=["name", "description"],
-                   filters=["type", "status", "parent_site_id"],
+                   filters=["type", "workflow_state", "parent_site_id"],
                    required_fields=["name"],
                    m2m_fields={"scope_ids": "scopes"},
                    field_overrides={
@@ -1965,11 +1955,6 @@ def _register_context_tools(server):
                                "headquarters", "office", "factory", "warehouse",
                                "datacenter", "remote", "other",
                            ],
-                       },
-                       "status": {
-                           "type": "string",
-                           "description": "Site status.",
-                           "enum": ["draft", "active", "archived"],
                        },
                        "parent_site_id": {
                            "type": "string",
@@ -4020,16 +4005,16 @@ def _register_risks_tools(server):
                    })
 
     rc_fields = ["id", "scopes", "name", "description", "risk_matrix",
-                 "acceptance_threshold", "is_default", "status", "created_at"]
+                 "acceptance_threshold", "is_default", "workflow_state", "created_at"]
     rc_writable = ["name", "description", "risk_matrix",
-                   "acceptance_threshold", "is_default", "status",
+                   "acceptance_threshold", "is_default", 
                    "scope_ids"]
 
     _register_crud(server, "risk_criteria", RiskCriteria, "risks.criteria",
                    list_fields=rc_fields,
                    writable_fields=rc_writable,
                    search_fields=["name", "description"],
-                   filters=["status"],
+                   filters=["workflow_state"],
                    has_approve=False,
                    m2m_fields={"scope_ids": "scopes"},
                    field_overrides={
@@ -4055,11 +4040,6 @@ def _register_risks_tools(server):
                        "is_default": {
                            "type": "boolean",
                            "description": "Whether this is the default risk criteria.",
-                       },
-                       "status": {
-                           "type": "string",
-                           "description": "Status of the criteria.",
-                           "enum": ["draft", "active", "archived"],
                        },
                    })
 

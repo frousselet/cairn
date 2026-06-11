@@ -3,12 +3,6 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
 
-class Status(models.TextChoices):
-    DRAFT = "draft", _("Draft")
-    ACTIVE = "active", _("Active")
-    ARCHIVED = "archived", _("Archived")
-
-
 class IssueType(models.TextChoices):
     INTERNAL = "internal", _("Internal")
     EXTERNAL = "external", _("External")
@@ -145,12 +139,6 @@ class ObjectiveStatus(models.TextChoices):
     ACHIEVED = "achieved", _("Achieved")
     NOT_ACHIEVED = "not_achieved", _("Not achieved")
     CANCELLED = "cancelled", _("Cancelled")
-
-
-class SwotStatus(models.TextChoices):
-    DRAFT = "draft", _("Draft")
-    VALIDATED = "validated", _("Validated")
-    ARCHIVED = "archived", _("Archived")
 
 
 class SwotQuadrant(models.TextChoices):

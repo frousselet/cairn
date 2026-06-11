@@ -318,7 +318,7 @@ class GroupDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
         ctx["permission_matrix"] = matrix
         ctx["all_actions"] = all_actions
         ctx["all_users"] = User.objects.filter(is_active=True).exclude(pk__in=group.users.all())
-        ctx["all_scopes"] = Scope.objects.exclude(status="archived")
+        ctx["all_scopes"] = Scope.objects.exclude(workflow_state="archived")
         ctx["group_scope_ids"] = set(group.allowed_scopes.values_list("id", flat=True))
         return ctx
 

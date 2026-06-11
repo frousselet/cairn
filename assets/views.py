@@ -856,7 +856,7 @@ class SiteDetailView(LoginRequiredMixin, PermissionRequiredMixin, ApprovalContex
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["ancestors"] = self.object.get_ancestors()
-        ctx["children"] = self.object.children.exclude(status="archived")
+        ctx["children"] = self.object.children.exclude(workflow_state="archived")
         return ctx
 
 
