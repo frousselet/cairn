@@ -285,6 +285,7 @@ Additional tools:
 | Audit Trail | django-simple-history |
 | Filtering | django-filter |
 | Frontend | Bootstrap 5.3 + HTMX |
+| Forms | Shared declarative modal engine (`core.modal_forms`): create/edit forms render in one centered modal, built from per-form `steps` (stepper or completion meter, column rows, mandatory per-field helpers) |
 | Export | openpyxl, weasyprint, python-pptx, python-docx |
 | Calendar | icalendar |
 | Linting | Ruff |
