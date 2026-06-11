@@ -9560,3 +9560,24 @@ msgstr "Mesures déjà en place."
 
 msgid "{n} fields need attention"
 msgstr "{n} champs nécessitent votre attention"
+
+msgid "Component - modal form engine"
+msgstr "Composant - moteur de formulaires modal"
+
+msgid "Create / edit forms render in the shared centered modal, built declaratively from a form's steps (core.modal_forms.SteppedFormMixin). See the Forms section of the brand guidelines for the doctrine."
+msgstr "Les formulaires de création / édition s'affichent dans le modal centré partagé, construits de façon déclarative à partir des étapes du formulaire (core.modal_forms.SteppedFormMixin). Voir la section Forms des guidelines de marque pour la doctrine."
+
+msgid "Multi-step stepper (done / current / upcoming)"
+msgstr "Stepper multi-étapes (fait / courant / à venir)"
+
+msgid "Single-step completion meter"
+msgstr "Jauge de complétion mono-étape"
+
+msgid "Field anatomy and a two-column row"
+msgstr "Anatomie d'un champ et ligne à deux colonnes"
+
+msgid "Short, recognizable name."
+msgstr "Nom court et reconnaissable."
+
+msgid "Lifecycle state."
+msgstr "État du cycle de vie."

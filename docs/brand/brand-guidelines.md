@@ -424,6 +424,30 @@ A form is assembled from shared parts, never hand-built :
 If a form needs a layout the shared parts do not offer, extend the shared
 part - do not fork it into the template.
 
+#### Engine (implementation)
+
+The single source of truth is the form. A form mixes in
+`core.modal_forms.SteppedFormMixin` and declares `steps`; everything else
+is derived.
+
+| Piece | Where | Role |
+| --- | --- | --- |
+| `SteppedFormMixin` / `Step` | `core/modal_forms.py` | Declarative steps, row layout, coverage + row-cap validation, `is_stepped` / `is_multistep` / `modal_size` / `required_field_count` / `iter_steps()`. |
+| Shell | `templates/includes/modal_form.html` | Modal chrome; emits `data-mform`, `data-modal-size`, `novalidate` (multi-step) and the progress / footer. |
+| Field / row / progress | `includes/form_field.html`, `form_row.html`, `form_steps.html`, `form_progress.html` | Auto-render of the steps. |
+| Generic JS + CSS | `templates/base.html` | Step navigation, completion meter, dialog sizing, focus, widget re-init, `#hx-live` error count. No per-entity JS. |
+| Container | `#itemDrawer` (in `base.html`) | One centered Bootstrap modal, swap region `#drawer-form-content`, driven by the shared `HtmxFormMixin` (`core/mixins.py`). |
+| Custom field widgets | `context/widgets.py` | `IconPickerWidget`, `ImageUploadWidget` - reusable controls that auto-render in a step. |
+
+Rules the engine enforces at instantiation: every visible field appears
+in exactly one step; a step holds at most `max_rows_per_step` (default 7)
+layout rows. `modal_size` is `md` single-step, `lg` multi-step.
+
+A new entity form is therefore: a `XBaseForm(SteppedFormMixin, …)` with
+`steps` + per-field `help_texts`, thin `XCreateForm` / `XUpdateForm`
+subclasses, two view `form_class` lines + modal titles, and a template
+reduced to the header icon. Nothing else.
+
 ### One form per action
 
 Create and edit are **separate forms**, not one template toggled by a

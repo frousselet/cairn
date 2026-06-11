@@ -257,6 +257,47 @@
   </div>
 </section>
 
+{# ── Modal form engine ──────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - modal form engine" %}</div>
+  <p class="small text-muted">{% trans "Create / edit forms render in the shared centered modal, built declaratively from a form's steps (core.modal_forms.SteppedFormMixin). See the Forms section of the brand guidelines for the doctrine." %}</p>
+  <div class="sg-card-shell">
+    <h6 class="text-muted mb-2">{% trans "Multi-step stepper (done / current / upcoming)" %}</h6>
+    <nav class="mform-stepper" aria-label="{% trans 'Form steps' %}">
+      <ol>
+        <li class="mform-pill is-done"><span class="mform-pill-num">1</span><span class="mform-pill-label">{% trans "Identity" %}</span></li>
+        <li class="mform-pill is-current" aria-current="step"><span class="mform-pill-num">2</span><span class="mform-pill-label">{% trans "Evaluation" %}</span></li>
+        <li class="mform-pill"><span class="mform-pill-num">3</span><span class="mform-pill-label">{% trans "Relations & status" %}</span></li>
+      </ol>
+    </nav>
+
+    <h6 class="text-muted mt-3 mb-2">{% trans "Single-step completion meter" %}</h6>
+    <div class="mform-meter">
+      <div class="mform-meter-track"><span class="mform-meter-fill" style="width:60%"></span></div>
+      <span class="mform-meter-text">3 / 5</span>
+    </div>
+
+    <div class="sg-divider"></div>
+    <h6 class="text-muted mb-2">{% trans "Field anatomy and a two-column row" %}</h6>
+    <div class="row g-2">
+      <div class="col-sm">
+        <div class="mb-3">
+          <label class="form-label">{% trans "Name" %} <span class="form-required" aria-hidden="true">*</span></label>
+          <input type="text" class="form-control">
+          <div class="form-text">{% trans "Short, recognizable name." %}</div>
+        </div>
+      </div>
+      <div class="col-sm">
+        <div class="mb-3">
+          <label class="form-label">{% trans "Status" %} <span class="form-required" aria-hidden="true">*</span></label>
+          <select class="form-select"><option>{% trans "Draft" %}</option></select>
+          <div class="form-text">{% trans "Lifecycle state." %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 {# ── Accessibility checklist ────────────────────────────── #}
 <section class="sg-section">
   <div class="sg-section__title">{% trans "Accessibility - WCAG 2.2 AA" %}</div>
