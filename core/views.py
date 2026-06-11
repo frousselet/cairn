@@ -263,6 +263,11 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
             fw.computed_compliance = fw.seg_compliant
 
         ctx["active_frameworks"] = active_frameworks
+        # Caption of the overall-compliance card: count the requirements that
+        # actually feed the average (applicable, on the frameworks above).
+        ctx["tracked_requirement_count"] = sum(
+            fw.req_count or 0 for fw in active_frameworks
+        )
 
         # Overall compliance: average of computed framework compliance levels
         if active_frameworks:

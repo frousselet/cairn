@@ -139,7 +139,7 @@
           <span class="overall-compliance__value tabular-nums" data-ws-field="overall_compliance" data-ws-suffix="%">{{ overall_compliance|floatformat:0 }}%</span>
           <span class="overall-compliance__delta overall-compliance__delta--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}" aria-hidden="true"></span>
         </div>
-        <p class="overall-compliance__hint">{% blocktrans with count=requirement_count %}Average across all active frameworks - {{ count }} requirement{{ count|pluralize:"s" }} tracked.{% endblocktrans %}</p>
+        <p class="overall-compliance__hint">{% blocktrans count count=tracked_requirement_count %}Average across all active frameworks - {{ count }} requirement tracked.{% plural %}Average across all active frameworks - {{ count }} requirements tracked.{% endblocktrans %}</p>
       </div>
       <div class="col-lg-5">
         <div class="overall-compliance__bar">
