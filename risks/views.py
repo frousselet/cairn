@@ -35,16 +35,19 @@ from .constants import (
 from .views_ebios import build_ebios_stepper_context
 from .forms import (
     ImpactFormSet,
-    ISO27005RiskForm,
+    ISO27005RiskCreateForm,
+    ISO27005RiskUpdateForm,
     LikelihoodFormSet,
     RiskAcceptanceCreateForm,
     RiskAcceptanceUpdateForm,
     RiskAssessmentCreateForm,
     RiskAssessmentUpdateForm,
     RiskCriteriaForm,
-    RiskForm,
+    RiskCreateForm,
+    RiskUpdateForm,
     RiskLevelFormSet,
-    RiskTreatmentPlanForm,
+    RiskTreatmentPlanCreateForm,
+    RiskTreatmentPlanUpdateForm,
     ThreatCreateForm,
     ThreatUpdateForm,
     TreatmentActionCreateForm,
@@ -931,10 +934,12 @@ class RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMix
 
 class RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = Risk
-    form_class = RiskForm
+    form_class = RiskCreateForm
     template_name = "risks/risk_form.html"
     modal_template_name = "risks/risk_form_modal.html"
     permission_required = "risks.risk.create"
+    modal_title_create = _l("New risk")
+    modal_title_update = _l("Edit risk")
     success_url = reverse_lazy("risks:risk-list")
 
     def dispatch(self, request, *args, **kwargs):
@@ -958,10 +963,12 @@ class RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
 class RiskUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, ApprovableUpdateMixin, UpdateView):
     scope_parent_lookup = "assessment__scopes"
     model = Risk
-    form_class = RiskForm
+    form_class = RiskUpdateForm
     template_name = "risks/risk_form.html"
     modal_template_name = "risks/risk_form_modal.html"
     permission_required = "risks.risk.update"
+    modal_title_create = _l("New risk")
+    modal_title_update = _l("Edit risk")
     success_url = reverse_lazy("risks:risk-list")
 
 
@@ -1086,20 +1093,24 @@ class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scope
 
 class TreatmentPlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = RiskTreatmentPlan
-    form_class = RiskTreatmentPlanForm
+    form_class = RiskTreatmentPlanCreateForm
     template_name = "risks/treatment_plan_form.html"
     modal_template_name = "risks/treatment_plan_form_modal.html"
     permission_required = "risks.treatment.create"
+    modal_title_create = _l("New treatment plan")
+    modal_title_update = _l("Edit treatment plan")
     success_url = reverse_lazy("risks:treatment-plan-list")
 
 
 class TreatmentPlanUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, ApprovableUpdateMixin, UpdateView):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskTreatmentPlan
-    form_class = RiskTreatmentPlanForm
+    form_class = RiskTreatmentPlanUpdateForm
     template_name = "risks/treatment_plan_form.html"
     modal_template_name = "risks/treatment_plan_form_modal.html"
     permission_required = "risks.treatment.update"
+    modal_title_create = _l("New treatment plan")
+    modal_title_update = _l("Edit treatment plan")
     success_url = reverse_lazy("risks:treatment-plan-list")
 
 
@@ -1506,10 +1517,12 @@ class ISO27005RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
 
 class ISO27005RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = ISO27005Risk
-    form_class = ISO27005RiskForm
+    form_class = ISO27005RiskCreateForm
     template_name = "risks/iso27005_risk_form.html"
     modal_template_name = "risks/iso27005_risk_form_modal.html"
     permission_required = "risks.iso27005.create"
+    modal_title_create = _l("New ISO 27005 risk")
+    modal_title_update = _l("Edit ISO 27005 risk")
 
     def get_initial(self):
         initial = super().get_initial()
@@ -1529,10 +1542,12 @@ class ISO27005RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFo
 class ISO27005RiskUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, ApprovableUpdateMixin, UpdateView):
     scope_parent_lookup = "assessment__scopes"
     model = ISO27005Risk
-    form_class = ISO27005RiskForm
+    form_class = ISO27005RiskUpdateForm
     template_name = "risks/iso27005_risk_form.html"
     modal_template_name = "risks/iso27005_risk_form_modal.html"
     permission_required = "risks.iso27005.update"
+    modal_title_create = _l("New ISO 27005 risk")
+    modal_title_update = _l("Edit ISO 27005 risk")
 
     def get_success_url(self):
         if self.object and self.object.assessment_id:
