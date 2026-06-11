@@ -50,7 +50,7 @@ class TestRiskRegisterXlsx:
             name="Data leak",
             current_likelihood=3,
             current_impact=4,
-            is_approved=True,
+            status="evaluated",
         )
         _, content = generate_risk_register_xlsx(
             Risk.objects.filter(pk=risk.pk), user,
@@ -69,7 +69,7 @@ class TestRiskRegisterXlsx:
         """Draft risks never appear in the risk register (RG-LC-01)."""
         user = UserFactory(is_superuser=True)
         RiskFactory(name="DraftRisk")
-        RiskFactory(name="LiveRisk", is_approved=True)
+        RiskFactory(name="LiveRisk", status="evaluated")
         _, content = generate_risk_register_xlsx(Risk.objects.all(), user)
         wb = _read_workbook(content)
         ws = wb.active
@@ -82,7 +82,7 @@ class TestRiskRegisterXlsx:
 
     def test_includes_linked_requirements(self):
         user = UserFactory(is_superuser=True)
-        risk = RiskFactory(is_approved=True)
+        risk = RiskFactory(status="evaluated")
         framework = FrameworkFactory()
         req1 = RequirementFactory(framework=framework, requirement_number="A.5.1")
         req2 = RequirementFactory(framework=framework, requirement_number="A.5.2")
@@ -134,8 +134,8 @@ class TestRiskRegisterExportView:
         assessment_in.scopes.add(scope_in)
         assessment_out = RiskAssessmentFactory()
         assessment_out.scopes.add(scope_out)
-        risk_in = RiskFactory(assessment=assessment_in, name="Inside", is_approved=True)
-        risk_out = RiskFactory(assessment=assessment_out, name="Outside", is_approved=True)
+        risk_in = RiskFactory(assessment=assessment_in, name="Inside", status="evaluated")
+        risk_out = RiskFactory(assessment=assessment_out, name="Outside", status="evaluated")
 
         from accounts.models import Group, Permission
         group = Group.objects.create(name="Test scope group")

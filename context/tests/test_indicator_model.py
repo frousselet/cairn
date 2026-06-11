@@ -504,9 +504,9 @@ class TestComputeInternalValue:
     def test_risk_treatment_rate_with_data(self):
         from risks.tests.factories import RiskFactory
 
-        RiskFactory(treatment_decision="reduce", is_approved=True)
-        RiskFactory(treatment_decision="reduce", is_approved=True)
-        RiskFactory(treatment_decision="", is_approved=True)
+        RiskFactory(treatment_decision="reduce", status="evaluated")
+        RiskFactory(treatment_decision="reduce", status="evaluated")
+        RiskFactory(treatment_decision="", status="evaluated")
         ind = _make_indicator(
             is_internal=True,
             indicator_type=IndicatorType.ORGANIZATIONAL,

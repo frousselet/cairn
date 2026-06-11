@@ -10,6 +10,7 @@ from risks.constants import AcceptanceStatus
 
 class RiskAcceptance(BaseModel):
     REFERENCE_PREFIX = "RACC"
+    WORKFLOW_NAME = "risk_acceptance"
 
     risk = models.ForeignKey(
         "risks.Risk",
@@ -49,6 +50,10 @@ class RiskAcceptance(BaseModel):
     def __str__(self):
         return f"{self.reference} : {self.risk}"
 
+    @property
+    def workflow_perm_namespace(self):
+        return "risks.acceptance"
+
     def save(self, *args, **kwargs):
         # RV-05: when an acceptance is active, capture the moment and the
         # current risk level. The QA report (CAIRN-RAC-01) flagged that
@@ -62,4 +67,7 @@ class RiskAcceptance(BaseModel):
                 current = getattr(self.risk, "current_risk_level", None)
                 if current is not None:
                     self.risk_level_at_acceptance = current
+        from core.workflow import sync_legacy_status
+
+        sync_legacy_status(self, kwargs, AcceptanceStatus.ACTIVE)
         super().save(*args, **kwargs)

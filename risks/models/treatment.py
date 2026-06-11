@@ -20,6 +20,7 @@ from risks.constants import (
 
 class RiskTreatmentPlan(BaseModel):
     REFERENCE_PREFIX = "RTPL"
+    WORKFLOW_NAME = "risk_treatment_plan"
 
     risk = models.ForeignKey(
         "risks.Risk",
@@ -147,6 +148,10 @@ class RiskTreatmentPlan(BaseModel):
         TreatmentPlanStatus.OVERDUE,
     })
 
+    @property
+    def workflow_perm_namespace(self):
+        return "risks.treatment"
+
     def save(self, *args, **kwargs):
         # RS-04: in-flight plans whose target_date is in the past flip to
         # overdue at save time. The daily mark_overdue_treatment_plans cron
@@ -158,6 +163,9 @@ class RiskTreatmentPlan(BaseModel):
             and self.target_date < timezone.localdate()
         ):
             self.status = TreatmentPlanStatus.OVERDUE
+        from core.workflow import sync_legacy_status
+
+        sync_legacy_status(self, kwargs, TreatmentPlanStatus.PLANNED)
         super().save(*args, **kwargs)
 
 

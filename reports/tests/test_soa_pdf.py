@@ -46,7 +46,7 @@ class TestBuildSoaFrameworksData:
     def test_row_includes_structured_risks_data(self):
         fw = FrameworkFactory(is_approved=True)
         req = RequirementFactory(is_approved=True, framework=fw, requirement_number="A.5.2")
-        risk = RiskFactory(name="Data leak", is_approved=True)
+        risk = RiskFactory(name="Data leak", status="evaluated")
         risk.residual_risk_level = 2
         risk.treatment_decision = "mitigate"
         risk.save()
@@ -71,8 +71,8 @@ class TestBuildSoaFrameworksData:
         fw = FrameworkFactory(is_approved=True)
         r1 = RequirementFactory(is_approved=True, framework=fw, requirement_number="A.5.5")
         r2 = RequirementFactory(is_approved=True, framework=fw, requirement_number="A.5.6")
-        risk_a = RiskFactory(is_approved=True)
-        risk_b = RiskFactory(is_approved=True)
+        risk_a = RiskFactory(status="evaluated")
+        risk_b = RiskFactory(status="evaluated")
         risk_a.linked_requirements.add(r1, r2)
         risk_b.linked_requirements.add(r2)
 
@@ -82,7 +82,7 @@ class TestBuildSoaFrameworksData:
     def test_applicable_with_no_plan_uses_risk_justification(self):
         fw = FrameworkFactory(is_approved=True)
         req = RequirementFactory(is_approved=True, framework=fw, requirement_number="A.5.7")
-        risk = RiskFactory(is_approved=True)
+        risk = RiskFactory(status="evaluated")
         risk.linked_requirements.add(req)
 
         data = build_soa_frameworks_data(Framework.objects.filter(pk=fw.pk))
