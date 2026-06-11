@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Dashboard alerts become "Today's actions"**: the red global-alerts banner at the top of the dashboard is replaced by a calm "Today's actions" card. The same signals (critical risks, non-compliant requirements, overdue action plans, unassigned mandatory roles, ownerless critical activities, end-of-life assets, expired supplier contracts, expiring risk acceptances) are now phrased as actionable to-do items ("Treat 3 critical risk(s)" instead of "3 critical risk(s)"), grouped by priority (Priority / To plan / To watch, each with a discreet semantic dot), and each item links to the page where the user can act. The card header shows the total number of items needing attention. Renders in three columns on desktop and stacks on mobile, in both themes.
+- **Dashboard alerts become "Today's actions"**: the red global-alerts banner at the top of the dashboard is replaced by a calm "Today's actions" card. The same signals (critical risks, non-compliant requirements, overdue action plans, unassigned mandatory roles, ownerless critical activities, end-of-life assets, expired supplier contracts, expiring risk acceptances) are now phrased as actionable to-do items ("Treat 3 critical risk(s)" instead of "3 critical risk(s)"), grouped by priority (Priority / To plan / To watch, each on a soft-tinted panel with a semantic dot), and each item links to the page where the user can act. The card carries a navy top accent, an icon chip and a count badge in the header, and items render as raised rows with a calm hover lift. Renders in three columns on desktop and stacks on mobile, in both themes.
 
 ## [0.26.0] - 2026-06-11
 
