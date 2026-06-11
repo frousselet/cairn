@@ -9428,3 +9428,132 @@ msgstr "État du cycle de vie de l'action."
 
 msgid "Display order within the plan."
 msgstr "Ordre d'affichage dans le plan."
+
+msgid "Residual & planning"
+msgstr "Risque résiduel et planification"
+
+msgid "Relations & tags"
+msgstr "Relations et étiquettes"
+
+msgid "Edit risk"
+msgstr "Modifier le risque"
+
+msgid "Edit treatment plan"
+msgstr "Modifier le plan de traitement"
+
+msgid "New ISO 27005 risk"
+msgstr "Nouveau risque ISO 27005"
+
+msgid "Edit ISO 27005 risk"
+msgstr "Modifier le risque ISO 27005"
+
+msgid "Short, recognizable name of the risk."
+msgstr "Nom court et reconnaissable du risque."
+
+msgid "Assessment this risk belongs to."
+msgstr "Évaluation à laquelle appartient le risque."
+
+msgid "Source of the risk."
+msgstr "Source du risque."
+
+msgid "Person accountable for the risk."
+msgstr "Personne responsable du risque."
+
+msgid "What the risk is."
+msgstr "Ce qu'est le risque."
+
+msgid "Confidentiality is impacted."
+msgstr "La confidentialité est impactée."
+
+msgid "Integrity is impacted."
+msgstr "L'intégrité est impactée."
+
+msgid "Availability is impacted."
+msgstr "La disponibilité est impactée."
+
+msgid "Likelihood before treatment."
+msgstr "Vraisemblance avant traitement."
+
+msgid "Impact before treatment."
+msgstr "Impact avant traitement."
+
+msgid "Likelihood after current controls."
+msgstr "Vraisemblance après les mesures actuelles."
+
+msgid "Impact after current controls."
+msgstr "Impact après les mesures actuelles."
+
+msgid "How the risk will be treated."
+msgstr "Comment le risque sera traité."
+
+msgid "Priority of the risk."
+msgstr "Priorité du risque."
+
+msgid "Rationale for the treatment decision."
+msgstr "Justification de la décision de traitement."
+
+msgid "Essential assets at risk."
+msgstr "Biens essentiels exposés."
+
+msgid "Support assets at risk."
+msgstr "Biens support exposés."
+
+msgid "Requirements related to this risk."
+msgstr "Exigences liées à ce risque."
+
+msgid "Lifecycle state of the risk."
+msgstr "État du cycle de vie du risque."
+
+msgid "Next date this risk should be reviewed."
+msgstr "Prochaine date de revue du risque."
+
+msgid "Name of the treatment plan."
+msgstr "Nom du plan de traitement."
+
+msgid "Risk addressed by this plan."
+msgstr "Risque traité par ce plan."
+
+msgid "Treatment strategy."
+msgstr "Stratégie de traitement."
+
+msgid "What the plan does."
+msgstr "Ce que fait le plan."
+
+msgid "Expected likelihood after treatment."
+msgstr "Vraisemblance attendue après traitement."
+
+msgid "Expected impact after treatment."
+msgstr "Impact attendu après traitement."
+
+msgid "Lifecycle state of the plan."
+msgstr "État du cycle de vie du plan."
+
+msgid "Compliance action plans linked to this treatment."
+msgstr "Plans d'action de conformité liés à ce traitement."
+
+msgid "ISO 27005 assessment this risk belongs to."
+msgstr "Évaluation ISO 27005 à laquelle appartient le risque."
+
+msgid "Threat involved."
+msgstr "Menace impliquée."
+
+msgid "Vulnerability exploited."
+msgstr "Vulnérabilité exploitée."
+
+msgid "Likelihood of the threat (0-4)."
+msgstr "Vraisemblance de la menace (0-4)."
+
+msgid "Exposure of the vulnerability (0-4)."
+msgstr "Exposition de la vulnérabilité (0-4)."
+
+msgid "Confidentiality impact (0-4)."
+msgstr "Impact sur la confidentialité (0-4)."
+
+msgid "Integrity impact (0-4)."
+msgstr "Impact sur l'intégrité (0-4)."
+
+msgid "Availability impact (0-4)."
+msgstr "Impact sur la disponibilité (0-4)."
+
+msgid "Controls already in place."
+msgstr "Mesures déjà en place."

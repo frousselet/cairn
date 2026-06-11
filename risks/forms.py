@@ -168,7 +168,20 @@ class RiskAssessmentUpdateForm(RiskAssessmentBaseForm):
     """Risk assessment edition modal form."""
 
 
-class RiskForm(forms.ModelForm):
+class RiskBaseForm(SteppedFormMixin, forms.ModelForm):
+    steps = [
+        Step(_("Identity"), "exclamation-triangle",
+             ["name", ["assessment", "risk_source"], "risk_owner", "description"]),
+        Step(_("Evaluation"), "speedometer2",
+             [["impact_confidentiality", "impact_integrity", "impact_availability"],
+              ["initial_likelihood", "initial_impact"],
+              ["current_likelihood", "current_impact"],
+              ["treatment_decision", "priority"], "treatment_justification"]),
+        Step(_("Relations & status"), "diagram-3",
+             ["affected_essential_assets", "affected_support_assets",
+              "linked_requirements", ["status", "review_date"], "tags"]),
+    ]
+
     class Meta:
         model = Risk
         fields = [
@@ -203,6 +216,29 @@ class RiskForm(forms.ModelForm):
             "status": forms.Select(attrs=SELECT_ATTRS),
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+        }
+        help_texts = {
+            "name": _("Short, recognizable name of the risk."),
+            "assessment": _("Assessment this risk belongs to."),
+            "risk_source": _("Source of the risk."),
+            "risk_owner": _("Person accountable for the risk."),
+            "description": _("What the risk is."),
+            "impact_confidentiality": _("Confidentiality is impacted."),
+            "impact_integrity": _("Integrity is impacted."),
+            "impact_availability": _("Availability is impacted."),
+            "initial_likelihood": _("Likelihood before treatment."),
+            "initial_impact": _("Impact before treatment."),
+            "current_likelihood": _("Likelihood after current controls."),
+            "current_impact": _("Impact after current controls."),
+            "treatment_decision": _("How the risk will be treated."),
+            "priority": _("Priority of the risk."),
+            "treatment_justification": _("Rationale for the treatment decision."),
+            "affected_essential_assets": _("Essential assets at risk."),
+            "affected_support_assets": _("Support assets at risk."),
+            "linked_requirements": _("Requirements related to this risk."),
+            "status": _("Lifecycle state of the risk."),
+            "review_date": _("Next date this risk should be reviewed."),
+            "tags": _("Free-form labels for filtering and grouping."),
         }
 
     def __init__(self, *args, **kwargs):
@@ -239,7 +275,24 @@ class RiskForm(forms.ModelForm):
         return _resolve_criteria_from_assessment_id(assessment_id)
 
 
-class RiskTreatmentPlanForm(forms.ModelForm):
+class RiskCreateForm(RiskBaseForm):
+    """Risk creation modal form."""
+
+
+class RiskUpdateForm(RiskBaseForm):
+    """Risk edition modal form."""
+
+
+class RiskTreatmentPlanBaseForm(SteppedFormMixin, forms.ModelForm):
+    steps = [
+        Step(_("Identity"), "shield-check",
+             ["name", ["risk", "treatment_type"], "owner", "description"]),
+        Step(_("Residual & planning"), "speedometer2",
+             [["expected_residual_likelihood", "expected_residual_impact"],
+              ["cost_estimate", "status"], ["start_date", "target_date"]]),
+        Step(_("Relations & tags"), "diagram-3", ["related_action_plans", "tags"]),
+    ]
+
     class Meta:
         model = RiskTreatmentPlan
         fields = [
@@ -262,6 +315,21 @@ class RiskTreatmentPlanForm(forms.ModelForm):
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
             "related_action_plans": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 6}),
+        }
+        help_texts = {
+            "name": _("Name of the treatment plan."),
+            "risk": _("Risk addressed by this plan."),
+            "treatment_type": _("Treatment strategy."),
+            "owner": _("Person accountable for the plan."),
+            "description": _("What the plan does."),
+            "expected_residual_likelihood": _("Expected likelihood after treatment."),
+            "expected_residual_impact": _("Expected impact after treatment."),
+            "cost_estimate": _("Estimated cost."),
+            "status": _("Lifecycle state of the plan."),
+            "start_date": _("Planned start date."),
+            "target_date": _("Planned completion date."),
+            "related_action_plans": _("Compliance action plans linked to this treatment."),
+            "tags": _("Free-form labels for filtering and grouping."),
         }
 
     def __init__(self, *args, **kwargs):
@@ -295,6 +363,14 @@ class RiskTreatmentPlanForm(forms.ModelForm):
             label=self.fields["expected_residual_impact"].label,
             widget=forms.Select(attrs=SELECT_ATTRS),
         )
+
+
+class RiskTreatmentPlanCreateForm(RiskTreatmentPlanBaseForm):
+    """Treatment plan creation modal form."""
+
+
+class RiskTreatmentPlanUpdateForm(RiskTreatmentPlanBaseForm):
+    """Treatment plan edition modal form."""
 
 
 class RiskAcceptanceBaseForm(SteppedFormMixin, forms.ModelForm):
@@ -480,7 +556,18 @@ RiskLevelFormSet = forms.inlineformset_factory(
 )
 
 
-class ISO27005RiskForm(forms.ModelForm):
+class ISO27005RiskBaseForm(SteppedFormMixin, forms.ModelForm):
+    steps = [
+        Step(_("Identity"), "exclamation-triangle",
+             ["assessment", ["threat", "vulnerability"], "description"]),
+        Step(_("Evaluation"), "speedometer2",
+             [["threat_likelihood", "vulnerability_exposure"],
+              ["impact_confidentiality", "impact_integrity", "impact_availability"],
+              "existing_controls"]),
+        Step(_("Relations & tags"), "diagram-3",
+             ["affected_essential_assets", "affected_support_assets", "tags"]),
+    ]
+
     class Meta:
         model = ISO27005Risk
         fields = [
@@ -505,6 +592,21 @@ class ISO27005RiskForm(forms.ModelForm):
             "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        help_texts = {
+            "assessment": _("ISO 27005 assessment this risk belongs to."),
+            "threat": _("Threat involved."),
+            "vulnerability": _("Vulnerability exploited."),
+            "description": _("What the risk is."),
+            "threat_likelihood": _("Likelihood of the threat (0-4)."),
+            "vulnerability_exposure": _("Exposure of the vulnerability (0-4)."),
+            "impact_confidentiality": _("Confidentiality impact (0-4)."),
+            "impact_integrity": _("Integrity impact (0-4)."),
+            "impact_availability": _("Availability impact (0-4)."),
+            "existing_controls": _("Controls already in place."),
+            "affected_essential_assets": _("Essential assets at risk."),
+            "affected_support_assets": _("Support assets at risk."),
+            "tags": _("Free-form labels for filtering and grouping."),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -512,6 +614,14 @@ class ISO27005RiskForm(forms.ModelForm):
         self.fields["assessment"].queryset = RiskAssessment.objects.filter(
             methodology="iso27005"
         )
+
+
+class ISO27005RiskCreateForm(ISO27005RiskBaseForm):
+    """ISO 27005 risk creation modal form."""
+
+
+class ISO27005RiskUpdateForm(ISO27005RiskBaseForm):
+    """ISO 27005 risk edition modal form."""
 
 
 class TreatmentActionBaseForm(SteppedFormMixin, forms.ModelForm):
