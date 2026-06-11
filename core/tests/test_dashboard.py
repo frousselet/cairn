@@ -555,7 +555,7 @@ class TestDashboardOverallCompliance:
 
     def test_frameworks_with_no_requirements(self):
         """A framework with no requirements should show 0% compliance."""
-        FrameworkFactory(status="active")
+        FrameworkFactory(status="active", is_approved=True)
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
         active_fws = resp.context["active_frameworks"]
