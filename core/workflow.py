@@ -96,8 +96,13 @@ class Transition:
 # --- Errors -----------------------------------------------------------------
 
 
-class WorkflowError(Exception):
-    """Base error for an invalid workflow definition or an invalid transition."""
+class WorkflowError(ValueError):
+    """Base error for an invalid workflow definition or an invalid transition.
+
+    Subclasses ``ValueError`` so legacy callers that wrapped the bespoke
+    status machines (``except ValueError``) keep catching transition errors
+    once a model is routed through the framework.
+    """
 
 
 class UnknownStateError(WorkflowError):
@@ -192,6 +197,17 @@ class Workflow:
         return frozenset(s.code for s in self.states if getattr(s, attr))
 
     @property
+    def subsumes_approval(self) -> bool:
+        """Whether this workflow replaces the legacy ``is_approved`` axis.
+
+        True for workflows shaped like the default lifecycle (both ``draft``
+        and ``validated`` states): there, the approval flag mirrors the state.
+        Specific operational workflows (e.g. the action plan's) keep
+        ``is_approved`` as an independent approval axis.
+        """
+        return self.has_state("draft") and self.has_state("validated")
+
+    @property
     def reportable_state_codes(self) -> frozenset:
         return self._codes_where("counts_in_reports")
 
@@ -247,10 +263,11 @@ def _resolve_model(model_or_label):
 def workflow_name_for(model_or_label) -> str:
     """Resolve the workflow name assigned to a model.
 
-    Reads the per-model assignment from ``VersioningConfig.workflow_name``. An
-    unset, unknown or unreadable assignment (including contexts with no database)
-    falls back to the default workflow, so callers never branch on assignment
-    logic themselves.
+    Precedence: the per-model DB assignment (``VersioningConfig.workflow_name``,
+    an explicit admin choice), then the model's declared ``WORKFLOW_NAME`` class
+    attribute (the code-level natural workflow), then the default workflow. An
+    unknown or unreadable assignment (including contexts with no database) falls
+    through, so callers never branch on assignment logic themselves.
     """
     model = _resolve_model(model_or_label)
     if model is not None:
@@ -262,6 +279,9 @@ def workflow_name_for(model_or_label) -> str:
             name = None
         if name and name in WORKFLOW_REGISTRY:
             return name
+        declared = getattr(model, "WORKFLOW_NAME", None)
+        if declared and declared in WORKFLOW_REGISTRY:
+            return declared
     return DEFAULT_WORKFLOW_NAME
 
 
@@ -344,7 +364,8 @@ def validate_transition(
     transition = find_transition(workflow, current_code, target_code)
     if transition is None:
         raise IllegalTransitionError(
-            f"No transition '{current_code}' -> '{target_code}' in '{workflow.name}'."
+            f"Cannot transition from '{current_code}' to '{target_code}' "
+            f"in workflow '{workflow.name}'."
         )
     if has_perm is not None and perm_namespace is not None:
         codename = permission_codename(perm_namespace, transition.action)
@@ -352,7 +373,8 @@ def validate_transition(
             raise PermissionDeniedError(f"Permission '{codename}' is required.")
     if transition.requires_comment and not (comment and comment.strip()):
         raise CommentRequiredError(
-            f"Transition '{current_code}' -> '{target_code}' requires a comment."
+            f"A comment is required for the transition "
+            f"'{current_code}' -> '{target_code}'."
         )
     return transition
 

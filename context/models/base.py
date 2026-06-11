@@ -180,7 +180,10 @@ class BaseModel(ReferenceGeneratorMixin):
             comment=comment,
         )
         new_state = workflow.state(target)
-        self.is_approved = new_state.counts_in_reports
+        if workflow.subsumes_approval:
+            # Default-lifecycle-shaped workflows mirror the legacy approval flag;
+            # operational workflows keep is_approved as an independent axis.
+            self.is_approved = new_state.counts_in_reports
         if Effect.STAMP_VALIDATION in transition.effects and user is not None:
             self.approved_by = user
             self.approved_at = timezone.now()
@@ -206,7 +209,7 @@ class BaseModel(ReferenceGeneratorMixin):
             workflow = self.get_workflow()
         except Exception:
             return
-        if not (workflow.has_state("validated") and workflow.has_state("draft")):
+        if not workflow.subsumes_approval:
             return
         before = self.workflow_state
         if self.is_approved and self.workflow_state in ("", "draft", "pending"):
