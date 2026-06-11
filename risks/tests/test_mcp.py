@@ -101,8 +101,8 @@ class TestTreatmentPlanActionPlanLinkMCP:
 
     def test_link_and_list(self):
         plan = self._make_plan()
-        ap1 = ComplianceActionPlanFactory(is_approved=True)
-        ap2 = ComplianceActionPlanFactory(is_approved=True)
+        ap1 = ComplianceActionPlanFactory(status="validated")
+        ap2 = ComplianceActionPlanFactory(status="validated")
         result = _call_tool(
             self.srv, self.user, "link_treatment_plan_action_plans",
             {"treatment_plan_id": str(plan.pk), "action_plan_ids": [str(ap1.pk), str(ap2.pk)]},
@@ -120,8 +120,8 @@ class TestTreatmentPlanActionPlanLinkMCP:
 
     def test_link_is_additive(self):
         plan = self._make_plan()
-        ap1 = ComplianceActionPlanFactory(is_approved=True)
-        ap2 = ComplianceActionPlanFactory(is_approved=True)
+        ap1 = ComplianceActionPlanFactory(status="validated")
+        ap2 = ComplianceActionPlanFactory(status="validated")
         plan.related_action_plans.add(ap1)
         result = _call_tool(
             self.srv, self.user, "link_treatment_plan_action_plans",
@@ -132,8 +132,8 @@ class TestTreatmentPlanActionPlanLinkMCP:
 
     def test_unlink_removes_selected(self):
         plan = self._make_plan()
-        ap1 = ComplianceActionPlanFactory(is_approved=True)
-        ap2 = ComplianceActionPlanFactory(is_approved=True)
+        ap1 = ComplianceActionPlanFactory(status="validated")
+        ap2 = ComplianceActionPlanFactory(status="validated")
         plan.related_action_plans.add(ap1, ap2)
         result = _call_tool(
             self.srv, self.user, "unlink_treatment_plan_action_plans",
@@ -145,9 +145,9 @@ class TestTreatmentPlanActionPlanLinkMCP:
 
     def test_set_replaces_all(self):
         plan = self._make_plan()
-        ap1 = ComplianceActionPlanFactory(is_approved=True)
-        ap2 = ComplianceActionPlanFactory(is_approved=True)
-        ap3 = ComplianceActionPlanFactory(is_approved=True)
+        ap1 = ComplianceActionPlanFactory(status="validated")
+        ap2 = ComplianceActionPlanFactory(status="validated")
+        ap3 = ComplianceActionPlanFactory(status="validated")
         plan.related_action_plans.add(ap1, ap2)
         result = _call_tool(
             self.srv, self.user, "set_treatment_plan_action_plans",

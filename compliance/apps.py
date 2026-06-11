@@ -12,3 +12,6 @@ class ComplianceConfig(AppConfig):
         # so editing a requirement directly (not only when validating an
         # assessment) keeps Section and Framework compliance_level in sync.
         from compliance import signals  # noqa: F401
+
+        # Register the module's specific lifecycle workflows (action plan).
+        from compliance import workflows  # noqa: F401
