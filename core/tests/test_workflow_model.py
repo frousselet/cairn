@@ -159,6 +159,27 @@ def test_reportable_and_linkable_queryset_helpers():
 
 
 @pytest.mark.django_db
+def test_linkable_or_linked_keeps_existing_links():
+    from core.workflow import linkable_or_linked
+
+    draft = ScopeFactory()
+    validated = ScopeFactory(is_approved=True)
+    archived = ScopeFactory(is_approved=True)
+    archived.transition_to("archived")
+
+    # Without a linked queryset: only linkable (validated) elements.
+    offered = linkable_or_linked(Scope.objects.all())
+    assert set(offered) == {validated}
+
+    # An already-linked archived element stays offered so edits keep the link.
+    offered = linkable_or_linked(
+        Scope.objects.all(), Scope.objects.filter(pk=archived.pk)
+    )
+    assert set(offered) == {validated, archived}
+    assert draft not in offered
+
+
+@pytest.mark.django_db
 class TestDeletionGuard:
     def test_draft_object_can_be_deleted(self):
         scope = ScopeFactory()  # draft, deletable
