@@ -2116,6 +2116,69 @@
       border-top: 1px solid var(--border-light);
       margin: .25rem 0;
     }
+
+    /* ── Notifications bell ───────────────────────────── */
+    .user-header-bubble #notifToggleBtn { position: relative; }
+    .notif-badge {
+      position: absolute;
+      top: -.125rem;
+      right: -.125rem;
+      min-width: 1rem;
+      height: 1rem;
+      padding: 0 .25rem;
+      border-radius: .5rem;
+      background: var(--accent);
+      color: #fff;
+      font-size: .625rem;
+      font-weight: 600;
+      line-height: 1rem;
+      text-align: center;
+    }
+    .notif-dropdown { width: 21rem; max-width: calc(100vw - 2rem); }
+    .notif-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+    }
+    .notif-mark-all {
+      border: 0;
+      background: none;
+      padding: 0;
+      color: var(--accent);
+      font-size: .75rem;
+      cursor: pointer;
+    }
+    .notif-mark-all:hover { text-decoration: underline; }
+    .notif-list { max-height: 22rem; overflow-y: auto; }
+    .notif-item {
+      display: block;
+      padding: .5rem .875rem;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background .15s var(--ease-out, ease-out);
+    }
+    .notif-item:last-child { border-bottom: 0; }
+    .notif-item:hover { background: var(--surface-subtle); }
+    .notif-item--unread { background: rgba(30, 58, 138, .05); }
+    [data-bs-theme="dark"] .notif-item--unread { background: rgba(91, 124, 207, .12); }
+    .notif-item .notif-title { font-size: .8125rem; font-weight: 600; }
+    .notif-item .notif-message {
+      font-size: .75rem;
+      color: var(--text-secondary);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .notif-item .notif-time { font-size: .6875rem; color: var(--text-secondary); }
+    .notif-empty {
+      padding: 1.25rem .875rem;
+      font-size: .8125rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
     @media (max-width: 991.98px) {
       .user-header-bubble { top: .75rem; right: .75rem; }
       .user-header-bubble .btn-bubble,
@@ -3572,6 +3635,10 @@
     <button class="btn-bubble" type="button" title="{% trans 'About' %}" data-bs-toggle="modal" data-bs-target="#aboutModal">
       <i class="bi bi-info-circle"></i>
     </button>
+    <button class="btn-bubble" type="button" title="{% trans 'Notifications' %}" id="notifToggleBtn" aria-label="{% trans 'Notifications' %}">
+      <i class="bi bi-bell"></i>
+      <span class="notif-badge d-none" id="notifBadge" aria-hidden="true"></span>
+    </button>
     <button class="user-avatar-btn{% if not user.avatar %} user-avatar-btn--initials{% endif %}" type="button" id="userAvatarToggle" aria-label="{% trans 'User menu' %}">
       {% if user.avatar %}
       <img src="{{ user.avatar_64|default:user.avatar }}" alt="">
@@ -3594,6 +3661,15 @@
           <i class="bi bi-box-arrow-right"></i> {% trans "Sign out" %}
         </button>
       </form>
+    </div>
+    <div class="user-header-dropdown notif-dropdown" id="notifDropdown" aria-label="{% trans 'Notifications' %}">
+      <div class="dropdown-header notif-header">
+        <span class="user-name">{% trans "Notifications" %}</span>
+        <button type="button" class="notif-mark-all" id="notifMarkAllBtn">{% trans "Mark all as read" %}</button>
+      </div>
+      <div class="notif-list" id="notifList">
+        <div class="notif-empty">{% trans "No notifications" %}</div>
+      </div>
     </div>
   </div>
 
@@ -4285,6 +4361,125 @@
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') dropdown.classList.remove('show');
     });
+  })();
+  </script>
+  <script>
+  /* ── Notifications bell (badge, dropdown, live updates) ── */
+  (function() {
+    var toggle = document.getElementById('notifToggleBtn');
+    var dropdown = document.getElementById('notifDropdown');
+    var badge = document.getElementById('notifBadge');
+    var list = document.getElementById('notifList');
+    var markAllBtn = document.getElementById('notifMarkAllBtn');
+    if (!toggle || !dropdown || !badge || !list) return;
+
+    {% trans "No notifications" as notif_empty_label %}
+    var emptyLabel = "{{ notif_empty_label|escapejs }}";
+
+    function csrf() {
+      var m = document.cookie.match(/csrftoken=([^;]+)/);
+      return m ? m[1] : '';
+    }
+    function unwrap(json) {
+      var payload = (json && json.data !== undefined) ? json.data : json;
+      return payload || {};
+    }
+    function setBadge(count) {
+      if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : String(count);
+        badge.classList.remove('d-none');
+      } else {
+        badge.classList.add('d-none');
+      }
+    }
+    function refreshCount() {
+      fetch('/api/v1/notifications/unread_count/', {credentials: 'same-origin'})
+        .then(function(r) { return r.json(); })
+        .then(function(json) { setBadge(unwrap(json).unread || 0); })
+        .catch(function() {});
+    }
+    function render(items) {
+      list.innerHTML = '';
+      if (!items.length) {
+        var empty = document.createElement('div');
+        empty.className = 'notif-empty';
+        empty.textContent = emptyLabel;
+        list.appendChild(empty);
+        return;
+      }
+      items.forEach(function(n) {
+        var el = document.createElement('a');
+        el.className = 'notif-item' + (n.is_read ? '' : ' notif-item--unread');
+        el.href = n.target_url || '#';
+        var title = document.createElement('div');
+        title.className = 'notif-title';
+        title.textContent = n.title;
+        var msg = document.createElement('div');
+        msg.className = 'notif-message';
+        msg.textContent = n.message;
+        var time = document.createElement('div');
+        time.className = 'notif-time';
+        time.textContent = new Date(n.created_at).toLocaleString();
+        el.appendChild(title); el.appendChild(msg); el.appendChild(time);
+        el.addEventListener('click', function(e) {
+          if (!n.target_url) e.preventDefault();
+          fetch('/api/v1/notifications/' + n.id + '/mark_read/', {
+            method: 'POST', credentials: 'same-origin',
+            headers: {'X-CSRFToken': csrf()},
+            keepalive: true
+          }).catch(function() {});
+        });
+        list.appendChild(el);
+      });
+    }
+    function refreshList() {
+      fetch('/api/v1/notifications/?limit=10', {credentials: 'same-origin'})
+        .then(function(r) { return r.json(); })
+        .then(function(json) {
+          var payload = unwrap(json);
+          render(payload.results || payload || []);
+        })
+        .catch(function() {});
+    }
+
+    toggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var userDd = document.getElementById('userDropdown');
+      if (userDd) userDd.classList.remove('show');
+      dropdown.classList.toggle('show');
+      if (dropdown.classList.contains('show')) refreshList();
+    });
+    document.addEventListener('click', function(e) {
+      if (!dropdown.contains(e.target) && e.target !== toggle && !toggle.contains(e.target)) {
+        dropdown.classList.remove('show');
+      }
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') dropdown.classList.remove('show');
+    });
+    if (markAllBtn) {
+      markAllBtn.addEventListener('click', function() {
+        fetch('/api/v1/notifications/mark_all_read/', {
+          method: 'POST', credentials: 'same-origin',
+          headers: {'X-CSRFToken': csrf()}
+        }).then(function() { setBadge(0); refreshList(); }).catch(function() {});
+      });
+    }
+
+    refreshCount();
+    try {
+      var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      var ws = new WebSocket(proto + '//' + location.host + '/ws/notifications/');
+      ws.onmessage = function(event) {
+        try {
+          var msg = JSON.parse(event.data);
+          if (msg.type === 'notification.count') {
+            setBadge(msg.unread || 0);
+            if (dropdown.classList.contains('show')) refreshList();
+          }
+        } catch (e) { /* ignore malformed frames */ }
+      };
+    } catch (e) { /* WebSocket unavailable: the badge still loads on page load */ }
   })();
   </script>
   <script>
