@@ -100,6 +100,7 @@ Manage your organisation's security posture, track compliance with regulatory fr
 | Management reviews | Persistent ISO 27001:2022 clause 9.3 workflow with life cycle, decisions, ISMS changes, participants, snapshot-based auditability, and retrochaining to action plans, treatment plans, and objectives |
 | Stakeholder feedback | Formal feedback channel (clause 9.3.2.e) with sentiment, severity, and traceability to issues and expectations |
 | Approval Workflows | Two-step approval (submit / approve) on all domain models with dedicated permissions |
+| Notifications | In-app + email notifications on lifecycle events (element submitted for validation), with a live bell badge (WebSocket), recipient fallback chain (scope managers, approvers, creator) and per-user email opt-out |
 | Audit Trail | Full change history on every model via django-simple-history |
 | Versioning | Automatic version increment on all domain objects |
 | Company Settings | Centralised platform configuration (organisation name, logo, defaults) |
@@ -237,6 +238,9 @@ Additional tools:
 | `get_user` | Get detailed user information |
 | `get_me` | Get the currently authenticated user |
 | `update_me` | Update the current user's profile (first_name, last_name, phone, language, timezone, theme_preference) |
+| `list_notifications` | List the current user's in-app notifications with the unread count |
+| `mark_notification_read` | Mark one of the current user's notifications as read |
+| `mark_all_notifications_read` | Mark all of the current user's notifications as read |
 | `list_groups` | List all groups |
 | `get_group` | Get group details including permissions |
 | `list_permissions` | List all available permissions with module filter |

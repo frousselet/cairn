@@ -1,7 +1,7 @@
 from django.contrib.auth import password_validation
 from rest_framework import serializers
 
-from accounts.models import AccessLog, CompanySettings, Group, Permission, User
+from accounts.models import AccessLog, CompanySettings, Group, Notification, Permission, User
 from context.models import Scope
 
 
@@ -146,3 +146,18 @@ class MeSerializer(serializers.ModelSerializer):
         return sorted(
             Permission.objects.filter(groups__users=obj).values_list("codename", flat=True).distinct()
         )
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    actor_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Notification
+        fields = (
+            "id", "notification_type", "title", "message", "actor_name",
+            "target_url", "is_read", "read_at", "created_at",
+        )
+        read_only_fields = fields
+
+    def get_actor_name(self, obj):
+        return obj.actor.display_name if obj.actor else ""

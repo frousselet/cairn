@@ -266,3 +266,44 @@ class DashboardConsumer(AsyncWebsocketConsumer):
             # Alerts
             "alert_count": alert_count,
         }
+
+
+class NotificationConsumer(AsyncWebsocketConsumer):
+    """Push per-user notification updates in real time.
+
+    Clients connect to ``ws://<host>/ws/notifications/``. The consumer joins a
+    per-user ``notifications_<pk>`` group; the notification service nudges it
+    with ``{"type": "notification.new"}`` after a notification is created, and
+    the consumer replies to the client with the fresh unread count.
+    """
+
+    async def connect(self):
+        user = self.scope.get("user")
+        if user is None or user.is_anonymous:
+            await self.close()
+            return
+        self.group_name = f"notifications_{user.pk}"
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+        await self._send_unread_count()
+
+    async def disconnect(self, close_code):
+        if hasattr(self, "group_name"):
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def notification_new(self, event):
+        """Called when the notification service broadcasts to the user group."""
+        await self._send_unread_count()
+
+    async def _send_unread_count(self):
+        user = self.scope.get("user")
+        if user is None or user.is_anonymous:
+            return
+        count = await self._unread_count(user)
+        await self.send(text_data=json.dumps(
+            {"type": "notification.count", "unread": count}
+        ))
+
+    @database_sync_to_async
+    def _unread_count(self, user):
+        return user.notifications.filter(is_read=False).count()

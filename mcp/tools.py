@@ -5858,6 +5858,96 @@ def _register_accounts_tools(server):
         update_me,
     )
 
+    # ── Notifications (own-data) ──────────────────────────────
+
+    def list_notifications(user, arguments):
+        """List the authenticated user's own in-app notifications.
+
+        Parameters
+        ----------
+        unread_only : bool (optional, default false)
+            Only return notifications that have not been read yet.
+        limit : int (optional, default 20, max 100)
+            Maximum number of notifications to return (most recent first).
+        """
+        qs = user.notifications.all()
+        if arguments.get("unread_only"):
+            qs = qs.filter(is_read=False)
+        limit = min(int(arguments.get("limit", 20) or 20), 100)
+        items = [
+            {
+                "id": str(n.pk),
+                "type": n.notification_type,
+                "title": n.title,
+                "message": n.message,
+                "actor": n.actor.display_name if n.actor else "",
+                "target_url": n.target_url,
+                "is_read": n.is_read,
+                "created_at": n.created_at.isoformat(),
+            }
+            for n in qs[:limit]
+        ]
+        return {
+            "notifications": items,
+            "unread": user.notifications.filter(is_read=False).count(),
+        }
+
+    server.register_tool(
+        "list_notifications",
+        (
+            "List the currently authenticated user's in-app notifications "
+            "(most recent first), with the unread count. "
+            "Set unread_only=true to only return unread notifications."
+        ),
+        _obj_schema(
+            {
+                "unread_only": {"type": "boolean", "description": "Only unread notifications."},
+                "limit": {"type": "integer", "description": "Max results (default 20, max 100)."},
+            }
+        ),
+        list_notifications,
+    )
+
+    def mark_notification_read(user, arguments):
+        """Mark one of the authenticated user's notifications as read."""
+        pk = arguments.get("id")
+        if not pk:
+            raise InvalidParamsError("id is required.")
+        from accounts.models import Notification
+
+        try:
+            notification = user.notifications.get(pk=pk)
+        except (Notification.DoesNotExist, ValueError):
+            return _error("Notification not found.")
+        notification.mark_read()
+        return {"id": str(notification.pk), "is_read": True}
+
+    server.register_tool(
+        "mark_notification_read",
+        "Mark one of the authenticated user's notifications as read.",
+        _obj_schema(
+            {"id": {"type": "string", "description": "UUID of the notification"}},
+            required=["id"],
+        ),
+        mark_notification_read,
+    )
+
+    def mark_all_notifications_read(user, arguments):
+        """Mark all of the authenticated user's notifications as read."""
+        from django.utils import timezone as _tz
+
+        updated = user.notifications.filter(is_read=False).update(
+            is_read=True, read_at=_tz.now()
+        )
+        return {"marked_read": updated}
+
+    server.register_tool(
+        "mark_all_notifications_read",
+        "Mark all of the authenticated user's unread notifications as read.",
+        {"type": "object", "properties": {}},
+        mark_all_notifications_read,
+    )
+
     # List groups
     server.register_tool(
         "list_groups",

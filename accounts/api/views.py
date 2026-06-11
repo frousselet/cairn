@@ -311,3 +311,39 @@ def _get_client_ip(request):
     if xff:
         return xff.split(",")[0].strip()
     return request.META.get("REMOTE_ADDR")
+
+
+class NotificationViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+):
+    """The authenticated user's own notifications (own-data, no module permission)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        from accounts.api.serializers import NotificationSerializer
+
+        return NotificationSerializer
+
+    def get_queryset(self):
+        qs = self.request.user.notifications.all()
+        if self.request.query_params.get("unread") in ("1", "true", "True"):
+            qs = qs.filter(is_read=False)
+        return qs
+
+    @action(detail=False, methods=["get"])
+    def unread_count(self, request):
+        return Response({"unread": request.user.notifications.filter(is_read=False).count()})
+
+    @action(detail=True, methods=["post"])
+    def mark_read(self, request, pk=None):
+        notification = self.get_object()
+        notification.mark_read()
+        return Response({"id": str(notification.pk), "is_read": True})
+
+    @action(detail=False, methods=["post"])
+    def mark_all_read(self, request):
+        updated = request.user.notifications.filter(is_read=False).update(
+            is_read=True, read_at=timezone.now()
+        )
+        return Response({"marked_read": updated})

@@ -2310,6 +2310,12 @@ msgstr "Notification"
 msgid "Element pending validation"
 msgstr "Élément en attente de validation"
 
+msgid "Mark all as read"
+msgstr "Tout marquer comme lu"
+
+msgid "No notifications"
+msgstr "Aucune notification"
+
 msgid "Email notifications"
 msgstr "Notifications par email"
 

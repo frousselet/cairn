@@ -8,6 +8,7 @@ router.register("users", views.UserViewSet, basename="user")
 router.register("groups", views.GroupViewSet, basename="group")
 router.register("permissions", views.PermissionViewSet, basename="permission")
 router.register("access-logs", views.AccessLogViewSet, basename="access-log")
+router.register("notifications", views.NotificationViewSet, basename="notification")
 
 urlpatterns = [
     # Auth endpoints
