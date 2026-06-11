@@ -99,19 +99,10 @@
 
       --sidebar-w: 264px;
       --sidebar-collapsed-w: 4.25rem;
-      --sidebar-inset: .4375rem;
-      /* Recessed sidebar: a pressed-in tray behind the menu. The tray is
-       * shaped purely with shadows (inner shadow + outer bottom light
-       * edge); the menu keeps the page-background colour and breathes
-       * inside the tray thanks to the container padding. */
-      --sidebar-recess-bg: var(--bg-page);
-      --sidebar-recess-shadow:
-        inset 0 2px 5px rgba(0,0,0,.07),
-        inset 0 -1px 2px rgba(0,0,0,.03),
-        inset 1px 0 2px rgba(0,0,0,.03),
-        inset -1px 0 2px rgba(0,0,0,.03),
-        0 1px 0 rgba(255,255,255,.85);
-      --sidebar-recess-pad: .4375rem;
+      --sidebar-inset: 0rem;
+      /* Floating glass elements in the sidebar (search field, user footer) */
+      --sidebar-glass: rgba(255,255,255,.45);
+      --sidebar-glass-hover: rgba(255,255,255,.7);
       --radius-xs: .375rem;
       --radius-sm: .5rem;
       --radius-md: .625rem;
@@ -224,12 +215,8 @@
       --shadow-xl: 0 20px 48px rgba(0,0,0,.4);
       --shadow-glow: 0 0 0 1px rgba(129,140,248,.1), 0 4px 16px rgba(129,140,248,.06);
       --text-sidebar-sub: var(--color-charcoal-400);
-      --sidebar-recess-shadow:
-        inset 0 2px 6px rgba(0,0,0,.55),
-        inset 0 -1px 2px rgba(0,0,0,.35),
-        inset 1px 0 2px rgba(0,0,0,.3),
-        inset -1px 0 2px rgba(0,0,0,.3),
-        0 1px 0 rgba(255,255,255,.04);
+      --sidebar-glass: rgba(28,31,35,.45);
+      --sidebar-glass-hover: rgba(42,45,50,.65);
       /* Module accents (dark mode) - all aliased to the single brand colour. */
       --module-accent-risks:        var(--accent);
       --module-accent-risks-soft:   var(--accent-soft);
@@ -305,21 +292,24 @@
       left: var(--sidebar-inset);
       bottom: var(--sidebar-inset);
       width: var(--sidebar-w);
-      background: var(--sidebar-recess-bg);
-      border: 1px solid var(--border-subtle);
-      border-radius: 1.25rem;
-      box-shadow: var(--sidebar-recess-shadow);
-      padding: var(--sidebar-recess-pad);
-      overflow-y: auto;
-      overflow-x: hidden;
+      background: var(--bg-page);
+      border: 0;
+      border-right: 1px solid var(--border-subtle);
+      border-radius: 0;
+      overflow: hidden;
       z-index: 1040;
       display: flex;
       flex-direction: column;
       transition: width .35s var(--ease-out-expo), transform .3s var(--ease-out-expo);
     }
-    .sidebar::-webkit-scrollbar { width: 3px; }
-    .sidebar::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
-    .sidebar::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+    /* Invisible scrollbar: the menu scrolls but shows no persistent bar */
+    .sidebar,
+    .sidebar-body {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .sidebar::-webkit-scrollbar,
+    .sidebar-body::-webkit-scrollbar { display: none; width: 0; }
 
     .sidebar-brand {
       padding: 1.25rem 1.25rem 1.125rem;
@@ -353,18 +343,67 @@
       height: 100%;
     }
 
+    /* ── Sidebar search field — floating glass ────────── */
+    .sidebar-search {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: .5rem 1rem;
+      margin-bottom: .5rem;
+    }
+    .sidebar-search-field {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      width: 100%;
+      padding: .5rem .875rem;
+      background: var(--sidebar-glass);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      color: var(--text-muted);
+      font-size: .8125rem;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      position: relative;
+      transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+    }
+    .sidebar-search-field:hover,
+    .sidebar-search-field:focus-visible {
+      background: var(--sidebar-glass-hover);
+      border-color: var(--border-light);
+      color: var(--text-secondary);
+    }
+    .sidebar-search-field .sidebar-link-text {
+      flex: 1;
+      text-align: left;
+    }
+    .sidebar-search-field i {
+      font-size: .8125rem;
+      flex-shrink: 0;
+    }
+
     .sidebar-body {
       flex: 1;
-      padding: .5rem 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 0;
       overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .sidebar-body > * {
+      flex-shrink: 0;
     }
 
     .sidebar-section {
-      padding: 1.375rem 1.25rem .5rem;
-      font-size: .625rem;
-      font-weight: 650;
-      text-transform: uppercase;
-      letter-spacing: .1em;
+      padding: 1.5rem 1.25rem .5rem;
+      font-size: .75rem;
+      font-weight: 500;
       color: var(--text-muted);
       white-space: nowrap;
       overflow: hidden;
@@ -409,7 +448,8 @@
     .sidebar-body .collapse {
       position: relative;
     }
-    .sidebar-body .collapse::before {
+    /* Vertical guide line for sub-menus (not the user menu in the footer) */
+    .sidebar-body .collapse:not(#sidebarUserMenu)::before {
       content: '';
       position: absolute;
       left: 1.875rem;
@@ -460,17 +500,102 @@
       color: var(--text-muted);
     }
 
+    /* ── Sidebar user footer — floating glass ─────────── */
     .sidebar-footer {
-      border-top: 1px solid var(--border-light);
-      padding: .875rem 1.25rem;
+      position: sticky;
+      bottom: 0;
+      z-index: 5;
+      margin-top: auto;
+      padding: .5rem 1rem;
     }
-    .sidebar-footer .dropdown-toggle {
-      color: var(--text-secondary);
+    .sidebar-user-card {
+      background: var(--sidebar-glass);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      padding: .25rem;
+      overflow: hidden;
+    }
+    .sidebar-user {
+      display: flex;
+      align-items: center;
+      gap: .625rem;
+      width: 100%;
+      padding: .4375rem .5rem;
+      background: none;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      transition: background-color var(--transition-fast);
+    }
+    .sidebar-user:hover {
+      background: var(--sidebar-glass-hover);
+    }
+    .sidebar-user-avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: .6875rem;
+      font-weight: 600;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .sidebar-user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .sidebar-user-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+    }
+    .sidebar-user-name {
       font-size: .8125rem;
       font-weight: 500;
-      transition: color var(--transition-fast);
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .sidebar-footer .dropdown-toggle:hover { color: var(--accent); }
+    .sidebar-user-email {
+      font-size: .6875rem;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sidebar-user-dots {
+      color: var(--text-muted);
+      font-size: .875rem;
+      flex-shrink: 0;
+    }
+    #sidebarUserMenu {
+      margin-bottom: .25rem;
+    }
+    #sidebarUserMenu .sidebar-link {
+      border-radius: var(--radius-sm);
+      padding: .5rem .625rem;
+    }
+    .sidebar-footer form { margin: 0; }
+    .sidebar-footer button.sidebar-link {
+      width: 100%;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    .sidebar-link--danger,
+    .sidebar-link--danger i { color: var(--danger) !important; }
+    .sidebar-link--danger:hover { background: var(--danger-soft); }
 
     /* ── Sidebar collapse toggle ──────────────────────── */
     .sidebar-collapse-toggle {
@@ -580,9 +705,9 @@
       top: .25rem;
       bottom: .25rem;
     }
-    /* Hide sub-links in collapsed */
-    .sidebar-collapsed .sidebar-body .collapse,
-    .sidebar-collapsed .sidebar-body .collapsing {
+    /* Hide sub-links in collapsed (the user menu in the footer stays usable) */
+    .sidebar-collapsed .sidebar-body .collapse:not(#sidebarUserMenu),
+    .sidebar-collapsed .sidebar-body .collapsing:not(#sidebarUserMenu) {
       display: none !important;
     }
     /* Collapse buttons: icon-only, centered */
@@ -620,6 +745,45 @@
     }
     .sidebar-collapsed .sidebar-collapse-btn:hover::after {
       opacity: .7;
+    }
+    /* Search: icon-only */
+    .sidebar-collapsed .sidebar-search {
+      padding: .5rem;
+    }
+    .sidebar-collapsed .sidebar-search-field {
+      justify-content: center;
+      padding: .5rem;
+      gap: 0;
+    }
+    .sidebar-collapsed .sidebar-search-field .sidebar-link-text {
+      width: 0;
+      overflow: hidden;
+      opacity: 0;
+      flex: 0 0 auto;
+    }
+    .sidebar-collapsed .sidebar-search-kbd {
+      display: none;
+    }
+    .sidebar-collapsed .sidebar-search-field:hover .sidebar-tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+    }
+    /* User footer: avatar only */
+    .sidebar-collapsed .sidebar-footer {
+      padding: .5rem;
+    }
+    .sidebar-collapsed .sidebar-user-card {
+      padding: .125rem;
+    }
+    .sidebar-collapsed .sidebar-user {
+      justify-content: center;
+      padding: .375rem;
+      gap: 0;
+    }
+    .sidebar-collapsed .sidebar-user-info,
+    .sidebar-collapsed .sidebar-user-dots {
+      display: none;
     }
     /* Tooltip on hover for collapsed items */
     .sidebar-collapsed .sidebar-link:hover .sidebar-tooltip {
@@ -1479,7 +1643,8 @@
       color: var(--text-primary);
     }
     .search-input-wrap input::placeholder { color: var(--text-muted); font-weight: 400; }
-    .search-input-wrap .search-kbd {
+    .search-input-wrap .search-kbd,
+    .sidebar-search-field .search-kbd {
       font-size: .6875rem;
       font-weight: 600;
       padding: .15rem .4rem;
@@ -1489,6 +1654,10 @@
       background: var(--surface-muted);
       line-height: 1;
       flex-shrink: 0;
+    }
+    .sidebar-search-field .search-kbd {
+      font-size: .625rem;
+      background: transparent;
     }
     .search-results {
       max-height: min(55vh, 420px);
@@ -2040,42 +2209,6 @@
       border-color: var(--accent);
       color: var(--accent);
     }
-    .user-header-bubble .user-avatar-btn {
-      width: 2.25rem;
-      height: 2.25rem;
-      border-radius: 50%;
-      border: 1px solid var(--border-light);
-      background: var(--surface-raised);
-      color: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: .75rem;
-      font-weight: 600;
-      letter-spacing: .02em;
-      cursor: pointer;
-      box-shadow: var(--shadow-sm);
-      transition: box-shadow .15s var(--ease-out-expo), border-color .15s ease;
-      padding: 0;
-      overflow: hidden;
-      font-variant-numeric: tabular-nums;
-    }
-    /* When the user has no avatar uploaded, fill with a soft navy
-     * gradient so the initials sit on a brand-aligned surface instead
-     * of the warning yellow. */
-    .user-header-bubble .user-avatar-btn--initials {
-      background: linear-gradient(135deg, var(--accent-soft), color-mix(in srgb, var(--accent) 18%, transparent));
-      border-color: color-mix(in srgb, var(--accent) 18%, var(--border-light));
-    }
-    .user-header-bubble .user-avatar-btn:hover {
-      box-shadow: var(--shadow-md);
-      border-color: var(--accent);
-    }
-    .user-header-bubble .user-avatar-btn img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
     .user-header-dropdown {
       position: absolute;
       top: calc(100% + .5rem);
@@ -2200,8 +2333,7 @@
     }
     @media (max-width: 991.98px) {
       .user-header-bubble { top: .75rem; right: .75rem; }
-      .user-header-bubble .btn-bubble,
-      .user-header-bubble .user-avatar-btn { width: 2rem; height: 2rem; font-size: .75rem; }
+      .user-header-bubble .btn-bubble { width: 2rem; height: 2rem; font-size: .75rem; }
     }
 
     /* ── Modals — theme-aware ─────────────────────────── */
@@ -2303,12 +2435,6 @@
         transform: translateX(calc(-100% - var(--sidebar-inset)));
         width: calc(100vw - var(--sidebar-inset) * 2);
         max-width: var(--sidebar-w);
-        /* As a mobile drawer the menu floats over the page: it needs
-         * elevation again, not the recessed desktop treatment. */
-        background: var(--surface-raised);
-        border-color: var(--border-light);
-        box-shadow: var(--shadow-lg);
-        padding: 0;
       }
       .sidebar.show { transform: translateX(0); }
       .sidebar.show .sidebar-brand { padding-left: 3rem; }
@@ -3402,6 +3528,16 @@
     </div>
 
     <div class="sidebar-body">
+      {% if user.is_authenticated %}
+      <div class="sidebar-search">
+        <button type="button" class="sidebar-search-field" id="sidebarSearchBtn" title="{% trans 'Search' %} (Ctrl+K)" aria-label="{% trans 'Search' %}">
+          <span class="sidebar-link-text">{% trans "Search" %}</span>
+          <span class="search-kbd sidebar-search-kbd" id="sidebarSearchKbd" aria-hidden="true">Ctrl&nbsp;K</span>
+          <i class="bi bi-search"></i>
+          <span class="sidebar-tooltip">{% trans "Search" %}</span>
+        </button>
+      </div>
+      {% endif %}
       {# ── General ───────────────────────────────────────── #}
       <a href="{% url 'home' %}" class="sidebar-link">
         <i class="bi bi-speedometer2"></i> <span class="sidebar-link-text">{% trans "Dashboard" %}</span>
@@ -3616,6 +3752,40 @@
       </a>
       {% endif %}
       {% endif %}
+
+      {% if user.is_authenticated %}
+      <div class="sidebar-footer">
+        <div class="sidebar-user-card">
+          <div class="collapse" id="sidebarUserMenu">
+            <a href="{% url 'accounts:profile' %}" class="sidebar-link">
+              <i class="bi bi-person"></i> <span class="sidebar-link-text">{% trans "Profile" %}</span>
+              <span class="sidebar-tooltip">{% trans "Profile" %}</span>
+            </a>
+            <form method="post" action="{% url 'accounts:logout' %}" class="m-0" hx-boost="false">
+              {% csrf_token %}
+              <button type="submit" class="sidebar-link sidebar-link--danger">
+                <i class="bi bi-box-arrow-right"></i> <span class="sidebar-link-text">{% trans "Sign out" %}</span>
+                <span class="sidebar-tooltip">{% trans "Sign out" %}</span>
+              </button>
+            </form>
+          </div>
+          <button class="sidebar-user" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarUserMenu" aria-expanded="false" aria-label="{% trans 'User menu' %}">
+            <span class="sidebar-user-avatar">
+              {% if user.avatar %}
+              <img src="{{ user.avatar_64|default:user.avatar }}" alt="">
+              {% else %}
+              {{ user.display_name|initials }}
+              {% endif %}
+            </span>
+            <span class="sidebar-user-info">
+              <span class="sidebar-user-name">{{ user.display_name }}</span>
+              <span class="sidebar-user-email">{{ user.email }}</span>
+            </span>
+            <i class="bi bi-three-dots sidebar-user-dots" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+      {% endif %}
     </div>
 
   </aside>
@@ -3646,29 +3816,6 @@
       <i class="bi bi-bell"></i>
       <span class="notif-badge d-none" id="notifBadge" aria-hidden="true"></span>
     </button>
-    <button class="user-avatar-btn{% if not user.avatar %} user-avatar-btn--initials{% endif %}" type="button" id="userAvatarToggle" aria-label="{% trans 'User menu' %}">
-      {% if user.avatar %}
-      <img src="{{ user.avatar_64|default:user.avatar }}" alt="">
-      {% else %}
-      {{ user.display_name|initials }}
-      {% endif %}
-    </button>
-    <div class="user-header-dropdown" id="userDropdown">
-      <div class="dropdown-header">
-        <div class="user-name">{{ user.display_name }}</div>
-        <div class="user-email">{{ user.email }}</div>
-      </div>
-      <a href="{% url 'accounts:profile' %}" class="dropdown-item">
-        <i class="bi bi-person"></i> {% trans "Profile" %}
-      </a>
-      <div class="dropdown-divider"></div>
-      <form method="post" action="{% url 'accounts:logout' %}" class="m-0" hx-boost="false">
-        {% csrf_token %}
-        <button type="submit" class="dropdown-item" style="color:var(--danger)">
-          <i class="bi bi-box-arrow-right"></i> {% trans "Sign out" %}
-        </button>
-      </form>
-    </div>
     <div class="user-header-dropdown notif-dropdown" id="notifDropdown" aria-label="{% trans 'Notifications' %}">
       <div class="dropdown-header notif-header">
         <span class="user-name">{% trans "Notifications" %}</span>
@@ -4164,6 +4311,19 @@
       var collapsed = document.documentElement.classList.toggle('sidebar-collapsed');
       try { localStorage.setItem('sidebar-collapsed', collapsed ? '1' : ''); } catch(e) {}
     }
+    /* ── Sidebar user menu: close after clicking an item ── */
+    (function() {
+      var menu = document.getElementById('sidebarUserMenu');
+      if (!menu) return;
+      menu.addEventListener('click', function(e) {
+        if (!e.target.closest('.sidebar-link')) return;
+        if (window.bootstrap && bootstrap.Collapse) {
+          bootstrap.Collapse.getOrCreateInstance(menu, { toggle: false }).hide();
+        } else {
+          menu.classList.remove('show');
+        }
+      });
+    })();
     /* ── Sidebar flyout for collapsed sub-menus ─────── */
     (function() {
       var flyout = document.getElementById('sidebarFlyout');
@@ -4353,26 +4513,6 @@
     })();
   </script>
   <script>
-  /* ── User header dropdown toggle ─────────────────── */
-  (function() {
-    var toggle = document.getElementById('userAvatarToggle');
-    var dropdown = document.getElementById('userDropdown');
-    if (!toggle || !dropdown) return;
-    toggle.addEventListener('click', function(e) {
-      e.stopPropagation();
-      dropdown.classList.toggle('show');
-    });
-    document.addEventListener('click', function(e) {
-      if (!dropdown.contains(e.target) && e.target !== toggle) {
-        dropdown.classList.remove('show');
-      }
-    });
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') dropdown.classList.remove('show');
-    });
-  })();
-  </script>
-  <script>
   /* ── Notifications bell (badge, dropdown, live updates) ── */
   (function() {
     var toggle = document.getElementById('notifToggleBtn');
@@ -4453,8 +4593,6 @@
 
     toggle.addEventListener('click', function(e) {
       e.stopPropagation();
-      var userDd = document.getElementById('userDropdown');
-      if (userDd) userDd.classList.remove('show');
       dropdown.classList.toggle('show');
       if (dropdown.classList.contains('show')) refreshList();
     });
@@ -4862,13 +5000,46 @@
         .catch(function() {});
     }
 
-    function openSearch() {
+    function openSearch(e) {
       overlay.classList.add('show');
       input.value = '';
       results.innerHTML = '';
       activeIndex = -1;
+      flyFrom(e && e.currentTarget instanceof Element ? e.currentTarget : null);
       setTimeout(function() { input.focus(); }, 60);
       fetchDefault();
+    }
+
+    /* FLIP entrance: the dialog morphs from the trigger's position and
+     * shape (sidebar search field or topbar bubble) to its centered
+     * resting place. Falls back to the CSS fade/slide when there is no
+     * trigger (Ctrl+K) or when the user prefers reduced motion. */
+    function flyFrom(trigger) {
+      var dialog = overlay.querySelector('.search-dialog');
+      if (!trigger || !dialog) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var from = trigger.getBoundingClientRect();
+      dialog.style.transition = 'none';
+      dialog.style.transform = 'none';
+      var to = dialog.getBoundingClientRect();
+      if (!from.width || !to.width) { dialog.style.transition = ''; dialog.style.transform = ''; return; }
+      var dx = from.left - to.left;
+      var dy = from.top - to.top;
+      var sx = from.width / to.width;
+      var sy = from.height / to.height;
+      dialog.style.transformOrigin = 'top left';
+      dialog.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')';
+      dialog.style.opacity = '.35';
+      void dialog.offsetWidth;
+      dialog.style.transition = 'transform 320ms var(--ease-out-expo), opacity 220ms ease';
+      dialog.style.transform = '';
+      dialog.style.opacity = '';
+      dialog.addEventListener('transitionend', function reset(ev) {
+        if (ev.target !== dialog) return;
+        dialog.style.transition = '';
+        dialog.style.transformOrigin = '';
+        dialog.removeEventListener('transitionend', reset);
+      });
     }
 
     function closeSearch() {
@@ -4881,6 +5052,19 @@
     }
 
     toggleBtn.addEventListener('click', openSearch);
+
+    var sidebarSearchBtn = document.getElementById('sidebarSearchBtn');
+    if (sidebarSearchBtn) sidebarSearchBtn.addEventListener('click', openSearch);
+
+    /* Platform-aware shortcut hint: Cmd on macOS / iOS, Ctrl elsewhere */
+    var kbdHint = document.getElementById('sidebarSearchKbd');
+    if (kbdHint) {
+      var plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
+      if (/mac|iphone|ipad|ipod/i.test(plat)) {
+        kbdHint.textContent = '⌘K';
+        if (sidebarSearchBtn) sidebarSearchBtn.title = sidebarSearchBtn.title.replace('Ctrl+K', '⌘K');
+      }
+    }
 
     /* Ctrl+K / Cmd+K shortcut */
     document.addEventListener('keydown', function(e) {
