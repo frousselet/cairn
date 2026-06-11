@@ -4561,36 +4561,55 @@ msgid "Versioning configuration deleted."
 msgstr "Configuration du versioning supprimée."
 
 #, python-format
-msgid "%(count)d mandatory role(s) with no assigned user"
-msgstr "%(count)d rôle(s) obligatoire(s) sans utilisateur assigné"
+msgid "Treat %(count)d critical risk(s)"
+msgstr "Traiter %(count)d risque(s) critique(s)"
 
 #, python-format
-msgid "%(count)d support asset(s) past end of life"
-msgstr "%(count)d bien(s) support(s) en fin de vie"
+msgid "Bring %(count)d requirement(s) back into compliance"
+msgstr "Remettre %(count)d exigence(s) en conformité"
 
 #, python-format
-msgid "%(count)d non-compliant requirement(s)"
-msgstr "%(count)d exigence(s) non conforme(s)"
+msgid "Reschedule %(count)d overdue action plan(s)"
+msgstr "Replanifier %(count)d plan(s) d'action en retard"
 
 #, python-format
-msgid "%(count)d overdue action plan(s)"
-msgstr "%(count)d plan(s) d'action en retard"
+msgid "Assign %(count)d mandatory role(s) without user"
+msgstr "Assigner %(count)d rôle(s) obligatoire(s) sans utilisateur"
 
 #, python-format
-msgid "%(count)d critical risk(s)"
-msgstr "%(count)d risque(s) critique(s)"
+msgid "Name an owner for %(count)d critical activity(ies)"
+msgstr "Nommer un propriétaire pour %(count)d activité(s) critique(s)"
 
 #, python-format
-msgid "%(count)d supplier(s) with expired contract"
-msgstr "%(count)d fournisseur(s) avec contrat expiré"
+msgid "Plan the replacement of %(count)d asset(s) past end of life"
+msgstr "Planifier le remplacement de %(count)d bien(s) en fin de vie"
 
 #, python-format
-msgid "%(count)d risk acceptance(s) expiring within 30 days"
-msgstr "%(count)d acceptation(s) de risque expirant dans les 30 jours"
+msgid "Renew %(count)d expired supplier contract(s)"
+msgstr "Renouveler %(count)d contrat(s) fournisseur expiré(s)"
 
 #, python-format
-msgid "%(count)d critical activity(ies) without owner"
-msgstr "%(count)d activité(s) critique(s) sans propriétaire"
+msgid "Review %(count)d risk acceptance(s) expiring within 30 days"
+msgstr "Réexaminer %(count)d acceptation(s) de risque expirant sous 30 jours"
+
+msgctxt "today actions group"
+msgid "Priority"
+msgstr "Prioritaire"
+
+msgid "To plan"
+msgstr "À planifier"
+
+msgid "To watch"
+msgstr "À surveiller"
+
+msgid "Today's actions"
+msgstr "Actions du jour"
+
+#, python-format
+msgid "%(count)s item needs your attention."
+msgid_plural "%(count)s items need your attention."
+msgstr[0] "%(count)s point demande votre attention."
+msgstr[1] "%(count)s points demandent votre attention."
 
 msgid "Review: "
 msgstr "Revue : "

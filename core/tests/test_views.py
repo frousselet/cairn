@@ -93,8 +93,9 @@ class TestGeneralDashboardView:
         assert "framework_count" in ctx
         assert "assessment_count" in ctx
         assert "action_plan_count" in ctx
-        # Alerts
-        assert "alerts" in ctx
+        # Today's actions
+        assert "today_action_groups" in ctx
+        assert "today_action_count" in ctx
         # Risk matrices
         assert "matrix_current" in ctx
         assert "matrix_residual" in ctx

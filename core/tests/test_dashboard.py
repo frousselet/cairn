@@ -358,67 +358,85 @@ class TestDashboardCompliance:
         assert resp.context["non_compliant_count"] == 2
 
 
-# ── Alerts ───────────────────────────────────────────────────
+# ── Today's actions ──────────────────────────────────────────
 
 
-class TestDashboardAlerts:
-    def test_no_alerts_when_no_issues(self):
+def _action_labels(resp):
+    return [
+        str(item["label"]).lower()
+        for group in resp.context["today_action_groups"]
+        for item in group["items"]
+    ]
+
+
+class TestDashboardTodayActions:
+    def test_no_actions_when_no_issues(self):
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
-        assert resp.context["alerts"] == []
+        assert resp.context["today_action_groups"] == []
+        assert resp.context["today_action_count"] == 0
 
-    def test_mandatory_role_alert(self):
+    def test_mandatory_role_action(self):
         Role.objects.create(name="DPO", type="governance", is_mandatory=True)
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
-        alerts = resp.context["alerts"]
-        assert len(alerts) >= 1
-        assert any("mandatory" in str(a).lower() for a in alerts)
+        labels = _action_labels(resp)
+        assert len(labels) >= 1
+        assert any("mandatory" in label for label in labels)
 
-    def test_eol_alert(self):
+    def test_eol_action(self):
         SupportAssetFactory(
             end_of_life_date=date.today() - timedelta(days=5),
             status="active",
         )
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
-        alerts = resp.context["alerts"]
-        assert any("end of life" in str(a).lower() for a in alerts)
+        assert any("end of life" in label for label in _action_labels(resp))
 
-    def test_non_compliant_alert(self):
+    def test_non_compliant_action(self):
         fw = FrameworkFactory()
         RequirementFactory(framework=fw, compliance_status="major_non_conformity")
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
-        alerts = resp.context["alerts"]
-        assert any("non-compliant" in str(a).lower() for a in alerts)
+        assert any("compliance" in label for label in _action_labels(resp))
 
-    def test_overdue_plan_alert(self):
+    def test_overdue_plan_action(self):
         ComplianceActionPlanFactory(
             target_date=date.today() - timedelta(days=5),
             status="in_progress",
         )
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
-        alerts = resp.context["alerts"]
-        assert any("overdue" in str(a).lower() for a in alerts)
+        assert any("overdue" in label for label in _action_labels(resp))
 
-    def test_critical_risk_alert(self):
+    def test_critical_risk_action(self):
         RiskFactory(priority="critical")
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
-        alerts = resp.context["alerts"]
-        assert any("critical" in str(a).lower() for a in alerts)
+        assert any("critical" in label for label in _action_labels(resp))
+        priority_group = resp.context["today_action_groups"][0]
+        assert priority_group["key"] == "priority"
+        assert priority_group["items"][0]["url"]
 
-    def test_expired_contract_alert(self):
+    def test_expired_contract_action(self):
         SupplierFactory(
             contract_end_date=date.today() - timedelta(days=5),
             status="active",
         )
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
-        alerts = resp.context["alerts"]
-        assert any("expired" in str(a).lower() for a in alerts)
+        assert any("expired" in label for label in _action_labels(resp))
+
+    def test_action_count_sums_counts(self):
+        RiskFactory(priority="critical")
+        RiskFactory(priority="critical")
+        SupplierFactory(
+            contract_end_date=date.today() - timedelta(days=5),
+            status="active",
+        )
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        assert resp.context["today_action_count"] == 3
 
 
 # ── _filter_scoped helper ────────────────────────────────────

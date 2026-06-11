@@ -9,7 +9,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, pgettext
 from django.views import View
 from django.views.generic import TemplateView
 
@@ -300,49 +300,81 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         ).count()
         ctx["mapping_count"] = RequirementMapping.objects.count()
 
-        # ── Global alerts ─────────────────────────────
-        alerts = []
-        if ctx["mandatory_roles_no_user"]:
-            alerts.append(
-                _("%(count)d mandatory role(s) with no assigned user")
-                % {"count": ctx["mandatory_roles_no_user"]}
-            )
-        if ctx["eol_count"]:
-            alerts.append(
-                _("%(count)d support asset(s) past end of life")
-                % {"count": ctx["eol_count"]}
-            )
-        if ctx["non_compliant_count"]:
-            alerts.append(
-                _("%(count)d non-compliant requirement(s)")
-                % {"count": ctx["non_compliant_count"]}
-            )
-        if ctx["overdue_plan_count"]:
-            alerts.append(
-                _("%(count)d overdue action plan(s)")
-                % {"count": ctx["overdue_plan_count"]}
-            )
+        # ── Today's actions ───────────────────────────
+        # Presented as a prioritized to-do list rather than alarms: each
+        # entry carries an action verb, a count and a link to the page
+        # where the user can act on it.
+        def _action(count, label, url_name, icon):
+            return {
+                "count": count,
+                "label": label % {"count": count},
+                "url": reverse(url_name),
+                "icon": icon,
+            }
+
+        priority_items = []
         if ctx["critical_risk_count"]:
-            alerts.append(
-                _("%(count)d critical risk(s)")
-                % {"count": ctx["critical_risk_count"]}
-            )
-        if ctx["expired_contract_count"]:
-            alerts.append(
-                _("%(count)d supplier(s) with expired contract")
-                % {"count": ctx["expired_contract_count"]}
-            )
-        if ctx["expiring_acceptance_count"]:
-            alerts.append(
-                _("%(count)d risk acceptance(s) expiring within 30 days")
-                % {"count": ctx["expiring_acceptance_count"]}
-            )
+            priority_items.append(_action(
+                ctx["critical_risk_count"],
+                _("Treat %(count)d critical risk(s)"),
+                "risks:risk-list", "bi-fire",
+            ))
+        if ctx["non_compliant_count"]:
+            priority_items.append(_action(
+                ctx["non_compliant_count"],
+                _("Bring %(count)d requirement(s) back into compliance"),
+                "compliance:requirement-list", "bi-clipboard-x",
+            ))
+        if ctx["overdue_plan_count"]:
+            priority_items.append(_action(
+                ctx["overdue_plan_count"],
+                _("Reschedule %(count)d overdue action plan(s)"),
+                "compliance:action-plan-list", "bi-calendar-x",
+            ))
+
+        plan_items = []
+        if ctx["mandatory_roles_no_user"]:
+            plan_items.append(_action(
+                ctx["mandatory_roles_no_user"],
+                _("Assign %(count)d mandatory role(s) without user"),
+                "context:role-list", "bi-person-plus",
+            ))
         if ctx["critical_activities_no_owner"]:
-            alerts.append(
-                _("%(count)d critical activity(ies) without owner")
-                % {"count": ctx["critical_activities_no_owner"]}
-            )
-        ctx["alerts"] = alerts
+            plan_items.append(_action(
+                ctx["critical_activities_no_owner"],
+                _("Name an owner for %(count)d critical activity(ies)"),
+                "context:activity-list", "bi-person-exclamation",
+            ))
+        if ctx["eol_count"]:
+            plan_items.append(_action(
+                ctx["eol_count"],
+                _("Plan the replacement of %(count)d asset(s) past end of life"),
+                "assets:support-asset-list", "bi-cpu",
+            ))
+        if ctx["expired_contract_count"]:
+            plan_items.append(_action(
+                ctx["expired_contract_count"],
+                _("Renew %(count)d expired supplier contract(s)"),
+                "assets:supplier-list", "bi-file-earmark-text",
+            ))
+
+        watch_items = []
+        if ctx["expiring_acceptance_count"]:
+            watch_items.append(_action(
+                ctx["expiring_acceptance_count"],
+                _("Review %(count)d risk acceptance(s) expiring within 30 days"),
+                "risks:acceptance-list", "bi-hourglass-split",
+            ))
+
+        action_groups = [
+            {"key": "priority", "title": pgettext("today actions group", "Priority"), "tone": "high", "items": priority_items},
+            {"key": "plan", "title": _("To plan"), "tone": "medium", "items": plan_items},
+            {"key": "watch", "title": _("To watch"), "tone": "low", "items": watch_items},
+        ]
+        ctx["today_action_groups"] = [g for g in action_groups if g["items"]]
+        ctx["today_action_count"] = sum(
+            item["count"] for g in action_groups for item in g["items"]
+        )
 
         # ── Changelog popup ──────────────────────────────
         user = self.request.user
