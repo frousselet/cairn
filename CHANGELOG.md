@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-06-11
+
 ### Fixed
 
 - **Overall-compliance caption counted every requirement**: the dashboard's "Overall compliance" card claimed "N requirements tracked" using the full requirement inventory, while the displayed average only covers validated active frameworks, so a draft framework's requirements inflated the caption. The caption now counts the applicable requirements of the frameworks that actually feed the average (new `tracked_requirement_count`), the inventory stat card keeps the full count, and the live WebSocket refresh applies the same reportable filter to the average as the page render. The caption's French translation also gains a real singular / plural form (it previously rendered "3 exigence suivie" because of an illegal filter inside `blocktrans`).
@@ -926,7 +928,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://github.com/frousselet/cairn/compare/v0.25.0...HEAD
+[Unreleased]: https://github.com/frousselet/cairn/compare/v0.26.0...HEAD
+[0.26.0]: https://github.com/frousselet/cairn/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/frousselet/cairn/compare/v0.24.5...v0.25.0
 [0.24.5]: https://github.com/frousselet/cairn/compare/v0.24.4...v0.24.5
 [0.24.4]: https://github.com/frousselet/cairn/compare/v0.24.3...v0.24.4
