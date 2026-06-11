@@ -7,7 +7,6 @@ from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from compliance.constants import (
-    ASSESSMENT_STATUS_TRANSITIONS,
     AssessmentStatus,
     ComplianceStatus,
     FINDING_SEVERITY_ORDER,
@@ -18,6 +17,7 @@ from context.models.base import ScopedModel
 
 class ComplianceAssessment(ScopedModel):
     REFERENCE_PREFIX = "CAST"
+    WORKFLOW_NAME = "compliance_assessment"
 
     frameworks = models.ManyToManyField(
         "compliance.Framework",
@@ -118,20 +118,60 @@ class ComplianceAssessment(ScopedModel):
         avg = assessed_qs.aggregate(avg=Avg("compliance_level"))["avg"]
         return round(avg) if avg else 0
 
-    def transition_to(self, new_status):
+    @property
+    def workflow_perm_namespace(self):
+        return "compliance.assessment"
+
+    def save(self, *args, **kwargs):
+        """Keep the legacy ``status`` field and ``workflow_state`` coherent.
+
+        Same migration-period contract as the action plan: legacy writers set
+        ``status``, the workflow framework sets ``workflow_state``; whichever
+        changed since the last save wins (the framework wins if both changed);
+        on creation ``status`` is the authoritative initial value.
+        """
+        old = (
+            ComplianceAssessment.objects.filter(pk=self.pk)
+            .values("status", "workflow_state")
+            .first()
+            if self.pk
+            else None
+        )
+        if old:
+            status_changed = self.status != old["status"]
+            state_changed = self.workflow_state != old["workflow_state"]
+            if state_changed:
+                self.status = self.workflow_state
+            elif status_changed:
+                self.workflow_state = self.status
+            elif self.status != self.workflow_state:
+                # Stale pre-assignment value (e.g. the phase 2 backfill):
+                # the status machine is authoritative.
+                self.workflow_state = self.status
+            if self.workflow_state != old["workflow_state"] or self.status != old["status"]:
+                update_fields = kwargs.get("update_fields")
+                if update_fields is not None:
+                    kwargs["update_fields"] = set(update_fields) | {"status", "workflow_state"}
+        else:
+            # Creation (the UUID pk is set before the row exists).
+            self.workflow_state = self.status or AssessmentStatus.DRAFT
+        super().save(*args, **kwargs)
+
+    def transition_to(self, target, user=None, comment=None, *, enforce_permission=False, save=True):
         """Validate and perform a status transition.
 
-        Raises ValueError if the transition is not allowed.
+        Routed through the workflow framework (the ``compliance_assessment``
+        workflow is generated from the same constants as before), keeping the
+        legacy contract: raises ValueError if the transition is not allowed.
         When transitioning to COMPLETED, resets EVALUATED results without
         findings back to NOT_ASSESSED.
         """
-        allowed = ASSESSMENT_STATUS_TRANSITIONS.get(self.status, [])
-        if new_status not in allowed:
-            raise ValueError(
-                f"Cannot transition from {self.status} to {new_status}."
-            )
+        transition = super().transition_to(
+            target, user, comment=comment,
+            enforce_permission=enforce_permission, save=save,
+        )
 
-        if new_status == AssessmentStatus.COMPLETED:
+        if save and target == AssessmentStatus.COMPLETED:
             # Reset EVALUATED results without findings to NOT_ASSESSED
             finding_req_ids = set(
                 self.findings.values_list("requirements__id", flat=True)
@@ -146,9 +186,7 @@ class ComplianceAssessment(ScopedModel):
                 compliance_level=0,
             )
             self.recalculate_counts()
-
-        self.status = new_status
-        self.save(update_fields=["status"])
+        return transition
 
     def get_all_requirements(self):
         """Return a queryset of all requirements across all frameworks."""
