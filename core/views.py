@@ -72,6 +72,8 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         return qs.filter(id__in=scope_ids)
 
     def get_context_data(self, **kwargs):
+        from core.workflow import reportable
+
         ctx = super().get_context_data(**kwargs)
         today = timezone.now().date()
 
@@ -179,9 +181,9 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         frameworks = self._filter_scoped(Framework.objects.all())
         ctx["framework_count"] = frameworks.count()
         active_frameworks = list(
-            self._filter_scoped(
+            reportable(self._filter_scoped(
                 Framework.objects.filter(status="active")
-            ).select_related("owner").prefetch_related(
+            )).select_related("owner").prefetch_related(
                 Prefetch("scopes", queryset=Scope.objects.select_related("parent_scope")),
             ).annotate(
                 req_count=Count("requirements", filter=Q(requirements__is_applicable=True)),
@@ -410,11 +412,14 @@ ALL_CATEGORIES = [
 
 def get_calendar_events(user, start=None, end=None, categories=None):
     """Fetch calendar events for *user*. Returns list of event dicts."""
+    from core.workflow import reportable
+
     events = []
     if not categories:
         categories = ALL_CATEGORIES
 
     def add(queryset, date_field, category, color, url_name, label_prefix=""):
+        queryset = reportable(queryset)
         filters = {f"{date_field}__isnull": False}
         if start:
             filters[f"{date_field}__gte"] = start
@@ -433,6 +438,7 @@ def get_calendar_events(user, start=None, end=None, categories=None):
             })
 
     def add_range(queryset, sf, ef, category, color, url_name):
+        queryset = reportable(queryset)
         qs = queryset.filter(
             Q(**{f"{sf}__isnull": False}) | Q(**{f"{ef}__isnull": False})
         )

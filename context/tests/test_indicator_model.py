@@ -482,8 +482,8 @@ class TestComputeInternalValue:
     def test_objective_progress_with_data(self):
         from context.tests.factories import ObjectiveFactory
 
-        ObjectiveFactory(progress_percentage=80)
-        ObjectiveFactory(progress_percentage=60)
+        ObjectiveFactory(progress_percentage=80, is_approved=True)
+        ObjectiveFactory(progress_percentage=60, is_approved=True)
         ind = _make_indicator(
             is_internal=True,
             indicator_type=IndicatorType.ORGANIZATIONAL,
@@ -504,9 +504,9 @@ class TestComputeInternalValue:
     def test_risk_treatment_rate_with_data(self):
         from risks.tests.factories import RiskFactory
 
-        RiskFactory(treatment_decision="reduce")
-        RiskFactory(treatment_decision="reduce")
-        RiskFactory(treatment_decision="")
+        RiskFactory(treatment_decision="reduce", is_approved=True)
+        RiskFactory(treatment_decision="reduce", is_approved=True)
+        RiskFactory(treatment_decision="", is_approved=True)
         ind = _make_indicator(
             is_internal=True,
             indicator_type=IndicatorType.ORGANIZATIONAL,

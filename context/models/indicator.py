@@ -296,7 +296,8 @@ class Indicator(ScopedModel):
 
     def _compute_global_compliance_rate(self):
         from compliance.models import Framework
-        frameworks = Framework.objects.all()
+        from core.workflow import reportable
+        frameworks = reportable(Framework.objects.all())
         if not frameworks.exists():
             return "0"
         total = 0
@@ -323,18 +324,21 @@ class Indicator(ScopedModel):
 
     def _compute_objective_progress(self):
         from context.models import Objective
-        objectives = Objective.objects.exclude(progress_percentage__isnull=True)
+        from core.workflow import reportable
+        objectives = reportable(Objective.objects.exclude(progress_percentage__isnull=True))
         if not objectives.exists():
             return "0"
         values = objectives.values_list("progress_percentage", flat=True)
         return str(round(sum(values) / len(values), 1))
 
     def _compute_risk_treatment_rate(self):
+        from core.workflow import reportable
         from risks.models import Risk
-        total = Risk.objects.count()
+        risks = reportable(Risk.objects.all())
+        total = risks.count()
         if total == 0:
             return "0"
-        treated = Risk.objects.exclude(treatment_decision="").exclude(
+        treated = risks.exclude(treatment_decision="").exclude(
             treatment_decision__isnull=True
         ).count()
         return str(round(treated / total * 100, 1))
