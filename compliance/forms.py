@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
 from context.models import Scope
-from context.widgets import ScopeTreeWidget
+from context.widgets import ImageUploadWidget, ScopeTreeWidget
 from compliance.constants import (
     ASSESSMENT_FROZEN_STATUSES,
     ASSESSMENT_LOCKED_STATUSES,
@@ -72,13 +72,21 @@ class ScopedFormMixin:
             field.widget.build_tree_data(qs, selected_ids)
 
 
-class FrameworkForm(ScopedFormMixin, forms.ModelForm):
-    logo = forms.ImageField(
-        label=_("Logo"),
-        required=False,
-        widget=forms.FileInput(attrs={**FORM_WIDGET_ATTRS, "accept": "image/*"}),
-    )
-    logo_resized = forms.CharField(required=False, widget=forms.HiddenInput())
+class FrameworkBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    logo = forms.CharField(label=_("Logo"), required=False, widget=ImageUploadWidget())
+
+    steps = [
+        Step(_("Identity"), "journal-check",
+             [[("logo", "auto"), "name"], ["short_name", "framework_version"],
+              ["type", "category"], "description"]),
+        Step(_("Publication"), "calendar-event",
+             ["issuing_body", "jurisdiction", "url",
+              ["publication_date", "effective_date"], "expiry_date"]),
+        Step(_("Applicability"), "check2-square",
+             [["is_mandatory", "is_applicable"], "applicability_justification",
+              ["owner", "review_date"]]),
+        Step(_("Scope & status"), "diagram-3", ["scopes", "status", "tags"]),
+    ]
 
     class Meta:
         model = Framework
@@ -112,18 +120,57 @@ class FrameworkForm(ScopedFormMixin, forms.ModelForm):
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        help_texts = {
+            "logo": "",
+            "name": _("Name of the framework."),
+            "short_name": _("Short name or acronym."),
+            "framework_version": _("Version of the framework."),
+            "type": _("Kind of framework."),
+            "category": _("Category of the framework."),
+            "description": _("What the framework covers."),
+            "issuing_body": _("Organization that issues the framework."),
+            "jurisdiction": _("Jurisdiction where it applies."),
+            "url": _("Link to the official framework."),
+            "publication_date": _("Date the framework was published."),
+            "effective_date": _("Date it takes effect."),
+            "expiry_date": _("Date it expires, if any."),
+            "is_mandatory": _("Tick if compliance is mandatory."),
+            "is_applicable": _("Tick if the framework applies to the organization."),
+            "applicability_justification": _("Why the framework is or is not applicable."),
+            "owner": _("Person accountable for the framework."),
+            "review_date": _("Next date this framework should be reviewed."),
+            "status": _("Lifecycle state of the framework."),
+            "scopes": _("Organizational scopes this framework applies to."),
+            "tags": _("Free-form labels for filtering and grouping."),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk and getattr(self.instance, "logo", ""):
+            self.fields["logo"].initial = self.instance.logo
 
     def save(self, commit=True):
         framework = super().save(commit=False)
-        resized = self.cleaned_data.get("logo_resized")
-        if resized:
-            _set_logo_with_variants(framework, resized)
-        elif self.files.get("logo"):
-            _set_logo_with_variants(framework, _file_to_data_uri(self.files["logo"]))
+        data_uri = self.cleaned_data.get("logo")
+        if data_uri:
+            _set_logo_with_variants(framework, data_uri)
+        elif self.instance.pk:
+            framework.logo = ""
+            framework.logo_16 = ""
+            framework.logo_32 = ""
+            framework.logo_64 = ""
         if commit:
             framework.save()
             self.save_m2m()
         return framework
+
+
+class FrameworkCreateForm(FrameworkBaseForm):
+    """Framework creation modal form."""
+
+
+class FrameworkUpdateForm(FrameworkBaseForm):
+    """Framework edition modal form."""
 
 
 class SectionForm(forms.ModelForm):
@@ -201,7 +248,15 @@ class RequirementForm(forms.ModelForm):
         return instance
 
 
-class ComplianceAssessmentForm(ScopedFormMixin, forms.ModelForm):
+class ComplianceAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    steps = [
+        Step(_("Identity"), "clipboard-check",
+             ["name", "frameworks", "assessor", "description"]),
+        Step(_("Planning & status"), "calendar-check",
+             [["assessment_start_date", "assessment_end_date"], "limitations",
+              "status", "scopes", "tags"]),
+    ]
+
     class Meta:
         model = ComplianceAssessment
         fields = [
@@ -221,6 +276,18 @@ class ComplianceAssessmentForm(ScopedFormMixin, forms.ModelForm):
             "assessor": forms.Select(attrs=SELECT_ATTRS),
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+        }
+        help_texts = {
+            "name": _("Name of the assessment."),
+            "frameworks": _("Frameworks covered by this assessment."),
+            "assessor": _("Person leading the assessment."),
+            "description": _("Scope and purpose of the assessment."),
+            "limitations": _("Known limitations or exclusions."),
+            "assessment_start_date": _("Assessment start date."),
+            "assessment_end_date": _("Assessment end date."),
+            "status": _("Lifecycle state of the assessment."),
+            "scopes": _("Organizational scopes this assessment applies to."),
+            "tags": _("Free-form labels for filtering and grouping."),
         }
 
     def __init__(self, *args, **kwargs):
@@ -267,6 +334,14 @@ class ComplianceAssessmentForm(ScopedFormMixin, forms.ModelForm):
                 _("End date must be after start date."),
             )
         return cleaned
+
+
+class ComplianceAssessmentCreateForm(ComplianceAssessmentBaseForm):
+    """Compliance assessment creation modal form."""
+
+
+class ComplianceAssessmentUpdateForm(ComplianceAssessmentBaseForm):
+    """Compliance assessment edition modal form."""
 
 
 class AssessmentResultForm(forms.ModelForm):
@@ -318,7 +393,13 @@ class AssessmentResultForm(forms.ModelForm):
         return cleaned
 
 
-class FindingForm(forms.ModelForm):
+class FindingBaseForm(SteppedFormMixin, forms.ModelForm):
+    steps = [
+        Step(_("Finding"), "exclamation-diamond",
+             ["finding_type", "requirements", "description"]),
+        Step(_("Recommendation"), "lightbulb", ["recommendation", "evidence"]),
+    ]
+
     class Meta:
         model = Finding
         fields = [
@@ -332,6 +413,13 @@ class FindingForm(forms.ModelForm):
             "evidence": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "requirements": forms.SelectMultiple(attrs={**SELECT_ATTRS, "data-ts-requirements": "true"}),
         }
+        help_texts = {
+            "finding_type": _("Nature of the finding."),
+            "requirements": _("Requirements this finding relates to."),
+            "description": _("What was observed."),
+            "recommendation": _("Suggested corrective action."),
+            "evidence": _("Evidence supporting the finding."),
+        }
 
     def __init__(self, *args, assessment=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -339,6 +427,14 @@ class FindingForm(forms.ModelForm):
             self.fields["requirements"].queryset = assessment.get_all_requirements().order_by("requirement_number")
         else:
             self.fields["requirements"].queryset = Requirement.objects.none()
+
+
+class FindingCreateForm(FindingBaseForm):
+    """Finding creation modal form."""
+
+
+class FindingUpdateForm(FindingBaseForm):
+    """Finding edition modal form."""
 
 
 class RequirementMappingBaseForm(SteppedFormMixin, forms.ModelForm):
@@ -445,7 +541,19 @@ class FrameworkImportForm(forms.Form):
         return cleaned
 
 
-class ComplianceActionPlanForm(ScopedFormMixin, forms.ModelForm):
+class ComplianceActionPlanBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    steps = [
+        Step(_("Identity"), "list-check",
+             ["name", ["priority", "owner"], "assignees", "description"]),
+        Step(_("Gap & remediation"), "clipboard-data",
+             ["gap_description", "remediation_plan"]),
+        Step(_("Planning"), "calendar-range",
+             [["start_date", "target_date"],
+              ["completion_date", "progress_percentage"], "cost_estimate"]),
+        Step(_("Relations & scope"), "diagram-3",
+             ["risks", "findings", "requirements", "scopes", "tags"]),
+    ]
+
     class Meta:
         model = ComplianceActionPlan
         fields = [
@@ -475,6 +583,33 @@ class ComplianceActionPlanForm(ScopedFormMixin, forms.ModelForm):
             "cost_estimate": forms.NumberInput(attrs={**FORM_WIDGET_ATTRS, "step": "0.01"}),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        help_texts = {
+            "name": _("Name of the action plan."),
+            "priority": _("Priority of the plan."),
+            "owner": _("Person accountable for the plan."),
+            "assignees": _("People working on the plan."),
+            "description": _("What the plan covers."),
+            "gap_description": _("The gap to close."),
+            "remediation_plan": _("How the gap will be remediated."),
+            "risks": _("Risks addressed by this plan."),
+            "findings": _("Findings addressed by this plan."),
+            "requirements": _("Requirements addressed by this plan."),
+            "start_date": _("Planned start date."),
+            "target_date": _("Planned completion date."),
+            "completion_date": _("Actual completion date."),
+            "progress_percentage": _("Completion from 0 to 100."),
+            "cost_estimate": _("Estimated cost."),
+            "scopes": _("Organizational scopes this plan applies to."),
+            "tags": _("Free-form labels for filtering and grouping."),
+        }
+
+
+class ComplianceActionPlanCreateForm(ComplianceActionPlanBaseForm):
+    """Action plan creation modal form."""
+
+
+class ComplianceActionPlanUpdateForm(ComplianceActionPlanBaseForm):
+    """Action plan edition modal form."""
 
 
 class ActionPlanTransitionForm(forms.Form):
