@@ -9149,3 +9149,159 @@ msgstr "État du cycle de vie du fournisseur."
 
 msgid "Organizational scopes this supplier applies to."
 msgstr "Périmètres organisationnels concernés par le fournisseur."
+
+msgid "Publication"
+msgstr "Publication"
+
+msgid "Gap & remediation"
+msgstr "Écart et remédiation"
+
+msgid "Relations & scope"
+msgstr "Relations et périmètre"
+
+msgid "Planning & status"
+msgstr "Planification et statut"
+
+msgid "Name of the framework."
+msgstr "Nom du référentiel."
+
+msgid "Short name or acronym."
+msgstr "Nom court ou acronyme."
+
+msgid "Version of the framework."
+msgstr "Version du référentiel."
+
+msgid "Kind of framework."
+msgstr "Type de référentiel."
+
+msgid "Category of the framework."
+msgstr "Catégorie du référentiel."
+
+msgid "What the framework covers."
+msgstr "Ce que couvre le référentiel."
+
+msgid "Organization that issues the framework."
+msgstr "Organisme émetteur du référentiel."
+
+msgid "Jurisdiction where it applies."
+msgstr "Juridiction où il s'applique."
+
+msgid "Link to the official framework."
+msgstr "Lien vers le référentiel officiel."
+
+msgid "Date the framework was published."
+msgstr "Date de publication du référentiel."
+
+msgid "Date it takes effect."
+msgstr "Date de prise d'effet."
+
+msgid "Date it expires, if any."
+msgstr "Date d'expiration, le cas échéant."
+
+msgid "Tick if compliance is mandatory."
+msgstr "Cochez si la conformité est obligatoire."
+
+msgid "Tick if the framework applies to the organization."
+msgstr "Cochez si le référentiel s'applique à l'organisation."
+
+msgid "Why the framework is or is not applicable."
+msgstr "Pourquoi le référentiel est applicable ou non."
+
+msgid "Person accountable for the framework."
+msgstr "Personne responsable du référentiel."
+
+msgid "Next date this framework should be reviewed."
+msgstr "Prochaine date de revue du référentiel."
+
+msgid "Lifecycle state of the framework."
+msgstr "État du cycle de vie du référentiel."
+
+msgid "Organizational scopes this framework applies to."
+msgstr "Périmètres organisationnels concernés par le référentiel."
+
+msgid "Name of the assessment."
+msgstr "Nom de l'évaluation."
+
+msgid "Frameworks covered by this assessment."
+msgstr "Référentiels couverts par cette évaluation."
+
+msgid "Person leading the assessment."
+msgstr "Personne en charge de l'évaluation."
+
+msgid "Scope and purpose of the assessment."
+msgstr "Périmètre et objet de l'évaluation."
+
+msgid "Known limitations or exclusions."
+msgstr "Limites ou exclusions connues."
+
+msgid "Assessment start date."
+msgstr "Date de début de l'évaluation."
+
+msgid "Assessment end date."
+msgstr "Date de fin de l'évaluation."
+
+msgid "Lifecycle state of the assessment."
+msgstr "État du cycle de vie de l'évaluation."
+
+msgid "Organizational scopes this assessment applies to."
+msgstr "Périmètres organisationnels concernés par l'évaluation."
+
+msgid "Nature of the finding."
+msgstr "Nature du constat."
+
+msgid "Requirements this finding relates to."
+msgstr "Exigences concernées par le constat."
+
+msgid "What was observed."
+msgstr "Ce qui a été observé."
+
+msgid "Suggested corrective action."
+msgstr "Action corrective suggérée."
+
+msgid "Evidence supporting the finding."
+msgstr "Preuves étayant le constat."
+
+msgid "Name of the action plan."
+msgstr "Nom du plan d'action."
+
+msgid "Priority of the plan."
+msgstr "Priorité du plan."
+
+msgid "Person accountable for the plan."
+msgstr "Personne responsable du plan."
+
+msgid "People working on the plan."
+msgstr "Personnes travaillant sur le plan."
+
+msgid "What the plan covers."
+msgstr "Ce que couvre le plan."
+
+msgid "The gap to close."
+msgstr "L'écart à combler."
+
+msgid "How the gap will be remediated."
+msgstr "Comment l'écart sera comblé."
+
+msgid "Risks addressed by this plan."
+msgstr "Risques traités par ce plan."
+
+msgid "Findings addressed by this plan."
+msgstr "Constats traités par ce plan."
+
+msgid "Requirements addressed by this plan."
+msgstr "Exigences traitées par ce plan."
+
+msgid "Planned start date."
+msgstr "Date de début prévue."
+
+msgid "Planned completion date."
+msgstr "Date d'achèvement prévue."
+
+msgid "Actual completion date."
+msgstr "Date d'achèvement réelle."
+
+msgid "Estimated cost."
+msgstr "Coût estimé."
+
+msgid "Organizational scopes this plan applies to."
+msgstr "Périmètres organisationnels concernés par le plan."

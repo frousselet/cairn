@@ -29,10 +29,14 @@ from core.mixins import HtmxFormMixin, SortableListMixin
 from .forms import (
     ActionPlanTransitionForm,
     AssessmentResultForm,
-    ComplianceActionPlanForm,
-    ComplianceAssessmentForm,
-    FindingForm,
-    FrameworkForm,
+    ComplianceActionPlanCreateForm,
+    ComplianceActionPlanUpdateForm,
+    ComplianceAssessmentCreateForm,
+    ComplianceAssessmentUpdateForm,
+    FindingCreateForm,
+    FindingUpdateForm,
+    FrameworkCreateForm,
+    FrameworkUpdateForm,
     FrameworkImportForm,
     RequirementForm,
     RequirementMappingCreateForm,
@@ -178,9 +182,11 @@ class FrameworkDetailView(
 class FrameworkCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = Framework
     permission_required = "compliance.framework.create"
-    form_class = FrameworkForm
+    form_class = FrameworkCreateForm
     template_name = "compliance/framework_form.html"
     modal_template_name = "compliance/framework_form_modal.html"
+    modal_title_create = _l("New framework")
+    modal_title_update = _l("Edit framework")
     success_url = reverse_lazy("compliance:framework-list")
 
     def get_form_kwargs(self):
@@ -192,9 +198,11 @@ class FrameworkCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
 class FrameworkUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
     model = Framework
     permission_required = "compliance.framework.update"
-    form_class = FrameworkForm
+    form_class = FrameworkUpdateForm
     template_name = "compliance/framework_form.html"
     modal_template_name = "compliance/framework_form_modal.html"
+    modal_title_create = _l("New framework")
+    modal_title_update = _l("Edit framework")
     success_url = reverse_lazy("compliance:framework-list")
 
     def get_form_kwargs(self):
@@ -630,9 +638,11 @@ class AssessmentDetailView(
 class AssessmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = ComplianceAssessment
     permission_required = "compliance.assessment.create"
-    form_class = ComplianceAssessmentForm
+    form_class = ComplianceAssessmentCreateForm
     template_name = "compliance/assessment_form.html"
     modal_template_name = "compliance/assessment_form_modal.html"
+    modal_title_create = _l("New assessment")
+    modal_title_update = _l("Edit assessment")
     success_url = reverse_lazy("compliance:assessment-list")
 
     def get_form_kwargs(self):
@@ -651,9 +661,11 @@ class AssessmentUpdateView(
 ):
     model = ComplianceAssessment
     permission_required = "compliance.assessment.update"
-    form_class = ComplianceAssessmentForm
+    form_class = ComplianceAssessmentUpdateForm
     template_name = "compliance/assessment_form.html"
     modal_template_name = "compliance/assessment_form_modal.html"
+    modal_title_create = _l("New assessment")
+    modal_title_update = _l("Edit assessment")
     success_url = reverse_lazy("compliance:assessment-list")
 
     def get_form_kwargs(self):
@@ -1360,7 +1372,7 @@ class AssessmentResultsTableBodyView(LoginRequiredMixin, PermissionRequiredMixin
 class FindingCreateView(EditableAssessmentGuardMixin, LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = Finding
     permission_required = "compliance.assessment.create"
-    form_class = FindingForm
+    form_class = FindingCreateForm
     template_name = "compliance/finding_form.html"
     modal_template_name = "compliance/finding_form_modal.html"
     modal_title_create = _("Add finding")
@@ -1399,7 +1411,7 @@ class FindingUpdateView(EditableAssessmentGuardMixin, LoginRequiredMixin, Permis
     model = Finding
     permission_required = "compliance.assessment.update"
     scope_parent_lookup = "assessment__scopes"
-    form_class = FindingForm
+    form_class = FindingUpdateForm
     template_name = "compliance/finding_form.html"
     modal_template_name = "compliance/finding_form_modal.html"
     modal_title_update = _("Edit finding")
@@ -1728,9 +1740,11 @@ class ActionPlanDetailView(
 class ActionPlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = ComplianceActionPlan
     permission_required = "compliance.action_plan.create"
-    form_class = ComplianceActionPlanForm
+    form_class = ComplianceActionPlanCreateForm
     template_name = "compliance/action_plan_form.html"
     modal_template_name = "compliance/action_plan_form_modal.html"
+    modal_title_create = _l("New action plan")
+    modal_title_update = _l("Edit action plan")
     success_url = reverse_lazy("compliance:action-plan-kanban")
 
     def get_form_kwargs(self):
@@ -1744,9 +1758,11 @@ class ActionPlanUpdateView(
 ):
     model = ComplianceActionPlan
     permission_required = "compliance.action_plan.update"
-    form_class = ComplianceActionPlanForm
+    form_class = ComplianceActionPlanUpdateForm
     template_name = "compliance/action_plan_form.html"
     modal_template_name = "compliance/action_plan_form_modal.html"
+    modal_title_create = _l("New action plan")
+    modal_title_update = _l("Edit action plan")
     success_url = reverse_lazy("compliance:action-plan-kanban")
 
     def get_form_kwargs(self):
