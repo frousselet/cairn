@@ -4197,6 +4197,7 @@
 
       /* Intercept clicks on collapse buttons when sidebar is collapsed */
       document.addEventListener('click', function(e) {
+        if (!(e.target instanceof Element)) return;
         var btn = e.target.closest('.sidebar-collapse-btn');
         if (btn && isCollapsed()) {
           e.preventDefault();
@@ -4211,6 +4212,7 @@
 
       /* Open flyout on hover */
       document.addEventListener('mouseenter', function(e) {
+        if (!(e.target instanceof Element)) return;
         var btn = e.target.closest('.sidebar-collapse-btn');
         if (btn && isCollapsed()) {
           clearTimeout(hoverTimeout);
@@ -5094,7 +5096,10 @@
       return Array.prototype.slice.call(
         scope.querySelectorAll('[data-mform-required]')
       ).map(function(w) {
-        return w.querySelector('input, select, textarea');
+        /* Only consider named controls: rich-text editors (Jodit) inject
+         * unnamed internal inputs before the real, synced form field. */
+        return w.querySelector('input[name], select[name], textarea[name]')
+          || w.querySelector('input, select, textarea');
       }).filter(Boolean);
     }
 
