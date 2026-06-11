@@ -1,3 +1,5 @@
+import logging
+
 from django.utils import timezone
 from rest_framework import status as http_status
 from rest_framework.decorators import action
@@ -5,6 +7,8 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from context.models import Scope
+
+logger = logging.getLogger(__name__)
 
 
 class ApprovableAPIMixin:
@@ -131,7 +135,8 @@ class ApprovableAPIMixin:
                 has_perm=has_perm, perm_namespace=namespace, comment=comment,
             )
         except PermissionDeniedError as e:
-            raise PermissionDenied(str(e))
+            logger.warning("Permission denied during workflow transition validation: %s", e)
+            raise PermissionDenied("You do not have permission to perform this transition.")
         except WorkflowError as e:
             return Response({"detail": str(e)}, status=http_status.HTTP_400_BAD_REQUEST)
         obj.transition_to(target, request.user, comment=comment)
