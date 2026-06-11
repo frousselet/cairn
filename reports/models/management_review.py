@@ -32,6 +32,7 @@ class ManagementReview(ScopedModel):
     """
 
     REFERENCE_PREFIX = "MRVW"
+    WORKFLOW_NAME = "management_review"
 
     title = models.CharField(_("Title"), max_length=255)
     description = models.TextField(_("Description"), blank=True, default="")
@@ -115,47 +116,86 @@ class ManagementReview(ScopedModel):
             )
         return (not reasons, reasons)
 
-    def transition_to(self, new_status, user, comment=""):
+    @property
+    def workflow_perm_namespace(self):
+        return "reports.management_review"
+
+    def save(self, *args, **kwargs):
+        """Keep the legacy ``status`` field and ``workflow_state`` coherent.
+
+        Same migration-period contract as the other reconciled entities:
+        legacy writers set ``status``, the workflow framework sets
+        ``workflow_state``; whichever changed since the last save wins (the
+        framework wins if both changed); on creation ``status`` is the
+        authoritative initial value.
+        """
+        old = (
+            ManagementReview.objects.filter(pk=self.pk)
+            .values("status", "workflow_state")
+            .first()
+            if self.pk
+            else None
+        )
+        if old:
+            status_changed = self.status != old["status"]
+            state_changed = self.workflow_state != old["workflow_state"]
+            if state_changed:
+                self.status = self.workflow_state
+            elif status_changed:
+                self.workflow_state = self.status
+            elif self.status != self.workflow_state:
+                self.workflow_state = self.status
+            if self.workflow_state != old["workflow_state"] or self.status != old["status"]:
+                update_fields = kwargs.get("update_fields")
+                if update_fields is not None:
+                    kwargs["update_fields"] = set(update_fields) | {"status", "workflow_state"}
+        else:
+            # Creation (the UUID pk is set before the row exists).
+            self.workflow_state = self.status or ManagementReviewStatus.PLANNED
+        super().save(*args, **kwargs)
+
+    def transition_to(self, target, user=None, comment=None, *, enforce_permission=False, save=True):
         """Perform a status transition with audit trail.
 
-        Raises ValueError when:
+        Routed through the workflow framework (the ``management_review``
+        workflow is generated from the same constants as before), keeping the
+        legacy contract. Raises ValueError when:
           - the transition is not allowed,
           - the transition is a cancellation without a comment,
           - closure preconditions are not met.
         """
+        from core.workflow import validate_transition
         from reports.models.management_review_transition import (
             ManagementReviewTransition,
         )
 
-        allowed = self.get_allowed_transitions()
-        if new_status not in allowed:
-            raise ValueError(
-                f"Cannot transition from {self.status} to {new_status}."
-            )
-
-        if new_status == ManagementReviewStatus.CANCELLED and not comment.strip():
-            raise ValueError("A comment is required when cancelling.")
-
-        if new_status == ManagementReviewStatus.CLOSED:
+        workflow = self.get_workflow()
+        previous = self.workflow_state or self.status or workflow.initial_state.code
+        # Legality and mandatory-comment checks first (legacy precedence),
+        # then the closure preconditions.
+        validate_transition(workflow, previous, target, comment=comment)
+        if target == ManagementReviewStatus.CLOSED:
             ok, reasons = self.can_close()
             if not ok:
                 raise ValueError("; ".join(str(r) for r in reasons))
 
-        old_status = self.status
-        self.status = new_status
-
-        if new_status == ManagementReviewStatus.HELD and not self.held_date:
+        if target == ManagementReviewStatus.HELD and not self.held_date:
             self.held_date = timezone.now().date()
 
-        self.save()
-
-        ManagementReviewTransition.objects.create(
-            review=self,
-            from_status=old_status,
-            to_status=new_status,
-            performed_by=user,
-            comment=comment,
+        transition = super().transition_to(
+            target, user, comment=comment,
+            enforce_permission=enforce_permission, save=save,
         )
+
+        if save and user is not None:
+            ManagementReviewTransition.objects.create(
+                review=self,
+                from_status=previous,
+                to_status=target,
+                performed_by=user,
+                comment=comment or "",
+            )
+        return transition
 
     def take_snapshot(self, data):
         """Store a frozen snapshot of the aggregated data."""
