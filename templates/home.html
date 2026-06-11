@@ -114,19 +114,119 @@
 </style>
 {% help_modal "home" %}
 
-{# ── Global alerts ──────────────────────────────────────── #}
-{% if alerts %}
-<div class="alert alert-danger mb-4">
-  <div class="d-flex align-items-center mb-2">
-    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-    <strong>{% trans "Alerts" %} ({{ alerts|length }})</strong>
+{# ── Today's actions ────────────────────────────────────── #}
+{% if today_action_groups %}
+<div class="card today-actions mb-4">
+  <div class="card-body">
+    <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-2 mb-3">
+      <h2 class="today-actions__title mb-0">
+        <i class="bi bi-list-check me-2" aria-hidden="true"></i>{% trans "Today's actions" %}
+      </h2>
+      <span class="today-actions__hint">{% blocktrans count count=today_action_count %}{{ count }} item needs your attention.{% plural %}{{ count }} items need your attention.{% endblocktrans %}</span>
+    </div>
+    <div class="row g-3">
+      {% for group in today_action_groups %}
+      <div class="col-12 col-lg">
+        <div class="today-actions__group today-actions__group--{{ group.tone }} h-100">
+          <div class="today-actions__group-title">
+            <span class="today-actions__dot" aria-hidden="true"></span>{{ group.title }}
+          </div>
+          <ul class="today-actions__list">
+            {% for item in group.items %}
+            <li>
+              <a href="{{ item.url }}" class="today-actions__item">
+                <i class="bi {{ item.icon }} today-actions__item-icon" aria-hidden="true"></i>
+                <span class="today-actions__item-label">{{ item.label }}</span>
+                <i class="bi bi-chevron-right today-actions__item-go" aria-hidden="true"></i>
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
-  <ul class="mb-0">
-    {% for alert in alerts %}
-    <li>{{ alert }}</li>
-    {% endfor %}
-  </ul>
 </div>
+<style>
+  .today-actions__title {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .today-actions__hint {
+    font-size: .8125rem;
+    color: var(--bs-secondary-color);
+  }
+  .today-actions__group {
+    border: 1px solid var(--bs-border-color);
+    border-radius: .5rem;
+    padding: .75rem .875rem;
+  }
+  .today-actions__group-title {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .8125rem;
+    font-weight: 600;
+    color: var(--bs-secondary-color);
+    margin-bottom: .5rem;
+  }
+  .today-actions__dot {
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .today-actions__group--high .today-actions__dot { background: var(--bs-danger); }
+  .today-actions__group--medium .today-actions__dot { background: var(--bs-warning); }
+  .today-actions__group--low .today-actions__dot { background: var(--bs-info); }
+  .today-actions__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+  }
+  .today-actions__item {
+    display: flex;
+    align-items: center;
+    gap: .625rem;
+    padding: .4375rem .5rem;
+    border-radius: .375rem;
+    text-decoration: none;
+    color: var(--bs-body-color);
+    font-size: .875rem;
+    transition: background-color 150ms var(--ease-out, ease-out);
+  }
+  .today-actions__item:hover,
+  .today-actions__item:focus-visible {
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-body-color);
+  }
+  .today-actions__item-icon {
+    color: var(--bs-secondary-color);
+    flex-shrink: 0;
+  }
+  .today-actions__item-label {
+    flex: 1 1 auto;
+  }
+  .today-actions__item-go {
+    color: var(--bs-secondary-color);
+    font-size: .75rem;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 150ms var(--ease-out, ease-out);
+  }
+  .today-actions__item:hover .today-actions__item-go,
+  .today-actions__item:focus-visible .today-actions__item-go {
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .today-actions__item,
+    .today-actions__item-go { transition: none; }
+  }
+</style>
 {% endif %}
 
 {# ── Overall compliance (minimal card) ──────────────────── #}
