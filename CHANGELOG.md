@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Modal step gating broken by rich-text fields**: the step-completion check of the modal form engine read the first input inside each required field wrapper, which on rich-text fields is an unnamed internal input injected by the Jodit editor (always empty), so forms like the scope create / edit modal refused to advance past a step whose required fields were all filled. The check now reads the first *named* control of the wrapper (the real, synced form field). Also hardened two sidebar event handlers against non-element event targets (console `TypeError` on text-node hover).
+
 ### Removed
 
 - **Legacy approval bar retired**: the per-page "Pending approval / Approve" banner is removed from all 25 detail pages, along with the `approval_banner` styleguide component, its template tag and its CSS - the lifecycle stepper carries the state and the validation action (the Validate step is the approval act). The approve endpoints remain for API / MCP compatibility as deprecated aliases.
