@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Overall-compliance caption counted every requirement**: the dashboard's "Overall compliance" card claimed "N requirements tracked" using the full requirement inventory, while the displayed average only covers validated active frameworks, so a draft framework's requirements inflated the caption. The caption now counts the applicable requirements of the frameworks that actually feed the average (new `tracked_requirement_count`), the inventory stat card keeps the full count, and the live WebSocket refresh applies the same reportable filter to the average as the page render. The caption's French translation also gains a real singular / plural form (it previously rendered "3 exigence suivie" because of an illegal filter inside `blocktrans`).
 - **Modal step gating broken by rich-text fields**: the step-completion check of the modal form engine read the first input inside each required field wrapper, which on rich-text fields is an unnamed internal input injected by the Jodit editor (always empty), so forms like the scope create / edit modal refused to advance past a step whose required fields were all filled. The check now reads the first *named* control of the wrapper (the real, synced form field). Also hardened two sidebar event handlers against non-element event targets (console `TypeError` on text-node hover).
 
 ### Removed

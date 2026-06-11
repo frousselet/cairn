@@ -324,6 +324,21 @@ class TestDashboardCompliance:
         resp = client.get(reverse("home"))
         assert resp.context["requirement_count"] == 2
 
+    def test_tracked_requirement_count_follows_rate_basis(self):
+        # Validated active framework: its applicable requirements count.
+        tracked = FrameworkFactory(status="active", is_approved=True)
+        RequirementFactory(framework=tracked)
+        RequirementFactory(framework=tracked, is_applicable=False)
+        # Draft framework: excluded from the average, so from the caption too.
+        draft = FrameworkFactory()
+        RequirementFactory(framework=draft)
+        RequirementFactory(framework=draft)
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        assert resp.context["tracked_requirement_count"] == 1
+        # The inventory tile keeps the full count.
+        assert resp.context["requirement_count"] == 4
+
     def test_non_compliant_count(self):
         fw = FrameworkFactory()
         RequirementFactory(

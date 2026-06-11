@@ -185,10 +185,12 @@ class DashboardConsumer(AsyncWebsocketConsumer):
         vulnerability_count = Vulnerability.objects.count()
 
         # ── Compliance ───────────────────────────────────
+        from core.workflow import reportable
+
         framework_count = filter_scoped(Framework.objects.all()).count()
-        agg = filter_scoped(Framework.objects.filter(status="active")).aggregate(
-            avg=Avg("compliance_level")
-        )
+        agg = reportable(
+            filter_scoped(Framework.objects.filter(status="active"))
+        ).aggregate(avg=Avg("compliance_level"))
         overall_compliance = round(agg["avg"] or 0)
         requirement_count = Requirement.objects.count()
         non_compliant_count = Requirement.objects.filter(
