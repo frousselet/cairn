@@ -123,38 +123,9 @@ class ComplianceAssessment(ScopedModel):
         return "compliance.assessment"
 
     def save(self, *args, **kwargs):
-        """Keep the legacy ``status`` field and ``workflow_state`` coherent.
+        from core.workflow import sync_legacy_status
 
-        Same migration-period contract as the action plan: legacy writers set
-        ``status``, the workflow framework sets ``workflow_state``; whichever
-        changed since the last save wins (the framework wins if both changed);
-        on creation ``status`` is the authoritative initial value.
-        """
-        old = (
-            ComplianceAssessment.objects.filter(pk=self.pk)
-            .values("status", "workflow_state")
-            .first()
-            if self.pk
-            else None
-        )
-        if old:
-            status_changed = self.status != old["status"]
-            state_changed = self.workflow_state != old["workflow_state"]
-            if state_changed:
-                self.status = self.workflow_state
-            elif status_changed:
-                self.workflow_state = self.status
-            elif self.status != self.workflow_state:
-                # Stale pre-assignment value (e.g. the phase 2 backfill):
-                # the status machine is authoritative.
-                self.workflow_state = self.status
-            if self.workflow_state != old["workflow_state"] or self.status != old["status"]:
-                update_fields = kwargs.get("update_fields")
-                if update_fields is not None:
-                    kwargs["update_fields"] = set(update_fields) | {"status", "workflow_state"}
-        else:
-            # Creation (the UUID pk is set before the row exists).
-            self.workflow_state = self.status or AssessmentStatus.DRAFT
+        sync_legacy_status(self, kwargs, AssessmentStatus.DRAFT)
         super().save(*args, **kwargs)
 
     def transition_to(self, target, user=None, comment=None, *, enforce_permission=False, save=True):

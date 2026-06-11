@@ -113,7 +113,8 @@ def test_resolve_workflow_defaults_to_default():
 
 def test_module_helpers_accept_labels():
     assert reportable_states("context.scope") == {"validated"}
-    assert deletable_states("assets.supportasset") == {"draft"}
+    # A model with a declared specific workflow resolves through its label too.
+    assert deletable_states("assets.supportasset") == {"in_stock", "active"}
 
 
 def test_permission_codename():

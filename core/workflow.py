@@ -409,6 +409,47 @@ def apply_transition(
     return transition
 
 
+def sync_legacy_status(instance, save_kwargs, default_status):
+    """Keep a legacy ``status`` field and ``workflow_state`` coherent on save.
+
+    Migration-period contract shared by every reconciled entity: legacy
+    writers set ``status``, the workflow framework sets ``workflow_state``;
+    whichever changed since the last save wins (the framework wins if both
+    changed); on creation ``status`` is the authoritative initial value.
+    Call from ``save()`` before ``super().save()``; mutates ``save_kwargs``
+    so a caller-supplied ``update_fields`` carries both fields.
+    """
+    model = type(instance)
+    old = (
+        model.objects.filter(pk=instance.pk)
+        .values("status", "workflow_state")
+        .first()
+        if instance.pk
+        else None
+    )
+    if old:
+        status_changed = instance.status != old["status"]
+        state_changed = instance.workflow_state != old["workflow_state"]
+        if state_changed:
+            instance.status = instance.workflow_state
+        elif status_changed:
+            instance.workflow_state = instance.status
+        elif instance.status != instance.workflow_state:
+            # Stale pre-assignment value (e.g. the phase 2 backfill):
+            # the status machine is authoritative.
+            instance.workflow_state = instance.status
+        if (
+            instance.workflow_state != old["workflow_state"]
+            or instance.status != old["status"]
+        ):
+            update_fields = save_kwargs.get("update_fields")
+            if update_fields is not None:
+                save_kwargs["update_fields"] = set(update_fields) | {"status", "workflow_state"}
+    else:
+        # Creation (UUID pks are set before the row exists).
+        instance.workflow_state = instance.status or default_status
+
+
 # --- Module-level governance helpers (accept a model, label or workflow) ----
 
 

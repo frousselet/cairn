@@ -10,6 +10,12 @@ class AssetsConfig(AppConfig):
     verbose_name = _("Assets")
 
     def ready(self):
+        # Register the module's specific lifecycle workflows (essential and
+        # support assets). Must run before the server-process early returns
+        # below: workflows are needed in every context (tests, management
+        # commands, servers).
+        from assets import workflows  # noqa: F401
+
         # Only start the SPOF scheduler when running an actual server
         # process. The previous blocklist approach ("everything that is
         # not manage.py is a server") wrongly classified ad-hoc inline
