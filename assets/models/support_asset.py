@@ -19,6 +19,7 @@ from context.models.base import ScopedModel
 
 class SupportAsset(ScopedModel):
     REFERENCE_PREFIX = "SAST"
+    WORKFLOW_NAME = "support_asset"
 
     name = models.CharField(_("Name"), max_length=255)
     description = models.TextField(_("Description"), blank=True, default="")
@@ -148,8 +149,15 @@ class SupportAsset(ScopedModel):
                     {"parent_asset": _("The child support asset must share at least one scope with its parent.")}
                 )
 
+    @property
+    def workflow_perm_namespace(self):
+        return "assets.support_asset"
+
     def save(self, *args, **kwargs):
+        from core.workflow import sync_legacy_status
+
         self.clean()
+        sync_legacy_status(self, kwargs, SupportAssetStatus.ACTIVE)
         super().save(*args, **kwargs)
 
     def recalculate_inherited_dic(self):

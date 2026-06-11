@@ -18,6 +18,7 @@ from context.models.base import ScopedModel
 
 class EssentialAsset(ScopedModel):
     REFERENCE_PREFIX = "EAST"
+    WORKFLOW_NAME = "essential_asset"
 
     name = models.CharField(_("Name"), max_length=255)
     description = models.TextField(_("Description"), blank=True, default="")
@@ -119,8 +120,15 @@ class EssentialAsset(ScopedModel):
                 {"category": _("An information asset can only have an information category.")}
             )
 
+    @property
+    def workflow_perm_namespace(self):
+        return "assets.essential_asset"
+
     def save(self, *args, **kwargs):
+        from core.workflow import sync_legacy_status
+
         self.clean()
+        sync_legacy_status(self, kwargs, EssentialAssetStatus.IDENTIFIED)
         super().save(*args, **kwargs)
         # RV-04: recalculate inherited DIC on all linked support assets
         self._recalculate_support_assets_dic()
