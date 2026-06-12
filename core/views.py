@@ -9,7 +9,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext as _, pgettext
+from django.utils.translation import gettext as _, gettext_lazy, pgettext
 from django.views import View
 from django.views.generic import TemplateView
 
@@ -840,35 +840,38 @@ class GlobalSearchView(LoginRequiredMixin, View):
             })
         return results
 
+    # Class attributes are evaluated at import time, so the labels must be
+    # lazy: plain gettext would bake in whatever language is active when the
+    # module loads, ignoring the request language.
     NAVIGATION_ENTRIES = [
-        ("home", _("Dashboard"), "bi-grid", None),
-        ("context:scope-list", _("Scopes"), "bi-bullseye", None),
-        ("context:issue-list", _("Issues"), "bi-exclamation-diamond", None),
-        ("context:objective-list", _("Objectives"), "bi-flag", None),
-        ("context:stakeholder-list", _("Stakeholders"), "bi-people", None),
-        ("context:role-list", _("Roles"), "bi-person-badge", None),
-        ("assets:essential-asset-list", _("Essential assets"), "bi-gem", None),
-        ("assets:support-asset-list", _("Support assets"), "bi-hdd-network", None),
-        ("assets:supplier-list", _("Suppliers"), "bi-truck", None),
-        ("compliance:framework-list", _("Frameworks"), "bi-journal-check", None),
-        ("compliance:requirement-list", _("Requirements"), "bi-list-check", None),
-        ("compliance:assessment-list", _("Compliance assessments"), "bi-clipboard-check", None),
-        ("compliance:action-plan-kanban", _("Action plans"), "bi-card-checklist", None),
-        ("risks:assessment-list", _("Risk assessments"), "bi-shield-exclamation", None),
-        ("risks:risk-list", _("Risk register"), "bi-exclamation-triangle", None),
-        ("risks:treatment-plan-list", _("Treatment plans"), "bi-bandaid", None),
-        ("calendar", _("Calendar"), "bi-calendar3", None),
+        ("home", gettext_lazy("Dashboard"), "bi-grid", None),
+        ("context:scope-list", gettext_lazy("Scopes"), "bi-bullseye", None),
+        ("context:issue-list", gettext_lazy("Issues"), "bi-exclamation-diamond", None),
+        ("context:objective-list", gettext_lazy("Objectives"), "bi-flag", None),
+        ("context:stakeholder-list", gettext_lazy("Stakeholders"), "bi-people", None),
+        ("context:role-list", gettext_lazy("Roles"), "bi-person-badge", None),
+        ("assets:essential-asset-list", gettext_lazy("Essential assets"), "bi-gem", None),
+        ("assets:support-asset-list", gettext_lazy("Support assets"), "bi-hdd-network", None),
+        ("assets:supplier-list", gettext_lazy("Suppliers"), "bi-truck", None),
+        ("compliance:framework-list", gettext_lazy("Frameworks"), "bi-journal-check", None),
+        ("compliance:requirement-list", gettext_lazy("Requirements"), "bi-list-check", None),
+        ("compliance:assessment-list", gettext_lazy("Compliance assessments"), "bi-clipboard-check", None),
+        ("compliance:action-plan-kanban", gettext_lazy("Action plans"), "bi-card-checklist", None),
+        ("risks:assessment-list", gettext_lazy("Risk assessments"), "bi-shield-exclamation", None),
+        ("risks:risk-list", gettext_lazy("Risk register"), "bi-exclamation-triangle", None),
+        ("risks:treatment-plan-list", gettext_lazy("Treatment plans"), "bi-bandaid", None),
+        ("calendar", gettext_lazy("Calendar"), "bi-calendar3", None),
     ]
 
     ACTION_ENTRIES = [
-        ("risks:risk-create", _("Create a risk"), "bi-plus-circle", "risks.risk.create"),
-        ("risks:assessment-create", _("Create a risk assessment"), "bi-plus-circle", "risks.assessment.create"),
-        ("compliance:requirement-create", _("Create a requirement"), "bi-plus-circle", "compliance.requirement.create"),
-        ("compliance:assessment-create", _("Create a compliance assessment"), "bi-plus-circle", "compliance.assessment.create"),
-        ("compliance:action-plan-create", _("Create an action plan"), "bi-plus-circle", "compliance.action_plan.create"),
-        ("assets:essential-asset-create", _("Create an essential asset"), "bi-plus-circle", "assets.essential_asset.create"),
-        ("context:objective-create", _("Create an objective"), "bi-plus-circle", "context.objective.create"),
-        ("styleguide", _("Open styleguide"), "bi-palette", None),
+        ("risks:risk-create", gettext_lazy("Create a risk"), "bi-plus-circle", "risks.risk.create"),
+        ("risks:assessment-create", gettext_lazy("Create a risk assessment"), "bi-plus-circle", "risks.assessment.create"),
+        ("compliance:requirement-create", gettext_lazy("Create a requirement"), "bi-plus-circle", "compliance.requirement.create"),
+        ("compliance:assessment-create", gettext_lazy("Create a compliance assessment"), "bi-plus-circle", "compliance.assessment.create"),
+        ("compliance:action-plan-create", gettext_lazy("Create an action plan"), "bi-plus-circle", "compliance.action_plan.create"),
+        ("assets:essential-asset-create", gettext_lazy("Create an essential asset"), "bi-plus-circle", "assets.essential_asset.create"),
+        ("context:objective-create", gettext_lazy("Create an objective"), "bi-plus-circle", "context.objective.create"),
+        ("styleguide", gettext_lazy("Open styleguide"), "bi-palette", None),
     ]
 
     def _navigation_group(self):
