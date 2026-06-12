@@ -8,6 +8,7 @@
     {% elif ev.days_left == 1 %}<span class="upcoming-days">{% trans "tomorrow" %}</span>
     {% else %}<span class="upcoming-days">{% blocktrans with days=ev.days_left %}in {{ days }} days{% endblocktrans %}</span>{% endif %}
   </span>
+  {% if ev.kind %}<span class="upcoming-item-kind">{{ ev.kind }}</span>{% endif %}
   <span class="upcoming-item-title" title="{{ ev.title }}">{{ ev.title }}</span>
   <span class="upcoming-item-cat">{{ ev.category_label }}</span>
 </a>

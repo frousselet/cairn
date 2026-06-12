@@ -4614,6 +4614,15 @@ msgstr "Traiter %(count)d SPOF dans les dépendances site-fournisseur"
 msgid "Deadlines and events"
 msgstr "Échéances et événements"
 
+msgid "Expiry"
+msgstr "Expiration"
+
+msgid "Audit start"
+msgstr "Début d'audit"
+
+msgid "Audit end"
+msgstr "Fin d'audit"
+
 msgid "in the next 30 days"
 msgstr "dans les 30 prochains jours"
 
