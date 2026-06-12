@@ -628,3 +628,60 @@ class TestDashboardRiskMatrices:
         resp = client.get(reverse("home"))
         assert resp.context["matrix_current"] is not None
         assert resp.context["matrix_residual"] is not None
+
+
+# ── Company identity in the header ──────────────────────────
+
+
+class TestDashboardCompanyIdentity:
+    """The company name replaces the dashboard title, with the logo beside it."""
+
+    def test_company_name_as_title(self):
+        from accounts.models import CompanySettings
+
+        CompanySettings.objects.create(name="Voltara Energy")
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        assert resp.context["company"].name == "Voltara Energy"
+        content = resp.content.decode()
+        assert "Voltara Energy" in content
+        # The page identity moves to the eyebrow when the company name is the title.
+        assert ">Dashboard</div>" in content
+
+    def test_fallback_title_without_company(self):
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        assert resp.context["company"] is None
+        assert "Dashboard" in resp.content.decode()
+        assert b'class="page-header__logo"' not in resp.content
+
+    def test_get_does_not_create_singleton(self):
+        from accounts.models import CompanySettings
+
+        client, user = _superuser_client()
+        client.get(reverse("home"))
+        assert not CompanySettings.objects.exists()
+
+    def test_logo_rendered(self):
+        from accounts.models import CompanySettings
+
+        CompanySettings.objects.create(
+            name="Voltara Energy",
+            logo="data:image/png;base64,abc",
+            logo_128="data:image/png;base64,abc128",
+        )
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        assert b"data:image/png;base64,abc128" in resp.content
+        assert b'class="page-header__logo"' in resp.content
+
+    def test_logo_fallback_to_original(self):
+        from accounts.models import CompanySettings
+
+        CompanySettings.objects.create(
+            name="Voltara Energy",
+            logo="data:image/png;base64,abc",
+        )
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        assert b"data:image/png;base64,abc" in resp.content

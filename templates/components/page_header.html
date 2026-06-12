@@ -2,7 +2,7 @@
 <div class="page-header{% if accent %} page-header--accent page-header--accent-{{ accent }}{% endif %}">
   {% if accent %}<div class="page-header__bar" aria-hidden="true"></div>{% endif %}
   <div class="page-header__main">
-    {% if icon %}<i class="bi bi-{{ icon }} page-header__icon" aria-hidden="true"></i>{% endif %}
+    {% if logo %}<img src="{{ logo }}" alt="" class="page-header__logo">{% elif icon %}<i class="bi bi-{{ icon }} page-header__icon" aria-hidden="true"></i>{% endif %}
     <div class="page-header__text">
       {% if eyebrow %}<div class="page-header__eyebrow">{{ eyebrow }}</div>{% endif %}
       <h1 class="page-header__title mb-0">{{ title }}</h1>

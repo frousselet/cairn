@@ -390,6 +390,7 @@ class PageHeaderNode(template.Node):
             subtitle=resolved_kwargs.get("subtitle"),
             reference=resolved_kwargs.get("reference"),
             icon=resolved_kwargs.get("icon"),
+            logo=resolved_kwargs.get("logo"),
             accent=accent,
             eyebrow=resolved_kwargs.get("eyebrow"),
             actions_html=mark_safe(actions_html) if actions_html else "",

@@ -79,8 +79,13 @@
 {% endblock %}
 
 {% block content %}
+{% if company.name %}
+{% page_header company.name eyebrow=_("Dashboard") subtitle=_("Compliance, risks and operational signals at a glance.") accent="dashboard" logo=company.logo_128|default:company.logo %}
+{% endpage_header %}
+{% else %}
 {% page_header _("Dashboard") eyebrow=_("Today") subtitle=_("Compliance, risks and operational signals at a glance.") accent="dashboard" %}
 {% endpage_header %}
+{% endif %}
 {% help_modal "home" %}
 
 {# ── Today's actions ────────────────────────────────────── #}
