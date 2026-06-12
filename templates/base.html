@@ -3664,14 +3664,6 @@
         <i class="bi bi-calendar3"></i> <span class="sidebar-link-text">{% trans "Calendar" %}</span>
         <span class="sidebar-tooltip">{% trans "Calendar" %}</span>
       </a>
-      <a href="{% url 'reports:report-list' %}" class="sidebar-link">
-        <i class="bi bi-file-earmark-text"></i> <span class="sidebar-link-text">{% trans "Reports" %}</span>
-        <span class="sidebar-tooltip">{% trans "Reports" %}</span>
-      </a>
-      <a href="{% url 'reports:management-review-list' %}" class="sidebar-link">
-        <i class="bi bi-clipboard-check"></i> <span class="sidebar-link-text">{% trans "Management reviews" %}</span>
-        <span class="sidebar-tooltip">{% trans "Management reviews" %}</span>
-      </a>
 
       {# ── Gouvernance ─────────────────────────────────── #}
       <div class="sidebar-section">{% trans "Governance" %}</div>
@@ -3703,6 +3695,15 @@
       <div class="collapse show" id="navIndicateurs">
         <a href="{% url 'context:indicator-organizational-list' %}" class="sidebar-link sidebar-sub">{% trans "Organizational" %}</a>
         <a href="{% url 'context:indicator-technical-list' %}" class="sidebar-link sidebar-sub">{% trans "Technical" %}</a>
+      </div>
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navStrategie" aria-expanded="true">
+        <i class="bi bi-compass"></i> <span class="sidebar-link-text">{% trans "Strategy" %}</span>
+        <i class="bi bi-chevron-down"></i>
+        <span class="sidebar-tooltip">{% trans "Strategy" %}</span>
+      </button>
+      <div class="collapse show" id="navStrategie">
+        <a href="{% url 'reports:report-list' %}" class="sidebar-link sidebar-sub">{% trans "Reports" %}</a>
+        <a href="{% url 'reports:management-review-list' %}" class="sidebar-link sidebar-sub">{% trans "Management reviews" %}</a>
       </div>
 
       {# ── Actifs ──────────────────────────────────────── #}
