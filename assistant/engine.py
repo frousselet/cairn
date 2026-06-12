@@ -1,19 +1,23 @@
 """Bounded natural-language question engine.
 
-Pipeline: the routing model picks read-only tools from the curated catalog
-(max ``AI_ASSISTANT_MAX_TOOL_ROUNDS`` rounds), each tool executes in-process
-through the MCP registry with the session user (existing ``@require_perm``
-decorators and scope filters apply, nothing is bypassed), then one final
-model call produces a short summary sentence from the collected data.
+Pipeline: one constrained planning call turns the question into a short plan
+of read-only catalog tools (sequencing is NOT left to the model round after
+round: tiny models are unreliable at it). The engine executes the plan
+deterministically, resolving ``$N.id`` placeholders from earlier step
+results, through the MCP registry with the session user (existing
+``@require_perm`` decorators and scope filters apply, nothing is bypassed).
+One final model call produces a short summary sentence from the collected,
+identifier-stripped data.
 """
 
 import json
 import logging
+import re
 from dataclasses import dataclass, field
 
 from django.conf import settings
 
-from assistant.catalog import TOOL_CATALOG, routing_schema
+from assistant.catalog import TOOL_CATALOG, plan_schema
 from assistant.ollama import (
     AssistantDisabled,
     MalformedModelOutput,
@@ -24,11 +28,14 @@ from assistant.prompts import routing_prompt, summary_prompt
 
 logger = logging.getLogger(__name__)
 
-# Cap on the serialized tool result re-injected into the model context.
+# Cap on the serialized tool result fed back to the summary model.
 COMPACT_RESULT_MAX_CHARS = 2000
 
 PERMISSION_DENIED = "permission_denied"
 TOOL_ERROR = "tool_error"
+
+UUID_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+PLACEHOLDER_RE = re.compile(r"^\$(\d+)\.id$")
 
 
 @dataclass
@@ -98,8 +105,27 @@ def _user(content):
     return {"role": "user", "content": content}
 
 
-def _assistant(content):
-    return {"role": "assistant", "content": content}
+def _strip_identifiers(payload):
+    """Remove internal ids from the data fed to the summary stage.
+
+    The routing rounds need record ids for child tool calls, but the summary
+    model must never see them: a small model readily "answers" a question by
+    citing a UUID when the real information is missing from the data.
+    """
+    if isinstance(payload, dict):
+        return {
+            key: _strip_identifiers(value)
+            for key, value in payload.items()
+            if not (key == "id" or key.endswith("_id"))
+            and not (isinstance(value, str) and UUID_RE.fullmatch(value.lower()))
+        }
+    if isinstance(payload, list):
+        return [
+            _strip_identifiers(item)
+            for item in payload
+            if not (isinstance(item, str) and UUID_RE.fullmatch(item.lower()))
+        ]
+    return payload
 
 
 def _extract_records(raw):
@@ -130,28 +156,94 @@ class AssistantEngine:
         if not settings.AI_ASSISTANT_ENABLED:
             raise AssistantDisabled()
         outcome = AskOutcome(question=question, language=self.language)
-        messages = [_system(routing_prompt()), _user(question)]
-        for _round in range(settings.AI_ASSISTANT_MAX_TOOL_ROUNDS):
-            decision = self.client.chat_json(messages, routing_schema())
-            tool_name = decision.get("tool")
-            if decision.get("done") or not tool_name:
-                break
+        max_steps = settings.AI_ASSISTANT_MAX_TOOL_ROUNDS
+        plan = self.client.chat_json(
+            [_system(routing_prompt()), _user(question)],
+            plan_schema(max_steps),
+        )
+        steps = [s for s in (plan.get("steps") or []) if isinstance(s, dict)]
+        # Id grounding: literal id arguments may only carry ids returned by an
+        # earlier step (covered by $N.id resolution) or pasted verbatim in the
+        # question. Small models otherwise reuse ids from the prompt examples.
+        known_ids = set(UUID_RE.findall(question.lower()))
+        step_runs = {}
+        for index, step in enumerate(steps[:max_steps], start=1):
+            tool_name = step.get("tool")
             spec = TOOL_CATALOG.get(tool_name)
             if spec is None:
                 # Unreachable through constrained decoding; kept as a guard.
                 outcome.refused_tools.append(str(tool_name))
-                break
-            args = self._sanitize_arguments(spec, decision.get("arguments"))
+                continue
+            args = self._sanitize_arguments(spec, step.get("arguments"))
+            args = self._resolve_placeholders(args, index, step_runs, known_ids)
+            if args is None or self._has_unknown_id(args, known_ids):
+                outcome.refused_tools.append(spec.name)
+                continue
             run = self._execute(spec, args)
             outcome.tool_runs.append(run)
-            messages.append(_assistant(json.dumps(decision, ensure_ascii=False)))
-            messages.append(_user(
-                f"Result of {spec.name}: {run.compact_json()}\n"
-                'If this answers the question, respond {"done": true}. '
-                "Otherwise call the next tool."
-            ))
+            step_runs[index] = run
+            known_ids.update(
+                str(record["id"]).lower()
+                for record in run.records
+                if record.get("id")
+            )
         self._summarize(outcome)
         return outcome
+
+    def _resolve_placeholders(self, args, index, step_runs, known_ids):
+        """Replace ``$N.id`` values with the first record id of step N.
+
+        Resolved ids come straight from a tool result, so they are grounded
+        by construction and recorded in ``known_ids``. Returns None when a
+        placeholder cannot be resolved (unknown step, failed parent, or
+        parent with no records even after the fallback).
+        """
+        resolved = {}
+        for key, value in args.items():
+            match = PLACEHOLDER_RE.match(value.strip()) if isinstance(value, str) else None
+            if not match:
+                resolved[key] = value
+                continue
+            ref = int(match.group(1))
+            if not (1 <= ref < index) or ref not in step_runs:
+                return None
+            parent = step_runs[ref]
+            if not parent.records:
+                self._retry_parent_without_status(parent)
+            if parent.error or not parent.records or not parent.records[0].get("id"):
+                return None
+            parent_id = str(parent.records[0]["id"])
+            known_ids.add(parent_id.lower())
+            resolved[key] = parent_id
+        return resolved
+
+    def _retry_parent_without_status(self, parent):
+        """Re-run an empty parent step once without its status filter.
+
+        The planner is taught to filter parents (e.g. status "closed") so the
+        first record is deterministically the right one; when that filter
+        matches nothing (e.g. reviews held but never closed), retrying
+        unfiltered keeps the newest-first ordering meaningful.
+        """
+        if "status" not in parent.arguments or parent.error:
+            return
+        retry_args = {k: v for k, v in parent.arguments.items() if k != "status"}
+        retry = self._execute(TOOL_CATALOG[parent.tool], retry_args)
+        if retry.error or not retry.records:
+            return
+        parent.arguments = retry_args
+        parent.records = retry.records
+        parent.cards = retry.cards
+        parent.data = retry.data
+
+    @staticmethod
+    def _has_unknown_id(args, known_ids):
+        """True when an id-like argument carries a value never seen before."""
+        return any(
+            (key == "id" or key.endswith("_id"))
+            and str(value).lower() not in known_ids
+            for key, value in args.items()
+        )
 
     def _sanitize_arguments(self, spec, arguments):
         args = {}
@@ -208,10 +300,10 @@ class AssistantEngine:
         for run in successful:
             text = run.compact_json() or "[]"
             try:
-                data[run.tool] = json.loads(text)
+                data[run.tool] = _strip_identifiers(json.loads(text))
             except ValueError:
-                # Truncated payload: pass the raw text through.
-                data[run.tool] = text
+                # Truncated payload: pass the raw text through, scrubbed.
+                data[run.tool] = UUID_RE.sub("", text.lower())
         if outcome.permission_denied:
             data["note"] = "Some data was not accessible to this user."
         messages = [

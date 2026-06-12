@@ -9748,3 +9748,6 @@ msgstr "Certains résultats sont masqués faute de permission."
 
 msgid "AI-generated summary. Verify against the linked records."
 msgstr "Résumé généré par IA. Vérifiez les enregistrements liés."
+
+msgid "The assistant only answers questions about your GRC data: risks, reviews, action plans, assets, compliance..."
+msgstr "L'assistant répond uniquement aux questions sur vos données GRC : risques, revues, plans d'action, actifs, conformité..."

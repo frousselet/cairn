@@ -257,6 +257,10 @@ AI_ASSISTANT_OLLAMA_URL = os.environ.get("AI_ASSISTANT_OLLAMA_URL", "http://olla
 AI_ASSISTANT_MODEL = os.environ.get("AI_ASSISTANT_MODEL", "qwen3:1.7b")
 AI_ASSISTANT_CONNECT_TIMEOUT = float(os.environ.get("AI_ASSISTANT_CONNECT_TIMEOUT", "2"))
 AI_ASSISTANT_TIMEOUT = float(os.environ.get("AI_ASSISTANT_TIMEOUT", "30"))
-AI_ASSISTANT_MAX_TOOL_ROUNDS = int(os.environ.get("AI_ASSISTANT_MAX_TOOL_ROUNDS", "2"))
+AI_ASSISTANT_MAX_TOOL_ROUNDS = int(os.environ.get("AI_ASSISTANT_MAX_TOOL_ROUNDS", "3"))
+# Chain-of-thought during tool routing (thinking models only, e.g. qwen3).
+# Helps multi-step routing but is far too slow on CPU-only hosts; enable on
+# GPU-backed Ollama instances.
+AI_ASSISTANT_ROUTING_THINK = os.environ.get("AI_ASSISTANT_ROUTING_THINK", "False").lower() in ("true", "1", "yes")
 AI_ASSISTANT_MAX_RECORDS_PER_TOOL = int(os.environ.get("AI_ASSISTANT_MAX_RECORDS_PER_TOOL", "5"))
 AI_ASSISTANT_NUM_CTX = int(os.environ.get("AI_ASSISTANT_NUM_CTX", "8192"))

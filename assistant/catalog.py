@@ -288,8 +288,8 @@ _SPECS = [
 TOOL_CATALOG = {spec.name: spec for spec in _SPECS}
 
 
-def routing_schema():
-    """JSON Schema constraining the routing response of the model.
+def plan_schema(max_steps):
+    """JSON Schema constraining the model's one-shot execution plan.
 
     The ``enum`` on the tool name makes any tool outside the catalog
     impossible to decode; the engine still re-validates server-side.
@@ -297,11 +297,20 @@ def routing_schema():
     return {
         "type": "object",
         "properties": {
-            "done": {"type": "boolean"},
-            "tool": {"type": "string", "enum": sorted(TOOL_CATALOG)},
-            "arguments": {"type": "object"},
+            "steps": {
+                "type": "array",
+                "maxItems": max_steps,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "tool": {"type": "string", "enum": sorted(TOOL_CATALOG)},
+                        "arguments": {"type": "object"},
+                    },
+                    "required": ["tool"],
+                },
+            },
         },
-        "required": ["done"],
+        "required": ["steps"],
     }
 
 
