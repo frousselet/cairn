@@ -1,0 +1,46 @@
+{% load i18n %}
+<div class="search-group-label" role="presentation">
+  <i class="bi bi-robot" aria-hidden="true"></i> {% trans "Ask Cairn" %}
+  <span class="ai-badge">{% trans "AI" %}</span>
+</div>
+{% if error_code == "disabled" %}
+  <div class="search-empty"><i class="bi bi-robot" aria-hidden="true"></i>{% trans "The assistant is disabled." %}</div>
+{% elif error_code == "unreachable" %}
+  <div class="search-empty"><i class="bi bi-plug" aria-hidden="true"></i>{% trans "The assistant is unreachable. Try again later." %}</div>
+{% elif error_code == "model_missing" %}
+  <div class="search-empty"><i class="bi bi-download" aria-hidden="true"></i>{% blocktrans %}The assistant model is not installed. Run: ollama pull {{ model_name }}{% endblocktrans %}</div>
+{% elif error_code %}
+  <div class="search-empty"><i class="bi bi-robot" aria-hidden="true"></i>{% trans "The assistant could not produce an answer. Try rephrasing your question." %}</div>
+{% else %}
+  {% if outcome.summary %}
+    <div class="assistant-summary">{{ outcome.summary }}</div>
+  {% elif outcome.degraded %}
+    <div class="assistant-summary assistant-summary-muted">{% trans "Summary unavailable. Here are the matching records." %}</div>
+  {% endif %}
+  {% for run in outcome.tool_runs %}
+    {% if run.error == "permission_denied" %}
+      <div class="assistant-note"><i class="bi bi-lock" aria-hidden="true"></i> {% trans "Some results were hidden because you lack the required permission." %}</div>
+    {% elif run.cards %}
+      <div class="search-group-label" role="presentation"><i class="{{ run.icon }}" aria-hidden="true"></i> {{ run.label }}</div>
+      {% for card in run.cards %}
+        {% if card.url %}
+        <a class="search-result-item" role="option" aria-selected="false" href="{{ card.url }}">
+          <i class="{{ card.icon }}" aria-hidden="true"></i>
+          <span>{{ card.title }}</span>
+          {% if card.subtitle %}<span class="assistant-card-sub">{{ card.subtitle }}</span>{% endif %}
+        </a>
+        {% else %}
+        <div class="search-result-item assistant-card-static" role="option" aria-selected="false">
+          <i class="{{ card.icon }}" aria-hidden="true"></i>
+          <span>{{ card.title }}</span>
+          {% if card.subtitle %}<span class="assistant-card-sub">{{ card.subtitle }}</span>{% endif %}
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+  {% if not outcome.has_cards and not outcome.summary %}
+    <div class="search-empty"><i class="bi bi-search" aria-hidden="true"></i>{% trans "No matching records found." %}</div>
+  {% endif %}
+  <div class="assistant-disclaimer">{% trans "AI-generated summary. Verify against the linked records." %}</div>
+{% endif %}
