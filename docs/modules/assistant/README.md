@@ -98,7 +98,27 @@ docker compose exec ollama ollama pull qwen3:1.7b
 # .env: AI_ASSISTANT_ENABLED=True, then restart web
 ```
 
-Sizing: `qwen3:1.7b` needs roughly 2-4 GB of RAM at an 8k context, CPU-only. The first question after a model (re)load takes 10-20 extra seconds; warm questions take roughly 5-20 s for two tool rounds plus the summary. Any other Ollama model can be substituted via `AI_ASSISTANT_MODEL` without code changes.
+Sizing: `qwen3:1.7b` needs roughly 2-4 GB of RAM at an 8k context, CPU-only. The first question after a model (re)load takes 10-20 extra seconds; warm questions take roughly 5-30 s for the plan, the tool executions and the summary. Any other Ollama model can be substituted via `AI_ASSISTANT_MODEL` without code changes.
+
+### Choosing a model
+
+Measured on the Voltara demo dataset (Docker on an Apple M3, CPU-only VM):
+
+| Model | Size | Data accuracy | French phrasing | Verdict |
+| ----- | ---- | ------------- | --------------- | ------- |
+| `qwen3:1.7b` (default) | 1.4 GB | correct (plan-based engine) | occasional slips ("scépôle", "est responsable par") | best CPU-only choice; cosmetic risk only, records are always exact |
+| `llama3.2:3b` | 2 GB | correct but weaker plans | also flawed ("la prêté à gérer"), verbose | not worth the extra weight |
+| `qwen3:4b` and larger | 2.6+ GB | correct | clean French | needs accelerated inference; unusable in a CPU-only Docker VM (470 s, runner OOM at 8 GB) |
+
+Rule of thumb: clean French phrasing starts around the 4B class, and that class needs a GPU-backed Ollama. On macOS, Docker containers cannot use the Metal GPU: install the native Ollama app on the host instead and point the web container at it:
+
+```bash
+# .env
+AI_ASSISTANT_OLLAMA_URL=http://host.docker.internal:11434
+AI_ASSISTANT_MODEL=qwen3:4b
+```
+
+(then do not start the `ai` compose profile, or its container would conflict on port 11434). On a Linux server with a GPU, add the standard GPU reservation to the `ollama` service. On pure CPU servers, keep `qwen3:1.7b`: the summary sentence may occasionally read clumsily, but the cards always show the exact records.
 
 ## Future work
 
