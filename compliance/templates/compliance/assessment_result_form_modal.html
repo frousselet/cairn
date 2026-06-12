@@ -8,9 +8,9 @@
 {# ── Requirement context (read-only guidance) ── #}
 {% if requirement_obj %}
 <div class="drawer-section" style="background:var(--bs-tertiary-bg);border-radius:.5rem;padding:.75rem 1rem;margin-bottom:.75rem">
-  <div style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem">{% trans "Requirement" %}</div>
+  <div style="font-size:.75rem;color:var(--text-muted);font-weight:500;margin-bottom:.25rem">{% trans "Requirement" %}</div>
   <div class="fw-semibold" style="font-size:.95rem">
-    {% if requirement_obj.requirement_number %}{{ requirement_obj.requirement_number }} — {% endif %}{{ requirement_obj.name }}
+    {% if requirement_obj.requirement_number %}{{ requirement_obj.requirement_number }} - {% endif %}{{ requirement_obj.name }}
   </div>
   {% if requirement_obj.description %}
   <div style="font-size:.82rem;color:var(--text-muted);margin-top:.35rem;max-height:6rem;overflow-y:auto">

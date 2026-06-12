@@ -7,7 +7,7 @@
 <style>
   .stat-card { border: 1px solid var(--border); border-radius: var(--radius-sm, .5rem); padding: 1rem; background: var(--surface, #fff); height: 100%; }
   .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent, #5b4ccc); line-height: 1.1; }
-  .stat-label { font-size: .75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 500; }
+  .stat-label { font-size: .8125rem; color: var(--text-muted); font-weight: 500; }
   .stat-sub { font-size: .8rem; color: var(--text-muted); margin-top: .25rem; }
   .bar-row { display: flex; align-items: center; gap: .5rem; padding: .35rem 0; }
   .bar-row .label { flex: 0 0 9rem; font-size: .82rem; color: var(--text-secondary); }
@@ -89,7 +89,7 @@
 <div class="row g-3 mb-4">
   <div class="col-lg-4">
     <div class="card h-100"><div class="card-body">
-      <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status distribution" %}</h6>
+      <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status distribution" %}</h6>
       {% for entry in risk_status_breakdown %}
       {% if entry.count or forloop.counter <= 4 %}
       <div class="bar-row">
@@ -103,7 +103,7 @@
   </div>
   <div class="col-lg-4">
     <div class="card h-100"><div class="card-body">
-      <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-bar-chart me-1"></i>{% trans "Priority distribution" %}</h6>
+      <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-bar-chart me-1"></i>{% trans "Priority distribution" %}</h6>
       {% for entry in risk_priority_breakdown %}
       <div class="bar-row">
         <div class="label">{{ entry.label }}</div>
@@ -115,7 +115,7 @@
   </div>
   <div class="col-lg-4">
     <div class="card h-100"><div class="card-body">
-      <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "Treatment decisions" %}</h6>
+      <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "Treatment decisions" %}</h6>
       {% for entry in treatment_decision_breakdown %}
       <div class="bar-row">
         <div class="label">{{ entry.label }}</div>
@@ -130,7 +130,7 @@
 {# ── Top critical risks ──────────────────────────────────── #}
 <div class="card mb-4"><div class="card-body">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h6 class="text-muted text-uppercase small fw-semibold mb-0"><i class="bi bi-exclamation-octagon me-1"></i>{% trans "Top 10 critical risks" %}</h6>
+    <h6 class="text-muted small fw-semibold mb-0"><i class="bi bi-exclamation-octagon me-1"></i>{% trans "Top 10 critical risks" %}</h6>
     <a href="{% url 'risks:risk-list' %}?priority=critical" class="btn btn-sm btn-outline-secondary">{% trans "Open list" %}</a>
   </div>
   {% if top_critical_risks %}
@@ -167,7 +167,7 @@
 {# ── Overdue treatment plans ─────────────────────────────── #}
 <div class="card mb-4"><div class="card-body">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h6 class="text-muted text-uppercase small fw-semibold mb-0"><i class="bi bi-clock-history me-1"></i>{% trans "Overdue treatment plans" %}</h6>
+    <h6 class="text-muted small fw-semibold mb-0"><i class="bi bi-clock-history me-1"></i>{% trans "Overdue treatment plans" %}</h6>
     <a href="{% url 'risks:treatment-plan-list' %}" class="btn btn-sm btn-outline-secondary">{% trans "Open list" %}</a>
   </div>
   {% if overdue_treatment_plans %}
@@ -202,7 +202,7 @@
 {# ── Expiring acceptances ────────────────────────────────── #}
 <div class="card mb-4"><div class="card-body">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h6 class="text-muted text-uppercase small fw-semibold mb-0"><i class="bi bi-bell me-1"></i>{% trans "Acceptances expiring within 90 days" %}</h6>
+    <h6 class="text-muted small fw-semibold mb-0"><i class="bi bi-bell me-1"></i>{% trans "Acceptances expiring within 90 days" %}</h6>
     <a href="{% url 'risks:acceptance-list' %}" class="btn btn-sm btn-outline-secondary">{% trans "Open list" %}</a>
   </div>
   {% if expiring_acceptances %}

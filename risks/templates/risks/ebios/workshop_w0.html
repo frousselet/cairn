@@ -45,7 +45,7 @@
 
     {% if study_framework.participants.all %}
     <div class="mb-3">
-      <div class="small text-muted text-uppercase mb-2">{% trans "Internal participants" %}</div>
+      <div class="small text-muted mb-2">{% trans "Internal participants" %}</div>
       <div class="d-flex flex-wrap gap-2">
         {% for user in study_framework.participants.all %}
           <span class="badge text-bg-secondary">
@@ -58,7 +58,7 @@
 
     {% if study_framework.applicable_frameworks.all %}
     <div class="mb-3">
-      <div class="small text-muted text-uppercase mb-2">{% trans "Applicable frameworks" %}</div>
+      <div class="small text-muted mb-2">{% trans "Applicable frameworks" %}</div>
       <div class="d-flex flex-wrap gap-2">
         {% for framework in study_framework.applicable_frameworks.all %}
           <span class="badge text-bg-info">

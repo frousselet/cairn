@@ -30,7 +30,7 @@
     {# ── Description ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         {% if scope.parent_scope %}
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Parent scope" %}</div>
@@ -48,7 +48,7 @@
     {% if scope.geographic_scope or scope.organizational_scope or scope.technical_scope %}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-layers me-1"></i>{% trans "Scope details" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-layers me-1"></i>{% trans "Scope details" %}</h6>
         {% if scope.geographic_scope %}
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Geographic" %}</div>
@@ -75,7 +75,7 @@
     {% if scope.boundaries or scope.justification_exclusions %}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-bounding-box me-1"></i>{% trans "Boundaries and exclusions" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-bounding-box me-1"></i>{% trans "Boundaries and exclusions" %}</h6>
         {% if scope.boundaries %}
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Boundaries" %}</div>
@@ -96,7 +96,7 @@
     {% if scope.included_sites.all or scope.excluded_sites.all %}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-geo-alt me-1"></i>{% trans "Sites" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-geo-alt me-1"></i>{% trans "Sites" %}</h6>
         {% if scope.included_sites.all %}
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Included sites" %}</div>
@@ -125,7 +125,7 @@
     {% if children %}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Sub-scopes" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Sub-scopes" %}</h6>
         <ul class="list-group list-group-flush">
           {% for child in children %}
           <li class="list-group-item px-0{% if forloop.first %} pt-0{% endif %}{% if forloop.last %} pb-0{% endif %}">
@@ -146,7 +146,7 @@
     {# ── Status ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">
@@ -163,7 +163,7 @@
     {# ── People ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Managers" %}</div>
           {% for manager in scope.managers.all %}
@@ -186,7 +186,7 @@
     {# ── Dates ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Effective date" %}</dt>
           <dd class="mb-3">{{ scope.effective_date|default:"—" }}</dd>

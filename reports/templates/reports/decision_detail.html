@@ -18,20 +18,20 @@
 <div class="row g-3">
   <div class="col-lg-8">
     <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted text-uppercase small fw-semibold mb-2">{% trans "Description" %}</h6>
+      <h6 class="text-muted small fw-semibold mb-2">{% trans "Description" %}</h6>
       <div>{{ decision.description|linebreaks }}</div>
     </div></div>
 
     {% if decision.rationale %}
     <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted text-uppercase small fw-semibold mb-2">{% trans "Rationale" %}</h6>
+      <h6 class="text-muted small fw-semibold mb-2">{% trans "Rationale" %}</h6>
       <div>{{ decision.rationale|linebreaks }}</div>
     </div></div>
     {% endif %}
 
     {% if decision.implementation_evidence %}
     <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted text-uppercase small fw-semibold mb-2">{% trans "Implementation evidence" %}</h6>
+      <h6 class="text-muted small fw-semibold mb-2">{% trans "Implementation evidence" %}</h6>
       <div>{{ decision.implementation_evidence|linebreaks }}</div>
     </div></div>
     {% endif %}
@@ -39,7 +39,7 @@
 
   <div class="col-lg-4">
     <div class="card"><div class="card-body">
-      <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "Details" %}</h6>
+      <h6 class="text-muted small fw-semibold mb-3">{% trans "Details" %}</h6>
       <dl class="row small mb-0">
         <dt class="col-5">{% trans "Category" %}</dt><dd class="col-7">{{ decision.get_category_display }}</dd>
         <dt class="col-5">{% trans "Input clause" %}</dt><dd class="col-7">{{ decision.get_input_clause_display|default:"-" }}</dd>

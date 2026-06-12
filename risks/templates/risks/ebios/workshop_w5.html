@@ -78,7 +78,7 @@
   <div class="card-body">
     <div class="row g-3">
       <div class="col-md-6">
-        <div class="small text-muted text-uppercase mb-2">{% trans "Before treatment" %}</div>
+        <div class="small text-muted mb-2">{% trans "Before treatment" %}</div>
         {% if summary.risk_mapping_before %}
           <div class="border rounded p-3">
             <div class="mb-2"><strong>{% trans "Total" %}:</strong> {{ summary.risk_mapping_before.total }}</div>
@@ -96,7 +96,7 @@
         {% endif %}
       </div>
       <div class="col-md-6">
-        <div class="small text-muted text-uppercase mb-2">{% trans "After treatment" %}</div>
+        <div class="small text-muted mb-2">{% trans "After treatment" %}</div>
         {% if summary.risk_mapping_after %}
           <div class="border rounded p-3">
             <div class="mb-2"><strong>{% trans "Total" %}:</strong> {{ summary.risk_mapping_after.total }}</div>

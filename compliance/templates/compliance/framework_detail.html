@@ -21,7 +21,7 @@
     {# General info #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
           <div>
@@ -59,7 +59,7 @@
     {# Compliance overview #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-clipboard-check me-1"></i>{% trans "Compliance" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-clipboard-check me-1"></i>{% trans "Compliance" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Overall compliance level" %}</div>
           <div class="display-6 fw-bold">{{ framework.compliance_level|floatformat:0 }}%</div>
@@ -70,7 +70,7 @@
     {# Sections / Structure #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Structure" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Structure" %}</h6>
         {% if sections %}
         <ul class="list-group list-group-flush">
           {% for section in sections %}
@@ -90,7 +90,7 @@
     <div class="card mb-4">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="text-muted text-uppercase small fw-semibold mb-0">
+          <h6 class="text-muted small fw-semibold mb-0">
             <i class="bi bi-list-check me-1"></i>{% trans "Requirements" %}
             <span class="badge" style="background:var(--accent-soft);color:var(--accent);font-size:.82rem;padding:.4em .8em">{{ requirements|length }}</span>
           </h6>
@@ -164,7 +164,7 @@
     {# Assessments table #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-journal-check me-1"></i>{% trans "Assessments" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-journal-check me-1"></i>{% trans "Assessments" %}</h6>
         {% if assessments %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
@@ -196,7 +196,7 @@
     {# Status #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">{{ framework.get_status_display }}</dd>
@@ -215,7 +215,7 @@
     {# People #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Owner" %}</dt>
           <dd class="mb-3">{% if framework.owner %}{% user_badge framework.owner size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}</dd>
@@ -228,7 +228,7 @@
     {# Dates #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
           <dd class="mb-3">{{ framework.created_at|date:"d/m/Y H:i" }}</dd>

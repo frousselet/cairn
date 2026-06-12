@@ -28,7 +28,7 @@
   <div class="col-lg-8">
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         {% if site.parent_site %}
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Parent site" %}</div>
@@ -51,7 +51,7 @@
     {% if children %}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Sub-sites" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Sub-sites" %}</h6>
         <ul class="list-group list-group-flush">
           {% for child in children %}
           <li class="list-group-item px-0{% if forloop.first %} pt-0{% endif %}{% if forloop.last %} pb-0{% endif %}">
@@ -69,7 +69,7 @@
   <div class="col-lg-4">
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">
@@ -87,7 +87,7 @@
 
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Created by" %}</div>
           {% if site.created_by %}{% user_badge site.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
@@ -103,7 +103,7 @@
 
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           {% if approval_enabled is not False %}
           <dt class="text-muted small mb-1">{% trans "Approval date" %}</dt>

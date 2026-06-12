@@ -2,12 +2,12 @@
 {% comment %}Reusable risk matrix grid. Expected: matrix (dict), title (str).{% endcomment %}
 {% if matrix %}
 <div class="risk-matrix-wrapper mb-2">
-  <h6 class="text-center mb-3" style="font-weight:600;color:var(--text-secondary);font-size:.82rem;text-transform:uppercase;letter-spacing:.04em">{{ title }}</h6>
+  <h6 class="text-center mb-3" style="font-weight:600;color:var(--text-secondary);font-size:.875rem">{{ title }}</h6>
   <table style="border-collapse:separate; border-spacing:3px; width:100%;">
     {# ── Impact axis label ── #}
     <tr>
       <td></td>
-      <td colspan="{{ matrix.impact_labels|length }}" style="text-align:center; font-size:.625rem; text-transform:uppercase; color:var(--text-muted); letter-spacing:.1em; padding:0 0 2px;">
+      <td colspan="{{ matrix.impact_labels|length }}" style="text-align:center; font-size:.6875rem; color:var(--text-muted); padding:0 0 2px;">
         {% trans "Impact" %} &rarr;
       </td>
     </tr>
@@ -16,7 +16,7 @@
     <tr>
       {% if forloop.first %}
       <td rowspan="{{ matrix.rows|length }}" style="vertical-align:middle; text-align:center; width:1.4em; padding:0;">
-        <div style="writing-mode:vertical-lr; transform:rotate(180deg); font-size:.625rem; text-transform:uppercase; color:var(--text-muted); letter-spacing:.1em; white-space:nowrap;">
+        <div style="writing-mode:vertical-lr; transform:rotate(180deg); font-size:.6875rem; color:var(--text-muted); white-space:nowrap;">
           {% trans "Likelihood" %} &rarr;
         </div>
       </td>
