@@ -116,7 +116,9 @@ docker compose exec ollama ollama pull qwen3:1.7b
 # AI_ASSISTANT_ENABLED=True
 ```
 
-Sizing: the default `qwen3:1.7b` model needs roughly 2-4 GB of RAM (CPU-only inference). The first question after startup loads the model (10-20 extra seconds); warm questions take about 5-20 seconds. Any Ollama chat model can be used instead via `AI_ASSISTANT_MODEL`. Without the profile (or if Ollama is down) the palette works exactly as before. Details: [docs/modules/assistant/](modules/assistant/README.md).
+Sizing: the default `qwen3:1.7b` model needs roughly 2-4 GB of RAM (CPU-only inference). The first question after startup loads the model (10-20 extra seconds); warm questions take about 5-30 seconds. Any Ollama chat model can be used instead via `AI_ASSISTANT_MODEL`. Without the profile (or if Ollama is down) the palette works exactly as before.
+
+On macOS, Docker containers cannot use the Metal GPU, which caps you at small models. For noticeably better answer phrasing, install the [native Ollama app](https://ollama.com/download) on the host, pull a 4B-class model (`ollama pull qwen3:4b`), and point Cairn at it instead of the compose profile: `AI_ASSISTANT_OLLAMA_URL=http://host.docker.internal:11434` and `AI_ASSISTANT_MODEL=qwen3:4b` in `.env` (do not start the `ai` profile then, to avoid a port conflict on 11434). Model guidance and measurements: [docs/modules/assistant/](modules/assistant/README.md).
 
 ## Scheduled lifecycle commands
 
