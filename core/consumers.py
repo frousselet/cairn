@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.db.models import Avg, Count, Q
+from django.db.models import Count, Q
 from django.utils import timezone
 
 
@@ -185,13 +185,22 @@ class DashboardConsumer(AsyncWebsocketConsumer):
         vulnerability_count = Vulnerability.objects.count()
 
         # ── Compliance ───────────────────────────────────
-        from core.workflow import reportable
+        # Same computation as the dashboard page render (shared service,
+        # same first-10 active frameworks), so the live refresh never
+        # overwrites the page value with a different number.
+        from compliance.services import (
+            active_frameworks_for_scoring,
+            annotate_compliance_segments,
+        )
 
         framework_count = filter_scoped(Framework.objects.all()).count()
-        agg = reportable(
-            filter_scoped(Framework.objects.filter(status="active"))
-        ).aggregate(avg=Avg("compliance_level"))
-        overall_compliance = round(agg["avg"] or 0)
+        scored = annotate_compliance_segments(list(
+            active_frameworks_for_scoring(filter_scoped(Framework.objects.all()))[:10]
+        ))
+        overall_compliance = (
+            round(sum(fw.computed_compliance for fw in scored) / len(scored))
+            if scored else 0
+        )
         requirement_count = Requirement.objects.count()
         non_compliant_count = Requirement.objects.filter(
             compliance_status__in=["major_non_conformity", "minor_non_conformity"]

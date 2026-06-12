@@ -32,7 +32,6 @@ from compliance.models import (
     Requirement,
     RequirementMapping,
 )
-from compliance.models.assessment import AssessmentResult
 from context.models import Activity, Indicator, Issue, Objective, Role, Scope, Site, Stakeholder, SwotAnalysis
 from context.views import get_dashboard_indicator_slots
 from risks.models import (
@@ -72,8 +71,6 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         return qs.filter(id__in=scope_ids)
 
     def get_context_data(self, **kwargs):
-        from core.workflow import reportable
-
         ctx = super().get_context_data(**kwargs)
         today = timezone.now().date()
 
@@ -176,91 +173,23 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
             )
 
         # ── Conformité ───────────────────────────────────
-        from compliance.constants import ComplianceStatus as CS
+        # Per-framework compliance segments and the overall average come
+        # from compliance.services (shared with the WebSocket refresh and
+        # the predefined indicators).
+        from compliance.services import (
+            active_frameworks_for_scoring,
+            annotate_compliance_segments,
+        )
 
         frameworks = self._filter_scoped(Framework.objects.all())
         ctx["framework_count"] = frameworks.count()
-        active_frameworks = list(
-            reportable(self._filter_scoped(
-                Framework.objects.filter(status="active")
+        active_frameworks = annotate_compliance_segments(list(
+            active_frameworks_for_scoring(self._filter_scoped(
+                Framework.objects.all()
             )).select_related("owner").prefetch_related(
                 Prefetch("scopes", queryset=Scope.objects.select_related("parent_scope")),
-            ).annotate(
-                req_count=Count("requirements", filter=Q(requirements__is_applicable=True)),
             )[:10]
-        )
-
-        NOT_EVALUATED = {CS.NOT_ASSESSED, CS.EVALUATED}
-        COMPLIANT_STATUSES = {CS.COMPLIANT, CS.STRENGTH}
-        PARTIAL_STATUSES = {
-            CS.MINOR_NON_CONFORMITY, CS.OBSERVATION,
-            CS.IMPROVEMENT_OPPORTUNITY,
-        }
-
-        # Compute segments from assessment results (latest by end_date, with fallback)
-        for fw in active_frameworks:
-            rc = fw.req_count or 0
-            if rc == 0:
-                fw.seg_compliant = fw.seg_partial = fw.seg_non_compliant = 0
-                fw.seg_evaluated = fw.seg_not_assessed = 0
-                fw.computed_compliance = 0
-                continue
-
-            req_ids = set(
-                fw.requirements.filter(is_applicable=True).values_list("pk", flat=True)
-            )
-            all_results = (
-                AssessmentResult.objects.filter(
-                    assessment__frameworks=fw,
-                    requirement_id__in=req_ids,
-                )
-                .select_related("assessment")
-                .order_by("-assessment__assessment_end_date", "-assessment__created_at")
-            )
-
-            latest_map = {}    # req_id → (status, level)
-            fallback_map = {}  # req_id → (status, level)
-            for r in all_results:
-                rid = r.requirement_id
-                if rid not in latest_map:
-                    latest_map[rid] = (r.compliance_status, r.compliance_level)
-                if rid not in fallback_map and r.compliance_status not in NOT_EVALUATED:
-                    fallback_map[rid] = (r.compliance_status, r.compliance_level)
-
-            counts = {"compliant": 0, "partial": 0, "non_compliant": 0, "evaluated": 0, "not_assessed": 0}
-            for rid in req_ids:
-                latest = latest_map.get(rid)
-                if latest is None:
-                    counts["not_assessed"] += 1
-                    continue
-                status, level = latest
-                if status in NOT_EVALUATED:
-                    fb = fallback_map.get(rid)
-                    if fb:
-                        status, level = fb
-                    else:
-                        status, level = CS.NOT_ASSESSED, 0
-
-                if status == CS.NOT_APPLICABLE:
-                    counts["compliant"] += 1
-                elif status in COMPLIANT_STATUSES:
-                    counts["compliant"] += 1
-                elif status in PARTIAL_STATUSES:
-                    counts["partial"] += 1
-                elif status == CS.MAJOR_NON_CONFORMITY:
-                    counts["non_compliant"] += 1
-                elif status == CS.EVALUATED:
-                    counts["evaluated"] += 1
-                else:
-                    counts["not_assessed"] += 1
-
-            fw.seg_compliant = round(counts["compliant"] * 100 / rc)
-            fw.seg_partial = round(counts["partial"] * 100 / rc)
-            fw.seg_non_compliant = round(counts["non_compliant"] * 100 / rc)
-            fw.seg_evaluated = round(counts["evaluated"] * 100 / rc)
-            fw.seg_not_assessed = round(counts["not_assessed"] * 100 / rc)
-            # Compliance % = proportion of compliant requirements (matches green segment)
-            fw.computed_compliance = fw.seg_compliant
+        ))
 
         ctx["active_frameworks"] = active_frameworks
         # Caption of the overall-compliance card: count the requirements that

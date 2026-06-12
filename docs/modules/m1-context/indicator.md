@@ -58,8 +58,8 @@ Indicateur de pilotage (KPI) du SMSI, manuel, alimenté par API ou prédéfini p
 
 | Source | Format | Unité | Description |
 |---|---|---|---|
-| `global_compliance_rate` | number | `%` | Taux de conformité agrégé sur l'ensemble des référentiels applicables |
-| `framework_compliance_rate` | number | `%` | Taux de conformité d'un référentiel précis (paramètre = UUID du `Framework`) |
+| `global_compliance_rate` | number | `%` | Taux de conformité agrégé : même calcul que la carte « Conformité globale » du tableau de bord (moyenne, sur les référentiels actifs et reportables, de la part d'exigences applicables conformes selon le dernier résultat d'évaluation ; service partagé `compliance.services`) |
+| `framework_compliance_rate` | number | `%` | Taux de conformité d'un référentiel précis (paramètre = UUID du `Framework`), même calcul par exigences que ci-dessus |
 | `objective_progress` | number | `%` | Avancement moyen des objectifs (`Objective.progress_percentage`) |
 | `risk_treatment_rate` | number | `%` | Part des risques dont un plan de traitement est `completed` |
 | `approved_scopes_rate` | number | `%` | Part des `Scope` au statut `active` ET `is_approved=true` |
