@@ -295,32 +295,25 @@ class Indicator(ScopedModel):
         return None
 
     def _compute_global_compliance_rate(self):
-        from compliance.models import Framework
-        from core.workflow import reportable
-        frameworks = reportable(Framework.objects.all())
-        if not frameworks.exists():
-            return "0"
-        total = 0
-        count = 0
-        for fw in frameworks:
-            rate = fw.compliance_level
-            if rate is not None:
-                total += rate
-                count += 1
-        if count == 0:
-            return "0"
-        return str(round(total / count, 1))
+        # Same computation as the dashboard's "Overall compliance" card:
+        # average of the computed compliance (proportion of compliant
+        # applicable requirements, from assessment results) over the
+        # active reportable frameworks - NOT the stored compliance_level
+        # field averaged over every framework.
+        from compliance.services import overall_compliance_rate
+        return str(overall_compliance_rate(precision=1))
 
     def _compute_framework_compliance_rate(self):
         if not self.internal_source_parameter:
             return None
         from compliance.models import Framework
+        from compliance.services import annotate_compliance_segments
         try:
             fw = Framework.objects.get(pk=self.internal_source_parameter)
-            rate = fw.compliance_level
-            return str(round(rate, 1)) if rate is not None else "0"
         except Framework.DoesNotExist:
             return None
+        annotate_compliance_segments([fw])
+        return str(round(fw.computed_compliance, 1))
 
     def _compute_objective_progress(self):
         from context.models import Objective

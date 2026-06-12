@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Predefined compliance indicators disagreed with the dashboard**: the "Global compliance rate" predefined indicator averaged the stored `compliance_level` field over every reportable framework (drafts and superseded included), while the dashboard computes, per active framework, the proportion of applicable requirements whose latest assessment result is compliant. The computation is extracted into a shared service (`compliance.services`) now used by the dashboard page, the dashboard WebSocket refresh (which averaged the stored field too, so a live update could overwrite the page value with a different number) and both predefined indicators (`global_compliance_rate` and `framework_compliance_rate`).
 - **Roles could not be assigned from the UI**: the role create / edit modal had no "Assigned users" field, even though the model, the API and the MCP tools expose it (and the dashboard nags about mandatory roles without a user). The second step of the modal becomes "Assignment & status" and gains a multi-select of active users.
 
 ### Changed
