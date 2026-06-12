@@ -21,7 +21,7 @@
     {# General #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
           <div>{% grouped_scope_badges asset.scopes.all %}{% if not asset.scopes.all %}<span class="text-muted">—</span>{% endif %}</div>
@@ -44,7 +44,7 @@
     {# CIA Valuation #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "CIA valuation" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "CIA valuation" %}</h6>
         <div class="row g-3 mb-3">
           <div class="col-md-4">
             <div class="card">
@@ -85,7 +85,7 @@
     {# Classification #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-lock me-1"></i>{% trans "Classification" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-lock me-1"></i>{% trans "Classification" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Classification" %}</div>
           <div>{{ asset.get_data_classification_display|default:"—" }}</div>
@@ -110,7 +110,7 @@
     {# Relations : associated support assets #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Associated support assets" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Associated support assets" %}</h6>
         {% if dependencies %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
@@ -136,7 +136,7 @@
     {# Valuations history #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-graph-up me-1"></i>{% trans "CIA valuation history" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-graph-up me-1"></i>{% trans "CIA valuation history" %}</h6>
         {% if valuations %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
@@ -169,7 +169,7 @@
     {# Status #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">
@@ -188,7 +188,7 @@
     {# People #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Owner" %}</dt>
           <dd class="mb-3">{% if asset.owner %}{% user_badge asset.owner size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}</dd>
@@ -203,7 +203,7 @@
     {# Dates #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
           <dd class="mb-3">{{ asset.created_at }}</dd>

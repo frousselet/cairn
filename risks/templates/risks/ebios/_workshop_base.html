@@ -24,7 +24,7 @@
   <div class="col-lg-4">
     <div class="card mb-3 ebios-sidebar-card">
       <div class="card-body">
-        <div class="small text-muted text-uppercase mb-2">{% trans "Status" %}</div>
+        <div class="small text-muted mb-2">{% trans "Status" %}</div>
         <h5 class="mb-1">
           <span class="badge text-bg-{% if workshop.status == 'validated' %}success{% elif workshop.status == 'in_progress' %}primary{% elif workshop.status == 'under_review' %}warning{% elif workshop.status == 'rejected' %}danger{% else %}secondary{% endif %}">
             {{ workshop.get_status_display }}

@@ -24,7 +24,7 @@
     {# ── General ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Assessment" %}</div>
           <div><a href="{% url 'risks:assessment-detail' risk.assessment.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ risk.assessment }}</a></div>
@@ -54,11 +54,11 @@
     {# ── Evaluation ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-speedometer2 me-1"></i>{% trans "Evaluation" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-speedometer2 me-1"></i>{% trans "Evaluation" %}</h6>
         <div class="row g-3">
           <div class="col-md-4">
             <div class="stat-card text-center">
-              <h6 style="color:var(--text-muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em">{% trans "Initial risk" %}</h6>
+              <h6 style="color:var(--text-muted);font-size:.8125rem;font-weight:500">{% trans "Initial risk" %}</h6>
               <p class="mb-1" style="font-size:.85rem">{% trans "Likelihood:" %} <strong>{{ risk.initial_likelihood|default:"—" }}</strong></p>
               <p class="mb-1" style="font-size:.85rem">{% trans "Impact:" %} <strong>{{ risk.initial_impact|default:"—" }}</strong></p>
               <p class="stat-card-value mt-2">{{ risk.initial_risk_level|default:"—" }}</p>
@@ -66,7 +66,7 @@
           </div>
           <div class="col-md-4">
             <div class="stat-card text-center">
-              <h6 style="color:var(--text-muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em">{% trans "Current risk" %}</h6>
+              <h6 style="color:var(--text-muted);font-size:.8125rem;font-weight:500">{% trans "Current risk" %}</h6>
               <p class="mb-1" style="font-size:.85rem">{% trans "Likelihood:" %} <strong>{{ risk.current_likelihood|default:"—" }}</strong></p>
               <p class="mb-1" style="font-size:.85rem">{% trans "Impact:" %} <strong>{{ risk.current_impact|default:"—" }}</strong></p>
               <p class="stat-card-value mt-2">{{ risk.current_risk_level|default:"—" }}</p>
@@ -74,7 +74,7 @@
           </div>
           <div class="col-md-4">
             <div class="stat-card text-center">
-              <h6 style="color:var(--text-muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.05em">{% trans "Residual risk" %}</h6>
+              <h6 style="color:var(--text-muted);font-size:.8125rem;font-weight:500">{% trans "Residual risk" %}</h6>
               <p class="mb-1" style="font-size:.85rem">{% trans "Likelihood:" %} <strong>{{ risk.residual_likelihood|default:"—" }}</strong></p>
               <p class="mb-1" style="font-size:.85rem">{% trans "Impact:" %} <strong>{{ risk.residual_impact|default:"—" }}</strong></p>
               <p class="stat-card-value mt-2">{{ risk.residual_risk_level|default:"—" }}</p>
@@ -87,7 +87,7 @@
     {# ── Treatment ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "Treatment" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "Treatment" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Treatment decision" %}</div>
           <div>{{ risk.get_treatment_decision_display }}</div>
@@ -158,7 +158,7 @@
     {# ── Affected assets ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-hdd-stack me-1"></i>{% trans "Affected assets" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-hdd-stack me-1"></i>{% trans "Affected assets" %}</h6>
         <div class="mb-3">
           <div class="fw-medium mb-2" style="font-size:.85rem">{% trans "Affected essential assets" %}</div>
           <div class="d-flex flex-wrap gap-2">
@@ -185,7 +185,7 @@
     {# ── Linked requirements ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-clipboard-check me-1"></i>{% trans "Linked requirements" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-clipboard-check me-1"></i>{% trans "Linked requirements" %}</h6>
         {% if risk.linked_requirements.all %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
@@ -216,7 +216,7 @@
     {% if iso27005_sources %}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-diagram-2 me-1"></i>{% trans "Methodology sources" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-2 me-1"></i>{% trans "Methodology sources" %}</h6>
         <p class="small text-muted">
           <i class="bi bi-info-circle me-1"></i>
           {% trans "This risk was identified through ISO 27005 analyses (threat × vulnerability)." %}
@@ -249,7 +249,7 @@
     {# ── Status ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">{{ risk.get_status_display }}</dd>
@@ -269,7 +269,7 @@
     {% if risk.criteria_snapshot %}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-bookmark-check me-1"></i>{% trans "Scoring snapshot" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-bookmark-check me-1"></i>{% trans "Scoring snapshot" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Criteria" %}</dt>
           <dd class="mb-2">
@@ -294,7 +294,7 @@
     {# ── People ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Owner" %}</div>
           {% if risk.risk_owner %}{% user_badge risk.risk_owner size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
@@ -309,7 +309,7 @@
     {# ── Dates ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Review date" %}</dt>
           <dd class="mb-3">{{ risk.review_date|default:"—" }}</dd>

@@ -45,14 +45,14 @@
 
     {% if review.description %}
     <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted text-uppercase small fw-semibold mb-2">{% trans "Description" %}</h6>
+      <h6 class="text-muted small fw-semibold mb-2">{% trans "Description" %}</h6>
       <div>{{ review.description|linebreaks }}</div>
     </div></div>
     {% endif %}
 
     {% if review.agenda %}
     <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted text-uppercase small fw-semibold mb-2">{% trans "Agenda" %}</h6>
+      <h6 class="text-muted small fw-semibold mb-2">{% trans "Agenda" %}</h6>
       <div>{{ review.agenda|linebreaks }}</div>
     </div></div>
     {% endif %}
@@ -60,7 +60,7 @@
     {# Decisions (outputs 9.3.3) #}
     <div class="card mb-3"><div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-0">{% trans "Decisions (clause 9.3.3)" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-0">{% trans "Decisions (clause 9.3.3)" %}</h6>
         {% if can_update_review %}
         <a href="{% url 'reports:decision-create' review.pk %}" class="btn btn-sm btn-outline-primary">
           <i class="bi bi-plus-lg me-1"></i>{% trans "Add decision" %}
@@ -105,7 +105,7 @@
     {# ISMS changes #}
     <div class="card mb-3"><div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-0">{% trans "ISMS changes (clause 9.3.3)" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-0">{% trans "ISMS changes (clause 9.3.3)" %}</h6>
         {% if can_update_review %}
         <a href="{% url 'reports:isms-change-create' review.pk %}" class="btn btn-sm btn-outline-primary">
           <i class="bi bi-plus-lg me-1"></i>{% trans "Add change" %}
@@ -146,7 +146,7 @@
 
     {# Executive summary #}
     <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted text-uppercase small fw-semibold mb-2">{% trans "Executive summary" %}</h6>
+      <h6 class="text-muted small fw-semibold mb-2">{% trans "Executive summary" %}</h6>
       {% if review.summary %}
         <div>{{ review.summary|linebreaks }}</div>
       {% else %}
@@ -156,7 +156,7 @@
 
     {# Comments #}
     <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "Comments" %}</h6>
+      <h6 class="text-muted small fw-semibold mb-3">{% trans "Comments" %}</h6>
       {% if can_update_review %}
       <form method="post" action="{% url 'reports:management-review-comment-create' review.pk %}" class="mb-3">
         {% csrf_token %}
@@ -177,7 +177,7 @@
     {# Transition history #}
     {% if transitions %}
     <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "Status history" %}</h6>
+      <h6 class="text-muted small fw-semibold mb-3">{% trans "Status history" %}</h6>
       <ul class="list-unstyled small mb-0">
         {% for t in transitions %}
         <li class="mb-1">
@@ -197,7 +197,7 @@
   <div class="col-lg-4">
     <div class="card position-sticky" style="top:1rem">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "Details" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3">{% trans "Details" %}</h6>
 
         <dl class="row small mb-0">
           <dt class="col-5">{% trans "Status" %}</dt>
@@ -245,7 +245,7 @@
 
         <hr>
 
-        <h6 class="text-muted text-uppercase small fw-semibold mb-2">{% trans "Participants" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-2">{% trans "Participants" %}</h6>
         {% if participants %}
         <ul class="list-unstyled small mb-0">
           {% for p in participants %}

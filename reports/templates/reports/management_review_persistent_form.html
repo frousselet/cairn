@@ -20,7 +20,7 @@
     <div class="col-md-8">
       <div class="card mb-3">
         <div class="card-body">
-          <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "General information" %}</h6>
+          <h6 class="text-muted small fw-semibold mb-3">{% trans "General information" %}</h6>
 
           <div class="mb-3">
             <label class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
@@ -87,7 +87,7 @@
       </div>
 
       <div class="card mb-3"><div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "Agenda and summary" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3">{% trans "Agenda and summary" %}</h6>
         <div class="mb-3">
           <label class="form-label">{{ form.agenda.label }}</label>
           {{ form.agenda }}
@@ -100,7 +100,7 @@
 
       {% if participant_formset %}
       <div class="card mb-3"><div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "Participants" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3">{% trans "Participants" %}</h6>
         {{ participant_formset.management_form }}
         <div id="participant-formset">
         {% for pform in participant_formset %}
@@ -142,7 +142,7 @@
 
     <div class="col-md-4">
       <div class="card mb-3"><div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3">{% trans "Scope and tags" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3">{% trans "Scope and tags" %}</h6>
         <div class="mb-3">
           <label class="form-label">{{ form.scopes.label }}</label>
           {{ form.scopes }}

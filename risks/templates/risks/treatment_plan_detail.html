@@ -24,7 +24,7 @@
     {# ── General ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Risk" %}</div>
           <div><a href="{% url 'risks:risk-detail' plan.risk.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ plan.risk }}</a></div>
@@ -58,7 +58,7 @@
     <div class="card mb-4">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="text-muted text-uppercase small fw-semibold mb-0"><i class="bi bi-list-task me-1"></i>{% trans "Treatment actions" %}</h6>
+          <h6 class="text-muted small fw-semibold mb-0"><i class="bi bi-list-task me-1"></i>{% trans "Treatment actions" %}</h6>
           {% has_perm "risks.treatment.update" as can_edit_actions %}
           {% if can_edit_actions %}
           <a href="{% url 'risks:treatment-action-create' plan.pk %}"
@@ -118,7 +118,7 @@
     <div class="card mb-4">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="text-muted text-uppercase small fw-semibold mb-0"><i class="bi bi-clipboard-plus me-1"></i>{% trans "Related action plans" %}</h6>
+          <h6 class="text-muted small fw-semibold mb-0"><i class="bi bi-clipboard-plus me-1"></i>{% trans "Related action plans" %}</h6>
           <a href="{% url 'risks:treatment-plan-update' plan.pk %}" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-pencil me-1"></i>{% trans "Manage links" %}
           </a>
@@ -158,7 +158,7 @@
     {# ── Status ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">
@@ -182,7 +182,7 @@
     {# ── People ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Owner" %}</div>
           {% if plan.owner %}{% user_badge plan.owner size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
@@ -197,7 +197,7 @@
     {# ── Dates ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Start date" %}</dt>
           <dd class="mb-3">{{ plan.start_date|default:"—" }}</dd>

@@ -18,7 +18,7 @@
   <div class="col-lg-8">
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
           {% grouped_scope_badges activity.scopes.all %}{% if not activity.scopes.all %}<span class="text-muted">—</span>{% endif %}
@@ -39,7 +39,7 @@
     {% if activity.children.exists %}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Sub-activities" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Sub-activities" %}</h6>
         <ul class="list-group list-group-flush">
           {% for child in activity.children.all %}
           <li class="list-group-item px-0 d-flex justify-content-between align-items-center{% if forloop.first %} pt-0{% endif %}{% if forloop.last %} pb-0{% endif %}">
@@ -57,7 +57,7 @@
   <div class="col-lg-4">
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">{{ activity.get_status_display }}</dd>
@@ -75,7 +75,7 @@
 
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <div>
           <div class="text-muted small mb-1">{% trans "Owner" %}</div>
           {% if activity.owner %}{% user_badge activity.owner size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
@@ -85,7 +85,7 @@
 
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
           <dd class="mb-0">{{ activity.created_at }}</dd>

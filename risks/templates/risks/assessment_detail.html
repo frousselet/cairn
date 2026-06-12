@@ -10,7 +10,7 @@
   .risk-matrix-cell { position: relative; height: 60px; min-width: 60px; transition: transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s; cursor: default; border: 2px solid var(--surface-raised) !important; border-radius: var(--radius-xs, .375rem); }
   .risk-matrix-cell:hover { transform: scale(1.06); z-index: 1; box-shadow: var(--shadow-md); }
   .risk-matrix-count { display: block; font-size: 1.25rem; font-weight: 700; line-height: 1.2; font-variant-numeric:tabular-nums; }
-  .risk-matrix-level-name { display: block; font-size: .5625rem; text-transform: uppercase; letter-spacing: .04em; opacity: .75; font-weight:500; }
+  .risk-matrix-level-name { display: block; font-size: .625rem; opacity: .75; font-weight:500; }
   .workflow-step { display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; border-radius: .5rem; margin-bottom: .5rem; }
   .workflow-step:last-child { margin-bottom: 0; }
   .workflow-step .step-number { width: 2rem; height: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; flex-shrink: 0; }
@@ -103,7 +103,7 @@
     {# ── General ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Methodology" %}</div>
           <div>
@@ -140,7 +140,7 @@
     <div class="card mb-4">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="text-muted text-uppercase small fw-semibold mb-0"><i class="bi bi-diagram-3 me-1"></i>{% trans "ISO 27005 analyses" %}</h6>
+          <h6 class="text-muted small fw-semibold mb-0"><i class="bi bi-diagram-3 me-1"></i>{% trans "ISO 27005 analyses" %}</h6>
           <a href="{% url 'risks:iso27005-create' %}?assessment={{ assessment.pk }}" class="btn btn-sm btn-primary">{% trans "New analysis" %}</a>
         </div>
         {% if iso27005_risks %}
@@ -200,7 +200,7 @@
     <div class="card mb-4">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="text-muted text-uppercase small fw-semibold mb-0"><i class="bi bi-exclamation-triangle me-1"></i>{% trans "Associated risks" %}</h6>
+          <h6 class="text-muted small fw-semibold mb-0"><i class="bi bi-exclamation-triangle me-1"></i>{% trans "Associated risks" %}</h6>
           {% if assessment.methodology == 'iso27005' %}
           <span class="text-muted small">
             <i class="bi bi-info-circle me-1"></i>{% trans "Risks are created by consolidating ISO 27005 analyses." %}
@@ -244,7 +244,7 @@
     {% if matrix_current or matrix_residual %}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3">
+        <h6 class="text-muted small fw-semibold mb-3">
           <i class="bi bi-grid-3x3 me-1"></i>{% trans "Risk matrices" %}
           {% if matrix_criteria %}<small class="text-muted fw-normal ms-2">({{ matrix_criteria.name }})</small>{% endif %}
         </h6>
@@ -274,7 +274,7 @@
     {# ── Status ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">
@@ -291,7 +291,7 @@
     {# ── People ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Assessor" %}</div>
           {% if assessment.assessor %}{% user_badge assessment.assessor size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
@@ -306,7 +306,7 @@
     {# ── Dates ── #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Assessment date" %}</dt>
           <dd class="mb-3">{{ assessment.assessment_date|default:"—" }}</dd>

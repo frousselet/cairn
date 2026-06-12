@@ -31,7 +31,7 @@
     {# General #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
           <div>{% grouped_scope_badges supplier.scopes.all %}{% if not supplier.scopes.all %}<span class="text-muted">—</span>{% endif %}</div>
@@ -54,7 +54,7 @@
     {# Contact #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-person-lines-fill me-1"></i>{% trans "Contact" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-person-lines-fill me-1"></i>{% trans "Contact" %}</h6>
         <div class="row">
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Contact name" %}</div>
@@ -87,7 +87,7 @@
     {# Contract #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-file-earmark-text me-1"></i>{% trans "Contract" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-file-earmark-text me-1"></i>{% trans "Contract" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Contract reference" %}</div>
           <div>{{ supplier.contract_reference|default:"—" }}</div>
@@ -109,7 +109,7 @@
     {# Requirements #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-list-check me-1"></i>{% trans "Requirements" %} <span class="badge text-bg-secondary">{{ requirements|length }}{% if type_requirements %} + {{ type_requirements|length }}{% endif %}</span></h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-list-check me-1"></i>{% trans "Requirements" %} <span class="badge text-bg-secondary">{{ requirements|length }}{% if type_requirements %} + {{ type_requirements|length }}{% endif %}</span></h6>
 
         {% if supplier.type and type_requirements %}
         <h6 class="mb-3">{% trans "Type requirements" %} <small style="color:var(--text-muted);font-weight:normal">({% trans "inherited from" %} <a href="{% url 'assets:supplier-type-detail' supplier.type.pk %}" style="color:var(--accent);text-decoration:none">{{ supplier.type.name }}</a>)</small></h6>
@@ -227,7 +227,7 @@
     {# Status #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">
@@ -250,7 +250,7 @@
     {# People #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Owner" %}</dt>
           <dd class="mb-3">{% if supplier.owner %}{% user_badge supplier.owner size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}</dd>
@@ -263,7 +263,7 @@
     {# Dates #}
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
           <dd class="mb-3">{{ supplier.created_at }}</dd>

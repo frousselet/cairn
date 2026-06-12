@@ -20,7 +20,7 @@
   <div class="col-lg-8">
     <div class="card mb-4">
       <div class="card-body">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-3"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>{% trans "Information" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>{% trans "Information" %}</h6>
         <dl class="row mb-0">
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt>
           <dd class="col-sm-9">{{ role.get_type_display }}</dd>
@@ -36,7 +36,7 @@
 
     <details class="card mb-4" open>
       <summary class="card-body py-2" style="cursor:pointer;user-select:none">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-list-check me-1" aria-hidden="true"></i>{% trans "Responsibilities" %}<span class="badge bg-secondary ms-2 tabular-nums">{{ role.responsibilities.count }}</span></h6>
+        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-list-check me-1" aria-hidden="true"></i>{% trans "Responsibilities" %}<span class="badge bg-secondary ms-2 tabular-nums">{{ role.responsibilities.count }}</span></h6>
       </summary>
       <div class="card-body pt-0">
         {% if role.responsibilities.all %}
@@ -68,7 +68,7 @@
 
     <details class="card mb-4">
       <summary class="card-body py-2" style="cursor:pointer;user-select:none">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-people me-1" aria-hidden="true"></i>{% trans "Users" %}<span class="badge bg-secondary ms-2 tabular-nums">{{ role.assigned_users.count }}</span></h6>
+        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-people me-1" aria-hidden="true"></i>{% trans "Users" %}<span class="badge bg-secondary ms-2 tabular-nums">{{ role.assigned_users.count }}</span></h6>
       </summary>
       <div class="card-body pt-0">
         {% if role.assigned_users.all %}
@@ -85,7 +85,7 @@
 
     <details class="card mb-4">
       <summary class="card-body py-2" style="cursor:pointer;user-select:none">
-        <h6 class="text-muted text-uppercase small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-clock-history me-1" aria-hidden="true"></i>{% trans "History" %}</h6>
+        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-clock-history me-1" aria-hidden="true"></i>{% trans "History" %}</h6>
       </summary>
       <div class="card-body pt-0">
         {% include "includes/history_tab.html" %}

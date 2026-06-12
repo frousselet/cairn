@@ -100,9 +100,12 @@
       --sidebar-w: 264px;
       --sidebar-collapsed-w: 4.25rem;
       --sidebar-inset: 0rem;
-      /* Floating glass elements in the sidebar (search field, user footer) */
-      --sidebar-glass: rgba(255,255,255,.45);
-      --sidebar-glass-hover: rgba(255,255,255,.7);
+      /* Floating glass elements (sidebar search field and user footer,
+       * floating buttons, sticky bars). Generalized from the sidebar
+       * redesign so every element hovering over content shares the
+       * same frosted treatment. */
+      --glass: rgba(255,255,255,.45);
+      --glass-hover: rgba(255,255,255,.7);
       --radius-xs: .375rem;
       --radius-sm: .5rem;
       --radius-md: .625rem;
@@ -215,8 +218,8 @@
       --shadow-xl: 0 20px 48px rgba(0,0,0,.4);
       --shadow-glow: 0 0 0 1px rgba(129,140,248,.1), 0 4px 16px rgba(129,140,248,.06);
       --text-sidebar-sub: var(--color-charcoal-400);
-      --sidebar-glass: rgba(28,31,35,.45);
-      --sidebar-glass-hover: rgba(42,45,50,.65);
+      --glass: rgba(28,31,35,.45);
+      --glass-hover: rgba(42,45,50,.65);
       /* Module accents (dark mode) - all aliased to the single brand colour. */
       --module-accent-risks:        var(--accent);
       --module-accent-risks-soft:   var(--accent-soft);
@@ -269,7 +272,7 @@
     h3 { font-size: 1.125rem; font-weight: 600; letter-spacing: -.012em; color: var(--text-primary); line-height: 1.35; }
     h4 { font-size: 1rem; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
     h5 { font-size: .9375rem; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
-    h6 { font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); line-height: 1.4; }
+    h6 { font-size: .8125rem; font-weight: 600; color: var(--text-muted); line-height: 1.4; }
     .display-4 { font-size: 2.25rem; font-weight: 600; letter-spacing: -.028em; line-height: 1.1; }
     .display-6 { font-size: 1.625rem; font-weight: 600; letter-spacing: -.022em; line-height: 1.15; }
     small, .small { font-size: .8125rem; }
@@ -322,12 +325,14 @@
     }
     /* Invisible scrollbar: the menu scrolls but shows no persistent bar */
     .sidebar,
-    .sidebar-body {
+    .sidebar-body,
+    .sidebar .notif-list {
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
     .sidebar::-webkit-scrollbar,
-    .sidebar-body::-webkit-scrollbar { display: none; width: 0; }
+    .sidebar-body::-webkit-scrollbar,
+    .sidebar .notif-list::-webkit-scrollbar { display: none; width: 0; }
 
     /* No border under the brand: a gradient veil hangs below it
      * (page background fading to transparent) so scrolling entries
@@ -394,7 +399,7 @@
       gap: .5rem;
       width: 100%;
       padding: .5rem .875rem;
-      background: var(--sidebar-glass);
+      background: var(--glass);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border: 1px solid var(--border-glass);
@@ -410,7 +415,7 @@
     }
     .sidebar-search-field:hover,
     .sidebar-search-field:focus-visible {
-      background: var(--sidebar-glass-hover);
+      background: var(--glass-hover);
       border-color: var(--border-light);
       color: var(--text-secondary);
     }
@@ -548,7 +553,7 @@
       padding: .5rem 1rem;
     }
     .sidebar-user-card {
-      background: var(--sidebar-glass);
+      background: var(--glass);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border: 1px solid var(--border-glass);
@@ -590,7 +595,7 @@
       display: block;
     }
     .sidebar-user:hover {
-      background: var(--sidebar-glass-hover);
+      background: var(--glass-hover);
     }
     .sidebar-user-avatar {
       display: inline-flex;
@@ -657,7 +662,7 @@
       transition: background-color var(--transition-fast), color var(--transition-fast);
     }
     .sidebar-notif-btn:hover {
-      background: var(--sidebar-glass-hover);
+      background: var(--glass-hover);
       color: var(--text-secondary);
     }
     .sidebar-notif-panel {
@@ -708,8 +713,10 @@
       width: 1.75rem;
       height: 1.75rem;
       border-radius: 50%;
-      border: 1px solid var(--border-light);
-      background: var(--surface-raised);
+      border: 1px solid var(--border-glass);
+      background: var(--glass);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       color: var(--text-muted);
       cursor: pointer;
       font-size: .625rem;
@@ -950,10 +957,8 @@
     }
     .sidebar-flyout .flyout-title {
       padding: .5rem .875rem .375rem;
-      font-size: .6875rem;
-      font-weight: 650;
-      text-transform: uppercase;
-      letter-spacing: .08em;
+      font-size: .75rem;
+      font-weight: 500;
       color: var(--text-muted);
     }
     .sidebar-flyout a {
@@ -1034,7 +1039,9 @@
     }
     .card > .card-header {
       background: transparent;
-      border-bottom: 1px solid var(--border-hairline);
+      /* Hairline fading at both ends, like the sidebar demarcation */
+      border-bottom: 1px solid transparent;
+      border-image: linear-gradient(to right, transparent, var(--border-subtle) 12%, var(--border-subtle) 88%, transparent) 1;
       padding: 1.125rem 1.75rem;
     }
     .card-body { padding: 1.75rem 2rem; }
@@ -1110,12 +1117,10 @@
     .stat-card-icon.danger { background: var(--danger-soft); color: var(--danger); }
     .stat-card-icon.info { background: var(--info-soft); color: var(--info); }
     .stat-card-label {
-      font-size: .75rem;
-      font-weight: 550;
+      font-size: .8125rem;
+      font-weight: 500;
       color: var(--text-muted);
       margin-bottom: .375rem;
-      text-transform: uppercase;
-      letter-spacing: .04em;
     }
     .stat-card-value {
       font-size: 1.75rem;
@@ -1160,12 +1165,10 @@
       margin-bottom: 0;
     }
     .table > thead > tr > th {
-      font-size: .6875rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .08em;
+      font-size: .75rem;
+      font-weight: 600;
       color: var(--text-muted);
-      border-bottom: 1.5px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light);
       padding: .75rem 1rem;
       background: transparent;
       white-space: nowrap;
@@ -1481,6 +1484,8 @@
       font-weight: 500;
       line-height: 1.4;
       box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       animation: toastSlideIn .35s cubic-bezier(.21,1.02,.73,1) forwards;
       will-change: transform, opacity;
       color: var(--text-primary);
@@ -1516,17 +1521,19 @@
       border-radius: 0 0 var(--radius-md) var(--radius-md);
       animation: toastProgress 5s linear forwards;
     }
-    .toast-item.toast-success { background: var(--success-soft); color: var(--text-primary); }
+    /* Semantic tints kept, but translucent so the backdrop blur reads
+     * as frosted glass over the page content */
+    .toast-item.toast-success { background: color-mix(in srgb, var(--success-soft) 82%, transparent); color: var(--text-primary); }
     .toast-item.toast-success .toast-progress { background: var(--text-primary); }
     .toast-item.toast-danger,
-    .toast-item.toast-error { background: var(--danger-soft); color: var(--text-primary); }
+    .toast-item.toast-error { background: color-mix(in srgb, var(--danger-soft) 82%, transparent); color: var(--text-primary); }
     .toast-item.toast-danger .toast-progress,
     .toast-item.toast-error .toast-progress { background: var(--text-primary); }
-    .toast-item.toast-warning { background: var(--warning-soft); color: var(--text-primary); }
+    .toast-item.toast-warning { background: color-mix(in srgb, var(--warning-soft) 82%, transparent); color: var(--text-primary); }
     .toast-item.toast-warning .toast-progress { background: var(--text-primary); }
-    .toast-item.toast-info { background: var(--accent-soft); color: var(--text-primary); }
+    .toast-item.toast-info { background: color-mix(in srgb, var(--accent-soft) 82%, transparent); color: var(--text-primary); }
     .toast-item.toast-info .toast-progress { background: var(--text-primary); }
-    [data-bs-theme="dark"] .toast-stack .toast-item { color: var(--color-charcoal-100); background: var(--color-charcoal-700); }
+    [data-bs-theme="dark"] .toast-stack .toast-item { color: var(--color-charcoal-100); background: rgba(28,31,35,.78); }
 
     @keyframes toastSlideIn {
       from { transform: translateX(calc(100% + 1.5rem)); opacity: 0; }
@@ -1668,7 +1675,9 @@
       box-shadow: var(--shadow-lg);
       padding: .375rem;
       font-size: .875rem;
-      background: var(--surface);
+      background: var(--surface-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       animation: dropdownFade .15s var(--ease-out-expo);
     }
     @keyframes dropdownFade {
@@ -1718,7 +1727,11 @@
     .search-overlay.show { opacity: 1; visibility: visible; }
     .search-dialog {
       width: min(95vw, 620px);
-      background: var(--surface-raised);
+      /* Frosted glass: the dialog morphs out of the sidebar's glass
+       * search field, so it keeps the same material */
+      background: var(--surface-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--border-light);
       border-radius: 1.25rem;
       box-shadow: var(--shadow-xl);
@@ -1734,8 +1747,10 @@
       align-items: center;
       gap: .625rem;
       padding: .875rem 1.125rem;
-      border-bottom: 1px solid var(--border-light);
-      background: var(--surface);
+      background: transparent;
+      /* Hairline fading at both ends, like the sidebar demarcation */
+      border-bottom: 1px solid transparent;
+      border-image: linear-gradient(to right, transparent, var(--border-light) 12%, var(--border-light) 88%, transparent) 1;
     }
     .search-input-wrap i { color: var(--text-muted); font-size: 1.125rem; flex-shrink: 0; }
     .search-input-wrap input {
@@ -1776,10 +1791,8 @@
       border-radius: 3px;
     }
     .search-group-label {
-      font-size: .6875rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .08em;
+      font-size: .75rem;
+      font-weight: 500;
       color: var(--text-muted);
       padding: .75rem 1.125rem .25rem;
       display: flex;
@@ -2117,11 +2130,9 @@
     }
     .filter-pill i { font-size: .6875rem; }
     .filter-bar-label {
-      font-size: .6875rem;
-      font-weight: 600;
+      font-size: .75rem;
+      font-weight: 500;
       color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: .04em;
       white-space: nowrap;
     }
     .filter-bar .form-control {
@@ -2344,8 +2355,20 @@
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-xl);
     }
-    .modal-header { border-bottom-color: var(--border-light); }
-    .modal-footer { border-top-color: var(--border-light); }
+    /* Hairlines fading at both ends, like the sidebar demarcation */
+    .modal-header {
+      border-bottom: 1px solid transparent;
+      border-image: linear-gradient(to right, transparent, var(--border-light) 12%, var(--border-light) 88%, transparent) 1;
+    }
+    .modal-footer {
+      border-top: 1px solid transparent;
+      border-image: linear-gradient(to right, transparent, var(--border-light) 12%, var(--border-light) 88%, transparent) 1;
+    }
+    /* Frosted backdrop, matching the search overlay */
+    .modal-backdrop.show {
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
 
     /* ── About modal ───────────────────────────────────── */
     .about-modal-content { text-align: center; }
@@ -2383,9 +2406,11 @@
       width: 2.5rem;
       height: 2.5rem;
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-light);
-      background: var(--surface-raised);
-      box-shadow: var(--shadow-xs);
+      border: 1px solid var(--border-glass);
+      background: var(--glass);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-sm);
       color: var(--text-secondary);
       align-items: center;
       justify-content: center;
@@ -2397,7 +2422,7 @@
     }
     .mobile-menu-toggle:active {
       transform: scale(.92);
-      background: var(--surface-muted);
+      background: var(--glass-hover);
     }
     /* When sidebar is open, integrate the close button inside the sidebar header */
     body.sidebar-open .mobile-menu-toggle {
@@ -2776,14 +2801,14 @@
       display: flex;
       align-items: center;
       gap: .375rem;
-      font-size: .6875rem;
+      font-size: .75rem;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .06em;
       color: var(--text-muted);
       margin-bottom: .75rem;
       padding-bottom: .5rem;
-      border-bottom: 1px solid var(--border-subtle);
+      /* Hairline fading to the right, echoing the sidebar demarcation */
+      border-bottom: 1px solid transparent;
+      border-image: linear-gradient(to right, var(--border-subtle) 40%, transparent) 1;
     }
     .drawer-section-title i {
       font-size: .7rem;
@@ -2802,10 +2827,8 @@
       margin-bottom: 1.5rem;
     }
     .drawer-meta .form-label {
-      font-size: .6875rem !important;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .04em;
+      font-size: .75rem !important;
+      font-weight: 500;
       color: var(--text-muted);
       margin-bottom: .25rem;
     }
@@ -3049,10 +3072,8 @@
       line-height: 1.2;
     }
     .page-header__eyebrow {
-      font-size: .6875rem;
+      font-size: .75rem;
       font-weight: 600;
-      letter-spacing: .06em;
-      text-transform: uppercase;
       color: var(--module-accent, var(--text-muted));
       margin-bottom: .625rem;
       line-height: 1;
@@ -3218,10 +3239,8 @@
       letter-spacing: -.02em;
     }
     .kpi-card__label {
-      font-size: .75rem;
+      font-size: .8125rem;
       color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: .04em;
       font-weight: 500;
       margin-top: .125rem;
     }
@@ -3245,13 +3264,13 @@
       align-items: center;
       gap: .5rem;
       padding: .75rem 1rem;
-      font-size: .75rem;
+      font-size: .8125rem;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .05em;
       color: var(--text-muted);
-      background: var(--surface-muted);
-      border-bottom: 1px solid var(--border-light);
+      background: transparent;
+      /* Flat header: no tinted block, a hairline fading at both ends */
+      border-bottom: 1px solid transparent;
+      border-image: linear-gradient(to right, transparent, var(--border-light) 12%, var(--border-light) 88%, transparent) 1;
     }
     .sidebar-card__header .bi { font-size: .875rem; }
     .sidebar-card__body { padding: 1rem; }
@@ -3269,8 +3288,12 @@
       z-index: 100;
       margin: 0 0 1rem;
       padding: .625rem 1rem;
-      background: var(--surface-raised);
-      border: 1px solid var(--accent);
+      /* Floating glass card, like the sidebar search and user footer.
+       * The accent-coloured count is enough to signal selection mode. */
+      background: var(--surface-glass);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border-light);
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-md);
       animation: bulk-bar-slide .25s var(--ease-out-expo);
