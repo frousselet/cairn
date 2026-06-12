@@ -426,8 +426,10 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
             # plans already started.
             if end_d and start_d >= today:
                 due = start_d
+                kind = ev.get("kind_start") or ev.get("kind")
             else:
                 due = end_d or start_d
+                kind = (ev.get("kind_end") if end_d else None) or ev.get("kind")
             if due > today + timedelta(days=30):
                 continue
             overdue = due < today
@@ -436,10 +438,13 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
             if overdue and not ev.get("is_deadline"):
                 continue
             calendar_items.append({
-                "title": ev["title"],
+                # The nature of the date lives in `kind`; the title stays
+                # free of the "Review: " / "Expiry: " prefixes.
+                "title": ev.get("plain_title") or ev["title"],
                 "url": ev.get("url"),
                 "color": ev["color"],
                 "category_label": category_labels.get(ev["category"], ev["category"]),
+                "kind": kind,
                 "due": due,
                 "overdue": overdue,
                 "days_left": (due - today).days,
@@ -537,7 +542,10 @@ def get_calendar_events(user, start=None, end=None, categories=None):
     # `done` is a per-object predicate flagging items already concluded
     # (closed / completed / cancelled): their dates stay on the calendar
     # but are no longer actionable.
-    def add(queryset, date_field, category, color, url_name, label_prefix="", deadline=False, done=None):
+    # `kind` (and `kind_start` / `kind_end` for ranges) names the nature of
+    # the date (review, expiry, effective date, target date...) so consumers
+    # can say what the event is instead of just when it falls.
+    def add(queryset, date_field, category, color, url_name, label_prefix="", deadline=False, done=None, kind=""):
         queryset = reportable(queryset)
         filters = {f"{date_field}__isnull": False}
         if start:
@@ -545,20 +553,21 @@ def get_calendar_events(user, start=None, end=None, categories=None):
         if end:
             filters[f"{date_field}__lte"] = end
         for obj in queryset.filter(**filters):
-            title = str(obj)
-            if label_prefix:
-                title = f"{label_prefix}{title}"
+            plain_title = str(obj)
+            title = f"{label_prefix}{plain_title}" if label_prefix else plain_title
             events.append({
                 "title": title,
+                "plain_title": plain_title,
                 "start": getattr(obj, date_field).isoformat(),
                 "color": color,
                 "category": category,
                 "url": _safe_reverse(url_name, obj.pk),
                 "is_deadline": deadline,
                 "is_done": bool(done and done(obj)),
+                "kind": kind,
             })
 
-    def add_range(queryset, sf, ef, category, color, url_name, deadline=False, done=None):
+    def add_range(queryset, sf, ef, category, color, url_name, deadline=False, done=None, kind_start="", kind_end=""):
         queryset = reportable(queryset)
         qs = queryset.filter(
             Q(**{f"{sf}__isnull": False}) | Q(**{f"{ef}__isnull": False})
@@ -580,11 +589,14 @@ def get_calendar_events(user, start=None, end=None, categories=None):
                 continue
             ev = {
                 "title": str(obj),
+                "plain_title": str(obj),
                 "color": color,
                 "category": category,
                 "url": _safe_reverse(url_name, obj.pk),
                 "is_deadline": deadline,
                 "is_done": bool(done and done(obj)),
+                "kind_start": kind_start,
+                "kind_end": kind_end,
             }
             if s and e:
                 ev["start"] = min(s, e).isoformat()
@@ -597,15 +609,16 @@ def get_calendar_events(user, start=None, end=None, categories=None):
     if "risk_assessment" in categories:
         qs = _filter_scoped(RiskAssessment.objects.all(), user)
         add(qs, "assessment_date", "risk_assessment", "#ef4444",
-            "risks:assessment-detail")
+            "risks:assessment-detail", kind=_("Assessment date"))
         add(qs, "next_review_date", "risk_assessment", "#fca5a5",
-            "risks:assessment-detail", _("Review: "), deadline=True)
+            "risks:assessment-detail", _("Review: "), deadline=True, kind=_("Review"))
 
     if "compliance_assessment" in categories:
         qs = _filter_scoped(ComplianceAssessment.objects.all(), user)
         add_range(qs, "assessment_start_date", "assessment_end_date",
                   "compliance_assessment", "#1E3A8A",
-                  "compliance:assessment-detail")
+                  "compliance:assessment-detail",
+                  kind_start=_("Audit start"), kind_end=_("Audit end"))
 
     if "action_plan" in categories:
         from compliance.constants import ActionPlanStatus
@@ -614,7 +627,8 @@ def get_calendar_events(user, start=None, end=None, categories=None):
         add_range(qs, "start_date", "target_date",
                   "action_plan", "#f59e0b",
                   "compliance:action-plan-detail", deadline=True,
-                  done=lambda o: o.status in (ActionPlanStatus.CLOSED, ActionPlanStatus.CANCELLED))
+                  done=lambda o: o.status in (ActionPlanStatus.CLOSED, ActionPlanStatus.CANCELLED),
+                  kind_start=_("Start date"), kind_end=_("Target date"))
 
     if "treatment_plan" in categories:
         from risks.constants import TreatmentPlanStatus
@@ -623,13 +637,15 @@ def get_calendar_events(user, start=None, end=None, categories=None):
         add_range(qs, "start_date", "target_date",
                   "treatment_plan", "#475569",
                   "risks:treatment-plan-detail", deadline=True,
-                  done=lambda o: o.status in (TreatmentPlanStatus.COMPLETED, TreatmentPlanStatus.CANCELLED))
+                  done=lambda o: o.status in (TreatmentPlanStatus.COMPLETED, TreatmentPlanStatus.CANCELLED),
+                  kind_start=_("Start date"), kind_end=_("Target date"))
 
     if "scope" in categories:
         qs = Scope.objects.all()
-        add(qs, "effective_date", "scope", "#06b6d4", "context:scope-detail")
+        add(qs, "effective_date", "scope", "#06b6d4", "context:scope-detail",
+            kind=_("Effective date"))
         add(qs, "review_date", "scope", "#67e8f9",
-            "context:scope-detail", _("Review: "), deadline=True)
+            "context:scope-detail", _("Review: "), deadline=True, kind=_("Review"))
 
     if "objective" in categories:
         from context.constants import ObjectiveStatus
@@ -643,24 +659,27 @@ def get_calendar_events(user, start=None, end=None, categories=None):
 
         qs = _filter_scoped(Objective.objects.all(), user)
         add(qs, "target_date", "objective", "#14b8a6",
-            "context:objective-detail", deadline=True, done=objective_done)
+            "context:objective-detail", deadline=True, done=objective_done,
+            kind=_("Target date"))
         add(qs, "review_date", "objective", "#5eead4",
-            "context:objective-detail", _("Review: "), deadline=True, done=objective_done)
+            "context:objective-detail", _("Review: "), deadline=True, done=objective_done,
+            kind=_("Review"))
 
     if "framework" in categories:
         qs = _filter_scoped(Framework.objects.all(), user)
         add(qs, "effective_date", "framework", "#3b82f6",
-            "compliance:framework-detail")
+            "compliance:framework-detail", kind=_("Effective date"))
         add(qs, "expiry_date", "framework", "#93c5fd",
-            "compliance:framework-detail", _("Expiry: "), deadline=True)
+            "compliance:framework-detail", _("Expiry: "), deadline=True, kind=_("Expiry"))
         add(qs, "review_date", "framework", "#bfdbfe",
-            "compliance:framework-detail", _("Review: "), deadline=True)
+            "compliance:framework-detail", _("Review: "), deadline=True, kind=_("Review"))
 
     if "swot" in categories:
         qs = _filter_scoped(SwotAnalysis.objects.all(), user)
-        add(qs, "analysis_date", "swot", "#ec4899", "context:swot-detail")
+        add(qs, "analysis_date", "swot", "#ec4899", "context:swot-detail",
+            kind=_("Analysis date"))
         add(qs, "review_date", "swot", "#f9a8d4",
-            "context:swot-detail", _("Review: "), deadline=True)
+            "context:swot-detail", _("Review: "), deadline=True, kind=_("Review"))
 
     if "acceptance" in categories:
         from risks.constants import AcceptanceStatus
@@ -670,9 +689,11 @@ def get_calendar_events(user, start=None, end=None, categories=None):
 
         qs = RiskAcceptance.objects.all()
         add(qs, "valid_until", "acceptance", "#f97316",
-            "risks:acceptance-detail", deadline=True, done=acceptance_done)
+            "risks:acceptance-detail", deadline=True, done=acceptance_done,
+            kind=_("Valid until"))
         add(qs, "review_date", "acceptance", "#fdba74",
-            "risks:acceptance-detail", _("Review: "), deadline=True, done=acceptance_done)
+            "risks:acceptance-detail", _("Review: "), deadline=True, done=acceptance_done,
+            kind=_("Review"))
 
     if "supplier_review" in categories:
         filters = {"review_date__isnull": False}
@@ -688,6 +709,7 @@ def get_calendar_events(user, start=None, end=None, categories=None):
             title = f"{supplier_name} : {review.supplier_requirement.title}"
             events.append({
                 "title": title,
+                "plain_title": title,
                 "start": review.review_date.isoformat(),
                 "color": "#d946ef",
                 "category": "supplier_review",
@@ -696,6 +718,7 @@ def get_calendar_events(user, start=None, end=None, categories=None):
                     review.supplier_requirement.pk,
                 ),
                 "is_deadline": True,
+                "kind": _("Review"),
             })
 
     return events
