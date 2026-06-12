@@ -132,6 +132,9 @@
       --surface-muted: var(--color-neutral-50);
       --surface-subtle: var(--color-neutral-100);
       --surface-glass: rgba(255,255,255,.85);
+      /* Near-opaque glass for floating dialogs: keeps a hint of frosting
+       * while guaranteeing legible text over any backdrop */
+      --surface-glass-strong: rgba(255,255,255,.97);
       --bg-page: var(--color-neutral-50);
       /* Borders — hairline-thin, no thick variants */
       --border-light: rgba(0,0,0,.08);
@@ -198,6 +201,7 @@
       --surface-muted: var(--color-charcoal-800);
       --surface-subtle: var(--color-charcoal-700);
       --surface-glass: rgba(22,24,28,.82);
+      --surface-glass-strong: rgba(22,24,28,.96);
       --border-light: rgba(255,255,255,.10);
       --border-subtle: rgba(255,255,255,.06);
       --border-hairline: rgba(255,255,255,.05);
@@ -1739,7 +1743,7 @@
       align-items: flex-start;
       justify-content: center;
       padding-top: min(18vh, 160px);
-      background: rgba(0,0,0,.35);
+      background: rgba(0,0,0,.45);
       backdrop-filter: blur(4px);
       opacity: 0;
       visibility: hidden;
@@ -1748,9 +1752,10 @@
     .search-overlay.show { opacity: 1; visibility: visible; }
     .search-dialog {
       width: min(95vw, 620px);
-      /* Frosted glass: the dialog morphs out of the sidebar's glass
-       * search field, so it keeps the same material */
-      background: var(--surface-glass);
+      /* Frosted glass like the sidebar search field it morphs out of,
+       * but near-opaque: at 85% opacity the palette content blended
+       * into the blurred page behind it and read as grey-on-grey */
+      background: var(--surface-glass-strong);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--border-light);
@@ -1813,8 +1818,8 @@
     }
     .search-group-label {
       font-size: .75rem;
-      font-weight: 500;
-      color: var(--text-muted);
+      font-weight: 600;
+      color: var(--text-secondary);
       padding: .75rem 1.125rem .25rem;
       display: flex;
       align-items: center;

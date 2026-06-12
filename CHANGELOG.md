@@ -12,8 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Company identity on the dashboard**: when a company name is configured (Company settings page), it replaces the "Dashboard" title in the page header, with the company logo displayed beside it; the page identity moves to the eyebrow. The `{% page_header %}` component gains a generic `logo` parameter (image rendered in place of the icon). Without a configured name, the header is unchanged.
 - **Demo dataset seed script**: `scripts/seed_demo_data.py` (with `scripts/seed_demo_tables.py`) populates a fresh database with the fictional "Voltara Energy" company: users in every system group, scopes, sites, stakeholders, issues, objectives, SWOT, roles, activities, essential and support assets with dependencies and SPOFs, suppliers with contractual requirements, the full ISO/IEC 27001:2022 Annex A plus NIS2, GDPR and an internal baseline (133 requirements), audits with findings and action plans, an ISO 27005 risk assessment (threats, vulnerabilities, analyses, risks, treatment plans, acceptances), an EBIOS RM study (workshops 0-3), indicators with measurement history, and management reviews. Documented in `docs/installation.md`.
 
+### Fixed
+
+- **Search palette ignored the user language**: the navigation and quick-action entries of the command palette (Ctrl+K) were translated once at server start instead of per request, so they always showed up in the import-time language (typically English) regardless of the user's language. The labels are now lazily translated.
+
 ### Changed
 
+- **Search palette contrast**: the command palette dialog was 85% translucent and blended into the blurred page behind it, reading as grey-on-grey. It now uses a near-opaque frosted surface (new `--surface-glass-strong` token, light and dark), a slightly darker backdrop scrim, and stronger group labels.
 - **README rewritten for accessibility**: the public README is now a short overview (what Cairn does, quick start, documentation links, tech stack). The detailed content moves to `docs/`: feature tables to `docs/features.md`, the full MCP tool reference to `docs/mcp-server.md`, installation and scheduled-command details to `docs/installation.md`, plus a new REST API overview (`docs/api.md`) and a documentation index (`docs/README.md`).
 - **Documentation screenshots refreshed**: all `docs/screenshots/` captures retaken in 4:3 (1440x1080) on the current brand with the demo dataset, and embedded in the README (dashboard) and `docs/features.md` (one per module section).
 

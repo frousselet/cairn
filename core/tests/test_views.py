@@ -330,6 +330,25 @@ class TestGlobalSearchView:
         for create_label in ["Create a risk", "Create an action plan"]:
             assert create_label not in titles
 
+    def test_navigation_labels_follow_request_language(self):
+        """Navigation entries are lazy: a French request gets French labels.
+
+        Regression test: NAVIGATION_ENTRIES is a class attribute, so plain
+        gettext would freeze the import-time language forever.
+        """
+        client, user = _superuser_client()
+        resp = client.get(reverse("global-search"), {"q": ""}, headers={"accept-language": "fr"})
+        data = json.loads(resp.content)
+        nav = next(g for g in data["results"] if g["label"] == "Navigation")
+        titles = {item["title"] for item in nav["items"]}
+        assert "Tableau de bord" in titles
+        # And an English request still gets English labels.
+        resp = client.get(reverse("global-search"), {"q": ""}, headers={"accept-language": "en"})
+        data = json.loads(resp.content)
+        nav = next(g for g in data["results"] if g["label"] == "Navigation")
+        titles = {item["title"] for item in nav["items"]}
+        assert "Dashboard" in titles
+
     def test_search_finds_scope(self):
         client, user = _superuser_client()
         scope = ScopeFactory(name="UniqueSearchTerm")
