@@ -582,6 +582,51 @@ def register_all_tools(server):
     _register_risks_tools(server)
     _register_accounts_tools(server)
     _register_reports_tools(server)
+    _register_assistant_tools(server)
+
+
+# ── Assistant Tool ────────────────────────────────────────
+
+def _register_assistant_tools(server):
+    """Register the Ask Cairn natural-language assistant tool.
+
+    No dedicated permission: the routing model reveals nothing by itself, and
+    every data access inside the loop goes through the regular read tools,
+    whose @require_perm decorators run with the calling user.
+    """
+
+    def ask_assistant(user, arguments):
+        # Lazy imports: the assistant app is optional at runtime and must not
+        # influence MCP registry import time.
+        from assistant.engine import AssistantEngine
+        from assistant.ollama import AssistantError
+
+        question = (arguments.get("question") or "").strip()
+        if not question:
+            return _error("question is required")
+        language = arguments.get("language") or "en"
+        try:
+            outcome = AssistantEngine(user, language=language).ask(question)
+        except AssistantError as exc:
+            return _error(f"Assistant unavailable: {exc.__class__.__name__}")
+        return outcome.as_dict()
+
+    server.register_tool(
+        "ask_assistant",
+        "Ask Cairn's natural-language assistant a read-only question about GRC data "
+        "(e.g. 'Which decisions were made at the last management review?'). Requires "
+        "the optional Ollama sidecar (AI_ASSISTANT_ENABLED). The answer cites real "
+        "records; data access enforces the caller's permissions.",
+        {
+            "type": "object",
+            "properties": {
+                "question": {"type": "string", "description": "Natural-language question"},
+                "language": {"type": "string", "description": "ISO language code for the answer (default en)"},
+            },
+            "required": ["question"],
+        },
+        ask_assistant,
+    )
 
 
 # ── Help Tool ─────────────────────────────────────────────
