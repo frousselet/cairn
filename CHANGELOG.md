@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.26.3] - 2026-06-12
+
 ### Added
 
 - **Company identity on the dashboard**: when a company name is configured (Company settings page), it replaces the "Dashboard" title in the page header, with the company logo displayed beside it; the page identity moves to the eyebrow. The `{% page_header %}` component gains a generic `logo` parameter (image rendered in place of the icon). Without a configured name, the header is unchanged.
@@ -970,7 +972,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://github.com/frousselet/cairn/compare/v0.26.2...HEAD
+[Unreleased]: https://github.com/frousselet/cairn/compare/v0.26.3...HEAD
+[0.26.3]: https://github.com/frousselet/cairn/compare/v0.26.2...v0.26.3
 [0.26.2]: https://github.com/frousselet/cairn/compare/v0.26.1...v0.26.2
 [0.26.1]: https://github.com/frousselet/cairn/compare/v0.26.0...v0.26.1
 [0.26.0]: https://github.com/frousselet/cairn/compare/v0.25.0...v0.26.0
