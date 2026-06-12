@@ -9,17 +9,27 @@ Django app: `assistant/`. **No persistent entities, no migrations, no lifecycle 
 ```
 Question (palette or API)
   -> AssistantEngine.ask()
-       routing loop, max AI_ASSISTANT_MAX_TOOL_ROUNDS rounds:
-         Ollama /api/chat, grammar-constrained JSON output
-         (format = JSON Schema; tool name restricted by enum to the catalog)
-         -> server-side sanitization (allowlist re-check, argument
-            whitelist, limit clamp)
-         -> in-process execution through McpServer.get_tool() with the
-            session user: existing @require_perm decorators and scope
-            filters apply, nothing is bypassed
-       -> one final summary call (plain text, user's language, data-only)
+       1 planning call: Ollama /api/chat, grammar-constrained JSON output
+       (format = JSON Schema; tool names restricted by enum to the catalog,
+       at most AI_ASSISTANT_MAX_TOOL_ROUNDS steps; "$1.id" placeholders
+       reference earlier steps)
+       -> deterministic engine-side execution of the plan:
+            sanitization (allowlist re-check, argument whitelist, limit
+            clamp), placeholder resolution from the parent step's first
+            record (with a one-shot retry without the status filter when
+            the parent matches nothing), id-grounding check
+            -> in-process execution through McpServer.get_tool() with the
+               session user: existing @require_perm decorators and scope
+               filters apply, nothing is bypassed
+       -> 1 summary call (plain text, user's language, identifier-stripped
+          data only)
   -> rendered partial: AI summary + record cards with links + disclaimer
 ```
+
+Sequencing is deliberately NOT left to the model round after round: very
+small models are unreliable at deciding mid-conversation whether to chain a
+child call. They are good at one-shot constrained planning, so the engine
+owns the execution order, the id plumbing and the fallbacks.
 
 Key code: `assistant/engine.py` (loop), `assistant/catalog.py` (allowlist), `assistant/ollama.py` (client + error taxonomy), `assistant/prompts.py` (model-facing English prompts).
 
@@ -32,7 +42,8 @@ Key code: `assistant/engine.py` (loop), `assistant/catalog.py` (allowlist), `ass
 | `AI_ASSISTANT_MODEL` | `AI_ASSISTANT_MODEL` | `qwen3:1.7b` | Any Ollama chat model; pull it once on the sidecar |
 | `AI_ASSISTANT_CONNECT_TIMEOUT` | same | `2` | Seconds; fast fail when the sidecar is absent |
 | `AI_ASSISTANT_TIMEOUT` | same | `30` | Seconds per LLM call (CPU inference, cold load included) |
-| `AI_ASSISTANT_MAX_TOOL_ROUNDS` | same | `2` | Hard cap on tool-routing rounds |
+| `AI_ASSISTANT_MAX_TOOL_ROUNDS` | same | `3` | Hard cap on plan steps (also enforced in the plan JSON Schema) |
+| `AI_ASSISTANT_ROUTING_THINK` | same | `False` | Chain-of-thought during planning (thinking models only); too slow on CPU-only hosts, useful with a GPU |
 | `AI_ASSISTANT_MAX_RECORDS_PER_TOOL` | same | `5` | Limit clamp applied to every tool call |
 | `AI_ASSISTANT_NUM_CTX` | same | `8192` | Ollama context window |
 
@@ -60,10 +71,12 @@ Hard-coded in `assistant/catalog.py` (21 tools, strictly `list_*` / `get_*`). Th
 ## Business rules
 
 - **RG-AI-01 - Read-only surface**: the assistant can only reach tools in the catalog, all read-only. A model response naming any other tool is refused server-side (and is already impossible to decode through the constrained schema). Worst case is a useless answer, never a write or an unauthorized read.
-- **RG-AI-02 - Bounded loop**: at most `AI_ASSISTANT_MAX_TOOL_ROUNDS` tool calls plus one summary call per question.
+- **RG-AI-02 - Bounded execution**: exactly two LLM calls per question (one plan, one summary) and at most `AI_ASSISTANT_MAX_TOOL_ROUNDS` tool executions (plus at most one deterministic parent retry without its status filter).
 - **RG-AI-03 - AI output is labeled and escaped**: the summary sentence carries the AI badge and disclaimer, renders through Django autoescaping, and the cards are built server-side from ORM records; the model never produces URLs or markup.
 - **RG-AI-04 - Permissions enforced by the platform**: every data access runs the regular MCP handler with the calling user; `@require_perm` denials surface as a neutral "some results were hidden" notice, never as data.
 - **RG-AI-05 - Graceful degradation**: assistant disabled, Ollama unreachable or model not pulled produce friendly i18n states in the palette; normal search is never affected. A summary-stage failure keeps the record cards (degraded mode).
+- **RG-AI-06 - Id grounding**: id-like arguments (`id`, `*_id`) must come from a `$N.id` placeholder resolved against an earlier step's results, or be pasted verbatim in the question. Literal ids from nowhere (typically copied from the prompt examples by the model) are refused without executing the tool.
+- **RG-AI-07 - No identifiers in the summary**: the payload fed to the summary stage is recursively stripped of `id` / `*_id` keys and UUID-shaped values, and the prompt forbids citing identifiers; when the data lacks the requested information the model must say so and defer to the record cards.
 
 ## Prompt-injection posture
 

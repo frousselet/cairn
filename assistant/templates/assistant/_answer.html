@@ -39,8 +39,12 @@
       {% endfor %}
     {% endif %}
   {% endfor %}
-  {% if not outcome.has_cards and not outcome.summary %}
+  {% if not outcome.tool_runs and not outcome.summary %}
+    <div class="search-empty"><i class="bi bi-chat-dots" aria-hidden="true"></i>{% trans "The assistant only answers questions about your GRC data: risks, reviews, action plans, assets, compliance..." %}</div>
+  {% elif not outcome.has_cards and not outcome.summary %}
     <div class="search-empty"><i class="bi bi-search" aria-hidden="true"></i>{% trans "No matching records found." %}</div>
   {% endif %}
-  <div class="assistant-disclaimer">{% trans "AI-generated summary. Verify against the linked records." %}</div>
+  {% if outcome.summary or outcome.has_cards %}
+    <div class="assistant-disclaimer">{% trans "AI-generated summary. Verify against the linked records." %}</div>
+  {% endif %}
 {% endif %}

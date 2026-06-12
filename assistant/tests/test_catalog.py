@@ -2,7 +2,7 @@
 
 import uuid
 
-from assistant.catalog import READ_ONLY_PREFIXES, TOOL_CATALOG, catalog_signatures, routing_schema
+from assistant.catalog import READ_ONLY_PREFIXES, TOOL_CATALOG, catalog_signatures, plan_schema
 
 WRITE_VERBS = ("create", "update", "delete", "transition", "approve", "batch", "set_", "link", "unlink")
 
@@ -23,10 +23,12 @@ def test_every_catalog_tool_exists_in_mcp_registry():
         assert server.get_tool(name) is not None, f"{name} missing from MCP registry"
 
 
-def test_routing_schema_constrains_tool_names():
-    schema = routing_schema()
-    assert schema["properties"]["tool"]["enum"] == sorted(TOOL_CATALOG)
-    assert "done" in schema["required"]
+def test_plan_schema_constrains_tool_names_and_step_count():
+    schema = plan_schema(3)
+    steps = schema["properties"]["steps"]
+    assert steps["maxItems"] == 3
+    assert steps["items"]["properties"]["tool"]["enum"] == sorted(TOOL_CATALOG)
+    assert "steps" in schema["required"]
 
 
 def test_signatures_fit_in_a_small_prompt():

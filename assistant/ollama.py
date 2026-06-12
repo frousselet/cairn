@@ -51,14 +51,14 @@ class OllamaClient:
         except httpx.HTTPError as exc:
             raise OllamaUnreachable(str(exc)) from exc
 
-    def _chat(self, messages, fmt=None):
+    def _chat(self, messages, fmt=None, think=False):
         payload = {
             "model": self.model,
             "messages": messages,
             "stream": False,
-            # "think" disables chain-of-thought on thinking models (qwen3...):
-            # routing latency matters more than reasoning depth here.
-            "think": False,
+            # Chain-of-thought on thinking models (qwen3...): required for
+            # reliable multi-step routing, skipped for the summary sentence.
+            "think": think,
             "options": {"temperature": 0, "num_ctx": settings.AI_ASSISTANT_NUM_CTX},
             "keep_alive": "30m",
         }
@@ -79,9 +79,11 @@ class OllamaClient:
             raise MalformedModelOutput(resp.text[:200]) from exc
         return content or ""
 
-    def chat_json(self, messages, json_schema):
+    def chat_json(self, messages, json_schema, think=None):
         """Chat completion constrained to ``json_schema``; returns the parsed object."""
-        content = self._chat(messages, fmt=json_schema)
+        if think is None:
+            think = settings.AI_ASSISTANT_ROUTING_THINK
+        content = self._chat(messages, fmt=json_schema, think=think)
         try:
             parsed = json.loads(content)
         except (json.JSONDecodeError, TypeError) as exc:

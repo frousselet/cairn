@@ -96,6 +96,25 @@ def test_happy_path_renders_summary_badge_and_cards(logged_client, stub_engine):
     assert "AI-generated summary" in content
 
 
+def test_out_of_scope_question_shows_hint_not_no_records(logged_client, stub_engine):
+    stub_engine.outcome = AskOutcome(question="Hello, how are you?", language="en")
+    response = logged_client.post(ASK_URL, {"q": "Hello, how are you?"})
+    content = response.text
+    assert "only answers questions about your GRC data" in content
+    assert "No matching records found." not in content
+    assert "AI-generated summary" not in content
+
+
+def test_tools_ran_but_zero_records_shows_no_records(logged_client, stub_engine):
+    run = ToolRun(
+        tool="list_risks", label="Risks", icon="bi-radioactive",
+        arguments={}, records=[], cards=[],
+    )
+    stub_engine.outcome = AskOutcome(question="q?", language="en", tool_runs=[run])
+    response = logged_client.post(ASK_URL, {"q": "Des risques critiques ouverts ?"})
+    assert "No matching records found." in response.text
+
+
 def test_permission_denied_note_rendered(logged_client, stub_engine):
     run = ToolRun(
         tool="list_management_reviews",

@@ -10,35 +10,37 @@ from django.utils import timezone
 from assistant.catalog import catalog_signatures
 
 ROUTING_PROMPT_TEMPLATE = """\
-You are the routing engine of Cairn, a Governance, Risk and Compliance platform.
-Your only job is to decide which internal read-only data tool to call next in
-order to answer the user's question. Today is {today}.
+You are the query planner of Cairn, a Governance, Risk and Compliance platform.
+Turn the user's question into a short plan of read-only data tool calls.
+Today is {today}.
 
 Available tools:
 {signatures}
 
 Rules:
-- Respond ONLY with a JSON object.
-- To call a tool: {{"done": false, "tool": "<name>", "arguments": {{...}}}}
-- When the collected data answers the question, or no tool applies: {{"done": true}}
-- Call at most one tool per response, with only the parameters listed for it.
-- Always pass "limit": 5 or less.
-- For "last" or "latest" questions, list a few items first, then reuse the "id"
-  of the most recent relevant item (prefer status held or closed over planned).
+- Respond ONLY with a JSON object: {{"steps": [{{"tool": "<name>", "arguments": {{...}}}}, ...]}}
+- 0, 1 or 2 steps. Use {{"steps": []}} when no tool can help (greetings, chit-chat).
+- Use only the parameters listed for each tool. Always pass "limit": 5 or less.
+- When a later step needs the id of the record found by step 1, write the
+  placeholder "$1.id" as the value: it is replaced by the id of the first
+  record returned by step 1. Never invent ids.
+- When the question asks about the CONTENT of a parent object (decisions of a
+  review, measurements of an indicator), plan the parent lookup as step 1
+  (filtered to the right item, e.g. status "closed" and "limit": 1 for the
+  most recent one that already happened) and the child tool as step 2.
 
 Examples:
 Question: "Quelles décisions ont été prises lors de la dernière revue de direction ?"
-Response: {{"done": false, "tool": "list_management_reviews", "arguments": {{"limit": 5}}}}
-Tool result: [{{"id": "9f31", "reference": "MRVW-2", "status": "closed", "held_date": "2026-03-12"}}, {{"id": "77ab", "reference": "MRVW-3", "status": "planned"}}]
-Response: {{"done": false, "tool": "list_management_review_decisions", "arguments": {{"review_id": "9f31", "limit": 5}}}}
-Tool result: [{{"id": "c001", "reference": "DECS-1", "title": "Renew SOC contract"}}]
-Response: {{"done": true}}
+Response: {{"steps": [{{"tool": "list_management_reviews", "arguments": {{"status": "closed", "limit": 1}}}}, {{"tool": "list_management_review_decisions", "arguments": {{"review_id": "$1.id", "limit": 5}}}}]}}
 
 Question: "What are our high priority risks?"
-Response: {{"done": false, "tool": "list_risks", "arguments": {{"priority": "high", "limit": 5}}}}
+Response: {{"steps": [{{"tool": "list_risks", "arguments": {{"priority": "high", "limit": 5}}}}]}}
+
+Question: "Qui est responsable du périmètre Voltara Group ?"
+Response: {{"steps": [{{"tool": "list_scopes", "arguments": {{"search": "Voltara Group", "limit": 5}}}}]}}
 
 Question: "Hello, how are you?"
-Response: {{"done": true}}
+Response: {{"steps": []}}
 """
 
 SUMMARY_PROMPT_TEMPLATE = """\
@@ -46,8 +48,11 @@ You are the assistant of Cairn, a Governance, Risk and Compliance platform.
 Using ONLY the JSON data provided, answer the user's question in one or two
 short plain-text sentences. Answer in the same language as the question
 (fallback language: {language}). No markdown, no lists, no headings. Never
-invent values that are not in the data. If the data is empty, say that no
-matching records were found. Today is {today}.
+invent values that are not in the data. Never mention internal identifiers,
+codes you cannot interpret, or UUIDs. If the data does not contain the
+information the question asks for, say plainly that it is not in the
+available data and refer to the records shown below your answer. If the data
+is empty, say that no matching records were found. Today is {today}.
 """
 
 
