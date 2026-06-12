@@ -4337,6 +4337,9 @@ msgstr "Opportunités"
 msgid "Strategies"
 msgstr "Stratégies"
 
+msgid "Strategy"
+msgstr "Stratégie"
+
 msgid "Details"
 msgstr "Détails"
 
