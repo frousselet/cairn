@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.26.2] - 2026-06-12
+
 ### Fixed
 
 - **Predefined compliance indicators disagreed with the dashboard**: the "Global compliance rate" predefined indicator averaged the stored `compliance_level` field over every reportable framework (drafts and superseded included), while the dashboard computes, per active framework, the proportion of applicable requirements whose latest assessment result is compliant. The computation is extracted into a shared service (`compliance.services`) now used by the dashboard page, the dashboard WebSocket refresh (which averaged the stored field too, so a live update could overwrite the page value with a different number) and both predefined indicators (`global_compliance_rate` and `framework_compliance_rate`).
@@ -951,7 +953,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://github.com/frousselet/cairn/compare/v0.26.1...HEAD
+[Unreleased]: https://github.com/frousselet/cairn/compare/v0.26.2...HEAD
+[0.26.2]: https://github.com/frousselet/cairn/compare/v0.26.1...v0.26.2
 [0.26.1]: https://github.com/frousselet/cairn/compare/v0.26.0...v0.26.1
 [0.26.0]: https://github.com/frousselet/cairn/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/frousselet/cairn/compare/v0.24.5...v0.25.0
