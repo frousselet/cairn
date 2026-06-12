@@ -14,6 +14,7 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from core.changelog import get_changelog_between
+from accounts.models import CompanySettings
 from assets.models import (
     AssetDependency,
     AssetGroup,
@@ -73,6 +74,11 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         today = timezone.now().date()
+
+        # Company identity shown in the dashboard header. Read-only access:
+        # objects.first() instead of CompanySettings.get() to avoid creating
+        # the singleton row on a GET request.
+        ctx["company"] = CompanySettings.objects.first()
 
         # ── Gouvernance ──────────────────────────────────
         scopes = self._filter_scopes(Scope.objects.all())

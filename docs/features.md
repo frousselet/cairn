@@ -114,7 +114,7 @@ Detailed feature reference for Cairn. For module-level specifications (business 
 | Notifications | In-app + email notifications on lifecycle events (element submitted for validation), with a live bell badge (WebSocket), recipient fallback chain (scope managers, approvers, creator) and per-user email opt-out |
 | Audit Trail | Full change history on every model via django-simple-history |
 | Versioning | Automatic version increment on all domain objects |
-| Company Settings | Centralised platform configuration (organisation name, logo, defaults) |
+| Company Settings | Centralised platform configuration (organisation name, logo, defaults); the company name and logo head the dashboard |
 | Bilingual UI | Full French/English interface with contextual help banners |
 | Excel Export | Export assets, risks, compliance data to Excel |
 | Display Theme | Per-user Light / Dark / System preference (System follows the OS), persisted server-side and exposed through the API |
