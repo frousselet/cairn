@@ -106,6 +106,13 @@
        * same frosted treatment. */
       --glass: rgba(255,255,255,.45);
       --glass-hover: rgba(255,255,255,.7);
+      /* Form fields: same glass recipe, but with enough contrast to
+       * read as fields on light surfaces (more opaque fill, visible
+       * hairline border) */
+      --field-bg: rgba(255,255,255,.78);
+      --field-bg-hover: rgba(255,255,255,.95);
+      --field-border: rgba(0,0,0,.10);
+      --field-border-hover: rgba(0,0,0,.16);
       --radius-xs: .375rem;
       --radius-sm: .5rem;
       --radius-md: .625rem;
@@ -220,6 +227,10 @@
       --text-sidebar-sub: var(--color-charcoal-400);
       --glass: rgba(28,31,35,.45);
       --glass-hover: rgba(42,45,50,.65);
+      --field-bg: rgba(28,31,35,.45);
+      --field-bg-hover: rgba(42,45,50,.65);
+      --field-border: rgba(255,255,255,.08);
+      --field-border-hover: rgba(255,255,255,.16);
       /* Module accents (dark mode) - all aliased to the single brand colour. */
       --module-accent-risks:        var(--accent);
       --module-accent-risks-soft:   var(--accent-soft);
@@ -1577,8 +1588,8 @@
      */
     .form-control, .form-select {
       border-radius: .75rem;
-      border: 1px solid var(--border-glass);
-      background-color: var(--glass);
+      border: 1px solid var(--field-border);
+      background-color: var(--field-bg);
       box-shadow: var(--shadow-sm);
       font-size: .9375rem;
       font-weight: 500;
@@ -1588,8 +1599,8 @@
     }
     .form-control:hover:not(:focus):not(:disabled):not([readonly]),
     .form-select:hover:not(:focus):not(:disabled) {
-      background-color: var(--glass-hover);
-      border-color: var(--border-light);
+      background-color: var(--field-bg-hover);
+      border-color: var(--field-border-hover);
     }
     .form-control:focus, .form-select:focus {
       border-color: var(--accent);
@@ -1605,8 +1616,8 @@
     }
     .form-control::placeholder { color: var(--text-muted); opacity: .7; font-weight: 400; }
     .input-group-text {
-      background: var(--glass);
-      border: 1px solid var(--border-glass);
+      background: var(--field-bg);
+      border: 1px solid var(--field-border);
       color: var(--text-muted);
     }
     .form-label {
@@ -2173,8 +2184,8 @@
       padding: .125rem .5rem;
     }
     .ts-wrapper .ts-control {
-      background: var(--glass);
-      border-color: var(--border-glass);
+      background: var(--field-bg);
+      border-color: var(--field-border);
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-sm);
       font-size: .8125rem;
@@ -2182,8 +2193,8 @@
       transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
     }
     .ts-wrapper:hover:not(.focus) .ts-control {
-      background: var(--glass-hover);
-      border-color: var(--border-light);
+      background: var(--field-bg-hover);
+      border-color: var(--field-border-hover);
     }
     .ts-wrapper.focus .ts-control {
       background: var(--surface);
@@ -2212,9 +2223,9 @@
       color: var(--accent);
     }
     [data-bs-theme="dark"] .ts-wrapper .ts-control {
-      background: var(--glass);
+      background: var(--field-bg);
       color: var(--text-primary);
-      border-color: var(--border-glass);
+      border-color: var(--field-border);
     }
     [data-bs-theme="dark"] .ts-dropdown {
       background: var(--surface-glass);
@@ -2239,15 +2250,15 @@
      * surfaces on focus, a transparent toolbar over it, and a fading
      * hairline between toolbar and canvas. */
     .jodit-container:not(.jodit_inline) {
-      background: var(--glass) !important;
-      border: 1px solid var(--border-glass) !important;
+      background: var(--field-bg) !important;
+      border: 1px solid var(--field-border) !important;
       border-radius: var(--radius-md) !important;
       box-shadow: var(--shadow-sm);
       overflow: hidden;
       transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
     }
     .jodit-container:not(.jodit_inline):hover:not(:focus-within) {
-      border-color: var(--border-light) !important;
+      border-color: var(--field-border-hover) !important;
     }
     .jodit-container:not(.jodit_inline):focus-within {
       background: var(--surface) !important;
@@ -2661,8 +2672,8 @@
       height: 1.5rem;
       flex-shrink: 0;
       border-radius: 50%;
-      border: 1px solid var(--border-glass);
-      background: var(--glass);
+      border: 1px solid var(--field-border);
+      background: var(--field-bg);
       box-shadow: var(--shadow-xs);
       display: inline-flex;
       align-items: center;
@@ -2776,8 +2787,8 @@
       height: 32px;
       flex-shrink: 0;
       border-radius: var(--radius-xs);
-      border: 1px solid var(--border-glass);
-      background: var(--glass);
+      border: 1px solid var(--field-border);
+      background: var(--field-bg);
       box-shadow: var(--shadow-xs);
       color: var(--text-secondary);
       display: inline-flex;
@@ -2903,8 +2914,8 @@
     #itemDrawer .form-control,
     #itemDrawer .form-select {
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-glass);
-      background: var(--glass);
+      border: 1px solid var(--field-border);
+      background: var(--field-bg);
       box-shadow: var(--shadow-sm);
       font-size: .8125rem;
       padding: .4375rem .75rem;
@@ -2913,8 +2924,8 @@
     }
     #itemDrawer .form-control:hover:not(:focus),
     #itemDrawer .form-select:hover:not(:focus) {
-      background: var(--glass-hover);
-      border-color: var(--border-light);
+      background: var(--field-bg-hover);
+      border-color: var(--field-border-hover);
     }
     #itemDrawer .form-control:focus,
     #itemDrawer .form-select:focus {
@@ -2960,16 +2971,16 @@
      * borderless and separated from the tree by a fading hairline,
      * echoing the sidebar search over the scrolling menu */
     #itemDrawer .scope-tree-widget {
-      border: 1px solid var(--border-glass);
+      border: 1px solid var(--field-border);
       border-radius: var(--radius-md);
       padding: .5rem;
       scrollbar-width: thin;
-      background: var(--glass);
+      background: var(--field-bg);
       box-shadow: var(--shadow-sm);
       transition: border-color var(--transition-fast);
     }
     #itemDrawer .scope-tree-widget:hover {
-      border-color: var(--border-light);
+      border-color: var(--field-border-hover);
     }
     #itemDrawer .scope-tree-widget .scope-tree-search {
       margin-bottom: .375rem !important;
