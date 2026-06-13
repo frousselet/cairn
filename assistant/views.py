@@ -202,6 +202,7 @@ class AssistantFeedbackExportView(LoginRequiredMixin, PermissionRequiredMixin, V
         response = JsonResponse(
             {"count": len(feedback), "feedback": feedback},
             json_dumps_params={"ensure_ascii": False, "indent": 2},
+            content_type="application/json; charset=utf-8",
         )
         response["Content-Disposition"] = 'attachment; filename="assistant_feedback.json"'
         return response
