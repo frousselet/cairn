@@ -249,18 +249,23 @@ SIMPLE_JWT = {
 }
 
 # AI assistant ("Ask Cairn"): optional natural-language question mode in the
-# command palette, backed by a local Ollama sidecar
-# (docker compose --profile ai up). Disabled by default; the rest of the
-# application works normally without it.
+# command palette, backed by a pluggable LLM provider. Disabled by default;
+# the rest of the application works normally without it. The default provider
+# is Mistral AI (third-party, EU-hosted); the self-hosted "ollama" provider
+# stays selectable for those pointing at their own instance.
 AI_ASSISTANT_ENABLED = os.environ.get("AI_ASSISTANT_ENABLED", "False").lower() in ("true", "1", "yes")
-AI_ASSISTANT_OLLAMA_URL = os.environ.get("AI_ASSISTANT_OLLAMA_URL", "http://ollama:11434")
-AI_ASSISTANT_MODEL = os.environ.get("AI_ASSISTANT_MODEL", "qwen3:1.7b")
+AI_ASSISTANT_PROVIDER = os.environ.get("AI_ASSISTANT_PROVIDER", "mistral")
+AI_ASSISTANT_API_KEY = os.environ.get("AI_ASSISTANT_API_KEY", "")
+AI_ASSISTANT_BASE_URL = os.environ.get("AI_ASSISTANT_BASE_URL", "https://api.mistral.ai/v1")
+AI_ASSISTANT_MODEL = os.environ.get("AI_ASSISTANT_MODEL", "mistral-small-latest")
 AI_ASSISTANT_CONNECT_TIMEOUT = float(os.environ.get("AI_ASSISTANT_CONNECT_TIMEOUT", "2"))
 AI_ASSISTANT_TIMEOUT = float(os.environ.get("AI_ASSISTANT_TIMEOUT", "30"))
 AI_ASSISTANT_MAX_TOOL_ROUNDS = int(os.environ.get("AI_ASSISTANT_MAX_TOOL_ROUNDS", "3"))
-# Chain-of-thought during tool routing (thinking models only, e.g. qwen3).
-# Helps multi-step routing but is far too slow on CPU-only hosts; enable on
-# GPU-backed Ollama instances.
-AI_ASSISTANT_ROUTING_THINK = os.environ.get("AI_ASSISTANT_ROUTING_THINK", "False").lower() in ("true", "1", "yes")
 AI_ASSISTANT_MAX_RECORDS_PER_TOOL = int(os.environ.get("AI_ASSISTANT_MAX_RECORDS_PER_TOOL", "5"))
+# Cap on the completion length (Mistral / OpenAI-compatible backends).
+AI_ASSISTANT_MAX_TOKENS = int(os.environ.get("AI_ASSISTANT_MAX_TOKENS", "1024"))
+# Ollama provider only: local instance URL, context window, and chain-of-thought
+# during routing (thinking models such as qwen3). Ignored by the Mistral provider.
+AI_ASSISTANT_OLLAMA_URL = os.environ.get("AI_ASSISTANT_OLLAMA_URL", "http://ollama:11434")
 AI_ASSISTANT_NUM_CTX = int(os.environ.get("AI_ASSISTANT_NUM_CTX", "8192"))
+AI_ASSISTANT_ROUTING_THINK = os.environ.get("AI_ASSISTANT_ROUTING_THINK", "False").lower() in ("true", "1", "yes")

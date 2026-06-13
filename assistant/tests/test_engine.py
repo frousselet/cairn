@@ -7,12 +7,12 @@ from django.test import override_settings
 
 from accounts.tests.factories import UserFactory
 from assistant.engine import PERMISSION_DENIED, AssistantEngine
-from assistant.ollama import AssistantDisabled, OllamaUnreachable
+from assistant.providers import AssistantDisabled, ServiceUnreachable
 from reports.tests.factories import ManagementReviewDecisionFactory, ManagementReviewFactory
 
 
 class FakeClient:
-    """Scripted stand-in for OllamaClient."""
+    """Scripted stand-in for the provider client."""
 
     def __init__(self, plan, summary="Summary sentence."):
         self.plan = plan
@@ -191,7 +191,7 @@ def test_summary_failure_degrades_but_keeps_cards(superuser):
     ManagementReviewFactory(status="held", held_date=date.today())
     client = FakeClient(
         _plan(_step("list_management_reviews", limit=5)),
-        summary=OllamaUnreachable("down"),
+        summary=ServiceUnreachable("down"),
     )
     outcome = AssistantEngine(superuser, client=client).ask("Revues ?")
     assert outcome.degraded is True

@@ -1,16 +1,16 @@
-"""Unit tests for the Ollama HTTP client (no real sockets)."""
+"""Unit tests for the Ollama provider client (no real sockets)."""
 
 import json
 
 import httpx
 import pytest
 
-from assistant.ollama import (
+from assistant.providers.base import (
     MalformedModelOutput,
     ModelNotAvailable,
-    OllamaClient,
-    OllamaUnreachable,
+    ServiceUnreachable,
 )
+from assistant.providers.ollama import OllamaClient
 
 
 class FakeResponse:
@@ -61,21 +61,21 @@ def test_model_not_pulled_maps_to_model_not_available(monkeypatch):
 def test_connect_error_maps_to_unreachable(monkeypatch):
     _patch_post(monkeypatch, [httpx.ConnectError("refused")])
     client = OllamaClient(base_url="http://test:11434")
-    with pytest.raises(OllamaUnreachable):
+    with pytest.raises(ServiceUnreachable):
         client.chat_text([{"role": "user", "content": "hi"}])
 
 
 def test_timeout_maps_to_unreachable(monkeypatch):
     _patch_post(monkeypatch, [httpx.ReadTimeout("slow")])
     client = OllamaClient(base_url="http://test:11434")
-    with pytest.raises(OllamaUnreachable):
+    with pytest.raises(ServiceUnreachable):
         client.chat_text([{"role": "user", "content": "hi"}])
 
 
 def test_server_error_maps_to_unreachable(monkeypatch):
     _patch_post(monkeypatch, [FakeResponse(status_code=500, text="boom")])
     client = OllamaClient(base_url="http://test:11434")
-    with pytest.raises(OllamaUnreachable):
+    with pytest.raises(ServiceUnreachable):
         client.chat_text([{"role": "user", "content": "hi"}])
 
 

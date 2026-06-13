@@ -8,7 +8,7 @@
 {% elif error_code == "unreachable" %}
   <div class="search-empty"><i class="bi bi-plug" aria-hidden="true"></i>{% trans "The assistant is unreachable. Try again later." %}</div>
 {% elif error_code == "model_missing" %}
-  <div class="search-empty"><i class="bi bi-download" aria-hidden="true"></i>{% blocktrans %}The assistant model is not installed. Run: ollama pull {{ model_name }}{% endblocktrans %}</div>
+  <div class="search-empty"><i class="bi bi-download" aria-hidden="true"></i>{% blocktrans %}The configured assistant model "{{ model_name }}" is unavailable.{% endblocktrans %}</div>
 {% elif error_code %}
   <div class="search-empty"><i class="bi bi-robot" aria-hidden="true"></i>{% trans "The assistant could not produce an answer. Try rephrasing your question." %}</div>
 {% else %}

@@ -4,7 +4,7 @@ import pytest
 
 from accounts.tests.factories import UserFactory
 from assistant.engine import AskOutcome, ToolRun
-from assistant.ollama import AssistantDisabled, OllamaUnreachable
+from assistant.providers import AssistantDisabled, ServiceUnreachable
 
 API_URL = "/api/v1/assistant/ask/"
 
@@ -57,7 +57,7 @@ def test_disabled_returns_503_with_code(logged_client, stub_engine):
 
 
 def test_unreachable_returns_503_with_code(logged_client, stub_engine):
-    stub_engine.error = OllamaUnreachable("down")
+    stub_engine.error = ServiceUnreachable("down")
     response = logged_client.post(API_URL, {"q": "Quelles décisions ?"})
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "assistant_unreachable"

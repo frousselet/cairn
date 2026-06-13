@@ -9731,8 +9731,8 @@ msgstr "L'assistant est désactivé."
 msgid "The assistant is unreachable. Try again later."
 msgstr "L'assistant est injoignable. Réessayez plus tard."
 
-msgid "The assistant model is not installed. Run: ollama pull %(model_name)s"
-msgstr "Le modèle de l'assistant n'est pas installé. Exécutez : ollama pull %(model_name)s"
+msgid "The configured assistant model \"%(model_name)s\" is unavailable."
+msgstr "Le modèle d'assistant configuré « %(model_name)s » est indisponible."
 
 msgid "The assistant could not produce an answer. Try rephrasing your question."
 msgstr "L'assistant n'a pas pu produire de réponse. Reformulez votre question."

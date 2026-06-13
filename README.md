@@ -13,7 +13,7 @@ Manage your organisation's security posture, track compliance with regulatory fr
 - **Risks** : ISO 27005 and EBIOS RM (ANSSI v1.5, workshops 0 to 5) assessments, threat and vulnerability catalogs, treatment plans and formal risk acceptance
 - **Compliance** : frameworks, requirements, assessments, findings, action plans and inter-framework mappings, with Excel import
 - **Steering** : real-time dashboard, KPI indicators, ISO 27001 management reviews, and PDF/DOCX/PPTX report generation (SoA, audit report, risk register, meeting minutes)
-- **Ask Cairn (optional)** : natural-language questions in the command palette ("Which decisions were made at the last management review?"), answered by a small local AI model (Ollama sidecar) that cites real records and enforces your permissions - data never leaves your host
+- **Ask Cairn (optional)** : natural-language questions in the command palette ("Which decisions were made at the last management review?"), answered by a pluggable LLM provider (Mistral AI by default, self-hosted Ollama optional) that cites real records and enforces your permissions
 
 Everything is bilingual (English/French), audit-ready (full change history, versioning, lifecycle workflows with approvals) and access-controlled (role-based permissions, scope-based tenancy, passkey login).
 
@@ -47,7 +47,7 @@ To run the published image without cloning the repository, and for production no
 
 ## Tech stack
 
-Django 5.2 LTS, PostgreSQL 16, Django REST Framework, Django Channels + Redis (real-time), Bootstrap 5.3 + HTMX (frontend), Docker. Optional: Ollama (local AI assistant).
+Django 5.2 LTS, PostgreSQL 16, Django REST Framework, Django Channels + Redis (real-time), Bootstrap 5.3 + HTMX (frontend), Docker. Optional: Mistral AI or self-hosted Ollama (Ask Cairn assistant).
 
 ## Licence
 
