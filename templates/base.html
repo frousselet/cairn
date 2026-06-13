@@ -4018,6 +4018,13 @@
         <a href="{% url 'accounts:action-log-list' %}" class="sidebar-link sidebar-sub">{% trans "Action log" %}</a>
       </div>
       {% endif %}
+      {% has_perm "system.assistant_feedback.read" as can_feedback %}
+      {% if can_feedback %}
+      <a href="{% url 'assistant:feedback-list' %}" class="sidebar-link">
+        <i class="bi bi-chat-heart"></i> <span class="sidebar-link-text">{% trans "Assistant feedback" %}</span>
+        <span class="sidebar-tooltip">{% trans "Assistant feedback" %}</span>
+      </a>
+      {% endif %}
       {% has_perm "system.admin_django.access" as can_django_admin %}
       {% if can_django_admin %}
       <a href="{% url 'admin:index' %}" class="sidebar-link">

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load ui %}
+{% load i18n %}
+{% load table_tags %}
+{% block title %}{% trans "Assistant feedback - Cairn" %}{% endblock %}
+
+{% block content %}
+{% page_header _("Assistant feedback") eyebrow=_("Administration") accent="accounts" %}{% endpage_header %}
+
+<form id="filterForm" method="get">
+  <input type="hidden" name="rating" value="{{ request.GET.rating|default:'' }}">
+  <input type="hidden" name="q" value="{{ request.GET.q|default:'' }}">
+  <input type="hidden" name="date_from" value="{{ request.GET.date_from|default:'' }}">
+  <input type="hidden" name="date_to" value="{{ request.GET.date_to|default:'' }}">
+</form>
+<div class="filter-bar" data-sort-view-key="{{ sort_view_key }}">
+  <div class="filter-bar-group flex-grow-1" style="min-width:160px;max-width:18rem">
+    <div class="table-toolbar-search w-100">
+      <i class="bi bi-search table-toolbar-icon"></i>
+      <input type="search" name="q" form="filterForm" class="table-toolbar-input"
+             placeholder="{% trans 'Question or comment…' %}"
+             value="{{ request.GET.q|default:'' }}"
+             autocomplete="off"
+             onchange="this.form.submit()">
+    </div>
+  </div>
+  <div class="filter-bar-sep"></div>
+  <div class="filter-bar-group">
+    <span class="filter-bar-label">{% trans "Rating" %}</span>
+    <a href="#" class="filter-pill{% if not request.GET.rating %} active{% endif %}" onclick="setPill('rating','');return false">{% trans "All" %}</a>
+    <a href="#" class="filter-pill{% if request.GET.rating == 'up' %} active{% endif %}" onclick="setPill('rating','up');return false"><i class="bi bi-hand-thumbs-up"></i> {% trans "Thumbs up" %}</a>
+    <a href="#" class="filter-pill{% if request.GET.rating == 'down' %} active{% endif %}" onclick="setPill('rating','down');return false"><i class="bi bi-hand-thumbs-down"></i> {% trans "Thumbs down" %}</a>
+  </div>
+  <div class="filter-bar-sep"></div>
+  <div class="filter-bar-group">
+    <span class="filter-bar-label">{% trans "Period" %}</span>
+    <input type="date" name="date_from" form="filterForm" class="form-control" value="{{ request.GET.date_from|default:'' }}" onchange="this.form.submit()">
+    <input type="date" name="date_to" form="filterForm" class="form-control" value="{{ request.GET.date_to|default:'' }}" onchange="this.form.submit()">
+  </div>
+  {% if request.GET.q or request.GET.rating or request.GET.date_from or request.GET.date_to %}
+  <a href="{% url 'assistant:feedback-list' %}" class="filter-pill" title="{% trans 'Clear' %}"><i class="bi bi-x-lg"></i> {% trans "Clear" %}</a>
+  {% endif %}
+  <div class="filter-bar-sep"></div>
+  <a href="{% url 'assistant:feedback-export' %}?{{ request.GET.urlencode }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-download"></i> {% trans "Export JSON" %}
+  </a>
+</div>
+<script>
+function setPill(param, value) {
+  var f = document.getElementById('filterForm');
+  var input = f.querySelector('input[name="'+param+'"]');
+  if (input) input.value = value;
+  f.submit();
+}
+</script>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover table-sm mb-0">
+      <thead>
+        <tr>
+          {% sortable_th "date" "Date" %}
+          {% sortable_th "rating" "Rating" %}
+          {% sortable_th "language" "Language" %}
+          <th>{% trans "Question" %}</th>
+          <th>{% trans "Comment" %}</th>
+          <th>{% trans "User" %}</th>
+          <th>{% trans "Model" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fb in feedbacks %}
+        <tr>
+          <td class="text-nowrap">{{ fb.created_at|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if fb.rating == "up" %}
+            <span class="badge bg-success"><i class="bi bi-hand-thumbs-up"></i> {{ fb.get_rating_display }}</span>
+            {% else %}
+            <span class="badge bg-danger"><i class="bi bi-hand-thumbs-down"></i> {{ fb.get_rating_display }}</span>
+            {% endif %}
+          </td>
+          <td>{{ fb.language|default:"-" }}</td>
+          <td>{{ fb.question|truncatechars:70 }}</td>
+          <td>{{ fb.comment|truncatechars:70|default:"-" }}</td>
+          <td>{% if fb.user %}{{ fb.user.display_name }}{% else %}-{% endif %}</td>
+          <td class="text-nowrap"><small class="text-muted">{{ fb.model_name|default:"-" }}</small></td>
+        </tr>
+        {% empty %}
+        {% empty_state title=_("No feedback yet.") message=_("Feedback appears here when users rate an Ask Cairn answer with thumbs up or down. Export the set to hand it to an LLM for improvement.") colspan=7 %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "includes/pagination.html" %}
+{% endblock %}

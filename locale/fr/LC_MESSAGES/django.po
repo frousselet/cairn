@@ -9809,3 +9809,18 @@ msgstr "Exporter les retours sélectionnés en JSON"
 
 msgid "Question"
 msgstr "Question"
+
+msgid "Assistant feedback - Cairn"
+msgstr "Retours sur l'assistant - Cairn"
+
+msgid "Question or comment…"
+msgstr "Question ou commentaire…"
+
+msgid "Export JSON"
+msgstr "Exporter en JSON"
+
+msgid "No feedback yet."
+msgstr "Aucun retour pour l'instant."
+
+msgid "Feedback appears here when users rate an Ask Cairn answer with thumbs up or down. Export the set to hand it to an LLM for improvement."
+msgstr "Les retours apparaissent ici lorsque les utilisateurs évaluent une réponse d'Ask Cairn avec un pouce en haut ou en bas. Exportez l'ensemble pour le confier à un LLM en vue d'améliorations."

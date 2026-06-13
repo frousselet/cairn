@@ -108,9 +108,10 @@ To keep the stored feedback faithful (and not spoofable from the client), the an
 
 The collected feedback is meant to be exported and handed to an LLM (Claude Code or other) to improve the assistant:
 
-- **Django admin** (`/admin/`): the `AssistantFeedback` list (read-only, filters on rating / language / provider / date) has an **"Export selected feedback as JSON"** action that downloads the selected rows as a structured JSON file.
+- **In-app Administration page** (`assistant:feedback-list`, sidebar "Assistant feedback"): a server-rendered list with search (question / comment), rating and period filters and an **"Export JSON"** button that downloads the filtered set (`assistant:feedback-export`). This is the primary surface, consistent with the Access log / Action log pages.
 - **REST**: `GET /api/v1/assistant/feedback/export/` returns the same structured set (honouring the list filters).
 - **MCP**: `list_assistant_feedback` lets an LLM pull the feedback directly.
+- **Django admin** (`/admin/`, superusers): the `AssistantFeedback` model is also registered with an "Export selected feedback as JSON" action.
 
 Reading, exporting and the MCP tool require the `system.assistant_feedback.read` permission (granted to Super Admin, Admin, RSSI/DPO and Auditeur); submitting feedback only requires being authenticated.
 
