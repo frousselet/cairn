@@ -628,6 +628,32 @@ def _register_assistant_tools(server):
         ask_assistant,
     )
 
+    from assistant.models import AssistantFeedback
+
+    server.register_tool(
+        "list_assistant_feedback",
+        "List user feedback on Ask Cairn answers (thumbs up/down and optional "
+        "comment), with the original question, language and the LLM response. "
+        "Read-only; intended for quality analysis and improving the assistant.",
+        _list_schema({
+            "rating": {"type": "string", "description": "Filter by rating: 'up' or 'down'"},
+            "language": {"type": "string", "description": "Filter by interface language code"},
+            "provider": {"type": "string", "description": "Filter by LLM provider"},
+            "user_id": {"type": "string", "description": "Filter by user ID"},
+        }),
+        require_perm("system.assistant_feedback.read")(
+            _list_handler(
+                AssistantFeedback,
+                ["id", "created_at", "user_id", "question", "language", "rating",
+                 "comment", "summary", "results", "degraded", "refused_tools",
+                 "provider", "model_name"],
+                search_fields=["question", "comment", "summary"],
+                filters=["rating", "language", "provider", "user_id"],
+                scope_filtered=False,
+            )
+        ),
+    )
+
 
 # ── Help Tool ─────────────────────────────────────────────
 

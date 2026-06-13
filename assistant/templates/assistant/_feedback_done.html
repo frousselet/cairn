@@ -1,0 +1,6 @@
+{% load i18n %}
+{% if error %}
+  <div class="assistant-feedback-done assistant-feedback-error"><i class="bi bi-exclamation-circle" aria-hidden="true"></i> {% trans "Could not record your feedback." %}</div>
+{% else %}
+  <div class="assistant-feedback-done"><i class="bi bi-check2" aria-hidden="true"></i> {% trans "Thanks for your feedback." %}</div>
+{% endif %}

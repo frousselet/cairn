@@ -300,6 +300,10 @@ PERMISSION_REGISTRY = {
             "actions": ["read"],
             "label": _("System audit trail"),
         },
+        "assistant_feedback": {
+            "actions": ["read"],
+            "label": _("AI assistant feedback"),
+        },
         "config": {
             "actions": ["read", "update"],
             "label": _("System configuration"),
