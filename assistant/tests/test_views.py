@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from accounts.tests.factories import UserFactory
 from assistant.engine import AskOutcome, ToolRun
-from assistant.ollama import ModelNotAvailable, OllamaUnreachable
+from assistant.providers import ModelNotAvailable, ServiceUnreachable
 
 ASK_URL = "/api/assistant/ask/"
 
@@ -128,14 +128,14 @@ def test_permission_denied_note_rendered(logged_client, stub_engine):
     assert "lack the required permission" in response.text
 
 
-def test_model_missing_shows_pull_hint(logged_client, stub_engine, settings):
-    settings.AI_ASSISTANT_MODEL = "qwen3:1.7b"
-    stub_engine.error = ModelNotAvailable("qwen3:1.7b")
+def test_model_missing_shows_model_name(logged_client, stub_engine, settings):
+    settings.AI_ASSISTANT_MODEL = "mistral-small-latest"
+    stub_engine.error = ModelNotAvailable("mistral-small-latest")
     response = logged_client.post(ASK_URL, {"q": "Quelles décisions ?"})
-    assert "ollama pull qwen3:1.7b" in response.text
+    assert "mistral-small-latest" in response.text
 
 
 def test_unreachable_state(logged_client, stub_engine):
-    stub_engine.error = OllamaUnreachable("down")
+    stub_engine.error = ServiceUnreachable("down")
     response = logged_client.post(ASK_URL, {"q": "Quelles décisions ?"})
     assert "unreachable" in response.text

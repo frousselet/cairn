@@ -18,13 +18,13 @@ from dataclasses import dataclass, field
 from django.conf import settings
 
 from assistant.catalog import TOOL_CATALOG, plan_schema
-from assistant.ollama import (
+from assistant.prompts import routing_prompt, summary_prompt
+from assistant.providers import (
     AssistantDisabled,
     MalformedModelOutput,
-    OllamaClient,
-    OllamaUnreachable,
+    ServiceUnreachable,
+    get_client,
 )
-from assistant.prompts import routing_prompt, summary_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +150,7 @@ class AssistantEngine:
     def __init__(self, user, language="en", client=None):
         self.user = user
         self.language = language or "en"
-        self.client = client or OllamaClient()
+        self.client = client or get_client()
 
     def ask(self, question):
         if not settings.AI_ASSISTANT_ENABLED:
@@ -315,6 +315,6 @@ class AssistantEngine:
         ]
         try:
             outcome.summary = self.client.chat_text(messages) or None
-        except (OllamaUnreachable, MalformedModelOutput):
+        except (ServiceUnreachable, MalformedModelOutput):
             logger.warning("Assistant summary generation failed", exc_info=True)
             outcome.degraded = True

@@ -4,11 +4,11 @@ from rest_framework.views import APIView
 
 from assistant.api.serializers import AskRequestSerializer
 from assistant.engine import AssistantEngine
-from assistant.ollama import (
+from assistant.providers import (
     AssistantDisabled,
     MalformedModelOutput,
     ModelNotAvailable,
-    OllamaUnreachable,
+    ServiceUnreachable,
 )
 
 
@@ -28,11 +28,11 @@ class AskAssistantApiView(APIView):
             return self._unavailable("assistant_disabled", "The AI assistant is disabled.")
         except ModelNotAvailable as exc:
             return self._unavailable(
-                "model_missing", f"Model not available on Ollama: {exc}"
+                "model_missing", f"The configured model is not available: {exc}"
             )
-        except OllamaUnreachable:
+        except ServiceUnreachable:
             return self._unavailable(
-                "assistant_unreachable", "The Ollama service is unreachable."
+                "assistant_unreachable", "The AI service is unreachable."
             )
         except MalformedModelOutput:
             return self._unavailable(

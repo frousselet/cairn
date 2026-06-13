@@ -4,11 +4,11 @@ from django.shortcuts import render
 from django.views import View
 
 from assistant.engine import AssistantEngine
-from assistant.ollama import (
+from assistant.providers import (
     AssistantDisabled,
     MalformedModelOutput,
     ModelNotAvailable,
-    OllamaUnreachable,
+    ServiceUnreachable,
 )
 
 QUESTION_MIN_LENGTH = 3
@@ -40,7 +40,7 @@ class AskAssistantView(LoginRequiredMixin, View):
             context["error_code"] = "disabled"
         except ModelNotAvailable:
             context["error_code"] = "model_missing"
-        except OllamaUnreachable:
+        except ServiceUnreachable:
             context["error_code"] = "unreachable"
         except MalformedModelOutput:
             context["error_code"] = "model_error"

@@ -599,7 +599,7 @@ def _register_assistant_tools(server):
         # Lazy imports: the assistant app is optional at runtime and must not
         # influence MCP registry import time.
         from assistant.engine import AssistantEngine
-        from assistant.ollama import AssistantError
+        from assistant.providers import AssistantError
 
         question = (arguments.get("question") or "").strip()
         if not question:
@@ -615,8 +615,8 @@ def _register_assistant_tools(server):
         "ask_assistant",
         "Ask Cairn's natural-language assistant a read-only question about GRC data "
         "(e.g. 'Which decisions were made at the last management review?'). Requires "
-        "the optional Ollama sidecar (AI_ASSISTANT_ENABLED). The answer cites real "
-        "records; data access enforces the caller's permissions.",
+        "the optional AI assistant to be enabled (AI_ASSISTANT_ENABLED). The answer "
+        "cites real records; data access enforces the caller's permissions.",
         {
             "type": "object",
             "properties": {
