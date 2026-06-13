@@ -98,7 +98,7 @@ Record contents are user-authored data already visible to the requesting user. T
 | Palette partial | `POST /api/assistant/ask/` (`assistant:ask`) | Session auth, returns the HTML partial, always 200 with error states inside |
 | Feedback partial | `POST /api/assistant/feedback/` (`assistant:feedback`) | Session auth; body `{answer_id, rating, comment}`; returns a small confirmation partial |
 | REST API | `POST /api/v1/assistant/ask/` | Session / JWT / OAuth; body `{"q": "...", "language": "fr"}`; 200 with `{summary, language, degraded, results, refused_tools}`; 503 + code (`assistant_disabled`, `assistant_unreachable`, `model_missing`, `model_error`); 400 on invalid `q` |
-| REST API | `/api/v1/assistant/feedback/` | DRF viewset: `POST` to submit (any authenticated user), `GET` list/retrieve and `GET .../export/` require `system.assistant_feedback.read` |
+| REST API | `/api/v1/assistant/feedback/` | DRF viewset: `POST` to submit (any authenticated user); `GET` list/retrieve, `GET .../export/`, and `POST .../{id}/resolve/` \| `.../unresolve/` require `system.assistant_feedback.read` |
 | MCP | `ask_assistant` tool | Same outcome shape; error envelope when unavailable |
 | MCP | `list_assistant_feedback` tool | Read-only; requires `system.assistant_feedback.read`; for quality analysis |
 
@@ -116,6 +116,8 @@ The collected feedback is meant to be exported and handed to an LLM (Claude Code
 - **Django admin** (`/admin/`, superusers): the `AssistantFeedback` model is also registered with an "Export selected feedback as JSON" action.
 
 Reading, exporting and the MCP tool require the `system.assistant_feedback.read` permission (granted to Super Admin, Admin, RSSI/DPO and Auditeur); submitting feedback only requires being authenticated.
+
+**Closing the loop**: once a feedback item has been acted on, mark it **corrected** (the in-app list "Mark corrected" button, the admin "Mark selected as corrected" action, or `POST /api/v1/assistant/feedback/{id}/resolve/`). Corrected items are excluded from future exports by default: the in-app list defaults to the "Open" filter and the Export button mirrors it, `GET .../feedback/export/` and the `list_assistant_feedback` MCP tool both drop corrected rows unless `include_resolved=true`. This keeps each export to the improvement LLM focused on still-open feedback. Corrected items remain visible via the "Corrected"/"All" filters and can be reopened.
 
 ## Operations
 

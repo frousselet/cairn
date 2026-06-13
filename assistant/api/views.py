@@ -79,10 +79,10 @@ class AssistantFeedbackViewSet(
     action returns the full structured set ready to hand to an improvement LLM.
     """
 
-    queryset = AssistantFeedback.objects.select_related("user").all()
+    queryset = AssistantFeedback.objects.select_related("user", "resolved_by").all()
     serializer_class = AssistantFeedbackSerializer
     permission_classes = [AssistantFeedbackPermission]
-    filterset_fields = ["rating", "language", "provider"]
+    filterset_fields = ["rating", "language", "provider", "is_resolved"]
     search_fields = ["question", "comment", "summary"]
     ordering_fields = ["created_at"]
 
@@ -92,6 +92,25 @@ class AssistantFeedbackViewSet(
 
     @action(detail=False, methods=["get"])
     def export(self, request):
+        """Export feedback as a structured set; corrected items are excluded
+        unless ``?include_resolved=true`` is passed."""
         queryset = self.filter_queryset(self.get_queryset())
+        include_resolved = request.query_params.get("include_resolved", "").lower() in (
+            "1", "true", "yes",
+        )
+        if not include_resolved:
+            queryset = queryset.filter(is_resolved=False)
         feedback = [obj.as_export_dict() for obj in queryset]
         return Response({"count": len(feedback), "feedback": feedback})
+
+    @action(detail=True, methods=["post"])
+    def resolve(self, request, pk=None):
+        feedback = self.get_object()
+        feedback.mark_resolved(request.user)
+        return Response(self.get_serializer(feedback).data)
+
+    @action(detail=True, methods=["post"])
+    def unresolve(self, request, pk=None):
+        feedback = self.get_object()
+        feedback.mark_unresolved()
+        return Response(self.get_serializer(feedback).data)

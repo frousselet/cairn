@@ -23,7 +23,9 @@ class AssistantFeedbackSerializer(serializers.ModelSerializer):
             "id", "created_at", "user", "user_email", "question", "language",
             "rating", "rating_display", "comment", "summary", "results",
             "degraded", "refused_tools", "provider", "model_name",
+            "is_resolved", "resolved_at", "resolved_by",
         ]
         read_only_fields = [
             "id", "created_at", "user", "user_email", "rating_display",
+            "is_resolved", "resolved_at", "resolved_by",
         ]

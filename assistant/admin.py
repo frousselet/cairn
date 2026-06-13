@@ -17,17 +17,17 @@ from assistant.models import AssistantFeedback
 class AssistantFeedbackAdmin(admin.ModelAdmin):
     list_display = (
         "created_at", "rating", "language", "short_question",
-        "user", "has_comment", "provider", "model_name",
+        "user", "has_comment", "is_resolved", "provider", "model_name",
     )
-    list_filter = ("rating", "language", "provider", "created_at")
+    list_filter = ("is_resolved", "rating", "language", "provider", "created_at")
     search_fields = ("question", "comment", "summary")
     date_hierarchy = "created_at"
     readonly_fields = (
         "id", "created_at", "user", "question", "language", "rating",
         "comment", "summary", "results", "degraded", "refused_tools",
-        "provider", "model_name",
+        "provider", "model_name", "is_resolved", "resolved_at", "resolved_by",
     )
-    actions = ["export_as_json"]
+    actions = ["export_as_json", "mark_corrected", "reopen"]
 
     @admin.display(description=_("Question"))
     def short_question(self, obj):
@@ -36,6 +36,22 @@ class AssistantFeedbackAdmin(admin.ModelAdmin):
     @admin.display(boolean=True, description=_("Comment"))
     def has_comment(self, obj):
         return bool(obj.comment)
+
+    @admin.action(description=_("Mark selected feedback as corrected"))
+    def mark_corrected(self, request, queryset):
+        from django.utils import timezone
+
+        updated = queryset.filter(is_resolved=False).update(
+            is_resolved=True, resolved_at=timezone.now(), resolved_by=request.user
+        )
+        self.message_user(request, _("%(n)d feedback marked as corrected.") % {"n": updated})
+
+    @admin.action(description=_("Reopen selected feedback"))
+    def reopen(self, request, queryset):
+        updated = queryset.filter(is_resolved=True).update(
+            is_resolved=False, resolved_at=None, resolved_by=None
+        )
+        self.message_user(request, _("%(n)d feedback reopened.") % {"n": updated})
 
     @admin.action(description=_("Export selected feedback as JSON"))
     def export_as_json(self, request, queryset):

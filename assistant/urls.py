@@ -9,4 +9,5 @@ urlpatterns = [
     path("feedback/", views.AssistantFeedbackView.as_view(), name="feedback"),
     path("feedback/list/", views.AssistantFeedbackListView.as_view(), name="feedback-list"),
     path("feedback/export/", views.AssistantFeedbackExportView.as_view(), name="feedback-export"),
+    path("feedback/<uuid:pk>/resolve/", views.AssistantFeedbackResolveView.as_view(), name="feedback-resolve"),
 ]

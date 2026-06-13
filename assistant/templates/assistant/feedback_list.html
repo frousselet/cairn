@@ -8,6 +8,7 @@
 {% page_header _("Assistant feedback") eyebrow=_("Administration") accent="accounts" %}{% endpage_header %}
 
 <form id="filterForm" method="get">
+  <input type="hidden" name="status" value="{{ request.GET.status|default:'' }}">
   <input type="hidden" name="rating" value="{{ request.GET.rating|default:'' }}">
   <input type="hidden" name="q" value="{{ request.GET.q|default:'' }}">
   <input type="hidden" name="date_from" value="{{ request.GET.date_from|default:'' }}">
@@ -26,6 +27,13 @@
   </div>
   <div class="filter-bar-sep"></div>
   <div class="filter-bar-group">
+    <span class="filter-bar-label">{% trans "Status" %}</span>
+    <a href="#" class="filter-pill{% if not request.GET.status or request.GET.status == 'open' %} active{% endif %}" onclick="setPill('status','open');return false">{% trans "Open" %}</a>
+    <a href="#" class="filter-pill{% if request.GET.status == 'resolved' %} active{% endif %}" onclick="setPill('status','resolved');return false">{% trans "Corrected" %}</a>
+    <a href="#" class="filter-pill{% if request.GET.status == 'all' %} active{% endif %}" onclick="setPill('status','all');return false">{% trans "All" %}</a>
+  </div>
+  <div class="filter-bar-sep"></div>
+  <div class="filter-bar-group">
     <span class="filter-bar-label">{% trans "Rating" %}</span>
     <a href="#" class="filter-pill{% if not request.GET.rating %} active{% endif %}" onclick="setPill('rating','');return false">{% trans "All" %}</a>
     <a href="#" class="filter-pill{% if request.GET.rating == 'up' %} active{% endif %}" onclick="setPill('rating','up');return false"><i class="bi bi-hand-thumbs-up"></i> {% trans "Thumbs up" %}</a>
@@ -37,7 +45,7 @@
     <input type="date" name="date_from" form="filterForm" class="form-control" value="{{ request.GET.date_from|default:'' }}" onchange="this.form.submit()">
     <input type="date" name="date_to" form="filterForm" class="form-control" value="{{ request.GET.date_to|default:'' }}" onchange="this.form.submit()">
   </div>
-  {% if request.GET.q or request.GET.rating or request.GET.date_from or request.GET.date_to %}
+  {% if request.GET.q or request.GET.rating or request.GET.date_from or request.GET.date_to or request.GET.status and request.GET.status != 'open' %}
   <a href="{% url 'assistant:feedback-list' %}" class="filter-pill" title="{% trans 'Clear' %}"><i class="bi bi-x-lg"></i> {% trans "Clear" %}</a>
   {% endif %}
   <div class="filter-bar-sep"></div>
@@ -64,7 +72,7 @@ function setPill(param, value) {
           <th>{% trans "Question" %}</th>
           <th>{% trans "Comment" %}</th>
           <th>{% trans "User" %}</th>
-          <th>{% trans "Model" %}</th>
+          <th class="text-end">{% trans "Status" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -79,13 +87,25 @@ function setPill(param, value) {
             {% endif %}
           </td>
           <td>{{ fb.language|default:"-" }}</td>
-          <td>{{ fb.question|truncatechars:70 }}</td>
-          <td>{{ fb.comment|truncatechars:70|default:"-" }}</td>
+          <td>{{ fb.question|truncatechars:60 }}</td>
+          <td>{{ fb.comment|truncatechars:60|default:"-" }}</td>
           <td>{% if fb.user %}{{ fb.user.display_name }}{% else %}-{% endif %}</td>
-          <td class="text-nowrap"><small class="text-muted">{{ fb.model_name|default:"-" }}</small></td>
+          <td class="text-end text-nowrap">
+            <form method="post" action="{% url 'assistant:feedback-resolve' fb.pk %}" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="next_qs" value="{{ request.GET.urlencode }}">
+              {% if fb.is_resolved %}
+              <span class="badge bg-secondary" title="{% if fb.resolved_by %}{{ fb.resolved_by.display_name }} - {% endif %}{{ fb.resolved_at|date:'d/m/Y H:i' }}"><i class="bi bi-check2-circle"></i> {% trans "Corrected" %}</span>
+              <input type="hidden" name="action" value="reopen">
+              <button type="submit" class="btn btn-sm btn-link text-muted p-0 ms-1" title="{% trans 'Reopen' %}"><i class="bi bi-arrow-counterclockwise"></i></button>
+              {% else %}
+              <button type="submit" class="btn btn-sm btn-outline-secondary" title="{% trans 'Exclude from future exports' %}"><i class="bi bi-check2"></i> {% trans "Mark corrected" %}</button>
+              {% endif %}
+            </form>
+          </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No feedback yet.") message=_("Feedback appears here when users rate an Ask Cairn answer with thumbs up or down. Export the set to hand it to an LLM for improvement.") colspan=7 %}
+        {% empty_state title=_("No feedback to review.") message=_("Open feedback appears here when users rate an Ask Cairn answer. Export the set to hand it to an LLM, then mark items corrected to drop them from future exports.") colspan=7 %}
         {% endfor %}
       </tbody>
     </table>
