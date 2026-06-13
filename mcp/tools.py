@@ -630,28 +630,39 @@ def _register_assistant_tools(server):
 
     from assistant.models import AssistantFeedback
 
+    feedback_list_handler = _list_handler(
+        AssistantFeedback,
+        ["id", "created_at", "user_id", "question", "language", "rating",
+         "comment", "summary", "results", "degraded", "refused_tools",
+         "provider", "model_name", "is_resolved"],
+        search_fields=["question", "comment", "summary"],
+        filters=["rating", "language", "provider", "user_id", "is_resolved"],
+        scope_filtered=False,
+    )
+
+    def list_assistant_feedback(user, arguments):
+        # Corrected feedback is excluded by default so an improvement LLM only
+        # sees still-open items; pass include_resolved=true to see everything.
+        args = dict(arguments or {})
+        include = str(args.pop("include_resolved", "")).lower() in ("1", "true", "yes")
+        if not include:
+            args.setdefault("is_resolved", False)
+        return feedback_list_handler(user, args)
+
     server.register_tool(
         "list_assistant_feedback",
         "List user feedback on Ask Cairn answers (thumbs up/down and optional "
         "comment), with the original question, language and the LLM response. "
-        "Read-only; intended for quality analysis and improving the assistant.",
+        "Read-only; for quality analysis. Feedback already marked corrected is "
+        "excluded unless include_resolved=true.",
         _list_schema({
             "rating": {"type": "string", "description": "Filter by rating: 'up' or 'down'"},
             "language": {"type": "string", "description": "Filter by interface language code"},
             "provider": {"type": "string", "description": "Filter by LLM provider"},
             "user_id": {"type": "string", "description": "Filter by user ID"},
+            "include_resolved": {"type": "boolean", "description": "Include feedback already marked corrected (default false)"},
         }),
-        require_perm("system.assistant_feedback.read")(
-            _list_handler(
-                AssistantFeedback,
-                ["id", "created_at", "user_id", "question", "language", "rating",
-                 "comment", "summary", "results", "degraded", "refused_tools",
-                 "provider", "model_name"],
-                search_fields=["question", "comment", "summary"],
-                filters=["rating", "language", "provider", "user_id"],
-                scope_filtered=False,
-            )
-        ),
+        require_perm("system.assistant_feedback.read")(list_assistant_feedback),
     )
 
     _register_semantic_requirement_tool(server)

@@ -44,6 +44,16 @@ class AssistantFeedback(models.Model):
     refused_tools = models.JSONField(_("Refused tools"), default=list, blank=True)
     provider = models.CharField(_("LLM provider"), max_length=50, blank=True)
     model_name = models.CharField(_("LLM model"), max_length=100, blank=True)
+    is_resolved = models.BooleanField(_("Corrected"), default=False, db_index=True)
+    resolved_at = models.DateTimeField(_("Corrected at"), null=True, blank=True)
+    resolved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="resolved_assistant_feedback",
+        verbose_name=_("Corrected by"),
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -53,6 +63,20 @@ class AssistantFeedback(models.Model):
 
     def __str__(self):
         return f"{self.get_rating_display()} - {self.question[:50]}"
+
+    def mark_resolved(self, user):
+        from django.utils import timezone
+
+        self.is_resolved = True
+        self.resolved_at = timezone.now()
+        self.resolved_by = user if getattr(user, "is_authenticated", False) else None
+        self.save(update_fields=["is_resolved", "resolved_at", "resolved_by"])
+
+    def mark_unresolved(self):
+        self.is_resolved = False
+        self.resolved_at = None
+        self.resolved_by = None
+        self.save(update_fields=["is_resolved", "resolved_at", "resolved_by"])
 
     def as_export_dict(self):
         """Structured record for the export handed to an improvement LLM."""
@@ -70,6 +94,7 @@ class AssistantFeedback(models.Model):
             "refused_tools": self.refused_tools,
             "provider": self.provider,
             "model": self.model_name,
+            "is_resolved": self.is_resolved,
         }
 
 

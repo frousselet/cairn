@@ -289,3 +289,99 @@ def test_admin_export_downloads_json(client):
 def test_admin_export_forbidden_without_permission(client):
     client.force_login(UserFactory())
     assert client.get(EXPORT_URL).status_code == 403
+
+
+# ── Mark corrected / exclude from exports ─────────────────
+
+
+@pytest.mark.django_db
+def test_model_mark_resolved_and_unresolved():
+    user = UserFactory()
+    fb = AssistantFeedback.objects.create(question="Q?", rating="down")
+    fb.mark_resolved(user)
+    assert fb.is_resolved and fb.resolved_by == user and fb.resolved_at is not None
+    fb.mark_unresolved()
+    assert not fb.is_resolved and fb.resolved_by is None and fb.resolved_at is None
+
+
+@pytest.mark.django_db
+def test_list_defaults_to_open_and_hides_corrected(client):
+    AssistantFeedback.objects.create(question="Still open one", rating="down")
+    AssistantFeedback.objects.create(question="Already fixed one", rating="down", is_resolved=True)
+    client.force_login(UserFactory(is_superuser=True))
+    response = client.get(LIST_URL)
+    assert "Still open one" in response.text
+    assert "Already fixed one" not in response.text
+    # status=all shows everything
+    response_all = client.get(LIST_URL, {"status": "all"})
+    assert "Already fixed one" in response_all.text
+
+
+@pytest.mark.django_db
+def test_resolve_view_marks_corrected_and_redirects(client):
+    fb = AssistantFeedback.objects.create(question="Q?", rating="down")
+    user = UserFactory(is_superuser=True)
+    client.force_login(user)
+    url = reverse("assistant:feedback-resolve", args=[fb.pk])
+    response = client.post(url, {"next_qs": "status=open"})
+    assert response.status_code == 302
+    fb.refresh_from_db()
+    assert fb.is_resolved and fb.resolved_by == user
+    # reopen
+    client.post(url, {"action": "reopen"})
+    fb.refresh_from_db()
+    assert not fb.is_resolved
+
+
+@pytest.mark.django_db
+def test_resolve_view_requires_permission(client):
+    fb = AssistantFeedback.objects.create(question="Q?", rating="down")
+    client.force_login(UserFactory())
+    url = reverse("assistant:feedback-resolve", args=[fb.pk])
+    assert client.post(url).status_code == 403
+
+
+@pytest.mark.django_db
+def test_inapp_export_excludes_corrected_by_default(client):
+    AssistantFeedback.objects.create(question="open", rating="down")
+    AssistantFeedback.objects.create(question="fixed", rating="down", is_resolved=True)
+    client.force_login(UserFactory(is_superuser=True))
+    payload = json.loads(client.get(EXPORT_URL).content)
+    assert payload["count"] == 1
+    assert payload["feedback"][0]["question"] == "open"
+    # status=all includes corrected
+    payload_all = json.loads(client.get(EXPORT_URL, {"status": "all"}).content)
+    assert payload_all["count"] == 2
+
+
+@pytest.mark.django_db
+def test_api_export_excludes_corrected_unless_flag():
+    AssistantFeedback.objects.create(question="open", rating="down")
+    AssistantFeedback.objects.create(question="fixed", rating="down", is_resolved=True)
+    api = APIClient()
+    api.force_authenticate(UserFactory(is_superuser=True))
+    assert api.get(FEEDBACK_API + "export/").data["count"] == 1
+    assert api.get(FEEDBACK_API + "export/", {"include_resolved": "true"}).data["count"] == 2
+
+
+@pytest.mark.django_db
+def test_api_resolve_and_unresolve_actions():
+    fb = AssistantFeedback.objects.create(question="Q?", rating="down")
+    admin = UserFactory(is_superuser=True)
+    api = APIClient()
+    api.force_authenticate(admin)
+    resp = api.post(f"{FEEDBACK_API}{fb.pk}/resolve/")
+    assert resp.status_code == 200 and resp.data["is_resolved"] is True
+    fb.refresh_from_db()
+    assert fb.is_resolved and fb.resolved_by == admin
+    resp = api.post(f"{FEEDBACK_API}{fb.pk}/unresolve/")
+    assert resp.data["is_resolved"] is False
+
+
+@pytest.mark.django_db
+def test_mcp_list_excludes_corrected_unless_flag():
+    AssistantFeedback.objects.create(question="open", rating="down")
+    AssistantFeedback.objects.create(question="fixed", rating="down", is_resolved=True)
+    admin = UserFactory(is_superuser=True)
+    assert _fb_tool()["handler"](admin, {})["total"] == 1
+    assert _fb_tool()["handler"](admin, {"include_resolved": True})["total"] == 2

@@ -1,10 +1,14 @@
 import uuid
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Q
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render
+from django.urls import reverse
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import ListView
 
@@ -146,13 +150,24 @@ class AssistantFeedbackView(LoginRequiredMixin, View):
 
 
 def _filtered_feedback(request):
-    """Apply the shared admin-list filters (rating, language, search, period)."""
-    qs = AssistantFeedback.objects.select_related("user")
+    """Apply the shared admin-list filters (status, rating, language, search, period).
+
+    ``status`` defaults to "open": corrected feedback is hidden, so the list
+    focuses on actionable items and the Export button (which mirrors this
+    filter) excludes corrected feedback by default. ``resolved`` shows only
+    corrected, ``all`` shows everything.
+    """
+    qs = AssistantFeedback.objects.select_related("user", "resolved_by")
+    status = request.GET.get("status") or "open"
     rating = request.GET.get("rating")
     language = request.GET.get("language")
     search = request.GET.get("q")
     date_from = request.GET.get("date_from")
     date_to = request.GET.get("date_to")
+    if status == "open":
+        qs = qs.filter(is_resolved=False)
+    elif status == "resolved":
+        qs = qs.filter(is_resolved=True)
     if rating in (AssistantFeedback.RATING_UP, AssistantFeedback.RATING_DOWN):
         qs = qs.filter(rating=rating)
     if language:
@@ -206,3 +221,22 @@ class AssistantFeedbackExportView(LoginRequiredMixin, PermissionRequiredMixin, V
         )
         response["Content-Disposition"] = 'attachment; filename="assistant_feedback.json"'
         return response
+
+
+class AssistantFeedbackResolveView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Mark a feedback as corrected (or reopen it), excluding it from exports."""
+
+    permission_required = FEEDBACK_READ_PERM
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        feedback = get_object_or_404(AssistantFeedback, pk=pk)
+        if request.POST.get("action") == "reopen":
+            feedback.mark_unresolved()
+            messages.success(request, _("Feedback reopened."))
+        else:
+            feedback.mark_resolved(request.user)
+            messages.success(request, _("Feedback marked as corrected."))
+        querystring = request.POST.get("next_qs", "")
+        url = reverse("assistant:feedback-list")
+        return redirect(f"{url}?{querystring}" if querystring else url)
