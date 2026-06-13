@@ -234,3 +234,58 @@ def test_mcp_tool_lists_for_superuser():
     result = _fb_tool()["handler"](UserFactory(is_superuser=True), {})
     assert result["total"] == 1
     assert result["items"][0]["rating"] == "up"
+
+
+# ── In-app Administration list + export ───────────────────
+
+LIST_URL = "/api/assistant/feedback/list/"
+EXPORT_URL = "/api/assistant/feedback/export/"
+
+
+def test_admin_list_urls_reverse():
+    assert reverse("assistant:feedback-list") == LIST_URL
+    assert reverse("assistant:feedback-export") == EXPORT_URL
+
+
+@pytest.mark.django_db
+def test_admin_list_forbidden_without_permission(client):
+    client.force_login(UserFactory())
+    assert client.get(LIST_URL).status_code == 403
+
+
+@pytest.mark.django_db
+def test_admin_list_visible_with_permission(client):
+    AssistantFeedback.objects.create(question="Quelle exigence ?", rating="down", comment="confus")
+    client.force_login(UserFactory(is_superuser=True, is_staff=True))
+    response = client.get(LIST_URL)
+    assert response.status_code == 200
+    assert "Quelle exigence ?" in response.text
+
+
+@pytest.mark.django_db
+def test_admin_list_filters_by_rating(client):
+    AssistantFeedback.objects.create(question="Up one", rating="up")
+    AssistantFeedback.objects.create(question="Down one", rating="down")
+    client.force_login(UserFactory(is_superuser=True))
+    response = client.get(LIST_URL, {"rating": "up"})
+    assert "Up one" in response.text
+    assert "Down one" not in response.text
+
+
+@pytest.mark.django_db
+def test_admin_export_downloads_json(client):
+    AssistantFeedback.objects.create(question="Q?", rating="up", comment="great")
+    client.force_login(UserFactory(is_superuser=True))
+    response = client.get(EXPORT_URL)
+    assert response.status_code == 200
+    assert response["Content-Type"] == "application/json"
+    assert "attachment" in response["Content-Disposition"]
+    payload = json.loads(response.content)
+    assert payload["count"] == 1
+    assert payload["feedback"][0]["comment"] == "great"
+
+
+@pytest.mark.django_db
+def test_admin_export_forbidden_without_permission(client):
+    client.force_login(UserFactory())
+    assert client.get(EXPORT_URL).status_code == 403

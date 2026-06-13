@@ -1,9 +1,12 @@
 import uuid
 
 from django.conf import settings
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.views import View
+from django.views.generic import ListView
 
 from assistant.engine import AssistantEngine
 from assistant.models import AssistantFeedback
@@ -13,6 +16,9 @@ from assistant.providers import (
     ModelNotAvailable,
     ServiceUnreachable,
 )
+from core.mixins import SortableListMixin
+
+FEEDBACK_READ_PERM = "system.assistant_feedback.read"
 
 QUESTION_MIN_LENGTH = 3
 QUESTION_MAX_LENGTH = 500
@@ -137,3 +143,65 @@ class AssistantFeedbackView(LoginRequiredMixin, View):
         # One feedback per answer: drop the stash to block double submission.
         request.session.pop(ANSWER_SESSION_KEY, None)
         return render(request, "assistant/_feedback_done.html", {"error": False})
+
+
+def _filtered_feedback(request):
+    """Apply the shared admin-list filters (rating, language, search, period)."""
+    qs = AssistantFeedback.objects.select_related("user")
+    rating = request.GET.get("rating")
+    language = request.GET.get("language")
+    search = request.GET.get("q")
+    date_from = request.GET.get("date_from")
+    date_to = request.GET.get("date_to")
+    if rating in (AssistantFeedback.RATING_UP, AssistantFeedback.RATING_DOWN):
+        qs = qs.filter(rating=rating)
+    if language:
+        qs = qs.filter(language=language)
+    if search:
+        qs = qs.filter(
+            Q(question__icontains=search)
+            | Q(comment__icontains=search)
+            | Q(summary__icontains=search)
+        )
+    if date_from:
+        qs = qs.filter(created_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(created_at__date__lte=date_to)
+    return qs
+
+
+class AssistantFeedbackListView(
+    LoginRequiredMixin, PermissionRequiredMixin, SortableListMixin, ListView
+):
+    """In-app Administration page listing Ask Cairn answer feedback."""
+
+    model = AssistantFeedback
+    template_name = "assistant/feedback_list.html"
+    context_object_name = "feedbacks"
+    paginate_by = 50
+    permission_required = FEEDBACK_READ_PERM
+    sortable_fields = {"date": "created_at", "rating": "rating", "language": "language"}
+    default_sort = "date"
+    default_sort_order = "desc"
+
+    def get_queryset(self):
+        return self._apply_sorting(_filtered_feedback(self.request))
+
+
+class AssistantFeedbackExportView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Download the (filtered) feedback set as structured JSON for an LLM."""
+
+    permission_required = FEEDBACK_READ_PERM
+    http_method_names = ["get"]
+
+    def get(self, request):
+        feedback = [
+            fb.as_export_dict()
+            for fb in _filtered_feedback(request).order_by("-created_at")
+        ]
+        response = JsonResponse(
+            {"count": len(feedback), "feedback": feedback},
+            json_dumps_params={"ensure_ascii": False, "indent": 2},
+        )
+        response["Content-Disposition"] = 'attachment; filename="assistant_feedback.json"'
+        return response
