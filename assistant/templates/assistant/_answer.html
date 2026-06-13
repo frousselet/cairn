@@ -46,5 +46,14 @@
   {% endif %}
   {% if outcome.summary or outcome.has_cards %}
     <div class="assistant-disclaimer">{% blocktrans %}AI-generated summary, powered by {{ powered_by }}. Verify against the linked records.{% endblocktrans %}</div>
+    {% if feedback_token %}
+      <form class="assistant-feedback" method="post" data-assistant-feedback>
+        <input type="hidden" name="answer_id" value="{{ feedback_token }}">
+        <span class="assistant-feedback-label">{% trans "Was this helpful?" %}</span>
+        <input type="text" name="comment" class="assistant-feedback-comment" maxlength="2000" placeholder="{% trans 'Optional comment' %}" aria-label="{% trans 'Optional comment' %}">
+        <button type="submit" name="rating" value="up" class="assistant-feedback-btn" aria-label="{% trans 'Thumbs up' %}"><i class="bi bi-hand-thumbs-up" aria-hidden="true"></i></button>
+        <button type="submit" name="rating" value="down" class="assistant-feedback-btn" aria-label="{% trans 'Thumbs down' %}"><i class="bi bi-hand-thumbs-down" aria-hidden="true"></i></button>
+      </form>
+    {% endif %}
   {% endif %}
 {% endif %}

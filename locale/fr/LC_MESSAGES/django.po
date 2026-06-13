@@ -9755,3 +9755,57 @@ msgstr ""
 
 msgid "The assistant only answers questions about your GRC data: risks, reviews, action plans, assets, compliance..."
 msgstr "L'assistant répond uniquement aux questions sur vos données GRC : risques, revues, plans d'action, actifs, conformité..."
+
+msgid "Was this helpful?"
+msgstr "Cette réponse vous a-t-elle aidé ?"
+
+msgid "Optional comment"
+msgstr "Commentaire facultatif"
+
+msgid "Thumbs up"
+msgstr "Pouce en haut"
+
+msgid "Thumbs down"
+msgstr "Pouce en bas"
+
+msgid "Could not record your feedback."
+msgstr "Impossible d'enregistrer votre retour."
+
+msgid "Thanks for your feedback."
+msgstr "Merci pour votre retour."
+
+msgid "Interface language"
+msgstr "Langue de l'interface"
+
+msgid "Rating"
+msgstr "Évaluation"
+
+msgid "LLM summary"
+msgstr "Résumé du LLM"
+
+msgid "Returned records"
+msgstr "Enregistrements retournés"
+
+msgid "Degraded answer"
+msgstr "Réponse dégradée"
+
+msgid "Refused tools"
+msgstr "Outils refusés"
+
+msgid "LLM provider"
+msgstr "Fournisseur LLM"
+
+msgid "LLM model"
+msgstr "Modèle LLM"
+
+msgid "Assistant feedback"
+msgstr "Retour sur l'assistant"
+
+msgid "AI assistant feedback"
+msgstr "Retours sur l'assistant IA"
+
+msgid "Export selected feedback as JSON"
+msgstr "Exporter les retours sélectionnés en JSON"
+
+msgid "Question"
+msgstr "Question"

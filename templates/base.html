@@ -1928,6 +1928,66 @@
       font-size: .6875rem;
       color: var(--text-muted);
     }
+    .assistant-feedback {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .25rem 1.125rem .75rem;
+    }
+    .assistant-feedback-label {
+      font-size: .6875rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .assistant-feedback-comment {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-size: .75rem;
+      padding: .25rem .5rem;
+      color: var(--text);
+      background: var(--field-bg);
+      border: 1px solid var(--field-border);
+      border-radius: var(--radius-sm, .375rem);
+    }
+    .assistant-feedback-comment:focus {
+      outline: none;
+      border-color: var(--field-border-hover);
+      background: var(--field-bg-hover);
+    }
+    .assistant-feedback-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.875rem;
+      height: 1.875rem;
+      flex: 0 0 auto;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid var(--field-border);
+      border-radius: var(--radius-sm, .375rem);
+      cursor: pointer;
+      transition: color var(--duration-fast, 150ms) var(--ease-out),
+                  border-color var(--duration-fast, 150ms) var(--ease-out),
+                  background var(--duration-fast, 150ms) var(--ease-out);
+    }
+    .assistant-feedback-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .assistant-feedback-btn:disabled { opacity: .5; cursor: default; }
+    .assistant-feedback-done {
+      display: flex;
+      align-items: center;
+      gap: .375rem;
+      padding: .375rem 1.125rem .75rem;
+      font-size: .6875rem;
+      color: var(--text-muted);
+    }
+    .assistant-feedback-error { color: var(--danger); }
+    @media (prefers-reduced-motion: reduce) {
+      .assistant-feedback-btn { transition: none; }
+    }
     .assistant-thinking {
       display: flex;
       align-items: center;
@@ -4071,7 +4131,7 @@
 
   {# ── Search overlay ─────────────────────────────────────── #}
   {% if user.is_authenticated %}
-  <div class="search-overlay" id="searchOverlay"{% if AI_ASSISTANT_ENABLED %} data-assistant-url="{% url 'assistant:ask' %}"{% endif %}>
+  <div class="search-overlay" id="searchOverlay"{% if AI_ASSISTANT_ENABLED %} data-assistant-url="{% url 'assistant:ask' %}" data-feedback-url="{% url 'assistant:feedback' %}"{% endif %}>
     <div class="search-dialog" role="dialog" aria-label="{% trans 'Command palette' %}" aria-modal="true">
       <div class="search-input-wrap">
         <i class="bi bi-search" aria-hidden="true"></i>
@@ -5314,6 +5374,31 @@
           results.innerHTML = '<div class="search-empty"><i class="bi bi-plug" aria-hidden="true"></i>{% trans "The assistant is unreachable. Try again later." %}</div>';
         });
     }
+
+    var feedbackUrl = overlay.dataset.feedbackUrl || null;
+
+    /* Thumbs up/down (+ optional comment) on an assistant answer. Submits the
+     * clicked rating with the form, then swaps the form for a thank-you note. */
+    results.addEventListener('submit', function(e) {
+      var form = e.target.closest('form[data-assistant-feedback]');
+      if (!form || !feedbackUrl) return;
+      e.preventDefault();
+      var body = new FormData(form);
+      if (e.submitter && e.submitter.name === 'rating') {
+        body.set('rating', e.submitter.value);
+      }
+      Array.prototype.forEach.call(form.querySelectorAll('button'), function(b) { b.disabled = true; });
+      fetch(feedbackUrl, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        body: body
+      })
+        .then(function(r) { return r.text(); })
+        .then(function(html) { form.outerHTML = html; })
+        .catch(function() {
+          Array.prototype.forEach.call(form.querySelectorAll('button'), function(b) { b.disabled = false; });
+        });
+    });
 
     function fetchDefault() {
       /* Fetch navigation + actions list when the query is empty. */

@@ -4,7 +4,7 @@ Optional natural-language question mode embedded in the command palette (Ctrl+K)
 
 The backend is a **pluggable provider** (`assistant/providers/`): [Mistral AI](https://mistral.ai/) (a third-party, EU-hosted API) by default, with a self-hosted [Ollama](https://ollama.com/) provider still selectable for those who run their own local LLM. With Mistral, the question and the compact record fields used for routing leave the platform (see [Data egress](#data-egress)); with Ollama, data never leaves the host.
 
-Django app: `assistant/`. **No persistent entities, no migrations, no lifecycle workflow**: the feature is stateless (a future query audit log would be a separate decision).
+Django app: `assistant/`. The only persistent entity is **answer feedback** (`AssistantFeedback`, see [Feedback](#feedback)); the question/answer pipeline itself is stateless (no lifecycle workflow, no history). `AssistantFeedback` is a plain log row (like `AccessLog`), not a domain `BaseModel`.
 
 ## Pipeline
 
@@ -94,8 +94,25 @@ Record contents are user-authored data already visible to the requesting user. T
 | Surface | Path | Notes |
 | ------- | ---- | ----- |
 | Palette partial | `POST /api/assistant/ask/` (`assistant:ask`) | Session auth, returns the HTML partial, always 200 with error states inside |
+| Feedback partial | `POST /api/assistant/feedback/` (`assistant:feedback`) | Session auth; body `{answer_id, rating, comment}`; returns a small confirmation partial |
 | REST API | `POST /api/v1/assistant/ask/` | Session / JWT / OAuth; body `{"q": "...", "language": "fr"}`; 200 with `{summary, language, degraded, results, refused_tools}`; 503 + code (`assistant_disabled`, `assistant_unreachable`, `model_missing`, `model_error`); 400 on invalid `q` |
+| REST API | `/api/v1/assistant/feedback/` | DRF viewset: `POST` to submit (any authenticated user), `GET` list/retrieve and `GET .../export/` require `system.assistant_feedback.read` |
 | MCP | `ask_assistant` tool | Same outcome shape; error envelope when unavailable |
+| MCP | `list_assistant_feedback` tool | Read-only; requires `system.assistant_feedback.read`; for quality analysis |
+
+## Feedback
+
+Each answer in the palette shows a thumbs up / thumbs down control plus an optional free-text comment. Submitting records an `AssistantFeedback` row capturing the prompt, the interface language, the LLM response (summary and the returned record cards), the provider/model, the rating and the comment.
+
+To keep the stored feedback faithful (and not spoofable from the client), the answer is stashed in the session at render time under a one-time token; the feedback POST sends only `{answer_id, rating, comment}` and the server rebuilds the row from the stashed answer, then clears the token (one feedback per answer).
+
+The collected feedback is meant to be exported and handed to an LLM (Claude Code or other) to improve the assistant:
+
+- **Django admin** (`/admin/`): the `AssistantFeedback` list (read-only, filters on rating / language / provider / date) has an **"Export selected feedback as JSON"** action that downloads the selected rows as a structured JSON file.
+- **REST**: `GET /api/v1/assistant/feedback/export/` returns the same structured set (honouring the list filters).
+- **MCP**: `list_assistant_feedback` lets an LLM pull the feedback directly.
+
+Reading, exporting and the MCP tool require the `system.assistant_feedback.read` permission (granted to Super Admin, Admin, RSSI/DPO and Auditeur); submitting feedback only requires being authenticated.
 
 ## Operations
 
