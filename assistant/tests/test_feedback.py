@@ -200,7 +200,7 @@ def test_admin_export_action_returns_json():
     )
     model_admin = AssistantFeedbackAdmin(AssistantFeedback, AdminSite())
     response = model_admin.export_as_json(None, AssistantFeedback.objects.all())
-    assert response["Content-Type"] == "application/json"
+    assert response["Content-Type"] == "application/json; charset=utf-8"
     assert "attachment" in response["Content-Disposition"]
     payload = json.loads(response.content)
     assert payload["count"] == 1
@@ -278,7 +278,7 @@ def test_admin_export_downloads_json(client):
     client.force_login(UserFactory(is_superuser=True))
     response = client.get(EXPORT_URL)
     assert response.status_code == 200
-    assert response["Content-Type"] == "application/json"
+    assert response["Content-Type"] == "application/json; charset=utf-8"
     assert "attachment" in response["Content-Disposition"]
     payload = json.loads(response.content)
     assert payload["count"] == 1

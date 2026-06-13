@@ -45,7 +45,7 @@ class AssistantFeedbackAdmin(admin.ModelAdmin):
         }
         response = HttpResponse(
             json.dumps(payload, ensure_ascii=False, indent=2),
-            content_type="application/json",
+            content_type="application/json; charset=utf-8",
         )
         response["Content-Disposition"] = 'attachment; filename="assistant_feedback.json"'
         return response
