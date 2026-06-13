@@ -44,9 +44,9 @@ class AskAssistantApiView(APIView):
             outcome = engine.ask(serializer.validated_data["q"])
         except AssistantDisabled:
             return self._unavailable("assistant_disabled", "The AI assistant is disabled.")
-        except ModelNotAvailable as exc:
+        except ModelNotAvailable:
             return self._unavailable(
-                "model_missing", f"The configured model is not available: {exc}"
+                "model_missing", "The configured model is not available."
             )
         except ServiceUnreachable:
             return self._unavailable(
