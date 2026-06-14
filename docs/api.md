@@ -47,10 +47,10 @@ GET  /api/v1/auth/me/        # current user profile
 
 ## Assistant (Ask Cairn)
 
-`POST /api/v1/assistant/ask/` answers a simple natural-language question using the optional local AI assistant (see [docs/modules/assistant/](modules/assistant/README.md)).
+`POST /api/v1/assistant/ask/` answers a simple natural-language question using the optional AI assistant (pluggable LLM provider; see [docs/modules/assistant/](modules/assistant/README.md)).
 
 Request body: `{"q": "Quelles décisions ont été prises lors de la dernière revue de direction ?", "language": "fr"}` (`language` optional, defaults to the request language).
 
 Response `200`: `{"summary": "...", "language": "fr", "degraded": false, "refused_tools": [], "results": [{"tool": "list_management_review_decisions", "label": "Decisions", "error": null, "records": [{"title": "DECS-1 ...", "subtitle": "pending", "url": "/reports/decisions/<uuid>/", "icon": "bi-check2-square"}]}]}`. Records are real database objects the caller is allowed to read; the summary sentence is AI-generated and must be verified against them.
 
-Errors: `400` on invalid `q`; `503` with a stable code (`assistant_disabled`, `assistant_unreachable`, `model_missing`, `model_error`) when the assistant or its Ollama sidecar is unavailable.
+Errors: `400` on invalid `q`; `503` with a stable code (`assistant_disabled`, `assistant_unreachable`, `model_missing`, `model_error`) when the assistant is disabled or its configured LLM provider is unavailable.

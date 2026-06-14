@@ -173,4 +173,4 @@ Additional tools:
 
 | Tool | Description |
 | ---- | ----------- |
-| `ask_assistant` | Ask the Ask Cairn natural-language assistant a read-only question about GRC data (e.g. "Which decisions were made at the last management review?"). Requires the optional Ollama sidecar (`AI_ASSISTANT_ENABLED`); the answer cites real records and data access enforces the caller's permissions. See [docs/modules/assistant/](modules/assistant/README.md). |
+| `ask_assistant` | Ask the Ask Cairn natural-language assistant a read-only question about GRC data (e.g. "Which decisions were made at the last management review?"). Requires the optional assistant feature (`AI_ASSISTANT_ENABLED`, backed by a pluggable LLM provider); the answer cites real records and data access enforces the caller's permissions. See [docs/modules/assistant/](modules/assistant/README.md). |
