@@ -9905,3 +9905,9 @@ msgstr "La mise à jour de l'index sémantique a démarré ; elle s'exécute en 
 
 msgid "A semantic index update is already running."
 msgstr "Une mise à jour de l'index sémantique est déjà en cours."
+
+msgid "Semantic index"
+msgstr "Index sémantique"
+
+msgid "Semantic index - Cairn"
+msgstr "Index sémantique - Cairn"

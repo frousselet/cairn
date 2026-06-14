@@ -262,12 +262,35 @@ class AssistantFeedbackResolveView(LoginRequiredMixin, PermissionRequiredMixin, 
         return f"?{encoded}" if encoded else ""
 
 
+class SemanticIndexAdminView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """In-app Administration page for the requirement semantic index.
+
+    Shows index status (indexed / total requirements, last updated, embedding
+    model) and the on-demand rebuild button.
+    """
+
+    permission_required = "system.config.read"
+    http_method_names = ["get"]
+
+    def get(self, request):
+        from assistant.semantic import index_status
+
+        can_edit = request.user.is_superuser or request.user.has_perm(
+            "system.config.update"
+        )
+        return render(
+            request,
+            "assistant/semantic_index.html",
+            {"semantic": index_status(), "can_edit": can_edit},
+        )
+
+
 class RebuildSemanticIndexView(LoginRequiredMixin, View):
     """Trigger an on-demand background refresh of the requirement index.
 
-    Lives on the Company settings page (in-app Administration), gated by the
-    same permission as other system configuration changes. The rebuild runs in
-    a guarded background thread so the request returns immediately.
+    Posted from the Semantic index admin page, gated by the same permission as
+    other system configuration changes. The rebuild runs in a guarded background
+    thread so the request returns immediately.
     """
 
     http_method_names = ["post"]
@@ -278,10 +301,10 @@ class RebuildSemanticIndexView(LoginRequiredMixin, View):
             or request.user.has_perm("system.config.update")
         ):
             messages.error(request, _("You do not have the required permissions."))
-            return redirect("accounts:company-settings")
+            return redirect("assistant:semantic-index")
         if not settings.AI_ASSISTANT_SEMANTIC_ENABLED:
             messages.error(request, _("Semantic search is disabled."))
-            return redirect("accounts:company-settings")
+            return redirect("assistant:semantic-index")
 
         from assistant.semantic import rebuild_index_async
 
@@ -292,4 +315,4 @@ class RebuildSemanticIndexView(LoginRequiredMixin, View):
             )
         else:
             messages.info(request, _("A semantic index update is already running."))
-        return redirect("accounts:company-settings")
+        return redirect("assistant:semantic-index")
