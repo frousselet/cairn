@@ -289,9 +289,8 @@ _SPECS = [
         _("Objectives"),
         "bi-flag",
         "list_objectives(search, category, status: draft|active|achieved|not_achieved|cancelled,"
-        " limit): information security objectives. A completed / met / reached objective has"
-        " status 'achieved' (100% progress); 'not_achieved' means finished but the target was"
-        " missed.",
+        " limit): information security objectives. A completed / met objective has status"
+        " 'achieved' (100%); 'not_achieved' means finished but the target was missed.",
         ("search", "category", "type", "status", "limit", "offset"),
         detail_route="context:objective-detail",
     ),
@@ -368,6 +367,48 @@ _SPECS = [
         " support assets (IT infrastructure)",
         ("search", "type", "category", "status", "environment", "limit", "offset"),
         detail_route="assets:support-asset-detail",
+    ),
+    _spec(
+        "list_supplier_requirements",
+        _("Supplier requirements"),
+        "bi-list-check",
+        "list_supplier_requirements(supplier_id, compliance_status: not_assessed|compliant"
+        "|partially_compliant|non_compliant, limit): requirements placed on a supplier. Find the"
+        " supplier with list_suppliers (step 1), pass its id as supplier_id (step 2).",
+        ("supplier_id", "compliance_status", "search", "limit", "offset"),
+        title_fields=("title",),
+        subtitle_field="compliance_status",
+        summary_fields=("description",),
+        detail_route="assets:supplier-detail",
+        url_pk_field="supplier_id",
+    ),
+    _spec(
+        "list_supplier_dependencys",
+        _("Supplier dependencies"),
+        "bi-diagram-2",
+        "list_supplier_dependencys(support_asset_id, supplier_id, criticality, limit): suppliers"
+        " a support asset depends on. Find the asset with list_support_assets (step 1), pass its"
+        " id as support_asset_id (step 2); 'supplier_name' is the supplier.",
+        ("support_asset_id", "supplier_id", "dependency_type", "criticality", "limit", "offset"),
+        title_fields=("supplier_name",),
+        subtitle_field="criticality",
+        summary_fields=("supplier_name", "support_asset_name", "dependency_type"),
+        detail_route="assets:supplier-detail",
+        url_pk_field="supplier_id",
+    ),
+    _spec(
+        "list_site_supplier_dependencys",
+        _("Supplier dependencies"),
+        "bi-diagram-2",
+        "list_site_supplier_dependencys(site_id, supplier_id, criticality, limit): suppliers a"
+        " site depends on. Find the site with list_sites (step 1), pass its id as site_id"
+        " (step 2); 'supplier_name' is the supplier.",
+        ("site_id", "supplier_id", "dependency_type", "criticality", "limit", "offset"),
+        title_fields=("supplier_name",),
+        subtitle_field="criticality",
+        summary_fields=("supplier_name", "site_name", "dependency_type"),
+        detail_route="assets:supplier-detail",
+        url_pk_field="supplier_id",
     ),
 ]
 

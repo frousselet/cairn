@@ -2652,7 +2652,8 @@ def _register_assets_tools(server):
         ),
     )
 
-    sd_fields = ["id", "reference", "support_asset_id", "supplier_id", "dependency_type",
+    sd_fields = ["id", "reference", "support_asset_id", "support_asset_name",
+                 "supplier_id", "supplier_name", "dependency_type",
                  "criticality", "description",
                  "is_single_point_of_failure", "redundancy_level",
                  "is_approved", "created_at"]
@@ -2722,7 +2723,8 @@ def _register_assets_tools(server):
                    })
 
     # Site-supplier dependencies (has approve)
-    ssd_fields = ["id", "reference", "site_id", "supplier_id", "dependency_type",
+    ssd_fields = ["id", "reference", "site_id", "site_name", "supplier_id", "supplier_name",
+                  "dependency_type",
                   "criticality", "description", "is_single_point_of_failure",
                   "redundancy_level", "is_approved", "created_at"]
     ssd_writable = ["site_id", "supplier_id", "dependency_type", "criticality",
