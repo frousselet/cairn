@@ -138,6 +138,11 @@ class Supplier(ScopedModel):
         return False
 
     @property
+    def type_name(self):
+        """Human-readable supplier type / category (for read-only API / assistant output)."""
+        return self.type.name if self.type_id else ""
+
+    @property
     def requirement_compliance_summary(self):
         """Return a dict with counts per compliance status."""
         reqs = self.requirements.all()

@@ -118,8 +118,14 @@ def _apply_search(qs, arguments, search_fields):
 
 # ── Generic CRUD helpers ───────────────────────────────────
 
-def _list_handler(model_class, fields, search_fields=None, filters=None, scope_filtered=True):
-    """Create a generic list handler."""
+def _list_handler(model_class, fields, search_fields=None, filters=None, scope_filtered=True,
+                  queryset_filter=None):
+    """Create a generic list handler.
+
+    ``queryset_filter`` is an optional ``(qs, arguments) -> qs`` hook applied
+    after the standard equality filters, for derived filters the generic
+    equality machinery cannot express (e.g. "contract expired").
+    """
     def handler(user, arguments):
         qs = model_class.objects.all()
         if scope_filtered:
@@ -128,6 +134,8 @@ def _list_handler(model_class, fields, search_fields=None, filters=None, scope_f
             qs = _apply_search(qs, arguments, search_fields)
         if filters:
             qs = _apply_filters(qs, arguments, filters)
+        if queryset_filter:
+            qs = queryset_filter(qs, arguments)
         limit = min(int(arguments.get("limit", 25)), 100)
         offset = int(arguments.get("offset", 0))
         total = qs.count()
@@ -2549,7 +2557,8 @@ def _register_assets_tools(server):
                        },
                    })
 
-    sup_fields = ["id", "reference", "scopes", "name", "description", "type", "criticality",
+    sup_fields = ["id", "reference", "scopes", "name", "description", "type", "type_name",
+                  "criticality",
                   "status", "contact_name", "contact_email", "contact_phone",
                   "website", "address", "country",
                   "contract_reference", "contract_start_date", "contract_end_date",
@@ -2583,6 +2592,21 @@ def _register_assets_tools(server):
         },
     }
 
+    def _supplier_expired_filter(qs, arguments):
+        """Filter to suppliers whose contract has expired (mirrors
+        ``Supplier.is_contract_expired``: active supplier, past contract end)."""
+        val = arguments.get("expired")
+        if str(val).lower() in ("true", "1", "yes"):
+            from django.utils import timezone
+
+            from assets.constants import SupplierStatus
+            qs = qs.filter(
+                status=SupplierStatus.ACTIVE,
+                contract_end_date__isnull=False,
+                contract_end_date__lte=timezone.now().date(),
+            )
+        return qs
+
     _register_crud(server, "supplier", Supplier, "assets.supplier",
                    list_fields=sup_fields,
                    writable_fields=sup_writable,
@@ -2590,7 +2614,15 @@ def _register_assets_tools(server):
                    filters=["type", "criticality", "status"],
                    required_fields=["name", "owner_id"],
                    m2m_fields={"scope_ids": "scopes"},
-                   field_overrides=_sup_field_overrides)
+                   field_overrides=_sup_field_overrides,
+                   list_queryset_filter=_supplier_expired_filter,
+                   list_extra_filter_props={
+                       "expired": {
+                           "type": "boolean",
+                           "description": "If true, only suppliers whose contract has expired "
+                                          "(active suppliers with a contract end date in the past).",
+                       },
+                   })
 
     # Custom tool: update supplier logo with automatic variant generation
     server.register_tool(
@@ -6403,13 +6435,21 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
                    list_fields, writable_fields, search_fields=None,
                    filters=None, scope_filtered=True, has_approve=True,
                    field_overrides=None, required_fields=None,
-                   m2m_fields=None):
-    """Register list, get, create, update, delete (and optionally approve) tools for an entity."""
+                   m2m_fields=None, list_queryset_filter=None,
+                   list_extra_filter_props=None):
+    """Register list, get, create, update, delete (and optionally approve) tools for an entity.
+
+    ``list_queryset_filter`` / ``list_extra_filter_props`` add a derived list
+    filter (a ``(qs, arguments) -> qs`` hook plus its JSON-schema properties)
+    that the generic equality filters cannot express.
+    """
 
     display_name = entity_name.replace("_", " ")
     filter_props = {}
     for f in (filters or []):
         filter_props[f] = {"type": "string", "description": f"Filter by {f}"}
+    if list_extra_filter_props:
+        filter_props.update(list_extra_filter_props)
 
     # List
     server.register_tool(
@@ -6417,7 +6457,8 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
         f"List {display_name}s with optional search and filters",
         _list_schema(filter_props),
         require_perm(f"{perm_prefix}.read")(
-            _list_handler(model_class, list_fields, search_fields, filters, scope_filtered)
+            _list_handler(model_class, list_fields, search_fields, filters, scope_filtered,
+                          queryset_filter=list_queryset_filter)
         ),
     )
 
