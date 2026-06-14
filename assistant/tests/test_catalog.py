@@ -1,9 +1,15 @@
 """Guards on the curated tool allowlist."""
 
+import re
 import uuid
 
 from django.test import override_settings
 
+from assets.constants import (
+    EssentialAssetStatus,
+    SupplierStatus,
+    SupportAssetStatus,
+)
 from assistant.catalog import (
     READ_ONLY_PREFIXES,
     TOOL_CATALOG,
@@ -11,8 +17,30 @@ from assistant.catalog import (
     catalog_signatures,
     plan_schema,
 )
+from compliance.constants import (
+    ActionPlanStatus,
+    AssessmentStatus,
+    FrameworkStatus,
+)
+from context.constants import IndicatorStatus, IssueStatus, ObjectiveStatus
 
 WRITE_VERBS = ("create", "update", "delete", "transition", "approve", "batch", "set_", "link", "unlink")
+
+# Tools whose signature spells out a `status: a|b|c` enum, mapped to the model
+# TextChoices the MCP `status` filter actually matches against. Drift here is
+# what made "completed objectives" return nothing (the signature taught the
+# planner a value the model never accepts), so it is pinned in CI.
+STATUS_ENUM_TOOLS = {
+    "list_objectives": ObjectiveStatus,
+    "list_action_plans": ActionPlanStatus,
+    "list_compliance_assessments": AssessmentStatus,
+    "list_frameworks": FrameworkStatus,
+    "list_indicators": IndicatorStatus,
+    "list_issues": IssueStatus,
+    "list_suppliers": SupplierStatus,
+    "list_essential_assets": EssentialAssetStatus,
+    "list_support_assets": SupportAssetStatus,
+}
 
 
 def test_every_catalog_tool_is_read_only():
@@ -43,6 +71,25 @@ def test_signatures_fit_in_a_small_prompt():
     text = catalog_signatures()
     assert len(text) < 4000
     assert text.count("\n") == len(active_specs()) - 1
+
+
+def test_documented_status_enums_match_model_choices():
+    """Every status value advertised to the planner must be a real model choice.
+
+    A bare or stale `status:` enum is exactly what made `list_objectives` filter
+    on a value the model can never accept (so "completed objectives" returned
+    nothing). Pin the documented values to the source-of-truth TextChoices.
+    """
+    for name, choices in STATUS_ENUM_TOOLS.items():
+        signature = TOOL_CATALOG[name].signature
+        match = re.search(r"status:\s*([a-z_|]+)", signature)
+        assert match, f"{name} no longer documents its status enum"
+        documented = match.group(1).split("|")
+        valid = set(choices.values)
+        assert set(documented) <= valid, (
+            f"{name} documents status values not in {choices.__name__}: "
+            f"{sorted(set(documented) - valid)}"
+        )
 
 
 def test_semantic_tool_gated_by_setting():
