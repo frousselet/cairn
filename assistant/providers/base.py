@@ -52,9 +52,11 @@ class BaseClient:
 def get_client():
     """Return the configured provider client.
 
-    ``mistral`` (third-party API) is the default; ``ollama`` (self-hosted
-    local LLM) remains selectable for those who point it at their own
-    instance.
+    ``mistral`` (third-party API) is the default. ``openai`` covers OpenAI
+    (ChatGPT) and any other OpenAI-compatible endpoint selected through
+    ``AI_ASSISTANT_BASE_URL`` (vLLM, LiteLLM, LocalAI, Together, Groq...).
+    ``ollama`` (self-hosted local LLM) remains selectable for those who point
+    it at their own instance.
     """
     provider = (settings.AI_ASSISTANT_PROVIDER or "mistral").lower()
     if provider == "ollama":
@@ -65,4 +67,8 @@ def get_client():
         from assistant.providers.mistral import MistralClient
 
         return MistralClient()
+    if provider in ("openai", "openai-compatible"):
+        from assistant.providers.openai_compatible import OpenAICompatibleClient
+
+        return OpenAICompatibleClient()
     raise ServiceUnreachable(f"Unknown AI assistant provider: {provider!r}")

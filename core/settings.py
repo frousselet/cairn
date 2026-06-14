@@ -251,18 +251,22 @@ SIMPLE_JWT = {
 # AI assistant ("Ask Cairn"): optional natural-language question mode in the
 # command palette, backed by a pluggable LLM provider. Disabled by default;
 # the rest of the application works normally without it. The default provider
-# is Mistral AI (third-party, EU-hosted); the self-hosted "ollama" provider
-# stays selectable for those pointing at their own instance.
+# is Mistral AI (third-party, EU-hosted). "openai" targets OpenAI (ChatGPT) or
+# any OpenAI-compatible endpoint via AI_ASSISTANT_BASE_URL; the self-hosted
+# "ollama" provider stays selectable for those pointing at their own instance.
 AI_ASSISTANT_ENABLED = os.environ.get("AI_ASSISTANT_ENABLED", "False").lower() in ("true", "1", "yes")
 AI_ASSISTANT_PROVIDER = os.environ.get("AI_ASSISTANT_PROVIDER", "mistral")
 AI_ASSISTANT_API_KEY = os.environ.get("AI_ASSISTANT_API_KEY", "")
-AI_ASSISTANT_BASE_URL = os.environ.get("AI_ASSISTANT_BASE_URL", "https://api.mistral.ai/v1")
+# Empty by default: each provider falls back to its own endpoint (Mistral ->
+# api.mistral.ai, openai -> api.openai.com). Set it to target a custom
+# OpenAI-compatible gateway (vLLM, LiteLLM, LocalAI, Together, Groq...).
+AI_ASSISTANT_BASE_URL = os.environ.get("AI_ASSISTANT_BASE_URL", "")
 AI_ASSISTANT_MODEL = os.environ.get("AI_ASSISTANT_MODEL", "mistral-small-latest")
 AI_ASSISTANT_CONNECT_TIMEOUT = float(os.environ.get("AI_ASSISTANT_CONNECT_TIMEOUT", "2"))
 AI_ASSISTANT_TIMEOUT = float(os.environ.get("AI_ASSISTANT_TIMEOUT", "30"))
 AI_ASSISTANT_MAX_TOOL_ROUNDS = int(os.environ.get("AI_ASSISTANT_MAX_TOOL_ROUNDS", "3"))
 AI_ASSISTANT_MAX_RECORDS_PER_TOOL = int(os.environ.get("AI_ASSISTANT_MAX_RECORDS_PER_TOOL", "5"))
-# Cap on the completion length (Mistral / OpenAI-compatible backends).
+# Cap on the completion length (Mistral / OpenAI / OpenAI-compatible backends).
 AI_ASSISTANT_MAX_TOKENS = int(os.environ.get("AI_ASSISTANT_MAX_TOKENS", "1024"))
 # Semantic search over requirement content (embeddings + in-Python cosine).
 # Opt-in: build the index with `manage.py rebuild_semantic_index` after enabling.

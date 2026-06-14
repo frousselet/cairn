@@ -2,7 +2,7 @@
 
 Optional natural-language question mode embedded in the command palette (Ctrl+K). An LLM routes the user's question to a curated allowlist of read-only MCP tools executed in-process with the requesting user; the answer displays the real matching records as clickable cards plus a short AI-labeled summary sentence.
 
-The backend is a **pluggable provider** (`assistant/providers/`): [Mistral AI](https://mistral.ai/) (a third-party, EU-hosted API) by default, with a self-hosted [Ollama](https://ollama.com/) provider still selectable for those who run their own local LLM. With Mistral, the question and the compact record fields used for routing leave the platform (see [Data egress](#data-egress)); with Ollama, data never leaves the host.
+The backend is a **pluggable provider** (`assistant/providers/`): [Mistral AI](https://mistral.ai/) (a third-party, EU-hosted API) by default, an `openai` provider for [OpenAI](https://openai.com/) (ChatGPT) and any other OpenAI-compatible endpoint (vLLM, LiteLLM, LocalAI, Together, Groq... selected via `AI_ASSISTANT_BASE_URL`), and a self-hosted [Ollama](https://ollama.com/) provider for those who run their own local LLM. With Mistral or OpenAI, the question and the compact record fields used for routing leave the platform (see [Data egress](#data-egress)); with Ollama, data never leaves the host.
 
 Django app: `assistant/`. The only persistent entity is **answer feedback** (`AssistantFeedback`, see [Feedback](#feedback)); the question/answer pipeline itself is stateless (no lifecycle workflow, no history). `AssistantFeedback` is a plain log row (like `AccessLog`), not a domain `BaseModel`.
 
@@ -12,7 +12,7 @@ Django app: `assistant/`. The only persistent entity is **answer feedback** (`As
 Question (palette or API)
   -> AssistantEngine.ask()
        1 planning call: provider chat completion, JSON-Schema-constrained
-       output (Mistral response_format / Ollama format; tool names restricted
+       output (Mistral/OpenAI response_format / Ollama format; tool names restricted
        by enum to the catalog, at most AI_ASSISTANT_MAX_TOOL_ROUNDS steps;
        "$1.id" placeholders reference earlier steps)
        -> deterministic engine-side execution of the plan:
@@ -33,20 +33,20 @@ small models are unreliable at deciding mid-conversation whether to chain a
 child call. They are good at one-shot constrained planning, so the engine
 owns the execution order, the id plumbing and the fallbacks.
 
-Key code: `assistant/engine.py` (loop), `assistant/catalog.py` (allowlist), `assistant/providers/` (`base.py` error taxonomy + `get_client()` factory, `mistral.py`, `ollama.py`), `assistant/prompts.py` (model-facing English prompts).
+Key code: `assistant/engine.py` (loop), `assistant/catalog.py` (allowlist), `assistant/providers/` (`base.py` error taxonomy + `get_client()` factory, `openai_compatible.py` generic OpenAI client, `mistral.py` thin subclass, `ollama.py`), `assistant/prompts.py` (model-facing English prompts).
 
 ## Settings
 
 | Setting | Default | Purpose |
 | ------- | ------- | ------- |
 | `AI_ASSISTANT_ENABLED` | `False` | Feature flag; when off the palette behaves exactly as before |
-| `AI_ASSISTANT_PROVIDER` | `mistral` | Backend selector: `mistral` (third-party API) or `ollama` (self-hosted) |
-| `AI_ASSISTANT_API_KEY` | `""` | Mistral API key (required when the provider is `mistral`) |
-| `AI_ASSISTANT_BASE_URL` | `https://api.mistral.ai/v1` | OpenAI-compatible API base URL (Mistral provider) |
-| `AI_ASSISTANT_MODEL` | `mistral-small-latest` | Chat model; a Mistral model id, or an Ollama model when `provider=ollama` |
-| `AI_ASSISTANT_MAX_TOKENS` | `1024` | Completion length cap (Mistral provider) |
+| `AI_ASSISTANT_PROVIDER` | `mistral` | Backend selector: `mistral` (third-party API), `openai` (OpenAI / any OpenAI-compatible endpoint), or `ollama` (self-hosted) |
+| `AI_ASSISTANT_API_KEY` | `""` | API key (required for `mistral` and `openai`; sent as a Bearer token) |
+| `AI_ASSISTANT_BASE_URL` | `""` | OpenAI-compatible API base URL. Empty falls back to the provider default (`mistral` -> `https://api.mistral.ai/v1`, `openai` -> `https://api.openai.com/v1`). Set it to target a custom gateway (vLLM, LiteLLM, LocalAI, Together, Groq...) |
+| `AI_ASSISTANT_MODEL` | `mistral-small-latest` | Chat model id served by the backend (e.g. `gpt-4o-mini` for OpenAI, an Ollama model when `provider=ollama`) |
+| `AI_ASSISTANT_MAX_TOKENS` | `1024` | Completion length cap (`mistral` / `openai` providers) |
 | `AI_ASSISTANT_SEMANTIC_ENABLED` | `False` | Enable meaning-based requirement search (see [Semantic search](#semantic-search)) |
-| `AI_ASSISTANT_EMBED_MODEL` | `mistral-embed` | Embedding model used to index and query requirements |
+| `AI_ASSISTANT_EMBED_MODEL` | `mistral-embed` | Embedding model used to index and query requirements (set to e.g. `text-embedding-3-small` for OpenAI) |
 | `AI_ASSISTANT_CONNECT_TIMEOUT` | `2` | Seconds; fast fail when the backend is unreachable |
 | `AI_ASSISTANT_TIMEOUT` | `30` | Seconds per LLM call |
 | `AI_ASSISTANT_MAX_TOOL_ROUNDS` | `3` | Hard cap on plan steps (also enforced in the plan JSON Schema) |
@@ -135,6 +135,22 @@ No sidecar, no model download, no GPU. `mistral-small-latest` is the recommended
 
 To enable meaning-based requirement search, add `AI_ASSISTANT_SEMANTIC_ENABLED=True` and build the index once: `docker compose exec web python manage.py rebuild_semantic_index` (re-run after bulk requirement imports). See [Semantic search](#semantic-search).
 
+### OpenAI and OpenAI-compatible endpoints
+
+The `openai` provider targets OpenAI (ChatGPT) out of the box, and any other backend that implements the OpenAI `/chat/completions` and `/embeddings` API (vLLM, LiteLLM, LocalAI, Together, Groq...) by overriding the base URL:
+
+```bash
+AI_ASSISTANT_ENABLED=True
+AI_ASSISTANT_PROVIDER=openai
+AI_ASSISTANT_API_KEY=your-api-key
+AI_ASSISTANT_MODEL=gpt-4o-mini
+# AI_ASSISTANT_BASE_URL=https://api.openai.com/v1   # default; set for a custom gateway
+# For semantic search, pick a matching embedding model:
+# AI_ASSISTANT_EMBED_MODEL=text-embedding-3-small
+```
+
+`AI_ASSISTANT_BASE_URL` defaults to `https://api.openai.com/v1` for this provider; point it at any compatible gateway to route through your own deployment. The key is sent as a `Bearer` token. The request/response handling is shared with the Mistral provider (which is itself an OpenAI-compatible client), so the structured-output routing and the `json_object` fallback behave identically.
+
 ### Self-hosted alternative (Ollama)
 
 For a no-egress deployment, point the assistant at your own Ollama instance:
@@ -149,12 +165,12 @@ AI_ASSISTANT_MODEL=qwen3:4b
 
 ## Data egress
 
-With the **Mistral** provider, data leaves the platform on two calls per question:
+With the **Mistral** or **OpenAI** provider, data leaves the platform on two calls per question:
 
 - **Planning call**: the user's question plus the catalog tool signatures (no record data yet).
 - **Summary call**: the question plus the compact fields of the matching records (titles, statuses, dates), after `engine._strip_identifiers` recursively removes `id` / `*_id` keys and UUID-shaped values. Internal identifiers are never sent.
 
-Mistral is EU-hosted. The feature is **off by default** and must be enabled deliberately (`AI_ASSISTANT_ENABLED`), which is the opt-in: enabling it acknowledges that question text and the above record fields are sent to the third-party provider under its data-processing terms. The API key is read from the environment and never logged or surfaced in error messages. For a deployment that must keep all data on-premises, use the Ollama provider above (no egress). With semantic search enabled, requirement text is additionally sent to the embedding model at index-build time and the query text at search time.
+Mistral is EU-hosted; OpenAI and other third-party gateways are hosted under their own terms (and possibly outside the EU - check the provider before enabling). The feature is **off by default** and must be enabled deliberately (`AI_ASSISTANT_ENABLED`), which is the opt-in: enabling it acknowledges that question text and the above record fields are sent to the configured third-party provider under its data-processing terms. The API key is read from the environment and never logged or surfaced in error messages. For a deployment that must keep all data on-premises, use the Ollama provider above (no egress), or point the `openai` provider at a self-hosted OpenAI-compatible gateway. With semantic search enabled, requirement text is additionally sent to the embedding model at index-build time and the query text at search time.
 
 ## Semantic search
 
