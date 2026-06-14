@@ -130,3 +130,39 @@ class TestToolsRegistered:
             assert "description" in tool_def, f"Tool {name} missing description"
             assert "handler" in tool_def, f"Tool {name} missing handler"
             assert callable(tool_def["handler"]), f"Tool {name} handler not callable"
+
+
+class TestSupplierListTool:
+    def _server_user(self):
+        srv = McpServer()
+        register_all_tools(srv)
+        return srv, UserFactory(is_superuser=True)
+
+    def test_expired_filter_and_type_name(self):
+        from datetime import date, timedelta
+
+        from assets.constants import SupplierStatus
+        from assets.tests.factories import SupplierFactory, SupplierTypeFactory
+
+        hr = SupplierTypeFactory(name="HR software")
+        expired = SupplierFactory(
+            type=hr, status=SupplierStatus.ACTIVE,
+            contract_end_date=date.today() - timedelta(days=10),
+        )
+        # Active contract (future end date) and an expired-but-archived supplier
+        # must both be excluded by expired=true.
+        SupplierFactory(status=SupplierStatus.ACTIVE,
+                        contract_end_date=date.today() + timedelta(days=10))
+        SupplierFactory(status=SupplierStatus.ARCHIVED,
+                        contract_end_date=date.today() - timedelta(days=10))
+
+        srv, user = self._server_user()
+        handler = srv.get_tool("list_suppliers")["handler"]
+
+        expired_only = handler(user, {"expired": True})
+        assert [item["reference"] for item in expired_only["items"]] == [expired.reference]
+        # The supplier category name is surfaced for read-only consumers.
+        assert expired_only["items"][0]["type_name"] == "HR software"
+
+        # Without the flag, all three suppliers are returned.
+        assert handler(user, {})["total"] == 3

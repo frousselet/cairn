@@ -38,6 +38,9 @@ Response: {{"steps": [{{"tool": "list_management_reviews", "arguments": {{"statu
 Question: "What are our high priority risks?"
 Response: {{"steps": [{{"tool": "list_risks", "arguments": {{"priority": "high", "limit": 5}}}}]}}
 
+Question: "Combien de biens essentiels avons-nous ?"
+Response: {{"steps": [{{"tool": "list_essential_assets", "arguments": {{"limit": 5}}}}]}}
+
 Question: "Qui est responsable du périmètre Voltara Group ?"
 Response: {{"steps": [{{"tool": "list_scopes", "arguments": {{"search": "Voltara Group", "limit": 5}}}}]}}
 

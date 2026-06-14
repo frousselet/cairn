@@ -342,11 +342,11 @@ _SPECS = [
         _("Suppliers"),
         "bi-truck",
         "list_suppliers(search, criticality: low|medium|high|critical, status: active"
-        "|under_evaluation|suspended|archived, limit): suppliers and service providers. The"
-        " 'description' field explains what the supplier does; 'contract_end_date' is when its"
-        " contract expires.",
-        ("search", "type", "criticality", "status", "limit", "offset"),
-        summary_fields=("description", "criticality", "country", "contract_end_date"),
+        "|under_evaluation|suspended|archived, expired: true, limit): suppliers and service"
+        " providers. 'type_name' is the supplier's category and 'description' explains what it"
+        " does. Pass expired=true for suppliers whose contract has expired.",
+        ("search", "type", "criticality", "status", "expired", "limit", "offset"),
+        summary_fields=("type_name", "description", "criticality", "country", "contract_end_date"),
         detail_route="assets:supplier-detail",
     ),
     _spec(
