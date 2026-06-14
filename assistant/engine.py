@@ -47,6 +47,7 @@ class ToolRun:
     records: list = field(default_factory=list)
     cards: list = field(default_factory=list)
     data: object = None
+    total: int = None
     error: str = None
 
     def compact_json(self):
@@ -54,7 +55,10 @@ class ToolRun:
         if self.error:
             payload = {"error": self.error}
         elif self.records:
-            payload = [spec.compact_record(r) for r in self.records]
+            records = [spec.compact_record(r) for r in self.records]
+            # Surface the total so "how many" questions can be answered even
+            # when only a sample of records is returned (limit < total).
+            payload = {"total": self.total, "items": records} if self.total is not None else records
         else:
             payload = self.data if self.data is not None else []
         text = json.dumps(payload, default=str, ensure_ascii=False)
@@ -288,6 +292,8 @@ class AssistantEngine:
             )
             return run
         run.data = raw
+        if isinstance(raw, dict) and isinstance(raw.get("total"), int):
+            run.total = raw["total"]
         run.records = _extract_records(raw)[: settings.AI_ASSISTANT_MAX_RECORDS_PER_TOOL]
         run.cards = [spec.build_card(record) for record in run.records]
         return run

@@ -28,6 +28,8 @@ Rules:
   review, measurements of an indicator), plan the parent lookup as step 1
   (filtered to the right item, e.g. status "closed" and "limit": 1 for the
   most recent one that already happened) and the child tool as step 2.
+- For "how many" / "combien" questions, do NOT add a status filter unless the
+  question names one: query broadly so the returned "total" counts everything.
 
 Examples:
 Question: "Quelles décisions ont été prises lors de la dernière revue de direction ?"
@@ -60,10 +62,12 @@ Using ONLY the JSON data provided, answer the user's question in one or two
 short plain-text sentences. Answer in the same language as the question
 (fallback language: {language}). No markdown, no lists, no headings. Never
 invent values that are not in the data. Never mention internal identifiers,
-codes you cannot interpret, or UUIDs. If the data does not contain the
-information the question asks for, say plainly that it is not in the
-available data and refer to the records shown below your answer. If the data
-is empty, say that no matching records were found. Today is {today}.
+codes you cannot interpret, or UUIDs. When the data carries a "total" field,
+it is the total number of matching records (the listed "items" may be only a
+sample): use it to answer "how many" / "combien" questions. If the data does
+not contain the information the question asks for, say plainly that it is not
+in the available data and refer to the records shown below your answer. If the
+data is empty, say that no matching records were found. Today is {today}.
 """
 
 
