@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Ask Cairn: OpenAI and OpenAI-compatible providers**: the assistant gains an `openai` backend (`AI_ASSISTANT_PROVIDER=openai`) that targets OpenAI (ChatGPT, e.g. `gpt-4o-mini`) out of the box and, via `AI_ASSISTANT_BASE_URL`, any other endpoint implementing the OpenAI `/chat/completions` and `/embeddings` API (vLLM, LiteLLM, LocalAI, Together, Groq...). The shared request/response handling was extracted into a generic `OpenAICompatibleClient`; the existing `MistralClient` is now a thin subclass of it (Mistral already exposes an OpenAI-compatible API), so behaviour is unchanged for Mistral users. `AI_ASSISTANT_BASE_URL` now defaults to empty and each provider falls back to its own endpoint (`mistral` -> `api.mistral.ai`, `openai` -> `api.openai.com`); set it only to target a custom gateway.
+
 ## [0.27.1] - 2026-06-14
 
 ### Fixed

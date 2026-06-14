@@ -33,7 +33,12 @@ COMMENT_MAX_LENGTH = 2000
 ANSWER_SESSION_KEY = "assistant_last_answer"
 
 # Human-friendly names for the configured LLM backend, shown in the disclaimer.
-PROVIDER_LABELS = {"mistral": "Mistral", "ollama": "Ollama"}
+PROVIDER_LABELS = {
+    "mistral": "Mistral",
+    "openai": "OpenAI",
+    "openai-compatible": "OpenAI",
+    "ollama": "Ollama",
+}
 
 
 def _powered_by():
