@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Command palette no longer opens in a French locale**: the Ask Cairn palette script embedded `{% trans %}` strings inside single-quoted JS literals, and French translations contain apostrophes (e.g. "L'assistant est injoignable…") that terminated the string, throwing a `SyntaxError` that killed the whole palette script. Translated strings embedded in the palette JS are now escaped with `|escapejs`. (Surfaced only in production, which runs in French; English dev was unaffected.)
+- **Clearer error when the Mistral API key is missing**: `rebuild_semantic_index` and chat failed with a cryptic `httpx.LocalProtocolError: Illegal header value b'Bearer '` when `AI_ASSISTANT_API_KEY` was empty. `MistralClient` now validates the key up front and raises a clear "Mistral API key is not configured" message; `rebuild_semantic_index` exits with a clean error instead of a traceback.
+
 ## [0.27.0] - 2026-06-13
 
 ### Added
