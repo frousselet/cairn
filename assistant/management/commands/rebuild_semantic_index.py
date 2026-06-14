@@ -7,10 +7,10 @@ requirements are pruned.
 """
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from assistant.models import SemanticIndex, content_hash
-from assistant.providers import get_client
+from assistant.providers import AssistantError, get_client
 from assistant.semantic import requirement_text, upsert_embedding
 
 
@@ -58,13 +58,19 @@ class Command(BaseCommand):
 
         client = get_client()
         done = 0
-        for start in range(0, len(pending), batch):
-            chunk = pending[start:start + batch]
-            vectors = client.embed([text for _, text in chunk])
-            for (obj, text), vector in zip(chunk, vectors):
-                upsert_embedding(content_type, obj, text, vector)
-                done += 1
-            self.stdout.write(f"  embedded {done}/{len(pending)}")
+        try:
+            for start in range(0, len(pending), batch):
+                chunk = pending[start:start + batch]
+                vectors = client.embed([text for _, text in chunk])
+                for (obj, text), vector in zip(chunk, vectors):
+                    upsert_embedding(content_type, obj, text, vector)
+                    done += 1
+                self.stdout.write(f"  embedded {done}/{len(pending)}")
+        except AssistantError as exc:
+            raise CommandError(
+                f"Embedding failed: {exc}. Check the AI assistant configuration "
+                f"(provider, API key, model, connectivity)."
+            ) from exc
 
         self.stdout.write(self.style.SUCCESS(
             f"Semantic index updated: {done} embedded, {len(stale_ids)} pruned."

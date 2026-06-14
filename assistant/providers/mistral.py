@@ -36,8 +36,15 @@ class MistralClient(BaseClient):
             connect=settings.AI_ASSISTANT_CONNECT_TIMEOUT,
         )
 
+    def _auth_headers(self):
+        if not self.api_key:
+            raise ServiceUnreachable(
+                "Mistral API key is not configured (set AI_ASSISTANT_API_KEY)."
+            )
+        return {"Authorization": f"Bearer {self.api_key}"}
+
     def _post_chat(self, payload):
-        headers = {"Authorization": f"Bearer {self.api_key}"}
+        headers = self._auth_headers()
         try:
             return httpx.post(
                 f"{self.base_url}/chat/completions",
@@ -112,7 +119,7 @@ class MistralClient(BaseClient):
         """Return one embedding vector per input string (Mistral embeddings API)."""
         if not texts:
             return []
-        headers = {"Authorization": f"Bearer {self.api_key}"}
+        headers = self._auth_headers()
         payload = {"model": settings.AI_ASSISTANT_EMBED_MODEL, "input": list(texts)}
         try:
             resp = httpx.post(
