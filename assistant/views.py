@@ -37,6 +37,8 @@ PROVIDER_LABELS = {
     "mistral": "Mistral",
     "openai": "OpenAI",
     "openai-compatible": "OpenAI",
+    "anthropic": "Claude",
+    "claude": "Claude",
     "ollama": "Ollama",
 }
 

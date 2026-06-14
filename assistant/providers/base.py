@@ -55,8 +55,9 @@ def get_client():
     ``mistral`` (third-party API) is the default. ``openai`` covers OpenAI
     (ChatGPT) and any other OpenAI-compatible endpoint selected through
     ``AI_ASSISTANT_BASE_URL`` (vLLM, LiteLLM, LocalAI, Together, Groq...).
-    ``ollama`` (self-hosted local LLM) remains selectable for those who point
-    it at their own instance.
+    ``anthropic`` targets Claude through the native Messages API. ``ollama``
+    (self-hosted local LLM) remains selectable for those who point it at their
+    own instance.
     """
     provider = (settings.AI_ASSISTANT_PROVIDER or "mistral").lower()
     if provider == "ollama":
@@ -71,4 +72,8 @@ def get_client():
         from assistant.providers.openai_compatible import OpenAICompatibleClient
 
         return OpenAICompatibleClient()
+    if provider in ("anthropic", "claude"):
+        from assistant.providers.anthropic import AnthropicClient
+
+        return AnthropicClient()
     raise ServiceUnreachable(f"Unknown AI assistant provider: {provider!r}")
