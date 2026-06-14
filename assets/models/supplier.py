@@ -347,3 +347,13 @@ class SupplierDependency(ReferenceGeneratorMixin):
 
     def __str__(self):
         return f"{self.support_asset.reference} → {self.supplier.reference}"
+
+    @property
+    def supplier_name(self):
+        """Human-readable supplier name (for read-only API / assistant output)."""
+        return self.supplier.name if self.supplier_id else ""
+
+    @property
+    def support_asset_name(self):
+        """Human-readable support-asset name (for read-only API / assistant output)."""
+        return self.support_asset.name if self.support_asset_id else ""

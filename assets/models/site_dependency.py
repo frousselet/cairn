@@ -164,3 +164,13 @@ class SiteSupplierDependency(ReferenceGeneratorMixin):
 
     def __str__(self):
         return f"{self.site.reference} → {self.supplier.reference}"
+
+    @property
+    def supplier_name(self):
+        """Human-readable supplier name (for read-only API / assistant output)."""
+        return self.supplier.name if self.supplier_id else ""
+
+    @property
+    def site_name(self):
+        """Human-readable site name (for read-only API / assistant output)."""
+        return self.site.name if self.site_id else ""

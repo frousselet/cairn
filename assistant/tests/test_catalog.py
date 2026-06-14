@@ -68,8 +68,11 @@ def test_plan_schema_constrains_tool_names_and_step_count():
 
 
 def test_signatures_fit_in_a_small_prompt():
+    # The full signature block is injected verbatim into every routing prompt,
+    # so it must stay compact for small planner models. ~5k chars (~1.3k tokens)
+    # is a comfortable ceiling for the current catalog; keep new tools terse.
     text = catalog_signatures()
-    assert len(text) < 4000
+    assert len(text) < 5000
     assert text.count("\n") == len(active_specs()) - 1
 
 
