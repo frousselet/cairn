@@ -222,6 +222,25 @@ def test_empty_plan_ends_quietly(superuser):
     assert outcome.summary is None
 
 
+def test_compact_json_surfaces_total_for_count_questions():
+    """A "how many" answer needs the total even when only a sample is returned."""
+    import json
+
+    from assistant.engine import ToolRun
+
+    run = ToolRun(
+        tool="list_objectives", label="Objectives", icon="bi-flag", arguments={},
+        records=[{"id": "x", "reference": "OBJ-1", "name": "Encrypt backups", "status": "active"}],
+        total=7,
+    )
+    payload = json.loads(run.compact_json())
+    assert payload["total"] == 7
+    assert len(payload["items"]) == 1
+    # Without a total (e.g. a bare-list tool), the payload stays a plain list.
+    run.total = None
+    assert isinstance(json.loads(run.compact_json()), list)
+
+
 @override_settings(AI_ASSISTANT_ENABLED=False)
 @pytest.mark.django_db
 def test_disabled_flag_raises():
