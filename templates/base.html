@@ -4025,6 +4025,15 @@
         <span class="sidebar-tooltip">{% trans "Assistant feedback" %}</span>
       </a>
       {% endif %}
+      {% if AI_ASSISTANT_ENABLED %}
+      {% has_perm "system.config.read" as can_semantic_index %}
+      {% if can_semantic_index %}
+      <a href="{% url 'assistant:semantic-index' %}" class="sidebar-link">
+        <i class="bi bi-stars"></i> <span class="sidebar-link-text">{% trans "Semantic index" %}</span>
+        <span class="sidebar-tooltip">{% trans "Semantic index" %}</span>
+      </a>
+      {% endif %}
+      {% endif %}
       {% has_perm "system.admin_django.access" as can_django_admin %}
       {% if can_django_admin %}
       <a href="{% url 'admin:index' %}" class="sidebar-link">

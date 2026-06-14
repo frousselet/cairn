@@ -143,6 +143,26 @@ def test_rebuild_view_reports_disabled(client, monkeypatch):
 
 @pytest.mark.django_db
 @override_settings(AI_ASSISTANT_SEMANTIC_ENABLED=True)
+def test_semantic_index_admin_page_requires_permission(client):
+    user = UserFactory()  # no system.config.read
+    client.force_login(user)
+    resp = client.get(reverse("assistant:semantic-index"))
+    assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+@override_settings(AI_ASSISTANT_SEMANTIC_ENABLED=True, AI_ASSISTANT_PROVIDER="mistral")
+def test_semantic_index_admin_page_renders_status(client):
+    user = UserFactory()
+    _grant(user, "system.config.read")
+    client.force_login(user)
+    resp = client.get(reverse("assistant:semantic-index"))
+    assert resp.status_code == 200
+    assert resp.context["semantic"]["enabled"] is True
+
+
+@pytest.mark.django_db
+@override_settings(AI_ASSISTANT_SEMANTIC_ENABLED=True)
 def test_rebuild_view_starts_rebuild_with_permission(client, monkeypatch):
     calls = {}
     monkeypatch.setattr(
