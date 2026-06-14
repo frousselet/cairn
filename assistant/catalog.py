@@ -171,8 +171,9 @@ _SPECS = [
         "list_action_plans",
         _("Action Plans"),
         "bi-card-checklist",
-        "list_action_plans(search, status, priority: low|medium|high|critical, limit):"
-        " compliance action plans",
+        "list_action_plans(search, status: new|to_define|to_validate|to_implement|"
+        "implementation_to_validate|validated|closed|cancelled, priority: low|medium|high|critical,"
+        " limit): compliance action plans",
         ("search", "status", "priority", "limit", "offset"),
         summary_fields=("target_date",),
         detail_route="compliance:action-plan-detail",
@@ -190,7 +191,8 @@ _SPECS = [
         "list_compliance_assessments",
         _("Compliance Assessments"),
         "bi-clipboard-check",
-        "list_compliance_assessments(search, status, limit): compliance assessments (audits)",
+        "list_compliance_assessments(search, status: draft|planned|in_progress|completed|closed"
+        "|cancelled, limit): compliance assessments (audits)",
         ("search", "status", "limit", "offset"),
         summary_fields=("overall_compliance_level",),
         detail_route="compliance:assessment-detail",
@@ -199,7 +201,8 @@ _SPECS = [
         "list_frameworks",
         _("Frameworks"),
         "bi-journal-check",
-        "list_frameworks(search, status, limit): compliance frameworks and standards",
+        "list_frameworks(search, status: draft|active|under_review|deprecated|archived, limit):"
+        " compliance frameworks and standards",
         ("search", "status", "type", "category", "limit", "offset"),
         detail_route="compliance:framework-detail",
     ),
@@ -256,7 +259,8 @@ _SPECS = [
         "list_indicators",
         _("Indicators"),
         "bi-speedometer2",
-        "list_indicators(search, status, indicator_type, limit): performance and security indicators",
+        "list_indicators(search, status: active|inactive|draft, indicator_type: organizational"
+        "|technical, limit): performance and security indicators",
         ("search", "status", "indicator_type", "limit", "offset"),
         detail_route="context:indicator-detail",
     ),
@@ -275,7 +279,8 @@ _SPECS = [
         "list_issues",
         _("Issues"),
         "bi-exclamation-diamond",
-        "list_issues(search, type: internal|external, status, limit): internal and external issues",
+        "list_issues(search, type: internal|external, status: identified|active|monitored|closed,"
+        " limit): internal and external issues",
         ("search", "type", "category", "status", "limit", "offset"),
         detail_route="context:issue-detail",
     ),
@@ -283,7 +288,10 @@ _SPECS = [
         "list_objectives",
         _("Objectives"),
         "bi-flag",
-        "list_objectives(search, status, limit): information security objectives",
+        "list_objectives(search, category, status: draft|active|achieved|not_achieved|cancelled,"
+        " limit): information security objectives. A completed / met / reached objective has"
+        " status 'achieved' (100% progress); 'not_achieved' means finished but the target was"
+        " missed.",
         ("search", "category", "type", "status", "limit", "offset"),
         detail_route="context:objective-detail",
     ),
@@ -303,7 +311,8 @@ _SPECS = [
         "list_suppliers",
         _("Suppliers"),
         "bi-truck",
-        "list_suppliers(search, criticality, status, limit): suppliers and service providers",
+        "list_suppliers(search, criticality: low|medium|high|critical, status: active"
+        "|under_evaluation|suspended|archived, limit): suppliers and service providers",
         ("search", "type", "criticality", "status", "limit", "offset"),
         summary_fields=("criticality",),
         detail_route="assets:supplier-detail",
@@ -312,8 +321,8 @@ _SPECS = [
         "list_essential_assets",
         _("Essential Assets"),
         "bi-gem",
-        "list_essential_assets(search, type: business_process|information, status, limit):"
-        " essential assets (processes, information)",
+        "list_essential_assets(search, type: business_process|information, status: identified"
+        "|active|under_review|decommissioned, limit): essential assets (processes, information)",
         ("search", "type", "category", "status", "limit", "offset"),
         detail_route="assets:essential-asset-detail",
     ),
@@ -321,8 +330,9 @@ _SPECS = [
         "list_support_assets",
         _("Support Assets"),
         "bi-hdd-network",
-        "list_support_assets(search, type: hardware|software|network|person|service|paper, status,"
-        " limit): support assets (IT infrastructure)",
+        "list_support_assets(search, type: hardware|software|network|person|service|paper,"
+        " status: in_stock|deployed|active|under_maintenance|decommissioned|disposed, limit):"
+        " support assets (IT infrastructure)",
         ("search", "type", "category", "status", "environment", "limit", "offset"),
         detail_route="assets:support-asset-detail",
     ),
