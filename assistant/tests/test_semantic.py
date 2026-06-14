@@ -180,3 +180,24 @@ def test_rebuild_command_embeds_and_is_idempotent(monkeypatch):
     out = StringIO()
     call_command("rebuild_semantic_index", stdout=out)
     assert "0 embedded" in out.getvalue()
+
+
+@pytest.mark.django_db
+def test_rebuild_command_reports_clear_error_on_backend_failure(monkeypatch):
+    from django.core.management import call_command
+    from django.core.management.base import CommandError
+
+    from assistant.providers.base import ServiceUnreachable
+
+    class FailingClient:
+        def embed(self, texts):
+            raise ServiceUnreachable("Mistral API key is not configured.")
+
+    monkeypatch.setattr(
+        "assistant.management.commands.rebuild_semantic_index.get_client",
+        lambda: FailingClient(),
+    )
+    RequirementFactory(name="Anything")
+    with pytest.raises(CommandError) as exc:
+        call_command("rebuild_semantic_index")
+    assert "Embedding failed" in str(exc.value)

@@ -47,6 +47,21 @@ def _client():
     )
 
 
+def test_missing_api_key_raises_clear_error(monkeypatch):
+    def boom(*a, **k):
+        raise AssertionError("must not hit the network without an API key")
+
+    monkeypatch.setattr(httpx, "post", boom)
+    client = MistralClient(base_url="https://api.mistral.ai/v1", model="m", api_key="")
+    for call in (
+        lambda: client.embed(["x"]),
+        lambda: client.chat_text([{"role": "user", "content": "hi"}]),
+    ):
+        with pytest.raises(ServiceUnreachable) as exc:
+            call()
+        assert "API key" in str(exc.value)
+
+
 def test_chat_json_sends_schema_and_bearer(monkeypatch):
     calls = _patch_post(monkeypatch, [FakeResponse(content='{"steps": []}')])
     result = _client().chat_json([{"role": "user", "content": "hi"}], {"type": "object"})
