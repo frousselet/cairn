@@ -103,22 +103,19 @@ Then sign in with `elise.moreau@voltara.example` / `VoltaraDemo!2026` (superuser
 
 ## AI assistant (optional)
 
-"Ask Cairn" answers simple natural-language questions from the command palette (Ctrl+K), e.g. *"Quelles décisions ont été prises lors de la dernière revue de direction ?"*. It runs entirely on your host through an [Ollama](https://ollama.com/) sidecar: no data leaves the machine, and every data access enforces the asking user's permissions.
+"Ask Cairn" answers simple natural-language questions from the command palette (Ctrl+K), e.g. *"Quelles décisions ont été prises lors de la dernière revue de direction ?"*. Every data access enforces the asking user's permissions, and the answer cites the real matching records. The LLM backend is a **pluggable provider** (`AI_ASSISTANT_PROVIDER`); the feature is **off by default** and the palette works unchanged when it is disabled or the backend is unreachable.
+
+Default (Mistral AI, third-party EU-hosted API): no sidecar, no model download, no GPU.
 
 ```bash
-# 1. Start the sidecar (the `ai` profile is opt-in)
-docker compose --profile ai up -d
-
-# 2. Pull the model once (kept in the ollama_models volume)
-docker compose exec ollama ollama pull qwen3:1.7b
-
-# 3. Enable the feature in .env, then restart web
-# AI_ASSISTANT_ENABLED=True
+# In .env, then restart web:
+AI_ASSISTANT_ENABLED=True
+AI_ASSISTANT_PROVIDER=mistral
+AI_ASSISTANT_API_KEY=your-mistral-api-key
+AI_ASSISTANT_MODEL=mistral-small-latest
 ```
 
-Sizing: the default `qwen3:1.7b` model needs roughly 2-4 GB of RAM (CPU-only inference). The first question after startup loads the model (10-20 extra seconds); warm questions take about 5-30 seconds. Any Ollama chat model can be used instead via `AI_ASSISTANT_MODEL`. Without the profile (or if Ollama is down) the palette works exactly as before.
-
-On macOS, Docker containers cannot use the Metal GPU, which caps you at small models. For noticeably better answer phrasing, install the [native Ollama app](https://ollama.com/download) on the host, pull a 4B-class model (`ollama pull qwen3:4b`), and point Cairn at it instead of the compose profile: `AI_ASSISTANT_OLLAMA_URL=http://host.docker.internal:11434` and `AI_ASSISTANT_MODEL=qwen3:4b` in `.env` (do not start the `ai` profile then, to avoid a port conflict on 11434). Model guidance and measurements: [docs/modules/assistant/](modules/assistant/README.md).
+Other backends are configured the same way: `openai` for OpenAI (ChatGPT) or any OpenAI-compatible endpoint (vLLM, LiteLLM, LocalAI...), `anthropic` for Claude, and `ollama` for a self-hosted, no-egress deployment pointed at your own [Ollama](https://ollama.com/) instance. With a third-party provider, the question text and the compact record fields used for routing leave the platform. Provider setup, model guidance, the data-egress detail and semantic search are all documented in [docs/modules/assistant/](modules/assistant/README.md).
 
 ## Scheduled lifecycle commands
 
