@@ -306,15 +306,48 @@ _SPECS = [
         summary_fields=("manager_names",),
         detail_route="context:scope-detail",
     ),
+    _spec(
+        "list_sites",
+        _("Sites"),
+        "bi-geo-alt",
+        "list_sites(search, type, limit): physical sites / premises / locations. The 'address'"
+        " field carries the postal address of each site.",
+        ("search", "type", "workflow_state", "parent_site_id", "limit", "offset"),
+        subtitle_field="workflow_state",
+        summary_fields=("address", "description"),
+        detail_route="assets:site-detail",
+    ),
+    _spec(
+        "list_activitys",
+        _("Activities"),
+        "bi-diagram-3",
+        "list_activitys(search, criticality: low|medium|high|critical, type,"
+        " status: active|inactive|planned, limit): business activities and processes",
+        ("search", "type", "criticality", "status", "limit", "offset"),
+        summary_fields=("description", "criticality", "type"),
+        detail_route="context:activity-detail",
+    ),
+    _spec(
+        "list_stakeholders",
+        _("Stakeholders"),
+        "bi-people",
+        "list_stakeholders(search, type, category, status, limit): interested parties /"
+        " stakeholders (the people and organizations with a stake in the ISMS)",
+        ("search", "type", "category", "status", "limit", "offset"),
+        summary_fields=("description", "type", "category", "influence_level", "interest_level"),
+        detail_route="context:stakeholder-detail",
+    ),
     # Assets
     _spec(
         "list_suppliers",
         _("Suppliers"),
         "bi-truck",
         "list_suppliers(search, criticality: low|medium|high|critical, status: active"
-        "|under_evaluation|suspended|archived, limit): suppliers and service providers",
+        "|under_evaluation|suspended|archived, limit): suppliers and service providers. The"
+        " 'description' field explains what the supplier does; 'contract_end_date' is when its"
+        " contract expires.",
         ("search", "type", "criticality", "status", "limit", "offset"),
-        summary_fields=("criticality",),
+        summary_fields=("description", "criticality", "country", "contract_end_date"),
         detail_route="assets:supplier-detail",
     ),
     _spec(
