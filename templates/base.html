@@ -3937,15 +3937,10 @@
 
       {# ── Conformité ──────────────────────────────────── #}
       <div class="sidebar-section">{% trans "Compliance" %}</div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navReferentiels" aria-expanded="true">
+      <a href="{% url 'compliance:framework-list' %}" class="sidebar-link">
         <i class="bi bi-journal-bookmark"></i> <span class="sidebar-link-text">{% trans "Frameworks" %}</span>
-        <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Frameworks" %}</span>
-      </button>
-      <div class="collapse show" id="navReferentiels">
-        <a href="{% url 'compliance:framework-list' %}" class="sidebar-link sidebar-sub">{% trans "List" %}</a>
-        <a href="{% url 'compliance:framework-import' %}" class="sidebar-link sidebar-sub">{% trans "Import" %}</a>
-      </div>
+      </a>
       <a href="{% url 'compliance:requirement-list' %}" class="sidebar-link">
         <i class="bi bi-list-check"></i> <span class="sidebar-link-text">{% trans "Requirements" %}</span>
         <span class="sidebar-tooltip">{% trans "Requirements" %}</span>
