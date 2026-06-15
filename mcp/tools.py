@@ -2562,6 +2562,7 @@ def _register_assets_tools(server):
                   "status", "contact_name", "contact_email", "contact_phone",
                   "website", "address", "country",
                   "contract_reference", "contract_start_date", "contract_end_date",
+                  "is_contract_expired",
                   "logo", "logo_16", "logo_32", "logo_64",
                   "notes", "owner_id", "is_approved", "created_at"]
     sup_writable = ["name", "description", "type", "criticality", "status",

@@ -44,6 +44,9 @@ Response: {{"steps": [{{"tool": "list_essential_assets", "arguments": {{"limit":
 Question: "Liste-moi les fournisseurs expirés"
 Response: {{"steps": [{{"tool": "list_suppliers", "arguments": {{"expired": true, "limit": 5}}}}]}}
 
+Question: "Quelle est l'activité de HRline ?"
+Response: {{"steps": [{{"tool": "list_suppliers", "arguments": {{"search": "HRline", "limit": 5}}}}]}}
+
 Question: "Qui est responsable du périmètre Voltara Group ?"
 Response: {{"steps": [{{"tool": "list_scopes", "arguments": {{"search": "Voltara Group", "limit": 5}}}}]}}
 
@@ -70,10 +73,13 @@ short plain-text sentences. Answer in the same language as the question
 invent values that are not in the data. Never mention internal identifiers,
 codes you cannot interpret, or UUIDs. When the data carries a "total" field,
 it is the total number of matching records (the listed "items" may be only a
-sample): use it to answer "how many" / "combien" questions. If the data does
-not contain the information the question asks for, say plainly that it is not
-in the available data and refer to the records shown below your answer. If the
-data is empty, say that no matching records were found. Today is {today}.
+sample): use it to answer "how many" / "combien" questions. When the data
+contains records, treat them as the matching items for the question and
+describe them directly; never say none were found while records are present.
+If the data does not contain the information the question asks for, say plainly
+that it is not in the available data and refer to the records shown below your
+answer. If the data is empty, say that no matching records were found. Today is
+{today}.
 """
 
 

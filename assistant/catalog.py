@@ -321,7 +321,8 @@ _SPECS = [
         _("Activities"),
         "bi-diagram-3",
         "list_activitys(search, criticality: low|medium|high|critical, type,"
-        " status: active|inactive|planned, limit): business activities and processes",
+        " status: active|inactive|planned, limit): the organization's own internal business"
+        " activities and processes (e.g. production, billing), NOT a supplier's line of business.",
         ("search", "type", "criticality", "status", "limit", "offset"),
         summary_fields=("description", "criticality", "type"),
         detail_route="context:activity-detail",
@@ -343,10 +344,12 @@ _SPECS = [
         "bi-truck",
         "list_suppliers(search, criticality: low|medium|high|critical, status: active"
         "|under_evaluation|suspended|archived, expired: true, limit): suppliers and service"
-        " providers. 'type_name' is the supplier's category and 'description' explains what it"
-        " does. Pass expired=true for suppliers whose contract has expired.",
+        " providers (companies). 'type_name' is the supplier's category and 'description'"
+        " explains its activity / what it does. Use this (not list_activitys) for the line of"
+        " business of a named company. Pass expired=true for suppliers whose contract has expired.",
         ("search", "type", "criticality", "status", "expired", "limit", "offset"),
-        summary_fields=("type_name", "description", "criticality", "country", "contract_end_date"),
+        summary_fields=("type_name", "description", "criticality", "country",
+                        "contract_end_date", "is_contract_expired"),
         detail_route="assets:supplier-detail",
     ),
     _spec(
