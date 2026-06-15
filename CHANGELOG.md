@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.27.2] - 2026-06-15
+
 ### Added
 
 - **Dashboard risk treatment flow (Sankey)**: a new Sankey (cash-flow style) chart on the home dashboard, displayed above the risk matrices, visualises how treatment moves each risk from its current severity level (before treatment) to its residual level (after treatment). Each column lists the severity levels present (highest at the top, lowest at the bottom), coloured with the configured risk-level palette, and each flow's thickness is the number of risks making that transition - so a heavy downward flow reads as effective treatment and a flat flow as untreated risk. Levels are derived from the likelihood/impact pairs (with the same default 5x5 ISO 27005 fallback as the matrices), so the chart stays consistent with the matrices below even when no risk criteria are configured. The chart honours light/dark mode and is rendered with Apache ECharts. Built from a new `build_risk_treatment_flow()` helper in `risks/views.py`.
@@ -1001,7 +1003,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://github.com/frousselet/cairn/compare/v0.27.1...HEAD
+[Unreleased]: https://github.com/frousselet/cairn/compare/v0.27.2...HEAD
+[0.27.2]: https://github.com/frousselet/cairn/compare/v0.27.1...v0.27.2
 [0.27.1]: https://github.com/frousselet/cairn/compare/v0.27.0...v0.27.1
 [0.27.0]: https://github.com/frousselet/cairn/compare/v0.26.3...v0.27.0
 [0.26.3]: https://github.com/frousselet/cairn/compare/v0.26.2...v0.26.3
