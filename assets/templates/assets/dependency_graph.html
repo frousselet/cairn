@@ -5,6 +5,9 @@
 
 {% block extra_css %}
 <style>
+  /* Compact header: title + toolbar share one row, graph claims the rest */
+  .graph-header .page-header { margin-bottom: .75rem; align-items: center; }
+
   /* Graph fills the remaining viewport below the header via fixed position */
   #graph-container {
     position: fixed;
@@ -13,9 +16,6 @@
     bottom: 0;
     overflow: hidden;
     background: transparent;
-  }
-  @media (max-width: 991.98px) {
-    #graph-container { left: 0; }
   }
   #graph-container svg { width: 100%; height: 100%; }
   .node-label {
@@ -31,9 +31,42 @@
     fill: var(--text-muted);
     pointer-events: none;
   }
+
+  /* ── Header toolbar: stats · legend · zoom ─────── */
+  .graph-toolbar {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+  .graph-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    white-space: nowrap;
+    font-size: .8rem;
+    color: var(--text-secondary);
+    padding: .25rem .55rem;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+  }
+  .graph-stat strong { color: var(--text-primary); font-weight: 600; }
+
+  /* Legend lives in a popover so it stops eating header width */
+  .graph-legend-menu { min-width: 12rem; }
+  .graph-legend-item {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .25rem .5rem;
+    font-size: .8rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
   .legend-dot {
-    width: 10px;
-    height: 10px;
+    width: 11px;
+    height: 11px;
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -42,123 +75,68 @@
     height: 2px;
     flex-shrink: 0;
   }
-  .graph-stats-bar .btn {
-    padding: .15rem .4rem;
-    font-size: .75rem;
-    line-height: 1;
-  }
-  /* Compact stats + legend bar */
-  .graph-stats-bar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    padding: .4rem .75rem;
-    margin-bottom: .5rem;
-    font-size: .8rem;
-    color: var(--text-secondary);
-    background: var(--surface-raised);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-light);
-  }
-  .graph-stat {
-    display: inline-flex;
-    align-items: center;
-    gap: .3rem;
-    white-space: nowrap;
-    vertical-align: middle;
-  }
-  .graph-stat strong { color: var(--text-primary); }
-  .graph-stat-sep {
-    width: 1px;
-    align-self: stretch;
-    margin: .25rem 0;
-    background: var(--border-light);
-  }
-  .graph-legend-group {
-    display: inline-flex;
-    align-items: center;
-    gap: 1rem;
-  }
 
   /* ── Mobile optimizations ─────────────────────── */
   @media (max-width: 991.98px) {
-    /* Reduce main-content top padding for this page */
     .main-content { padding-top: 3.5rem !important; }
-
-    /* Hide the page title on mobile — the stats bar is self-explanatory */
-    .graph-page-header { display: none; }
-
-    /* Tighter stats bar */
-    .graph-stats-bar {
-      gap: .35rem .6rem;
-      padding: .3rem .5rem;
-      margin-bottom: .25rem;
-      font-size: .7rem;
-    }
-    .graph-stats-bar .btn {
-      padding: .1rem .3rem;
-      font-size: .65rem;
-      min-height: unset;
-    }
-    .graph-stat { gap: .2rem; }
-    .legend-dot { width: 9px; height: 9px; }
-    .legend-line { width: 16px; }
-
-    /* Hide the legend on small screens — use a collapsible toggle */
-    .graph-legend-group { display: none; }
-    .graph-legend-toggle { display: inline-flex !important; }
-    .graph-legend-group.show { display: contents; }
+    .graph-header .page-header { margin-bottom: .5rem; }
+    .graph-stat { font-size: .72rem; padding: .2rem .45rem; }
   }
   @media (max-width: 575.98px) {
     .main-content { padding-top: 3rem !important; }
-    .graph-stats-bar {
-      gap: .25rem .5rem;
-      padding: .25rem .4rem;
-      font-size: .65rem;
-    }
-    .graph-stat-sep { display: none; }
+    /* Stack title above a full-width, scrollable toolbar */
+    .graph-toolbar { width: 100%; gap: .35rem; }
+    .graph-stat .graph-stat-lbl { display: none; }
   }
-  /* Toggle button hidden on desktop */
-  .graph-legend-toggle { display: none !important; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="graph-page-header">
-{% page_header _("Dependency graph") %}{% endpage_header %}
-</div>
+<div class="graph-header">
+{% page_header _("Dependency graph") eyebrow=_("Assets") accent="assets" %}
+  <div class="graph-toolbar">
+    <span class="graph-stat" title="{% trans 'Asset dependencies' %}"><i class="bi bi-diagram-3 text-primary"></i> <strong>{{ asset_dep_count }}</strong> <span class="graph-stat-lbl">{% trans "Asset dep." %}</span></span>
+    <span class="graph-stat" title="{% trans 'Supplier dependencies' %}"><i class="bi bi-truck text-info"></i> <strong>{{ supplier_dep_count }}</strong> <span class="graph-stat-lbl">{% trans "Supplier dep." %}</span></span>
+    <span class="graph-stat" title="{% trans 'Site dependencies' %}"><i class="bi bi-building" style="color:#06b6d4"></i> <strong>{{ site_asset_dep_count|add:site_supplier_dep_count }}</strong> <span class="graph-stat-lbl">{% trans "Site dep." %}</span></span>
 
-<div class="graph-stats-bar">
-  <span class="graph-stat"><i class="bi bi-diagram-3 text-primary"></i> {% trans "Asset dep." %} <strong>{{ asset_dep_count }}</strong></span>
-  <span class="graph-stat"><i class="bi bi-truck text-info"></i> {% trans "Supplier dep." %} <strong>{{ supplier_dep_count }}</strong></span>
-  <span class="graph-stat"><i class="bi bi-building" style="color:#06b6d4"></i> {% trans "Site dep." %} <strong>{{ site_asset_dep_count|add:site_supplier_dep_count }}</strong></span>
-  <span class="graph-stat-sep"></span>
-  <button class="btn btn-sm btn-outline-secondary graph-legend-toggle" onclick="this.nextElementSibling.classList.toggle('show')" title="{% trans 'Legend' %}"><i class="bi bi-palette"></i></button>
-  <span class="graph-legend-group">
-    <span class="graph-stat"><span class="legend-dot" style="background:#1E3A8A"></span><span>{% trans "Essential asset" %}</span></span>
-    <span class="graph-stat"><span class="legend-dot" style="background:#34d399"></span><span>{% trans "Support asset" %}</span></span>
-    <span class="graph-stat"><span class="legend-dot" style="background:#22d3ee"></span><span>{% trans "Site" %}</span></span>
-    <span class="graph-stat"><span class="legend-dot" style="background:#fbbf24"></span><span>{% trans "Supplier" %}</span></span>
-    <span class="graph-stat"><span class="legend-line" style="background:#94a3b8"></span><span>{% trans "Dependency" %}</span></span>
-    <span class="graph-stat"><span class="legend-line" style="background:#f87171"></span><span>SPOF</span></span>
-  </span>
-  <span class="graph-stat-sep"></span>
-  <button class="btn btn-sm btn-outline-secondary" onclick="resetZoom()" title="{% trans 'Reset zoom' %}"><i class="bi bi-arrows-fullscreen"></i></button>
-  <button class="btn btn-sm btn-outline-secondary" onclick="zoomIn()" title="{% trans 'Zoom in' %}"><i class="bi bi-zoom-in"></i></button>
-  <button class="btn btn-sm btn-outline-secondary" onclick="zoomOut()" title="{% trans 'Zoom out' %}"><i class="bi bi-zoom-out"></i></button>
+    <div class="dropdown">
+      <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false" title="{% trans 'Legend' %}">
+        <i class="bi bi-palette"></i> <span class="d-none d-sm-inline">{% trans "Legend" %}</span>
+      </button>
+      <div class="dropdown-menu dropdown-menu-end graph-legend-menu p-2">
+        <div class="graph-legend-item"><span class="legend-dot" style="background:#1E3A8A"></span>{% trans "Essential asset" %}</div>
+        <div class="graph-legend-item"><span class="legend-dot" style="background:#34d399"></span>{% trans "Support asset" %}</div>
+        <div class="graph-legend-item"><span class="legend-dot" style="background:#22d3ee"></span>{% trans "Site" %}</div>
+        <div class="graph-legend-item"><span class="legend-dot" style="background:#fbbf24"></span>{% trans "Supplier" %}</div>
+        <div class="dropdown-divider"></div>
+        <div class="graph-legend-item"><span class="legend-line" style="background:#94a3b8"></span>{% trans "Dependency" %}</div>
+        <div class="graph-legend-item"><span class="legend-line" style="background:#f87171"></span>SPOF</div>
+      </div>
+    </div>
+
+    <div class="btn-group btn-group-sm" role="group" aria-label="{% trans 'Zoom controls' %}">
+      <button class="btn btn-outline-secondary" onclick="resetZoom()" title="{% trans 'Reset zoom' %}"><i class="bi bi-arrows-fullscreen"></i></button>
+      <button class="btn btn-outline-secondary" onclick="zoomIn()" title="{% trans 'Zoom in' %}"><i class="bi bi-zoom-in"></i></button>
+      <button class="btn btn-outline-secondary" onclick="zoomOut()" title="{% trans 'Zoom out' %}"><i class="bi bi-zoom-out"></i></button>
+    </div>
+  </div>
+{% endpage_header %}
 </div>
 
 <div id="graph-container">
   <svg id="graph-svg"></svg>
 </div>
 <script>
-  // Position graph container right below the stats bar
+  // Anchor the graph canvas right below the header, and keep it there on resize.
   (function() {
-    var bar = document.querySelector('.graph-stats-bar');
-    var rect = bar.getBoundingClientRect();
-    document.getElementById('graph-container').style.top = Math.ceil(rect.bottom) + 'px';
+    function place() {
+      var header = document.querySelector('.graph-header');
+      if (!header) return;
+      var rect = header.getBoundingClientRect();
+      document.getElementById('graph-container').style.top = Math.ceil(rect.bottom) + 8 + 'px';
+    }
+    place();
+    window.addEventListener('resize', place);
   })();
 </script>
 {% endblock %}
@@ -216,10 +194,20 @@
   });
 
   var simulation = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(function(d) { return d.id; }).distance(160))
-    .force('charge', d3.forceManyBody().strength(-400))
+    .force('link', d3.forceLink(links).id(function(d) { return d.id; }).distance(190))
+    // Local repulsion only: distanceMax stops disconnected components from
+    // pushing each other to the other side of the canvas.
+    .force('charge', d3.forceManyBody().strength(-420).distanceMax(650))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collision', d3.forceCollide().radius(30));
+    // Gentle gravity toward the centre: keeps orphan clusters in frame without
+    // crushing everything into one overlapping blob.
+    .force('x', d3.forceX(width / 2).strength(0.045))
+    .force('y', d3.forceY(height / 2).strength(0.045))
+    // Collision radius accounts for the node *and* its label so neighbours
+    // don't overlap their text.
+    .force('collision', d3.forceCollide().radius(function(d) {
+      return (sizeMap[d.type] || 14) + 50;
+    }));
 
   // Arrow markers — grey for normal, red for SPOF
   svg.append('defs').selectAll('marker')
@@ -314,7 +302,7 @@
     .attr('dy', function(d) { return (sizeMap[d.type] || 14) + 14; })
     .attr('text-anchor', 'middle')
     .text(function(d) {
-      return d.label.length > 30 ? d.label.substring(0, 30) + '...' : d.label;
+      return d.label.length > 22 ? d.label.substring(0, 22) + '...' : d.label;
     });
 
   // Tooltip
