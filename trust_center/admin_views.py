@@ -302,8 +302,13 @@ class DocumentRequestTransitionView(LoginRequiredMixin, PermissionRequiredMixin,
         if target == DocumentRequestState.APPROVED:
             token = obj.issue_download_link(dj_settings.TRUST_CENTER_DOWNLOAD_TTL)
             url = reverse("trust_center:gated-download", kwargs={"token": token})
-            send_gated_link_email(obj, url)
-            messages.success(request, _("Request approved and a download link was emailed."))
+            if send_gated_link_email(obj, url):
+                messages.success(request, _("Request approved and a download link was emailed."))
+            else:
+                messages.warning(
+                    request,
+                    _("Request approved, but the download link email could not be sent."),
+                )
         else:
             messages.success(request, _("Request updated."))
         return redirect("trust_center_manage:request-detail", pk=pk)

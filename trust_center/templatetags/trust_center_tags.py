@@ -2,7 +2,6 @@ from django import template
 from django.utils.safestring import mark_safe
 
 from trust_center.sanitizers import (
-    clean_css,
     clean_html,
     clean_svg,
     logo_href,
@@ -39,9 +38,3 @@ def safe_svg(markup):
 def safe_html(markup):
     """Sanitize admin-authored rich text (Jodit) for safe public rendering."""
     return mark_safe(clean_html(markup or ""))  # noqa: S308 - sanitized by clean_html
-
-
-@register.filter(name="safe_css")
-def safe_css(css):
-    """Sanitize operator-supplied custom CSS for inline <style> injection."""
-    return mark_safe(clean_css(css or ""))  # noqa: S308 - sanitized by clean_css

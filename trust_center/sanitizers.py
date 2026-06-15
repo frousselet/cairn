@@ -371,10 +371,21 @@ _CSS_DANGEROUS = re.compile(
 
 
 def clean_css(css: str) -> str:
-    """Strip style-tag breakout and active-content constructs from custom CSS."""
+    """Strip active-content / breakout constructs from custom CSS.
+
+    Applied to a fixed point so a split-token payload (e.g. ``<scr<script>ipt>``)
+    cannot reconstruct a stripped token after a single pass. Custom CSS is served
+    from a dedicated ``text/css`` endpoint (not inlined in a ``<style>``), so this
+    is defence in depth rather than the sole boundary.
+    """
     if not css:
         return ""
-    return _CSS_DANGEROUS.sub("", css)
+    previous = None
+    out = css
+    while previous != out:
+        previous = out
+        out = _CSS_DANGEROUS.sub("", out)
+    return out
 
 
 # --- Logo rendering ---------------------------------------------------------
