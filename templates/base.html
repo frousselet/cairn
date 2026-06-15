@@ -3967,47 +3967,72 @@
       {# ── Administration ──────────────────────────────── #}
       {% has_module_perms "system" as can_admin %}
       {% if can_admin %}
-      <div class="sidebar-section">{% trans "Administration" %}</div>
-      <a href="{% url 'context:tag-list' %}" class="sidebar-link">
-        <i class="bi bi-tags"></i> <span class="sidebar-link-text">{% trans "Tags" %}</span>
-        <span class="sidebar-tooltip">{% trans "Tags" %}</span>
-      </a>
       {% has_perm "system.config.read" as can_config %}
-      {% if can_config %}
-      <a href="{% url 'accounts:company-settings' %}" class="sidebar-link">
-        <i class="bi bi-building"></i> <span class="sidebar-link-text">{% trans "Company" %}</span>
-        <span class="sidebar-tooltip">{% trans "Company" %}</span>
-      </a>
-      <a href="{% url 'core:versioning-config-list' %}" class="sidebar-link">
-        <i class="bi bi-sliders"></i> <span class="sidebar-link-text">{% trans "Versioning" %}</span>
-        <span class="sidebar-tooltip">{% trans "Versioning" %}</span>
-      </a>
-      {% endif %}
+      {% has_perm "trust_center.settings.read" as can_trust_center %}
       {% has_perm "system.users.read" as can_users %}
-      {% if can_users %}
-      <a href="{% url 'accounts:user-list' %}" class="sidebar-link">
-        <i class="bi bi-people"></i> <span class="sidebar-link-text">{% trans "Users" %}</span>
-        <span class="sidebar-tooltip">{% trans "Users" %}</span>
-      </a>
-      {% endif %}
       {% has_perm "system.groups.read" as can_groups %}
-      {% if can_groups %}
-      <a href="{% url 'accounts:group-list' %}" class="sidebar-link">
-        <i class="bi bi-shield-lock"></i> <span class="sidebar-link-text">{% trans "Groups" %}</span>
-        <span class="sidebar-tooltip">{% trans "Groups" %}</span>
-      </a>
-      <a href="{% url 'accounts:permission-list' %}" class="sidebar-link">
-        <i class="bi bi-key"></i> <span class="sidebar-link-text">{% trans "Permissions" %}</span>
-        <span class="sidebar-tooltip">{% trans "Permissions" %}</span>
-      </a>
-      {% endif %}
-      {% if can_users %}
-      <a href="{% url 'accounts:calendar-subscription-list' %}" class="sidebar-link">
-        <i class="bi bi-rss"></i> <span class="sidebar-link-text">{% trans "Subscriptions" %}</span>
-        <span class="sidebar-tooltip">{% trans "Subscriptions" %}</span>
-      </a>
-      {% endif %}
       {% has_perm "system.audit_trail.read" as can_audit %}
+      {% has_perm "system.assistant_feedback.read" as can_feedback %}
+      <div class="sidebar-section">{% trans "Administration" %}</div>
+
+      {# ── Général ──────────────────────────────── #}
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminGeneral" aria-expanded="true">
+        <i class="bi bi-gear"></i> <span class="sidebar-link-text">{% trans "General" %}</span>
+        <i class="bi bi-chevron-down"></i>
+        <span class="sidebar-tooltip">{% trans "General" %}</span>
+      </button>
+      <div class="collapse show" id="navAdminGeneral">
+        {% if can_config %}
+        <a href="{% url 'accounts:company-settings' %}" class="sidebar-link sidebar-sub">{% trans "Company" %}</a>
+        {% endif %}
+        <a href="{% url 'context:tag-list' %}" class="sidebar-link sidebar-sub">{% trans "Tags" %}</a>
+        {% if can_config %}
+        <a href="{% url 'core:versioning-config-list' %}" class="sidebar-link sidebar-sub">{% trans "Versioning" %}</a>
+        {% endif %}
+        {% if can_users %}
+        <a href="{% url 'accounts:calendar-subscription-list' %}" class="sidebar-link sidebar-sub">{% trans "Calendar subscriptions" %}</a>
+        {% endif %}
+        {% if can_trust_center %}
+        <a href="{% url 'trust_center_manage:settings' %}" class="sidebar-link sidebar-sub">{% trans "Trust Center" %}</a>
+        {% endif %}
+      </div>
+
+      {# ── Accès ──────────────────────────────── #}
+      {% if can_users or can_groups %}
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminAccess" aria-expanded="true">
+        <i class="bi bi-shield-lock"></i> <span class="sidebar-link-text">{% trans "Access" %}</span>
+        <i class="bi bi-chevron-down"></i>
+        <span class="sidebar-tooltip">{% trans "Access" %}</span>
+      </button>
+      <div class="collapse show" id="navAdminAccess">
+        {% if can_users %}
+        <a href="{% url 'accounts:user-list' %}" class="sidebar-link sidebar-sub">{% trans "Users" %}</a>
+        {% endif %}
+        {% if can_groups %}
+        <a href="{% url 'accounts:group-list' %}" class="sidebar-link sidebar-sub">{% trans "Groups" %}</a>
+        <a href="{% url 'accounts:permission-list' %}" class="sidebar-link sidebar-sub">{% trans "Permissions" %}</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {# ── Ask Cairn ──────────────────────────────── #}
+      {% if can_feedback or AI_ASSISTANT_ENABLED and can_config %}
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminAskCairn" aria-expanded="true">
+        <i class="bi bi-stars"></i> <span class="sidebar-link-text">{% trans "Ask Cairn" %}</span>
+        <i class="bi bi-chevron-down"></i>
+        <span class="sidebar-tooltip">{% trans "Ask Cairn" %}</span>
+      </button>
+      <div class="collapse show" id="navAdminAskCairn">
+        {% if AI_ASSISTANT_ENABLED and can_config %}
+        <a href="{% url 'assistant:semantic-index' %}" class="sidebar-link sidebar-sub">{% trans "Semantic index" %}</a>
+        {% endif %}
+        {% if can_feedback %}
+        <a href="{% url 'assistant:feedback-list' %}" class="sidebar-link sidebar-sub">{% trans "Feedback" %}</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {# ── Logs ──────────────────────────────── #}
       {% if can_audit %}
       <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navLogs" aria-expanded="true">
         <i class="bi bi-journal-text"></i> <span class="sidebar-link-text">{% trans "Logs" %}</span>
@@ -4018,29 +4043,6 @@
         <a href="{% url 'accounts:access-log-list' %}" class="sidebar-link sidebar-sub">{% trans "Access log" %}</a>
         <a href="{% url 'accounts:action-log-list' %}" class="sidebar-link sidebar-sub">{% trans "Action log" %}</a>
       </div>
-      {% endif %}
-      {% has_perm "system.assistant_feedback.read" as can_feedback %}
-      {% if can_feedback %}
-      <a href="{% url 'assistant:feedback-list' %}" class="sidebar-link">
-        <i class="bi bi-chat-heart"></i> <span class="sidebar-link-text">{% trans "Assistant feedback" %}</span>
-        <span class="sidebar-tooltip">{% trans "Assistant feedback" %}</span>
-      </a>
-      {% endif %}
-      {% if AI_ASSISTANT_ENABLED %}
-      {% has_perm "system.config.read" as can_semantic_index %}
-      {% if can_semantic_index %}
-      <a href="{% url 'assistant:semantic-index' %}" class="sidebar-link">
-        <i class="bi bi-stars"></i> <span class="sidebar-link-text">{% trans "Semantic index" %}</span>
-        <span class="sidebar-tooltip">{% trans "Semantic index" %}</span>
-      </a>
-      {% endif %}
-      {% endif %}
-      {% has_perm "system.admin_django.access" as can_django_admin %}
-      {% if can_django_admin %}
-      <a href="{% url 'admin:index' %}" class="sidebar-link">
-        <i class="bi bi-gear"></i> <span class="sidebar-link-text">{% trans "Django admin" %}</span>
-        <span class="sidebar-tooltip">{% trans "Django admin" %}</span>
-      </a>
       {% endif %}
       {% endif %}
 

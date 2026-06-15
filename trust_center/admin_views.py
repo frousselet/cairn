@@ -165,7 +165,7 @@ class SettingsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         if form.is_valid():
             form.save()
             messages.success(request, _("Trust Center settings updated."))
-            return redirect("trust_center_manage:hub")
+            return redirect("trust_center_manage:settings")
         return render(request, "trust_center/manage/settings_form.html", {"form": form})
 
 

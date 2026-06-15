@@ -9801,6 +9801,9 @@ msgstr "Modèle LLM"
 msgid "Assistant feedback"
 msgstr "Retour sur l'assistant"
 
+msgid "Feedback"
+msgstr "Retours"
+
 msgid "AI assistant feedback"
 msgstr "Retours sur l'assistant IA"
 
@@ -10017,6 +10020,9 @@ msgstr "À titre informatif uniquement. Le routage sur un domaine distinct se co
 
 msgid "Trust Center settings"
 msgstr "Paramètres du centre de confiance"
+
+msgid "Manage content"
+msgstr "Gérer le contenu"
 
 msgid "Enter a valid hex colour, e.g. #1E3A8A."
 msgstr "Saisissez une couleur hexadécimale valide, p. ex. #1E3A8A."
