@@ -5,6 +5,7 @@ from django.db import transaction
 from django.utils.translation import gettext as _
 from openpyxl import load_workbook
 from openpyxl import Workbook as XlWorkbook
+from openpyxl.comments import Comment
 from openpyxl.styles import Alignment, Font, PatternFill
 
 from .constants import (
@@ -41,7 +42,7 @@ SAMPLE_DATA = {
                     "description": "Definition and review of policies.",
                     "requirements": [
                         {
-                            "reference": "REQ.1.1.1",
+                            "reference": "SEC.1.1.1",
                             "name": "General security policy",
                             "description": "An information security policy must be defined and approved by management.",
                             "guidance": "The policy must be communicated to all staff and reviewed at regular intervals.",
@@ -49,7 +50,7 @@ SAMPLE_DATA = {
                             "category": "organizational",
                         },
                         {
-                            "reference": "REQ.1.1.2",
+                            "reference": "SEC.1.1.2",
                             "name": "Policy review",
                             "description": "Security policies must be reviewed at planned intervals.",
                             "guidance": "The review must take place at least once a year or upon significant changes.",
@@ -66,7 +67,7 @@ SAMPLE_DATA = {
             "description": "Measures related to the management of information assets.",
             "requirements": [
                 {
-                    "reference": "REQ.2.1",
+                    "reference": "SEC.2.1",
                     "name": "Asset inventory",
                     "description": "An inventory of information assets must be established and maintained.",
                     "guidance": "The inventory must identify the owner of each asset.",
@@ -74,7 +75,7 @@ SAMPLE_DATA = {
                     "category": "organizational",
                 },
                 {
-                    "reference": "REQ.2.2",
+                    "reference": "SEC.2.2",
                     "name": "Information classification",
                     "description": "Information must be classified according to its sensitivity.",
                     "guidance": "",
@@ -87,12 +88,173 @@ SAMPLE_DATA = {
 }
 
 
+def _allowed_values():
+    """Code -> label maps for the enumerated fields.
+
+    Built from the model choices so the documentation embedded in the sample
+    files always reflects the values the importer actually accepts.
+    """
+    return {
+        "framework_type": {value: str(label) for value, label in FrameworkType.choices},
+        "framework_category": {
+            value: str(label) for value, label in FrameworkCategory.choices
+        },
+        "requirement_type": {
+            value: str(label) for value, label in RequirementType.choices
+        },
+        "requirement_category": {
+            value: str(label) for value, label in RequirementCategory.choices
+        },
+    }
+
+
+def _json_instructions():
+    """Documentation block prepended to the sample JSON (ignored on import)."""
+    return {
+        "about": _(
+            "This block documents the import format and is ignored on import. "
+            "You may keep it or remove it."
+        ),
+        "structure": _(
+            "'framework' is an object; 'sections' is an array. A section can nest "
+            "child sections in 'sections' and list requirements in 'requirements'."
+        ),
+        "framework_fields": {
+            "reference": _("optional"),
+            "name": _("required"),
+            "short_name": _("optional"),
+            "framework_version": _("optional"),
+            "issuing_body": _("optional"),
+            "description": _("optional"),
+            "type": _("optional, one of allowed_values.framework_type"),
+            "category": _("optional, one of allowed_values.framework_category"),
+        },
+        "section_fields": {
+            "reference": _("required"),
+            "name": _("required"),
+            "description": _("optional"),
+            "sections": _("optional, array of nested child sections"),
+            "requirements": _("optional, array of requirements"),
+        },
+        "requirement_fields": {
+            "reference": _("required"),
+            "name": _("required"),
+            "description": _("optional"),
+            "guidance": _("optional"),
+            "type": _("optional, one of allowed_values.requirement_type"),
+            "category": _("optional, one of allowed_values.requirement_category"),
+        },
+        "allowed_values": _allowed_values(),
+    }
+
+
 def generate_sample_json():
     """Return a BytesIO containing the sample JSON file."""
+    payload = {"_instructions": _json_instructions(), **SAMPLE_DATA}
     buf = io.BytesIO()
-    buf.write(json.dumps(SAMPLE_DATA, ensure_ascii=False, indent=2).encode("utf-8"))
+    buf.write(json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"))
     buf.seek(0)
     return buf
+
+
+# Per-column help shown both as header-cell comments and on the documentation
+# sheet. The req_type / req_category columns are overloaded: on the framework
+# row they carry the framework type / category, on a requirement row the
+# requirement type / category.
+def _column_docs():
+    return [
+        ("type", _("All rows"), _("Required"), _("framework, section or requirement")),
+        (
+            "reference",
+            _("All rows"),
+            _("Required (sections, requirements)"),
+            _("Unique code"),
+        ),
+        ("name", _("All rows"), _("Required"), _("Name of the record")),
+        ("description", _("All rows"), _("Optional"), _("Free text")),
+        ("guidance", _("Requirement rows"), _("Optional"), _("Implementation guidance")),
+        (
+            "req_type",
+            _("Framework and requirement rows"),
+            _("Optional"),
+            _(
+                "Framework type on the framework row, requirement type on a "
+                "requirement row. See the allowed values below."
+            ),
+        ),
+        (
+            "req_category",
+            _("Framework and requirement rows"),
+            _("Optional"),
+            _(
+                "Framework category on the framework row, requirement category on "
+                "a requirement row. See the allowed values below."
+            ),
+        ),
+    ]
+
+
+def _build_doc_sheet(wb, header_font, header_fill):
+    """Append a human-readable 'Documentation' sheet describing the format."""
+    ws = wb.create_sheet(title="Documentation")
+    title_font = Font(bold=True, size=13)
+    group_font = Font(bold=True, size=11)
+
+    def _table_header(values):
+        ws.append(values)
+        for cell in ws[ws.max_row]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal="left")
+
+    ws.append([_("Framework import - format documentation")])
+    ws[ws.max_row][0].font = title_font
+    ws.append([
+        _(
+            "Each row is one record. The 'type' column says whether the row is the "
+            "framework, a section or a requirement. Section and requirement nesting "
+            "is inferred from the dotted reference prefixes (e.g. SEC.1 > SEC.1.1)."
+        )
+    ])
+    ws.append([])
+
+    ws.append([_("Columns")])
+    ws[ws.max_row][0].font = group_font
+    _table_header([_("Column"), _("Applies to"), _("Required"), _("Notes")])
+    for name, applies, required, notes in _column_docs():
+        ws.append([name, applies, required, notes])
+    ws.append([
+        "",
+        "",
+        "",
+        _(
+            "Optional extra framework columns are also accepted: short_name, "
+            "framework_version, issuing_body."
+        ),
+    ])
+    ws.append([])
+
+    ws.append([_("Allowed values")])
+    ws[ws.max_row][0].font = group_font
+    groups = [
+        (_("Framework type (req_type on the framework row)"), "framework_type"),
+        (_("Framework category (req_category on the framework row)"), "framework_category"),
+        (_("Requirement type (req_type)"), "requirement_type"),
+        (_("Requirement category (req_category)"), "requirement_category"),
+    ]
+    allowed = _allowed_values()
+    for label, key in groups:
+        ws.append([label])
+        ws[ws.max_row][0].font = group_font
+        _table_header([_("Code"), _("Label")])
+        for code, human in allowed[key].items():
+            ws.append([code, human])
+        ws.append([])
+
+    widths = [38, 32, 28, 70]
+    for idx, width in enumerate(widths, 1):
+        ws.column_dimensions[ws.cell(row=1, column=idx).column_letter].width = width
+    return ws
 
 
 def generate_sample_excel():
@@ -107,11 +269,18 @@ def generate_sample_excel():
     ]
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill(start_color="374151", end_color="374151", fill_type="solid")
+    column_notes = {name: notes for name, _applies, _required, notes in _column_docs()}
     for col_idx, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col_idx, value=header)
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = Alignment(horizontal="center")
+        note = column_notes.get(header)
+        if note:
+            comment = Comment(str(note), "Cairn")
+            comment.width = 320
+            comment.height = 120
+            cell.comment = comment
 
     fw = SAMPLE_DATA["framework"]
     rows = [
@@ -148,6 +317,11 @@ def generate_sample_excel():
             val = str(cell.value) if cell.value else ""
             max_len = max(max_len, min(len(val), 60))
         ws.column_dimensions[col_letter].width = max_len + 3
+
+    _build_doc_sheet(wb, header_font, header_fill)
+    # Keep the data sheet active/first so the importer (which reads wb.active)
+    # picks up the framework data, not the documentation sheet.
+    wb.active = 0
 
     buf = io.BytesIO()
     wb.save(buf)
