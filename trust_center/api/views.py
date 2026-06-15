@@ -19,6 +19,7 @@ from trust_center.models import (
     TrustCenterSettings,
     TrustCenterSubprocessor,
 )
+from trust_center.transition_messages import transition_error_detail
 
 from .serializers import (
     CertificationSerializer,
@@ -69,9 +70,15 @@ class _ManagedViewSet(viewsets.ModelViewSet):
                 enforce_permission=True,
             )
         except PermissionDeniedError as exc:
-            return Response({"detail": str(exc)}, status=status.HTTP_403_FORBIDDEN)
-        except (WorkflowError, ValueError) as exc:
-            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": transition_error_detail(exc)},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        except WorkflowError as exc:
+            return Response(
+                {"detail": transition_error_detail(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return Response(self.get_serializer(obj).data)
 
 

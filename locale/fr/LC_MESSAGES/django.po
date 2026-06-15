@@ -10291,3 +10291,14 @@ msgstr "Facultatif. Remplace le CSS personnalisé ci-dessous par le fichier tél
 msgid "Could not read the uploaded file."
 msgstr "Impossible de lire le fichier téléversé."
 
+
+# Trust Center - transition error messages
+msgid "This transition is not allowed."
+msgstr "Cette transition n'est pas autorisée."
+
+msgid "This transition is not allowed from the current state."
+msgstr "Cette transition n'est pas autorisée depuis l'état actuel."
+
+msgid "Unknown target state."
+msgstr "État cible inconnu."
+
