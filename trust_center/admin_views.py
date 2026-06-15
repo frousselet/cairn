@@ -45,6 +45,7 @@ from trust_center.models import (
     TrustCenterSubprocessor,
 )
 from trust_center.notifications import send_gated_link_email
+from trust_center.transition_messages import transition_error_detail
 
 ENTITY_CONFIG = {
     "certification": {
@@ -290,7 +291,7 @@ class DocumentRequestTransitionView(LoginRequiredMixin, PermissionRequiredMixin,
                 target, request.user, comment=comment, enforce_permission=True
             )
         except WorkflowError as exc:
-            messages.error(request, str(exc))
+            messages.error(request, transition_error_detail(exc))
             return redirect("trust_center_manage:request-detail", pk=pk)
 
         obj.reviewed_by = request.user
