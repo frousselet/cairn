@@ -215,12 +215,11 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "context.api.renderers.StandardJSONRenderer",
     ],
-    # Throttling is opt-in per view (public Trust Center endpoints only); the
-    # authenticated app is not throttled. Rates are consumed by AnonRateThrottle
-    # (public reads) and the "trust_request" ScopedRateThrottle (gated requests).
+    # Throttling is opt-in per view (public Trust Center read endpoints only,
+    # via AnonRateThrottle); the authenticated app is not throttled. The public
+    # gated-request form is a Django view rate-limited separately in its view.
     "DEFAULT_THROTTLE_RATES": {
         "anon": "120/hour",
-        "trust_request": "5/hour",
     },
 }
 

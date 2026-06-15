@@ -145,6 +145,18 @@ def test_download_rejects_expired_token():
     assert resp.status_code == 410
 
 
+def test_download_blocked_after_document_unpublished():
+    _enable()
+    req = DocumentRequestFactory(workflow_state=DocumentRequestState.APPROVED)
+    publish(req.document)
+    token = req.make_download_token()
+    assert Client().get(f"/trust/documents/download/{token}/").status_code == 200
+    # Taking the document down revokes outstanding approved links too.
+    req.document.workflow_state = "draft"
+    req.document.save()
+    assert Client().get(f"/trust/documents/download/{token}/").status_code == 404
+
+
 def test_download_rejected_after_revoke():
     _enable()
     req = DocumentRequestFactory(workflow_state=DocumentRequestState.APPROVED)

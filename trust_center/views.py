@@ -5,6 +5,9 @@ login-required middleware in this project): the Trust Center is public. The
 global ``TrustCenterSettings.is_published`` kill switch 404s everything when off.
 """
 
+import ipaddress
+from urllib.parse import quote
+
 from django.conf import settings
 from django.core import signing
 from django.core.cache import cache
@@ -28,13 +31,30 @@ from trust_center.models import (
     TrustCenterSettings,
     TrustCenterSubprocessor,
 )
+from trust_center.sanitizers import clean_css
 
 
 def _client_ip(request):
-    xff = request.META.get("HTTP_X_FORWARDED_FOR")
-    if xff:
-        return xff.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR")
+    """Return a valid client IP string, or None.
+
+    X-Forwarded-For is client-controlled, so the value is validated before it
+    reaches the GenericIPAddressField (an ``inet`` column on PostgreSQL rejects
+    a malformed value with a hard error).
+    """
+    xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    candidate = (xff.split(",")[0].strip() if xff else "") or request.META.get("REMOTE_ADDR")
+    if not candidate:
+        return None
+    try:
+        return str(ipaddress.ip_address(candidate))
+    except ValueError:
+        return None
+
+
+def _attachment_disposition(filename):
+    """Build a safe Content-Disposition value (no header injection / breakout)."""
+    safe = "".join(ch for ch in (filename or "") if ch not in '"\\\r\n').strip() or "document"
+    return f"attachment; filename=\"{safe}\"; filename*=UTF-8''{quote(safe)}"
 
 
 def _rate_ok(key, limit, window):
@@ -84,9 +104,20 @@ class TrustCenterPublicDocumentDownloadView(View):
         resp = HttpResponse(
             data, content_type=doc.content_type or "application/octet-stream"
         )
-        filename = doc.effective_file_name or "document"
-        resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+        resp["Content-Disposition"] = _attachment_disposition(doc.effective_file_name)
         return resp
+
+
+class TrustCenterCustomCSSView(View):
+    """Serve the operator-supplied custom CSS as a standalone stylesheet.
+
+    Served with ``text/css`` (not inlined in a <style> element) so there is no
+    HTML context to break out of; ``clean_css`` is applied as defence in depth.
+    """
+
+    def get(self, request):
+        css = clean_css(TrustCenterSettings.get().custom_css or "")
+        return HttpResponse(css, content_type="text/css; charset=utf-8")
 
 
 class DocumentRequestCreateView(FormView):
@@ -183,6 +214,11 @@ class TrustCenterGatedDownloadView(View):
         if req is None or not req.is_granted:
             raise Http404()
 
+        # The document must still be published (an admin unpublishing or
+        # archiving it revokes outstanding approved links too).
+        if not TrustCenterDocument.objects.published().filter(pk=req.document_id).exists():
+            raise Http404()
+
         data = req.document.get_file_bytes()
         if not data:
             raise Http404()
@@ -193,6 +229,5 @@ class TrustCenterGatedDownloadView(View):
         resp = HttpResponse(
             data, content_type=req.document.content_type or "application/octet-stream"
         )
-        filename = req.document.effective_file_name or "document"
-        resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+        resp["Content-Disposition"] = _attachment_disposition(req.document.effective_file_name)
         return resp

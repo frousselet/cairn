@@ -125,7 +125,7 @@
     .tc-doc-icon { color: var(--accent); font-size: 1.15rem; flex-shrink: 0; }
     .badge-soft { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
   </style>
-  {% if tc.custom_css %}<style>{{ tc.custom_css|safe_css }}</style>{% endif %}
+  {% if tc.custom_css %}<link rel="stylesheet" href="{% url 'trust_center:custom-css' %}">{% endif %}
   {% block extra_head %}{% endblock %}
 </head>
 <body>

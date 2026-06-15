@@ -6,6 +6,7 @@ app_name = "trust_center"
 
 urlpatterns = [
     path("", views.TrustCenterLandingView.as_view(), name="landing"),
+    path("custom.css", views.TrustCenterCustomCSSView.as_view(), name="custom-css"),
     path(
         "documents/<uuid:pk>/download/",
         views.TrustCenterPublicDocumentDownloadView.as_view(),

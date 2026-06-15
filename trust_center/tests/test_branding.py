@@ -115,11 +115,15 @@ def test_landing_shows_document_type_icon():
 # --- Custom CSS -------------------------------------------------------------
 
 
-def test_custom_css_injected_and_sanitized():
-    _enable(custom_css="body { background: rebeccapurple; } </style><script>alert(1)</script>")
-    content = Client().get("/trust/").content
-    assert b"rebeccapurple" in content  # custom CSS present
-    assert b"<script>alert(1)" not in content  # breakout neutralized
+def test_custom_css_served_from_stylesheet_endpoint():
+    _enable(custom_css="body { background: rebeccapurple; }")
+    page = Client().get("/trust/").content.decode()
+    assert "/trust/custom.css" in page  # linked, not inlined
+    assert "<style>body { background: rebeccapurple" not in page
+    css = Client().get("/trust/custom.css")
+    assert css.status_code == 200
+    assert css["Content-Type"].startswith("text/css")
+    assert b"rebeccapurple" in css.content
 
 
 def test_clean_css_strips_dangerous_constructs():
@@ -131,6 +135,43 @@ def test_clean_css_strips_dangerous_constructs():
     assert "javascript:" not in lowered
     assert "behavior:" not in lowered
     assert "a{}" in out  # benign CSS preserved
+
+
+def test_clean_css_defeats_split_token_recreation():
+    out = clean_css("</sty</stylele><scr<scriptipt>x</scr<scriptipt>@imp@importort")
+    lowered = out.lower()
+    assert "</style" not in lowered
+    assert "<script" not in lowered
+    assert "@import" not in lowered
+
+
+def test_client_ip_validates_x_forwarded_for():
+    from django.test import RequestFactory
+
+    from trust_center.views import _client_ip
+
+    rf = RequestFactory()
+    assert _client_ip(rf.get("/", HTTP_X_FORWARDED_FOR="not-an-ip")) is None
+    assert _client_ip(rf.get("/", HTTP_X_FORWARDED_FOR="203.0.113.7")) == "203.0.113.7"
+
+
+def test_public_download_filename_header_is_safe():
+    from trust_center.tests.factories import TrustCenterDocumentFactory, publish
+
+    _enable()
+    doc = publish(TrustCenterDocumentFactory(file_name='evil".pdf'))
+    resp = Client().get(f"/trust/documents/{doc.id}/download/")
+    assert resp.status_code == 200
+    assert 'filename="evil.pdf"' in resp["Content-Disposition"]  # quote stripped
+
+
+def test_public_download_filename_crlf_does_not_500():
+    from trust_center.tests.factories import TrustCenterDocumentFactory, publish
+
+    _enable()
+    doc = publish(TrustCenterDocumentFactory(file_name="a\r\nb.pdf"))
+    resp = Client().get(f"/trust/documents/{doc.id}/download/")
+    assert resp.status_code == 200
 
 
 # --- CSS upload -------------------------------------------------------------
