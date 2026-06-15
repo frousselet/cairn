@@ -3,6 +3,7 @@ import json
 
 from django.db import transaction
 from django.utils.translation import gettext as _
+from django.utils.translation import override
 from openpyxl import load_workbook
 from openpyxl import Workbook as XlWorkbook
 from openpyxl.comments import Comment
@@ -92,57 +93,63 @@ def _allowed_values():
     """Code -> label maps for the enumerated fields.
 
     Built from the model choices so the documentation embedded in the sample
-    files always reflects the values the importer actually accepts.
+    files always reflects the values the importer actually accepts. Labels are
+    resolved in English: the embedded documentation is a stable, language-neutral
+    technical artifact, independent of the requesting user's locale.
     """
-    return {
-        "framework_type": {value: str(label) for value, label in FrameworkType.choices},
-        "framework_category": {
-            value: str(label) for value, label in FrameworkCategory.choices
-        },
-        "requirement_type": {
-            value: str(label) for value, label in RequirementType.choices
-        },
-        "requirement_category": {
-            value: str(label) for value, label in RequirementCategory.choices
-        },
-    }
+    with override("en"):
+        return {
+            "framework_type": {value: str(label) for value, label in FrameworkType.choices},
+            "framework_category": {
+                value: str(label) for value, label in FrameworkCategory.choices
+            },
+            "requirement_type": {
+                value: str(label) for value, label in RequirementType.choices
+            },
+            "requirement_category": {
+                value: str(label) for value, label in RequirementCategory.choices
+            },
+        }
 
 
+# The documentation embedded in the sample files is intentionally English-only
+# (not wrapped in gettext): it is a technical format reference shipped inside the
+# downloaded artifact, kept stable regardless of the requesting user's locale.
 def _json_instructions():
     """Documentation block prepended to the sample JSON (ignored on import)."""
     return {
-        "about": _(
+        "about": (
             "This block documents the import format and is ignored on import. "
             "You may keep it or remove it."
         ),
-        "structure": _(
+        "structure": (
             "'framework' is an object; 'sections' is an array. A section can nest "
             "child sections in 'sections' and list requirements in 'requirements'."
         ),
         "framework_fields": {
-            "reference": _("optional"),
-            "name": _("required"),
-            "short_name": _("optional"),
-            "framework_version": _("optional"),
-            "issuing_body": _("optional"),
-            "description": _("optional"),
-            "type": _("optional, one of allowed_values.framework_type"),
-            "category": _("optional, one of allowed_values.framework_category"),
+            "reference": "optional",
+            "name": "required",
+            "short_name": "optional",
+            "framework_version": "optional",
+            "issuing_body": "optional",
+            "description": "optional",
+            "type": "optional, one of allowed_values.framework_type",
+            "category": "optional, one of allowed_values.framework_category",
         },
         "section_fields": {
-            "reference": _("required"),
-            "name": _("required"),
-            "description": _("optional"),
-            "sections": _("optional, array of nested child sections"),
-            "requirements": _("optional, array of requirements"),
+            "reference": "required",
+            "name": "required",
+            "description": "optional",
+            "sections": "optional, array of nested child sections",
+            "requirements": "optional, array of requirements",
         },
         "requirement_fields": {
-            "reference": _("required"),
-            "name": _("required"),
-            "description": _("optional"),
-            "guidance": _("optional"),
-            "type": _("optional, one of allowed_values.requirement_type"),
-            "category": _("optional, one of allowed_values.requirement_category"),
+            "reference": "required",
+            "name": "required",
+            "description": "optional",
+            "guidance": "optional",
+            "type": "optional, one of allowed_values.requirement_type",
+            "category": "optional, one of allowed_values.requirement_category",
         },
         "allowed_values": _allowed_values(),
     }
@@ -163,30 +170,30 @@ def generate_sample_json():
 # requirement type / category.
 def _column_docs():
     return [
-        ("type", _("All rows"), _("Required"), _("framework, section or requirement")),
+        ("type", "All rows", "Required", "framework, section or requirement"),
         (
             "reference",
-            _("All rows"),
-            _("Required (sections, requirements)"),
-            _("Unique code"),
+            "All rows",
+            "Required (sections, requirements)",
+            "Unique code",
         ),
-        ("name", _("All rows"), _("Required"), _("Name of the record")),
-        ("description", _("All rows"), _("Optional"), _("Free text")),
-        ("guidance", _("Requirement rows"), _("Optional"), _("Implementation guidance")),
+        ("name", "All rows", "Required", "Name of the record"),
+        ("description", "All rows", "Optional", "Free text"),
+        ("guidance", "Requirement rows", "Optional", "Implementation guidance"),
         (
             "req_type",
-            _("Framework and requirement rows"),
-            _("Optional"),
-            _(
+            "Framework and requirement rows",
+            "Optional",
+            (
                 "Framework type on the framework row, requirement type on a "
                 "requirement row. See the allowed values below."
             ),
         ),
         (
             "req_category",
-            _("Framework and requirement rows"),
-            _("Optional"),
-            _(
+            "Framework and requirement rows",
+            "Optional",
+            (
                 "Framework category on the framework row, requirement category on "
                 "a requirement row. See the allowed values below."
             ),
@@ -207,10 +214,10 @@ def _build_doc_sheet(wb, header_font, header_fill):
             cell.fill = header_fill
             cell.alignment = Alignment(horizontal="left")
 
-    ws.append([_("Framework import - format documentation")])
+    ws.append(["Framework import - format documentation"])
     ws[ws.max_row][0].font = title_font
     ws.append([
-        _(
+        (
             "Each row is one record. The 'type' column says whether the row is the "
             "framework, a section or a requirement. Section and requirement nesting "
             "is inferred from the dotted reference prefixes (e.g. SEC.1 > SEC.1.1)."
@@ -218,35 +225,35 @@ def _build_doc_sheet(wb, header_font, header_fill):
     ])
     ws.append([])
 
-    ws.append([_("Columns")])
+    ws.append(["Columns"])
     ws[ws.max_row][0].font = group_font
-    _table_header([_("Column"), _("Applies to"), _("Required"), _("Notes")])
+    _table_header(["Column", "Applies to", "Required", "Notes"])
     for name, applies, required, notes in _column_docs():
         ws.append([name, applies, required, notes])
     ws.append([
         "",
         "",
         "",
-        _(
+        (
             "Optional extra framework columns are also accepted: short_name, "
             "framework_version, issuing_body."
         ),
     ])
     ws.append([])
 
-    ws.append([_("Allowed values")])
+    ws.append(["Allowed values"])
     ws[ws.max_row][0].font = group_font
     groups = [
-        (_("Framework type (req_type on the framework row)"), "framework_type"),
-        (_("Framework category (req_category on the framework row)"), "framework_category"),
-        (_("Requirement type (req_type)"), "requirement_type"),
-        (_("Requirement category (req_category)"), "requirement_category"),
+        ("Framework type (req_type on the framework row)", "framework_type"),
+        ("Framework category (req_category on the framework row)", "framework_category"),
+        ("Requirement type (req_type)", "requirement_type"),
+        ("Requirement category (req_category)", "requirement_category"),
     ]
     allowed = _allowed_values()
     for label, key in groups:
         ws.append([label])
         ws[ws.max_row][0].font = group_font
-        _table_header([_("Code"), _("Label")])
+        _table_header(["Code", "Label"])
         for code, human in allowed[key].items():
             ws.append([code, human])
         ws.append([])
