@@ -222,6 +222,40 @@ def test_empty_plan_ends_quietly(superuser):
     assert outcome.summary is None
 
 
+@override_settings(AI_ASSISTANT_ENABLED=True)
+@pytest.mark.django_db
+def test_supplier_activity_feeds_description_and_category(superuser):
+    """A supplier's category and description reach the summary stage (feedback #3)."""
+    from assets.tests.factories import SupplierFactory, SupplierTypeFactory
+
+    saas = SupplierTypeFactory(name="SaaS provider")
+    SupplierFactory(name="HRline", type=saas, description="HR information system (SaaS).")
+    client = FakeClient(_plan(_step("list_suppliers", search="HRline", limit=5)))
+    AssistantEngine(superuser, client=client).ask("Quelle est l'activité de HRline ?")
+    data_message = client.text_calls[0][-1]["content"]
+    assert "HR information system (SaaS)." in data_message
+    assert "SaaS provider" in data_message
+
+
+@override_settings(AI_ASSISTANT_ENABLED=True)
+@pytest.mark.django_db
+def test_expired_supplier_question_returns_only_expired(superuser):
+    """expired=true keeps only suppliers with a past contract end (feedback #4)."""
+    from datetime import date, timedelta
+
+    from assets.tests.factories import SupplierFactory
+
+    SupplierFactory(name="OldVendor", status="active",
+                    contract_end_date=date.today() - timedelta(days=5))
+    SupplierFactory(name="CurrentVendor", status="active",
+                    contract_end_date=date.today() + timedelta(days=30))
+    client = FakeClient(_plan(_step("list_suppliers", expired=True, limit=5)))
+    outcome = AssistantEngine(superuser, client=client).ask("Liste-moi les fournisseurs expirés")
+    titles = [card["title"] for run in outcome.tool_runs for card in run.cards]
+    assert any("OldVendor" in t for t in titles)
+    assert not any("CurrentVendor" in t for t in titles)
+
+
 def test_compact_json_surfaces_total_for_count_questions():
     """A "how many" answer needs the total even when only a sample is returned."""
     import json
