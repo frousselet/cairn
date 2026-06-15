@@ -5,9 +5,6 @@
 
 {% block content %}
 {% page_header _("Trust Center") eyebrow=_("Strategy") %}
-  <a href="{% url 'trust_center_manage:settings' %}" class="btn btn-outline-secondary">
-    <i class="bi bi-gear me-1"></i>{% trans "Settings" %}
-  </a>
   <a href="{% url 'trust_center:landing' %}" target="_blank" rel="noopener" class="btn btn-outline-secondary">
     <i class="bi bi-box-arrow-up-right me-1"></i>{% trans "View public page" %}
   </a>
