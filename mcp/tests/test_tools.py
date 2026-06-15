@@ -161,8 +161,9 @@ class TestSupplierListTool:
 
         expired_only = handler(user, {"expired": True})
         assert [item["reference"] for item in expired_only["items"]] == [expired.reference]
-        # The supplier category name is surfaced for read-only consumers.
+        # The supplier category and responsible owner are surfaced by name.
         assert expired_only["items"][0]["type_name"] == "HR software"
+        assert expired_only["items"][0]["owner_name"] == expired.owner.display_name
 
         # Without the flag, all three suppliers are returned.
         assert handler(user, {})["total"] == 3

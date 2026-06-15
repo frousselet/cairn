@@ -143,6 +143,11 @@ class Supplier(ScopedModel):
         return self.type.name if self.type_id else ""
 
     @property
+    def owner_name(self):
+        """Display name of the responsible owner (for read-only API / assistant output)."""
+        return self.owner.display_name if self.owner_id else ""
+
+    @property
     def requirement_compliance_summary(self):
         """Return a dict with counts per compliance status."""
         reqs = self.requirements.all()
