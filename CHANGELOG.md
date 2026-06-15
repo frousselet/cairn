@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Administration menu reorganised**: the sidebar's Administration section is now structured into four collapsible groups instead of a flat list - **General** (Company, Tags, Versioning, Calendar subscriptions, Trust Center), **Access** (Users, Groups, Permissions), **Ask Cairn** (Semantic index, Feedback) and **Logs** (Access log, Action log). Each group only renders when the user can see at least one of its items, preserving the existing per-item permission checks. The Django admin link was removed from the sidebar.
-- **Trust Center settings moved to Administration**: the Trust Center configuration page (publish switch, branding, custom domain and CSS) is now reached from the Administration menu rather than from the Trust Center management hub, so it is managed alongside the other admin settings. The hub keeps the public-page link and continues to host the day-to-day content curation under Strategy.
+- **Trust Center moved to Administration**: the Trust Center is now entirely an administration concern. Its settings page (publish switch, branding, custom domain and CSS) is reached from the Administration menu, and the standalone Trust Center entry was removed from the Governance / Strategy menu. The content curation hub is now reached through a "Manage content" link on the settings page; it keeps the public-page link and continues to host the day-to-day curation of certifications, subprocessors, measures and documents.
 
 ## [0.28.0] - 2026-06-15
 
