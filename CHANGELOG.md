@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.28.0] - 2026-06-15
+
 ### Added
 
 - **Trust Center**: a new public, unauthenticated page that advertises the organisation's security and compliance posture, built directly into Cairn and optionally servable on a separate domain. It is an explicit **curation layer**: a dedicated `trust_center` app whose models reference internal frameworks, suppliers and reports through public-only entries (public label, description, ordering), so internal GRC data (contracts, contacts, findings, internal compliance gaps) never reaches the public surface. Four content sections, each governed by a `trust_center_publication` lifecycle workflow (draft -> published, with unpublished and archived states): **certifications** (a framework's compliance level and logo, with an optional percentage), **subprocessors** (a curated supplier list with purpose and country), **security measures** (free-form organizational / technical / physical controls), and **documents** (a generated report or an uploaded file). A **dual publish gate** means an item is public only when its own publication state is "published" AND its source object is still validated/active, so un-validating a framework or deactivating a supplier auto-removes it from the public page; a global publish switch takes the whole Trust Center offline. Data-leakage safety is enforced by dedicated public DRF serializers exposing a hardcoded field whitelist (never the internal serializers), anonymous rate-limiting, no raw `/media/` exposure (documents stream through a view), and strict allowlist sanitization of every rendered SVG logo (`clean_svg`). The public page is at `/trust/` with a public read API under `/trust/api/`; the internal curation UI (settings plus per-entity management with the workflow stepper) is at `/trust-center/manage/`. A full REST API under `/api/v1/trust-center/` and MCP tools (`get_/update_trust_center_settings` plus CRUD and lifecycle tools for certifications, subprocessors, measures and documents) are included, with new `trust_center.*` permissions assigned to the six system roles (RSSI/DPO and admins can publish; Contributeur curates without publishing; Auditeur and Lecteur read-only).
@@ -1012,7 +1014,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://github.com/frousselet/cairn/compare/v0.27.2...HEAD
+[Unreleased]: https://github.com/frousselet/cairn/compare/v0.28.0...HEAD
+[0.28.0]: https://github.com/frousselet/cairn/compare/v0.27.2...v0.28.0
 [0.27.2]: https://github.com/frousselet/cairn/compare/v0.27.1...v0.27.2
 [0.27.1]: https://github.com/frousselet/cairn/compare/v0.27.0...v0.27.1
 [0.27.0]: https://github.com/frousselet/cairn/compare/v0.26.3...v0.27.0
