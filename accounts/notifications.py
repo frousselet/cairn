@@ -118,6 +118,50 @@ def notify_lifecycle_submitted(instance, actor=None):
     return notifications
 
 
+def notify_document_requested(instance):
+    """Notify Trust Center admins of a new gated-document access request.
+
+    Recipients are the holders of the ``trust_center.document_request.approve``
+    permission (resolved via the shared fallback chain; the request has no scope
+    and no creator, so it lands on the approve-permission holders).
+    """
+    recipients = resolve_lifecycle_recipients(instance, actor=None)
+    if not recipients:
+        return []
+
+    doc_title = str(instance.document)
+    try:
+        url = reverse("trust_center_manage:request-detail", kwargs={"pk": instance.pk})
+    except NoReverseMatch:
+        url = ""
+
+    notifications = []
+    for recipient in recipients:
+        with translation.override(recipient.language or settings.LANGUAGE_CODE):
+            title = _("New document access request: %(doc)s") % {"doc": doc_title}
+            message = _(
+                '%(name)s (%(email)s) requested access to "%(doc)s".'
+            ) % {
+                "name": instance.requester_name,
+                "email": instance.email,
+                "doc": doc_title,
+            }
+        notifications.append(
+            Notification.objects.create(
+                recipient=recipient,
+                actor=None,
+                notification_type=NotificationType.TRUST_DOCUMENT_REQUESTED,
+                title=title,
+                message=message,
+                target=instance,
+                target_url=url,
+            )
+        )
+
+    transaction.on_commit(lambda: _deliver(notifications))
+    return notifications
+
+
 def _deliver(notifications):
     """Send the email and WebSocket push for freshly created notifications."""
     for notification in notifications:

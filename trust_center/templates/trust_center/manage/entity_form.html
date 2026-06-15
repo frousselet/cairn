@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block title %}{{ cfg.label }} : Cairn{% endblock %}
+
+{% block content %}
+{% page_header cfg.label eyebrow=_("Trust Center") %}
+  <a href="{% url 'trust_center_manage:hub' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
+{% endpage_header %}
+
+<div class="card">
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for field in form %}
+      <div class="mb-3">
+        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+      <a href="{% url 'trust_center_manage:hub' %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

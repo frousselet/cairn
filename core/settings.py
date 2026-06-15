@@ -65,12 +65,14 @@ INSTALLED_APPS = [
     "reports",
     "mcp",
     "assistant",
+    "trust_center",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
+    "trust_center.middleware.TrustCenterHostMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -213,6 +215,13 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "context.api.renderers.StandardJSONRenderer",
     ],
+    # Throttling is opt-in per view (public Trust Center endpoints only); the
+    # authenticated app is not throttled. Rates are consumed by AnonRateThrottle
+    # (public reads) and the "trust_request" ScopedRateThrottle (gated requests).
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "120/hour",
+        "trust_request": "5/hour",
+    },
 }
 
 # Email (notifications)
@@ -231,6 +240,19 @@ EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "False").lower() in ("true", "1"
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "cairn@localhost")
 # Absolute URL prefix used in notification emails (e.g. https://grc.example.com).
 SITE_URL = os.environ.get("SITE_URL", "")
+
+# Trust Center
+# Time-to-live (seconds) of a gated-document download link signed for an
+# approved request. Default: 7 days.
+TRUST_CENTER_DOWNLOAD_TTL = int(os.environ.get("TRUST_CENTER_DOWNLOAD_TTL", "604800"))
+# Host that serves the public Trust Center on a dedicated domain. Empty disables
+# dedicated-domain mode (the Trust Center is then reachable only at /trust/).
+TRUST_CENTER_HOST = os.environ.get("TRUST_CENTER_HOST", "").strip().lower()
+# Defensive: make sure the dedicated host is accepted so it does not 400 before
+# the isolation middleware can route it. The operator should still add it (and
+# its https origin) to ALLOWED_HOSTS / CSRF_TRUSTED_ORIGINS explicitly.
+if TRUST_CENTER_HOST and TRUST_CENTER_HOST not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(TRUST_CENTER_HOST)
 
 # Simple JWT
 # WebAuthn / Passkeys

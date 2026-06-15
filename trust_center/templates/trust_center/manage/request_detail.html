@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block title %}{{ obj.reference }} : Cairn{% endblock %}
+
+{% block content %}
+{% page_header obj.reference eyebrow=_("Document request") %}
+  <a href="{% url 'trust_center_manage:request-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
+{% endpage_header %}
+
+<div class="row g-3">
+  <div class="col-12 col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-muted">{% trans "Document" %}</dt>
+          <dd class="col-sm-8">{{ obj.document.title }}</dd>
+          <dt class="col-sm-4 text-muted">{% trans "Name" %}</dt>
+          <dd class="col-sm-8">{{ obj.requester_name }}</dd>
+          <dt class="col-sm-4 text-muted">{% trans "Email" %}</dt>
+          <dd class="col-sm-8"><a href="mailto:{{ obj.email }}">{{ obj.email }}</a></dd>
+          <dt class="col-sm-4 text-muted">{% trans "Company" %}</dt>
+          <dd class="col-sm-8">{{ obj.company|default:"-" }}</dd>
+          <dt class="col-sm-4 text-muted">{% trans "Reason for access" %}</dt>
+          <dd class="col-sm-8">{{ obj.reason|default:"-"|linebreaksbr }}</dd>
+          <dt class="col-sm-4 text-muted">{% trans "NDA accepted" %}</dt>
+          <dd class="col-sm-8">
+            {% if obj.nda_accepted %}<i class="bi bi-check-lg text-success"></i> {{ obj.nda_accepted_at|date:"SHORT_DATETIME_FORMAT" }}
+            {% else %}<i class="bi bi-dash text-muted"></i>{% endif %}
+          </dd>
+          <dt class="col-sm-4 text-muted">{% trans "Origin IP" %}</dt>
+          <dd class="col-sm-8 text-muted small">{{ obj.ip_address|default:"-" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    {% sidebar_card _("Lifecycle") icon="diagram-2" %}
+      {% include "includes/workflow_stepper.html" %}
+      <div class="small text-muted mt-3">
+        {% if obj.reviewed_by %}<div>{% trans "Reviewed by" %}: {{ obj.reviewed_by }}</div>{% endif %}
+        {% if obj.reviewed_at %}<div>{% trans "Reviewed at" %}: {{ obj.reviewed_at|date:"SHORT_DATETIME_FORMAT" }}</div>{% endif %}
+        {% if obj.decision_note %}<div class="mt-1">{% trans "Note" %}: {{ obj.decision_note }}</div>{% endif %}
+        {% if obj.download_link_expires_at %}<div class="mt-1">{% trans "Link expires" %}: {{ obj.download_link_expires_at|date:"SHORT_DATETIME_FORMAT" }}</div>{% endif %}
+        <div>{% trans "Downloads" %}: {{ obj.download_count }}</div>
+        <div>{% trans "Received" %}: {{ obj.created_at|date:"SHORT_DATETIME_FORMAT" }}</div>
+      </div>
+    {% endsidebar_card %}
+  </div>
+</div>
+{% endblock %}

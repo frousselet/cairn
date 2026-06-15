@@ -590,6 +590,7 @@ def register_all_tools(server):
     _register_risks_tools(server)
     _register_accounts_tools(server)
     _register_reports_tools(server)
+    _register_trust_center_tools(server)
     _register_assistant_tools(server)
 
 
@@ -7691,4 +7692,259 @@ def _register_reports_tools(server):
             },
         },
         update_company_settings,
+    )
+
+
+# ── Trust Center Module ───────────────────────────────────
+
+def _register_trust_center_tools(server):
+    TrustCenterSettings = _get_model("trust_center", "TrustCenterSettings")
+    TrustCenterCertification = _get_model("trust_center", "TrustCenterCertification")
+    TrustCenterSubprocessor = _get_model("trust_center", "TrustCenterSubprocessor")
+    TrustCenterMeasure = _get_model("trust_center", "TrustCenterMeasure")
+    TrustCenterDocument = _get_model("trust_center", "TrustCenterDocument")
+
+    settings_fields = [
+        "id", "is_published", "headline", "intro", "contact_email",
+        "show_compliance_percentages", "theme_accent", "custom_domain", "updated_at",
+    ]
+    settings_writable = [
+        "is_published", "headline", "intro", "contact_email",
+        "show_compliance_percentages", "theme_accent", "custom_domain",
+    ]
+
+    @require_perm("trust_center.settings.read")
+    def get_trust_center_settings(user, arguments):
+        return _serialize_obj(TrustCenterSettings.get(), settings_fields)
+
+    server.register_tool(
+        "get_trust_center_settings",
+        "Get the public Trust Center settings (publication switch, headline, intro, "
+        "security contact, theme).",
+        {"type": "object", "properties": {}},
+        get_trust_center_settings,
+    )
+
+    @require_perm("trust_center.settings.update")
+    def update_trust_center_settings(user, arguments):
+        instance = TrustCenterSettings.get()
+        for field_name in settings_writable:
+            if field_name in arguments:
+                setattr(instance, field_name, arguments[field_name])
+        try:
+            instance.full_clean()
+        except ValidationError as exc:
+            return _error(str(exc))
+        instance.save()
+        return _serialize_obj(instance, settings_fields)
+
+    server.register_tool(
+        "update_trust_center_settings",
+        "Update the public Trust Center settings. Set is_published=true to expose the "
+        "public page and API; false takes the whole Trust Center offline (404).",
+        {
+            "type": "object",
+            "properties": {
+                "is_published": {"type": "boolean", "description": "Master switch: expose the public Trust Center page and API."},
+                "headline": {"type": "string", "description": "Public hero headline."},
+                "intro": {"type": "string", "description": "Public introduction paragraph."},
+                "contact_email": {"type": "string", "description": "Public security contact email."},
+                "show_compliance_percentages": {"type": "boolean", "description": "Show numeric compliance percentages on certifications."},
+                "theme_accent": {"type": "string", "description": "Accent colour as a hex value, e.g. #1E3A8A."},
+                "custom_domain": {"type": "string", "description": "Informational custom domain (routing is configured via the TRUST_CENTER_HOST env var)."},
+            },
+        },
+        update_trust_center_settings,
+    )
+
+    _register_crud(
+        server,
+        "trust_center_certification",
+        TrustCenterCertification,
+        "trust_center.certification",
+        list_fields=[
+            "id", "reference", "framework", "public_label", "public_description",
+            "show_percentage", "display_order", "workflow_state",
+        ],
+        writable_fields=[
+            "framework", "public_label", "public_description",
+            "show_percentage", "display_order",
+        ],
+        search_fields=["public_label", "public_description"],
+        required_fields=["framework", "public_label"],
+        scope_filtered=False,
+        field_overrides={
+            "framework": {"type": "string", "description": "UUID of the source compliance framework."},
+            "show_percentage": {"type": "boolean", "description": "Show this certification's compliance percentage."},
+            "display_order": {"type": "integer", "description": "Ascending sort order."},
+        },
+    )
+
+    _register_crud(
+        server,
+        "trust_center_subprocessor",
+        TrustCenterSubprocessor,
+        "trust_center.subprocessor",
+        list_fields=[
+            "id", "reference", "supplier", "public_name", "purpose",
+            "public_country", "public_website", "display_order", "workflow_state",
+        ],
+        writable_fields=[
+            "supplier", "public_name", "purpose", "public_country",
+            "public_website", "display_order",
+        ],
+        search_fields=["public_name", "purpose", "public_country"],
+        required_fields=["supplier", "public_name"],
+        scope_filtered=False,
+        field_overrides={
+            "supplier": {"type": "string", "description": "UUID of the source supplier."},
+            "display_order": {"type": "integer", "description": "Ascending sort order."},
+        },
+    )
+
+    _register_crud(
+        server,
+        "trust_center_measure",
+        TrustCenterMeasure,
+        "trust_center.measure",
+        list_fields=[
+            "id", "reference", "title", "description", "icon", "category",
+            "display_order", "workflow_state",
+        ],
+        writable_fields=["title", "description", "icon", "category", "display_order"],
+        search_fields=["title", "description"],
+        required_fields=["title"],
+        scope_filtered=False,
+        field_overrides={
+            "category": {"type": "string", "description": "One of: organizational, technical, physical."},
+            "icon": {"type": "string", "description": "Bootstrap Icons name, e.g. bi-shield-check."},
+            "display_order": {"type": "integer", "description": "Ascending sort order."},
+        },
+    )
+
+    _register_crud(
+        server,
+        "trust_center_document",
+        TrustCenterDocument,
+        "trust_center.document",
+        list_fields=[
+            "id", "reference", "title", "description", "access", "requires_nda",
+            "report", "file_name", "display_order", "workflow_state",
+        ],
+        writable_fields=[
+            "title", "description", "access", "requires_nda", "report", "display_order",
+        ],
+        search_fields=["title", "description"],
+        required_fields=["title"],
+        scope_filtered=False,
+        field_overrides={
+            "access": {"type": "string", "description": "Access level: 'public' (direct download) or 'gated' (request + approval)."},
+            "requires_nda": {"type": "boolean", "description": "Whether a gated document requires NDA acceptance."},
+            "report": {"type": "string", "description": "UUID of the source generated report (required when creating via the API/MCP)."},
+            "display_order": {"type": "integer", "description": "Ascending sort order."},
+        },
+    )
+
+    # Document requests are read-only via MCP (they originate from the public
+    # form); the only mutations are approve / reject, which carry side effects.
+    DocumentRequest = _get_model("trust_center", "DocumentRequest")
+    dr_fields = [
+        "id", "reference", "document", "email", "requester_name", "company",
+        "reason", "nda_accepted", "workflow_state", "reviewed_by", "reviewed_at",
+        "decision_note", "download_count", "download_link_expires_at", "created_at",
+    ]
+
+    server.register_tool(
+        "list_trust_center_document_requests",
+        "List Trust Center gated-document access requests (optionally filter by workflow_state).",
+        _list_schema({
+            "workflow_state": {
+                "type": "string",
+                "description": "Filter by state: pending, approved, rejected.",
+            }
+        }),
+        require_perm("trust_center.document_request.read")(
+            _list_handler(
+                DocumentRequest, dr_fields,
+                search_fields=["email", "requester_name", "company"],
+                filters=["workflow_state"], scope_filtered=False,
+            )
+        ),
+    )
+
+    server.register_tool(
+        "get_trust_center_document_request",
+        "Get a Trust Center document request by ID.",
+        _id_schema(),
+        require_perm("trust_center.document_request.read")(
+            _get_handler(DocumentRequest, dr_fields, scope_filtered=False)
+        ),
+    )
+
+    @require_perm("trust_center.document_request.approve")
+    def approve_document_request(user, arguments):
+        from django.conf import settings as _dj_settings
+        from django.urls import reverse as _reverse
+
+        pk = arguments.get("id")
+        if not pk:
+            raise InvalidParamsError("id is required.")
+        try:
+            obj = DocumentRequest.objects.get(pk=pk)
+        except DocumentRequest.DoesNotExist:
+            return _error("Document request not found.")
+        try:
+            obj.transition_to("approved", user, enforce_permission=True)
+        except Exception as exc:
+            return _error(str(exc))
+        obj.reviewed_by = user
+        obj.reviewed_at = timezone.now()
+        obj.save(update_fields=["reviewed_by", "reviewed_at", "updated_at"])
+        token = obj.issue_download_link(_dj_settings.TRUST_CENTER_DOWNLOAD_TTL)
+        from trust_center.notifications import send_gated_link_email
+
+        send_gated_link_email(obj, _reverse("trust_center:gated-download", kwargs={"token": token}))
+        return _serialize_obj(obj, dr_fields)
+
+    server.register_tool(
+        "approve_trust_center_document_request",
+        "Approve a gated-document request: issues a time-limited signed download "
+        "link and emails it to the requester.",
+        _id_schema(),
+        approve_document_request,
+    )
+
+    @require_perm("trust_center.document_request.approve")
+    def reject_document_request(user, arguments):
+        pk = arguments.get("id")
+        comment = arguments.get("comment") or ""
+        if not pk:
+            raise InvalidParamsError("id is required.")
+        try:
+            obj = DocumentRequest.objects.get(pk=pk)
+        except DocumentRequest.DoesNotExist:
+            return _error("Document request not found.")
+        try:
+            obj.transition_to("rejected", user, comment=comment, enforce_permission=True)
+        except Exception as exc:
+            return _error(str(exc))
+        obj.reviewed_by = user
+        obj.reviewed_at = timezone.now()
+        if comment:
+            obj.decision_note = comment
+        obj.save(update_fields=["reviewed_by", "reviewed_at", "decision_note", "updated_at"])
+        return _serialize_obj(obj, dr_fields)
+
+    server.register_tool(
+        "reject_trust_center_document_request",
+        "Reject a pending gated-document request, or revoke access for an approved "
+        "one. A comment is required.",
+        _obj_schema(
+            {
+                "id": {"type": "string", "description": "UUID of the request"},
+                "comment": {"type": "string", "description": "Reason (required)"},
+            },
+            required=["id", "comment"],
+        ),
+        reject_document_request,
     )

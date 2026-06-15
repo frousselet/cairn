@@ -1,0 +1,148 @@
+{% load static i18n trust_center_tags %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% trans "Trust Center" %}{% if company.name %} : {{ company.name }}{% endif %}{% endblock %}</title>
+  <meta name="theme-color" content="{{ tc.theme_accent|default:'#1E3A8A' }}">
+  {% with fav=company.logo_64|default:company.logo|tc_logo_href %}{% if fav %}<link rel="icon" href="{{ fav }}">{% endif %}{% endwith %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        rel="stylesheet">
+  <script>
+  (function(){
+    var root = document.documentElement;
+    var STORAGE_KEY = 'theme-preference';
+    var mql = window.matchMedia('(prefers-color-scheme: dark)');
+    function getPreference(){
+      try { var saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === 'light' || saved === 'dark' || saved === 'system') return saved;
+      } catch(e){}
+      return 'system';
+    }
+    function resolve(pref){
+      if (pref === 'light' || pref === 'dark') return pref;
+      return mql.matches ? 'dark' : 'light';
+    }
+    function apply(pref){
+      root.setAttribute('data-bs-theme', resolve(pref));
+      root.setAttribute('data-theme-preference', pref);
+      try { localStorage.setItem(STORAGE_KEY, pref); } catch(e){}
+    }
+    apply(getPreference());
+    mql.addEventListener('change', function(){
+      if (root.getAttribute('data-theme-preference') === 'system') apply('system');
+    });
+  })();
+  </script>
+  <style>
+    :root {
+      --accent: {{ tc.theme_accent|default:'#1E3A8A' }};
+      --accent-soft: #EEF2FF;
+      --accent-glow: rgba(30,58,138,.18);
+      --bg: #F8F9FB;
+      --surface: #FFFFFF;
+      --border-light: rgba(0,0,0,.08);
+      --text-primary: #18181B;
+      --text-secondary: #52525B;
+      --text-muted: #A1A1AA;
+      --radius-lg: 1.125rem;
+      --radius-md: .625rem;
+      --radius-sm: .5rem;
+      --ease-out: cubic-bezier(.16,1,.3,1);
+    }
+    [data-bs-theme="dark"] {
+      --accent-soft: rgba(59,91,184,.15);
+      --accent-glow: rgba(59,91,184,.22);
+      --bg: #0F1011;
+      --surface: #16181B;
+      --border-light: rgba(255,255,255,.10);
+      --text-primary: #E4E4E7;
+      --text-secondary: #A1A1AA;
+      --text-muted: #71717A;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .tc-hero {
+      background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, #000) 100%);
+      color: #fff;
+      padding: 4rem 0;
+    }
+    .tc-hero-brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    .tc-hero-logo {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 3.5rem; min-width: 3.5rem; padding: .4rem .55rem;
+      background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    }
+    .tc-hero-logo img, .tc-hero-logo svg { height: 100%; width: auto; max-width: 180px; object-fit: contain; }
+    /* The company name is the hero's primary element. */
+    .tc-hero-company { font-weight: 700; font-size: clamp(1.75rem, 5vw, 2.75rem); line-height: 1.1; letter-spacing: -.02em; }
+    /* The headline is a secondary tagline below the name. */
+    .tc-hero h1 { font-weight: 600; font-size: 1.375rem; letter-spacing: -.01em; opacity: .95; margin: .5rem 0 0; }
+    .tc-hero .tc-rich { font-size: .95rem; opacity: .85; margin-top: 1rem; }
+    .tc-rich { max-width: 46rem; }
+    .tc-rich p:last-child { margin-bottom: 0; }
+    .tc-rich a { color: inherit; text-decoration: underline; }
+    main { flex: 1 0 auto; }
+    .tc-section { padding: 3rem 0; }
+    .tc-section h2 { font-weight: 600; font-size: 1.375rem; letter-spacing: -.02em; margin-bottom: 1.5rem; }
+    .tc-card {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      height: 100%;
+      transition: box-shadow .22s var(--ease-out), transform .22s var(--ease-out);
+    }
+    .tc-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.06); transform: translateY(-2px); }
+    .tc-logo { width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; }
+    .tc-logo img, .tc-logo svg { width: 100%; height: 100%; object-fit: contain; }
+    .tc-pct { font-weight: 700; color: var(--accent); }
+    .tc-footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border-light);
+      padding: 2rem 0;
+      color: var(--text-muted);
+      font-size: .8125rem;
+    }
+    .tc-icon { color: var(--accent); font-size: 1.5rem; }
+    .tc-doc-icon { color: var(--accent); font-size: 1.15rem; flex-shrink: 0; }
+    .badge-soft { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  </style>
+  {% if tc.custom_css %}<style>{{ tc.custom_css|safe_css }}</style>{% endif %}
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="tc-footer">
+    <div class="container d-flex flex-wrap justify-content-between gap-2">
+      <span>{% if company.name %}{{ company.name }} : {% endif %}{% trans "Trust Center" %}</span>
+      {% if tc.contact_email %}<span><i class="bi bi-envelope me-1"></i><a href="mailto:{{ tc.contact_email }}">{{ tc.contact_email }}</a></span>{% endif %}
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+          crossorigin="anonymous"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

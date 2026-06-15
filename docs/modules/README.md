@@ -13,6 +13,7 @@ docs/modules/
 ├── m3-compliance/               Frameworks, sections, requirements, assessments, mappings, action plans
 ├── m4-risks/                    Risk assessment, threats, vulnerabilities, risks, treatment, acceptance
 │   └── ebios-rm/                EBIOS RM workshops (W0-W5) per ANSSI v1.5
+├── m5-trust-center/             Public Trust Center: certifications, subprocessors, measures, documents (curation layer)
 ├── management-review/           ISO 27001 §9.3 management review entities
 ├── governance/                  Cross-cutting platform governance (lifecycle workflow framework)
 └── assistant/                   Ask Cairn: optional AI question mode, pluggable LLM provider (no persistent entities)

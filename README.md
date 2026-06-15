@@ -13,6 +13,7 @@ Manage your organisation's security posture, track compliance with regulatory fr
 - **Risks** : ISO 27005 and EBIOS RM (ANSSI v1.5, workshops 0 to 5) assessments, threat and vulnerability catalogs, treatment plans and formal risk acceptance
 - **Compliance** : frameworks, requirements, assessments, findings, action plans and inter-framework mappings, with Excel import
 - **Steering** : real-time dashboard (risk matrices and a current-to-residual risk treatment flow chart), KPI indicators, ISO 27001 management reviews, and PDF/DOCX/PPTX report generation (SoA, audit report, risk register, meeting minutes)
+- **Trust Center** : a public, curated page to share your security posture (certifications and compliance level, subprocessors, security measures, downloadable documents), built directly into Cairn and optionally servable on a separate domain - an explicit, opt-in curation layer so internal GRC data never leaks
 - **Ask Cairn (optional)** : natural-language questions in the command palette ("Which decisions were made at the last management review?"), answered by a pluggable LLM provider (Mistral AI by default; OpenAI / any OpenAI-compatible endpoint; Claude; self-hosted Ollama) that cites real records and enforces your permissions, with thumbs up/down feedback that admins can export to improve the assistant
 
 Everything is bilingual (English/French), audit-ready (full change history, versioning, lifecycle workflows with approvals) and access-controlled (role-based permissions, scope-based tenancy, passkey login).

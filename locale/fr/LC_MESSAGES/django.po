@@ -9935,3 +9935,359 @@ msgstr "risques"
 
 msgid "Level %(n)s"
 msgstr "Niveau %(n)s"
+
+# Trust Center module
+msgid "Trust Center"
+msgstr "Centre de confiance"
+
+msgid "Certifications"
+msgstr "Certifications"
+
+msgid "Subprocessors"
+msgstr "Sous-traitants"
+
+msgid "Measures"
+msgstr "Mesures"
+
+msgid "Documents"
+msgstr "Documents"
+
+msgid "Settings"
+msgstr "Paramètres"
+
+msgid "Document requests"
+msgstr "Demandes de document"
+
+msgid "Publish"
+msgstr "Publier"
+
+msgid "Unpublish"
+msgstr "Dépublier"
+
+msgid "Unpublished"
+msgstr "Dépublié"
+
+msgid "Purpose"
+msgstr "Finalité"
+
+msgid "Display order"
+msgstr "Ordre d'affichage"
+
+msgid "Public name"
+msgstr "Nom public"
+
+msgid "Public label"
+msgstr "Libellé public"
+
+msgid "Public description"
+msgstr "Description publique"
+
+msgid "Show compliance percentage"
+msgstr "Afficher le pourcentage de conformité"
+
+msgid "Show compliance percentages"
+msgstr "Afficher les pourcentages de conformité"
+
+msgid "Headline"
+msgstr "Titre principal"
+
+msgid "Introduction"
+msgstr "Introduction"
+
+msgid "Security contact email"
+msgstr "E-mail de contact sécurité"
+
+msgid "Accent colour"
+msgstr "Couleur d'accent"
+
+msgid "Custom domain"
+msgstr "Domaine personnalisé"
+
+msgid "Trust Center published"
+msgstr "Centre de confiance publié"
+
+msgid "When off, the public Trust Center returns a 404 for everyone."
+msgstr "Lorsque désactivé, le centre de confiance public renvoie une erreur 404 pour tout le monde."
+
+msgid "Global toggle for numeric compliance percentages on certifications."
+msgstr "Bascule globale pour les pourcentages de conformité chiffrés sur les certifications."
+
+msgid "Informational only. Routing on a separate domain is configured via the TRUST_CENTER_HOST environment variable."
+msgstr "À titre informatif uniquement. Le routage sur un domaine distinct se configure via la variable d'environnement TRUST_CENTER_HOST."
+
+msgid "Trust Center settings"
+msgstr "Paramètres du centre de confiance"
+
+msgid "Enter a valid hex colour, e.g. #1E3A8A."
+msgstr "Saisissez une couleur hexadécimale valide, p. ex. #1E3A8A."
+
+msgid "Trust Center certification"
+msgstr "Certification du centre de confiance"
+
+msgid "Trust Center certifications"
+msgstr "Certifications du centre de confiance"
+
+msgid "Trust Center subprocessor"
+msgstr "Sous-traitant du centre de confiance"
+
+msgid "Trust Center subprocessors"
+msgstr "Sous-traitants du centre de confiance"
+
+msgid "Trust Center measure"
+msgstr "Mesure du centre de confiance"
+
+msgid "Trust Center measures"
+msgstr "Mesures du centre de confiance"
+
+msgid "Trust Center document"
+msgstr "Document du centre de confiance"
+
+msgid "Trust Center documents"
+msgstr "Documents du centre de confiance"
+
+msgid "Requires NDA"
+msgstr "Nécessite un accord de confidentialité"
+
+msgid "Only applies to gated documents."
+msgstr "S'applique uniquement aux documents à accès restreint."
+
+msgid "Source report"
+msgstr "Rapport source"
+
+msgid "Content type"
+msgstr "Type de contenu"
+
+msgid "Enter a Bootstrap Icons name, e.g. bi-shield-check."
+msgstr "Saisissez un nom d'icône Bootstrap Icons, p. ex. bi-shield-check."
+
+msgid "Bootstrap Icons name, e.g. bi-shield-check."
+msgstr "Nom d'icône Bootstrap Icons, p. ex. bi-shield-check."
+
+msgid "Provide either a source report or an uploaded file, not both."
+msgstr "Indiquez soit un rapport source, soit un fichier téléversé, pas les deux."
+
+msgid "Provide a source report or upload a file."
+msgstr "Indiquez un rapport source ou téléversez un fichier."
+
+msgid "Provide either a source report or an uploaded file (not both)."
+msgstr "Indiquez soit un rapport source, soit un fichier téléversé (pas les deux)."
+
+msgid "Upload a file"
+msgstr "Téléverser un fichier"
+
+msgid "Security and compliance, transparently"
+msgstr "Sécurité et conformité, en toute transparence"
+
+msgid "Certifications and compliance"
+msgstr "Certifications et conformité"
+
+msgid "compliant"
+msgstr "de conformité"
+
+msgid "Security measures"
+msgstr "Mesures de sécurité"
+
+msgid "On request"
+msgstr "Sur demande"
+
+msgid "Request access"
+msgstr "Demander l'accès"
+
+msgid "Contact security"
+msgstr "Contacter la sécurité"
+
+msgid "Information will be published here soon."
+msgstr "Des informations seront bientôt publiées ici."
+
+msgid "View public page"
+msgstr "Voir la page publique"
+
+msgid "The public Trust Center is online."
+msgstr "Le centre de confiance public est en ligne."
+
+msgid "The public Trust Center is offline. Enable it in Settings."
+msgstr "Le centre de confiance public est hors ligne. Activez-le dans les paramètres."
+
+msgid "Nothing yet."
+msgstr "Rien pour le moment."
+
+msgid "This item cannot be deleted in its current state. Unpublish it first."
+msgstr "Cet élément ne peut pas être supprimé dans son état actuel. Dépubliez-le d'abord."
+
+msgid "This will permanently delete this item. This action cannot be undone."
+msgstr "Cette action supprimera définitivement cet élément. Elle est irréversible."
+
+msgid "You do not have permission to update these settings."
+msgstr "Vous n'avez pas l'autorisation de modifier ces paramètres."
+
+msgid "Trust Center settings updated."
+msgstr "Paramètres du centre de confiance mis à jour."
+
+msgid "Created."
+msgstr "Créé."
+
+msgid "Updated."
+msgstr "Mis à jour."
+
+msgid "Deleted."
+msgstr "Supprimé."
+
+msgctxt "trust center"
+msgid "Public"
+msgstr "Public"
+
+msgctxt "trust center"
+msgid "Gated"
+msgstr "À accès restreint"
+
+msgctxt "trust center"
+msgid "Published"
+msgstr "Publié"
+
+msgctxt "trust center"
+msgid "Settings"
+msgstr "Paramètres"
+
+msgctxt "trust center"
+msgid "Documents"
+msgstr "Documents"
+
+
+# Trust Center - gated documents
+msgid "Reason for access"
+msgstr "Motif de la demande d'accès"
+
+msgid "Your name"
+msgstr "Votre nom"
+
+msgid "I accept the non-disclosure agreement"
+msgstr "J'accepte l'accord de confidentialité"
+
+msgid "You must accept the non-disclosure agreement to request this document."
+msgstr "Vous devez accepter l'accord de confidentialité pour demander ce document."
+
+msgid "Your request could not be processed."
+msgstr "Votre demande n'a pas pu être traitée."
+
+msgid "Too many requests. Please try again later."
+msgstr "Trop de demandes. Veuillez réessayer plus tard."
+
+msgid "Back to Trust Center"
+msgstr "Retour au centre de confiance"
+
+msgid "Submit request"
+msgstr "Envoyer la demande"
+
+msgid "Request received"
+msgstr "Demande reçue"
+
+msgid "Request access to \"%(title)s\"."
+msgstr "Demander l'accès à \"%(title)s\"."
+
+msgid "Thank you. Your request has been received and will be reviewed. If it is approved, you will receive a download link by email."
+msgstr "Merci. Votre demande a bien été reçue et sera examinée. Si elle est approuvée, vous recevrez un lien de téléchargement par e-mail."
+
+msgid "This link has expired"
+msgstr "Ce lien a expiré"
+
+msgid "Your download link is no longer valid. Please request access again."
+msgstr "Votre lien de téléchargement n'est plus valide. Veuillez demander à nouveau l'accès."
+
+msgid "Requester"
+msgstr "Demandeur"
+
+msgid "Received"
+msgstr "Reçue le"
+
+msgid "No requests yet."
+msgstr "Aucune demande pour le moment."
+
+msgid "No pending requests"
+msgstr "Aucune demande en attente"
+
+msgid "pending"
+msgstr "en attente"
+
+msgid "Origin IP"
+msgstr "IP d'origine"
+
+msgid "Reviewed by"
+msgstr "Examinée par"
+
+msgid "Reviewed at"
+msgstr "Examinée le"
+
+msgid "Note"
+msgstr "Note"
+
+msgid "Link expires"
+msgstr "Le lien expire le"
+
+msgid "Downloads"
+msgstr "Téléchargements"
+
+msgid "NDA accepted"
+msgstr "Accord de confidentialité accepté"
+
+msgid "NDA accepted at"
+msgstr "Accord de confidentialité accepté le"
+
+msgid "User agent"
+msgstr "Agent utilisateur"
+
+msgid "Decision note"
+msgstr "Note de décision"
+
+msgid "Token issued at"
+msgstr "Jeton émis le"
+
+msgid "Link expires at"
+msgstr "Le lien expire le"
+
+msgid "Download count"
+msgstr "Nombre de téléchargements"
+
+msgid "Pending review"
+msgstr "En attente d'examen"
+
+msgid "Revoke access"
+msgstr "Révoquer l'accès"
+
+msgid "Document request"
+msgstr "Demande de document"
+
+msgid "Request approved and a download link was emailed."
+msgstr "Demande approuvée et lien de téléchargement envoyé par e-mail."
+
+msgid "Request updated."
+msgstr "Demande mise à jour."
+
+msgid "New document access request: %(doc)s"
+msgstr "Nouvelle demande d'accès à un document : %(doc)s"
+
+msgid "%(name)s (%(email)s) requested access to \"%(doc)s\"."
+msgstr "%(name)s (%(email)s) a demandé l'accès à \"%(doc)s\"."
+
+msgid "Your access to \"%(doc)s\""
+msgstr "Votre accès à \"%(doc)s\""
+
+msgid "Your request to access \"%(doc)s\" has been approved.\n\nUse the link below to download the document. The link is personal and expires after a limited time:\n\n%(url)s"
+msgstr "Votre demande d'accès à \"%(doc)s\" a été approuvée.\n\nUtilisez le lien ci-dessous pour télécharger le document. Ce lien est personnel et expire après un délai limité :\n\n%(url)s"
+
+
+# Trust Center - branding/custom CSS
+msgid "Custom CSS"
+msgstr "CSS personnalisé"
+
+msgid "Optional CSS injected into the public page to override the theme."
+msgstr "CSS facultatif injecté dans la page publique pour surcharger le thème."
+
+msgid "Upload a CSS file"
+msgstr "Téléverser un fichier CSS"
+
+msgid "Optional. Replaces the custom CSS below with the uploaded file."
+msgstr "Facultatif. Remplace le CSS personnalisé ci-dessous par le fichier téléversé."
+
+msgid "Could not read the uploaded file."
+msgstr "Impossible de lire le fichier téléversé."
+
