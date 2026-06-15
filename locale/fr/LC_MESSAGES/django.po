@@ -10314,3 +10314,107 @@ msgstr "Dépendances de sites"
 
 msgid "Zoom controls"
 msgstr "Contrôles de zoom"
+
+# Framework import sample documentation
+msgid "This block documents the import format and is ignored on import. You may keep it or remove it."
+msgstr "Ce bloc documente le format d'import et est ignoré lors de l'import. Vous pouvez le conserver ou le supprimer."
+
+msgid "'framework' is an object; 'sections' is an array. A section can nest child sections in 'sections' and list requirements in 'requirements'."
+msgstr "« framework » est un objet ; « sections » est un tableau. Une section peut imbriquer des sous-sections dans « sections » et lister des exigences dans « requirements »."
+
+msgid "optional"
+msgstr "facultatif"
+
+msgid "required"
+msgstr "obligatoire"
+
+msgid "optional, one of allowed_values.framework_type"
+msgstr "facultatif, une valeur de allowed_values.framework_type"
+
+msgid "optional, one of allowed_values.framework_category"
+msgstr "facultatif, une valeur de allowed_values.framework_category"
+
+msgid "optional, array of nested child sections"
+msgstr "facultatif, tableau de sous-sections imbriquées"
+
+msgid "optional, array of requirements"
+msgstr "facultatif, tableau d'exigences"
+
+msgid "optional, one of allowed_values.requirement_type"
+msgstr "facultatif, une valeur de allowed_values.requirement_type"
+
+msgid "optional, one of allowed_values.requirement_category"
+msgstr "facultatif, une valeur de allowed_values.requirement_category"
+
+msgid "All rows"
+msgstr "Toutes les lignes"
+
+msgid "Required"
+msgstr "Obligatoire"
+
+msgid "framework, section or requirement"
+msgstr "framework, section ou requirement"
+
+msgid "Required (sections, requirements)"
+msgstr "Obligatoire (sections, exigences)"
+
+msgid "Unique code"
+msgstr "Code unique"
+
+msgid "Name of the record"
+msgstr "Nom de l'enregistrement"
+
+msgid "Free text"
+msgstr "Texte libre"
+
+msgid "Requirement rows"
+msgstr "Lignes requirement"
+
+msgid "Implementation guidance"
+msgstr "Conseils de mise en œuvre"
+
+msgid "Framework and requirement rows"
+msgstr "Lignes framework et requirement"
+
+msgid "Framework type on the framework row, requirement type on a requirement row. See the allowed values below."
+msgstr "Type de référentiel sur la ligne framework, type d'exigence sur une ligne requirement. Voir les valeurs autorisées ci-dessous."
+
+msgid "Framework category on the framework row, requirement category on a requirement row. See the allowed values below."
+msgstr "Catégorie de référentiel sur la ligne framework, catégorie d'exigence sur une ligne requirement. Voir les valeurs autorisées ci-dessous."
+
+msgid "Framework import - format documentation"
+msgstr "Import de référentiel - documentation du format"
+
+msgid "Each row is one record. The 'type' column says whether the row is the framework, a section or a requirement. Section and requirement nesting is inferred from the dotted reference prefixes (e.g. SEC.1 > SEC.1.1)."
+msgstr "Chaque ligne est un enregistrement. La colonne « type » indique si la ligne est le référentiel, une section ou une exigence. L'imbrication des sections et des exigences est déduite des préfixes de référence séparés par des points (p. ex. SEC.1 > SEC.1.1)."
+
+msgid "Columns"
+msgstr "Colonnes"
+
+msgid "Column"
+msgstr "Colonne"
+
+msgid "Applies to"
+msgstr "S'applique à"
+
+msgid "Optional extra framework columns are also accepted: short_name, framework_version, issuing_body."
+msgstr "Des colonnes de référentiel facultatives supplémentaires sont également acceptées : short_name, framework_version, issuing_body."
+
+msgid "Allowed values"
+msgstr "Valeurs autorisées"
+
+msgid "Framework type (req_type on the framework row)"
+msgstr "Type de référentiel (req_type sur la ligne framework)"
+
+msgid "Framework category (req_category on the framework row)"
+msgstr "Catégorie de référentiel (req_category sur la ligne framework)"
+
+msgid "Requirement type (req_type)"
+msgstr "Type d'exigence (req_type)"
+
+msgid "Requirement category (req_category)"
+msgstr "Catégorie d'exigence (req_category)"
+
+msgid "Code"
+msgstr "Code"
+
