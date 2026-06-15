@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block title %}{{ obj }} : Cairn{% endblock %}
+
+{% block content %}
+{% page_header obj eyebrow=cfg.label %}
+  <a href="{% url 'trust_center_manage:update' entity obj.pk %}" class="btn btn-outline-secondary">
+    <i class="bi bi-pencil me-1"></i>{% trans "Edit" %}
+  </a>
+  <a href="{% url 'trust_center_manage:delete' entity obj.pk %}" class="btn btn-outline-danger">
+    <i class="bi bi-trash me-1"></i>{% trans "Delete" %}
+  </a>
+{% endpage_header %}
+
+<div class="row g-3">
+  <div class="col-12 col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <dl class="row mb-0">
+          {% for label, value in detail_rows %}
+          <dt class="col-sm-4 text-muted">{{ label }}</dt>
+          <dd class="col-sm-8">
+            {% if value is True %}<i class="bi bi-check-lg text-success"></i>
+            {% elif value is False %}<i class="bi bi-dash text-muted"></i>
+            {% else %}{{ value }}{% endif %}
+          </dd>
+          {% endfor %}
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    {% sidebar_card _("Lifecycle") icon="diagram-2" %}
+      {% include "includes/workflow_stepper.html" %}
+      <div class="small text-muted mt-3">
+        <div>{% trans "Reference" %}: {{ obj.reference }}</div>
+        <div>{% trans "Updated" %}: {{ obj.updated_at|date:"SHORT_DATETIME_FORMAT" }}</div>
+      </div>
+    {% endsidebar_card %}
+  </div>
+</div>
+{% endblock %}

@@ -11,6 +11,7 @@ Run inside the web container:
 import datetime
 from datetime import date, timedelta
 from decimal import Decimal
+from urllib.parse import quote
 
 from django.db import transaction
 from django.utils import timezone
@@ -85,6 +86,15 @@ from risks.models import (
     Threat,
     TreatmentAction,
     Vulnerability,
+)
+from trust_center.constants import DocumentAccess, PublicationState
+from trust_center.models import (
+    DocumentRequest,
+    TrustCenterCertification,
+    TrustCenterDocument,
+    TrustCenterMeasure,
+    TrustCenterSettings,
+    TrustCenterSubprocessor,
 )
 
 TBL = {}
@@ -1906,10 +1916,183 @@ with transaction.atomic():
         target_url="/risks/threats/",
     )
 
+    # ----------------------------------------------------------- trust center
+    print("Trust Center...")
+    # A simple Voltara mark (lightning bolt) as an SVG data URI, used as the
+    # public hero logo and the favicon.
+    voltara_logo = "data:image/svg+xml," + quote(
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>"
+        "<rect width='64' height='64' rx='14' fill='#0E9F6E'/>"
+        "<path d='M35 7 L17 36 H29 L26 57 L47 27 H34 Z' fill='#ffffff'/>"
+        "</svg>"
+    )
+    cs.logo = voltara_logo
+    cs.logo_64 = voltara_logo
+    cs.logo_128 = voltara_logo
+    cs.save()
+
+    tc = TrustCenterSettings.get()
+    tc.is_published = True
+    tc.headline = "Security and compliance at Voltara Energy"
+    tc.intro = (
+        "<p>At <strong>Voltara Energy</strong> we operate critical renewable "
+        "energy infrastructure, and we hold our security and privacy practices "
+        "to a high standard.</p>"
+        "<p>This Trust Center summarizes our certifications, the subprocessors we "
+        "rely on, and the controls that protect customer and operational data. "
+        "For anything not published here, <em>reach out to our security team</em>.</p>"
+    )
+    tc.contact_email = "security@voltara.example"
+    tc.show_compliance_percentages = True
+    tc.theme_accent = "#0E9F6E"
+    tc.custom_css = (
+        "/* Voltara Energy - Trust Center theme */\n"
+        ":root {\n"
+        "  --accent: #0E9F6E;\n"
+        "  --accent-soft: #E6FBF3;\n"
+        "  --accent-glow: rgba(14, 159, 110, .18);\n"
+        "  --bg: #F4FBF8;\n"
+        "}\n"
+        '[data-bs-theme="dark"] {\n'
+        "  --accent: #2BD4A0;\n"
+        "  --accent-soft: rgba(43, 212, 160, .14);\n"
+        "  --accent-glow: rgba(43, 212, 160, .22);\n"
+        "  --bg: #0A0F0D;\n"
+        "  --surface: #0F1714;\n"
+        "}\n"
+        ".tc-hero {\n"
+        "  background:\n"
+        "    radial-gradient(120% 120% at 85% -10%, rgba(163, 230, 53, .30) 0%, transparent 55%),\n"
+        "    linear-gradient(135deg, #065F46 0%, #0E9F6E 60%, #0BA5A4 100%);\n"
+        "}\n"
+        ".tc-section h2 { display: inline-block; padding-bottom: .35rem; border-bottom: 3px solid var(--accent); }\n"
+        ".tc-card:hover { border-color: var(--accent); box-shadow: 0 12px 30px var(--accent-glow); }\n"
+        ".tc-footer { border-top: 2px solid var(--accent); }\n"
+    )
+    tc.save()
+
+    def tc_pub(**kwargs):
+        return dict(created_by=elise, workflow_state=PublicationState.PUBLISHED, **kwargs)
+
+    TrustCenterCertification.objects.create(
+        framework=fw_iso, public_label="ISO/IEC 27001:2022",
+        public_description="<p>Our ISMS is certified against ISO/IEC 27001, covering the full Annex A control set.</p>",
+        show_percentage=True, display_order=1, **tc_pub(),
+    )
+    TrustCenterCertification.objects.create(
+        framework=fw_nis2, public_label="NIS2 Directive",
+        public_description="<p>As an operator of essential services, we align with the EU NIS2 cybersecurity measures.</p>",
+        show_percentage=True, display_order=2, **tc_pub(),
+    )
+    TrustCenterCertification.objects.create(
+        framework=fw_gdpr, public_label="GDPR",
+        public_description="<p>Personal data is processed in line with the EU General Data Protection Regulation.</p>",
+        show_percentage=True, display_order=3, **tc_pub(),
+    )
+
+    TrustCenterSubprocessor.objects.create(
+        supplier=sup_cloudnord, public_name="CloudNord",
+        purpose="Cloud hosting and colocation for production workloads",
+        public_country="France", public_website="https://cloudnord.example",
+        display_order=1, **tc_pub(),
+    )
+    TrustCenterSubprocessor.objects.create(
+        supplier=sup_sentinel, public_name="SentinelWatch",
+        purpose="24/7 managed security operations (SOC / SIEM)",
+        public_country="France", public_website="https://sentinelwatch.example",
+        display_order=2, **tc_pub(),
+    )
+    TrustCenterSubprocessor.objects.create(
+        supplier=sup_paycore, public_name="PayCore",
+        purpose="Payment processing for customer invoicing",
+        public_country="Netherlands", public_website="https://paycore.example",
+        display_order=3, **tc_pub(),
+    )
+    TrustCenterSubprocessor.objects.create(
+        supplier=sup_hrline, public_name="HRline",
+        purpose="Human resources information system",
+        public_country="France", display_order=4, **tc_pub(),
+    )
+
+    TrustCenterMeasure.objects.create(
+        title="Security governance and ISMS", category="organizational",
+        icon="bi-diagram-3",
+        description="<p>An ISO 27001-aligned ISMS led by an appointed CISO and DPO, with annual internal audits and management reviews.</p>",
+        display_order=1, **tc_pub(),
+    )
+    TrustCenterMeasure.objects.create(
+        title="Vendor risk management", category="organizational",
+        icon="bi-shield-check",
+        description="<p>Every critical supplier is assessed against security requirements before and during the engagement.</p>",
+        display_order=2, **tc_pub(),
+    )
+    TrustCenterMeasure.objects.create(
+        title="Encryption in transit and at rest", category="technical",
+        icon="bi-lock",
+        description="<p>Customer and operational data is encrypted with industry-standard algorithms, in transit and at rest.</p>",
+        display_order=3, **tc_pub(),
+    )
+    TrustCenterMeasure.objects.create(
+        title="24/7 monitoring and detection", category="technical",
+        icon="bi-activity",
+        description="<p>A managed SOC operates our SIEM around the clock to detect and respond to threats.</p>",
+        display_order=4, **tc_pub(),
+    )
+    TrustCenterMeasure.objects.create(
+        title="Secure data centers", category="physical",
+        icon="bi-hdd-rack",
+        description="<p>Production runs in ISO 27001-certified EU data centers with strict physical access controls.</p>",
+        display_order=5, **tc_pub(),
+    )
+
+    demo_pdf = b"%PDF-1.4\n% Voltara Energy - Trust Center demo document.\n"
+    TrustCenterDocument.objects.create(
+        title="Information security overview", access=DocumentAccess.PUBLIC,
+        description="<p>A high-level summary of our security program.</p>",
+        file_content=demo_pdf, file_name="voltara-security-overview.pdf",
+        content_type="application/pdf", display_order=1, **tc_pub(),
+    )
+    TrustCenterDocument.objects.create(
+        title="Data processing addendum (template)", access=DocumentAccess.PUBLIC,
+        description="<p>Our standard DPA template for customers and partners.</p>",
+        file_content=b"PK\x03\x04 Voltara DPA template (demo).",
+        file_name="voltara-dpa-template.docx",
+        content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        display_order=2, **tc_pub(),
+    )
+    doc_soc2 = TrustCenterDocument.objects.create(
+        title="SOC 2 Type II report", access=DocumentAccess.GATED, requires_nda=True,
+        description="<p>Available on request after acceptance of our NDA.</p>",
+        file_content=demo_pdf, file_name="voltara-soc2-type-ii.pdf",
+        content_type="application/pdf", display_order=3, **tc_pub(),
+    )
+    TrustCenterDocument.objects.create(
+        title="Penetration test executive summary", access=DocumentAccess.GATED,
+        requires_nda=True,
+        description="<p>Latest third-party penetration test summary, available on request.</p>",
+        file_content=demo_pdf, file_name="voltara-pentest-summary.pdf",
+        content_type="application/pdf", display_order=4, **tc_pub(),
+    )
+
+    # One pending access request so the curation inbox is not empty.
+    DocumentRequest.objects.create(
+        document=doc_soc2, email="jordan.blake@acme-corp.example",
+        requester_name="Jordan Blake", company="ACME Corp",
+        reason="Vendor due diligence for an upcoming contract.",
+        nda_accepted=True, nda_accepted_at=NOW,
+    )
+
 print("Seed completed.")
 print(f"  Users: {User.objects.count()}  Scopes: {Scope.objects.count()}  Sites: {Site.objects.count()}")
 print(f"  Essential assets: {EssentialAsset.objects.count()}  Support assets: {SupportAsset.objects.count()}")
 print(f"  Frameworks: {Framework.objects.count()}  Requirements: {Requirement.objects.count()}")
 print(f"  Risks: {Risk.objects.count()}  Treatment plans: {RiskTreatmentPlan.objects.count()}")
 print(f"  Action plans: {ComplianceActionPlan.objects.count()}  Indicators: {Indicator.objects.count()}")
+print(
+    f"  Trust Center: {TrustCenterCertification.objects.count()} certifications, "
+    f"{TrustCenterSubprocessor.objects.count()} subprocessors, "
+    f"{TrustCenterMeasure.objects.count()} measures, "
+    f"{TrustCenterDocument.objects.count()} documents, "
+    f"{DocumentRequest.objects.count()} request"
+)
 print("Login: elise.moreau@voltara.example / " + PASSWORD)

@@ -1,0 +1,35 @@
+{% extends "trust_center/public_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<section class="tc-section">
+  <div class="container" style="max-width: 640px;">
+    <a href="{% url 'trust_center:landing' %}" class="small">&larr; {% trans "Back to Trust Center" %}</a>
+    <h1 class="mt-2 mb-1" style="font-size: 1.5rem;">{% trans "Request access" %}</h1>
+    <p class="text-secondary">{% blocktrans with title=document.title %}Request access to "{{ title }}".{% endblocktrans %}</p>
+    <div class="tc-card">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+          {% if field.is_hidden %}{{ field }}
+          {% elif field.name == 'nda_accepted' %}
+          <div class="form-check mb-3">
+            {{ field }}
+            <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+            {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+          </div>
+          {% else %}
+          <div class="mb-3">
+            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+            {{ field }}
+            {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+          </div>
+          {% endif %}
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">{% trans "Submit request" %}</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

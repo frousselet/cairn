@@ -1,0 +1,138 @@
+{% extends "trust_center/public_base.html" %}
+{% load i18n trust_center_tags %}
+
+{% block content %}
+<section class="tc-hero">
+  <div class="container">
+    {% if company.logo_128 or company.logo or company.name %}
+    <div class="tc-hero-brand">
+      {% if company.logo_128 or company.logo %}<span class="tc-hero-logo">{{ company.logo_128|default:company.logo|tc_logo }}</span>{% endif %}
+      {% if company.name %}<span class="tc-hero-company">{{ company.name }}</span>{% endif %}
+    </div>
+    {% endif %}
+    <h1>{{ tc.headline|default:_("Security and compliance, transparently") }}</h1>
+    {% if tc.intro %}<div class="tc-rich mb-0">{{ tc.intro|safe_html }}</div>{% endif %}
+  </div>
+</section>
+
+{% if certifications %}
+<section class="tc-section">
+  <div class="container">
+    <h2>{% trans "Certifications and compliance" %}</h2>
+    <div class="row g-3">
+      {% for cert in certifications %}
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="tc-card d-flex flex-column">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <span class="tc-logo">
+              {% if cert.framework.logo_64 or cert.framework.logo %}{{ cert.framework.logo_64|default:cert.framework.logo|tc_logo }}{% else %}<i class="bi bi-patch-check-fill tc-icon"></i>{% endif %}
+            </span>
+            <div>
+              <div class="fw-semibold">{{ cert.public_label }}</div>
+              {% if cert.public_compliance_level is not None %}
+              <div class="small"><span class="tc-pct">{{ cert.public_compliance_level }}%</span> <span class="text-muted">{% trans "compliant" %}</span></div>
+              {% endif %}
+            </div>
+          </div>
+          {% if cert.public_description %}<div class="text-secondary small mb-0 tc-rich">{{ cert.public_description|safe_html }}</div>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if measures %}
+<section class="tc-section" style="background:var(--surface);">
+  <div class="container">
+    <h2>{% trans "Security measures" %}</h2>
+    <div class="row g-3">
+      {% for measure in measures %}
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="tc-card">
+          <i class="bi {{ measure.icon|default:'bi-shield-check' }} tc-icon mb-2 d-block"></i>
+          <div class="fw-semibold mb-1">{{ measure.title }}</div>
+          <span class="badge badge-soft mb-2">{{ measure.get_category_display }}</span>
+          {% if measure.description %}<div class="text-secondary small mb-0 tc-rich">{{ measure.description|safe_html }}</div>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if documents %}
+<section class="tc-section">
+  <div class="container">
+    <h2>{% trans "Documents" %}</h2>
+    <div class="row g-3">
+      {% for doc in documents %}
+      <div class="col-12 col-lg-6">
+        <div class="tc-card d-flex align-items-start justify-content-between gap-3">
+          <div>
+            <div class="fw-semibold d-flex align-items-center gap-2">
+              <i class="bi {{ doc.file_icon }} tc-doc-icon"></i>
+              <span>{{ doc.title }}</span>
+            </div>
+            {% if doc.description %}<div class="text-secondary small mb-0 tc-rich">{{ doc.description|safe_html }}</div>{% endif %}
+          </div>
+          <div class="text-nowrap">
+            {% if doc.is_gated %}
+              <span class="badge badge-soft mb-1 d-block"><i class="bi bi-lock me-1"></i>{% trans "On request" %}</span>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'trust_center:document-request' doc.id %}">{% trans "Request access" %}</a>
+            {% else %}
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'trust_center:document-download' doc.id %}"><i class="bi bi-download me-1"></i>{% trans "Download" %}</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if subprocessors %}
+<section class="tc-section" style="background:var(--surface);">
+  <div class="container">
+    <h2>{% trans "Subprocessors" %}</h2>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "Purpose" %}</th>
+            <th>{% trans "Country" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in subprocessors %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                {% if sub.supplier.logo_64 or sub.supplier.logo %}<span class="tc-logo" style="width:1.75rem;height:1.75rem;">{{ sub.supplier.logo_64|default:sub.supplier.logo|tc_logo }}</span>{% endif %}
+                {% if sub.public_website %}<a href="{{ sub.public_website }}" rel="noopener noreferrer nofollow" target="_blank">{{ sub.public_name }}</a>{% else %}{{ sub.public_name }}{% endif %}
+              </div>
+            </td>
+            <td class="text-secondary">{{ sub.purpose|default:"-" }}</td>
+            <td class="text-secondary">{{ sub.public_country|default:"-" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if not certifications and not measures and not documents and not subprocessors %}
+<section class="tc-section">
+  <div class="container text-center text-muted">
+    <i class="bi bi-shield-lock" style="font-size:2.5rem;"></i>
+    <p class="mt-3">{% trans "Information will be published here soon." %}</p>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -48,6 +48,7 @@ class FailureReason(models.TextChoices):
 
 class NotificationType(models.TextChoices):
     LIFECYCLE_SUBMITTED = "lifecycle_submitted", _("Element pending validation")
+    TRUST_DOCUMENT_REQUESTED = "trust_document_requested", _("Trust Center document request")
 
 
 # Lockout settings
@@ -283,6 +284,32 @@ PERMISSION_REGISTRY = {
             "label": _("Management reviews"),
         },
     },
+    "trust_center": {
+        "settings": {
+            "actions": ["read", "update"],
+            "label": pgettext_lazy("trust center", "Settings"),
+        },
+        "certification": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("Certifications"),
+        },
+        "subprocessor": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("Subprocessors"),
+        },
+        "measure": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("Measures"),
+        },
+        "document": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": pgettext_lazy("trust center", "Documents"),
+        },
+        "document_request": {
+            "actions": ["read", "approve", "delete"],
+            "label": _("Document requests"),
+        },
+    },
     "system": {
         "admin_django": {
             "actions": ["access"],
@@ -354,6 +381,7 @@ MODULE_LABELS = {
     "risks": _("Risk management"),
     "compliance": _("Compliance"),
     "reports": _("Reports"),
+    "trust_center": _("Trust Center"),
     "system": _("System"),
 }
 
