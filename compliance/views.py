@@ -224,7 +224,22 @@ class FrameworkDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteVie
 class FrameworkImportView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
     permission_required = "compliance.framework.create"
     template_name = "compliance/framework_import.html"
+    modal_template_name = "compliance/framework_import_modal.html"
     form_class = FrameworkImportForm
+
+    def get_template_names(self):
+        # Serve the modal partial when the framework list opens the import
+        # form in the shared HTMX drawer (GET only; the form itself submits
+        # as a normal POST, so errors fall back to the full-page template).
+        headers = self.request.headers
+        if (
+            self.request.method == "GET"
+            and headers.get("HX-Request") == "true"
+            and headers.get("HX-Boosted") != "true"
+            and headers.get("HX-Target") == "drawer-form-content"
+        ):
+            return [self.modal_template_name]
+        return [self.template_name]
 
     def form_valid(self, form):
         uploaded = form.cleaned_data["file"]
