@@ -1809,7 +1809,7 @@ def _register_context_tools(server):
     objective_fields = ["id", "reference", "scopes", "name", "description", "category", "type",
                         "target_value", "current_value", "unit",
                         "measurement_method", "measurement_frequency",
-                        "status", "progress_percentage", "target_date", "owner_id",
+                        "status", "progress_percentage", "target_date", "owner_id", "owner_name",
                         "related_issues", "related_stakeholders",
                         "parent_objective_id", "review_date",
                         "is_approved", "created_at"]
@@ -2021,7 +2021,7 @@ def _register_context_tools(server):
                    })
 
     activity_fields = ["id", "reference", "scopes", "name", "description", "type", "criticality",
-                       "owner_id", "parent_activity_id",
+                       "owner_id", "owner_name", "parent_activity_id",
                        "related_stakeholders", "related_objectives", "essential_assets",
                        "status", "is_approved", "created_at"]
     activity_writable = ["name", "description", "type", "criticality", "owner_id",
@@ -2301,7 +2301,7 @@ def _register_assets_tools(server):
     SupplierRequirementReview = _get_model("assets", "SupplierRequirementReview")
 
     ea_fields = ["id", "reference", "scopes", "name", "description", "type", "category",
-                 "owner_id", "custodian_id", "status",
+                 "owner_id", "owner_name", "custodian_id", "status",
                  "confidentiality_level", "integrity_level", "availability_level",
                  "confidentiality_justification", "integrity_justification",
                  "availability_justification",
@@ -2398,7 +2398,7 @@ def _register_assets_tools(server):
                    })
 
     sa_fields = ["id", "reference", "scopes", "name", "description", "type", "category",
-                 "owner_id", "custodian_id", "supplier_id",
+                 "owner_id", "owner_name", "custodian_id", "supplier_id",
                  "location", "manufacturer", "model_name", "serial_number",
                  "software_version", "operating_system",
                  "hostname", "ip_address",
@@ -2564,7 +2564,7 @@ def _register_assets_tools(server):
                   "contract_reference", "contract_start_date", "contract_end_date",
                   "is_contract_expired",
                   "logo", "logo_16", "logo_32", "logo_64",
-                  "notes", "owner_id", "is_approved", "created_at"]
+                  "notes", "owner_id", "owner_name", "is_approved", "created_at"]
     sup_writable = ["name", "description", "type", "criticality", "status",
                     "contact_name", "contact_email", "contact_phone",
                     "website", "address", "country",

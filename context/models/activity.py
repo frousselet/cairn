@@ -61,6 +61,11 @@ class Activity(ScopedModel):
     def __str__(self):
         return f"{self.reference} : {self.name}"
 
+    @property
+    def owner_name(self):
+        """Display name of the responsible owner (for read-only API / assistant output)."""
+        return self.owner.display_name if self.owner_id else ""
+
     def clean(self):
         super().clean()
         # RS-04: parent and child must share at least one scope

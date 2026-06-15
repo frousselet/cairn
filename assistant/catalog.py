@@ -290,8 +290,10 @@ _SPECS = [
         "bi-flag",
         "list_objectives(search, category, status: draft|active|achieved|not_achieved|cancelled,"
         " limit): information security objectives. A completed / met objective has status"
-        " 'achieved' (100%); 'not_achieved' means finished but the target was missed.",
+        " 'achieved' (100%); 'not_achieved' means finished but the target was missed."
+        " 'owner_name' is the person responsible.",
         ("search", "category", "type", "status", "limit", "offset"),
+        summary_fields=("owner_name",),
         detail_route="context:objective-detail",
     ),
     _spec(
@@ -324,7 +326,7 @@ _SPECS = [
         " status: active|inactive|planned, limit): the organization's own internal business"
         " activities and processes (e.g. production, billing), NOT a supplier's line of business.",
         ("search", "type", "criticality", "status", "limit", "offset"),
-        summary_fields=("description", "criticality", "type"),
+        summary_fields=("description", "criticality", "type", "owner_name"),
         detail_route="context:activity-detail",
     ),
     _spec(
@@ -336,6 +338,17 @@ _SPECS = [
         ("search", "type", "category", "status", "limit", "offset"),
         summary_fields=("description", "type", "category", "influence_level", "interest_level"),
         detail_route="context:stakeholder-detail",
+    ),
+    _spec(
+        "list_swot_analysiss",
+        _("SWOT analyses"),
+        "bi-grid-3x3-gap",
+        "list_swot_analysiss(search, limit): SWOT analyses (strengths, weaknesses, opportunities,"
+        " threats)",
+        ("search", "workflow_state", "limit", "offset"),
+        subtitle_field="workflow_state",
+        summary_fields=("analysis_date",),
+        detail_route="context:swot-detail",
     ),
     # Assets
     _spec(
@@ -349,7 +362,7 @@ _SPECS = [
         " business of a named company. Pass expired=true for suppliers whose contract has expired.",
         ("search", "type", "criticality", "status", "expired", "limit", "offset"),
         summary_fields=("type_name", "description", "criticality", "country",
-                        "contract_end_date", "is_contract_expired"),
+                        "contract_end_date", "is_contract_expired", "owner_name"),
         detail_route="assets:supplier-detail",
     ),
     _spec(
@@ -357,8 +370,10 @@ _SPECS = [
         _("Essential Assets"),
         "bi-gem",
         "list_essential_assets(search, type: business_process|information, status: identified"
-        "|active|under_review|decommissioned, limit): essential assets (processes, information)",
+        "|active|under_review|decommissioned, limit): essential assets (processes, information)."
+        " 'owner_name' is the person responsible.",
         ("search", "type", "category", "status", "limit", "offset"),
+        summary_fields=("owner_name",),
         detail_route="assets:essential-asset-detail",
     ),
     _spec(
@@ -367,8 +382,9 @@ _SPECS = [
         "bi-hdd-network",
         "list_support_assets(search, type: hardware|software|network|person|service|paper,"
         " status: in_stock|deployed|active|under_maintenance|decommissioned|disposed, limit):"
-        " support assets (IT infrastructure)",
+        " support assets (IT infrastructure). 'owner_name' is the person responsible.",
         ("search", "type", "category", "status", "environment", "limit", "offset"),
+        summary_fields=("owner_name",),
         detail_route="assets:support-asset-detail",
     ),
     _spec(
