@@ -27,7 +27,7 @@
 
 {% block content %}
 <div id="kanban-page-header">
-{% page_header _("Action plans") %}
+{% page_header _("Action plans") eyebrow=_("Compliance") accent="compliance" %}
   <a href="{% url 'compliance:action-plan-list' %}" class="btn btn-outline-secondary"><i class="bi bi-list-ul me-1" aria-hidden="true"></i>{% trans 'List view' %}</a>
   <button type="button" class="btn btn-primary" hx-get="{% url 'compliance:action-plan-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New action plan' %}</button>
 {% endpage_header %}
@@ -290,13 +290,29 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Position kanban container right below the page header
-  (function() {
+(function() {
+  // Position the fixed kanban container right below the page header. Kept in a
+  // standalone function so it can run on first load, after every boosted swap
+  // (DOMContentLoaded does not fire then) and on resize.
+  function positionKanban() {
     var header = document.getElementById('kanban-page-header');
-    var rect = header.getBoundingClientRect();
-    document.getElementById('kanban-container').style.top = Math.ceil(rect.bottom) + 'px';
-  })();
+    var container = document.getElementById('kanban-container');
+    if (header && container) {
+      container.style.top = Math.ceil(header.getBoundingClientRect().bottom) + 'px';
+    }
+  }
+
+  function initKanban() {
+    var container = document.getElementById('kanban-container');
+    if (!container) return;            // not on the kanban page
+    positionKanban();
+    if (container.dataset.kanbanReady === '1') return;  // already wired
+    if (typeof Sortable === 'undefined') {
+      // External dependency still loading right after a boosted swap.
+      setTimeout(initKanban, 50);
+      return;
+    }
+    container.dataset.kanbanReady = '1';
 
   const allowedTransitions = {{ transitions_json|safe }};
   const refusalTransitions = {{ refusal_json|safe }};
@@ -512,11 +528,25 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+  }  // end initKanban
 
-  // Listen for kanban refresh trigger from HTMX
-  document.body.addEventListener('refreshKanban', function() {
-    window.location.reload();
-  });
-});
+  // One-time global hooks (the body persists across boosted swaps).
+  if (!window.__kanbanBound) {
+    window.__kanbanBound = true;
+    window.addEventListener('resize', positionKanban);
+    document.body.addEventListener('htmx:afterSettle', initKanban);
+    document.body.addEventListener('refreshKanban', function() {
+      window.location.reload();
+    });
+  }
+
+  // Initial run: DOMContentLoaded on a hard load, immediately when this
+  // script ships inside a boosted #page-shell swap (already interactive).
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initKanban);
+  } else {
+    initKanban();
+  }
+})();
 </script>
 {% endblock %}
