@@ -7,10 +7,12 @@
 
 {% block content %}
 {% page_header assessment.name reference=assessment.reference %}
+  {% include "includes/history_trigger.html" %}
   {% if not is_locked %}
   <a href="{% url 'compliance:assessment-update' assessment.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans 'Edit' %}</a>
   {% endif %}
 {% endpage_header %}
+{% include "includes/history_panel.html" %}
 
 {# ── Metadata line ── #}
 <div class="d-flex flex-wrap align-items-center gap-3 mb-3" style="font-size:.85rem;color:var(--text-muted)">
@@ -38,7 +40,6 @@
 <ul class="nav nav-tabs mb-3" role="tablist">
   <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#planning">{% trans "Planning" %}</a></li>
   <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#findings_tab">{% trans "Findings" %} {% if findings_count %}<span class="badge text-bg-secondary ms-1">{{ findings_count }}</span>{% endif %}</a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#history">{% trans "History" %}</a></li>
 </ul>
 
 <div class="tab-content">
@@ -226,11 +227,6 @@
         </table>
       </div>
     </div>
-  </div>
-
-
-  <div class="tab-pane fade" id="history">
-    {% include "includes/history_tab.html" %}
   </div>
 </div>
 {% endblock %}

@@ -1,0 +1,91 @@
+{% load i18n %}
+{% comment %}
+  Off-canvas history panel shell. Rendered once per detail page (next to the
+  workflow stepper include). The body is empty until the panel is first opened,
+  then lazily HTMX-loaded from the generic history endpoint, so detail pages
+  never pay for the diff computation unless the user opens history.
+{% endcomment %}
+{% if history_available %}
+<div class="offcanvas offcanvas-end history-panel"
+     tabindex="-1"
+     id="historyPanel"
+     aria-labelledby="historyPanelLabel"
+     hx-get="{{ history_url }}"
+     hx-trigger="show.bs.offcanvas once"
+     hx-target="#historyPanelBody"
+     hx-swap="innerHTML">
+  <div class="offcanvas-header border-bottom">
+    <h2 class="offcanvas-title h6 mb-0 d-flex align-items-center gap-2" id="historyPanelLabel">
+      <i class="bi bi-clock-history" aria-hidden="true"></i>{% trans "History" %}
+    </h2>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{% trans 'Close' %}"></button>
+  </div>
+  <div class="offcanvas-body" id="historyPanelBody">
+    <div class="history-loading text-muted d-flex align-items-center justify-content-center gap-2 py-5">
+      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>{% trans "Loading..." %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .history-panel { --bs-offcanvas-width: min(92vw, 460px); }
+  .history-event { margin-bottom: 1rem; }
+  .history-event:last-child { margin-bottom: 0; }
+  .history-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+    font-size: .8rem;
+    margin-bottom: .35rem;
+  }
+  .history-meta .history-actor { color: var(--text-muted); }
+  .history-comment {
+    font-size: .8125rem;
+    background: var(--surface-muted);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: .5rem .65rem;
+    margin-top: .4rem;
+  }
+  .wf-chip {
+    display: inline-block;
+    font-size: .75rem;
+    font-weight: 500;
+    padding: .1rem .5rem;
+    border-radius: 999px;
+    background: var(--surface-muted);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+  }
+  .wf-arrow { color: var(--text-muted); margin: 0 .25rem; }
+  .diff-block {
+    font-family: 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .diff-line {
+    padding: 2px 0.7rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border-left: 3px solid transparent;
+  }
+  .diff-line-remove { background: var(--danger-soft); border-left-color: var(--danger); color: var(--danger); }
+  .diff-line-add { background: var(--success-soft); border-left-color: var(--success); color: var(--success); }
+  .diff-line-context { color: var(--text-muted); }
+  .diff-separator {
+    padding: 2px 0.7rem;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.75rem;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+  }
+  .diff-block .diff-line:first-child,
+  .diff-block .diff-separator:first-child { border-top: 0; }
+  .history-empty { color: var(--text-muted); font-size: .85rem; }
+</style>
+{% endif %}

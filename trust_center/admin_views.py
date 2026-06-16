@@ -25,7 +25,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import WorkflowStepperMixin
+from accounts.mixins import HistoryUrlMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
 from core.workflow import WorkflowError
 from trust_center.constants import DocumentRequestState
@@ -220,7 +220,7 @@ class EntityUpdateView(LoginRequiredMixin, _EntityBase, UpdateView):
         return reverse("trust_center_manage:detail", args=[self.entity, self.object.pk])
 
 
-class EntityDetailView(LoginRequiredMixin, _EntityBase, WorkflowStepperMixin, DetailView):
+class EntityDetailView(LoginRequiredMixin, _EntityBase, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
     action = "read"
     template_name = "trust_center/manage/entity_detail.html"
     context_object_name = "obj"
@@ -266,7 +266,7 @@ class DocumentRequestListView(LoginRequiredMixin, PermissionRequiredMixin, ListV
 
 
 class DocumentRequestDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, WorkflowStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView
 ):
     model = DocumentRequest
     template_name = "trust_center/manage/request_detail.html"

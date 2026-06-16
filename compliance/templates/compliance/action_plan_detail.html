@@ -7,9 +7,11 @@
 
 {% block content %}
 {% page_header action_plan.name reference=action_plan.reference %}
+  {% include "includes/history_trigger.html" %}
   <a href="{% url 'compliance:action-plan-update' action_plan.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
   <a href="{% url 'compliance:action-plan-kanban' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
+{% include "includes/history_panel.html" %}
 {% help_modal "compliance.action_plan_detail" %}
 
 
@@ -183,82 +185,6 @@
           <dt class="text-muted small mb-1">{% trans "Cost estimate" %}</dt>
           <dd class="mb-0">{% if action_plan.cost_estimate %}{{ action_plan.cost_estimate|floatformat:2 }} €{% else %}—{% endif %}</dd>
         </dl>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-{# ══════════════════════════════════════════════════════════════ #}
-{# ── Transitions & History (collapsible, full width) ───────── #}
-{# ══════════════════════════════════════════════════════════════ #}
-<div class="row g-4 mt-0">
-  <div class="col-12">
-
-    {# ── Transitions ── #}
-    <div class="card mb-4">
-      <div class="card-header bg-transparent d-flex justify-content-between align-items-center" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-transitions" aria-expanded="false">
-        <h6 class="mb-0 fw-semibold" style="font-size:.875rem">
-          <i class="bi bi-arrow-left-right me-1"></i>{% trans "Transitions" %}
-          {% if transition_history %}<span class="badge bg-secondary ms-1">{{ transition_history|length }}</span>{% endif %}
-        </h6>
-        <i class="bi bi-chevron-down text-muted"></i>
-      </div>
-      <div class="collapse" id="collapse-transitions">
-        <div class="card-body">
-          {% if transition_history %}
-          <div class="timeline">
-            {% for t in transition_history %}
-            <div class="d-flex gap-3 mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
-              <div>
-                {% if t.is_refusal %}
-                <span class="badge text-bg-warning"><i class="bi bi-arrow-return-left"></i></span>
-                {% elif t.to_status == 'cancelled' %}
-                <span class="badge text-bg-danger"><i class="bi bi-x-circle"></i></span>
-                {% else %}
-                <span class="badge text-bg-info"><i class="bi bi-arrow-right"></i></span>
-                {% endif %}
-              </div>
-              <div class="flex-grow-1">
-                <div class="d-flex justify-content-between">
-                  <div>
-                    <span class="badge text-bg-secondary">{{ t.get_from_status_display }}</span>
-                    <i class="bi bi-arrow-right mx-1"></i>
-                    <span class="badge text-bg-secondary">{{ t.get_to_status_display }}</span>
-                  </div>
-                  <small class="text-muted">{{ t.created_at }}</small>
-                </div>
-                <div class="mt-1">
-                  <small class="text-muted">{% trans "by" %} {% if t.performed_by %}{% user_badge t.performed_by size=20 %}{% endif %}</small>
-                </div>
-                {% if t.comment %}
-                <div class="mt-1 p-2 rounded" style="background:var(--surface-muted);font-size:.8125rem">
-                  {{ t.comment }}
-                </div>
-                {% endif %}
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-          {% else %}
-          <p class="text-muted mb-0">{% trans "No transitions recorded." %}</p>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    {# ── History ── #}
-    <div class="card mb-4">
-      <div class="card-header bg-transparent d-flex justify-content-between align-items-center" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-history" aria-expanded="false">
-        <h6 class="mb-0 fw-semibold" style="font-size:.875rem">
-          <i class="bi bi-clock-history me-1"></i>{% trans "History" %}
-        </h6>
-        <i class="bi bi-chevron-down text-muted"></i>
-      </div>
-      <div class="collapse" id="collapse-history">
-        <div class="card-body">
-          {% include "includes/history_tab.html" %}
-        </div>
       </div>
     </div>
 

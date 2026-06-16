@@ -6,16 +6,17 @@
 
 {% block content %}
 {% page_header criteria.name reference=criteria.reference %}
+  {% include "includes/history_trigger.html" %}
   <a href="{% url 'risks:criteria-update' criteria.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
   <a href="{% url 'risks:criteria-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
+{% include "includes/history_panel.html" %}
 {% help_modal "risks.criteria_detail" %}
 
 <ul class="nav nav-tabs mb-3" role="tablist">
   <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#general">{% trans "General" %}</a></li>
   <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#scales">{% trans "Scales" %}</a></li>
   <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#levels">{% trans "Risk levels" %}</a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#history">{% trans "History" %}</a></li>
 </ul>
 
 <div class="tab-content">
@@ -88,10 +89,6 @@
     {% else %}
     <p style="color:var(--text-muted);font-size:.85rem">{% trans "No risk levels defined." %}</p>
     {% endif %}
-  </div>
-
-  <div class="tab-pane fade" id="history">
-    {% include "includes/history_tab.html" %}
   </div>
 </div>
 {% endblock %}

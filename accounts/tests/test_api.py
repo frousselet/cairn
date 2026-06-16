@@ -578,7 +578,7 @@ class TestHistoryAPIMixin:
             f"/api/v1/context/scopes/{self.scope.pk}/history/"
         )
         assert response.status_code == 200
-        # history returns a list wrapped in data
+        # history returns the unified timeline: {results, limit, offset, has_more}
         history_data = _data(response)
-        assert isinstance(history_data, list)
-        assert len(history_data) >= 1
+        assert isinstance(history_data["results"], list)
+        assert len(history_data["results"]) >= 1

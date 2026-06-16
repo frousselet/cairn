@@ -10474,3 +10474,9 @@ msgstr[1] "%(count)s correspondances existantes"
 
 msgid "Replace all matches"
 msgstr "Tout remplacer"
+
+msgid "(empty)"
+msgstr "(vide)"
+
+msgid "Refusal"
+msgstr "Refus"

@@ -6,6 +6,7 @@
 {% block content %}
 {% has_perm "reports.management_review.update" as can_update_review %}
 {% page_header review.title reference=review.reference %}
+  {% include "includes/history_trigger.html" %}
   {% if can_update_review %}
   <a href="{% url 'reports:management-review-edit' review.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
   {% endif %}
@@ -19,6 +20,7 @@
   </div>
   <a href="{% url 'reports:management-review-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
+{% include "includes/history_panel.html" %}
 
 {% if data_source == "snapshot" %}
 <div class="alert alert-info d-flex align-items-center py-2 px-3 mb-3" role="alert">
@@ -173,23 +175,6 @@
       <p class="text-muted small mb-0">{% trans "No comments yet." %}</p>
       {% endfor %}
     </div></div>
-
-    {# Transition history #}
-    {% if transitions %}
-    <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted small fw-semibold mb-3">{% trans "Status history" %}</h6>
-      <ul class="list-unstyled small mb-0">
-        {% for t in transitions %}
-        <li class="mb-1">
-          <span class="text-muted">{{ t.created_at|date:"d/m/Y H:i" }}</span> -
-          <strong>{{ t.performed_by|default:"-" }}</strong> :
-          {{ t.from_status }} &rarr; {{ t.to_status }}
-          {% if t.comment %}<div class="ps-3 text-muted">{{ t.comment }}</div>{% endif %}
-        </li>
-        {% endfor %}
-      </ul>
-    </div></div>
-    {% endif %}
 
   </div>
 

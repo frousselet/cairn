@@ -542,6 +542,49 @@ def _allowed_transitions_handler(model_class, perm_namespace, scope_filtered=Tru
     return handler
 
 
+def _history_handler(model_class, scope_filtered=True):
+    """Create a handler returning an entity's unified change/transition timeline."""
+    def handler(user, arguments):
+        from core.history import (
+            DEFAULT_HISTORY_LIMIT,
+            MAX_HISTORY_LIMIT,
+            build_timeline,
+            extra_source_for,
+        )
+
+        pk = arguments.get("id")
+        if not pk:
+            raise InvalidParamsError("id is required.")
+        try:
+            obj = model_class.objects.get(pk=pk)
+        except model_class.DoesNotExist:
+            return _error(f"{model_class.__name__} not found.")
+        if scope_filtered:
+            qs = _filter_by_scopes(model_class.objects.filter(pk=pk), user)
+            if not qs.exists():
+                return _error("Access denied: object is outside your allowed scopes.")
+
+        try:
+            limit = int(arguments.get("limit", DEFAULT_HISTORY_LIMIT))
+        except (TypeError, ValueError):
+            limit = DEFAULT_HISTORY_LIMIT
+        limit = max(1, min(limit, MAX_HISTORY_LIMIT))
+        try:
+            offset = max(0, int(arguments.get("offset", 0)))
+        except (TypeError, ValueError):
+            offset = 0
+
+        entries = build_timeline(obj, limit=limit + offset, extra=extra_source_for(obj))
+        page = entries[offset:offset + limit]
+        return {
+            "limit": limit,
+            "offset": offset,
+            "has_more": len(entries) > offset + limit,
+            "results": [e.as_dict() for e in page],
+        }
+    return handler
+
+
 # ── Schema helpers ─────────────────────────────────────────
 
 def _list_schema(extra_props=None):
@@ -6583,6 +6626,28 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
                 _id_schema(),
                 require_perm(f"{perm_prefix}.read")(
                     _allowed_transitions_handler(model_class, perm_prefix, scope_filtered)
+                ),
+            )
+
+    # History (unified change / transition timeline)
+    if hasattr(model_class, "history"):
+        history_tool = f"get_{entity_name}_history"
+        if history_tool not in server._tools:
+            server.register_tool(
+                history_tool,
+                f"Return the change history of a {display_name}: field-level diffs, "
+                f"approval events and lifecycle transitions (with comments where "
+                f"recorded) merged into one reverse-chronological timeline.",
+                _obj_schema(
+                    {
+                        "id": {"type": "string", "description": f"UUID of the {display_name}"},
+                        "limit": {"type": "integer", "description": "Max entries (default 100, max 500)."},
+                        "offset": {"type": "integer", "description": "Entries to skip (pagination)."},
+                    },
+                    required=["id"],
+                ),
+                require_perm(f"{perm_prefix}.read")(
+                    _history_handler(model_class, scope_filtered)
                 ),
             )
 

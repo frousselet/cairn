@@ -22,7 +22,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import WorkflowStepperMixin
+from accounts.mixins import HistoryUrlMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import SortableListMixin
 from compliance.constants import ActionPlanStatus
@@ -106,7 +106,7 @@ class ManagementReviewListView(
 # ─── Detail with stepper and all sections ─────────────────────────────
 
 class ManagementReviewDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, WorkflowStepperMixin, DetailView,
+    LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView,
 ):
     permission_required = "reports.management_review.read"
     workflow_transition_url_name = "reports:management-review-transition"

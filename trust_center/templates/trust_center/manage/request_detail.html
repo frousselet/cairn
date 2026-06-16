@@ -5,8 +5,10 @@
 
 {% block content %}
 {% page_header obj.reference eyebrow=_("Document request") %}
+  {% include "includes/history_trigger.html" %}
   <a href="{% url 'trust_center_manage:request-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
+{% include "includes/history_panel.html" %}
 
 <div class="row g-3">
   <div class="col-12 col-lg-8">
