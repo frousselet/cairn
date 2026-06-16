@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.28.1] - 2026-06-16
+
 ### Changed
 
 - **Administration menu reorganised**: the sidebar's Administration section is now structured into four collapsible groups instead of a flat list - **General** (Company, Tags, Versioning, Calendar subscriptions, Trust Center), **Access** (Users, Groups, Permissions), **Ask Cairn** (Semantic index, Feedback) and **Logs** (Access log, Action log). Each group only renders when the user can see at least one of its items, preserving the existing per-item permission checks. The Django admin link was removed from the sidebar.
@@ -1026,7 +1028,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
-[Unreleased]: https://github.com/frousselet/cairn/compare/v0.28.0...HEAD
+[Unreleased]: https://github.com/frousselet/cairn/compare/v0.28.1...HEAD
+[0.28.1]: https://github.com/frousselet/cairn/compare/v0.28.0...v0.28.1
 [0.28.0]: https://github.com/frousselet/cairn/compare/v0.27.2...v0.28.0
 [0.27.2]: https://github.com/frousselet/cairn/compare/v0.27.1...v0.27.2
 [0.27.1]: https://github.com/frousselet/cairn/compare/v0.27.0...v0.27.1
