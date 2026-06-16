@@ -25,6 +25,7 @@ Most domain entities expose a standard set of operations generated automatically
 | Delete | `delete_{entity}` | Delete an object (only allowed from a deletable lifecycle state) |
 | Transition | `transition_{entity}` | Change the object's lifecycle state (draft / pending / validated / archived), validating permissions, mandatory comments and side effects |
 | Allowed transitions | `{entity}_allowed_transitions` | List the lifecycle transitions the caller may perform from the current state |
+| History | `get_{entity}_history` | Unified change timeline (field diffs, approvals and lifecycle transitions), with `limit` / `offset` pagination |
 | Approve | `approve_{entity}` | Deprecated alias of `transition_{entity}` with `target_state="validated"` |
 
 ## Context module
@@ -93,7 +94,7 @@ Additional tools:
 | ---- | ----------- |
 | `get_framework_compliance_summary` | Compliance summary with section-level scores and status distribution |
 | `action_plan_transition` | Transition an action plan through the Kanban workflow (forward, refusal, cancellation) |
-| `action_plan_transitions` | List transition history for an action plan |
+| `action_plan_transitions` | List transition history for an action plan (legacy; `get_action_plan_history` is the canonical superset) |
 | `action_plan_kanban` | Get action plans grouped by status for Kanban board with workflow rules |
 | `action_plan_allowed_transitions` | Get allowed transitions for an action plan with permission checks |
 | `list_action_plan_comments` | List threaded comments on an action plan |

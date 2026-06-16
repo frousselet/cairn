@@ -6,9 +6,11 @@
 
 {% block content %}
 {% page_header role.name reference=role.reference eyebrow=_("Role") icon="person-badge" accent="context" %}
+  {% include "includes/history_trigger.html" %}
   <a href="{% url 'context:role-update' role.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
   <a href="{% url 'context:role-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
+{% include "includes/history_panel.html" %}
 {% help_modal "context.role_detail" %}
 {% include "includes/workflow_stepper.html" %}
 
@@ -107,15 +109,6 @@
         {% else %}
         {% empty_state icon="person" message=_("No assigned user.") %}
         {% endif %}
-      </div>
-    </details>
-
-    <details class="card mb-4">
-      <summary class="card-body py-2" style="cursor:pointer;user-select:none">
-        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-clock-history me-1" aria-hidden="true"></i>{% trans "History" %}</h6>
-      </summary>
-      <div class="card-body pt-0">
-        {% include "includes/history_tab.html" %}
       </div>
     </details>
   </div>

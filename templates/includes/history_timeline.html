@@ -1,0 +1,84 @@
+{% load i18n %}
+{% comment %}
+  Lazy-loaded history timeline partial. Consumes `history_records`: a list of
+  core.history.HistoryEntry objects (field diffs, approvals and lifecycle
+  transitions merged into one reverse-chronological stream). Returned by
+  core.history_views.HistoryPartialView into the off-canvas panel body.
+{% endcomment %}
+{% trans "(empty)" as empty_label %}
+{% if history_records %}
+{% for entry in history_records %}
+<div class="history-event">
+  <div class="history-meta">
+    {% if entry.kind == "create" %}
+      <span class="badge text-bg-success"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Creation" %}</span>
+    {% elif entry.kind == "delete" %}
+      <span class="badge text-bg-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Deletion" %}</span>
+    {% elif entry.kind == "approval" %}
+      {% if entry.approved %}
+      <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{% trans "Approval" %}</span>
+      {% else %}
+      <span class="badge text-bg-dark"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>{% trans "Approval withdrawn" %}</span>
+      {% endif %}
+    {% elif entry.kind == "transition" %}
+      {% if entry.is_refusal %}
+      <span class="badge text-bg-warning"><i class="bi bi-arrow-return-left me-1" aria-hidden="true"></i>{% trans "Refusal" %}</span>
+      {% else %}
+      <span class="badge text-bg-info"><i class="bi bi-arrow-right me-1" aria-hidden="true"></i>{% trans "Transition" %}</span>
+      {% endif %}
+    {% else %}
+      <span class="badge text-bg-secondary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Modification" %}</span>
+    {% endif %}
+    {% if entry.entity_label %}<span class="badge text-bg-light border">{{ entry.entity_label }}</span>{% endif %}
+    {% if entry.version %}<span class="badge" style="background:var(--accent-soft);color:var(--accent)">v{{ entry.version }}</span>{% endif %}
+    <span>{{ entry.history_date|date:"d/m/Y H:i:s" }}</span>
+    <span class="history-actor">· {{ entry.user|default:"System" }}</span>
+  </div>
+
+  {% if entry.kind == "create" %}
+    {% if entry.snapshot %}
+    <div class="diff-block">
+      {% for f in entry.snapshot %}<div class="diff-line diff-line-add">+ {{ f.field }}: {{ f.new|default:empty_label }}</div>{% endfor %}
+    </div>
+    {% else %}
+    <div class="diff-block"><div class="diff-line diff-line-context">  {% trans "Initial record" %}</div></div>
+    {% endif %}
+
+  {% elif entry.kind == "delete" %}
+    <div class="diff-block">
+      <div class="diff-line diff-line-remove">- {% trans "Record deleted" %}</div>
+      {% for f in entry.snapshot %}<div class="diff-line diff-line-remove">- {{ f.field }}: {{ f.new|default:empty_label }}</div>{% endfor %}
+    </div>
+
+  {% elif entry.kind == "approval" %}
+    <div class="diff-block">
+      <div class="diff-line diff-line-{% if entry.approved %}add{% else %}remove{% endif %}">
+        {% if entry.approved %}+ {% trans "Approval granted" %}{% else %}- {% trans "Approval revoked" %}{% endif %}
+      </div>
+    </div>
+
+  {% elif entry.kind == "transition" %}
+    <div>
+      <span class="wf-chip">{{ entry.from_label|default:empty_label }}</span>
+      <i class="bi bi-arrow-right wf-arrow" aria-hidden="true"></i>
+      <span class="wf-chip">{{ entry.to_label|default:empty_label }}</span>
+    </div>
+    {% if entry.comment %}<div class="history-comment">{{ entry.comment }}</div>{% endif %}
+
+  {% elif entry.changes %}
+    <div class="diff-block">
+      {% for c in entry.changes %}
+<div class="diff-separator">@@ {{ c.field }} @@</div>
+<div class="diff-line diff-line-remove">- {{ c.field }}: {{ c.old|default:empty_label }}</div>
+<div class="diff-line diff-line-add">+ {{ c.field }}: {{ c.new|default:empty_label }}</div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <div class="diff-block"><div class="diff-line diff-line-context">  {% trans "No changes detected" %}</div></div>
+  {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<p class="history-empty mb-0">{% trans "No history available." %}</p>
+{% endif %}

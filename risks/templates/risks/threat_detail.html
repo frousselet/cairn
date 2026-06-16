@@ -6,44 +6,33 @@
 
 {% block content %}
 {% page_header threat.name reference=threat.reference %}
+  {% include "includes/history_trigger.html" %}
   <a href="{% url 'risks:threat-update' threat.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
   <a href="{% url 'risks:threat-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
+{% include "includes/history_panel.html" %}
 {% help_modal "risks.threat_detail" %}
 {% include "includes/workflow_stepper.html" %}
 
-<ul class="nav nav-tabs mb-3" role="tablist">
-  <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#general">{% trans "General" %}</a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#history">{% trans "History" %}</a></li>
-</ul>
-
-<div class="tab-content">
-  <div class="tab-pane fade show active" id="general">
-    <div class="card">
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges threat.scopes.all %}{% if not threat.scopes.all %}<span style="color:var(--text-muted)">—</span>{% endif %}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt><dd class="col-sm-9">{{ threat.get_type_display }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Origin" %}</dt><dd class="col-sm-9">{{ threat.get_origin_display|default:"—" }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Category" %}</dt><dd class="col-sm-9">{{ threat.get_category_display|default:"—" }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Typical likelihood" %}</dt><dd class="col-sm-9">{{ threat.typical_likelihood|default:"—" }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "From catalog" %}</dt><dd class="col-sm-9">{% if threat.is_from_catalog %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>
-          <dd class="col-sm-9">
-            <span class="badge text-bg-{% if threat.status == 'active' %}success{% else %}secondary{% endif %}">
-              {{ threat.get_status_display }}
-            </span>
-          </dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ threat.description|default:"—"|safe }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
-          <dd class="col-sm-9">{% for tag in threat.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
-        </dl>
-      </div>
-    </div>
-  </div>
-
-  <div class="tab-pane fade" id="history">
-    {% include "includes/history_tab.html" %}
+<div class="card">
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges threat.scopes.all %}{% if not threat.scopes.all %}<span style="color:var(--text-muted)">—</span>{% endif %}</dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt><dd class="col-sm-9">{{ threat.get_type_display }}</dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Origin" %}</dt><dd class="col-sm-9">{{ threat.get_origin_display|default:"—" }}</dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Category" %}</dt><dd class="col-sm-9">{{ threat.get_category_display|default:"—" }}</dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Typical likelihood" %}</dt><dd class="col-sm-9">{{ threat.typical_likelihood|default:"—" }}</dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "From catalog" %}</dt><dd class="col-sm-9">{% if threat.is_from_catalog %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>
+      <dd class="col-sm-9">
+        <span class="badge text-bg-{% if threat.status == 'active' %}success{% else %}secondary{% endif %}">
+          {{ threat.get_status_display }}
+        </span>
+      </dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ threat.description|default:"—"|safe }}</dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
+      <dd class="col-sm-9">{% for tag in threat.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
+    </dl>
   </div>
 </div>
 {% endblock %}

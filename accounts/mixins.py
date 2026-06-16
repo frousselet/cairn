@@ -97,6 +97,35 @@ class ApprovalContextMixin:
         return ctx
 
 
+class HistoryUrlMixin:
+    """Expose the lazy-loaded history panel URL on a detail view.
+
+    Replaces the per-app ``HistoryMixin`` copies: the (potentially expensive)
+    timeline diff computation moves to
+    :class:`core.history_views.HistoryPartialView` and runs only when the
+    off-canvas history panel is opened, not on every detail page load.
+    """
+
+    def get_context_data(self, **kwargs):
+        from context.models.base import BaseModel
+
+        ctx = super().get_context_data(**kwargs)
+        obj = self.object
+        if isinstance(obj, BaseModel) and hasattr(obj, "history"):
+            ctx["history_available"] = True
+            ctx["history_url"] = reverse(
+                "history:partial",
+                kwargs={
+                    "app_label": obj._meta.app_label,
+                    "model": obj._meta.model_name,
+                    "pk": obj.pk,
+                },
+            )
+        else:
+            ctx["history_available"] = False
+        return ctx
+
+
 class WorkflowStepperMixin:
     """Build the generic lifecycle stepper context for a detail view.
 

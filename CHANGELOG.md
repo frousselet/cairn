@@ -5,6 +5,13 @@ All notable changes to Cairn (formerly Fairway) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Unified, audit-grade entity history**: the change/audit trail was rebuilt around a single framework (`core.history`). Every history-tracked entity now shows its history the same way: a **History** button always sits in the page-header action bar and opens a right-side **off-canvas panel** that lazily loads (HTMX) a single chronological timeline. Field changes, lifecycle transitions (state A -> B, who, when) and approval events are merged into one stream and computed in one place, so the diff/classification logic no longer differs between the detail page, the REST API and the MCP tools. The previous per-entity presentations (a History nav-tab, a bottom collapsible card, a `<details>` block, or no history at all) were all replaced by this panel across the context, assets, compliance, risks, reports and trust-center modules, and entities that had no history UI (trust-center certifications / subprocessors / measures / document requests, management reviews) now expose it. The action plan's separate "Transitions" card and the management review's "Status history" section are folded into the unified timeline (their transition comments still appear). The detail page no longer queries history on load, only when the panel is opened.
+- **History parity across surfaces**: the REST `…/history/` action now returns the unified timeline (field diffs + transitions + approvals) with `?limit=` / `?offset=` pagination, and a generic `get_<entity>_history` MCP tool is registered for every history-tracked entity (gated by the entity's read permission), replacing the previous single action-plan-only history tool.
+
 ## [0.28.2] - 2026-06-16
 
 ### Added

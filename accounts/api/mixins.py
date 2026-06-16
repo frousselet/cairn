@@ -7,6 +7,12 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from context.models import Scope
+from core.history import (
+    DEFAULT_HISTORY_LIMIT,
+    MAX_HISTORY_LIMIT,
+    build_timeline,
+    extra_source_for,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -188,56 +194,38 @@ class ApprovableAPIMixin:
 
 
 class HistoryAPIMixin:
-    """Add a /history/ action to any ViewSet whose model has django-simple-history."""
+    """Add a /history/ action returning the unified, normalized timeline.
 
-    HISTORY_APPROVAL_FIELDS = {"is_approved", "approved_by", "approved_by_id", "approved_at"}
-    HISTORY_HIDDEN_FIELDS = HISTORY_APPROVAL_FIELDS | {"version"}
+    Delegates to :func:`core.history.build_timeline` so the API, the UI panel
+    and the MCP tools share one classifier: field diffs, approval events and
+    lifecycle transitions (with comments where a dedicated log exists) are
+    merged into one reverse-chronological stream. Supports ``?limit=`` and
+    ``?offset=`` query parameters.
+    """
+
+    history_limit = DEFAULT_HISTORY_LIMIT
 
     @action(detail=True, methods=["get"])
     def history(self, request, **kwargs):
         obj = self.get_object()
-        records = obj.history.select_related("history_user").all()[:100]
-        data = []
-        for record in records:
-            entry = {
-                "history_id": record.history_id,
-                "history_date": record.history_date,
-                "history_type": record.history_type,
-                "history_user": str(record.history_user) if record.history_user else None,
-                "history_change_reason": record.history_change_reason,
-                "version": getattr(record, "version", None),
-            }
-            # Compute diff against previous record
-            if record.history_type != "+":
-                try:
-                    prev = record.prev_record
-                    if prev:
-                        delta = record.diff_against(prev)
-                        approval_changes = []
-                        regular_changes = []
-                        for c in delta.changes:
-                            if c.field in self.HISTORY_HIDDEN_FIELDS:
-                                if c.field in self.HISTORY_APPROVAL_FIELDS:
-                                    approval_changes.append(c)
-                                continue
-                            regular_changes.append({
-                                "field": c.field,
-                                "old": str(c.old) if c.old is not None else None,
-                                "new": str(c.new) if c.new is not None else None,
-                            })
-                        if not regular_changes and approval_changes:
-                            entry["is_approval"] = True
-                            entry["approved"] = bool(record.is_approved)
-                            entry["changes"] = []
-                        else:
-                            entry["is_approval"] = False
-                            entry["changes"] = regular_changes
-                except Exception:
-                    entry["changes"] = []
-            else:
-                entry["changes"] = []
-            data.append(entry)
-        return Response(data)
+        try:
+            limit = int(request.query_params.get("limit", self.history_limit))
+        except (TypeError, ValueError):
+            limit = self.history_limit
+        limit = max(1, min(limit, MAX_HISTORY_LIMIT))
+        try:
+            offset = max(0, int(request.query_params.get("offset", 0)))
+        except (TypeError, ValueError):
+            offset = 0
+
+        entries = build_timeline(obj, limit=limit + offset, extra=extra_source_for(obj))
+        page = entries[offset:offset + limit]
+        return Response({
+            "limit": limit,
+            "offset": offset,
+            "has_more": len(entries) > offset + limit,
+            "results": [e.as_dict() for e in page],
+        })
 
 
 class ScopeFilterAPIMixin:

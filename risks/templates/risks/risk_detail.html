@@ -7,9 +7,11 @@
 
 {% block content %}
 {% page_header risk.name reference=risk.reference %}
+  {% include "includes/history_trigger.html" %}
   <a href="{% url 'risks:risk-update' risk.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
   <a href="{% url 'risks:risk-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
+{% include "includes/history_panel.html" %}
 {% help_modal "risks.risk_detail" %}
 {% include "includes/workflow_stepper.html" %}
 
@@ -324,16 +326,4 @@
   </div>
 </div>
 
-{# ══════════════════════════════════════════════════════════ #}
-{# ── History (collapsible, full width) ────────────────── #}
-{# ══════════════════════════════════════════════════════════ #}
-<div class="card mt-0 mb-4">
-  <div class="card-header bg-transparent d-flex justify-content-between align-items-center" role="button" data-bs-toggle="collapse" data-bs-target="#collapse-history" aria-expanded="false">
-    <h6 class="mb-0 fw-semibold" style="font-size:.875rem"><i class="bi bi-clock-history me-1"></i>{% trans "History" %}</h6>
-    <i class="bi bi-chevron-down text-muted"></i>
-  </div>
-  <div class="collapse" id="collapse-history">
-    <div class="card-body">{% include "includes/history_tab.html" %}</div>
-  </div>
-</div>
 {% endblock %}

@@ -23,7 +23,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, ScopeFilterMixin, WorkflowStepperMixin
+from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import HtmxFormMixin, SortableListMixin
 from .forms import (
@@ -93,13 +93,6 @@ class CreatedByMixin:
         return super().form_valid(form)
 
 
-class HistoryMixin:
-    """Add history_records to context for detail views."""
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["history_records"] = self.object.history.select_related("history_user").all()[:50]
-        return ctx
 
 
 class ApproveView(LoginRequiredMixin, View):
@@ -160,7 +153,7 @@ class FrameworkListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
 
 
 class FrameworkDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, WorkflowStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView
 ):
     model = Framework
     permission_required = "compliance.framework.read"
@@ -417,7 +410,7 @@ class RequirementListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilt
 
 
 class RequirementDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, WorkflowStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView
 ):
     model = Requirement
     permission_required = "compliance.requirement.read"
@@ -495,7 +488,7 @@ class AssessmentListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
 
 
 class AssessmentDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, WorkflowStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView
 ):
     model = ComplianceAssessment
     workflow_transition_url_name = "compliance:assessment-transition"
@@ -1481,7 +1474,7 @@ class MappingListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMi
         )
 
 
-class MappingDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryMixin, DetailView):
+class MappingDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, DetailView):
     model = RequirementMapping
     permission_required = "compliance.mapping.read"
     scope_parent_lookup = "source_requirement__framework__scopes"
@@ -1552,7 +1545,7 @@ class ActionPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
 
 
 class ActionPlanDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, WorkflowStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView
 ):
     model = ComplianceActionPlan
     workflow_transition_url_name = "compliance:action-plan-transition"
@@ -1585,9 +1578,6 @@ class ActionPlanDetailView(
                     "is_cancel": target == ActionPlanStatus.CANCELLED,
                 })
         ctx["allowed_transitions"] = allowed
-
-
-        ctx["transition_history"] = ap.transitions.select_related("performed_by").all()[:20]
         ctx["status_colors"] = ACTION_PLAN_STATUS_COLORS
         ctx["comments"] = (
             ap.comments.filter(parent__isnull=True)

@@ -18,7 +18,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, ScopeFilterMixin, WorkflowStepperMixin
+from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import HtmxFormMixin, SortableListMixin
 from .constants import (
@@ -310,13 +310,6 @@ class CreatedByMixin:
         return super().form_valid(form)
 
 
-class HistoryMixin:
-    """Add history_records to context for detail views."""
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["history_records"] = self.object.history.select_related("history_user").all()[:50]
-        return ctx
 
 
 class ApproveView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -548,7 +541,7 @@ class RiskAssessmentListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
         return qs
 
 
-class RiskAssessmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, WorkflowStepperMixin, DetailView):
+class RiskAssessmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
     model = RiskAssessment
     template_name = "risks/assessment_detail.html"
     context_object_name = "assessment"
@@ -711,7 +704,7 @@ class RiskCriteriaListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFil
         return qs
 
 
-class RiskCriteriaDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryMixin, DetailView):
+class RiskCriteriaDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, DetailView):
     model = RiskCriteria
     template_name = "risks/criteria_detail.html"
     context_object_name = "criteria"
@@ -1018,7 +1011,7 @@ class RiskBulkActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect("risks:risk-list")
 
 
-class RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, WorkflowStepperMixin, DetailView):
+class RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
     scope_parent_lookup = "assessment__scopes"
     model = Risk
     template_name = "risks/risk_detail.html"
@@ -1176,7 +1169,7 @@ class TreatmentPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFi
         return qs
 
 
-class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, WorkflowStepperMixin, DetailView):
+class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskTreatmentPlan
     template_name = "risks/treatment_plan_detail.html"
@@ -1339,7 +1332,7 @@ class RiskAcceptanceListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
         return qs
 
 
-class RiskAcceptanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, WorkflowStepperMixin, DetailView):
+class RiskAcceptanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskAcceptance
     template_name = "risks/acceptance_detail.html"
@@ -1420,7 +1413,7 @@ class ThreatListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMix
         return ctx
 
 
-class ThreatDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, WorkflowStepperMixin, DetailView):
+class ThreatDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
     model = Threat
     template_name = "risks/threat_detail.html"
     context_object_name = "threat"
@@ -1506,7 +1499,7 @@ class VulnerabilityListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFi
         return ctx
 
 
-class VulnerabilityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, WorkflowStepperMixin, DetailView):
+class VulnerabilityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
     model = Vulnerability
     template_name = "risks/vulnerability_detail.html"
     context_object_name = "vulnerability"
@@ -1608,7 +1601,7 @@ class ISO27005RiskListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFil
         return qs
 
 
-class ISO27005RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryMixin, WorkflowStepperMixin, DetailView):
+class ISO27005RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
     scope_parent_lookup = "assessment__scopes"
     model = ISO27005Risk
     template_name = "risks/iso27005_risk_detail.html"

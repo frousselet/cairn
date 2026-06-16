@@ -192,7 +192,8 @@ class TestScopeDetailView:
         scope = ScopeFactory()
         resp = client.get(reverse("context:scope-detail", args=[scope.pk]))
         assert resp.status_code == 200
-        assert "history_records" in resp.context
+        assert resp.context["history_available"] is True
+        assert "history_url" in resp.context
 
 
 class TestScopeCreateView:
@@ -372,7 +373,8 @@ class TestIssueDetailView:
         client, _ = _superuser_client()
         issue = IssueFactory()
         resp = client.get(reverse("context:issue-detail", args=[issue.pk]))
-        assert "history_records" in resp.context
+        assert resp.context["history_available"] is True
+        assert "history_url" in resp.context
 
 
 class TestIssueCreateView:
@@ -539,7 +541,8 @@ class TestStakeholderDetailView:
         client, _ = _superuser_client()
         sh = _make_stakeholder()
         resp = client.get(reverse("context:stakeholder-detail", args=[sh.pk]))
-        assert "history_records" in resp.context
+        assert resp.context["history_available"] is True
+        assert "history_url" in resp.context
 
 
 class TestStakeholderCreateView:
@@ -708,7 +711,8 @@ class TestObjectiveDetailView:
         client, _ = _superuser_client()
         obj = ObjectiveFactory()
         resp = client.get(reverse("context:objective-detail", args=[obj.pk]))
-        assert "history_records" in resp.context
+        assert resp.context["history_available"] is True
+        assert "history_url" in resp.context
 
 
 class TestObjectiveCreateView:
@@ -869,7 +873,8 @@ class TestRoleDetailView:
         client, _ = _superuser_client()
         role = _make_role()
         resp = client.get(reverse("context:role-detail", args=[role.pk]))
-        assert "history_records" in resp.context
+        assert resp.context["history_available"] is True
+        assert "history_url" in resp.context
 
 
 class TestRoleCreateView:
@@ -1024,7 +1029,8 @@ class TestActivityDetailView:
         client, user = _superuser_client()
         activity = _make_activity(owner=user)
         resp = client.get(reverse("context:activity-detail", args=[activity.pk]))
-        assert "history_records" in resp.context
+        assert resp.context["history_available"] is True
+        assert "history_url" in resp.context
 
 
 class TestActivityCreateView:
@@ -1332,7 +1338,8 @@ class TestIndicatorDetailView:
         client, _ = _superuser_client()
         ind = _make_indicator()
         resp = client.get(reverse("context:indicator-detail", args=[ind.pk]))
-        assert "history_records" in resp.context
+        assert resp.context["history_available"] is True
+        assert "history_url" in resp.context
 
     def test_detail_shows_measurements(self):
         client, user = _superuser_client()

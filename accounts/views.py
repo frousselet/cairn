@@ -15,6 +15,7 @@ from django.views import View
 from django.views.generic import DetailView, ListView
 
 from accounts.constants import PERMISSION_REGISTRY, MODULE_LABELS
+from core.history import EntryKind, classify_record
 from core.mixins import SortableListMixin
 from accounts.forms import (
     CompanySettingsForm,
@@ -628,7 +629,6 @@ class CalendarSubscriptionRevokeView(LoginRequiredMixin, PermissionRequiredMixin
 # ── Action Log (history) ────────────────────────────────────
 
 HISTORY_TYPE_LABELS = {"+": _lazy("Creation"), "~": _lazy("Modification"), "-": _lazy("Deletion")}
-APPROVAL_FIELDS = {"is_approved", "approved_by", "approved_by_id", "approved_at"}
 
 MODEL_LABELS = {}
 
@@ -645,33 +645,6 @@ def _get_model_labels():
                 app = original._meta.app_label
                 MODEL_LABELS[model] = (app, label)
     return MODEL_LABELS
-
-
-def _detect_approval(record):
-    """Detect if a history record is an approval-only change.
-
-    Returns "approved", "rejected", or None.
-    """
-    if record.history_type != "~":
-        return None
-    try:
-        prev = record.prev_record
-    except Exception:
-        return None
-    if prev is None:
-        return None
-    try:
-        delta = record.diff_against(prev)
-    except Exception:
-        return None
-    changed_fields = {c.field for c in delta.changes}
-    non_approval = changed_fields - APPROVAL_FIELDS - {"version"}
-    if non_approval:
-        return None
-    approval_changed = changed_fields & APPROVAL_FIELDS
-    if not approval_changed:
-        return None
-    return "approved" if getattr(record, "is_approved", False) else "rejected"
 
 
 class ActionLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
@@ -742,29 +715,30 @@ class ActionLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             try:
                 entry.object_repr = str(entry)
             except Exception:
-                entry.object_repr = "—"
+                entry.object_repr = "-"
 
-            # Detect approval
-            approval_status = _detect_approval(entry)
-            if approval_status == "approved":
-                entry.action_label = _("Approval")
-                entry.action_badge = "info"
-            elif approval_status == "rejected":
-                entry.action_label = _("Approval withdrawn")
-                entry.action_badge = "dark"
+            # Classify via the shared core.history classifier.
+            kind = classify_record(entry)
+            if kind == EntryKind.APPROVAL:
+                approved = bool(getattr(entry, "is_approved", False))
+                entry.action_label = _("Approval") if approved else _("Approval withdrawn")
+                entry.action_badge = "info" if approved else "dark"
             else:
-                entry.action_label = HISTORY_TYPE_LABELS.get(entry.history_type, "?")
-                if entry.history_type == "+":
-                    entry.action_badge = "success"
-                elif entry.history_type == "~":
-                    entry.action_badge = "warning"
-                elif entry.history_type == "-":
-                    entry.action_badge = "danger"
-                else:
-                    entry.action_badge = "secondary"
-                # If filtering approvals only, skip non-approval entries
+                # If filtering approvals only, skip non-approval entries.
                 if filter_approval:
                     continue
+                if kind == EntryKind.TRANSITION:
+                    entry.action_label = _("Transition")
+                    entry.action_badge = "info"
+                elif kind == EntryKind.CREATE:
+                    entry.action_label = HISTORY_TYPE_LABELS["+"]
+                    entry.action_badge = "success"
+                elif kind == EntryKind.DELETE:
+                    entry.action_label = HISTORY_TYPE_LABELS["-"]
+                    entry.action_badge = "danger"
+                else:
+                    entry.action_label = HISTORY_TYPE_LABELS["~"]
+                    entry.action_badge = "warning"
 
             annotated.append(entry)
 
