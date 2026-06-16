@@ -36,6 +36,7 @@ from .forms import (
     IssueUpdateForm,
     ObjectiveCreateForm,
     ObjectiveUpdateForm,
+    ResponsibilityForm,
     RoleCreateForm,
     RoleUpdateForm,
     ScopeCreateForm,
@@ -53,6 +54,7 @@ from .models import (
     IndicatorMeasurement,
     Issue,
     Objective,
+    Responsibility,
     Role,
     Scope,
     Site,
@@ -800,6 +802,73 @@ class SwotStrategyDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return HttpResponse(status=204, headers={"HX-Trigger": "refreshItems"})
 
 
+# ── Responsibility (nested under Role) ──────────────────────
+
+class ResponsibilityCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = Responsibility
+    permission_required = "context.role.update"
+    form_class = ResponsibilityForm
+    template_name = "context/responsibility_form_modal.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.role = get_object_or_404(Role, pk=kwargs["role_pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["role"] = self.role
+        ctx["modal_title"] = _("New responsibility")
+        return ctx
+
+    def form_valid(self, form):
+        form.instance.role = self.role
+        form.save()
+        self.role.send_back_to_draft()
+        return HttpResponse(status=204, headers={"HX-Trigger": "refreshItems"})
+
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+class ResponsibilityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = Responsibility
+    permission_required = "context.role.update"
+    form_class = ResponsibilityForm
+    template_name = "context/responsibility_form_modal.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.role = get_object_or_404(Role, pk=kwargs["role_pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Responsibility.objects.filter(role_id=self.kwargs["role_pk"])
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["role"] = self.role
+        ctx["modal_title"] = _("Edit responsibility")
+        return ctx
+
+    def form_valid(self, form):
+        form.save()
+        self.role.send_back_to_draft()
+        return HttpResponse(status=204, headers={"HX-Trigger": "refreshItems"})
+
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+class ResponsibilityDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = "context.role.update"
+
+    def post(self, request, role_pk, pk):
+        role = get_object_or_404(Role, pk=role_pk)
+        responsibility = get_object_or_404(Responsibility, pk=pk, role_id=role_pk)
+        responsibility.delete()
+        role.send_back_to_draft()
+        return HttpResponse(status=204, headers={"HX-Trigger": "refreshItems"})
+
+
 # ── Role ────────────────────────────────────────────────────
 
 class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
@@ -841,6 +910,22 @@ class RoleDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMix
         return super().get_queryset().prefetch_related(
             "responsibilities", "assigned_users"
         )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # Merge the role's own history with its responsibilities' history so
+        # that adding / editing / deleting a responsibility is visible on the
+        # role timeline (each responsibility has its own HistoricalRecords).
+        records = list(self.object.history.select_related("history_user").all())
+        resp_history = Responsibility.history.filter(
+            role_id=self.object.pk
+        ).select_related("history_user")
+        for record in resp_history:
+            record.entity_label = _("Responsibility")
+            records.append(record)
+        records.sort(key=lambda r: r.history_date, reverse=True)
+        ctx["history_records"] = records[:50]
+        return ctx
 
 
 class RoleCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):

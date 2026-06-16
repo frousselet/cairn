@@ -497,7 +497,7 @@ window.initSparklines = function(root) {
           {{ obj.progress_percentage|default:0 }}%
         </span>
       </div>
-      <div class="progress">
+      <div class="progress" style="height:8px">
         <div class="progress-bar bg-{% if obj.progress_percentage >= 80 %}success{% elif obj.progress_percentage >= 50 %}warning{% else %}danger{% endif %}"
              role="progressbar"
              style="width: {{ obj.progress_percentage|default:0 }}%"

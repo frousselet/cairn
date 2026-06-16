@@ -34,9 +34,20 @@
       </div>
     </div>
 
-    <details class="card mb-4" open>
-      <summary class="card-body py-2" style="cursor:pointer;user-select:none">
+    <details id="responsibilities-section" class="card mb-4" open
+             hx-get="{% url 'context:role-detail' role.pk %}"
+             hx-select="#responsibilities-section"
+             hx-target="#responsibilities-section"
+             hx-swap="outerHTML"
+             hx-trigger="refreshItems from:body">
+      <summary class="card-body py-2 d-flex justify-content-between align-items-center" style="cursor:pointer;user-select:none">
         <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-list-check me-1" aria-hidden="true"></i>{% trans "Responsibilities" %}<span class="badge bg-secondary ms-2 tabular-nums">{{ role.responsibilities.count }}</span></h6>
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0" title="{% trans 'Add' %}"
+                hx-get="{% url 'context:responsibility-create' role.pk %}"
+                hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset"
+                onclick="event.preventDefault();">
+          <i class="bi bi-plus-lg" style="font-size:.75rem"></i>
+        </button>
       </summary>
       <div class="card-body pt-0">
         {% if role.responsibilities.all %}
@@ -47,6 +58,7 @@
                 <th>{% trans "Description" %}</th>
                 <th>{% trans "RACI type" %}</th>
                 <th>{% trans "Activity" %}</th>
+                <th class="text-end"><span class="visually-hidden">{% trans "Actions" %}</span></th>
               </tr>
             </thead>
             <tbody>
@@ -55,6 +67,21 @@
                 <td>{{ resp.description }}</td>
                 <td>{% badge resp.raci_type variant="accent" label=resp.get_raci_type_display %}</td>
                 <td>{{ resp.related_activity|default:"-" }}</td>
+                <td class="text-end">
+                  <div class="d-inline-flex gap-1">
+                    <button type="button" class="btn btn-sm border-0 p-0 px-1" style="color:var(--text-muted)" title="{% trans 'Edit' %}"
+                            hx-get="{% url 'context:responsibility-update' role.pk resp.pk %}"
+                            hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm border-0 p-0 px-1" style="color:var(--text-muted)" title="{% trans 'Delete' %}"
+                            hx-post="{% url 'context:responsibility-delete' role.pk resp.pk %}"
+                            hx-confirm="{% trans 'Are you sure you want to delete this responsibility?' %}"
+                            hx-disabled-elt="this">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -74,7 +101,7 @@
         {% if role.assigned_users.all %}
         <ul class="list-group">
           {% for user in role.assigned_users.all %}
-          <li class="list-group-item">{{ user.get_full_name|default:user.username }}</li>
+          <li class="list-group-item">{{ user.get_full_name|default:user.email }}</li>
           {% endfor %}
         </ul>
         {% else %}
@@ -113,4 +140,14 @@
     {% endsidebar_card %}
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.body.addEventListener('refreshItems', function() {
+  var drawerEl = document.getElementById('itemDrawer');
+  var drawer = bootstrap.Modal.getInstance(drawerEl);
+  if (drawer) drawer.hide();
+});
+</script>
 {% endblock %}

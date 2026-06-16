@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -314,8 +315,21 @@ class ResponsibilityViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Responsibility.objects.filter(role_id=self.kwargs["role_pk"])
 
+    def _send_role_back_to_draft(self):
+        """Changing a role's responsibilities sends the role back to draft."""
+        get_object_or_404(Role, pk=self.kwargs["role_pk"]).send_back_to_draft()
+
     def perform_create(self, serializer):
         serializer.save(role_id=self.kwargs["role_pk"])
+        self._send_role_back_to_draft()
+
+    def perform_update(self, serializer):
+        serializer.save()
+        self._send_role_back_to_draft()
+
+    def perform_destroy(self, instance):
+        instance.delete()
+        self._send_role_back_to_draft()
 
 
 class ActivityViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):

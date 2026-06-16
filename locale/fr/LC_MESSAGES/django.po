@@ -4442,6 +4442,24 @@ msgstr "Aucun périmètre disponible"
 msgid "scope(s) selected"
 msgstr "périmètre(s) sélectionné(s)"
 
+msgid "New responsibility"
+msgstr "Nouvelle responsabilité"
+
+msgid "Edit responsibility"
+msgstr "Modifier la responsabilité"
+
+msgid "What this role is responsible for."
+msgstr "Ce dont ce rôle est responsable."
+
+msgid "RACI involvement for this responsibility."
+msgstr "Implication RACI pour cette responsabilité."
+
+msgid "Activity this responsibility relates to, if any."
+msgstr "Activité à laquelle cette responsabilité se rapporte, le cas échéant."
+
+msgid "Are you sure you want to delete this responsibility?"
+msgstr "Voulez-vous vraiment supprimer cette responsabilité ?"
+
 msgid "New SWOT item"
 msgstr "Nouvel élément SWOT"
 

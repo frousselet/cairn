@@ -414,6 +414,29 @@ class SwotStrategyForm(forms.ModelForm):
         }
 
 
+class ResponsibilityForm(forms.ModelForm):
+    """Responsibility create / edit modal, nested under a Role."""
+
+    class Meta:
+        model = Responsibility
+        fields = ["description", "raci_type", "related_activity"]
+        widgets = {
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3, "class": "form-control no-jodit"}),
+            "raci_type": forms.Select(attrs=SELECT_ATTRS),
+            "related_activity": forms.Select(attrs=SELECT_ATTRS),
+        }
+        help_texts = {
+            "description": _("What this role is responsible for."),
+            "raci_type": _("RACI involvement for this responsibility."),
+            "related_activity": _("Activity this responsibility relates to, if any."),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["related_activity"].queryset = Activity.objects.order_by("name")
+        self.fields["related_activity"].required = False
+
+
 class RoleBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     """Shared base for the Role create / edit modals.
 
