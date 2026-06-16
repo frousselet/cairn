@@ -16,6 +16,11 @@ class AssetsConfig(AppConfig):
         # commands, servers).
         from assets import workflows  # noqa: F401
 
+        # Register the supplier CSV bulk importer with the generic import
+        # registry. Must run in every context (tests, management commands,
+        # servers) so the import URLs resolve.
+        from assets import imports  # noqa: F401
+
         # Only start the SPOF scheduler when running an actual server
         # process. The previous blocklist approach ("everything that is
         # not manage.py is a server") wrongly classified ad-hoc inline
