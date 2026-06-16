@@ -67,6 +67,10 @@ urlpatterns = [
     path("roles/<uuid:pk>/delete/", views.RoleDeleteView.as_view(), name="role-delete"),
     path("roles/<uuid:pk>/approve/", views.ApproveView.as_view(model=Role, success_url=reverse_lazy("context:role-list")), name="role-approve"),
     path("roles/table-body/", views.RoleTableBodyView.as_view(), name="role-table-body"),
+    # Responsibilities (nested under a role)
+    path("roles/<uuid:role_pk>/responsibilities/create/", views.ResponsibilityCreateView.as_view(), name="responsibility-create"),
+    path("roles/<uuid:role_pk>/responsibilities/<uuid:pk>/edit/", views.ResponsibilityUpdateView.as_view(), name="responsibility-update"),
+    path("roles/<uuid:role_pk>/responsibilities/<uuid:pk>/delete/", views.ResponsibilityDeleteView.as_view(), name="responsibility-delete"),
     # Activities
     path("activities/", views.ActivityListView.as_view(), name="activity-list"),
     path("activities/create/", views.ActivityCreateView.as_view(), name="activity-create"),

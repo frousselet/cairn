@@ -20,6 +20,24 @@ Représente un rôle au sein du dispositif GRC.
 | `created_at` | datetime | auto | Date de création |
 | `updated_at` | datetime | auto | Date de dernière modification |
 
+Les responsabilités se gèrent directement depuis la page de détail du rôle :
+ajout, modification et suppression via un tiroir (drawer) HTMX, la section se
+rafraîchissant sans rechargement de page. Les actions sont protégées par la
+permission `context.role.update`.
+
+Toute création, modification ou suppression d'une responsabilité **repasse le
+rôle à l'état initial (brouillon)** : l'approbation est réinitialisée, la version
+est incrémentée et la rétrogradation est tracée dans l'historique du rôle, afin
+qu'il soit revalidé. Ce comportement s'applique aussi bien depuis l'interface que
+via l'API REST (`Role.send_back_to_draft()`, source unique). Les rôles dans un
+état terminal (archivé / annulé) ne sont pas affectés.
+
+L'historique du rôle **fusionne l'historique de ses responsabilités** (chaque
+responsabilité possède son propre suivi `HistoricalRecords`) : ajout,
+modification et suppression d'une responsabilité apparaissent ainsi sur la
+chronologie du rôle. Une suppression affiche les valeurs de la responsabilité
+retirée et porte un libellé « Responsabilité ».
+
 ## Responsibility
 
 Sous-entité : responsabilité associée à un rôle.

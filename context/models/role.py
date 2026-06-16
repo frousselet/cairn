@@ -45,6 +45,30 @@ class Role(ScopedModel):
             return _("Mandatory role without assigned user")
         return ""
 
+    def send_back_to_draft(self):
+        """Demote the role to its initial (draft) state after a change.
+
+        Changing a role's responsibilities invalidates any prior review, so the
+        role must be re-validated. Terminal states (archived / cancelled) are
+        left untouched. The ``save()`` records the demotion in the role's
+        django-simple-history trail, so the change is visible in its history.
+        Single source of truth shared by the web views and the REST API.
+        """
+        try:
+            if self.get_lifecycle_state().is_terminal:
+                return
+        except Exception:
+            pass
+        draft_code = self.get_workflow().initial_state.code
+        if self.workflow_state == draft_code and not self.is_approved:
+            return  # already a plain draft, nothing to record
+        self.workflow_state = draft_code
+        self.is_approved = False
+        self.approved_by = None
+        self.approved_at = None
+        self.version = (self.version or 0) + 1
+        self.save()
+
 
 class Responsibility(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

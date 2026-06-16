@@ -2354,6 +2354,9 @@
       border-radius: var(--radius-sm);
       box-shadow: var(--shadow-lg);
       margin-top: .25rem;
+      /* Dropdown is appended to <body> (dropdownParent), so it must stack
+         above the Bootstrap modal (z-index 1055) when opened from a drawer. */
+      z-index: 1060;
     }
     .ts-dropdown .active {
       background: var(--accent-soft);
@@ -4295,6 +4298,7 @@
       document.querySelectorAll('select[name="tags"]:not(.tomselected)').forEach(function(el) {
         var ts = new TomSelect(el, {
           plugins: ['remove_button'],
+          dropdownParent: 'body',
           create: function(input, callback) {
             fetch('{% url "context:tag-create-inline" %}', {
               method: 'POST',
@@ -4368,6 +4372,7 @@
       maxOptions: 200,
       allowEmptyOption: true,
       searchField: ['text'],
+      dropdownParent: 'body',
       render: {
         option: function(data, escape) {
           return '<div style="padding:6px 10px;font-size:.85rem">' + escape(data.text) + '</div>';
@@ -4379,6 +4384,7 @@
       plugins: ['remove_button'],
       maxOptions: 200,
       searchField: ['text'],
+      dropdownParent: 'body',
       render: {
         option: function(data, escape) {
           return '<div style="padding:6px 10px;font-size:.85rem">' + escape(data.text) + '</div>';
