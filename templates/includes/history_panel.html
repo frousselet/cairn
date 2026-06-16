@@ -28,7 +28,16 @@
 </div>
 
 <style>
-  .history-panel { --bs-offcanvas-width: min(92vw, 460px); }
+  .history-panel {
+    --bs-offcanvas-width: min(92vw, 460px);
+    --bs-offcanvas-border-color: var(--border-light);
+    border-radius: 0;
+  }
+  /* The offcanvas receives focus on open; suppress the browser focus ring
+     (its left edge would otherwise show as a stray accent line). */
+  .history-panel:focus,
+  .history-panel:focus-visible { outline: none; }
+  .history-panel .offcanvas-header { border-top-left-radius: 0; border-top-right-radius: 0; }
   .history-event { margin-bottom: 1rem; }
   .history-event:last-child { margin-bottom: 0; }
   .history-meta {

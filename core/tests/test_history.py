@@ -89,6 +89,18 @@ def test_classify_approval_only_change():
     assert entry.approved is True
 
 
+def test_snapshot_renders_foreign_key_as_label_not_uuid():
+    """A creation snapshot shows the creator's name, not their raw UUID."""
+    user = UserFactory()
+    scope = ScopeFactory(created_by=user)
+    creation = scope.history.filter(history_type="+").first()
+    entry = build_entry(creation)
+    created_by = next((c for c in entry.snapshot if c.field_code == "created_by"), None)
+    assert created_by is not None
+    assert str(created_by.new) == str(user)
+    assert str(user.pk) not in str(created_by.new)
+
+
 def test_build_timeline_orders_desc_and_limits():
     scope = ScopeFactory()
     for i in range(5):

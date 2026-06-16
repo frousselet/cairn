@@ -192,13 +192,17 @@ def _state_label(model, code: str) -> str:
 
 
 def snapshot(record) -> tuple[FieldChange, ...]:
-    """Full field values of a creation / deletion record (as ``new``)."""
+    """Full field values of a creation / deletion record (as ``new``).
+
+    Uses the field name (not the attname) so foreign keys render the related
+    object's label (e.g. the creator's name) rather than its raw id.
+    """
     fields = []
     for f in record._meta.get_fields():
-        name = getattr(f, "attname", None) or f.name
-        if name in SNAPSHOT_EXCLUDED or name.startswith("history_"):
+        if not hasattr(f, "column"):  # skip reverse relations / M2M
             continue
-        if not hasattr(f, "column"):  # skip reverse relations
+        name = f.name
+        if name in SNAPSHOT_EXCLUDED or name.startswith("history_"):
             continue
         try:
             value = getattr(record, name)
@@ -206,7 +210,7 @@ def snapshot(record) -> tuple[FieldChange, ...]:
             continue
         if value in (None, ""):
             continue
-        fields.append(FieldChange(resolve_verbose_name(record, f.name), f.name, new=value))
+        fields.append(FieldChange(resolve_verbose_name(record, name), name, new=value))
     return tuple(fields)
 
 
