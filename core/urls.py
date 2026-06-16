@@ -54,6 +54,7 @@ urlpatterns = [
     path("api/v1/", include("mcp.urls")),
     path("config/", include("core.versioning_urls")),
     path("workflow/", include("core.workflow_urls")),
+    path("imports/", include("core.imports.urls")),
 ]
 
 if settings.DEBUG:

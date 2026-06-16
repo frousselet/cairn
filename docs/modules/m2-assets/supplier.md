@@ -118,6 +118,42 @@ Exigence-modèle attachée à un `SupplierType`. À la création d'un `Supplier`
 - `list_supplier_types` / `create_supplier_type` / `delete_supplier_type`
 - `list_supplier_type_requirements` / `create_supplier_type_requirement` / `delete_supplier_type_requirement`
 
+## Import CSV en masse
+
+Les fournisseurs sont le premier consommateur du socle d'import générique (`core/imports`, voir [le module Compliance](../m3-compliance/framework.md) pour le modèle d'origine). Un bouton **Import** au-dessus de la liste des fournisseurs ouvre, dans une modale, le téléversement d'un fichier CSV. Le flux est en trois temps : téléversement -> aperçu (lignes à créer, correspondances existantes, lignes en erreur) -> confirmation.
+
+**Gestion des doublons (par ligne, dans l'aperçu)** : une ligne dont le nom correspond exactement à un fournisseur existant est signalée et propose une case **Remplacer**. Cochée, le fournisseur existant est mis à jour avec les valeurs du CSV ; décochée, l'existant est conservé tel quel et la ligne est ignorée (pas de doublon). En cas de remplacement, la **date de création d'origine est préservée** (la colonne `created_at` du CSV est ignorée pour une mise à jour). Si un nom correspond à plusieurs fournisseurs existants, la ligne passe en erreur (ambiguïté à lever). Les nouvelles lignes créent un fournisseur avec une référence `SUPP-N` auto-générée.
+
+- **Permission** : `assets.supplier.create` (le téléchargement de l'exemple ne requiert que `assets.supplier.read`).
+- **URLs** : `/imports/supplier/` (formulaire), `/imports/supplier/preview/` (aperçu/confirmation), `/imports/supplier/sample/` (exemple CSV).
+- **Encodage** : `.csv` UTF-8 (BOM toléré), taille max 10 Mo.
+
+### Colonnes
+
+| Colonne | Obligatoire | Résolution / valeurs |
+|---|---|---|
+| `name` | oui | Texte |
+| `owner` | non | Utilisateur par e-mail ; vide -> utilisateur courant |
+| `type` | non | `SupplierType` par nom (doit exister) |
+| `criticality` | non | `low` / `medium` / `high` / `critical` (défaut `medium`) |
+| `status` | non | `active` / `under_evaluation` / `suspended` / `archived` (défaut `active`) |
+| `description` | non | Texte |
+| `contact_name` | non | Texte |
+| `contact_email` | non | E-mail valide |
+| `contact_phone` | non | Texte |
+| `website` | non | URL valide |
+| `address` | non | Texte |
+| `country` | non | Texte |
+| `contract_reference` | non | Texte |
+| `contract_start_date` | non | Date `AAAA-MM-JJ` |
+| `contract_end_date` | non | Date `AAAA-MM-JJ` |
+| `notes` | non | Texte |
+| `scopes` | non | Références ou noms de périmètres séparés par `;` (doivent exister) |
+| `tags` | non | Noms de tags séparés par `;` (créés s'ils n'existent pas) |
+| `created_at` | non | Date / date-heure de création d'origine (reprise depuis l'ancien outil) ; appliquée après création pour contourner `auto_now_add`, défaut « maintenant » |
+
+La création en masse est aussi disponible par programmation via l'outil MCP `batch_create_suppliers` et l'endpoint de lot `/api/v1/assets/suppliers/`.
+
 ## Permissions
 
 | Codename | Description |

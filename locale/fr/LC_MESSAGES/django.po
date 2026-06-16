@@ -10314,3 +10314,145 @@ msgstr "Dépendances de sites"
 
 msgid "Zoom controls"
 msgstr "Contrôles de zoom"
+
+# ── Bulk CSV import ──────────────────────────────────────
+
+msgid "suppliers"
+msgstr "fournisseurs"
+
+msgid "Import %(verbose_name_plural)s"
+msgstr "Importer les %(verbose_name_plural)s"
+
+msgid "Bulk import"
+msgstr "Import en masse"
+
+msgid "Sample template"
+msgstr "Modèle d'exemple"
+
+msgid "Download a pre-filled CSV sample to prepare your import."
+msgstr "Téléchargez un exemple CSV pré-rempli pour préparer votre import."
+
+msgid "CSV sample"
+msgstr "Exemple CSV"
+
+msgid "Columns"
+msgstr "Colonnes"
+
+msgid "Column"
+msgstr "Colonne"
+
+msgid "Required"
+msgstr "Requis"
+
+msgid "Allowed:"
+msgstr "Valeurs autorisées :"
+
+msgid "Rows that will be skipped"
+msgstr "Lignes ignorées"
+
+msgid "Rows to import"
+msgstr "Lignes à importer"
+
+msgid "Row"
+msgstr "Ligne"
+
+msgid "Errors"
+msgstr "Erreurs"
+
+msgid "CSV file"
+msgstr "Fichier CSV"
+
+msgid "UTF-8 encoded .csv file (max 10 MB)."
+msgstr "Fichier .csv encodé en UTF-8 (max 10 Mo)."
+
+msgid "Unsupported format. Please provide a .csv file."
+msgstr "Format non pris en charge. Veuillez fournir un fichier .csv."
+
+msgid "The file contains no data rows."
+msgstr "Le fichier ne contient aucune ligne de données."
+
+msgid "Missing required column(s): %(cols)s."
+msgstr "Colonne(s) obligatoire(s) manquante(s) : %(cols)s."
+
+msgid "Column \"%(col)s\" has no resolver."
+msgstr "La colonne « %(col)s » n'a pas de résolveur."
+
+msgid "Column \"%(col)s\" is required."
+msgstr "La colonne « %(col)s » est obligatoire."
+
+msgid "Column \"%(col)s\" must be a whole number (got \"%(val)s\")."
+msgstr "La colonne « %(col)s » doit être un nombre entier (reçu « %(val)s »)."
+
+msgid "Column \"%(col)s\" must be a date in YYYY-MM-DD format (got \"%(val)s\")."
+msgstr "La colonne « %(col)s » doit être une date au format AAAA-MM-JJ (reçu « %(val)s »)."
+
+msgid "Invalid value \"%(val)s\" for \"%(col)s\". Allowed: %(allowed)s."
+msgstr "Valeur « %(val)s » invalide pour « %(col)s ». Valeurs autorisées : %(allowed)s."
+
+msgid "Column \"%(col)s\" must be a valid email address (got \"%(val)s\")."
+msgstr "La colonne « %(col)s » doit être une adresse e-mail valide (reçu « %(val)s »)."
+
+msgid "Column \"%(col)s\" must be a valid URL (got \"%(val)s\")."
+msgstr "La colonne « %(col)s » doit être une URL valide (reçu « %(val)s »)."
+
+msgid "Row %(row)s: %(err)s"
+msgstr "Ligne %(row)s : %(err)s"
+
+msgid "The data could no longer be validated. Please upload the file again."
+msgstr "Les données n'ont pas pu être revalidées. Veuillez téléverser à nouveau le fichier."
+
+msgid "%(count)s %(name)s imported successfully."
+msgstr "%(count)s %(name)s importés avec succès."
+
+msgid "No user found with email \"%(email)s\"."
+msgstr "Aucun utilisateur trouvé avec l'e-mail « %(email)s »."
+
+msgid "No supplier type named \"%(name)s\". Create it first."
+msgstr "Aucun type de fournisseur nommé « %(name)s ». Créez-le d'abord."
+
+msgid "Several supplier types match \"%(name)s\"."
+msgstr "Plusieurs types de fournisseur correspondent à « %(name)s »."
+
+msgid "No scope matching reference or name \"%(token)s\"."
+msgstr "Aucun périmètre correspondant à la référence ou au nom « %(token)s »."
+
+msgid "Tag \"%(name)s\" will be created."
+msgstr "Le tag « %(name)s » sera créé."
+
+msgid "%(count)s row to import"
+msgid_plural "%(count)s rows to import"
+msgstr[0] "%(count)s ligne à importer"
+msgstr[1] "%(count)s lignes à importer"
+
+msgid "%(count)s row with errors (skipped)"
+msgid_plural "%(count)s rows with errors (skipped)"
+msgstr[0] "%(count)s ligne en erreur (ignorée)"
+msgstr[1] "%(count)s lignes en erreur (ignorées)"
+
+msgid "Column \"%(col)s\" must be a date or date-time in YYYY-MM-DD[ HH:MM] format (got \"%(val)s\")."
+msgstr "La colonne « %(col)s » doit être une date ou une date-heure au format AAAA-MM-JJ[ HH:MM] (reçu « %(val)s »)."
+
+msgid "Several existing records already match \"%(val)s\" on %(field)s; disambiguate before importing."
+msgstr "Plusieurs enregistrements existants correspondent déjà à « %(val)s » sur %(field)s ; levez l'ambiguïté avant l'import."
+
+msgid "Import complete: %(created)s created, %(updated)s updated, %(skipped)s skipped (%(name)s)."
+msgstr "Import terminé : %(created)s créés, %(updated)s mis à jour, %(skipped)s ignorés (%(name)s)."
+
+msgid "Some rows match an existing record. Tick \"Replace\" to overwrite it (the original creation date is kept); leave it unticked to keep the existing record unchanged."
+msgstr "Certaines lignes correspondent à un enregistrement existant. Cochez « Remplacer » pour l'écraser (la date de création d'origine est conservée) ; laissez décoché pour garder l'enregistrement existant inchangé."
+
+msgid "Replace %(label)s"
+msgstr "Remplacer %(label)s"
+
+msgid "%(count)s new row"
+msgid_plural "%(count)s new rows"
+msgstr[0] "%(count)s nouvelle ligne"
+msgstr[1] "%(count)s nouvelles lignes"
+
+msgid "%(count)s existing match"
+msgid_plural "%(count)s existing matches"
+msgstr[0] "%(count)s correspondance existante"
+msgstr[1] "%(count)s correspondances existantes"
+
+msgid "Replace all matches"
+msgstr "Tout remplacer"

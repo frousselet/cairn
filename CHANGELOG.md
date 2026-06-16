@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Generic CSV bulk import (suppliers first)**: a new reusable, entity-by-entity bulk-import framework (`core/imports`) modelled on the framework import. Each importable entity declares an `EntityImporter` with its column specification and registers it; the generic views, URLs (`/imports/<entity>/`), templates and sample-file generation then drive the same **upload -> preview -> confirm** wizard for every entity. **Suppliers** are the first consumer: an **Import** button above the supplier list opens a CSV upload in a modal, the file is validated row by row (type coercion, allowed values, FK/M2M resolution) and a preview lists the rows to import (flagging those that already exist) and the rows skipped with their errors before confirmation. Owners are resolved by email (blank falls back to the importing user), supplier types by name (must exist), scopes by reference or name (must exist) and tags by name (created on the fly). **Duplicate handling is decided per row in the preview**: a row whose exact name already matches an existing supplier shows a **Replace** checkbox, so for each match the user chooses to overwrite the existing supplier or keep it unchanged (a name matching several existing suppliers is reported as an ambiguous error). On replacement the supplier's **original creation date is preserved**. The importer can also carry over the **original creation date** of newly created suppliers from a legacy tool (a `created_at` column written via a post-save update so it is not overwritten by `auto_now_add`). A downloadable CSV sample with a per-column documentation panel is provided. Suppliers already expose programmatic bulk creation through the existing `batch_create_suppliers` MCP tool and the `/api/v1/assets/suppliers/` batch endpoint.
+
 ## [0.28.1] - 2026-06-16
 
 ### Changed

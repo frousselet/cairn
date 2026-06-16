@@ -7,6 +7,7 @@
 
 {% block content %}
 {% page_header _("Suppliers") eyebrow=_("Assets") accent="assets" %}
+  <button type="button" class="btn btn-outline-secondary" hx-get="{% url 'imports:import' entity='supplier' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-upload me-1" aria-hidden="true"></i>{% trans 'Import' %}</button>
   <button type="button" class="btn btn-primary" hx-get="{% url 'assets:supplier-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New supplier' %}</button>
 {% endpage_header %}
 {% help_modal "assets.supplier_list" %}

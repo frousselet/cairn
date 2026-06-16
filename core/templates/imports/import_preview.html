@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block title %}{% trans "Import preview" %} — Cairn{% endblock %}
+
+{% block content %}
+{% page_header _("Import preview") eyebrow=verbose_name_plural %}{% endpage_header %}
+
+{# ── Stats badges ─────────────────────────────────────── #}
+<div class="d-flex gap-2 mb-3 flex-wrap">
+  <span class="badge" style="background:var(--success-soft);color:var(--success);font-size:.8125rem;padding:.4em .8em">
+    <i class="bi bi-plus-circle me-1"></i>{% blocktrans count count=new_count %}{{ count }} new row{% plural %}{{ count }} new rows{% endblocktrans %}
+  </span>
+  {% if conflict_count %}
+  <span class="badge" style="background:var(--warning-soft);color:var(--warning);font-size:.8125rem;padding:.4em .8em">
+    <i class="bi bi-exclamation-circle me-1"></i>{% blocktrans count count=conflict_count %}{{ count }} existing match{% plural %}{{ count }} existing matches{% endblocktrans %}
+  </span>
+  {% endif %}
+  {% if error_count %}
+  <span class="badge" style="background:var(--danger-soft);color:var(--danger);font-size:.8125rem;padding:.4em .8em">
+    <i class="bi bi-x-circle me-1"></i>{% blocktrans count count=error_count %}{{ count }} row with errors (skipped){% plural %}{{ count }} rows with errors (skipped){% endblocktrans %}
+  </span>
+  {% endif %}
+</div>
+
+{% if conflict_count %}
+<div class="alert alert-info">
+  <div><i class="bi bi-info-circle me-1"></i>{% trans "Some rows match an existing record. Tick \"Replace\" to overwrite it (the original creation date is kept); leave it unticked to keep the existing record unchanged." %}</div>
+  <div class="form-check mt-2 mb-0">
+    <input class="form-check-input" type="checkbox" id="replace-all">
+    <label class="form-check-label fw-semibold" for="replace-all">
+      {% trans "Replace all matches" %}
+    </label>
+  </div>
+</div>
+{% endif %}
+
+{# ── Warnings ─────────────────────────────────────────── #}
+{% if warnings %}
+<div class="alert alert-warning">
+  <strong><i class="bi bi-exclamation-triangle me-1"></i>{% trans "Warnings:" %}</strong>
+  <ul class="mb-0 mt-1">
+    {% for w in warnings %}
+    <li>{{ w }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{# ── Rows in error ────────────────────────────────────── #}
+{% if error_rows %}
+<div class="card mb-3 border-danger">
+  <div class="card-header text-danger"><i class="bi bi-x-octagon me-1"></i>{% trans "Rows that will be skipped" %}</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm mb-0 small">
+        <thead>
+          <tr>
+            <th>{% trans "Row" %}</th>
+            {% for col in columns %}<th>{{ col }}</th>{% endfor %}
+            <th>{% trans "Errors" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in error_rows %}
+          <tr>
+            <td class="text-muted">{{ row.row_number }}</td>
+            {% for cell in row.cells %}<td>{{ cell }}</td>{% endfor %}
+            <td class="text-danger">
+              <ul class="mb-0 ps-3">
+                {% for msg in row.messages %}<li>{{ msg }}</li>{% endfor %}
+              </ul>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ── Valid rows + confirm (single form so checkboxes submit) ── #}
+<form method="post">
+  {% csrf_token %}
+  {% if valid_rows %}
+  <div class="card mb-3">
+    <div class="card-header">{% trans "Rows to import" %}</div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 small align-middle">
+          <thead>
+            <tr>
+              <th>{% trans "Row" %}</th>
+              <th>{% trans "Action" %}</th>
+              {% for col in columns %}<th>{{ col }}</th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in valid_rows %}
+            <tr>
+              <td class="text-muted">{{ row.row_number }}</td>
+              <td>
+                {% if row.conflict %}
+                <div class="form-check mb-0">
+                  <input class="form-check-input" type="checkbox" name="replace" value="{{ row.row_number }}" id="replace-{{ row.row_number }}">
+                  <label class="form-check-label text-warning" for="replace-{{ row.row_number }}">
+                    {% blocktrans with label=row.conflict.label %}Replace {{ label }}{% endblocktrans %}
+                  </label>
+                </div>
+                {% else %}
+                <span class="badge text-bg-light">{% trans "Create" %}</span>
+                {% endif %}
+              </td>
+              {% for cell in row.cells %}<td>{{ cell }}</td>{% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary" {% if not valid_count %}disabled{% endif %}>
+          <i class="bi bi-check-lg me-1"></i>{% trans "Confirm import" %}
+        </button>
+        <a href="{% url 'imports:import' entity=entity %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if conflict_count %}
+<script>
+  (function () {
+    const master = document.getElementById("replace-all");
+    if (!master) return;
+    const boxes = document.querySelectorAll('input[name="replace"]');
+    master.addEventListener("change", function () {
+      boxes.forEach(function (b) { b.checked = master.checked; });
+    });
+    // Keep the master in sync when individual rows change.
+    boxes.forEach(function (b) {
+      b.addEventListener("change", function () {
+        master.checked = Array.from(boxes).every(function (x) { return x.checked; });
+      });
+    });
+  })();
+</script>
+{% endif %}
+{% endblock %}

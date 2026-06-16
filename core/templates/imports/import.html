@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block title %}{% blocktrans %}Import {{ verbose_name_plural }}{% endblocktrans %} — Cairn{% endblock %}
+
+{% block content %}
+{% page_header verbose_name_plural eyebrow=_("Bulk import") %}{% endpage_header %}
+
+{% if form.non_field_errors %}
+<div class="alert alert-danger">
+  <strong>{% trans "Validation errors:" %}</strong>
+  <ul class="mb-0 mt-1">
+    {% for error in form.non_field_errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label for="{{ field.id_for_label }}" class="form-label">
+              {{ field.label }}{% if field.field.required %} *{% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+            {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+          </div>
+          {% endfor %}
+          <div class="d-flex gap-2 mt-4 pt-3" style="border-top:1px solid var(--border-light)">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i>{% trans "Analyze" %}</button>
+            <a href="{{ list_url }}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-download me-1"></i>{% trans "Sample template" %}</div>
+      <div class="card-body">
+        <p class="small text-muted">{% trans "Download a pre-filled CSV sample to prepare your import." %}</p>
+        <a href="{{ sample_url }}" hx-boost="false" download class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-filetype-csv me-1"></i>{% trans "CSV sample" %}
+        </a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><i class="bi bi-info-circle me-1"></i>{% trans "Columns" %}</div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0 small">
+            <thead>
+              <tr>
+                <th>{% trans "Column" %}</th>
+                <th>{% trans "Required" %}</th>
+                <th>{% trans "Notes" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for col in column_docs %}
+              <tr>
+                <td><code>{{ col.name }}</code></td>
+                <td>{% if col.required %}<i class="bi bi-check-lg text-success"></i>{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                <td>
+                  {{ col.help }}
+                  {% if col.allowed %}<div class="text-muted">{% trans "Allowed:" %} {{ col.allowed }}</div>{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
