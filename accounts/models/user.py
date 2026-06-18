@@ -94,6 +94,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         help_text=_("Per-view sort preferences: {view_key: {sort, order}}."),
     )
+    collapsed_sections = models.JSONField(
+        _("Collapsed sections"),
+        default=list,
+        blank=True,
+        help_text=_("Keys of collapsible UI sections the user has collapsed (e.g. the dashboard's Today's actions card)."),
+    )
     last_seen_version = models.CharField(
         _("Last seen version"),
         max_length=20,

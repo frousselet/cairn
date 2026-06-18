@@ -46,19 +46,29 @@
   }
   .upcoming-toggle:hover { text-decoration:underline; color:var(--accent-hover); }
 
+  /* Segmented data bar: one rounded track, hairline-separated segments (design system) */
   .fw-bar .progress {
-    height: .75rem;
-    border-radius: 100px;
+    height: 10px;
+    border-radius: 5px;
+    background: var(--surface-subtle);
+    overflow: hidden;
   }
   .fw-bar .progress-bar {
     font-size: .625rem;
     font-weight: 600;
-    border-radius: 100px;
   }
-  .risk-matrix-cell { position: relative; height: 60px; min-width: 60px; transition: transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s; cursor: default; border: 2px solid var(--surface-raised) !important; border-radius: var(--radius-xs, .375rem); }
-  .risk-matrix-cell:hover { transform: scale(1.06); z-index: 1; box-shadow: var(--shadow-md); }
-  .risk-matrix-count { display: block; font-size: 1.25rem; font-weight: 700; line-height: 1.2; font-variant-numeric:tabular-nums; }
-  .risk-matrix-level-name { display: block; font-size: .625rem; opacity: .75; font-weight:500; }
+  .fw-bar .progress-bar + .progress-bar {
+    border-left: 1.5px solid var(--surface-raised);
+  }
+  /* Align rows across the two dashboard panels: one fixed-height header line
+     (icon or not) and single-line names that truncate instead of wrapping. */
+  .fw-bar__head { min-height: 1.5rem; }
+  .fw-bar__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
   /* ── Mobile responsiveness ─────────────────────── */
   @media (max-width: 767.98px) {
@@ -80,25 +90,24 @@
 
 {% block content %}
 {% if company.name %}
-{% page_header company.name eyebrow=_("Dashboard") accent="dashboard" logo=company.logo_128|default:company.logo %}
+{% page_header company.name accent="dashboard" logo=company.logo_128|default:company.logo %}
+  {% include "includes/dashboard_header_actions.html" %}
 {% endpage_header %}
 {% else %}
-{% page_header _("Dashboard") eyebrow=_("Today") accent="dashboard" %}
+{% page_header _("Dashboard") accent="dashboard" %}
+  {% include "includes/dashboard_header_actions.html" %}
 {% endpage_header %}
 {% endif %}
 {% help_modal "home" %}
 
 {# ── Today's actions ────────────────────────────────────── #}
 {% if today_action_groups or calendar_items %}
-<div class="card today-actions mb-4">
+<div class="card today-actions mb-4{% if today_actions_collapsed %} d-none{% endif %}" id="todayActionsPanel">
   <div class="card-body">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-      <div class="d-flex align-items-center gap-2">
-        <span class="today-actions__badge-icon" aria-hidden="true"><i class="bi bi-list-check"></i></span>
-        <h2 class="today-actions__title mb-0">{% trans "Today's actions" %}</h2>
-        {% if today_action_count %}<span class="today-actions__count tabular-nums">{{ today_action_count }}</span>{% endif %}
-      </div>
-      {% if today_action_count %}<span class="today-actions__hint">{% blocktrans count count=today_action_count %}{{ count }} item needs your attention.{% plural %}{{ count }} items need your attention.{% endblocktrans %}</span>{% endif %}
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span class="today-actions__badge-icon" aria-hidden="true"><i class="bi bi-list-check"></i></span>
+      <h2 class="today-actions__title mb-0">{% trans "Today's actions" %}</h2>
+      {% if today_action_count %}<span class="today-actions__count tabular-nums">{{ today_action_count }}</span>{% endif %}
     </div>
     {% if today_action_groups %}
     <div class="row g-3">
@@ -398,7 +407,10 @@ window.initSparklines = function(root) {
       return x.toFixed(1) + ',' + y.toFixed(1);
     });
 
-    var color = isCritical ? '#DC2626' : trend === 'up' ? '#16A34A' : trend === 'down' ? '#DC2626' : '#1E3A8A';
+    // Neutral sparklines (no up/down trend, not critical) use the app accent
+    // colour, which follows a custom accent / the active theme.
+    var accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#1E3A8A';
+    var color = isCritical ? '#DC2626' : trend === 'up' ? '#16A34A' : trend === 'down' ? '#DC2626' : accent;
 
     var uid = 'sp' + Math.random().toString(36).substr(2, 6);
     var line = 'M' + points.join(' L');
@@ -440,25 +452,28 @@ window.initSparklines = function(root) {
 {% include "includes/dashboard_indicators.html" %}
 </div>
 
-{# ── Bars per framework ────────────────────────────────── #}
-{% if active_frameworks %}
-<div class="card mb-4">
+{# ── Compliance by framework + active objectives (side by side) ── #}
+{% if active_frameworks or active_objectives %}
+<div class="row g-4 mb-4">
+  {% if active_frameworks %}
+  <div class="{% if active_objectives %}col-lg-6{% else %}col-12{% endif %}">
+  <div class="card h-100">
   <div class="card-body">
     <h5 class="card-title mb-3"><i class="bi bi-journal-bookmark me-1" style="color:var(--accent)"></i> {% trans "Compliance by framework" %}</h5>
     {% for fw in active_frameworks %}
     <div class="fw-bar mb-3">
-      <div class="d-flex justify-content-between align-items-center mb-1">
-        <div class="d-flex align-items-center gap-2">
-          {% if fw.logo %}<img src="{{ fw.logo_32|default:fw.logo }}" alt="" style="width:20px;height:20px;object-fit:cover;border-radius:3px;background:#fff;border:1px solid var(--border-light)">{% else %}<span class="d-inline-flex align-items-center justify-content-center" style="width:20px;min-width:20px;height:20px;min-height:20px;border-radius:3px;background:var(--accent-soft);color:var(--accent);font-size:.65rem;border:1px solid var(--border-light)"><i class="bi bi-journal-bookmark"></i></span>{% endif %}
-          <a href="{% url 'compliance:framework-detail' fw.pk %}" class="fw-semibold text-decoration-none" style="color:var(--text-primary);font-size:.8125rem">{{ fw.short_name|default:fw.name }}</a>
-          <small class="ms-2" style="color:var(--text-muted);font-size:.75rem">{% blocktrans with count=fw.req_count %}{{ count }} requirement{{ count|pluralize:"s" }}{% endblocktrans %}</small>
+      <div class="d-flex justify-content-between align-items-center gap-2 mb-1 fw-bar__head">
+        <div class="d-flex align-items-center gap-2" style="min-width:0">
+          {% if fw.logo %}<img src="{{ fw.logo_32|default:fw.logo }}" alt="" style="width:20px;height:20px;object-fit:cover;border-radius:3px;background:#fff;border:1px solid var(--border-light);flex-shrink:0">{% else %}<span class="d-inline-flex align-items-center justify-content-center" style="width:20px;min-width:20px;height:20px;min-height:20px;border-radius:3px;background:var(--accent-soft);color:var(--accent);font-size:.65rem;border:1px solid var(--border-light);flex-shrink:0"><i class="bi bi-journal-bookmark"></i></span>{% endif %}
+          <a href="{% url 'compliance:framework-detail' fw.pk %}" class="fw-semibold text-decoration-none fw-bar__name" style="color:var(--text-primary);font-size:.8125rem" title="{{ fw.short_name|default:fw.name }}">{{ fw.short_name|default:fw.name }}</a>
+          <small style="color:var(--text-muted);font-size:.75rem;white-space:nowrap;flex-shrink:0">{% blocktrans with count=fw.req_count %}{{ count }} requirement{{ count|pluralize:"s" }}{% endblocktrans %}</small>
           {% grouped_scope_badges fw.scopes.all %}
         </div>
-        <span class="fw-semibold tabular-nums" style="font-size:.8125rem;color:var(--text-primary)">
+        <span class="fw-semibold tabular-nums" style="font-size:.8125rem;color:var(--text-primary);flex-shrink:0">
           {{ fw.computed_compliance|default:0 }}%
         </span>
       </div>
-      <div class="progress" style="height:8px">
+      <div class="progress">
         {% if fw.seg_compliant %}<div class="progress-bar bg-success" role="progressbar" style="width:{{ fw.seg_compliant }}%" title="{% trans 'Compliant' %}"></div>{% endif %}
         {% if fw.seg_partial %}<div class="progress-bar" role="progressbar" style="width:{{ fw.seg_partial }}%;background-color:#fd7e14" title="{% trans 'Partial compliance' %}"></div>{% endif %}
         {% if fw.seg_non_compliant %}<div class="progress-bar bg-danger" role="progressbar" style="width:{{ fw.seg_non_compliant }}%" title="{% trans 'Major non-conformity' %}"></div>{% endif %}
@@ -475,29 +490,29 @@ window.initSparklines = function(root) {
       <span><span class="d-inline-block rounded-1 me-1" style="width:10px;height:10px;background:var(--bs-secondary);vertical-align:middle"></span>{% trans "Not assessed" %}</span>
     </div>
   </div>
-</div>
-{% endif %}
-
-{# ── Active objectives progression ───────────────────────── #}
-{% if active_objectives %}
-<div class="card mb-4">
+  </div>
+  </div>
+  {% endif %}
+  {% if active_objectives %}
+  <div class="{% if active_frameworks %}col-lg-6{% else %}col-12{% endif %}">
+  <div class="card h-100">
   <div class="card-body">
     <h5 class="card-title mb-3"><i class="bi bi-trophy me-1" style="color:var(--accent)"></i> {% trans "Active objectives progression" %}</h5>
     {% for obj in active_objectives %}
     <div class="fw-bar mb-3">
-      <div class="d-flex justify-content-between align-items-center mb-1">
-        <div>
-          <a href="{% url 'context:objective-detail' obj.pk %}" class="fw-semibold text-decoration-none" style="color:var(--text-primary);font-size:.8125rem">{{ obj.name }}</a>
+      <div class="d-flex justify-content-between align-items-center gap-2 mb-1 fw-bar__head">
+        <div class="d-flex align-items-center gap-2" style="min-width:0">
+          <a href="{% url 'context:objective-detail' obj.pk %}" class="fw-semibold text-decoration-none fw-bar__name" style="color:var(--text-primary);font-size:.8125rem" title="{{ obj.name }}">{{ obj.name }}</a>
           {% if obj.target_date %}
-          <small class="ms-2" style="color:var(--text-muted);font-size:.75rem">{% trans "Target:" %} {{ obj.target_date }}</small>
+          <small style="color:var(--text-muted);font-size:.75rem;white-space:nowrap;flex-shrink:0">{% trans "Target:" %} {{ obj.target_date }}</small>
           {% endif %}
           {% grouped_scope_badges obj.scopes.all %}
         </div>
-        <span class="fw-semibold tabular-nums" style="font-size:.8125rem;{% if obj.progress_percentage >= 80 %}color:var(--success){% elif obj.progress_percentage >= 50 %}color:var(--warning){% else %}color:var(--danger){% endif %}">
+        <span class="fw-semibold tabular-nums" style="font-size:.8125rem;flex-shrink:0;{% if obj.progress_percentage >= 80 %}color:var(--success){% elif obj.progress_percentage >= 50 %}color:var(--warning){% else %}color:var(--danger){% endif %}">
           {{ obj.progress_percentage|default:0 }}%
         </span>
       </div>
-      <div class="progress" style="height:8px">
+      <div class="progress">
         <div class="progress-bar bg-{% if obj.progress_percentage >= 80 %}success{% elif obj.progress_percentage >= 50 %}warning{% else %}danger{% endif %}"
              role="progressbar"
              style="width: {{ obj.progress_percentage|default:0 }}%"
@@ -508,364 +523,55 @@ window.initSparklines = function(root) {
     </div>
     {% endfor %}
   </div>
+  </div>
+  </div>
+  {% endif %}
 </div>
 {% endif %}
 
-{# ── Governance ───────────────────────────────────────────── #}
-<div class="section-header">
-  <span class="section-header-icon" style="background:var(--accent-soft);color:var(--accent)"><i class="bi bi-diagram-3"></i></span>
-  <h2 class="mb-0">{% trans "Governance" %}</h2>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon accent"><i class="bi bi-bullseye"></i></div>
-      <div class="stat-card-label">{% trans "Scopes" %}</div>
-      <div class="stat-card-value" data-ws-field="scope_count">{{ scope_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'context:scope-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon info"><i class="bi bi-flag"></i></div>
-      <div class="stat-card-label">{% trans "Issues" %}</div>
-      <div class="stat-card-value" data-ws-field="issue_count">{{ issue_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'context:issue-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon success"><i class="bi bi-people"></i></div>
-      <div class="stat-card-label">{% trans "Stakeholders" %}</div>
-      <div class="stat-card-value" data-ws-field="stakeholder_count">{{ stakeholder_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'context:stakeholder-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon warning"><i class="bi bi-trophy"></i></div>
-      <div class="stat-card-label">{% trans "Objectives" %}</div>
-      <div class="stat-card-value" data-ws-field="objective_count">{{ objective_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'context:objective-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon accent"><i class="bi bi-person-badge"></i></div>
-      <div class="stat-card-label">{% trans "Roles" %}</div>
-      <div class="stat-card-value" data-ws-field="role_count">{{ role_count }}</div>
-      {% if mandatory_roles_no_user %}
-      <span class="badge text-bg-danger mt-2" style="font-size:.6875rem">{% blocktrans with count=mandatory_roles_no_user %}{{ count }} mandatory role(s) with no user{% endblocktrans %}</span>
-      {% endif %}
-      <div class="stat-card-footer"><a href="{% url 'context:role-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon info"><i class="bi bi-building"></i></div>
-      <div class="stat-card-label">{% trans "Sites" %}</div>
-      <div class="stat-card-value" data-ws-field="site_count">{{ site_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'assets:site-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon danger"><i class="bi bi-grid-3x3-gap"></i></div>
-      <div class="stat-card-label">{% trans "SWOT analyses" %}</div>
-      <div class="stat-card-value" data-ws-field="swot_count">{{ swot_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'context:swot-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon success"><i class="bi bi-activity"></i></div>
-      <div class="stat-card-label">{% trans "Activities" %}</div>
-      <div class="stat-card-value" data-ws-field="activity_count">{{ activity_count }}</div>
-      {% if critical_activities_no_owner %}
-      <span class="badge text-bg-danger mt-2" style="font-size:.6875rem">{% blocktrans with count=critical_activities_no_owner %}{{ count }} critical without owner{% endblocktrans %}</span>
-      {% endif %}
-      <div class="stat-card-footer"><a href="{% url 'context:activity-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-md-12">
-    <div class="stat-card">
-      <div class="stat-card-icon accent"><i class="bi bi-bullseye"></i></div>
-      <div class="stat-card-label">{% trans "Active scopes" %}</div>
-      <div class="mt-2">
-        {% grouped_scope_badges active_scopes %}
-        {% if not active_scopes %}
-        <span style="color:var(--text-muted);font-size:.85rem">{% trans "No active scope" %}</span>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
-
-<hr class="section-divider">
-
-{# ── Assets ────────────────────────────────────────────────── #}
-<div class="section-header">
-  <span class="section-header-icon" style="background:var(--info-soft);color:var(--info)"><i class="bi bi-box-seam"></i></span>
-  <h2 class="mb-0">{% trans "Assets" %}</h2>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon accent"><i class="bi bi-gem"></i></div>
-      <div class="stat-card-label">{% trans "Essential assets" %}</div>
-      <div class="stat-card-value" data-ws-field="essential_count">{{ essential_count }}</div>
-      {% if personal_data_count %}
-      <span class="badge mt-2" style="background:var(--warning-soft);color:var(--warning);font-size:.6875rem">{% blocktrans with count=personal_data_count %}{{ count }} with personal data{% endblocktrans %}</span>
-      {% endif %}
-      <div class="stat-card-footer"><a href="{% url 'assets:essential-asset-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon info"><i class="bi bi-hdd-stack"></i></div>
-      <div class="stat-card-label">{% trans "Support assets" %}</div>
-      <div class="stat-card-value" data-ws-field="support_count">{{ support_count }}</div>
-      {% if eol_count %}
-      <span class="badge mt-2" style="background:var(--danger-soft);color:var(--danger);font-size:.6875rem">{% blocktrans with count=eol_count %}{{ count }} past end of life{% endblocktrans %}</span>
-      {% endif %}
-      <div class="stat-card-footer"><a href="{% url 'assets:support-asset-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon success"><i class="bi bi-share"></i></div>
-      <div class="stat-card-label">{% trans "Dependencies" %}</div>
-      <div class="stat-card-value" data-ws-field="dependency_count">{{ dependency_count }}</div>
-      {% if spof_count %}
-      <span class="badge mt-2" style="background:var(--warning-soft);color:var(--warning);font-size:.6875rem">{{ spof_count }} SPOF</span>
-      {% endif %}
-      <div class="stat-card-footer"><a href="{% url 'assets:dependency-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon warning"><i class="bi bi-truck"></i></div>
-      <div class="stat-card-label">{% trans "Suppliers" %}</div>
-      <div class="stat-card-value" data-ws-field="supplier_count">{{ supplier_count }}</div>
-      {% if expired_contract_count %}
-      <span class="badge mt-2" style="background:var(--danger-soft);color:var(--danger);font-size:.6875rem">{% blocktrans with count=expired_contract_count %}{{ count }} expired contract(s){% endblocktrans %}</span>
-      {% endif %}
-      <div class="stat-card-footer"><a href="{% url 'assets:supplier-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-lg-4 col-md-4 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon info"><i class="bi bi-diagram-2"></i></div>
-      <div class="stat-card-label">{% trans "Supplier dependencies" %}</div>
-      <div class="stat-card-value" data-ws-field="supplier_dep_count">{{ supplier_dep_count }}</div>
-      {% if supplier_spof_count %}
-      <span class="badge mt-2" style="background:var(--warning-soft);color:var(--warning);font-size:.6875rem">{{ supplier_spof_count }} SPOF</span>
-      {% endif %}
-      <div class="stat-card-footer"><a href="{% url 'assets:supplier-dependency-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-4 col-md-4 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon warning"><i class="bi bi-tags"></i></div>
-      <div class="stat-card-label">{% trans "Supplier types" %}</div>
-      <div class="stat-card-value" data-ws-field="supplier_type_count">{{ supplier_type_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'assets:supplier-type-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-4 col-md-4 col-sm-12">
-    <div class="stat-card">
-      <div class="stat-card-icon accent"><i class="bi bi-collection"></i></div>
-      <div class="stat-card-label">{% trans "Asset groups" %}</div>
-      <div class="stat-card-value" data-ws-field="group_count">{{ group_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'assets:group-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-</div>
-
-<hr class="section-divider">
-
-{# ── Risk management ──────────────────────────────────── #}
-<div class="section-header">
-  <span class="section-header-icon" style="background:var(--danger-soft);color:var(--danger)"><i class="bi bi-shield-exclamation"></i></span>
-  <h2 class="mb-0">{% trans "Risk management" %}</h2>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon accent"><i class="bi bi-clipboard-data"></i></div>
-      <div class="stat-card-label">{% trans "Assessments" %}</div>
-      <div class="stat-card-value" data-ws-field="risk_assessment_count">{{ risk_assessment_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'risks:assessment-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon danger"><i class="bi bi-exclamation-diamond"></i></div>
-      <div class="stat-card-label">{% trans "Risks" %}</div>
-      <div class="stat-card-value" data-ws-field="risk_count">{{ risk_count }}</div>
-      {% if critical_risk_count %}
-      <span class="badge mt-2" style="background:var(--danger-soft);color:var(--danger);font-size:.6875rem">{% blocktrans with count=critical_risk_count %}{{ count }} critical{% endblocktrans %}</span>
-      {% endif %}
-      <div class="stat-card-footer"><a href="{% url 'risks:risk-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon warning"><i class="bi bi-tools"></i></div>
-      <div class="stat-card-label">{% trans "Treatment plans" %}</div>
-      <div class="stat-card-value" data-ws-field="treatment_plan_count">{{ treatment_plan_count }}</div>
-      {% if treatment_in_progress_count %}
-      <span class="badge mt-2" style="background:var(--warning-soft);color:var(--warning);font-size:.6875rem">{% blocktrans with count=treatment_in_progress_count %}{{ count }} in progress{% endblocktrans %}</span>
-      {% endif %}
-      <div class="stat-card-footer"><a href="{% url 'risks:treatment-plan-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon success"><i class="bi bi-check2-circle"></i></div>
-      <div class="stat-card-label">{% trans "Acceptances" %}</div>
-      <div class="stat-card-value" data-ws-field="acceptance_count">{{ acceptance_count }}</div>
-      {% if expiring_acceptance_count %}
-      <span class="badge mt-2" style="background:var(--warning-soft);color:var(--warning);font-size:.6875rem">{% blocktrans with count=expiring_acceptance_count %}{{ count }} expiring soon{% endblocktrans %}</span>
-      {% endif %}
-      <div class="stat-card-footer"><a href="{% url 'risks:acceptance-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-lg-6 col-md-6 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon info"><i class="bi bi-bug"></i></div>
-      <div class="stat-card-label">{% trans "Threats" %}</div>
-      <div class="stat-card-value" data-ws-field="threat_count">{{ threat_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'risks:threat-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-6 col-md-6 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon warning"><i class="bi bi-shield-slash"></i></div>
-      <div class="stat-card-label">{% trans "Vulnerabilities" %}</div>
-      <div class="stat-card-value" data-ws-field="vulnerability_count">{{ vulnerability_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'risks:vulnerability-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-</div>
-
 {# ── Risk treatment flow (current → residual) ───────── #}
 {% if risk_treatment_flow %}
-<div class="d-flex align-items-center mb-3 flex-wrap gap-2">
-  <h5 class="mb-0"><i class="bi bi-diagram-3 me-1" style="color:var(--accent)"></i> {% trans "Risk treatment flow" %}</h5>
-  <span class="text-muted" style="font-size:.8125rem">{% trans "How treatment moves risks from their current level (before treatment) to their residual level (after treatment)" %}</span>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-12">
-    <div class="card">
-      <div class="card-body">
-        {{ risk_treatment_flow|json_script:"risk-flow-data" }}
-        <div id="risk-treatment-flow" role="img"
-             aria-label="{% trans 'Sankey diagram of risk treatment flow from current to residual level' %}"
-             style="width:100%;height:360px"></div>
-      </div>
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+      <h5 class="card-title mb-0"><i class="bi bi-diagram-3 me-1" style="color:var(--accent)"></i> {% trans "Risk treatment flow" %}</h5>
+      <span class="text-muted small">{% trans "How treatment moves risks from their current level (before treatment) to their residual level (after treatment)" %}</span>
     </div>
+    {{ risk_treatment_flow|json_script:"risk-flow-data" }}
+    <div id="risk-treatment-flow" role="img"
+         aria-label="{% trans 'Sankey diagram of risk treatment flow from current to residual level' %}"
+         style="width:100%;height:360px"></div>
   </div>
 </div>
 {% endif %}
 
 {# ── Risk matrices ─────────────────────────────────── #}
 {% if matrix_current or matrix_residual %}
-<div class="d-flex align-items-center mb-3 flex-wrap gap-2">
-  <h5 class="mb-0"><i class="bi bi-grid-3x3 me-1" style="color:var(--accent)"></i> {% trans "Risk matrices" %}</h5>
-  {% if matrix_criteria %}
-  <a href="{% url 'risks:criteria-update' matrix_criteria.pk %}" class="btn btn-outline-secondary btn-sm ms-lg-3" title="{% trans "Configure scales" %}"><i class="bi bi-gear me-1"></i>{% trans "Configure" %}</a>
-  {% endif %}
-</div>
-<div class="row g-3 mb-4">
-  {% if matrix_current %}
-  <div class="col-lg-6 col-md-12">
-    <div class="card h-100">
-      <div class="card-body" style="overflow-x:auto">
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+      <h5 class="card-title mb-0"><i class="bi bi-grid-3x3 me-1" style="color:var(--accent)"></i> {% trans "Risk matrices" %}</h5>
+      {% if matrix_criteria %}
+      <a href="{% url 'risks:criteria-update' matrix_criteria.pk %}" class="btn btn-outline-secondary btn-sm" title="{% trans "Configure scales" %}"><i class="bi bi-gear me-1"></i>{% trans "Configure" %}</a>
+      {% endif %}
+    </div>
+    <div class="row g-4">
+      {% if matrix_current %}
+      <div class="col-lg-6 col-md-12" style="overflow-x:auto">
         {% trans "Current risks (before treatment)" as current_risks_title %}
         {% include "risks/includes/risk_matrix.html" with matrix=matrix_current title=current_risks_title %}
       </div>
-    </div>
-  </div>
-  {% endif %}
-  {% if matrix_residual %}
-  <div class="col-lg-6 col-md-12">
-    <div class="card h-100">
-      <div class="card-body" style="overflow-x:auto">
+      {% endif %}
+      {% if matrix_residual %}
+      <div class="col-lg-6 col-md-12" style="overflow-x:auto">
         {% trans "Residual risks (after treatment)" as residual_risks_title %}
         {% include "risks/includes/risk_matrix.html" with matrix=matrix_residual title=residual_risks_title %}
       </div>
+      {% endif %}
     </div>
   </div>
-  {% endif %}
 </div>
 {% endif %}
-
-<hr class="section-divider">
-
-{# ── Compliance — KPIs ─────────────────────────────────────── #}
-<div class="section-header">
-  <span class="section-header-icon" style="background:var(--success-soft);color:var(--success)"><i class="bi bi-journal-bookmark"></i></span>
-  <h2 class="mb-0">{% trans "Compliance" %}</h2>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon accent"><i class="bi bi-journal-bookmark"></i></div>
-      <div class="stat-card-label">{% trans "Frameworks" %}</div>
-      <div class="stat-card-value" data-ws-field="framework_count">{{ framework_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'compliance:framework-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon info"><i class="bi bi-list-check"></i></div>
-      <div class="stat-card-label">{% trans "Requirements" %}</div>
-      <div class="stat-card-value" data-ws-field="requirement_count">{{ requirement_count }}</div>
-      {% if non_compliant_count %}
-      <span class="badge mt-2" style="background:var(--danger-soft);color:var(--danger);font-size:.6875rem">{% blocktrans with count=non_compliant_count %}{{ count }} non-compliant{% endblocktrans %}</span>
-      {% endif %}
-      <div class="stat-card-footer"><a href="{% url 'compliance:requirement-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon success"><i class="bi bi-clipboard-check"></i></div>
-      <div class="stat-card-label">{% trans "Audits & compliance" %}</div>
-      <div class="stat-card-value" data-ws-field="assessment_count">{{ assessment_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'compliance:assessment-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-3 col-sm-6 col-6">
-    <div class="stat-card">
-      <div class="stat-card-icon warning"><i class="bi bi-kanban"></i></div>
-      <div class="stat-card-label">{% trans "Action plans" %}</div>
-      <div class="stat-card-value" data-ws-field="action_plan_count">{{ action_plan_count }}</div>
-      {% if overdue_plan_count %}
-      <span class="badge mt-2" style="background:var(--danger-soft);color:var(--danger);font-size:.6875rem">{% blocktrans with count=overdue_plan_count %}{{ count }} overdue{% endblocktrans %}</span>
-      {% endif %}
-      <div class="stat-card-footer"><a href="{% url 'compliance:action-plan-kanban' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-md-6 col-sm-12">
-    <div class="stat-card">
-      <div class="stat-card-icon accent"><i class="bi bi-arrow-left-right"></i></div>
-      <div class="stat-card-label">{% trans "Inter-framework mappings" %}</div>
-      <div class="stat-card-value" data-ws-field="mapping_count">{{ mapping_count }}</div>
-      <div class="stat-card-footer"><a href="{% url 'compliance:mapping-list' %}" class="stat-card-link">{% trans "View all" %}</a></div>
-    </div>
-  </div>
-</div>
 
 {# ── Changelog popup ──────────────────────────────────── #}
 {% if changelog_entries %}
@@ -931,8 +637,27 @@ window.initSparklines = function(root) {
       .getPropertyValue('--text-secondary').trim() || '#475569';
   }
 
+  function shade(hex, amt) {
+    // amt < 0 darkens toward black, amt > 0 lightens toward white.
+    var m = /^#?([0-9a-fA-F]{6})$/.exec(hex || '');
+    if (!m) return hex;
+    var n = parseInt(m[1], 16);
+    var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    var t = amt < 0 ? 0 : 255, p = Math.abs(amt);
+    return 'rgb(' + Math.round((t - r) * p + r) + ',' +
+                    Math.round((t - g) * p + g) + ',' +
+                    Math.round((t - b) * p + b) + ')';
+  }
+
   function render() {
     var color = textColor();
+    var dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    // Tint each node label with its own severity colour, darkened on light
+    // backgrounds / lightened on dark ones so it stands out and stays legible.
+    flow.nodes.forEach(function(n) {
+      var base = (n.itemStyle && n.itemStyle.color) || color;
+      n.label = Object.assign({}, n.label, {color: shade(base, dark ? 0.45 : -0.35)});
+    });
     chart.setOption({
       tooltip: {
         trigger: 'item',
@@ -948,8 +673,8 @@ window.initSparklines = function(root) {
       },
       series: [{
         type: 'sankey',
-        left: '8%',
-        right: '8%',
+        left: 0,
+        right: 0,
         top: 20,
         bottom: 20,
         nodeGap: 14,
@@ -963,6 +688,7 @@ window.initSparklines = function(root) {
           color: color,
           fontFamily: 'Inter, sans-serif',
           fontSize: 12,
+          fontWeight: 600,
           formatter: function(p) { return p.data.displayName; }
         },
         lineStyle: {color: 'gradient', opacity: 0.45, curveness: 0.5},
@@ -992,7 +718,8 @@ window.initSparklines = function(root) {
     dismissed = true;
     fetch('{% url "changelog-dismiss" %}', {
       method: 'POST',
-      headers: {'X-CSRFToken': getCsrfToken()}
+      credentials: 'same-origin',
+      headers: {'X-CSRFToken': '{{ csrf_token }}'}
     });
   }
   var modal = new bootstrap.Modal(document.getElementById('changelogModal'));
@@ -1218,6 +945,36 @@ window.initSparklines = function(root) {
   // Clean up on page unload
   window.addEventListener('beforeunload', function() {
     if (ws) ws.close();
+  });
+})();
+</script>
+
+{# ── Show / hide the "Today's actions" panel from the page header (per user) ── #}
+{% trans "Show today's actions" as ta_show %}
+{% trans "Hide today's actions" as ta_hide %}
+<script>
+(function() {
+  var btn = document.getElementById('toggleTodayActions');
+  var panel = document.getElementById('todayActionsPanel');
+  if (!btn || !panel) return;
+  var labels = { show: "{{ ta_show|escapejs }}", hide: "{{ ta_hide|escapejs }}" };
+  var icon = btn.querySelector('.bi');
+  var label = btn.querySelector('span');
+  function apply(collapsed) {
+    panel.classList.toggle('d-none', collapsed);
+    btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    if (icon) icon.className = 'bi ' + (collapsed ? 'bi-list-check' : 'bi-eye-slash');
+    if (label) label.textContent = collapsed ? labels.show : labels.hide;
+  }
+  btn.addEventListener('click', function() {
+    var collapsed = !panel.classList.contains('d-none');
+    apply(collapsed);
+    fetch('{% url "dashboard-section-toggle" %}', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ section: 'today_actions', collapsed: collapsed })
+    }).catch(function() {});
   });
 })();
 </script>

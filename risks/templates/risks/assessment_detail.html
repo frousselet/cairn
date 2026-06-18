@@ -7,16 +7,19 @@
 
 {% block extra_css %}
 <style>
-  .risk-matrix-cell { position: relative; height: 60px; min-width: 60px; transition: transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s; cursor: default; border: 2px solid var(--surface-raised) !important; border-radius: var(--radius-xs, .375rem); }
-  .risk-matrix-cell:hover { transform: scale(1.06); z-index: 1; box-shadow: var(--shadow-md); }
-  .risk-matrix-count { display: block; font-size: 1.25rem; font-weight: 700; line-height: 1.2; font-variant-numeric:tabular-nums; }
-  .risk-matrix-level-name { display: block; font-size: .625rem; opacity: .75; font-weight:500; }
-  .workflow-step { display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; border-radius: .5rem; margin-bottom: .5rem; }
-  .workflow-step:last-child { margin-bottom: 0; }
-  .workflow-step .step-number { width: 2rem; height: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; flex-shrink: 0; }
-  .workflow-step-done .step-number { background: #198754; color: #fff; }
-  .workflow-step-active .step-number { background: #0d6efd; color: #fff; }
-  .workflow-step-pending .step-number { background: #e9ecef; color: #6c757d; }
+  /* ── ISO 27005 workflow card (tokenized; hairline-separated step rows) ── */
+  .iso-workflow-card { border-left: 3px solid var(--accent); }
+  .iso-workflow-steps { padding: .25rem .25rem; }
+  .iso-step { display: flex; align-items: center; gap: 1rem; padding: 1.125rem .25rem; border-bottom: 1px solid var(--border-hairline); }
+  .iso-step:last-child { border-bottom: none; }
+  .iso-step-num { flex-shrink: 0; width: 1.875rem; height: 1.875rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: .8125rem; }
+  .iso-step-done .iso-step-num { background: var(--success); color: #fff; }
+  .iso-step-active .iso-step-num { background: var(--accent); color: #fff; }
+  .iso-step-pending .iso-step-num { background: var(--surface-subtle); color: var(--text-muted); }
+  .iso-step-body { flex: 1; min-width: 0; }
+  .iso-step-title { font-weight: 600; font-size: .9375rem; color: var(--text-primary); }
+  .iso-step-desc { font-size: .8125rem; color: var(--text-secondary); margin-top: .15rem; }
+  .iso-step-meta { display: flex; align-items: center; gap: .75rem; flex-shrink: 0; }
 </style>
 {% endblock %}
 
@@ -41,45 +44,53 @@
 {# ══════════════════════════════════════════════════════════ #}
 
 {% if assessment.methodology == 'iso27005' %}
-<div class="card mb-4" style="border-left:4px solid var(--accent)">
+<div class="card iso-workflow-card mb-4">
   <div class="card-header d-flex align-items-center">
-    <h5 class="mb-0"><i class="bi bi-signpost-2 me-2"></i>{% trans "ISO 27005 workflow" %}</h5>
+    <h5 class="mb-0"><i class="bi bi-diagram-2 me-2" style="color:var(--text-muted)"></i>{% trans "ISO 27005 workflow" %}</h5>
   </div>
-  <div class="card-body">
-    <div class="workflow-step {% if threat_count > 0 %}workflow-step-done{% else %}workflow-step-active{% endif %}">
-      <span class="step-number">1</span>
-      <div>
-        <strong>{% trans "Identify threats" %}</strong>
-        <div class="text-muted small">{% trans "Define or select threats from the catalog that apply to your scope." %}</div>
+  <div class="card-body iso-workflow-steps">
+    <div class="iso-step {% if threat_count > 0 %}iso-step-done{% else %}iso-step-active{% endif %}">
+      <span class="iso-step-num">1</span>
+      <div class="iso-step-body">
+        <div class="iso-step-title">{% trans "Identify threats" %}</div>
+        <div class="iso-step-desc">{% trans "Define or select threats from the catalog that apply to your scope." %}</div>
       </div>
-      <span class="ms-auto badge text-bg-{% if threat_count > 0 %}success{% else %}secondary{% endif %}">{{ threat_count }} {% trans "threat(s)" %}</span>
-      <a href="{% url 'risks:threat-list' %}?assessment={{ assessment.pk }}" class="btn btn-sm btn-outline-primary ms-2">{% trans "Manage" %}</a>
+      <div class="iso-step-meta">
+        <span class="badge text-bg-{% if threat_count > 0 %}success{% else %}secondary{% endif %}">{{ threat_count }} {% trans "threat(s)" %}</span>
+        <a href="{% url 'risks:threat-list' %}?assessment={{ assessment.pk }}" class="btn btn-sm btn-outline-secondary">{% trans "Manage" %}</a>
+      </div>
     </div>
-    <div class="workflow-step {% if vulnerability_count > 0 %}workflow-step-done{% elif threat_count > 0 %}workflow-step-active{% else %}workflow-step-pending{% endif %}">
-      <span class="step-number">2</span>
-      <div>
-        <strong>{% trans "Identify vulnerabilities" %}</strong>
-        <div class="text-muted small">{% trans "Define or select vulnerabilities from the catalog." %}</div>
+    <div class="iso-step {% if vulnerability_count > 0 %}iso-step-done{% elif threat_count > 0 %}iso-step-active{% else %}iso-step-pending{% endif %}">
+      <span class="iso-step-num">2</span>
+      <div class="iso-step-body">
+        <div class="iso-step-title">{% trans "Identify vulnerabilities" %}</div>
+        <div class="iso-step-desc">{% trans "Define or select vulnerabilities from the catalog." %}</div>
       </div>
-      <span class="ms-auto badge text-bg-{% if vulnerability_count > 0 %}success{% else %}secondary{% endif %}">{{ vulnerability_count }} {% trans "vulnerability(ies)" %}</span>
-      <a href="{% url 'risks:vulnerability-list' %}?assessment={{ assessment.pk }}" class="btn btn-sm btn-outline-primary ms-2">{% trans "Manage" %}</a>
+      <div class="iso-step-meta">
+        <span class="badge text-bg-{% if vulnerability_count > 0 %}success{% else %}secondary{% endif %}">{{ vulnerability_count }} {% trans "vulnerability(ies)" %}</span>
+        <a href="{% url 'risks:vulnerability-list' %}?assessment={{ assessment.pk }}" class="btn btn-sm btn-outline-secondary">{% trans "Manage" %}</a>
+      </div>
     </div>
-    <div class="workflow-step {% if iso27005_risks %}workflow-step-done{% elif vulnerability_count > 0 %}workflow-step-active{% else %}workflow-step-pending{% endif %}">
-      <span class="step-number">3</span>
-      <div>
-        <strong>{% trans "Analyze risk scenarios" %}</strong>
-        <div class="text-muted small">{% trans "Create threat × vulnerability scenarios and evaluate their likelihood and impact." %}</div>
+    <div class="iso-step {% if iso27005_risks %}iso-step-done{% elif vulnerability_count > 0 %}iso-step-active{% else %}iso-step-pending{% endif %}">
+      <span class="iso-step-num">3</span>
+      <div class="iso-step-body">
+        <div class="iso-step-title">{% trans "Analyze risk scenarios" %}</div>
+        <div class="iso-step-desc">{% trans "Create threat × vulnerability scenarios and evaluate their likelihood and impact." %}</div>
       </div>
-      <span class="ms-auto badge text-bg-{% if iso27005_risks %}success{% else %}secondary{% endif %}">{{ iso27005_risks|length }} {% trans "analysis(es)" %}</span>
-      <a href="{% url 'risks:iso27005-create' %}?assessment={{ assessment.pk }}" class="btn btn-sm btn-primary ms-2">{% trans "New analysis" %}</a>
+      <div class="iso-step-meta">
+        <span class="badge text-bg-{% if iso27005_risks %}success{% else %}secondary{% endif %}">{{ iso27005_risks|length }} {% trans "analysis(es)" %}</span>
+        <a href="{% url 'risks:iso27005-create' %}?assessment={{ assessment.pk }}" class="btn btn-sm btn-primary">{% trans "New analysis" %}</a>
+      </div>
     </div>
-    <div class="workflow-step {% if risks %}workflow-step-done{% elif iso27005_risks %}workflow-step-active{% else %}workflow-step-pending{% endif %}">
-      <span class="step-number">4</span>
-      <div>
-        <strong>{% trans "Consolidate risks" %}</strong>
-        <div class="text-muted small">{% trans "Promote analyses to the risk register for treatment planning." %}</div>
+    <div class="iso-step {% if risks %}iso-step-done{% elif iso27005_risks %}iso-step-active{% else %}iso-step-pending{% endif %}">
+      <span class="iso-step-num">4</span>
+      <div class="iso-step-body">
+        <div class="iso-step-title">{% trans "Consolidate risks" %}</div>
+        <div class="iso-step-desc">{% trans "Promote analyses to the risk register for treatment planning." %}</div>
       </div>
-      <span class="ms-auto badge text-bg-{% if risks %}success{% else %}secondary{% endif %}">{{ risks|length }} {% trans "risk(s)" %}</span>
+      <div class="iso-step-meta">
+        <span class="badge text-bg-{% if risks %}success{% else %}secondary{% endif %}">{{ risks|length }} {% trans "risk(s)" %}</span>
+      </div>
     </div>
   </div>
 </div>

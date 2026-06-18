@@ -271,9 +271,11 @@ def build_risk_treatment_flow(risks_qs, criteria=None):
         info = level_info.get(level)
         return info["color"] if info else default_color
 
-    # Nodes : current column (depth 0, label on the left) then residual column
-    # (depth 1, label on the right). Highest severity first so the heavy,
-    # high-risk flows sit at the top of each column.
+    # Nodes : current column (depth 0, label inward/right) then residual column
+    # (depth 1, label inward/left). Edge labels point into the chart so the
+    # left/right margins stay symmetric with the other dashboard panels.
+    # Highest severity first so the heavy, high-risk flows sit at the top of
+    # each column.
     nodes = []
     for lvl in sorted(current_totals, reverse=True):
         nodes.append({
@@ -281,7 +283,7 @@ def build_risk_treatment_flow(risks_qs, criteria=None):
             "displayName": f"{label_for(lvl)} ({current_totals[lvl]})",
             "depth": 0,
             "itemStyle": {"color": color_for(lvl)},
-            "label": {"position": "left"},
+            "label": {"position": "right"},
         })
     for lvl in sorted(residual_totals, reverse=True):
         nodes.append({
@@ -289,7 +291,7 @@ def build_risk_treatment_flow(risks_qs, criteria=None):
             "displayName": f"{label_for(lvl)} ({residual_totals[lvl]})",
             "depth": 1,
             "itemStyle": {"color": color_for(lvl)},
-            "label": {"position": "right"},
+            "label": {"position": "left"},
         })
 
     links = [

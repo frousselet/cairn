@@ -120,7 +120,7 @@ class AccessLogSerializer(serializers.ModelSerializer):
 class CompanySettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanySettings
-        fields = ("id", "name", "address", "logo", "updated_at")
+        fields = ("id", "name", "app_name", "address", "logo", "accent_color", "use_logo_as_app_brand", "updated_at")
         read_only_fields = ("id", "updated_at")
 
 

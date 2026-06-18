@@ -62,3 +62,23 @@ class TestCompanySettingsView:
         instance = CompanySettings.get()
         assert instance.name == "My Company"
         assert instance.address == "123 Main Street"
+
+    def test_post_normalizes_accent_color(self, client):
+        user = UserFactory(is_superuser=True)
+        client.force_login(user)
+        resp = client.post("/accounts/company/", {
+            "name": "My Company",
+            "accent_color": "2e7d32",  # no leading #, lowercase
+        })
+        assert resp.status_code == 302
+        assert CompanySettings.get().accent_color == "#2E7D32"
+
+    def test_post_rejects_invalid_accent_color(self, client):
+        user = UserFactory(is_superuser=True)
+        client.force_login(user)
+        resp = client.post("/accounts/company/", {
+            "name": "My Company",
+            "accent_color": "not-a-color",
+        })
+        assert resp.status_code == 200  # re-rendered with a field error
+        assert CompanySettings.get().accent_color == ""

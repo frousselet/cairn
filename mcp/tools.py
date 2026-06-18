@@ -7714,7 +7714,7 @@ def _register_reports_tools(server):
 
     # ── Company Settings ───────────────────────────────────
 
-    company_fields = ["id", "name", "address", "updated_at"]
+    company_fields = ["id", "name", "app_name", "address", "accent_color", "use_logo_as_app_brand", "updated_at"]
 
     @require_perm("system.config.read")
     def get_company_settings(user, arguments):
@@ -7724,7 +7724,7 @@ def _register_reports_tools(server):
 
     server.register_tool(
         "get_company_settings",
-        "Get the company settings (name, address)",
+        "Get the company settings (name, application name, address, accent colour, whether the company logo replaces the Cairn logo)",
         {"type": "object", "properties": {}},
         get_company_settings,
     )
@@ -7735,14 +7735,29 @@ def _register_reports_tools(server):
         instance = CompanySettings.get()
         if "name" in arguments:
             instance.name = arguments["name"]
+        if "app_name" in arguments:
+            instance.app_name = arguments["app_name"]
         if "address" in arguments:
             instance.address = arguments["address"]
+        if "accent_color" in arguments:
+            raw = (arguments["accent_color"] or "").strip()
+            if raw and not raw.startswith("#"):
+                raw = "#" + raw
+            valid = not raw or (
+                len(raw) == 7 and raw[0] == "#"
+                and all(c in "0123456789abcdefABCDEF" for c in raw[1:])
+            )
+            if not valid:
+                raise ValueError("accent_color must be a 6-digit hex colour, e.g. #1E3A8A")
+            instance.accent_color = raw.upper()
+        if "use_logo_as_app_brand" in arguments:
+            instance.use_logo_as_app_brand = bool(arguments["use_logo_as_app_brand"])
         instance.save()
         return _serialize_obj(instance, company_fields)
 
     server.register_tool(
         "update_company_settings",
-        "Update company settings (name and/or address)",
+        "Update company settings (name, application name, address, accent colour, and/or whether the company logo replaces the Cairn logo)",
         {
             "type": "object",
             "properties": {
@@ -7750,9 +7765,25 @@ def _register_reports_tools(server):
                     "type": "string",
                     "description": "Company name",
                 },
+                "app_name": {
+                    "type": "string",
+                    "description": "Custom application name shown in the sidebar and tab titles (defaults to Cairn when empty)",
+                },
                 "address": {
                     "type": "string",
                     "description": "Company address (multi-line)",
+                },
+                "accent_color": {
+                    "type": "string",
+                    "description": "Accent colour as a 6-digit hex code (e.g. #1E3A8A) used throughout the app; empty string resets to the Cairn navy",
+                },
+                "use_logo_as_app_brand": {
+                    "type": "boolean",
+                    "description": (
+                        "When true, the company logo replaces the Cairn logo across "
+                        "the application (sidebar, page headers); the About dialog "
+                        "always keeps the Cairn logo. Requires a company logo to be set."
+                    ),
                 },
             },
         },
