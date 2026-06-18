@@ -37,7 +37,20 @@
   })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Cairn{% endblock %}</title>
+  <title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
+  {% if APP_NAME and APP_NAME != "Cairn" %}
+  <script>
+  /* Custom application name: replace "Cairn" in the tab title on initial load
+     and on every boosted / HTMX navigation (via a <title> mutation observer). */
+  (function() {
+    var appName = "{{ APP_NAME|escapejs }}";
+    function fix() { if (document.title.indexOf("Cairn") !== -1) document.title = document.title.split("Cairn").join(appName); }
+    fix();
+    var t = document.querySelector("title");
+    if (t) new MutationObserver(fix).observe(t, { childList: true, characterData: true, subtree: true });
+  })();
+  </script>
+  {% endif %}
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%231E3A8A'/%3E%3Cpath d='M 19 38 A 14 14 0 1 1 45 38' stroke='%23FFFFFF' stroke-width='6' stroke-linecap='round' fill='none'/%3E%3Cpath d='M 22 44 L 32 26 L 42 44 Z' fill='%23FFFFFF'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -151,6 +164,7 @@
       --accent-soft: #EEF2FF;
       --accent-hover: var(--color-navy-600);
       --accent-glow: rgba(30,58,138,.20);
+      --accent-contrast: #fff;
       --success: var(--color-success);
       --success-soft: #F0FDF4;
       --warning: var(--color-warning);
@@ -214,6 +228,7 @@
       --accent-soft: rgba(59,91,184,.15);
       --accent-hover: var(--color-navy-300);
       --accent-glow: rgba(59,91,184,.22);
+      --accent-contrast: #fff;
       --success: #10b981;
       --warning: #f59e0b;
       --danger: #ef4444;
@@ -398,6 +413,18 @@
     .sidebar-brand-icon svg {
       width: 100%;
       height: 100%;
+    }
+    .sidebar-brand-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    /* A custom company logo shows edge-to-edge: drop the navy chip framing
+       (rounded corners + glow shadow) used for the Cairn mark. */
+    .sidebar-brand-icon:has(img) {
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
     }
 
     /* ── Sidebar search field — floating glass ────────── */
@@ -751,7 +778,7 @@
     .sidebar-collapse-toggle:hover {
       background: var(--accent);
       border-color: var(--accent);
-      color: #fff;
+      color: var(--accent-contrast);
       box-shadow: 0 2px 10px var(--accent-glow), var(--shadow-md);
     }
     .sidebar-collapse-toggle:active {
@@ -1163,6 +1190,40 @@
     .stat-card-link::after { content: '\2192'; font-size: .8125rem; transition: transform .2s var(--ease-out-expo); }
     .stat-card-link:hover::after { transform: translateX(1px); }
 
+    /* ── Risk matrix heatmap ───────────────────────────────
+       Cells carry their severity colour inline as --cell-color and
+       background-color. No border at rest (the 3px cell spacing separates
+       them); on hover the cell lifts with a ring + soft glow in its OWN
+       colour. */
+    .risk-matrix-cell {
+      position: relative;
+      height: 60px;
+      min-width: 60px;
+      border-radius: var(--radius-sm);
+      cursor: default;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .risk-matrix-cell:hover {
+      z-index: 1;
+      transform: scale(1.05);
+      box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--cell-color, var(--accent)) 50%, transparent),
+        0 0 18px 2px color-mix(in srgb, var(--cell-color, var(--accent)) 42%, transparent);
+    }
+    .risk-matrix-count {
+      display: block;
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.2;
+      font-variant-numeric: tabular-nums;
+    }
+    .risk-matrix-level-name {
+      display: block;
+      font-size: .625rem;
+      opacity: .75;
+      font-weight: 500;
+    }
+
     /* ── Tables ────────────────────────────────────────── */
     .card:has(.table-responsive) {
       overflow: hidden;
@@ -1337,24 +1398,59 @@
       line-height: 1.4;
     }
     .btn-sm { font-size: .8125rem; padding: .375rem .8125rem; border-radius: .5rem; }
+    /* Focus: a subtle NEUTRAL keyboard ring (not the blue accent that the
+       generic :focus-visible rule would otherwise draw around buttons). The
+       !important removes that generic accent outline even on boosted swaps. */
+    .btn:focus-visible {
+      outline: none !important;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-primary) 25%, transparent) !important;
+    }
+    .btn:focus:not(:focus-visible) {
+      outline: none !important;
+      box-shadow: none !important;
+    }
+    /* Remap Bootstrap's primary button variables to the accent, otherwise every
+       hover / active / focus state falls back to Bootstrap's default #0d6efd. */
     .btn-primary {
+      --bs-btn-bg: var(--accent);
+      --bs-btn-border-color: var(--accent);
+      --bs-btn-color: var(--accent-contrast);
+      --bs-btn-hover-bg: var(--accent-hover);
+      --bs-btn-hover-border-color: var(--accent-hover);
+      --bs-btn-hover-color: var(--accent-contrast);
+      --bs-btn-active-bg: var(--accent-hover);
+      --bs-btn-active-border-color: var(--accent-hover);
+      --bs-btn-active-color: var(--accent-contrast);
+      --bs-btn-disabled-bg: var(--accent);
+      --bs-btn-disabled-border-color: var(--accent);
+      --bs-btn-disabled-color: var(--accent-contrast);
       background: var(--accent);
       border-color: var(--accent);
-      color: #fff;
+      color: var(--accent-contrast);
     }
     .btn-primary:hover {
       background: var(--accent-hover);
       border-color: var(--accent-hover);
-      color: #fff;
+      color: var(--accent-contrast);
     }
     .btn-outline-primary {
+      --bs-btn-color: var(--accent);
+      --bs-btn-border-color: var(--accent);
+      --bs-btn-hover-bg: var(--accent);
+      --bs-btn-hover-border-color: var(--accent);
+      --bs-btn-hover-color: var(--accent-contrast);
+      --bs-btn-active-bg: var(--accent);
+      --bs-btn-active-border-color: var(--accent);
+      --bs-btn-active-color: var(--accent-contrast);
+      --bs-btn-disabled-color: var(--accent);
+      --bs-btn-disabled-border-color: var(--accent);
       color: var(--accent);
       border-color: var(--accent);
       background: transparent;
     }
     .btn-outline-primary:hover {
       background: var(--accent);
-      color: #fff;
+      color: var(--accent-contrast);
     }
     .btn-outline-secondary {
       color: var(--text-secondary);
@@ -2111,12 +2207,12 @@
     .filter-chip.active {
       background: var(--accent);
       border-color: var(--accent);
-      color: #fff;
+      color: var(--accent-contrast);
     }
     .filter-chip.active:hover {
       background: var(--accent-hover);
       border-color: var(--accent-hover);
-      color: #fff;
+      color: var(--accent-contrast);
     }
     .filter-chip.active-danger {
       background: var(--danger);
@@ -2287,7 +2383,7 @@
     .filter-pill.active {
       background: var(--accent);
       border-color: var(--accent);
-      color: #fff;
+      color: var(--accent-contrast);
       font-weight: 600;
     }
     .filter-pill.active:hover {
@@ -2322,7 +2418,7 @@
     /* ── Tom Select overrides ─────────────────────────── */
     .ts-wrapper.multi .ts-control > .item {
       background: var(--accent);
-      color: #fff;
+      color: var(--accent-contrast);
       border: none;
       border-radius: var(--radius-xs);
       font-size: .78rem;
@@ -2480,11 +2576,17 @@
       }
     }
 
-    /* ── Smooth focus ring for accessibility ─────────── */
+    /* ── Focus ring for accessibility ─────────────────────
+     * Neutral (not the brand accent) so it never reads as a coloured "liseré"
+     * - the default navy accent otherwise drew a blue ring on every control.
+     * Only shown for keyboard focus; a mouse :focus draws nothing. */
     :focus-visible {
-      outline: 2px solid var(--accent);
+      outline: 2px solid color-mix(in srgb, var(--text-primary) 45%, transparent);
       outline-offset: 2px;
       border-radius: var(--radius-xs);
+    }
+    :focus:not(:focus-visible) {
+      outline: none;
     }
 
     /*
@@ -2845,7 +2947,7 @@
     .mform-pill.is-current .mform-pill-num {
       background: var(--accent);
       border-color: var(--accent);
-      color: #fff;
+      color: var(--accent-contrast);
     }
     .mform-pill.is-done { color: var(--text-secondary); cursor: pointer; }
     .mform-pill.is-done .mform-pill-num {
@@ -3175,22 +3277,23 @@
     }
 
     /* ── Scope breadcrumb pills ──────────────────────── */
-    .scope-crumb { display: inline-flex; align-items: center; flex-wrap: wrap; background: var(--success-soft); color: var(--success); border: none; border-radius: 999px; padding: .2em .7em; font-size: .625rem; font-weight: 600; letter-spacing: .02em; line-height: 1.4; vertical-align: middle; gap: .1em .35em; margin-bottom: .2em; }
-    .scope-crumb-sep { opacity: .4; font-weight: 500; }
-    .scope-crumb-seg { opacity: .65; white-space: nowrap; }
-    .scope-crumb-leaf { opacity: 1; font-weight: 700; }
+    .scope-crumb { display: inline-flex; align-items: center; flex-wrap: nowrap; max-width: 100%; background: var(--success-soft); color: var(--success); border: none; border-radius: 999px; padding: .2em .7em; font-size: .625rem; font-weight: 600; letter-spacing: .02em; line-height: 1.4; vertical-align: middle; gap: .1em .35em; margin-bottom: .2em; }
+    .scope-crumb-sep { opacity: .4; font-weight: 500; flex-shrink: 0; }
+    /* Parent segments truncate with … so the crumb stays on one line; the leaf (most specific scope) is preserved. */
+    .scope-crumb-seg { opacity: .65; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .scope-crumb-leaf { opacity: 1; font-weight: 700; flex-shrink: 0; }
 
     /* ── Scope count popover (tables) ─────────────── */
     .scope-pop-wrap { display: inline-block; }
     .scope-pop-btn { background: var(--success-soft); color: var(--success); border: 0; border-radius: 999px; padding: .2em .65em; font-size: .75rem; font-weight: 700; cursor: pointer; white-space: nowrap; line-height: 1.4; transition: background-color .15s, color .15s; }
-    .scope-pop-btn:hover { background: var(--accent); color: #fff; }
+    .scope-pop-btn:hover { background: var(--accent); color: var(--accent-contrast); }
     .scope-pop-btn .bi { font-size: .7rem; }
     .scope-pop-panel { display: none; position: fixed; z-index: 1050; background: var(--surface-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: .875rem; padding: .625rem .75rem; box-shadow: var(--shadow-lg); min-width: max-content; max-width: 360px; }
     .scope-pop-panel.show { display: flex; flex-wrap: wrap; gap: .3em; align-items: center; }
 
     /* ── Utilities ─────────────────────────────────── */
     .tabular-nums { font-variant-numeric: tabular-nums; }
-    .text-on-accent { color: #fff; }
+    .text-on-accent { color: var(--accent-contrast); }
 
     /* ── Motion — Clean page + content transitions ──── */
     /*
@@ -3284,6 +3387,9 @@
       flex-wrap: wrap;
       position: relative;
     }
+    /* With a logo (e.g. the dashboard) the title block is taller, so centre the
+       whole header - title and actions line up on the logo's vertical midline. */
+    .page-header:has(.page-header__logo) { align-items: center; }
     .page-header__main {
       display: flex;
       align-items: flex-start;
@@ -3291,6 +3397,8 @@
       min-width: 0;
       flex: 1 1 auto;
     }
+    /* Centre the logo with the title block when a logo is present. */
+    .page-header__main:has(.page-header__logo) { align-items: center; }
     .page-header__icon {
       font-size: 1.625rem;
       color: var(--accent);
@@ -3298,15 +3406,10 @@
       margin-top: .25rem;
     }
     .page-header__logo {
-      width: 3rem;
-      height: 3rem;
+      width: 4.5rem;
+      height: 4.5rem;
       object-fit: contain;
       flex-shrink: 0;
-      margin-top: .25rem;
-      border-radius: var(--radius-sm);
-      background: #fff;
-      border: 1px solid var(--border-light);
-      padding: .25rem;
     }
     .page-header__text { min-width: 0; }
     .page-header__title {
@@ -3601,7 +3704,7 @@
       border: 1px solid var(--border-light);
     }
     .stepper__pill--current {
-      color: #fff;
+      color: var(--accent-contrast);
       background: var(--accent);
       font-weight: 600;
       border: 2px solid var(--accent);
@@ -3761,6 +3864,46 @@
       document.querySelectorAll('.scope-pop-panel.show').forEach(function(p) { p.classList.remove('show'); });
     });
   </script>
+  {% if ACCENT_LIGHT %}
+  {% comment %}Custom accent colour (company settings): override the navy accent tokens, placed after the main token block so it cascades. ACCENT_LIGHT / ACCENT_DARK are lightness-clamped per theme so any chosen colour (even black) stays legible on each background; hover/soft/glow are derived via color-mix. The Cairn mark in the About dialog keeps its own navy.{% endcomment %}
+  <style id="brand-accent-override">
+    :root {
+      --accent: {{ ACCENT_LIGHT }};
+      --accent-hover: color-mix(in srgb, {{ ACCENT_LIGHT }} 82%, black);
+      --accent-soft: color-mix(in srgb, {{ ACCENT_LIGHT }} 12%, white);
+      --accent-glow: color-mix(in srgb, {{ ACCENT_LIGHT }} 22%, transparent);
+      --accent-contrast: {{ ACCENT_LIGHT_FG }};
+    }
+    [data-bs-theme="dark"] {
+      --accent: {{ ACCENT_DARK }};
+      --accent-hover: color-mix(in srgb, {{ ACCENT_DARK }} 80%, white);
+      --accent-soft: color-mix(in srgb, {{ ACCENT_DARK }} 18%, transparent);
+      --accent-glow: color-mix(in srgb, {{ ACCENT_DARK }} 28%, transparent);
+      --accent-contrast: {{ ACCENT_DARK_FG }};
+    }
+    /* Recolour checkbox / radio ticks and switch knobs to the accent-contrast
+       colour so they stay visible on a light accent (the marks are SVGs whose
+       colour is baked in, so they are re-injected per theme here). */
+    .form-check-input[type=checkbox]:checked {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='{{ ACCENT_LIGHT_FG|urlencode }}' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+    }
+    .form-check-input[type=radio]:checked {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='{{ ACCENT_LIGHT_FG|urlencode }}'/%3e%3c/svg%3e");
+    }
+    .form-switch .form-check-input:checked {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='{{ ACCENT_LIGHT_FG|urlencode }}'/%3e%3c/svg%3e");
+    }
+    [data-bs-theme="dark"] .form-check-input[type=checkbox]:checked {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='{{ ACCENT_DARK_FG|urlencode }}' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+    }
+    [data-bs-theme="dark"] .form-check-input[type=radio]:checked {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='{{ ACCENT_DARK_FG|urlencode }}'/%3e%3c/svg%3e");
+    }
+    [data-bs-theme="dark"] .form-switch .form-check-input:checked {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='{{ ACCENT_DARK_FG|urlencode }}'/%3e%3c/svg%3e");
+    }
+  </style>
+  {% endif %}
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
       hx-boost="true">
@@ -3795,11 +3938,16 @@
     <div class="sidebar-brand">
       <a href="/">
         <span class="sidebar-brand-icon">
+          {% if company.use_logo_as_app_brand and company.logo %}
+          {# Company logo used as the application brand (configured in company settings). #}
+          <img src="{{ company.logo_64|default:company.logo }}" alt="{{ company.name }}">
+          {% else %}
           {# Cairn — primary mark (stepped cairn). Light theme: navy 500 bg. Dark theme: navy 400 bg for better contrast on charcoal surface. #}
           <svg class="logo-light" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#1E3A8A"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
           <svg class="logo-dark" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#3B5BB8"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
+          {% endif %}
         </span>
-        <span class="sidebar-link-text">Cairn {% if APP_VERSION == "dev" %}<small style="font-size:.7em;opacity:.45">dev</small>{% endif %}</span>
+        <span class="sidebar-link-text">{% if company.app_name %}{{ company.app_name }}{% else %}Cairn {% if APP_VERSION == "dev" %}<small style="font-size:.7em;opacity:.45">dev</small>{% endif %}{% endif %}</span>
       </a>
     </div>
 

@@ -22,7 +22,7 @@
       </td>
       {% endif %}
       {% for cell in row.cells %}
-      <td class="risk-matrix-cell" style="background-color:{{ cell.color }}; color:{{ cell.text_color }}; text-align:center; vertical-align:middle; padding:10px 4px; min-width:90px; border-radius:var(--radius-sm);" title="{{ row.name }} / {{ cell.impact_name|default:cell.risk_level_name }}{% if cell.count %} — {{ cell.count }} risk(s){% endif %}">
+      <td class="risk-matrix-cell" style="--cell-color:{{ cell.color }}; background-color:{{ cell.color }}; color:{{ cell.text_color }}; text-align:center; vertical-align:middle; padding:10px 4px; min-width:90px;" title="{{ row.name }} / {{ cell.impact_name|default:cell.risk_level_name }}{% if cell.count %} — {{ cell.count }} risk(s){% endif %}">
         {% if cell.count %}
         <span class="risk-matrix-count">{{ cell.count }}</span>
         {% endif %}

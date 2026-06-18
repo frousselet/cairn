@@ -187,11 +187,25 @@ class CompanySettingsForm(forms.ModelForm):
 
     class Meta:
         model = CompanySettings
-        fields = ("name", "address")
+        fields = ("name", "app_name", "address", "accent_color", "use_logo_as_app_brand")
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control"}),
+            "app_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Cairn"}),
             "address": forms.Textarea(attrs={"class": "form-control no-jodit", "rows": 3}),
+            "accent_color": forms.TextInput(attrs={
+                "class": "form-control", "placeholder": "#1E3A8A",
+                "pattern": "#?[0-9A-Fa-f]{6}", "maxlength": 7,
+            }),
+            "use_logo_as_app_brand": forms.CheckboxInput(attrs={"class": "form-check-input", "role": "switch"}),
         }
+
+    def clean_accent_color(self):
+        value = (self.cleaned_data.get("accent_color") or "").strip()
+        if not value:
+            return ""
+        if not value.startswith("#"):
+            value = "#" + value
+        return value.upper()
 
     def save(self, commit=True):
         instance = super().save(commit=False)

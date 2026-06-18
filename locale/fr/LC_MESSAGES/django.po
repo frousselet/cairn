@@ -10480,3 +10480,42 @@ msgstr "(vide)"
 
 msgid "Refusal"
 msgstr "Refus"
+
+msgid "Collapse or expand"
+msgstr "Réduire ou développer"
+
+msgid "Collapsed sections"
+msgstr "Sections réduites"
+
+msgid "Keys of collapsible UI sections the user has collapsed (e.g. the dashboard's Today's actions card)."
+msgstr "Clés des sections d'interface repliables que l'utilisateur a réduites (par ex. la carte « Actions du jour » du tableau de bord)."
+
+msgid "Show today's actions"
+msgstr "Afficher les actions du jour"
+
+msgid "Hide today's actions"
+msgstr "Masquer les actions du jour"
+
+msgid "Use the company logo as the application logo"
+msgstr "Utiliser le logo de l'entreprise comme logo de l'application"
+
+msgid "Replace the Cairn logo in the sidebar with the company logo. The About dialog always keeps the Cairn logo."
+msgstr "Remplace le logo Cairn de la barre latérale par le logo de l'entreprise. La fenêtre « À propos » conserve toujours le logo Cairn."
+
+msgid "Custom name shown in the sidebar and the browser tab titles. Defaults to Cairn when left empty."
+msgstr "Nom personnalisé affiché dans la barre latérale et le titre des onglets du navigateur. « Cairn » par défaut si laissé vide."
+
+msgid "Pick accent colour"
+msgstr "Choisir la couleur d'accent"
+
+msgid "Reset to default"
+msgstr "Réinitialiser par défaut"
+
+msgid "Default (Cairn navy)"
+msgstr "Défaut (bleu marine Cairn)"
+
+msgid "Hex colour (e.g. #1E3A8A) used as the accent throughout the application. Defaults to the Cairn navy when left empty."
+msgstr "Couleur hexadécimale (par ex. #1E3A8A) utilisée comme accent dans toute l'application. Bleu marine Cairn par défaut si laissé vide."
+
+msgid "Enter a colour as a 6-digit hex code, e.g. #1E3A8A."
+msgstr "Saisissez une couleur sous forme de code hexadécimal à 6 chiffres, par ex. #1E3A8A."

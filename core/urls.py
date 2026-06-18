@@ -11,7 +11,7 @@ from .views import (
     CalendarEventsView, CalendarSubscribeView, CalendarUpcomingView,
     CalendarView, ChangelogDismissView, DashboardIndicatorsPartialView,
     GeneralDashboardView, GlobalSearchView,
-    ICalFeedView, StyleGuideView,
+    ICalFeedView, SectionCollapseToggleView, StyleGuideView,
 )
 
 urlpatterns = [
@@ -25,6 +25,7 @@ urlpatterns = [
     path("", GeneralDashboardView.as_view(), name="home"),
     path("dashboard/indicators-partial/", DashboardIndicatorsPartialView.as_view(), name="dashboard-indicators-partial"),
     path("dashboard/changelog-dismiss/", ChangelogDismissView.as_view(), name="changelog-dismiss"),
+    path("dashboard/section-toggle/", SectionCollapseToggleView.as_view(), name="dashboard-section-toggle"),
     path("calendar/", CalendarView.as_view(), name="calendar"),
     path("calendar/subscribe/", CalendarSubscribeView.as_view(), name="calendar-subscribe"),
     path("calendar.ics", ICalFeedView.as_view(), name="calendar-ical"),

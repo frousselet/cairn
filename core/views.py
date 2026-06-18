@@ -1,4 +1,5 @@
 import base64
+import json
 import uuid as uuid_mod
 from datetime import date, timedelta
 
@@ -91,8 +92,13 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         ctx["issue_count"] = self._filter_scoped(Issue.objects.all()).count()
         ctx["stakeholder_count"] = self._filter_scoped(Stakeholder.objects.all()).count()
         ctx["objective_count"] = self._filter_scoped(Objective.objects.all()).count()
+        # Show objectives in play: in-progress (active) and completed (achieved,
+        # i.e. 100%). Draft / not-achieved / cancelled domain statuses are left
+        # out, and archived objectives (lifecycle) are excluded outright -- the
+        # status (progress) and workflow_state (lifecycle) are two separate axes.
         ctx["active_objectives"] = self._filter_scoped(
-            Objective.objects.filter(status="active")
+            Objective.objects.filter(status__in=["active", "achieved"])
+            .exclude(workflow_state="archived")
         ).select_related("owner").prefetch_related(
             Prefetch("scopes", queryset=Scope.objects.select_related("parent_scope")),
         )[:10]
@@ -342,6 +348,11 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
             item["count"] for g in action_groups for item in g["items"]
         ) + overdue_event_count
 
+        # ── Collapsible section state (persisted per user) ──
+        ctx["today_actions_collapsed"] = "today_actions" in (
+            self.request.user.collapsed_sections or []
+        )
+
         # ── Changelog popup ──────────────────────────────
         user = self.request.user
         app_version = settings.APP_VERSION
@@ -363,6 +374,35 @@ class ChangelogDismissView(LoginRequiredMixin, View):
             request.user.last_seen_version = version
             request.user.save(update_fields=["last_seen_version"])
         return JsonResponse({"ok": True})
+
+
+class SectionCollapseToggleView(LoginRequiredMixin, View):
+    """Persist the collapsed/expanded state of a collapsible UI section per user."""
+
+    # Allow-list of section keys that may be toggled (avoids storing arbitrary keys).
+    ALLOWED_SECTIONS = {"today_actions"}
+
+    def post(self, request, *args, **kwargs):
+        try:
+            payload = json.loads(request.body or "{}")
+        except (ValueError, TypeError):
+            return JsonResponse({"ok": False, "error": "invalid_body"}, status=400)
+
+        section = payload.get("section")
+        if section not in self.ALLOWED_SECTIONS:
+            return JsonResponse({"ok": False, "error": "unknown_section"}, status=400)
+
+        collapsed = bool(payload.get("collapsed"))
+        sections = list(request.user.collapsed_sections or [])
+        if collapsed and section not in sections:
+            sections.append(section)
+        elif not collapsed and section in sections:
+            sections = [s for s in sections if s != section]
+
+        if sections != (request.user.collapsed_sections or []):
+            request.user.collapsed_sections = sections
+            request.user.save(update_fields=["collapsed_sections"])
+        return JsonResponse({"ok": True, "collapsed": collapsed})
 
 
 class DashboardIndicatorsPartialView(LoginRequiredMixin, TemplateView):

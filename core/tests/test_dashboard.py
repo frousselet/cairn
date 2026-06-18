@@ -701,8 +701,8 @@ class TestDashboardCompanyIdentity:
         assert resp.context["company"].name == "Voltara Energy"
         content = resp.content.decode()
         assert "Voltara Energy" in content
-        # The page identity moves to the eyebrow when the company name is the title.
-        assert ">Dashboard</div>" in content
+        # The company name is the sole title now: no eyebrow div above it.
+        assert '<div class="page-header__eyebrow">' not in content
 
     def test_fallback_title_without_company(self):
         client, user = _superuser_client()
@@ -741,3 +741,160 @@ class TestDashboardCompanyIdentity:
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
         assert b"data:image/png;base64,abc" in resp.content
+
+    def test_company_logo_replaces_sidebar_brand_when_enabled(self):
+        from accounts.models import CompanySettings
+
+        CompanySettings.objects.create(
+            name="Voltara Energy",
+            logo="data:image/png;base64,brandfull",
+            logo_64="data:image/png;base64,brand64",
+            use_logo_as_app_brand=True,
+        )
+        client, user = _superuser_client()
+        content = client.get(reverse("home")).content.decode()
+        # The sidebar brand uses the company logo (64px variant) and name...
+        assert "data:image/png;base64,brand64" in content
+        # ...but the About dialog always keeps the Cairn mark.
+        assert ">Cairn</h5>" in content
+
+    def test_sidebar_keeps_cairn_when_toggle_disabled(self):
+        from accounts.models import CompanySettings
+
+        CompanySettings.objects.create(
+            name="Voltara Energy",
+            logo="data:image/png;base64,brandfull",
+            logo_64="data:image/png;base64,brand64",
+            use_logo_as_app_brand=False,
+        )
+        client, user = _superuser_client()
+        content = client.get(reverse("home")).content.decode()
+        # The 64px brand variant is only used by the sidebar brand image,
+        # which stays the Cairn mark while the toggle is off.
+        assert "data:image/png;base64,brand64" not in content
+
+    def test_company_field_in_global_context(self):
+        from accounts.models import CompanySettings
+
+        CompanySettings.objects.create(name="Voltara Energy", use_logo_as_app_brand=True)
+        client, user = _superuser_client()
+        # The company singleton is exposed globally (sidebar brand) via the
+        # context processor, not only by the dashboard view.
+        resp = client.get(reverse("calendar"))
+        assert resp.context["company"].use_logo_as_app_brand is True
+
+    def test_custom_app_name_replaces_cairn_brand(self):
+        from accounts.models import CompanySettings
+
+        CompanySettings.objects.create(name="Voltara Energy", app_name="Voltara GRC")
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        assert resp.context["APP_NAME"] == "Voltara GRC"
+        # The sidebar brand text uses the custom application name.
+        assert "Voltara GRC" in resp.content.decode()
+
+    def test_app_name_defaults_to_cairn(self):
+        client, user = _regular_client()
+        resp = client.get(reverse("home"))
+        assert resp.context["APP_NAME"] == "Cairn"
+
+    def test_custom_accent_color_injects_override(self):
+        from accounts.models import CompanySettings
+
+        CompanySettings.objects.create(name="Voltara Energy", accent_color="#2E7D32")
+        client, user = _superuser_client()
+        content = client.get(reverse("home")).content.decode()
+        assert 'id="brand-accent-override"' in content
+        assert "#2E7D32" in content
+
+    def test_no_accent_override_without_custom_color(self):
+        from accounts.models import CompanySettings
+
+        CompanySettings.objects.create(name="Voltara Energy")
+        client, user = _superuser_client()
+        content = client.get(reverse("home")).content.decode()
+        assert 'id="brand-accent-override"' not in content
+
+    def test_dark_mode_keeps_a_dark_accent_legible(self):
+        from accounts.models import CompanySettings
+
+        CompanySettings.objects.create(name="Voltara Energy", accent_color="#000000")
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        # Black on white is fine in light mode, but must be lightened for the
+        # dark charcoal canvas so the accent stays visible.
+        assert resp.context["ACCENT_LIGHT"] == "#000000"
+        assert resp.context["ACCENT_DARK"] != "#000000"
+
+
+# ── Collapsible section state (persisted per user) ──────────────
+
+
+class TestSectionCollapseToggle:
+    """The dashboard-section-toggle endpoint persists collapse state per user."""
+
+    def test_collapse_then_expand_persists(self):
+        client, user = _regular_client()
+        url = reverse("dashboard-section-toggle")
+
+        resp = client.post(
+            url,
+            data={"section": "today_actions", "collapsed": True},
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        assert resp.json() == {"ok": True, "collapsed": True}
+        user.refresh_from_db()
+        assert "today_actions" in user.collapsed_sections
+
+        resp = client.post(
+            url,
+            data={"section": "today_actions", "collapsed": False},
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        user.refresh_from_db()
+        assert "today_actions" not in user.collapsed_sections
+
+    def test_collapse_is_idempotent(self):
+        client, user = _regular_client()
+        url = reverse("dashboard-section-toggle")
+        for _ in range(2):
+            client.post(
+                url,
+                data={"section": "today_actions", "collapsed": True},
+                content_type="application/json",
+            )
+        user.refresh_from_db()
+        assert user.collapsed_sections.count("today_actions") == 1
+
+    def test_unknown_section_rejected(self):
+        client, user = _regular_client()
+        resp = client.post(
+            reverse("dashboard-section-toggle"),
+            data={"section": "evil", "collapsed": True},
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+        user.refresh_from_db()
+        assert user.collapsed_sections == []
+
+    def test_requires_login(self):
+        resp = Client().post(
+            reverse("dashboard-section-toggle"),
+            data={"section": "today_actions", "collapsed": True},
+            content_type="application/json",
+        )
+        assert resp.status_code in (302, 403)
+
+    def test_collapsed_state_reflected_in_dashboard_context(self):
+        client, user = _regular_client()
+        user.collapsed_sections = ["today_actions"]
+        user.save(update_fields=["collapsed_sections"])
+        resp = client.get(reverse("home"))
+        assert resp.context["today_actions_collapsed"] is True
+
+    def test_default_state_is_expanded(self):
+        client, user = _regular_client()
+        resp = client.get(reverse("home"))
+        assert resp.context["today_actions_collapsed"] is False
