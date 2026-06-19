@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.0] - 2026-06-19
+
 ### Added
 
 - **Custom accent colour**: a new `accent_color` company setting (a validated hex code, with a colour picker on the settings page) overrides the navy accent used throughout the application. When set, the accent tokens (`--accent` and the derived hover / soft / glow) are recomputed via `color-mix`; left empty, the app keeps the Cairn navy. The chosen colour's lightness is **clamped per theme** so it stays legible on both canvases (a dark accent is lightened for the dark charcoal background, a pale one darkened for the light background; greys are pushed near-white in dark mode). A derived `--accent-contrast` foreground (computed from the accent's luminance) keeps **text, ticks and switch knobs on accent backgrounds legible** - primary buttons and their hovers, active filter pills/chips, the workflow stepper's current step, checkboxes / radios / switches and multi-select chips all flip to a dark foreground when the accent is light. Exposed on the settings page, the REST API and the `get_company_settings` / `update_company_settings` MCP tools.
@@ -1074,6 +1076,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.29.0]: https://github.com/frousselet/cairn/compare/v0.28.3...v0.29.0
 [0.28.3]: https://github.com/frousselet/cairn/compare/v0.28.2...v0.28.3
 [0.28.2]: https://github.com/frousselet/cairn/compare/v0.28.1...v0.28.2
 [0.28.1]: https://github.com/frousselet/cairn/compare/v0.28.0...v0.28.1
