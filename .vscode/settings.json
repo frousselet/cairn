@@ -1,7 +1,0 @@
-{
-    "editor.formatOnSave": true,
-    // Python interpreter managed by mise (follows `python = "latest"` in mise.toml).
-    // The Python extension selects it automatically; debugpy and the tasks
-    // use it via ${command:python.interpreterPath}.
-    "python.defaultInterpreterPath": "${env:HOME}/.local/share/mise/installs/python/latest/bin/python"
-}

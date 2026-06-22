@@ -192,6 +192,8 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file. However, if you prefer, 
 #  you could uncomment the following to ignore the entire vscode folder
 # .vscode/
+#  Per-developer editor settings are not shared (the interpreter is mise-managed).
+.vscode/settings.json
 
 # Ruff stuff:
 .ruff_cache/
