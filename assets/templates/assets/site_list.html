@@ -32,9 +32,12 @@
         <tr>
           <td><a href="{% url 'assets:site-detail' site.pk %}" class="ref">{{ site.reference }}</a></td>
           <td>
-            <div style="padding-left: {{ site.tree_indent }}px;">
+            <div class="d-flex align-items-start" style="padding-left: {{ site.tree_indent }}px;">
               {% if site.tree_level > 0 %}<span class="text-muted me-1">&boxur;</span>{% endif %}
-              <a href="{% url 'assets:site-detail' site.pk %}" class="cell-link">{{ site.name }}</a>
+              <span class="cell-stack">
+                <a href="{% url 'assets:site-detail' site.pk %}" class="cell-link">{{ site.name }}</a>
+                {% if site.address %}<span class="cell-sub">{{ site.address|truncatechars:60 }}</span>{% endif %}
+              </span>
             </div>
           </td>
           <td>{{ site.get_type_display }}</td>
