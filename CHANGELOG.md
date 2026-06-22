@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Visual feedback when uploading images**: choosing a profile photo, a company logo or any image handled by the generic image-upload widget (supplier and framework logos) now shows a spinner overlay on the preview while the file is read and resized client-side. The overlay stays visible for a short minimum duration so the feedback is always perceived without flickering on small images, is theme-aware (accent-coloured spinner over a translucent backdrop) and positions itself robustly over the preview regardless of its shape (round avatar, rounded logo or widget box). Implemented via a shared `showImageUploadSpinner()` helper alongside `resizeImageFile()`.
 - **Reference shown on supplier types**: supplier types already carried an auto-generated `SPTY-N` reference at the data layer, but it was never surfaced in the UI. The supplier-types list now shows a clickable, sortable and searchable **Ref.** column (matching every other list table), the detail page header shows the reference pill, and the Django admin lists and searches it too. The MCP `list_supplier_types` / `get_supplier_type` tools now include the `reference` field.
 
 ### Fixed
 
+- **Sidebar brand stale after a company logo / name change**: the sidebar brand (company logo and application name) lives outside `#page-shell`, so a boosted navigation - including the redirect after saving company settings - only swapped the main content and left the menu logo unchanged until a full page reload. The boosted-swap handler now also resynchronizes the `.sidebar-brand` from the fresh response (alongside the existing `<title>` sync), so a new logo, a toggled "use logo as app brand" or a renamed application appears in the menu immediately.
 - **Charts loaded from a CDN sometimes failed to render under boosted navigation**: the dependency graph (d3) and the dashboard's "Risk treatment flow" Sankey diagram (ECharts) each pulled their library from a CDN with a plain `<script src>` immediately followed by the init code. On a full page reload the browser fetches the library synchronously so it works, but under `hx-boost` navigation the library `<script>` is injected asynchronously and the init code ran before the library was defined, leaving the chart blank until a manual refresh. Both charts now load their library on demand and only build once it is available (reusing the already-loaded global on subsequent visits).
 
 ## [0.29.1] - 2026-06-22
