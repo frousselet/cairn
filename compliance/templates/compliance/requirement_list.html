@@ -19,13 +19,9 @@
       <thead>
         <tr>
           {% sortable_th "reference" "Ref." %}
-          {% sortable_th "requirement_number" "Req. number" %}
           {% sortable_th "name" "Title" %}
-          {% sortable_th "framework" "Framework" %}
-          {% sortable_th "type" "Type" %}
           {% sortable_th "compliance" "Compliance" %}
-          <th>{% trans "Level" %}</th>
-          {% sortable_th "priority" "Priority" %}
+          <th>{% trans "Risks" %}</th>
           <th>{% trans "Tags" %}</th>
           {% sortable_th "workflow_state" "Status" %}
           <th class="text-end">{% trans "Actions" %}</th>
@@ -35,26 +31,28 @@
         {% for req in requirements %}
         <tr>
           <td><a href="{% url 'compliance:requirement-detail' req.pk %}" class="ref">{{ req.reference }}</a></td>
-          <td>{{ req.requirement_number|default:"-" }}</td>
-          <td><a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.name|truncatechars:60 }}</a></td>
-          <td>{{ req.framework.short_name|default:req.framework.name }}</td>
-          <td>{{ req.get_type_display }}</td>
           <td>
-            {% if req.compliance_status == 'evaluated' %}
-            <span class="badge" style="background-color:var(--accent);color:#fff">{{ req.get_compliance_status_display }}</span>
-            {% else %}
-            <span class="badge text-bg-{% if req.compliance_status == 'compliant' or req.compliance_status == 'strength' %}success{% elif req.compliance_status == 'observation' or req.compliance_status == 'improvement_opportunity' or req.compliance_status == 'partially_compliant' %}warning{% elif req.compliance_status == 'major_non_conformity' or req.compliance_status == 'minor_non_conformity' or req.compliance_status == 'non_compliant' %}danger{% elif req.compliance_status == 'not_applicable' %}dark{% else %}secondary{% endif %}">
-              {{ req.get_compliance_status_display }}
+            <span class="cell-stack">
+              <span><a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link" style="font-weight:600" title="{{ req.name }}">{{ req.name }}</a>{% if not req.is_applicable %} <span class="badge text-bg-secondary" style="font-size:.65rem">{% trans "Not applicable" %}</span>{% endif %}</span>
+              <span class="cell-sub">{% if req.requirement_number %}{{ req.requirement_number }} • {% endif %}{{ req.framework.short_name|default:req.framework.name }}</span>
             </span>
-            {% endif %}
           </td>
-          <td>{{ req.compliance_level }}%</td>
           <td>
-            {% if req.priority %}
-            <span class="badge text-bg-{% if req.priority == 'critical' %}danger{% elif req.priority == 'high' %}warning{% elif req.priority == 'medium' %}info{% else %}secondary{% endif %}">
-              {{ req.get_priority_display }}
+            <span class="cell-stack">
+              <span>
+                {% if req.compliance_status == 'evaluated' %}
+                <span class="badge" style="background-color:var(--accent);color:var(--accent-contrast)">{{ req.get_compliance_status_display }}</span>
+                {% else %}
+                <span class="badge text-bg-{% if req.compliance_status == 'compliant' or req.compliance_status == 'strength' %}success{% elif req.compliance_status == 'observation' or req.compliance_status == 'improvement_opportunity' or req.compliance_status == 'partially_compliant' %}warning{% elif req.compliance_status == 'major_non_conformity' or req.compliance_status == 'minor_non_conformity' or req.compliance_status == 'non_compliant' %}danger{% elif req.compliance_status == 'not_applicable' %}dark{% else %}secondary{% endif %}">
+                  {{ req.get_compliance_status_display }}
+                </span>
+                {% endif %}
+              </span>
+              <span class="cell-sub">{{ req.compliance_level }}%</span>
             </span>
-            {% else %}-{% endif %}
+          </td>
+          <td>
+            {% if req.risk_count %}<a href="{% url 'risks:risk-list' %}?linked_requirement={{ req.pk }}" class="badge text-bg-secondary text-decoration-none" title="{% trans 'Linked risks' %}">{{ req.risk_count }}</a>{% else %}<span class="cell-empty">-</span>{% endif %}
           </td>
           <td>{% include "includes/tags_badge.html" with tags=req.tags.all %}</td>
           <td>{% workflow_badge req %}</td>
@@ -63,7 +61,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No requirement registered yet.") message=_("Requirements are the individual clauses of a framework you must conform to. They are usually loaded with the framework itself.") colspan=11 %}
+        {% empty_state title=_("No requirement registered yet.") message=_("Requirements are the individual clauses of a framework you must conform to. They are usually loaded with the framework itself.") colspan=7 %}
         {% endfor %}
       </tbody>
     </table>
