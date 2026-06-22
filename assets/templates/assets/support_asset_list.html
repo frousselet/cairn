@@ -27,7 +27,6 @@
         <tr>
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
-          {% sortable_th "category" "Category" %}
           {% sortable_th "owner" "Owner" %}
           <th>C / I / A</th>
           <th>{% trans "Env." %}</th>
@@ -40,11 +39,10 @@
         {% for asset in assets %}
         <tr{% if asset.is_end_of_life %} class="table-danger"{% endif %}>
           <td><a href="{% url 'assets:support-asset-detail' asset.pk %}" class="ref">{{ asset.reference }}</a></td>
-          <td><a href="{% url 'assets:support-asset-detail' asset.pk %}" class="cell-link">{{ asset.name }}</a></td>
           <td>
             <span class="cell-stack">
-              <span>{{ asset.get_category_display }}</span>
-              <span class="cell-sub">{{ asset.get_type_display }}</span>
+              <a href="{% url 'assets:support-asset-detail' asset.pk %}" class="cell-link">{{ asset.name }}</a>
+              <span class="cell-sub">{{ asset.get_category_display }} • {{ asset.get_type_display }}</span>
             </span>
           </td>
           <td>
@@ -80,7 +78,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No support asset registered yet.") message=_("Support assets are the IT components (servers, applications, network gear, data stores) that essential assets depend on.") colspan=9 %}
+        {% empty_state title=_("No support asset registered yet.") message=_("Support assets are the IT components (servers, applications, network gear, data stores) that essential assets depend on.") colspan=8 %}
         {% endfor %}
       </tbody>
     </table>
