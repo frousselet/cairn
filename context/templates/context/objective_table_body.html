@@ -2,9 +2,27 @@
 {% for obj in objectives %}
 <tr>
   <td><a href="{% url 'context:objective-detail' obj.pk %}" class="ref">{{ obj.reference }}</a></td>
-  <td><a href="{% url 'context:objective-detail' obj.pk %}" class="cell-link">{{ obj.name }}</a></td>
-  <td>{{ obj.get_category_display }}</td>
-  <td>{% if obj.owner %}{% user_badge obj.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+  <td>
+    <span class="cell-stack">
+      <a href="{% url 'context:objective-detail' obj.pk %}" class="cell-link">{{ obj.name }}</a>
+      <span class="cell-sub">{{ obj.get_category_display }}</span>
+    </span>
+  </td>
+  <td>
+    {% if obj.owner %}
+    <span class="cell-people cell-people--sm">
+      {% if obj.owner.avatar %}
+      <img src="{{ obj.owner.avatar_32|default:obj.owner.avatar }}" alt="" class="cell-avatar">
+      {% else %}
+      <span class="cell-avatar-fallback">{{ obj.owner.display_name|initials }}</span>
+      {% endif %}
+      <span class="cell-stack">
+        <span style="font-weight:600">{{ obj.owner.display_name }}</span>
+        {% if obj.owner.job_title %}<span class="cell-sub">{{ obj.owner.job_title }}</span>{% endif %}
+      </span>
+    </span>
+    {% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
   <td>
     {% if obj.progress_percentage is not None %}
     <div class="progress" style="min-width: 80px;">
@@ -14,7 +32,18 @@
     {% else %}-{% endif %}
   </td>
   <td>{% workflow_badge obj %}</td>
-  <td>{{ obj.target_date|default:"-" }}</td>
+  <td>
+    {% if obj.target_date %}
+    <span class="cell-stack">
+      <span>{{ obj.target_date }}</span>
+      {% if obj.review_date %}<span class="cell-sub" title="{% trans 'Next review date' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ obj.review_date }}</span>{% endif %}
+    </span>
+    {% elif obj.review_date %}
+    <span class="cell-sub" title="{% trans 'Next review date' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ obj.review_date }}</span>
+    {% else %}
+    <span class="cell-empty">-</span>
+    {% endif %}
+  </td>
   <td>{% include "includes/tags_badge.html" with tags=obj.tags.all %}</td>
   <td class="text-end">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
@@ -24,5 +53,5 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No security objective defined yet.") message=_("Objectives translate strategy into measurable security commitments. Tie each one to scopes and indicators.") colspan=9 %}
+{% empty_state title=_("No security objective defined yet.") message=_("Objectives translate strategy into measurable security commitments. Tie each one to scopes and indicators.") colspan=8 %}
 {% endfor %}
