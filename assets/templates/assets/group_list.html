@@ -21,8 +21,6 @@
         <tr>
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
-          {% sortable_th "type" "Type" %}
-          <th>{% trans "Members" %}</th>
           <th>{% trans "Owner" %}</th>
           {% sortable_th "workflow_state" "Status" %}
           <th>{% trans "Tags" %}</th>
@@ -33,10 +31,27 @@
         {% for group in groups %}
         <tr>
           <td><a href="{% url 'assets:group-detail' group.pk %}" class="ref">{{ group.reference }}</a></td>
-          <td><a href="{% url 'assets:group-detail' group.pk %}" class="cell-link">{{ group.name }}</a></td>
-          <td>{{ group.get_type_display }}</td>
-          <td>{{ group.member_count }}</td>
-          <td>{% if group.owner %}{% user_badge group.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+          <td>
+            <span class="cell-stack">
+              <a href="{% url 'assets:group-detail' group.pk %}" class="cell-link">{{ group.name }}</a>
+              <span class="cell-sub">{{ group.get_type_display }} • <i class="bi bi-collection me-1" aria-hidden="true" title="{% trans 'Members' %}"></i>{{ group.member_count }}</span>
+            </span>
+          </td>
+          <td>
+            {% if group.owner %}
+            <span class="cell-people cell-people--sm">
+              {% if group.owner.avatar %}
+              <img src="{{ group.owner.avatar_32|default:group.owner.avatar }}" alt="" class="cell-avatar">
+              {% else %}
+              <span class="cell-avatar-fallback">{{ group.owner.display_name|initials }}</span>
+              {% endif %}
+              <span class="cell-stack">
+                <span style="font-weight:600">{{ group.owner.display_name }}</span>
+                {% if group.owner.job_title %}<span class="cell-sub">{{ group.owner.job_title }}</span>{% endif %}
+              </span>
+            </span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
+          </td>
           <td>{% workflow_badge group %}</td>
           <td>{% include "includes/tags_badge.html" with tags=group.tags.all %}</td>
           <td class="text-end">
@@ -44,7 +59,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No group created yet.") message=_("Groups bundle related items together so you can apply controls and analyses at the right granularity.") colspan=8 %}
+        {% empty_state title=_("No group created yet.") message=_("Groups bundle related items together so you can apply controls and analyses at the right granularity.") colspan=6 %}
         {% endfor %}
       </tbody>
     </table>
