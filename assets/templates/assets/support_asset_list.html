@@ -68,8 +68,12 @@
           <td>{{ asset.get_environment_display|default:"-" }}</td>
           <td>
             <span class="cell-stack">
+              {% if asset.is_end_of_life %}
+              <span><span class="badge text-bg-danger">EOL</span></span>
+              {% else %}
               <span>{% workflow_badge asset %}</span>
-              {% if asset.end_of_life_date %}<span class="cell-sub" title="{% trans 'End of life date' %}"><i class="bi bi-calendar-x me-1" aria-hidden="true"></i>{{ asset.end_of_life_date }}{% if asset.is_end_of_life %} <span class="badge text-bg-danger">EOL</span>{% endif %}</span>{% endif %}
+              {% endif %}
+              {% if asset.end_of_life_date %}<span class="cell-sub" title="{% trans 'End of life date' %}"><i class="bi bi-calendar-x me-1" aria-hidden="true"></i>{{ asset.end_of_life_date }}</span>{% endif %}
             </span>
           </td>
           <td>{% include "includes/tags_badge.html" with tags=asset.tags.all %}</td>
