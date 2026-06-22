@@ -15,6 +15,15 @@
     </span>
   </td>
   <td>{% user_avatars role.assigned_users.all size=24 %}</td>
+  <td>
+    <div class="d-flex gap-1 flex-nowrap">
+      {% if role.responsible_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent-soft);color:var(--accent)" title="{% trans 'Responsible (R)' %}">R {{ role.responsible_count }}</span>{% endif %}
+      {% if role.accountable_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent-soft);color:var(--accent)" title="{% trans 'Accountable (A)' %}">A {{ role.accountable_count }}</span>{% endif %}
+      {% if role.consulted_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent-soft);color:var(--accent)" title="{% trans 'Consulted (C)' %}">C {{ role.consulted_count }}</span>{% endif %}
+      {% if role.informed_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent-soft);color:var(--accent)" title="{% trans 'Informed (I)' %}">I {{ role.informed_count }}</span>{% endif %}
+      {% if not role.responsible_count and not role.accountable_count and not role.consulted_count and not role.informed_count %}<span class="cell-empty" style="font-size:.75rem">-</span>{% endif %}
+    </div>
+  </td>
   <td>{% workflow_badge role %}</td>
   <td>{% include "includes/tags_badge.html" with tags=role.tags.all %}</td>
   <td class="text-end">
@@ -25,5 +34,5 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No role described yet.") message=_("Roles formalise who does what in the ISMS. Map each role to its responsibilities, then assign it to a person.") colspan=7 %}
+{% empty_state title=_("No role described yet.") message=_("Roles formalise who does what in the ISMS. Map each role to its responsibilities, then assign it to a person.") colspan=8 %}
 {% endfor %}
