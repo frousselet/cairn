@@ -7,16 +7,20 @@
     <div class="d-flex gap-1 flex-nowrap">
       {% if analysis.strength_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--success);color:#fff" title="{% trans 'Strengths' %}">S {{ analysis.strength_count }}</span>{% endif %}
       {% if analysis.weakness_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--danger);color:#fff" title="{% trans 'Weaknesses' %}">W {{ analysis.weakness_count }}</span>{% endif %}
-      {% if analysis.opportunity_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent);color:#fff" title="{% trans 'Opportunities' %}">O {{ analysis.opportunity_count }}</span>{% endif %}
+      {% if analysis.opportunity_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent);color:var(--accent-contrast)" title="{% trans 'Opportunities' %}">O {{ analysis.opportunity_count }}</span>{% endif %}
       {% if analysis.threat_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--warning);color:#000" title="{% trans 'Threats' %}">T {{ analysis.threat_count }}</span>{% endif %}
       {% if not analysis.strength_count and not analysis.weakness_count and not analysis.opportunity_count and not analysis.threat_count %}<span style="color:var(--text-muted);font-size:.75rem">-</span>{% endif %}
     </div>
   </td>
-  <td>{{ analysis.analysis_date }}</td>
+  <td>
+    <span class="cell-stack">
+      <span>{{ analysis.analysis_date }}</span>
+      {% if analysis.review_date %}<span class="cell-sub" title="{% trans 'Next review date' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ analysis.review_date }}</span>{% endif %}
+    </span>
+  </td>
   <td>
     {% workflow_badge analysis %}
   </td>
-  <td>{{ analysis.validated_by|default:"-" }}</td>
   <td>{% include "includes/tags_badge.html" with tags=analysis.tags.all %}</td>
   <td class="text-end">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
@@ -26,5 +30,5 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No SWOT analysis yet.") message=_("A SWOT analysis surfaces strengths, weaknesses, opportunities and threats. One per scope or major initiative is the common cadence.") colspan=8 %}
+{% empty_state title=_("No SWOT analysis yet.") message=_("A SWOT analysis surfaces strengths, weaknesses, opportunities and threats. One per scope or major initiative is the common cadence.") colspan=7 %}
 {% endfor %}
