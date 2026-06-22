@@ -109,39 +109,16 @@
 
 {% include "includes/table_search.html" %}
 
-{% has_perm "risks.risk.approve" as can_approve_risks %}
 {% has_perm "risks.risk.delete" as can_delete_risks %}
-{% if can_approve_risks or can_delete_risks %}
-<form method="post" action="{% url 'risks:risk-bulk-action' %}" id="risk-bulk-form">
-  {% csrf_token %}
-  <div class="d-flex align-items-center gap-2 mb-2 small" id="risk-bulk-bar" style="display:none !important">
-    <span id="risk-bulk-count" class="text-muted"></span>
-    {% if can_approve_risks %}
-    <button type="submit" name="action" value="approve" class="btn btn-sm btn-outline-success">
-      <i class="bi bi-check2 me-1"></i>{% trans "Approve selected" %}
-    </button>
-    {% endif %}
-    {% if can_delete_risks %}
-    <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger"
-            onclick="return confirm('{% trans 'Delete the selected risks?' %}')">
-      <i class="bi bi-trash me-1"></i>{% trans "Delete selected" %}
-    </button>
-    {% endif %}
-  </div>
-{% endif %}
 
 <div class="card">
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead>
         <tr>
-          {% if can_approve_risks or can_delete_risks %}
-          <th style="width:1%"><input type="checkbox" id="risk-bulk-select-all" aria-label="{% trans 'Select all' %}"></th>
-          {% endif %}
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
           {% sortable_th "priority" "Priority" %}
-          {% sortable_th "treatment" "Treatment" %}
           {% sortable_th "workflow_state" "Status" %}
           <th>{% trans "Owner" %}</th>
           <th>{% trans "Tags" %}</th>
@@ -151,9 +128,6 @@
       <tbody>
         {% for r in risks %}
         <tr>
-          {% if can_approve_risks or can_delete_risks %}
-          <td><input type="checkbox" name="risk_ids" value="{{ r.pk }}" class="risk-bulk-checkbox" form="risk-bulk-form"></td>
-          {% endif %}
           <td><a href="{% url 'risks:risk-detail' r.pk %}" class="ref">{{ r.reference }}</a></td>
           <td>
             <span class="cell-stack">
@@ -162,10 +136,17 @@
             </span>
           </td>
           <td>
-            {% if r.current_risk_level is not None %}{% with lvl=r.current_risk_level|stringformat:"s" %}{% badge r.priority type="severity" label=r.get_priority_display|add:" · "|add:lvl %}{% endwith %}{% else %}{% badge r.priority type="severity" label=r.get_priority_display %}{% endif %}
+            <span class="cell-stack">
+              <span>{% badge r.priority type="severity" label=r.get_priority_display %}</span>
+              {% if r.current_risk_level is not None %}<span class="cell-sub" title="{% trans 'Current level' %}"><i class="bi bi-speedometer2 me-1" aria-hidden="true"></i>{{ r.current_risk_level }}</span>{% endif %}
+            </span>
           </td>
-          <td style="font-size:.85rem">{{ r.get_treatment_decision_display }}</td>
-          <td>{% workflow_badge r %}</td>
+          <td>
+            <span class="cell-stack">
+              <span>{% workflow_badge r %}</span>
+              {% if r.treatment_decision %}<span class="cell-sub" title="{% trans 'Treatment' %}"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>{{ r.get_treatment_decision_display }}</span>{% endif %}
+            </span>
+          </td>
           <td>
             {% if r.risk_owner %}
             <span class="cell-people cell-people--sm">
@@ -190,37 +171,12 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No risks recorded yet.") message=_("Risks are identified through methodology-driven assessments. Open an assessment and use its workflow to create them.") colspan=9 %}
+        {% empty_state title=_("No risks recorded yet.") message=_("Risks are identified through methodology-driven assessments. Open an assessment and use its workflow to create them.") colspan=7 %}
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
-{% if can_approve_risks or can_delete_risks %}
-</form>
-<script>
-(function() {
-  const bar = document.getElementById("risk-bulk-bar");
-  const count = document.getElementById("risk-bulk-count");
-  const checkboxes = document.querySelectorAll(".risk-bulk-checkbox");
-  const selectAll = document.getElementById("risk-bulk-select-all");
-  if (!bar) return;
-  function refresh() {
-    const checked = document.querySelectorAll(".risk-bulk-checkbox:checked").length;
-    bar.style.display = checked > 0 ? "flex" : "none";
-    if (count) count.textContent = checked + " {% trans 'selected' %}";
-  }
-  checkboxes.forEach(cb => cb.addEventListener("change", refresh));
-  if (selectAll) {
-    selectAll.addEventListener("change", function() {
-      checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
-      refresh();
-    });
-  }
-  refresh();
-})();
-</script>
-{% endif %}
 
 {% include "includes/pagination.html" %}
 {% endblock %}
