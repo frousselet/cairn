@@ -29,10 +29,8 @@
         <tr>
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
-          <th>{% trans "Type" %}</th>
           {% sortable_th "criticality" "Criticality" %}
           <th>{% trans "Owner" %}</th>
-          {% sortable_th "contract_end" "Contract end" %}
           {% sortable_th "workflow_state" "Status" %}
           <th>{% trans "Tags" %}</th>
           <th class="text-end">{% trans "Actions" %}</th>
@@ -43,32 +41,51 @@
         <tr{% if supplier.is_contract_expired %} class="table-warning"{% endif %}>
           <td><a href="{% url 'assets:supplier-detail' supplier.pk %}" class="ref">{{ supplier.reference }}</a></td>
           <td>
-            <a href="{% url 'assets:supplier-detail' supplier.pk %}" class="cell-link d-inline-flex align-items-center gap-2">
-              {% if supplier.logo %}<img src="{{ supplier.logo_32|default:supplier.logo }}" alt="" style="width:24px;height:24px;object-fit:cover;border-radius:4px">{% endif %}
-              {{ supplier.name }}
+            <a href="{% url 'assets:supplier-detail' supplier.pk %}" class="cell-people">
+              {% if supplier.logo %}
+              <img src="{{ supplier.logo_32|default:supplier.logo }}" alt="" style="width:32px;height:32px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--border-light)">
+              {% else %}
+              <span class="d-inline-flex align-items-center justify-content-center" style="width:32px;height:32px;border-radius:6px;background:var(--accent-soft);color:var(--accent);flex-shrink:0"><i class="bi bi-building" aria-hidden="true"></i></span>
+              {% endif %}
+              <span class="cell-stack">
+                <span class="cell-link">{{ supplier.name }}</span>
+                {% if supplier.type %}<span class="cell-sub">{{ supplier.type.name }}</span>{% endif %}
+              </span>
             </a>
           </td>
-          <td>{% if supplier.type %}<a href="{% url 'assets:supplier-type-detail' supplier.type.pk %}" class="cell-link">{{ supplier.type.name }}</a>{% else %}-{% endif %}</td>
           <td>
             <span class="badge text-bg-{% if supplier.criticality == 'critical' %}danger{% elif supplier.criticality == 'high' %}warning{% elif supplier.criticality == 'medium' %}info{% else %}secondary{% endif %}">
               {{ supplier.get_criticality_display }}
             </span>
           </td>
-          <td>{% if supplier.owner %}{% user_badge supplier.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
           <td>
-            {% if supplier.contract_end_date %}
-              {{ supplier.contract_end_date }}
-              {% if supplier.is_contract_expired %}<span class="badge text-bg-danger">{% trans "Expired" %}</span>{% endif %}
-            {% else %}-{% endif %}
+            {% if supplier.owner %}
+            <span class="cell-people cell-people--sm">
+              {% if supplier.owner.avatar %}
+              <img src="{{ supplier.owner.avatar_32|default:supplier.owner.avatar }}" alt="" class="cell-avatar">
+              {% else %}
+              <span class="cell-avatar-fallback">{{ supplier.owner.display_name|initials }}</span>
+              {% endif %}
+              <span class="cell-stack">
+                <span style="font-weight:600">{{ supplier.owner.display_name }}</span>
+                {% if supplier.owner.job_title %}<span class="cell-sub">{{ supplier.owner.job_title }}</span>{% endif %}
+              </span>
+            </span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
           </td>
-          <td>{% workflow_badge supplier %}</td>
+          <td>
+            <span class="cell-stack">
+              <span>{% workflow_badge supplier %}</span>
+              {% if supplier.contract_end_date %}<span class="cell-sub" title="{% trans 'Contract end' %}"><i class="bi bi-calendar-event me-1" aria-hidden="true"></i>{{ supplier.contract_end_date }}{% if supplier.is_contract_expired %} <span class="badge text-bg-danger">{% trans "Expired" %}</span>{% endif %}</span>{% endif %}
+            </span>
+          </td>
           <td>{% include "includes/tags_badge.html" with tags=supplier.tags.all %}</td>
           <td class="text-end">
             <a hx-get="{% url 'assets:supplier-update' supplier.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No supplier registered yet.") message=_("Suppliers are external parties you depend on - SaaS vendors, hosting providers, contractors. Track them to assess third-party risk.") colspan=9 %}
+        {% empty_state title=_("No supplier registered yet.") message=_("Suppliers are external parties you depend on - SaaS vendors, hosting providers, contractors. Track them to assess third-party risk.") colspan=7 %}
         {% endfor %}
       </tbody>
     </table>
