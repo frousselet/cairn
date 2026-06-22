@@ -21,9 +21,6 @@
         <tr>
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
-          {% sortable_th "type" "Type" %}
-          {% sortable_th "category" "Category" %}
-          <th>{% trans "Mandatory" %}</th>
           {% sortable_th "compliance" "Compliance" %}
           {% sortable_th "workflow_state" "Status" %}
           <th>{% trans "Tags" %}</th>
@@ -35,14 +32,18 @@
         <tr>
           <td><a href="{% url 'compliance:framework-detail' fw.pk %}" class="ref">{{ fw.reference }}</a></td>
           <td>
-            <a href="{% url 'compliance:framework-detail' fw.pk %}" class="cell-link d-inline-flex align-items-center gap-2">
-              {% if fw.logo %}<img src="{{ fw.logo_32|default:fw.logo }}" alt="" style="width:24px;height:24px;object-fit:cover;border-radius:4px;background:#fff;border:1px solid var(--border-light)">{% else %}<span class="d-inline-flex align-items-center justify-content-center" style="width:24px;min-width:24px;height:24px;min-height:24px;border-radius:4px;background:var(--accent-soft);color:var(--accent);font-size:.75rem;border:1px solid var(--border-light)"><i class="bi bi-journal-bookmark"></i></span>{% endif %}
-              {{ fw.name }}
+            <a href="{% url 'compliance:framework-detail' fw.pk %}" class="cell-people">
+              {% if fw.logo %}
+              <img src="{{ fw.logo_32|default:fw.logo }}" alt="" style="width:32px;height:32px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#fff;border:1px solid var(--border-light)">
+              {% else %}
+              <span class="d-inline-flex align-items-center justify-content-center" style="width:32px;height:32px;border-radius:6px;background:var(--accent-soft);color:var(--accent);flex-shrink:0"><i class="bi bi-journal-bookmark" aria-hidden="true"></i></span>
+              {% endif %}
+              <span class="cell-stack">
+                <span class="cell-link">{{ fw.name }}{% if fw.is_mandatory %} <span class="badge text-bg-danger" style="font-size:.65rem">{% trans "Mandatory" %}</span>{% endif %}</span>
+                <span class="cell-sub" title="{{ fw.get_type_display }}"><i class="bi {% if fw.type == 'standard' %}bi-patch-check{% elif fw.type == 'law' %}bi-bank{% elif fw.type == 'regulation' %}bi-file-earmark-ruled{% elif fw.type == 'contract' %}bi-file-earmark-text{% elif fw.type == 'internal_policy' %}bi-building{% elif fw.type == 'industry_framework' %}bi-diagram-3{% else %}bi-bookmark{% endif %} me-1" aria-hidden="true"></i>{{ fw.get_category_display }}</span>
+              </span>
             </a>
           </td>
-          <td>{{ fw.get_type_display }}</td>
-          <td>{{ fw.get_category_display }}</td>
-          <td>{% if fw.is_mandatory %}<span class="badge text-bg-danger">{% trans "Yes" %}</span>{% else %}{% trans "No" %}{% endif %}</td>
           <td>
             <div class="progress" style="min-width: 80px;">
               <div class="progress-bar {% if fw.compliance_level >= 80 %}bg-success{% elif fw.compliance_level >= 50 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ fw.compliance_level|floatformat:0 }}%">{{ fw.compliance_level|floatformat:0 }}%</div>
@@ -55,7 +56,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No framework loaded yet.") message=_("Frameworks are the regulatory or normative texts you measure against (ISO 27001, NIS 2, GDPR). Import or create one to start mapping requirements.") colspan=9 %}
+        {% empty_state title=_("No framework loaded yet.") message=_("Frameworks are the regulatory or normative texts you measure against (ISO 27001, NIS 2, GDPR). Import or create one to start mapping requirements.") colspan=6 %}
         {% endfor %}
       </tbody>
     </table>
