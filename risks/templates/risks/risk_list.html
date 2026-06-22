@@ -140,10 +140,7 @@
           {% endif %}
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
-          <th>{% trans "Assessment" %}</th>
-          <th>{% trans "Source" %}</th>
           {% sortable_th "priority" "Priority" %}
-          {% sortable_th "current_level" "Current level" %}
           {% sortable_th "treatment" "Treatment" %}
           {% sortable_th "workflow_state" "Status" %}
           <th>{% trans "Owner" %}</th>
@@ -158,16 +155,32 @@
           <td><input type="checkbox" name="risk_ids" value="{{ r.pk }}" class="risk-bulk-checkbox" form="risk-bulk-form"></td>
           {% endif %}
           <td><a href="{% url 'risks:risk-detail' r.pk %}" class="ref">{{ r.reference }}</a></td>
-          <td><a href="{% url 'risks:risk-detail' r.pk %}" class="cell-link">{{ r.name }}</a></td>
-          <td style="font-size:.85rem">{{ r.assessment.reference }}</td>
-          <td style="font-size:.85rem">{{ r.get_risk_source_display }}</td>
           <td>
-            {% badge r.priority type="severity" label=r.get_priority_display %}
+            <span class="cell-stack">
+              <a href="{% url 'risks:risk-detail' r.pk %}" class="cell-link">{{ r.name }}</a>
+              <span class="cell-sub">{{ r.assessment.reference }} • {{ r.get_risk_source_display }}</span>
+            </span>
           </td>
-          <td class="tabular-nums" style="font-weight:600;font-size:.85rem">{{ r.current_risk_level|default:"-" }}</td>
+          <td>
+            {% if r.current_risk_level is not None %}{% with lvl=r.current_risk_level|stringformat:"s" %}{% badge r.priority type="severity" label=r.get_priority_display|add:" · "|add:lvl %}{% endwith %}{% else %}{% badge r.priority type="severity" label=r.get_priority_display %}{% endif %}
+          </td>
           <td style="font-size:.85rem">{{ r.get_treatment_decision_display }}</td>
           <td>{% workflow_badge r %}</td>
-          <td style="font-size:.85rem">{% if r.risk_owner %}{% user_badge r.risk_owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+          <td>
+            {% if r.risk_owner %}
+            <span class="cell-people cell-people--sm">
+              {% if r.risk_owner.avatar %}
+              <img src="{{ r.risk_owner.avatar_32|default:r.risk_owner.avatar }}" alt="" class="cell-avatar">
+              {% else %}
+              <span class="cell-avatar-fallback">{{ r.risk_owner.display_name|initials }}</span>
+              {% endif %}
+              <span class="cell-stack">
+                <span style="font-weight:600">{{ r.risk_owner.display_name }}</span>
+                {% if r.risk_owner.job_title %}<span class="cell-sub">{{ r.risk_owner.job_title }}</span>{% endif %}
+              </span>
+            </span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
+          </td>
           <td>{% include "includes/tags_badge.html" with tags=r.tags.all %}</td>
           <td class="text-end">
             <a hx-get="{% url 'risks:risk-update' r.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ r.reference }}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
@@ -177,7 +190,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No risks recorded yet.") message=_("Risks are identified through methodology-driven assessments. Open an assessment and use its workflow to create them.") colspan=12 %}
+        {% empty_state title=_("No risks recorded yet.") message=_("Risks are identified through methodology-driven assessments. Open an assessment and use its workflow to create them.") colspan=9 %}
         {% endfor %}
       </tbody>
     </table>
