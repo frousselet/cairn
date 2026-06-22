@@ -33,7 +33,7 @@
           <td>
             <span class="cell-stack">
               <a href="{% url 'assets:supplier-type-detail' st.pk %}" class="cell-link">{{ st.name }}</a>
-              {% if st.description %}<span class="cell-sub">{{ st.description|truncatewords:15 }}</span>{% endif %}
+              {% if st.description %}<span class="cell-sub" title="{{ st.description }}">{{ st.description }}</span>{% endif %}
             </span>
           </td>
           <td><span class="badge text-bg-secondary">{{ st.req_count }}</span></td>

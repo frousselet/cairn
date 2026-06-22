@@ -103,6 +103,18 @@ Use the shared helpers (defined in `base.html`, theme-aware in light/dark) :
 - `.cell-sub` : the muted, smaller secondary line (`var(--text-muted)`, `.8125rem`).
   A `.cell-link` placed directly in a `.cell-stack` is automatically bold (600).
 
+**Line-length rule (enforced by the helpers, do not override):**
+
+- The **primary line is always a single line** : it never wraps and is truncated
+  with an ellipsis (`.cell-stack > :not(.cell-sub)`).
+- The **secondary line is at most two lines** : longer text is clamped with an
+  ellipsis (`.cell-stack > .cell-sub`, except horizontal `d-inline-flex` sub-lines
+  which stay on one line).
+- Do **not** pre-truncate the text with `|truncatechars`/`|truncatewords` to fit -
+  let the CSS clamp it, and add a `title="{{ full_value }}"` so the full text is
+  available on hover. The stack is also width-capped (`max-width`) so long values
+  truncate instead of widening the column.
+
 ```django
 <td>
   <span class="cell-stack">

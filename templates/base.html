@@ -2209,8 +2209,16 @@
     /* Two-line table cell: a primary line over a muted secondary line.
        Groups related fields (name + email, job title + department, …) so a
        row stays scannable without extra columns. See docs/brand/table-standard.md. */
-    .cell-stack { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+    .cell-stack { display: flex; flex-direction: column; gap: .15rem; line-height: 1.25; min-width: 0; max-width: 24rem; }
+    /* Primary line never wraps: a single line, truncated with an ellipsis. */
+    .cell-stack > :not(.cell-sub) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
     .cell-sub { color: var(--text-muted); font-size: .8125rem; }
+    /* Secondary line: at most two lines, then truncated. (Horizontal flex
+       sub-lines - icon + logo + link - keep their layout and stay short.) */
+    .cell-stack > .cell-sub:not(.d-inline-flex) {
+      display: -webkit-box; -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+    }
     .cell-stack > .cell-link { font-weight: 600; }
 
     /* People cell: avatar + two-line identity (used in the users admin table).
