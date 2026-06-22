@@ -24,7 +24,6 @@
         <tr>
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
-          {% sortable_th "category" "Category" %}
           {% sortable_th "owner" "Owner" %}
           <th>C / I / A</th>
           {% sortable_th "workflow_state" "Status" %}
@@ -39,13 +38,7 @@
           <td>
             <span class="cell-stack">
               <a href="{% url 'assets:essential-asset-detail' asset.pk %}" class="cell-link">{{ asset.name }}</a>
-              {% if asset.data_classification or asset.personal_data %}<span class="cell-sub">{% if asset.data_classification %}{{ asset.get_data_classification_display }}{% endif %}{% if asset.personal_data %}{% if asset.data_classification %} · {% endif %}<i class="bi bi-person-badge me-1" aria-hidden="true"></i>{% trans "Personal data" %}{% endif %}</span>{% endif %}
-            </span>
-          </td>
-          <td>
-            <span class="cell-stack">
-              <span>{{ asset.get_category_display }}</span>
-              <span class="cell-sub">{{ asset.get_type_display }}</span>
+              <span class="cell-sub">{{ asset.get_category_display }} • {{ asset.get_type_display }}</span>
             </span>
           </td>
           <td>
@@ -75,7 +68,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No essential asset registered yet.") message=_("Essential assets are the information, processes and services whose loss would hurt the business. They sit at the top of every dependency chain.") colspan=8 %}
+        {% empty_state title=_("No essential asset registered yet.") message=_("Essential assets are the information, processes and services whose loss would hurt the business. They sit at the top of every dependency chain.") colspan=7 %}
         {% endfor %}
       </tbody>
     </table>
