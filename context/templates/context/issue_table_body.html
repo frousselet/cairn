@@ -2,16 +2,25 @@
 {% for issue in issues %}
 <tr>
   <td><a href="{% url 'context:issue-detail' issue.pk %}" class="ref">{{ issue.reference }}</a></td>
-  <td><a href="{% url 'context:issue-detail' issue.pk %}" class="cell-link">{{ issue.name }}</a></td>
-  <td>{% scope_popover issue.scopes.all %}</td>
-  <td>{{ issue.get_type_display }}</td>
-  <td>{{ issue.get_category_display }}</td>
   <td>
-    <span class="badge text-bg-{% if issue.impact_level == 'critical' %}danger{% elif issue.impact_level == 'high' %}warning{% elif issue.impact_level == 'medium' %}info{% else %}secondary{% endif %}">
-      {{ issue.get_impact_level_display }}
+    <span class="cell-stack">
+      <a href="{% url 'context:issue-detail' issue.pk %}" class="cell-link">{{ issue.name }}</a>
+      {% if issue.source %}<span class="cell-sub">{{ issue.source }}</span>{% endif %}
     </span>
   </td>
-  <td>{{ issue.get_trend_display|default:"-" }}</td>
+  <td>{% scope_popover issue.scopes.all %}</td>
+  <td>
+    <span class="cell-stack">
+      <span>{{ issue.get_category_display }}</span>
+      <span class="cell-sub">{{ issue.get_type_display }}</span>
+    </span>
+  </td>
+  <td>
+    <span class="cell-stack">
+      <span><span class="badge text-bg-{% if issue.impact_level == 'critical' %}danger{% elif issue.impact_level == 'high' %}warning{% elif issue.impact_level == 'medium' %}info{% else %}secondary{% endif %}">{{ issue.get_impact_level_display }}</span></span>
+      {% if issue.trend %}<span class="cell-sub"><i class="bi bi-arrow-{% if issue.trend == 'improving' %}up{% elif issue.trend == 'degrading' %}down{% else %}right{% endif %} me-1" aria-hidden="true"></i>{{ issue.get_trend_display }}</span>{% endif %}
+    </span>
+  </td>
   <td>{% workflow_badge issue %}</td>
   <td>{% include "includes/tags_badge.html" with tags=issue.tags.all %}</td>
   <td class="text-end">
@@ -22,5 +31,5 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No issue identified yet.") message=_("Issues are internal/external factors that influence your ISMS - strategic context, regulatory pressure, notable incidents.") colspan=10 %}
+{% empty_state title=_("No issue identified yet.") message=_("Issues are internal/external factors that influence your ISMS - strategic context, regulatory pressure, notable incidents.") colspan=8 %}
 {% endfor %}
