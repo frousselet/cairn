@@ -4742,6 +4742,16 @@
           }
           var t = doc.querySelector('title');
           if (t) document.title = t.textContent.trim();
+          /* The sidebar lives outside #page-shell, so a boosted swap never
+           * refreshes it. Sync the brand (company logo / app name) from the
+           * fresh response so a logo or name change in company settings
+           * shows in the menu immediately, without a full page reload. */
+          var newBrand = doc.querySelector('.sidebar-brand');
+          var curBrand = document.querySelector('.sidebar-brand');
+          if (newBrand && curBrand && newBrand.innerHTML !== curBrand.innerHTML) {
+            curBrand.innerHTML = newBrand.innerHTML;
+            if (window.htmx) htmx.process(curBrand);
+          }
         } catch (_) { /* fall through and let HTMX handle it */ }
       });
 
@@ -6220,9 +6230,12 @@
       file.addEventListener('change', function(e) {
         var f = e.target.files[0];
         if (!f || typeof resizeImageFile !== 'function') return;
+        var hideSpinner = typeof showImageUploadSpinner === 'function'
+          ? showImageUploadSpinner(preview) : function() {};
         resizeImageFile(f, 128, function(uri) {
           input.value = uri;
           setPreview(uri);
+          hideSpinner();
         });
       });
       if (clearBtn) clearBtn.addEventListener('click', function() {

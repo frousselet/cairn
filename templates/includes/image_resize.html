@@ -23,4 +23,40 @@ function resizeImageFile(file, size, callback) {
   };
   reader.readAsDataURL(file);
 }
+
+/**
+ * Overlay a spinner on top of an image preview element while the chosen file
+ * is being read and resized. Returns a function that removes the overlay.
+ * Robust to any layout: positions the overlay against the preview's parent.
+ * The overlay stays visible for at least `minMs` so it never just flickers on
+ * fast (small-image) resizes.
+ */
+function showImageUploadSpinner(previewEl, minMs) {
+  if (!previewEl) return function() {};
+  var minVisible = minMs == null ? 350 : minMs;
+  var parent = previewEl.parentNode;
+  if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+  var pr = parent.getBoundingClientRect();
+  var er = previewEl.getBoundingClientRect();
+  var overlay = document.createElement('div');
+  overlay.className = 'image-upload-spinner';
+  overlay.setAttribute('role', 'status');
+  overlay.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true" style="color:var(--accent)"></span>';
+  overlay.style.cssText =
+    'position:absolute;display:flex;align-items:center;justify-content:center;z-index:5;' +
+    'left:' + (er.left - pr.left) + 'px;top:' + (er.top - pr.top) + 'px;' +
+    'width:' + er.width + 'px;height:' + er.height + 'px;' +
+    'border-radius:' + getComputedStyle(previewEl).borderRadius + ';' +
+    'background:color-mix(in srgb,var(--card-bg) 65%,transparent);backdrop-filter:blur(1px);' +
+    'transition:opacity var(--ease-out,ease) 150ms';
+  parent.appendChild(overlay);
+  var shownAt = Date.now();
+  return function() {
+    var remaining = Math.max(0, minVisible - (Date.now() - shownAt));
+    setTimeout(function() {
+      overlay.style.opacity = '0';
+      setTimeout(function() { overlay.remove(); }, 150);
+    }, remaining);
+  };
+}
 </script>

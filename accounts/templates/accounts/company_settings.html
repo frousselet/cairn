@@ -131,6 +131,7 @@ document.getElementById('{{ form.logo_file.id_for_label }}').addEventListener('c
   var file = e.target.files[0];
   if (!file) return;
   document.getElementById('id_remove_logo').value = '';
+  var hideSpinner = showImageUploadSpinner(document.getElementById('logo-preview'));
   resizeImageFile(file, 128, function(dataUri) {
     document.getElementById('id_logo_resized').value = dataUri;
     var el = document.getElementById('logo-preview');
@@ -143,6 +144,7 @@ document.getElementById('{{ form.logo_file.id_for_label }}').addEventListener('c
       img.style.cssText = 'width:80px;height:80px;border-radius:12px;object-fit:contain;border:2px solid var(--border-light);background:var(--card-bg);padding:4px';
       el.parentNode.replaceChild(img, el);
     }
+    hideSpinner();
   });
 });
 
