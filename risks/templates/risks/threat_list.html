@@ -40,11 +40,8 @@
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
           {% sortable_th "type" "Type" %}
-          {% sortable_th "origin" "Origin" %}
-          <th>{% trans "Category" %}</th>
           <th>{% trans "Scopes" %}</th>
           {% sortable_th "workflow_state" "Status" %}
-          <th>{% trans "Catalog" %}</th>
           <th>{% trans "Tags" %}</th>
           <th class="text-end">{% trans "Actions" %}</th>
         </tr>
@@ -53,13 +50,20 @@
         {% for t in threats %}
         <tr>
           <td><a href="{% url 'risks:threat-detail' t.pk %}" class="ref">{{ t.reference }}</a></td>
-          <td><a href="{% url 'risks:threat-detail' t.pk %}" class="cell-link">{{ t.name }}</a></td>
-          <td>{{ t.get_type_display }}</td>
-          <td>{{ t.get_origin_display|default:"-" }}</td>
-          <td>{{ t.get_category_display|default:"-" }}</td>
+          <td>
+            <span class="cell-stack">
+              <span><a href="{% url 'risks:threat-detail' t.pk %}" class="cell-link" style="font-weight:600">{{ t.name }}</a>{% if t.is_from_catalog %} <span class="badge text-bg-info" style="font-size:.65rem">{% trans "Catalog" %}</span>{% endif %}</span>
+              {% if t.category %}<span class="cell-sub">{{ t.get_category_display }}</span>{% endif %}
+            </span>
+          </td>
+          <td>
+            <span class="cell-stack">
+              <span>{{ t.get_type_display }}</span>
+              {% if t.origin %}<span class="cell-sub">{{ t.get_origin_display }}</span>{% endif %}
+            </span>
+          </td>
           <td>{% scope_popover t.scopes.all %}</td>
           <td>{% workflow_badge t %}</td>
-          <td>{% if t.is_from_catalog %}<span class="badge text-bg-info">{% trans "Catalog" %}</span>{% else %}-{% endif %}</td>
           <td>{% include "includes/tags_badge.html" with tags=t.tags.all %}</td>
           <td class="text-end">
             <a hx-get="{% url 'risks:threat-update' t.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
@@ -69,7 +73,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No threat catalogued yet.") message=_("Threats are the events or sources that could harm assets. Maintain a shared catalogue to keep assessments consistent.") colspan=10 %}
+        {% empty_state title=_("No threat catalogued yet.") message=_("Threats are the events or sources that could harm assets. Maintain a shared catalogue to keep assessments consistent.") colspan=7 %}
         {% endfor %}
       </tbody>
     </table>
