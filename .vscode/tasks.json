@@ -1,0 +1,74 @@
+{
+    // Support tasks for running Cairn in pure Python (without Docker).
+    // They all use the local dev settings (SQLite + in-memory channels)
+    // and the interpreter selected by the Python extension (mise), so no
+    // external dependency is required.
+    "version": "2.0.0",
+    "tasks": [
+        {
+            // Prepares a ready-to-use database, in two steps:
+            //  1. migrate --noinput: applies all migrations (including the data
+            //     migrations that populate permissions, system groups and risk
+            //     criteria). Idempotent.
+            //  2. demo seed (Voltara Energy, scripts/seed_demo_data.py): populates
+            //     all modules for realistic screens. The script is NOT
+            //     idempotent, so it is guarded: it is only replayed if the database
+            //     does not already contain the demo user.
+            // Wired as the preLaunchTask of the launch configs -> run on every
+            // F5, but only does work on an uninitialized database.
+            "label": "stack: bootstrap",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} manage.py migrate --noinput && ${command:python.interpreterPath} manage.py shell -c \"from accounts.models import User; print('Demo data already present - skipping seed.') if User.objects.filter(email='elise.moreau@voltara.example').exists() else exec(open('scripts/seed_demo_data.py').read())\"",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "DJANGO_SETTINGS_MODULE": "core.settings_local"
+                }
+            },
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "close": true
+            },
+            "problemMatcher": []
+        },
+        {
+            // Reloads the Voltara Energy demo dataset on demand (same idempotence
+            // guard as the bootstrap). To start from a clean dataset,
+            // delete db.sqlite3 first.
+            // Login: elise.moreau@voltara.example / VoltaraDemo!2026
+            "label": "stack: seed-demo",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} manage.py shell -c \"from accounts.models import User; print('Demo data already present - skipping seed.') if User.objects.filter(email='elise.moreau@voltara.example').exists() else exec(open('scripts/seed_demo_data.py').read())\"",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "DJANGO_SETTINGS_MODULE": "core.settings_local"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            // Creates an additional super administrator (interactive). Optional:
+            // the demo seed already creates a super-admin (elise.moreau@voltara.example).
+            "label": "stack: createsuperuser",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} manage.py createsuperuser",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "DJANGO_SETTINGS_MODULE": "core.settings_local"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
