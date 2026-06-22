@@ -1,0 +1,53 @@
+{
+    // Runs the whole Cairn stack in pure Python, without Docker or any external service.
+    // The dev settings `core.settings_local` replace Postgres with SQLite
+    // (db.sqlite3 file) and Redis with an in-memory channel layer: no
+    // dependency to install or start separately.
+    //
+    // First run: run the "stack: migrate" task first
+    // (Terminal > Run Task…) to create the SQLite schema.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Cairn: runserver (Django)",
+            "type": "debugpy",
+            "request": "launch",
+            "preLaunchTask": "stack: bootstrap",
+            "program": "${workspaceFolder}/manage.py",
+            "args": [
+                "runserver",
+                "0.0.0.0:8000"
+            ],
+            "django": true,
+            "python": "${command:python.interpreterPath}",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "core.settings_local",
+                "PYTHONUNBUFFERED": "1"
+            }
+        },
+        {
+            "name": "Cairn: uvicorn ASGI (Channels)",
+            "type": "debugpy",
+            "request": "launch",
+            "preLaunchTask": "stack: bootstrap",
+            "module": "uvicorn",
+            "args": [
+                "core.asgi:application",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000",
+                "--reload"
+            ],
+            "python": "${command:python.interpreterPath}",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "core.settings_local",
+                "PYTHONUNBUFFERED": "1"
+            }
+        }
+    ]
+}

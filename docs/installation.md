@@ -1,6 +1,6 @@
 # Installation
 
-Cairn runs as a Docker stack: the Django application (ASGI/Uvicorn), PostgreSQL 16 and Redis 7 (real-time features).
+Cairn runs as a Docker stack: the Django application (ASGI/Uvicorn), PostgreSQL 16 and Redis 7 (real-time features). For local development and debugging, it can also run in pure Python with no Docker (see [Option 3](#option-3--run-in-pure-python-for-debugging-mise)).
 
 ## Prerequisites
 
@@ -90,6 +90,62 @@ docker compose up -d
 docker compose exec web python manage.py migrate
 docker compose exec web python manage.py createsuperuser
 ```
+
+## Option 3 : run in pure Python for debugging (mise)
+
+For local development and step-by-step debugging, you can run the whole stack in pure Python, with no Docker and no external service. The dev settings module `core.settings_local` replaces PostgreSQL with a file-based SQLite database (`db.sqlite3`) and Redis with an in-memory channel layer, so nothing needs to be installed or started on the side.
+
+Python is managed by [mise](https://mise.jdx.dev/), pinned in [`mise.toml`](../mise.toml) (`python = "latest"`).
+
+### Prerequisites
+
+- [mise](https://mise.jdx.dev/getting-started.html)
+
+### Setup
+
+```bash
+# 1. Install the Python version declared in mise.toml
+mise install
+
+# 2. Create and activate a virtual environment, then install dependencies
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+The VS Code Python extension picks up the mise-managed interpreter automatically (see [`.vscode/settings.json`](../.vscode/settings.json)); debugpy and the tasks use it via `${command:python.interpreterPath}`.
+
+### Start the application
+
+All commands use `DJANGO_SETTINGS_MODULE=core.settings_local`:
+
+```bash
+export DJANGO_SETTINGS_MODULE=core.settings_local
+
+# Create the SQLite schema (applies all migrations, including the data
+# migrations that seed permissions, system groups and risk criteria)
+python manage.py migrate
+
+# Either create a superuser...
+python manage.py createsuperuser
+
+# ...or load the demo dataset (see below), then start the dev server
+python manage.py runserver 0.0.0.0:8000
+```
+
+The application is available at [http://localhost:8000](http://localhost:8000). The defaults are dev-friendly (`DEBUG=True`, `SECRET_KEY` and `ALLOWED_HOSTS` fall back to safe local values), so no `.env` is required.
+
+### Debugging in VS Code
+
+The repository ships ready-to-use VS Code configurations:
+
+- **`.vscode/launch.json`** : two launch configurations, **Cairn: runserver (Django)** and **Cairn: uvicorn ASGI (Channels)**. Press `F5` to start the server under the debugger with breakpoints. Both set `DJANGO_SETTINGS_MODULE=core.settings_local` for you.
+- **`.vscode/tasks.json`** : support tasks (Terminal > Run Task...):
+  - **stack: bootstrap** : runs `migrate` then seeds the demo dataset (guarded - only on an uninitialized database). It is wired as the `preLaunchTask`, so a plain `F5` prepares the database automatically.
+  - **stack: seed-demo** : reloads the Voltara Energy demo dataset on demand.
+  - **stack: createsuperuser** : creates an additional superuser interactively.
+
+To start from a clean dataset, delete `db.sqlite3` and run the bootstrap task again.
 
 ## Demo data (optional)
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Pure-Python debugging setup (mise)**: documented how to run the whole stack with no Docker and no external service for local development and step-by-step debugging, using [mise](https://mise.jdx.dev/) for the Python toolchain and the `core.settings_local` dev settings (file-based SQLite + in-memory channel layer). The installation guide gains an "Option 3" with the mise/venv setup, the `DJANGO_SETTINGS_MODULE=core.settings_local` start commands, and a walkthrough of the shipped VS Code launch configurations and tasks (bootstrap / seed-demo / createsuperuser); the README points to it.
+
 ## [0.29.0] - 2026-06-19
 
 ### Added

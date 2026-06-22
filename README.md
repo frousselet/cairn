@@ -34,13 +34,15 @@ docker compose exec web python manage.py createsuperuser
 
 Then open [http://localhost:8000](http://localhost:8000). To try Cairn with realistic sample content, load the [demo dataset](docs/installation.md#demo-data-optional).
 
+Prefer pure Python for debugging? Cairn also runs with no Docker and no external service using [mise](https://mise.jdx.dev/) (SQLite + in-memory channels), with ready-to-use VS Code launch configurations - see [running in pure Python for debugging](docs/installation.md#option-3--run-in-pure-python-for-debugging-mise).
+
 To run the published image without cloning the repository, and for production notes (scheduled commands), see the [installation guide](docs/installation.md).
 
 ## Documentation
 
 | Document | Contents |
 | -------- | -------- |
-| [Installation guide](docs/installation.md) | Docker setup (from source or published image), scheduled commands |
+| [Installation guide](docs/installation.md) | Docker setup (from source or published image), pure-Python debugging with mise, scheduled commands |
 | [Features](docs/features.md) | Detailed feature reference for every module |
 | [REST API](docs/api.md) | Base paths, authentication, conventions |
 | [MCP server](docs/mcp-server.md) | Endpoints, OAuth 2.0, full tool reference |
