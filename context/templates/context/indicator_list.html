@@ -37,13 +37,10 @@
     <table class="table table-hover mb-0">
       <thead>
         <tr>
-          {% sortable_th "reference" "Reference" %}
+          {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Title" %}
-          {% sortable_th "format" "Format" %}
           <th>{% trans "Current value" %}</th>
-          <th>{% trans "Expected level" %}</th>
           <th>{% trans "Collection" %}</th>
-          <th>{% trans "Frequency" %}</th>
           {% sortable_th "workflow_state" "Status" %}
           <th>{% trans "Tags" %}</th>
           <th class="text-end">{% trans "Actions" %}</th>
