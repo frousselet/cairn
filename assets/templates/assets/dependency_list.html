@@ -38,7 +38,7 @@
           <td>
             <span class="cell-stack">
               <span>{{ dep.get_dependency_type_display }}</span>
-              {% if dep.redundancy_level %}<span class="cell-sub">{{ dep.get_redundancy_level_display }}</span>{% endif %}
+              {% if dep.redundancy_level %}<span class="cell-sub" title="{% trans 'Redundancy' %}"><i class="bi bi-hdd-stack me-1" aria-hidden="true"></i>{{ dep.get_redundancy_level_display }}</span>{% endif %}
             </span>
           </td>
           <td>
