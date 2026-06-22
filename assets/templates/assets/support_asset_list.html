@@ -63,10 +63,8 @@
             {% else %}<span class="cell-empty">-</span>{% endif %}
           </td>
           <td>
-            <span class="d-inline-flex gap-2 align-items-center" style="font-size:.8125rem">
-              <span title="{% trans 'Confidentiality' %}"><span class="text-muted">C</span> {{ asset.inherited_confidentiality|dic_badge }}</span>
-              <span title="{% trans 'Integrity' %}"><span class="text-muted">I</span> {{ asset.inherited_integrity|dic_badge }}</span>
-              <span title="{% trans 'Availability' %}"><span class="text-muted">A</span> {{ asset.inherited_availability|dic_badge }}</span>
+            <span class="d-inline-flex gap-1 align-items-center" style="white-space:nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
+              {{ asset.inherited_confidentiality|dic_badge }}{{ asset.inherited_integrity|dic_badge }}{{ asset.inherited_availability|dic_badge }}
             </span>
           </td>
           <td>{{ asset.get_environment_display|default:"-" }}</td>
