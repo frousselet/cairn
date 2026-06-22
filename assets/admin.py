@@ -114,8 +114,9 @@ class SupplierTypeRequirementInline(admin.TabularInline):
 
 @admin.register(SupplierType)
 class SupplierTypeAdmin(admin.ModelAdmin):
-    list_display = ("name", "description")
-    search_fields = ("name",)
+    list_display = ("reference", "name", "description")
+    search_fields = ("reference", "name")
+    readonly_fields = ("reference",)
     inlines = [SupplierTypeRequirementInline]
 
 

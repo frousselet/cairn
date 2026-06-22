@@ -622,13 +622,29 @@ window.initSparklines = function(root) {
 
 {# ── Risk treatment flow (Sankey) ────────────────────── #}
 {% if risk_treatment_flow %}
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 <script>
 (function() {
   var el = document.getElementById('risk-treatment-flow');
   var dataEl = document.getElementById('risk-flow-data');
-  if (!el || !dataEl || typeof echarts === 'undefined') return;
+  if (!el || !dataEl) return;
 
+  // echarts is loaded from a CDN. Under hx-boost navigation the external
+  // <script> is injected asynchronously, so this code would run before echarts
+  // is ready and the chart stays blank until a full page reload. Load echarts
+  // on demand and only build the chart once echarts is available.
+  function withECharts(cb) {
+    if (window.echarts) { cb(); return; }
+    var s = document.getElementById('echarts-cdn');
+    if (!s) {
+      s = document.createElement('script');
+      s.id = 'echarts-cdn';
+      s.src = 'https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js';
+      document.head.appendChild(s);
+    }
+    s.addEventListener('load', cb);
+  }
+
+  withECharts(function() {
   var flow = JSON.parse(dataEl.textContent);
   var chart = echarts.init(el, null, {renderer: 'svg'});
 
@@ -705,6 +721,7 @@ window.initSparklines = function(root) {
   new MutationObserver(function() { render(); }).observe(
     document.documentElement, {attributes: true, attributeFilter: ['data-bs-theme']}
   );
+  });
 })();
 </script>
 {% endif %}

@@ -142,7 +142,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 (function() {
   var nodes = {{ graph_nodes|safe }};
@@ -154,6 +153,23 @@
     return;
   }
 
+  // d3 is loaded from a CDN. Under hx-boost navigation the external
+  // <script> is injected asynchronously, so the init code below would run
+  // before d3 is ready and the graph stays blank until a full page reload.
+  // Load d3 on demand and only build the graph once d3 is available.
+  function withD3(cb) {
+    if (window.d3) { cb(); return; }
+    var s = document.getElementById('d3-cdn');
+    if (!s) {
+      s = document.createElement('script');
+      s.id = 'd3-cdn';
+      s.src = 'https://d3js.org/d3.v7.min.js';
+      document.head.appendChild(s);
+    }
+    s.addEventListener('load', cb);
+  }
+
+  function initGraph() {
   var container = document.getElementById('graph-container');
   var width = container.clientWidth;
   var height = container.clientHeight;
@@ -378,6 +394,9 @@
   window.zoomOut = function() {
     svg.transition().duration(300).call(zoom.scaleBy, 0.7);
   };
+  }
+
+  withD3(initGraph);
 })();
 </script>
 {% endblock %}

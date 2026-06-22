@@ -18,6 +18,7 @@
     <table class="table table-hover mb-0">
       <thead>
         <tr>
+          {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
           <th>{% trans "Description" %}</th>
           <th>{% trans "Requirements" %}</th>
@@ -28,6 +29,7 @@
       <tbody>
         {% for st in supplier_types %}
         <tr>
+          <td><a href="{% url 'assets:supplier-type-detail' st.pk %}" class="ref">{{ st.reference }}</a></td>
           <td><a href="{% url 'assets:supplier-type-detail' st.pk %}" class="cell-link">{{ st.name }}</a></td>
           <td>{{ st.description|truncatewords:15|default:"-" }}</td>
           <td><span class="badge text-bg-secondary">{{ st.requirements.count }}</span></td>
@@ -38,7 +40,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No supplier type defined yet.") message=_("Supplier types group your vendors by category (cloud, software, legal). Each type carries its own baseline requirements.") colspan=5 %}
+        {% empty_state title=_("No supplier type defined yet.") message=_("Supplier types group your vendors by category (cloud, software, legal). Each type carries its own baseline requirements.") colspan=6 %}
         {% endfor %}
       </tbody>
     </table>

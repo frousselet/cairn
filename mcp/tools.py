@@ -2874,7 +2874,7 @@ def _register_assets_tools(server):
                    })
 
     # Supplier types (config, no approve)
-    st_fields = ["id", "name", "description", "created_at"]
+    st_fields = ["id", "reference", "name", "description", "created_at"]
     st_writable = ["name", "description"]
 
     _register_crud(server, "supplier_type", SupplierType, "assets.config",
