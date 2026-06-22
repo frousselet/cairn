@@ -331,7 +331,7 @@ class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixi
     search_fields = ["reference", "name"]
 
     def get_queryset(self):
-        return super().get_queryset().annotate(
+        return super().get_queryset().select_related("owner").annotate(
             member_count=Count("members")
         )
 
