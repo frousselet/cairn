@@ -7,6 +7,7 @@
 
 {% block content %}
 {% has_perm "system.groups.create" as can_create %}
+{% has_perm "system.groups.update" as can_update %}
 {% page_header _("Groups") eyebrow=_("Administration") accent="accounts" %}
   {% if can_create %}
   <a href="{% url 'accounts:group-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'Create a group' %}</a>
@@ -26,12 +27,13 @@
           <th>{% trans "Type" %}</th>
           <th>{% trans "Users" %}</th>
           <th>{% trans "Permissions" %}</th>
+          <th class="text-end">{% trans "Actions" %}</th>
         </tr>
       </thead>
       <tbody>
         {% for group in groups %}
         <tr>
-          <td><a href="{% url 'accounts:group-detail' group.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ group.name }}</a></td>
+          <td><a href="{% url 'accounts:group-detail' group.pk %}" class="cell-link">{{ group.name }}</a></td>
           <td>{{ group.description|truncatewords:15|default:"-" }}</td>
           <td>
             {% if group.is_system %}
@@ -42,9 +44,14 @@
           </td>
           <td>{{ group.user_count }}</td>
           <td>{{ group.permission_count }}</td>
+          <td class="text-end">
+            {% if can_update %}
+            <a href="{% url 'accounts:group-update' group.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            {% endif %}
+          </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No group created yet.") message=_("Groups bundle related items together so you can apply controls and analyses at the right granularity.") colspan=5 %}
+        {% empty_state title=_("No group created yet.") message=_("Groups bundle related items together so you can apply controls and analyses at the right granularity.") colspan=6 %}
         {% endfor %}
       </tbody>
     </table>

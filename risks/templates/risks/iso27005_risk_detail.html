@@ -25,13 +25,13 @@
     <div class="card">
       <div class="card-body">
         <dl class="row mb-0">
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Assessment" %}</dt><dd class="col-sm-9"><a href="{% url 'risks:assessment-detail' analysis.assessment.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ analysis.assessment }}</a></dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Threat" %}</dt><dd class="col-sm-9"><a href="{% url 'risks:threat-detail' analysis.threat.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ analysis.threat }}</a></dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Vulnerability" %}</dt><dd class="col-sm-9"><a href="{% url 'risks:vulnerability-detail' analysis.vulnerability.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ analysis.vulnerability }}</a></dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Assessment" %}</dt><dd class="col-sm-9"><a href="{% url 'risks:assessment-detail' analysis.assessment.pk %}" class="cell-link">{{ analysis.assessment }}</a></dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Threat" %}</dt><dd class="col-sm-9"><a href="{% url 'risks:threat-detail' analysis.threat.pk %}" class="cell-link">{{ analysis.threat }}</a></dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Vulnerability" %}</dt><dd class="col-sm-9"><a href="{% url 'risks:vulnerability-detail' analysis.vulnerability.pk %}" class="cell-link">{{ analysis.vulnerability }}</a></dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Consolidated risk" %}</dt>
-          <dd class="col-sm-9">{% if analysis.risk %}<a href="{% url 'risks:risk-detail' analysis.risk.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ analysis.risk }}</a>{% else %}—{% endif %}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Existing controls" %}</dt><dd class="col-sm-9">{{ analysis.existing_controls|default:"—"|safe }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ analysis.description|default:"—"|safe }}</dd>
+          <dd class="col-sm-9">{% if analysis.risk %}<a href="{% url 'risks:risk-detail' analysis.risk.pk %}" class="cell-link">{{ analysis.risk }}</a>{% else %}—{% endif %}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Existing controls" %}</dt><dd class="col-sm-9">{{ analysis.existing_controls|default:"-"|safe }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ analysis.description|default:"-"|safe }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
           <dd class="col-sm-9">{% for tag in risk.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
         </dl>
@@ -45,10 +45,10 @@
         <div class="card">
           <div class="card-body text-center">
             <h6>{% trans "Likelihood" %}</h6>
-            <p class="mb-1">{% trans "Threat:" %} <strong>{{ analysis.threat_likelihood|default:"—" }}</strong></p>
-            <p class="mb-1">{% trans "Vuln. exposure:" %} <strong>{{ analysis.vulnerability_exposure|default:"—" }}</strong></p>
+            <p class="mb-1">{% trans "Threat:" %} <strong>{{ analysis.threat_likelihood|default:"-" }}</strong></p>
+            <p class="mb-1">{% trans "Vuln. exposure:" %} <strong>{{ analysis.vulnerability_exposure|default:"-" }}</strong></p>
             <hr>
-            <p class="mb-0">{% trans "Combined:" %} <strong class="display-6">{{ analysis.combined_likelihood|default:"—" }}</strong></p>
+            <p class="mb-0">{% trans "Combined:" %} <strong class="display-6">{{ analysis.combined_likelihood|default:"-" }}</strong></p>
           </div>
         </div>
       </div>
@@ -56,11 +56,11 @@
         <div class="card">
           <div class="card-body text-center">
             <h6>{% trans "Impact" %}</h6>
-            <p class="mb-1">{% trans "Confidentiality:" %} <strong>{{ analysis.impact_confidentiality|default:"—" }}</strong></p>
-            <p class="mb-1">{% trans "Integrity:" %} <strong>{{ analysis.impact_integrity|default:"—" }}</strong></p>
-            <p class="mb-1">{% trans "Availability:" %} <strong>{{ analysis.impact_availability|default:"—" }}</strong></p>
+            <p class="mb-1">{% trans "Confidentiality:" %} <strong>{{ analysis.impact_confidentiality|default:"-" }}</strong></p>
+            <p class="mb-1">{% trans "Integrity:" %} <strong>{{ analysis.impact_integrity|default:"-" }}</strong></p>
+            <p class="mb-1">{% trans "Availability:" %} <strong>{{ analysis.impact_availability|default:"-" }}</strong></p>
             <hr>
-            <p class="mb-0">{% trans "Max:" %} <strong class="display-6">{{ analysis.max_impact|default:"—" }}</strong></p>
+            <p class="mb-0">{% trans "Max:" %} <strong class="display-6">{{ analysis.max_impact|default:"-" }}</strong></p>
           </div>
         </div>
       </div>
@@ -68,7 +68,7 @@
         <div class="card border-danger">
           <div class="card-body text-center">
             <h6>{% trans "Risk level" %}</h6>
-            <p class="display-4 text-danger mb-0">{{ analysis.risk_level|default:"—" }}</p>
+            <p class="display-4 text-danger mb-0">{{ analysis.risk_level|default:"-" }}</p>
           </div>
         </div>
       </div>
@@ -79,8 +79,8 @@
       <div>
         <strong>{% trans "Scoring snapshot:" %}</strong>
         {{ analysis.criteria_snapshot.criteria_name }}
-        (v.{{ analysis.criteria_snapshot.criteria_version|default:"—" }})
-        - {% trans "captured at" %} {{ analysis.criteria_snapshot.captured_at|default:"—" }}.
+        (v.{{ analysis.criteria_snapshot.criteria_version|default:"-" }})
+        - {% trans "captured at" %} {{ analysis.criteria_snapshot.captured_at|default:"-" }}.
         <span class="text-muted">{% trans "Later edits to the criteria do not change this score." %}</span>
       </div>
     </div>

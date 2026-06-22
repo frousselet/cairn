@@ -19,9 +19,9 @@
     <dl class="row mb-0">
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges threat.scopes.all %}{% if not threat.scopes.all %}<span style="color:var(--text-muted)">—</span>{% endif %}</dd>
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt><dd class="col-sm-9">{{ threat.get_type_display }}</dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Origin" %}</dt><dd class="col-sm-9">{{ threat.get_origin_display|default:"—" }}</dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Category" %}</dt><dd class="col-sm-9">{{ threat.get_category_display|default:"—" }}</dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Typical likelihood" %}</dt><dd class="col-sm-9">{{ threat.typical_likelihood|default:"—" }}</dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Origin" %}</dt><dd class="col-sm-9">{{ threat.get_origin_display|default:"-" }}</dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Category" %}</dt><dd class="col-sm-9">{{ threat.get_category_display|default:"-" }}</dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Typical likelihood" %}</dt><dd class="col-sm-9">{{ threat.typical_likelihood|default:"-" }}</dd>
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "From catalog" %}</dt><dd class="col-sm-9">{% if threat.is_from_catalog %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>
       <dd class="col-sm-9">
@@ -29,7 +29,7 @@
           {{ threat.get_status_display }}
         </span>
       </dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ threat.description|default:"—"|safe }}</dd>
+      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ threat.description|default:"-"|safe }}</dd>
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
       <dd class="col-sm-9">{% for tag in threat.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
     </dl>

@@ -18,7 +18,7 @@
     <table class="table table-hover mb-0">
       <thead>
         <tr>
-          {% sortable_th "reference" "Reference" %}
+          {% sortable_th "reference" "Ref." %}
           {% sortable_th "support" "Support asset" %}
           {% sortable_th "site" "Site" %}
           {% sortable_th "type" "Type" %}
@@ -32,9 +32,9 @@
       <tbody>
         {% for dep in dependencies %}
         <tr>
-          <td class="ref" style="text-decoration:none;white-space:nowrap">{{ dep.reference }}</td>
-          <td><a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ dep.support_asset }}</a></td>
-          <td><a href="{% url 'assets:site-detail' dep.site.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ dep.site }}</a></td>
+          <td><span class="ref">{{ dep.reference }}</span></td>
+          <td><a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" class="cell-link">{{ dep.support_asset }}</a></td>
+          <td><a href="{% url 'assets:site-detail' dep.site.pk %}" class="cell-link">{{ dep.site }}</a></td>
           <td>{{ dep.get_dependency_type_display }}</td>
           <td>
             <span class="badge text-bg-{% if dep.criticality == 'critical' %}danger{% elif dep.criticality == 'high' %}warning{% elif dep.criticality == 'medium' %}info{% else %}secondary{% endif %}">
@@ -45,14 +45,14 @@
             {% if dep.is_single_point_of_failure %}
               <span class="badge text-bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>SPOF</span>
             {% else %}
-              —
+              -
             {% endif %}
           </td>
-          <td>{{ dep.get_redundancy_level_display|default:"—" }}</td>
+          <td>{{ dep.get_redundancy_level_display|default:"-" }}</td>
           <td>{% workflow_badge dep %}</td>
           <td class="text-end">
-            <a href="{% url 'assets:site-asset-dependency-update' dep.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'assets:site-asset-dependency-delete' dep.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+            <a href="{% url 'assets:site-asset-dependency-update' dep.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'assets:site-asset-dependency-delete' dep.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
           </td>
         </tr>
         {% empty %}

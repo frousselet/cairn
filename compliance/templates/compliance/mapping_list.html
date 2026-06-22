@@ -30,14 +30,14 @@
       <tbody>
         {% for m in mappings %}
         <tr>
-          <td><a href="{% url 'compliance:mapping-detail' m.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ m.source_requirement.reference }}</a></td>
+          <td><a href="{% url 'compliance:mapping-detail' m.pk %}" class="cell-link">{{ m.source_requirement.reference }}</a></td>
           <td>{{ m.source_requirement.framework.short_name|default:m.source_requirement.framework.name }}</td>
-          <td><a href="{% url 'compliance:requirement-detail' m.target_requirement.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ m.target_requirement.reference }}</a></td>
+          <td><a href="{% url 'compliance:requirement-detail' m.target_requirement.pk %}" class="cell-link">{{ m.target_requirement.reference }}</a></td>
           <td>{{ m.target_requirement.framework.short_name|default:m.target_requirement.framework.name }}</td>
           <td>{{ m.get_mapping_type_display }}</td>
-          <td>{{ m.get_coverage_level_display|default:"—" }}</td>
+          <td>{{ m.get_coverage_level_display|default:"-" }}</td>
           <td class="text-end">
-            <a hx-get="{% url 'compliance:mapping-update' m.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a hx-get="{% url 'compliance:mapping-update' m.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
           </td>
         </tr>
         {% empty %}

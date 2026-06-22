@@ -33,7 +33,7 @@
         </div>
         <div class="mb-0">
           <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ group.description|default:"—"|safe }}</div>
+          <div>{{ group.description|default:"-"|safe }}</div>
         </div>
       </div>
     </div>
@@ -50,7 +50,7 @@
               {% for member in group.members.all %}
               <tr>
                 <td>{{ member.reference }}</td>
-                <td><a href="{% url 'assets:support-asset-detail' member.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ member.name }}</a></td>
+                <td><a href="{% url 'assets:support-asset-detail' member.pk %}" class="cell-link">{{ member.name }}</a></td>
                 <td>{{ member.get_type_display }}</td>
                 <td>{{ member.get_category_display }}</td>
                 <td>{{ member.get_status_display }}</td>

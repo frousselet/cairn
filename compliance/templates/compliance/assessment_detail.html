@@ -37,14 +37,14 @@
   <span>
     <i class="bi bi-journal-bookmark me-1"></i>
     {% for fw in assessment.frameworks.all %}
-      <a href="{% url 'compliance:framework-detail' fw.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ fw.short_name|default:fw.name }}</a>{% if not forloop.last %}, {% endif %}
+      <a href="{% url 'compliance:framework-detail' fw.pk %}" class="cell-link">{{ fw.short_name|default:fw.name }}</a>{% if not forloop.last %}, {% endif %}
     {% empty %}
       —
     {% endfor %}
   </span>
   <span>
     <i class="bi bi-calendar-event me-1"></i>
-    {{ assessment.assessment_start_date|default:"—" }} → {{ assessment.assessment_end_date|default:"—" }}
+    {{ assessment.assessment_start_date|default:"-" }} → {{ assessment.assessment_end_date|default:"-" }}
   </span>
   <span>
     {% if assessment.assessor %}{% user_badge assessment.assessor size=24 %}{% else %}—{% endif %}

@@ -43,7 +43,7 @@
         </div>
         <div class="mb-0">
           <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ asset.description|default:"—"|safe }}</div>
+          <div>{{ asset.description|default:"-"|safe }}</div>
         </div>
       </div>
     </div>
@@ -55,43 +55,43 @@
         <div class="row">
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Location" %}</div>
-            <div>{{ asset.location|default:"—" }}</div>
+            <div>{{ asset.location|default:"-" }}</div>
           </div>
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Manufacturer / vendor" %}</div>
-            <div>{{ asset.manufacturer|default:"—" }}</div>
+            <div>{{ asset.manufacturer|default:"-" }}</div>
           </div>
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Model / version" %}</div>
-            <div>{{ asset.model_name|default:"—" }}</div>
+            <div>{{ asset.model_name|default:"-" }}</div>
           </div>
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Serial number" %}</div>
-            <div>{{ asset.serial_number|default:"—" }}</div>
+            <div>{{ asset.serial_number|default:"-" }}</div>
           </div>
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Software version" %}</div>
-            <div>{{ asset.software_version|default:"—" }}</div>
+            <div>{{ asset.software_version|default:"-" }}</div>
           </div>
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "IP address" %}</div>
-            <div>{{ asset.ip_address|default:"—" }}</div>
+            <div>{{ asset.ip_address|default:"-" }}</div>
           </div>
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Hostname" %}</div>
-            <div>{{ asset.hostname|default:"—" }}</div>
+            <div>{{ asset.hostname|default:"-" }}</div>
           </div>
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "OS" %}</div>
-            <div>{{ asset.operating_system|default:"—" }}</div>
+            <div>{{ asset.operating_system|default:"-" }}</div>
           </div>
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Exposure" %}</div>
-            <div>{{ asset.get_exposure_level_display|default:"—" }}</div>
+            <div>{{ asset.get_exposure_level_display|default:"-" }}</div>
           </div>
           <div class="col-sm-6 mb-0">
             <div class="text-muted small mb-1">{% trans "Environment" %}</div>
-            <div>{{ asset.get_environment_display|default:"—" }}</div>
+            <div>{{ asset.get_environment_display|default:"-" }}</div>
           </div>
         </div>
       </div>
@@ -135,7 +135,7 @@
             <tbody>
               {% for dep in dependencies %}
               <tr>
-                <td><a href="{% url 'assets:essential-asset-detail' dep.essential_asset.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ dep.essential_asset }}</a></td>
+                <td><a href="{% url 'assets:essential-asset-detail' dep.essential_asset.pk %}" class="cell-link">{{ dep.essential_asset }}</a></td>
                 <td class="text-center">{{ dep.essential_asset.confidentiality_level|dic_badge }}</td>
                 <td class="text-center">{{ dep.essential_asset.integrity_level|dic_badge }}</td>
                 <td class="text-center">{{ dep.essential_asset.availability_level|dic_badge }}</td>
@@ -158,7 +158,7 @@
           <div class="text-muted small mb-1">{% trans "Parent support asset" %}</div>
           <div>
             {% if asset.parent_asset %}
-            <a href="{% url 'assets:support-asset-detail' asset.parent_asset.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ asset.parent_asset }}</a>
+            <a href="{% url 'assets:support-asset-detail' asset.parent_asset.pk %}" class="cell-link">{{ asset.parent_asset }}</a>
             {% else %}—{% endif %}
           </div>
         </div>
@@ -188,7 +188,7 @@
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">{{ asset.get_status_display }}</dd>
           <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
-          <dd class="mb-3">{{ asset.version|default:"—" }}</dd>
+          <dd class="mb-3">{{ asset.version|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
           <dd class="mb-0">{% for tag in asset.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
         </dl>
@@ -216,18 +216,18 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Acquisition date" %}</dt>
-          <dd class="mb-3">{{ asset.acquisition_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ asset.acquisition_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "End of life" %}</dt>
           <dd class="mb-3">
-            {{ asset.end_of_life_date|default:"—" }}
+            {{ asset.end_of_life_date|default:"-" }}
             {% if asset.is_end_of_life %}<span class="badge text-bg-danger">{% trans "Exceeded" %}</span>{% endif %}
           </dd>
           <dt class="text-muted small mb-1">{% trans "Warranty expiry" %}</dt>
-          <dd class="mb-3">{{ asset.warranty_expiry_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ asset.warranty_expiry_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Contract reference" %}</dt>
-          <dd class="mb-3">{{ asset.contract_reference|default:"—" }}</dd>
+          <dd class="mb-3">{{ asset.contract_reference|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Next review date" %}</dt>
-          <dd class="mb-3">{{ asset.review_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ asset.review_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
           <dd class="mb-3">{{ asset.created_at }}</dd>
           <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>

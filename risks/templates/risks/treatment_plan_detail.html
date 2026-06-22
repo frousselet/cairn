@@ -29,7 +29,7 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Risk" %}</div>
-          <div><a href="{% url 'risks:risk-detail' plan.risk.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ plan.risk }}</a></div>
+          <div><a href="{% url 'risks:risk-detail' plan.risk.pk %}" class="cell-link">{{ plan.risk }}</a></div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Treatment type" %}</div>
@@ -43,15 +43,15 @@
         {% endif %}
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Estimated cost" %}</div>
-          <div>{{ plan.cost_estimate|default:"—" }}</div>
+          <div>{{ plan.cost_estimate|default:"-" }}</div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Expected residual likelihood" %}</div>
-          <div>{{ plan.expected_residual_likelihood|default:"—" }}</div>
+          <div>{{ plan.expected_residual_likelihood|default:"-" }}</div>
         </div>
         <div>
           <div class="text-muted small mb-1">{% trans "Expected residual impact" %}</div>
-          <div>{{ plan.expected_residual_impact|default:"—" }}</div>
+          <div>{{ plan.expected_residual_impact|default:"-" }}</div>
         </div>
       </div>
     </div>
@@ -80,8 +80,8 @@
               <tr>
                 <td>{{ action.order }}</td>
                 <td>{{ action.description }}</td>
-                <td>{% if action.owner %}{% user_badge action.owner size=20 %}{% else %}—{% endif %}</td>
-                <td>{{ action.target_date|default:"—" }}</td>
+                <td>{% if action.owner %}{% user_badge action.owner size=20 %}{% else %}-{% endif %}</td>
+                <td>{{ action.target_date|default:"-" }}</td>
                 <td>
                   <span class="badge text-bg-{% if action.status == 'completed' %}success{% elif action.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
                     {{ action.get_status_display }}
@@ -133,8 +133,8 @@
               {% for ap in related_action_plans %}
               <tr>
                 <td style="font-weight:500;color:var(--text-muted);font-size:.82rem">{{ ap.reference }}</td>
-                <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ ap.name }}</a></td>
-                <td>{% if ap.owner %}{% user_badge ap.owner size=20 %}{% else %}—{% endif %}</td>
+                <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="cell-link">{{ ap.name }}</a></td>
+                <td>{% if ap.owner %}{% user_badge ap.owner size=20 %}{% else %}-{% endif %}</td>
                 <td>
                   <div class="progress" style="height:.65rem">
                     <div class="progress-bar" style="width:{{ ap.progress_percentage }}%"></div>
@@ -202,11 +202,11 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Start date" %}</dt>
-          <dd class="mb-3">{{ plan.start_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ plan.start_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Target date" %}</dt>
-          <dd class="mb-3">{{ plan.target_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ plan.target_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Completion date" %}</dt>
-          <dd class="mb-3">{{ plan.completion_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ plan.completion_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
           <dd class="mb-3">{{ plan.created_at }}</dd>
           <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>

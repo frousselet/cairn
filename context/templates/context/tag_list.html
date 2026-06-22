@@ -36,13 +36,13 @@
                 {% for model_name, count in tag.usage %}{{ count }}&nbsp;{{ model_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
               </span>
             {% else %}
-              <span style="color:var(--text-muted);font-size:.85rem">—</span>
+              <span style="color:var(--text-muted);font-size:.85rem">-</span>
             {% endif %}
           </td>
           <td style="color:var(--text-secondary);font-size:.85rem">{{ tag.created_at|date:"d/m/Y H:i" }}</td>
           <td class="text-end">
-            <a href="{% url 'context:tag-update' tag.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'context:tag-delete' tag.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+            <a href="{% url 'context:tag-update' tag.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'context:tag-delete' tag.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
           </td>
         </tr>
         {% empty %}

@@ -16,7 +16,7 @@
       <h6 class="mb-2">{{ feat_data.label }}</h6>
       <div class="d-flex flex-wrap gap-2">
         {% for perm in feat_data.permissions %}
-        <span class="badge bg-light text-dark border"><code>{{ perm.codename }}</code> — {{ perm.get_action_display }}</span>
+        <span class="badge bg-light text-dark border"><code>{{ perm.codename }}</code> - {{ perm.get_action_display }}</span>
         {% endfor %}
       </div>
     </div>

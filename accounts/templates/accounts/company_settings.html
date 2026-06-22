@@ -67,7 +67,7 @@
             {% if can_edit %}
             {{ form.name }}
             {% else %}
-            <div class="form-control-plaintext">{{ company.name|default:"—" }}</div>
+            <div class="form-control-plaintext">{{ company.name|default:"-" }}</div>
             {% endif %}
             {% if form.name.errors %}<div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>{% endif %}
           </div>
@@ -105,7 +105,7 @@
             {% if can_edit %}
             {{ form.address }}
             {% else %}
-            <div class="form-control-plaintext" style="white-space:pre-line">{{ company.address|default:"—" }}</div>
+            <div class="form-control-plaintext" style="white-space:pre-line">{{ company.address|default:"-" }}</div>
             {% endif %}
             {% if form.address.errors %}<div class="invalid-feedback d-block">{{ form.address.errors.0 }}</div>{% endif %}
           </div>

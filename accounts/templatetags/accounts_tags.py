@@ -96,3 +96,67 @@ def user_badge(user, size=28, link=False, name=True, block=False):
         "link": link,
         "block": block,
     }
+
+
+def _avatar_src(user, size):
+    """Pick the best avatar rendition for a given diameter (px)."""
+    if not (user and user.avatar):
+        return ""
+    if size > 32:
+        return user.avatar_64 or user.avatar
+    if size > 16:
+        return user.avatar_32 or user.avatar
+    return user.avatar_16 or user.avatar
+
+
+@register.inclusion_tag("includes/user_avatars.html")
+def user_avatars(users, size=24, max=5, link=False):
+    """Render a compact, overlapping stack of round user avatars (no names).
+
+    Avatars overlap slightly; each carries the user's name as a tooltip. When
+    there are more users than ``max``, a trailing ``+N`` chip is shown. Renders
+    a muted ``-`` placeholder when there is no user.
+
+    Usage:
+        {% load accounts_tags %}
+        {% user_avatars scope.managers.all %}
+        {% user_avatars ap.assignees.all size=20 max=4 %}
+        {% user_avatars scope.managers.all link=True %}
+
+    Parameters:
+        users - iterable of User instances (required)
+        size  - Avatar diameter in px (default 24)
+        max   - Max avatars shown before a "+N" chip (default 5, 0 = no limit)
+        link  - Link each avatar to the user detail page (default False)
+    """
+    size = int(size)
+    max = int(max)
+    if size >= 48:
+        font_size = "1rem"
+    elif size >= 32:
+        font_size = ".6875rem"
+    elif size >= 24:
+        font_size = ".5625rem"
+    else:
+        font_size = ".5rem"
+
+    users = [u for u in (users or []) if u]
+    shown = users[:max] if max else users
+    overflow = len(users) - len(shown)
+
+    items = [
+        {
+            "u": u,
+            "avatar_src": _avatar_src(u, size),
+            "initial": initials(u.display_name),
+            "name": u.display_name,
+        }
+        for u in shown
+    ]
+    return {
+        "items": items,
+        "overflow": overflow,
+        "sz": size,
+        "font_size": font_size,
+        "link": link,
+    }

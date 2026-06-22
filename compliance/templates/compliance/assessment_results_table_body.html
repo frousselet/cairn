@@ -46,7 +46,7 @@
 {% for entry in group.requirements %}
 <tr>
   <td>
-    <a href="{% url 'compliance:requirement-detail' entry.requirement.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500;font-size:.85rem">
+    <a href="{% url 'compliance:requirement-detail' entry.requirement.pk %}" class="cell-link" style="font-size:.85rem">
       {{ entry.requirement.requirement_number|default:entry.requirement.reference }}
     </a>
   </td>
@@ -80,7 +80,7 @@
   </td>
   <td style="font-size:.85rem">
     {% if not entry.requirement.is_applicable %}
-      <span style="color:var(--text-muted)">—</span>
+      <span style="color:var(--text-muted)">-</span>
     {% elif entry.has_findings and entry.result %}
       <div class="progress" style="width:60px;height:5px">
         <div class="progress-bar" style="width:{{ entry.result.compliance_level }}%;background-color:var(--accent)"></div>
@@ -90,7 +90,7 @@
         <div class="progress-bar" style="width:{{ entry.result.compliance_level }}%;background-color:var(--accent)"></div>
       </div>
     {% else %}
-      <span style="color:var(--text-muted)">—</span>
+      <span style="color:var(--text-muted)">-</span>
     {% endif %}
   </td>
   <td class="text-end">

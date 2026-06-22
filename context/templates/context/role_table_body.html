@@ -1,13 +1,13 @@
-{% load i18n ui workflow_tags %}
+{% load i18n ui workflow_tags accounts_tags %}
 {% for role in roles %}
 <tr{% if role.is_mandatory and role.user_count == 0 %} class="table-danger"{% endif %}>
-  <td><a href="{% url 'context:role-detail' role.pk %}" class="ref" style="text-decoration:none">{{ role.reference }}</a></td>
-  <td>{{ role.name }}</td>
+  <td><a href="{% url 'context:role-detail' role.pk %}" class="ref">{{ role.reference }}</a></td>
+  <td><a href="{% url 'context:role-detail' role.pk %}" class="cell-link">{{ role.name }}</a></td>
   <td>{{ role.get_type_display }}</td>
-  <td>{{ role.user_count }}</td>
+  <td>{% user_avatars role.assigned_users.all size=24 %}</td>
   <td>{% if role.is_mandatory %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
   <td>{% workflow_badge role %}</td>
-  <td>{% for tag in role.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+  <td>{% include "includes/tags_badge.html" with tags=role.tags.all %}</td>
   <td class="text-end">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
             hx-get="{% url 'context:role-update' role.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">

@@ -80,7 +80,7 @@
           <tbody>
           {% for d in decisions %}
           <tr>
-            <td class="ref">{{ d.reference }}</td>
+            <td><span class="ref">{{ d.reference }}</span></td>
             <td>{{ d.title }}</td>
             <td class="small">{{ d.get_category_display }}</td>
             <td class="small">{{ d.owner|default:"-" }}</td>
@@ -125,7 +125,7 @@
           <tbody>
           {% for c in isms_changes %}
           <tr>
-            <td class="ref">{{ c.reference }}</td>
+            <td><span class="ref">{{ c.reference }}</span></td>
             <td>{{ c.title }}</td>
             <td class="small">{{ c.get_change_type_display }}</td>
             <td class="small">{{ c.owner|default:"-" }}</td>

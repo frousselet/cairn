@@ -36,7 +36,7 @@
         {% if scope.parent_scope %}
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Parent scope" %}</div>
-          <a href="{% url 'context:scope-detail' scope.parent_scope.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ scope.parent_scope.name }}</a>
+          <a href="{% url 'context:scope-detail' scope.parent_scope.pk %}" class="cell-link">{{ scope.parent_scope.name }}</a>
         </div>
         {% endif %}
         <div>
@@ -131,7 +131,7 @@
         <ul class="list-group list-group-flush">
           {% for child in children %}
           <li class="list-group-item px-0{% if forloop.first %} pt-0{% endif %}{% if forloop.last %} pb-0{% endif %}">
-            <a href="{% url 'context:scope-detail' child.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ child.name }}</a>
+            <a href="{% url 'context:scope-detail' child.pk %}" class="cell-link">{{ child.name }}</a>
             {% workflow_badge child %}
           </li>
           {% endfor %}
@@ -191,12 +191,12 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Effective date" %}</dt>
-          <dd class="mb-3">{{ scope.effective_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ scope.effective_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Next review" %}</dt>
-          <dd class="mb-3">{{ scope.review_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ scope.review_date|default:"-" }}</dd>
           {% if approval_enabled is not False %}
           <dt class="text-muted small mb-1">{% trans "Approval date" %}</dt>
-          <dd class="mb-3">{{ scope.approved_at|default:"—" }}</dd>
+          <dd class="mb-3">{{ scope.approved_at|default:"-" }}</dd>
           {% endif %}
           <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
           <dd class="mb-3">{{ scope.created_at }}</dd>

@@ -26,15 +26,15 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Framework" %}</div>
-          <div><a href="{% url 'compliance:framework-detail' requirement.framework.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ requirement.framework }}</a></div>
+          <div><a href="{% url 'compliance:framework-detail' requirement.framework.pk %}" class="cell-link">{{ requirement.framework }}</a></div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Section" %}</div>
-          <div>{{ requirement.section|default:"—" }}</div>
+          <div>{{ requirement.section|default:"-" }}</div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Requirement number" %}</div>
-          <div>{{ requirement.requirement_number|default:"—" }}</div>
+          <div>{{ requirement.requirement_number|default:"-" }}</div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Type" %}</div>
@@ -42,7 +42,7 @@
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Category" %}</div>
-          <div>{{ requirement.get_category_display|default:"—" }}</div>
+          <div>{{ requirement.get_category_display|default:"-" }}</div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Applicable" %}</div>
@@ -51,7 +51,7 @@
         {% if not requirement.is_applicable %}
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Justification" %}</div>
-          <div>{{ requirement.applicability_justification|default:"—" }}</div>
+          <div>{{ requirement.applicability_justification|default:"-" }}</div>
         </div>
         {% endif %}
         <div class="mb-3">
@@ -89,15 +89,15 @@
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Last assessment" %}</div>
-          <div>{{ requirement.last_assessment_date|default:"—" }}</div>
+          <div>{{ requirement.last_assessment_date|default:"-" }}</div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Evidence" %}</div>
-          <div>{{ requirement.compliance_evidence|default:"—"|safe }}</div>
+          <div>{{ requirement.compliance_evidence|default:"-"|safe }}</div>
         </div>
         <div class="mb-0">
           <div class="text-muted small mb-1">{% trans "Finding" %}</div>
-          <div>{{ requirement.compliance_finding|default:"—"|safe }}</div>
+          <div>{{ requirement.compliance_finding|default:"-"|safe }}</div>
         </div>
       </div>
     </div>
@@ -114,8 +114,8 @@
               {% for risk in requirement.linked_risks.all %}
               <tr>
                 <td style="font-weight:500;color:var(--text-muted);font-size:.82rem">{{ risk.reference }}</td>
-                <td><a href="{% url 'risks:risk-detail' risk.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ risk.name }}</a></td>
-                <td style="font-size:.85rem;font-weight:600">{{ risk.current_risk_level|default:"—" }}</td>
+                <td><a href="{% url 'risks:risk-detail' risk.pk %}" class="cell-link">{{ risk.name }}</a></td>
+                <td style="font-size:.85rem;font-weight:600">{{ risk.current_risk_level|default:"-" }}</td>
                 <td style="font-size:.85rem">{{ risk.get_status_display }}</td>
               </tr>
               {% endfor %}
@@ -140,7 +140,7 @@
               {% for m in mappings_source %}
               <tr>
                 <td>{% trans "Source" %} →</td>
-                <td><a href="{% url 'compliance:requirement-detail' m.target_requirement.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ m.target_requirement.reference }}</a></td>
+                <td><a href="{% url 'compliance:requirement-detail' m.target_requirement.pk %}" class="cell-link">{{ m.target_requirement.reference }}</a></td>
                 <td>{{ m.target_requirement.framework.name }}</td>
                 <td>{{ m.get_mapping_type_display }}</td>
               </tr>
@@ -148,7 +148,7 @@
               {% for m in mappings_target %}
               <tr>
                 <td>← {% trans "Target" %}</td>
-                <td><a href="{% url 'compliance:requirement-detail' m.source_requirement.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ m.source_requirement.reference }}</a></td>
+                <td><a href="{% url 'compliance:requirement-detail' m.source_requirement.pk %}" class="cell-link">{{ m.source_requirement.reference }}</a></td>
                 <td>{{ m.source_requirement.framework.name }}</td>
                 <td>{{ m.get_mapping_type_display }}</td>
               </tr>
@@ -173,7 +173,7 @@
             <tbody>
               {% for ap in action_plans %}
               <tr>
-                <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ ap.reference }}</a></td>
+                <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="cell-link">{{ ap.reference }}</a></td>
                 <td>{{ ap.name }}</td>
                 <td>{{ ap.get_priority_display }}</td>
                 <td>{{ ap.progress_percentage }}%</td>
@@ -202,7 +202,7 @@
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">{{ requirement.get_status_display }}</dd>
           <dt class="text-muted small mb-1">{% trans "Priority" %}</dt>
-          <dd class="mb-3">{{ requirement.get_priority_display|default:"—" }}</dd>
+          <dd class="mb-3">{{ requirement.get_priority_display|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
           <dd class="mb-0">{% for tag in requirement.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
         </dl>
@@ -234,9 +234,9 @@
           <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>
           <dd class="mb-3">{{ requirement.updated_at|date:"d/m/Y H:i" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Target date" %}</dt>
-          <dd class="mb-3">{{ requirement.target_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ requirement.target_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Last assessment" %}</dt>
-          <dd class="mb-0">{{ requirement.last_assessment_date|default:"—" }}</dd>
+          <dd class="mb-0">{{ requirement.last_assessment_date|default:"-" }}</dd>
         </dl>
       </div>
     </div>

@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% load i18n scope_tags table_tags ui workflow_tags %}
+{% load i18n scope_tags table_tags ui workflow_tags accounts_tags %}
 
 {% block title %}{% trans "Risk criteria" %} — Cairn{% endblock %}
 
 {% load help_tags %}
 
 {% block content %}
+{% has_perm "risks.criteria.delete" as can_delete_criteria %}
 {% page_header _("Risk criteria") eyebrow=_("Risk management") accent="risks" %}
   <a href="{% url 'risks:criteria-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New criteria' %}</a>
 {% endpage_header %}
@@ -36,15 +37,18 @@
       <tbody>
         {% for c in criteria_list %}
         <tr>
-          <td><a href="{% url 'risks:criteria-detail' c.pk %}" class="ref" style="text-decoration:none">{{ c.reference }}</a></td>
-          <td>{{ c.name }}</td>
+          <td><a href="{% url 'risks:criteria-detail' c.pk %}" class="ref">{{ c.reference }}</a></td>
+          <td><a href="{% url 'risks:criteria-detail' c.pk %}" class="cell-link">{{ c.name }}</a></td>
           <td>{% scope_popover c.scopes.all %}</td>
           <td>{{ c.acceptance_threshold }}</td>
-          <td>{% if c.is_default %}<span class="badge text-bg-success">{% trans "Yes" %}</span>{% else %}—{% endif %}</td>
+          <td>{% if c.is_default %}<span class="badge text-bg-success">{% trans "Yes" %}</span>{% else %}-{% endif %}</td>
           <td>{% workflow_badge c %}</td>
-          <td>{% for tag in c.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+          <td>{% include "includes/tags_badge.html" with tags=c.tags.all %}</td>
           <td class="text-end">
-            <a href="{% url 'risks:criteria-update' c.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'risks:criteria-update' c.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            {% if can_delete_criteria and c.is_deletable %}
+            <a href="{% url 'risks:criteria-delete' c.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+            {% endif %}
           </td>
         </tr>
         {% empty %}

@@ -173,7 +173,7 @@
                   <input type="checkbox" class="form-check-input user-remove-cb" value="{{ u.pk }}" onchange="updateRemoveCount()">
                 </td>
                 {% endif %}
-                <td><a href="{% url 'accounts:user-detail' u.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ u.display_name }}</a></td>
+                <td><a href="{% url 'accounts:user-detail' u.pk %}" class="cell-link">{{ u.display_name }}</a></td>
                 <td>{{ u.email }}</td>
                 <td class="text-end">
                   {% has_perm "system.groups.update" as can_edit_group %}

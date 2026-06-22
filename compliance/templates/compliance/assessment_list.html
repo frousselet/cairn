@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n ui workflow_tags %}
+{% load i18n ui workflow_tags accounts_tags %}
 {% load table_tags %}
 
 {% block title %}{% trans "Audits & compliance" %} — Cairn{% endblock %}
@@ -34,12 +34,12 @@
       <tbody>
         {% for a in assessments %}
         <tr>
-          <td><a href="{% url 'compliance:assessment-detail' a.pk %}" class="ref" style="text-decoration:none">{{ a.reference }}</a></td>
-          <td>{{ a.name }}</td>
+          <td><a href="{% url 'compliance:assessment-detail' a.pk %}" class="ref">{{ a.reference }}</a></td>
+          <td><a href="{% url 'compliance:assessment-detail' a.pk %}" class="cell-link">{{ a.name }}</a></td>
           <td>{% for fw in a.frameworks.all %}{{ fw.short_name|default:fw.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-          <td>{{ a.assessment_start_date|default:"—" }}</td>
-          <td>{{ a.assessment_end_date|default:"—" }}</td>
-          <td>{{ a.assessor }}</td>
+          <td>{{ a.assessment_start_date|default:"-" }}</td>
+          <td>{{ a.assessment_end_date|default:"-" }}</td>
+          <td>{% if a.assessor %}{% user_badge a.assessor size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
           <td>
             <div class="d-flex align-items-center gap-1">
               <div class="progress flex-grow-1" style="min-width:60px;height:6px">
@@ -59,9 +59,9 @@
             </div>
           </td>
           <td>{% workflow_badge a %}</td>
-          <td>{% for tag in a.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+          <td>{% include "includes/tags_badge.html" with tags=a.tags.all %}</td>
           <td class="text-end">
-            <a hx-get="{% url 'compliance:assessment-update' a.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a hx-get="{% url 'compliance:assessment-update' a.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
           </td>
         </tr>
         {% empty %}

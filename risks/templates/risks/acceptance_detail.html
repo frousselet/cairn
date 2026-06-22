@@ -30,7 +30,7 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Risk" %}</div>
-          <div><a href="{% url 'risks:risk-detail' acceptance.risk.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ acceptance.risk }}</a></div>
+          <div><a href="{% url 'risks:risk-detail' acceptance.risk.pk %}" class="cell-link">{{ acceptance.risk }}</a></div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Justification" %}</div>
@@ -68,7 +68,7 @@
             </span>
           </dd>
           <dt class="text-muted small mb-1">{% trans "Level at acceptance" %}</dt>
-          <dd class="mb-3">{{ acceptance.risk_level_at_acceptance|default:"—" }}</dd>
+          <dd class="mb-3">{{ acceptance.risk_level_at_acceptance|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
           <dd class="mb-0">{% for tag in acceptance.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">—</span>{% endfor %}</dd>
         </dl>
@@ -92,11 +92,11 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Acceptance date" %}</dt>
-          <dd class="mb-3">{{ acceptance.accepted_at|default:"—" }}</dd>
+          <dd class="mb-3">{{ acceptance.accepted_at|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Valid until" %}</dt>
-          <dd class="mb-3">{{ acceptance.valid_until|default:"—" }}</dd>
+          <dd class="mb-3">{{ acceptance.valid_until|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Review date" %}</dt>
-          <dd class="mb-3">{{ acceptance.review_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ acceptance.review_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
           <dd class="mb-3">{{ acceptance.created_at }}</dd>
           <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>

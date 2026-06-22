@@ -33,7 +33,7 @@
         {% endif %}
         <div>
           <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ objective.description|default:"—"|safe }}</div>
+          <div>{{ objective.description|default:"-"|safe }}</div>
         </div>
       </div>
     </div>
@@ -43,13 +43,13 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-graph-up me-1"></i>{% trans "KPI" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Target value" %}</dt>
-          <dd class="mb-3">{{ objective.target_value|default:"—" }} {{ objective.unit }}</dd>
+          <dd class="mb-3">{{ objective.target_value|default:"-" }} {{ objective.unit }}</dd>
           <dt class="text-muted small mb-1">{% trans "Current value" %}</dt>
-          <dd class="mb-3">{{ objective.current_value|default:"—" }} {{ objective.unit }}</dd>
+          <dd class="mb-3">{{ objective.current_value|default:"-" }} {{ objective.unit }}</dd>
           <dt class="text-muted small mb-1">{% trans "Measurement method" %}</dt>
-          <dd class="mb-3">{{ objective.measurement_method|default:"—" }}</dd>
+          <dd class="mb-3">{{ objective.measurement_method|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Frequency" %}</dt>
-          <dd class="mb-0">{{ objective.get_measurement_frequency_display|default:"—" }}</dd>
+          <dd class="mb-0">{{ objective.get_measurement_frequency_display|default:"-" }}</dd>
         </dl>
       </div>
     </div>
@@ -97,9 +97,9 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Target date" %}</dt>
-          <dd class="mb-3">{{ objective.target_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ objective.target_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Next review" %}</dt>
-          <dd class="mb-0">{{ objective.review_date|default:"—" }}</dd>
+          <dd class="mb-0">{{ objective.review_date|default:"-" }}</dd>
         </dl>
       </div>
     </div>

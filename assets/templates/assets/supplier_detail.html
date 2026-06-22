@@ -44,11 +44,11 @@
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ supplier.description|default:"—"|safe }}</div>
+          <div>{{ supplier.description|default:"-"|safe }}</div>
         </div>
         <div class="mb-0">
           <div class="text-muted small mb-1">{% trans "Notes" %}</div>
-          <div>{{ supplier.notes|default:"—"|safe }}</div>
+          <div>{{ supplier.notes|default:"-"|safe }}</div>
         </div>
       </div>
     </div>
@@ -60,7 +60,7 @@
         <div class="row">
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Contact name" %}</div>
-            <div>{{ supplier.contact_name|default:"—" }}</div>
+            <div>{{ supplier.contact_name|default:"-" }}</div>
           </div>
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Contact email" %}</div>
@@ -68,7 +68,7 @@
           </div>
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Contact phone" %}</div>
-            <div>{{ supplier.contact_phone|default:"—" }}</div>
+            <div>{{ supplier.contact_phone|default:"-" }}</div>
           </div>
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Website" %}</div>
@@ -76,11 +76,11 @@
           </div>
           <div class="col-sm-6 mb-3">
             <div class="text-muted small mb-1">{% trans "Address" %}</div>
-            <div>{{ supplier.address|default:"—"|safe }}</div>
+            <div>{{ supplier.address|default:"-"|safe }}</div>
           </div>
           <div class="col-sm-6 mb-0">
             <div class="text-muted small mb-1">{% trans "Country" %}</div>
-            <div>{{ supplier.country|default:"—" }}</div>
+            <div>{{ supplier.country|default:"-" }}</div>
           </div>
         </div>
       </div>
@@ -92,16 +92,16 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-file-earmark-text me-1"></i>{% trans "Contract" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Contract reference" %}</div>
-          <div>{{ supplier.contract_reference|default:"—" }}</div>
+          <div>{{ supplier.contract_reference|default:"-" }}</div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Contract start date" %}</div>
-          <div>{{ supplier.contract_start_date|default:"—" }}</div>
+          <div>{{ supplier.contract_start_date|default:"-" }}</div>
         </div>
         <div class="mb-0">
           <div class="text-muted small mb-1">{% trans "Contract end date" %}</div>
           <div>
-            {{ supplier.contract_end_date|default:"—" }}
+            {{ supplier.contract_end_date|default:"-" }}
             {% if supplier.is_contract_expired %}<span class="badge text-bg-danger">{% trans "Expired" %}</span>{% endif %}
           </div>
         </div>
@@ -128,7 +128,7 @@
               {% for req in type_requirements %}
               <tr>
                 <td style="font-weight:500">{{ req.title }}</td>
-                <td>{{ req.description|default:"—"|truncatewords:20 }}</td>
+                <td>{{ req.description|default:"-"|truncatewords:20 }}</td>
                 <td>
                   <form method="post" action="{% url 'assets:instantiate-type-requirement-review' supplier.pk req.pk %}" class="d-inline">
                     {% csrf_token %}
@@ -197,16 +197,16 @@
             <tbody>
               {% for req in requirements %}
               <tr>
-                <td><a href="{% url 'assets:supplier-requirement-detail' req.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ req.title }}</a></td>
-                <td>{% if req.requirement %}<span class="ref">{{ req.requirement.reference }}</span> {{ req.requirement.name|truncatewords:10 }}{% else %}—{% endif %}</td>
+                <td><a href="{% url 'assets:supplier-requirement-detail' req.pk %}" class="cell-link">{{ req.title }}</a></td>
+                <td>{% if req.requirement %}<span class="ref">{{ req.requirement.reference }}</span> {{ req.requirement.name|truncatewords:10 }}{% else %}-{% endif %}</td>
                 <td>
                   <span class="badge text-bg-{% if req.compliance_status == 'compliant' %}success{% elif req.compliance_status == 'non_compliant' %}danger{% elif req.compliance_status == 'partially_compliant' %}warning{% else %}secondary{% endif %}">
                     {{ req.get_compliance_status_display }}
                   </span>
                 </td>
                 <td><span class="badge text-bg-secondary">{{ req.reviews.count }}</span></td>
-                <td>{{ req.due_date|default:"—" }}</td>
-                <td>{% if req.verified_by %}{% user_badge req.verified_by size=20 %}{% else %}—{% endif %}</td>
+                <td>{{ req.due_date|default:"-" }}</td>
+                <td>{% if req.verified_by %}{% user_badge req.verified_by size=20 %}{% else %}-{% endif %}</td>
                 <td class="text-end">
                   <a href="{% url 'assets:supplier-requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
                   <a href="{% url 'assets:supplier-requirement-delete' req.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>

@@ -19,7 +19,7 @@
     <table class="table table-hover mb-0">
       <thead>
         <tr>
-          {% sortable_th "reference" "Reference" %}
+          {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
           {% sortable_th "type" "Type" %}
           {% sortable_th "category" "Category" %}
@@ -33,12 +33,12 @@
       <tbody>
         {% for fw in frameworks %}
         <tr>
-          <td><a href="{% url 'compliance:framework-detail' fw.pk %}" class="ref" style="text-decoration:none">{{ fw.reference }}</a></td>
+          <td><a href="{% url 'compliance:framework-detail' fw.pk %}" class="ref">{{ fw.reference }}</a></td>
           <td>
-            <span class="d-inline-flex align-items-center gap-2">
+            <a href="{% url 'compliance:framework-detail' fw.pk %}" class="cell-link d-inline-flex align-items-center gap-2">
               {% if fw.logo %}<img src="{{ fw.logo_32|default:fw.logo }}" alt="" style="width:24px;height:24px;object-fit:cover;border-radius:4px;background:#fff;border:1px solid var(--border-light)">{% else %}<span class="d-inline-flex align-items-center justify-content-center" style="width:24px;min-width:24px;height:24px;min-height:24px;border-radius:4px;background:var(--accent-soft);color:var(--accent);font-size:.75rem;border:1px solid var(--border-light)"><i class="bi bi-journal-bookmark"></i></span>{% endif %}
               {{ fw.name }}
-            </span>
+            </a>
           </td>
           <td>{{ fw.get_type_display }}</td>
           <td>{{ fw.get_category_display }}</td>
@@ -49,9 +49,9 @@
             </div>
           </td>
           <td>{% workflow_badge fw %}</td>
-          <td>{% for tag in fw.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+          <td>{% include "includes/tags_badge.html" with tags=fw.tags.all %}</td>
           <td class="text-end">
-            <a hx-get="{% url 'compliance:framework-update' fw.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a hx-get="{% url 'compliance:framework-update' fw.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
           </td>
         </tr>
         {% empty %}

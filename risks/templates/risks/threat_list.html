@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% load i18n scope_tags table_tags ui workflow_tags %}
+{% load i18n scope_tags table_tags ui workflow_tags accounts_tags %}
 
 {% block title %}{% trans "Threats" %} — Cairn{% endblock %}
 
 {% load help_tags %}
 
 {% block content %}
+{% has_perm "risks.threat.delete" as can_delete_threats %}
 {% page_header _("Threats") eyebrow=_("Risk management") accent="risks" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'risks:threat-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New threat' %}</button>
 {% endpage_header %}
@@ -51,17 +52,20 @@
       <tbody>
         {% for t in threats %}
         <tr>
-          <td><a href="{% url 'risks:threat-detail' t.pk %}" class="ref" style="text-decoration:none">{{ t.reference }}</a></td>
-          <td>{{ t.name }}</td>
+          <td><a href="{% url 'risks:threat-detail' t.pk %}" class="ref">{{ t.reference }}</a></td>
+          <td><a href="{% url 'risks:threat-detail' t.pk %}" class="cell-link">{{ t.name }}</a></td>
           <td>{{ t.get_type_display }}</td>
-          <td>{{ t.get_origin_display|default:"—" }}</td>
-          <td>{{ t.get_category_display|default:"—" }}</td>
+          <td>{{ t.get_origin_display|default:"-" }}</td>
+          <td>{{ t.get_category_display|default:"-" }}</td>
           <td>{% scope_popover t.scopes.all %}</td>
           <td>{% workflow_badge t %}</td>
-          <td>{% if t.is_from_catalog %}<span class="badge text-bg-info">{% trans "Catalog" %}</span>{% else %}—{% endif %}</td>
-          <td>{% for tag in t.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+          <td>{% if t.is_from_catalog %}<span class="badge text-bg-info">{% trans "Catalog" %}</span>{% else %}-{% endif %}</td>
+          <td>{% include "includes/tags_badge.html" with tags=t.tags.all %}</td>
           <td class="text-end">
-            <a hx-get="{% url 'risks:threat-update' t.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a hx-get="{% url 'risks:threat-update' t.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            {% if can_delete_threats and t.is_deletable %}
+            <a href="{% url 'risks:threat-delete' t.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+            {% endif %}
           </td>
         </tr>
         {% empty %}

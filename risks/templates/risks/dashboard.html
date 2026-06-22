@@ -148,12 +148,12 @@
         {% for r in top_critical_risks %}
         <tr>
           <td style="font-weight:500;color:var(--text-muted);font-size:.82rem">{{ r.reference }}</td>
-          <td><a href="{% url 'risks:risk-detail' r.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ r.name }}</a></td>
+          <td><a href="{% url 'risks:risk-detail' r.pk %}" class="cell-link">{{ r.name }}</a></td>
           <td style="font-size:.85rem">{{ r.assessment.reference }}</td>
-          <td style="font-weight:600">{{ r.current_risk_level|default:"—" }}</td>
-          <td>{{ r.residual_risk_level|default:"—" }}</td>
+          <td style="font-weight:600">{{ r.current_risk_level|default:"-" }}</td>
+          <td>{{ r.residual_risk_level|default:"-" }}</td>
           <td><span class="badge text-bg-{% if r.priority == 'critical' %}danger{% elif r.priority == 'high' %}warning{% elif r.priority == 'medium' %}info{% else %}secondary{% endif %}">{{ r.get_priority_display }}</span></td>
-          <td>{% if r.risk_owner %}{% user_badge r.risk_owner size=20 %}{% else %}—{% endif %}</td>
+          <td>{% if r.risk_owner %}{% user_badge r.risk_owner size=20 %}{% else %}-{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -184,11 +184,11 @@
         {% for p in overdue_treatment_plans %}
         <tr>
           <td style="font-weight:500;color:var(--text-muted);font-size:.82rem">{{ p.reference }}</td>
-          <td><a href="{% url 'risks:treatment-plan-detail' p.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ p.name }}</a></td>
+          <td><a href="{% url 'risks:treatment-plan-detail' p.pk %}" class="cell-link">{{ p.name }}</a></td>
           <td><a href="{% url 'risks:risk-detail' p.risk.pk %}" style="font-size:.82rem;color:var(--text-muted);text-decoration:none">{{ p.risk.reference }}</a></td>
-          <td class="text-danger" style="font-size:.85rem">{{ p.target_date|default:"—" }}</td>
+          <td class="text-danger" style="font-size:.85rem">{{ p.target_date|default:"-" }}</td>
           <td><div class="progress" style="height:.5rem;width:6rem"><div class="progress-bar" style="width:{{ p.progress_percentage }}%"></div></div></td>
-          <td>{% if p.owner %}{% user_badge p.owner size=20 %}{% else %}—{% endif %}</td>
+          <td>{% if p.owner %}{% user_badge p.owner size=20 %}{% else %}-{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -217,10 +217,10 @@
       <tbody>
         {% for a in expiring_acceptances %}
         <tr>
-          <td><a href="{% url 'risks:acceptance-detail' a.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ a.reference }}</a></td>
+          <td><a href="{% url 'risks:acceptance-detail' a.pk %}" class="cell-link">{{ a.reference }}</a></td>
           <td><a href="{% url 'risks:risk-detail' a.risk.pk %}" style="font-size:.82rem;color:var(--text-muted);text-decoration:none">{{ a.risk.reference }}</a></td>
           <td class="text-warning" style="font-size:.85rem">{{ a.valid_until }}</td>
-          <td>{% if a.accepted_by %}{% user_badge a.accepted_by size=20 %}{% else %}—{% endif %}</td>
+          <td>{% if a.accepted_by %}{% user_badge a.accepted_by size=20 %}{% else %}-{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
