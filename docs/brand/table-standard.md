@@ -90,6 +90,64 @@ the same appearance, columns and ergonomics, in both light and dark themes.
     `locale/*.po` file in this pass — instead report any *new* English string you
     introduce so it can be translated centrally.
 
+## Two-line cells and people identity (optional)
+
+By default a cell is a single value (rules 4-10). When a row carries several
+**closely related** fields, group them into one cell on two lines instead of
+spending a column on each : a **primary line** over a **muted secondary line**.
+This keeps wide entities (people, contacts) scannable and the table narrow.
+
+Use the shared helpers (defined in `base.html`, theme-aware in light/dark) :
+
+- `.cell-stack` : the two-line wrapper (a flex column, tight `line-height`).
+- `.cell-sub` : the muted, smaller secondary line (`var(--text-muted)`, `.8125rem`).
+  A `.cell-link` placed directly in a `.cell-stack` is automatically bold (600).
+
+```django
+<td>
+  <span class="cell-stack">
+    <span>{{ obj.job_title }}</span>
+    {% if obj.department %}<span class="cell-sub">{{ obj.department }}</span>{% endif %}
+  </span>
+</td>
+```
+
+**People identity** (avatar + name + secondary line) uses `.cell-people` :
+
+```django
+<td>
+  <a href="{detail url}" class="cell-people">
+    {% if u.avatar %}
+    <img src="{{ u.avatar_64|default:u.avatar }}" alt="" class="cell-avatar">
+    {% else %}
+    <span class="cell-avatar-fallback">{{ u.display_name|initials }}</span>
+    {% endif %}
+    <span class="cell-stack">
+      <span class="cell-link">{{ u.display_name }}</span>
+      <span class="cell-sub">{{ u.email }}</span>
+    </span>
+  </a>
+</td>
+```
+
+Rules for two-line / people cells :
+
+- The **avatar is 40px** (`.cell-avatar` / `.cell-avatar-fallback`), sized to align
+  with the two-line text block. Do **not** hand-roll avatar markup or inline sizes ;
+  use the helpers (or `{% user_badge %}` for a single-line avatar+name elsewhere).
+- The whole people cell is a single link to the detail page (`<a class="cell-people">`),
+  not just the name.
+- Keep the secondary line **secondary** : one muted field only, never a second link
+  or a badge. Status, tags and actions stay in their own columns (rules 8-10).
+- Fold the secondary field's standalone column **and its sort header** away when you
+  merge it (e.g. merging Email into Name drops the Email `sortable_th`). The primary
+  field stays sortable. Note the dropped sort in the PR description.
+- Graceful fallback when the primary field is empty : promote the secondary field to
+  the single line, or render `<span class="cell-empty">-</span>` if both are empty.
+- Still **no `align-middle`** (rule 1) : the base stylesheet centres cells, and the
+  helpers keep the two lines tight on their own.
+- Canonical example : `accounts/user_list.html`.
+
 ## HTMX list + table_body split
 
 Some lists render the `<tbody>` from a `*_table_body.html` partial loaded via HTMX.
