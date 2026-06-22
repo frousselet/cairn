@@ -28,7 +28,6 @@
         <tr>
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
-          {% sortable_th "methodology" "Methodology" %}
           <th>{% trans "Scopes" %}</th>
           <th>{% trans "Assessor" %}</th>
           {% sortable_th "date" "Date" %}
@@ -41,11 +40,38 @@
         {% for a in assessments %}
         <tr>
           <td><a href="{% url 'risks:assessment-detail' a.pk %}" class="ref">{{ a.reference }}</a></td>
-          <td><a href="{% url 'risks:assessment-detail' a.pk %}" class="cell-link">{{ a.name }}</a></td>
-          <td>{{ a.get_methodology_display }}</td>
+          <td>
+            <span class="cell-stack">
+              <a href="{% url 'risks:assessment-detail' a.pk %}" class="cell-link">{{ a.name }}</a>
+              <span class="cell-sub">{{ a.get_methodology_display }}</span>
+            </span>
+          </td>
           <td>{% scope_popover a.scopes.all %}</td>
-          <td>{% if a.assessor %}{% user_badge a.assessor size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
-          <td>{{ a.assessment_date|default:"-" }}</td>
+          <td>
+            {% if a.assessor %}
+            <span class="cell-people cell-people--sm">
+              {% if a.assessor.avatar %}
+              <img src="{{ a.assessor.avatar_32|default:a.assessor.avatar }}" alt="" class="cell-avatar">
+              {% else %}
+              <span class="cell-avatar-fallback">{{ a.assessor.display_name|initials }}</span>
+              {% endif %}
+              <span class="cell-stack">
+                <span style="font-weight:600">{{ a.assessor.display_name }}</span>
+                {% if a.assessor.job_title %}<span class="cell-sub">{{ a.assessor.job_title }}</span>{% endif %}
+              </span>
+            </span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
+          </td>
+          <td>
+            {% if a.assessment_date %}
+            <span class="cell-stack">
+              <span>{{ a.assessment_date }}</span>
+              {% if a.next_review_date %}<span class="cell-sub" title="{% trans 'Next review' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ a.next_review_date }}</span>{% endif %}
+            </span>
+            {% elif a.next_review_date %}
+            <span class="cell-sub" title="{% trans 'Next review' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ a.next_review_date }}</span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
+          </td>
           <td>{% workflow_badge a %}</td>
           <td>{% include "includes/tags_badge.html" with tags=a.tags.all %}</td>
           <td class="text-end">
@@ -56,7 +82,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No assessment yet.") message=_("Assessments evaluate your conformance to a framework at a point in time. Open one to score every requirement and gather findings.") colspan=9 %}
+        {% empty_state title=_("No assessment yet.") message=_("Assessments evaluate your conformance to a framework at a point in time. Open one to score every requirement and gather findings.") colspan=8 %}
         {% endfor %}
       </tbody>
     </table>
