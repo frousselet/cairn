@@ -2223,6 +2223,11 @@
       background: linear-gradient(135deg, var(--accent-soft), color-mix(in srgb, var(--accent) 18%, transparent));
       color: var(--accent); font-size: .9375rem; font-weight: 600; letter-spacing: .02em;
     }
+    /* Denser variant for a secondary people column (e.g. an owner). */
+    .cell-people--sm { gap: .5rem; }
+    .cell-people--sm .cell-avatar,
+    .cell-people--sm .cell-avatar-fallback { width: 32px; height: 32px; }
+    .cell-people--sm .cell-avatar-fallback { font-size: .75rem; }
 
     /*
      * Right-aligned action cells (Edit / Delete buttons) must stay on a single
