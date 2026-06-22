@@ -113,7 +113,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-The VS Code Python extension picks up the mise-managed interpreter automatically (see [`.vscode/settings.json`](../.vscode/settings.json)); debugpy and the tasks use it via `${command:python.interpreterPath}`.
+Point the VS Code Python extension at the mise-managed interpreter (`Python: Select Interpreter` → `${env:HOME}/.local/share/mise/installs/python/latest/bin/python`); debugpy and the tasks then use it via `${command:python.interpreterPath}`.
 
 ### Start the application
 
