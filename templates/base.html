@@ -2202,6 +2202,28 @@
     /* Muted placeholder for an empty cell (use instead of a bare dash). */
     .cell-empty { color: var(--text-muted); }
 
+    /* Two-line table cell: a primary line over a muted secondary line.
+       Groups related fields (name + email, job title + department, …) so a
+       row stays scannable without extra columns. See docs/brand/table-standard.md. */
+    .cell-stack { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+    .cell-stack > .cell-sub { color: var(--text-muted); font-size: .8125rem; }
+    .cell-stack > .cell-link { font-weight: 600; }
+
+    /* People cell: avatar + two-line identity (used in the users admin table).
+       Block-level flex so the td's vertical-align:middle centres it
+       deterministically and the primary lines line up across columns. */
+    .cell-people { display: flex; align-items: center; gap: .625rem; text-decoration: none; }
+    .cell-avatar,
+    .cell-avatar-fallback {
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    }
+    .cell-avatar { object-fit: cover; border: 2px solid var(--border-light); }
+    .cell-avatar-fallback {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--accent-soft), color-mix(in srgb, var(--accent) 18%, transparent));
+      color: var(--accent); font-size: .9375rem; font-weight: 600; letter-spacing: .02em;
+    }
+
     /*
      * Right-aligned action cells (Edit / Delete buttons) must stay on a single
      * row: a narrow column would otherwise wrap the buttons onto two lines.
