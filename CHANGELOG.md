@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.1] - 2026-06-22
+
 ### Changed
 
 - **Uniform list tables across the whole app**: swept every list table (all `*_list.html` pages, the HTMX `*_table_body.html` partials and detail-page sub-tables) in Assets, Risk management, Compliance, Governance/Context, the Administration area and the Reports / Trust Center / Assistant sections so they share the same appearance, columns and ergonomics. Each list now uses the same card-wrapped `table table-hover` structure, the integrated search toolbar and pagination, a clickable monospace **reference pill** *and* a clickable **name** link (both pointing to the record), a consistent right-aligned **Actions** column (Edit, plus Delete only where the entity is deletable), the shared tags-badge rendering and the standard empty state. The copy-pasted inline link style was replaced by a shared `.cell-link` class (with a `.cell-empty` muted placeholder), the reference column header was harmonized to `Ref.`, and the em-dash `—` empty-cell placeholders were replaced with a plain `-` (per the no-em-dash brand rule). A new `docs/brand/table-standard.md` documents the canonical pattern. No data, view or API changes.
@@ -15,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Reusable stacked-avatars table component**: a new `{% user_avatars %}` template tag (with the `includes/user_avatars.html` partial and the `.avatar-stack` styles) renders a compact, slightly overlapping row of round user avatars with no names, each carrying the user's name as a tooltip, a `+N` chip when there are more users than the display limit, and a muted `-` when empty. It reuses the same avatar / initials logic as `{% user_badge %}` and accepts `size`, `max` and `link` options. Used in the **Scopes** table for a new **Responsible** column (the scope managers), for the **Action plans** assignees and the **Roles** users column. In addition, every list table that shows a single person now renders that user with their **profile photo + name** (via `{% user_badge %}`) instead of plain text: asset / support-asset / supplier / asset-group owners, risk owners, risk and compliance assessment assessors, treatment-plan owners, risk-acceptance approvers, action-plan supervisors and management-review facilitators (each falling back to a muted `-` when unset).
 - **Pure-Python debugging setup (mise)**: documented how to run the whole stack with no Docker and no external service for local development and step-by-step debugging, using [mise](https://mise.jdx.dev/) for the Python toolchain and the `core.settings_local` dev settings (file-based SQLite + in-memory channel layer). The installation guide gains an "Option 3" with the mise/venv setup, the `DJANGO_SETTINGS_MODULE=core.settings_local` start commands, and a walkthrough of the shipped VS Code launch configurations and tasks (bootstrap / seed-demo / createsuperuser); the README points to it.
+
+### Fixed
+
+- **Unread-notifications count invisible in dark mode with a custom theme colour**: the notification badge hardcoded a white number on its accent background, so a light custom accent (further lightened in dark mode) rendered the count white-on-white and unreadable. It now uses the computed `--accent-contrast` foreground, like the primary buttons and the profile-photo selector, so the count stays legible for any accent in both themes.
 
 ## [0.29.0] - 2026-06-19
 
@@ -1085,6 +1091,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.29.1]: https://github.com/frousselet/cairn/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/frousselet/cairn/compare/v0.28.3...v0.29.0
 [0.28.3]: https://github.com/frousselet/cairn/compare/v0.28.2...v0.28.3
 [0.28.2]: https://github.com/frousselet/cairn/compare/v0.28.1...v0.28.2
