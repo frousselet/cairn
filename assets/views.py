@@ -497,9 +497,9 @@ class SupplierTypeListView(LoginRequiredMixin, PermissionRequiredMixin, Sortable
     template_name = "assets/supplier_type_list.html"
     context_object_name = "supplier_types"
     permission_required = "assets.supplier.read"
-    sortable_fields = {"name": "name"}
+    sortable_fields = {"reference": "reference", "name": "name"}
     default_sort = "name"
-    search_fields = ["name"]
+    search_fields = ["reference", "name"]
 
 
 class SupplierTypeDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):

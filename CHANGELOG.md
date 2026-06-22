@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Reference shown on supplier types**: supplier types already carried an auto-generated `SPTY-N` reference at the data layer, but it was never surfaced in the UI. The supplier-types list now shows a clickable, sortable and searchable **Ref.** column (matching every other list table), the detail page header shows the reference pill, and the Django admin lists and searches it too. The MCP `list_supplier_types` / `get_supplier_type` tools now include the `reference` field.
+
+### Fixed
+
+- **Charts loaded from a CDN sometimes failed to render under boosted navigation**: the dependency graph (d3) and the dashboard's "Risk treatment flow" Sankey diagram (ECharts) each pulled their library from a CDN with a plain `<script src>` immediately followed by the init code. On a full page reload the browser fetches the library synchronously so it works, but under `hx-boost` navigation the library `<script>` is injected asynchronously and the init code ran before the library was defined, leaving the chart blank until a manual refresh. Both charts now load their library on demand and only build once it is available (reusing the already-loaded global on subsequent visits).
+
 ## [0.29.1] - 2026-06-22
 
 ### Changed
