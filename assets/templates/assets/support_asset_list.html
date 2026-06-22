@@ -29,7 +29,6 @@
           {% sortable_th "name" "Name" %}
           {% sortable_th "owner" "Owner" %}
           <th>C / I / A</th>
-          <th>{% trans "Env." %}</th>
           {% sortable_th "workflow_state" "Status" %}
           <th>{% trans "Tags" %}</th>
           <th class="text-end">{% trans "Actions" %}</th>
@@ -65,7 +64,6 @@
               {{ asset.inherited_confidentiality|dic_badge }}{{ asset.inherited_integrity|dic_badge }}{{ asset.inherited_availability|dic_badge }}
             </span>
           </td>
-          <td>{{ asset.get_environment_display|default:"-" }}</td>
           <td>
             <span class="cell-stack">
               {% if asset.is_end_of_life %}
@@ -82,7 +80,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No support asset registered yet.") message=_("Support assets are the IT components (servers, applications, network gear, data stores) that essential assets depend on.") colspan=8 %}
+        {% empty_state title=_("No support asset registered yet.") message=_("Support assets are the IT components (servers, applications, network gear, data stores) that essential assets depend on.") colspan=7 %}
         {% endfor %}
       </tbody>
     </table>
