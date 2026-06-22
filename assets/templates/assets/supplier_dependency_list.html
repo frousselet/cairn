@@ -19,12 +19,9 @@
       <thead>
         <tr>
           {% sortable_th "reference" "Ref." %}
-          {% sortable_th "support" "Support asset" %}
-          {% sortable_th "supplier" "Supplier" %}
+          {% sortable_th "support" "Dependency" %}
           {% sortable_th "type" "Type" %}
           {% sortable_th "criticality" "Criticality" %}
-          <th>{% trans "SPOF" %}</th>
-          <th>{% trans "Redundancy" %}</th>
           {% sortable_th "workflow_state" "Status" %}
           <th class="text-end">{% trans "Actions" %}</th>
         </tr>
@@ -33,31 +30,28 @@
         {% for dep in dependencies %}
         <tr>
           <td><span class="ref">{{ dep.reference }}</span></td>
-          <td><a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" class="cell-link">{{ dep.support_asset }}</a></td>
           <td>
-            <a href="{% url 'assets:supplier-detail' dep.supplier.pk %}" class="cell-link d-inline-flex align-items-center gap-2">
-              {% if dep.supplier.logo %}
-                <img src="{{ dep.supplier.logo_32|default:dep.supplier.logo }}" alt="" style="width:24px;height:24px;object-fit:cover;border-radius:4px">
-              {% else %}
-                <span class="d-inline-flex align-items-center justify-content-center" style="width:24px;height:24px;border-radius:4px;background:#f59e0b;color:#fff;font-size:.6875rem"><i class="bi bi-truck"></i></span>
-              {% endif %}
-              {{ dep.supplier.name }}
-            </a>
-          </td>
-          <td>{{ dep.get_dependency_type_display }}</td>
-          <td>
-            <span class="badge text-bg-{% if dep.criticality == 'critical' %}danger{% elif dep.criticality == 'high' %}warning{% elif dep.criticality == 'medium' %}info{% else %}secondary{% endif %}">
-              {{ dep.get_criticality_display }}
+            <span class="cell-stack">
+              <a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" class="cell-link">{{ dep.support_asset }}</a>
+              <span class="cell-sub d-inline-flex align-items-center">
+                <i class="bi bi-arrow-return-right me-1" aria-hidden="true"></i>
+                {% if dep.supplier.logo %}<img src="{{ dep.supplier.logo_16|default:dep.supplier.logo }}" alt="" style="width:16px;height:16px;object-fit:cover;border-radius:3px;flex-shrink:0" class="me-1">{% endif %}
+                <a href="{% url 'assets:supplier-detail' dep.supplier.pk %}" style="color:inherit;text-decoration:none">{{ dep.supplier.name }}</a>
+              </span>
             </span>
           </td>
           <td>
-            {% if dep.is_single_point_of_failure %}
-              <span class="badge text-bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>SPOF</span>
-            {% else %}
-              -
-            {% endif %}
+            <span class="cell-stack">
+              <span>{{ dep.get_dependency_type_display }}</span>
+              {% if dep.redundancy_level %}<span class="cell-sub" title="{% trans 'Redundancy' %}"><i class="bi bi-hdd-stack me-1" aria-hidden="true"></i>{{ dep.get_redundancy_level_display }}</span>{% endif %}
+            </span>
           </td>
-          <td>{{ dep.get_redundancy_level_display|default:"-" }}</td>
+          <td>
+            <span class="cell-stack">
+              <span><span class="badge text-bg-{% if dep.criticality == 'critical' %}danger{% elif dep.criticality == 'high' %}warning{% elif dep.criticality == 'medium' %}info{% else %}secondary{% endif %}">{{ dep.get_criticality_display }}</span></span>
+              {% if dep.is_single_point_of_failure %}<span class="cell-sub" style="color:var(--danger)"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>SPOF</span>{% endif %}
+            </span>
+          </td>
           <td>{% workflow_badge dep %}</td>
           <td class="text-end">
             <a href="{% url 'assets:supplier-dependency-update' dep.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
@@ -65,7 +59,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No supplier dependency declared yet.") message=_("Track which assets depend on which suppliers - critical for vendor risk and continuity planning.") colspan=9 %}
+        {% empty_state title=_("No supplier dependency declared yet.") message=_("Track which assets depend on which suppliers - critical for vendor risk and continuity planning.") colspan=6 %}
         {% endfor %}
       </tbody>
     </table>
