@@ -501,6 +501,14 @@ class SupplierTypeListView(LoginRequiredMixin, PermissionRequiredMixin, Sortable
     default_sort = "name"
     search_fields = ["reference", "name"]
 
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .annotate(req_count=Count("requirements", distinct=True))
+            .prefetch_related("suppliers")
+        )
+
 
 class SupplierTypeDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     model = SupplierType

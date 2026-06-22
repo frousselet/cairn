@@ -1,0 +1,8 @@
+{# Rendered by {% supplier_avatars %} (supplier_tags) - do not include directly. #}
+{% if items %}
+<span class="avatar-stack d-inline-flex align-items-center" style="--avatar-size:{{ sz }}px">
+  {% for it in items %}{% if link and it.s %}<a href="{% url 'assets:supplier-detail' it.s.pk %}" class="avatar-stack-item" title="{{ it.name }}">{% else %}<span class="avatar-stack-item" title="{{ it.name }}">{% endif %}{% if it.logo_src %}<img src="{{ it.logo_src }}" alt="{{ it.name }}">{% else %}<span class="avatar-stack-initial" style="font-size:{{ font_size }}">{{ it.initial }}</span>{% endif %}{% if link and it.s %}</a>{% else %}</span>{% endif %}{% endfor %}{% if overflow > 0 %}<span class="avatar-stack-item avatar-stack-more" style="font-size:{{ font_size }}" title="+{{ overflow }}">+{{ overflow }}</span>{% endif %}
+</span>
+{% else %}
+<span class="cell-empty">-</span>
+{% endif %}
