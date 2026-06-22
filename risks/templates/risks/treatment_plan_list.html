@@ -27,8 +27,6 @@
         <tr>
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
-          <th>{% trans "Risk" %}</th>
-          {% sortable_th "type" "Type" %}
           <th>{% trans "Owner" %}</th>
           {% sortable_th "progress" "Progress" %}
           {% sortable_th "target_date" "Target date" %}
@@ -41,16 +39,42 @@
         {% for p in plans %}
         <tr>
           <td><a href="{% url 'risks:treatment-plan-detail' p.pk %}" class="ref">{{ p.reference }}</a></td>
-          <td><a href="{% url 'risks:treatment-plan-detail' p.pk %}" class="cell-link">{{ p.name }}</a></td>
-          <td>{% if p.risk %}<a href="{% url 'risks:risk-detail' p.risk.pk %}" class="cell-link">{{ p.risk.reference }}</a>{% else %}-{% endif %}</td>
-          <td>{{ p.get_treatment_type_display }}</td>
-          <td>{% if p.owner %}{% user_badge p.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+          <td>
+            <span class="cell-stack">
+              <a href="{% url 'risks:treatment-plan-detail' p.pk %}" class="cell-link">{{ p.name }}</a>
+              <span class="cell-sub">{% if p.risk %}<a href="{% url 'risks:risk-detail' p.risk.pk %}" style="color:inherit;text-decoration:none">{{ p.risk.reference }}</a> • {% endif %}{{ p.get_treatment_type_display }}</span>
+            </span>
+          </td>
+          <td>
+            {% if p.owner %}
+            <span class="cell-people cell-people--sm">
+              {% if p.owner.avatar %}
+              <img src="{{ p.owner.avatar_32|default:p.owner.avatar }}" alt="" class="cell-avatar">
+              {% else %}
+              <span class="cell-avatar-fallback">{{ p.owner.display_name|initials }}</span>
+              {% endif %}
+              <span class="cell-stack">
+                <span style="font-weight:600">{{ p.owner.display_name }}</span>
+                {% if p.owner.job_title %}<span class="cell-sub">{{ p.owner.job_title }}</span>{% endif %}
+              </span>
+            </span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
+          </td>
           <td>
             <div class="progress" style="height:1rem;min-width:60px">
               <div class="progress-bar bg-{% if p.progress_percentage == 100 %}success{% elif p.progress_percentage >= 50 %}info{% else %}warning{% endif %}" style="width:{{ p.progress_percentage }}%">{{ p.progress_percentage }}%</div>
             </div>
           </td>
-          <td>{{ p.target_date|default:"-" }}</td>
+          <td>
+            {% if p.target_date %}
+            <span class="cell-stack">
+              <span>{{ p.target_date }}</span>
+              {% if p.start_date %}<span class="cell-sub" title="{% trans 'Start date' %}"><i class="bi bi-calendar-event me-1" aria-hidden="true"></i>{{ p.start_date }}</span>{% endif %}
+            </span>
+            {% elif p.start_date %}
+            <span class="cell-sub" title="{% trans 'Start date' %}"><i class="bi bi-calendar-event me-1" aria-hidden="true"></i>{{ p.start_date }}</span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
+          </td>
           <td>{% workflow_badge p %}</td>
           <td>{% include "includes/tags_badge.html" with tags=p.tags.all %}</td>
           <td class="text-end">
@@ -61,7 +85,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No treatment plan yet.") message=_("Treatment plans implement the chosen response to a risk (mitigate, transfer, accept, avoid). Track actions, owners and target dates.") colspan=10 %}
+        {% empty_state title=_("No treatment plan yet.") message=_("Treatment plans implement the chosen response to a risk (mitigate, transfer, accept, avoid). Track actions, owners and target dates.") colspan=8 %}
         {% endfor %}
       </tbody>
     </table>
