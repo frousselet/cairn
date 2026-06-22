@@ -28,13 +28,13 @@
       <tbody>
         {% for st in supplier_types %}
         <tr>
-          <td><a href="{% url 'assets:supplier-type-detail' st.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ st.name }}</a></td>
-          <td>{{ st.description|truncatewords:15|default:"—" }}</td>
+          <td><a href="{% url 'assets:supplier-type-detail' st.pk %}" class="cell-link">{{ st.name }}</a></td>
+          <td>{{ st.description|truncatewords:15|default:"-" }}</td>
           <td><span class="badge text-bg-secondary">{{ st.requirements.count }}</span></td>
           <td><span class="badge text-bg-secondary">{{ st.suppliers.count }}</span></td>
           <td class="text-end">
-            <a href="{% url 'assets:supplier-type-update' st.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'assets:supplier-type-delete' st.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+            <a href="{% url 'assets:supplier-type-update' st.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'assets:supplier-type-delete' st.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
           </td>
         </tr>
         {% empty %}

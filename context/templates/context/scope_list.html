@@ -31,6 +31,7 @@
           {% sortable_th "workflow_state" "Status" %}
           {% sortable_th "effective_date" "Effective date" %}
           {% sortable_th "review_date" "Review date" %}
+          <th>{% trans "Responsible" %}</th>
           <th>{% trans "Tags" %}</th>
           <th class="text-end">{% trans "Actions" %}</th>
         </tr>
@@ -45,4 +46,5 @@
   </div>
 </div>
 
+{% include "includes/pagination.html" %}
 {% endblock %}

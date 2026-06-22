@@ -45,6 +45,7 @@
 
 {# ── Generated reports history ─────────────────────────── #}
 <h4 class="mb-3">{% trans "Generated reports" %}</h4>
+{% include "includes/table_search.html" %}
 <div class="card">
   <div class="table-responsive">
     <table class="table table-hover mb-0">
@@ -69,7 +70,7 @@
             </span>
           </td>
           <td>{{ report.created_at|date:"d/m/Y H:i" }}</td>
-          <td>{{ report.created_by|default:"—" }}</td>
+          <td>{{ report.created_by|default:"-" }}</td>
           <td class="text-end">
             {% if report.file_content %}
             <a href="{% url 'reports:report-download' report.pk %}" hx-boost="false" download class="btn btn-sm btn-outline-primary" title="{% trans 'Download' %}">

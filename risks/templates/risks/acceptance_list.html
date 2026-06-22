@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% load i18n table_tags ui workflow_tags %}
+{% load i18n table_tags ui workflow_tags accounts_tags %}
 
 {% block title %}{% trans "Risk acceptances" %} — Cairn{% endblock %}
 
 {% load help_tags %}
 
 {% block content %}
+{% has_perm "risks.acceptance.delete" as can_delete_acceptances %}
 {% page_header _("Risk acceptances") eyebrow=_("Risk management") accent="risks" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'risks:acceptance-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New acceptance' %}</button>
 {% endpage_header %}
@@ -36,15 +37,18 @@
       <tbody>
         {% for acc in acceptances %}
         <tr>
-          <td><a href="{% url 'risks:acceptance-detail' acc.pk %}" class="ref" style="text-decoration:none">{{ acc.reference }}</a></td>
-          <td>{{ acc.risk }}</td>
-          <td>{{ acc.accepted_by|default:"—" }}</td>
-          <td>{{ acc.risk_level_at_acceptance|default:"—" }}</td>
-          <td>{{ acc.valid_until|default:"—" }}</td>
+          <td><a href="{% url 'risks:acceptance-detail' acc.pk %}" class="ref">{{ acc.reference }}</a></td>
+          <td>{% if acc.risk %}<a href="{% url 'risks:risk-detail' acc.risk.pk %}" class="cell-link">{{ acc.risk }}</a>{% else %}-{% endif %}</td>
+          <td>{% if acc.accepted_by %}{% user_badge acc.accepted_by size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+          <td>{{ acc.risk_level_at_acceptance|default:"-" }}</td>
+          <td>{{ acc.valid_until|default:"-" }}</td>
           <td>{% workflow_badge acc %}</td>
-          <td>{% for tag in acc.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+          <td>{% include "includes/tags_badge.html" with tags=acc.tags.all %}</td>
           <td class="text-end">
-            <a hx-get="{% url 'risks:acceptance-update' acc.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a hx-get="{% url 'risks:acceptance-update' acc.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            {% if can_delete_acceptances and acc.is_deletable %}
+            <a href="{% url 'risks:acceptance-delete' acc.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+            {% endif %}
           </td>
         </tr>
         {% empty %}

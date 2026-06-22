@@ -127,7 +127,7 @@
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Risk criteria" %}</div>
-          <div>{{ assessment.risk_criteria|default:"—" }}</div>
+          <div>{{ assessment.risk_criteria|default:"-" }}</div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
@@ -171,14 +171,14 @@
             <tbody>
               {% for a in iso27005_risks %}
               <tr>
-                <td><a href="{% url 'risks:iso27005-detail' a.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ a.threat.name }}</a></td>
+                <td><a href="{% url 'risks:iso27005-detail' a.pk %}" class="cell-link">{{ a.threat.name }}</a></td>
                 <td>{{ a.vulnerability.name }}</td>
-                <td>{{ a.combined_likelihood|default:"—" }}</td>
-                <td>{{ a.max_impact|default:"—" }}</td>
-                <td>{{ a.risk_level|default:"—" }}</td>
+                <td>{{ a.combined_likelihood|default:"-" }}</td>
+                <td>{{ a.max_impact|default:"-" }}</td>
+                <td>{{ a.risk_level|default:"-" }}</td>
                 <td>
                   {% if a.risk %}
-                  <a href="{% url 'risks:risk-detail' a.risk.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ a.risk.reference }}</a>
+                  <a href="{% url 'risks:risk-detail' a.risk.pk %}" class="cell-link">{{ a.risk.reference }}</a>
                   {% else %}
                   <span class="text-muted">—</span>
                   {% endif %}
@@ -236,10 +236,10 @@
               {% for r in risks %}
               <tr>
                 <td>{{ r.reference }}</td>
-                <td><a href="{% url 'risks:risk-detail' r.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ r.name }}</a></td>
+                <td><a href="{% url 'risks:risk-detail' r.pk %}" class="cell-link">{{ r.name }}</a></td>
                 <td><span class="badge text-bg-{% if r.priority == 'critical' %}danger{% elif r.priority == 'high' %}warning{% elif r.priority == 'medium' %}info{% else %}secondary{% endif %}">{{ r.get_priority_display }}</span></td>
                 <td>{{ r.get_status_display }}</td>
-                <td>{{ r.current_risk_level|default:"—" }}</td>
+                <td>{{ r.current_risk_level|default:"-" }}</td>
                 <td>{{ r.get_treatment_decision_display }}</td>
                 <td class="text-end"><a href="{% url 'risks:risk-update' r.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a></td>
               </tr>
@@ -322,9 +322,9 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Assessment date" %}</dt>
-          <dd class="mb-3">{{ assessment.assessment_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ assessment.assessment_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Next review" %}</dt>
-          <dd class="mb-3">{{ assessment.next_review_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ assessment.next_review_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
           <dd class="mb-3">{{ assessment.created_at }}</dd>
           <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>

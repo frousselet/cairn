@@ -1,9 +1,9 @@
 {% load i18n ui workflow_tags %}
 {% for indicator in indicators %}
 <tr>
-  <td><a href="{% url 'context:indicator-detail' indicator.pk %}" class="ref" style="text-decoration:none">{{ indicator.reference }}</a></td>
+  <td><a href="{% url 'context:indicator-detail' indicator.pk %}" class="ref">{{ indicator.reference }}</a></td>
   <td>
-    {{ indicator.name }}
+    <a href="{% url 'context:indicator-detail' indicator.pk %}" class="cell-link">{{ indicator.name }}</a>
     {% if indicator.is_internal %}<span class="badge text-bg-info ms-1" style="font-size:.65rem">{% trans "Predefined" %}</span>{% endif %}
   </td>
   <td>{{ indicator.get_format_display }}</td>
@@ -12,13 +12,13 @@
       <span class="{% if indicator.is_critical %}text-danger fw-bold{% endif %}">
         {{ indicator.current_value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}
       </span>
-    {% else %}—{% endif %}
+    {% else %}-{% endif %}
   </td>
-  <td>{{ indicator.expected_level|default:"—" }}{% if indicator.unit and indicator.expected_level %} {{ indicator.unit }}{% endif %}</td>
+  <td>{{ indicator.expected_level|default:"-" }}{% if indicator.unit and indicator.expected_level %} {{ indicator.unit }}{% endif %}</td>
   <td>{{ indicator.get_collection_method_display }}</td>
   <td>{{ indicator.get_review_frequency_display }}</td>
   <td>{% workflow_badge indicator %}</td>
-  <td>{% for tag in indicator.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+  <td>{% include "includes/tags_badge.html" with tags=indicator.tags.all %}</td>
   <td class="text-end">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
             hx-get="{% url 'context:indicator-update' indicator.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">

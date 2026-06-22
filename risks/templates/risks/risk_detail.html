@@ -29,7 +29,7 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Assessment" %}</div>
-          <div><a href="{% url 'risks:assessment-detail' risk.assessment.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ risk.assessment }}</a></div>
+          <div><a href="{% url 'risks:assessment-detail' risk.assessment.pk %}" class="cell-link">{{ risk.assessment }}</a></div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Source" %}</div>
@@ -61,25 +61,25 @@
           <div class="col-md-4">
             <div class="stat-card text-center">
               <h6 style="color:var(--text-muted);font-size:.8125rem;font-weight:500">{% trans "Initial risk" %}</h6>
-              <p class="mb-1" style="font-size:.85rem">{% trans "Likelihood:" %} <strong>{{ risk.initial_likelihood|default:"—" }}</strong></p>
-              <p class="mb-1" style="font-size:.85rem">{% trans "Impact:" %} <strong>{{ risk.initial_impact|default:"—" }}</strong></p>
-              <p class="stat-card-value mt-2">{{ risk.initial_risk_level|default:"—" }}</p>
+              <p class="mb-1" style="font-size:.85rem">{% trans "Likelihood:" %} <strong>{{ risk.initial_likelihood|default:"-" }}</strong></p>
+              <p class="mb-1" style="font-size:.85rem">{% trans "Impact:" %} <strong>{{ risk.initial_impact|default:"-" }}</strong></p>
+              <p class="stat-card-value mt-2">{{ risk.initial_risk_level|default:"-" }}</p>
             </div>
           </div>
           <div class="col-md-4">
             <div class="stat-card text-center">
               <h6 style="color:var(--text-muted);font-size:.8125rem;font-weight:500">{% trans "Current risk" %}</h6>
-              <p class="mb-1" style="font-size:.85rem">{% trans "Likelihood:" %} <strong>{{ risk.current_likelihood|default:"—" }}</strong></p>
-              <p class="mb-1" style="font-size:.85rem">{% trans "Impact:" %} <strong>{{ risk.current_impact|default:"—" }}</strong></p>
-              <p class="stat-card-value mt-2">{{ risk.current_risk_level|default:"—" }}</p>
+              <p class="mb-1" style="font-size:.85rem">{% trans "Likelihood:" %} <strong>{{ risk.current_likelihood|default:"-" }}</strong></p>
+              <p class="mb-1" style="font-size:.85rem">{% trans "Impact:" %} <strong>{{ risk.current_impact|default:"-" }}</strong></p>
+              <p class="stat-card-value mt-2">{{ risk.current_risk_level|default:"-" }}</p>
             </div>
           </div>
           <div class="col-md-4">
             <div class="stat-card text-center">
               <h6 style="color:var(--text-muted);font-size:.8125rem;font-weight:500">{% trans "Residual risk" %}</h6>
-              <p class="mb-1" style="font-size:.85rem">{% trans "Likelihood:" %} <strong>{{ risk.residual_likelihood|default:"—" }}</strong></p>
-              <p class="mb-1" style="font-size:.85rem">{% trans "Impact:" %} <strong>{{ risk.residual_impact|default:"—" }}</strong></p>
-              <p class="stat-card-value mt-2">{{ risk.residual_risk_level|default:"—" }}</p>
+              <p class="mb-1" style="font-size:.85rem">{% trans "Likelihood:" %} <strong>{{ risk.residual_likelihood|default:"-" }}</strong></p>
+              <p class="mb-1" style="font-size:.85rem">{% trans "Impact:" %} <strong>{{ risk.residual_impact|default:"-" }}</strong></p>
+              <p class="stat-card-value mt-2">{{ risk.residual_risk_level|default:"-" }}</p>
             </div>
           </div>
         </div>
@@ -114,7 +114,7 @@
               {% for tp in treatment_plans %}
               <tr>
                 <td style="font-weight:500;color:var(--text-muted);font-size:.82rem">{{ tp.reference }}</td>
-                <td><a href="{% url 'risks:treatment-plan-detail' tp.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ tp.name }}</a></td>
+                <td><a href="{% url 'risks:treatment-plan-detail' tp.pk %}" class="cell-link">{{ tp.name }}</a></td>
                 <td style="font-size:.85rem">{{ tp.get_treatment_type_display }}</td>
                 <td>
                   <div class="progress" style="height:.65rem">
@@ -141,10 +141,10 @@
               <tbody>
                 {% for acc in acceptances %}
                 <tr>
-                  <td><a href="{% url 'risks:acceptance-detail' acc.pk %}" style="text-decoration:none">{% if acc.accepted_by %}{% user_badge acc.accepted_by size=20 %}{% else %}—{% endif %}</a></td>
-                  <td style="font-size:.85rem">{{ acc.risk_level_at_acceptance|default:"—" }}</td>
+                  <td><a href="{% url 'risks:acceptance-detail' acc.pk %}" style="text-decoration:none">{% if acc.accepted_by %}{% user_badge acc.accepted_by size=20 %}{% else %}-{% endif %}</a></td>
+                  <td style="font-size:.85rem">{{ acc.risk_level_at_acceptance|default:"-" }}</td>
                   <td style="font-size:.85rem">{{ acc.get_status_display }}</td>
-                  <td style="font-size:.85rem">{{ acc.valid_until|default:"—" }}</td>
+                  <td style="font-size:.85rem">{{ acc.valid_until|default:"-" }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -196,7 +196,7 @@
               {% for req in risk.linked_requirements.all %}
               <tr>
                 <td style="font-weight:500;color:var(--text-muted);font-size:.82rem">{{ req.requirement_number|default:req.reference }}</td>
-                <td><a href="{% url 'compliance:requirement-detail' req.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ req.name }}</a></td>
+                <td><a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.name }}</a></td>
                 <td style="font-size:.85rem">{{ req.framework.name }}</td>
                 <td>
                   <span class="badge text-bg-{% if req.compliance_status == 'compliant' %}success{% elif req.compliance_status == 'partially_compliant' %}warning{% elif req.compliance_status == 'non_compliant' %}danger{% else %}secondary{% endif %}">
@@ -229,11 +229,11 @@
             <tbody>
               {% for src in iso27005_sources %}
               <tr>
-                <td><a href="{% url 'risks:iso27005-detail' src.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ src.threat.name }}</a></td>
+                <td><a href="{% url 'risks:iso27005-detail' src.pk %}" class="cell-link">{{ src.threat.name }}</a></td>
                 <td style="font-size:.85rem">{{ src.vulnerability.name }}</td>
-                <td style="font-size:.85rem">{{ src.combined_likelihood|default:"—" }}</td>
-                <td style="font-size:.85rem">{{ src.max_impact|default:"—" }}</td>
-                <td style="font-weight:600;font-size:.85rem">{{ src.risk_level|default:"—" }}</td>
+                <td style="font-size:.85rem">{{ src.combined_likelihood|default:"-" }}</td>
+                <td style="font-size:.85rem">{{ src.max_impact|default:"-" }}</td>
+                <td style="font-weight:600;font-size:.85rem">{{ src.risk_level|default:"-" }}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -276,15 +276,15 @@
           <dt class="text-muted small mb-1">{% trans "Criteria" %}</dt>
           <dd class="mb-2">
             {% if risk.assessment.risk_criteria_id %}
-            <a href="{% url 'risks:criteria-detail' risk.assessment.risk_criteria_id %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ risk.criteria_snapshot.criteria_name }}</a>
+            <a href="{% url 'risks:criteria-detail' risk.assessment.risk_criteria_id %}" class="cell-link">{{ risk.criteria_snapshot.criteria_name }}</a>
             {% else %}
             {{ risk.criteria_snapshot.criteria_name }}
             {% endif %}
           </dd>
           <dt class="text-muted small mb-1">{% trans "Version at evaluation" %}</dt>
-          <dd class="mb-2">v.{{ risk.criteria_snapshot.criteria_version|default:"—" }}</dd>
+          <dd class="mb-2">v.{{ risk.criteria_snapshot.criteria_version|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Captured at" %}</dt>
-          <dd class="mb-0 small text-muted">{{ risk.criteria_snapshot.captured_at|default:"—" }}</dd>
+          <dd class="mb-0 small text-muted">{{ risk.criteria_snapshot.captured_at|default:"-" }}</dd>
         </dl>
         <p class="small text-muted mb-0 mt-3">
           <i class="bi bi-info-circle me-1"></i>{% trans "Score frozen at evaluation time. Later edits to the criteria do not change historical scores." %}
@@ -314,7 +314,7 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Review date" %}</dt>
-          <dd class="mb-3">{{ risk.review_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ risk.review_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
           <dd class="mb-3">{{ risk.created_at }}</dd>
           <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>

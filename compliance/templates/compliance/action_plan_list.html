@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n ui workflow_tags %}
+{% load i18n ui workflow_tags accounts_tags %}
 {% load table_tags %}
 
 {% block title %}{% trans "Action plans" %} — Cairn{% endblock %}
@@ -19,7 +19,7 @@
     <table class="table table-hover mb-0">
       <thead>
         <tr>
-          {% sortable_th "reference" "Reference" %}
+          {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
           {% sortable_th "priority" "Priority" %}
           <th>{% trans "Supervisor" %}</th>
@@ -34,36 +34,15 @@
       <tbody>
         {% for ap in action_plans %}
         <tr>
-          <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="ref" style="text-decoration:none">{{ ap.reference }}</a></td>
-          <td>{{ ap.name|truncatechars:50 }}</td>
+          <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="ref">{{ ap.reference }}</a></td>
+          <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="cell-link">{{ ap.name|truncatechars:50 }}</a></td>
           <td>
             <span class="badge text-bg-{% if ap.priority == 'critical' %}danger{% elif ap.priority == 'high' %}warning{% elif ap.priority == 'medium' %}info{% else %}secondary{% endif %}">
               {{ ap.get_priority_display }}
             </span>
           </td>
-          <td>
-            {% with user=ap.owner %}
-            <span class="d-inline-flex align-items-center" title="{{ user.display_name }}">
-              {% if user.avatar_32 %}
-              <img src="{{ user.avatar_32 }}" alt="{{ user.get_short_name }}" width="20" height="20" class="rounded-circle me-1">
-              {% else %}
-              <span class="d-inline-flex align-items-center justify-content-center rounded-circle me-1" style="width:20px;height:20px;background:var(--bs-primary);color:#fff;font-size:.55rem;font-weight:600">{{ user.first_name|make_list|first }}{{ user.last_name|make_list|first }}</span>
-              {% endif %}
-              {{ user.display_name }}
-            </span>
-            {% endwith %}
-          </td>
-          <td>
-            {% for user in ap.assignees.all %}
-            <span class="d-inline-flex align-items-center me-1" title="{{ user.display_name }}">
-              {% if user.avatar_32 %}
-              <img src="{{ user.avatar_32 }}" alt="{{ user.get_short_name }}" width="20" height="20" class="rounded-circle">
-              {% else %}
-              <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:20px;height:20px;background:var(--bs-primary);color:#fff;font-size:.55rem;font-weight:600">{{ user.first_name|make_list|first }}{{ user.last_name|make_list|first }}</span>
-              {% endif %}
-            </span>
-            {% empty %}—{% endfor %}
-          </td>
+          <td>{% if ap.owner %}{% user_badge ap.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+          <td>{% user_avatars ap.assignees.all size=20 %}</td>
           <td>{{ ap.target_date }}</td>
           <td>
             <div class="progress" style="min-width:60px">
@@ -71,9 +50,9 @@
             </div>
           </td>
           <td>{% workflow_badge ap %}</td>
-          <td>{% for tag in ap.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+          <td>{% include "includes/tags_badge.html" with tags=ap.tags.all %}</td>
           <td class="text-end">
-            <a hx-get="{% url 'compliance:action-plan-update' ap.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a hx-get="{% url 'compliance:action-plan-update' ap.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
           </td>
         </tr>
         {% empty %}

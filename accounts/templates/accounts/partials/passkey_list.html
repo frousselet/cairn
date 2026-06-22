@@ -8,7 +8,7 @@
       <div style="font-size:.75rem;color:var(--text-muted)">
         {% trans "Added" %} {{ pk.created_at|date:"d/m/Y" }}
         {% if pk.last_used_at %}
-          — {% trans "Last used" %} {{ pk.last_used_at|date:"d/m/Y" }}
+          - {% trans "Last used" %} {{ pk.last_used_at|date:"d/m/Y" }}
         {% endif %}
       </div>
     </div>

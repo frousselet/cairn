@@ -1,4 +1,4 @@
-{% load i18n ui %}
+{% load i18n ui accounts_tags %}
 {% for finding in findings %}
 <tr>
   <td>
@@ -15,11 +15,11 @@
     {% for req in finding.requirements.all %}
       <span class="badge text-bg-light border" style="font-size:.72rem">{{ req.requirement_number|default:req.reference }}</span>
     {% empty %}
-      <span style="color:var(--text-muted)">—</span>
+      <span style="color:var(--text-muted)">-</span>
     {% endfor %}
     </div>
   </td>
-  <td style="font-size:.82rem;color:var(--text-muted)">{{ finding.assessor }}</td>
+  <td style="font-size:.82rem">{% if finding.assessor %}{% user_badge finding.assessor size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
   <td class="text-end">
     {% if not is_frozen %}
     <div class="d-flex gap-1 justify-content-end">

@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% load i18n table_tags ui workflow_tags %}
+{% load i18n table_tags ui workflow_tags accounts_tags %}
 
 {% block title %}{% trans "Treatment plans" %} — Cairn{% endblock %}
 
 {% load help_tags %}
 
 {% block content %}
+{% has_perm "risks.treatment.delete" as can_delete_plans %}
 {% page_header _("Treatment plans") eyebrow=_("Risk management") accent="risks" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'risks:treatment-plan-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New plan' %}</button>
 {% endpage_header %}
@@ -39,21 +40,24 @@
       <tbody>
         {% for p in plans %}
         <tr>
-          <td><a href="{% url 'risks:treatment-plan-detail' p.pk %}" class="ref" style="text-decoration:none">{{ p.reference }}</a></td>
-          <td>{{ p.name }}</td>
-          <td>{{ p.risk.reference }}</td>
+          <td><a href="{% url 'risks:treatment-plan-detail' p.pk %}" class="ref">{{ p.reference }}</a></td>
+          <td><a href="{% url 'risks:treatment-plan-detail' p.pk %}" class="cell-link">{{ p.name }}</a></td>
+          <td>{% if p.risk %}<a href="{% url 'risks:risk-detail' p.risk.pk %}" class="cell-link">{{ p.risk.reference }}</a>{% else %}-{% endif %}</td>
           <td>{{ p.get_treatment_type_display }}</td>
-          <td>{{ p.owner|default:"—" }}</td>
+          <td>{% if p.owner %}{% user_badge p.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
           <td>
             <div class="progress" style="height:1rem;min-width:60px">
               <div class="progress-bar bg-{% if p.progress_percentage == 100 %}success{% elif p.progress_percentage >= 50 %}info{% else %}warning{% endif %}" style="width:{{ p.progress_percentage }}%">{{ p.progress_percentage }}%</div>
             </div>
           </td>
-          <td>{{ p.target_date|default:"—" }}</td>
+          <td>{{ p.target_date|default:"-" }}</td>
           <td>{% workflow_badge p %}</td>
-          <td>{% for tag in p.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+          <td>{% include "includes/tags_badge.html" with tags=p.tags.all %}</td>
           <td class="text-end">
-            <a hx-get="{% url 'risks:treatment-plan-update' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a hx-get="{% url 'risks:treatment-plan-update' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            {% if can_delete_plans and p.is_deletable %}
+            <a href="{% url 'risks:treatment-plan-delete' p.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+            {% endif %}
           </td>
         </tr>
         {% empty %}

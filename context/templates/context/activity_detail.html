@@ -28,12 +28,12 @@
         {% if activity.parent_activity %}
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Parent activity" %}</div>
-          <a href="{% url 'context:activity-detail' activity.parent_activity.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ activity.parent_activity }}</a>
+          <a href="{% url 'context:activity-detail' activity.parent_activity.pk %}" class="cell-link">{{ activity.parent_activity }}</a>
         </div>
         {% endif %}
         <div>
           <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ activity.description|default:"—"|safe }}</div>
+          <div>{{ activity.description|default:"-"|safe }}</div>
         </div>
       </div>
     </div>

@@ -1,15 +1,15 @@
 {% load i18n scope_tags ui workflow_tags %}
 {% for sh in stakeholders %}
 <tr>
-  <td><a href="{% url 'context:stakeholder-detail' sh.pk %}" class="ref" style="text-decoration:none">{{ sh.reference }}</a></td>
-  <td>{{ sh.name }}</td>
+  <td><a href="{% url 'context:stakeholder-detail' sh.pk %}" class="ref">{{ sh.reference }}</a></td>
+  <td><a href="{% url 'context:stakeholder-detail' sh.pk %}" class="cell-link">{{ sh.name }}</a></td>
   <td>{% scope_popover sh.scopes.all %}</td>
   <td>{{ sh.get_type_display }}</td>
   <td>{{ sh.get_category_display }}</td>
   <td>{{ sh.get_influence_level_display }}</td>
   <td>{{ sh.get_interest_level_display }}</td>
   <td>{% workflow_badge sh %}</td>
-  <td>{% for tag in sh.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+  <td>{% include "includes/tags_badge.html" with tags=sh.tags.all %}</td>
   <td class="text-end">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
             hx-get="{% url 'context:stakeholder-update' sh.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">

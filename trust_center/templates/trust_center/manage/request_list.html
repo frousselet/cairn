@@ -8,12 +8,14 @@
   <a href="{% url 'trust_center_manage:hub' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 
+{% include "includes/table_search.html" %}
+
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
+    <table class="table table-hover mb-0">
       <thead>
         <tr>
-          <th>{% trans "Reference" %}</th>
+          <th>{% trans "Ref." %}</th>
           <th>{% trans "Document" %}</th>
           <th>{% trans "Requester" %}</th>
           <th>{% trans "Status" %}</th>
@@ -23,17 +25,19 @@
       <tbody>
         {% for req in requests %}
         <tr>
-          <td><a href="{% url 'trust_center_manage:request-detail' req.pk %}">{{ req.reference }}</a></td>
+          <td><a href="{% url 'trust_center_manage:request-detail' req.pk %}" class="ref">{{ req.reference }}</a></td>
           <td>{{ req.document.title }}</td>
           <td>{{ req.requester_name }}<br><span class="text-muted small">{{ req.email }}</span></td>
           <td>{% workflow_badge req %}</td>
           <td class="text-muted small">{{ req.created_at|date:"SHORT_DATETIME_FORMAT" }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="text-center text-muted py-3">{% trans "No requests yet." %}</td></tr>
+        {% empty_state title=_("No requests yet.") message=_("Document access requests submitted from the Trust Center appear here for review and approval.") colspan=5 %}
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
+{% include "includes/pagination.html" %}
 {% endblock %}

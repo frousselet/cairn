@@ -1,21 +1,21 @@
-{% load i18n ui workflow_tags %}
+{% load i18n ui workflow_tags accounts_tags %}
 {% for obj in objectives %}
 <tr>
-  <td><a href="{% url 'context:objective-detail' obj.pk %}" class="ref" style="text-decoration:none">{{ obj.reference }}</a></td>
-  <td>{{ obj.name }}</td>
+  <td><a href="{% url 'context:objective-detail' obj.pk %}" class="ref">{{ obj.reference }}</a></td>
+  <td><a href="{% url 'context:objective-detail' obj.pk %}" class="cell-link">{{ obj.name }}</a></td>
   <td>{{ obj.get_category_display }}</td>
-  <td>{{ obj.owner }}</td>
+  <td>{% if obj.owner %}{% user_badge obj.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
   <td>
     {% if obj.progress_percentage is not None %}
     <div class="progress" style="min-width: 80px;">
       <div class="progress-bar {% if obj.progress_percentage == 100 %}bg-success{% elif obj.progress_percentage >= 50 %}bg-info{% else %}bg-warning{% endif %}"
            style="width: {{ obj.progress_percentage }}%">{{ obj.progress_percentage }}%</div>
     </div>
-    {% else %}—{% endif %}
+    {% else %}-{% endif %}
   </td>
   <td>{% workflow_badge obj %}</td>
-  <td>{{ obj.target_date|default:"—" }}</td>
-  <td>{% for tag in obj.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+  <td>{{ obj.target_date|default:"-" }}</td>
+  <td>{% include "includes/tags_badge.html" with tags=obj.tags.all %}</td>
   <td class="text-end">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
             hx-get="{% url 'context:objective-update' obj.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">

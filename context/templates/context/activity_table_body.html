@@ -1,17 +1,17 @@
-{% load i18n ui workflow_tags %}
+{% load i18n ui workflow_tags accounts_tags %}
 {% for activity in activities %}
 <tr>
-  <td><a href="{% url 'context:activity-detail' activity.pk %}" class="ref" style="text-decoration:none">{{ activity.reference }}</a></td>
-  <td>{{ activity.name }}</td>
+  <td><a href="{% url 'context:activity-detail' activity.pk %}" class="ref">{{ activity.reference }}</a></td>
+  <td><a href="{% url 'context:activity-detail' activity.pk %}" class="cell-link">{{ activity.name }}</a></td>
   <td>{{ activity.get_type_display }}</td>
   <td>
     <span class="badge text-bg-{% if activity.criticality == 'critical' %}danger{% elif activity.criticality == 'high' %}warning{% elif activity.criticality == 'medium' %}info{% else %}secondary{% endif %}">
       {{ activity.get_criticality_display }}
     </span>
   </td>
-  <td>{{ activity.owner }}</td>
+  <td>{% if activity.owner %}{% user_badge activity.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
   <td>{% workflow_badge activity %}</td>
-  <td>{% for tag in activity.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+  <td>{% include "includes/tags_badge.html" with tags=activity.tags.all %}</td>
   <td class="text-end">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
             hx-get="{% url 'context:activity-update' activity.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">

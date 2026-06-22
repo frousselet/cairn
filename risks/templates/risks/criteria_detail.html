@@ -31,7 +31,7 @@
           <dd class="col-sm-9">
             {% workflow_badge criteria %}
           </dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ criteria.description|default:"—"|safe }}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ criteria.description|default:"-"|safe }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
           <dd class="col-sm-9">{% for tag in criteria.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
         </dl>
@@ -52,8 +52,8 @@
               <td>{{ sl.get_scale_type_display }}</td>
               <td>{{ sl.level }}</td>
               <td>{{ sl.name }}</td>
-              <td>{{ sl.description|default:"—" }}</td>
-              <td>{% if sl.color %}<span class="badge" style="background-color:{{ sl.color }}">{{ sl.color }}</span>{% else %}—{% endif %}</td>
+              <td>{{ sl.description|default:"-" }}</td>
+              <td>{% if sl.color %}<span class="badge" style="background-color:{{ sl.color }}">{{ sl.color }}</span>{% else %}-{% endif %}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -77,8 +77,8 @@
             <tr>
               <td>{{ rl.level }}</td>
               <td>{{ rl.name }}</td>
-              <td>{{ rl.description|default:"—" }}</td>
-              <td>{% if rl.color %}<span class="badge" style="background-color:{{ rl.color }}">{{ rl.color }}</span>{% else %}—{% endif %}</td>
+              <td>{{ rl.description|default:"-" }}</td>
+              <td>{% if rl.color %}<span class="badge" style="background-color:{{ rl.color }}">{{ rl.color }}</span>{% else %}-{% endif %}</td>
               <td>{% if rl.requires_treatment %}<span class="badge text-bg-danger">{% trans "Yes" %}</span>{% else %}{% trans "No" %}{% endif %}</td>
             </tr>
             {% endfor %}

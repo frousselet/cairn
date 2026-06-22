@@ -174,7 +174,7 @@
           <span class="badge-applicable badge-no">{% trans "No" %}</span>
           {% endif %}
         </td>
-        <td>{{ row.justification|default:"—"|safe }}</td>
+        <td>{{ row.justification|default:"-"|safe }}</td>
         <td>
           {% for risk in row.risks_data %}
           <span class="risk-row">

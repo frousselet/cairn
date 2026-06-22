@@ -33,7 +33,7 @@
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Abbreviation" %}</div>
-          <div>{{ framework.short_name|default:"—" }}</div>
+          <div>{{ framework.short_name|default:"-" }}</div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Type" %}</div>
@@ -45,15 +45,15 @@
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Issuing body" %}</div>
-          <div>{{ framework.issuing_body|default:"—" }}</div>
+          <div>{{ framework.issuing_body|default:"-" }}</div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Jurisdiction" %}</div>
-          <div>{{ framework.jurisdiction|default:"—" }}</div>
+          <div>{{ framework.jurisdiction|default:"-" }}</div>
         </div>
         <div class="mb-0">
           <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ framework.description|default:"—"|safe }}</div>
+          <div>{{ framework.description|default:"-"|safe }}</div>
         </div>
       </div>
     </div>
@@ -119,9 +119,9 @@
             <tbody>
               {% for req in requirements %}
               <tr>
-                <td><a href="{% url 'compliance:requirement-detail' req.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ req.reference }}</a></td>
+                <td><a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.reference }}</a></td>
                 <td>{{ req.name|truncatechars:60 }}</td>
-                <td>{{ req.section.reference|default:"—" }}</td>
+                <td>{{ req.section.reference|default:"-" }}</td>
                 <td>{{ req.get_type_display }}</td>
                 <td>
                   {% if req.compliance_status == 'evaluated' %}
@@ -146,9 +146,9 @@
                   <span class="badge text-bg-{% if req.priority == 'critical' %}danger{% elif req.priority == 'high' %}warning{% elif req.priority == 'medium' %}info{% else %}secondary{% endif %}">
                     {{ req.get_priority_display }}
                   </span>
-                  {% else %}—{% endif %}
+                  {% else %}-{% endif %}
                 </td>
-                <td>{% if req.owner %}{% user_badge req.owner size=20 %}{% else %}—{% endif %}</td>
+                <td>{% if req.owner %}{% user_badge req.owner size=20 %}{% else %}-{% endif %}</td>
                 <td class="text-end">
                   <a href="{% url 'compliance:requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
                 </td>
@@ -174,9 +174,9 @@
             <tbody>
               {% for a in assessments %}
               <tr>
-                <td><a href="{% url 'compliance:assessment-detail' a.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ a.name }}</a></td>
+                <td><a href="{% url 'compliance:assessment-detail' a.pk %}" class="cell-link">{{ a.name }}</a></td>
                 <td>{{ a.assessment_start_date }}</td>
-                <td>{% if a.assessor %}{% user_badge a.assessor size=20 %}{% else %}—{% endif %}</td>
+                <td>{% if a.assessor %}{% user_badge a.assessor size=20 %}{% else %}-{% endif %}</td>
                 <td>{{ a.overall_compliance_level|floatformat:0 }}%</td>
                 <td>{{ a.get_status_display }}</td>
               </tr>
@@ -203,7 +203,7 @@
           <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
           <dd class="mb-3">{{ framework.get_status_display }}</dd>
           <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
-          <dd class="mb-3">{{ framework.framework_version|default:"—" }}</dd>
+          <dd class="mb-3">{{ framework.framework_version|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Mandatory" %}</dt>
           <dd class="mb-3">{% if framework.is_mandatory %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
           <dt class="text-muted small mb-1">{% trans "Applicable" %}</dt>
@@ -237,15 +237,15 @@
           <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>
           <dd class="mb-3">{{ framework.updated_at|date:"d/m/Y H:i" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Publication date" %}</dt>
-          <dd class="mb-3">{{ framework.publication_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ framework.publication_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Effective date" %}</dt>
-          <dd class="mb-3">{{ framework.effective_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ framework.effective_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Expiry date" %}</dt>
-          <dd class="mb-3">{{ framework.expiry_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ framework.expiry_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Next review date" %}</dt>
-          <dd class="mb-3">{{ framework.review_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ framework.review_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Last assessment" %}</dt>
-          <dd class="mb-0">{{ framework.last_assessment_date|default:"—" }}</dd>
+          <dd class="mb-0">{{ framework.last_assessment_date|default:"-" }}</dd>
         </dl>
       </div>
     </div>

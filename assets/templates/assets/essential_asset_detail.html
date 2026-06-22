@@ -38,7 +38,7 @@
         </div>
         <div class="mb-0">
           <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ asset.description|default:"—"|safe }}</div>
+          <div>{{ asset.description|default:"-"|safe }}</div>
         </div>
       </div>
     </div>
@@ -53,7 +53,7 @@
               <div class="card-body text-center">
                 <h6>{% trans "Confidentiality" %}</h6>
                 <p class="display-6">{{ asset.confidentiality_level|dic_badge }}</p>
-                <small style="color:var(--text-muted)">{{ asset.confidentiality_justification|default:"—" }}</small>
+                <small style="color:var(--text-muted)">{{ asset.confidentiality_justification|default:"-" }}</small>
               </div>
             </div>
           </div>
@@ -62,7 +62,7 @@
               <div class="card-body text-center">
                 <h6>{% trans "Integrity" %}</h6>
                 <p class="display-6">{{ asset.integrity_level|dic_badge }}</p>
-                <small style="color:var(--text-muted)">{{ asset.integrity_justification|default:"—" }}</small>
+                <small style="color:var(--text-muted)">{{ asset.integrity_justification|default:"-" }}</small>
               </div>
             </div>
           </div>
@@ -71,15 +71,15 @@
               <div class="card-body text-center">
                 <h6>{% trans "Availability" %}</h6>
                 <p class="display-6">{{ asset.availability_level|dic_badge }}</p>
-                <small style="color:var(--text-muted)">{{ asset.availability_justification|default:"—" }}</small>
+                <small style="color:var(--text-muted)">{{ asset.availability_justification|default:"-" }}</small>
               </div>
             </div>
           </div>
         </div>
         <dl class="row mb-0">
-          <dt class="col-sm-4" style="color:var(--text-muted);font-size:.82rem">{% trans "MTD / Max tolerable downtime" %}</dt><dd class="col-sm-8">{{ asset.max_tolerable_downtime|default:"—" }}</dd>
-          <dt class="col-sm-4" style="color:var(--text-muted);font-size:.82rem">{% trans "RTO" %}</dt><dd class="col-sm-8">{{ asset.recovery_time_objective|default:"—" }}</dd>
-          <dt class="col-sm-4" style="color:var(--text-muted);font-size:.82rem">{% trans "RPO" %}</dt><dd class="col-sm-8">{{ asset.recovery_point_objective|default:"—" }}</dd>
+          <dt class="col-sm-4" style="color:var(--text-muted);font-size:.82rem">{% trans "MTD / Max tolerable downtime" %}</dt><dd class="col-sm-8">{{ asset.max_tolerable_downtime|default:"-" }}</dd>
+          <dt class="col-sm-4" style="color:var(--text-muted);font-size:.82rem">{% trans "RTO" %}</dt><dd class="col-sm-8">{{ asset.recovery_time_objective|default:"-" }}</dd>
+          <dt class="col-sm-4" style="color:var(--text-muted);font-size:.82rem">{% trans "RPO" %}</dt><dd class="col-sm-8">{{ asset.recovery_point_objective|default:"-" }}</dd>
         </dl>
       </div>
     </div>
@@ -90,7 +90,7 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-lock me-1"></i>{% trans "Classification" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Classification" %}</div>
-          <div>{{ asset.get_data_classification_display|default:"—" }}</div>
+          <div>{{ asset.get_data_classification_display|default:"-" }}</div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Personal data" %}</div>
@@ -104,7 +104,7 @@
         {% endif %}
         <div class="mb-0">
           <div class="text-muted small mb-1">{% trans "Regulatory constraints" %}</div>
-          <div>{{ asset.regulatory_constraints|default:"—"|safe }}</div>
+          <div>{{ asset.regulatory_constraints|default:"-"|safe }}</div>
         </div>
       </div>
     </div>
@@ -120,10 +120,10 @@
             <tbody>
               {% for dep in dependencies %}
               <tr>
-                <td><a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ dep.support_asset }}</a></td>
+                <td><a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" class="cell-link">{{ dep.support_asset }}</a></td>
                 <td>{{ dep.get_dependency_type_display }}</td>
                 <td>{{ dep.get_criticality_display }}</td>
-                <td>{% if dep.is_single_point_of_failure %}<span class="badge text-bg-danger">SPOF</span>{% else %}—{% endif %}</td>
+                <td>{% if dep.is_single_point_of_failure %}<span class="badge text-bg-danger">SPOF</span>{% else %}-{% endif %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -150,8 +150,8 @@
                 <td class="text-center">{{ val.confidentiality_level|dic_badge }}</td>
                 <td class="text-center">{{ val.integrity_level|dic_badge }}</td>
                 <td class="text-center">{{ val.availability_level|dic_badge }}</td>
-                <td>{% if val.evaluated_by %}{% user_badge val.evaluated_by size=20 %}{% else %}—{% endif %}</td>
-                <td>{{ val.context|default:"—" }}</td>
+                <td>{% if val.evaluated_by %}{% user_badge val.evaluated_by size=20 %}{% else %}-{% endif %}</td>
+                <td>{{ val.context|default:"-" }}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -180,7 +180,7 @@
             </span>
           </dd>
           <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
-          <dd class="mb-3">{{ asset.version|default:"—" }}</dd>
+          <dd class="mb-3">{{ asset.version|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
           <dd class="mb-0">{% for tag in asset.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
         </dl>

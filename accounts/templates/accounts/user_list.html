@@ -7,6 +7,7 @@
 
 {% block content %}
 {% has_perm "system.users.create" as can_create %}
+{% has_perm "system.users.update" as can_update %}
 {% page_header _("Users") eyebrow=_("Administration") accent="accounts" %}
   {% if can_create %}
   <a href="{% url 'accounts:user-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'Create a user' %}</a>
@@ -32,13 +33,14 @@
           <th>{% trans "Department" %}</th>
           {% sortable_th "status" "Status" %}
           {% sortable_th "last_login" "Last login" %}
+          <th class="text-end">{% trans "Actions" %}</th>
         </tr>
       </thead>
       <tbody>
         {% for u in users %}
         <tr>
           <td>
-            <a href="{% url 'accounts:user-detail' u.pk %}" class="d-inline-flex align-items-center gap-2" style="color:var(--accent);text-decoration:none;font-weight:500">
+            <a href="{% url 'accounts:user-detail' u.pk %}" class="cell-link d-inline-flex align-items-center gap-2">
               {% if u.avatar %}
               <img src="{{ u.avatar_32|default:u.avatar }}" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover">
               {% else %}
@@ -63,9 +65,14 @@
             {% endif %}
           </td>
           <td>{{ u.last_login|date:"d/m/Y H:i"|default:"-" }}</td>
+          <td class="text-end">
+            {% if can_update %}
+            <a href="{% url 'accounts:user-update' u.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            {% endif %}
+          </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No user found.") message=_("Users are the people who can sign in to Cairn. Invite a user to give them access.") colspan=6 %}
+        {% empty_state title=_("No user found.") message=_("Users are the people who can sign in to Cairn. Invite a user to give them access.") colspan=7 %}
         {% endfor %}
       </tbody>
     </table>

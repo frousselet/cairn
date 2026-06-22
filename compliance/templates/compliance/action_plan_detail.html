@@ -177,11 +177,11 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Planning" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Start date" %}</dt>
-          <dd class="mb-3">{{ action_plan.start_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ action_plan.start_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Target date" %}</dt>
           <dd class="mb-3">{{ action_plan.target_date }}</dd>
           <dt class="text-muted small mb-1">{% trans "Completion date" %}</dt>
-          <dd class="mb-3">{{ action_plan.completion_date|default:"—" }}</dd>
+          <dd class="mb-3">{{ action_plan.completion_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Cost estimate" %}</dt>
           <dd class="mb-0">{% if action_plan.cost_estimate %}{{ action_plan.cost_estimate|floatformat:2 }} €{% else %}—{% endif %}</dd>
         </dl>

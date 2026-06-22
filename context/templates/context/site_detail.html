@@ -34,7 +34,7 @@
         {% if site.parent_site %}
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Parent site" %}</div>
-          <a href="{% url 'context:site-detail' site.parent_site.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ site.parent_site.name }}</a>
+          <a href="{% url 'context:site-detail' site.parent_site.pk %}" class="cell-link">{{ site.parent_site.name }}</a>
         </div>
         {% endif %}
         {% if site.address %}
@@ -45,7 +45,7 @@
         {% endif %}
         <div>
           <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ site.description|default:"—"|safe }}</div>
+          <div>{{ site.description|default:"-"|safe }}</div>
         </div>
       </div>
     </div>
@@ -57,7 +57,7 @@
         <ul class="list-group list-group-flush">
           {% for child in children %}
           <li class="list-group-item px-0{% if forloop.first %} pt-0{% endif %}{% if forloop.last %} pb-0{% endif %}">
-            <a href="{% url 'context:site-detail' child.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ child.name }}</a>
+            <a href="{% url 'context:site-detail' child.pk %}" class="cell-link">{{ child.name }}</a>
             {% workflow_badge child %}
           </li>
           {% endfor %}
@@ -109,7 +109,7 @@
         <dl class="mb-0">
           {% if approval_enabled is not False %}
           <dt class="text-muted small mb-1">{% trans "Approval date" %}</dt>
-          <dd class="mb-3">{{ site.approved_at|default:"—" }}</dd>
+          <dd class="mb-3">{{ site.approved_at|default:"-" }}</dd>
           {% endif %}
           <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
           <dd class="mb-3">{{ site.created_at }}</dd>

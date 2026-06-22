@@ -31,7 +31,7 @@
     <dt class="text-muted small mb-1">{% trans "Current risk level" %}</dt>
     <dd class="mb-3">
       <span class="fw-semibold">{{ risk.current_risk_level }}</span>
-      <small class="text-muted">({% trans "Likelihood" %}: {{ risk.current_likelihood|default:"—" }} / {% trans "Impact" %}: {{ risk.current_impact|default:"—" }})</small>
+      <small class="text-muted">({% trans "Likelihood" %}: {{ risk.current_likelihood|default:"-" }} / {% trans "Impact" %}: {{ risk.current_impact|default:"-" }})</small>
     </dd>
     {% endif %}
 

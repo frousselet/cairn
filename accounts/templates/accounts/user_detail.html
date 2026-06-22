@@ -86,7 +86,7 @@
         <ul class="list-group list-group-flush">
           {% for group in groups %}
           <li class="list-group-item d-flex justify-content-between align-items-center">
-            <a href="{% url 'accounts:group-detail' group.pk %}" style="color:var(--accent);text-decoration:none;font-weight:500">{{ group.name }}</a>
+            <a href="{% url 'accounts:group-detail' group.pk %}" class="cell-link">{{ group.name }}</a>
             {% if group.is_system %}<span class="badge" style="background:var(--accent-soft);color:var(--accent);font-size:.82rem;padding:.4em .8em">{% trans "System" %}</span>{% endif %}
           </li>
           {% endfor %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n ui workflow_tags %}
+{% load i18n ui workflow_tags accounts_tags %}
 {% load table_tags %}
 
 {% block title %}{% trans "Asset groups" %} — Cairn{% endblock %}
@@ -32,15 +32,15 @@
       <tbody>
         {% for group in groups %}
         <tr>
-          <td><a href="{% url 'assets:group-detail' group.pk %}" class="ref" style="text-decoration:none">{{ group.reference }}</a></td>
-          <td>{{ group.name }}</td>
+          <td><a href="{% url 'assets:group-detail' group.pk %}" class="ref">{{ group.reference }}</a></td>
+          <td><a href="{% url 'assets:group-detail' group.pk %}" class="cell-link">{{ group.name }}</a></td>
           <td>{{ group.get_type_display }}</td>
           <td>{{ group.member_count }}</td>
-          <td>{{ group.owner|default:"—" }}</td>
+          <td>{% if group.owner %}{% user_badge group.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
           <td>{% workflow_badge group %}</td>
-          <td>{% for tag in group.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+          <td>{% include "includes/tags_badge.html" with tags=group.tags.all %}</td>
           <td class="text-end">
-            <a hx-get="{% url 'assets:group-update' group.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+            <a hx-get="{% url 'assets:group-update' group.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
           </td>
         </tr>
         {% empty %}

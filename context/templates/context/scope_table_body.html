@@ -1,20 +1,21 @@
-{% load i18n ui workflow_tags %}
+{% load i18n ui workflow_tags accounts_tags %}
 {% for scope in scopes %}
 <tr>
-  <td><a href="{% url 'context:scope-detail' scope.pk %}" class="ref" style="text-decoration:none">{{ scope.reference }}</a></td>
+  <td><a href="{% url 'context:scope-detail' scope.pk %}" class="ref">{{ scope.reference }}</a></td>
   <td>
     <div style="padding-left: {{ scope.tree_indent }}px;">
       {% if scope.tree_level > 0 %}<span class="text-muted me-1">└</span>{% endif %}
-      {{ scope.name }}
+      <a href="{% url 'context:scope-detail' scope.pk %}" class="cell-link">{{ scope.name }}</a>
     </div>
   </td>
   <td>{{ scope.version }}</td>
   <td>
     {% workflow_badge scope %}
   </td>
-  <td>{{ scope.effective_date|default:"—" }}</td>
-  <td>{{ scope.review_date|default:"—" }}</td>
-  <td>{% for tag in scope.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+  <td>{{ scope.effective_date|default:"-" }}</td>
+  <td>{{ scope.review_date|default:"-" }}</td>
+  <td>{% user_avatars scope.managers.all %}</td>
+  <td>{% include "includes/tags_badge.html" with tags=scope.tags.all %}</td>
   <td class="text-end">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
             hx-get="{% url 'context:scope-update' scope.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
@@ -24,5 +25,5 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No scope defined yet.") message=_("Scopes draw the boundaries of your ISMS. Define at least one (geographic, organisational, technical) to anchor every other entity.") colspan=8 %}
+{% empty_state title=_("No scope defined yet.") message=_("Scopes draw the boundaries of your ISMS. Define at least one (geographic, organisational, technical) to anchor every other entity.") colspan=9 %}
 {% endfor %}

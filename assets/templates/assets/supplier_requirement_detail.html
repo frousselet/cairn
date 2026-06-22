@@ -28,7 +28,7 @@
       <dd class="col-sm-9"><span class="ref">{{ req.requirement.reference }}</span> {{ req.requirement.name }}</dd>
       {% endif %}
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt>
-      <dd class="col-sm-9">{{ req.description|default:"—"|safe }}</dd>
+      <dd class="col-sm-9">{{ req.description|default:"-"|safe }}</dd>
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Compliance status" %}</dt>
       <dd class="col-sm-9">
         <span class="badge text-bg-{% if req.compliance_status == 'compliant' %}success{% elif req.compliance_status == 'non_compliant' %}danger{% elif req.compliance_status == 'partially_compliant' %}warning{% else %}secondary{% endif %}">
@@ -36,7 +36,7 @@
         </span>
       </dd>
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Due date" %}</dt>
-      <dd class="col-sm-9">{{ req.due_date|default:"—" }}</dd>
+      <dd class="col-sm-9">{{ req.due_date|default:"-" }}</dd>
       {% if req.verified_by %}
       <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Last verified" %}</dt>
       <dd class="col-sm-9">{{ req.verified_at|date:"d/m/Y H:i" }} {% trans "by" %} {% user_badge req.verified_by size=24 %}</dd>

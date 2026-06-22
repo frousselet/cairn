@@ -40,10 +40,10 @@
                 {% elif slot.indicator.current_value %}
                   <i class="bi bi-x-circle-fill text-danger"></i>
                 {% else %}
-                  <span style="color:var(--text-muted)">—</span>
+                  <span class="cell-empty">-</span>
                 {% endif %}
               {% else %}
-                {{ slot.formatted_value|default:slot.indicator.current_value|default:"—" }}
+                {{ slot.formatted_value|default:slot.indicator.current_value|default:"-" }}
               {% endif %}
             </span>
             {% if slot.indicator.unit and slot.indicator.format != "boolean" %}

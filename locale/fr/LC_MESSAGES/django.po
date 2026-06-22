@@ -10226,6 +10226,13 @@ msgstr "Reçue le"
 msgid "No requests yet."
 msgstr "Aucune demande pour le moment."
 
+msgid ""
+"Document access requests submitted from the Trust Center appear here for "
+"review and approval."
+msgstr ""
+"Les demandes d'accès aux documents soumises depuis le Trust Center "
+"apparaissent ici pour examen et approbation."
+
 msgid "No pending requests"
 msgstr "Aucune demande en attente"
 

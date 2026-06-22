@@ -29,21 +29,21 @@
       <tbody>
         {% for site in sites %}
         <tr>
-          <td><a href="{% url 'context:site-detail' site.pk %}" class="ref" style="text-decoration:none">{{ site.reference }}</a></td>
+          <td><a href="{% url 'context:site-detail' site.pk %}" class="ref">{{ site.reference }}</a></td>
           <td>
             <div style="padding-left: {{ site.tree_indent }}px;">
               {% if site.tree_level > 0 %}<span class="text-muted me-1">&boxur;</span>{% endif %}
-              {{ site.name }}
+              <a href="{% url 'context:site-detail' site.pk %}" class="cell-link">{{ site.name }}</a>
             </div>
           </td>
           <td>{{ site.get_type_display }}</td>
           <td>
             {% workflow_badge site %}
           </td>
-          <td>{% for tag in site.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem">{{ tag.name }}</span>{% endfor %}</td>
+          <td>{% include "includes/tags_badge.html" with tags=site.tags.all %}</td>
           <td class="text-end">
-            <a href="{% url 'context:site-update' site.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'context:site-delete' site.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+            <a href="{% url 'context:site-update' site.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'context:site-delete' site.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
           </td>
         </tr>
         {% empty %}
@@ -54,4 +54,5 @@
   </div>
 </div>
 
+{% include "includes/pagination.html" %}
 {% endblock %}
