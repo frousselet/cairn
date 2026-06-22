@@ -27,15 +27,11 @@
         <tr>
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
-          {% sortable_th "type" "Type" %}
           {% sortable_th "category" "Category" %}
           {% sortable_th "owner" "Owner" %}
-          <th class="text-center" title="{% trans 'Confidentiality' %}">C</th>
-          <th class="text-center" title="{% trans 'Integrity' %}">I</th>
-          <th class="text-center" title="{% trans 'Availability' %}">A</th>
+          <th>C / I / A</th>
           <th>{% trans "Env." %}</th>
           {% sortable_th "workflow_state" "Status" %}
-          {% sortable_th "eol" "End of life" %}
           <th>{% trans "Tags" %}</th>
           <th class="text-end">{% trans "Actions" %}</th>
         </tr>
@@ -45,19 +41,40 @@
         <tr{% if asset.is_end_of_life %} class="table-danger"{% endif %}>
           <td><a href="{% url 'assets:support-asset-detail' asset.pk %}" class="ref">{{ asset.reference }}</a></td>
           <td><a href="{% url 'assets:support-asset-detail' asset.pk %}" class="cell-link">{{ asset.name }}</a></td>
-          <td>{{ asset.get_type_display }}</td>
-          <td>{{ asset.get_category_display }}</td>
-          <td>{% if asset.owner %}{% user_badge asset.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
-          <td class="text-center">{{ asset.inherited_confidentiality|dic_badge }}</td>
-          <td class="text-center">{{ asset.inherited_integrity|dic_badge }}</td>
-          <td class="text-center">{{ asset.inherited_availability|dic_badge }}</td>
-          <td>{{ asset.get_environment_display|default:"-" }}</td>
-          <td>{% workflow_badge asset %}</td>
           <td>
-            {% if asset.end_of_life_date %}
-              {{ asset.end_of_life_date }}
-              {% if asset.is_end_of_life %}<span class="badge text-bg-danger">EOL</span>{% endif %}
-            {% else %}-{% endif %}
+            <span class="cell-stack">
+              <span>{{ asset.get_category_display }}</span>
+              <span class="cell-sub">{{ asset.get_type_display }}</span>
+            </span>
+          </td>
+          <td>
+            {% if asset.owner %}
+            <span class="cell-people cell-people--sm">
+              {% if asset.owner.avatar %}
+              <img src="{{ asset.owner.avatar_32|default:asset.owner.avatar }}" alt="" class="cell-avatar">
+              {% else %}
+              <span class="cell-avatar-fallback">{{ asset.owner.display_name|initials }}</span>
+              {% endif %}
+              <span class="cell-stack">
+                <span style="font-weight:600">{{ asset.owner.display_name }}</span>
+                {% if asset.owner.job_title %}<span class="cell-sub">{{ asset.owner.job_title }}</span>{% endif %}
+              </span>
+            </span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
+          </td>
+          <td>
+            <span class="d-inline-flex gap-2 align-items-center" style="font-size:.8125rem">
+              <span title="{% trans 'Confidentiality' %}"><span class="text-muted">C</span> {{ asset.inherited_confidentiality|dic_badge }}</span>
+              <span title="{% trans 'Integrity' %}"><span class="text-muted">I</span> {{ asset.inherited_integrity|dic_badge }}</span>
+              <span title="{% trans 'Availability' %}"><span class="text-muted">A</span> {{ asset.inherited_availability|dic_badge }}</span>
+            </span>
+          </td>
+          <td>{{ asset.get_environment_display|default:"-" }}</td>
+          <td>
+            <span class="cell-stack">
+              <span>{% workflow_badge asset %}</span>
+              {% if asset.end_of_life_date %}<span class="cell-sub" title="{% trans 'End of life date' %}"><i class="bi bi-calendar-x me-1" aria-hidden="true"></i>{{ asset.end_of_life_date }}{% if asset.is_end_of_life %} <span class="badge text-bg-danger">EOL</span>{% endif %}</span>{% endif %}
+            </span>
           </td>
           <td>{% include "includes/tags_badge.html" with tags=asset.tags.all %}</td>
           <td class="text-end">
@@ -65,7 +82,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No support asset registered yet.") message=_("Support assets are the IT components (servers, applications, network gear, data stores) that essential assets depend on.") colspan=13 %}
+        {% empty_state title=_("No support asset registered yet.") message=_("Support assets are the IT components (servers, applications, network gear, data stores) that essential assets depend on.") colspan=9 %}
         {% endfor %}
       </tbody>
     </table>
