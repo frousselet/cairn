@@ -75,8 +75,12 @@
           </td>
           <td>
             <span class="cell-stack">
+              {% if supplier.is_contract_expired %}
+              <span><span class="badge text-bg-danger">{% trans "Expired" %}</span></span>
+              {% else %}
               <span>{% workflow_badge supplier %}</span>
-              {% if supplier.contract_end_date %}<span class="cell-sub" title="{% trans 'Contract end' %}"><i class="bi bi-calendar-event me-1" aria-hidden="true"></i>{{ supplier.contract_end_date }}{% if supplier.is_contract_expired %} <span class="badge text-bg-danger">{% trans "Expired" %}</span>{% endif %}</span>{% endif %}
+              {% endif %}
+              {% if supplier.contract_end_date %}<span class="cell-sub" title="{% trans 'Contract end' %}"><i class="bi bi-calendar-event me-1" aria-hidden="true"></i>{{ supplier.contract_end_date }}</span>{% endif %}
             </span>
           </td>
           <td>{% include "includes/tags_badge.html" with tags=supplier.tags.all %}</td>
