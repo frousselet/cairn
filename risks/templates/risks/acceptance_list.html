@@ -41,8 +41,8 @@
           <td>
             {% if acc.risk %}
             <span class="cell-stack">
-              <a href="{% url 'risks:risk-detail' acc.risk.pk %}" class="cell-link">{{ acc.risk }}</a>
-              {% if acc.justification %}<span class="cell-sub">{{ acc.justification|truncatechars:70 }}</span>{% endif %}
+              <a href="{% url 'risks:risk-detail' acc.risk.pk %}" class="cell-link" title="{{ acc.risk }}">{{ acc.risk }}</a>
+              {% if acc.justification %}<span class="cell-sub" title="{{ acc.justification }}">{{ acc.justification }}</span>{% endif %}
             </span>
             {% else %}<span class="cell-empty">-</span>{% endif %}
           </td>

@@ -36,7 +36,7 @@
               {% if site.tree_level > 0 %}<span class="text-muted me-1">&boxur;</span>{% endif %}
               <span class="cell-stack">
                 <a href="{% url 'assets:site-detail' site.pk %}" class="cell-link">{{ site.name }}</a>
-                {% if site.address %}<span class="cell-sub">{{ site.address|truncatechars:60 }}</span>{% endif %}
+                {% if site.address %}<span class="cell-sub" title="{{ site.address }}">{{ site.address }}</span>{% endif %}
               </span>
             </div>
           </td>
