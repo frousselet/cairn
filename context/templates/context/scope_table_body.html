@@ -5,15 +5,25 @@
   <td>
     <div style="padding-left: {{ scope.tree_indent }}px;">
       {% if scope.tree_level > 0 %}<span class="text-muted me-1">└</span>{% endif %}
+      {% if scope.icon %}<i class="bi {{ scope.icon }} me-1" aria-hidden="true" style="color:var(--accent)"></i>{% endif %}
       <a href="{% url 'context:scope-detail' scope.pk %}" class="cell-link">{{ scope.name }}</a>
     </div>
   </td>
-  <td>{{ scope.version }}</td>
   <td>
     {% workflow_badge scope %}
   </td>
-  <td>{{ scope.effective_date|default:"-" }}</td>
-  <td>{{ scope.review_date|default:"-" }}</td>
+  <td>
+    {% if scope.effective_date %}
+    <span class="cell-stack">
+      <span>{{ scope.effective_date }}</span>
+      {% if scope.review_date %}<span class="cell-sub" title="{% trans 'Next review date' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ scope.review_date }}</span>{% endif %}
+    </span>
+    {% elif scope.review_date %}
+    <span class="cell-sub" title="{% trans 'Next review date' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ scope.review_date }}</span>
+    {% else %}
+    <span class="cell-empty">-</span>
+    {% endif %}
+  </td>
   <td>{% user_avatars scope.managers.all %}</td>
   <td>{% include "includes/tags_badge.html" with tags=scope.tags.all %}</td>
   <td class="text-end">
@@ -25,5 +35,5 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No scope defined yet.") message=_("Scopes draw the boundaries of your ISMS. Define at least one (geographic, organisational, technical) to anchor every other entity.") colspan=9 %}
+{% empty_state title=_("No scope defined yet.") message=_("Scopes draw the boundaries of your ISMS. Define at least one (geographic, organisational, technical) to anchor every other entity.") colspan=7 %}
 {% endfor %}
