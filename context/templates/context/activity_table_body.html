@@ -2,14 +2,33 @@
 {% for activity in activities %}
 <tr>
   <td><a href="{% url 'context:activity-detail' activity.pk %}" class="ref">{{ activity.reference }}</a></td>
-  <td><a href="{% url 'context:activity-detail' activity.pk %}" class="cell-link">{{ activity.name }}</a></td>
-  <td>{{ activity.get_type_display }}</td>
   <td>
-    <span class="badge text-bg-{% if activity.criticality == 'critical' %}danger{% elif activity.criticality == 'high' %}warning{% elif activity.criticality == 'medium' %}info{% else %}secondary{% endif %}">
-      {{ activity.get_criticality_display }}
+    <span class="cell-stack">
+      <a href="{% url 'context:activity-detail' activity.pk %}" class="cell-link">{{ activity.name }}</a>
+      {% if activity.parent_activity %}<span class="cell-sub"><i class="bi bi-arrow-return-right me-1" aria-hidden="true"></i>{{ activity.parent_activity.name }}</span>{% endif %}
     </span>
   </td>
-  <td>{% if activity.owner %}{% user_badge activity.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+  <td>
+    <span class="cell-stack">
+      <span><span class="badge text-bg-{% if activity.criticality == 'critical' %}danger{% elif activity.criticality == 'high' %}warning{% elif activity.criticality == 'medium' %}info{% else %}secondary{% endif %}">{{ activity.get_criticality_display }}</span></span>
+      <span class="cell-sub">{{ activity.get_type_display }}</span>
+    </span>
+  </td>
+  <td>
+    {% if activity.owner %}
+    <span class="cell-people cell-people--sm">
+      {% if activity.owner.avatar %}
+      <img src="{{ activity.owner.avatar_32|default:activity.owner.avatar }}" alt="" class="cell-avatar">
+      {% else %}
+      <span class="cell-avatar-fallback">{{ activity.owner.display_name|initials }}</span>
+      {% endif %}
+      <span class="cell-stack">
+        <span style="font-weight:600">{{ activity.owner.display_name }}</span>
+        {% if activity.owner.job_title %}<span class="cell-sub">{{ activity.owner.job_title }}</span>{% endif %}
+      </span>
+    </span>
+    {% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
   <td>{% workflow_badge activity %}</td>
   <td>{% include "includes/tags_badge.html" with tags=activity.tags.all %}</td>
   <td class="text-end">
@@ -20,5 +39,5 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No activity catalogued yet.") message=_("Activities are the business processes your ISMS protects. Cataloguing them lets you trace risks and controls back to what the organisation actually does.") colspan=8 %}
+{% empty_state title=_("No activity catalogued yet.") message=_("Activities are the business processes your ISMS protects. Cataloguing them lets you trace risks and controls back to what the organisation actually does.") colspan=7 %}
 {% endfor %}

@@ -965,7 +965,7 @@ class ActivityListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterM
     search_fields = ["reference", "name"]
 
     def get_queryset(self):
-        qs = super().get_queryset().prefetch_related("scopes").select_related("owner")
+        qs = super().get_queryset().prefetch_related("scopes").select_related("owner", "parent_activity")
         criticality_filter = self.request.GET.get("criticality")
         if criticality_filter:
             qs = qs.filter(criticality=criticality_filter)
@@ -1164,7 +1164,7 @@ class ActivityTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFi
     search_fields = ["reference", "name"]
 
     def get_queryset(self):
-        qs = super().get_queryset().prefetch_related("scopes").select_related("owner")
+        qs = super().get_queryset().prefetch_related("scopes").select_related("owner", "parent_activity")
         for param, field in [("criticality", "criticality"), ("status", "status")]:
             val = self.request.GET.get(param)
             if val:
