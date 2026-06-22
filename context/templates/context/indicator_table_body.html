@@ -19,6 +19,11 @@
     {% else %}<span class="cell-empty">-</span>{% endif %}
   </td>
   <td>
+    {% if indicator.sparkline_data %}
+    <div class="sparkline-slot" data-sparkline="{{ indicator.sparkline_data|join:',' }}" data-trend="{{ indicator.spark_trend }}" data-critical="{% if indicator.is_critical %}1{% endif %}" style="width:90px;height:28px"></div>
+    {% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td>
     <span class="cell-stack">
       <span>{{ indicator.get_collection_method_display }}</span>
       <span class="cell-sub" title="{% trans 'Review frequency' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ indicator.get_review_frequency_display }}</span>
@@ -34,5 +39,5 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No indicator defined yet.") message=_("Indicators measure the health of your ISMS. Define what to measure, the expected level and the review frequency.") colspan=7 %}
+{% empty_state title=_("No indicator defined yet.") message=_("Indicators measure the health of your ISMS. Define what to measure, the expected level and the review frequency.") colspan=8 %}
 {% endfor %}
