@@ -38,10 +38,40 @@
         {% for acc in acceptances %}
         <tr>
           <td><a href="{% url 'risks:acceptance-detail' acc.pk %}" class="ref">{{ acc.reference }}</a></td>
-          <td>{% if acc.risk %}<a href="{% url 'risks:risk-detail' acc.risk.pk %}" class="cell-link">{{ acc.risk }}</a>{% else %}-{% endif %}</td>
-          <td>{% if acc.accepted_by %}{% user_badge acc.accepted_by size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+          <td>
+            {% if acc.risk %}
+            <span class="cell-stack">
+              <a href="{% url 'risks:risk-detail' acc.risk.pk %}" class="cell-link">{{ acc.risk }}</a>
+              {% if acc.justification %}<span class="cell-sub">{{ acc.justification|truncatechars:70 }}</span>{% endif %}
+            </span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
+          </td>
+          <td>
+            {% if acc.accepted_by %}
+            <span class="cell-people cell-people--sm">
+              {% if acc.accepted_by.avatar %}
+              <img src="{{ acc.accepted_by.avatar_32|default:acc.accepted_by.avatar }}" alt="" class="cell-avatar">
+              {% else %}
+              <span class="cell-avatar-fallback">{{ acc.accepted_by.display_name|initials }}</span>
+              {% endif %}
+              <span class="cell-stack">
+                <span style="font-weight:600">{{ acc.accepted_by.display_name }}</span>
+                {% if acc.accepted_by.job_title %}<span class="cell-sub">{{ acc.accepted_by.job_title }}</span>{% endif %}
+              </span>
+            </span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
+          </td>
           <td>{{ acc.risk_level_at_acceptance|default:"-" }}</td>
-          <td>{{ acc.valid_until|default:"-" }}</td>
+          <td>
+            {% if acc.valid_until %}
+            <span class="cell-stack">
+              <span>{{ acc.valid_until }}</span>
+              {% if acc.accepted_at %}<span class="cell-sub" title="{% trans 'Acceptance date' %}"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{{ acc.accepted_at|date }}</span>{% endif %}
+            </span>
+            {% elif acc.accepted_at %}
+            <span class="cell-sub" title="{% trans 'Acceptance date' %}"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{{ acc.accepted_at|date }}</span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
+          </td>
           <td>{% workflow_badge acc %}</td>
           <td>{% include "includes/tags_badge.html" with tags=acc.tags.all %}</td>
           <td class="text-end">
