@@ -879,7 +879,11 @@ class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin
 
     def get_queryset(self):
         qs = super().get_queryset().annotate(
-            user_count=Count("assigned_users")
+            user_count=Count("assigned_users", distinct=True),
+            responsible_count=Count("responsibilities", filter=Q(responsibilities__raci_type="responsible"), distinct=True),
+            accountable_count=Count("responsibilities", filter=Q(responsibilities__raci_type="accountable"), distinct=True),
+            consulted_count=Count("responsibilities", filter=Q(responsibilities__raci_type="consulted"), distinct=True),
+            informed_count=Count("responsibilities", filter=Q(responsibilities__raci_type="informed"), distinct=True),
         )
         type_filter = self.request.GET.get("type")
         if type_filter:
@@ -1135,7 +1139,13 @@ class RoleTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
     search_fields = ["reference", "name"]
 
     def get_queryset(self):
-        qs = super().get_queryset().annotate(user_count=Count("assigned_users"))
+        qs = super().get_queryset().annotate(
+            user_count=Count("assigned_users", distinct=True),
+            responsible_count=Count("responsibilities", filter=Q(responsibilities__raci_type="responsible"), distinct=True),
+            accountable_count=Count("responsibilities", filter=Q(responsibilities__raci_type="accountable"), distinct=True),
+            consulted_count=Count("responsibilities", filter=Q(responsibilities__raci_type="consulted"), distinct=True),
+            informed_count=Count("responsibilities", filter=Q(responsibilities__raci_type="informed"), distinct=True),
+        )
         for param, field in [("type", "type"), ("status", "status")]:
             val = self.request.GET.get(param)
             if val:
