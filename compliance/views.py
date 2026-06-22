@@ -399,7 +399,9 @@ class RequirementListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilt
     search_fields = ["reference", "requirement_number", "name", "framework__name"]
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related("framework", "section")
+        qs = super().get_queryset().select_related("framework", "section").annotate(
+            risk_count=Count("linked_risks", distinct=True)
+        )
         framework_filter = self.request.GET.get("framework")
         if framework_filter:
             qs = qs.filter(framework_id=framework_filter)
