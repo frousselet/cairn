@@ -2,6 +2,7 @@
 {% load i18n ui %}
 {% load help_tags %}
 {% load table_tags %}
+{% load supplier_tags %}
 
 {% block title %}{% trans "Supplier types" %} — Cairn{% endblock %}
 
@@ -20,7 +21,6 @@
         <tr>
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
-          <th>{% trans "Description" %}</th>
           <th>{% trans "Requirements" %}</th>
           <th>{% trans "Suppliers" %}</th>
           <th class="text-end">{% trans "Actions" %}</th>
@@ -30,17 +30,21 @@
         {% for st in supplier_types %}
         <tr>
           <td><a href="{% url 'assets:supplier-type-detail' st.pk %}" class="ref">{{ st.reference }}</a></td>
-          <td><a href="{% url 'assets:supplier-type-detail' st.pk %}" class="cell-link">{{ st.name }}</a></td>
-          <td>{{ st.description|truncatewords:15|default:"-" }}</td>
-          <td><span class="badge text-bg-secondary">{{ st.requirements.count }}</span></td>
-          <td><span class="badge text-bg-secondary">{{ st.suppliers.count }}</span></td>
+          <td>
+            <span class="cell-stack">
+              <a href="{% url 'assets:supplier-type-detail' st.pk %}" class="cell-link">{{ st.name }}</a>
+              {% if st.description %}<span class="cell-sub">{{ st.description|truncatewords:15 }}</span>{% endif %}
+            </span>
+          </td>
+          <td><span class="badge text-bg-secondary">{{ st.req_count }}</span></td>
+          <td>{% supplier_avatars st.suppliers.all %}</td>
           <td class="text-end">
             <a href="{% url 'assets:supplier-type-update' st.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
             <a href="{% url 'assets:supplier-type-delete' st.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No supplier type defined yet.") message=_("Supplier types group your vendors by category (cloud, software, legal). Each type carries its own baseline requirements.") colspan=6 %}
+        {% empty_state title=_("No supplier type defined yet.") message=_("Supplier types group your vendors by category (cloud, software, legal). Each type carries its own baseline requirements.") colspan=5 %}
         {% endfor %}
       </tbody>
     </table>
