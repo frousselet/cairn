@@ -2,12 +2,26 @@
 {% for sh in stakeholders %}
 <tr>
   <td><a href="{% url 'context:stakeholder-detail' sh.pk %}" class="ref">{{ sh.reference }}</a></td>
-  <td><a href="{% url 'context:stakeholder-detail' sh.pk %}" class="cell-link">{{ sh.name }}</a></td>
+  <td>
+    <span class="cell-stack">
+      <a href="{% url 'context:stakeholder-detail' sh.pk %}" class="cell-link">{{ sh.name }}</a>
+      {% if sh.contact_name %}<span class="cell-sub">{{ sh.contact_name }}</span>
+      {% elif sh.contact_email %}<span class="cell-sub">{{ sh.contact_email }}</span>{% endif %}
+    </span>
+  </td>
   <td>{% scope_popover sh.scopes.all %}</td>
-  <td>{{ sh.get_type_display }}</td>
-  <td>{{ sh.get_category_display }}</td>
-  <td>{{ sh.get_influence_level_display }}</td>
-  <td>{{ sh.get_interest_level_display }}</td>
+  <td>
+    <span class="cell-stack">
+      <span>{{ sh.get_category_display }}</span>
+      <span class="cell-sub">{{ sh.get_type_display }}</span>
+    </span>
+  </td>
+  <td>
+    <span class="cell-stack">
+      <span><span class="cell-sub">{% trans "Influence" %}</span> {{ sh.get_influence_level_display }}</span>
+      <span class="cell-sub">{% trans "Interest" %} {{ sh.get_interest_level_display }}</span>
+    </span>
+  </td>
   <td>{% workflow_badge sh %}</td>
   <td>{% include "includes/tags_badge.html" with tags=sh.tags.all %}</td>
   <td class="text-end">
@@ -18,5 +32,5 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No stakeholder mapped yet.") message=_("Stakeholders are the parties who care about your ISMS (clients, regulators, suppliers). Map who they are and what they expect.") colspan=10 %}
+{% empty_state title=_("No stakeholder mapped yet.") message=_("Stakeholders are the parties who care about your ISMS (clients, regulators, suppliers). Map who they are and what they expect.") colspan=8 %}
 {% endfor %}
