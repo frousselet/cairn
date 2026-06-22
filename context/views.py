@@ -3,7 +3,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -1306,6 +1306,34 @@ def dashboard_indicator_chart_toggle(request):
     return JsonResponse({"action": action, "chart_ids": chart_ids})
 
 
+def _attach_indicator_sparklines(indicators, limit=20):
+    """Attach ``sparkline_data`` (chronological numeric values) and ``spark_trend``
+    to each number indicator, for the per-row mini chart in the list.
+
+    Relies on the ``measurements`` relation being prefetched (newest first) so it
+    does not issue a query per row.
+    """
+    for ind in indicators:
+        data = []
+        trend = None
+        if ind.format == "number":
+            measurements = list(ind.measurements.all())[:limit]  # cached, newest first
+            for m in reversed(measurements):
+                try:
+                    data.append(float(m.value))
+                except (ValueError, TypeError):
+                    continue
+            if len(measurements) >= 2:
+                try:
+                    diff = float(measurements[0].value) - float(measurements[1].value)
+                    trend = "up" if diff > 0 else "down" if diff < 0 else "stable"
+                except (ValueError, TypeError):
+                    pass
+        ind.sparkline_data = data
+        ind.spark_trend = trend
+    return indicators
+
+
 class IndicatorListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Indicator
     permission_required = "context.indicator.read"
@@ -1323,7 +1351,10 @@ class IndicatorListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
     search_fields = ["reference", "name"]
 
     def get_queryset(self):
-        qs = super().get_queryset().prefetch_related("scopes")
+        qs = super().get_queryset().prefetch_related(
+            "scopes",
+            Prefetch("measurements", queryset=IndicatorMeasurement.objects.order_by("-recorded_at")),
+        )
         if self.indicator_type:
             qs = qs.filter(indicator_type=self.indicator_type)
         status_filter = self.request.GET.get("status")
@@ -1334,6 +1365,7 @@ class IndicatorListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["indicator_type"] = self.indicator_type
+        _attach_indicator_sparklines(ctx["indicators"])
         return ctx
 
 
@@ -1348,7 +1380,10 @@ class IndicatorTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
     search_fields = ["reference", "name"]
 
     def get_queryset(self):
-        qs = super().get_queryset().prefetch_related("scopes")
+        qs = super().get_queryset().prefetch_related(
+            "scopes",
+            Prefetch("measurements", queryset=IndicatorMeasurement.objects.order_by("-recorded_at")),
+        )
         indicator_type = self.request.GET.get("indicator_type")
         if indicator_type:
             qs = qs.filter(indicator_type=indicator_type)
@@ -1356,6 +1391,11 @@ class IndicatorTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
         if status_filter:
             qs = qs.filter(status=status_filter)
         return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        _attach_indicator_sparklines(ctx["indicators"])
+        return ctx
 
 
 class IndicatorDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
