@@ -2,10 +2,19 @@
 {% for role in roles %}
 <tr{% if role.is_mandatory and role.user_count == 0 %} class="table-danger"{% endif %}>
   <td><a href="{% url 'context:role-detail' role.pk %}" class="ref">{{ role.reference }}</a></td>
-  <td><a href="{% url 'context:role-detail' role.pk %}" class="cell-link">{{ role.name }}</a></td>
-  <td>{{ role.get_type_display }}</td>
+  <td>
+    <span class="cell-stack">
+      <a href="{% url 'context:role-detail' role.pk %}" class="cell-link">{{ role.name }}</a>
+      {% if role.source_standard %}<span class="cell-sub">{{ role.source_standard }}</span>{% endif %}
+    </span>
+  </td>
+  <td>
+    <span class="cell-stack">
+      <span>{{ role.get_type_display }}</span>
+      {% if role.is_mandatory %}<span class="cell-sub"><i class="bi bi-asterisk me-1" aria-hidden="true"></i>{% trans "Mandatory" %}</span>{% endif %}
+    </span>
+  </td>
   <td>{% user_avatars role.assigned_users.all size=24 %}</td>
-  <td>{% if role.is_mandatory %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
   <td>{% workflow_badge role %}</td>
   <td>{% include "includes/tags_badge.html" with tags=role.tags.all %}</td>
   <td class="text-end">
@@ -16,5 +25,5 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No role described yet.") message=_("Roles formalise who does what in the ISMS. Map each role to its responsibilities, then assign it to a person.") colspan=8 %}
+{% empty_state title=_("No role described yet.") message=_("Roles formalise who does what in the ISMS. Map each role to its responsibilities, then assign it to a person.") colspan=7 %}
 {% endfor %}
