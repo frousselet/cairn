@@ -52,12 +52,10 @@
   </script>
   {% endif %}
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%231E3A8A'/%3E%3Cpath d='M 19 38 A 14 14 0 1 1 45 38' stroke='%23FFFFFF' stroke-width='6' stroke-linecap='round' fill='none'/%3E%3Cpath d='M 22 44 L 32 26 L 42 44 Z' fill='%23FFFFFF'/%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
         rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
         crossorigin="anonymous">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
         rel="stylesheet">
@@ -65,6 +63,22 @@
         rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jodit@4.2.27/es2021/jodit.min.css">
   <style>
+    /* GitLab Sans (OFL-1.1) — variable body face, self-hosted via the
+       @gitlab/fonts npm package mirrored on jsDelivr (not on Google Fonts). */
+    @font-face {
+      font-family: 'GitLab Sans';
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: swap;
+      src: url('https://cdn.jsdelivr.net/npm/@gitlab/fonts@1.3.1/gitlab-sans/GitLabSans.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'GitLab Sans';
+      font-style: italic;
+      font-weight: 100 900;
+      font-display: swap;
+      src: url('https://cdn.jsdelivr.net/npm/@gitlab/fonts@1.3.1/gitlab-sans/GitLabSans-Italic.woff2') format('woff2');
+    }
     /* ── Design tokens ────────────────────────────────── */
     /*
      * Three-layer token system:
@@ -77,10 +91,11 @@
      * scale without inventing new hex codes.
      */
     :root {
-      /* Typography — Inter for body/UI, Space Grotesk to elevate titles and
-         emphasized values (KPI / indicators). Single source of truth. */
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --font-display: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      /* Typography — GitLab Sans (Inter v4 derivative, OFL) for body/UI and for
+         titles / emphasized values (KPI); emphasis comes from weight (700) and
+         tighter tracking rather than a separate display face. Single source. */
+      --font-sans: 'GitLab Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-display: 'GitLab Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       /* Neutral palette - clean true-gray scale */
       --color-neutral-0:   #FFFFFF;
       --color-neutral-50:  #FAFAFA;
@@ -114,7 +129,7 @@
       --color-charcoal-300: #A1A1AA;
       --color-charcoal-100: #E4E4E7;
 
-      --sidebar-w: 264px;
+      --sidebar-w: 280px;
       --sidebar-collapsed-w: 4.25rem;
       --sidebar-inset: 0rem;
       /* Height the sticky page title bar occupies once pinned (compact form).
@@ -301,25 +316,28 @@
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
       font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+      /* Instrument Serif ships a single weight (400); disable faux-bold so
+         display titles render at their true weight instead of synthesized. */
+      font-synthesis: none;
     }
     ::selection { background: var(--accent-soft); color: var(--accent); }
 
     /* ── Typography ladder — Space Grotesk titles, Inter body ───── */
-    h1 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; letter-spacing: -.022em; color: var(--text-primary); line-height: 1.2; }
-    h2 { font-family: var(--font-display); font-size: 1.375rem; font-weight: 700; letter-spacing: -.018em; color: var(--text-primary); line-height: 1.25; }
-    h3 { font-size: 1.125rem; font-weight: 600; letter-spacing: -.012em; color: var(--text-primary); line-height: 1.35; }
+    h1 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; letter-spacing: normal; color: var(--text-primary); line-height: 1.2; }
+    h2 { font-family: var(--font-display); font-size: 1.375rem; font-weight: 700; letter-spacing: normal; color: var(--text-primary); line-height: 1.25; }
+    h3 { font-size: 1.125rem; font-weight: 600; letter-spacing: normal; color: var(--text-primary); line-height: 1.35; }
     h4 { font-size: 1rem; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
     h5 { font-size: .9375rem; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
     h6 { font-size: .8125rem; font-weight: 600; color: var(--text-muted); line-height: 1.4; }
-    .display-4 { font-family: var(--font-display); font-size: 2.25rem; font-weight: 700; letter-spacing: -.028em; line-height: 1.1; }
-    .display-6 { font-family: var(--font-display); font-size: 1.625rem; font-weight: 700; letter-spacing: -.022em; line-height: 1.15; }
+    .display-4 { font-family: var(--font-display); font-size: 2.25rem; font-weight: 700; letter-spacing: normal; line-height: 1.1; }
+    .display-6 { font-family: var(--font-display); font-size: 1.625rem; font-weight: 700; letter-spacing: normal; line-height: 1.15; }
     small, .small { font-size: .8125rem; }
     .text-xs { font-size: .75rem; }
     .text-display {
       font-family: var(--font-display);
       font-size: clamp(2rem, 4vw, 3rem);
       font-weight: 700;
-      letter-spacing: -.028em;
+      letter-spacing: normal;
       line-height: 1.05;
     }
     @media (max-width: 991.98px) {
@@ -406,14 +424,15 @@
       pointer-events: none;
     }
     .sidebar-brand a {
-      /* Match the compact page-header title (1.25rem / 700, Space Grotesk) so the
-         app name and the pinned page title read identically on the same line. */
+      /* Match the compact page-header title (1.25rem) so the app name and the
+         pinned page title read identically on the same line; heaviest weight
+         (900) to echo the bold page-header title. */
       font-family: var(--font-display);
-      font-weight: 700;
+      font-weight: 810;
       font-size: 1.25rem;
       color: var(--accent);
       text-decoration: none;
-      letter-spacing: -.025em;
+      letter-spacing: normal;
       display: flex;
       align-items: center;
       gap: .5rem;
@@ -1129,7 +1148,7 @@
       padding: 1.125rem 1.75rem;
     }
     .card-body { padding: 1.75rem 2rem; }
-    .card-title { font-weight: 600; color: var(--text-primary); font-size: .9375rem; letter-spacing: -.01em; margin-bottom: 1.25rem; }
+    .card-title { font-weight: 600; color: var(--text-primary); font-size: .9375rem; letter-spacing: normal; margin-bottom: 1.25rem; }
 
     /* ── List group — Refined ──────────────────────────── */
     .list-group {
@@ -1209,8 +1228,8 @@
     .stat-card-value {
       font-family: var(--font-display);
       font-size: 1.75rem;
-      font-weight: 700;
-      letter-spacing: -.022em;
+      font-weight: 900;
+      letter-spacing: normal;
       color: var(--text-primary);
       line-height: 1.1;
       font-variant-numeric: tabular-nums;
@@ -1441,7 +1460,7 @@
       font-size: .875rem;
       padding: .5rem 1rem;
       transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
-      letter-spacing: -.003em;
+      letter-spacing: normal;
       line-height: 1.4;
     }
     .btn-sm { font-size: .8125rem; padding: .375rem .8125rem; border-radius: .5rem; }
@@ -1624,7 +1643,7 @@
       padding: .75rem 1rem;
       box-shadow: none;
     }
-    .alert-heading { font-weight: 600; letter-spacing: -.01em; }
+    .alert-heading { font-weight: 600; letter-spacing: normal; }
     .alert-danger  { background: var(--danger-soft);  color: #991B1B; border-color: rgba(220,38,38,.16); }
     .alert-warning { background: var(--warning-soft); color: #92400E; border-color: rgba(217,119,6,.18); }
     .alert-success { background: var(--success-soft); color: #14532D; border-color: rgba(22,163,74,.16); }
@@ -1788,7 +1807,7 @@
       font-weight: 600;
       color: var(--text-secondary);
       margin-bottom: .375rem;
-      letter-spacing: -.005em;
+      letter-spacing: normal;
     }
     .form-text { font-size: .8125rem; color: var(--text-muted); font-weight: 400; }
     .form-check-input {
@@ -3109,7 +3128,7 @@
       border-image: linear-gradient(to right, transparent, var(--border-light) 12%, var(--border-light) 88%, transparent) 1;
       padding: .875rem 1.25rem;
     }
-    .modal-title { font-weight: 700; letter-spacing: -.01em; }
+    .modal-title { font-weight: 700; letter-spacing: normal; }
 
     /* ── Stepped / metered modal form ──────────────── */
     .mform-stepper { padding: .85rem 1.5rem .25rem; flex-shrink: 0; }
@@ -3657,6 +3676,8 @@
     }
     .page-header.is-compact .page-header__title {
       font-size: 1.25rem;
+      /* Match the sidebar brand weight on the pinned line. */
+      font-weight: 810;
       /* Keep the pinned title centred on the action-button line (~2.375rem tall)
          whether or not the page has header buttons, so its vertical midline always
          matches the sidebar brand. Without this, a button-less header lets the
@@ -3715,12 +3736,15 @@
     .page-header__text { min-width: 0; }
     .page-header__title {
       font-family: var(--font-display);
-      font-size: 1.75rem;
-      font-weight: 700;
+      font-size: 2.5rem;
+      font-weight: 810;
       color: var(--text-primary);
-      letter-spacing: -.022em;
-      line-height: 1.2;
+      letter-spacing: normal;
+      line-height: 1.12;
       transition: font-size var(--transition-normal);
+    }
+    @media (max-width: 991.98px) {
+      .page-header__title { font-size: 1.875rem; }
     }
     .page-header__eyebrow {
       font-size: .75rem;
@@ -3934,10 +3958,10 @@
       font-family: var(--font-display);
       font-variant-numeric: tabular-nums;
       font-size: 1.375rem;
-      font-weight: 700;
+      font-weight: 900;
       line-height: 1.2;
       color: var(--text-primary);
-      letter-spacing: -.02em;
+      letter-spacing: normal;
     }
     .kpi-card__label {
       font-size: .8125rem;
@@ -4110,7 +4134,7 @@
       justify-content: center;
       gap: 1rem;
       font-weight: 700;
-      letter-spacing: -.005em;
+      letter-spacing: normal;
       font-size: .875rem;
       height: var(--imp-h, 38px);
     }
@@ -4710,8 +4734,8 @@
   </main>
   {% endblock %}
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
           crossorigin="anonymous"></script>
   <script src="https://unpkg.com/htmx.org@2.0.4"
           integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"

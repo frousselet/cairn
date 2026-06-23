@@ -185,55 +185,84 @@ warm-charcoal, never true black (#000), off-white text never pure white.
 
 ## Typography
 
-**Two families, one role each**:
+**One family: GitLab Sans.** A single typeface across the whole product -
+body, UI, labels, controls, table content, titles and emphasized values.
+GitLab Sans is an [Inter v4](https://rsms.me/inter/) derivative (it defaults
+to the `cv05` set, giving a distinct lowercase `l`), so it keeps Inter's
+screen legibility while reading slightly more like a product face of its own.
+Hierarchy comes from **weight and size, not a second display font**: there is
+no separate accent family any more.
 
-- **Inter** ([rsms.me/inter](https://rsms.me/inter/)) - body, UI, labels,
-  controls, table content. The neutral workhorse.
-- **Space Grotesk** - the **accent / display** face, reserved for titles
-  (`h1`, `h2`, page-header title, sidebar app name) and emphasized values
-  (KPI / stat-card figures and other highlighted indicators). Its geometric
-  character and distinctive numerals give those elements presence without
-  shouting, keeping the calm, professional tone.
-
-Both are loaded via Google Fonts
-(`Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700`). Plan a
-self-host eventually for GDPR concerns and perf.
+Licensed under **OFL-1.1** and **self-hosted** (not a Google Font): loaded via
+`@font-face` from the `@gitlab/fonts` package. The single variable `.woff2`
+(weights 100-900) is currently served from jsDelivr; plan to vendor it into
+`static/fonts/` with a `<link rel="preload">` for prod (perf + no third-party
+dependency).
 
 Exposed as tokens - never hardcode a family name in a component:
 
-- `--font-sans` - Inter stack (the default on `body`).
-- `--font-display` - Space Grotesk stack (falls back to Inter).
+- `--font-sans` - GitLab Sans stack (the default on `body`).
+- `--font-display` - GitLab Sans stack as well. The token is kept so a future
+  accent face can be reintroduced in one place, but today both resolve to the
+  same family.
 
-Everything below `h2` (h3-h6, body, captions, controls) stays in Inter:
-the display face is a deliberate accent, not a second body font. Tight
-tracking and size still carry most of the hierarchy.
+`font-synthesis: none` is set globally so any single-weight fallback renders at
+its true weight (no synthesized faux-bold).
 
 ### Scale
 
+Emphasis is carried by weight. GitLab Sans is variable, so non-standard weights
+(660, 810) are valid and used deliberately.
+
 | Element | Family | Size | Weight | Tracking | Line-height |
 | --- | --- | --- | --- | --- | --- |
-| `h1` | Space Grotesk | 1.75rem (28 px) | 700 | -0.022em | 1.2 |
-| `h2` | Space Grotesk | 1.375rem (22 px) | 700 | -0.018em | 1.25 |
-| `h3` | Inter | 1.125rem (18 px) | 600 | -0.012em | 1.35 |
-| `h4` | Inter | 1rem (16 px) | 600 | normal | 1.4 |
-| `h5` | Inter | 0.9375rem (15 px) | 600 | normal | 1.4 |
-| `h6` (eyebrow) | Inter | 0.75rem (12 px) | 600 | +0.04em uppercase | 1.4 |
-| `.display-4` / `.display-6` / `.text-display` | Space Grotesk | 2.25rem (36 px) / … | 700 | -0.028em | 1.1 |
-| `.page-header__title` | Space Grotesk | 1.75rem (1.25rem compact) | 700 | -0.022em | 1.2 |
-| KPI / stat-card value | Space Grotesk | 1.375-1.75rem | 700 | -0.02em | 1.1-1.2 |
-| `body` | Inter | 0.9375rem (15 px) | 400 | normal | 1.6 |
-| `.small` | Inter | 0.8125rem (13 px) | 400 | normal | 1.6 |
-| `.text-xs` | Inter | 0.75rem (12 px) | 400 | normal | 1.6 |
+| `h1` | GitLab Sans | 1.75rem (28 px) | 700 | normal | 1.2 |
+| `h2` | GitLab Sans | 1.375rem (22 px) | 700 | normal | 1.25 |
+| `h3` | GitLab Sans | 1.125rem (18 px) | 600 | normal | 1.35 |
+| `h4` | GitLab Sans | 1rem (16 px) | 600 | normal | 1.4 |
+| `h5` | GitLab Sans | 0.9375rem (15 px) | 600 | normal | 1.4 |
+| `h6` (eyebrow) | GitLab Sans | 0.75rem (12 px) | 600 | +0.04em uppercase | 1.4 |
+| `.display-4` / `.display-6` / `.text-display` | GitLab Sans | 2.25rem (36 px) / … | 700 | normal | 1.1 |
+| `.page-header__title` | GitLab Sans | 2.5rem (1.875rem ≤992px · 1.25rem compact) | 810 | normal | 1.12 |
+| Sidebar app name | GitLab Sans | 1.25rem | 810 | normal | - |
+| KPI / stat-card value · Overall compliance | GitLab Sans | 1.375-2.75rem | 900 | normal | 1-1.2 |
+| `body` | GitLab Sans | 0.9375rem (15 px) | 400 | normal | 1.6 |
+| `.small` | GitLab Sans | 0.8125rem (13 px) | 400 | normal | 1.6 |
+| `.text-xs` | GitLab Sans | 0.75rem (12 px) | 400 | normal | 1.6 |
 
 ### Rules
 
 - **No UPPERCASE on titles.** Reserved for eyebrows (h6 and `.form-label`)
   as a discreet hierarchy cue.
-- **Tight tracking on large titles.** -0.022em on h1, never positive.
-- **Wide tracking on eyebrows.** +0.04em to +0.08em, that's what creates
-  the "small caps" effect.
+- **No negative tracking.** Titles and KPI values use `letter-spacing: normal`;
+  emphasis comes from weight (up to 900), never from tight tracking.
+- **Wide tracking on eyebrows / uppercase only.** +0.04em to +0.08em on
+  uppercase labels, badges and avatar initials - that's what creates the
+  "small caps" effect. This is the only place positive tracking is allowed.
 - **Tabular numbers everywhere** numbers align vertically (numeric table
   columns, KPIs). Utility class `.tabular-nums`.
+
+### Choosing typefaces - the font matrix
+
+If the type system is ever revisited, evaluate candidates with Google Fonts'
+[font matrix](https://fonts.google.com/knowledge/choosing_type/pairing_typefaces_based_on_their_construction_using_the_font_matrix),
+which describes a face in three layers and pairs on the first two:
+
+- **Skeleton (form model)** - *Dynamic* (humanist, diagonal axis, open
+  apertures, warm), *Rational* (vertical axis, closed apertures, orderly),
+  or *Geometric* (compass-built, no axis, clean but impersonal).
+- **Flesh** - contrast level (linear ↔ contrasting) and serif presence.
+- **Skin** - fine details (serif shapes, terminals); ignored for pairing.
+
+Pairing rules: (1) **same skeleton, different flesh** = harmonious;
+(2) **diagonal across the matrix** (very different skeleton *and* flesh) =
+deliberate, strong contrast; (3) **avoid different skeleton but same flesh**
+(e.g. two sans of different construction) - it reads as dissonant.
+
+Constraints for Cairn's body face: a Rational or Dynamic **linear sans**
+(never Geometric for running UI text), variable, OFL, full Latin + accents,
+good tabular figures. GitLab Sans (Rational, Inter-derived) satisfies all of
+these, which is why the product now runs on a single coherent family.
 
 ---
 
