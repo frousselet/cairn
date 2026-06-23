@@ -10526,3 +10526,12 @@ msgstr "Couleur hexadécimale (par ex. #1E3A8A) utilisée comme accent dans tout
 
 msgid "Enter a colour as a 6-digit hex code, e.g. #1E3A8A."
 msgstr "Saisissez une couleur sous forme de code hexadécimal à 6 chiffres, par ex. #1E3A8A."
+
+msgid "Working days (excluding weekends)"
+msgstr "Jours ouvrés (hors week-ends)"
+
+#, python-format
+msgid "%(n)s business day"
+msgid_plural "%(n)s business days"
+msgstr[0] "%(n)s jour ouvré"
+msgstr[1] "%(n)s jours ouvrés"

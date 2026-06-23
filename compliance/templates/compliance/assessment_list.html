@@ -20,9 +20,7 @@
         <tr>
           {% sortable_th "reference" "Ref." %}
           {% sortable_th "name" "Name" %}
-          <th>{% trans "Frameworks" %}</th>
-          {% sortable_th "start_date" "Start date" %}
-          {% sortable_th "end_date" "End date" %}
+          {% sortable_th "start_date" "Dates" %}
           <th>{% trans "Assessor" %}</th>
           <th>{% trans "Coverage" %}</th>
           <th>{% trans "Compliance" %}</th>
@@ -35,11 +33,37 @@
         {% for a in assessments %}
         <tr>
           <td><a href="{% url 'compliance:assessment-detail' a.pk %}" class="ref">{{ a.reference }}</a></td>
-          <td><a href="{% url 'compliance:assessment-detail' a.pk %}" class="cell-link">{{ a.name }}</a></td>
-          <td>{% for fw in a.frameworks.all %}{{ fw.short_name|default:fw.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-          <td>{{ a.assessment_start_date|default:"-" }}</td>
-          <td>{{ a.assessment_end_date|default:"-" }}</td>
-          <td>{% if a.assessor %}{% user_badge a.assessor size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+          <td>
+            <span class="cell-stack">
+              <a href="{% url 'compliance:assessment-detail' a.pk %}" class="cell-link" title="{{ a.name }}">{{ a.name }}</a>
+              {% with fw_list=a.frameworks.all %}{% if fw_list %}<span class="cell-sub">{% for fw in fw_list %}{{ fw.short_name|default:fw.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}{% endwith %}
+            </span>
+          </td>
+          <td>
+            {% if a.assessment_start_date %}
+            <span class="cell-stack">
+              <span>{{ a.assessment_start_date }}</span>
+              {% if a.business_days_duration %}<span class="cell-sub" title="{% trans 'Working days (excluding weekends)' %}"><i class="bi bi-calendar-range me-1" aria-hidden="true"></i>{% blocktrans count n=a.business_days_duration %}{{ n }} business day{% plural %}{{ n }} business days{% endblocktrans %}</span>{% endif %}
+            </span>
+            {% elif a.assessment_end_date %}
+            <span>{{ a.assessment_end_date }}</span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
+          </td>
+          <td>
+            {% if a.assessor %}
+            <span class="cell-people cell-people--sm">
+              {% if a.assessor.avatar %}
+              <img src="{{ a.assessor.avatar_32|default:a.assessor.avatar }}" alt="" class="cell-avatar">
+              {% else %}
+              <span class="cell-avatar-fallback">{{ a.assessor.display_name|initials }}</span>
+              {% endif %}
+              <span class="cell-stack">
+                <span style="font-weight:600">{{ a.assessor.display_name }}</span>
+                {% if a.assessor.job_title %}<span class="cell-sub">{{ a.assessor.job_title }}</span>{% endif %}
+              </span>
+            </span>
+            {% else %}<span class="cell-empty">-</span>{% endif %}
+          </td>
           <td>
             <div class="d-flex align-items-center gap-1">
               <div class="progress flex-grow-1" style="min-width:60px;height:6px">
@@ -65,7 +89,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No assessment yet.") message=_("Assessments evaluate your conformance to a framework at a point in time. Open one to score every requirement and gather findings.") colspan=11 %}
+        {% empty_state title=_("No assessment yet.") message=_("Assessments evaluate your conformance to a framework at a point in time. Open one to score every requirement and gather findings.") colspan=9 %}
         {% endfor %}
       </tbody>
     </table>
