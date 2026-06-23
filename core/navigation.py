@@ -45,6 +45,7 @@ NAV_TREE = {
     "assets:supplier-dependency-list": ("Assets", "Dependencies", "Supplier dependencies"),
     "assets:site-asset-dependency-list": ("Assets", "Dependencies", "Site–asset dependencies"),
     "assets:site-supplier-dependency-list": ("Assets", "Dependencies", "Site–supplier dependencies"),
+    "assets:dependency-graph": ("Assets", "Dependencies", "Dependency graph"),
     # ── Risk management ──────────────────────────────────────────
     "risks:assessment-list": ("Risk management", "Assessments", "Assessments"),
     "risks:criteria-list": ("Risk management", "Assessments", "Criteria"),
