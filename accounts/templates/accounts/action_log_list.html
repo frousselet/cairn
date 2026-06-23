@@ -64,7 +64,6 @@ function setPill(param, value) {
         <tr>
           <th>{% trans "Date" %}</th>
           <th>{% trans "User" %}</th>
-          <th>{% trans "Module" %}</th>
           <th>{% trans "Object" %}</th>
           <th>{% trans "Action" %}</th>
           <th>{% trans "Item" %}</th>
@@ -75,15 +74,19 @@ function setPill(param, value) {
         <tr>
           <td>{{ entry.history_date|date:"d/m/Y H:i:s" }}</td>
           <td>{% if entry.history_user %}{{ entry.history_user }}{% else %}{% trans "System" %}{% endif %}</td>
-          <td><span class="badge text-bg-secondary">{{ entry.app_label }}</span></td>
-          <td>{{ entry.model_label }}</td>
+          <td>
+            <span class="cell-stack">
+              <span>{{ entry.model_label }}</span>
+              <span class="cell-sub">{{ entry.app_label }}</span>
+            </span>
+          </td>
           <td>
             <span class="badge text-bg-{{ entry.action_badge }}">{{ entry.action_label }}</span>
           </td>
-          <td>{{ entry.object_repr|truncatechars:80 }}</td>
+          <td title="{{ entry.object_repr }}">{{ entry.object_repr|truncatechars:80 }}</td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No actions recorded yet.") message=_("Action logs trace every state-changing action across the platform. Useful for audit trails and incident investigation.") colspan=6 %}
+        {% empty_state title=_("No actions recorded yet.") message=_("Action logs trace every state-changing action across the platform. Useful for audit trails and incident investigation.") colspan=5 %}
         {% endfor %}
       </tbody>
     </table>
