@@ -185,27 +185,45 @@ warm-charcoal, never true black (#000), off-white text never pure white.
 
 ## Typography
 
-**One family only**: [Inter](https://rsms.me/inter/). Loaded via Google
-Fonts (`Inter:wght@400;500;600;700`). Plan a self-host eventually for
-GDPR concerns and perf.
+**Two families, one role each**:
 
-No display font. Large size and tight tracking carry the visual
-differentiation.
+- **Inter** ([rsms.me/inter](https://rsms.me/inter/)) - body, UI, labels,
+  controls, table content. The neutral workhorse.
+- **Space Grotesk** - the **accent / display** face, reserved for titles
+  (`h1`, `h2`, page-header title, sidebar app name) and emphasized values
+  (KPI / stat-card figures and other highlighted indicators). Its geometric
+  character and distinctive numerals give those elements presence without
+  shouting, keeping the calm, professional tone.
+
+Both are loaded via Google Fonts
+(`Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700`). Plan a
+self-host eventually for GDPR concerns and perf.
+
+Exposed as tokens - never hardcode a family name in a component:
+
+- `--font-sans` - Inter stack (the default on `body`).
+- `--font-display` - Space Grotesk stack (falls back to Inter).
+
+Everything below `h2` (h3-h6, body, captions, controls) stays in Inter:
+the display face is a deliberate accent, not a second body font. Tight
+tracking and size still carry most of the hierarchy.
 
 ### Scale
 
-| Element | Size | Weight | Tracking | Line-height |
-| --- | --- | --- | --- | --- |
-| `h1` | 1.75rem (28 px) | 600 | -0.022em | 1.2 |
-| `h2` | 1.375rem (22 px) | 600 | -0.018em | 1.25 |
-| `h3` | 1.125rem (18 px) | 600 | -0.012em | 1.35 |
-| `h4` | 1rem (16 px) | 600 | normal | 1.4 |
-| `h5` | 0.9375rem (15 px) | 600 | normal | 1.4 |
-| `h6` (eyebrow) | 0.75rem (12 px) | 600 | +0.04em uppercase | 1.4 |
-| `.display-4` | 2.25rem (36 px) | 600 | -0.028em | 1.1 |
-| `body` | 0.9375rem (15 px) | 400 | normal | 1.6 |
-| `.small` | 0.8125rem (13 px) | 400 | normal | 1.6 |
-| `.text-xs` | 0.75rem (12 px) | 400 | normal | 1.6 |
+| Element | Family | Size | Weight | Tracking | Line-height |
+| --- | --- | --- | --- | --- | --- |
+| `h1` | Space Grotesk | 1.75rem (28 px) | 700 | -0.022em | 1.2 |
+| `h2` | Space Grotesk | 1.375rem (22 px) | 700 | -0.018em | 1.25 |
+| `h3` | Inter | 1.125rem (18 px) | 600 | -0.012em | 1.35 |
+| `h4` | Inter | 1rem (16 px) | 600 | normal | 1.4 |
+| `h5` | Inter | 0.9375rem (15 px) | 600 | normal | 1.4 |
+| `h6` (eyebrow) | Inter | 0.75rem (12 px) | 600 | +0.04em uppercase | 1.4 |
+| `.display-4` / `.display-6` / `.text-display` | Space Grotesk | 2.25rem (36 px) / … | 700 | -0.028em | 1.1 |
+| `.page-header__title` | Space Grotesk | 1.75rem (1.25rem compact) | 700 | -0.022em | 1.2 |
+| KPI / stat-card value | Space Grotesk | 1.375-1.75rem | 700 | -0.02em | 1.1-1.2 |
+| `body` | Inter | 0.9375rem (15 px) | 400 | normal | 1.6 |
+| `.small` | Inter | 0.8125rem (13 px) | 400 | normal | 1.6 |
+| `.text-xs` | Inter | 0.75rem (12 px) | 400 | normal | 1.6 |
 
 ### Rules
 
