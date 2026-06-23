@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-06-23
+
 ### Added
 
 - **Navigation breadcrumb in every page header**: the page-header eyebrow is now a breadcrumb that mirrors the sidebar menu tree, built from a single source of truth in `core/navigation.py` (`NAV_TREE`). On a list page it ends on the current section (e.g. `Governance > Organization > Stakeholders`); on a detail page the list crumb is a link and the item's **reference** is the last crumb (`Governance > Organization > Stakeholders > STKH-1`); menu group headings with no page of their own (Governance, Organization…) are non-clickable. Self-nested entities (scopes) append their ancestor chain (`Scopes > parent ref > current ref`). The `{% page_header %}` tag gained `nav`, `eyebrow_url`, `parent_label` / `parent_url` and `breadcrumb` arguments.
@@ -1155,6 +1157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.30.0]: https://github.com/frousselet/cairn/compare/v0.29.1...v0.30.0
 [0.29.1]: https://github.com/frousselet/cairn/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/frousselet/cairn/compare/v0.28.3...v0.29.0
 [0.28.3]: https://github.com/frousselet/cairn/compare/v0.28.2...v0.28.3
