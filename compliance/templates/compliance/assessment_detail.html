@@ -80,7 +80,7 @@
                             stroke-dasharray="{{ compliance_pct }} 100"
                             stroke-linecap="round"/>
                   </svg>
-                  <span style="position:absolute;font-size:1.1rem;font-weight:700;{% if compliance_pct >= 80 %}color:var(--success){% elif compliance_pct >= 50 %}color:var(--warning){% else %}color:var(--danger){% endif %}">
+                  <span style="position:absolute;font-family:var(--font-display);font-variant-numeric:tabular-nums;font-size:1.1rem;font-weight:700;{% if compliance_pct >= 80 %}color:var(--success){% elif compliance_pct >= 50 %}color:var(--warning){% else %}color:var(--danger){% endif %}">
                     {{ compliance_pct }}%
                   </span>
                 </div>
@@ -97,7 +97,7 @@
                             stroke-dasharray="{{ coverage_pct }} 100"
                             stroke-linecap="round"/>
                   </svg>
-                  <span style="position:absolute;font-size:1.1rem;font-weight:700;color:var(--info)">
+                  <span style="position:absolute;font-family:var(--font-display);font-variant-numeric:tabular-nums;font-size:1.1rem;font-weight:700;color:var(--info)">
                     {{ coverage_pct }}%
                   </span>
                 </div>
