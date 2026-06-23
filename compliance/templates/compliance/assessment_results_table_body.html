@@ -67,7 +67,7 @@
     {% elif entry.result and entry.result.compliance_status == 'strength' %}
       <span class="badge text-bg-success">{% trans "Strength" context "compliance" %}</span>
     {% elif entry.result and entry.result.compliance_status == 'evaluated' %}
-      <span class="badge" style="background-color:var(--accent);color:#fff">{% trans "Evaluation planned" %}</span>
+      <span class="badge" style="background-color:var(--accent);color:var(--accent-contrast)">{% trans "Evaluation planned" %}</span>
     {% elif entry.result and entry.result.compliance_status == 'not_applicable' %}
       <span class="badge text-bg-dark">{{ entry.result.get_compliance_status_display }}</span>
     {% elif entry.result and entry.result.compliance_status != 'not_assessed' %}
