@@ -109,12 +109,16 @@
         {% if requirement.linked_risks.all %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Reference" %}</th><th>{% trans "Name" %}</th><th>{% trans "Level" %}</th><th>{% trans "Status" %}</th></tr></thead>
+            <thead><tr><th>{% trans "Risk" %}</th><th>{% trans "Level" %}</th><th>{% trans "Status" %}</th></tr></thead>
             <tbody>
               {% for risk in requirement.linked_risks.all %}
               <tr>
-                <td style="font-weight:500;color:var(--text-muted);font-size:.82rem">{{ risk.reference }}</td>
-                <td><a href="{% url 'risks:risk-detail' risk.pk %}" class="cell-link">{{ risk.name }}</a></td>
+                <td>
+                  <span class="cell-stack">
+                    <a href="{% url 'risks:risk-detail' risk.pk %}" class="cell-link">{{ risk.name }}</a>
+                    <span class="cell-sub">{{ risk.reference }}</span>
+                  </span>
+                </td>
                 <td style="font-size:.85rem;font-weight:600">{{ risk.current_risk_level|default:"-" }}</td>
                 <td style="font-size:.85rem">{{ risk.get_status_display }}</td>
               </tr>
@@ -135,21 +139,29 @@
         {% if mappings_source or mappings_target %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Direction" %}</th><th>{% trans "Requirement" %}</th><th>{% trans "Framework" %}</th><th>{% trans "Type" %}</th></tr></thead>
+            <thead><tr><th>{% trans "Direction" %}</th><th>{% trans "Requirement" %}</th><th>{% trans "Type" %}</th></tr></thead>
             <tbody>
               {% for m in mappings_source %}
               <tr>
                 <td>{% trans "Source" %} →</td>
-                <td><a href="{% url 'compliance:requirement-detail' m.target_requirement.pk %}" class="cell-link">{{ m.target_requirement.reference }}</a></td>
-                <td>{{ m.target_requirement.framework.name }}</td>
+                <td>
+                  <span class="cell-stack">
+                    <a href="{% url 'compliance:requirement-detail' m.target_requirement.pk %}" class="cell-link">{{ m.target_requirement.reference }}</a>
+                    <span class="cell-sub">{{ m.target_requirement.framework.short_name|default:m.target_requirement.framework.name }}</span>
+                  </span>
+                </td>
                 <td>{{ m.get_mapping_type_display }}</td>
               </tr>
               {% endfor %}
               {% for m in mappings_target %}
               <tr>
                 <td>← {% trans "Target" %}</td>
-                <td><a href="{% url 'compliance:requirement-detail' m.source_requirement.pk %}" class="cell-link">{{ m.source_requirement.reference }}</a></td>
-                <td>{{ m.source_requirement.framework.name }}</td>
+                <td>
+                  <span class="cell-stack">
+                    <a href="{% url 'compliance:requirement-detail' m.source_requirement.pk %}" class="cell-link">{{ m.source_requirement.reference }}</a>
+                    <span class="cell-sub">{{ m.source_requirement.framework.short_name|default:m.source_requirement.framework.name }}</span>
+                  </span>
+                </td>
                 <td>{{ m.get_mapping_type_display }}</td>
               </tr>
               {% endfor %}
@@ -173,10 +185,10 @@
             <tbody>
               {% for ap in action_plans %}
               <tr>
-                <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="cell-link">{{ ap.reference }}</a></td>
-                <td>{{ ap.name }}</td>
-                <td>{{ ap.get_priority_display }}</td>
-                <td>{{ ap.progress_percentage }}%</td>
+                <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="ref">{{ ap.reference }}</a></td>
+                <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="cell-link">{{ ap.name }}</a></td>
+                <td><span class="badge text-bg-{% if ap.priority == 'critical' %}danger{% elif ap.priority == 'high' %}warning{% elif ap.priority == 'medium' %}info{% else %}secondary{% endif %}">{{ ap.get_priority_display }}</span></td>
+                <td>{% progress_bar ap.progress_percentage scheme="progress" %}</td>
                 <td>{{ ap.get_status_display }}</td>
               </tr>
               {% endfor %}
