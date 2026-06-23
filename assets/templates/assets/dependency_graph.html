@@ -93,14 +93,14 @@
 
 {% block content %}
 <div class="graph-header">
-{% page_header _("Dependency graph") eyebrow=_("Assets") accent="assets" %}
+{% page_header _("Dependency graph") nav="assets:dependency-graph" accent="assets" %}
   <div class="graph-toolbar">
     <span class="graph-stat" title="{% trans 'Asset dependencies' %}"><i class="bi bi-diagram-3 text-primary"></i> <strong>{{ asset_dep_count }}</strong> <span class="graph-stat-lbl">{% trans "Asset dep." %}</span></span>
     <span class="graph-stat" title="{% trans 'Supplier dependencies' %}"><i class="bi bi-truck text-info"></i> <strong>{{ supplier_dep_count }}</strong> <span class="graph-stat-lbl">{% trans "Supplier dep." %}</span></span>
     <span class="graph-stat" title="{% trans 'Site dependencies' %}"><i class="bi bi-building" style="color:#06b6d4"></i> <strong>{{ site_asset_dep_count|add:site_supplier_dep_count }}</strong> <span class="graph-stat-lbl">{% trans "Site dep." %}</span></span>
 
     <div class="dropdown">
-      <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false" title="{% trans 'Legend' %}">
+      <button class="btn btn-outline-secondary" type="button" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false" title="{% trans 'Legend' %}">
         <i class="bi bi-palette"></i> <span class="d-none d-sm-inline">{% trans "Legend" %}</span>
       </button>
       <div class="dropdown-menu dropdown-menu-end graph-legend-menu p-2">
@@ -114,7 +114,7 @@
       </div>
     </div>
 
-    <div class="btn-group btn-group-sm" role="group" aria-label="{% trans 'Zoom controls' %}">
+    <div class="btn-group" role="group" aria-label="{% trans 'Zoom controls' %}">
       <button class="btn btn-outline-secondary" onclick="resetZoom()" title="{% trans 'Reset zoom' %}"><i class="bi bi-arrows-fullscreen"></i></button>
       <button class="btn btn-outline-secondary" onclick="zoomIn()" title="{% trans 'Zoom in' %}"><i class="bi bi-zoom-in"></i></button>
       <button class="btn btn-outline-secondary" onclick="zoomOut()" title="{% trans 'Zoom out' %}"><i class="bi bi-zoom-out"></i></button>
