@@ -30,22 +30,25 @@
       <thead>
         <tr>
           <th>{% trans "Title" %}</th>
-          <th>{% trans "Description" %}</th>
           <th class="text-end">{% trans "Actions" %}</th>
         </tr>
       </thead>
       <tbody>
         {% for req in requirements %}
         <tr>
-          <td><a href="{% url 'assets:supplier-type-requirement-update' req.pk %}" class="cell-link">{{ req.title }}</a></td>
-          <td>{{ req.description|default:"-"|truncatewords:20 }}</td>
+          <td>
+            <span class="cell-stack">
+              <a href="{% url 'assets:supplier-type-requirement-update' req.pk %}" class="cell-link">{{ req.title }}</a>
+              {% if req.description %}<span class="cell-sub" title="{{ req.description }}">{{ req.description }}</span>{% endif %}
+            </span>
+          </td>
           <td class="text-end">
             <a href="{% url 'assets:supplier-type-requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
             <a href="{% url 'assets:supplier-type-requirement-delete' req.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="3" class="text-center py-4" style="color:var(--text-muted)">{% trans "No requirements for this type." %}</td></tr>
+        <tr><td colspan="2" class="text-center py-4" style="color:var(--text-muted)">{% trans "No requirements for this type." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

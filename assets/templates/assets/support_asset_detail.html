@@ -131,14 +131,16 @@
         {% if dependencies %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Essential asset" %}</th><th class="text-center">C</th><th class="text-center">I</th><th class="text-center">A</th></tr></thead>
+            <thead><tr><th>{% trans "Essential asset" %}</th><th>C / I / A</th></tr></thead>
             <tbody>
               {% for dep in dependencies %}
               <tr>
                 <td><a href="{% url 'assets:essential-asset-detail' dep.essential_asset.pk %}" class="cell-link">{{ dep.essential_asset }}</a></td>
-                <td class="text-center">{{ dep.essential_asset.confidentiality_level|dic_badge }}</td>
-                <td class="text-center">{{ dep.essential_asset.integrity_level|dic_badge }}</td>
-                <td class="text-center">{{ dep.essential_asset.availability_level|dic_badge }}</td>
+                <td>
+                  <span class="d-inline-flex gap-1 align-items-center" style="white-space:nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
+                    {{ dep.essential_asset.confidentiality_level|dic_badge }}{{ dep.essential_asset.integrity_level|dic_badge }}{{ dep.essential_asset.availability_level|dic_badge }}
+                  </span>
+                </td>
               </tr>
               {% endfor %}
             </tbody>

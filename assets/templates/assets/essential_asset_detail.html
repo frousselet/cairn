@@ -116,14 +116,22 @@
         {% if dependencies %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Support asset" %}</th><th>{% trans "Dependency type" %}</th><th>{% trans "Criticality" %}</th><th>{% trans "SPOF" %}</th></tr></thead>
+            <thead><tr><th>{% trans "Support asset" %}</th><th>{% trans "Criticality" %}</th></tr></thead>
             <tbody>
               {% for dep in dependencies %}
               <tr>
-                <td><a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" class="cell-link">{{ dep.support_asset }}</a></td>
-                <td>{{ dep.get_dependency_type_display }}</td>
-                <td>{{ dep.get_criticality_display }}</td>
-                <td>{% if dep.is_single_point_of_failure %}<span class="badge text-bg-danger">SPOF</span>{% else %}-{% endif %}</td>
+                <td>
+                  <span class="cell-stack">
+                    <a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" class="cell-link">{{ dep.support_asset }}</a>
+                    <span class="cell-sub">{{ dep.get_dependency_type_display }}</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="cell-stack">
+                    <span>{{ dep.get_criticality_display }}</span>
+                    {% if dep.is_single_point_of_failure %}<span class="cell-sub" style="color:var(--danger)"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>SPOF</span>{% endif %}
+                  </span>
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -142,15 +150,17 @@
         {% if valuations %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Date" %}</th><th class="text-center">C</th><th class="text-center">I</th><th class="text-center">A</th><th>{% trans "Evaluator" %}</th><th>{% trans "Context" %}</th></tr></thead>
+            <thead><tr><th>{% trans "Date" %}</th><th>C / I / A</th><th>{% trans "Evaluator" %}</th><th>{% trans "Context" %}</th></tr></thead>
             <tbody>
               {% for val in valuations %}
               <tr>
                 <td>{{ val.evaluation_date }}</td>
-                <td class="text-center">{{ val.confidentiality_level|dic_badge }}</td>
-                <td class="text-center">{{ val.integrity_level|dic_badge }}</td>
-                <td class="text-center">{{ val.availability_level|dic_badge }}</td>
-                <td>{% if val.evaluated_by %}{% user_badge val.evaluated_by size=20 %}{% else %}-{% endif %}</td>
+                <td>
+                  <span class="d-inline-flex gap-1 align-items-center" style="white-space:nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
+                    {{ val.confidentiality_level|dic_badge }}{{ val.integrity_level|dic_badge }}{{ val.availability_level|dic_badge }}
+                  </span>
+                </td>
+                <td>{% if val.evaluated_by %}{% user_badge val.evaluated_by size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
                 <td>{{ val.context|default:"-" }}</td>
               </tr>
               {% endfor %}
