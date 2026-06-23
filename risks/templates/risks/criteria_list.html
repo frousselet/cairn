@@ -7,7 +7,7 @@
 
 {% block content %}
 {% has_perm "risks.criteria.delete" as can_delete_criteria %}
-{% page_header _("Risk criteria") eyebrow=_("Risk management") accent="risks" %}
+{% page_header _("Risk criteria") nav="risks:criteria-list" accent="risks" %}
   <a href="{% url 'risks:criteria-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New criteria' %}</a>
 {% endpage_header %}
 {% help_modal "risks.criteria_list" %}

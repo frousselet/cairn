@@ -4,7 +4,7 @@
 {% block title %}{% trans "Action log — Cairn" %}{% endblock %}
 
 {% block content %}
-{% page_header _("Action log") eyebrow=_("Administration") accent="accounts" %}{% endpage_header %}
+{% page_header _("Action log") nav="accounts:action-log-list" accent="accounts" %}{% endpage_header %}
 {% help_modal "accounts.action_log_list" %}
 
 <form id="filterForm" method="get">

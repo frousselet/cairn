@@ -5,7 +5,7 @@
 
 {% block content %}
 {% page_header _("Delete group") %}
-  <a href="{% url 'accounts:group-detail' object.pk %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+  <a href="{% url 'accounts:group-detail' object.pk %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
 {% endpage_header %}
 
 <div class="card">
@@ -31,7 +31,7 @@
         <button type="submit" class="btn btn-danger" {% if user_count %}disabled{% endif %}>
           <i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete permanently" %}
         </button>
-        <a href="{% url 'accounts:group-detail' object.pk %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+        <a href="{% url 'accounts:group-detail' object.pk %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
       </div>
     </form>
   </div>

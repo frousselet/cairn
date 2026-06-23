@@ -6,20 +6,9 @@
 {% block title %}{{ scope.name }} — Cairn{% endblock %}
 
 {% block content %}
-{% if ancestors %}
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    {% for ancestor in ancestors %}
-    <li class="breadcrumb-item"><a href="{% url 'context:scope-detail' ancestor.pk %}">{{ ancestor.name }}</a></li>
-    {% endfor %}
-    <li class="breadcrumb-item active" aria-current="page">{{ scope.name }}</li>
-  </ol>
-</nav>
-{% endif %}
-{% page_header scope.name reference=scope.reference %}
+{% page_header scope.name reference=scope.reference nav="context:scope-list" breadcrumb=scope_breadcrumb accent="context" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'context:scope-update' scope.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'context:scope-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.scope_detail" %}

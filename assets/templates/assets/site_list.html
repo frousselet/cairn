@@ -7,7 +7,7 @@
 {% load help_tags %}
 
 {% block content %}
-{% page_header _("Sites") eyebrow=_("Assets") accent="assets" %}
+{% page_header _("Sites") nav="assets:site-list" accent="assets" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'assets:site-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New site' %}</button>
 {% endpage_header %}
 {% help_modal "context.site_list" %}

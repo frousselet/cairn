@@ -154,16 +154,14 @@ class TestPageHeaderTag:
         assert "RISK-1" in out
         assert "ref" in out
 
-    def test_module_accent_applies_modifier_class_and_bar(self):
+    def test_module_accent_applies_modifier_class(self):
         out = render('{% page_header "Risk register" accent="risks" %}{% endpage_header %}')
         assert "page-header--accent" in out
         assert "page-header--accent-risks" in out
-        assert "page-header__bar" in out
 
     def test_unknown_accent_is_silently_dropped(self):
         out = render('{% page_header "Title" accent="bogus" %}{% endpage_header %}')
         assert "page-header--accent" not in out
-        assert "page-header__bar" not in out
 
     def test_eyebrow_renders_when_set(self):
         out = render('{% page_header "Risk register" eyebrow="Risks" accent="risks" %}{% endpage_header %}')

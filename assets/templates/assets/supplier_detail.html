@@ -6,7 +6,7 @@
 {% block title %}{{ supplier.name }} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header supplier.name reference=supplier.reference %}
+{% page_header supplier.name reference=supplier.reference nav="assets:supplier-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'assets:supplier-update' supplier.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
   {% if supplier.status != 'archived' %}
@@ -15,7 +15,6 @@
     <button type="submit" class="btn btn-outline-warning" onclick="return confirm('{% trans "Archive this supplier?" %}')">{% trans "Archive" %}</button>
   </form>
   {% endif %}
-  <a href="{% url 'assets:supplier-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.supplier_detail" %}

@@ -113,6 +113,10 @@
       --sidebar-w: 264px;
       --sidebar-collapsed-w: 4.25rem;
       --sidebar-inset: 0rem;
+      /* Height the sticky page title bar occupies once pinned (compact form).
+       * Other sticky elements (bulk-actions bar, sticky sidebar cards) clear
+       * it so they never slide behind the title bar. */
+      --page-header-offset: 3.75rem;
       /* Floating glass elements (sidebar search field and user footer,
        * floating buttons, sticky bars). Generalized from the sidebar
        * redesign so every element hovering over content shares the
@@ -388,6 +392,12 @@
         color-mix(in srgb, var(--bg-page) 72%, transparent) 30%,
         color-mix(in srgb, var(--bg-page) 30%, transparent) 65%,
         transparent 100%);
+      /* Same frosted fade as the page title bar: blur the menu items
+         scrolling underneath, masked so the blur dissolves with the gradient. */
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+      -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 55%, transparent 100%);
+      mask-image: linear-gradient(to bottom, #000 0, #000 55%, transparent 100%);
       pointer-events: none;
     }
     .sidebar-brand a {
@@ -593,6 +603,29 @@
       z-index: 5;
       margin-top: auto;
       padding: .5rem 1rem;
+      /* Background + dissolve live on ::before (behind the card content). */
+      background: transparent;
+    }
+    /* Frosted fade above the footer, mirroring the top one: menu items
+       scrolling down dissolve (blurred + faded) before reaching the user card. */
+    .sidebar-footer::before {
+      content: '';
+      position: absolute;
+      /* Covers the footer (user-card) region, behind the card content. Menu
+         text stays sharp until it reaches the card, then progressively blurs
+         and fades to a fully opaque base by the bottom of the page. */
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        color-mix(in srgb, var(--bg-page) 50%, transparent) 42%,
+        color-mix(in srgb, var(--bg-page) 88%, transparent) 70%,
+        var(--bg-page) 100%);
+      -webkit-backdrop-filter: blur(5px);
+      backdrop-filter: blur(5px);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 55%, #000 100%);
+      mask-image: linear-gradient(to bottom, transparent 0%, #000 55%, #000 100%);
     }
     .sidebar-user-card {
       background: var(--glass);
@@ -748,7 +781,8 @@
     .sidebar-collapse-toggle {
       position: fixed;
       left: calc(var(--sidebar-w) + var(--sidebar-inset) - .875rem);
-      top: calc(var(--sidebar-inset) + 3.625rem);
+      top: 50%;
+      transform: translateY(-50%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -782,7 +816,7 @@
       box-shadow: 0 2px 10px var(--accent-glow), var(--shadow-md);
     }
     .sidebar-collapse-toggle:active {
-      transform: scale(.88);
+      transform: translateY(-50%) scale(.88);
     }
     .sidebar-collapse-toggle i {
       transition: transform .35s var(--ease-out-expo);
@@ -1413,78 +1447,94 @@
       outline: none !important;
       box-shadow: none !important;
     }
-    /* Remap Bootstrap's primary button variables to the accent, otherwise every
-       hover / active / focus state falls back to Bootstrap's default #0d6efd. */
-    .btn-primary {
-      --bs-btn-bg: var(--accent);
-      --bs-btn-border-color: var(--accent);
-      --bs-btn-color: var(--accent-contrast);
-      --bs-btn-hover-bg: var(--accent-hover);
-      --bs-btn-hover-border-color: var(--accent-hover);
-      --bs-btn-hover-color: var(--accent-contrast);
-      --bs-btn-active-bg: var(--accent-hover);
-      --bs-btn-active-border-color: var(--accent-hover);
-      --bs-btn-active-color: var(--accent-contrast);
-      --bs-btn-disabled-bg: var(--accent);
-      --bs-btn-disabled-border-color: var(--accent);
-      --bs-btn-disabled-color: var(--accent-contrast);
-      background: var(--accent);
-      border-color: var(--accent);
-      color: var(--accent-contrast);
-    }
-    .btn-primary:hover {
-      background: var(--accent-hover);
-      border-color: var(--accent-hover);
-      color: var(--accent-contrast);
-    }
-    .btn-outline-primary {
-      --bs-btn-color: var(--accent);
-      --bs-btn-border-color: var(--accent);
-      --bs-btn-hover-bg: var(--accent);
-      --bs-btn-hover-border-color: var(--accent);
-      --bs-btn-hover-color: var(--accent-contrast);
-      --bs-btn-active-bg: var(--accent);
-      --bs-btn-active-border-color: var(--accent);
-      --bs-btn-active-color: var(--accent-contrast);
-      --bs-btn-disabled-color: var(--accent);
-      --bs-btn-disabled-border-color: var(--accent);
-      color: var(--accent);
-      border-color: var(--accent);
-      background: transparent;
-    }
-    .btn-outline-primary:hover {
-      background: var(--accent);
-      color: var(--accent-contrast);
-    }
-    .btn-outline-secondary {
-      color: var(--text-secondary);
-      border-color: var(--border-light);
+    /* ── Button variants : unified outline system ─────────
+     * Every variant is an outline button : a subtle raised fill, a 1px
+     * coloured border + matching text, and a calm soft-tint fill on hover
+     * (never a solid block). Context is carried by the colour : navy
+     * (primary / main action), grey (secondary / neutral), red (danger),
+     * amber (warning), green (success). Bootstrap's solid classes are
+     * remapped to their outline equivalent so the whole UI is consistent.
+     * Info is not part of the palette and renders as neutral grey. */
+    .btn-primary, .btn-outline-primary,
+    .btn-secondary, .btn-outline-secondary,
+    .btn-danger, .btn-outline-danger,
+    .btn-warning, .btn-outline-warning,
+    .btn-success, .btn-outline-success,
+    .btn-info, .btn-outline-info {
       background: var(--surface-raised);
-    }
-    .btn-outline-secondary:hover {
-      background: var(--surface-muted);
-      color: var(--text-primary);
       border-color: var(--border-light);
     }
-    .btn-danger  { background: var(--danger); border-color: var(--danger); color: #fff; }
-    .btn-danger:hover  { background: #B91C1C; border-color: #B91C1C; color: #fff; }
-    .btn-success { background: var(--success); border-color: var(--success); color: #fff; }
-    .btn-success:hover { background: #15803D; border-color: #15803D; color: #fff; }
-    .btn-warning { background: var(--warning); border-color: var(--warning); color: #fff; }
-    .btn-warning:hover { background: #B45309; border-color: #B45309; color: #fff; }
-    .btn-outline-secondary {
+    /* Neutral = grey. The default for every non-semantic action, INCLUDING
+     * the main "primary" action. One single neutral style (the dashboard
+     * button) so nothing looks mixed; emphasis comes from placement and the
+     * leading icon, not colour. Only danger / warning / success carry colour. */
+    .btn-primary, .btn-outline-primary,
+    .btn-secondary, .btn-outline-secondary,
+    .btn-info, .btn-outline-info {
+      --bs-btn-color: var(--text-secondary);
+      --bs-btn-border-color: var(--border-light);
+      --bs-btn-hover-bg: var(--surface-muted);
+      --bs-btn-hover-border-color: var(--border-light);
+      --bs-btn-hover-color: var(--text-primary);
+      --bs-btn-active-bg: var(--surface-muted);
+      --bs-btn-active-border-color: var(--border-light);
+      --bs-btn-active-color: var(--text-primary);
+      --bs-btn-disabled-color: var(--text-secondary);
+      --bs-btn-disabled-border-color: var(--border-light);
       color: var(--text-secondary);
       border-color: var(--border-light);
     }
-    .btn-outline-secondary:hover {
+    .btn-primary:hover, .btn-outline-primary:hover,
+    .btn-secondary:hover, .btn-outline-secondary:hover,
+    .btn-info:hover, .btn-outline-info:hover {
       background: var(--surface-muted);
-      border-color: var(--border-light);
       color: var(--text-primary);
+      border-color: var(--border-light);
+    }
+    /* Danger = red */
+    .btn-danger, .btn-outline-danger {
+      --bs-btn-color: var(--danger);
+      --bs-btn-border-color: var(--danger);
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+    .btn-danger:hover, .btn-outline-danger:hover {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+    /* Warning = amber */
+    .btn-warning, .btn-outline-warning {
+      --bs-btn-color: var(--warning);
+      --bs-btn-border-color: var(--warning);
+      color: var(--warning);
+      border-color: var(--warning);
+    }
+    .btn-warning:hover, .btn-outline-warning:hover {
+      background: var(--warning-soft);
+      color: var(--warning);
+      border-color: var(--warning);
+    }
+    /* Success = green */
+    .btn-success, .btn-outline-success {
+      --bs-btn-color: var(--success);
+      --bs-btn-border-color: var(--success);
+      color: var(--success);
+      border-color: var(--success);
+    }
+    .btn-success:hover, .btn-outline-success:hover {
+      background: var(--success-soft);
+      color: var(--success);
+      border-color: var(--success);
     }
     .btn-sm { padding: .3125rem .75rem; font-size: .78rem; }
-    .btn-danger { box-shadow: 0 1px 2px rgba(239,68,68,.15); }
-    .btn-danger:hover { box-shadow: 0 4px 12px rgba(239,68,68,.2); }
-    .btn-success { box-shadow: 0 1px 2px rgba(16,185,129,.15); }
+
+    /* In tables, action buttons are borderless : just the (coloured) icon or
+       text, with a soft-tint fill that appears only on hover. Keeps rows calm
+       and uncluttered while preserving the danger/neutral colour cues. */
+    .table .btn { border-color: transparent; box-shadow: none; }
+    .table .btn:not(:hover) { background: transparent; }
+    .table .btn:hover { border-color: transparent; }
 
     /* ── HTMX loading feedback (buttons & form submit) ── */
     @keyframes htmx-spin {
@@ -1843,48 +1893,59 @@
       align-items: flex-start;
       justify-content: center;
       padding-top: min(18vh, 160px);
-      background: rgba(0,0,0,.45);
-      backdrop-filter: blur(4px);
       opacity: 0;
       visibility: hidden;
       transition: opacity .2s ease, visibility .2s ease;
     }
+    /* Frosted backdrop on a pseudo BEHIND the dialog (tinted with the page
+       background, not a dark veil). Keeping the backdrop-filter off the dialog's
+       ancestor stops Firefox from rendering the palette text + icons blurry. */
+    .search-overlay::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: color-mix(in srgb, var(--bg-page) 82%, transparent);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+    }
     .search-overlay.show { opacity: 1; visibility: visible; }
     .search-dialog {
-      width: min(95vw, 620px);
-      /* Frosted glass like the sidebar search field it morphs out of,
-       * but near-opaque: at 85% opacity the palette content blended
-       * into the blurred page behind it and read as grey-on-grey */
-      background: var(--surface-glass-strong);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--border-light);
-      border-radius: 1.25rem;
-      box-shadow: var(--shadow-xl);
-      overflow: hidden;
-      transform: translateY(-12px) scale(.97);
+      width: min(95vw, 760px);
+      /* Transparent shell: the field and the results panel are two separate
+       * cards, each with its own surface + shadow, spaced apart. Sits above the
+       * backdrop pseudo; no scale() (it blurs text in Firefox). */
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      background: transparent;
+      transform: translateY(-12px);
       transition: transform .25s var(--ease-out-expo);
     }
     .search-overlay.show .search-dialog {
-      transform: translateY(0) scale(1);
+      transform: none;
     }
     .search-input-wrap {
       display: flex;
       align-items: center;
-      gap: .625rem;
-      padding: .875rem 1.125rem;
-      background: transparent;
-      /* Hairline fading at both ends, like the sidebar demarcation */
-      border-bottom: 1px solid transparent;
-      border-image: linear-gradient(to right, transparent, var(--border-light) 12%, var(--border-light) 88%, transparent) 1;
+      gap: .75rem;
+      padding: 1.25rem 1.375rem;
+      /* Near-opaque surface, no own backdrop-filter : nesting one inside the
+         overlay's backdrop-filter makes Firefox render the content blurry, and
+         the .97 surface hides the page anyway. */
+      background: var(--surface-glass-strong);
+      border: 1px solid var(--border-light);
+      border-radius: 1rem;
+      box-shadow: var(--shadow-lg);
     }
-    .search-input-wrap i { color: var(--text-muted); font-size: 1.125rem; flex-shrink: 0; }
+    .search-input-wrap i { color: var(--text-muted); font-size: 1.375rem; flex-shrink: 0; }
     .search-input-wrap input {
       flex: 1;
       border: none;
       outline: none;
       background: transparent;
-      font-size: .9375rem;
+      font-size: 1.125rem;
       font-weight: 500;
       color: var(--text-primary);
     }
@@ -1906,9 +1967,17 @@
       background: transparent;
     }
     .search-results {
-      max-height: min(55vh, 420px);
+      max-height: min(65vh, 560px);
       overflow-y: auto;
-      padding: .5rem 0;
+      padding: .625rem 0;
+      background: var(--surface-glass-strong);
+      border: 1px solid var(--border-light);
+      border-radius: 1rem;
+      box-shadow: var(--shadow-lg);
+      /* Firefox scrollbar (it ignores ::-webkit-scrollbar) so the thin
+         scrollbar matches Safari / Chrome. */
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-light) transparent;
     }
     .search-results:empty { display: none; }
     .search-results::-webkit-scrollbar { width: 6px; }
@@ -1917,23 +1986,23 @@
       border-radius: 3px;
     }
     .search-group-label {
-      font-size: .75rem;
+      font-size: .8125rem;
       font-weight: 600;
       color: var(--text-secondary);
-      padding: .75rem 1.125rem .25rem;
+      padding: .875rem 1.375rem .3125rem;
       display: flex;
       align-items: center;
-      gap: .375rem;
+      gap: .4375rem;
     }
-    .search-group-label i { font-size: .8rem; }
+    .search-group-label i { font-size: .875rem; }
     .search-result-item {
       display: flex;
       align-items: center;
-      gap: .625rem;
-      padding: .5rem 1.125rem;
+      gap: .75rem;
+      padding: .6875rem 1.375rem;
       color: var(--text-primary);
       text-decoration: none;
-      font-size: .875rem;
+      font-size: 1rem;
       font-weight: 500;
       transition: background .12s ease, color .12s ease;
       cursor: pointer;
@@ -1944,10 +2013,10 @@
       color: var(--accent);
     }
     .search-result-item i {
-      font-size: .9rem;
+      font-size: 1.0625rem;
       color: var(--text-muted);
       flex-shrink: 0;
-      width: 1.25rem;
+      width: 1.5rem;
       text-align: center;
     }
     .search-result-item:hover i,
@@ -2004,11 +2073,38 @@
     }
     .search-group-label .ai-badge { margin-left: .25rem; }
     .assistant-summary {
-      padding: .5rem 1.125rem .25rem;
-      font-size: .875rem;
+      padding: .625rem 1.375rem .375rem;
+      font-size: .9375rem;
+      line-height: 1.55;
       color: var(--text-primary);
     }
     .assistant-summary-muted { color: var(--text-muted); }
+    /* Typewriter caret while the answer is being revealed letter by letter. */
+    .assistant-summary.assistant-typing::after {
+      content: '';
+      display: inline-block;
+      width: .45em;
+      height: 1.05em;
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      background: var(--accent);
+      border-radius: 1px;
+      animation: assistant-caret .9s steps(1) infinite;
+    }
+    @keyframes assistant-caret { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .assistant-summary.assistant-typing::after { display: none; }
+    }
+    /* Staggered entrance for the records/notes that come with an answer, played
+       in parallel with the typewriter summary. Delay is set per item in JS. */
+    @keyframes assistant-reveal {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+    .assistant-reveal { animation: assistant-reveal .32s var(--ease-out) both; }
+    @media (prefers-reduced-motion: reduce) {
+      .assistant-reveal { animation: none; }
+    }
     .assistant-note {
       padding: .375rem 1.125rem;
       font-size: .8125rem;
@@ -3485,15 +3581,87 @@
     /* Smooth global text + icon colour transitions for theme toggle */
     html { transition: background-color 320ms var(--ease-out), color 320ms var(--ease-out); }
 
-    /* ── Component: page-header ────────────────────── */
+    /* ── Component: page-header ──────────────────────
+     * Sticky title bar shared by every full page (via the page_header tag).
+     * It stays pinned at the top while content scrolls *behind* it, and
+     * shrinks to a compact toolbar once pinned (see .is-compact below).
+     * The background is a vertical gradient: opaque page colour at the top
+     * fading to transparent at the bottom edge, so scrolling content
+     * dissolves into the page instead of cutting hard against the bar.
+     */
     .page-header {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 1rem;
-      margin-bottom: 2.5rem;
       flex-wrap: wrap;
-      position: relative;
+      position: sticky;
+      /* top:-1px lets an IntersectionObserver(threshold:1) detect the
+       * "stuck" state and toggle .is-compact - no scroll listener needed. */
+      top: -1px;
+      z-index: 1030;
+      margin: 0 0 .5rem;
+      padding: 1.25rem 0 2.5rem;
+      /* Long, multi-stop fade so the sticky bar dissolves softly into the
+         page instead of cutting against the scrolling content. */
+      /* Gradient tint + frosted blur live on ::before (below the title), so the
+         fade and blur never touch the title / buttons themselves. */
+      background: transparent;
+      transition: padding var(--transition-normal), margin var(--transition-normal);
+    }
+    .page-header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        var(--bg-page) 0,
+        var(--bg-page) 30%,
+        color-mix(in srgb, var(--bg-page) 82%, transparent) 50%,
+        color-mix(in srgb, var(--bg-page) 52%, transparent) 68%,
+        color-mix(in srgb, var(--bg-page) 24%, transparent) 84%,
+        transparent 100%
+      );
+      /* Softly blur the content scrolling behind the bar; the mask dissolves the
+         blur together with the gradient so there is no hard edge at the bottom. */
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+      -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 55%, transparent 100%);
+      mask-image: linear-gradient(to bottom, #000 0, #000 55%, transparent 100%);
+    }
+    /* Browsers without color-mix(): fall back to a plain opaque background. */
+    @supports not (background: color-mix(in srgb, red, blue)) {
+      .page-header { background: var(--bg-page); }
+    }
+    /* Compact form once pinned: smaller title, eyebrow + subtitle collapse,
+     * tighter padding. The gradient + size change read as "scrolled". */
+    .page-header.is-compact {
+      /* padding-top sits the compact title on the same line as the sidebar
+       * brand (its block is 1.25rem top padding + 2rem icon, centre ~36px).
+       * Breadcrumb collapsed: title lines up with the action buttons. */
+      padding-top: 1.125rem;
+      padding-bottom: 2rem;
+      align-items: center;
+      margin-bottom: .25rem;
+    }
+    .page-header.is-compact .page-header__title { font-size: 1.25rem; }
+    .page-header.is-compact .page-header__eyebrow,
+    .page-header.is-compact .page-header__breadcrumb {
+      opacity: 0;
+      max-height: 0;
+      margin-bottom: 0;
+      padding-bottom: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .page-header.is-compact .page-header__subtitle {
+      opacity: 0;
+      max-height: 0;
+      margin-top: 0;
+      overflow: hidden;
+      pointer-events: none;
     }
     /* With a logo (e.g. the dashboard) the title block is taller, so centre the
        whole header - title and actions line up on the logo's vertical midline. */
@@ -3504,7 +3672,9 @@
       gap: .875rem;
       min-width: 0;
       flex: 1 1 auto;
+      transition: gap var(--transition-normal);
     }
+    .page-header.is-compact .page-header__main { gap: .5rem; }
     /* Centre the logo with the title block when a logo is present. */
     .page-header__main:has(.page-header__logo) { align-items: center; }
     .page-header__icon {
@@ -3518,6 +3688,11 @@
       height: 4.5rem;
       object-fit: contain;
       flex-shrink: 0;
+      transition: width var(--transition-normal), height var(--transition-normal);
+    }
+    .page-header.is-compact .page-header__logo {
+      width: 2.25rem;
+      height: 2.25rem;
     }
     .page-header__text { min-width: 0; }
     .page-header__title {
@@ -3526,6 +3701,7 @@
       color: var(--text-primary);
       letter-spacing: -.022em;
       line-height: 1.2;
+      transition: font-size var(--transition-normal);
     }
     .page-header__eyebrow {
       font-size: .75rem;
@@ -3533,12 +3709,46 @@
       color: var(--module-accent, var(--text-muted));
       margin-bottom: .625rem;
       line-height: 1;
+      transition: opacity var(--transition-fast),
+                  max-height var(--transition-normal),
+                  margin var(--transition-normal);
     }
-    .page-header__reference { margin-left: .625rem; vertical-align: middle; }
+    /* Breadcrumb form of the eyebrow: clickable list root + optional
+     * ancestors, chevron separators. Stays within the navy identity
+     * (no coloured pills); hover just underlines the link. */
+    .page-header__breadcrumb {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .375rem;
+      margin-bottom: .625rem;
+      font-size: .75rem;
+      font-weight: 600;
+      line-height: 1;
+      transition: opacity var(--transition-fast),
+                  max-height var(--transition-normal),
+                  margin var(--transition-normal);
+    }
+    .page-header__crumb {
+      color: var(--module-accent, var(--accent));
+      text-decoration: none;
+      transition: color var(--transition-fast);
+    }
+    a.page-header__crumb:hover { text-decoration: underline; }
+    .page-header__crumb--current { color: var(--text-muted); }
+    .page-header__crumb-sep {
+      font-size: .5625rem;
+      color: var(--text-muted);
+      opacity: .65;
+    }
+    .page-header__reference { display: inline-block; margin-top: .5rem; }
     .page-header__subtitle {
       font-size: .9375rem;
       color: var(--text-secondary);
       margin-top: .625rem;
+      transition: opacity var(--transition-fast),
+                  max-height var(--transition-normal),
+                  margin var(--transition-normal);
     }
     .page-header__actions {
       flex-shrink: 0;
@@ -3584,9 +3794,23 @@
     .page-header--accent-accounts   { --module-accent: var(--module-accent-accounts); }
     .page-header--accent-helpers    { --module-accent: var(--module-accent-helpers); }
     .page-header--accent-dashboard  { --module-accent: var(--module-accent-dashboard); }
+    .page-header--accent-trust-center { --module-accent: var(--accent); }
+    /* Honour reduced-motion: snap between full and compact, no easing. */
+    @media (prefers-reduced-motion: reduce) {
+      .page-header,
+      .page-header__main,
+      .page-header__title,
+      .page-header__eyebrow,
+      .page-header__breadcrumb,
+      .page-header__subtitle,
+      .page-header__logo { transition: none; }
+    }
     @media (max-width: 575.98px) {
       .page-header { flex-direction: column; align-items: stretch; }
       .page-header__actions { width: 100%; flex-wrap: wrap; }
+      /* On mobile the actions wrap below the title, so keep the full
+       * height stable: only shrink the title, don't collapse the row. */
+      .page-header.is-compact { padding-top: .25rem; }
     }
 
     /* ── Component: empty-state ────────────────────── */
@@ -3731,7 +3955,7 @@
     .sidebar-card__header .bi { font-size: .875rem; }
     .sidebar-card__body { padding: 1rem; }
     @media (min-width: 992px) {
-      .sidebar-card--sticky { position: sticky; top: 1.5rem; }
+      .sidebar-card--sticky { position: sticky; top: calc(var(--page-header-offset) + 1rem); }
     }
 
     /* ── Component: approval-banner ────────────────── */
@@ -3740,7 +3964,7 @@
     /* ── Component: bulk-actions-bar ───────────────── */
     .bulk-actions-bar {
       position: sticky;
-      top: 1rem;
+      top: calc(var(--page-header-offset) + .5rem);
       z-index: 100;
       margin: 0 0 1rem;
       padding: .625rem 1rem;
@@ -4030,7 +4254,7 @@
   <style>
     :root { --imp-h: 38px; }
     .sidebar { top: calc(var(--sidebar-inset) + var(--imp-h)) !important; }
-    .sidebar-collapse-toggle { top: calc(var(--sidebar-inset) + 3.625rem + var(--imp-h)) !important; }
+    .sidebar-collapse-toggle { top: calc(50% + var(--imp-h) / 2) !important; }
     .main-content { padding-top: calc(2.5rem + var(--imp-h)) !important; }
     @media (max-width: 991.98px) {
       .sidebar { top: var(--imp-h) !important; }
@@ -4606,6 +4830,31 @@
     }
     /* Re-init after HTMX swaps */
     document.body.addEventListener('htmx:afterSettle', initTagInputs);
+  })();
+  </script>
+  <script>
+  /* Sticky page title bar: toggle the compact form once the bar is pinned.
+   * The bar sits at top:-1px, so an IntersectionObserver(threshold:1) fires
+   * the moment that 1px crosses the viewport edge - cheaper and smoother
+   * than a scroll listener. A fresh bar is rendered on every boosted
+   * navigation, so we (re)bind on load and after each HTMX settle. */
+  (function () {
+    function initPageHeader() {
+      var header = document.querySelector('[data-page-header]');
+      if (!header || header._compactBound) return;
+      header._compactBound = true;
+      if (!('IntersectionObserver' in window)) return;
+      var io = new IntersectionObserver(function (entries) {
+        header.classList.toggle('is-compact', entries[0].intersectionRatio < 1);
+      }, { threshold: [1] });
+      io.observe(header);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPageHeader);
+    } else {
+      initPageHeader();
+    }
+    document.body.addEventListener('htmx:afterSettle', initPageHeader);
   })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/jodit@4.2.27/es2021/jodit.min.js"></script>
@@ -5619,8 +5868,52 @@
     var askController = null;
     var ASK_MIN_LEN = 4;
 
+    var typeTimer = null;
+    function stopTypewriter() {
+      if (typeTimer) { clearTimeout(typeTimer); typeTimer = null; }
+    }
     function abortAsk() {
       if (askController) { askController.abort(); askController = null; }
+      stopTypewriter();
+    }
+
+    /* Reveal the assistant's answer letter by letter, as if it were being
+     * typed. Plain-text summary only; instant for reduced-motion or the muted
+     * fallback. Chunk size scales so long answers don't drag on. */
+    function animateAssistantSummary() {
+      stopTypewriter();
+      var el = results.querySelector('.assistant-summary');
+      if (!el || el.classList.contains('assistant-summary-muted')) return;
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var full = el.textContent;
+      if (!full) return;
+      el.textContent = '';
+      el.classList.add('assistant-typing');
+      var i = 0, total = full.length;
+      var perTick = Math.max(1, Math.round(total / 220));
+      (function step() {
+        i = Math.min(total, i + perTick);
+        el.textContent = full.slice(0, i);
+        if (i < total) {
+          typeTimer = setTimeout(step, 16);
+        } else {
+          el.classList.remove('assistant-typing');
+          typeTimer = null;
+        }
+      })();
+    }
+
+    /* Reveal the answer's records / notes in a quick cascade, in parallel with
+     * the typewriter. Skips the leading "Ask Cairn" header and the summary. */
+    function animateAssistantCards() {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var delay = 0;
+      Array.prototype.forEach.call(results.children, function(el, idx) {
+        if (idx === 0 || el.classList.contains('assistant-summary')) return;
+        el.style.animationDelay = (40 + delay * 45) + 'ms';
+        el.classList.add('assistant-reveal');
+        delay++;
+      });
     }
 
     function askRowHtml(q) {
@@ -5657,6 +5950,8 @@
         .then(function(html) {
           results.innerHTML = html;
           activeIndex = -1;
+          animateAssistantSummary();
+          animateAssistantCards();
         })
         .catch(function(err) {
           if (err && err.name === 'AbortError') return;

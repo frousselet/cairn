@@ -114,7 +114,7 @@
       {% csrf_token %}
       <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{% if existing_framework %}{% trans "Confirm addition" %}{% else %}{% trans "Confirm import" %}{% endif %}</button>
-        <a href="{% url 'compliance:framework-import' %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+        <a href="{% url 'compliance:framework-import' %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
       </div>
     </form>
   </div>

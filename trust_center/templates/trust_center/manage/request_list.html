@@ -4,7 +4,7 @@
 {% block title %}{% trans "Document requests" %} : Cairn{% endblock %}
 
 {% block content %}
-{% page_header _("Document requests") eyebrow=_("Trust Center") %}
+{% page_header _("Document requests") nav="trust_center_manage:request-list" %}
   <a href="{% url 'trust_center_manage:hub' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 

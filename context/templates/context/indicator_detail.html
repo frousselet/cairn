@@ -5,16 +5,11 @@
 {% block title %}{{ indicator.name }} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header indicator.name reference=indicator.reference %}
+{% page_header indicator.name reference=indicator.reference nav=nav_key accent="context" %}
   {% include "includes/history_trigger.html" %}
   {% if indicator.is_internal %}<span class="badge text-bg-info">{% trans "Predefined Cairn" %}</span>{% endif %}
   <a href="{% url 'context:indicator-update' indicator.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
   <a href="{% url 'context:indicator-delete' indicator.pk %}" class="btn btn-outline-danger">{% trans "Delete" %}</a>
-  {% if indicator.indicator_type == "organizational" %}
-  <a href="{% url 'context:indicator-organizational-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
-  {% else %}
-  <a href="{% url 'context:indicator-technical-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
-  {% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.indicator_detail" %}

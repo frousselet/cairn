@@ -6,10 +6,9 @@
 {% block title %}{{ activity.name }} — Cairn{% endblock %}
 
 {% block content %}
-{% page_header activity.name reference=activity.reference %}
+{% page_header activity.name reference=activity.reference nav="context:activity-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'context:activity-update' activity.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'context:activity-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.activity_detail" %}

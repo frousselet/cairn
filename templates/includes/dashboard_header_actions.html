@@ -1,6 +1,6 @@
 {% load i18n %}
 {% comment %}Dashboard page-header actions: the Today's-actions show/hide toggle (only when there is a panel) and the indicators Configure button (opens #indicatorPickerModal, rendered by the indicators include below).{% endcomment %}
 {% if today_action_groups or calendar_items %}{% include "includes/today_actions_toggle.html" %}{% endif %}
-<button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#indicatorPickerModal">
+<button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#indicatorPickerModal">
   <i class="bi bi-gear me-1" aria-hidden="true"></i>{% trans "Configure" %}
 </button>

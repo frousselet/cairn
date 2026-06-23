@@ -7,7 +7,7 @@
 {% load help_tags %}
 
 {% block content %}
-{% page_header _("Cross-framework mappings") eyebrow=_("Compliance") accent="compliance" %}
+{% page_header _("Cross-framework mappings") nav="compliance:mapping-list" accent="compliance" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'compliance:mapping-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New mapping' %}</button>
 {% endpage_header %}
 {% help_modal "compliance.mapping_list" %}

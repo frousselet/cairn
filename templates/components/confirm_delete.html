@@ -17,7 +17,7 @@
         {% endif %}
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
         <form method="post" action="{{ url }}" class="d-inline m-0">
           {% csrf_token %}
           <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>

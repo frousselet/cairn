@@ -288,7 +288,14 @@ class ScopeDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMi
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["ancestors"] = self.object.get_ancestors()
+        ancestors = self.object.get_ancestors()
+        ctx["ancestors"] = ancestors
+        # Scope ancestry for the page_header breadcrumb (Scopes > parent ref >
+        # ... > current ref): references linking to each ancestor's detail page.
+        ctx["scope_breadcrumb"] = [
+            {"label": a.reference, "url": reverse("context:scope-detail", kwargs={"pk": a.pk})}
+            for a in ancestors
+        ]
         ctx["children"] = self.object.children.exclude(workflow_state="archived")
         return ctx
 
@@ -1365,6 +1372,11 @@ class IndicatorListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["indicator_type"] = self.indicator_type
+        ctx["nav_key"] = (
+            "context:indicator-technical-list"
+            if str(self.indicator_type) == "technical"
+            else "context:indicator-organizational-list"
+        )
         _attach_indicator_sparklines(ctx["indicators"])
         return ctx
 
@@ -1410,6 +1422,11 @@ class IndicatorDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilt
         ctx["measurements"] = self.object.measurements.select_related("recorded_by")[:50]
         ctx["measurement_form"] = IndicatorMeasurementForm(
             indicator_format=self.object.format,
+        )
+        ctx["nav_key"] = (
+            "context:indicator-technical-list"
+            if str(self.object.indicator_type) == "technical"
+            else "context:indicator-organizational-list"
         )
         return ctx
 

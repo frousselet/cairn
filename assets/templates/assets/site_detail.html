@@ -16,10 +16,9 @@
   </ol>
 </nav>
 {% endif %}
-{% page_header site.name reference=site.reference %}
+{% page_header site.name reference=site.reference nav="assets:site-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'assets:site-update' site.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'assets:site-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.site_detail" %}

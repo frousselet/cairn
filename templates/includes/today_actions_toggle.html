@@ -1,6 +1,6 @@
 {% load i18n %}
 {% comment %}Discreet page-header toggle that shows / hides the whole "Today's actions" panel. State is persisted per user (see dashboard-section-toggle); JS swaps the icon/label.{% endcomment %}
-<button type="button" id="toggleTodayActions" class="btn btn-sm btn-outline-secondary"
+<button type="button" id="toggleTodayActions" class="btn btn-outline-secondary"
         aria-controls="todayActionsPanel"
         aria-expanded="{% if today_actions_collapsed %}false{% else %}true{% endif %}">
   <i class="bi {% if today_actions_collapsed %}bi-list-check{% else %}bi-eye-slash{% endif %}" aria-hidden="true"></i>

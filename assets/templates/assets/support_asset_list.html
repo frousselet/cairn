@@ -4,7 +4,7 @@
 {% block title %}{% trans "Support assets" %} — Cairn{% endblock %}
 
 {% block content %}
-{% page_header _("Support assets") eyebrow=_("Assets") accent="assets" %}
+{% page_header _("Support assets") nav="assets:support-asset-list" accent="assets" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'assets:support-asset-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New support asset' %}</button>
 {% endpage_header %}
 {% help_modal "assets.support_asset_list" %}

@@ -7,7 +7,7 @@
 {% load help_tags %}
 
 {% block content %}
-{% page_header _("Audits & compliance") eyebrow=_("Compliance") accent="compliance" %}
+{% page_header _("Audits & compliance") nav="compliance:assessment-list" accent="compliance" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'compliance:assessment-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New assessment' %}</button>
 {% endpage_header %}
 {% help_modal "compliance.assessment_list" %}

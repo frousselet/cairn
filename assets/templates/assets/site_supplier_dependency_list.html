@@ -6,7 +6,7 @@
 {% block title %}{% trans "Site–supplier dependencies" %} — Cairn{% endblock %}
 
 {% block content %}
-{% page_header _("Site–supplier dependencies") eyebrow=_("Assets") accent="assets" %}
+{% page_header _("Site–supplier dependencies") nav="assets:site-supplier-dependency-list" accent="assets" %}
   <a href="{% url 'assets:site-supplier-dependency-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New dependency' %}</a>
 {% endpage_header %}
 {% help_modal "assets.site_supplier_dependency_list" %}

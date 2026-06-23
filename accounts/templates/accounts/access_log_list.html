@@ -5,7 +5,7 @@
 {% block title %}{% trans "Access log — Cairn" %}{% endblock %}
 
 {% block content %}
-{% page_header _("Access log") eyebrow=_("Administration") accent="accounts" %}{% endpage_header %}
+{% page_header _("Access log") nav="accounts:access-log-list" accent="accounts" %}{% endpage_header %}
 {% help_modal "accounts.access_log_list" %}
 
 <form id="filterForm" method="get">

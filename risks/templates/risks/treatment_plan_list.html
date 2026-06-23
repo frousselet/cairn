@@ -7,7 +7,7 @@
 
 {% block content %}
 {% has_perm "risks.treatment.delete" as can_delete_plans %}
-{% page_header _("Treatment plans") eyebrow=_("Risk management") accent="risks" %}
+{% page_header _("Treatment plans") nav="risks:treatment-plan-list" accent="risks" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'risks:treatment-plan-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New plan' %}</button>
 {% endpage_header %}
 {% help_modal "risks.treatment_plan_list" %}

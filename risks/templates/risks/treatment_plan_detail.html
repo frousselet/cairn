@@ -6,10 +6,9 @@
 {% block title %}{{ plan.name }} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header plan.name reference=plan.reference %}
+{% page_header plan.name reference=plan.reference nav="risks:treatment-plan-list" accent="risks" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'risks:treatment-plan-update' plan.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'risks:treatment-plan-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.treatment_plan_detail" %}

@@ -6,10 +6,9 @@
 {% block title %}{{ framework.name }} — Cairn{% endblock %}
 
 {% block content %}
-{% page_header framework.name reference=framework.reference %}
+{% page_header framework.name reference=framework.reference nav="compliance:framework-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'compliance:framework-update' framework.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'compliance:framework-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "compliance.framework_detail" %}

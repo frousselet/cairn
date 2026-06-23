@@ -6,7 +6,6 @@
 {% block content %}
 {% if form.instance.pk %}{% trans "Edit essential asset" as page_title %}{% else %}{% trans "New essential asset" as page_title %}{% endif %}
 {% page_header page_title %}
-  <a href="{% url 'assets:essential-asset-list' %}" class="btn btn-outline-secondary">{% trans "Back to list" %}</a>
 {% endpage_header %}
 
 <form method="post">
@@ -220,7 +219,7 @@
   {# ── Actions ───────────────────────────────────── #}
   <div class="d-flex gap-2 form-actions-sticky">
     <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{% trans "Save" %}</button>
-    <a href="{% url 'assets:essential-asset-list' %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+    <a href="{% url 'assets:essential-asset-list' %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
   </div>
 </form>
 {% endblock %}

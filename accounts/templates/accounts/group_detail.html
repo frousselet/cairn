@@ -2,25 +2,21 @@
 {% load accounts_tags %}
 {% load i18n %}
 {% load help_tags %}
+{% load ui %}
 {% block title %}{{ group.name }} — Cairn{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h2>{{ group.name }}
-    {% if group.is_system %}<span class="badge fs-6" style="background:var(--accent-soft);color:var(--accent);font-size:.82rem;padding:.4em .8em">{% trans "System" %}</span>{% endif %}
-  </h2>
-  <div class="d-flex gap-2">
-    {% has_perm "system.groups.update" as can_edit %}
-    {% if can_edit %}
-    <a href="{% url 'accounts:group-update' group.pk %}" class="btn btn-outline-primary">{% trans "Edit" %}</a>
-    {% endif %}
-    {% has_perm "system.groups.delete" as can_delete %}
-    {% if can_delete %}
-    <a href="{% url 'accounts:group-delete' group.pk %}" class="btn btn-outline-danger">{% trans "Delete" %}</a>
-    {% endif %}
-    <a href="{% url 'accounts:group-list' %}" class="btn btn-outline-secondary">{% trans "Back to list" %}</a>
-  </div>
-</div>
+{% if group.is_system %}{% translate "System role" as group_kind %}{% endif %}
+{% page_header group.name nav="accounts:group-list" subtitle=group_kind accent="accounts" %}
+  {% has_perm "system.groups.update" as can_edit %}
+  {% if can_edit %}
+  <a href="{% url 'accounts:group-update' group.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  {% endif %}
+  {% has_perm "system.groups.delete" as can_delete %}
+  {% if can_delete %}
+  <a href="{% url 'accounts:group-delete' group.pk %}" class="btn btn-outline-danger">{% trans "Delete" %}</a>
+  {% endif %}
+{% endpage_header %}
 {% help_modal "accounts.group_detail" %}
 
 {% if group.description %}

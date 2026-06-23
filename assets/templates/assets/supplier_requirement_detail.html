@@ -14,9 +14,9 @@
   </ol>
 </nav>
 
-{% page_header req.title %}
+{% url 'assets:supplier-detail' supplier.pk as ph_parent_url %}
+{% page_header req.title nav="assets:supplier-list" parent_label=supplier.name parent_url=ph_parent_url accent="assets" %}
   <a href="{% url 'assets:supplier-requirement-update' req.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'assets:supplier-detail' supplier.pk %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% help_modal "assets.supplier_requirement_detail" %}
 

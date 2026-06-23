@@ -7,10 +7,9 @@
 {% block title %}{{ asset.name }} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header asset.name reference=asset.reference %}
+{% page_header asset.name reference=asset.reference nav="assets:essential-asset-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'assets:essential-asset-update' asset.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'assets:essential-asset-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.essential_asset_detail" %}

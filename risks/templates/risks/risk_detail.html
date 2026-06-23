@@ -6,10 +6,9 @@
 {% block title %}{{ risk.name }} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header risk.name reference=risk.reference %}
+{% page_header risk.name reference=risk.reference nav="risks:risk-list" accent="risks" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'risks:risk-update' risk.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'risks:risk-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.risk_detail" %}

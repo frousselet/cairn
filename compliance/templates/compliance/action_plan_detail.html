@@ -6,10 +6,9 @@
 {% block title %}{{ action_plan.name }} — Cairn{% endblock %}
 
 {% block content %}
-{% page_header action_plan.name reference=action_plan.reference %}
+{% page_header action_plan.name reference=action_plan.reference nav="compliance:action-plan-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'compliance:action-plan-update' action_plan.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'compliance:action-plan-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "compliance.action_plan_detail" %}

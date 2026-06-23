@@ -5,7 +5,7 @@
 {% block title %}{% trans "Assistant feedback - Cairn" %}{% endblock %}
 
 {% block content %}
-{% page_header _("Assistant feedback") eyebrow=_("Administration") accent="accounts" %}{% endpage_header %}
+{% page_header _("Assistant feedback") nav="assistant:feedback-list" accent="accounts" %}{% endpage_header %}
 
 <form id="filterForm" method="get">
   <input type="hidden" name="status" value="{{ request.GET.status|default:'' }}">

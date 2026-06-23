@@ -7,7 +7,7 @@
 
 {% block content %}
 {% has_perm "risks.threat.delete" as can_delete_threats %}
-{% page_header _("Threats") eyebrow=_("Risk management") accent="risks" %}
+{% page_header _("Threats") nav="risks:threat-list" accent="risks" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'risks:threat-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New threat' %}</button>
 {% endpage_header %}
 {% help_modal "risks.threat_list" %}
