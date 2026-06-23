@@ -252,6 +252,38 @@ def badge(value=None, *, type=None, variant=None, icon=None, label=None, classes
     }
 
 
+@register.inclusion_tag("components/progress_bar.html")
+def progress_bar(pct, *, scheme="progress", variant=None, title=None, count=None, total=None):
+    """Render a standard progress bar (1rem tall, percentage inside, min 60px).
+
+    pct      : percentage value (0-100); rounded for display and width.
+    scheme   : colour scheme when ``variant`` is not given -
+               "progress" (>=100 success, >=50 info, else warning) or
+               "score" (>=80 success, >=50 warning, else danger).
+    variant  : explicit Bootstrap colour (e.g. "info") to bypass the scheme.
+    title    : tooltip on the track; if omitted and ``count``/``total`` are
+               given, defaults to ``"count/total"``.
+    Light bars (info / warning) get dark, semibold text for contrast.
+    """
+    try:
+        value = float(pct) if pct is not None else 0
+    except (TypeError, ValueError):
+        value = 0
+    if variant is None:
+        if scheme == "score":
+            variant = "success" if value >= 80 else "warning" if value >= 50 else "danger"
+        else:
+            variant = "success" if value >= 100 else "info" if value >= 50 else "warning"
+    if title is None and count is not None and total is not None:
+        title = f"{count}/{total}"
+    return {
+        "pct": round(value),
+        "variant": variant,
+        "text_dark": variant in ("info", "warning"),
+        "title": title,
+    }
+
+
 @register.inclusion_tag("components/empty_state.html")
 def empty_state(*, icon=None, illustration=None, title=None, message=None, cta_url=None, cta_label=None, colspan=None):
     """Render a standardized empty state.

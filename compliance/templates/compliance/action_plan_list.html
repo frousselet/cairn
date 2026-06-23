@@ -44,11 +44,7 @@
           <td>{% if ap.owner %}{% user_badge ap.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
           <td>{% user_avatars ap.assignees.all size=20 %}</td>
           <td>{{ ap.target_date }}</td>
-          <td>
-            <div class="progress" style="min-width:60px">
-              <div class="progress-bar" style="width:{{ ap.progress_percentage }}%">{{ ap.progress_percentage }}%</div>
-            </div>
-          </td>
+          <td>{% progress_bar ap.progress_percentage scheme="progress" %}</td>
           <td>{% workflow_badge ap %}</td>
           <td>{% include "includes/tags_badge.html" with tags=ap.tags.all %}</td>
           <td class="text-end">
