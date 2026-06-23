@@ -23,7 +23,7 @@
             // compilemessages refreshes the catalog when .po files change.
             "label": "stack: bootstrap",
             "type": "shell",
-            "command": "${command:python.interpreterPath} manage.py compilemessages || echo 'i18n: compilemessages skipped - install gettext (e.g. brew/apt install gettext) to compile the French catalog'; ${command:python.interpreterPath} manage.py migrate --noinput && ${command:python.interpreterPath} manage.py shell -c \"from accounts.models import User; print('Demo data already present - skipping seed.') if User.objects.filter(email='elise.moreau@voltara.example').exists() else exec(open('scripts/seed_demo_data.py').read())\"",
+            "command": "${command:python.interpreterPath} manage.py migrate --noinput && ${command:python.interpreterPath} manage.py shell -c \"from accounts.models import User; print('Demo data already present - skipping seed.') if User.objects.filter(email='elise.moreau@voltara.example').exists() else exec(open('scripts/seed_demo_data.py').read())\" && (${command:python.interpreterPath} manage.py compilemessages || true)",
             "options": {
                 "cwd": "${workspaceFolder}",
                 "env": {
