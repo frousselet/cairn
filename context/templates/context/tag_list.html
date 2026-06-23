@@ -14,7 +14,6 @@
       <thead>
         <tr>
           <th>{% trans "Tag" %}</th>
-          <th>{% trans "Color" %}</th>
           <th>{% trans "Linked items" %}</th>
           <th>{% trans "Created at" %}</th>
           <th class="text-end">{% trans "Actions" %}</th>
@@ -24,11 +23,10 @@
         {% for tag in tags %}
         <tr>
           <td>
-            <span class="badge" style="background-color:{{ tag.color }};color:#fff;font-size:.82rem">{{ tag.name }}</span>
-          </td>
-          <td>
-            <span style="display:inline-block;width:1.2rem;height:1.2rem;border-radius:var(--radius-sm);background:{{ tag.color }};vertical-align:middle;border:1px solid var(--border-light)"></span>
-            <code style="font-size:.8rem;color:var(--text-secondary);margin-left:.35rem">{{ tag.color }}</code>
+            <span class="cell-stack">
+              <span><span class="badge" style="background-color:{{ tag.color }};color:#fff;font-size:.82rem">{{ tag.name }}</span></span>
+              <span class="cell-sub"><code>{{ tag.color }}</code></span>
+            </span>
           </td>
           <td>
             {% if tag.usage %}
@@ -46,7 +44,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No tag created yet.") message=_("Tags are free-form classifiers (project, criticality tier, regulation). Create the ones your team naturally reaches for.") colspan=5 %}
+        {% empty_state title=_("No tag created yet.") message=_("Tags are free-form classifiers (project, criticality tier, regulation). Create the ones your team naturally reaches for.") colspan=4 %}
         {% endfor %}
       </tbody>
     </table>
