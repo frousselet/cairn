@@ -105,9 +105,7 @@
           <table class="table table-hover mb-0">
             <thead>
               <tr>
-                <th>{% trans "Reference" %}</th>
                 <th>{% trans "Title" %}</th>
-                <th>{% trans "Section" %}</th>
                 <th>{% trans "Type" %}</th>
                 <th>{% trans "Status" %}</th>
                 <th style="min-width:120px">{% trans "Compliance" %}</th>
@@ -119,28 +117,23 @@
             <tbody>
               {% for req in requirements %}
               <tr>
-                <td><a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.reference }}</a></td>
-                <td>{{ req.name|truncatechars:60 }}</td>
-                <td>{{ req.section.reference|default:"-" }}</td>
+                <td>
+                  <span class="cell-stack">
+                    <a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.name }}</a>
+                    <span class="cell-sub">{{ req.requirement_number|default:req.reference }}{% if req.section %} • {{ req.section.reference }}{% endif %}</span>
+                  </span>
+                </td>
                 <td>{{ req.get_type_display }}</td>
                 <td>
                   {% if req.compliance_status == 'evaluated' %}
-                  <span class="badge" style="background-color:var(--accent);color:#fff">{{ req.get_compliance_status_display }}</span>
+                  <span class="badge" style="background-color:var(--accent);color:var(--accent-contrast)">{{ req.get_compliance_status_display }}</span>
                   {% else %}
                   <span class="badge text-bg-{% if req.compliance_status == 'compliant' or req.compliance_status == 'strength' %}success{% elif req.compliance_status == 'observation' or req.compliance_status == 'improvement_opportunity' or req.compliance_status == 'partially_compliant' %}warning{% elif req.compliance_status == 'major_non_conformity' or req.compliance_status == 'minor_non_conformity' or req.compliance_status == 'non_compliant' %}danger{% elif req.compliance_status == 'not_applicable' %}dark{% else %}secondary{% endif %}">
                     {{ req.get_compliance_status_display }}
                   </span>
                   {% endif %}
                 </td>
-                <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="progress flex-grow-1" style="height:.5rem">
-                      <div class="progress-bar bg-{% if req.compliance_level >= 80 %}success{% elif req.compliance_level >= 50 %}warning{% else %}danger{% endif %}"
-                           style="width:{{ req.compliance_level }}%"></div>
-                    </div>
-                    <small class="text-nowrap">{{ req.compliance_level|floatformat:0 }}%</small>
-                  </div>
-                </td>
+                <td>{% progress_bar req.compliance_level scheme="score" %}</td>
                 <td>
                   {% if req.priority %}
                   <span class="badge text-bg-{% if req.priority == 'critical' %}danger{% elif req.priority == 'high' %}warning{% elif req.priority == 'medium' %}info{% else %}secondary{% endif %}">
@@ -148,7 +141,7 @@
                   </span>
                   {% else %}-{% endif %}
                 </td>
-                <td>{% if req.owner %}{% user_badge req.owner size=20 %}{% else %}-{% endif %}</td>
+                <td>{% if req.owner %}{% user_badge req.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
                 <td class="text-end">
                   <a href="{% url 'compliance:requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
                 </td>
@@ -176,8 +169,8 @@
               <tr>
                 <td><a href="{% url 'compliance:assessment-detail' a.pk %}" class="cell-link">{{ a.name }}</a></td>
                 <td>{{ a.assessment_start_date }}</td>
-                <td>{% if a.assessor %}{% user_badge a.assessor size=20 %}{% else %}-{% endif %}</td>
-                <td>{{ a.overall_compliance_level|floatformat:0 }}%</td>
+                <td>{% if a.assessor %}{% user_badge a.assessor size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+                <td>{% progress_bar a.overall_compliance_level scheme="score" %}</td>
                 <td>{{ a.get_status_display }}</td>
               </tr>
               {% endfor %}
