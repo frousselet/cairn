@@ -65,16 +65,14 @@
             {% else %}<span class="cell-empty">-</span>{% endif %}
           </td>
           <td>
-            <div class="progress" style="height:1rem;min-width:60px">
+            <div class="progress" style="height:1rem;min-width:60px" title="{{ a.covered_count }}/{{ a.applicable_count }}">
               <div class="progress-bar bg-info" style="width:{{ a.coverage_pct }}%">{{ a.coverage_pct }}%</div>
             </div>
-            <div class="cell-sub" style="margin-top:.15rem">{{ a.covered_count }}/{{ a.applicable_count }}</div>
           </td>
           <td>
             <div class="progress" style="height:1rem;min-width:60px">
               <div class="progress-bar {% if a.compliance_pct >= 80 %}bg-success{% elif a.compliance_pct >= 50 %}bg-warning{% else %}bg-danger{% endif %}" style="width:{{ a.compliance_pct }}%">{{ a.compliance_pct }}%</div>
             </div>
-            <div class="cell-sub" style="margin-top:.15rem">{{ a.assessed_count }}/{{ a.applicable_count }}</div>
           </td>
           <td>{% workflow_badge a %}</td>
           <td>{% include "includes/tags_badge.html" with tags=a.tags.all %}</td>
