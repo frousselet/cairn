@@ -109,18 +109,18 @@
         {% if treatment_plans %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Ref." %}</th><th>{% trans "Name" %}</th><th>{% trans "Type" %}</th><th>{% trans "Progress" %}</th><th>{% trans "Status" %}</th></tr></thead>
+            <thead><tr><th>{% trans "Ref." %}</th><th>{% trans "Name" %}</th><th>{% trans "Progress" %}</th><th>{% trans "Status" %}</th></tr></thead>
             <tbody>
               {% for tp in treatment_plans %}
               <tr>
-                <td style="font-weight:500;color:var(--text-muted);font-size:.82rem">{{ tp.reference }}</td>
-                <td><a href="{% url 'risks:treatment-plan-detail' tp.pk %}" class="cell-link">{{ tp.name }}</a></td>
-                <td style="font-size:.85rem">{{ tp.get_treatment_type_display }}</td>
+                <td><a href="{% url 'risks:treatment-plan-detail' tp.pk %}" class="ref">{{ tp.reference }}</a></td>
                 <td>
-                  <div class="progress" style="height:.65rem">
-                    <div class="progress-bar" style="width:{{ tp.progress_percentage }}%"></div>
-                  </div>
+                  <span class="cell-stack">
+                    <a href="{% url 'risks:treatment-plan-detail' tp.pk %}" class="cell-link">{{ tp.name }}</a>
+                    <span class="cell-sub">{{ tp.get_treatment_type_display }}</span>
+                  </span>
                 </td>
+                <td>{% progress_bar tp.progress_percentage scheme="progress" %}</td>
                 <td style="font-size:.85rem">{{ tp.get_status_display }}</td>
               </tr>
               {% endfor %}
@@ -191,13 +191,16 @@
         {% if risk.linked_requirements.all %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Reference" %}</th><th>{% trans "Title" %}</th><th>{% trans "Framework" %}</th><th>{% trans "Compliance" %}</th></tr></thead>
+            <thead><tr><th>{% trans "Requirement" %}</th><th>{% trans "Compliance" %}</th></tr></thead>
             <tbody>
               {% for req in risk.linked_requirements.all %}
               <tr>
-                <td style="font-weight:500;color:var(--text-muted);font-size:.82rem">{{ req.requirement_number|default:req.reference }}</td>
-                <td><a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.name }}</a></td>
-                <td style="font-size:.85rem">{{ req.framework.name }}</td>
+                <td>
+                  <span class="cell-stack">
+                    <a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.name }}</a>
+                    <span class="cell-sub">{% if req.requirement_number %}{{ req.requirement_number }} • {% endif %}{{ req.framework.short_name|default:req.framework.name }}</span>
+                  </span>
+                </td>
                 <td>
                   <span class="badge text-bg-{% if req.compliance_status == 'compliant' %}success{% elif req.compliance_status == 'partially_compliant' %}warning{% elif req.compliance_status == 'non_compliant' %}danger{% else %}secondary{% endif %}">
                     {{ req.get_compliance_status_display }}

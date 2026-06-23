@@ -134,12 +134,8 @@
               <tr>
                 <td style="font-weight:500;color:var(--text-muted);font-size:.82rem">{{ ap.reference }}</td>
                 <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="cell-link">{{ ap.name }}</a></td>
-                <td>{% if ap.owner %}{% user_badge ap.owner size=20 %}{% else %}-{% endif %}</td>
-                <td>
-                  <div class="progress" style="height:.65rem">
-                    <div class="progress-bar" style="width:{{ ap.progress_percentage }}%"></div>
-                  </div>
-                </td>
+                <td>{% if ap.owner %}{% user_badge ap.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+                <td>{% progress_bar ap.progress_percentage scheme="progress" %}</td>
                 <td><span class="badge text-bg-secondary">{{ ap.get_status_display }}</span></td>
               </tr>
               {% endfor %}
