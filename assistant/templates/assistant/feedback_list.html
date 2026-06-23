@@ -68,9 +68,7 @@ function setPill(param, value) {
         <tr>
           {% sortable_th "date" "Date" %}
           {% sortable_th "rating" "Rating" %}
-          {% sortable_th "language" "Language" %}
           <th>{% trans "Question" %}</th>
-          <th>{% trans "Comment" %}</th>
           <th>{% trans "User" %}</th>
           <th class="text-end">{% trans "Status" %}</th>
         </tr>
@@ -80,15 +78,17 @@ function setPill(param, value) {
         <tr>
           <td class="text-nowrap">{{ fb.created_at|date:"d/m/Y H:i" }}</td>
           <td>
-            {% if fb.rating == "up" %}
-            <span class="badge bg-success"><i class="bi bi-hand-thumbs-up"></i> {{ fb.get_rating_display }}</span>
-            {% else %}
-            <span class="badge bg-danger"><i class="bi bi-hand-thumbs-down"></i> {{ fb.get_rating_display }}</span>
-            {% endif %}
+            <span class="cell-stack">
+              <span>{% if fb.rating == "up" %}<span class="badge bg-success"><i class="bi bi-hand-thumbs-up"></i> {{ fb.get_rating_display }}</span>{% else %}<span class="badge bg-danger"><i class="bi bi-hand-thumbs-down"></i> {{ fb.get_rating_display }}</span>{% endif %}</span>
+              {% if fb.language %}<span class="cell-sub">{{ fb.language }}</span>{% endif %}
+            </span>
           </td>
-          <td>{{ fb.language|default:"-" }}</td>
-          <td>{{ fb.question|truncatechars:60 }}</td>
-          <td>{{ fb.comment|truncatechars:60|default:"-" }}</td>
+          <td>
+            <span class="cell-stack">
+              <span title="{{ fb.question }}">{{ fb.question }}</span>
+              {% if fb.comment %}<span class="cell-sub" title="{{ fb.comment }}">{{ fb.comment }}</span>{% endif %}
+            </span>
+          </td>
           <td>{% if fb.user %}{{ fb.user.display_name }}{% else %}-{% endif %}</td>
           <td class="text-end text-nowrap">
             <form method="post" action="{% url 'assistant:feedback-resolve' fb.pk %}" class="d-inline">
@@ -105,7 +105,7 @@ function setPill(param, value) {
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No feedback to review.") message=_("Open feedback appears here when users rate an Ask Cairn answer. Export the set to hand it to an LLM, then mark items corrected to drop them from future exports.") colspan=7 %}
+        {% empty_state title=_("No feedback to review.") message=_("Open feedback appears here when users rate an Ask Cairn answer. Export the set to hand it to an LLM, then mark items corrected to drop them from future exports.") colspan=5 %}
         {% endfor %}
       </tbody>
     </table>

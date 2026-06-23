@@ -19,7 +19,6 @@
           <th>{% trans "Document" %}</th>
           <th>{% trans "Requester" %}</th>
           <th>{% trans "Status" %}</th>
-          <th>{% trans "Received" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -27,12 +26,21 @@
         <tr>
           <td><a href="{% url 'trust_center_manage:request-detail' req.pk %}" class="ref">{{ req.reference }}</a></td>
           <td>{{ req.document.title }}</td>
-          <td>{{ req.requester_name }}<br><span class="text-muted small">{{ req.email }}</span></td>
-          <td>{% workflow_badge req %}</td>
-          <td class="text-muted small">{{ req.created_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+          <td>
+            <span class="cell-stack">
+              <span>{{ req.requester_name }}</span>
+              <span class="cell-sub">{{ req.email }}</span>
+            </span>
+          </td>
+          <td>
+            <span class="cell-stack">
+              <span>{% workflow_badge req %}</span>
+              <span class="cell-sub">{{ req.created_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+            </span>
+          </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No requests yet.") message=_("Document access requests submitted from the Trust Center appear here for review and approval.") colspan=5 %}
+        {% empty_state title=_("No requests yet.") message=_("Document access requests submitted from the Trust Center appear here for review and approval.") colspan=4 %}
         {% endfor %}
       </tbody>
     </table>

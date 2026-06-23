@@ -52,7 +52,6 @@
       <thead>
         <tr>
           <th>{% trans "Name" %}</th>
-          <th>{% trans "Type" %}</th>
           <th>{% trans "Status" %}</th>
           <th>{% trans "Created at" %}</th>
           <th>{% trans "Created by" %}</th>
@@ -62,8 +61,12 @@
       <tbody>
         {% for report in reports %}
         <tr>
-          <td>{{ report.name }}</td>
-          <td>{{ report.get_report_type_display }}</td>
+          <td>
+            <span class="cell-stack">
+              <span style="font-weight:600">{{ report.name }}</span>
+              <span class="cell-sub">{{ report.get_report_type_display }}</span>
+            </span>
+          </td>
           <td>
             <span class="badge text-bg-{% if report.status == 'completed' %}success{% elif report.status == 'generating' %}info{% elif report.status == 'failed' %}danger{% else %}secondary{% endif %}">
               {{ report.get_status_display }}
@@ -83,7 +86,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No report generated yet.") message=_("Generated reports (audit reports, SoA, management review packs) are listed here for download.") colspan=6 %}
+        {% empty_state title=_("No report generated yet.") message=_("Generated reports (audit reports, SoA, management review packs) are listed here for download.") colspan=5 %}
         {% endfor %}
       </tbody>
     </table>
