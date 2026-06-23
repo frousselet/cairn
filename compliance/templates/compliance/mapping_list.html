@@ -19,9 +19,7 @@
       <thead>
         <tr>
           {% sortable_th "source" "Source" %}
-          <th>{% trans "Source framework" %}</th>
           {% sortable_th "target" "Target" %}
-          <th>{% trans "Target framework" %}</th>
           {% sortable_th "type" "Type" %}
           {% sortable_th "coverage" "Coverage" %}
           <th class="text-end">{% trans "Actions" %}</th>
@@ -30,10 +28,18 @@
       <tbody>
         {% for m in mappings %}
         <tr>
-          <td><a href="{% url 'compliance:mapping-detail' m.pk %}" class="cell-link">{{ m.source_requirement.reference }}</a></td>
-          <td>{{ m.source_requirement.framework.short_name|default:m.source_requirement.framework.name }}</td>
-          <td><a href="{% url 'compliance:requirement-detail' m.target_requirement.pk %}" class="cell-link">{{ m.target_requirement.reference }}</a></td>
-          <td>{{ m.target_requirement.framework.short_name|default:m.target_requirement.framework.name }}</td>
+          <td>
+            <span class="cell-stack">
+              <a href="{% url 'compliance:mapping-detail' m.pk %}" class="cell-link">{{ m.source_requirement.reference }}</a>
+              <span class="cell-sub">{{ m.source_requirement.framework.short_name|default:m.source_requirement.framework.name }}</span>
+            </span>
+          </td>
+          <td>
+            <span class="cell-stack">
+              <a href="{% url 'compliance:requirement-detail' m.target_requirement.pk %}" class="cell-link">{{ m.target_requirement.reference }}</a>
+              <span class="cell-sub">{{ m.target_requirement.framework.short_name|default:m.target_requirement.framework.name }}</span>
+            </span>
+          </td>
           <td>{{ m.get_mapping_type_display }}</td>
           <td>{{ m.get_coverage_level_display|default:"-" }}</td>
           <td class="text-end">
@@ -41,7 +47,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No inter-framework mapping defined yet.") message=_("Mappings link an answer to one requirement to its equivalent in another framework, so a single assessment can satisfy multiple norms.") colspan=7 %}
+        {% empty_state title=_("No inter-framework mapping defined yet.") message=_("Mappings link an answer to one requirement to its equivalent in another framework, so a single assessment can satisfy multiple norms.") colspan=5 %}
         {% endfor %}
       </tbody>
     </table>
