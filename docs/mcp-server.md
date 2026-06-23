@@ -97,6 +97,7 @@ Additional tools:
 | `action_plan_transitions` | List transition history for an action plan (legacy; `get_action_plan_history` is the canonical superset) |
 | `action_plan_kanban` | Get action plans grouped by status for Kanban board with workflow rules |
 | `action_plan_allowed_transitions` | Get allowed transitions for an action plan with permission checks |
+| `kanban_board` | Get the unified To do / Doing / Done board aggregating action plans, treatment actions, audits and risk assessments (read-only) |
 | `list_action_plan_comments` | List threaded comments on an action plan |
 | `create_action_plan_comment` | Create a comment or reply on an action plan |
 

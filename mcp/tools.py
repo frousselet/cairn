@@ -3824,6 +3824,38 @@ def _register_compliance_tools(server):
         require_perm("compliance.action_plan.read")(_action_plan_kanban),
     )
 
+    # Unified To do / Doing / Done board across modules
+    def _kanban_board(user, arguments):
+        """Get the unified To do / Doing / Done board.
+
+        Aggregates action plans, treatment actions, audits (compliance
+        assessments) and risk assessments into three columns. Only the entity
+        types the user is allowed to read are included, and cancelled / archived
+        items are omitted. The board is read-only.
+        """
+        from core.kanban import build_kanban_columns, serialize_card
+
+        columns = build_kanban_columns(user)
+        return {
+            "columns": [
+                {
+                    "key": col["key"],
+                    "label": col["label"],
+                    "count": col["count"],
+                    "cards": [serialize_card(c) for c in col["cards"]],
+                }
+                for col in columns
+            ]
+        }
+
+    server.register_tool(
+        "kanban_board",
+        "Get the unified To do / Doing / Done board aggregating action plans, "
+        "treatment actions, audits and risk assessments (read-only)",
+        _obj_schema({}, []),
+        _kanban_board,
+    )
+
     # Action plan allowed transitions tool
     def _action_plan_allowed_transitions(user, arguments):
         """Get the list of allowed transitions for a specific action plan.

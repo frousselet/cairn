@@ -52,11 +52,9 @@ from .import_utils import (
     validate_parsed_data,
 )
 from .constants import (
-    ACTION_PLAN_CANCELLABLE_STATUSES,
     ACTION_PLAN_REFUSAL_TRANSITIONS,
     ACTION_PLAN_STATUS_COLORS,
     ACTION_PLAN_TRANSITION_PERMISSIONS,
-    ACTION_PLAN_TRANSITIONS,
     ASSESSMENT_EDITABLE_STATUSES,
     ASSESSMENT_FROZEN_STATUSES,
     ASSESSMENT_TOGGLEABLE_STATUSES,
@@ -1603,7 +1601,7 @@ class ActionPlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxForm
     modal_template_name = "compliance/action_plan_form_modal.html"
     modal_title_create = _l("New action plan")
     modal_title_update = _l("Edit action plan")
-    success_url = reverse_lazy("compliance:action-plan-kanban")
+    success_url = reverse_lazy("compliance:action-plan-list")
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1621,7 +1619,7 @@ class ActionPlanUpdateView(
     modal_template_name = "compliance/action_plan_form_modal.html"
     modal_title_create = _l("New action plan")
     modal_title_update = _l("Edit action plan")
-    success_url = reverse_lazy("compliance:action-plan-kanban")
+    success_url = reverse_lazy("compliance:action-plan-list")
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1633,77 +1631,7 @@ class ActionPlanDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteVi
     model = ComplianceActionPlan
     permission_required = "compliance.action_plan.delete"
     template_name = "compliance/confirm_delete.html"
-    success_url = reverse_lazy("compliance:action-plan-kanban")
-
-
-class ActionPlanKanbanView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ListView):
-    model = ComplianceActionPlan
-    permission_required = "compliance.action_plan.read"
-    template_name = "compliance/action_plan_kanban.html"
-    context_object_name = "action_plans"
-
-    def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .select_related("owner")
-            .prefetch_related("risks", "findings", "tags", "assignees")
-            .annotate(comment_count=Count("comments"))
-        )
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        qs = ctx["action_plans"]
-        # Group action plans by status into ordered columns
-        columns = {}
-        for status_val in ActionPlanStatus:
-            if status_val == ActionPlanStatus.CANCELLED:
-                continue  # Show cancelled separately
-            columns[status_val.value] = {
-                "label": status_val.label,
-                "color": ACTION_PLAN_STATUS_COLORS.get(status_val, "secondary"),
-                "plans": [ap for ap in qs if ap.status == status_val.value],
-            }
-        ctx["columns"] = columns
-        ctx["cancelled_plans"] = [ap for ap in qs if ap.status == ActionPlanStatus.CANCELLED]
-        ctx["status_colors"] = ACTION_PLAN_STATUS_COLORS
-        # Pass transition rules as JSON for JS validation
-        transitions_json = {}
-        for from_status, to_list in ACTION_PLAN_TRANSITIONS.items():
-            transitions_json[from_status.value if hasattr(from_status, 'value') else from_status] = [
-                s.value if hasattr(s, 'value') else s for s in to_list
-            ]
-        # Add cancellation transitions
-        for s in ACTION_PLAN_CANCELLABLE_STATUSES:
-            key = s.value if hasattr(s, 'value') else s
-            if key in transitions_json:
-                transitions_json[key].append(ActionPlanStatus.CANCELLED.value)
-        ctx["transitions_json"] = json.dumps(transitions_json)
-        refusal_json = {}
-        for from_s, to_s in ACTION_PLAN_REFUSAL_TRANSITIONS.items():
-            refusal_json[from_s.value if hasattr(from_s, 'value') else from_s] = (
-                to_s.value if hasattr(to_s, 'value') else to_s
-            )
-        ctx["refusal_json"] = json.dumps(refusal_json)
-        return ctx
-
-
-class ActionPlanKanbanColumnView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ListView):
-    """HTMX partial: returns cards for a single kanban column."""
-    model = ComplianceActionPlan
-    permission_required = "compliance.action_plan.read"
-    template_name = "compliance/_action_plan_kanban_cards.html"
-    context_object_name = "plans"
-
-    def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .filter(status=self.kwargs["status"])
-            .select_related("owner")
-            .prefetch_related("risks", "findings", "tags", "assignees")
-            .annotate(comment_count=Count("comments"))
-        )
+    success_url = reverse_lazy("compliance:action-plan-list")
 
 
 class ActionPlanTransitionView(LoginRequiredMixin, PermissionRequiredMixin, View):

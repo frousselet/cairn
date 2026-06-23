@@ -58,6 +58,8 @@ new -> to_define -> to_validate -> to_implement -> implementation_to_validate ->
 | `closed` | Plan terminé (terminal). `completion_date` et `progress_percentage=100` sont auto-renseignés à l'entrée. |
 | `cancelled` | Plan annulé (terminal). Accessible depuis tout statut sauf `validated`, `closed` et `cancelled`. |
 
+> Note UI : le plan d'action conserve ce cycle de vie à 7 états sur le modèle, mais il n'a plus de tableau Kanban dédié. La page `/compliance/action-plans/` est désormais la liste, les transitions se font depuis la page de détail, et les plans apparaissent dans le tableau Kanban global **To do / Doing / Done** (`/kanban/`, voir [governance/kanban.md](../governance/kanban.md)).
+
 ### Transitions et permissions
 
 - **Avancement** : chaque transition forward exige la permission `compliance.action_plan.update` au minimum, et certaines étapes de validation peuvent exiger `compliance.action_plan.approve` (configurable).

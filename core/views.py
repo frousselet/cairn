@@ -424,6 +424,38 @@ class CalendarView(LoginRequiredMixin, TemplateView):
     template_name = "calendar.html"
 
 
+class KanbanBoardView(LoginRequiredMixin, TemplateView):
+    """Unified read-only To do / Doing / Done board across modules."""
+
+    template_name = "kanban.html"
+
+    def get_context_data(self, **kwargs):
+        from core.kanban import build_kanban_columns
+
+        ctx = super().get_context_data(**kwargs)
+        ctx["columns"] = build_kanban_columns(self.request.user)
+        return ctx
+
+
+class KanbanBoardDataView(LoginRequiredMixin, View):
+    """JSON feed backing the unified Kanban board."""
+
+    def get(self, request):
+        from core.kanban import build_kanban_columns, serialize_card
+
+        columns = build_kanban_columns(request.user)
+        data = [
+            {
+                "key": col["key"],
+                "label": col["label"],
+                "count": col["count"],
+                "cards": [serialize_card(c) for c in col["cards"]],
+            }
+            for col in columns
+        ]
+        return JsonResponse({"columns": data})
+
+
 # ── Shared calendar event fetcher ────────────────────────────
 
 
@@ -937,11 +969,12 @@ class GlobalSearchView(LoginRequiredMixin, View):
         ("compliance:framework-list", gettext_lazy("Frameworks"), "bi-journal-check", None),
         ("compliance:requirement-list", gettext_lazy("Requirements"), "bi-list-check", None),
         ("compliance:assessment-list", gettext_lazy("Compliance assessments"), "bi-clipboard-check", None),
-        ("compliance:action-plan-kanban", gettext_lazy("Action plans"), "bi-card-checklist", None),
+        ("compliance:action-plan-list", gettext_lazy("Action plans"), "bi-card-checklist", None),
         ("risks:assessment-list", gettext_lazy("Risk assessments"), "bi-shield-exclamation", None),
         ("risks:risk-list", gettext_lazy("Risk register"), "bi-exclamation-triangle", None),
         ("risks:treatment-plan-list", gettext_lazy("Treatment plans"), "bi-bandaid", None),
         ("calendar", gettext_lazy("Calendar"), "bi-calendar3", None),
+        ("kanban", gettext_lazy("Tasks"), "bi-kanban", None),
     ]
 
     ACTION_ENTRIES = [
