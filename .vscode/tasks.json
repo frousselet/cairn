@@ -6,19 +6,24 @@
     "version": "2.0.0",
     "tasks": [
         {
-            // Prepares a ready-to-use database, in two steps:
-            //  1. migrate --noinput: applies all migrations (including the data
+            // Prepares a ready-to-use environment, in three steps:
+            //  1. compilemessages: builds the .mo translation catalogs so the UI
+            //     renders in French (and any other locale). Non-fatal: if the
+            //     gettext `msgfmt` binary is missing it is skipped with a hint,
+            //     so F5 still launches (the UI just falls back to English).
+            //  2. migrate --noinput: applies all migrations (including the data
             //     migrations that populate permissions, system groups and risk
             //     criteria). Idempotent.
-            //  2. demo seed (Voltara Energy, scripts/seed_demo_data.py): populates
+            //  3. demo seed (Voltara Energy, scripts/seed_demo_data.py): populates
             //     all modules for realistic screens. The script is NOT
             //     idempotent, so it is guarded: it is only replayed if the database
             //     does not already contain the demo user.
             // Wired as the preLaunchTask of the launch configs -> run on every
-            // F5, but only does work on an uninitialized database.
+            // F5; only migrate/seed do real work once initialized, and
+            // compilemessages refreshes the catalog when .po files change.
             "label": "stack: bootstrap",
             "type": "shell",
-            "command": "${command:python.interpreterPath} manage.py migrate --noinput && ${command:python.interpreterPath} manage.py shell -c \"from accounts.models import User; print('Demo data already present - skipping seed.') if User.objects.filter(email='elise.moreau@voltara.example').exists() else exec(open('scripts/seed_demo_data.py').read())\"",
+            "command": "${command:python.interpreterPath} manage.py compilemessages || echo 'i18n: compilemessages skipped - install gettext (e.g. brew/apt install gettext) to compile the French catalog'; ${command:python.interpreterPath} manage.py migrate --noinput && ${command:python.interpreterPath} manage.py shell -c \"from accounts.models import User; print('Demo data already present - skipping seed.') if User.objects.filter(email='elise.moreau@voltara.example').exists() else exec(open('scripts/seed_demo_data.py').read())\"",
             "options": {
                 "cwd": "${workspaceFolder}",
                 "env": {
@@ -58,6 +63,26 @@
             "label": "stack: createsuperuser",
             "type": "shell",
             "command": "${command:python.interpreterPath} manage.py createsuperuser",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "DJANGO_SETTINGS_MODULE": "core.settings_local"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            // Recompiles the translation catalogs (.po -> .mo) on demand. The
+            // bootstrap task already does this on F5; use this after editing a
+            // locale/*.po file without restarting the server. Requires the
+            // gettext `msgfmt` binary (brew/apt install gettext).
+            "label": "stack: compile messages",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} manage.py compilemessages",
             "options": {
                 "cwd": "${workspaceFolder}",
                 "env": {
