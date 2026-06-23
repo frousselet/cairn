@@ -690,7 +690,7 @@ class TestDashboardRiskTreatmentFlow:
 
 
 class TestDashboardCompanyIdentity:
-    """The company name replaces the dashboard title, with the logo beside it."""
+    """The company name replaces the dashboard title (the logo is not shown)."""
 
     def test_company_name_as_title(self):
         from accounts.models import CompanySettings
@@ -718,7 +718,7 @@ class TestDashboardCompanyIdentity:
         client.get(reverse("home"))
         assert not CompanySettings.objects.exists()
 
-    def test_logo_rendered(self):
+    def test_company_logo_not_in_title(self):
         from accounts.models import CompanySettings
 
         CompanySettings.objects.create(
@@ -728,19 +728,10 @@ class TestDashboardCompanyIdentity:
         )
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
-        assert b"data:image/png;base64,abc128" in resp.content
-        assert b'class="page-header__logo"' in resp.content
-
-    def test_logo_fallback_to_original(self):
-        from accounts.models import CompanySettings
-
-        CompanySettings.objects.create(
-            name="Voltara Energy",
-            logo="data:image/png;base64,abc",
-        )
-        client, user = _superuser_client()
-        resp = client.get(reverse("home"))
-        assert b"data:image/png;base64,abc" in resp.content
+        # The dashboard title shows the company name only - no logo beside it.
+        assert b'class="page-header__logo"' not in resp.content
+        assert b"data:image/png;base64,abc128" not in resp.content
+        assert "Voltara Energy" in resp.content.decode()
 
     def test_company_logo_replaces_sidebar_brand_when_enabled(self):
         from accounts.models import CompanySettings
