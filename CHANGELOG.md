@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Single typeface : GitLab Sans replaces the Inter + Space Grotesk pairing**: the whole product now runs on one family, **GitLab Sans** (an Inter v4 derivative, OFL-1.1), instead of Inter for body and Space Grotesk for titles. Hierarchy now comes from **weight and size, not a second display face**: page titles, the sidebar app name and the pinned/compact title use weight **810**, and emphasized values (KPI / stat-card figures and the dashboard **Overall compliance** percentage) use weight **900**. The page-header title was also enlarged (2.5rem, down to 1.875rem under 992px). GitLab Sans is **self-hosted** via `@font-face` from the `@gitlab/fonts` package (no longer a Google Font); the `--font-sans` / `--font-display` tokens both resolve to it, and `font-synthesis: none` prevents synthesized faux-bold. Applied across the app shell and the standalone screens (login, MCP authorize, public Trust Center) plus the dependency-graph and dashboard-chart labels.
+- **No negative letter-spacing on titles and indicators**: all titles, display classes and KPI / Overall-compliance values now use `letter-spacing: normal` (the previous tight tracking was removed). Positive tracking is kept only on uppercase eyebrows, badges and avatar initials. Brand guidelines updated accordingly (the two-family system is replaced by the single GitLab Sans family, and a "font matrix" methodology section was added for any future type revision).
+- **Bootstrap bumped to 5.3.8**: the CSS and JS bundle CDN references (app shell + login, MCP authorize and public Trust Center screens) were updated from 5.3.3 to 5.3.8, with refreshed Subresource Integrity (SRI) hashes.
+
 ## [0.30.0] - 2026-06-23
 
 ### Added
