@@ -65,21 +65,14 @@
             {% else %}<span class="cell-empty">-</span>{% endif %}
           </td>
           <td>
-            <div class="d-flex align-items-center gap-1">
-              <div class="progress flex-grow-1" style="min-width:60px;height:6px">
-                <div class="progress-bar bg-info" style="width:{{ a.coverage_pct }}%"></div>
-              </div>
-              <small class="fw-semibold" style="font-size:.75rem;min-width:2rem;text-align:right">{{ a.coverage_pct }}%</small>
+            <div class="progress" style="height:1rem;min-width:60px">
+              <div class="progress-bar bg-info" style="width:{{ a.coverage_pct }}%">{{ a.coverage_pct }}%</div>
             </div>
             <div class="cell-sub" style="margin-top:.15rem">{{ a.covered_count }}/{{ a.applicable_count }}</div>
           </td>
           <td>
-            <div class="d-flex align-items-center gap-1">
-              <div class="progress flex-grow-1" style="min-width:60px;height:6px">
-                <div class="progress-bar {% if a.compliance_pct >= 80 %}bg-success{% elif a.compliance_pct >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
-                     style="width:{{ a.compliance_pct }}%"></div>
-              </div>
-              <small class="fw-semibold" style="font-size:.75rem;min-width:2rem;text-align:right">{{ a.compliance_pct }}%</small>
+            <div class="progress" style="height:1rem;min-width:60px">
+              <div class="progress-bar {% if a.compliance_pct >= 80 %}bg-success{% elif a.compliance_pct >= 50 %}bg-warning{% else %}bg-danger{% endif %}" style="width:{{ a.compliance_pct }}%">{{ a.compliance_pct }}%</div>
             </div>
             <div class="cell-sub" style="margin-top:.15rem">{{ a.assessed_count }}/{{ a.applicable_count }}</div>
           </td>
