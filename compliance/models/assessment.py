@@ -81,6 +81,25 @@ class ComplianceAssessment(ScopedModel):
         return f"{self.reference} : {self.name}"
 
     @property
+    def business_days_duration(self):
+        """Number of business days (Mon-Fri, inclusive) between the assessment
+        start and end dates. Public holidays are not accounted for.
+        Returns None when either date is missing or the range is invalid."""
+        from datetime import timedelta
+
+        start = self.assessment_start_date
+        end = self.assessment_end_date
+        if not (start and end) or end < start:
+            return None
+        days = 0
+        current = start
+        while current <= end:
+            if current.weekday() < 5:
+                days += 1
+            current += timedelta(days=1)
+        return days
+
+    @property
     def applicable_count(self):
         """Number of applicable results (excludes NOT_APPLICABLE and non-applicable requirements)."""
         return self.results.exclude(
