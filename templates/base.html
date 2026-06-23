@@ -6328,7 +6328,7 @@
       var accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#1E3A8A';
       var color = isCritical ? '#DC2626' : trend === 'up' ? '#16A34A' : trend === 'down' ? '#DC2626' : accent;
 
-      var uid = 'sp' + Math.random().toString(36).substr(2, 6);
+      var uid = 'sp' + (window.initSparklines._uid = (window.initSparklines._uid || 0) + 1);
       var line = 'M' + points.join(' L');
       var area = line + ' L' + w + ',' + h + ' L0,' + h + ' Z';
 
