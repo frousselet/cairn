@@ -28,7 +28,6 @@
           {% sortable_th "name" "Name" %}
           <th>{% trans "Scopes" %}</th>
           <th>{% trans "Acceptance threshold" %}</th>
-          <th>{% trans "Default" %}</th>
           {% sortable_th "workflow_state" "Status" %}
           <th>{% trans "Tags" %}</th>
           <th class="text-end">{% trans "Actions" %}</th>
@@ -38,10 +37,9 @@
         {% for c in criteria_list %}
         <tr>
           <td><a href="{% url 'risks:criteria-detail' c.pk %}" class="ref">{{ c.reference }}</a></td>
-          <td><a href="{% url 'risks:criteria-detail' c.pk %}" class="cell-link">{{ c.name }}</a></td>
+          <td><a href="{% url 'risks:criteria-detail' c.pk %}" class="cell-link">{{ c.name }}</a>{% if c.is_default %} <span class="badge text-bg-success" style="font-size:.65rem">{% trans "Default" %}</span>{% endif %}</td>
           <td>{% scope_popover c.scopes.all %}</td>
           <td>{{ c.acceptance_threshold }}</td>
-          <td>{% if c.is_default %}<span class="badge text-bg-success">{% trans "Yes" %}</span>{% else %}-{% endif %}</td>
           <td>{% workflow_badge c %}</td>
           <td>{% include "includes/tags_badge.html" with tags=c.tags.all %}</td>
           <td class="text-end">
@@ -52,7 +50,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No risk criteria defined yet.") message=_("Risk criteria are the scales (likelihood, impact) and the level matrix used during assessments. Define them once per methodology.") colspan=8 %}
+        {% empty_state title=_("No risk criteria defined yet.") message=_("Risk criteria are the scales (likelihood, impact) and the level matrix used during assessments. Define them once per methodology.") colspan=7 %}
         {% endfor %}
       </tbody>
     </table>
