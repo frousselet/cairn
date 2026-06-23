@@ -46,13 +46,17 @@
       <div class="table-responsive">
         <table class="table table-hover mb-0">
           <thead>
-            <tr><th>{% trans "Type" %}</th><th>{% trans "Description" %}</th><th>{% trans "Priority" %}</th><th>{% trans "Applicable" %}</th></tr>
+            <tr><th>{% trans "Description" %}</th><th>{% trans "Priority" %}</th><th>{% trans "Applicable" %}</th></tr>
           </thead>
           <tbody>
             {% for exp in stakeholder.expectations.all %}
             <tr>
-              <td>{{ exp.get_type_display }}</td>
-              <td>{{ exp.description }}</td>
+              <td>
+                <span class="cell-stack">
+                  <span>{{ exp.description }}</span>
+                  <span class="cell-sub">{{ exp.get_type_display }}</span>
+                </span>
+              </td>
               <td>{{ exp.get_priority_display }}</td>
               <td>{% if exp.is_applicable %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
             </tr>

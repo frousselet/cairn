@@ -120,14 +120,18 @@
         {% if recent_access_logs %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Date" %}</th><th>{% trans "Event" %}</th><th>{% trans "IP" %}</th><th>{% trans "Reason" %}</th></tr></thead>
+            <thead><tr><th>{% trans "Date" %}</th><th>{% trans "Event" %}</th><th>{% trans "IP" %}</th></tr></thead>
             <tbody>
               {% for log in recent_access_logs %}
               <tr>
                 <td>{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
-                <td>{{ log.get_event_type_display }}</td>
+                <td>
+                  <span class="cell-stack">
+                    <span>{{ log.get_event_type_display }}</span>
+                    {% if log.failure_reason %}<span class="cell-sub">{{ log.get_failure_reason_display }}</span>{% endif %}
+                  </span>
+                </td>
                 <td>{{ log.ip_address|default:"-" }}</td>
-                <td>{{ log.get_failure_reason_display|default:"-" }}</td>
               </tr>
               {% endfor %}
             </tbody>
