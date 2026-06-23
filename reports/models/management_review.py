@@ -152,7 +152,9 @@ class ManagementReview(ScopedModel):
                 raise ValueError("; ".join(str(r) for r in reasons))
 
         if target == ManagementReviewStatus.HELD and not self.held_date:
-            self.held_date = timezone.now().date()
+            # Use the local date, not the UTC date: timezone.now().date() can be
+            # a day behind localdate() near midnight in a non-UTC timezone.
+            self.held_date = timezone.localdate()
 
         transition = super().transition_to(
             target, user, comment=comment,

@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **No negative letter-spacing on titles and indicators**: all titles, display classes and KPI / Overall-compliance values now use `letter-spacing: normal` (the previous tight tracking was removed). Positive tracking is kept only on uppercase eyebrows, badges and avatar initials. Brand guidelines updated accordingly (the two-family system is replaced by the single GitLab Sans family, and a "font matrix" methodology section was added for any future type revision).
 - **Bootstrap bumped to 5.3.8**: the CSS and JS bundle CDN references (app shell + login, MCP authorize and public Trust Center screens) were updated from 5.3.3 to 5.3.8, with refreshed Subresource Integrity (SRI) hashes.
 
+### Fixed
+
+- **Management review held date uses the local date**: transitioning a management review to *Held* now stamps `held_date` with `timezone.localdate()` instead of `timezone.now().date()`, which could be a day behind near midnight in a non-UTC timezone.
+
 ## [0.30.0] - 2026-06-23
 
 ### Added
