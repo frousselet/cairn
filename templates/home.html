@@ -90,7 +90,7 @@
 
 {% block content %}
 {% if company.name %}
-{% page_header company.name accent="dashboard" logo=company.logo_128|default:company.logo %}
+{% page_header company.name accent="dashboard" %}
   {% include "includes/dashboard_header_actions.html" %}
 {% endpage_header %}
 {% else %}
