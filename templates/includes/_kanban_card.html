@@ -1,0 +1,17 @@
+{% load i18n %}
+<a href="{{ card.url }}" class="kanban-card{% if card.is_overdue %} is-overdue{% endif %}">
+  <div class="kanban-card-head">
+    <span class="kanban-card-type"><i class="bi {{ card.type_icon }}" aria-hidden="true"></i>{{ card.type_label }}</span>
+    <span class="kanban-card-ref">{{ card.reference }}</span>
+  </div>
+  <div class="kanban-card-title">{{ card.title }}</div>
+  <div class="kanban-card-meta">
+    <span class="badge text-bg-{{ card.status_tone }}">{{ card.status_label }}</span>
+    {% if card.owner %}<span class="kanban-card-owner"><i class="bi bi-person" aria-hidden="true"></i>{{ card.owner }}</span>{% endif %}
+    {% if card.due_date %}
+      <span class="kanban-card-due{% if card.is_overdue %} is-overdue{% endif %}" {% if card.is_overdue %}title="{% trans 'Overdue' %}"{% endif %}>
+        <i class="bi bi-calendar-event" aria-hidden="true"></i>{{ card.due_date|date:"d M Y" }}
+      </span>
+    {% endif %}
+  </div>
+</a>

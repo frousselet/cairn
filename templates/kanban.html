@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block title %}{% trans "Tasks" %} — Cairn{% endblock %}
+
+{% block extra_css %}
+<style>
+  .kanban-board { display:flex; flex-direction:column; gap:1rem; }
+  @media (min-width: 992px) {
+    .kanban-board { flex-direction:row; align-items:flex-start; }
+    /* Cap each column to the viewport; scroll happens inside the column.
+       --kanban-h is computed by the fit script below; the calc() is a fallback. */
+    .kanban-col { max-height:var(--kanban-h, calc(100vh - 16rem)); }
+    .kanban-col-body { overflow-y:auto; min-height:0; }
+  }
+  .kanban-col {
+    flex:1 1 0; min-width:0;
+    background:var(--surface-muted);
+    border:1px solid var(--border-light);
+    border-radius:var(--radius-md);
+    display:flex; flex-direction:column;
+  }
+  .kanban-col-header { flex:0 0 auto; }
+  .kanban-col-header {
+    display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+    padding:.75rem 1rem; border-bottom:1px solid var(--border-light);
+    font-weight:650; font-size:.9rem; color:var(--text-primary);
+    letter-spacing:-.01em;
+  }
+  .kanban-count {
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:1.5rem; height:1.5rem; padding:0 .4rem; border-radius:100px;
+    background:var(--surface); border:1px solid var(--border-light);
+    font-size:.75rem; font-weight:600; color:var(--text-secondary);
+  }
+  .kanban-col-body {
+    padding:.75rem; display:flex; flex-direction:column; gap:.625rem;
+    min-height:3.5rem;
+  }
+  .kanban-card {
+    display:block; background:var(--surface);
+    border:1px solid var(--border-light); border-radius:var(--radius-sm);
+    padding:.625rem .75rem; text-decoration:none; color:inherit;
+    transition:border-color .15s var(--ease-out), box-shadow .15s var(--ease-out);
+  }
+  .kanban-card:hover { border-color:var(--accent); box-shadow:var(--shadow-sm); }
+  .kanban-card.is-overdue, .kanban-card.is-overdue:hover { border-color:var(--bs-danger); }
+  .kanban-card-head {
+    display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+    font-size:.7rem;
+  }
+  .kanban-card-type {
+    display:inline-flex; align-items:center; gap:.3rem;
+    color:var(--text-secondary); font-weight:500;
+  }
+  .kanban-card-ref { color:var(--text-secondary); font-variant-numeric:tabular-nums; }
+  .kanban-card-title {
+    font-weight:550; font-size:.85rem; color:var(--text-primary);
+    margin:.3rem 0 .45rem; line-height:1.3;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .kanban-card-meta {
+    display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;
+    font-size:.72rem; color:var(--text-secondary);
+  }
+  .kanban-card-owner, .kanban-card-due { display:inline-flex; align-items:center; gap:.25rem; }
+  .kanban-card-due.is-overdue { color:var(--bs-danger); font-weight:600; }
+  .kanban-empty {
+    color:var(--text-secondary); font-size:.8rem; text-align:center;
+    padding:1.5rem .5rem; margin:0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% page_header _("Tasks") icon="bi-kanban" %}
+{% endpage_header %}
+
+<div class="kanban-board" id="kanbanBoard">
+  {% for col in columns %}
+  <section class="kanban-col" aria-label="{{ col.label }}">
+    <header class="kanban-col-header">
+      <span>{{ col.label }}</span>
+      <span class="kanban-count">{{ col.count }}</span>
+    </header>
+    <div class="kanban-col-body">
+      {% for card in col.cards %}
+        {% include "includes/_kanban_card.html" %}
+      {% empty %}
+        <p class="kanban-empty">{% trans "Nothing here" %}</p>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    var board = document.getElementById("kanbanBoard");
+    if (!board) return;
+
+    // Cap the columns to the available viewport height so the page itself
+    // never scrolls: only the column bodies do. Disabled on stacked (mobile)
+    // layouts, where the page scrolls normally.
+    function fit() {
+      if (window.innerWidth < 992) {
+        board.style.removeProperty("--kanban-h");
+        return;
+      }
+      var top = board.getBoundingClientRect().top;
+      // Leave room for the main content's bottom padding (~5rem) plus slack.
+      var height = window.innerHeight - top - 96;
+      board.style.setProperty("--kanban-h", Math.max(height, 240) + "px");
+    }
+
+    fit();
+    window.addEventListener("resize", fit);
+  })();
+</script>
+{% endblock %}

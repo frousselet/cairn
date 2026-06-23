@@ -4079,6 +4079,10 @@
         <i class="bi bi-calendar3"></i> <span class="sidebar-link-text">{% trans "Calendar" %}</span>
         <span class="sidebar-tooltip">{% trans "Calendar" %}</span>
       </a>
+      <a href="{% url 'kanban' %}" class="sidebar-link">
+        <i class="bi bi-kanban"></i> <span class="sidebar-link-text">{% trans "Tasks" %}</span>
+        <span class="sidebar-tooltip">{% trans "Tasks" %}</span>
+      </a>
 
       {# ── Gouvernance ─────────────────────────────────── #}
       <div class="sidebar-section">{% trans "Governance" %}</div>
@@ -4212,8 +4216,8 @@
         <i class="bi bi-arrow-left-right"></i> <span class="sidebar-link-text">{% trans "Mappings" %}</span>
         <span class="sidebar-tooltip">{% trans "Mappings" %}</span>
       </a>
-      <a href="{% url 'compliance:action-plan-kanban' %}" class="sidebar-link">
-        <i class="bi bi-kanban"></i> <span class="sidebar-link-text">{% trans "Action plans" %}</span>
+      <a href="{% url 'compliance:action-plan-list' %}" class="sidebar-link">
+        <i class="bi bi-card-checklist"></i> <span class="sidebar-link-text">{% trans "Action plans" %}</span>
         <span class="sidebar-tooltip">{% trans "Action plans" %}</span>
       </a>
 

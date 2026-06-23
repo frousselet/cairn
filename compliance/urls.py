@@ -58,16 +58,14 @@ urlpatterns = [
     path("mappings/<uuid:pk>/edit/", views.MappingUpdateView.as_view(), name="mapping-update"),
     path("mappings/<uuid:pk>/delete/", views.MappingDeleteView.as_view(), name="mapping-delete"),
     # Action Plans
-    path("action-plans/", views.ActionPlanKanbanView.as_view(), name="action-plan-kanban"),
-    path("action-plans/list/", views.ActionPlanListView.as_view(), name="action-plan-list"),
-    path("action-plans/kanban/column/<str:status>/", views.ActionPlanKanbanColumnView.as_view(), name="action-plan-kanban-column"),
+    path("action-plans/", views.ActionPlanListView.as_view(), name="action-plan-list"),
     path("action-plans/create/", views.ActionPlanCreateView.as_view(), name="action-plan-create"),
     path("action-plans/<uuid:pk>/", views.ActionPlanDetailView.as_view(), name="action-plan-detail"),
     path("action-plans/<uuid:pk>/edit/", views.ActionPlanUpdateView.as_view(), name="action-plan-update"),
     path("action-plans/<uuid:pk>/delete/", views.ActionPlanDeleteView.as_view(), name="action-plan-delete"),
     path("action-plans/<uuid:pk>/comments/", views.ActionPlanCommentCreateView.as_view(), name="action-plan-comments"),
     path("action-plans/<uuid:pk>/transition/", views.ActionPlanTransitionView.as_view(), name="action-plan-transition"),
-    path("action-plans/<uuid:pk>/approve/", views.ApproveView.as_view(model=ComplianceActionPlan, permission_feature="action_plan", success_url=reverse_lazy("compliance:action-plan-kanban")), name="action-plan-approve"),
+    path("action-plans/<uuid:pk>/approve/", views.ApproveView.as_view(model=ComplianceActionPlan, permission_feature="action_plan", success_url=reverse_lazy("compliance:action-plan-list")), name="action-plan-approve"),
     # Drawer previews
     path("preview/risk/<uuid:pk>/", views.RiskPreviewView.as_view(), name="risk-preview"),
     path("preview/finding/<uuid:pk>/", views.FindingPreviewView.as_view(), name="finding-preview"),

@@ -506,19 +506,6 @@ class TestMappingDeleteView:
 # ── Action Plan Views ────────────────────────────────────────
 
 
-class TestActionPlanKanbanView:
-    def test_kanban_returns_200(self, client):
-        ComplianceActionPlanFactory()
-        url = reverse("compliance:action-plan-kanban")
-        response = client.get(url)
-        assert response.status_code == 200
-
-    def test_kanban_empty(self, client):
-        url = reverse("compliance:action-plan-kanban")
-        response = client.get(url)
-        assert response.status_code == 200
-
-
 class TestActionPlanListView:
     def test_list_returns_200(self, client):
         ComplianceActionPlanFactory()
@@ -752,9 +739,9 @@ class TestLoginRequired:
         response = c.get(url)
         assert response.status_code == 302
 
-    def test_action_plan_kanban_requires_login(self):
+    def test_action_plan_list_requires_login(self):
         c = Client()
-        url = reverse("compliance:action-plan-kanban")
+        url = reverse("compliance:action-plan-list")
         response = c.get(url)
         assert response.status_code == 302
 
