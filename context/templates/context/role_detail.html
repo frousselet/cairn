@@ -59,16 +59,19 @@
               <tr>
                 <th>{% trans "Description" %}</th>
                 <th>{% trans "RACI type" %}</th>
-                <th>{% trans "Activity" %}</th>
                 <th class="text-end"><span class="visually-hidden">{% trans "Actions" %}</span></th>
               </tr>
             </thead>
             <tbody>
               {% for resp in role.responsibilities.all %}
               <tr>
-                <td>{{ resp.description }}</td>
+                <td>
+                  <span class="cell-stack">
+                    <span>{{ resp.description }}</span>
+                    {% if resp.related_activity %}<span class="cell-sub"><i class="bi bi-diagram-2 me-1" aria-hidden="true"></i>{{ resp.related_activity }}</span>{% endif %}
+                  </span>
+                </td>
                 <td>{% badge resp.raci_type variant="accent" label=resp.get_raci_type_display %}</td>
-                <td>{{ resp.related_activity|default:"-" }}</td>
                 <td class="text-end">
                   <div class="d-inline-flex gap-1">
                     <button type="button" class="btn btn-sm border-0 p-0 px-1" style="color:var(--text-muted)" title="{% trans 'Edit' %}"

@@ -162,7 +162,7 @@
               {% if can_edit_group %}
               <th style="width:40px"></th>
               {% endif %}
-              <th>{% trans "Name" %}</th><th>{% trans "Email" %}</th><th></th>
+              <th>{% trans "Name" %}</th><th></th>
             </tr></thead>
             <tbody>
               {% for u in group_users %}
@@ -173,8 +173,19 @@
                   <input type="checkbox" class="form-check-input user-remove-cb" value="{{ u.pk }}" onchange="updateRemoveCount()">
                 </td>
                 {% endif %}
-                <td><a href="{% url 'accounts:user-detail' u.pk %}" class="cell-link">{{ u.display_name }}</a></td>
-                <td>{{ u.email }}</td>
+                <td>
+                  <span class="cell-people cell-people--sm">
+                    {% if u.avatar %}
+                    <img src="{{ u.avatar_32|default:u.avatar }}" alt="" class="cell-avatar">
+                    {% else %}
+                    <span class="cell-avatar-fallback">{{ u.display_name|initials }}</span>
+                    {% endif %}
+                    <span class="cell-stack">
+                      <a href="{% url 'accounts:user-detail' u.pk %}" class="cell-link">{{ u.display_name }}</a>
+                      <span class="cell-sub">{{ u.email }}</span>
+                    </span>
+                  </span>
+                </td>
                 <td class="text-end">
                   {% has_perm "system.groups.update" as can_edit_group %}
                   {% if can_edit_group %}

@@ -74,15 +74,19 @@
         <table class="table table-sm mb-0">
           <thead><tr>
             <th>{% trans "Ref." %}</th><th>{% trans "Title" %}</th>
-            <th>{% trans "Category" %}</th><th>{% trans "Owner" %}</th>
+            <th>{% trans "Owner" %}</th>
             <th>{% trans "Due" %}</th><th>{% trans "Status" %}</th><th></th>
           </tr></thead>
           <tbody>
           {% for d in decisions %}
           <tr>
             <td><span class="ref">{{ d.reference }}</span></td>
-            <td>{{ d.title }}</td>
-            <td class="small">{{ d.get_category_display }}</td>
+            <td>
+              <span class="cell-stack">
+                <span style="font-weight:600">{{ d.title }}</span>
+                <span class="cell-sub">{{ d.get_category_display }}</span>
+              </span>
+            </td>
             <td class="small">{{ d.owner|default:"-" }}</td>
             <td class="small">{{ d.due_date|default:"-"|date:"d/m/Y" }}</td>
             <td><span class="badge bg-secondary">{{ d.get_status_display }}</span></td>
