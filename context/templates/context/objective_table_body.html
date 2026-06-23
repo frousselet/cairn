@@ -24,12 +24,7 @@
     {% else %}<span class="cell-empty">-</span>{% endif %}
   </td>
   <td>
-    {% if obj.progress_percentage is not None %}
-    <div class="progress" style="min-width: 80px;">
-      <div class="progress-bar {% if obj.progress_percentage == 100 %}bg-success{% elif obj.progress_percentage >= 50 %}bg-info{% else %}bg-warning{% endif %}"
-           style="width: {{ obj.progress_percentage }}%">{{ obj.progress_percentage }}%</div>
-    </div>
-    {% else %}-{% endif %}
+    {% if obj.progress_percentage is not None %}{% progress_bar obj.progress_percentage scheme="progress" %}{% else %}<span class="cell-empty">-</span>{% endif %}
   </td>
   <td>{% workflow_badge obj %}</td>
   <td>

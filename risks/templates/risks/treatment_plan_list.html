@@ -61,9 +61,7 @@
             {% else %}<span class="cell-empty">-</span>{% endif %}
           </td>
           <td>
-            <div class="progress" style="height:1rem;min-width:60px">
-              <div class="progress-bar bg-{% if p.progress_percentage == 100 %}success{% elif p.progress_percentage >= 50 %}info{% else %}warning{% endif %}" style="width:{{ p.progress_percentage }}%">{{ p.progress_percentage }}%</div>
-            </div>
+            {% progress_bar p.progress_percentage scheme="progress" %}
           </td>
           <td>
             {% if p.target_date %}

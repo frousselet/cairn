@@ -160,6 +160,29 @@ Rules for two-line / people cells :
   helpers keep the two lines tight on their own.
 - Canonical example : `accounts/user_list.html`.
 
+## Progress bars
+
+Use the shared `{% progress_bar %}` tag (`core.templatetags.ui`) for every
+percentage bar in a list table - never hand-roll the `.progress` markup. It
+renders a 1rem-tall bar with the percentage inside, a 60px min width, and
+**automatic text contrast** (dark, semibold text on the light `info` / `warning`
+bars; white on `success` / `danger`).
+
+```django
+{% load ui %}
+{% progress_bar obj.progress_percentage scheme="progress" %}   {# completion #}
+{% progress_bar fw.compliance_level scheme="score" %}          {# quality score #}
+{% progress_bar a.coverage_pct variant="info" count=a.covered_count total=a.applicable_count %}
+```
+
+- `scheme="progress"` (default): `>=100` success, `>=50` info, else warning. Use
+  for completion/advancement (objectives, treatment plans, action plans).
+- `scheme="score"`: `>=80` success, `>=50` warning, else danger. Use for a quality
+  rating (compliance level).
+- `variant="…"` forces a fixed colour (e.g. coverage is always `info`).
+- `count`/`total` (or `title`) set the hover tooltip (e.g. `82/89`); prefer a
+  tooltip over a second visible line for the underlying counts.
+
 ## HTMX list + table_body split
 
 Some lists render the `<tbody>` from a `*_table_body.html` partial loaded via HTMX.

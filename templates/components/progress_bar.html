@@ -1,0 +1,4 @@
+{# Rendered by {% progress_bar %} (core.templatetags.ui) - do not include directly. #}
+<div class="progress" style="height:1rem;min-width:60px"{% if title %} title="{{ title }}"{% endif %}>
+  <div class="progress-bar bg-{{ variant }}{% if text_dark %} text-dark{% endif %} fw-semibold" style="width:{{ pct }}%">{{ pct }}%</div>
+</div>
