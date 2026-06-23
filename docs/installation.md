@@ -100,6 +100,7 @@ Python is managed by [mise](https://mise.jdx.dev/), pinned in [`mise.toml`](../m
 ### Prerequisites
 
 - [mise](https://mise.jdx.dev/getting-started.html)
+- [gettext](https://www.gnu.org/software/gettext/) - provides the `msgfmt` binary used to compile the translation catalogs so the UI renders in French (`brew install gettext` on macOS, `apt install gettext` on Debian/Ubuntu). Without it the UI falls back to English.
 
 ### Setup
 
@@ -122,6 +123,10 @@ All commands use `DJANGO_SETTINGS_MODULE=core.settings_local`:
 ```bash
 export DJANGO_SETTINGS_MODULE=core.settings_local
 
+# Compile the translation catalogs (.po -> .mo) so the UI renders in French
+# (requires gettext / msgfmt - see prerequisites)
+python manage.py compilemessages
+
 # Create the SQLite schema (applies all migrations, including the data
 # migrations that seed permissions, system groups and risk criteria)
 python manage.py migrate
@@ -141,8 +146,9 @@ The repository ships ready-to-use VS Code configurations:
 
 - **`.vscode/launch.json`** : two launch configurations, **Cairn: runserver (Django)** and **Cairn: uvicorn ASGI (Channels)**. Press `F5` to start the server under the debugger with breakpoints. Both set `DJANGO_SETTINGS_MODULE=core.settings_local` for you.
 - **`.vscode/tasks.json`** : support tasks (Terminal > Run Task...):
-  - **stack: bootstrap** : runs `migrate` then seeds the demo dataset (guarded - only on an uninitialized database). It is wired as the `preLaunchTask`, so a plain `F5` prepares the database automatically.
+  - **stack: bootstrap** : compiles the translation catalogs (non-fatal if `gettext` is missing), runs `migrate`, then seeds the demo dataset (guarded - only on an uninitialized database). It is wired as the `preLaunchTask`, so a plain `F5` prepares the database and the French UI automatically.
   - **stack: seed-demo** : reloads the Voltara Energy demo dataset on demand.
+  - **stack: compile messages** : recompiles the `.po` -> `.mo` translation catalogs on demand (after editing a `locale/*.po` file).
   - **stack: createsuperuser** : creates an additional superuser interactively.
 
 To start from a clean dataset, delete `db.sqlite3` and run the bootstrap task again.
