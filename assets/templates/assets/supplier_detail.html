@@ -120,15 +120,18 @@
             <thead>
               <tr>
                 <th>{% trans "Title" %}</th>
-                <th>{% trans "Description" %}</th>
                 <th class="text-end">{% trans "Actions" %}</th>
               </tr>
             </thead>
             <tbody>
               {% for req in type_requirements %}
               <tr>
-                <td style="font-weight:500">{{ req.title }}</td>
-                <td>{{ req.description|default:"-"|truncatewords:20 }}</td>
+                <td>
+                  <span class="cell-stack">
+                    <span style="font-weight:600">{{ req.title }}</span>
+                    {% if req.description %}<span class="cell-sub" title="{{ req.description }}">{{ req.description }}</span>{% endif %}
+                  </span>
+                </td>
                 <td>
                   <form method="post" action="{% url 'assets:instantiate-type-requirement-review' supplier.pk req.pk %}" class="d-inline">
                     {% csrf_token %}
@@ -137,7 +140,7 @@
                 </td>
               </tr>
               {% empty %}
-              <tr><td colspan="3" class="text-center py-4" style="color:var(--text-muted)">{% trans "No type requirements." %}</td></tr>
+              <tr><td colspan="2" class="text-center py-4" style="color:var(--text-muted)">{% trans "No type requirements." %}</td></tr>
               {% endfor %}
             </tbody>
           </table>
@@ -186,7 +189,6 @@
             <thead>
               <tr>
                 <th>{% trans "Title" %}</th>
-                <th>{% trans "Linked requirement" %}</th>
                 <th>{% trans "Status" %}</th>
                 <th>{% trans "Reviews" %}</th>
                 <th>{% trans "Due date" %}</th>
@@ -197,8 +199,12 @@
             <tbody>
               {% for req in requirements %}
               <tr>
-                <td><a href="{% url 'assets:supplier-requirement-detail' req.pk %}" class="cell-link">{{ req.title }}</a></td>
-                <td>{% if req.requirement %}<span class="ref">{{ req.requirement.reference }}</span> {{ req.requirement.name|truncatewords:10 }}{% else %}-{% endif %}</td>
+                <td>
+                  <span class="cell-stack">
+                    <a href="{% url 'assets:supplier-requirement-detail' req.pk %}" class="cell-link">{{ req.title }}</a>
+                    {% if req.requirement %}<span class="cell-sub">{{ req.requirement.reference }} {{ req.requirement.name }}</span>{% endif %}
+                  </span>
+                </td>
                 <td>
                   <span class="badge text-bg-{% if req.compliance_status == 'compliant' %}success{% elif req.compliance_status == 'non_compliant' %}danger{% elif req.compliance_status == 'partially_compliant' %}warning{% else %}secondary{% endif %}">
                     {{ req.get_compliance_status_display }}
@@ -206,14 +212,14 @@
                 </td>
                 <td><span class="badge text-bg-secondary">{{ req.reviews.count }}</span></td>
                 <td>{{ req.due_date|default:"-" }}</td>
-                <td>{% if req.verified_by %}{% user_badge req.verified_by size=20 %}{% else %}-{% endif %}</td>
+                <td>{% if req.verified_by %}{% user_badge req.verified_by size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
                 <td class="text-end">
                   <a href="{% url 'assets:supplier-requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
                   <a href="{% url 'assets:supplier-requirement-delete' req.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
                 </td>
               </tr>
               {% empty %}
-              <tr><td colspan="7" class="text-center py-4" style="color:var(--text-muted)">{% trans "No specific requirements for this supplier." %}</td></tr>
+              <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted)">{% trans "No specific requirements for this supplier." %}</td></tr>
               {% endfor %}
             </tbody>
           </table>
