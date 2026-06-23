@@ -66,12 +66,12 @@
           </td>
           <td>
             <div class="progress" style="height:1rem;min-width:60px" title="{{ a.covered_count }}/{{ a.applicable_count }}">
-              <div class="progress-bar bg-info" style="width:{{ a.coverage_pct }}%">{{ a.coverage_pct }}%</div>
+              <div class="progress-bar bg-info text-dark fw-semibold" style="width:{{ a.coverage_pct }}%">{{ a.coverage_pct }}%</div>
             </div>
           </td>
           <td>
             <div class="progress" style="height:1rem;min-width:60px">
-              <div class="progress-bar {% if a.compliance_pct >= 80 %}bg-success{% elif a.compliance_pct >= 50 %}bg-warning{% else %}bg-danger{% endif %}" style="width:{{ a.compliance_pct }}%">{{ a.compliance_pct }}%</div>
+              <div class="progress-bar fw-semibold {% if a.compliance_pct >= 80 %}bg-success{% elif a.compliance_pct >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %}" style="width:{{ a.compliance_pct }}%">{{ a.compliance_pct }}%</div>
             </div>
           </td>
           <td>{% workflow_badge a %}</td>
