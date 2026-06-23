@@ -21,7 +21,6 @@
       <thead>
         <tr>
           <th>{% trans "Item type" %}</th>
-          <th>{% trans "Model" %}</th>
           <th>{% trans "Approval" %}</th>
           <th>{% trans "Major fields" %}</th>
           <th class="text-end">{% trans "Actions" %}</th>
@@ -30,8 +29,12 @@
       <tbody>
         {% for config in configs %}
         <tr>
-          <td style="font-weight:500">{{ config.model_label|default:config.model_name }}</td>
-          <td><code style="font-size:.8rem">{{ config.model_name }}</code></td>
+          <td>
+            <span class="cell-stack">
+              <span style="font-weight:600">{{ config.model_label|default:config.model_name }}</span>
+              <span class="cell-sub"><code>{{ config.model_name }}</code></span>
+            </span>
+          </td>
           <td>
             {% if config.approval_enabled %}
               <span class="badge text-bg-success">{% trans "Enabled" %}</span>
@@ -60,7 +63,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No versioning configuration defined yet.") message=_("All models use the default behaviour (every change is major, approval enabled). Add a configuration to relax this for a specific model.") colspan=5 %}
+        {% empty_state title=_("No versioning configuration defined yet.") message=_("All models use the default behaviour (every change is major, approval enabled). Add a configuration to relax this for a specific model.") colspan=4 %}
         {% endfor %}
       </tbody>
     </table>
