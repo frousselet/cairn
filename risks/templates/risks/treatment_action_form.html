@@ -37,9 +37,9 @@
       <div class="d-flex gap-2 form-actions-sticky">
         <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
         {% if form.instance.treatment_plan_id %}
-        <a href="{% url 'risks:treatment-plan-detail' form.instance.treatment_plan_id %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+        <a href="{% url 'risks:treatment-plan-detail' form.instance.treatment_plan_id %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
         {% else %}
-        <a href="{% url 'risks:treatment-plan-list' %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+        <a href="{% url 'risks:treatment-plan-list' %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
         {% endif %}
       </div>
     </form>

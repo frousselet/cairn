@@ -5,10 +5,9 @@
 {% block title %}{{ stakeholder.name }} — Cairn{% endblock %}
 
 {% block content %}
-{% page_header stakeholder.name reference=stakeholder.reference %}
+{% page_header stakeholder.name reference=stakeholder.reference nav="context:stakeholder-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'context:stakeholder-update' stakeholder.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'context:stakeholder-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.stakeholder_detail" %}

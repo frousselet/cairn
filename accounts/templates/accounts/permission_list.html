@@ -4,7 +4,7 @@
 {% block title %}{% trans "Permissions — Cairn" %}{% endblock %}
 
 {% block content %}
-{% page_header _("Permissions") eyebrow=_("Administration") accent="accounts" %}{% endpage_header %}
+{% page_header _("Permissions") nav="accounts:permission-list" accent="accounts" %}{% endpage_header %}
 {% help_modal "accounts.permission_list" %}
 
 {% for mod_key, mod_data in grouped_permissions.items %}

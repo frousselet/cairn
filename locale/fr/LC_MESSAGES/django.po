@@ -10570,3 +10570,22 @@ msgstr "Audit"
 msgctxt "kanban"
 msgid "Risk assessment"
 msgstr "Appréciation des risques"
+
+#. Detail page eyebrows (page_header surtitre)
+msgid "Mapping"
+msgstr "Correspondance"
+
+msgid "Decision"
+msgstr "Décision"
+
+msgid "Risk analysis"
+msgstr "Analyse de risque"
+
+msgid "System role"
+msgstr "Rôle système"
+
+msgid "Robot account"
+msgstr "Compte robot"
+
+msgid "Breadcrumb"
+msgstr "Fil d'Ariane"

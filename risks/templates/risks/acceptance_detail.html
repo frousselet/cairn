@@ -7,10 +7,9 @@
 
 {% block content %}
 {% blocktrans asvar acceptance_title with risk=acceptance.risk %}Acceptance - {{ risk }}{% endblocktrans %}
-{% page_header acceptance_title reference=acceptance.reference %}
+{% page_header acceptance_title reference=acceptance.reference nav="risks:acceptance-list" accent="risks" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'risks:acceptance-update' acceptance.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'risks:acceptance-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.acceptance_detail" %}

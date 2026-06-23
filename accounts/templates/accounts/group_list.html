@@ -8,7 +8,7 @@
 {% block content %}
 {% has_perm "system.groups.create" as can_create %}
 {% has_perm "system.groups.update" as can_update %}
-{% page_header _("Groups") eyebrow=_("Administration") accent="accounts" %}
+{% page_header _("Groups") nav="accounts:group-list" accent="accounts" %}
   {% if can_create %}
   <a href="{% url 'accounts:group-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'Create a group' %}</a>
   {% endif %}

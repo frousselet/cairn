@@ -6,10 +6,9 @@
 {% block title %}{{ objective.name }} — Cairn{% endblock %}
 
 {% block content %}
-{% page_header objective.name reference=objective.reference %}
+{% page_header objective.name reference=objective.reference nav="context:objective-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'context:objective-update' objective.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'context:objective-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.objective_detail" %}

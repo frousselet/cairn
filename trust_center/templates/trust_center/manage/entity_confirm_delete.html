@@ -15,7 +15,7 @@
     <form method="post">
       {% csrf_token %}
       <button type="submit" class="btn btn-danger">{% trans "Delete" %}</button>
-      <a href="{% url 'trust_center_manage:detail' entity obj.pk %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+      <a href="{% url 'trust_center_manage:detail' entity obj.pk %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
     </form>
   </div>
 </div>

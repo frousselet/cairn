@@ -5,14 +5,14 @@
 
 {% block content %}
 {% has_perm "reports.management_review.update" as can_update_review %}
-{% page_header decision.title reference=decision.reference %}
+{% url 'reports:management-review-detail' decision.review.pk as ph_parent_url %}
+{% page_header decision.title reference=decision.reference nav="reports:management-review-list" parent_label=decision.review.title parent_url=ph_parent_url accent="reports" %}
   {% if can_update_review %}
   <a href="{% url 'reports:decision-edit' decision.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
   {% if not decision.linked_action_plan %}
   <a href="{% url 'reports:decision-promote' decision.pk %}" class="btn btn-outline-success">{% trans "Promote to action plan" %}</a>
   {% endif %}
   {% endif %}
-  <a href="{% url 'reports:management-review-detail' decision.review.pk %}" class="btn btn-outline-secondary">{% trans "Back to review" %}</a>
 {% endpage_header %}
 
 <div class="row g-3">

@@ -4,7 +4,7 @@
 {% block title %}{% trans "Essential assets" %} — Cairn{% endblock %}
 
 {% block content %}
-{% page_header _("Essential assets") eyebrow=_("Assets") accent="assets" %}
+{% page_header _("Essential assets") nav="assets:essential-asset-list" accent="assets" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'assets:essential-asset-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New essential asset' %}</button>
 {% endpage_header %}
 {% help_modal "assets.essential_asset_list" %}

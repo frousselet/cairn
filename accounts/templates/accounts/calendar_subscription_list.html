@@ -4,7 +4,7 @@
 {% block title %}{% trans "Calendar subscriptions" %} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header _("Calendar subscriptions") subtitle=_("Active calendar subscription tokens across all users. Revoking a token immediately disables the corresponding iCal feed.") eyebrow=_("Administration") accent="accounts" %}{% endpage_header %}
+{% page_header _("Calendar subscriptions") subtitle=_("Active calendar subscription tokens across all users. Revoking a token immediately disables the corresponding iCal feed.") nav="accounts:calendar-subscription-list" accent="accounts" %}{% endpage_header %}
 
 <div class="card">
   <div class="table-responsive">

@@ -4,9 +4,8 @@
 {% block title %}{{ obj.reference }} : Cairn{% endblock %}
 
 {% block content %}
-{% page_header obj.reference eyebrow=_("Document request") %}
+{% page_header obj.reference nav="trust_center_manage:request-list" accent="trust-center" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'trust_center_manage:request-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 

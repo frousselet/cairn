@@ -5,10 +5,9 @@
 {% block title %}{{ role.name }} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header role.name reference=role.reference eyebrow=_("Role") icon="person-badge" accent="context" %}
+{% page_header role.name reference=role.reference nav="context:role-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'context:role-update' role.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
-  <a href="{% url 'context:role-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.role_detail" %}

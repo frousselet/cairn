@@ -24,7 +24,7 @@
 {% endblock %}
 
 {% block content %}
-{% page_header assessment.name reference=assessment.reference %}
+{% page_header assessment.name reference=assessment.reference nav="compliance:assessment-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
   {% if not is_locked %}
   <a href="{% url 'compliance:assessment-update' assessment.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans 'Edit' %}</a>

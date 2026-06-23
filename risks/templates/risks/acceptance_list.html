@@ -7,7 +7,7 @@
 
 {% block content %}
 {% has_perm "risks.acceptance.delete" as can_delete_acceptances %}
-{% page_header _("Risk acceptances") eyebrow=_("Risk management") accent="risks" %}
+{% page_header _("Risk acceptances") nav="risks:acceptance-list" accent="risks" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'risks:acceptance-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New acceptance' %}</button>
 {% endpage_header %}
 {% help_modal "risks.acceptance_list" %}

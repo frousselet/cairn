@@ -7,7 +7,7 @@
 {% load help_tags %}
 
 {% block content %}
-{% page_header _("Frameworks") eyebrow=_("Compliance") accent="compliance" %}
+{% page_header _("Frameworks") nav="compliance:framework-list" accent="compliance" %}
   <button type="button" class="btn btn-outline-secondary" hx-get="{% url 'compliance:framework-import' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-upload me-1" aria-hidden="true"></i>{% trans 'Import' %}</button>
   <button type="button" class="btn btn-primary" hx-get="{% url 'compliance:framework-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New framework' %}</button>
 {% endpage_header %}

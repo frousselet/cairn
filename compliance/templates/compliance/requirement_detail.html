@@ -6,10 +6,9 @@
 {% block title %}{{ requirement.name }} — Cairn{% endblock %}
 
 {% block content %}
-{% page_header requirement.name reference=requirement.reference %}
+{% page_header requirement.name reference=requirement.reference nav="compliance:requirement-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'compliance:requirement-update' requirement.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'compliance:requirement-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "compliance.requirement_detail" %}

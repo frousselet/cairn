@@ -33,12 +33,12 @@
   <div class="modal-footer drawer-footer">
     {% block modal_form_actions %}
       {% if form.is_multistep %}
-      <button type="button" class="btn btn-outline-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+      <button type="button" class="btn btn-outline-danger me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
       <button type="button" class="btn btn-outline-secondary" data-mform-back hidden><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{% trans "Back" %}</button>
       <button type="button" class="btn btn-primary" data-mform-next data-required-msg="{% trans 'Fill the required fields to continue.' %}">{% trans "Next" %}<i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
       <button type="submit" class="btn btn-primary" data-mform-submit hidden><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
       {% else %}
-      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+      <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
       <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
       {% endif %}
     {% endblock %}

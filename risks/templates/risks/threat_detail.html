@@ -5,10 +5,9 @@
 {% block title %}{{ threat.name }} — Cairn{% endblock %}
 
 {% block content %}
-{% page_header threat.name reference=threat.reference %}
+{% page_header threat.name reference=threat.reference nav="risks:threat-list" accent="risks" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'risks:threat-update' threat.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'risks:threat-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.threat_detail" %}

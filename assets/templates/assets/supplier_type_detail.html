@@ -5,9 +5,8 @@
 {% block title %}{{ supplier_type.name }} — Cairn{% endblock %}
 
 {% block content %}
-{% page_header supplier_type.name subtitle=_("Supplier type") reference=supplier_type.reference %}
+{% page_header supplier_type.name reference=supplier_type.reference nav="assets:supplier-type-list" accent="assets" %}
   <a href="{% url 'assets:supplier-type-update' supplier_type.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'assets:supplier-type-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% help_modal "assets.supplier_type_detail" %}
 

@@ -13,8 +13,11 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from django import template
+from django.urls import NoReverseMatch, reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _
+
+from core.navigation import NAV_TREE
 
 register = template.Library()
 
@@ -32,6 +35,7 @@ register = template.Library()
 MODULE_ACCENTS = {
     "risks", "compliance", "assets", "context",
     "reports", "accounts", "helpers", "dashboard",
+    "trust-center",
 }
 
 
@@ -417,6 +421,55 @@ class PageHeaderNode(template.Node):
             accent = str(accent)
             if accent not in MODULE_ACCENTS:
                 accent = None
+        # The eyebrow renders as a breadcrumb that mirrors the sidebar tree.
+        # Preferred form: `nav="<list-url-name>"` resolves the menu ancestry
+        # from core.navigation.NAV_TREE (section / group as non-clickable
+        # crumbs, the leaf list as a link), then appends the parent crumb
+        # (parent_label/parent_url) for nested entities and the item's
+        # reference (or title) as the final, current crumb. On the list page
+        # itself the leaf is the current crumb and nothing is appended.
+        # Legacy form (eyebrow_url / breadcrumb) is kept as a fallback; with
+        # neither, it falls back to the plain eyebrow.
+        eyebrow = resolved_kwargs.get("eyebrow")
+        eyebrow_url = resolved_kwargs.get("eyebrow_url")
+        parent_label = resolved_kwargs.get("parent_label")
+        parent_url = resolved_kwargs.get("parent_url")
+        extra = resolved_kwargs.get("breadcrumb") or []
+        nav = resolved_kwargs.get("nav")
+        reference = resolved_kwargs.get("reference")
+        crumbs = None
+        if nav and nav in NAV_TREE:
+            section, group, leaf_label = NAV_TREE[nav]
+            request = context.get("request")
+            try:
+                list_url = reverse(nav)
+            except NoReverseMatch:
+                list_url = None
+            on_list_page = bool(request and list_url and request.path == list_url)
+            crumbs = []
+            if section:
+                crumbs.append({"label": gettext(section), "url": None})
+            if group:
+                crumbs.append({"label": gettext(group), "url": None})
+            if on_list_page:
+                crumbs.append({"label": gettext(leaf_label), "url": None})
+            else:
+                crumbs.append({"label": gettext(leaf_label), "url": list_url})
+                if parent_label:
+                    crumbs.append({"label": parent_label, "url": parent_url})
+                # Self-nested entities (e.g. scopes) pass their ancestor chain
+                # as `breadcrumb`, inserted between the list and the current item.
+                crumbs.extend(extra)
+                final = reference or title
+                if final:
+                    crumbs.append({"label": final, "url": None})
+        elif eyebrow_url or parent_label or extra:
+            crumbs = []
+            if eyebrow:
+                crumbs.append({"label": eyebrow, "url": eyebrow_url})
+            if parent_label:
+                crumbs.append({"label": parent_label, "url": parent_url})
+            crumbs.extend(extra)
         with context.push(
             title=title,
             subtitle=resolved_kwargs.get("subtitle"),
@@ -424,7 +477,8 @@ class PageHeaderNode(template.Node):
             icon=resolved_kwargs.get("icon"),
             logo=resolved_kwargs.get("logo"),
             accent=accent,
-            eyebrow=resolved_kwargs.get("eyebrow"),
+            eyebrow=eyebrow,
+            crumbs=crumbs,
             actions_html=mark_safe(actions_html) if actions_html else "",
         ):
             tpl = context.template.engine.get_template("components/page_header.html")

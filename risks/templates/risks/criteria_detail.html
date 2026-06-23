@@ -5,10 +5,9 @@
 {% block title %}{{ criteria.name }} — Cairn{% endblock %}
 
 {% block content %}
-{% page_header criteria.name reference=criteria.reference %}
+{% page_header criteria.name reference=criteria.reference nav="risks:criteria-list" accent="risks" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'risks:criteria-update' criteria.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'risks:criteria-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.criteria_detail" %}

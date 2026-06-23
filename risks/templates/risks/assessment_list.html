@@ -7,7 +7,7 @@
 
 {% block content %}
 {% has_perm "risks.assessment.delete" as can_delete_assessments %}
-{% page_header _("Risk assessments") eyebrow=_("Risk management") accent="risks" %}
+{% page_header _("Risk assessments") nav="risks:assessment-list" accent="risks" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'risks:assessment-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New assessment' %}</button>
 {% endpage_header %}
 {% help_modal "risks.assessment_list" %}

@@ -5,7 +5,6 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2 class="mb-0">{% if object.pk %}{% trans "Edit versioning configuration" %}{% else %}{% trans "New versioning configuration" %}{% endif %}</h2>
-  <a href="{% url 'core:versioning-config-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 </div>
 
 <div class="card">
@@ -63,7 +62,7 @@
 
       <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
-        <a href="{% url 'core:versioning-config-list' %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+        <a href="{% url 'core:versioning-config-list' %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
       </div>
     </form>
   </div>

@@ -5,7 +5,6 @@
 
 {% block content %}
 {% page_header cfg.label eyebrow=_("Trust Center") %}
-  <a href="{% url 'trust_center_manage:hub' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 
 <div class="card">
@@ -22,7 +21,7 @@
       </div>
       {% endfor %}
       <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
-      <a href="{% url 'trust_center_manage:hub' %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+      <a href="{% url 'trust_center_manage:hub' %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
     </form>
   </div>
 </div>

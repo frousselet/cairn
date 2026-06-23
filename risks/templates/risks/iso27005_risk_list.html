@@ -7,7 +7,7 @@
 
 {% block content %}
 {% has_perm "risks.iso27005.delete" as can_delete_iso27005 %}
-{% page_header _("ISO 27005 analyses") eyebrow=_("Risk management") accent="risks" %}
+{% page_header _("ISO 27005 analyses") nav="risks:iso27005-list" accent="risks" %}
   <a href="{% url 'risks:assessment-list' %}" class="btn btn-outline-secondary"><i class="bi bi-clipboard-data me-1" aria-hidden="true"></i>{% trans 'Go to assessments' %}</a>
 {% endpage_header %}
 <div class="alert alert-info mb-3">

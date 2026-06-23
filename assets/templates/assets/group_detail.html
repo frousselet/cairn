@@ -6,10 +6,9 @@
 {% block title %}{{ group.name }} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header group.name reference=group.reference %}
+{% page_header group.name reference=group.reference nav="assets:group-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
   <a href="{% url 'assets:group-update' group.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'assets:group-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.group_detail" %}

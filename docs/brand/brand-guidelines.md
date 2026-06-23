@@ -148,7 +148,10 @@ and three semantic colours **reserved for status only**.
 | `--info-soft` | `#ECFEFF` | Info alert / chip background. |
 
 > Rule: no semantic colour is used as decoration. If an element is not a
-> status, it takes navy or a neutral.
+> status, it takes navy or a neutral. The one sanctioned exception is the
+> outline of an **action button**, where the semantic colour signals the
+> impact of the action itself (red = destructive, amber = caution,
+> green = confirm) - see Buttons. It still never appears as a solid fill.
 
 ### Dark mode (warm-charcoal)
 
@@ -298,13 +301,24 @@ live on the `/styleguide` page (visit after login).
 
 ### Buttons
 
-- Pill shape (`border-radius: 0.625rem`), `1px` border.
-- **Primary**: solid navy, white text. Reserved for the principal action
-  per context.
-- **Outline**: surface background, subtle border, secondary text. Hover:
-  cream background.
-- **Danger / Success / Warning**: solid semantic background, white text.
-  Strictly for actions with that impact (delete, approve, etc.).
+- Rounded corners (`border-radius: 0.625rem`), `1px` border, subtle raised
+  fill (`--surface-raised`).
+- **Every button is an outline button**: no solid fills anywhere. The context
+  is carried by the border + text colour, and hover applies a calm soft-tint
+  fill (`--*-soft`), never a solid block.
+- **Neutral**: grey outline (`--border-light`, secondary text), the dashboard
+  button. This is the single style for every non-semantic action, **including
+  the main / "primary" action** : `btn-primary` and `btn-secondary` look
+  identical. Emphasis comes from placement and the leading icon, not colour.
+- **Danger**: red outline (`--danger`). Destructive actions (delete).
+- **Warning**: amber outline (`--warning`).
+- **Success**: green outline (`--success`). Approve / confirm.
+- Info is **not** part of the button palette: `btn-info` renders as neutral
+  grey.
+- Bootstrap's solid classes (`btn-primary`, `btn-danger`, `btn-success`,
+  `btn-warning`, `btn-secondary`) are remapped in CSS to their outline
+  equivalent, so existing markup keeps working: authors may use either the
+  solid or the `btn-outline-*` name interchangeably.
 
 ### Page header
 

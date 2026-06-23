@@ -5,7 +5,6 @@
 
 {% block content %}
 {% page_header _("Promote decision to action plan") %}
-  <a href="{% url 'reports:management-review-detail' decision.review.pk %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
 {% endpage_header %}
 
 <div class="alert alert-info py-2 px-3 mb-3">
@@ -60,7 +59,7 @@
       <button type="submit" class="btn btn-primary">
         <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Create action plan" %}
       </button>
-      <a href="{% url 'reports:management-review-detail' decision.review.pk %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+      <a href="{% url 'reports:management-review-detail' decision.review.pk %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
     </div>
   </form>
 </div></div>
