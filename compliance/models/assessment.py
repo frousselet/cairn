@@ -117,6 +117,17 @@ class ComplianceAssessment(ScopedModel):
         ).filter(requirement__is_applicable=True).count()
 
     @property
+    def assessed_count(self):
+        """Number of truly assessed results (the basis of the compliance %)."""
+        return self.results.exclude(
+            compliance_status__in=[
+                ComplianceStatus.NOT_ASSESSED,
+                ComplianceStatus.NOT_APPLICABLE,
+                ComplianceStatus.EVALUATED,
+            ],
+        ).filter(requirement__is_applicable=True).count()
+
+    @property
     def coverage_pct(self):
         """Coverage percentage matching the detail view logic."""
         applicable = self.applicable_count
