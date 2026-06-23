@@ -23,8 +23,6 @@
       <thead>
         <tr>
           {% sortable_th "name" "Name" %}
-          <th>{% trans "Description" %}</th>
-          <th>{% trans "Type" %}</th>
           <th>{% trans "Users" %}</th>
           <th>{% trans "Permissions" %}</th>
           <th class="text-end">{% trans "Actions" %}</th>
@@ -33,14 +31,11 @@
       <tbody>
         {% for group in groups %}
         <tr>
-          <td><a href="{% url 'accounts:group-detail' group.pk %}" class="cell-link">{{ group.name }}</a></td>
-          <td>{{ group.description|truncatewords:15|default:"-" }}</td>
           <td>
-            {% if group.is_system %}
-            <span class="badge bg-info">{% trans "System" %}</span>
-            {% else %}
-            <span class="badge bg-light text-dark">{% trans "Custom" %}</span>
-            {% endif %}
+            <span class="cell-stack">
+              <span><a href="{% url 'accounts:group-detail' group.pk %}" class="cell-link" style="font-weight:600">{{ group.name }}</a>{% if group.is_system %} <span class="badge bg-info" style="font-size:.65rem">{% trans "System" %}</span>{% endif %}</span>
+              {% if group.description %}<span class="cell-sub" title="{{ group.description }}">{{ group.description }}</span>{% endif %}
+            </span>
           </td>
           <td>{{ group.user_count }}</td>
           <td>{{ group.permission_count }}</td>
@@ -51,7 +46,7 @@
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No group created yet.") message=_("Groups bundle related items together so you can apply controls and analyses at the right granularity.") colspan=6 %}
+        {% empty_state title=_("No group created yet.") message=_("Groups bundle related items together so you can apply controls and analyses at the right granularity.") colspan=4 %}
         {% endfor %}
       </tbody>
     </table>

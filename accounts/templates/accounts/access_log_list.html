@@ -62,7 +62,6 @@ function setPill(param, value) {
           {% sortable_th "email" "Email" %}
           {% sortable_th "event" "Event" %}
           <th>{% trans "IP" %}</th>
-          <th>{% trans "Reason" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -71,21 +70,15 @@ function setPill(param, value) {
           <td>{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
           <td>{{ log.email_attempted }}</td>
           <td>
-            {% if log.event_type == "login_success" %}
-            <span class="badge bg-success">{{ log.get_event_type_display }}</span>
-            {% elif log.event_type == "login_failed" %}
-            <span class="badge bg-danger">{{ log.get_event_type_display }}</span>
-            {% elif log.event_type == "account_locked" %}
-            <span class="badge bg-warning text-dark">{{ log.get_event_type_display }}</span>
-            {% else %}
-            <span class="badge bg-secondary">{{ log.get_event_type_display }}</span>
-            {% endif %}
+            <span class="cell-stack">
+              <span>{% if log.event_type == "login_success" %}<span class="badge bg-success">{{ log.get_event_type_display }}</span>{% elif log.event_type == "login_failed" %}<span class="badge bg-danger">{{ log.get_event_type_display }}</span>{% elif log.event_type == "account_locked" %}<span class="badge bg-warning text-dark">{{ log.get_event_type_display }}</span>{% else %}<span class="badge bg-secondary">{{ log.get_event_type_display }}</span>{% endif %}</span>
+              {% if log.failure_reason %}<span class="cell-sub">{{ log.get_failure_reason_display }}</span>{% endif %}
+            </span>
           </td>
           <td>{{ log.ip_address|default:"-" }}</td>
-          <td>{{ log.get_failure_reason_display|default:"-" }}</td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No access events yet.") message=_("Access logs trace every sign-in, sign-out and impersonation attempt. They appear here as soon as activity happens.") colspan=5 %}
+        {% empty_state title=_("No access events yet.") message=_("Access logs trace every sign-in, sign-out and impersonation attempt. They appear here as soon as activity happens.") colspan=4 %}
         {% endfor %}
       </tbody>
     </table>
