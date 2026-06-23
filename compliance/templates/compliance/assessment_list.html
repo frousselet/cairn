@@ -71,7 +71,7 @@
               </div>
               <small class="fw-semibold" style="font-size:.75rem;min-width:2rem;text-align:right">{{ a.coverage_pct }}%</small>
             </div>
-            <small style="font-size:.7rem;color:var(--text-muted)">{{ a.covered_count }}/{{ a.applicable_count }}</small>
+            <div class="cell-sub" style="margin-top:.15rem">{{ a.covered_count }}/{{ a.applicable_count }}</div>
           </td>
           <td>
             <div class="d-flex align-items-center gap-1">
@@ -81,6 +81,7 @@
               </div>
               <small class="fw-semibold" style="font-size:.75rem;min-width:2rem;text-align:right">{{ a.compliance_pct }}%</small>
             </div>
+            <div class="cell-sub" style="margin-top:.15rem">{{ a.assessed_count }}/{{ a.applicable_count }}</div>
           </td>
           <td>{% workflow_badge a %}</td>
           <td>{% include "includes/tags_badge.html" with tags=a.tags.all %}</td>
