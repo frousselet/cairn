@@ -132,6 +132,54 @@ class MeAPIView(APIView):
         return Response({"status": "success", "data": serializer.data})
 
 
+class DashboardLayoutAPIView(APIView):
+    """Read and update the authenticated user's configurable dashboard layout.
+
+    GET returns the resolved layout (every registered widget exactly once, in
+    the user's order, with sizes clamped to each widget's allowed set) plus the
+    catalogue of available widgets. PUT replaces the layout; the payload is
+    sanitised against the widget registry so it can never be corrupted.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def _catalogue(self):
+        from core.dashboard import DASHBOARD_WIDGETS
+
+        return [
+            {
+                "id": w.id,
+                "title": str(w.title),
+                "icon": w.icon,
+                "category": str(w.category),
+                "sizes": list(w.sizes),
+                "default_size": w.default_size,
+                "default_zone": w.default_zone,
+                "description": str(w.description),
+            }
+            for w in DASHBOARD_WIDGETS
+        ]
+
+    def get(self, request):
+        from core.dashboard import resolve_layout
+
+        return Response({
+            "status": "success",
+            "data": {
+                "layout": resolve_layout(request.user.dashboard_layout),
+                "widgets": self._catalogue(),
+            },
+        })
+
+    def put(self, request):
+        from core.dashboard import sanitize_layout
+
+        layout = sanitize_layout(request.data.get("layout"))
+        request.user.dashboard_layout = layout
+        request.user.save(update_fields=["dashboard_layout"])
+        return Response({"status": "success", "data": {"layout": layout}})
+
+
 class TokenRefreshAPIView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []

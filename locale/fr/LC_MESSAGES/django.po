@@ -10589,3 +10589,82 @@ msgstr "Compte robot"
 
 msgid "Breadcrumb"
 msgstr "Fil d'Ariane"
+
+# Configurable dashboard widgets
+msgid "Small - 1/4"
+msgstr "Petit - 1/4"
+
+msgid "Medium - 1/2"
+msgstr "Moyen - 1/2"
+
+msgid "Large - 3/4"
+msgstr "Grand - 3/4"
+
+msgid "Full width"
+msgstr "Pleine largeur"
+
+msgid "Key indicators"
+msgstr "Indicateurs clés"
+
+msgid "Upcoming deadlines"
+msgstr "Échéances à venir"
+
+msgid "Priority risks"
+msgstr "Risques prioritaires"
+
+msgid "Active objectives"
+msgstr "Objectifs actifs"
+
+msgid "Average compliance across all active frameworks, with the target."
+msgstr "Conformité moyenne sur tous les référentiels actifs, avec la cible."
+
+msgid "Your pinned KPI cards with trend sparklines."
+msgstr "Vos cartes d'indicateurs épinglées avec leurs courbes de tendance."
+
+msgid "Per-framework compliance breakdown."
+msgstr "Répartition de la conformité par référentiel."
+
+msgid "Reviews, audits and target dates in the next 30 days. Designed for the right rail."
+msgstr "Revues, audits et dates cibles dans les 30 prochains jours. Conçu pour la colonne de droite."
+
+msgid "Progress of objectives in play."
+msgstr "Avancement des objectifs en cours."
+
+msgid "Top untreated risks by residual level. Designed for the right rail."
+msgstr "Principaux risques non traités par niveau résiduel. Conçu pour la colonne de droite."
+
+msgid "How treatment moves risks from their current to their residual level."
+msgstr "Comment le traitement fait passer les risques de leur niveau actuel à leur niveau résiduel."
+
+msgid "Probability x impact heatmaps, current and residual."
+msgstr "Cartes de chaleur probabilité x impact, actuelles et résiduelles."
+
+msgid "A prioritized to-do list built from the current state of your ISMS."
+msgstr "Une liste de tâches priorisée construite à partir de l'état actuel de votre SMSI."
+
+msgid "Add a widget"
+msgstr "Ajouter un widget"
+
+msgid "Remove from dashboard"
+msgstr "Retirer du tableau de bord"
+
+msgid "Drag to move"
+msgstr "Glisser pour déplacer"
+
+msgid "Resize"
+msgstr "Redimensionner"
+
+msgid "Pick a widget to add it to your dashboard. You can then drag it into place and resize it."
+msgstr "Choisissez un widget à ajouter à votre tableau de bord. Vous pourrez ensuite le déplacer et le redimensionner."
+
+msgid "All widgets are already on your dashboard."
+msgstr "Tous les widgets sont déjà sur votre tableau de bord."
+
+msgid "No critical or high risk to address."
+msgstr "Aucun risque critique ou élevé à traiter."
+
+msgid "No deadline in the next 30 days."
+msgstr "Aucune échéance dans les 30 prochains jours."
+
+msgid "Nothing requires your attention right now."
+msgstr "Rien ne requiert votre attention pour le moment."

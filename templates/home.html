@@ -7,84 +7,212 @@
 
 {% block extra_css %}
 <style>
-  /* ── Deadlines & events (inside Today's actions) ── */
-  .today-actions__deadlines-title {
-    font-size:.8125rem; font-weight:600; color:var(--text-secondary);
+  /* ── Two-zone dashboard: main area + dedicated side rail ──
+     The page header lives in its own container (above), so it never moves.
+     The zones row is allowed to extend right into the container's gutter on
+     large screens to make room for the rail, without touching the title. */
+  .dashboard-zones {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    /* Each zone is its own height (never stretched to match the other one), so
+       its dotted edit background ends exactly at its last widget. */
+    align-items: start;
   }
-  .today-actions__deadlines-title .badge { font-size:.6875rem; font-weight:500; }
-  .upcoming-list { display:flex; flex-direction:column; gap:.3125rem; }
-  .upcoming-item {
-    display:flex; align-items:center; gap:.625rem; padding:.5rem .75rem;
-    border-radius:var(--radius-sm); background:var(--surface-raised);
-    border:1px solid var(--border-light); text-decoration:none; color:inherit;
-    transition:all .2s cubic-bezier(.16,1,.3,1);
+  .dashboard-main {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1.5rem;
+    /* Rows are content-height and packed to the top: a widget cell is never
+       taller than the widget, and the zone never has extra dotted space below
+       its last row. */
+    align-items: start;
+    align-content: start;
+    align-self: start;
+    min-width: 0;
+    transition: padding .22s var(--ease-out), background-color .22s var(--ease-out);
   }
-  .upcoming-item:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; transform:translateX(2px); }
-  .upcoming-item-dot { width:.4375rem; height:.4375rem; border-radius:50%; flex-shrink:0; }
-  .upcoming-item-date {
-    font-size:.75rem; font-weight:600; color:var(--text-muted);
-    min-width:11.5rem; flex-shrink:0; font-variant-numeric:tabular-nums; white-space:nowrap;
+  .dashboard-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-self: start;
+    min-width: 0;
+    transition: padding .22s var(--ease-out), background-color .22s var(--ease-out);
   }
-  .upcoming-item-date .upcoming-days {
-    display:inline-block; margin-left:.25rem; font-size:.625rem; font-weight:550;
-    color:var(--accent); background:var(--accent-soft); padding:.0625rem .375rem;
-    border-radius:100px; line-height:1.5;
+  /* Below xl, every main widget spans the full width (single column). */
+  @media (max-width: 1199.98px) {
+    .dashboard-main > .dash-widget { grid-column: 1 / -1 !important; }
   }
-  .upcoming-item-date .upcoming-days--overdue {
-    color:var(--danger); background:var(--danger-soft);
+  /* Large screens: the whole dashboard (title/buttons + board) uses more of the
+     screen up to a max width, kept centred (the container stays auto-centred).
+     The standard container cap is lifted (only for the dashboard, via :has) and
+     replaced by a wider cap so it never sprawls on very large screens. The title
+     row and the board share this container, so they are always the same width.
+     The rail sits beside the main area as a wide column. */
+  @media (min-width: 1600px) {
+    .main-content > .container-xl:has(#dashboardZones) {
+      max-width: 1900px;
+    }
+    .dashboard-zones {
+      --rail-w: 24rem;
+      grid-template-columns: minmax(0, 1fr) var(--rail-w);
+    }
   }
-  .upcoming-item-kind {
-    flex-shrink:0; font-size:.625rem; font-weight:550; line-height:1.5;
-    color:var(--text-secondary); background:var(--surface-subtle);
-    padding:.0625rem .375rem; border-radius:100px; white-space:nowrap;
+  /* On very wide screens, give the rail a little more room. */
+  @media (min-width: 2200px) {
+    .dashboard-zones { --rail-w: 28rem; }
   }
-  .upcoming-item-title { font-size:.8125rem; font-weight:500; color:var(--text-primary); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .upcoming-item-cat { font-size:.6875rem; color:var(--text-muted); flex-shrink:0; }
-  .upcoming-toggle {
-    font-size:.75rem; color:var(--accent); background:none; border:none;
-    cursor:pointer; font-weight:500; padding:0; transition:color .15s;
-  }
-  .upcoming-toggle:hover { text-decoration:underline; color:var(--accent-hover); }
+  .dash-widget { position: relative; min-width: 0; }
+  /* The base layout adds a trailing bottom margin under cards (2rem) and the KPI
+     grid (mb-4). Inside the widget grid the gap already handles spacing, so that
+     margin would just be dead space inside the cell, below the card. Strip it so
+     each widget's content fills its cell exactly. */
+  .dash-widget .card,
+  .dash-widget .indicator-grid { margin-bottom: 0 !important; }
+  /* Hidden widgets stay in the DOM (so they can be re-added without a reload)
+     but never render. */
+  .dash-widget[data-visible="false"] { display: none; }
+  /* An otherwise-visible widget with no data is hidden in view mode and shown
+     (as a removable placeholder) only while editing. */
+  body:not(.dash-editing) .dash-widget--empty { display: none; }
+  .dash-widget__chrome { display: none; }
+  /* Rail widgets always fill the rail width; their size menu is irrelevant. */
+  .dashboard-rail .dash-widget__resize { display: none; }
 
-  /* Segmented data bar: one rounded track, hairline-separated segments (design system) */
+  /* ── Edit mode ──────────────────────────────────────────── */
+  body.dash-editing .dashboard-main,
+  body.dash-editing .dashboard-rail {
+    /* Dotted placement grid behind the widgets (Apple-style). No padding, so
+       each widget card reaches the edges; the dots show only in the gaps
+       between widgets. */
+    border-radius: var(--radius-lg);
+    background-color: var(--surface-subtle);
+    background-image: radial-gradient(color-mix(in srgb, var(--text-muted) 38%, transparent) 1.2px, transparent 1.2px);
+    background-size: 22px 22px;
+    background-position: 11px 11px;
+  }
+  /* Keep an editable rail discoverable even when it holds no widgets. */
+  body.dash-editing .dashboard-rail { min-height: 6rem; }
+  body.dash-editing .dash-widget {
+    cursor: grab;
+    border-radius: var(--radius-lg);
+    outline: 2px dashed transparent;
+    transition: outline-color .15s var(--ease-out);
+  }
+  body.dash-editing .dash-widget:hover { outline-color: var(--border-strong, var(--border-light)); }
+  body.dash-editing .dash-widget.dash-widget--dragging { cursor: grabbing; }
+  /* Block interaction with the widget content while editing. */
+  body.dash-editing .dash-widget__body { pointer-events: none; user-select: none; }
+  body.dash-editing .dash-widget__chrome {
+    display: flex;
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: .5rem;
+    pointer-events: none;
+  }
+  body.dash-editing .dash-widget__chrome > * { pointer-events: auto; }
+  .dash-widget__remove {
+    width: 1.75rem; height: 1.75rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    border: none;
+    background: var(--danger);
+    color: #fff;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    font-size: .8125rem;
+    line-height: 1;
+  }
+  .dash-widget__remove:hover { filter: brightness(1.06); }
+  .dash-widget__grip {
+    color: var(--text-muted);
+    background: var(--glass);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: 100px;
+    padding: .0625rem .5rem;
+    box-shadow: var(--shadow-xs);
+    font-size: .875rem;
+    cursor: grab;
+  }
+  .dash-widget__resize .dash-widget__btn {
+    width: 1.75rem; height: 1.75rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    border: 1px solid var(--border-glass);
+    background: var(--glass);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-xs);
+    cursor: pointer;
+    font-size: .8125rem;
+  }
+  .dash-widget__resize .dash-widget__btn:hover { color: var(--accent); border-color: var(--accent); }
+  /* The widget content dims slightly in edit mode so the chrome reads clearly. */
+  body.dash-editing .dash-widget__body > * { opacity: .85; }
+
+  /* Wiggle, staggered so widgets don't pulse in unison (honours reduced motion). */
+  @keyframes dash-wiggle {
+    0%   { transform: rotate(-.45deg); }
+    50%  { transform: rotate(.45deg); }
+    100% { transform: rotate(-.45deg); }
+  }
+  body.dash-editing .dash-widget { animation: dash-wiggle .42s ease-in-out infinite; }
+  body.dash-editing .dash-widget:nth-child(2n)   { animation-delay: -.14s; animation-duration: .46s; }
+  body.dash-editing .dash-widget:nth-child(3n)   { animation-delay: -.28s; animation-duration: .40s; }
+  body.dash-editing .dash-widget.dash-widget--dragging { animation: none; }
+  @media (prefers-reduced-motion: reduce) {
+    body.dash-editing .dash-widget { animation: none; }
+    .dashboard-main, .dashboard-rail { transition: none; }
+  }
+
+  /* Header action buttons that only make sense in one mode. */
+  .dash-edit-only { display: none !important; }
+  body.dash-editing .dash-edit-only { display: inline-flex !important; }
+  body.dash-editing .dash-view-only { display: none !important; }
+
+  /* ── "Add a widget" gallery ─────────────────────────────── */
+  .widget-gallery { display: flex; flex-direction: column; gap: .625rem; }
+  .widget-gallery__tile {
+    display: flex; align-items: center; gap: .875rem; width: 100%; text-align: left;
+    padding: .875rem; border: 1px solid var(--border-light); border-radius: var(--radius-md);
+    background: var(--surface); cursor: pointer;
+    transition: border-color .15s var(--ease-out), background-color .15s var(--ease-out), transform .15s var(--ease-out);
+  }
+  .widget-gallery__tile:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-1px); }
+  .widget-gallery__icon {
+    flex-shrink: 0; width: 2.5rem; height: 2.5rem; border-radius: var(--radius-sm);
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--accent-soft); color: var(--accent); font-size: 1.125rem;
+  }
+  .widget-gallery__text { display: flex; flex-direction: column; gap: .125rem; min-width: 0; flex: 1; }
+  .widget-gallery__name { font-weight: 600; font-size: .875rem; color: var(--text-primary); }
+  .widget-gallery__desc { font-size: .75rem; color: var(--text-muted); }
+  .widget-gallery__add {
+    flex-shrink: 0; color: var(--accent); font-size: 1rem;
+    width: 1.75rem; height: 1.75rem; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .widget-gallery__tile:hover { transform: none; }
+  }
+
+  /* ── Shared bar style used by framework / objective widgets ── */
   .fw-bar .progress {
     height: 10px;
     border-radius: 5px;
     background: var(--surface-subtle);
     overflow: hidden;
   }
-  .fw-bar .progress-bar {
-    font-size: .625rem;
-    font-weight: 600;
-  }
-  .fw-bar .progress-bar + .progress-bar {
-    border-left: 1.5px solid var(--surface-raised);
-  }
-  /* Align rows across the two dashboard panels: one fixed-height header line
-     (icon or not) and single-line names that truncate instead of wrapping. */
+  .fw-bar .progress-bar { font-size: .625rem; font-weight: 600; }
+  .fw-bar .progress-bar + .progress-bar { border-left: 1.5px solid var(--surface-raised); }
   .fw-bar__head { min-height: 1.5rem; }
-  .fw-bar__name {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* ── Mobile responsiveness ─────────────────────── */
-  @media (max-width: 767.98px) {
-    .upcoming-item { gap:.375rem; padding:.4375rem .5625rem; flex-wrap:wrap; }
-    .upcoming-item:hover { transform:none; }
-    .upcoming-item-date { min-width:auto; font-size:.6875rem; }
-    .upcoming-item-date .upcoming-days { font-size:.5625rem; margin-left:.1875rem; }
-    .upcoming-item-title { font-size:.75rem; }
-    .upcoming-item-cat { display:none; }
-    .fw-bar .d-flex { flex-wrap:wrap; gap:.25rem; }
-    .fw-bar .badge { font-size:.5625rem !important; }
-  }
-  @media (max-width: 575.98px) {
-    .upcoming-item-date { min-width:auto; }
-    .upcoming-item-title { white-space:normal; }
-  }
+  .fw-bar__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 {% endblock %}
 
@@ -100,419 +228,24 @@
 {% endif %}
 {% help_modal "home" %}
 
-{# ── Today's actions ────────────────────────────────────── #}
-{% if today_action_groups or calendar_items %}
-<div class="card today-actions mb-4{% if today_actions_collapsed %} d-none{% endif %}" id="todayActionsPanel">
-  <div class="card-body">
-    <div class="d-flex align-items-center gap-2 mb-3">
-      <span class="today-actions__badge-icon" aria-hidden="true"><i class="bi bi-list-check"></i></span>
-      <h2 class="today-actions__title mb-0">{% trans "Today's actions" %}</h2>
-      {% if today_action_count %}<span class="today-actions__count tabular-nums">{{ today_action_count }}</span>{% endif %}
-    </div>
-    {% if today_action_groups %}
-    <div class="row g-3">
-      {% for group in today_action_groups %}
-      <div class="col-12 col-lg">
-        <div class="today-actions__group today-actions__group--{{ group.tone }} h-100">
-          <div class="today-actions__group-title">
-            <span class="today-actions__dot" aria-hidden="true"></span>{{ group.title }}
-          </div>
-          <ul class="today-actions__list">
-            {% for item in group.items %}
-            <li>
-              <a href="{{ item.url }}" class="today-actions__item">
-                <i class="bi {{ item.icon }} today-actions__item-icon" aria-hidden="true"></i>
-                <span class="today-actions__item-label">{{ item.label }}</span>
-                <i class="bi bi-chevron-right today-actions__item-go" aria-hidden="true"></i>
-              </a>
-            </li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-    {% if calendar_items %}
-    <div class="today-actions__deadlines{% if today_action_groups %} mt-3{% endif %}">
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-        <div class="today-actions__deadlines-title">
-          <i class="bi bi-clock-history me-1" aria-hidden="true"></i>{% trans "Deadlines and events" %}
-          <span class="badge bg-secondary ms-1">{% trans "in the next 30 days" %}</span>
-        </div>
-        <a href="{% url 'calendar' %}" class="upcoming-toggle"><i class="bi bi-calendar3 me-1" aria-hidden="true"></i>{% trans "View calendar" %}</a>
-      </div>
-      <div class="upcoming-list">
-        {% for ev in calendar_items|slice:":5" %}{% include "includes/dashboard_deadline_item.html" %}{% endfor %}
-      </div>
-      {% if calendar_items|length > 5 %}
-      <div class="collapse" id="moreDeadlines">
-        <div class="upcoming-list mt-1">
-          {% for ev in calendar_items|slice:"5:" %}{% include "includes/dashboard_deadline_item.html" %}{% endfor %}
-        </div>
-      </div>
-      <button class="upcoming-toggle mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#moreDeadlines" aria-expanded="false" aria-controls="moreDeadlines">
-        {% trans "Show all" %} ({{ calendar_items|length }})
-      </button>
-      {% endif %}
-    </div>
-    {% endif %}
-  </div>
-</div>
-<style>
-  .today-actions {
-    border-top: 3px solid var(--accent, var(--bs-primary));
-  }
-  .today-actions__badge-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: .625rem;
-    background: var(--accent-soft, var(--bs-primary-bg-subtle));
-    color: var(--accent, var(--bs-primary));
-    font-size: 1rem;
-    flex-shrink: 0;
-  }
-  .today-actions__title {
-    font-size: 1rem;
-    font-weight: 600;
-  }
-  .today-actions__count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 1.5rem;
-    height: 1.5rem;
-    padding: 0 .4375rem;
-    border-radius: 999px;
-    background: var(--accent, var(--bs-primary));
-    color: #fff;
-    font-size: .75rem;
-    font-weight: 600;
-  }
-  .today-actions__hint {
-    font-size: .8125rem;
-    color: var(--bs-secondary-color);
-  }
-  .today-actions__group {
-    border: 1px solid var(--bs-border-color);
-    border-radius: .625rem;
-    padding: .875rem;
-  }
-  .today-actions__group--high {
-    background: var(--danger-soft, var(--bs-danger-bg-subtle));
-    border-color: color-mix(in srgb, var(--danger, var(--bs-danger)) 22%, transparent);
-  }
-  .today-actions__group--medium {
-    background: var(--warning-soft, var(--bs-warning-bg-subtle));
-    border-color: color-mix(in srgb, var(--warning, var(--bs-warning)) 26%, transparent);
-  }
-  .today-actions__group--low {
-    background: var(--info-soft, var(--bs-info-bg-subtle));
-    border-color: color-mix(in srgb, var(--info, var(--bs-info)) 24%, transparent);
-  }
-  .today-actions__group-title {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    font-size: .8125rem;
-    font-weight: 600;
-    color: var(--text-secondary, var(--bs-secondary-color));
-    margin-bottom: .625rem;
-  }
-  .today-actions__dot {
-    width: .5rem;
-    height: .5rem;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .today-actions__group--high .today-actions__dot {
-    background: var(--danger, var(--bs-danger));
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger, var(--bs-danger)) 18%, transparent);
-  }
-  .today-actions__group--medium .today-actions__dot {
-    background: var(--warning, var(--bs-warning));
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning, var(--bs-warning)) 18%, transparent);
-  }
-  .today-actions__group--low .today-actions__dot {
-    background: var(--info, var(--bs-info));
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--info, var(--bs-info)) 18%, transparent);
-  }
-  .today-actions__list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: .375rem;
-  }
-  .today-actions__item {
-    display: flex;
-    align-items: center;
-    gap: .625rem;
-    padding: .5rem .625rem;
-    border-radius: .5rem;
-    background: var(--surface, var(--bs-body-bg));
-    box-shadow: var(--shadow-xs, 0 1px 2px rgba(0,0,0,.06));
-    text-decoration: none;
-    color: var(--bs-body-color);
-    font-size: .875rem;
-    transition: transform 150ms var(--ease-out, ease-out),
-                box-shadow 150ms var(--ease-out, ease-out);
-  }
-  .today-actions__item:hover,
-  .today-actions__item:focus-visible {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm, 0 2px 6px rgba(0,0,0,.08));
-    color: var(--bs-body-color);
-  }
-  .today-actions__item-icon {
-    flex-shrink: 0;
-  }
-  .today-actions__group--high .today-actions__item-icon { color: var(--danger, var(--bs-danger)); }
-  .today-actions__group--medium .today-actions__item-icon { color: var(--warning, var(--bs-warning)); }
-  .today-actions__group--low .today-actions__item-icon { color: var(--info, var(--bs-info)); }
-  .today-actions__item-label {
-    flex: 1 1 auto;
-  }
-  .today-actions__item-go {
-    color: var(--bs-secondary-color);
-    font-size: .75rem;
-    flex-shrink: 0;
-    opacity: 0;
-    transition: opacity 150ms var(--ease-out, ease-out);
-  }
-  .today-actions__item:hover .today-actions__item-go,
-  .today-actions__item:focus-visible .today-actions__item-go {
-    opacity: 1;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .today-actions__item,
-    .today-actions__item-go { transition: none; }
-    .today-actions__item:hover { transform: none; }
-  }
-</style>
-{% endif %}
-
-{# ── Overall compliance (minimal card) ──────────────────── #}
-<div class="card overall-compliance mb-4">
-  <div class="card-body">
-    <div class="row align-items-end g-4">
-      <div class="col-lg-7">
-        <div class="overall-compliance__eyebrow">{% trans "Overall compliance" %}</div>
-        <div class="overall-compliance__value-wrap">
-          <span class="overall-compliance__value tabular-nums" data-ws-field="overall_compliance" data-ws-suffix="%">{{ overall_compliance|floatformat:0 }}%</span>
-          <span class="overall-compliance__delta overall-compliance__delta--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}" aria-hidden="true"></span>
-        </div>
-        <p class="overall-compliance__hint">{% blocktrans count count=tracked_requirement_count %}Average across all active frameworks - {{ count }} requirement tracked.{% plural %}Average across all active frameworks - {{ count }} requirements tracked.{% endblocktrans %}</p>
-      </div>
-      <div class="col-lg-5">
-        <div class="overall-compliance__bar">
-          <div class="overall-compliance__bar-fill overall-compliance__bar-fill--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}"
-               role="progressbar"
-               style="width: {{ overall_compliance|floatformat:0 }}%"
-               aria-valuenow="{{ overall_compliance|floatformat:0 }}"
-               aria-valuemin="0"
-               aria-valuemax="100"></div>
-        </div>
-        <div class="overall-compliance__bar-legend">
-          <span>0%</span>
-          <span>{% trans "Target" %} 80%</span>
-          <span>100%</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<style>
-  .overall-compliance .card-body { padding: 1.75rem 2rem; }
-  .overall-compliance__eyebrow {
-    font-size: .75rem;
-    color: var(--text-muted); font-weight: 600; margin-bottom: .5rem;
-  }
-  .overall-compliance__value-wrap {
-    display: flex; align-items: center; gap: .75rem; line-height: 1;
-  }
-  .overall-compliance__value {
-    font-family: var(--font-display);
-    font-variant-numeric: tabular-nums;
-    font-size: 2.75rem;
-    letter-spacing: normal;
-    line-height: 1;
-    font-weight: 900;
-    color: var(--text-primary);
-  }
-  .overall-compliance__delta {
-    width: 1.625rem; height: 1.625rem; border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: .75rem; font-weight: 600;
-  }
-  .overall-compliance__delta--good { background: var(--success-soft); color: var(--success); }
-  .overall-compliance__delta--good::before { content: "\2197"; }
-  .overall-compliance__delta--warn { background: var(--warning-soft); color: var(--warning); }
-  .overall-compliance__delta--warn::before { content: "\2192"; }
-  .overall-compliance__delta--bad  { background: var(--danger-soft);  color: var(--danger); }
-  .overall-compliance__delta--bad::before  { content: "\2198"; }
-  .overall-compliance__hint {
-    color: var(--text-muted); font-size: .875rem;
-    margin: .875rem 0 0; max-width: 32rem;
-  }
-  .overall-compliance__bar {
-    height: .5rem;
-    background: var(--surface-muted);
-    border-radius: 100px;
-    overflow: hidden;
-  }
-  .overall-compliance__bar-fill {
-    height: 100%;
-    border-radius: 100px;
-    transition: width .8s var(--ease-out);
-  }
-  .overall-compliance__bar-fill--good { background: var(--success); }
-  .overall-compliance__bar-fill--warn { background: var(--warning); }
-  .overall-compliance__bar-fill--bad  { background: var(--danger); }
-  .overall-compliance__bar-legend {
-    display: flex; justify-content: space-between;
-    font-size: .75rem; color: var(--text-muted);
-    margin-top: .5rem; font-variant-numeric: tabular-nums;
-  }
-  @media (max-width: 575.98px) {
-    .overall-compliance .card-body { padding: 1.25rem 1.25rem; }
-    .overall-compliance__value { font-size: 2.25rem; }
-  }
-</style>
-
-{# initSparklines() is defined globally in base.html (used here and on the indicators list). #}
-
-{# ── Dashboard Indicators ──────────────────────────────── #}
-<div id="ws-indicators-container">
-{% include "includes/dashboard_indicators.html" %}
-</div>
-
-{# ── Compliance by framework + active objectives (side by side) ── #}
-{% if active_frameworks or active_objectives %}
-<div class="row g-4 mb-4">
-  {% if active_frameworks %}
-  <div class="{% if active_objectives %}col-lg-6{% else %}col-12{% endif %}">
-  <div class="card h-100">
-  <div class="card-body">
-    <h5 class="card-title mb-3"><i class="bi bi-journal-bookmark me-1" style="color:var(--accent)"></i> {% trans "Compliance by framework" %}</h5>
-    {% for fw in active_frameworks %}
-    <div class="fw-bar mb-3">
-      <div class="d-flex justify-content-between align-items-center gap-2 mb-1 fw-bar__head">
-        <div class="d-flex align-items-center gap-2" style="min-width:0">
-          {% if fw.logo %}<img src="{{ fw.logo_32|default:fw.logo }}" alt="" style="width:20px;height:20px;object-fit:cover;border-radius:3px;background:#fff;border:1px solid var(--border-light);flex-shrink:0">{% else %}<span class="d-inline-flex align-items-center justify-content-center" style="width:20px;min-width:20px;height:20px;min-height:20px;border-radius:3px;background:var(--accent-soft);color:var(--accent);font-size:.65rem;border:1px solid var(--border-light);flex-shrink:0"><i class="bi bi-journal-bookmark"></i></span>{% endif %}
-          <a href="{% url 'compliance:framework-detail' fw.pk %}" class="fw-semibold text-decoration-none fw-bar__name" style="color:var(--text-primary);font-size:.8125rem" title="{{ fw.short_name|default:fw.name }}">{{ fw.short_name|default:fw.name }}</a>
-          <small style="color:var(--text-muted);font-size:.75rem;white-space:nowrap;flex-shrink:0">{% blocktrans with count=fw.req_count %}{{ count }} requirement{{ count|pluralize:"s" }}{% endblocktrans %}</small>
-          {% grouped_scope_badges fw.scopes.all %}
-        </div>
-        <span class="fw-semibold tabular-nums" style="font-size:.8125rem;color:var(--text-primary);flex-shrink:0">
-          {{ fw.computed_compliance|default:0 }}%
-        </span>
-      </div>
-      <div class="progress">
-        {% if fw.seg_compliant %}<div class="progress-bar bg-success" role="progressbar" style="width:{{ fw.seg_compliant }}%" title="{% trans 'Compliant' %}"></div>{% endif %}
-        {% if fw.seg_partial %}<div class="progress-bar" role="progressbar" style="width:{{ fw.seg_partial }}%;background-color:#fd7e14" title="{% trans 'Partial compliance' %}"></div>{% endif %}
-        {% if fw.seg_non_compliant %}<div class="progress-bar bg-danger" role="progressbar" style="width:{{ fw.seg_non_compliant }}%" title="{% trans 'Major non-conformity' %}"></div>{% endif %}
-        {% if fw.seg_evaluated %}<div class="progress-bar" role="progressbar" style="width:{{ fw.seg_evaluated }}%;background-color:var(--accent)" title="{% trans 'Evaluation planned' %}"></div>{% endif %}
-        {% if fw.seg_not_assessed %}<div class="progress-bar bg-secondary" role="progressbar" style="width:{{ fw.seg_not_assessed }}%" title="{% trans 'Not assessed' %}"></div>{% endif %}
-      </div>
-    </div>
-    {% endfor %}
-    <div class="d-flex flex-wrap gap-3 mt-2" style="font-size:.7rem;color:var(--text-muted)">
-      <span><span class="d-inline-block rounded-1 me-1" style="width:10px;height:10px;background:var(--bs-success);vertical-align:middle"></span>{% trans "Compliant" %}</span>
-      <span><span class="d-inline-block rounded-1 me-1" style="width:10px;height:10px;background:#fd7e14;vertical-align:middle"></span>{% trans "Partial compliance" %}</span>
-      <span><span class="d-inline-block rounded-1 me-1" style="width:10px;height:10px;background:var(--bs-danger);vertical-align:middle"></span>{% trans "Major non-conformity" %}</span>
-      <span><span class="d-inline-block rounded-1 me-1" style="width:10px;height:10px;background:var(--accent);vertical-align:middle"></span>{% trans "Evaluation planned" %}</span>
-      <span><span class="d-inline-block rounded-1 me-1" style="width:10px;height:10px;background:var(--bs-secondary);vertical-align:middle"></span>{% trans "Not assessed" %}</span>
-    </div>
-  </div>
-  </div>
-  </div>
-  {% endif %}
-  {% if active_objectives %}
-  <div class="{% if active_frameworks %}col-lg-6{% else %}col-12{% endif %}">
-  <div class="card h-100">
-  <div class="card-body">
-    <h5 class="card-title mb-3"><i class="bi bi-trophy me-1" style="color:var(--accent)"></i> {% trans "Active objectives progression" %}</h5>
-    {% for obj in active_objectives %}
-    <div class="fw-bar mb-3">
-      <div class="d-flex justify-content-between align-items-center gap-2 mb-1 fw-bar__head">
-        <div class="d-flex align-items-center gap-2" style="min-width:0">
-          <a href="{% url 'context:objective-detail' obj.pk %}" class="fw-semibold text-decoration-none fw-bar__name" style="color:var(--text-primary);font-size:.8125rem" title="{{ obj.name }}">{{ obj.name }}</a>
-          {% if obj.target_date %}
-          <small style="color:var(--text-muted);font-size:.75rem;white-space:nowrap;flex-shrink:0">{% trans "Target:" %} {{ obj.target_date }}</small>
-          {% endif %}
-          {% grouped_scope_badges obj.scopes.all %}
-        </div>
-        <span class="fw-semibold tabular-nums" style="font-size:.8125rem;flex-shrink:0;{% if obj.progress_percentage >= 80 %}color:var(--success){% elif obj.progress_percentage >= 50 %}color:var(--warning){% else %}color:var(--danger){% endif %}">
-          {{ obj.progress_percentage|default:0 }}%
-        </span>
-      </div>
-      <div class="progress">
-        <div class="progress-bar bg-{% if obj.progress_percentage >= 80 %}success{% elif obj.progress_percentage >= 50 %}warning{% else %}danger{% endif %}"
-             role="progressbar"
-             style="width: {{ obj.progress_percentage|default:0 }}%"
-             aria-valuenow="{{ obj.progress_percentage|default:0 }}"
-             aria-valuemin="0" aria-valuemax="100">
-        </div>
-      </div>
-    </div>
+{# ── Widget zones: main area + dedicated side rail ───────── #}
+<div class="dashboard-zones" id="dashboardZones" data-save-url="{% url 'dashboard-layout-save' %}">
+  <div class="dashboard-main" id="dashboardMain" data-zone="main">
+    {% for placed in dashboard_main_widgets %}
+      {% include "dashboard/widgets/_shell.html" %}
     {% endfor %}
   </div>
-  </div>
-  </div>
-  {% endif %}
-</div>
-{% endif %}
-
-{# ── Risk treatment flow (current → residual) ───────── #}
-{% if risk_treatment_flow %}
-<div class="card mb-4">
-  <div class="card-body">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-      <h5 class="card-title mb-0"><i class="bi bi-diagram-3 me-1" style="color:var(--accent)"></i> {% trans "Risk treatment flow" %}</h5>
-      <span class="text-muted small">{% trans "How treatment moves risks from their current level (before treatment) to their residual level (after treatment)" %}</span>
-    </div>
-    {{ risk_treatment_flow|json_script:"risk-flow-data" }}
-    <div id="risk-treatment-flow" role="img"
-         aria-label="{% trans 'Sankey diagram of risk treatment flow from current to residual level' %}"
-         style="width:100%;height:360px"></div>
+  <div class="dashboard-rail" id="dashboardRail" data-zone="rail">
+    {% for placed in dashboard_rail_widgets %}
+      {% include "dashboard/widgets/_shell.html" %}
+    {% endfor %}
   </div>
 </div>
-{% endif %}
 
-{# ── Risk matrices ─────────────────────────────────── #}
-{% if matrix_current or matrix_residual %}
-<div class="card mb-4">
-  <div class="card-body">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-      <h5 class="card-title mb-0"><i class="bi bi-grid-3x3 me-1" style="color:var(--accent)"></i> {% trans "Risk matrices" %}</h5>
-      {% if matrix_criteria %}
-      <a href="{% url 'risks:criteria-update' matrix_criteria.pk %}" class="btn btn-outline-secondary btn-sm" title="{% trans "Configure scales" %}"><i class="bi bi-gear me-1"></i>{% trans "Configure" %}</a>
-      {% endif %}
-    </div>
-    <div class="row g-4">
-      {% if matrix_current %}
-      <div class="col-lg-6 col-md-12" style="overflow-x:auto">
-        {% trans "Current risks (before treatment)" as current_risks_title %}
-        {% include "risks/includes/risk_matrix.html" with matrix=matrix_current title=current_risks_title %}
-      </div>
-      {% endif %}
-      {% if matrix_residual %}
-      <div class="col-lg-6 col-md-12" style="overflow-x:auto">
-        {% trans "Residual risks (after treatment)" as residual_risks_title %}
-        {% include "risks/includes/risk_matrix.html" with matrix=matrix_residual title=residual_risks_title %}
-      </div>
-      {% endif %}
-    </div>
-  </div>
-</div>
-{% endif %}
+{# ── Add a widget gallery ────────────────────────────────── #}
+{% include "dashboard/widget_gallery.html" %}
 
-{# ── Changelog popup ──────────────────────────────────── #}
+{# ── Changelog popup ─────────────────────────────────────── #}
 {% if changelog_entries %}
 <div class="modal fade" id="changelogModal" tabindex="-1" aria-labelledby="changelogModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -558,6 +291,169 @@
 {% endblock %}
 
 {% block extra_js %}
+
+{# ── Dashboard widget editor (Apple-style edit mode) ─────── #}
+{% trans "Edit" as dash_edit_label %}
+{% trans "Done" as dash_done_label %}
+<script>
+(function() {
+  var zones = document.getElementById('dashboardZones');
+  var mainZone = document.getElementById('dashboardMain');
+  var railZone = document.getElementById('dashboardRail');
+  var editToggle = document.getElementById('dashEditToggle');
+  if (!zones || !mainZone || !railZone || !editToggle) return;
+
+  var SPANS = { S: 3, M: 6, L: 9, XL: 12 };
+  var saveUrl = zones.getAttribute('data-save-url');
+  var sortables = [];
+  var dirty = false;
+  var labels = { edit: "{{ dash_edit_label|escapejs }}", done: "{{ dash_done_label|escapejs }}" };
+
+  // All widgets across both zones, in DOM order (main first, then rail).
+  function widgets() {
+    return Array.prototype.slice.call(zones.querySelectorAll('.dash-widget'));
+  }
+
+  function galleryTile(id) {
+    return document.querySelector('#widgetGalleryList .widget-gallery__tile[data-widget-id="' + id + '"]');
+  }
+
+  function refreshGalleryEmpty() {
+    var any = document.querySelector('#widgetGalleryList .widget-gallery__tile:not(.d-none)');
+    var msg = document.querySelector('.widget-gallery__empty');
+    if (msg) msg.classList.toggle('d-none', !!any);
+  }
+
+  // Lazy-load SortableJS (CDN), like the echarts loader below.
+  function withSortable(cb) {
+    if (window.Sortable) { cb(); return; }
+    var s = document.getElementById('sortable-cdn');
+    if (!s) {
+      s = document.createElement('script');
+      s.id = 'sortable-cdn';
+      s.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js';
+      document.head.appendChild(s);
+    }
+    s.addEventListener('load', cb);
+  }
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // When a widget lands in a zone, record that zone on it (drives save + the
+  // size-menu visibility CSS).
+  function syncZone(el, zoneEl) {
+    el.setAttribute('data-zone', zoneEl.getAttribute('data-zone'));
+  }
+
+  function enableSorting() {
+    withSortable(function() {
+      if (sortables.length) {
+        sortables.forEach(function(s) { s.option('disabled', false); });
+        return;
+      }
+      // One Sortable per zone, sharing a group so widgets drag between them.
+      [mainZone, railZone].forEach(function(zoneEl) {
+        sortables.push(window.Sortable.create(zoneEl, {
+          group: 'dashboard-widgets',
+          animation: reduceMotion ? 0 : 180,
+          draggable: '.dash-widget',
+          filter: '.dash-widget__btn, .dash-widget__remove, .dropdown-menu, [data-bs-toggle="dropdown"]',
+          preventOnFilter: false,
+          ghostClass: 'dash-widget--ghost',
+          chosenClass: 'dash-widget--dragging',
+          onEnd: function(evt) { syncZone(evt.item, evt.to); dirty = true; }
+        }));
+      });
+    });
+  }
+
+  function setEditing(on) {
+    document.body.classList.toggle('dash-editing', on);
+    editToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    editToggle.classList.toggle('btn-primary', on);
+    editToggle.classList.toggle('btn-outline-secondary', !on);
+    var icon = editToggle.querySelector('.bi');
+    var span = editToggle.querySelector('span');
+    if (icon) icon.className = 'bi me-1 ' + (on ? 'bi-check2' : 'bi-grid-1x2');
+    if (span) span.textContent = on ? labels.done : labels.edit;
+    if (on) { enableSorting(); }
+    else { sortables.forEach(function(s) { s.option('disabled', true); }); }
+  }
+
+  function setSpan(el, size) {
+    el.setAttribute('data-size', size);
+    el.style.gridColumn = 'span ' + (SPANS[size] || 12);
+    el.className = el.className.replace(/dash-widget--(S|M|L|XL)\b/, 'dash-widget--' + size);
+  }
+
+  function save() {
+    var layout = widgets().map(function(el) {
+      return {
+        id: el.getAttribute('data-widget-id'),
+        size: el.getAttribute('data-size'),
+        zone: el.getAttribute('data-zone'),
+        visible: el.getAttribute('data-visible') === 'true'
+      };
+    });
+    return fetch(saveUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ layout: layout })
+    }).catch(function() {});
+  }
+
+  // Toggle edit mode; on exit, persist if anything changed.
+  editToggle.addEventListener('click', function() {
+    var on = !document.body.classList.contains('dash-editing');
+    setEditing(on);
+    if (!on && dirty) { save(); dirty = false; }
+  });
+
+  // Resize / remove, delegated across both zones.
+  zones.addEventListener('click', function(e) {
+    var sizeBtn = e.target.closest('.dash-widget__size');
+    if (sizeBtn) {
+      var widget = sizeBtn.closest('.dash-widget');
+      setSpan(widget, sizeBtn.getAttribute('data-size'));
+      widget.querySelectorAll('.dash-widget__size').forEach(function(b) {
+        b.classList.toggle('active', b === sizeBtn);
+      });
+      dirty = true;
+      return;
+    }
+    var removeBtn = e.target.closest('.dash-widget__remove');
+    if (removeBtn) {
+      var w = removeBtn.closest('.dash-widget');
+      var id = w.getAttribute('data-widget-id');
+      w.setAttribute('data-visible', 'false');
+      var tile = galleryTile(id);
+      if (tile) tile.classList.remove('d-none');
+      refreshGalleryEmpty();
+      dirty = true;
+    }
+  });
+
+  // Add a widget from the gallery: reveal it in its current zone (appended last).
+  var galleryList = document.getElementById('widgetGalleryList');
+  if (galleryList) {
+    galleryList.addEventListener('click', function(e) {
+      var tile = e.target.closest('.widget-gallery__tile');
+      if (!tile) return;
+      var id = tile.getAttribute('data-widget-id');
+      var widget = zones.querySelector('.dash-widget[data-widget-id="' + id + '"]');
+      if (widget) {
+        widget.setAttribute('data-visible', 'true');
+        var zoneEl = widget.getAttribute('data-zone') === 'rail' ? railZone : mainZone;
+        zoneEl.appendChild(widget);
+      }
+      tile.classList.add('d-none');
+      refreshGalleryEmpty();
+      dirty = true;
+    });
+  }
+})();
+</script>
 
 {# ── Risk treatment flow (Sankey) ────────────────────── #}
 {% if risk_treatment_flow %}
@@ -901,36 +797,6 @@
   // Clean up on page unload
   window.addEventListener('beforeunload', function() {
     if (ws) ws.close();
-  });
-})();
-</script>
-
-{# ── Show / hide the "Today's actions" panel from the page header (per user) ── #}
-{% trans "Show today's actions" as ta_show %}
-{% trans "Hide today's actions" as ta_hide %}
-<script>
-(function() {
-  var btn = document.getElementById('toggleTodayActions');
-  var panel = document.getElementById('todayActionsPanel');
-  if (!btn || !panel) return;
-  var labels = { show: "{{ ta_show|escapejs }}", hide: "{{ ta_hide|escapejs }}" };
-  var icon = btn.querySelector('.bi');
-  var label = btn.querySelector('span');
-  function apply(collapsed) {
-    panel.classList.toggle('d-none', collapsed);
-    btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-    if (icon) icon.className = 'bi ' + (collapsed ? 'bi-list-check' : 'bi-eye-slash');
-    if (label) label.textContent = collapsed ? labels.show : labels.hide;
-  }
-  btn.addEventListener('click', function() {
-    var collapsed = !panel.classList.contains('d-none');
-    apply(collapsed);
-    fetch('{% url "dashboard-section-toggle" %}', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ section: 'today_actions', collapsed: collapsed })
-    }).catch(function() {});
   });
 })();
 </script>

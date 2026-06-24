@@ -135,6 +135,8 @@ Additional tools:
 | `get_user` | Get detailed user information |
 | `get_me` | Get the currently authenticated user |
 | `update_me` | Update the current user's profile (first_name, last_name, phone, language, timezone, theme_preference) |
+| `get_dashboard_layout` | Get the current user's dashboard widget layout and the widget catalogue |
+| `update_dashboard_layout` | Replace the current user's dashboard widget layout (ordered {id, size, visible}) |
 | `list_notifications` | List the current user's in-app notifications with the unread count |
 | `mark_notification_read` | Mark one of the current user's notifications as read |
 | `mark_all_notifications_read` | Mark all of the current user's notifications as read |

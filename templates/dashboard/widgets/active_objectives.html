@@ -1,0 +1,31 @@
+{% load i18n scope_tags %}
+{# Widget: active objectives progression. Expects `active_objectives`. #}
+<div class="card h-100">
+  <div class="card-body">
+    <h5 class="card-title mb-3"><i class="bi bi-trophy me-1" style="color:var(--accent)"></i> {% trans "Active objectives progression" %}</h5>
+    {% for obj in active_objectives %}
+    <div class="fw-bar mb-3">
+      <div class="d-flex justify-content-between align-items-center gap-2 mb-1 fw-bar__head">
+        <div class="d-flex align-items-center gap-2" style="min-width:0">
+          <a href="{% url 'context:objective-detail' obj.pk %}" class="fw-semibold text-decoration-none fw-bar__name" style="color:var(--text-primary);font-size:.8125rem" title="{{ obj.name }}">{{ obj.name }}</a>
+          {% if obj.target_date %}
+          <small style="color:var(--text-muted);font-size:.75rem;white-space:nowrap;flex-shrink:0">{% trans "Target:" %} {{ obj.target_date }}</small>
+          {% endif %}
+          {% grouped_scope_badges obj.scopes.all %}
+        </div>
+        <span class="fw-semibold tabular-nums" style="font-size:.8125rem;flex-shrink:0;{% if obj.progress_percentage >= 80 %}color:var(--success){% elif obj.progress_percentage >= 50 %}color:var(--warning){% else %}color:var(--danger){% endif %}">
+          {{ obj.progress_percentage|default:0 }}%
+        </span>
+      </div>
+      <div class="progress">
+        <div class="progress-bar bg-{% if obj.progress_percentage >= 80 %}success{% elif obj.progress_percentage >= 50 %}warning{% else %}danger{% endif %}"
+             role="progressbar"
+             style="width: {{ obj.progress_percentage|default:0 }}%"
+             aria-valuenow="{{ obj.progress_percentage|default:0 }}"
+             aria-valuemin="0" aria-valuemax="100">
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
