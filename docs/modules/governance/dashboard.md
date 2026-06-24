@@ -128,9 +128,23 @@ Sizes are `"WxH"` tile tokens (see *Layout model*).
 | `risk_treatment_flow` | 4x2, main, visible | 2x2, 3x2, 4x2, 4x3 | Sankey (fills tile) |
 | `risk_matrix_current` | 2x2, main, visible | 2x2, 2x3 | Current-risk heatmap (before treatment) |
 | `risk_matrix_residual` | 2x2, main, visible | 2x2, 2x3 | Residual-risk heatmap (after treatment) |
+| `section` | (added on demand) | 4x1 | **Multiple**, **bare** (no card); full-width `<h2>` to group widgets, params `{title}` |
 
 `upcoming_deadlines`, `priority_risks`, `ask_cairn` and `ongoing_audits` default
 to the **rail**; everything else to the **main** area.
+
+The `section` widget is a **bare** widget (the `bare` flag on `DashboardWidget`):
+the shell adds a `dash-widget--bare` class that strips the card's background,
+border, shadow and padding, so the widget's content - here a single `<h2>` -
+sits directly on the page background. It is a layout helper used to break the
+main area into labelled sections: it is **multiple** (add several from the
+gallery's **Layout** category) and configurable (a gear dialog sets the per
+instance `title`, trimmed and capped at `SECTION_TITLE_MAX_LENGTH` = 60). The
+heading is bottom-aligned in its full-width row so it reads as a header just
+above the widgets that follow it, and takes its natural (content) height once
+the grid collapses to a single column below xl. Like the indicator widget it
+ships a hidden server-rendered clone source (`sectionWidgetTemplate`) that the
+editor duplicates per instance, and a shared config dialog (`sectionConfigModal`).
 
 The `ongoing_audits` widget is **conditional**: the view lists compliance
 assessments whose window covers today, excluding cancelled audits and draft

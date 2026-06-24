@@ -150,6 +150,39 @@
     flex-direction: column;
   }
 
+  /* ── Bare widgets (Section heading) ──────────────────────────
+     A "bare" widget has no card: no background, border, shadow or padding, so
+     its content sits directly on the page background. Used by the Section
+     widget, a full-width <h2> that groups widgets into sections. */
+  .dash-widget--bare {
+    background: none;
+    border: none;
+    box-shadow: none;
+  }
+  .dash-widget--bare > .dash-widget__body { padding: 0; }
+  /* In the fixed main grid the bare tile fills its row; the heading sits at the
+     bottom so it reads as a header just above the widgets that follow it (the
+     space above it separates it from the previous group). When the grid
+     collapses below xl the tile is content-height, so the heading is compact. */
+  .dashboard-main > .dash-widget--bare > .dash-widget__body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .dash-section-title {
+    margin: 0;
+    padding: 0 .25rem .375rem;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 810;        /* brand: titles at weight 810 */
+    letter-spacing: normal;  /* brand: no negative tracking on titles */
+    line-height: 1.2;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   /* ── Autofit lists ──────────────────────────────────────────
      A widget renders a generous pool of items inside a [data-fit-list]; the
      autofit script (below) hides trailing items until the list no longer
@@ -476,6 +509,10 @@
 {# ── Indicator widget: config dialog + clone source for new instances ── #}
 {% include "dashboard/indicator_config_modal.html" %}
 <template id="indicatorWidgetTemplate">{% with placed=indicator_widget_template %}{% include "dashboard/widgets/_shell.html" %}{% endwith %}</template>
+
+{# ── Section widget: config dialog + clone source for new instances ── #}
+{% include "dashboard/section_config_modal.html" %}
+<template id="sectionWidgetTemplate">{% with placed=section_widget_template %}{% include "dashboard/widgets/_shell.html" %}{% endwith %}</template>
 
 {# ── Sort dialog for progress-bar list widgets ───────────── #}
 {% include "dashboard/sort_config_modal.html" %}
@@ -903,6 +940,50 @@
     });
   }
 
+  // Config dialog (shared) for section widgets: the heading text. Applied
+  // client-side - the title is presentation, written straight onto the <h2>.
+  var sectionModalEl = document.getElementById('sectionConfigModal');
+  var sectionInput = document.getElementById('sectionConfigTitle');
+  var sectionModal = null;
+  var sectionTarget = null;
+  function getSectionModal() {
+    if (!sectionModal && sectionModalEl && window.bootstrap) sectionModal = new bootstrap.Modal(sectionModalEl);
+    return sectionModal;
+  }
+  // Reflect a section widget's title param onto its <h2> (placeholder when empty).
+  function applySectionTitle(widget) {
+    var h2 = widget.querySelector('[data-section-title]');
+    if (!h2) return;
+    var title = (readParams(widget).title || '').trim();
+    h2.textContent = title || h2.getAttribute('data-placeholder') || '';
+  }
+  function openSectionConfig(widget) {
+    var modal = getSectionModal();
+    if (!modal) return;
+    sectionTarget = widget;
+    if (sectionInput) sectionInput.value = readParams(widget).title || '';
+    modal.show();
+    if (sectionModalEl) sectionModalEl.addEventListener('shown.bs.modal', function onShown() {
+      sectionModalEl.removeEventListener('shown.bs.modal', onShown);
+      if (sectionInput) sectionInput.focus();
+    });
+  }
+  var sectionApply = document.getElementById('sectionConfigApply');
+  function commitSectionTitle() {
+    var modal = getSectionModal();
+    if (!sectionTarget) { if (modal) modal.hide(); return; }
+    var title = sectionInput ? sectionInput.value.trim().slice(0, 60) : '';
+    writeParams(sectionTarget, { title: title });
+    applySectionTitle(sectionTarget);
+    flashWidget(sectionTarget);
+    dirty = true;
+    if (modal) modal.hide();
+  }
+  if (sectionApply) sectionApply.addEventListener('click', commitSectionTitle);
+  if (sectionInput) sectionInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); commitSectionTitle(); }
+  });
+
   // Sort dialog (shared) for the progress-bar list widgets: a sort mode plus,
   // in "manual" mode, a drag-to-reorder list of the widget's rows.
   var sortModalEl = document.getElementById('sortConfigModal');
@@ -1040,15 +1121,27 @@
     });
   }
 
+  // Open the right config dialog for a widget, based on its data-config kind.
+  function openConfigFor(widget) {
+    var kind = widget.getAttribute('data-config');
+    if (kind === 'sort') openSortConfig(widget);
+    else if (kind === 'target') openTargetConfig(widget);
+    else if (kind === 'section') openSectionConfig(widget);
+    else openConfig(widget);
+  }
+
   // Build (but do not place) a fresh, unconfigured instance of a "multiple"
-  // widget by cloning its template node.
+  // widget by cloning its server-rendered template node. Each such widget ships
+  // a hidden <template> clone source (its empty/placeholder state is baked in by
+  // the server render, so nothing to toggle here beyond a fresh key).
+  var CLONE_TEMPLATES = { indicator: 'indicatorWidgetTemplate', section: 'sectionWidgetTemplate' };
   function cloneInstance(id) {
-    var tpl = document.getElementById('indicatorWidgetTemplate');
-    if (id !== 'indicator' || !tpl) return null;
+    var tplId = CLONE_TEMPLATES[id];
+    var tpl = tplId ? document.getElementById(tplId) : null;
+    if (!tpl) return null;
     var widget = tpl.content.firstElementChild.cloneNode(true);
     widget.setAttribute('data-key', newKey(id));
     widget.setAttribute('data-visible', 'true');
-    widget.classList.add('dash-widget--empty');
     return widget;
   }
 
@@ -1074,7 +1167,7 @@
     fitWidget(widget);
     refreshGalleryEmpty();
     flashWidget(widget);
-    if (multiple) openConfig(widget);
+    if (multiple) openConfigFor(widget);
     dirty = true;
     return widget;
   }
@@ -1114,11 +1207,7 @@
   zones.addEventListener('click', function(e) {
     var configBtn = e.target.closest('.dash-widget__config');
     if (configBtn) {
-      var cw = configBtn.closest('.dash-widget');
-      var kind = cw.getAttribute('data-config');
-      if (kind === 'sort') openSortConfig(cw);
-      else if (kind === 'target') openTargetConfig(cw);
-      else openConfig(cw);
+      openConfigFor(configBtn.closest('.dash-widget'));
       return;
     }
     var sizeBtn = e.target.closest('.dash-widget__size');

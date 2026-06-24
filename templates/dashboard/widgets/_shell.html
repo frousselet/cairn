@@ -1,6 +1,6 @@
 {% load i18n %}
 {# Generic widget wrapper. Expects `placed` = {key, widget, size, cols, rows, w, h, zone, visible, has_data, params, params_json, configurable, size_options, slot}. `size` is a "WxH" token; `cols`/`rows` are the grid spans it maps to; `key` is the per-instance id; `configurable` adds the edit-mode gear. The chrome (drag affordance, config, resize, remove) only shows in edit mode. #}
-<section class="dash-widget dash-widget--w{{ placed.w }} dash-widget--h{{ placed.h }}{% if not placed.has_data %} dash-widget--empty{% endif %}"
+<section class="dash-widget dash-widget--w{{ placed.w }} dash-widget--h{{ placed.h }}{% if placed.widget.bare %} dash-widget--bare{% endif %}{% if not placed.has_data %} dash-widget--empty{% endif %}"
          data-widget-id="{{ placed.widget.id }}"
          data-key="{{ placed.key }}"
          data-size="{{ placed.size }}"

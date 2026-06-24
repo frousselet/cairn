@@ -1,0 +1,3 @@
+{% load i18n %}
+{# Widget: a bare section heading sitting directly on the page background (no card). Expects `placed.params.title`; falls back to a neutral placeholder when not configured yet. #}
+<h2 class="dash-section-title" data-section-title data-placeholder="{% trans 'Section title' %}">{{ placed.params.title|default:_("Section title") }}</h2>

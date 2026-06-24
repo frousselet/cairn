@@ -606,6 +606,28 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
             "has_data": False,
         }
 
+        # Clone source for adding section headings from the gallery: a hidden,
+        # untitled bare widget the editor JS duplicates per instance (a section
+        # always renders, so it carries has_data=True - never an empty placeholder).
+        sec_widget = WIDGETS_BY_ID["section"]
+        ctx["section_widget_template"] = {
+            "key": "__TEMPLATE__",
+            "widget": sec_widget,
+            "size": sec_widget.default_size,
+            "cols": sec_widget.cols(sec_widget.default_size),
+            "rows": sec_widget.rows(sec_widget.default_size),
+            "w": sec_widget.width(sec_widget.default_size),
+            "h": sec_widget.height(sec_widget.default_size),
+            "visible": True,
+            "zone": "main",
+            "params": sec_widget.default_params(),
+            "params_json": json.dumps(sec_widget.default_params()),
+            "configurable": True,
+            "size_options": [(s, size_label(s)) for s in sec_widget.sizes],
+            "slot": None,
+            "has_data": True,
+        }
+
         return ctx
 
 

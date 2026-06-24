@@ -10749,6 +10749,29 @@ msgctxt "dashboard widget title"
 msgid "Summary"
 msgstr "Résumé"
 
+msgctxt "dashboard widget title"
+msgid "Section"
+msgstr "Section"
+
+msgid "Layout"
+msgstr "Disposition"
+
+msgid "Section title"
+msgstr "Titre de la section"
+
+msgid "Configure section"
+msgstr "Configurer la section"
+
+msgid "e.g. Compliance"
+msgstr "ex. Conformité"
+
+msgid ""
+"A full-width heading placed on the page background to group widgets into "
+"sections."
+msgstr ""
+"Un titre pleine largeur posé sur le fond de page pour regrouper les widgets "
+"en sections."
+
 msgid "References"
 msgstr "Références"
 

@@ -1154,6 +1154,32 @@ class TestDashboardWidgetRegistry:
         }
         assert resolved["active_objectives"]["params"] == {"sort": "default", "order": []}
 
+    def test_section_widget_is_bare_multiple_and_configurable(self):
+        from core.dashboard import WIDGETS_BY_ID, default_layout
+
+        w = WIDGETS_BY_ID["section"]
+        assert w.multiple is True
+        assert w.bare is True
+        assert w.configurable is True and w.config == "section"
+        # A layout helper, never auto-placed (a "multiple" widget starts at zero).
+        assert "section" not in [e["id"] for e in default_layout()]
+
+    def test_resolve_sanitizes_section_params(self):
+        from core.dashboard import resolve_layout
+
+        resolved = resolve_layout([
+            {"key": "s1", "id": "section", "size": "4x1", "params": {"title": "  Compliance  "}},
+            # Non-dict params -> empty title.
+            {"key": "s2", "id": "section", "size": "4x1", "params": "nope"},
+            # Over-long title is capped (kept short so it reads as a heading).
+            {"key": "s3", "id": "section", "size": "4x1", "params": {"title": "x" * 200}},
+        ])
+        sections = [e for e in resolved if e["id"] == "section"]
+        assert len(sections) == 3
+        assert sections[0]["params"] == {"title": "Compliance"}  # trimmed
+        assert sections[1]["params"] == {"title": ""}
+        assert len(sections[2]["params"]["title"]) == 60  # SECTION_TITLE_MAX_LENGTH
+
     def test_progress_widgets_are_sort_configurable(self):
         from core.dashboard import WIDGETS_BY_ID
 
@@ -1556,6 +1582,41 @@ class TestIndicatorWidget:
         tail = content[gallery_at:gallery_at + 4000]
         assert 'data-widget-id="indicator"' in tail
         assert 'data-multiple="true"' in tail
+
+    def test_section_widget_renders_bare_heading(self):
+        client, user = _regular_client()
+        user.dashboard_layout = [{
+            "key": "s1", "id": "section", "size": "4x1", "visible": True,
+            "zone": "main", "params": {"title": "Compliance"},
+        }]
+        user.save(update_fields=["dashboard_layout"])
+        content = client.get(reverse("home")).content.decode()
+        anchor = content.index('data-widget-id="section"')
+        # Bound the slice to this widget (up to the next widget's marker).
+        nxt = content.find('data-widget-id=', anchor + 1)
+        section = content[anchor - 200:nxt if nxt != -1 else anchor + 1500]
+        # Chromeless (bare) instance carrying its key + config gear, rendering the
+        # heading directly (no card) - it is never an empty/hidden placeholder.
+        assert 'dash-widget--bare' in section
+        assert 'data-key="s1"' in section
+        assert 'data-multiple="true"' in section
+        assert 'dash-widget__config' in section
+        assert 'dash-widget--empty' not in section[:300]
+        assert '>Compliance</h2>' in content
+
+    def test_section_widget_template_node_present(self):
+        # The hidden clone source + config dialog the editor uses to add sections.
+        client, user = _regular_client()
+        content = client.get(reverse("home")).content.decode()
+        assert 'id="sectionWidgetTemplate"' in content
+        assert 'id="sectionConfigModal"' in content
+
+    def test_gallery_section_tile_is_multiple(self):
+        client, user = _regular_client()
+        content = client.get(reverse("home")).content.decode()
+        # The section gallery tile is always available and marked multiple
+        # (the adjacency of the two attributes is unique to the gallery button).
+        assert 'data-widget-id="section" data-multiple="true"' in content
 
     def test_partial_endpoint_renders_card_for_indicator(self):
         ind = _make_indicator(name="Latency", current_value="42")
