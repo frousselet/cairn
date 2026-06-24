@@ -1213,11 +1213,13 @@ def ongoing_audits_queryset(user, today):
 def ongoing_audits_brief(user, today):
     """Server-built details of the ongoing audits, for the Ask Cairn LLM payload.
 
-    Returns a list of ``{name, covers_entire_scope, audited_scopes, standards,
-    lead_auditor}`` (capped), built from the database rather than the client, so
-    the briefing can name who / what is audited without trusting client strings.
-    ``covers_entire_scope`` is true when every root scope (a perimeter with no
-    parent) is selected, i.e. the audit spans the whole perimeter.
+    Returns a list of ``{name, covers_entire_scope, audited_scopes, standards
+    (name + framework type), lead_auditor, start_date, end_date, progress (once
+    started)}`` (capped), built from the database rather than the client, so the
+    briefing can name who
+    / what is audited without trusting client strings. ``covers_entire_scope`` is
+    true when every root scope (a perimeter with no parent) is selected, i.e. the
+    audit spans the whole perimeter.
     """
     from context.models import Scope
 
@@ -1227,13 +1229,39 @@ def ongoing_audits_brief(user, today):
     brief = []
     for a in ongoing_audits_queryset(user, today)[:10]:
         scope_ids = {s.id for s in a.scopes.all()}
-        brief.append({
+        entry = {
             "name": a.name,
             "covers_entire_scope": bool(root_scope_ids) and root_scope_ids <= scope_ids,
             "audited_scopes": [s.name for s in a.scopes.all()],
-            "standards": [fw.short_name or fw.name for fw in a.frameworks.all()],
+            # Each standard carries its framework type (standard / law / regulation
+            # / ...) so the briefing can call it a norme, une loi, etc.
+            "standards": [
+                {"name": fw.short_name or fw.name, "type": fw.type}
+                for fw in a.frameworks.all()
+            ],
             "lead_auditor": a.assessor.display_name,
-        })
+            "start_date": a.assessment_start_date.isoformat(),
+            "end_date": a.assessment_end_date.isoformat(),
+        }
+        # Progress so far, only once some requirements carry a verdict, so audits
+        # that have not started are not described with a misleading "0 %".
+        audited = (
+            a.compliant_count + a.major_non_conformity_count
+            + a.minor_non_conformity_count + a.observation_count
+            + a.improvement_opportunity_count + a.strength_count
+        )
+        if audited:
+            entry["progress"] = {
+                "requirements_audited": audited,
+                "requirements_total": a.total_requirements,
+                # Compliance rate over the requirements already audited.
+                "compliance_rate_pct": a.compliance_pct,
+                "major_non_conformities": a.major_non_conformity_count,
+                "minor_non_conformities": a.minor_non_conformity_count,
+                "observations": a.observation_count,
+                "improvement_opportunities": a.improvement_opportunity_count,
+            }
+        brief.append(entry)
     return brief
 
 

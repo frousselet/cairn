@@ -192,6 +192,11 @@
     transform: scale(var(--fit-scale, 1));
     transform-origin: center;
   }
+  /* The dashboard matrices are scaled down to fit their tile, where the per-cell
+     hover lift + colour glow looks wrong (and the glow spills the tile), so drop
+     it here. The full-page matrices on the risk pages keep that affordance. */
+  [data-fit-scale] .risk-matrix-cell { transition: none; }
+  [data-fit-scale] .risk-matrix-cell:hover { transform: none; box-shadow: none; z-index: auto; }
   /* Hidden widgets stay in the DOM (so they can be re-added without a reload)
      but never render. */
   .dash-widget[data-visible="false"] { display: none; }
