@@ -5,8 +5,8 @@ backend asks the configured LLM (Mistral by default) to synthesise it into a sho
 briefing and renders what the model returns. It is fetched **asynchronously** by
 the widget (a small endpoint the browser calls after the page has rendered), so
 the dashboard never blocks on the LLM - a slow or unreachable provider can only
-delay the briefing, never the page. Results are cached per user per day, and shown
-with an honest "powered by <provider> <model>" note.
+delay the briefing, never the page. Results are cached per user for a short window,
+and shown with an honest "powered by <provider> <model>" note.
 """
 
 import json
@@ -79,8 +79,12 @@ def provider_label():
 
 
 # Bump when the prompt, the metrics snapshot or the result shape changes, so
-# already-cached briefings for the day are regenerated instead of served stale.
+# already-cached briefings are regenerated instead of served stale.
 BRIEFING_CACHE_VERSION = "14"
+
+# How long a generated briefing is cached in production (per user). Kept short so
+# the briefing tracks the day's metrics as they change rather than freezing.
+BRIEFING_CACHE_TTL = 60 * 15  # 15 minutes
 
 
 def _cache_key(user, language):
@@ -93,8 +97,9 @@ def _cache_key(user, language):
 def get_or_generate_briefing(user, language, data):
     """Return the day's AI briefing ``{"text", "provider", "generated_at"}`` or ``None``.
 
-    ``data`` is a dict of the day's GRC metrics. Cached per user per day; on a
-    miss the LLM is called synchronously and the result cached. Returns ``None``
+    ``data`` is a dict of the day's GRC metrics. Cached per user for a short
+    window (``BRIEFING_CACHE_TTL``); on a miss the LLM is called synchronously and
+    the result cached. Returns ``None``
     when the assistant is disabled, there is no data, or generation fails (the
     caller then keeps the fallback). Meant to be called from the async briefing
     endpoint, never from the page render.
@@ -102,8 +107,8 @@ def get_or_generate_briefing(user, language, data):
     if not settings.AI_ASSISTANT_ENABLED or not data:
         return None
     # In dev (DEBUG) always regenerate: the briefing is being iterated on, so a
-    # day-long cache would mask prompt and snapshot changes. In production it is
-    # cached per user per day.
+    # cache would mask prompt and snapshot changes. In production it is cached
+    # briefly per user (BRIEFING_CACHE_TTL).
     use_cache = not settings.DEBUG
     key = _cache_key(user, language)
     if use_cache:
@@ -123,7 +128,7 @@ def get_or_generate_briefing(user, language, data):
         "generated_at": timezone.now().isoformat(),
     }
     if use_cache:
-        cache.set(key, result, 60 * 60 * 20)
+        cache.set(key, result, BRIEFING_CACHE_TTL)
     return result
 
 
