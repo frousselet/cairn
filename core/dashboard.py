@@ -154,6 +154,25 @@ CATEGORY_COMPLIANCE = _("Compliance")
 CATEGORY_RISKS = _("Risks")
 CATEGORY_GOVERNANCE = _("Governance")
 CATEGORY_ACTIVITY = _("Activity")
+CATEGORY_LAYOUT = _("Layout")
+
+
+# Longest a section title may be; kept short so it reads as a heading, not a
+# paragraph. Applied on resolve so a malformed client payload can never store an
+# oversized title.
+SECTION_TITLE_MAX_LENGTH = 60
+
+
+def _sanitize_section_params(raw) -> dict:
+    """Normalise the section widget's params: ``{title}``.
+
+    ``title`` is the heading text (a string, empty when not configured yet; the
+    template then shows a neutral placeholder). Trimmed and length-capped.
+    """
+    raw = raw if isinstance(raw, dict) else {}
+    title = raw.get("title")
+    title = str(title).strip() if title else ""
+    return {"title": title[:SECTION_TITLE_MAX_LENGTH]}
 
 
 @dataclass(frozen=True)
@@ -177,9 +196,13 @@ class DashboardWidget:
     multiple: bool = False
     # Optional sanitiser for this widget's per-instance params dict.
     param_sanitizer: object = None
-    # Which config dialog the edit-mode gear opens ("indicator", "sort" or "" for
-    # none). A widget is configurable iff this is set.
+    # Which config dialog the edit-mode gear opens ("indicator", "sort",
+    # "section" or "" for none). A widget is configurable iff this is set.
     config: str = ""
+    # A "bare" widget renders with no card chrome (no background, border, shadow
+    # or padding) - just its content sitting directly on the page background. Used
+    # by the Section widget, a heading that groups widgets into sections.
+    bare: bool = False
 
     @property
     def configurable(self) -> bool:
@@ -348,6 +371,21 @@ DASHBOARD_WIDGETS: list[DashboardWidget] = [
         default_size="2x2",
         default_order=81,
         description=_("Probability x impact heatmap, after treatment."),
+    ),
+    DashboardWidget(
+        id="section",
+        title=pgettext_lazy("dashboard widget title", "Section"),
+        icon="type-h2",
+        template="dashboard/widgets/section.html",
+        category=CATEGORY_LAYOUT,
+        sizes=("4x1",),
+        default_size="4x1",
+        default_order=90,
+        multiple=True,
+        param_sanitizer=_sanitize_section_params,
+        config="section",
+        bare=True,
+        description=_("A full-width heading placed on the page background to group widgets into sections."),
     ),
 ]
 

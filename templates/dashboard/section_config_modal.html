@@ -1,0 +1,22 @@
+{% load i18n %}
+{# Shared dialog to configure a section widget: its heading text. The editor JS opens it from the gear button of whichever section widget is being configured, prefills it, and writes the title back on Apply. #}
+<div class="modal fade" id="sectionConfigModal" tabindex="-1" aria-labelledby="sectionConfigLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sectionConfigLabel"><i class="bi bi-type-h2 me-2" style="color:var(--accent)"></i>{% trans "Configure section" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-0">
+          <label for="sectionConfigTitle" class="form-label">{% trans "Section title" %}</label>
+          <input type="text" id="sectionConfigTitle" class="form-control" maxlength="60" placeholder="{% trans 'e.g. Compliance' %}">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <button type="button" class="btn btn-primary" id="sectionConfigApply">{% trans "Apply" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
