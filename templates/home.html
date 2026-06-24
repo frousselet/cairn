@@ -165,16 +165,17 @@
   }
   .dash-widget--bare > .dash-widget__body { padding: 0; }
   /* In the fixed main grid the bare tile is a half-row band; the heading is
-     vertically centred so the space above and below it is balanced. When the
-     grid collapses below xl the tile is content-height, so it stays compact. */
+     pushed toward the bottom (free space accumulates above it) so it reads as a
+     section header sitting just above the widgets it labels - more space above
+     than below. When the grid collapses below xl the tile is content-height. */
   .dashboard-main > .dash-widget--bare > .dash-widget__body {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-end;
   }
   .dash-section-title {
     margin: 0;
-    padding: 0 .25rem;
+    padding: 0 .25rem .375rem;
     font-family: var(--font-display);
     font-size: 1.5rem;
     font-weight: 810;        /* brand: titles at weight 810 */
