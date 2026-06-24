@@ -7876,7 +7876,7 @@ def _register_reports_tools(server):
 
     # ── Company Settings ───────────────────────────────────
 
-    company_fields = ["id", "name", "app_name", "address", "accent_color", "use_logo_as_app_brand", "updated_at"]
+    company_fields = ["id", "name", "app_name", "assistant_name", "address", "accent_color", "use_logo_as_app_brand", "updated_at"]
 
     @require_perm("system.config.read")
     def get_company_settings(user, arguments):
@@ -7886,7 +7886,7 @@ def _register_reports_tools(server):
 
     server.register_tool(
         "get_company_settings",
-        "Get the company settings (name, application name, address, accent colour, whether the company logo replaces the Cairn logo)",
+        "Get the company settings (name, application name, AI assistant name, address, accent colour, whether the company logo replaces the Cairn logo)",
         {"type": "object", "properties": {}},
         get_company_settings,
     )
@@ -7899,6 +7899,8 @@ def _register_reports_tools(server):
             instance.name = arguments["name"]
         if "app_name" in arguments:
             instance.app_name = arguments["app_name"]
+        if "assistant_name" in arguments:
+            instance.assistant_name = arguments["assistant_name"]
         if "address" in arguments:
             instance.address = arguments["address"]
         if "accent_color" in arguments:
@@ -7919,7 +7921,7 @@ def _register_reports_tools(server):
 
     server.register_tool(
         "update_company_settings",
-        "Update company settings (name, application name, address, accent colour, and/or whether the company logo replaces the Cairn logo)",
+        "Update company settings (name, application name, AI assistant name, address, accent colour, and/or whether the company logo replaces the Cairn logo)",
         {
             "type": "object",
             "properties": {
@@ -7930,6 +7932,10 @@ def _register_reports_tools(server):
                 "app_name": {
                     "type": "string",
                     "description": "Custom application name shown in the sidebar and tab titles (defaults to Cairn when empty)",
+                },
+                "assistant_name": {
+                    "type": "string",
+                    "description": "Custom name for the AI assistant shown in the command palette, its answers and the sidebar (defaults to Ask Cairn when empty)",
                 },
                 "address": {
                     "type": "string",

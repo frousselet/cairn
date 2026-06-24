@@ -63,6 +63,16 @@ class TestCompanySettingsView:
         assert instance.name == "My Company"
         assert instance.address == "123 Main Street"
 
+    def test_post_updates_assistant_name(self, client):
+        user = UserFactory(is_superuser=True)
+        client.force_login(user)
+        resp = client.post("/accounts/company/", {
+            "name": "My Company",
+            "assistant_name": "Acme Copilot",
+        })
+        assert resp.status_code == 302
+        assert CompanySettings.get().assistant_name == "Acme Copilot"
+
     def test_post_normalizes_accent_color(self, client):
         user = UserFactory(is_superuser=True)
         client.force_login(user)

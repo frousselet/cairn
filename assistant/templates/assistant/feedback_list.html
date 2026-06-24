@@ -105,7 +105,8 @@ function setPill(param, value) {
           </td>
         </tr>
         {% empty %}
-        {% empty_state title=_("No feedback to review.") message=_("Open feedback appears here when users rate an Ask Cairn answer. Export the set to hand it to an LLM, then mark items corrected to drop them from future exports.") colspan=5 %}
+        {% blocktrans asvar no_feedback_msg %}Open feedback appears here when users rate an {{ ASSISTANT_NAME }} answer. Export the set to hand it to an LLM, then mark items corrected to drop them from future exports.{% endblocktrans %}
+        {% empty_state title=_("No feedback to review.") message=no_feedback_msg colspan=5 %}
         {% endfor %}
       </tbody>
     </table>

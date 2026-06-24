@@ -450,7 +450,14 @@ class PageHeaderNode(template.Node):
             if section:
                 crumbs.append({"label": gettext(section), "url": None})
             if group:
-                crumbs.append({"label": gettext(group), "url": None})
+                # The assistant's group label is the configurable brand name
+                # (ASSISTANT_NAME, default "Ask Cairn") so the breadcrumb matches
+                # the renamed sidebar group.
+                if nav.startswith("assistant:"):
+                    group_label = context.get("ASSISTANT_NAME") or gettext(group)
+                else:
+                    group_label = gettext(group)
+                crumbs.append({"label": group_label, "url": None})
             if on_list_page:
                 crumbs.append({"label": gettext(leaf_label), "url": None})
             else:

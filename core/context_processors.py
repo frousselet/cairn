@@ -66,12 +66,18 @@ def assistant_enabled(request):
 def company(request):
     """Expose the company settings singleton and the resolved application name to
     every template (sidebar brand, tab titles). Uses .first() so a GET never
-    creates the singleton row; APP_NAME falls back to "Cairn"."""
+    creates the singleton row; APP_NAME falls back to "Cairn" and
+    ASSISTANT_NAME (the AI assistant brand) to "Ask Cairn"."""
     from accounts.models import CompanySettings
 
     settings_obj = CompanySettings.objects.first()
     app_name = (settings_obj.app_name if settings_obj and settings_obj.app_name else "Cairn")
-    ctx = {"company": settings_obj, "APP_NAME": app_name}
+    assistant_name = (
+        settings_obj.assistant_name
+        if settings_obj and settings_obj.assistant_name
+        else "Ask Cairn"
+    )
+    ctx = {"company": settings_obj, "APP_NAME": app_name, "ASSISTANT_NAME": assistant_name}
     accent = settings_obj.accent_color if settings_obj else ""
     if accent:
         # Adjust lightness per theme so any chosen colour stays legible: darken

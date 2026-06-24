@@ -26,6 +26,16 @@ class CompanySettings(models.Model):
             "Defaults to Cairn when left empty."
         ),
     )
+    assistant_name = models.CharField(
+        _("Assistant name"),
+        max_length=100,
+        blank=True,
+        default="",
+        help_text=_(
+            "Custom name for the AI assistant, shown in the command palette, "
+            "its answers and the sidebar. Defaults to Ask Cairn when left empty."
+        ),
+    )
     accent_color = models.CharField(
         _("Accent colour"),
         max_length=7,

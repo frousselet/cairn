@@ -4772,6 +4772,9 @@ msgstr "Serveur MCP"
 msgid "Application name"
 msgstr "Nom de l'application"
 
+msgid "Assistant name"
+msgstr "Nom de l'assistant"
+
 msgid "Client ID"
 msgstr "Identifiant client"
 
@@ -9858,8 +9861,8 @@ msgstr "Retour rouvert."
 msgid "No feedback to review."
 msgstr "Aucun retour à examiner."
 
-msgid "Open feedback appears here when users rate an Ask Cairn answer. Export the set to hand it to an LLM, then mark items corrected to drop them from future exports."
-msgstr "Les retours ouverts apparaissent ici lorsque les utilisateurs évaluent une réponse d'Ask Cairn. Exportez l'ensemble pour le confier à un LLM, puis marquez les éléments corrigés pour les retirer des prochains exports."
+msgid "Open feedback appears here when users rate an %(ASSISTANT_NAME)s answer. Export the set to hand it to an LLM, then mark items corrected to drop them from future exports."
+msgstr "Les retours ouverts apparaissent ici lorsque les utilisateurs évaluent une réponse de %(ASSISTANT_NAME)s. Exportez l'ensemble pour le confier à un LLM, puis marquez les éléments corrigés pour les retirer des prochains exports."
 
 msgid "Mark selected feedback as corrected"
 msgstr "Marquer les retours sélectionnés comme corrigés"
@@ -10511,6 +10514,13 @@ msgstr "Remplace le logo Cairn de la barre latérale par le logo de l'entreprise
 
 msgid "Custom name shown in the sidebar and the browser tab titles. Defaults to Cairn when left empty."
 msgstr "Nom personnalisé affiché dans la barre latérale et le titre des onglets du navigateur. « Cairn » par défaut si laissé vide."
+
+msgid ""
+"Custom name for the AI assistant, shown in the command palette, its answers "
+"and the sidebar. Defaults to Ask Cairn when left empty."
+msgstr ""
+"Nom personnalisé de l'assistant IA, affiché dans la palette de commandes, ses "
+"réponses et la barre latérale. « Ask Cairn » par défaut si laissé vide."
 
 msgid "Pick accent colour"
 msgstr "Choisir la couleur d'accent"
