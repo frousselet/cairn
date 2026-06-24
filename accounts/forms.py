@@ -187,10 +187,11 @@ class CompanySettingsForm(forms.ModelForm):
 
     class Meta:
         model = CompanySettings
-        fields = ("name", "app_name", "address", "accent_color", "use_logo_as_app_brand")
+        fields = ("name", "app_name", "assistant_name", "address", "accent_color", "use_logo_as_app_brand")
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "app_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Cairn"}),
+            "assistant_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ask Cairn"}),
             "address": forms.Textarea(attrs={"class": "form-control no-jodit", "rows": 3}),
             "accent_color": forms.TextInput(attrs={
                 "class": "form-control", "placeholder": "#1E3A8A",

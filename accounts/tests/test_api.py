@@ -441,6 +441,16 @@ class TestCompanySettingsAPI:
         assert response.status_code == 200
         assert response.json()["data"]["name"] == "ACME Corp"
 
+    def test_patch_assistant_name(self):
+        response = self.client.patch(
+            "/api/v1/company-settings/",
+            {"assistant_name": "Acme Copilot"},
+            format="json",
+        )
+        assert response.status_code == 200
+        assert response.json()["data"]["assistant_name"] == "Acme Copilot"
+        assert CompanySettings.get().assistant_name == "Acme Copilot"
+
     def test_unauthenticated_access(self):
         client = APIClient()
         response = client.get("/api/v1/company-settings/")

@@ -952,6 +952,21 @@ class TestDashboardCompanyIdentity:
         resp = client.get(reverse("home"))
         assert resp.context["APP_NAME"] == "Cairn"
 
+    def test_custom_assistant_name_replaces_ask_cairn_brand(self):
+        from accounts.models import CompanySettings
+
+        CompanySettings.objects.create(name="Voltara Energy", assistant_name="Voltara Copilot")
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        assert resp.context["ASSISTANT_NAME"] == "Voltara Copilot"
+        # The sidebar assistant group uses the custom name (superuser sees it).
+        assert "Voltara Copilot" in resp.content.decode()
+
+    def test_assistant_name_defaults_to_ask_cairn(self):
+        client, user = _regular_client()
+        resp = client.get(reverse("home"))
+        assert resp.context["ASSISTANT_NAME"] == "Ask Cairn"
+
     def test_custom_accent_color_injects_override(self):
         from accounts.models import CompanySettings
 

@@ -1,6 +1,6 @@
 {% load i18n %}
 <div class="search-group-label" role="presentation">
-  <i class="bi bi-robot" aria-hidden="true"></i> {% trans "Ask Cairn" %}
+  <i class="bi bi-robot" aria-hidden="true"></i> {{ ASSISTANT_NAME }}
   <span class="ai-badge">{% trans "AI" %}</span>
 </div>
 {% if error_code == "disabled" %}

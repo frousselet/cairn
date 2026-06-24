@@ -82,6 +82,16 @@
             {% if form.app_name.errors %}<div class="invalid-feedback d-block">{{ form.app_name.errors.0 }}</div>{% endif %}
           </div>
           <div class="mb-3">
+            <label for="{{ form.assistant_name.id_for_label }}" class="form-label">{{ form.assistant_name.label }}</label>
+            {% if can_edit %}
+            {{ form.assistant_name }}
+            <div class="form-text">{{ form.assistant_name.help_text }}</div>
+            {% else %}
+            <div class="form-control-plaintext">{{ company.assistant_name|default:"Ask Cairn" }}</div>
+            {% endif %}
+            {% if form.assistant_name.errors %}<div class="invalid-feedback d-block">{{ form.assistant_name.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
             <label for="{{ form.accent_color.id_for_label }}" class="form-label">{{ form.accent_color.label }}</label>
             {% if can_edit %}
             <div class="d-flex align-items-center gap-2">

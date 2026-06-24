@@ -167,3 +167,20 @@ class TestSupplierListTool:
 
         # Without the flag, all three suppliers are returned.
         assert handler(user, {})["total"] == 3
+
+
+class TestCompanySettingsTools:
+    def _server_user(self):
+        srv = McpServer()
+        register_all_tools(srv)
+        return srv, UserFactory(is_superuser=True)
+
+    def test_update_and_get_assistant_name(self):
+        srv, user = self._server_user()
+        update = srv.get_tool("update_company_settings")["handler"]
+        get = srv.get_tool("get_company_settings")["handler"]
+
+        updated = update(user, {"assistant_name": "Acme Copilot"})
+        assert updated["assistant_name"] == "Acme Copilot"
+        # Persisted and surfaced by get_company_settings.
+        assert get(user, {})["assistant_name"] == "Acme Copilot"

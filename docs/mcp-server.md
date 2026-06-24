@@ -170,8 +170,8 @@ Additional tools:
 | `list_stakeholder_feedback` | List formal stakeholder feedback (clause 9.3.2.e) |
 | `create_stakeholder_feedback` | Record formal feedback from an interested party |
 | `delete_report` | Delete a generated report |
-| `get_company_settings` | Get company settings (name, application name, address, accent colour, whether the company logo replaces the Cairn logo) |
-| `update_company_settings` | Update company settings (name, application name, address, accent colour, use the company logo as the app brand) |
+| `get_company_settings` | Get company settings (name, application name, AI assistant name, address, accent colour, whether the company logo replaces the Cairn logo) |
+| `update_company_settings` | Update company settings (name, application name, AI assistant name, address, accent colour, use the company logo as the app brand) |
 
 ## Assistant
 

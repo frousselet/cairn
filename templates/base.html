@@ -4583,9 +4583,9 @@
       {# ── Ask Cairn ──────────────────────────────── #}
       {% if can_feedback or AI_ASSISTANT_ENABLED and can_config %}
       <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminAskCairn" aria-expanded="true">
-        <i class="bi bi-stars"></i> <span class="sidebar-link-text">{% trans "Ask Cairn" %}</span>
+        <i class="bi bi-stars"></i> <span class="sidebar-link-text">{{ ASSISTANT_NAME }}</span>
         <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Ask Cairn" %}</span>
+        <span class="sidebar-tooltip">{{ ASSISTANT_NAME }}</span>
       </button>
       <div class="collapse show" id="navAdminAskCairn">
         {% if AI_ASSISTANT_ENABLED and can_config %}
@@ -6003,7 +6003,7 @@
     function askRowHtml(q) {
       return '<button type="button" class="search-result-item search-ask-ai" id="cmdk-ask" role="option" aria-selected="false">'
         + '<i class="bi bi-robot" aria-hidden="true"></i>'
-        + '<span class="search-ask-q">{% trans "Ask Cairn" as t %}{{ t|escapejs }}&nbsp;: ' + escapeHtml(q) + '</span>'
+        + '<span class="search-ask-q">{{ ASSISTANT_NAME|escapejs }}&nbsp;: ' + escapeHtml(q) + '</span>'
         + '<span class="ai-badge">{% trans "AI" as t %}{{ t|escapejs }}</span></button>';
     }
 
