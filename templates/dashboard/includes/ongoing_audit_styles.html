@@ -1,0 +1,39 @@
+<style>
+  /* Ongoing-audit card styles, shared by the Ongoing audits widget and the
+     Summary widget (each includes this once). Responsive columns: one per row
+     when narrow (rail), several when wide. */
+  /* auto-fit (not auto-fill): with few cards they stretch to fill the row instead
+     of bunching to the left and leaving empty columns. */
+  .ongoing-audits { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(18rem, 1fr)); gap:.75rem; align-items:stretch; }
+  /* The card fills its (stretched) grid cell, so all cards in a row are the same height. */
+  .ongoing-audits > li { display:grid; }
+  .ongoing-audits__item {
+    display:flex; flex-direction:column; gap:.5rem; padding:.875rem 1rem;
+    border-radius:var(--radius-sm); background:var(--surface-raised);
+    border:1px solid var(--border-light); border-left:3px solid var(--accent);
+    text-decoration:none; color:inherit; transition:border-color .2s var(--ease-out), background-color .2s var(--ease-out), transform .2s var(--ease-out);
+  }
+  .ongoing-audits__item:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; transform:translateY(-1px); }
+  .ongoing-audits__head { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; }
+  .ongoing-audits__name { font-size:.875rem; font-weight:600; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .ongoing-audits__status { flex-shrink:0; font-size:.625rem; font-weight:600; padding:.125rem .4375rem; }
+  .ongoing-audits__status--accent { background:var(--accent-soft); color:var(--accent); }
+  .ongoing-audits__status--success { background:color-mix(in srgb, var(--success) 16%, transparent); color:var(--success); }
+  .ongoing-audits__status--muted { background:var(--surface-subtle); color:var(--text-muted); }
+  .ongoing-audits__meta { display:flex; align-items:center; gap:.375rem; flex-wrap:wrap; font-size:.6875rem; color:var(--text-muted); }
+  .ongoing-audits__fw { font-size:.625rem; font-weight:600; padding:.0625rem .375rem; background:var(--accent-soft); color:var(--accent); }
+  /* Reuses the shared grouped_scope_badges component (.scope-crumb pills). The
+     negative margin offsets each crumb's ms-1 so the first one lines up with the
+     other rows (name, ref, person) at the card's left edge. */
+  .ongoing-audits__scopes { display:flex; align-items:center; flex-wrap:wrap; row-gap:.1875rem; margin-left:-.25rem; color:var(--text-muted); }
+  .ongoing-audits__person { display:flex; align-items:center; gap:.5rem; min-width:0; }
+  .ongoing-audits__avatar { width:1.5rem; height:1.5rem; border-radius:50%; object-fit:cover; flex-shrink:0; }
+  .ongoing-audits__avatar--fallback { display:inline-flex; align-items:center; justify-content:center; background:var(--accent-soft); color:var(--accent); font-size:.625rem; font-weight:600; }
+  .ongoing-audits__person-name { font-size:.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* Pushed to the bottom so the progress bars line up across cards of equal height. */
+  .ongoing-audits__progress { display:flex; align-items:center; gap:.625rem; margin-top:auto; }
+  .ongoing-audits__bar { flex:1 1 auto; height:.375rem; border-radius:100px; background:rgba(0,0,0,.09); overflow:hidden; }
+  [data-bs-theme="dark"] .ongoing-audits__bar { background:rgba(255,255,255,.14); }
+  .ongoing-audits__bar > span { display:block; height:100%; border-radius:100px; background:var(--accent); }
+  .ongoing-audits__left { flex-shrink:0; font-size:.625rem; font-weight:600; color:var(--text-muted); font-variant-numeric:tabular-nums; white-space:nowrap; }
+</style>

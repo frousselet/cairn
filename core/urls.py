@@ -9,7 +9,9 @@ from mcp.views import OAuthAuthorizeView, oauth_authorization_server_metadata
 
 from .views import (
     CalendarEventsView, CalendarSubscribeView, CalendarUpcomingView,
-    CalendarView, ChangelogDismissView, DashboardIndicatorsPartialView,
+    CalendarView, ChangelogDismissView, DashboardAskCairnBriefingView,
+    DashboardIndicatorsPartialView,
+    DashboardIndicatorWidgetPartialView,
     DashboardLayoutSaveView, GeneralDashboardView, GlobalSearchView,
     ICalFeedView, KanbanBoardDataView, KanbanBoardView,
     SectionCollapseToggleView, StyleGuideView,
@@ -25,6 +27,8 @@ urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
     path("", GeneralDashboardView.as_view(), name="home"),
     path("dashboard/indicators-partial/", DashboardIndicatorsPartialView.as_view(), name="dashboard-indicators-partial"),
+    path("dashboard/indicator-widget/", DashboardIndicatorWidgetPartialView.as_view(), name="dashboard-indicator-widget"),
+    path("dashboard/ask-cairn-briefing/", DashboardAskCairnBriefingView.as_view(), name="dashboard-ask-cairn-briefing"),
     path("dashboard/changelog-dismiss/", ChangelogDismissView.as_view(), name="changelog-dismiss"),
     path("dashboard/section-toggle/", SectionCollapseToggleView.as_view(), name="dashboard-section-toggle"),
     path("dashboard/layout/", DashboardLayoutSaveView.as_view(), name="dashboard-layout-save"),

@@ -155,6 +155,7 @@ class DashboardLayoutAPIView(APIView):
                 "sizes": list(w.sizes),
                 "default_size": w.default_size,
                 "default_zone": w.default_zone,
+                "multiple": w.multiple,
                 "description": str(w.description),
             }
             for w in DASHBOARD_WIDGETS

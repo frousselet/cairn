@@ -129,6 +129,70 @@ def _format_number(value):
     return formats.number_format(num, decimal_pos=1, use_l10n=True)
 
 
+def build_indicator_slot(ind, show_chart):
+    """Build a single indicator's dashboard slot (value, trend, sparkline).
+
+    ``ind`` is an :class:`Indicator` (ideally with ``measurements`` prefetched).
+    Returns the dict the KPI-card template consumes. Shared by the legacy pinned
+    KPI strip and the per-indicator dashboard widget.
+    """
+    # Fetch enough measurements for sparklines when the chart is enabled.
+    limit = 20 if show_chart else 2
+    measurements = list(ind.measurements.order_by("-recorded_at")[:limit])
+    current = measurements[0] if measurements else None
+    previous = measurements[1] if len(measurements) > 1 else None
+
+    trend = None
+    trend_value = None
+    delta_display = ""
+    if current and previous and ind.format == "number":
+        try:
+            cur_val = float(current.value)
+            prev_val = float(previous.value)
+            diff = cur_val - prev_val
+            trend_value = diff
+            if diff > 0:
+                trend = "up"
+                delta_display = "+" + _format_number(diff)
+            elif diff < 0:
+                trend = "down"
+                delta_display = _format_number(diff)
+            else:
+                trend = "stable"
+        except (ValueError, TypeError):
+            pass
+    elif current and previous and ind.format == "boolean":
+        cur_bool = current.value.lower() in ("true", "1", "yes")
+        prev_bool = previous.value.lower() in ("true", "1", "yes")
+        trend = "changed" if cur_bool != prev_bool else "stable"
+
+    # Formatted current value with thousand separators.
+    formatted_value = None
+    if ind.format == "number" and ind.current_value:
+        formatted_value = _format_number(ind.current_value)
+
+    # Build sparkline values (chronological, numeric only).
+    sparkline_data = []
+    if show_chart and ind.format == "number" and len(measurements) >= 2:
+        for m in reversed(measurements):
+            try:
+                sparkline_data.append(float(m.value))
+            except (ValueError, TypeError):
+                continue
+
+    return {
+        "indicator": ind,
+        "current_measurement": current,
+        "previous_measurement": previous,
+        "trend": trend,
+        "trend_value": trend_value,
+        "delta_display": delta_display,
+        "formatted_value": formatted_value,
+        "show_chart": show_chart,
+        "sparkline_data": sparkline_data,
+    }
+
+
 def get_dashboard_indicator_slots(user):
     """Load pinned indicators with trend + sparkline data, padded to 10 slots."""
     pinned_ids = user.dashboard_indicators or []
@@ -139,67 +203,8 @@ def get_dashboard_indicator_slots(user):
         indicators = Indicator.objects.filter(
             id__in=pinned_ids,
         ).prefetch_related("measurements")
-
         for ind in indicators:
-            show_chart = str(ind.pk) in chart_ids
-            # Fetch enough measurements for sparklines when chart is enabled
-            limit = 20 if show_chart else 2
-            measurements = list(ind.measurements.order_by("-recorded_at")[:limit])
-            current = measurements[0] if measurements else None
-            previous = measurements[1] if len(measurements) > 1 else None
-
-            trend = None
-            trend_value = None
-            delta_display = ""
-            if current and previous and ind.format == "number":
-                try:
-                    cur_val = float(current.value)
-                    prev_val = float(previous.value)
-                    diff = cur_val - prev_val
-                    trend_value = diff
-                    if diff > 0:
-                        trend = "up"
-                        delta_display = "+" + _format_number(diff)
-                    elif diff < 0:
-                        trend = "down"
-                        delta_display = _format_number(diff)
-                    else:
-                        trend = "stable"
-                except (ValueError, TypeError):
-                    pass
-            elif current and previous and ind.format == "boolean":
-                cur_bool = current.value.lower() in ("true", "1", "yes")
-                prev_bool = previous.value.lower() in ("true", "1", "yes")
-                if cur_bool != prev_bool:
-                    trend = "changed"
-                else:
-                    trend = "stable"
-
-            # Formatted current value with thousand separators
-            formatted_value = None
-            if ind.format == "number" and ind.current_value:
-                formatted_value = _format_number(ind.current_value)
-
-            # Build sparkline values (chronological, numeric only)
-            sparkline_data = []
-            if show_chart and ind.format == "number" and len(measurements) >= 2:
-                for m in reversed(measurements):
-                    try:
-                        sparkline_data.append(float(m.value))
-                    except (ValueError, TypeError):
-                        continue
-
-            indicator_map[str(ind.pk)] = {
-                "indicator": ind,
-                "current_measurement": current,
-                "previous_measurement": previous,
-                "trend": trend,
-                "trend_value": trend_value,
-                "delta_display": delta_display,
-                "formatted_value": formatted_value,
-                "show_chart": show_chart,
-                "sparkline_data": sparkline_data,
-            }
+            indicator_map[str(ind.pk)] = build_indicator_slot(ind, str(ind.pk) in chart_ids)
 
     # Build ordered list, padded with None for empty slots
     slots = []

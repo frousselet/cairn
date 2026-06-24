@@ -1,0 +1,140 @@
+{% load i18n %}
+{# Widget: Summary ("Résumé") - the day's metrics synthesised by the LLM (Mistral). The widget posts `data-facts` (a metrics snapshot) to the briefing endpoint, renders the model's synthesis, lists the key items it draws on as references, and shows an honest "powered by" attribution. The point count is a deterministic fallback (assistant off, loading or unavailable). When it sits in the full-width stacked rail it reflows into a banner: summary on the left third, references filling two columns on the right. #}
+<div class="card ask-cairn h-100" data-ai-enabled="{% if AI_ASSISTANT_ENABLED %}1{% else %}0{% endif %}" data-facts="{{ ask_cairn_data_json }}">
+  <div class="card-body ask-cairn__body">
+    <h5 class="card-title ask-cairn__title"><i class="bi bi-stars me-1" style="color:var(--accent)"></i> {% trans "Summary" context "dashboard widget title" %}</h5>
+    <div class="ask-cairn__content">
+      <div class="ask-cairn__main">
+        {% if ask_cairn_data %}
+        {% if ask_cairn_point_count %}{% blocktrans count count=ask_cairn_point_count asvar count_text %}{{ count }} point needs your attention today.{% plural %}{{ count }} points need your attention today.{% endblocktrans %}{% else %}{% blocktrans count count=ask_cairn_audit_count asvar count_text %}{{ count }} audit under way today.{% plural %}{{ count }} audits under way today.{% endblocktrans %}{% endif %}
+        {% if AI_ASSISTANT_ENABLED %}
+        {# Skeleton reserves the text's space (so the rail widgets below do not jump) until the briefing fades in; the count is kept for the failure fallback. #}
+        <div class="ask-cairn__text" data-ai-text><div class="ask-cairn__skeleton" aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+        <p class="ask-cairn__pending" data-ai-pending><i class="bi bi-stars ask-cairn__spin me-1" aria-hidden="true"></i>{% trans "Cairn is writing today's briefing..." %}</p>
+        <span hidden data-ai-count>{{ count_text }}</span>
+        {% else %}
+        <div class="ask-cairn__text" data-ai-text>{{ count_text }}</div>
+        {% endif %}
+        {% else %}
+        <p class="ask-cairn__text ask-cairn__text--clear"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{% trans "Nothing pressing today - you're all clear." %}</p>
+        {% endif %}
+        <p class="ask-cairn__disclaimer" data-ai-disclaimer hidden></p>
+      </div>
+      {% if ask_cairn_references or ongoing_audits %}
+      <div class="ask-cairn__aside">
+        {% if ask_cairn_references %}
+        <div class="ask-cairn__references">
+          <ul class="ask-cairn__refs">
+            {% for ref in ask_cairn_references %}
+            <li>
+              <a href="{{ ref.url }}" class="ask-cairn__ref ask-cairn__ref--{{ ref.tone }}">
+                <i class="bi {{ ref.icon }} ask-cairn__ref-icon" aria-hidden="true"></i>
+                <span class="ask-cairn__ref-label">{{ ref.label }}</span>
+                <i class="bi bi-chevron-right ask-cairn__ref-go" aria-hidden="true"></i>
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        {% if ongoing_audits %}
+        {% include "dashboard/includes/ongoing_audit_styles.html" %}
+        <div class="ask-cairn__audits">
+          <div class="ask-cairn__audits-title">{% trans "Ongoing audits" %}</div>
+          <ul class="ongoing-audits">{% for item in ongoing_audits %}{% include "dashboard/includes/ongoing_audit_card.html" %}{% endfor %}</ul>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<style>
+  .ask-cairn__body { display: flex; flex-direction: column; }
+  .ask-cairn__title { margin-bottom: 1rem; }
+  .ask-cairn__content { display: flex; flex-direction: column; min-width: 0; }
+  .ask-cairn__main { display: flex; flex-direction: column; min-width: 0; }
+  /* Roomy line-height so the inline name chips don't crowd the lines around them. */
+  .ask-cairn__text { margin: 0; color: var(--text-primary); font-size: 1rem; font-weight: 400; line-height: 1.8; }
+  /* The model returns the briefing as <p> paragraphs (audit lead first). */
+  .ask-cairn__text p { margin: 0 0 .625rem; }
+  .ask-cairn__text p:last-child { margin-bottom: 0; }
+  .ask-cairn__text--clear { color: var(--success); }
+  /* People named in the briefing are rendered as a photo + name chip. */
+  .ask-cairn__chip { display: inline-flex; align-items: center; gap: .25rem; margin: 0 .0625rem; padding: .0625rem .4375rem .0625rem .125rem; border-radius: 100px; background: var(--accent-soft); color: var(--text-primary); font-weight: 550; white-space: nowrap; vertical-align: middle; line-height: 1.4; }
+  .ask-cairn__chip-img { width: 1.125rem; height: 1.125rem; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+  .ask-cairn__chip-img--fb { display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: #fff; font-size: .5625rem; font-weight: 700; }
+  .ask-cairn__pending { margin: .375rem 0 0; font-size: .75rem; color: var(--text-muted); }
+  .ask-cairn__disclaimer { margin: .75rem 0 0; font-size: .6875rem; color: var(--text-muted); font-style: italic; }
+  /* The right-hand column: references on top, ongoing-audit cards below. */
+  .ask-cairn__aside { min-width: 0; }
+  /* References: the key items behind the summary, each linking out. */
+  /* The ongoing-audit cards, also surfaced inside the Summary widget. */
+  .ask-cairn__audits { margin-top: 1.25rem; }
+  .ask-cairn__audits-title { margin: 0 0 .5rem; font-size: .6875rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); }
+  .ask-cairn__references { margin-top: 1rem; min-width: 0; }
+  .ask-cairn__refs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .3125rem; }
+  .ask-cairn__ref {
+    display: flex; align-items: center; gap: .5rem; padding: .375rem .5rem;
+    border-radius: var(--radius-sm); border: 1px solid var(--border-light);
+    border-left: 3px solid var(--border-light); background: var(--surface-raised);
+    text-decoration: none; color: var(--text-primary); font-size: .8125rem;
+    transition: border-color .15s var(--ease-out), background-color .15s var(--ease-out), transform .15s var(--ease-out);
+  }
+  .ask-cairn__ref:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--text-primary); transform: translateX(2px); }
+  .ask-cairn__ref--high { border-left-color: var(--danger); }
+  .ask-cairn__ref--medium { border-left-color: var(--warning); }
+  .ask-cairn__ref--low { border-left-color: var(--info, var(--accent)); }
+  .ask-cairn__ref-icon { flex-shrink: 0; color: var(--text-muted); }
+  .ask-cairn__ref--high .ask-cairn__ref-icon { color: var(--danger); }
+  .ask-cairn__ref--medium .ask-cairn__ref-icon { color: var(--warning); }
+  .ask-cairn__ref--low .ask-cairn__ref-icon { color: var(--info, var(--accent)); }
+  .ask-cairn__ref-label { flex: 1 1 auto; min-width: 0; }
+  .ask-cairn__ref-go { flex-shrink: 0; color: var(--text-muted); font-size: .75rem; opacity: 0; transition: opacity .15s var(--ease-out); }
+  .ask-cairn__ref:hover .ask-cairn__ref-go { opacity: 1; }
+  .ask-cairn__spin { display: inline-block; animation: ask-cairn-spin 1.4s linear infinite; color: var(--accent); }
+  @keyframes ask-cairn-spin { to { transform: rotate(360deg); } }
+  /* Skeleton shown while the briefing loads, sized to roughly reserve the text's
+     space so the rail widgets below it don't jump when the real text swaps in. */
+  .ask-cairn__skeleton { display: flex; flex-direction: column; gap: .5rem; padding: .25rem 0; }
+  .ask-cairn__skeleton span { height: .75rem; border-radius: 4px; background: rgba(0,0,0,.08); animation: ask-cairn-pulse 1.4s ease-in-out infinite; }
+  [data-bs-theme="dark"] .ask-cairn__skeleton span { background: rgba(255,255,255,.12); }
+  .ask-cairn__skeleton span:nth-child(1) { width: 95%; }
+  .ask-cairn__skeleton span:nth-child(2) { width: 100%; }
+  .ask-cairn__skeleton span:nth-child(3) { width: 88%; }
+  .ask-cairn__skeleton span:nth-child(4) { width: 55%; }
+  @keyframes ask-cairn-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+  /* The real briefing fades up when it replaces the skeleton. */
+  @keyframes ask-cairn-in { from { opacity: 0; transform: translateY(.375rem); } to { opacity: 1; transform: none; } }
+  .ask-cairn__text--in { animation: ask-cairn-in .35s var(--ease-out) both; }
+  @media (prefers-reduced-motion: reduce) { .ask-cairn__spin, .ask-cairn__skeleton span { animation: none; }
+    .ask-cairn__text--in { animation: none; }
+    .ask-cairn__ref:hover { transform: none; } }
+  /* Stacked rail (rail is full-width, between the xl breakpoint and the rail-beside
+     breakpoint): reflow into a banner - title header on top, then the summary in
+     the first column and the references filling two columns beside it, ~1 row tall.
+     The summary's first line and the first reference row top-align (align-items:
+     start), with a comfortable gap between the two halves. :has() keeps the
+     all-clear state (no references) as a plain single column. */
+  @media (min-width: 1200px) and (max-width: 1799.98px) {
+    .dashboard-rail .ask-cairn__title { margin-bottom: .75rem; }
+    .dashboard-rail .ask-cairn__content:has(.ask-cairn__aside) {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      column-gap: 2.5rem;
+      align-items: start;
+    }
+    /* References + audit cards share the right column; its first child sits at the
+       top (no top margin) so it aligns with the summary - but only here: stacked,
+       the references keep their gap below the disclaimer. */
+    .dashboard-rail .ask-cairn__aside > :first-child { margin-top: 0; }
+    .dashboard-rail .ask-cairn__refs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .25rem .75rem;
+    }
+    /* Denser rows kept to a single line, so the banner stays close to one row tall. */
+    .dashboard-rail .ask-cairn__ref { padding: .25rem .5rem; }
+    .dashboard-rail .ask-cairn__ref-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+</style>

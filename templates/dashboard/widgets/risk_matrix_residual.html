@@ -1,0 +1,10 @@
+{% load i18n %}
+{# Widget: residual risk matrix heatmap (after treatment). Expects `matrix_residual`. #}
+<div class="card h-100">
+  <div class="card-body">
+    <h5 class="card-title"><i class="bi bi-grid-3x3 me-1" style="color:var(--accent)"></i> {% trans "Residual risks" context "risk matrix widget" %}</h5>
+    {% if matrix_residual %}
+    <div data-fit-scale>{% include "risks/includes/risk_matrix.html" with matrix=matrix_residual title="" %}</div>
+    {% endif %}
+  </div>
+</div>

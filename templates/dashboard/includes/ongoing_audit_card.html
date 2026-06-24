@@ -1,0 +1,32 @@
+{% load i18n accounts_tags scope_tags %}
+{# One ongoing-audit card. Expects `item` = {audit, time_progress, days_left, status_tone}. Shared by the Ongoing audits widget and the Summary widget; styles in ongoing_audit_styles.html. #}
+<li>
+  <a href="{% url 'compliance:assessment-detail' item.audit.pk %}" class="ongoing-audits__item"
+     title="{{ item.audit.assessment_start_date|date:'d M Y' }} → {{ item.audit.assessment_end_date|date:'d M Y' }}">
+    <span class="ongoing-audits__head">
+      <span class="ongoing-audits__name">{{ item.audit.name }}</span>
+      <span class="badge ongoing-audits__status ongoing-audits__status--{{ item.status_tone }}">{{ item.audit.get_status_display }}</span>
+    </span>
+    <span class="ongoing-audits__meta">
+      <span class="ref">{{ item.audit.reference }}</span>
+      {% for fw in item.audit.frameworks.all %}<span class="badge ongoing-audits__fw">{{ fw.short_name|default:fw.name }}</span>{% endfor %}
+    </span>
+    {% if item.audit.scopes.all %}
+    <span class="ongoing-audits__scopes" title="{% trans 'Scopes' %}">{% grouped_scope_badges item.audit.scopes.all %}</span>
+    {% endif %}
+    {% with who=item.audit.assessor %}
+    <span class="ongoing-audits__person">
+      {% if who.avatar_32 or who.avatar %}
+      <img src="{{ who.avatar_32|default:who.avatar }}" alt="" class="ongoing-audits__avatar">
+      {% else %}
+      <span class="ongoing-audits__avatar ongoing-audits__avatar--fallback">{{ who.display_name|initials }}</span>
+      {% endif %}
+      <span class="ongoing-audits__person-name">{{ who.display_name }}</span>
+    </span>
+    {% endwith %}
+    <span class="ongoing-audits__progress">
+      <span class="ongoing-audits__bar"><span style="width:{{ item.time_progress }}%"></span></span>
+      <span class="ongoing-audits__left">{% blocktrans count days=item.days_left %}{{ days }} day left{% plural %}{{ days }} days left{% endblocktrans %}</span>
+    </span>
+  </a>
+</li>

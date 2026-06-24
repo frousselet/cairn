@@ -9735,7 +9735,7 @@ msgid "Lifecycle state."
 msgstr "État du cycle de vie."
 
 msgid "Ask Cairn"
-msgstr "Demander à Cairn"
+msgstr "Ask Cairn"
 
 msgid "AI"
 msgstr "IA"
@@ -10668,3 +10668,97 @@ msgstr "Aucune échéance dans les 30 prochains jours."
 
 msgid "Nothing requires your attention right now."
 msgstr "Rien ne requiert votre attention pour le moment."
+
+msgid "A single KPI indicator with its value, trend and an optional mini-chart."
+msgstr "Un indicateur KPI unique avec sa valeur, sa tendance et un mini-graphique optionnel."
+
+msgid "Choose an indicator"
+msgstr "Choisir un indicateur"
+
+msgid "Choose an indicator..."
+msgstr "Choisir un indicateur..."
+
+msgid "Configure indicator"
+msgstr "Configurer l'indicateur"
+
+msgid "Show chart"
+msgstr "Afficher le graphique"
+
+msgid "Order items"
+msgstr "Ordonner les éléments"
+
+msgid "Sort by"
+msgstr "Trier par"
+
+msgid "Default order"
+msgstr "Ordre par défaut"
+
+msgid "Value (descending)"
+msgstr "Valeur (décroissant)"
+
+msgid "Value (ascending)"
+msgstr "Valeur (croissant)"
+
+msgid "Alphabetical"
+msgstr "Alphabétique"
+
+msgid "Manual order"
+msgstr "Ordre manuel"
+
+msgid "Drag to reorder"
+msgstr "Glisser pour réordonner"
+
+msgid "Configure target"
+msgstr "Configurer la cible"
+
+msgid "Show target"
+msgstr "Afficher la cible"
+
+msgid "Key points of the day"
+msgstr "Points clés du jour"
+
+msgid "Nothing pressing today - you're all clear."
+msgstr "Rien d'urgent aujourd'hui - tout est en ordre."
+
+msgid "Cairn's briefing of the day's key governance, risk and compliance points."
+msgstr "Le brief de Cairn sur les points clés du jour en gouvernance, risques et conformité."
+
+msgid "Cairn is writing today's briefing..."
+msgstr "Cairn rédige le briefing du jour..."
+
+msgid "AI-generated summary on %(date)s at %(time)s, powered by %(provider)s."
+msgstr ""
+"Résumé généré par IA le %(date)s à %(time)s, propulsé par %(provider)s."
+
+msgid "%(count)s point needs your attention today."
+msgid_plural "%(count)s points need your attention today."
+msgstr[0] "%(count)s point requiert votre attention aujourd'hui."
+msgstr[1] "%(count)s points requièrent votre attention aujourd'hui."
+
+msgctxt "dashboard widget title"
+msgid "Summary"
+msgstr "Résumé"
+
+msgid "References"
+msgstr "Références"
+
+msgctxt "risk matrix widget"
+msgid "Current risks"
+msgstr "Risques réels"
+
+msgctxt "risk matrix widget"
+msgid "Residual risks"
+msgstr "Risques résiduels"
+
+msgid "Ongoing audits"
+msgstr "Audits en cours"
+
+msgid "%(days)s day left"
+msgid_plural "%(days)s days left"
+msgstr[0] "%(days)s jour restant"
+msgstr[1] "%(days)s jours restants"
+
+msgid "%(count)s audit under way today."
+msgid_plural "%(count)s audits under way today."
+msgstr[0] "%(count)s audit en cours aujourd'hui."
+msgstr[1] "%(count)s audits en cours aujourd'hui."

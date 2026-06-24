@@ -2,7 +2,7 @@
 {# Widget: overall compliance. Expects `overall_compliance`, `tracked_requirement_count`. #}
 <div class="card overall-compliance h-100">
   <div class="card-body">
-    <div class="row align-items-end g-4">
+    <div class="row align-items-center g-4">
       <div class="col-lg-7">
         <div class="overall-compliance__eyebrow">{% trans "Overall compliance" %}</div>
         <div class="overall-compliance__value-wrap">
@@ -12,18 +12,21 @@
         <p class="overall-compliance__hint">{% blocktrans count count=tracked_requirement_count %}Average across all active frameworks - {{ count }} requirement tracked.{% plural %}Average across all active frameworks - {{ count }} requirements tracked.{% endblocktrans %}</p>
       </div>
       <div class="col-lg-5">
-        <div class="overall-compliance__bar">
-          <div class="overall-compliance__bar-fill overall-compliance__bar-fill--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}"
-               role="progressbar"
-               style="width: {{ overall_compliance|floatformat:0 }}%"
-               aria-valuenow="{{ overall_compliance|floatformat:0 }}"
-               aria-valuemin="0"
-               aria-valuemax="100"></div>
-        </div>
-        <div class="overall-compliance__bar-legend">
-          <span>0%</span>
-          <span>{% trans "Target" %} 80%</span>
-          <span>100%</span>
+        <div class="overall-compliance__bar overall-compliance__bar--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}">
+          <div class="overall-compliance__bar-track">
+            <div class="overall-compliance__bar-fill overall-compliance__bar-fill--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}"
+                 role="progressbar"
+                 style="width: {{ overall_compliance|floatformat:0 }}%"
+                 aria-valuenow="{{ overall_compliance|floatformat:0 }}"
+                 aria-valuemin="0"
+                 aria-valuemax="100"></div>
+          </div>
+          <span class="overall-compliance__target" style="left:{{ placed.params.target }}%{% if not placed.params.show_target %};display:none{% endif %}" aria-hidden="true"></span>
+          <div class="overall-compliance__bar-legend">
+            <span>0%</span>
+            <span>100%</span>
+            <span class="overall-compliance__bar-target-label" data-prefix="{% trans 'Target' %}" style="right:{{ placed.target_right }}%{% if not placed.params.show_target %};display:none{% endif %}">{% trans "Target" %} {{ placed.params.target }}%</span>
+          </div>
         </div>
       </div>
     </div>
@@ -31,6 +34,9 @@
 </div>
 <style>
   .overall-compliance .card-body { padding: 1.75rem 2rem; }
+  /* In a fixed main-zone tile, centre the banner so it fills the height without
+     leaving an empty band when the tile is taller than one row. */
+  .dashboard-main > .dash-widget .overall-compliance .card-body { justify-content: center; }
   .overall-compliance__eyebrow {
     font-size: .75rem;
     color: var(--text-muted); font-weight: 600; margin-bottom: .5rem;
@@ -62,24 +68,51 @@
     color: var(--text-muted); font-size: .875rem;
     margin: .875rem 0 0; max-width: 32rem;
   }
-  .overall-compliance__bar {
-    height: .5rem;
+  .overall-compliance__bar { position: relative; }
+  /* Vivid status colour pair, used for both the gradient fill and the glow. */
+  .overall-compliance__bar--good { --oc-c1: #34D399; --oc-c2: #16A34A; }
+  .overall-compliance__bar--warn { --oc-c1: #FBBF24; --oc-c2: #F59E0B; }
+  .overall-compliance__bar--bad  { --oc-c1: #FB7185; --oc-c2: #EF4444; }
+  .overall-compliance__bar-track {
+    height: 1.375rem;
     background: var(--surface-muted);
     border-radius: 100px;
     overflow: hidden;
+    /* Inset depth + a punchy, status-coloured glow so the bar reads at a glance. */
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .08),
+                0 4px 14px color-mix(in srgb, var(--oc-c2, transparent) 45%, transparent);
   }
   .overall-compliance__bar-fill {
     height: 100%;
     border-radius: 100px;
-    transition: width .8s var(--ease-out);
+    /* Vivid diagonal gradient + a glossy top highlight. */
+    background: linear-gradient(135deg, var(--oc-c1), var(--oc-c2));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35);
+    transition: width .9s var(--ease-out);
   }
-  .overall-compliance__bar-fill--good { background: var(--success); }
-  .overall-compliance__bar-fill--warn { background: var(--warning); }
-  .overall-compliance__bar-fill--bad  { background: var(--danger); }
+  /* Target marker: a dashed vertical line at 80%, overhanging the bar slightly. */
+  .overall-compliance__target {
+    position: absolute; top: -3px; bottom: -3px; left: 80%;
+    transform: translateX(-1px);
+    border-left: 2px dashed var(--text-secondary);
+    opacity: .55; z-index: 2;
+  }
+  /* The legend floats just under the bar (out of flow) so only the bar itself is
+     what gets vertically centred against the big percentage, not bar + legend. */
   .overall-compliance__bar-legend {
+    position: absolute; top: calc(100% + .4375rem); left: 0; right: 0;
     display: flex; justify-content: space-between;
     font-size: .75rem; color: var(--text-muted);
-    margin-top: .5rem; font-variant-numeric: tabular-nums;
+    font-variant-numeric: tabular-nums;
+  }
+  /* The target label sits under the 80% marker (anchored from the right so it
+     never overflows the narrow column). */
+  .overall-compliance__bar-target-label {
+    position: absolute; right: 20%; bottom: 0;
+    color: var(--text-secondary); font-weight: 600; white-space: nowrap;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .overall-compliance__bar-fill { transition: none; }
   }
   @media (max-width: 575.98px) {
     .overall-compliance .card-body { padding: 1.25rem 1.25rem; }

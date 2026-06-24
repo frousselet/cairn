@@ -1,28 +1,39 @@
 {% load i18n %}
-{# Generic widget wrapper. Expects `placed` = {widget, size, span, visible, has_data, size_options}. The chrome (drag affordance, resize menu, remove button) only shows in edit mode. #}
-<section class="dash-widget dash-widget--{{ placed.size }}{% if not placed.has_data %} dash-widget--empty{% endif %}"
+{# Generic widget wrapper. Expects `placed` = {key, widget, size, cols, rows, w, h, zone, visible, has_data, params, params_json, configurable, size_options, slot}. `size` is a "WxH" token; `cols`/`rows` are the grid spans it maps to; `key` is the per-instance id; `configurable` adds the edit-mode gear. The chrome (drag affordance, config, resize, remove) only shows in edit mode. #}
+<section class="dash-widget dash-widget--w{{ placed.w }} dash-widget--h{{ placed.h }}{% if not placed.has_data %} dash-widget--empty{% endif %}"
          data-widget-id="{{ placed.widget.id }}"
+         data-key="{{ placed.key }}"
          data-size="{{ placed.size }}"
          data-zone="{{ placed.zone }}"
          data-visible="{{ placed.visible|yesno:'true,false' }}"
-         style="grid-column: span {{ placed.span }};">
+         {% if placed.widget.multiple %}data-multiple="true"{% endif %}
+         {% if placed.widget.config %}data-config="{{ placed.widget.config }}"{% endif %}
+         data-params="{{ placed.params_json }}"
+         {% if placed.zone == 'main' %}style="grid-column: span {{ placed.cols }}; grid-row: span {{ placed.rows }};"{% endif %}>
   <div class="dash-widget__chrome">
     <button type="button" class="dash-widget__remove" title="{% trans 'Remove from dashboard' %}" aria-label="{% trans 'Remove from dashboard' %}">
       <i class="bi bi-dash-lg" aria-hidden="true"></i>
     </button>
     <span class="dash-widget__grip" title="{% trans 'Drag to move' %}" aria-hidden="true"><i class="bi bi-grip-horizontal"></i></span>
-    {% if placed.size_options|length > 1 %}
-    <span class="dropdown dash-widget__resize">
-      <button type="button" class="dash-widget__btn" data-bs-toggle="dropdown" aria-expanded="false" title="{% trans 'Resize' %}" aria-label="{% trans 'Resize' %}">
-        <i class="bi bi-aspect-ratio" aria-hidden="true"></i>
+    <span class="dash-widget__tools">
+      {% if placed.configurable %}
+      <button type="button" class="dash-widget__btn dash-widget__config" title="{% trans 'Configure' %}" aria-label="{% trans 'Configure' %}">
+        <i class="bi bi-gear" aria-hidden="true"></i>
       </button>
-      <ul class="dropdown-menu dropdown-menu-end">
-        {% for value, label in placed.size_options %}
-        <li><button type="button" class="dropdown-item dash-widget__size{% if value == placed.size %} active{% endif %}" data-size="{{ value }}">{{ label }}</button></li>
-        {% endfor %}
-      </ul>
+      {% endif %}
+      {% if placed.size_options|length > 1 %}
+      <span class="dropdown dash-widget__resize">
+        <button type="button" class="dash-widget__btn" data-bs-toggle="dropdown" aria-expanded="false" title="{% trans 'Resize' %}" aria-label="{% trans 'Resize' %}">
+          <i class="bi bi-aspect-ratio" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          {% for value, label in placed.size_options %}
+          <li><button type="button" class="dropdown-item dash-widget__size{% if value == placed.size %} active{% endif %}" data-size="{{ value }}">{{ label }}</button></li>
+          {% endfor %}
+        </ul>
+      </span>
+      {% endif %}
     </span>
-    {% endif %}
   </div>
   <div class="dash-widget__body">
     {% include placed.widget.template %}

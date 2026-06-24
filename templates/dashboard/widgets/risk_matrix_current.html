@@ -1,0 +1,10 @@
+{% load i18n %}
+{# Widget: current risk matrix heatmap (before treatment). Expects `matrix_current`. #}
+<div class="card h-100">
+  <div class="card-body">
+    <h5 class="card-title"><i class="bi bi-grid-3x3 me-1" style="color:var(--accent)"></i> {% trans "Current risks" context "risk matrix widget" %}</h5>
+    {% if matrix_current %}
+    <div data-fit-scale>{% include "risks/includes/risk_matrix.html" with matrix=matrix_current title="" %}</div>
+    {% endif %}
+  </div>
+</div>

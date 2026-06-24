@@ -3696,6 +3696,17 @@
     @supports not (background: color-mix(in srgb, red, blue)) {
       .page-header { background: var(--bg-page); }
     }
+    /* At rest (nominal position, not pinned) the bar sits on the page like any
+       other content, so the gradient tint and the backdrop blur are dropped -
+       they are only needed once the bar is pinned over scrolling content. This
+       also avoids the backdrop-filter + mask artefacts Firefox renders here. */
+    .page-header:not(.is-compact)::before {
+      background: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
     /* Compact form once pinned: smaller title, eyebrow + subtitle collapse,
      * tighter padding. The gradient + size change read as "scrolled". */
     .page-header.is-compact {
