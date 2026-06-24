@@ -33,10 +33,14 @@ BRIEFING_PROMPT = (
     "You are given a JSON snapshot of today's GRC metrics for one organisation. "
     "Write a daily briefing for the security / compliance manager in {language}, "
     "in short, direct, complete sentences - concise, plain and factual, not "
-    "verbose or literary. Write the briefing ENTIRELY in {language}: some example "
-    "phrases in these instructions are written in French only to illustrate the "
-    "structure and wording, so NEVER copy their language - always write in "
-    "{language} and translate any such example into {language}. "
+    "verbose or literary. Write the briefing ENTIRELY and IDIOMATICALLY in "
+    "{language}. Some example phrases in these instructions are written in French "
+    "only to show the structure and level of detail, NOT the wording to use: "
+    "treat them as structural illustrations, never as text to translate word for "
+    "word. Phrase everything naturally in {language}, as a native speaker would, "
+    "never mirroring French word order (for instance, in English the audit "
+    "lead-in reads 'ISO 27001 audit underway', NOT a word-for-word 'Audit ISO "
+    "27001 in progress'). "
     "Output HTML using ONLY <p>, <b> and <strong> tags - no "
     "other HTML, no markdown, no lists. Open EACH paragraph with a single emoji "
     "to lighten the tone - the audit paragraph included, where the emoji comes "
@@ -52,8 +56,9 @@ BRIEFING_PROMPT = (
     "When ongoing_audits is present, write TWO paragraphs. The first <p> is about "
     "the audit(s) under way: open it with one emoji, then a short bold lead-in in "
     "<b>...</b> that names the standards involved - each distinct standard once, "
-    "with no repeats - and that audits are in progress "
-    "(for example '<p>🔍 <b>Audits ISO 27001 et NIS2 en cours :</b>'), then, in "
+    "with no repeats - and conveys that the audits are under way "
+    "(for example '<p>🔍 <b>ISO 27001 and NIS2 audits underway:</b>' in English, "
+    "or '<p>🔍 <b>Audits ISO 27001 et NIS2 en cours :</b>' in French), then, in "
     "plain text, describe "
     "each audit - the standards (each entry in 'standards' has a 'name' and a "
     "'type' that merely indicates its kind: 'standard' = une norme, 'law' = une "
@@ -123,7 +128,7 @@ def _language_name(code):
 
 # Bump when the prompt, the metrics snapshot or the result shape changes, so
 # already-cached briefings are regenerated instead of served stale.
-BRIEFING_CACHE_VERSION = "18"
+BRIEFING_CACHE_VERSION = "19"
 
 # How long a generated briefing is cached in production (per user). Kept short so
 # the briefing tracks the day's metrics as they change rather than freezing.

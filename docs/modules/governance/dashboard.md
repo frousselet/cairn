@@ -189,7 +189,11 @@ the prompt carries French example phrasing to pin down structure, so the target
 language is passed **spelled out** ("English" / "French" via `_language_name`,
 not the bare code) and the model is told the examples are structural only and
 must never dictate the output language - otherwise an English reader was getting
-a French briefing. Below the summary the widget lists
+a French briefing. The model is also told to phrase the briefing **idiomatically**
+in the target language and not translate the French examples word for word (which
+yielded stilted English such as "Audit ISO 27001 in progress"); the most visible
+example, the audit lead-in, is given in **both English and French** so each has a
+natural template. Below the summary the widget lists
 the **references** it draws on (`ask_cairn_references`: the key items, each
 linking to where to act).
 The fetch is off the request path, so a slow or unreachable model only delays the
