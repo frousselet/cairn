@@ -1,0 +1,88 @@
+{% load i18n %}
+{# Widget: overall compliance. Expects `overall_compliance`, `tracked_requirement_count`. #}
+<div class="card overall-compliance h-100">
+  <div class="card-body">
+    <div class="row align-items-end g-4">
+      <div class="col-lg-7">
+        <div class="overall-compliance__eyebrow">{% trans "Overall compliance" %}</div>
+        <div class="overall-compliance__value-wrap">
+          <span class="overall-compliance__value tabular-nums" data-ws-field="overall_compliance" data-ws-suffix="%">{{ overall_compliance|floatformat:0 }}%</span>
+          <span class="overall-compliance__delta overall-compliance__delta--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}" aria-hidden="true"></span>
+        </div>
+        <p class="overall-compliance__hint">{% blocktrans count count=tracked_requirement_count %}Average across all active frameworks - {{ count }} requirement tracked.{% plural %}Average across all active frameworks - {{ count }} requirements tracked.{% endblocktrans %}</p>
+      </div>
+      <div class="col-lg-5">
+        <div class="overall-compliance__bar">
+          <div class="overall-compliance__bar-fill overall-compliance__bar-fill--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}"
+               role="progressbar"
+               style="width: {{ overall_compliance|floatformat:0 }}%"
+               aria-valuenow="{{ overall_compliance|floatformat:0 }}"
+               aria-valuemin="0"
+               aria-valuemax="100"></div>
+        </div>
+        <div class="overall-compliance__bar-legend">
+          <span>0%</span>
+          <span>{% trans "Target" %} 80%</span>
+          <span>100%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  .overall-compliance .card-body { padding: 1.75rem 2rem; }
+  .overall-compliance__eyebrow {
+    font-size: .75rem;
+    color: var(--text-muted); font-weight: 600; margin-bottom: .5rem;
+  }
+  .overall-compliance__value-wrap {
+    display: flex; align-items: center; gap: .75rem; line-height: 1;
+  }
+  .overall-compliance__value {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+    font-size: 2.75rem;
+    letter-spacing: normal;
+    line-height: 1;
+    font-weight: 900;
+    color: var(--text-primary);
+  }
+  .overall-compliance__delta {
+    width: 1.625rem; height: 1.625rem; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: .75rem; font-weight: 600;
+  }
+  .overall-compliance__delta--good { background: var(--success-soft); color: var(--success); }
+  .overall-compliance__delta--good::before { content: "\2197"; }
+  .overall-compliance__delta--warn { background: var(--warning-soft); color: var(--warning); }
+  .overall-compliance__delta--warn::before { content: "\2192"; }
+  .overall-compliance__delta--bad  { background: var(--danger-soft);  color: var(--danger); }
+  .overall-compliance__delta--bad::before  { content: "\2198"; }
+  .overall-compliance__hint {
+    color: var(--text-muted); font-size: .875rem;
+    margin: .875rem 0 0; max-width: 32rem;
+  }
+  .overall-compliance__bar {
+    height: .5rem;
+    background: var(--surface-muted);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .overall-compliance__bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width .8s var(--ease-out);
+  }
+  .overall-compliance__bar-fill--good { background: var(--success); }
+  .overall-compliance__bar-fill--warn { background: var(--warning); }
+  .overall-compliance__bar-fill--bad  { background: var(--danger); }
+  .overall-compliance__bar-legend {
+    display: flex; justify-content: space-between;
+    font-size: .75rem; color: var(--text-muted);
+    margin-top: .5rem; font-variant-numeric: tabular-nums;
+  }
+  @media (max-width: 575.98px) {
+    .overall-compliance .card-body { padding: 1.25rem 1.25rem; }
+    .overall-compliance__value { font-size: 2.25rem; }
+  }
+</style>

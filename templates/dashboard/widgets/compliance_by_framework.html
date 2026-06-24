@@ -1,0 +1,36 @@
+{% load i18n scope_tags %}
+{# Widget: compliance by framework. Expects `active_frameworks`. #}
+<div class="card h-100">
+  <div class="card-body">
+    <h5 class="card-title mb-3"><i class="bi bi-journal-bookmark me-1" style="color:var(--accent)"></i> {% trans "Compliance by framework" %}</h5>
+    {% for fw in active_frameworks %}
+    <div class="fw-bar mb-3">
+      <div class="d-flex justify-content-between align-items-center gap-2 mb-1 fw-bar__head">
+        <div class="d-flex align-items-center gap-2" style="min-width:0">
+          {% if fw.logo %}<img src="{{ fw.logo_32|default:fw.logo }}" alt="" style="width:20px;height:20px;object-fit:cover;border-radius:3px;background:#fff;border:1px solid var(--border-light);flex-shrink:0">{% else %}<span class="d-inline-flex align-items-center justify-content-center" style="width:20px;min-width:20px;height:20px;min-height:20px;border-radius:3px;background:var(--accent-soft);color:var(--accent);font-size:.65rem;border:1px solid var(--border-light);flex-shrink:0"><i class="bi bi-journal-bookmark"></i></span>{% endif %}
+          <a href="{% url 'compliance:framework-detail' fw.pk %}" class="fw-semibold text-decoration-none fw-bar__name" style="color:var(--text-primary);font-size:.8125rem" title="{{ fw.short_name|default:fw.name }}">{{ fw.short_name|default:fw.name }}</a>
+          <small style="color:var(--text-muted);font-size:.75rem;white-space:nowrap;flex-shrink:0">{% blocktrans with count=fw.req_count %}{{ count }} requirement{{ count|pluralize:"s" }}{% endblocktrans %}</small>
+          {% grouped_scope_badges fw.scopes.all %}
+        </div>
+        <span class="fw-semibold tabular-nums" style="font-size:.8125rem;color:var(--text-primary);flex-shrink:0">
+          {{ fw.computed_compliance|default:0 }}%
+        </span>
+      </div>
+      <div class="progress">
+        {% if fw.seg_compliant %}<div class="progress-bar bg-success" role="progressbar" style="width:{{ fw.seg_compliant }}%" title="{% trans 'Compliant' %}"></div>{% endif %}
+        {% if fw.seg_partial %}<div class="progress-bar" role="progressbar" style="width:{{ fw.seg_partial }}%;background-color:#fd7e14" title="{% trans 'Partial compliance' %}"></div>{% endif %}
+        {% if fw.seg_non_compliant %}<div class="progress-bar bg-danger" role="progressbar" style="width:{{ fw.seg_non_compliant }}%" title="{% trans 'Major non-conformity' %}"></div>{% endif %}
+        {% if fw.seg_evaluated %}<div class="progress-bar" role="progressbar" style="width:{{ fw.seg_evaluated }}%;background-color:var(--accent)" title="{% trans 'Evaluation planned' %}"></div>{% endif %}
+        {% if fw.seg_not_assessed %}<div class="progress-bar bg-secondary" role="progressbar" style="width:{{ fw.seg_not_assessed }}%" title="{% trans 'Not assessed' %}"></div>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    <div class="d-flex flex-wrap gap-3 mt-2" style="font-size:.7rem;color:var(--text-muted)">
+      <span><span class="d-inline-block rounded-1 me-1" style="width:10px;height:10px;background:var(--bs-success);vertical-align:middle"></span>{% trans "Compliant" %}</span>
+      <span><span class="d-inline-block rounded-1 me-1" style="width:10px;height:10px;background:#fd7e14;vertical-align:middle"></span>{% trans "Partial compliance" %}</span>
+      <span><span class="d-inline-block rounded-1 me-1" style="width:10px;height:10px;background:var(--bs-danger);vertical-align:middle"></span>{% trans "Major non-conformity" %}</span>
+      <span><span class="d-inline-block rounded-1 me-1" style="width:10px;height:10px;background:var(--accent);vertical-align:middle"></span>{% trans "Evaluation planned" %}</span>
+      <span><span class="d-inline-block rounded-1 me-1" style="width:10px;height:10px;background:var(--bs-secondary);vertical-align:middle"></span>{% trans "Not assessed" %}</span>
+    </div>
+  </div>
+</div>

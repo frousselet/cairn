@@ -1,6 +1,13 @@
 {% load i18n %}
-{% comment %}Dashboard page-header actions: the Today's-actions show/hide toggle (only when there is a panel) and the indicators Configure button (opens #indicatorPickerModal, rendered by the indicators include below).{% endcomment %}
-{% if today_action_groups or calendar_items %}{% include "includes/today_actions_toggle.html" %}{% endif %}
-<button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#indicatorPickerModal">
+{% comment %}Dashboard page-header actions: Edit (toggles the widget edit mode), Add a widget (edit mode only), Configure indicators, and Done (edit mode only). Visibility between view / edit mode is driven by body.dash-editing in CSS.{% endcomment %}
+<button type="button" id="dashAddWidgetBtn" class="btn btn-outline-secondary dash-edit-only" data-bs-toggle="offcanvas" data-bs-target="#widgetGallery">
+  <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add a widget" %}
+</button>
+{% if "indicators" in dashboard_visible_ids %}
+<button type="button" class="btn btn-outline-secondary dash-view-only" data-bs-toggle="modal" data-bs-target="#indicatorPickerModal">
   <i class="bi bi-gear me-1" aria-hidden="true"></i>{% trans "Configure" %}
+</button>
+{% endif %}
+<button type="button" id="dashEditToggle" class="btn btn-outline-secondary" aria-pressed="false">
+  <i class="bi bi-grid-1x2 me-1" aria-hidden="true"></i><span>{% trans "Edit" %}</span>
 </button>

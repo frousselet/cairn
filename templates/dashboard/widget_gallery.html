@@ -1,0 +1,29 @@
+{% load i18n %}
+{# "Add a widget" offcanvas. One tile per widget; tiles for widgets already on the grid are hidden and revealed when the widget is removed. #}
+<div class="offcanvas offcanvas-end" id="widgetGallery" tabindex="-1" aria-labelledby="widgetGalleryLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="widgetGalleryLabel">
+      <i class="bi bi-plus-square me-1" aria-hidden="true"></i>{% trans "Add a widget" %}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{% trans 'Close' %}"></button>
+  </div>
+  <div class="offcanvas-body">
+    <p class="text-muted small">{% trans "Pick a widget to add it to your dashboard. You can then drag it into place and resize it." %}</p>
+    <div class="widget-gallery" id="widgetGalleryList">
+      {% for placed in dashboard_gallery_widgets %}
+      <button type="button" class="widget-gallery__tile{% if placed.visible %} d-none{% endif %}"
+              data-widget-id="{{ placed.widget.id }}">
+        <span class="widget-gallery__icon"><i class="bi bi-{{ placed.widget.icon }}" aria-hidden="true"></i></span>
+        <span class="widget-gallery__text">
+          <span class="widget-gallery__name">{{ placed.widget.title }}</span>
+          {% if placed.widget.description %}<span class="widget-gallery__desc">{{ placed.widget.description }}</span>{% endif %}
+        </span>
+        <span class="widget-gallery__add"><i class="bi bi-plus-lg" aria-hidden="true"></i></span>
+      </button>
+      {% endfor %}
+    </div>
+    <p class="widget-gallery__empty text-muted small{% if dashboard_hidden_widgets %} d-none{% endif %}">
+      {% trans "All widgets are already on your dashboard." %}
+    </p>
+  </div>
+</div>

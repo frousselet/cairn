@@ -100,6 +100,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         help_text=_("Keys of collapsible UI sections the user has collapsed (e.g. the dashboard's Today's actions card)."),
     )
+    dashboard_layout = models.JSONField(
+        _("Dashboard layout"),
+        default=list,
+        blank=True,
+        help_text=_("Personal dashboard arrangement: ordered list of {id, size, visible} widget entries."),
+    )
     last_seen_version = models.CharField(
         _("Last seen version"),
         max_length=20,

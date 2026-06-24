@@ -17,6 +17,9 @@ urlpatterns = [
     path("auth/me/", views.MeAPIView.as_view(), name="api-me"),
     path("auth/refresh/", views.TokenRefreshAPIView.as_view(), name="api-token-refresh"),
 
+    # Dashboard widget layout (per-user)
+    path("dashboard-layout/", views.DashboardLayoutAPIView.as_view(), name="api-dashboard-layout"),
+
     # Company settings
     path("company-settings/", views.CompanySettingsAPIView.as_view(), name="api-company-settings"),
 

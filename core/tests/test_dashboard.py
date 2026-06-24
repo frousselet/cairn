@@ -1,5 +1,6 @@
 """Tests for the GeneralDashboardView context computation and scope filtering."""
 
+import json
 from datetime import date, timedelta
 
 import pytest
@@ -889,3 +890,165 @@ class TestSectionCollapseToggle:
         client, user = _regular_client()
         resp = client.get(reverse("home"))
         assert resp.context["today_actions_collapsed"] is False
+
+
+# ── Configurable widget grid ─────────────────────────────────
+
+
+class TestDashboardWidgetRegistry:
+    """The widget registry resolves and sanitises per-user layouts safely."""
+
+    def test_default_layout_covers_every_widget_once(self):
+        from core.dashboard import DASHBOARD_WIDGETS, default_layout
+
+        layout = default_layout()
+        ids = [e["id"] for e in layout]
+        assert sorted(ids) == sorted(w.id for w in DASHBOARD_WIDGETS)
+        assert len(ids) == len(set(ids))
+
+    def test_resolve_drops_unknown_and_appends_missing(self):
+        from core.dashboard import DASHBOARD_WIDGETS, resolve_layout
+
+        resolved = resolve_layout([
+            {"id": "priority_risks", "size": "M", "visible": False},
+            {"id": "does_not_exist", "size": "M"},
+            {"id": "priority_risks", "size": "S"},  # duplicate -> ignored
+        ])
+        ids = [e["id"] for e in resolved]
+        # Unknown id dropped, every registry widget present exactly once.
+        assert "does_not_exist" not in ids
+        assert sorted(ids) == sorted(w.id for w in DASHBOARD_WIDGETS)
+        assert ids.count("priority_risks") == 1
+        # The first (kept) entry preserved its size/visibility.
+        first = next(e for e in resolved if e["id"] == "priority_risks")
+        assert first == {"id": "priority_risks", "size": "M", "visible": False, "zone": "rail"}
+
+    def test_resolve_clamps_invalid_size_to_default(self):
+        from core.dashboard import WIDGETS_BY_ID, resolve_layout
+
+        # "S" is not an allowed size for risk_matrices (sizes L, XL).
+        resolved = {e["id"]: e for e in resolve_layout([
+            {"id": "risk_matrices", "size": "S", "visible": True},
+        ])}
+        assert resolved["risk_matrices"]["size"] == WIDGETS_BY_ID["risk_matrices"].default_size
+
+    def test_resolve_carries_and_clamps_zone(self):
+        from core.dashboard import resolve_layout
+
+        resolved = {e["id"]: e for e in resolve_layout([
+            # Move a normally-main widget to the rail (valid zone, kept).
+            {"id": "active_objectives", "size": "S", "visible": True, "zone": "rail"},
+            # Bogus zone falls back to the widget default (main).
+            {"id": "overall_compliance", "size": "XL", "visible": True, "zone": "nope"},
+        ])}
+        assert resolved["active_objectives"]["zone"] == "rail"
+        assert resolved["overall_compliance"]["zone"] == "main"
+        # Untouched widgets keep their default zone (rail widgets default to rail).
+        assert resolved["priority_risks"]["zone"] == "rail"
+
+
+class TestDashboardLayoutEndpoint:
+    """The per-user layout save endpoint persists a sanitised layout."""
+
+    def test_save_persists_sanitised_layout(self):
+        client, user = _regular_client()
+        resp = client.post(
+            reverse("dashboard-layout-save"),
+            data=json.dumps({"layout": [
+                {"id": "priority_risks", "size": "M", "visible": True},
+                {"id": "overall_compliance", "size": "L", "visible": False},
+                {"id": "bogus", "size": "M"},
+            ]}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is True
+        user.refresh_from_db()
+        ids = [e["id"] for e in user.dashboard_layout]
+        assert "bogus" not in ids
+        assert user.dashboard_layout[0] == {"id": "priority_risks", "size": "M", "visible": True, "zone": "rail"}
+
+    def test_invalid_body_returns_400(self):
+        client, user = _regular_client()
+        resp = client.post(
+            reverse("dashboard-layout-save"),
+            data="not json",
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+
+    def test_requires_login(self):
+        resp = Client().post(reverse("dashboard-layout-save"), data="{}", content_type="application/json")
+        assert resp.status_code in (302, 403)
+
+
+class TestDashboardLayoutApi:
+    """The DRF dashboard-layout endpoint reads and replaces the layout."""
+
+    def test_get_returns_layout_and_catalogue(self):
+        from core.dashboard import DASHBOARD_WIDGETS
+
+        client, user = _regular_client()
+        resp = client.get("/api/v1/dashboard-layout/")
+        assert resp.status_code == 200
+        data = resp.json()["data"]
+        assert len(data["layout"]) == len(DASHBOARD_WIDGETS)
+        assert len(data["widgets"]) == len(DASHBOARD_WIDGETS)
+
+    def test_put_replaces_layout(self):
+        client, user = _regular_client()
+        resp = client.put(
+            "/api/v1/dashboard-layout/",
+            data=json.dumps({"layout": [{"id": "indicators", "size": "XL", "visible": True}]}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        user.refresh_from_db()
+        assert user.dashboard_layout[0]["id"] == "indicators"
+
+
+class TestDashboardGridRendering:
+    """The dashboard renders as two widget zones with the edit chrome."""
+
+    def test_zones_and_edit_controls_present(self):
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        content = resp.content.decode()
+        assert 'id="dashboardZones"' in content
+        assert 'id="dashboardMain"' in content
+        assert 'id="dashboardRail"' in content
+        assert 'class="dash-widget' in content
+        assert 'id="dashEditToggle"' in content
+        assert 'id="widgetGallery"' in content
+
+    def test_rail_widgets_render_in_rail_zone(self):
+        # priority_risks defaults to the rail, so its widget shell must appear
+        # after the rail container opens and before the gallery (which lists
+        # every widget id and would otherwise create a false positive).
+        client, user = _superuser_client()
+        content = client.get(reverse("home")).content.decode()
+        main_at = content.index('id="dashboardMain"')
+        rail_at = content.index('id="dashboardRail"')
+        gallery_at = content.index('id="widgetGallery"')
+        widget_at = content.index('data-widget-id="priority_risks"')
+        assert rail_at < widget_at < gallery_at
+        assert not (main_at < widget_at < rail_at)
+        assert 'data-zone="rail"' in content
+
+    def test_no_template_comment_leak(self):
+        # Django {# #} comments are single-line only; a multi-line one leaks its
+        # continuation as visible text. Guard against that regression.
+        client, user = _superuser_client()
+        content = client.get(reverse("home")).content.decode()
+        for marker in ("Generic widget wrapper", "Expects `placed`", "size_options}"):
+            assert marker not in content
+
+    def test_hidden_widget_marked_not_visible(self):
+        client, user = _regular_client()
+        user.dashboard_layout = [{"id": "today_actions", "size": "L", "visible": False}]
+        user.save(update_fields=["dashboard_layout"])
+        resp = client.get(reverse("home"))
+        content = resp.content.decode()
+        # The hidden widget is in the DOM but flagged so CSS keeps it off-grid.
+        assert 'data-widget-id="today_actions"' in content
+        assert 'data-visible="false"' in content

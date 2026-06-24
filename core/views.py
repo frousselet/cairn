@@ -5,7 +5,19 @@ from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Avg, Count, Max, Prefetch, Q, Subquery, OuterRef
+from django.db.models import (
+    Avg,
+    Case,
+    Count,
+    IntegerField,
+    Max,
+    OuterRef,
+    Prefetch,
+    Q,
+    Subquery,
+    Value,
+    When,
+)
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
@@ -15,6 +27,12 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from core.changelog import get_changelog_between
+from core.dashboard import (
+    WIDGET_SIZE_LABELS,
+    WIDGETS_BY_ID,
+    resolve_layout,
+    sanitize_layout,
+)
 from accounts.models import CompanySettings
 from assets.models import (
     AssetDependency,
@@ -164,6 +182,23 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         ).count()
         ctx["threat_count"] = Threat.objects.count()
         ctx["vulnerability_count"] = Vulnerability.objects.count()
+
+        # Top untreated risks by priority, for the right-rail "Priority risks"
+        # widget. Critical first, then high; archived risks are excluded.
+        priority_rank = Case(
+            When(priority="critical", then=Value(0)),
+            When(priority="high", then=Value(1)),
+            When(priority="medium", then=Value(2)),
+            When(priority="low", then=Value(3)),
+            default=Value(4),
+            output_field=IntegerField(),
+        )
+        ctx["priority_risks"] = list(
+            Risk.objects.exclude(workflow_state="archived")
+            .filter(priority__in=["critical", "high"])
+            .annotate(_priority_rank=priority_rank)
+            .order_by("_priority_rank", "reference")[:6]
+        )
 
         # Risk matrices
         criteria = RiskCriteria.objects.filter(is_default=True).first()
@@ -362,6 +397,46 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
                 ctx["changelog_entries"] = changelog_entries
                 ctx["changelog_new_version"] = app_version
 
+        # ── Configurable widget grid ─────────────────────
+        # Whether each widget actually has something to show. A visible widget
+        # with no data is hidden in normal mode but still shown (as a removable
+        # placeholder) in edit mode.
+        widget_has_data = {
+            "overall_compliance": True,
+            "indicators": True,
+            "compliance_by_framework": bool(active_frameworks),
+            "active_objectives": bool(ctx["active_objectives"]),
+            "upcoming_deadlines": bool(calendar_items),
+            "priority_risks": bool(ctx["priority_risks"]),
+            "risk_treatment_flow": bool(ctx.get("risk_treatment_flow")),
+            "risk_matrices": bool(ctx.get("matrix_current") or ctx.get("matrix_residual")),
+            "today_actions": bool(ctx["today_action_groups"]),
+        }
+
+        placed = []
+        for entry in resolve_layout(user.dashboard_layout):
+            widget = WIDGETS_BY_ID[entry["id"]]
+            placed.append({
+                "widget": widget,
+                "size": entry["size"],
+                "span": widget.span(entry["size"]),
+                "visible": entry["visible"],
+                "zone": entry["zone"],
+                "has_data": widget_has_data.get(widget.id, True),
+                "size_options": [(s, WIDGET_SIZE_LABELS[s]) for s in widget.sizes],
+            })
+        ctx["dashboard_widgets"] = placed
+        # Split into the two zones, preserving order within each.
+        ctx["dashboard_main_widgets"] = [p for p in placed if p["zone"] == "main"]
+        ctx["dashboard_rail_widgets"] = [p for p in placed if p["zone"] == "rail"]
+        # Every widget gets a gallery tile (shown only while hidden), so the
+        # "Add a widget" panel can list anything not currently on the dashboard.
+        ctx["dashboard_gallery_widgets"] = [p for p in placed]
+        ctx["dashboard_hidden_widgets"] = [p for p in placed if not p["visible"]]
+        ctx["dashboard_visible_ids"] = [
+            p["widget"].id for p in placed if p["visible"]
+        ]
+
         return ctx
 
 
@@ -403,6 +478,26 @@ class SectionCollapseToggleView(LoginRequiredMixin, View):
             request.user.collapsed_sections = sections
             request.user.save(update_fields=["collapsed_sections"])
         return JsonResponse({"ok": True, "collapsed": collapsed})
+
+
+class DashboardLayoutSaveView(LoginRequiredMixin, View):
+    """Persist the user's personal dashboard widget layout.
+
+    Expects a JSON body ``{"layout": [{"id", "size", "visible"}, ...]}``. The
+    payload is sanitised against the widget registry before being stored, so an
+    out-of-date or malformed client can never corrupt the saved arrangement.
+    """
+
+    def post(self, request, *args, **kwargs):
+        try:
+            payload = json.loads(request.body or "{}")
+        except (ValueError, TypeError):
+            return JsonResponse({"ok": False, "error": "invalid_body"}, status=400)
+
+        layout = sanitize_layout(payload.get("layout"))
+        request.user.dashboard_layout = layout
+        request.user.save(update_fields=["dashboard_layout"])
+        return JsonResponse({"ok": True, "layout": layout})
 
 
 class DashboardIndicatorsPartialView(LoginRequiredMixin, TemplateView):

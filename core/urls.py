@@ -10,7 +10,7 @@ from mcp.views import OAuthAuthorizeView, oauth_authorization_server_metadata
 from .views import (
     CalendarEventsView, CalendarSubscribeView, CalendarUpcomingView,
     CalendarView, ChangelogDismissView, DashboardIndicatorsPartialView,
-    GeneralDashboardView, GlobalSearchView,
+    DashboardLayoutSaveView, GeneralDashboardView, GlobalSearchView,
     ICalFeedView, KanbanBoardDataView, KanbanBoardView,
     SectionCollapseToggleView, StyleGuideView,
 )
@@ -27,6 +27,7 @@ urlpatterns = [
     path("dashboard/indicators-partial/", DashboardIndicatorsPartialView.as_view(), name="dashboard-indicators-partial"),
     path("dashboard/changelog-dismiss/", ChangelogDismissView.as_view(), name="changelog-dismiss"),
     path("dashboard/section-toggle/", SectionCollapseToggleView.as_view(), name="dashboard-section-toggle"),
+    path("dashboard/layout/", DashboardLayoutSaveView.as_view(), name="dashboard-layout-save"),
     path("calendar/", CalendarView.as_view(), name="calendar"),
     path("kanban/", KanbanBoardView.as_view(), name="kanban"),
     path("api/kanban-board/", KanbanBoardDataView.as_view(), name="kanban-board"),

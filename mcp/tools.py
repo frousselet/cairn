@@ -6193,6 +6193,100 @@ def _register_accounts_tools(server):
         update_me,
     )
 
+    # ── Dashboard widget layout (own-data) ────────────────────
+
+    def get_dashboard_layout(user, arguments):
+        """Return the authenticated user's resolved home-dashboard widget layout
+        together with the catalogue of available widgets and their allowed sizes."""
+        from core.dashboard import DASHBOARD_WIDGETS, resolve_layout
+
+        return {
+            "layout": resolve_layout(user.dashboard_layout),
+            "widgets": [
+                {
+                    "id": w.id,
+                    "title": str(w.title),
+                    "category": str(w.category),
+                    "sizes": list(w.sizes),
+                    "default_size": w.default_size,
+                    "default_zone": w.default_zone,
+                    "description": str(w.description),
+                }
+                for w in DASHBOARD_WIDGETS
+            ],
+        }
+
+    server.register_tool(
+        "get_dashboard_layout",
+        (
+            "Get the currently authenticated user's home-dashboard widget layout "
+            "(ordered list of {id, size, visible}) and the catalogue of available "
+            "widgets with their allowed sizes (S=1/4, M=1/2, L=3/4, XL=full width)."
+        ),
+        {"type": "object", "properties": {}},
+        get_dashboard_layout,
+    )
+
+    def update_dashboard_layout(user, arguments):
+        """Replace the authenticated user's home-dashboard widget layout.
+
+        Parameters
+        ----------
+        layout : list of objects
+            Ordered widget entries ``{"id", "size", "visible"}``. The payload is
+            sanitised against the widget registry: unknown ids are dropped,
+            invalid sizes fall back to the widget default, and any widget missing
+            from the list is appended with its defaults. The stored, normalised
+            layout is returned.
+        """
+        from core.dashboard import sanitize_layout
+
+        layout = arguments.get("layout")
+        if not isinstance(layout, list):
+            raise InvalidParamsError("layout must be a list of widget entries.")
+        normalised = sanitize_layout(layout)
+        user.dashboard_layout = normalised
+        user.save(update_fields=["dashboard_layout"])
+        return {"layout": normalised}
+
+    server.register_tool(
+        "update_dashboard_layout",
+        (
+            "Replace the currently authenticated user's home-dashboard widget "
+            "layout. Pass `layout` as an ordered list of {id, size, visible} "
+            "entries; use get_dashboard_layout first to discover widget ids and "
+            "allowed sizes. The payload is sanitised against the registry."
+        ),
+        _obj_schema(
+            {
+                "layout": {
+                    "type": "array",
+                    "description": "Ordered widget entries {id, size, visible}.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "string", "description": "Widget id."},
+                            "size": {
+                                "type": "string",
+                                "enum": ["S", "M", "L", "XL"],
+                                "description": "S=1/4, M=1/2, L=3/4, XL=full width (used in the main zone).",
+                            },
+                            "zone": {
+                                "type": "string",
+                                "enum": ["main", "rail"],
+                                "description": "Which zone the widget lives in: 'main' area or the 'rail' side column.",
+                            },
+                            "visible": {"type": "boolean", "description": "Whether the widget shows on the dashboard."},
+                        },
+                        "required": ["id"],
+                    },
+                },
+            },
+            required=["layout"],
+        ),
+        update_dashboard_layout,
+    )
+
     # ── Notifications (own-data) ──────────────────────────────
 
     def list_notifications(user, arguments):
