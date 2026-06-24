@@ -3645,19 +3645,52 @@
       pointer-events: none;
       background: linear-gradient(
         to bottom,
-        var(--bg-page) 0,
-        var(--bg-page) 30%,
-        color-mix(in srgb, var(--bg-page) 82%, transparent) 50%,
-        color-mix(in srgb, var(--bg-page) 52%, transparent) 68%,
-        color-mix(in srgb, var(--bg-page) 24%, transparent) 84%,
+        color-mix(in srgb, var(--bg-page) 91%, transparent) 0,
+        color-mix(in srgb, var(--bg-page) 90.5%, transparent) 7%,
+        color-mix(in srgb, var(--bg-page) 89%, transparent) 14%,
+        color-mix(in srgb, var(--bg-page) 86.5%, transparent) 20%,
+        color-mix(in srgb, var(--bg-page) 84%, transparent) 26%,
+        color-mix(in srgb, var(--bg-page) 81%, transparent) 30%,
+        color-mix(in srgb, var(--bg-page) 78%, transparent) 34%,
+        color-mix(in srgb, var(--bg-page) 73.5%, transparent) 38%,
+        color-mix(in srgb, var(--bg-page) 69%, transparent) 42%,
+        color-mix(in srgb, var(--bg-page) 63.5%, transparent) 46%,
+        color-mix(in srgb, var(--bg-page) 58%, transparent) 50%,
+        color-mix(in srgb, var(--bg-page) 52.5%, transparent) 54%,
+        color-mix(in srgb, var(--bg-page) 47%, transparent) 58%,
+        color-mix(in srgb, var(--bg-page) 41.5%, transparent) 62%,
+        color-mix(in srgb, var(--bg-page) 36%, transparent) 66%,
+        color-mix(in srgb, var(--bg-page) 31%, transparent) 70%,
+        color-mix(in srgb, var(--bg-page) 26%, transparent) 74%,
+        color-mix(in srgb, var(--bg-page) 21.5%, transparent) 78%,
+        color-mix(in srgb, var(--bg-page) 17%, transparent) 82%,
+        color-mix(in srgb, var(--bg-page) 13%, transparent) 86%,
+        color-mix(in srgb, var(--bg-page) 9%, transparent) 90%,
+        color-mix(in srgb, var(--bg-page) 6.5%, transparent) 93%,
+        color-mix(in srgb, var(--bg-page) 4%, transparent) 96%,
+        color-mix(in srgb, var(--bg-page) 2%, transparent) 98%,
         transparent 100%
       );
       /* Softly blur the content scrolling behind the bar; the mask dissolves the
          blur together with the gradient so there is no hard edge at the bottom. */
       -webkit-backdrop-filter: blur(4px);
       backdrop-filter: blur(4px);
-      -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 55%, transparent 100%);
-      mask-image: linear-gradient(to bottom, #000 0, #000 55%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom,
+        #000 0, #000 40%,
+        rgba(0,0,0,.92) 52%,
+        rgba(0,0,0,.74) 64%,
+        rgba(0,0,0,.5) 76%,
+        rgba(0,0,0,.26) 88%,
+        rgba(0,0,0,.1) 95%,
+        transparent 100%);
+      mask-image: linear-gradient(to bottom,
+        #000 0, #000 40%,
+        rgba(0,0,0,.92) 52%,
+        rgba(0,0,0,.74) 64%,
+        rgba(0,0,0,.5) 76%,
+        rgba(0,0,0,.26) 88%,
+        rgba(0,0,0,.1) 95%,
+        transparent 100%);
     }
     /* Browsers without color-mix(): fall back to a plain opaque background. */
     @supports not (background: color-mix(in srgb, red, blue)) {
