@@ -183,7 +183,13 @@ one-to-two-sentence briefing (complete, concise prose that **names the specific
 items and figures** - a vague count restatement like "N points need your
 attention" is explicitly forbidden), **caches it per user per day**, and returns
 the text plus an honest attribution ("AI-generated summary on &lt;date&gt; at
-&lt;time&gt;, powered by &lt;provider&gt;"). Below the summary the widget lists
+&lt;time&gt;, powered by &lt;provider&gt;"). The briefing is written in the
+**reader's language** (`request.LANGUAGE_CODE`, i.e. the user's profile language):
+the prompt carries French example phrasing to pin down structure, so the target
+language is passed **spelled out** ("English" / "French" via `_language_name`,
+not the bare code) and the model is told the examples are structural only and
+must never dictate the output language - otherwise an English reader was getting
+a French briefing. Below the summary the widget lists
 the **references** it draws on (`ask_cairn_references`: the key items, each
 linking to where to act).
 The fetch is off the request path, so a slow or unreachable model only delays the

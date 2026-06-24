@@ -33,7 +33,11 @@ BRIEFING_PROMPT = (
     "You are given a JSON snapshot of today's GRC metrics for one organisation. "
     "Write a daily briefing for the security / compliance manager in {language}, "
     "in short, direct, complete sentences - concise, plain and factual, not "
-    "verbose or literary. Output HTML using ONLY <p>, <b> and <strong> tags - no "
+    "verbose or literary. Write the briefing ENTIRELY in {language}: some example "
+    "phrases in these instructions are written in French only to illustrate the "
+    "structure and wording, so NEVER copy their language - always write in "
+    "{language} and translate any such example into {language}. "
+    "Output HTML using ONLY <p>, <b> and <strong> tags - no "
     "other HTML, no markdown, no lists. Open EACH paragraph with a single emoji "
     "to lighten the tone - the audit paragraph included, where the emoji comes "
     "right after the opening <p> and BEFORE the bold lead-in. Put it at the very "
@@ -104,9 +108,22 @@ def provider_label():
     return PROVIDER_LABELS.get(provider, provider.title() or "AI")
 
 
+# The prompt embeds French example phrasing to pin down structure and tone, which
+# biases the model toward French. Stating the target language as a spelled-out
+# name ("English") rather than the bare code ("en") is a strong enough
+# instruction to override that bias, so we always expand the code for the prompt.
+LANGUAGE_NAMES = {"en": "English", "fr": "French"}
+
+
+def _language_name(code):
+    """Map a Django language code (``en``, ``fr``, ``en-us``) to its English name."""
+    code = (code or "").lower()
+    return LANGUAGE_NAMES.get(code) or LANGUAGE_NAMES.get(code.split("-")[0], "English")
+
+
 # Bump when the prompt, the metrics snapshot or the result shape changes, so
 # already-cached briefings are regenerated instead of served stale.
-BRIEFING_CACHE_VERSION = "17"
+BRIEFING_CACHE_VERSION = "18"
 
 # How long a generated briefing is cached in production (per user). Kept short so
 # the briefing tracks the day's metrics as they change rather than freezing.
@@ -163,7 +180,7 @@ def _generate(language, data):
 
     client = get_client()
     messages = [
-        {"role": "system", "content": BRIEFING_PROMPT.format(language=language)},
+        {"role": "system", "content": BRIEFING_PROMPT.format(language=_language_name(language))},
         {"role": "user", "content": json.dumps(data, ensure_ascii=False)},
     ]
     return (client.chat_text(messages) or "").strip()

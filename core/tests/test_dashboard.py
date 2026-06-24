@@ -1727,3 +1727,50 @@ class TestAskCairnWidget:
         assert 'class="ask-cairn__chip"' in body["text"]
         assert "Sofia Lindqvist" in body["text"]
         assert "<script>" not in body["text"] and "&lt;script&gt;" in body["text"]
+
+    def test_briefing_prompt_names_language_for_english_user(self, settings):
+        """The system prompt must spell out the output language ("English"), not
+        the bare code ("en"). The prompt carries French example phrasing, and the
+        bare code is too weak to stop the model echoing it - an English user was
+        getting a French briefing."""
+        from unittest.mock import MagicMock, patch
+
+        settings.AI_ASSISTANT_ENABLED = True
+        settings.AI_ASSISTANT_PROVIDER = "mistral"
+        settings.AI_ASSISTANT_MODEL = "mistral-small-latest"
+        user = UserFactory(language="en")
+        client = Client()
+        client.force_login(user)
+        fake = MagicMock()
+        fake.chat_text.return_value = "<p>All clear.</p>"
+        with patch("assistant.providers.get_client", return_value=fake):
+            client.post(
+                reverse("dashboard-ask-cairn-briefing"),
+                data=json.dumps({"data": {"critical_risks_to_treat": 2}}),
+                content_type="application/json",
+            )
+        system_prompt = fake.chat_text.call_args[0][0][0]["content"]
+        assert "in English" in system_prompt
+        assert "in en," not in system_prompt
+
+    def test_briefing_prompt_names_language_for_french_user(self, settings):
+        """A French user's briefing is requested in "French" (spelled out)."""
+        from unittest.mock import MagicMock, patch
+
+        settings.AI_ASSISTANT_ENABLED = True
+        settings.AI_ASSISTANT_PROVIDER = "mistral"
+        settings.AI_ASSISTANT_MODEL = "mistral-small-latest"
+        user = UserFactory(language="fr")
+        client = Client()
+        client.force_login(user)
+        fake = MagicMock()
+        fake.chat_text.return_value = "<p>Tout va bien.</p>"
+        with patch("assistant.providers.get_client", return_value=fake):
+            client.post(
+                reverse("dashboard-ask-cairn-briefing"),
+                data=json.dumps({"data": {"critical_risks_to_treat": 2}}),
+                content_type="application/json",
+            )
+        system_prompt = fake.chat_text.call_args[0][0][0]["content"]
+        assert "in French" in system_prompt
+        assert "in fr," not in system_prompt
