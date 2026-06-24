@@ -22,13 +22,16 @@ single width step. The main area is a fixed-cell grid:
   4     12       Full width
   ====  =======  ===========
 
-- **Height** ``H`` is a number of fixed row units (1..4). Each unit is a fixed
-  pixel height (``--dash-row`` in the template), so a widget occupies an exact
-  ``W x H`` tile and its content scrolls inside if it overflows.
+- **Height** ``H`` is a number of fixed row units (1..4), or the half-step
+  ``0.5`` for a half-row tile (used by the bare Section heading). Each row unit
+  is a fixed pixel height (``--dash-row`` in the template); the grid is actually
+  laid on **half-row tracks** (``row_tracks()`` = ``H * 2``) so a tile can be
+  half a row tall, while a normal ``H``-unit tile keeps its exact old height.
 
-So ``"2x1"`` is a half-width, one-row tile and ``"4x2"`` is a full-width,
-two-row tile. The rail ignores width and height (rail widgets stack at the rail
-width with content height); the token only drives the main-area grid.
+So ``"2x1"`` is a half-width, one-row tile, ``"4x2"`` is a full-width, two-row
+tile, and ``"4x0.5"`` is a full-width, half-row tile. The rail ignores width and
+height (rail widgets stack at the rail width with content height); the token
+only drives the main-area grid.
 """
 
 from __future__ import annotations
@@ -48,11 +51,12 @@ MAX_HEIGHT = 4  # tallest tile, in fixed row units
 _LEGACY_WIDTHS = {"S": 1, "M": 2, "L": 3, "XL": 4}
 
 
-def parse_size(token) -> tuple[int, int] | None:
+def parse_size(token) -> tuple[int, float] | None:
     """Parse a ``"WxH"`` size token into ``(width, height)`` unit counts.
 
-    Returns ``None`` for anything that is not a well-formed token within the
-    supported ``1..MAX_WIDTH`` x ``1..MAX_HEIGHT`` range.
+    Width is an integer ``1..MAX_WIDTH``. Height is an integer ``1..MAX_HEIGHT``
+    or the half-step ``0.5`` - a half-row tile, used by the bare Section heading.
+    Returns ``None`` for anything malformed or out of range.
     """
     if not isinstance(token, str):
         return None
@@ -60,11 +64,16 @@ def parse_size(token) -> tuple[int, int] | None:
     if len(parts) != 2:
         return None
     try:
-        w, h = int(parts[0]), int(parts[1])
+        w = int(parts[0])
+        h = float(parts[1])
     except (TypeError, ValueError):
         return None
-    if 1 <= w <= MAX_WIDTH and 1 <= h <= MAX_HEIGHT:
-        return (w, h)
+    if not 1 <= w <= MAX_WIDTH:
+        return None
+    if h == 0.5:
+        return (w, 0.5)
+    if h.is_integer() and 1 <= h <= MAX_HEIGHT:
+        return (w, int(h))
     return None
 
 
@@ -221,9 +230,19 @@ class DashboardWidget:
         """Grid-column span (out of 12) for the given size."""
         return self._dims(size)[0] * WIDTH_UNIT_COLUMNS
 
-    def rows(self, size: str) -> int:
-        """Grid-row span (fixed row units) for the given size."""
+    def rows(self, size: str) -> float:
+        """Logical height of the tile, in row units (``0.5`` or ``1..MAX_HEIGHT``)."""
         return self._dims(size)[1]
+
+    def row_tracks(self, size: str) -> int:
+        """Grid-row span in **half-row tracks** (each height unit spans 2 tracks).
+
+        The main grid is laid on half-row tracks so a tile can be half a row tall
+        (the bare Section heading). A normal ``H``-unit tile spans ``H * 2``
+        tracks, which - with the row gap added back between the inner tracks - is
+        exactly its old ``H``-row height; a ``0.5`` tile spans a single track.
+        """
+        return int(round(self._dims(size)[1] * 2))
 
     def width(self, size: str) -> int:
         """Width unit (1..MAX_WIDTH) for the given size."""
@@ -378,8 +397,8 @@ DASHBOARD_WIDGETS: list[DashboardWidget] = [
         icon="type-h2",
         template="dashboard/widgets/section.html",
         category=CATEGORY_LAYOUT,
-        sizes=("4x1",),
-        default_size="4x1",
+        sizes=("4x0.5",),
+        default_size="4x0.5",
         default_order=90,
         multiple=True,
         param_sanitizer=_sanitize_section_params,

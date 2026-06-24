@@ -28,12 +28,18 @@ the page title) and a dedicated **side rail**. Each widget carries a `zone`
     | 3 | 9    | 3/4 width   |
     | 4 | 12   | Full width  |
 
-  - **Height** `H` (1..4) is a number of fixed row units; it maps directly to a
-    `grid-row` span. One row is `--dash-row` tall (170px), so a 2-row tile is
-    `2 * 170px + 1.5rem` gap.
+  - **Height** `H` is a number of fixed row units (`1..4`) or the half-step
+    `0.5`. The grid is actually laid on **half-row tracks**
+    (`grid-auto-rows = (--dash-row - gap) / 2`), and a tile spans `H * 2` tracks
+    (`row_tracks()`); with the gap added back between the inner tracks this
+    reproduces the exact `H * --dash-row` height, while a `0.5` tile spans a
+    single half-row track. One row is `--dash-row` tall (170px), so a 2-row tile
+    is `2 * 170px + 1.5rem` gap and a `0.5` tile is `~73px`. Only the bare
+    Section heading uses the half step.
 
-  So `2x1` is a half-width, one-row tile and `4x2` is a full-width, two-row
-  tile. Below 1200px the main grid collapses to a single content-height column
+  So `2x1` is a half-width, one-row tile, `4x2` is a full-width, two-row tile
+  and `4x0.5` is a full-width, half-row tile. Below 1200px the main grid
+  collapses to a single content-height column
   (fixed tiles only apply once the 2D grid is active), so nothing is clipped
   when widgets stack on tablets and phones.
 
@@ -128,7 +134,7 @@ Sizes are `"WxH"` tile tokens (see *Layout model*).
 | `risk_treatment_flow` | 4x2, main, visible | 2x2, 3x2, 4x2, 4x3 | Sankey (fills tile) |
 | `risk_matrix_current` | 2x2, main, visible | 2x2, 2x3 | Current-risk heatmap (before treatment) |
 | `risk_matrix_residual` | 2x2, main, visible | 2x2, 2x3 | Residual-risk heatmap (after treatment) |
-| `section` | (added on demand) | 4x1 | **Multiple**, **bare** (no card); full-width `<h2>` to group widgets, params `{title}` |
+| `section` | (added on demand) | 4x0.5 | **Multiple**, **bare** (no card); full-width, **half-row** `<h2>` to group widgets, params `{title}` |
 
 `upcoming_deadlines`, `priority_risks`, `ask_cairn` and `ongoing_audits` default
 to the **rail**; everything else to the **main** area.
@@ -139,12 +145,14 @@ border, shadow and padding, so the widget's content - here a single `<h2>` -
 sits directly on the page background. It is a layout helper used to break the
 main area into labelled sections: it is **multiple** (add several from the
 gallery's **Layout** category) and configurable (a gear dialog sets the per
-instance `title`, trimmed and capped at `SECTION_TITLE_MAX_LENGTH` = 60). The
-heading is bottom-aligned in its full-width row so it reads as a header just
-above the widgets that follow it, and takes its natural (content) height once
-the grid collapses to a single column below xl. Like the indicator widget it
-ships a hidden server-rendered clone source (`sectionWidgetTemplate`) that the
-editor duplicates per instance, and a shared config dialog (`sectionConfigModal`).
+instance `title`, trimmed and capped at `SECTION_TITLE_MAX_LENGTH` = 60). Its
+size is `4x0.5` - a **half-row** tile (see *Layout model*: the main grid is laid
+on half-row tracks so a tile can be half a row tall). The heading is vertically
+**centred** in that band so the space above and below it is balanced, and the
+tile takes its natural (content) height once the grid collapses to a single
+column below xl. Like the indicator widget it ships a hidden server-rendered
+clone source (`sectionWidgetTemplate`) that the editor duplicates per instance,
+and a shared config dialog (`sectionConfigModal`).
 
 The `ongoing_audits` widget is **conditional**: the view lists compliance
 assessments whose window covers today, excluding cancelled audits and draft

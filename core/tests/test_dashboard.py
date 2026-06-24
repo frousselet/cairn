@@ -1168,11 +1168,11 @@ class TestDashboardWidgetRegistry:
         from core.dashboard import resolve_layout
 
         resolved = resolve_layout([
-            {"key": "s1", "id": "section", "size": "4x1", "params": {"title": "  Compliance  "}},
+            {"key": "s1", "id": "section", "size": "4x0.5", "params": {"title": "  Compliance  "}},
             # Non-dict params -> empty title.
-            {"key": "s2", "id": "section", "size": "4x1", "params": "nope"},
+            {"key": "s2", "id": "section", "size": "4x0.5", "params": "nope"},
             # Over-long title is capped (kept short so it reads as a heading).
-            {"key": "s3", "id": "section", "size": "4x1", "params": {"title": "x" * 200}},
+            {"key": "s3", "id": "section", "size": "4x0.5", "params": {"title": "x" * 200}},
         ])
         sections = [e for e in resolved if e["id"] == "section"]
         assert len(sections) == 3
@@ -1264,10 +1264,13 @@ class TestWidgetSizeGeometry:
         assert parse_size("2x1") == (2, 1)
         assert parse_size("4x3") == (4, 3)
         assert parse_size("4X2") == (4, 2)  # case-insensitive
+        # The half-row step (used by the Section heading) is valid.
+        assert parse_size("4x0.5") == (4, 0.5)
         # Out of range / malformed -> None.
         assert parse_size("5x1") is None
         assert parse_size("2x9") is None
         assert parse_size("0x1") is None
+        assert parse_size("2x0.25") is None  # only the 0.5 half-step is allowed
         assert parse_size("2") is None
         assert parse_size("axb") is None
         assert parse_size("") is None
@@ -1289,6 +1292,9 @@ class TestWidgetSizeGeometry:
         assert w.cols("3x2") == 9
         assert w.width("3x2") == 3
         assert w.height("3x3") == 3
+        # Height also maps to a grid-row span in half-row tracks (H * 2).
+        assert w.row_tracks("4x2") == 4
+        assert WIDGETS_BY_ID["section"].row_tracks("4x0.5") == 1  # half a row
         # An unparseable size falls back to the widget default's dims.
         assert w.cols("bogus") == w.cols(w.default_size)
         assert w.rows("bogus") == w.rows(w.default_size)
@@ -1456,7 +1462,7 @@ class TestDashboardGridRendering:
 
     def test_main_widget_renders_2d_grid_spans_and_size_classes(self):
         # A 3x2 main widget must carry both grid spans (3 width units -> 9 cols,
-        # 2 height units -> 2 rows) and the width/height classes.
+        # 2 height units -> 2*2 = 4 half-row tracks) and the width/height classes.
         client, user = _regular_client()
         user.dashboard_layout = [
             {"id": "compliance_by_framework", "size": "3x2", "visible": True, "zone": "main"},
@@ -1466,9 +1472,9 @@ class TestDashboardGridRendering:
         anchor = content.index('data-widget-id="compliance_by_framework"')
         section = content[anchor - 200:anchor + 600]
         assert 'grid-column: span 9' in section
-        assert 'grid-row: span 2' in section
+        assert 'grid-row: span 4' in section  # 2 rows = 4 half-row tracks
         assert 'dash-widget--w3' in section
-        assert 'dash-widget--h2' in section
+        assert 'dash-widget--h4' in section
 
     def test_rail_widget_has_no_inline_grid(self):
         # Rail widgets stack at content height: no inline grid spans are emitted.
@@ -1586,7 +1592,7 @@ class TestIndicatorWidget:
     def test_section_widget_renders_bare_heading(self):
         client, user = _regular_client()
         user.dashboard_layout = [{
-            "key": "s1", "id": "section", "size": "4x1", "visible": True,
+            "key": "s1", "id": "section", "size": "4x0.5", "visible": True,
             "zone": "main", "params": {"title": "Compliance"},
         }]
         user.save(update_fields=["dashboard_layout"])
@@ -1602,6 +1608,8 @@ class TestIndicatorWidget:
         assert 'data-multiple="true"' in section
         assert 'dash-widget__config' in section
         assert 'dash-widget--empty' not in section[:300]
+        # Half-row tall: spans a single half-row track.
+        assert 'grid-row: span 1;' in section
         assert '>Compliance</h2>' in content
 
     def test_section_widget_template_node_present(self):

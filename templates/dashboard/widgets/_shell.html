@@ -1,6 +1,6 @@
 {% load i18n %}
 {# Generic widget wrapper. Expects `placed` = {key, widget, size, cols, rows, w, h, zone, visible, has_data, params, params_json, configurable, size_options, slot}. `size` is a "WxH" token; `cols`/`rows` are the grid spans it maps to; `key` is the per-instance id; `configurable` adds the edit-mode gear. The chrome (drag affordance, config, resize, remove) only shows in edit mode. #}
-<section class="dash-widget dash-widget--w{{ placed.w }} dash-widget--h{{ placed.h }}{% if placed.widget.bare %} dash-widget--bare{% endif %}{% if not placed.has_data %} dash-widget--empty{% endif %}"
+<section class="dash-widget dash-widget--w{{ placed.w }} dash-widget--h{{ placed.row_tracks }}{% if placed.widget.bare %} dash-widget--bare{% endif %}{% if not placed.has_data %} dash-widget--empty{% endif %}"
          data-widget-id="{{ placed.widget.id }}"
          data-key="{{ placed.key }}"
          data-size="{{ placed.size }}"
@@ -9,7 +9,7 @@
          {% if placed.widget.multiple %}data-multiple="true"{% endif %}
          {% if placed.widget.config %}data-config="{{ placed.widget.config }}"{% endif %}
          data-params="{{ placed.params_json }}"
-         {% if placed.zone == 'main' %}style="grid-column: span {{ placed.cols }}; grid-row: span {{ placed.rows }};"{% endif %}>
+         {% if placed.zone == 'main' %}style="grid-column: span {{ placed.cols }}; grid-row: span {{ placed.row_tracks }};"{% endif %}>
   <div class="dash-widget__chrome">
     <button type="button" class="dash-widget__remove" title="{% trans 'Remove from dashboard' %}" aria-label="{% trans 'Remove from dashboard' %}">
       <i class="bi bi-dash-lg" aria-hidden="true"></i>

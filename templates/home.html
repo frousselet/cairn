@@ -29,11 +29,15 @@
   .dashboard-main {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    /* Fixed-cell grid: each row is a fixed height unit, so a widget occupies an
-       exact W x H tile (its size maps to grid-column / grid-row spans). Content
-       that overflows scrolls inside the tile, keeping the grid aligned. */
-    grid-auto-rows: var(--dash-row, 170px);
-    gap: 1.5rem;
+    /* Fixed-cell grid: a widget occupies an exact W x H tile (its size maps to
+       grid-column / grid-row spans) and content that overflows scrolls inside,
+       keeping the grid aligned. Rows are laid on HALF-row tracks so a tile can
+       be half a row tall (the bare Section heading): a normal H-unit tile spans
+       2*H tracks which - with the gap added back between the inner tracks -
+       reproduces its exact H*--dash-row height, and a 0.5 tile spans one track. */
+    --dash-gap: 1.5rem;
+    grid-auto-rows: calc((var(--dash-row, 170px) - var(--dash-gap)) / 2);
+    gap: var(--dash-gap);
     /* Tiles stretch to fill their row span; rows are packed to the top so the
        zone never has extra dotted space below its last row. */
     align-items: stretch;
@@ -160,18 +164,17 @@
     box-shadow: none;
   }
   .dash-widget--bare > .dash-widget__body { padding: 0; }
-  /* In the fixed main grid the bare tile fills its row; the heading sits at the
-     bottom so it reads as a header just above the widgets that follow it (the
-     space above it separates it from the previous group). When the grid
-     collapses below xl the tile is content-height, so the heading is compact. */
+  /* In the fixed main grid the bare tile is a half-row band; the heading is
+     vertically centred so the space above and below it is balanced. When the
+     grid collapses below xl the tile is content-height, so it stays compact. */
   .dashboard-main > .dash-widget--bare > .dash-widget__body {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: center;
   }
   .dash-section-title {
     margin: 0;
-    padding: 0 .25rem .375rem;
+    padding: 0 .25rem;
     font-family: var(--font-display);
     font-size: 1.5rem;
     font-weight: 810;        /* brand: titles at weight 810 */
@@ -586,12 +589,14 @@
   }
 
   // Sizes are "WxH" tokens (width units x height units). Width maps to a grid-
-  // column span of W * 3 (out of 12); height maps to a grid-row span of H.
+  // column span of W * 3 (out of 12); height maps to a grid-row span of H * 2
+  // half-row tracks (H may be the half-step 0.5 for the Section heading).
   var WIDTH_UNIT_COLUMNS = 3;
   function parseSize(size) {
-    var m = /^(\d+)x(\d+)$/.exec(size || '');
-    return m ? { w: parseInt(m[1], 10), h: parseInt(m[2], 10) } : null;
+    var m = /^(\d+)x(\d+(?:\.\d+)?)$/.exec(size || '');
+    return m ? { w: parseInt(m[1], 10), h: parseFloat(m[2]) } : null;
   }
+  function rowTracks(h) { return Math.round(h * 2); }
   var saveUrl = zones.getAttribute('data-save-url');
   var sortables = [];
   var dirty = false;
@@ -714,12 +719,13 @@
   function applySize(el, size) {
     var d = parseSize(size);
     if (!d) return;
+    var tracks = rowTracks(d.h);
     el.setAttribute('data-size', size);
     el.style.gridColumn = 'span ' + (d.w * WIDTH_UNIT_COLUMNS);
-    el.style.gridRow = 'span ' + d.h;
+    el.style.gridRow = 'span ' + tracks;
     el.className = el.className
       .replace(/dash-widget--w\d+/g, 'dash-widget--w' + d.w)
-      .replace(/dash-widget--h\d+/g, 'dash-widget--h' + d.h);
+      .replace(/dash-widget--h\d+/g, 'dash-widget--h' + tracks);
   }
 
   // ── Autofit: fit a list's content to its tile ──────────────
