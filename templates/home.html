@@ -164,18 +164,17 @@
     box-shadow: none;
   }
   .dash-widget--bare > .dash-widget__body { padding: 0; }
-  /* In the fixed main grid the bare tile is a half-row band; the heading is
-     pushed toward the bottom (free space accumulates above it) so it reads as a
-     section header sitting just above the widgets it labels - more space above
-     than below. When the grid collapses below xl the tile is content-height. */
-  .dashboard-main > .dash-widget--bare > .dash-widget__body {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-  }
+  /* The bare Section tile is a half-row band acting as a header. The body takes
+     content height (not stretched) and is pushed to the BOTTOM of the band via
+     the section's OWN column justify-content (the section is the flex column, the
+     body its item), so the band's free space sits ABOVE the heading - more room
+     above than below, like a header attached to the widgets beneath it. Below xl
+     the band is content-height, so the spacing is even there. */
+  .dashboard-main > .dash-widget--bare { justify-content: flex-end; }
+  .dashboard-main > .dash-widget--bare > .dash-widget__body { flex: 0 0 auto; }
   .dash-section-title {
     margin: 0;
-    padding: 0 .25rem .375rem;
+    padding: 0 .25rem .25rem;
     font-family: var(--font-display);
     font-size: 1.5rem;
     font-weight: 810;        /* brand: titles at weight 810 */
