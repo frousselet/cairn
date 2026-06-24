@@ -1,0 +1,26 @@
+{% load i18n %}
+{# Shared dialog to configure the overall-compliance target: show/hide the marker and set its value. The editor JS opens it from the widget's gear and writes the choice back on Apply. #}
+<div class="modal fade" id="targetConfigModal" tabindex="-1" aria-labelledby="targetConfigLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="targetConfigLabel"><i class="bi bi-bullseye me-2" style="color:var(--accent)"></i>{% trans "Configure target" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" id="targetConfigShow" checked>
+          <label class="form-check-label" for="targetConfigShow">{% trans "Show target" %}</label>
+        </div>
+        <div>
+          <label for="targetConfigValue" class="form-label">{% trans "Target value" %} (%)</label>
+          <input type="number" class="form-control" id="targetConfigValue" min="0" max="100" step="1" value="80">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <button type="button" class="btn btn-primary" id="targetConfigApply">{% trans "Apply" %}</button>
+      </div>
+    </div>
+  </div>
+</div>

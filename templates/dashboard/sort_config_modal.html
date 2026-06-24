@@ -1,0 +1,32 @@
+{% load i18n %}
+{# Shared dialog to order a progress-bar list widget (compliance by framework, active objectives): pick a sort mode, or "Manual" and drag the rows into a custom order. The editor JS opens it from the gear of whichever widget is being configured and writes the choice back on Apply. #}
+<div class="modal fade" id="sortConfigModal" tabindex="-1" aria-labelledby="sortConfigLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sortConfigLabel"><i class="bi bi-sort-down me-2" style="color:var(--accent)"></i>{% trans "Order items" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <label for="sortConfigSelect" class="form-label">{% trans "Sort by" %}</label>
+          <select id="sortConfigSelect" class="form-select">
+            <option value="default">{% trans "Default order" %}</option>
+            <option value="value_desc">{% trans "Value (descending)" %}</option>
+            <option value="value_asc">{% trans "Value (ascending)" %}</option>
+            <option value="name">{% trans "Alphabetical" %}</option>
+            <option value="manual">{% trans "Manual order" %}</option>
+          </select>
+        </div>
+        <div id="sortConfigManual" class="mt-3 d-none">
+          <label class="form-label">{% trans "Drag to reorder" %}</label>
+          <ul id="sortConfigList" class="sort-config-list list-unstyled mb-0"></ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <button type="button" class="btn btn-primary" id="sortConfigApply">{% trans "Apply" %}</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,67 @@
+{% load i18n %}
+{# Widget: a single configurable indicator (KPI card). Expects `placed.slot` (a slot dict from build_indicator_slot) or None when the widget is not configured yet. #}
+{% with slot=placed.slot %}
+{% if slot %}
+<a href="{% url 'context:indicator-detail' slot.indicator.pk %}" class="text-decoration-none d-block h-100">
+  <div class="stat-card h-100 position-relative" data-indicator-id="{{ slot.indicator.pk }}" data-indicator-value="{{ slot.indicator.current_value|default:'' }}" style="overflow:hidden">
+    <div style="position:relative;z-index:1">
+      <div class="d-flex justify-content-between align-items-start mb-1">
+        <small class="text-muted text-truncate me-2" style="max-width:70%" title="{{ slot.indicator.name }}">{{ slot.indicator.name }}</small>
+        {% if slot.indicator.indicator_type == "organizational" %}
+        <span class="badge text-bg-primary" style="font-size:.6rem">{% trans "Org." %}</span>
+        {% else %}
+        <span class="badge text-bg-secondary" style="font-size:.6rem">{% trans "Tech." %}</span>
+        {% endif %}
+      </div>
+      <div class="d-flex align-items-baseline gap-2">
+        <span class="stat-card-value mb-0" style="{% if slot.indicator.is_critical %}color:var(--bs-danger){% endif %}">
+          {% if slot.indicator.format == "boolean" %}
+            {% if slot.indicator.current_value == "true" or slot.indicator.current_value == "1" or slot.indicator.current_value == "yes" %}
+              <i class="bi bi-check-circle-fill text-success"></i>
+            {% elif slot.indicator.current_value %}
+              <i class="bi bi-x-circle-fill text-danger"></i>
+            {% else %}
+              <span class="cell-empty">-</span>
+            {% endif %}
+          {% else %}
+            {{ slot.formatted_value|default:slot.indicator.current_value|default:"-" }}
+          {% endif %}
+        </span>
+        {% if slot.indicator.unit and slot.indicator.format != "boolean" %}
+        <small class="text-muted">{{ slot.indicator.unit }}</small>
+        {% endif %}
+        {% if slot.trend == "up" %}
+          <span class="ms-auto" title="{% trans 'Trend' %}: +{{ slot.trend_value|floatformat:1 }}"><i class="bi bi-arrow-up-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--bs-danger){% else %}var(--success){% endif %}"></i></span>
+        {% elif slot.trend == "down" %}
+          <span class="ms-auto" title="{% trans 'Trend' %}: {{ slot.trend_value|floatformat:1 }}"><i class="bi bi-arrow-down-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--bs-danger){% else %}var(--danger){% endif %}"></i></span>
+        {% elif slot.trend == "stable" %}
+          <span class="ms-auto" title="{% trans 'Stable' %}"><i class="bi bi-dash fs-5" style="color:var(--text-muted)"></i></span>
+        {% elif slot.trend == "changed" %}
+          <span class="ms-auto" title="{% trans 'Changed' %}"><i class="bi bi-arrow-left-right fs-5" style="color:{% if slot.indicator.is_critical %}var(--bs-danger){% else %}var(--warning){% endif %}"></i></span>
+        {% endif %}
+      </div>
+      {% if slot.current_measurement %}
+      <small class="text-muted" style="font-size:.72rem">
+        <i class="bi bi-calendar3 me-1"></i>{{ slot.current_measurement.recorded_at|date:"d/m/Y" }}
+        {% if slot.delta_display %} · <i class="bi bi-plus-slash-minus me-1"></i><span style="color:{% if slot.indicator.is_critical %}var(--bs-danger){% elif slot.trend == 'up' %}var(--success){% elif slot.trend == 'down' %}var(--danger){% else %}var(--text-muted){% endif %}">{{ slot.delta_display }}{% if slot.indicator.unit %} {{ slot.indicator.unit }}{% endif %}</span>{% endif %}
+      </small>
+      {% else %}
+      <small class="text-muted" style="font-size:.72rem">{% trans "No measurement" %}</small>
+      {% endif %}
+      {% if slot.indicator.is_critical %}
+      <div class="mt-1"><span class="badge text-bg-danger" style="font-size:.65rem">{% trans "Critical" %}</span></div>
+      {% endif %}
+    </div>
+    {% if slot.show_chart and slot.sparkline_data %}
+    <div class="sparkline-slot" data-sparkline="{{ slot.sparkline_data|join:',' }}" data-trend="{{ slot.trend }}" data-critical="{% if slot.indicator.is_critical %}1{% endif %}" style="position:absolute;bottom:0;left:0;right:0;height:30px;z-index:0;pointer-events:none"></div>
+    {% endif %}
+  </div>
+</a>
+{% else %}
+{# Unconfigured: shown only in edit mode (the shell flags it as empty). Prompts the user to pick an indicator via the gear. #}
+<div class="stat-card h-100 d-flex flex-column align-items-center justify-content-center text-center" style="gap:.5rem;border:1px dashed var(--border-light);background:var(--surface-raised)">
+  <span class="d-inline-flex align-items-center justify-content-center" style="width:2.25rem;height:2.25rem;border-radius:50%;background:var(--accent-soft);color:var(--accent)"><i class="bi bi-graph-up"></i></span>
+  <span class="text-muted small">{% trans "Choose an indicator" %}</span>
+</div>
+{% endif %}
+{% endwith %}

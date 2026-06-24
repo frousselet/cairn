@@ -1,13 +1,8 @@
 {% load i18n %}
-{% comment %}Dashboard page-header actions: Edit (toggles the widget edit mode), Add a widget (edit mode only), Configure indicators, and Done (edit mode only). Visibility between view / edit mode is driven by body.dash-editing in CSS.{% endcomment %}
+{% comment %}Dashboard page-header actions: Edit (toggles the widget edit mode), Add a widget (edit mode only) and Done (edit mode only). Visibility between view / edit mode is driven by body.dash-editing in CSS. Per-widget configuration (e.g. choosing an indicator) lives on each widget's edit-mode gear, not here.{% endcomment %}
 <button type="button" id="dashAddWidgetBtn" class="btn btn-outline-secondary dash-edit-only" data-bs-toggle="offcanvas" data-bs-target="#widgetGallery">
   <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add a widget" %}
 </button>
-{% if "indicators" in dashboard_visible_ids %}
-<button type="button" class="btn btn-outline-secondary dash-view-only" data-bs-toggle="modal" data-bs-target="#indicatorPickerModal">
-  <i class="bi bi-gear me-1" aria-hidden="true"></i>{% trans "Configure" %}
-</button>
-{% endif %}
 <button type="button" id="dashEditToggle" class="btn btn-outline-secondary" aria-pressed="false">
   <i class="bi bi-grid-1x2 me-1" aria-hidden="true"></i><span>{% trans "Edit" %}</span>
 </button>

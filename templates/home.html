@@ -7,10 +7,12 @@
 
 {% block extra_css %}
 <style>
-  /* ── Two-zone dashboard: main area + dedicated side rail ──
-     The page header lives in its own container (above), so it never moves.
-     The zones row is allowed to extend right into the container's gutter on
-     large screens to make room for the rail, without touching the title. */
+  /* ── Dashboard zones: main area + a two-part side rail (top / bottom) ──
+     The page header lives in its own container (above), so it never moves. By
+     default (and when stacked) the rail's two sub-zones are direct grid items:
+     the top sub-zone is ordered above the main area, the bottom one below it. On
+     wide screens the wrap re-forms a single sticky column in the right gutter
+     (see the rail-beside media query). */
   .dashboard-zones {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -19,44 +21,92 @@
        its dotted edit background ends exactly at its last widget. */
     align-items: start;
   }
+  /* The wrap dissolves so its sub-zones participate directly in the zones grid;
+     it only re-forms as a flex column on wide screens (rail-beside query). */
+  .dashboard-rail-wrap { display: contents; }
+  .dashboard-rail--top { order: -1; }     /* above the main area when stacked */
+  .dashboard-rail--bottom { order: 1; }   /* below the main area when stacked */
   .dashboard-main {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
+    /* Fixed-cell grid: each row is a fixed height unit, so a widget occupies an
+       exact W x H tile (its size maps to grid-column / grid-row spans). Content
+       that overflows scrolls inside the tile, keeping the grid aligned. */
+    grid-auto-rows: var(--dash-row, 170px);
     gap: 1.5rem;
-    /* Rows are content-height and packed to the top: a widget cell is never
-       taller than the widget, and the zone never has extra dotted space below
-       its last row. */
-    align-items: start;
+    /* Tiles stretch to fill their row span; rows are packed to the top so the
+       zone never has extra dotted space below its last row. */
+    align-items: stretch;
     align-content: start;
     align-self: start;
     min-width: 0;
     transition: padding .22s var(--ease-out), background-color .22s var(--ease-out);
   }
+  /* Each rail sub-zone is a flex column of widgets. Width comes from the grid
+     cell (stacked) or the wrap (beside); vertical alignment from the zones grid
+     (align-items: start) or the wrap's flex, so no align-self is needed here. */
   .dashboard-rail {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    align-self: start;
     min-width: 0;
     transition: padding .22s var(--ease-out), background-color .22s var(--ease-out);
   }
-  /* Below xl, every main widget spans the full width (single column). */
+  /* An empty sub-zone collapses in view mode (no dangling gap); while editing it
+     stays visible as a drop target (see the dash-editing min-height below). */
+  body:not(.dash-editing) .dashboard-rail:empty { display: none; }
+  /* Below xl the main grid collapses to a single, content-height column: fixed
+     tiles only make sense once the 2D grid is active, so heights become
+     automatic and nothing is clipped when widgets stack. */
   @media (max-width: 1199.98px) {
-    .dashboard-main > .dash-widget { grid-column: 1 / -1 !important; }
+    .dashboard-main { grid-auto-rows: auto; }
+    .dashboard-main > .dash-widget {
+      grid-column: 1 / -1 !important;
+      grid-row: auto !important;
+      overflow: visible;
+    }
+    .dashboard-main > .dash-widget > .dash-widget__body,
+    .dashboard-main > .dash-widget .card-body { overflow: visible; }
+    /* Progress rows take their natural height when stacked (no even-division);
+       skeleton placeholders only make sense for the fixed-height tile. */
+    .dashboard-main > .dash-widget [data-progress-rows] { overflow: visible; }
+    .dashboard-main > .dash-widget [data-progress-rows] > .fw-bar {
+      flex: none;
+      margin-bottom: .75rem !important;
+    }
+    .dashboard-main > .dash-widget .fw-bar--placeholder { display: none !important; }
+    /* Scale-to-fit widgets take natural size when stacked (no fixed tile to fit). */
+    .dashboard-main > .dash-widget [data-fit-scale] { display: block; overflow-x: auto; }
+    .dashboard-main > .dash-widget [data-fit-scale] > * { transform: none; }
   }
-  /* Large screens: the whole dashboard (title/buttons + board) uses more of the
-     screen up to a max width, kept centred (the container stays auto-centred).
+  /* Wide screens only: the whole dashboard (title/buttons + board) uses more of
+     the screen up to a max width, kept centred (the container stays auto-centred).
      The standard container cap is lifted (only for the dashboard, via :has) and
      replaced by a wider cap so it never sprawls on very large screens. The title
      row and the board share this container, so they are always the same width.
-     The rail sits beside the main area as a wide column. */
-  @media (min-width: 1600px) {
+     The rail sits beside the main area as a wide column. The threshold accounts
+     for the ~15rem sidebar plus the 24rem rail: below it the main column would be
+     cramped, so the rail stacks underneath instead. */
+  @media (min-width: 1800px) {
     .main-content > .container-xl:has(#dashboardZones) {
       max-width: 1900px;
     }
     .dashboard-zones {
       --rail-w: 24rem;
       grid-template-columns: minmax(0, 1fr) var(--rail-w);
+    }
+    /* Re-form the rail as a single column in the right gutter: the two sub-zones
+       stack together (top above bottom). It is sticky - it scrolls up until it
+       clears the sticky page header, then stays put while the (taller) main
+       column keeps scrolling past it. */
+    .dashboard-rail-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      position: sticky;
+      top: calc(var(--page-header-offset) + 1rem);
+      align-self: start;
+      min-width: 0;
     }
   }
   /* On very wide screens, give the rail a little more room. */
@@ -70,6 +120,78 @@
      each widget's content fills its cell exactly. */
   .dash-widget .card,
   .dash-widget .indicator-grid { margin-bottom: 0 !important; }
+  /* Fixed tiles (main zone): the widget fills its W x H cell and its content is
+     fitted to that cell - never a scrollbar, never empty space. Everything is a
+     flex column that fills the height and clips (the autofit script trims list
+     items so nothing is ever actually clipped). Scoped to the main zone; the
+     rail keeps content height. */
+  .dashboard-main > .dash-widget {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .dashboard-main > .dash-widget > .dash-widget__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .dashboard-main > .dash-widget .card {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .dashboard-main > .dash-widget .card-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Autofit lists ──────────────────────────────────────────
+     A widget renders a generous pool of items inside a [data-fit-list]; the
+     autofit script (below) hides trailing items until the list no longer
+     overflows its tile (never a scrollbar), then the kept items grow to share
+     the height (never empty space) - so a taller tile shows more / larger rows
+     and a shorter one shows fewer. Only active in the main zone; the rail keeps
+     natural content height (the list is observed but never constrained there). */
+  .dashboard-main > .dash-widget [data-fit-list] {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  /* Once trimmed to fit, the kept rows distribute to fill the height evenly, so
+     there is no empty band at the bottom. (A taller tile keeps more rows rather
+     than spreading a few, because we only trim on overflow.) */
+  .dashboard-main > .dash-widget [data-fit-list].dash-fit-filled {
+    justify-content: space-between;
+  }
+  /* A list item hidden by autofit is taken out of flow entirely. */
+  [data-fit-list] > [hidden] { display: none !important; }
+  /* ── Scale-to-fit (fixed-aspect widgets: the risk matrices) ──
+     The content has a fixed aspect (a 5x5 heatmap), so instead of trimming it we
+     measure it and apply a --fit-scale so it always fits its tile (no overflow,
+     no big band), centred and clipped. Outside the fixed grid it shows natural
+     size and scrolls horizontally if cramped. */
+  [data-fit-scale] { overflow-x: auto; }
+  .dashboard-main > .dash-widget [data-fit-scale] {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .dashboard-main > .dash-widget [data-fit-scale] > * {
+    flex: 0 0 auto;
+    margin: 0;
+    transform: scale(var(--fit-scale, 1));
+    transform-origin: center;
+  }
   /* Hidden widgets stay in the DOM (so they can be re-added without a reload)
      but never render. */
   .dash-widget[data-visible="false"] { display: none; }
@@ -102,6 +224,22 @@
   }
   body.dash-editing .dash-widget:hover { outline-color: var(--border-strong, var(--border-light)); }
   body.dash-editing .dash-widget.dash-widget--dragging { cursor: grabbing; }
+  /* SortableJS drag affordances: the dimmed placeholder marking where the item
+     will land, and the fallback drag image that follows the cursor (appended to
+     <body> so it is never clipped by the gallery offcanvas). */
+  .dash-widget--ghost,
+  .widget-gallery__tile--ghost { opacity: .4; }
+  .sortable-fallback {
+    opacity: .92;
+    pointer-events: none;
+    box-shadow: var(--shadow-lg, 0 12px 32px rgba(0,0,0,.18));
+    cursor: grabbing;
+    /* The clone is repositioned every frame via `transform`; any transition on
+       transform (e.g. the gallery tile's) would make it lag behind the cursor.
+       It also must not wiggle. */
+    transition: none !important;
+    animation: none !important;
+  }
   /* Block interaction with the widget content while editing. */
   body.dash-editing .dash-widget__body { pointer-events: none; user-select: none; }
   body.dash-editing .dash-widget__chrome {
@@ -139,7 +277,9 @@
     font-size: .875rem;
     cursor: grab;
   }
-  .dash-widget__resize .dash-widget__btn {
+  /* Right-aligned cluster of widget tools (config gear + resize). */
+  .dash-widget__tools { display: inline-flex; align-items: center; gap: .375rem; }
+  .dash-widget__btn {
     width: 1.75rem; height: 1.75rem;
     display: inline-flex; align-items: center; justify-content: center;
     border-radius: 50%;
@@ -152,7 +292,7 @@
     cursor: pointer;
     font-size: .8125rem;
   }
-  .dash-widget__resize .dash-widget__btn:hover { color: var(--accent); border-color: var(--accent); }
+  .dash-widget__btn:hover { color: var(--accent); border-color: var(--accent); }
   /* The widget content dims slightly in edit mode so the chrome reads clearly. */
   body.dash-editing .dash-widget__body > * { opacity: .85; }
 
@@ -169,6 +309,24 @@
   @media (prefers-reduced-motion: reduce) {
     body.dash-editing .dash-widget { animation: none; }
     .dashboard-main, .dashboard-rail { transition: none; }
+  }
+
+  /* Brief accent ring when a widget is freshly placed (added from the gallery or
+     dropped). The compound selector out-specifies the edit-mode wiggle so the
+     highlight wins for its short duration, then the wiggle resumes. */
+  @keyframes dash-flash {
+    0%   { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 60%, transparent); }
+    70%  { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 32%, transparent); }
+    100% { box-shadow: 0 0 0 4px transparent; }
+  }
+  .dash-widget--flash,
+  body.dash-editing .dash-widget.dash-widget--flash {
+    border-radius: var(--radius-lg);
+    animation: dash-flash 1.2s var(--ease-out);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dash-widget--flash,
+    body.dash-editing .dash-widget.dash-widget--flash { animation: none; }
   }
 
   /* Header action buttons that only make sense in one mode. */
@@ -202,6 +360,18 @@
     .widget-gallery__tile:hover { transform: none; }
   }
 
+  /* ── Sort dialog reorder list ───────────────────────────── */
+  .sort-config-list { display: flex; flex-direction: column; gap: .3125rem; }
+  .sort-config-item {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .4375rem .625rem;
+    border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+    background: var(--surface-raised); font-size: .85rem; cursor: grab;
+  }
+  .sort-config-item.sortable-chosen { background: var(--accent-soft); border-color: var(--accent); }
+  .sort-config-grip { color: var(--text-muted); flex-shrink: 0; }
+  .sort-config-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
   /* ── Shared bar style used by framework / objective widgets ── */
   .fw-bar .progress {
     height: 10px;
@@ -211,8 +381,60 @@
   }
   .fw-bar .progress-bar { font-size: .625rem; font-weight: 600; }
   .fw-bar .progress-bar + .progress-bar { border-left: 1.5px solid var(--surface-raised); }
+  /* Not-applicable segment / legend swatch: a muted diagonal hatch so it reads
+     as "out of scope" and stays distinct from the grey "Not assessed". */
+  .seg-na {
+    background-color: var(--surface-subtle) !important;
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent, transparent 2px,
+      color-mix(in srgb, var(--text-muted) 45%, transparent) 2px,
+      color-mix(in srgb, var(--text-muted) 45%, transparent) 4px
+    ) !important;
+  }
   .fw-bar__head { min-height: 1.5rem; }
   .fw-bar__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ── Progress-bar list widgets (compliance by framework, active objectives) ──
+     The client (layoutProgressWidget) sorts the rows and shows the first N for
+     the tile height; the shown rows divide the height evenly so the bars stay
+     aligned with no scroll and no empty band. */
+  .dashboard-main > .dash-widget [data-progress-rows] {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    overflow: hidden;
+  }
+  .dashboard-main > .dash-widget [data-progress-rows] > .fw-bar {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 0 !important;  /* the container gap handles spacing */
+  }
+  /* Row children (name line, scope line, bar) keep their height: the bar must
+     never be squished to nothing by a tight row. */
+  .dashboard-main > .dash-widget [data-progress-rows] > .fw-bar > * { flex-shrink: 0; }
+  [data-progress-rows] > .fw-bar[hidden] { display: none !important; }
+  /* Skeleton + empty-track fill. The default progress track (--surface-muted)
+     is almost identical to the dark card surface (--surface-raised), so empty
+     bars and skeleton rows disappear in dark mode. --skeleton-fill is a calm,
+     theme-aware overlay that stays clearly visible on the card in both themes
+     (it tints the unfilled part of real bars and the skeleton rows alike). */
+  [data-progress-rows] { --skeleton-fill: rgba(0,0,0,.09); }
+  [data-bs-theme="dark"] [data-progress-rows] { --skeleton-fill: rgba(255,255,255,.14); }
+  [data-progress-rows] .progress { background: var(--skeleton-fill); }
+  /* Skeleton rows recede a touch so they read as "empty slots", not real content. */
+  .fw-bar--placeholder { pointer-events: none; opacity: .85; }
+  .fw-bar--placeholder .ph-text {
+    display: block; height: .5rem; border-radius: 4px;
+    background: var(--skeleton-fill);
+  }
+  .fw-bar--placeholder .ph-text--name { width: 38%; }
+  .fw-bar--placeholder .ph-text--value { width: 2.25rem; }
 </style>
 {% endblock %}
 
@@ -229,21 +451,32 @@
 {% help_modal "home" %}
 
 {# ── Widget zones: main area + dedicated side rail ───────── #}
-<div class="dashboard-zones" id="dashboardZones" data-save-url="{% url 'dashboard-layout-save' %}">
+<div class="dashboard-zones" id="dashboardZones" data-save-url="{% url 'dashboard-layout-save' %}" data-indicator-widget-url="{% url 'dashboard-indicator-widget' %}">
   <div class="dashboard-main" id="dashboardMain" data-zone="main">
     {% for placed in dashboard_main_widgets %}
       {% include "dashboard/widgets/_shell.html" %}
     {% endfor %}
   </div>
-  <div class="dashboard-rail" id="dashboardRail" data-zone="rail">
-    {% for placed in dashboard_rail_widgets %}
-      {% include "dashboard/widgets/_shell.html" %}
-    {% endfor %}
+  {# Two rail sub-zones: stacked together in the right gutter on wide screens; when collapsed, the wrap is display:contents so the top sub-zone moves above the main area and the bottom one below it (see the responsive CSS). #}
+  <div class="dashboard-rail-wrap">
+    {# No inner whitespace so an empty sub-zone matches :empty and collapses in view mode (it stays a drop target while editing). #}
+    <div class="dashboard-rail dashboard-rail--top" id="dashboardRailTop" data-zone="rail_top">{% for placed in dashboard_rail_top_widgets %}{% include "dashboard/widgets/_shell.html" %}{% endfor %}</div>
+    <div class="dashboard-rail dashboard-rail--bottom" id="dashboardRailBottom" data-zone="rail_bottom">{% for placed in dashboard_rail_bottom_widgets %}{% include "dashboard/widgets/_shell.html" %}{% endfor %}</div>
   </div>
 </div>
 
 {# ── Add a widget gallery ────────────────────────────────── #}
 {% include "dashboard/widget_gallery.html" %}
+
+{# ── Indicator widget: config dialog + clone source for new instances ── #}
+{% include "dashboard/indicator_config_modal.html" %}
+<template id="indicatorWidgetTemplate">{% with placed=indicator_widget_template %}{% include "dashboard/widgets/_shell.html" %}{% endwith %}</template>
+
+{# ── Sort dialog for progress-bar list widgets ───────────── #}
+{% include "dashboard/sort_config_modal.html" %}
+
+{# ── Target dialog for the overall-compliance widget ─────── #}
+{% include "dashboard/target_config_modal.html" %}
 
 {# ── Changelog popup ─────────────────────────────────────── #}
 {% if changelog_entries %}
@@ -299,11 +532,24 @@
 (function() {
   var zones = document.getElementById('dashboardZones');
   var mainZone = document.getElementById('dashboardMain');
-  var railZone = document.getElementById('dashboardRail');
+  var railTopZone = document.getElementById('dashboardRailTop');
+  var railBottomZone = document.getElementById('dashboardRailBottom');
   var editToggle = document.getElementById('dashEditToggle');
-  if (!zones || !mainZone || !railZone || !editToggle) return;
+  if (!zones || !mainZone || !railTopZone || !railBottomZone || !editToggle) return;
+  // Map a stored zone name to its container element (main is the fallback).
+  function zoneElByName(name) {
+    if (name === 'rail_top') return railTopZone;
+    if (name === 'rail_bottom') return railBottomZone;
+    return mainZone;
+  }
 
-  var SPANS = { S: 3, M: 6, L: 9, XL: 12 };
+  // Sizes are "WxH" tokens (width units x height units). Width maps to a grid-
+  // column span of W * 3 (out of 12); height maps to a grid-row span of H.
+  var WIDTH_UNIT_COLUMNS = 3;
+  function parseSize(size) {
+    var m = /^(\d+)x(\d+)$/.exec(size || '');
+    return m ? { w: parseInt(m[1], 10), h: parseInt(m[2], 10) } : null;
+  }
   var saveUrl = zones.getAttribute('data-save-url');
   var sortables = [];
   var dirty = false;
@@ -352,18 +598,58 @@
         return;
       }
       // One Sortable per zone, sharing a group so widgets drag between them.
-      [mainZone, railZone].forEach(function(zoneEl) {
+      [mainZone, railTopZone, railBottomZone].forEach(function(zoneEl) {
         sortables.push(window.Sortable.create(zoneEl, {
           group: 'dashboard-widgets',
           animation: reduceMotion ? 0 : 180,
           draggable: '.dash-widget',
           filter: '.dash-widget__btn, .dash-widget__remove, .dropdown-menu, [data-bs-toggle="dropdown"]',
           preventOnFilter: false,
+          // Fallback drag (drag image appended to <body>) so a tile dragged out
+          // of the gallery offcanvas is not clipped by its overflow / fixed
+          // positioning; consistent across the zones and the gallery.
+          forceFallback: true,
+          fallbackOnBody: true,
           ghostClass: 'dash-widget--ghost',
           chosenClass: 'dash-widget--dragging',
-          onEnd: function(evt) { syncZone(evt.item, evt.to); dirty = true; }
+          onAdd: function(evt) {
+            // An item dragged in from the gallery (a tile clone) materialises
+            // into a real widget at the drop position. A real widget moving
+            // between zones is not a tile and is handled by onEnd instead.
+            var item = evt.item;
+            if (!item.classList || !item.classList.contains('widget-gallery__tile')) return;
+            var id = item.getAttribute('data-widget-id');
+            var multiple = item.getAttribute('data-multiple') === 'true';
+            var before = item.nextElementSibling;
+            if (item.parentNode) item.parentNode.removeChild(item);
+            materializeWidget(id, multiple, evt.to, before);
+          },
+          onEnd: function(evt) {
+            syncZone(evt.item, evt.to);
+            // A widget dragged into the main area needs its WxH grid spans
+            // (rail-born widgets render without inline spans), then a re-fit.
+            if (evt.to === mainZone) { applySize(evt.item, evt.item.getAttribute('data-size')); }
+            fitWidget(evt.item);
+            dirty = true;
+          }
         }));
       });
+      // The gallery is a clone-source: a tile can be dragged straight onto a
+      // zone at the exact drop position (handled by the zones' onAdd above).
+      var galleryListEl = document.getElementById('widgetGalleryList');
+      if (galleryListEl) {
+        sortables.push(window.Sortable.create(galleryListEl, {
+          group: { name: 'dashboard-widgets', pull: 'clone', put: false },
+          sort: false,
+          draggable: '.widget-gallery__tile',
+          filter: '.d-none',
+          animation: reduceMotion ? 0 : 180,
+          // Fallback drag so the tile can leave the offcanvas (see the zones).
+          forceFallback: true,
+          fallbackOnBody: true,
+          ghostClass: 'widget-gallery__tile--ghost'
+        }));
+      }
     });
   }
 
@@ -380,19 +666,428 @@
     else { sortables.forEach(function(s) { s.option('disabled', true); }); }
   }
 
-  function setSpan(el, size) {
+  // Reflect a widget's WxH size onto its grid spans (used in the main zone; the
+  // rail is a flex column and ignores the inline spans) and its width/height
+  // classes (which some widgets use to adapt their content to a narrow tile).
+  function applySize(el, size) {
+    var d = parseSize(size);
+    if (!d) return;
     el.setAttribute('data-size', size);
-    el.style.gridColumn = 'span ' + (SPANS[size] || 12);
-    el.className = el.className.replace(/dash-widget--(S|M|L|XL)\b/, 'dash-widget--' + size);
+    el.style.gridColumn = 'span ' + (d.w * WIDTH_UNIT_COLUMNS);
+    el.style.gridRow = 'span ' + d.h;
+    el.className = el.className
+      .replace(/dash-widget--w\d+/g, 'dash-widget--w' + d.w)
+      .replace(/dash-widget--h\d+/g, 'dash-widget--h' + d.h);
+  }
+
+  // ── Autofit: fit a list's content to its tile ──────────────
+  // Repeatable items live in a [data-fit-list]. We hide trailing items until
+  // the list stops overflowing (so there is never a scrollbar), then let the
+  // kept items grow to fill the height (so there is never empty space). A widget
+  // only constrains its lists in the main zone; in the rail the list is
+  // unconstrained, so nothing overflows and every item stays visible.
+  function fitList(list) {
+    list.classList.remove('dash-fit-filled');
+    var items = Array.prototype.slice.call(list.children);
+    // Start from the full pool, measuring at natural height.
+    items.forEach(function(it) { it.hidden = false; });
+    // Trim from the end while the content overflows its box (keep at least one).
+    for (var i = items.length - 1; i >= 1 && list.scrollHeight > list.clientHeight + 1; i--) {
+      items[i].hidden = true;
+    }
+    // Kept items now grow to share any remaining space (fills the tile).
+    list.classList.add('dash-fit-filled');
+  }
+
+  // ── Autofit: scale a fixed-aspect block to its tile ────────
+  // For content that can't be trimmed (the risk-matrix heatmap), measure its
+  // natural size against the available slot and set a --fit-scale so it always
+  // fits (no overflow, no big empty band). transform: scale never affects the
+  // measured layout size, so this is stable to re-run. Only the main grid scopes
+  // the transform in CSS; elsewhere the value is set but unused.
+  function fitScale(slot) {
+    var content = slot.firstElementChild;
+    if (!content) return;
+    var natW = content.offsetWidth, natH = content.offsetHeight;
+    var availW = slot.clientWidth, availH = slot.clientHeight;
+    if (!natW || !natH || !availW || !availH) return;
+    var scale = Math.min(availW / natW, availH / natH);
+    // Allow modest upscaling to fill a larger tile, but never blow it up.
+    content.style.setProperty('--fit-scale', Math.min(scale, 1.75).toFixed(4));
+  }
+
+  // ── Progress-bar list widgets (sort + per-size count) ──────
+  // Rows carry data-id / data-name / data-value. They are sorted per the
+  // widget's params and the first N (for the tile height) are shown; the shown
+  // rows divide the tile height evenly (CSS), so bars stay aligned with no
+  // scroll and no empty band.
+  var PROGRESS_ROW_COUNTS = { 1: 2, 2: 5, 3: 8, 4: 11 };
+  function progressCount(size) {
+    var d = parseSize(size);
+    return d ? (PROGRESS_ROW_COUNTS[d.h] || 5) : 5;
+  }
+  function rowVal(r) { return parseFloat(r.getAttribute('data-value')) || 0; }
+  function rowName(r) { return r.getAttribute('data-name') || ''; }
+  // A skeleton row (grey text rects + light grey bar) used to fill the remaining
+  // slots when a widget has fewer real rows than its tile shows, so the rows
+  // always divide the tile height evenly (no big gaps).
+  function makePlaceholderRow() {
+    var row = document.createElement('div');
+    row.className = 'fw-bar fw-bar--placeholder';
+    row.setAttribute('aria-hidden', 'true');
+    row.innerHTML =
+      '<div class="fw-bar__head d-flex justify-content-between align-items-center">' +
+        '<span class="ph-text ph-text--name"></span>' +
+        '<span class="ph-text ph-text--value"></span>' +
+      '</div>' +
+      '<div class="progress"></div>';
+    return row;
+  }
+  function layoutProgressWidget(widget, container) {
+    container = container || widget.querySelector('[data-progress-rows]');
+    if (!container) return;
+    // Drop placeholders from the previous pass; keep only the real rows.
+    Array.prototype.slice.call(container.querySelectorAll('.fw-bar--placeholder'))
+      .forEach(function(ph) { ph.remove(); });
+    var rows = Array.prototype.slice.call(container.children);
+    var p = readParams(widget);
+    var sort = p.sort || 'default';
+    var ordered = rows.slice();
+    if (sort === 'value_desc') ordered.sort(function(a, b) { return rowVal(b) - rowVal(a); });
+    else if (sort === 'value_asc') ordered.sort(function(a, b) { return rowVal(a) - rowVal(b); });
+    else if (sort === 'name') ordered.sort(function(a, b) { return rowName(a).localeCompare(rowName(b)); });
+    else if (sort === 'manual') {
+      var order = p.order || [];
+      var pos = {};
+      order.forEach(function(id, i) { pos[id] = i; });
+      ordered.sort(function(a, b) {
+        var pa = pos.hasOwnProperty(a.getAttribute('data-id')) ? pos[a.getAttribute('data-id')] : 1e9;
+        var pb = pos.hasOwnProperty(b.getAttribute('data-id')) ? pos[b.getAttribute('data-id')] : 1e9;
+        return pa - pb;
+      });
+    }
+    ordered.forEach(function(r) { container.appendChild(r); });  // reflow in order
+    var n = progressCount(widget.getAttribute('data-size'));
+    var shown = 0;
+    ordered.forEach(function(r, i) { r.hidden = (i >= n); if (i < n) shown++; });
+    // Fill the rest of the tile with skeleton placeholders.
+    for (var k = shown; k < n; k++) container.appendChild(makePlaceholderRow());
+  }
+
+  function fitWidget(widget) {
+    // Progress-bar widgets use a sort + per-size-count layout; fixed-aspect
+    // widgets scale to fit; other list widgets use the measure-and-trim autofit.
+    if (widget.querySelector('[data-progress-rows]')) { layoutProgressWidget(widget); return; }
+    var scale = widget.querySelector('[data-fit-scale]');
+    if (scale) { fitScale(scale); return; }
+    widget.querySelectorAll('[data-fit-list]').forEach(fitList);
+  }
+
+  function fitAll() {
+    zones.querySelectorAll('.dash-widget').forEach(fitWidget);
+  }
+
+  // Re-fit whenever a tile changes size (resize in edit mode, window/container
+  // resize, a widget revealed from the gallery). The observer fires for the
+  // initial layout too, so this also performs the first fit.
+  var fitObserver = ('ResizeObserver' in window)
+    ? new ResizeObserver(function(entries) {
+        entries.forEach(function(e) { fitWidget(e.target); });
+      })
+    : null;
+  function observeWidget(widget) { if (fitObserver) fitObserver.observe(widget); }
+
+  // Scroll a freshly placed widget into view and briefly highlight it, so the
+  // user sees where it landed (e.g. after adding one from the gallery).
+  function flashWidget(widget) {
+    try {
+      widget.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    } catch (e) {
+      widget.scrollIntoView();
+    }
+    widget.classList.remove('dash-widget--flash');
+    void widget.offsetWidth;  // restart the animation
+    widget.classList.add('dash-widget--flash');
+    setTimeout(function() { widget.classList.remove('dash-widget--flash'); }, 1300);
+  }
+
+  // ── Per-instance params + configurable widgets ─────────────
+  function readParams(el) {
+    try { return JSON.parse(el.getAttribute('data-params') || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  function writeParams(el, params) { el.setAttribute('data-params', JSON.stringify(params)); }
+
+  function newKey(id) {
+    var rnd = (window.crypto && window.crypto.randomUUID)
+      ? window.crypto.randomUUID()
+      : (Date.now().toString(36) + Math.floor(Math.random() * 1e9).toString(36));
+    return id + '-' + rnd;
+  }
+
+  var indicatorUrl = zones.getAttribute('data-indicator-widget-url');
+
+  // Refresh a single indicator widget's card from the server (after it is
+  // (re)configured or on a live update), without a full reload.
+  function refreshIndicatorWidget(widget) {
+    if (!indicatorUrl) return;
+    var p = readParams(widget);
+    var url = indicatorUrl + '?indicator=' + encodeURIComponent(p.indicator || '') +
+              '&chart=' + (p.show_chart ? '1' : '0');
+    fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function(r) { return r.ok ? r.text() : null; })
+      .then(function(html) {
+        if (html == null) return;
+        var body = widget.querySelector('.dash-widget__body');
+        if (!body) return;
+        body.innerHTML = html;
+        if (window.initSparklines) window.initSparklines(body);
+        fitWidget(widget);
+      })
+      .catch(function() {});
+  }
+
+  // Live (WebSocket) refresh entry point: re-pull every configured indicator
+  // widget's value. Exposed so the WS script below can call it.
+  window.refreshDashboardIndicators = function() {
+    zones.querySelectorAll('.dash-widget[data-widget-id="indicator"]').forEach(function(w) {
+      if (readParams(w).indicator) refreshIndicatorWidget(w);
+    });
+  };
+
+  // Config dialog (shared) for indicator widgets. Bootstrap's bundle is loaded
+  // after this block, so the modal instance is created lazily on first use (by
+  // which time, in edit mode, bootstrap is available).
+  var configModalEl = document.getElementById('indicatorConfigModal');
+  var configSelect = document.getElementById('indicatorConfigSelect');
+  var configChart = document.getElementById('indicatorConfigChart');
+  var configModal = null;
+  var configTarget = null;
+
+  function getConfigModal() {
+    if (!configModal && configModalEl && window.bootstrap) {
+      configModal = new bootstrap.Modal(configModalEl);
+    }
+    return configModal;
+  }
+
+  function openConfig(widget) {
+    var modal = getConfigModal();
+    if (!modal) return;
+    configTarget = widget;
+    var p = readParams(widget);
+    if (configSelect) configSelect.value = p.indicator || '';
+    if (configChart) configChart.checked = !!p.show_chart;
+    modal.show();
+  }
+
+  var configApply = document.getElementById('indicatorConfigApply');
+  if (configApply) {
+    configApply.addEventListener('click', function() {
+      var modal = getConfigModal();
+      if (!configTarget) { if (modal) modal.hide(); return; }
+      var indicator = configSelect ? configSelect.value : '';
+      var params = { indicator: indicator, show_chart: configChart ? configChart.checked : false };
+      writeParams(configTarget, params);
+      // A configured widget is no longer an empty placeholder.
+      configTarget.classList.toggle('dash-widget--empty', !indicator);
+      refreshIndicatorWidget(configTarget);
+      flashWidget(configTarget);
+      dirty = true;
+      if (modal) modal.hide();
+    });
+  }
+
+  // Sort dialog (shared) for the progress-bar list widgets: a sort mode plus,
+  // in "manual" mode, a drag-to-reorder list of the widget's rows.
+  var sortModalEl = document.getElementById('sortConfigModal');
+  var sortSelect = document.getElementById('sortConfigSelect');
+  var sortManualBox = document.getElementById('sortConfigManual');
+  var sortListEl = document.getElementById('sortConfigList');
+  var sortModal = null;
+  var sortTarget = null;
+  var sortListSortable = null;
+
+  function getSortModal() {
+    if (!sortModal && sortModalEl && window.bootstrap) sortModal = new bootstrap.Modal(sortModalEl);
+    return sortModal;
+  }
+  function toggleSortManual() {
+    if (sortManualBox) sortManualBox.classList.toggle('d-none', !sortSelect || sortSelect.value !== 'manual');
+  }
+  // Populate the reorder list from the widget's rows, in their current order.
+  function buildSortList(widget) {
+    if (!sortListEl) return;
+    sortListEl.innerHTML = '';
+    var container = widget.querySelector('[data-progress-rows]');
+    if (!container) return;
+    Array.prototype.forEach.call(container.children, function(r) {
+      if (r.classList.contains('fw-bar--placeholder')) return;  // skip skeletons
+      var li = document.createElement('li');
+      li.className = 'sort-config-item';
+      li.setAttribute('data-id', r.getAttribute('data-id') || '');
+      var nameEl = r.querySelector('.fw-bar__name');
+      var grip = document.createElement('i');
+      grip.className = 'bi bi-grip-vertical sort-config-grip';
+      var label = document.createElement('span');
+      label.className = 'sort-config-name';
+      label.textContent = nameEl ? nameEl.textContent.trim() : (r.getAttribute('data-name') || '');
+      li.appendChild(grip);
+      li.appendChild(label);
+      sortListEl.appendChild(li);
+    });
+    withSortable(function() {
+      if (sortListSortable) { sortListSortable.destroy(); sortListSortable = null; }
+      sortListSortable = window.Sortable.create(sortListEl, {
+        animation: reduceMotion ? 0 : 150,
+        handle: '.sort-config-grip',
+        draggable: '.sort-config-item'
+      });
+    });
+  }
+  function openSortConfig(widget) {
+    var modal = getSortModal();
+    if (!modal) return;
+    sortTarget = widget;
+    var p = readParams(widget);
+    if (sortSelect) sortSelect.value = p.sort || 'default';
+    buildSortList(widget);
+    toggleSortManual();
+    modal.show();
+  }
+  if (sortSelect) sortSelect.addEventListener('change', toggleSortManual);
+
+  var sortApply = document.getElementById('sortConfigApply');
+  if (sortApply) {
+    sortApply.addEventListener('click', function() {
+      var modal = getSortModal();
+      if (!sortTarget) { if (modal) modal.hide(); return; }
+      var sort = sortSelect ? sortSelect.value : 'default';
+      var order;
+      if (sort === 'manual' && sortListEl) {
+        order = [];
+        Array.prototype.forEach.call(sortListEl.children, function(li) {
+          var id = li.getAttribute('data-id');
+          if (id) order.push(id);
+        });
+      } else {
+        order = readParams(sortTarget).order || [];  // keep any manual order
+      }
+      writeParams(sortTarget, { sort: sort, order: order });
+      layoutProgressWidget(sortTarget);
+      flashWidget(sortTarget);
+      dirty = true;
+      if (modal) modal.hide();
+    });
+  }
+
+  // Target dialog (shared) for the overall-compliance widget: show/hide the
+  // marker and set its value. Applied client-side (the marker is presentation).
+  var targetModalEl = document.getElementById('targetConfigModal');
+  var targetShow = document.getElementById('targetConfigShow');
+  var targetValue = document.getElementById('targetConfigValue');
+  var targetModal = null;
+  var targetWidget = null;
+
+  function getTargetModal() {
+    if (!targetModal && targetModalEl && window.bootstrap) targetModal = new bootstrap.Modal(targetModalEl);
+    return targetModal;
+  }
+  // Reflect a widget's target params onto its marker + legend label.
+  function applyTargetWidget(widget) {
+    var p = readParams(widget);
+    var show = p.show_target !== false;
+    var t = parseInt(p.target, 10);
+    if (isNaN(t)) t = 80;
+    var marker = widget.querySelector('.overall-compliance__target');
+    var label = widget.querySelector('.overall-compliance__bar-target-label');
+    if (marker) { marker.style.display = show ? '' : 'none'; marker.style.left = t + '%'; }
+    if (label) {
+      label.style.display = show ? '' : 'none';
+      label.style.right = (100 - t) + '%';
+      var prefix = label.getAttribute('data-prefix') || '';
+      label.textContent = (prefix ? prefix + ' ' : '') + t + '%';
+    }
+  }
+  function openTargetConfig(widget) {
+    var modal = getTargetModal();
+    if (!modal) return;
+    targetWidget = widget;
+    var p = readParams(widget);
+    if (targetShow) targetShow.checked = p.show_target !== false;
+    if (targetValue) targetValue.value = (p.target != null ? p.target : 80);
+    modal.show();
+  }
+  var targetApply = document.getElementById('targetConfigApply');
+  if (targetApply) {
+    targetApply.addEventListener('click', function() {
+      var modal = getTargetModal();
+      if (!targetWidget) { if (modal) modal.hide(); return; }
+      var show = targetShow ? targetShow.checked : true;
+      var t = targetValue ? parseInt(targetValue.value, 10) : 80;
+      if (isNaN(t)) t = 80;
+      t = Math.max(0, Math.min(100, t));
+      writeParams(targetWidget, { show_target: show, target: t });
+      applyTargetWidget(targetWidget);
+      flashWidget(targetWidget);
+      dirty = true;
+      if (modal) modal.hide();
+    });
+  }
+
+  // Build (but do not place) a fresh, unconfigured instance of a "multiple"
+  // widget by cloning its template node.
+  function cloneInstance(id) {
+    var tpl = document.getElementById('indicatorWidgetTemplate');
+    if (id !== 'indicator' || !tpl) return null;
+    var widget = tpl.content.firstElementChild.cloneNode(true);
+    widget.setAttribute('data-key', newKey(id));
+    widget.setAttribute('data-visible', 'true');
+    widget.classList.add('dash-widget--empty');
+    return widget;
+  }
+
+  // Place a widget in a zone (before `before`, or appended when null), wire it
+  // up and give feedback. For "multiple" widgets a new instance is created; for
+  // singletons the existing hidden widget is revealed and its gallery tile hidden.
+  function materializeWidget(id, multiple, zoneEl, before) {
+    var widget;
+    if (multiple) {
+      widget = cloneInstance(id);
+      if (!widget) return;
+    } else {
+      widget = zones.querySelector('.dash-widget[data-widget-id="' + id + '"]');
+      if (!widget) return;
+      widget.setAttribute('data-visible', 'true');
+      var tile = galleryTile(id);
+      if (tile) tile.classList.add('d-none');
+    }
+    zoneEl.insertBefore(widget, (before && before.parentNode === zoneEl) ? before : null);
+    widget.setAttribute('data-zone', zoneEl.getAttribute('data-zone'));
+    if (zoneEl === mainZone) applySize(widget, widget.getAttribute('data-size') || '1x1');
+    observeWidget(widget);
+    fitWidget(widget);
+    refreshGalleryEmpty();
+    flashWidget(widget);
+    if (multiple) openConfig(widget);
+    dirty = true;
+    return widget;
+  }
+
+  // Add a fresh instance of a "multiple" widget, appended to the main zone.
+  function addInstance(id) {
+    materializeWidget(id, true, mainZone, null);
   }
 
   function save() {
     var layout = widgets().map(function(el) {
       return {
+        key: el.getAttribute('data-key'),
         id: el.getAttribute('data-widget-id'),
         size: el.getAttribute('data-size'),
         zone: el.getAttribute('data-zone'),
-        visible: el.getAttribute('data-visible') === 'true'
+        visible: el.getAttribute('data-visible') === 'true',
+        params: readParams(el)
       };
     });
     return fetch(saveUrl, {
@@ -410,12 +1105,22 @@
     if (!on && dirty) { save(); dirty = false; }
   });
 
-  // Resize / remove, delegated across both zones.
+  // Config / resize / remove, delegated across both zones.
   zones.addEventListener('click', function(e) {
+    var configBtn = e.target.closest('.dash-widget__config');
+    if (configBtn) {
+      var cw = configBtn.closest('.dash-widget');
+      var kind = cw.getAttribute('data-config');
+      if (kind === 'sort') openSortConfig(cw);
+      else if (kind === 'target') openTargetConfig(cw);
+      else openConfig(cw);
+      return;
+    }
     var sizeBtn = e.target.closest('.dash-widget__size');
     if (sizeBtn) {
       var widget = sizeBtn.closest('.dash-widget');
-      setSpan(widget, sizeBtn.getAttribute('data-size'));
+      applySize(widget, sizeBtn.getAttribute('data-size'));
+      fitWidget(widget);
       widget.querySelectorAll('.dash-widget__size').forEach(function(b) {
         b.classList.toggle('active', b === sizeBtn);
       });
@@ -425,33 +1130,97 @@
     var removeBtn = e.target.closest('.dash-widget__remove');
     if (removeBtn) {
       var w = removeBtn.closest('.dash-widget');
-      var id = w.getAttribute('data-widget-id');
-      w.setAttribute('data-visible', 'false');
-      var tile = galleryTile(id);
-      if (tile) tile.classList.remove('d-none');
+      if (w.getAttribute('data-multiple') === 'true') {
+        // A "multiple" widget is an instance: removing it deletes it outright
+        // (its gallery tile stays available to add another).
+        if (fitObserver) fitObserver.unobserve(w);
+        w.remove();
+      } else {
+        w.setAttribute('data-visible', 'false');
+        var tile = galleryTile(w.getAttribute('data-widget-id'));
+        if (tile) tile.classList.remove('d-none');
+      }
       refreshGalleryEmpty();
       dirty = true;
     }
   });
 
-  // Add a widget from the gallery: reveal it in its current zone (appended last).
+  // Add a widget from the gallery. A "multiple" widget spawns a fresh instance;
+  // a singleton is revealed in its zone (appended last) and its tile hidden.
   var galleryList = document.getElementById('widgetGalleryList');
   if (galleryList) {
     galleryList.addEventListener('click', function(e) {
       var tile = e.target.closest('.widget-gallery__tile');
       if (!tile) return;
       var id = tile.getAttribute('data-widget-id');
-      var widget = zones.querySelector('.dash-widget[data-widget-id="' + id + '"]');
-      if (widget) {
-        widget.setAttribute('data-visible', 'true');
-        var zoneEl = widget.getAttribute('data-zone') === 'rail' ? railZone : mainZone;
-        zoneEl.appendChild(widget);
+      if (tile.getAttribute('data-multiple') === 'true') {
+        addInstance(id);
+      } else {
+        var existing = zones.querySelector('.dash-widget[data-widget-id="' + id + '"]');
+        var zoneEl = existing ? zoneElByName(existing.getAttribute('data-zone')) : mainZone;
+        materializeWidget(id, false, zoneEl, null);
       }
-      tile.classList.add('d-none');
-      refreshGalleryEmpty();
-      dirty = true;
     });
   }
+
+  // Observe every widget for size changes and perform the initial fit. A window
+  // resize fallback covers browsers without ResizeObserver.
+  widgets().forEach(observeWidget);
+  fitAll();
+  // Web fonts swap in after first paint and change row heights without resizing
+  // the tile, so re-fit once they are ready.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(fitAll).catch(function() {});
+  }
+  if (!fitObserver) {
+    var fitTimer = null;
+    window.addEventListener('resize', function() {
+      clearTimeout(fitTimer);
+      fitTimer = setTimeout(fitAll, 150);
+    });
+  }
+})();
+</script>
+
+{# ── Ask Cairn briefing (async LLM synthesis) ────────── #}
+<script>
+(function() {
+  var card = document.querySelector('.dash-widget[data-widget-id="ask_cairn"] .ask-cairn');
+  if (!card || card.getAttribute('data-ai-enabled') !== '1') return;
+  var widget = card.closest('.dash-widget');
+  if (widget && widget.getAttribute('data-visible') !== 'true') return;  // not on the board
+  var facts;
+  try { facts = JSON.parse(card.getAttribute('data-facts') || '{}'); } catch (e) { return; }
+  if (!facts || !Object.keys(facts).length) return;
+  var textEl = card.querySelector('[data-ai-text]');
+  var pendingEl = card.querySelector('[data-ai-pending]');
+  var discEl = card.querySelector('[data-ai-disclaimer]');
+  function fadeIn(el) { if (el) el.classList.add('ask-cairn__text--in'); }
+  function showFallback() {
+    // The model failed: drop the skeleton + spinner, show the deterministic count.
+    if (pendingEl) pendingEl.remove();
+    var countEl = card.querySelector('[data-ai-count]');
+    if (textEl && countEl) { textEl.textContent = countEl.textContent; fadeIn(textEl); }
+  }
+  fetch('{% url "dashboard-ask-cairn-briefing" %}', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data: facts })
+  })
+  .then(function(r) { return r.ok ? r.json() : null; })
+  .then(function(data) {
+    if (data && data.ok && data.text) {
+      // Swap the skeleton for the model's synthesis (server-sanitised HTML: only
+      // <p>/<b>/<strong> plus the server-built name chips) and fade it in.
+      if (pendingEl) pendingEl.remove();
+      if (textEl) { textEl.innerHTML = data.text; fadeIn(textEl); }
+      if (discEl && data.disclaimer) { discEl.textContent = data.disclaimer; discEl.hidden = false; fadeIn(discEl); }
+    } else {
+      showFallback();
+    }
+  })
+  .catch(showFallback);
 })();
 </script>
 
@@ -551,6 +1320,11 @@
 
   render();
   window.addEventListener('resize', function() { chart.resize(); });
+  // The Sankey now fills its tile, so re-fit it whenever the tile is resized
+  // (edit-mode resize, zone change, container reflow), not just on window resize.
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(function() { chart.resize(); }).observe(el);
+  }
 
   // Re-render labels when the colour theme changes.
   new MutationObserver(function() { render(); }).observe(
@@ -638,23 +1412,6 @@
     }
   });
 
-  // Page load: animate indicator values from 0 (with thousand separators)
-  document.querySelectorAll('#ws-indicators-container .stat-card[data-indicator-value]').forEach(function(card) {
-    var valEl = card.querySelector('.stat-card-value');
-    if (!valEl || valEl.hasAttribute('data-ws-field')) return;
-    valEl.setAttribute('data-count-animated', '1');  // prevent base.html animation
-    // Use the raw numeric value (dot-decimal) from the data attribute
-    var rawAttr = card.getAttribute('data-indicator-value');
-    if (!rawAttr || !/\d/.test(rawAttr)) return;
-    var val = parseFloat(rawAttr);
-    if (isNaN(val) || val === 0) return;
-    // Detect decimal places from the raw stored value (uses dot as decimal)
-    var decMatch = rawAttr.match(/\.(\d+)$/);
-    var dec = decMatch ? decMatch[1].length : 0;
-    valEl.textContent = '0';
-    countTo(valEl, 0, val, '', 2800, true, dec);
-  });
-
   // Skip the first WS message (initial snapshot on connect,
   // which arrives while the page-load animation is still running)
   var isFirstMessage = true;
@@ -668,71 +1425,6 @@
       return;
     }
     countTo(el, oldVal, newVal, suffix, 2800);
-  }
-
-  function refreshIndicators() {
-    var container = document.getElementById('ws-indicators-container');
-    if (!container) return;
-
-    // Build a map: indicator ID → current value (as string)
-    // Use .stat-card to avoid matching chart-toggle buttons in the picker modal
-    var oldValues = {};
-    container.querySelectorAll('.stat-card[data-indicator-id]').forEach(function(card) {
-      var id = card.getAttribute('data-indicator-id');
-      var val = card.getAttribute('data-indicator-value');
-      oldValues[id] = (val == null) ? '' : val;
-    });
-
-    fetch('{% url "dashboard-indicators-partial" %}', {
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(function(r) { return r.ok ? r.text() : null; })
-    .then(function(html) {
-      if (!html) return;
-
-      // Parse response off-screen
-      var tmp = document.createElement('div');
-      tmp.innerHTML = html;
-
-      // Collect all new cards first (avoid modifying DOM during iteration)
-      var updates = [];
-      tmp.querySelectorAll('.stat-card[data-indicator-id]').forEach(function(newCard) {
-        var id = newCard.getAttribute('data-indicator-id');
-        var newVal = (newCard.getAttribute('data-indicator-value') == null) ? '' : newCard.getAttribute('data-indicator-value');
-        var oldVal = oldValues.hasOwnProperty(id) ? oldValues[id] : newVal;
-
-        // Only queue cards whose value ACTUALLY changed
-        if (oldVal !== newVal) {
-          updates.push({ id: id, newCard: newCard, oldVal: oldVal, newVal: newVal });
-        }
-      });
-
-      // Apply updates one by one
-      updates.forEach(function(u) {
-        var existingCard = container.querySelector('[data-indicator-id="' + u.id + '"]');
-        if (!existingCard) return;
-        var oldLink = existingCard.closest('a');
-        var newLink = u.newCard.closest('a');
-        if (!oldLink || !newLink) return;
-
-        oldLink.parentNode.replaceChild(newLink, oldLink);
-        if (window.initSparklines) window.initSparklines(newLink);
-
-        // Animate only this card's value
-        var valEl = newLink.querySelector('.stat-card-value');
-        if (valEl && u.newVal && /[\d]/.test(u.newVal)) {
-          valEl.setAttribute('data-count-animated', '1');  // prevent base.html animation
-          var oldNum = parseFloat(u.oldVal) || 0;
-          var newNum = parseFloat(u.newVal);
-          var decMatch = u.newVal.match(/\.(\d+)$/);
-          var dec = decMatch ? decMatch[1].length : 0;
-          if (!isNaN(newNum)) {
-            countTo(valEl, oldNum, newNum, '', 2800, true, dec);
-          }
-        }
-      });
-    })
-    .catch(function() {});
   }
 
   function applyUpdate(data) {
@@ -750,8 +1442,8 @@
       }
     });
 
-    // Only fetch+replace the specific indicator card that changed
-    refreshIndicators();
+    // Refresh each configurable indicator widget's live value.
+    if (window.refreshDashboardIndicators) window.refreshDashboardIndicators();
   }
 
   function connect() {

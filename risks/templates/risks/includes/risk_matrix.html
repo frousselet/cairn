@@ -2,7 +2,7 @@
 {% comment %}Reusable risk matrix grid. Expected: matrix (dict), title (str).{% endcomment %}
 {% if matrix %}
 <div class="risk-matrix-wrapper mb-2">
-  <h6 class="text-center mb-3" style="font-weight:600;color:var(--text-secondary);font-size:.875rem">{{ title }}</h6>
+  {% if title %}<h6 class="text-center mb-3" style="font-weight:600;color:var(--text-secondary);font-size:.875rem">{{ title }}</h6>{% endif %}
   <table style="border-collapse:separate; border-spacing:3px; width:100%;">
     {# ── Impact axis label ── #}
     <tr>

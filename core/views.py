@@ -1,10 +1,12 @@
 import base64
 import json
+import re
 import uuid as uuid_mod
 from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
 from django.db.models import (
     Avg,
     Case,
@@ -21,17 +23,19 @@ from django.db.models import (
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import formats, timezone
+from django.utils.dateparse import parse_datetime
 from django.utils.translation import gettext as _, gettext_lazy, pgettext
 from django.views import View
 from django.views.generic import TemplateView
 
 from core.changelog import get_changelog_between
 from core.dashboard import (
-    WIDGET_SIZE_LABELS,
+    DASHBOARD_WIDGETS,
     WIDGETS_BY_ID,
     resolve_layout,
     sanitize_layout,
+    size_label,
 )
 from accounts.models import CompanySettings
 from assets.models import (
@@ -53,7 +57,7 @@ from compliance.models import (
     RequirementMapping,
 )
 from context.models import Activity, Indicator, Issue, Objective, Role, Scope, Site, Stakeholder, SwotAnalysis
-from context.views import get_dashboard_indicator_slots
+from context.views import build_indicator_slot, get_dashboard_indicator_slots
 from risks.models import (
     Risk,
     RiskAcceptance,
@@ -196,6 +200,7 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         ctx["priority_risks"] = list(
             Risk.objects.exclude(workflow_state="archived")
             .filter(priority__in=["critical", "high"])
+            .select_related("risk_owner")
             .annotate(_priority_rank=priority_rank)
             .order_by("_priority_rank", "reference")[:6]
         )
@@ -241,10 +246,29 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         active_frameworks = annotate_compliance_segments(list(
             active_frameworks_for_scoring(self._filter_scoped(
                 Framework.objects.all()
-            )).select_related("owner").prefetch_related(
+            )).annotate(
+                na_count=Count("requirements", filter=Q(requirements__is_applicable=False)),
+            ).select_related("owner").prefetch_related(
                 Prefetch("scopes", queryset=Scope.objects.select_related("parent_scope")),
             )[:10]
         ))
+        # Condense the compliance segments into the four buckets the dashboard
+        # widget shows: compliant / non-compliant (partial + major) / not assessed
+        # (planned + not assessed) / not applicable. The service computes segments
+        # as percentages of the *applicable* requirements; here we rescale them to
+        # the *total* (applicable + non-applicable) so a not-applicable slice can be
+        # added, while the headline ``computed_compliance`` stays the
+        # compliant-of-applicable proportion.
+        for fw in active_frameworks:
+            applicable = fw.req_count or 0
+            na = getattr(fw, "na_count", 0) or 0
+            total = applicable + na
+            scale = (applicable / total) if total else 1
+            fw.seg_conform = round((fw.seg_compliant or 0) * scale)
+            fw.seg_nonconform = round(((fw.seg_partial or 0) + (fw.seg_non_compliant or 0)) * scale)
+            fw.seg_unassessed = round(((fw.seg_evaluated or 0) + (fw.seg_not_assessed or 0)) * scale)
+            # The not-applicable slice absorbs the rounding so the bar sums to 100%.
+            fw.seg_na = max(0, 100 - fw.seg_conform - fw.seg_nonconform - fw.seg_unassessed) if na else 0
 
         ctx["active_frameworks"] = active_frameworks
         # Caption of the overall-compliance card: count the requirements that
@@ -260,12 +284,11 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         else:
             ctx["overall_compliance"] = 0
 
-        # Dashboard indicators
-        ctx["dashboard_indicator_slots"] = get_dashboard_indicator_slots(self.request.user)
+        # Indicators available to the per-indicator widget's config dialog
+        # (each indicator can be placed as its own 1x1 widget).
         ctx["available_indicators"] = Indicator.objects.filter(
             status="active",
         ).order_by("indicator_type", "name")
-        ctx["dashboard_indicator_chart_ids"] = self.request.user.dashboard_indicator_charts or []
 
         ctx["requirement_count"] = Requirement.objects.count()
         ctx["non_compliant_count"] = Requirement.objects.filter(
@@ -274,6 +297,33 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         ctx["assessment_count"] = self._filter_scoped(
             ComplianceAssessment.objects.all()
         ).count()
+
+        # Ongoing audits: assessments whose window covers today, excluding
+        # cancelled audits and draft "audit projects" (status DRAFT). Drives the
+        # conditional ongoing-audits widget (hidden when there is none).
+        from compliance.constants import AssessmentStatus
+
+        def _audit_progress(audit):
+            span = (audit.assessment_end_date - audit.assessment_start_date).days
+            if span <= 0:
+                return 100
+            done = (today - audit.assessment_start_date).days
+            return max(0, min(100, round(done / span * 100)))
+
+        _ongoing_audits = ongoing_audits_queryset(self.request.user, today)
+        _audit_status_tone = {
+            AssessmentStatus.IN_PROGRESS: "accent",
+            AssessmentStatus.COMPLETED: "success",
+        }
+        ctx["ongoing_audits"] = [
+            {
+                "audit": a,
+                "time_progress": _audit_progress(a),
+                "days_left": (a.assessment_end_date - today).days,
+                "status_tone": _audit_status_tone.get(a.status, "muted"),
+            }
+            for a in _ongoing_audits
+        ]
         ctx["action_plan_count"] = self._filter_scoped(
             ComplianceActionPlan.objects.all()
         ).count()
@@ -375,13 +425,55 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         ctx["today_action_groups"] = [g for g in action_groups if g["items"]]
 
         # ── Deadlines & events (rendered inside Today's actions) ──
-        calendar_items = build_upcoming_deadlines(self.request.user, today)
+        calendar_items = attach_deadline_responsibles(
+            build_upcoming_deadlines(self.request.user, today)
+        )
         ctx["calendar_items"] = calendar_items
         overdue_event_count = sum(1 for e in calendar_items if e["overdue"])
 
         ctx["today_action_count"] = sum(
             item["count"] for g in action_groups for item in g["items"]
         ) + overdue_event_count
+
+        # ── Ask Cairn: a snapshot of the day's metrics, synthesised by the LLM ──
+        # The widget posts this snapshot to the briefing endpoint, which asks the
+        # configured model (Mistral) to write a short synthesis and renders it.
+        # The deterministic point count is only a fallback (assistant off / loading).
+        #
+        # Only the *urgent* items feed the summary: the "Priority" group (tone
+        # "high" - critical risks, non-compliant requirements, overdue plans). The
+        # lower-priority "to plan" / "to watch" items are deliberately left out so
+        # the briefing stays focused and the user is not buried under a long
+        # to-do list (those remain visible in the full Today's actions / tasks).
+        # The kept items are listed under the summary as the references it draws
+        # on (each links to where the user can act).
+        _ac_points = [
+            {**item, "tone": g["tone"]}
+            for g in ctx["today_action_groups"]
+            if g["tone"] == "high"
+            for item in g["items"]
+        ]
+        ctx["ask_cairn_references"] = _ac_points
+        ctx["ask_cairn_point_count"] = len(_ac_points)
+        ctx["ask_cairn_audit_count"] = len(ctx["ongoing_audits"])
+        _ac_metrics = {
+            "critical_risks_to_treat": ctx["critical_risk_count"],
+            "non_compliant_requirements": ctx["non_compliant_count"],
+            "overdue_action_plans": ctx["overdue_plan_count"],
+            # Ongoing audits are context worth surfacing (only when there are
+            # any: the non-zero filter below keeps "0 audits" out of the payload,
+            # so the model never states that there is no audit).
+            "ongoing_audits": ctx["ask_cairn_audit_count"],
+        }
+        # Worth a briefing when there is at least one urgent item or an audit to
+        # mention.
+        if _ac_points or ctx["ongoing_audits"]:
+            data = {"overall_compliance_pct": ctx["overall_compliance"]}
+            data.update({k: v for k, v in _ac_metrics.items() if v})
+        else:
+            data = {}
+        ctx["ask_cairn_data"] = data
+        ctx["ask_cairn_data_json"] = json.dumps(data)
 
         # ── Collapsible section state (persisted per user) ──
         ctx["today_actions_collapsed"] = "today_actions" in (
@@ -398,44 +490,121 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
                 ctx["changelog_new_version"] = app_version
 
         # ── Configurable widget grid ─────────────────────
-        # Whether each widget actually has something to show. A visible widget
+        # Whether each singleton widget has something to show. A visible widget
         # with no data is hidden in normal mode but still shown (as a removable
-        # placeholder) in edit mode.
+        # placeholder) in edit mode. Indicator widgets derive this from whether a
+        # valid indicator is selected (handled per instance below).
         widget_has_data = {
             "overall_compliance": True,
-            "indicators": True,
             "compliance_by_framework": bool(active_frameworks),
             "active_objectives": bool(ctx["active_objectives"]),
             "upcoming_deadlines": bool(calendar_items),
             "priority_risks": bool(ctx["priority_risks"]),
+            "ongoing_audits": bool(ctx["ongoing_audits"]),
             "risk_treatment_flow": bool(ctx.get("risk_treatment_flow")),
-            "risk_matrices": bool(ctx.get("matrix_current") or ctx.get("matrix_residual")),
-            "today_actions": bool(ctx["today_action_groups"]),
+            "risk_matrix_current": bool(ctx.get("matrix_current")),
+            "risk_matrix_residual": bool(ctx.get("matrix_residual")),
+            # The briefing always renders (it shows an all-clear when nothing's up).
+            "ask_cairn": True,
         }
 
-        placed = []
-        for entry in resolve_layout(user.dashboard_layout):
+        resolved = resolve_layout(user.dashboard_layout)
+
+        # Pre-fetch every indicator referenced by an indicator widget in one
+        # query (avoids an N+1 across instances).
+        indicator_ids = [
+            e["params"].get("indicator")
+            for e in resolved
+            if e["id"] == "indicator" and e["params"].get("indicator")
+        ]
+        indicators_by_id = {}
+        if indicator_ids:
+            indicators_by_id = {
+                str(ind.pk): ind
+                for ind in Indicator.objects.filter(
+                    id__in=indicator_ids
+                ).prefetch_related("measurements")
+            }
+
+        def _place(entry):
             widget = WIDGETS_BY_ID[entry["id"]]
-            placed.append({
+            size = entry["size"]
+            params = entry["params"]
+            item = {
+                "key": entry["key"],
                 "widget": widget,
-                "size": entry["size"],
-                "span": widget.span(entry["size"]),
+                "size": size,
+                "cols": widget.cols(size),
+                "rows": widget.rows(size),
+                "w": widget.width(size),
+                "h": widget.height(size),
                 "visible": entry["visible"],
                 "zone": entry["zone"],
-                "has_data": widget_has_data.get(widget.id, True),
-                "size_options": [(s, WIDGET_SIZE_LABELS[s]) for s in widget.sizes],
-            })
+                "params": params,
+                "params_json": json.dumps(params),
+                "configurable": widget.configurable,
+                "size_options": [(s, size_label(s)) for s in widget.sizes],
+                "slot": None,
+            }
+            if widget.id == "indicator":
+                ind = indicators_by_id.get(params.get("indicator"))
+                item["slot"] = (
+                    build_indicator_slot(ind, bool(params.get("show_chart"))) if ind else None
+                )
+                item["has_data"] = item["slot"] is not None
+            else:
+                item["has_data"] = widget_has_data.get(widget.id, True)
+                if widget.id == "overall_compliance":
+                    # Right-anchor offset for the target label so it never
+                    # overflows the bar (sits under the marker at `target`%).
+                    item["target_right"] = max(0, min(100, 100 - (params.get("target") or 80)))
+            return item
+
+        placed = [_place(e) for e in resolved]
         ctx["dashboard_widgets"] = placed
-        # Split into the two zones, preserving order within each.
+        # Split into the zones, preserving order within each.
         ctx["dashboard_main_widgets"] = [p for p in placed if p["zone"] == "main"]
-        ctx["dashboard_rail_widgets"] = [p for p in placed if p["zone"] == "rail"]
-        # Every widget gets a gallery tile (shown only while hidden), so the
-        # "Add a widget" panel can list anything not currently on the dashboard.
-        ctx["dashboard_gallery_widgets"] = [p for p in placed]
-        ctx["dashboard_hidden_widgets"] = [p for p in placed if not p["visible"]]
-        ctx["dashboard_visible_ids"] = [
-            p["widget"].id for p in placed if p["visible"]
+        ctx["dashboard_rail_top_widgets"] = [p for p in placed if p["zone"] == "rail_top"]
+        ctx["dashboard_rail_bottom_widgets"] = [p for p in placed if p["zone"] == "rail_bottom"]
+
+        # "Add a widget" gallery: one tile per widget *type*. A singleton's tile
+        # is hidden while it is on the dashboard; a "multiple" widget's tile is
+        # always available (it can be added again as a fresh instance).
+        visible_singleton_ids = {
+            p["widget"].id for p in placed if not p["widget"].multiple and p["visible"]
+        }
+        ctx["dashboard_gallery_widgets"] = [
+            {
+                "widget": w,
+                "multiple": w.multiple,
+                "available": w.multiple or w.id not in visible_singleton_ids,
+            }
+            for w in DASHBOARD_WIDGETS
         ]
+        ctx["dashboard_gallery_has_available"] = any(
+            g["available"] for g in ctx["dashboard_gallery_widgets"]
+        )
+
+        # Clone source for adding indicator widgets from the gallery: a hidden,
+        # unconfigured indicator widget the editor JS duplicates per instance.
+        ind_widget = WIDGETS_BY_ID["indicator"]
+        ctx["indicator_widget_template"] = {
+            "key": "__TEMPLATE__",
+            "widget": ind_widget,
+            "size": ind_widget.default_size,
+            "cols": ind_widget.cols(ind_widget.default_size),
+            "rows": ind_widget.rows(ind_widget.default_size),
+            "w": ind_widget.width(ind_widget.default_size),
+            "h": ind_widget.height(ind_widget.default_size),
+            "visible": True,
+            "zone": "main",
+            "params": ind_widget.default_params(),
+            "params_json": json.dumps(ind_widget.default_params()),
+            "configurable": True,
+            "size_options": [(s, size_label(s)) for s in ind_widget.sizes],
+            "slot": None,
+            "has_data": False,
+        }
 
         return ctx
 
@@ -498,6 +667,143 @@ class DashboardLayoutSaveView(LoginRequiredMixin, View):
         request.user.dashboard_layout = layout
         request.user.save(update_fields=["dashboard_layout"])
         return JsonResponse({"ok": True, "layout": layout})
+
+
+# Emoji (and the ZWJ / variation-selector glue that builds compound emoji).
+_EMOJI_RE = re.compile(
+    "(?:[\U0001F1E6-\U0001FAFF\U00002600-\U000027BF\U00002B00-\U00002BFF"
+    "\U00002190-\U000021FF\U0000FE00-\U0000FE0F\U0000200D\U000023E9-\U000023FA"
+    "\U00002B05-\U00002B07\U00002934\U00002935\U00003297\U00003299]+)"
+)
+
+
+def _move_emojis_to_paragraph_start(html):
+    """Enforce the emoji rule the model is asked to follow but sometimes doesn't:
+    at most one emoji per paragraph, at the very start (before any text or bold
+    lead-in), never in the middle or at the end. Extra emojis are dropped."""
+
+    def fix(m):
+        inner = m.group(1)
+        found = _EMOJI_RE.findall(inner)
+        if not found:
+            return m.group(0)
+        cleaned = re.sub(r"\s{2,}", " ", _EMOJI_RE.sub("", inner)).strip()
+        return f"<p>{found[0]} {cleaned}</p>"
+
+    return re.sub(r"<p>(.*?)</p>", fix, html, flags=re.DOTALL)
+
+
+def _safe_briefing_html(text):
+    """Escape the briefing text, then re-allow only ``<p>`` / ``<b>`` / ``<strong>``.
+
+    The model returns the briefing as a couple of ``<p>`` paragraphs with a bold
+    lead-in; everything else (including any echoed user-supplied name, and any
+    tag with attributes) stays escaped, so the widget can render the result as
+    HTML without an injection risk.
+    """
+    from django.utils.html import escape
+
+    safe = escape(text or "")
+    for tag in ("p", "b", "strong"):
+        safe = safe.replace(f"&lt;{tag}&gt;", f"<{tag}>").replace(f"&lt;/{tag}&gt;", f"</{tag}>")
+    return safe
+
+
+class DashboardAskCairnBriefingView(LoginRequiredMixin, View):
+    """Generate (and cache per day) the Ask Cairn LLM briefing for the posted
+    metrics snapshot. Fetched asynchronously by the widget so the dashboard never
+    blocks on the model. Returns ``{ok: False}`` when the assistant is off or the
+    model is unavailable (the widget then keeps its deterministic fallback)."""
+
+    # Allow-listed metric keys; values are coerced to a non-negative int so a
+    # client can neither inflate the LLM payload nor inject arbitrary content.
+    ALLOWED_METRICS = {
+        "overall_compliance_pct", "critical_risks_to_treat", "non_compliant_requirements",
+        "overdue_action_plans", "risk_acceptances_expiring_within_30d",
+        "assets_past_end_of_life", "expired_supplier_contracts",
+        "mandatory_roles_without_owner", "critical_activities_without_owner",
+        "single_points_of_failure", "upcoming_deadlines_within_30d",
+    }
+
+    def post(self, request, *args, **kwargs):
+        if not settings.AI_ASSISTANT_ENABLED:
+            return JsonResponse({"ok": False})
+        try:
+            payload = json.loads(request.body or "{}")
+        except (ValueError, TypeError):
+            return JsonResponse({"ok": False}, status=400)
+        raw = payload.get("data")
+        if not isinstance(raw, dict):
+            return JsonResponse({"ok": False}, status=400)
+        data = {}
+        for key in self.ALLOWED_METRICS:
+            value = raw.get(key)
+            if isinstance(value, bool):  # bool is an int subclass; reject it
+                continue
+            if isinstance(value, int) and 0 <= value <= 1_000_000:
+                data[key] = value
+        # Rich ongoing-audit details, built from the database (never from the
+        # client), so the briefing can name who / what is audited safely.
+        audits = ongoing_audits_brief(request.user, timezone.localdate())
+        if audits:
+            data["ongoing_audits"] = audits
+        if not data:
+            return JsonResponse({"ok": False})
+
+        from assistant.briefing import get_or_generate_briefing
+
+        result = get_or_generate_briefing(request.user, request.LANGUAGE_CODE or "en", data)
+        if not result:
+            return JsonResponse({"ok": False})
+        generated = parse_datetime(result.get("generated_at") or "") or timezone.now()
+        generated = timezone.localtime(generated)
+        disclaimer = _(
+            "AI-generated summary on %(date)s at %(time)s, powered by %(provider)s."
+        ) % {
+            "date": formats.date_format(generated, "SHORT_DATE_FORMAT"),
+            "time": formats.time_format(generated, "TIME_FORMAT"),
+            "provider": result["provider"],
+        }
+        text = _safe_briefing_html(result["text"])
+        text = _move_emojis_to_paragraph_start(text)
+        text = _inject_people_chips(
+            text, ongoing_audit_people(request.user, timezone.localdate())
+        )
+        return JsonResponse({"ok": True, "text": text, "disclaimer": disclaimer})
+
+
+class DashboardIndicatorWidgetPartialView(LoginRequiredMixin, TemplateView):
+    """Render a single indicator widget's body for a given indicator + chart flag.
+
+    Used by the editor to refresh an indicator widget's card in place after it is
+    (re)configured, and by the WebSocket refresh to update its live value, both
+    without a full page reload. Returns the unconfigured placeholder when no
+    valid indicator is supplied.
+    """
+
+    template_name = "dashboard/widgets/indicator.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        indicator_id = self.request.GET.get("indicator") or ""
+        show_chart = self.request.GET.get("chart") in ("1", "true", "True")
+        slot = None
+        if indicator_id:
+            try:
+                ind = (
+                    Indicator.objects.filter(pk=indicator_id, status="active")
+                    .prefetch_related("measurements")
+                    .first()
+                )
+            except (ValueError, ValidationError):
+                ind = None
+            if ind:
+                slot = build_indicator_slot(ind, show_chart)
+        ctx["placed"] = {
+            "slot": slot,
+            "params": {"indicator": indicator_id, "show_chart": show_chart},
+        }
+        return ctx
 
 
 class DashboardIndicatorsPartialView(LoginRequiredMixin, TemplateView):
@@ -597,7 +903,16 @@ def get_calendar_events(user, start=None, end=None, categories=None):
     # `kind` (and `kind_start` / `kind_end` for ranges) names the nature of
     # the date (review, expiry, effective date, target date...) so consumers
     # can say what the event is instead of just when it falls.
-    def add(queryset, date_field, category, color, url_name, label_prefix="", deadline=False, done=None, kind=""):
+    def _responsible_pk(obj, responsible):
+        # The FK id only (no extra query), kept as a JSON-safe string so the raw
+        # events stay serialisable for the calendar feed; resolved to a user in
+        # build_upcoming_deadlines.
+        if not responsible:
+            return None
+        rid = getattr(obj, f"{responsible}_id", None)
+        return str(rid) if rid else None
+
+    def add(queryset, date_field, category, color, url_name, label_prefix="", deadline=False, done=None, kind="", responsible=""):
         queryset = reportable(queryset)
         filters = {f"{date_field}__isnull": False}
         if start:
@@ -617,9 +932,10 @@ def get_calendar_events(user, start=None, end=None, categories=None):
                 "is_deadline": deadline,
                 "is_done": bool(done and done(obj)),
                 "kind": kind,
+                "responsible_pk": _responsible_pk(obj, responsible),
             })
 
-    def add_range(queryset, sf, ef, category, color, url_name, deadline=False, done=None, kind_start="", kind_end=""):
+    def add_range(queryset, sf, ef, category, color, url_name, deadline=False, done=None, kind_start="", kind_end="", responsible=""):
         queryset = reportable(queryset)
         qs = queryset.filter(
             Q(**{f"{sf}__isnull": False}) | Q(**{f"{ef}__isnull": False})
@@ -649,6 +965,7 @@ def get_calendar_events(user, start=None, end=None, categories=None):
                 "is_done": bool(done and done(obj)),
                 "kind_start": kind_start,
                 "kind_end": kind_end,
+                "responsible_pk": _responsible_pk(obj, responsible),
             }
             if s and e:
                 ev["start"] = min(s, e).isoformat()
@@ -661,16 +978,17 @@ def get_calendar_events(user, start=None, end=None, categories=None):
     if "risk_assessment" in categories:
         qs = _filter_scoped(RiskAssessment.objects.all(), user)
         add(qs, "assessment_date", "risk_assessment", "#ef4444",
-            "risks:assessment-detail", kind=_("Assessment date"))
+            "risks:assessment-detail", kind=_("Assessment date"), responsible="assessor")
         add(qs, "next_review_date", "risk_assessment", "#fca5a5",
-            "risks:assessment-detail", _("Review: "), deadline=True, kind=_("Review"))
+            "risks:assessment-detail", _("Review: "), deadline=True, kind=_("Review"), responsible="assessor")
 
     if "compliance_assessment" in categories:
         qs = _filter_scoped(ComplianceAssessment.objects.all(), user)
         add_range(qs, "assessment_start_date", "assessment_end_date",
                   "compliance_assessment", "#1E3A8A",
                   "compliance:assessment-detail",
-                  kind_start=_("Audit start"), kind_end=_("Audit end"))
+                  kind_start=_("Audit start"), kind_end=_("Audit end"),
+                  responsible="assessor")
 
     if "action_plan" in categories:
         from compliance.constants import ActionPlanStatus
@@ -680,7 +998,8 @@ def get_calendar_events(user, start=None, end=None, categories=None):
                   "action_plan", "#f59e0b",
                   "compliance:action-plan-detail", deadline=True,
                   done=lambda o: o.status in (ActionPlanStatus.CLOSED, ActionPlanStatus.CANCELLED),
-                  kind_start=_("Start date"), kind_end=_("Target date"))
+                  kind_start=_("Start date"), kind_end=_("Target date"),
+                  responsible="owner")
 
     if "treatment_plan" in categories:
         from risks.constants import TreatmentPlanStatus
@@ -712,10 +1031,10 @@ def get_calendar_events(user, start=None, end=None, categories=None):
         qs = _filter_scoped(Objective.objects.all(), user)
         add(qs, "target_date", "objective", "#14b8a6",
             "context:objective-detail", deadline=True, done=objective_done,
-            kind=_("Target date"))
+            kind=_("Target date"), responsible="owner")
         add(qs, "review_date", "objective", "#5eead4",
             "context:objective-detail", _("Review: "), deadline=True, done=objective_done,
-            kind=_("Review"))
+            kind=_("Review"), responsible="owner")
 
     if "framework" in categories:
         qs = _filter_scoped(Framework.objects.all(), user)
@@ -840,9 +1159,129 @@ def build_upcoming_deadlines(user, today, categories=None):
             "due": due,
             "overdue": overdue,
             "days_left": (due - today).days,
+            # JSON-safe FK id only; the dashboard resolves it to a user (photo +
+            # name) via attach_deadline_responsibles, while the calendar feed
+            # keeps the items serialisable.
+            "responsible_pk": ev.get("responsible_pk"),
         })
     items.sort(key=lambda e: e["due"])
     return items
+
+
+def attach_deadline_responsibles(items):
+    """Resolve each item's `responsible_pk` to a `responsible` user in one query.
+
+    Kept out of :func:`build_upcoming_deadlines` so its items stay JSON
+    serialisable for the calendar feed; only UI consumers (the dashboard widget)
+    that render the photo + name call this.
+    """
+    pks = {it["responsible_pk"] for it in items if it.get("responsible_pk")}
+    users = {}
+    if pks:
+        from accounts.models import User
+
+        users = {str(u.pk): u for u in User.objects.filter(pk__in=pks)}
+    for it in items:
+        it["responsible"] = users.get(it.get("responsible_pk"))
+    return items
+
+
+def ongoing_audits_queryset(user, today):
+    """Compliance assessments whose window covers ``today``, scoped to ``user``.
+
+    Excludes cancelled audits and draft "audit projects" (status DRAFT). Shared by
+    the dashboard widget and the Ask Cairn briefing so both agree on what counts
+    as an audit currently under way.
+    """
+    from compliance.constants import AssessmentStatus
+
+    qs = ComplianceAssessment.objects.all()
+    if not user.is_superuser:
+        qs = qs.filter(scopes__id__in=user.get_allowed_scope_ids()).distinct()
+    return (
+        qs.filter(
+            assessment_start_date__lte=today,
+            assessment_end_date__gte=today,
+        )
+        .exclude(status__in=[AssessmentStatus.DRAFT, AssessmentStatus.CANCELLED])
+        .select_related("assessor")
+        .prefetch_related("frameworks", "scopes")
+        .order_by("assessment_end_date", "name")
+    )
+
+
+def ongoing_audits_brief(user, today):
+    """Server-built details of the ongoing audits, for the Ask Cairn LLM payload.
+
+    Returns a list of ``{name, covers_entire_scope, audited_scopes, standards,
+    lead_auditor}`` (capped), built from the database rather than the client, so
+    the briefing can name who / what is audited without trusting client strings.
+    ``covers_entire_scope`` is true when every root scope (a perimeter with no
+    parent) is selected, i.e. the audit spans the whole perimeter.
+    """
+    from context.models import Scope
+
+    root_scope_ids = set(
+        Scope.objects.filter(parent_scope__isnull=True).values_list("id", flat=True)
+    )
+    brief = []
+    for a in ongoing_audits_queryset(user, today)[:10]:
+        scope_ids = {s.id for s in a.scopes.all()}
+        brief.append({
+            "name": a.name,
+            "covers_entire_scope": bool(root_scope_ids) and root_scope_ids <= scope_ids,
+            "audited_scopes": [s.name for s in a.scopes.all()],
+            "standards": [fw.short_name or fw.name for fw in a.frameworks.all()],
+            "lead_auditor": a.assessor.display_name,
+        })
+    return brief
+
+
+def ongoing_audit_people(user, today):
+    """Distinct people the briefing may name (the ongoing audits' lead auditors),
+    for rendering a photo + name chip in place of the plain name."""
+    seen, people = set(), []
+    for a in ongoing_audits_queryset(user, today)[:10]:
+        u = a.assessor
+        if u and u.pk not in seen:
+            seen.add(u.pk)
+            people.append(u)
+    return people
+
+
+def _person_chip_html(user):
+    """A trusted photo + name chip for a user (avatar or initials fallback)."""
+    from django.utils.html import escape
+
+    from accounts.templatetags.accounts_tags import initials
+
+    name = escape(user.display_name or "")
+    avatar = user.avatar_32 or user.avatar
+    if avatar:
+        media = f'<img class="ask-cairn__chip-img" src="{escape(avatar)}" alt="">'
+    else:
+        media = (
+            '<span class="ask-cairn__chip-img ask-cairn__chip-img--fb">'
+            f'{escape(initials(user.display_name or ""))}</span>'
+        )
+    return f'<span class="ask-cairn__chip">{media}{name}</span>'
+
+
+def _inject_people_chips(html, people):
+    """Replace each person's name in the already-sanitised briefing HTML with a
+    server-built photo + name chip. A single regex pass (longest names first)
+    avoids re-matching inside an injected chip and handles overlapping names."""
+    import re
+
+    from django.utils.html import escape
+
+    by_name = {escape(u.display_name): u for u in people if u.display_name}
+    if not by_name:
+        return html
+    pattern = re.compile(
+        "|".join(re.escape(n) for n in sorted(by_name, key=len, reverse=True))
+    )
+    return pattern.sub(lambda m: _person_chip_html(by_name[m.group(0)]), html)
 
 
 class CalendarEventsView(LoginRequiredMixin, View):

@@ -6210,6 +6210,7 @@ def _register_accounts_tools(server):
                     "sizes": list(w.sizes),
                     "default_size": w.default_size,
                     "default_zone": w.default_zone,
+                    "multiple": w.multiple,
                     "description": str(w.description),
                 }
                 for w in DASHBOARD_WIDGETS
@@ -6220,8 +6221,14 @@ def _register_accounts_tools(server):
         "get_dashboard_layout",
         (
             "Get the currently authenticated user's home-dashboard widget layout "
-            "(ordered list of {id, size, visible}) and the catalogue of available "
-            "widgets with their allowed sizes (S=1/4, M=1/2, L=3/4, XL=full width)."
+            "(ordered list of {key, id, size, visible, zone, params}) and the "
+            "catalogue of available widgets with their allowed sizes. `id` is the "
+            "widget type and `key` is the per-instance id. A size is a 'WxH' tile "
+            "token: width W in 1..4 quarter-columns (1=1/4 .. 4=full width) by "
+            "height H in 1..4 fixed row units, e.g. '2x1' or '4x2'. A widget with "
+            "`multiple: true` (e.g. 'indicator') can appear several times, each "
+            "instance carrying its own `params` (the indicator widget takes "
+            "`{indicator: <id>, show_chart: bool}`)."
         ),
         {"type": "object", "properties": {}},
         get_dashboard_layout,
@@ -6233,11 +6240,13 @@ def _register_accounts_tools(server):
         Parameters
         ----------
         layout : list of objects
-            Ordered widget entries ``{"id", "size", "visible"}``. The payload is
-            sanitised against the widget registry: unknown ids are dropped,
-            invalid sizes fall back to the widget default, and any widget missing
-            from the list is appended with its defaults. The stored, normalised
-            layout is returned.
+            Ordered widget instances ``{"key", "id", "size", "visible", "zone",
+            "params"}``. The payload is sanitised against the widget registry:
+            unknown ids are dropped, invalid sizes fall back to the widget
+            default, params are normalised, any missing singleton widget is
+            appended with its defaults, and ``multiple`` widgets keep every
+            instance (each with a unique key). The stored, normalised layout is
+            returned.
         """
         from core.dashboard import sanitize_layout
 
@@ -6253,23 +6262,38 @@ def _register_accounts_tools(server):
         "update_dashboard_layout",
         (
             "Replace the currently authenticated user's home-dashboard widget "
-            "layout. Pass `layout` as an ordered list of {id, size, visible} "
-            "entries; use get_dashboard_layout first to discover widget ids and "
-            "allowed sizes. The payload is sanitised against the registry."
+            "layout. Pass `layout` as an ordered list of {key, id, size, visible, "
+            "zone, params} instances; use get_dashboard_layout first to discover "
+            "widget ids, allowed sizes and which widgets are 'multiple'. Give each "
+            "instance of a 'multiple' widget a distinct key. The payload is "
+            "sanitised against the registry."
         ),
         _obj_schema(
             {
                 "layout": {
                     "type": "array",
-                    "description": "Ordered widget entries {id, size, visible}.",
+                    "description": "Ordered widget instances {key, id, size, visible, zone, params}.",
                     "items": {
                         "type": "object",
                         "properties": {
-                            "id": {"type": "string", "description": "Widget id."},
+                            "key": {
+                                "type": "string",
+                                "description": (
+                                    "Per-instance id. Required to keep several instances of a "
+                                    "'multiple' widget distinct; for singletons it equals the id."
+                                ),
+                            },
+                            "id": {"type": "string", "description": "Widget type id."},
                             "size": {
                                 "type": "string",
-                                "enum": ["S", "M", "L", "XL"],
-                                "description": "S=1/4, M=1/2, L=3/4, XL=full width (used in the main zone).",
+                                "description": (
+                                    "Tile size as a 'WxH' token: width W in 1..4 "
+                                    "quarter-columns (1=1/4 .. 4=full width) by height "
+                                    "H in 1..4 fixed row units, e.g. '2x1' or '4x2'. "
+                                    "Allowed values are per-widget; an out-of-set size "
+                                    "is clamped to the widget default. Used in the main "
+                                    "zone (ignored in the rail)."
+                                ),
                             },
                             "zone": {
                                 "type": "string",
@@ -6277,6 +6301,18 @@ def _register_accounts_tools(server):
                                 "description": "Which zone the widget lives in: 'main' area or the 'rail' side column.",
                             },
                             "visible": {"type": "boolean", "description": "Whether the widget shows on the dashboard."},
+                            "params": {
+                                "type": "object",
+                                "description": (
+                                    "Per-instance parameters (widget-type specific). "
+                                    "'indicator' takes {indicator: <id>, show_chart: bool}; "
+                                    "'compliance_by_framework' and 'active_objectives' take "
+                                    "{sort: default|value_desc|value_asc|name|manual, order: "
+                                    "[ids]}; 'overall_compliance' takes {show_target: bool, "
+                                    "target: 0..100}. Sanitised against the widget; ignored "
+                                    "for widgets that take no params."
+                                ),
+                            },
                         },
                         "required": ["id"],
                     },

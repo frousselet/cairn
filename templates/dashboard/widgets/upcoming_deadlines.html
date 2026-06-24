@@ -1,60 +1,52 @@
 {% load i18n %}
-{# Widget: upcoming deadlines & events (next 30 days). Designed for the right rail. Expects `calendar_items`. #}
+{# Widget: upcoming deadlines & events (next 30 days). Designed for the rail; items flow into a responsive grid (1 column when narrow, several when wide). Expects `calendar_items` (each item may carry a `responsible` user). #}
 <div class="card h-100">
   <div class="card-body">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
       <h5 class="card-title mb-0"><i class="bi bi-calendar-event me-1" style="color:var(--accent)"></i> {% trans "Upcoming deadlines" %}</h5>
-      <a href="{% url 'calendar' %}" class="upcoming-toggle"><i class="bi bi-calendar3 me-1" aria-hidden="true"></i>{% trans "Calendar" %}</a>
+      <a href="{% url 'calendar' %}" class="upcoming-toggle">{% trans "Calendar" %}</a>
     </div>
     <div class="today-actions__deadlines-title mb-2">
       <span class="badge bg-secondary">{% trans "in the next 30 days" %}</span>
     </div>
     {% if calendar_items %}
     <div class="upcoming-list">
-      {% for ev in calendar_items|slice:":6" %}{% include "includes/dashboard_deadline_item.html" %}{% endfor %}
+      {% for ev in calendar_items %}{% include "includes/dashboard_deadline_item.html" %}{% endfor %}
     </div>
-    {% if calendar_items|length > 6 %}
-    <div class="collapse" id="moreDeadlinesWidget">
-      <div class="upcoming-list mt-1">
-        {% for ev in calendar_items|slice:"6:" %}{% include "includes/dashboard_deadline_item.html" %}{% endfor %}
-      </div>
-    </div>
-    <button class="upcoming-toggle mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#moreDeadlinesWidget" aria-expanded="false" aria-controls="moreDeadlinesWidget">
-      {% trans "Show all" %} ({{ calendar_items|length }})
-    </button>
-    {% endif %}
     {% else %}
     <p class="text-muted small mb-0">{% trans "No deadline in the next 30 days." %}</p>
     {% endif %}
   </div>
 </div>
 <style>
-  .upcoming-list { display:flex; flex-direction:column; gap:.3125rem; }
+  /* Responsive columns: one per row when narrow (rail), several when wide. */
+  .upcoming-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(18rem, 1fr)); gap:.75rem; }
   .upcoming-item {
-    display:flex; align-items:center; gap:.625rem; padding:.5rem .75rem;
+    display:flex; flex-direction:column; gap:.5rem; padding:.875rem 1rem;
     border-radius:var(--radius-sm); background:var(--surface-raised);
     border:1px solid var(--border-light); text-decoration:none; color:inherit;
-    transition:all .2s cubic-bezier(.16,1,.3,1);
+    transition:border-color .2s var(--ease-out), background-color .2s var(--ease-out), transform .2s var(--ease-out);
   }
-  .upcoming-item:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; transform:translateX(2px); }
+  .upcoming-item:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; transform:translateY(-1px); }
+  .upcoming-item__head { display:flex; align-items:center; gap:.5rem; }
   .upcoming-item-dot { width:.4375rem; height:.4375rem; border-radius:50%; flex-shrink:0; }
-  .upcoming-item-date {
-    font-size:.75rem; font-weight:600; color:var(--text-muted);
-    min-width:11.5rem; flex-shrink:0; font-variant-numeric:tabular-nums; white-space:nowrap;
+  .upcoming-item-title { font-size:.875rem; font-weight:600; color:var(--text-primary); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .upcoming-days {
+    flex-shrink:0; font-size:.625rem; font-weight:550; color:var(--accent);
+    background:var(--accent-soft); padding:.0625rem .375rem; border-radius:100px; line-height:1.5; white-space:nowrap;
   }
-  .upcoming-item-date .upcoming-days {
-    display:inline-block; margin-left:.25rem; font-size:.625rem; font-weight:550;
-    color:var(--accent); background:var(--accent-soft); padding:.0625rem .375rem;
-    border-radius:100px; line-height:1.5;
-  }
-  .upcoming-item-date .upcoming-days--overdue { color:var(--danger); background:var(--danger-soft); }
+  .upcoming-days--overdue { color:var(--danger); background:var(--danger-soft); }
+  .upcoming-item-meta { display:flex; align-items:center; gap:.375rem; flex-wrap:wrap; font-size:.6875rem; color:var(--text-muted); }
+  .upcoming-item-date { font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
   .upcoming-item-kind {
-    flex-shrink:0; font-size:.625rem; font-weight:550; line-height:1.5;
-    color:var(--text-secondary); background:var(--surface-subtle);
-    padding:.0625rem .375rem; border-radius:100px; white-space:nowrap;
+    font-size:.625rem; font-weight:550; line-height:1.5; color:var(--text-secondary);
+    background:var(--surface-subtle); padding:.0625rem .375rem; border-radius:100px; white-space:nowrap;
   }
-  .upcoming-item-title { font-size:.8125rem; font-weight:500; color:var(--text-primary); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .upcoming-item-cat { font-size:.6875rem; color:var(--text-muted); flex-shrink:0; }
+  .upcoming-item-cat { color:var(--text-muted); }
+  .upcoming-item-person { display:flex; align-items:center; gap:.5rem; min-width:0; }
+  .upcoming-item-avatar { width:1.5rem; height:1.5rem; border-radius:50%; object-fit:cover; flex-shrink:0; }
+  .upcoming-item-avatar--fallback { display:inline-flex; align-items:center; justify-content:center; background:var(--accent-soft); color:var(--accent); font-size:.625rem; font-weight:600; }
+  .upcoming-item-person-name { font-size:.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .today-actions__deadlines-title { font-size:.8125rem; font-weight:600; color:var(--text-secondary); }
   .today-actions__deadlines-title .badge { font-size:.6875rem; font-weight:500; }
   .upcoming-toggle {
@@ -62,16 +54,4 @@
     cursor:pointer; font-weight:500; padding:0; transition:color .15s;
   }
   .upcoming-toggle:hover { text-decoration:underline; color:var(--accent-hover); }
-  /* In a narrow (S) rail widget the date column would crowd the title: let it shrink. */
-  .dash-widget--S .upcoming-item { flex-wrap:wrap; gap:.375rem; }
-  .dash-widget--S .upcoming-item-date { min-width:auto; }
-  .dash-widget--S .upcoming-item-cat { display:none; }
-  @media (max-width: 767.98px) {
-    .upcoming-item { gap:.375rem; padding:.4375rem .5625rem; flex-wrap:wrap; }
-    .upcoming-item:hover { transform:none; }
-    .upcoming-item-date { min-width:auto; font-size:.6875rem; }
-    .upcoming-item-date .upcoming-days { font-size:.5625rem; margin-left:.1875rem; }
-    .upcoming-item-title { font-size:.75rem; }
-    .upcoming-item-cat { display:none; }
-  }
 </style>

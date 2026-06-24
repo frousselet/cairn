@@ -1,0 +1,14 @@
+{% load i18n %}
+{# Widget: ongoing audits - compliance assessments whose window covers today, excluding cancelled audits and draft "audit projects". Hidden when empty via has_data. Expects `ongoing_audits` = list of {audit, time_progress, days_left, status_tone}. The card markup + styles are shared with the Summary widget. #}
+{% include "dashboard/includes/ongoing_audit_styles.html" %}
+<div class="card h-100">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+      <h5 class="card-title mb-0"><i class="bi bi-clipboard-check me-1" style="color:var(--accent)"></i> {% trans "Ongoing audits" %}</h5>
+      <a href="{% url 'compliance:assessment-list' %}" class="upcoming-toggle">{% trans "All" %}</a>
+    </div>
+    <ul class="ongoing-audits">
+      {% for item in ongoing_audits %}{% include "dashboard/includes/ongoing_audit_card.html" %}{% endfor %}
+    </ul>
+  </div>
+</div>

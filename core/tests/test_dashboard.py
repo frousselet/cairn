@@ -340,6 +340,23 @@ class TestDashboardCompliance:
         # The inventory tile keeps the full count.
         assert resp.context["requirement_count"] == 4
 
+    def test_framework_bar_includes_not_applicable_segment(self):
+        # A framework with applicable + non-applicable requirements (no
+        # assessments): the applicable segments rescale to the total and the rest
+        # becomes the not-applicable slice, so the bar sums to 100%.
+        fw = FrameworkFactory(status="active", is_approved=True)
+        RequirementFactory.create_batch(3, framework=fw)      # applicable, not assessed
+        RequirementFactory(framework=fw, is_applicable=False)  # not applicable
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        bar = next(f for f in resp.context["active_frameworks"] if f.pk == fw.pk)
+        assert bar.seg_unassessed == 75   # 3 of 4 applicable, not assessed
+        assert bar.seg_na == 25           # 1 of 4 not applicable
+        assert bar.seg_conform == 0 and bar.seg_nonconform == 0
+        assert bar.seg_conform + bar.seg_nonconform + bar.seg_unassessed + bar.seg_na == 100
+        # Headline compliance is still of applicable requirements (0 here).
+        assert bar.computed_compliance == 0
+
     def test_non_compliant_count(self):
         fw = FrameworkFactory()
         RequirementFactory(
@@ -476,21 +493,26 @@ class TestFilterScoped:
 
 
 class TestDashboardIndicatorSlots:
+    """The shared indicator-slot builder (powers the per-indicator widget and the
+    legacy pinned strip). Tested directly via ``get_dashboard_indicator_slots``."""
+
+    def _slots(self, user):
+        from context.views import get_dashboard_indicator_slots
+
+        return get_dashboard_indicator_slots(user)
+
     def test_empty_slots_when_no_pinned_indicators(self):
-        client, user = _superuser_client()
-        resp = client.get(reverse("home"))
-        slots = resp.context["dashboard_indicator_slots"]
+        _client, user = _superuser_client()
+        slots = self._slots(user)
         assert len(slots) == 10
         assert all(s is None for s in slots)
 
     def test_pinned_indicator_shown_in_slots(self):
         ind = _make_indicator(name="Coverage", current_value="85")
-        client, user = _superuser_client()
+        _client, user = _superuser_client()
         user.dashboard_indicators = [str(ind.pk)]
         user.save(update_fields=["dashboard_indicators"])
-        resp = client.get(reverse("home"))
-        slots = resp.context["dashboard_indicator_slots"]
-        filled = [s for s in slots if s is not None]
+        filled = [s for s in self._slots(user) if s is not None]
         assert len(filled) == 1
         assert filled[0]["indicator"].pk == ind.pk
 
@@ -498,12 +520,10 @@ class TestDashboardIndicatorSlots:
         ind = _make_indicator(name="Trend Test", current_value="100")
         IndicatorMeasurement.objects.create(indicator=ind, value="80")
         IndicatorMeasurement.objects.create(indicator=ind, value="100")
-        client, user = _superuser_client()
+        _client, user = _superuser_client()
         user.dashboard_indicators = [str(ind.pk)]
         user.save(update_fields=["dashboard_indicators"])
-        resp = client.get(reverse("home"))
-        slots = resp.context["dashboard_indicator_slots"]
-        filled = [s for s in slots if s is not None]
+        filled = [s for s in self._slots(user) if s is not None]
         assert len(filled) == 1
         assert filled[0]["trend"] is not None
 
@@ -515,12 +535,10 @@ class TestDashboardIndicatorSlots:
         )
         IndicatorMeasurement.objects.create(indicator=ind, value="false")
         IndicatorMeasurement.objects.create(indicator=ind, value="true")
-        client, user = _superuser_client()
+        _client, user = _superuser_client()
         user.dashboard_indicators = [str(ind.pk)]
         user.save(update_fields=["dashboard_indicators"])
-        resp = client.get(reverse("home"))
-        slots = resp.context["dashboard_indicator_slots"]
-        filled = [s for s in slots if s is not None]
+        filled = [s for s in self._slots(user) if s is not None]
         assert len(filled) == 1
         assert filled[0]["trend"] == "changed"
 
@@ -532,25 +550,21 @@ class TestDashboardIndicatorSlots:
         )
         IndicatorMeasurement.objects.create(indicator=ind, value="true")
         IndicatorMeasurement.objects.create(indicator=ind, value="true")
-        client, user = _superuser_client()
+        _client, user = _superuser_client()
         user.dashboard_indicators = [str(ind.pk)]
         user.save(update_fields=["dashboard_indicators"])
-        resp = client.get(reverse("home"))
-        slots = resp.context["dashboard_indicator_slots"]
-        filled = [s for s in slots if s is not None]
+        filled = [s for s in self._slots(user) if s is not None]
         assert filled[0]["trend"] == "stable"
 
     def test_pinned_indicator_with_chart_enabled(self):
         ind = _make_indicator(name="Chart Test", current_value="50")
         for i in range(5):
             IndicatorMeasurement.objects.create(indicator=ind, value=str(10 * (i + 1)))
-        client, user = _superuser_client()
+        _client, user = _superuser_client()
         user.dashboard_indicators = [str(ind.pk)]
         user.dashboard_indicator_charts = [str(ind.pk)]
         user.save(update_fields=["dashboard_indicators", "dashboard_indicator_charts"])
-        resp = client.get(reverse("home"))
-        slots = resp.context["dashboard_indicator_slots"]
-        filled = [s for s in slots if s is not None]
+        filled = [s for s in self._slots(user) if s is not None]
         assert len(filled) == 1
         assert filled[0]["show_chart"] is True
         assert len(filled[0]["sparkline_data"]) >= 2
@@ -558,11 +572,10 @@ class TestDashboardIndicatorSlots:
     def test_slots_padded_to_ten(self):
         ind1 = _make_indicator(name="Ind 1")
         ind2 = _make_indicator(name="Ind 2")
-        client, user = _superuser_client()
+        _client, user = _superuser_client()
         user.dashboard_indicators = [str(ind1.pk), str(ind2.pk)]
         user.save(update_fields=["dashboard_indicators"])
-        resp = client.get(reverse("home"))
-        slots = resp.context["dashboard_indicator_slots"]
+        slots = self._slots(user)
         assert len(slots) == 10
         filled = [s for s in slots if s is not None]
         assert len(filled) == 2
@@ -629,6 +642,155 @@ class TestDashboardRiskMatrices:
         resp = client.get(reverse("home"))
         assert resp.context["matrix_current"] is not None
         assert resp.context["matrix_residual"] is not None
+
+    def test_matrices_are_two_widgets_without_configure(self):
+        # The matrices are split into two separate widgets (current + residual),
+        # each rendering its own heatmap, with no in-widget Configure button.
+        client, user = _superuser_client()
+        content = client.get(reverse("home")).content.decode()
+        assert 'data-widget-id="risk_matrix_current"' in content
+        assert 'data-widget-id="risk_matrix_residual"' in content
+        # Each heatmap is wrapped so it scales to fit its tile (no overflow).
+        assert "data-fit-scale" in content
+        # The old combined widget and its Configure scales button are gone.
+        assert 'data-widget-id="risk_matrices"' not in content
+        assert "Configure scales" not in content
+
+
+class TestOngoingAuditsWidget:
+    """The conditional ongoing-audits widget (visible only while an audit runs)."""
+
+    @staticmethod
+    def _section(content, wid):
+        idx = content.index('data-widget-id="%s"' % wid)
+        return content[content.rfind("<section", 0, idx):idx]
+
+    def test_shows_audit_whose_window_covers_today(self):
+        from compliance.constants import AssessmentStatus
+        from compliance.tests.factories import ComplianceAssessmentFactory
+
+        today = date.today()
+        audit = ComplianceAssessmentFactory(
+            name="ISO 27001 surveillance",
+            status=AssessmentStatus.IN_PROGRESS,
+            assessment_start_date=today - timedelta(days=2),
+            assessment_end_date=today + timedelta(days=3),
+        )
+        audit.scopes.add(ScopeFactory(name="HQ Datacenter"))
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        ongoing = resp.context["ongoing_audits"]
+        assert len(ongoing) == 1
+        assert ongoing[0]["audit"].name == "ISO 27001 surveillance"
+        assert ongoing[0]["days_left"] == 3
+        assert ongoing[0]["time_progress"] == 40  # 2 of 5 days elapsed
+        content = resp.content.decode()
+        # Rendered and NOT flagged empty (so it shows in view mode).
+        assert 'data-widget-id="ongoing_audits"' in content
+        assert "dash-widget--empty" not in self._section(content, "ongoing_audits")
+        # The concerned scope is shown.
+        assert "HQ Datacenter" in content
+
+    def test_hidden_when_no_ongoing_audit(self):
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        assert resp.context["ongoing_audits"] == []
+        content = resp.content.decode()
+        # Still in the DOM, but flagged empty -> hidden in view mode.
+        assert "dash-widget--empty" in self._section(content, "ongoing_audits")
+
+    def test_excludes_draft_cancelled_and_out_of_window(self):
+        from compliance.constants import AssessmentStatus
+        from compliance.tests.factories import ComplianceAssessmentFactory
+
+        today = date.today()
+        common = dict(
+            assessment_start_date=today - timedelta(days=1),
+            assessment_end_date=today + timedelta(days=1),
+        )
+        # Draft "audit project" and cancelled audit, both in the window: excluded.
+        ComplianceAssessmentFactory(status=AssessmentStatus.DRAFT, **common)
+        ComplianceAssessmentFactory(status=AssessmentStatus.CANCELLED, **common)
+        # In progress but the window is entirely in the past / future: excluded.
+        ComplianceAssessmentFactory(
+            status=AssessmentStatus.IN_PROGRESS,
+            assessment_start_date=today - timedelta(days=10),
+            assessment_end_date=today - timedelta(days=5),
+        )
+        ComplianceAssessmentFactory(
+            status=AssessmentStatus.IN_PROGRESS,
+            assessment_start_date=today + timedelta(days=5),
+            assessment_end_date=today + timedelta(days=10),
+        )
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        assert resp.context["ongoing_audits"] == []
+
+    def test_audit_cards_surface_in_summary_widget_too(self):
+        from compliance.constants import AssessmentStatus
+        from compliance.tests.factories import ComplianceAssessmentFactory
+
+        today = date.today()
+        ComplianceAssessmentFactory(
+            name="ISO surveillance",
+            status=AssessmentStatus.IN_PROGRESS,
+            assessment_start_date=today - timedelta(days=1),
+            assessment_end_date=today + timedelta(days=2),
+        )
+        client, user = _superuser_client()
+        content = client.get(reverse("home")).content.decode()
+        # The cards appear inside the Summary widget (its section) as well as the
+        # standalone Ongoing audits widget (one card markup per widget).
+        assert "ask-cairn__audits" in content
+        assert 'data-widget-id="ongoing_audits"' in content
+        assert content.count("ongoing-audits__item") >= 2
+
+    def test_ongoing_audit_feeds_ask_cairn_summary(self):
+        from compliance.constants import AssessmentStatus
+        from compliance.tests.factories import ComplianceAssessmentFactory
+
+        today = date.today()
+        ComplianceAssessmentFactory(
+            status=AssessmentStatus.IN_PROGRESS,
+            assessment_start_date=today - timedelta(days=1),
+            assessment_end_date=today + timedelta(days=2),
+        )
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        # No urgent item, but the ongoing audit alone feeds the Ask Cairn
+        # snapshot, so the summary is generated (never an all-clear).
+        data = resp.context["ask_cairn_data"]
+        assert data.get("ongoing_audits") == 1
+        assert resp.context["ask_cairn_audit_count"] == 1
+        content = resp.content.decode()
+        assert "all clear" not in content
+        # AI off in tests -> deterministic fallback names the audit, not "0 points".
+        assert "audit under way" in content
+
+    def test_brief_flags_whole_scope_coverage(self):
+        from compliance.constants import AssessmentStatus
+        from compliance.tests.factories import ComplianceAssessmentFactory
+        from core.views import ongoing_audits_brief
+
+        today = date.today()
+        root = ScopeFactory(name="Company")
+        child = ScopeFactory(name="IT", parent_scope=root)
+        full = ComplianceAssessmentFactory(
+            status=AssessmentStatus.IN_PROGRESS,
+            assessment_start_date=today,
+            assessment_end_date=today + timedelta(days=1),
+        )
+        full.scopes.add(root)  # every root selected -> whole perimeter
+        partial = ComplianceAssessmentFactory(
+            status=AssessmentStatus.IN_PROGRESS,
+            assessment_start_date=today,
+            assessment_end_date=today + timedelta(days=1),
+        )
+        partial.scopes.add(child)  # a sub-scope only -> partial
+        _, user = _superuser_client()
+        brief = {b["name"]: b for b in ongoing_audits_brief(user, today)}
+        assert brief[full.name]["covers_entire_scope"] is True
+        assert brief[partial.name]["covers_entire_scope"] is False
 
 
 class TestDashboardRiskTreatmentFlow:
@@ -898,53 +1060,209 @@ class TestSectionCollapseToggle:
 class TestDashboardWidgetRegistry:
     """The widget registry resolves and sanitises per-user layouts safely."""
 
-    def test_default_layout_covers_every_widget_once(self):
+    def test_default_layout_covers_every_singleton_once(self):
         from core.dashboard import DASHBOARD_WIDGETS, default_layout
 
         layout = default_layout()
         ids = [e["id"] for e in layout]
-        assert sorted(ids) == sorted(w.id for w in DASHBOARD_WIDGETS)
+        singletons = [w.id for w in DASHBOARD_WIDGETS if not w.multiple]
+        # Only singletons are placed by default; "multiple" widgets start empty.
+        assert sorted(ids) == sorted(singletons)
+        assert "indicator" not in ids
         assert len(ids) == len(set(ids))
+        # Every default entry carries an instance key (== id for singletons) and a
+        # params dict (empty for plain widgets, populated for configurable ones).
+        assert all(e["key"] == e["id"] and isinstance(e["params"], dict) for e in layout)
 
     def test_resolve_drops_unknown_and_appends_missing(self):
         from core.dashboard import DASHBOARD_WIDGETS, resolve_layout
 
         resolved = resolve_layout([
-            {"id": "priority_risks", "size": "M", "visible": False},
-            {"id": "does_not_exist", "size": "M"},
-            {"id": "priority_risks", "size": "S"},  # duplicate -> ignored
+            {"id": "priority_risks", "size": "2x2", "visible": False},
+            {"id": "does_not_exist", "size": "2x2"},
+            {"id": "priority_risks", "size": "1x2"},  # duplicate singleton -> ignored
         ])
         ids = [e["id"] for e in resolved]
-        # Unknown id dropped, every registry widget present exactly once.
+        singletons = [w.id for w in DASHBOARD_WIDGETS if not w.multiple]
+        # Unknown id dropped; every singleton present exactly once; no multiple ones.
         assert "does_not_exist" not in ids
-        assert sorted(ids) == sorted(w.id for w in DASHBOARD_WIDGETS)
+        assert sorted(ids) == sorted(singletons)
         assert ids.count("priority_risks") == 1
-        # The first (kept) entry preserved its size/visibility.
+        # The first (kept) entry preserved its size/visibility and gained key/params.
         first = next(e for e in resolved if e["id"] == "priority_risks")
-        assert first == {"id": "priority_risks", "size": "M", "visible": False, "zone": "rail"}
+        assert first == {
+            "key": "priority_risks", "id": "priority_risks", "size": "2x2",
+            "visible": False, "zone": "rail_top", "params": {},
+        }
+
+    def test_resolve_keeps_multiple_instances_with_params(self):
+        from core.dashboard import resolve_layout
+
+        resolved = resolve_layout([
+            {"key": "indicator-a", "id": "indicator", "size": "1x1",
+             "params": {"indicator": "abc", "show_chart": True}},
+            {"key": "indicator-b", "id": "indicator", "size": "1x1",
+             "params": {"indicator": "def", "show_chart": False}},
+            # Missing key -> a unique one is generated, not dropped.
+            {"id": "indicator", "size": "1x1", "params": {"indicator": "ghi"}},
+        ])
+        instances = [e for e in resolved if e["id"] == "indicator"]
+        assert len(instances) == 3
+        keys = [e["key"] for e in instances]
+        assert keys[0] == "indicator-a" and keys[1] == "indicator-b"
+        assert len(set(keys)) == 3  # all unique, including the generated one
+        assert instances[0]["params"] == {"indicator": "abc", "show_chart": True}
+        # show_chart coerced to bool / defaulted.
+        assert instances[2]["params"] == {"indicator": "ghi", "show_chart": False}
+
+    def test_resolve_sanitizes_indicator_params(self):
+        from core.dashboard import resolve_layout
+
+        resolved = resolve_layout([
+            {"key": "x", "id": "indicator", "size": "1x1", "params": "not-a-dict"},
+        ])
+        assert resolved[0]["params"] == {"indicator": "", "show_chart": False}
+
+    def test_resolve_sanitizes_sort_params(self):
+        from core.dashboard import resolve_layout
+
+        resolved = {e["id"]: e for e in resolve_layout([
+            # Valid sort + order kept (order coerced to strings).
+            {"id": "compliance_by_framework", "size": "3x2",
+             "params": {"sort": "value_desc", "order": [1, "b", 3]}},
+            # Unknown sort falls back to "default"; non-list order -> [].
+            {"id": "active_objectives", "size": "2x2",
+             "params": {"sort": "bogus", "order": "nope"}},
+        ])}
+        assert resolved["compliance_by_framework"]["params"] == {
+            "sort": "value_desc", "order": ["1", "b", "3"],
+        }
+        assert resolved["active_objectives"]["params"] == {"sort": "default", "order": []}
+
+    def test_progress_widgets_are_sort_configurable(self):
+        from core.dashboard import WIDGETS_BY_ID
+
+        for wid in ("compliance_by_framework", "active_objectives"):
+            w = WIDGETS_BY_ID[wid]
+            assert w.configurable is True
+            assert w.config == "sort"
+            assert not w.multiple
+        assert WIDGETS_BY_ID["indicator"].config == "indicator"
+        # A plain widget is not configurable.
+        assert WIDGETS_BY_ID["risk_matrix_current"].configurable is False
+
+    def test_overall_compliance_is_target_configurable(self):
+        from core.dashboard import WIDGETS_BY_ID
+
+        w = WIDGETS_BY_ID["overall_compliance"]
+        assert w.config == "target"
+        assert w.configurable is True
+        # Default params show the target at 80.
+        assert w.default_params() == {"show_target": True, "target": 80}
+
+    def test_resolve_sanitizes_target_params(self):
+        from core.dashboard import resolve_layout
+
+        resolved = {e["id"]: e for e in resolve_layout([
+            # Out-of-range value clamped, show_target coerced to bool.
+            {"id": "overall_compliance", "size": "4x1",
+             "params": {"show_target": False, "target": 150}},
+        ])}
+        assert resolved["overall_compliance"]["params"] == {"show_target": False, "target": 100}
 
     def test_resolve_clamps_invalid_size_to_default(self):
         from core.dashboard import WIDGETS_BY_ID, resolve_layout
 
-        # "S" is not an allowed size for risk_matrices (sizes L, XL).
+        # "9x9" is out of range and not an allowed size for risk_matrix_current.
         resolved = {e["id"]: e for e in resolve_layout([
-            {"id": "risk_matrices", "size": "S", "visible": True},
+            {"id": "risk_matrix_current", "size": "9x9", "visible": True},
+            {"id": "active_objectives", "size": "garbage", "visible": True},
         ])}
-        assert resolved["risk_matrices"]["size"] == WIDGETS_BY_ID["risk_matrices"].default_size
+        assert resolved["risk_matrix_current"]["size"] == WIDGETS_BY_ID["risk_matrix_current"].default_size
+        assert resolved["active_objectives"]["size"] == WIDGETS_BY_ID["active_objectives"].default_size
+
+    def test_resolve_migrates_legacy_letter_size(self):
+        from core.dashboard import WIDGETS_BY_ID, resolve_layout
+
+        # Legacy single-letter sizes keep their width: M -> width 2, L -> width 3,
+        # preferring the token whose height matches the widget default.
+        resolved = {e["id"]: e for e in resolve_layout([
+            {"id": "active_objectives", "size": "M", "visible": True},  # 2x2 default
+            {"id": "compliance_by_framework", "size": "L", "visible": True},  # 3x2 default
+            # No allowed width-1 token for risk_matrix_current -> falls back to default.
+            {"id": "risk_matrix_current", "size": "S", "visible": True},
+        ])}
+        assert resolved["active_objectives"]["size"] == "2x2"
+        assert resolved["compliance_by_framework"]["size"] == "3x2"
+        assert resolved["risk_matrix_current"]["size"] == WIDGETS_BY_ID["risk_matrix_current"].default_size
 
     def test_resolve_carries_and_clamps_zone(self):
         from core.dashboard import resolve_layout
 
         resolved = {e["id"]: e for e in resolve_layout([
-            # Move a normally-main widget to the rail (valid zone, kept).
-            {"id": "active_objectives", "size": "S", "visible": True, "zone": "rail"},
+            # Move a normally-main widget to a valid rail sub-zone (kept).
+            {"id": "active_objectives", "size": "1x2", "visible": True, "zone": "rail_bottom"},
+            # Legacy single "rail" zone migrates to the top sub-zone.
+            {"id": "compliance_by_framework", "size": "2x2", "visible": True, "zone": "rail"},
             # Bogus zone falls back to the widget default (main).
-            {"id": "overall_compliance", "size": "XL", "visible": True, "zone": "nope"},
+            {"id": "overall_compliance", "size": "4x1", "visible": True, "zone": "nope"},
         ])}
-        assert resolved["active_objectives"]["zone"] == "rail"
+        assert resolved["active_objectives"]["zone"] == "rail_bottom"
+        assert resolved["compliance_by_framework"]["zone"] == "rail_top"
         assert resolved["overall_compliance"]["zone"] == "main"
-        # Untouched widgets keep their default zone (rail widgets default to rail).
-        assert resolved["priority_risks"]["zone"] == "rail"
+        # Untouched widgets keep their default zone (rail widgets default to the top).
+        assert resolved["priority_risks"]["zone"] == "rail_top"
+
+
+class TestWidgetSizeGeometry:
+    """The x*y size tokens parse into grid spans and labels correctly."""
+
+    def test_parse_size_valid_and_invalid(self):
+        from core.dashboard import parse_size
+
+        assert parse_size("2x1") == (2, 1)
+        assert parse_size("4x3") == (4, 3)
+        assert parse_size("4X2") == (4, 2)  # case-insensitive
+        # Out of range / malformed -> None.
+        assert parse_size("5x1") is None
+        assert parse_size("2x9") is None
+        assert parse_size("0x1") is None
+        assert parse_size("2") is None
+        assert parse_size("axb") is None
+        assert parse_size("") is None
+        assert parse_size(None) is None
+
+    def test_size_label(self):
+        from core.dashboard import size_label
+
+        assert size_label("2x1") == "2 × 1"
+        assert size_label("4x3") == "4 × 3"
+
+    def test_cols_rows_mapping(self):
+        from core.dashboard import WIDGETS_BY_ID
+
+        w = WIDGETS_BY_ID["risk_matrix_current"]
+        # Width unit -> 3 grid columns; height unit -> grid rows.
+        assert w.cols("4x2") == 12
+        assert w.rows("4x2") == 2
+        assert w.cols("3x2") == 9
+        assert w.width("3x2") == 3
+        assert w.height("3x3") == 3
+        # An unparseable size falls back to the widget default's dims.
+        assert w.cols("bogus") == w.cols(w.default_size)
+        assert w.rows("bogus") == w.rows(w.default_size)
+
+    def test_catalogue_sizes_are_valid_tokens(self):
+        from core.dashboard import DASHBOARD_WIDGETS, parse_size
+
+        for widget in DASHBOARD_WIDGETS:
+            assert widget.sizes, f"{widget.id} declares no sizes"
+            for size in widget.sizes:
+                assert parse_size(size) is not None, f"{widget.id}: bad size {size!r}"
+            # The default must be one of the allowed sizes.
+            assert widget.default_size in widget.sizes, (
+                f"{widget.id}: default {widget.default_size!r} not in {widget.sizes}"
+            )
 
 
 class TestDashboardLayoutEndpoint:
@@ -955,9 +1273,9 @@ class TestDashboardLayoutEndpoint:
         resp = client.post(
             reverse("dashboard-layout-save"),
             data=json.dumps({"layout": [
-                {"id": "priority_risks", "size": "M", "visible": True},
-                {"id": "overall_compliance", "size": "L", "visible": False},
-                {"id": "bogus", "size": "M"},
+                {"id": "priority_risks", "size": "2x2", "visible": True},
+                {"id": "overall_compliance", "size": "3x1", "visible": False},
+                {"id": "bogus", "size": "2x2"},
             ]}),
             content_type="application/json",
         )
@@ -966,7 +1284,29 @@ class TestDashboardLayoutEndpoint:
         user.refresh_from_db()
         ids = [e["id"] for e in user.dashboard_layout]
         assert "bogus" not in ids
-        assert user.dashboard_layout[0] == {"id": "priority_risks", "size": "M", "visible": True, "zone": "rail"}
+        assert user.dashboard_layout[0] == {
+            "key": "priority_risks", "id": "priority_risks", "size": "2x2",
+            "visible": True, "zone": "rail_top", "params": {},
+        }
+
+    def test_save_persists_indicator_instances(self):
+        client, user = _regular_client()
+        resp = client.post(
+            reverse("dashboard-layout-save"),
+            data=json.dumps({"layout": [
+                {"key": "indicator-1", "id": "indicator", "size": "1x1",
+                 "params": {"indicator": "11111111-1111-1111-1111-111111111111", "show_chart": True}},
+                {"key": "indicator-2", "id": "indicator", "size": "1x1",
+                 "params": {"indicator": "22222222-2222-2222-2222-222222222222", "show_chart": False}},
+            ]}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        user.refresh_from_db()
+        instances = [e for e in user.dashboard_layout if e["id"] == "indicator"]
+        assert len(instances) == 2
+        assert {e["key"] for e in instances} == {"indicator-1", "indicator-2"}
+        assert instances[0]["params"]["show_chart"] is True
 
     def test_invalid_body_returns_400(self):
         client, user = _regular_client()
@@ -992,19 +1332,28 @@ class TestDashboardLayoutApi:
         resp = client.get("/api/v1/dashboard-layout/")
         assert resp.status_code == 200
         data = resp.json()["data"]
-        assert len(data["layout"]) == len(DASHBOARD_WIDGETS)
+        # The default layout places singletons only; the catalogue lists every type.
+        singletons = [w for w in DASHBOARD_WIDGETS if not w.multiple]
+        assert len(data["layout"]) == len(singletons)
         assert len(data["widgets"]) == len(DASHBOARD_WIDGETS)
+        # The catalogue flags which widgets can be placed multiple times.
+        indicator = next(w for w in data["widgets"] if w["id"] == "indicator")
+        assert indicator["multiple"] is True
 
     def test_put_replaces_layout(self):
         client, user = _regular_client()
         resp = client.put(
             "/api/v1/dashboard-layout/",
-            data=json.dumps({"layout": [{"id": "indicators", "size": "XL", "visible": True}]}),
+            data=json.dumps({"layout": [
+                {"key": "indicator-x", "id": "indicator", "size": "1x1",
+                 "params": {"indicator": "11111111-1111-1111-1111-111111111111"}},
+            ]}),
             content_type="application/json",
         )
         assert resp.status_code == 200
         user.refresh_from_db()
-        assert user.dashboard_layout[0]["id"] == "indicators"
+        assert user.dashboard_layout[0]["id"] == "indicator"
+        assert user.dashboard_layout[0]["key"] == "indicator-x"
 
 
 class TestDashboardGridRendering:
@@ -1016,39 +1365,365 @@ class TestDashboardGridRendering:
         content = resp.content.decode()
         assert 'id="dashboardZones"' in content
         assert 'id="dashboardMain"' in content
-        assert 'id="dashboardRail"' in content
+        assert 'id="dashboardRailTop"' in content
+        assert 'id="dashboardRailBottom"' in content
         assert 'class="dash-widget' in content
         assert 'id="dashEditToggle"' in content
         assert 'id="widgetGallery"' in content
 
     def test_rail_widgets_render_in_rail_zone(self):
-        # priority_risks defaults to the rail, so its widget shell must appear
-        # after the rail container opens and before the gallery (which lists
-        # every widget id and would otherwise create a false positive).
+        # priority_risks defaults to the top rail sub-zone, so its widget shell
+        # must appear after that container opens and before the gallery (which
+        # lists every widget id and would otherwise create a false positive).
         client, user = _superuser_client()
         content = client.get(reverse("home")).content.decode()
         main_at = content.index('id="dashboardMain"')
-        rail_at = content.index('id="dashboardRail"')
+        rail_at = content.index('id="dashboardRailTop"')
         gallery_at = content.index('id="widgetGallery"')
         widget_at = content.index('data-widget-id="priority_risks"')
         assert rail_at < widget_at < gallery_at
         assert not (main_at < widget_at < rail_at)
-        assert 'data-zone="rail"' in content
+        assert 'data-zone="rail_top"' in content
 
     def test_no_template_comment_leak(self):
         # Django {# #} comments are single-line only; a multi-line one leaks its
-        # continuation as visible text. Guard against that regression.
+        # continuation as visible text. Guard against that regression across the
+        # dashboard partials (markers are taken from each widget's comments).
         client, user = _superuser_client()
         content = client.get(reverse("home")).content.decode()
-        for marker in ("Generic widget wrapper", "Expects `placed`", "size_options}"):
+        # Generic guard: no raw Django comment delimiters survive into the HTML
+        # (a multi-line {# #} leaks both markers and its text verbatim).
+        assert "{#" not in content and "#}" not in content
+        for marker in (
+            "Generic widget wrapper",
+            "Expects `placed`",
+            "size_options}",
+            "Fills the tile in the main grid",
+            "the card is content-height",
+        ):
             assert marker not in content
 
     def test_hidden_widget_marked_not_visible(self):
         client, user = _regular_client()
-        user.dashboard_layout = [{"id": "today_actions", "size": "L", "visible": False}]
+        user.dashboard_layout = [{"id": "risk_matrix_current", "size": "4x2", "visible": False}]
         user.save(update_fields=["dashboard_layout"])
         resp = client.get(reverse("home"))
         content = resp.content.decode()
         # The hidden widget is in the DOM but flagged so CSS keeps it off-grid.
-        assert 'data-widget-id="today_actions"' in content
+        assert 'data-widget-id="risk_matrix_current"' in content
         assert 'data-visible="false"' in content
+
+    def test_main_widget_renders_2d_grid_spans_and_size_classes(self):
+        # A 3x2 main widget must carry both grid spans (3 width units -> 9 cols,
+        # 2 height units -> 2 rows) and the width/height classes.
+        client, user = _regular_client()
+        user.dashboard_layout = [
+            {"id": "compliance_by_framework", "size": "3x2", "visible": True, "zone": "main"},
+        ]
+        user.save(update_fields=["dashboard_layout"])
+        content = client.get(reverse("home")).content.decode()
+        anchor = content.index('data-widget-id="compliance_by_framework"')
+        section = content[anchor - 200:anchor + 600]
+        assert 'grid-column: span 9' in section
+        assert 'grid-row: span 2' in section
+        assert 'dash-widget--w3' in section
+        assert 'dash-widget--h2' in section
+
+    def test_rail_widget_has_no_inline_grid(self):
+        # Rail widgets stack at content height: no inline grid spans are emitted.
+        client, user = _regular_client()
+        user.dashboard_layout = [
+            {"id": "priority_risks", "size": "1x2", "visible": True, "zone": "rail_top"},
+        ]
+        user.save(update_fields=["dashboard_layout"])
+        content = client.get(reverse("home")).content.decode()
+        anchor = content.index('data-widget-id="priority_risks"')
+        section = content[anchor - 200:anchor + 300]
+        assert 'grid-column' not in section
+        assert 'grid-row' not in section
+
+    def test_overall_compliance_renders_target_config(self):
+        # The overall-compliance widget exposes the target gear, renders the
+        # marker at the configured value, and the target dialog is on the page.
+        client, user = _regular_client()
+        user.dashboard_layout = [
+            {"id": "overall_compliance", "size": "4x1", "visible": True, "zone": "main",
+             "params": {"show_target": True, "target": 90}},
+        ]
+        user.save(update_fields=["dashboard_layout"])
+        content = client.get(reverse("home")).content.decode()
+        anchor = content.index('data-widget-id="overall_compliance"')
+        section = content[anchor - 100:anchor + 1800]
+        assert 'data-config="target"' in section
+        assert 'dash-widget__config' in section
+        assert 'id="targetConfigModal"' in content
+        # The marker is rendered at the configured target, with no display:none.
+        assert 'style="left:90%"' in content
+
+    def test_overall_compliance_target_hidden(self):
+        client, user = _regular_client()
+        user.dashboard_layout = [
+            {"id": "overall_compliance", "size": "4x1", "visible": True, "zone": "main",
+             "params": {"show_target": False, "target": 80}},
+        ]
+        user.save(update_fields=["dashboard_layout"])
+        content = client.get(reverse("home")).content.decode()
+        # The marker carries an inline display:none when the target is hidden.
+        assert 'overall-compliance__target" style="left:80%;display:none"' in content
+
+    def test_progress_widget_renders_sort_config(self):
+        # The progress-bar widgets expose the sort gear, declare the sort config
+        # kind, render a data-progress-rows container, and the sort dialog is
+        # present on the page.
+        client, user = _regular_client()
+        user.dashboard_layout = [
+            {"id": "active_objectives", "size": "2x2", "visible": True, "zone": "main"},
+        ]
+        user.save(update_fields=["dashboard_layout"])
+        content = client.get(reverse("home")).content.decode()
+        anchor = content.index('data-widget-id="active_objectives"')
+        section = content[anchor - 100:anchor + 1600]
+        assert 'data-config="sort"' in section
+        assert 'dash-widget__config' in section
+        assert 'data-progress-rows' in content
+        assert 'id="sortConfigModal"' in content
+
+
+class TestIndicatorWidget:
+    """The per-indicator widget: instance params, config gear, render, partial."""
+
+    def test_configured_indicator_widget_renders_card(self):
+        ind = _make_indicator(name="Coverage", current_value="85")
+        client, user = _regular_client()
+        user.dashboard_layout = [{
+            "key": "i1", "id": "indicator", "size": "1x1", "visible": True,
+            "zone": "main", "params": {"indicator": str(ind.pk), "show_chart": False},
+        }]
+        user.save(update_fields=["dashboard_layout"])
+        content = client.get(reverse("home")).content.decode()
+        anchor = content.index('data-widget-id="indicator"')
+        section = content[anchor - 100:anchor + 1600]
+        # Carries its instance key, is flagged multiple, exposes the config gear,
+        # and renders the indicator's KPI card (not the empty placeholder).
+        assert 'data-key="i1"' in section
+        assert 'data-multiple="true"' in section
+        assert 'dash-widget__config' in section
+        assert f'data-indicator-id="{ind.pk}"' in content
+        # The section's opening tag (first 200 chars) is not flagged empty.
+        assert 'dash-widget--empty' not in section[:200]
+
+    def test_unconfigured_indicator_widget_is_empty_placeholder(self):
+        client, user = _regular_client()
+        user.dashboard_layout = [{
+            "key": "i1", "id": "indicator", "size": "1x1", "visible": True,
+            "zone": "main", "params": {"indicator": "", "show_chart": False},
+        }]
+        user.save(update_fields=["dashboard_layout"])
+        content = client.get(reverse("home")).content.decode()
+        anchor = content.index('data-widget-id="indicator"')
+        section = content[anchor - 100:anchor + 600]
+        # No indicator chosen -> empty (hidden in view mode) with a configure prompt.
+        assert 'dash-widget--empty' in section
+        assert "Choose an indicator" in content
+
+    def test_indicator_widget_template_node_present(self):
+        # The hidden clone source the editor duplicates to add a new instance.
+        client, user = _regular_client()
+        content = client.get(reverse("home")).content.decode()
+        assert 'id="indicatorWidgetTemplate"' in content
+        assert 'id="indicatorConfigModal"' in content
+
+    def test_gallery_indicator_tile_is_multiple(self):
+        client, user = _regular_client()
+        content = client.get(reverse("home")).content.decode()
+        # The indicator gallery tile is always available and marked multiple.
+        gallery_at = content.index('id="widgetGalleryList"')
+        tail = content[gallery_at:gallery_at + 4000]
+        assert 'data-widget-id="indicator"' in tail
+        assert 'data-multiple="true"' in tail
+
+    def test_partial_endpoint_renders_card_for_indicator(self):
+        ind = _make_indicator(name="Latency", current_value="42")
+        client, user = _regular_client()
+        url = reverse("dashboard-indicator-widget")
+        resp = client.get(url, {"indicator": str(ind.pk), "chart": "0"})
+        assert resp.status_code == 200
+        content = resp.content.decode()
+        assert f'data-indicator-id="{ind.pk}"' in content
+        assert "Latency" in content
+
+    def test_partial_endpoint_placeholder_without_indicator(self):
+        client, user = _regular_client()
+        url = reverse("dashboard-indicator-widget")
+        resp = client.get(url)
+        assert resp.status_code == 200
+        assert "Choose an indicator" in resp.content.decode()
+
+    def test_partial_endpoint_handles_bad_indicator_id(self):
+        # A malformed indicator id must not 500; it renders the placeholder.
+        client, user = _regular_client()
+        url = reverse("dashboard-indicator-widget")
+        resp = client.get(url, {"indicator": "not-a-uuid"})
+        assert resp.status_code == 200
+        assert "Choose an indicator" in resp.content.decode()
+
+
+class TestAskCairnWidget:
+    """The Ask Cairn widget: a metrics snapshot synthesised by the LLM (with a
+    deterministic count fallback when the assistant is off / loading)."""
+
+    def test_in_registry_defaults_to_rail(self):
+        from core.dashboard import WIDGETS_BY_ID, default_layout
+
+        w = WIDGETS_BY_ID["ask_cairn"]
+        assert not w.multiple and not w.configurable
+        # Titled "Summary" ("Résumé" in French); the Ask Cairn brand lives in the
+        # AI attribution line, not the title.
+        assert str(w.title) == "Summary"
+        # Defaults to the top rail sub-zone (and is placeable in either).
+        assert w.default_zone == "rail_top"
+        entry = next((e for e in default_layout() if e["id"] == "ask_cairn"), None)
+        assert entry is not None and entry["zone"] == "rail_top"
+
+    def test_builds_metrics_snapshot_references_and_fallback(self):
+        RiskFactory(priority="critical")
+        # A non-urgent ("to plan") item: tracked, but must NOT feed the summary.
+        Role.objects.create(name="DPO", type="governance", is_mandatory=True)
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        data = resp.context["ask_cairn_data"]
+        assert data["critical_risks_to_treat"] == 1
+        assert "overall_compliance_pct" in data
+        # Only urgent (high-tone) items feed the summary; the mandatory role is
+        # tracked elsewhere but excluded from the snapshot and the references.
+        assert "mandatory_roles_without_owner" not in data
+        assert resp.context["mandatory_roles_no_user"] == 1
+        assert resp.context["ask_cairn_point_count"] == 1
+        # The references behind the snapshot, each linking out - all urgent.
+        refs = resp.context["ask_cairn_references"]
+        assert refs and refs[0]["url"] and all(r["tone"] == "high" for r in refs)
+        content = resp.content.decode()
+        assert 'data-widget-id="ask_cairn"' in content
+        # The snapshot is embedded for the async briefing fetch.
+        assert "data-facts=" in content
+        # AI disabled in tests -> deterministic count fallback + the references.
+        assert "point needs your attention today" in content
+        assert "ask-cairn__refs" in content and refs[0]["label"] in content
+
+    def test_all_clear_when_nothing_urgent(self):
+        # A non-urgent ("to plan") item exists, but the summary reacts only to
+        # urgent ones, so it still reads all-clear.
+        Role.objects.create(name="DPO", type="governance", is_mandatory=True)
+        client, user = _superuser_client()
+        resp = client.get(reverse("home"))
+        assert resp.context["mandatory_roles_no_user"] == 1  # tracked elsewhere
+        # No *urgent* items -> empty snapshot, all-clear message.
+        assert resp.context["ask_cairn_data"] == {}
+        assert resp.context["ask_cairn_point_count"] == 0
+        content = resp.content.decode()
+        assert 'data-widget-id="ask_cairn"' in content  # always rendered
+        assert "all clear" in content
+
+    def test_summary_shows_skeleton_not_count_while_loading(self, settings):
+        # With the assistant on, a modern skeleton placeholder is shown while the
+        # briefing loads - the deterministic count never flashes (it is kept
+        # hidden for the failure path only).
+        settings.AI_ASSISTANT_ENABLED = True
+        RiskFactory(priority="critical")
+        client, user = _superuser_client()
+        content = client.get(reverse("home")).content.decode()
+        assert "ask-cairn__skeleton" in content
+        assert "data-ai-count" in content
+
+    def test_emoji_forced_to_paragraph_start(self):
+        from core.views import _move_emojis_to_paragraph_start
+
+        out = _move_emojis_to_paragraph_start(
+            "<p>Two risks \U0001F4CA and one plan \U0001F6A8.</p><p>Audit ok.</p>"
+        )
+        # The first emoji is moved to the very start; any extra one is dropped.
+        assert out.startswith("<p>\U0001F4CA ")
+        assert "\U0001F6A8" not in out
+        assert out.count("\U0001F4CA") == 1
+        assert "<p>Audit ok.</p>" in out
+
+    def test_briefing_endpoint_disabled_returns_not_ok(self):
+        client, user = _regular_client()
+        resp = client.post(
+            reverse("dashboard-ask-cairn-briefing"),
+            data=json.dumps({"data": {"critical_risks_to_treat": 2}}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is False
+
+    def test_briefing_endpoint_generates_when_enabled(self, settings):
+        from unittest.mock import MagicMock, patch
+
+        settings.AI_ASSISTANT_ENABLED = True
+        settings.AI_ASSISTANT_PROVIDER = "mistral"
+        settings.AI_ASSISTANT_MODEL = "mistral-small-latest"
+        fake = MagicMock()
+        fake.chat_text.return_value = "Two critical risks need treatment today."
+        client, user = _regular_client()
+        with patch("assistant.providers.get_client", return_value=fake):
+            resp = client.post(
+                reverse("dashboard-ask-cairn-briefing"),
+                data=json.dumps({"data": {"critical_risks_to_treat": 2, "bogus": 9}}),
+                content_type="application/json",
+            )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["ok"] is True
+        assert body["text"] == "Two critical risks need treatment today."
+        # Honest attribution: the provider only (no model name), with a timestamp.
+        assert "powered by Mistral" in body["disclaimer"]
+        assert "mistral-small-latest" not in body["disclaimer"]
+        # The model only received allow-listed metric keys.
+        sent = fake.chat_text.call_args[0][0][1]["content"]
+        assert "critical_risks_to_treat" in sent and "bogus" not in sent
+
+    def test_briefing_endpoint_includes_audits_and_sanitizes_bold(self, settings):
+        from unittest.mock import MagicMock, patch
+
+        from compliance.constants import AssessmentStatus
+        from compliance.tests.factories import ComplianceAssessmentFactory
+
+        settings.AI_ASSISTANT_ENABLED = True
+        settings.AI_ASSISTANT_PROVIDER = "mistral"
+        settings.AI_ASSISTANT_MODEL = "mistral-small-latest"
+        today = date.today()
+        auditor = UserFactory(first_name="Sofia", last_name="Lindqvist")
+        audit = ComplianceAssessmentFactory(
+            name="ISO surveillance",
+            assessor=auditor,
+            status=AssessmentStatus.IN_PROGRESS,
+            assessment_start_date=today - timedelta(days=1),
+            assessment_end_date=today + timedelta(days=2),
+        )
+        audit.scopes.add(ScopeFactory(name="HQ Datacenter"))
+        fake = MagicMock()
+        fake.chat_text.return_value = (
+            "<p><b>Audits :</b> led by Sofia Lindqvist, covers HQ Datacenter.</p>"
+            "<p>2 risks.</p><script>x</script>"
+        )
+        client, user = _superuser_client()  # superuser -> the audit query is unscoped
+        with patch("assistant.providers.get_client", return_value=fake):
+            resp = client.post(
+                reverse("dashboard-ask-cairn-briefing"),
+                data=json.dumps({"data": {"overall_compliance_pct": 50}}),
+                content_type="application/json",
+            )
+        body = resp.json()
+        assert body["ok"] is True
+        # The audit brief is built server-side (name + scopes) and sent to the model.
+        sent = fake.chat_text.call_args[0][0][1]["content"]
+        assert "ongoing_audits" in sent
+        assert "ISO surveillance" in sent and "HQ Datacenter" in sent
+        # <p>/<b> are preserved; any other HTML the model emits is escaped.
+        assert "<p><b>Audits :</b>" in body["text"] and "HQ Datacenter" in body["text"]
+        assert "<p>2 risks.</p>" in body["text"]
+        # The named auditor is rendered as a photo + name chip.
+        assert 'class="ask-cairn__chip"' in body["text"]
+        assert "Sofia Lindqvist" in body["text"]
+        assert "<script>" not in body["text"] and "&lt;script&gt;" in body["text"]

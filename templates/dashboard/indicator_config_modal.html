@@ -1,0 +1,36 @@
+{% load i18n %}
+{# Shared dialog to configure an indicator widget: choose the indicator and toggle the mini-chart. The editor JS opens it from the gear button of whichever indicator widget is being configured, prefills it, and writes the choice back on Apply. #}
+<div class="modal fade" id="indicatorConfigModal" tabindex="-1" aria-labelledby="indicatorConfigLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="indicatorConfigLabel"><i class="bi bi-gear me-2" style="color:var(--accent)"></i>{% trans "Configure indicator" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="indicatorConfigSelect" class="form-label">{% trans "Indicator" %}</label>
+          <select id="indicatorConfigSelect" class="form-select">
+            <option value="">{% trans "Choose an indicator..." %}</option>
+            {% regroup available_indicators by get_indicator_type_display as indicator_groups %}
+            {% for group in indicator_groups %}
+            <optgroup label="{{ group.grouper }}">
+              {% for ind in group.list %}
+              <option value="{{ ind.pk }}">{{ ind.name }}</option>
+              {% endfor %}
+            </optgroup>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="indicatorConfigChart">
+          <label class="form-check-label" for="indicatorConfigChart">{% trans "Show chart" %}</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <button type="button" class="btn btn-primary" id="indicatorConfigApply">{% trans "Apply" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
