@@ -1789,3 +1789,31 @@ class TestAskCairnWidget:
         system_prompt = fake.chat_text.call_args[0][0][0]["content"]
         assert "in French" in system_prompt
         assert "in fr," not in system_prompt
+
+    def test_briefing_prompt_asks_for_idiomatic_not_literal_phrasing(self, settings):
+        """The prompt must tell the model to phrase the briefing idiomatically and
+        not translate the French example phrases word for word - which produced
+        stilted English like "Audit ISO 27001 in progress" (a literal rendering of
+        the French lead-in example)."""
+        from unittest.mock import MagicMock, patch
+
+        settings.AI_ASSISTANT_ENABLED = True
+        settings.AI_ASSISTANT_PROVIDER = "mistral"
+        settings.AI_ASSISTANT_MODEL = "mistral-small-latest"
+        user = UserFactory(language="en")
+        client = Client()
+        client.force_login(user)
+        fake = MagicMock()
+        fake.chat_text.return_value = "<p>All clear.</p>"
+        with patch("assistant.providers.get_client", return_value=fake):
+            client.post(
+                reverse("dashboard-ask-cairn-briefing"),
+                data=json.dumps({"data": {"critical_risks_to_treat": 2}}),
+                content_type="application/json",
+            )
+        system_prompt = fake.chat_text.call_args[0][0][0]["content"]
+        assert "IDIOMATICALLY" in system_prompt
+        # A natural English lead-in template is offered alongside the French one.
+        assert "ISO 27001 and NIS2 audits underway" in system_prompt
+        # The old wording that primed literal translation is gone.
+        assert "translate any such example into" not in system_prompt
