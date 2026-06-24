@@ -669,7 +669,7 @@ class TestOngoingAuditsWidget:
         from compliance.constants import AssessmentStatus
         from compliance.tests.factories import ComplianceAssessmentFactory
 
-        today = date.today()
+        today = timezone.localdate()
         audit = ComplianceAssessmentFactory(
             name="ISO 27001 surveillance",
             status=AssessmentStatus.IN_PROGRESS,
@@ -703,7 +703,7 @@ class TestOngoingAuditsWidget:
         from compliance.constants import AssessmentStatus
         from compliance.tests.factories import ComplianceAssessmentFactory
 
-        today = date.today()
+        today = timezone.localdate()
         common = dict(
             assessment_start_date=today - timedelta(days=1),
             assessment_end_date=today + timedelta(days=1),
@@ -730,7 +730,7 @@ class TestOngoingAuditsWidget:
         from compliance.constants import AssessmentStatus
         from compliance.tests.factories import ComplianceAssessmentFactory
 
-        today = date.today()
+        today = timezone.localdate()
         ComplianceAssessmentFactory(
             name="ISO surveillance",
             status=AssessmentStatus.IN_PROGRESS,
@@ -749,7 +749,7 @@ class TestOngoingAuditsWidget:
         from compliance.constants import AssessmentStatus
         from compliance.tests.factories import ComplianceAssessmentFactory
 
-        today = date.today()
+        today = timezone.localdate()
         ComplianceAssessmentFactory(
             status=AssessmentStatus.IN_PROGRESS,
             assessment_start_date=today - timedelta(days=1),
@@ -772,7 +772,7 @@ class TestOngoingAuditsWidget:
         from compliance.tests.factories import ComplianceAssessmentFactory
         from core.views import ongoing_audits_brief
 
-        today = date.today()
+        today = timezone.localdate()
         root = ScopeFactory(name="Company")
         child = ScopeFactory(name="IT", parent_scope=root)
         full = ComplianceAssessmentFactory(
@@ -1776,7 +1776,7 @@ class TestAskCairnWidget:
         settings.AI_ASSISTANT_ENABLED = True
         settings.AI_ASSISTANT_PROVIDER = "mistral"
         settings.AI_ASSISTANT_MODEL = "mistral-small-latest"
-        today = date.today()
+        today = timezone.localdate()
         auditor = UserFactory(first_name="Sofia", last_name="Lindqvist")
         audit = ComplianceAssessmentFactory(
             name="ISO surveillance",

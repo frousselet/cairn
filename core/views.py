@@ -100,7 +100,11 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        today = timezone.now().date()
+        # Local date (not UTC): timezone.now().date() can be a day off near
+        # midnight in a non-UTC timezone, skewing the day-based counts below
+        # (audits, deadlines, expiries). Same reasoning as the management-review
+        # held_date fix.
+        today = timezone.localdate()
 
         # Company identity shown in the dashboard header. Read-only access:
         # objects.first() instead of CompanySettings.get() to avoid creating
