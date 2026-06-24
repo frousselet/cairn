@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-06-25
+
 ### Added
 
 - **Section dashboard widget**: a new **Section** widget for the configurable dashboard - a full-width `<h2>` heading rendered **directly on the page background with no card** (a new `bare` widget flag strips the card's background, border, shadow and padding), used to group the widgets below it into labelled sections. It is a **multiple**, configurable widget: add as many as wanted from the gallery (under a new **Layout** category) and set each one's title via an edit-mode **gear** dialog (the title is stored per instance in `params`, trimmed and capped at 60 characters). It is a **half-row** tile (`4x0.5`): the main grid is now laid on **half-row tracks** so a tile can be half a row tall, while every existing widget keeps its exact height (a normal `H`-unit tile spans `H * 2` tracks). The heading is pushed **toward the bottom** of its band so there is more space above it than below (a section header sitting just above the widgets it labels), and the tile is content-height when the grid collapses on narrow screens. Persisted in `User.dashboard_layout` like any other widget (so it round-trips through `GET`/`PUT /api/v1/dashboard-layout/` and the dashboard MCP tools).
@@ -1177,6 +1179,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.31.0]: https://github.com/frousselet/cairn/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/frousselet/cairn/compare/v0.29.1...v0.30.0
 [0.29.1]: https://github.com/frousselet/cairn/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/frousselet/cairn/compare/v0.28.3...v0.29.0
