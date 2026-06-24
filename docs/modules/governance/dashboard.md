@@ -147,10 +147,11 @@ main area into labelled sections: it is **multiple** (add several from the
 gallery's **Layout** category) and configurable (a gear dialog sets the per
 instance `title`, trimmed and capped at `SECTION_TITLE_MAX_LENGTH` = 60). Its
 size is `4x0.5` - a **half-row** tile (see *Layout model*: the main grid is laid
-on half-row tracks so a tile can be half a row tall). The heading is vertically
-**centred** in that band so the space above and below it is balanced, and the
-tile takes its natural (content) height once the grid collapses to a single
-column below xl. Like the indicator widget it ships a hidden server-rendered
+on half-row tracks so a tile can be half a row tall). The heading is pushed
+**toward the bottom** of that band (`justify-content: flex-end`) so there is
+**more space above it than below** - it reads as a section header sitting just
+above the widgets it labels - and the tile takes its natural (content) height
+once the grid collapses to a single column below xl. Like the indicator widget it ships a hidden server-rendered
 clone source (`sectionWidgetTemplate`) that the editor duplicates per instance,
 and a shared config dialog (`sectionConfigModal`).
 
