@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **No negative letter-spacing on titles and indicators**: all titles, display classes and KPI / Overall-compliance values now use `letter-spacing: normal` (the previous tight tracking was removed). Positive tracking is kept only on uppercase eyebrows, badges and avatar initials. Brand guidelines updated accordingly (the two-family system is replaced by the single GitLab Sans family, and a "font matrix" methodology section was added for any future type revision).
 - **Bootstrap bumped to 5.3.8**: the CSS and JS bundle CDN references (app shell + login, MCP authorize and public Trust Center screens) were updated from 5.3.3 to 5.3.8, with refreshed Subresource Integrity (SRI) hashes.
 - **Softer page-header top fade**: the sticky page-header's frosted veil (`.page-header::before`) now fades out with many closely-spaced gradient stops following a gradual slow-fast-slow slope, and its blur mask steps down progressively instead of holding solid then dropping in a single ramp. This removes the faint banding lines that were visible where the old gradient changed slope abruptly, so content dissolves smoothly under the bar.
+- **Indicator widget cards no longer lift on hover**: the dashboard Indicator (KPI / `stat-card`) widgets dropped their `:hover` shadow + `translateY(-1px)` lift, matching the component's stated "the card itself stays calm" intent. The card stays a clickable link to the indicator detail, just without the motion.
 
 ### Fixed
 
