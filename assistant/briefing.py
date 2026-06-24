@@ -101,10 +101,15 @@ def get_or_generate_briefing(user, language, data):
     """
     if not settings.AI_ASSISTANT_ENABLED or not data:
         return None
+    # In dev (DEBUG) always regenerate: the briefing is being iterated on, so a
+    # day-long cache would mask prompt and snapshot changes. In production it is
+    # cached per user per day.
+    use_cache = not settings.DEBUG
     key = _cache_key(user, language)
-    hit = cache.get(key)
-    if hit is not None:
-        return hit
+    if use_cache:
+        hit = cache.get(key)
+        if hit is not None:
+            return hit
     try:
         text = _generate(language, data)
     except Exception:
@@ -117,7 +122,8 @@ def get_or_generate_briefing(user, language, data):
         "provider": provider_label(),
         "generated_at": timezone.now().isoformat(),
     }
-    cache.set(key, result, 60 * 60 * 20)
+    if use_cache:
+        cache.set(key, result, 60 * 60 * 20)
     return result
 
 
