@@ -165,14 +165,17 @@
   }
   .dash-widget--bare > .dash-widget__body { padding: 0; }
   /* The bare Section tile is a half-row band acting as a header. The body takes
-     content height (not stretched) and is pushed to the BOTTOM of the band via
-     the section's OWN column justify-content (the section is the flex column, the
-     body its item), so the band's free space sits ABOVE the heading - more room
-     above than below, like a header attached to the widgets beneath it. Below xl
-     the band is content-height, so the spacing is even there. */
+     content height (flex:0 0 auto) and the section's column justify-content pushes
+     it to the BOTTOM of the band, so the free space sits ABOVE the heading - more
+     room above than below, like a header attached to the widgets beneath it.
+     Below xl the band is content-height, so the spacing is even there. */
   .dashboard-main > .dash-widget--bare { justify-content: flex-end; }
   .dashboard-main > .dash-widget--bare > .dash-widget__body { flex: 0 0 auto; }
-  .dash-section-title {
+  /* Scoped to .dash-widget--bare so this `margin: 0` outranks the global
+     `.main-content h2 { margin-bottom: 2rem }` (a class+element selector that
+     beats a bare `.dash-section-title`); that stray 2rem was adding space BELOW
+     the heading and is what kept the title from sitting low in its band. */
+  .dash-widget--bare .dash-section-title {
     margin: 0;
     padding: 0 .25rem .25rem;
     font-family: var(--font-display);
