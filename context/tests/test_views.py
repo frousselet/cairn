@@ -385,6 +385,45 @@ class TestAdvancedFilters:
         assert any(o["value"] == "critical" for o in impact["options"])
 
 
+class TestTableBodyPagination:
+    """The HTMX table-body paginates and its response carries the pager OOB,
+    so filtering/search/paging stay consistent."""
+
+    def test_first_page_is_capped_and_has_pager(self):
+        client, _ = _superuser_client()
+        for _i in range(30):
+            IssueFactory()
+        body = client.get(reverse("context:issue-table-body")).content.decode()
+        assert body.count('class="ref"') == 25
+        assert 'id="list-pagination"' in body and 'hx-swap-oob="true"' in body
+        assert 'data-page="2"' in body
+
+    def test_second_page(self):
+        client, _ = _superuser_client()
+        for _i in range(30):
+            IssueFactory()
+        body = client.get(reverse("context:issue-table-body"), {"page": 2}).content.decode()
+        assert body.count('class="ref"') == 5
+
+    def test_search_narrows_and_repaginates(self):
+        client, _ = _superuser_client()
+        IssueFactory(name="ZebraUnique")
+        for _i in range(3):
+            IssueFactory(name="Common")
+        body = client.get(reverse("context:issue-table-body"), {"q": "ZebraUnique"}).content.decode()
+        assert body.count('class="ref"') == 1
+
+    def test_quoted_search_is_exact(self):
+        client, _ = _superuser_client()
+        IssueFactory(name="Alpha")
+        IssueFactory(name="Alpha extended")
+        url = reverse("context:issue-table-body")
+        # Substring: both match.
+        assert client.get(url, {"q": "Alpha"}).content.decode().count('class="ref"') == 2
+        # Quoted: only the exact title matches.
+        assert client.get(url, {"q": '"Alpha"'}).content.decode().count('class="ref"') == 1
+
+
 class TestSavedFilters:
     """Saved filters: list context (own + shared) and the CRUD API."""
 

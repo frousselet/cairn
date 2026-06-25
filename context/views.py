@@ -30,6 +30,7 @@ from core.mixins import (
     PredefinedFilterMixin,
     SavedFilterMixin,
     SortableListMixin,
+    TableBodyPaginatedMixin,
 )
 from .constants import (
     ActivityStatus,
@@ -1227,12 +1228,12 @@ class ScopeTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Predefined
         return ctx
 
 
-class IssueTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class IssueTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Issue
     permission_required = "context.issue.read"
     template_name = "context/issue_table_body.html"
     context_object_name = "issues"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = IssueListView.sortable_fields
     default_sort = IssueListView.default_sort
     search_fields = ["reference", "name"]
@@ -1245,12 +1246,12 @@ class IssueTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Predefined
         return self.filter_queryset_advanced(qs)
 
 
-class StakeholderTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class StakeholderTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Stakeholder
     permission_required = "context.stakeholder.read"
     template_name = "context/stakeholder_table_body.html"
     context_object_name = "stakeholders"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = StakeholderListView.sortable_fields
     default_sort = StakeholderListView.default_sort
     search_fields = ["reference", "name"]
@@ -1263,12 +1264,12 @@ class StakeholderTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Pred
         return self.filter_queryset_advanced(qs)
 
 
-class ObjectiveTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class ObjectiveTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Objective
     permission_required = "context.objective.read"
     template_name = "context/objective_table_body.html"
     context_object_name = "objectives"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = ObjectiveListView.sortable_fields
     default_sort = ObjectiveListView.default_sort
     search_fields = ["reference", "name"]
@@ -1281,12 +1282,12 @@ class ObjectiveTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Predef
         return self.filter_queryset_advanced(qs)
 
 
-class SwotTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class SwotTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = SwotAnalysis
     permission_required = "context.swot.read"
     template_name = "context/swot_table_body.html"
     context_object_name = "analyses"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = SwotListView.sortable_fields
     default_sort = SwotListView.default_sort
     search_fields = ["reference", "name"]
@@ -1305,12 +1306,12 @@ class SwotTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedF
         return self.filter_queryset_advanced(qs)
 
 
-class RoleTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class RoleTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Role
     permission_required = "context.role.read"
     template_name = "context/role_table_body.html"
     context_object_name = "roles"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = RoleListView.sortable_fields
     default_sort = RoleListView.default_sort
     search_fields = ["reference", "name"]
@@ -1329,12 +1330,12 @@ class RoleTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedF
         return self.filter_queryset_advanced(qs)
 
 
-class ActivityTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class ActivityTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Activity
     permission_required = "context.activity.read"
     template_name = "context/activity_table_body.html"
     context_object_name = "activities"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = ActivityListView.sortable_fields
     default_sort = ActivityListView.default_sort
     search_fields = ["reference", "name"]
@@ -1569,12 +1570,12 @@ class IndicatorListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
         return ctx
 
 
-class IndicatorTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class IndicatorTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Indicator
     permission_required = "context.indicator.read"
     template_name = "context/indicator_table_body.html"
     context_object_name = "indicators"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = IndicatorListView.sortable_fields
     default_sort = IndicatorListView.default_sort
     search_fields = ["reference", "name"]

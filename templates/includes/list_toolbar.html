@@ -8,7 +8,7 @@ offcanvas (included alongside this toolbar by the page).
 <div class="list-toolbar">
   <div class="list-toolbar__search">
     <i class="bi bi-search" aria-hidden="true"></i>
-    <input type="search" class="list-search-input" placeholder="{% trans 'Search…' %}" aria-label="{% trans 'Search' %}" autocomplete="off">
+    <input type="search" class="list-search-input" value="{{ request.GET.q }}" placeholder="{% trans 'Search…' %}" aria-label="{% trans 'Search' %}" autocomplete="off">
   </div>
   <div class="list-toolbar__spacer"></div>
   {% if saved_filter_view_key %}

@@ -2,8 +2,9 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.db import models as dj_models
-from django.db.models import Count, F
+from django.db.models import Count, F, Q
 from django.http import HttpResponse
+from django.template.loader import render_to_string
 from django.utils.dateparse import parse_date
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
@@ -160,7 +161,30 @@ class SortableListMixin:
         ctx["current_sort"] = sort_field or ""
         ctx["current_order"] = order or "asc"
         ctx["sort_view_key"] = self._get_sort_view_key()
+        # Elided page window (1 … 4 5 6 … 20) for the paginator UI.
+        page_obj = ctx.get("page_obj")
+        if page_obj is not None and page_obj.paginator.num_pages > 1:
+            ctx["page_range"] = page_obj.paginator.get_elided_page_range(
+                page_obj.number, on_each_side=1, on_ends=1
+            )
         return ctx
+
+
+class TableBodyPaginatedMixin:
+    """For HTMX table-body views: paginate the rows like the full list page and
+    return the rows partial PLUS an out-of-band pagination block, so the pager
+    (page count, numbers, prev/next) stays in sync with the active filters and
+    search on every refresh. The view keeps its rows partial as ``template_name``;
+    set ``paginate_by`` to match the list page (defaults to 25)."""
+
+    paginate_by = 25
+
+    def render_to_response(self, context, **response_kwargs):
+        rows = render_to_string(self.template_name, context, request=self.request)
+        pager = render_to_string(
+            "includes/pagination.html", {**context, "oob": True}, request=self.request
+        )
+        return HttpResponse(rows + pager)
 
 
 class ListSummaryMixin:
@@ -294,6 +318,22 @@ class PredefinedFilterMixin:
         return None
 
     def filter_queryset_predefined(self, qs):
+        # Server-side text search (the toolbar search box, ?q=), OR-combined
+        # across the view's search_fields, so it narrows the real queryset and
+        # the pagination reflects it. A query wrapped in double quotes ("A.5.1")
+        # means an exact (case-insensitive) match; otherwise it is a substring.
+        search = self.request.GET.get("q", "").strip()
+        search_fields = getattr(self, "search_fields", None)
+        if search and search_fields:
+            if len(search) >= 2 and search[0] == '"' and search[-1] == '"':
+                term, lookup = search[1:-1].strip(), "iexact"
+            else:
+                term, lookup = search, "icontains"
+            if term:
+                cond = Q()
+                for field in search_fields:
+                    cond |= Q(**{f"{field}__{lookup}": term})
+                qs = qs.filter(cond)
         for group in self.filter_groups:
             values = self.request.GET.getlist(group["param"])
             if values:
