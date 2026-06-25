@@ -808,7 +808,7 @@ Rules:
 | Need | Widget | Notes |
 | --- | --- | --- |
 | Short text | `<input type="text">` (`.form-control`) | Default. |
-| Long text | `<textarea>` (`.form-control`) | Auto-upgraded to **pell** rich text on page load (frosted glass field, Bootstrap-Icons toolbar, semantic attribute-free HTML). Opt out with `.no-richtext`. |
+| Long text | `<textarea>` (`.form-control`) | Auto-upgraded to **pell** rich text on page load (frosted glass field, Bootstrap-Icons toolbar, semantic attribute-free HTML). Stored content is sanitized with **DOMPurify** before being seeded into the editor. Opt out with `.no-richtext`. |
 | Enumerated value | `<select>` (`.form-select`) | Auto-upgraded to **TomSelect** for searchable single-select where appropriate. |
 | Tags | `<select multiple name="tags">` | Always **TomSelect** with the create plugin, initialised by `base.html`. |
 | Date | `<input type="date">` (`.form-control`) | Native picker; format `YYYY-MM-DD`. |
