@@ -5,31 +5,42 @@
 
 {% block extra_css %}
 <style>
-  /* Compact header: title + toolbar share one row, graph claims the rest */
-  .graph-header .page-header { margin-bottom: .75rem; align-items: center; }
+  /* This is a full-height page that does not scroll, so pin the (compact) title
+     bar flush to the top by dropping the page's large top padding - the bar then
+     sits exactly like a scrolled dashboard header. The responsive horizontal
+     container (width that narrows on small screens) is left untouched. */
+  .main-content { padding-top: 0 !important; }
 
-  /* Graph fills the remaining viewport below the header via fixed position */
+  /* The graph canvas fills the whole viewport and sits *behind* the sticky
+     compact header (lower z-index). The header's gradient/blur fade then
+     dissolves the top edge of the graph into the page, exactly like content
+     scrolling under the dashboard header. The fit logic keeps node content out
+     of the opaque title area while letting it rise into the fade. */
   #graph-container {
     position: fixed;
     left: 0;
     right: 0;
+    top: 0;
     bottom: 0;
+    z-index: 0;
     overflow: hidden;
     background: transparent;
   }
   #graph-container svg { width: 100%; height: 100%; }
+
+  /* Match the dashboard's responsive width: lift the default container-xl cap on
+     wide screens so the title bar spans the same width as the dashboard header
+     instead of shrinking to a narrow centred band. */
+  @media (min-width: 1800px) {
+    .main-content > .container-xl:has(#graph-container) { max-width: 1900px; }
+  }
+
   .node-label {
     font-size: 11px;
     font-family: 'GitLab Sans', sans-serif;
     pointer-events: none;
     fill: var(--text-primary);
     font-weight: 500;
-  }
-  .link-label {
-    font-size: 9px;
-    font-family: 'GitLab Sans', sans-serif;
-    fill: var(--text-muted);
-    pointer-events: none;
   }
 
   /* ── Header toolbar: stats · legend · zoom ─────── */
@@ -79,7 +90,6 @@
   /* ── Mobile optimizations ─────────────────────── */
   @media (max-width: 991.98px) {
     .main-content { padding-top: 3.5rem !important; }
-    .graph-header .page-header { margin-bottom: .5rem; }
     .graph-stat { font-size: .72rem; padding: .2rem .45rem; }
   }
   @media (max-width: 575.98px) {
@@ -92,8 +102,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="graph-header">
-{% page_header _("Dependency graph") nav="assets:dependency-graph" accent="assets" %}
+{% page_header _("Dependency graph") nav="assets:dependency-graph" accent="assets" compact=True %}
   <div class="graph-toolbar">
     <span class="graph-stat" title="{% trans 'Asset dependencies' %}"><i class="bi bi-diagram-3 text-primary"></i> <strong>{{ asset_dep_count }}</strong> <span class="graph-stat-lbl">{% trans "Asset dep." %}</span></span>
     <span class="graph-stat" title="{% trans 'Supplier dependencies' %}"><i class="bi bi-truck text-info"></i> <strong>{{ supplier_dep_count }}</strong> <span class="graph-stat-lbl">{% trans "Supplier dep." %}</span></span>
@@ -114,6 +123,10 @@
       </div>
     </div>
 
+    <button class="btn btn-outline-secondary" id="orientation-toggle" type="button" title="{% trans 'Toggle layout orientation' %}">
+      <i class="bi bi-arrow-left-right"></i> <span class="d-none d-sm-inline">{% trans "Orientation" %}</span>
+    </button>
+
     <div class="btn-group" role="group" aria-label="{% trans 'Zoom controls' %}">
       <button class="btn btn-outline-secondary" onclick="resetZoom()" title="{% trans 'Reset zoom' %}"><i class="bi bi-arrows-fullscreen"></i></button>
       <button class="btn btn-outline-secondary" onclick="zoomIn()" title="{% trans 'Zoom in' %}"><i class="bi bi-zoom-in"></i></button>
@@ -121,24 +134,10 @@
     </div>
   </div>
 {% endpage_header %}
-</div>
 
 <div id="graph-container">
   <svg id="graph-svg"></svg>
 </div>
-<script>
-  // Anchor the graph canvas right below the header, and keep it there on resize.
-  (function() {
-    function place() {
-      var header = document.querySelector('.graph-header');
-      if (!header) return;
-      var rect = header.getBoundingClientRect();
-      document.getElementById('graph-container').style.top = Math.ceil(rect.bottom) + 8 + 'px';
-    }
-    place();
-    window.addEventListener('resize', place);
-  })();
-</script>
 {% endblock %}
 
 {% block extra_js %}
@@ -153,26 +152,55 @@
     return;
   }
 
-  // d3 is loaded from a CDN. Under hx-boost navigation the external
-  // <script> is injected asynchronously, so the init code below would run
-  // before d3 is ready and the graph stays blank until a full page reload.
-  // Load d3 on demand and only build the graph once d3 is available.
-  function withD3(cb) {
-    if (window.d3) { cb(); return; }
-    var s = document.getElementById('d3-cdn');
-    if (!s) {
-      s = document.createElement('script');
-      s.id = 'd3-cdn';
-      s.src = 'https://d3js.org/d3.v7.min.js';
+  // d3 (rendering) and dagre (layered layout) are loaded from a CDN. Under
+  // hx-boost navigation the external <script> is injected asynchronously, so
+  // the init code below would run before the libs are ready and the graph
+  // stays blank until a full page reload. Load both on demand and only build
+  // the graph once they are available.
+  function loadScript(id, src) {
+    return new Promise(function(resolve) {
+      var existing = document.getElementById(id);
+      if (existing) {
+        if (existing.dataset.loaded) { resolve(); return; }
+        existing.addEventListener('load', function() { resolve(); });
+        return;
+      }
+      var s = document.createElement('script');
+      s.id = id;
+      s.src = src;
+      s.addEventListener('load', function() { s.dataset.loaded = '1'; resolve(); });
       document.head.appendChild(s);
-    }
-    s.addEventListener('load', cb);
+    });
+  }
+
+  function withLibs(cb) {
+    var needD3 = window.d3 ? Promise.resolve() : loadScript('d3-cdn', 'https://d3js.org/d3.v7.min.js');
+    var needDagre = window.dagre ? Promise.resolve() : loadScript('dagre-cdn', 'https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js');
+    Promise.all([needD3, needDagre]).then(cb);
   }
 
   function initGraph() {
   var container = document.getElementById('graph-container');
   var width = container.clientWidth;
   var height = container.clientHeight;
+
+  // The canvas spans the whole viewport behind the header. Reserve the header's
+  // OPAQUE height (its box minus the bottom fade) at the top so node content
+  // starts at the fade and dissolves under it, instead of hiding behind the
+  // title or stopping at a hard line.
+  function topInset() {
+    var h = document.querySelector('[data-page-header]');
+    if (!h) return 0;
+    var b = Math.round(h.getBoundingClientRect().bottom);
+    return Math.max(0, b - 28); // ~the compact bar's bottom fade band
+  }
+  var inset = topInset();
+
+  // Minimum readable zoom. Fitting a large graph entirely would shrink the
+  // nodes/labels until they are unreadable, so we never zoom out below this:
+  // past this point the graph overflows and the user pans around it. It is also
+  // the scale the layout targets when spacing the asset-type ranks to fit.
+  var MIN_SCALE = 0.5;
 
   var svg = d3.select('#graph-svg')
     .attr('viewBox', [0, 0, width, height]);
@@ -209,21 +237,157 @@
     };
   });
 
-  var simulation = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(function(d) { return d.id; }).distance(190))
-    // Local repulsion only: distanceMax stops disconnected components from
-    // pushing each other to the other side of the canvas.
-    .force('charge', d3.forceManyBody().strength(-420).distanceMax(650))
-    .force('center', d3.forceCenter(width / 2, height / 2))
-    // Gentle gravity toward the centre: keeps orphan clusters in frame without
-    // crushing everything into one overlapping blob.
-    .force('x', d3.forceX(width / 2).strength(0.045))
-    .force('y', d3.forceY(height / 2).strength(0.045))
-    // Collision radius accounts for the node *and* its label so neighbours
-    // don't overlap their text.
-    .force('collision', d3.forceCollide().radius(function(d) {
-      return (sizeMap[d.type] || 14) + 50;
-    }));
+  // Resolve string endpoints to the actual node objects (dagre is fed ids,
+  // but the render code reads source/target positions off the node objects).
+  links.forEach(function(l) {
+    l.source = nodeById[l.source];
+    l.target = nodeById[l.target];
+  });
+
+  // Pre-compute each node's truncated caption once, reused for both layout
+  // sizing and rendering so the two never drift apart.
+  nodes.forEach(function(n) {
+    n.display = n.label.length > 22 ? n.label.substring(0, 22) + '...' : n.label;
+  });
+
+  // Measure real text widths so dagre can reserve room for every caption and
+  // edge label. Without this dagre only knows the node disc and the labels
+  // overlap. The font must match the .node-label CSS.
+  var measureCtx = document.createElement('canvas').getContext('2d');
+  function measure(text, font) {
+    measureCtx.font = font;
+    return measureCtx.measureText(text).width;
+  }
+  var NODE_FONT = '500 11px "GitLab Sans", sans-serif';
+
+  // Layered (Sugiyama) layout via dagre. The dependency data is a directed
+  // acyclic flow Essential -> Support -> Site -> Supplier, so ranking the
+  // nodes into columns and flowing the edges one way removes the force-graph
+  // "hairball" entirely. We compute node x/y and edge waypoints here and the
+  // render code just reads them; orientation can be flipped at runtime.
+  var labelHeight = 20; // room reserved under each node for its caption
+  function computeLayout(rankdir, ranksep, nodesep) {
+    var dg = new dagre.graphlib.Graph({ multigraph: true });
+    dg.setGraph({
+      rankdir: rankdir,        // 'LR' (columns) or 'TB' (rows)
+      nodesep: nodesep,        // gap between nodes in the same rank (set to fit)
+      ranksep: ranksep,        // gap between asset-type ranks (set to fill screen)
+      edgesep: 30,
+      marginx: 60,
+      marginy: 60,
+      ranker: 'network-simplex'
+    });
+    dg.setDefaultEdgeLabel(function() { return {}; });
+
+    nodes.forEach(function(n) {
+      var r = sizeMap[n.type] || 14;
+      // Reserve the larger of the node disc and its caption so dagre keeps
+      // captions from overlapping their neighbours in either orientation.
+      var captionW = measure(n.display, NODE_FONT) + 16;
+      dg.setNode(n.id, {
+        width: Math.max(r * 2 + 12, captionW),
+        height: r * 2 + labelHeight
+      });
+    });
+    links.forEach(function(l, i) {
+      dg.setEdge(l.source.id, l.target.id, {}, 'e' + i);
+    });
+
+    dagre.layout(dg);
+
+    nodes.forEach(function(n) {
+      var p = dg.node(n.id);
+      n.x = p.x;
+      n.y = p.y;
+    });
+    links.forEach(function(l, i) {
+      var e = dg.edge(l.source.id, l.target.id, 'e' + i);
+      // dagre returns the polyline waypoints (incl. the trimmed endpoints).
+      l.points = (e && e.points) ? e.points : [
+        { x: l.source.x, y: l.source.y },
+        { x: l.target.x, y: l.target.y }
+      ];
+    });
+  }
+
+  function getCookie(name) {
+    var m = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function setCookie(name, value) {
+    document.cookie = name + '=' + encodeURIComponent(value) + ';path=/;max-age=31536000;samesite=lax';
+  }
+
+  // Horizontal (left-to-right) by default; the user's last choice is remembered
+  // per device in a cookie, since the best orientation depends on the screen.
+  var stored = getCookie('depgraph_orientation');
+  var orientation = (stored === 'LR' || stored === 'TB') ? stored : 'LR';
+
+  // Number of ranks (asset-type columns/rows) along the layered axis.
+  function rankAxisCount() {
+    var seen = {};
+    nodes.forEach(function(n) {
+      seen[orientation === 'LR' ? Math.round(n.x) : Math.round(n.y)] = 1;
+    });
+    return Object.keys(seen).length;
+  }
+
+  // Size the gap *between* asset-type ranks so the handful of type ranks span
+  // their own axis of the viewport at the minimum zoom, and therefore all fit.
+  // In top-to-bottom the type bands are stacked vertically, so this makes every
+  // type fit the height (the densely populated horizontal axis then overflows
+  // and is panned); in left-to-right it is the mirror image across the width.
+  // The lever is ranksep (gap between ranks), not the within-rank spacing.
+  var NODESEP = 38; // readable spacing along the densely populated axis
+  function relayoutForViewport() {
+    var baseSep = 180;
+    computeLayout(orientation, baseSep, NODESEP);
+    var ranks = rankAxisCount();
+    if (ranks < 2) return;
+    var alongV = orientation === 'TB';        // is the rank axis vertical?
+    var lo = d3.min(nodes, function(d) { return alongV ? d.y : d.x; });
+    var hi = d3.max(nodes, function(d) { return alongV ? d.y : d.x; });
+    var centerSpan0 = hi - lo;                 // rank-axis span between centres
+    var rankThickness = alongV ? 52 : 150;     // node size on the rank axis
+    var viewport = alongV ? (height - inset) : width;
+    var avail = viewport / MIN_SCALE - 120;    // graph units available at min zoom
+    var targetSpan = Math.max(rankThickness, avail - rankThickness);
+    var sep = baseSep + (targetSpan - centerSpan0) / (ranks - 1);
+    computeLayout(orientation, Math.max(150, Math.min(sep, 4000)), NODESEP);
+  }
+  relayoutForViewport();
+
+  // Smooth path through the dagre waypoints.
+  var lineGen = d3.line()
+    .x(function(p) { return p.x; })
+    .y(function(p) { return p.y; })
+    .curve(d3.curveBasis);
+
+  // Trim a polyline so its first/last points sit on the node circles (plus a
+  // small pad for the arrowhead) instead of on the larger dagre bounding box.
+  // This keeps arrowheads touching the nodes whatever the orientation.
+  function trimToCircle(from, toward, radius) {
+    var dx = from.x - toward.x;
+    var dy = from.y - toward.y;
+    var len = Math.sqrt(dx * dx + dy * dy) || 1;
+    return { x: toward.x + (dx / len) * radius, y: toward.y + (dy / len) * radius };
+  }
+
+  function edgePoints(d) {
+    if (!d.points || d.points.length < 2) {
+      return [{ x: d.source.x, y: d.source.y }, { x: d.target.x, y: d.target.y }];
+    }
+    var pts = d.points.slice();
+    var sr = (sizeMap[d.source.type] || 14) + 2;
+    var tr = (sizeMap[d.target.type] || 14) + 1; // path ends at the arrowhead tip
+    pts[0] = trimToCircle(pts[1], { x: d.source.x, y: d.source.y }, sr);
+    pts[pts.length - 1] = trimToCircle(pts[pts.length - 2], { x: d.target.x, y: d.target.y }, tr);
+    return pts;
+  }
+
+  function linkPath(d) {
+    return lineGen(edgePoints(d));
+  }
 
   // Arrow markers - grey for normal, red for SPOF
   svg.append('defs').selectAll('marker')
@@ -231,41 +395,30 @@
     .join('marker')
       .attr('id', function(d) { return 'arrow-' + d; })
       .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 25)
+      .attr('refX', 10)
       .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
+      .attr('markerWidth', 7)
+      .attr('markerHeight', 7)
       .attr('orient', 'auto')
     .append('path')
       .attr('fill', function(d) { return d === 'spof' ? '#f87171' : '#94a3b8'; })
       .attr('d', 'M0,-5L10,0L0,5');
 
   var link = g.append('g')
-    .selectAll('line')
+    .selectAll('path')
     .data(links)
-    .join('line')
+    .join('path')
+      .attr('fill', 'none')
       .attr('stroke', function(d) { return d.is_spof ? '#f87171' : '#94a3b8'; })
-      .attr('stroke-width', function(d) { return d.is_spof ? 2.5 : 1.5; })
+      .attr('stroke-width', function(d) { return d.is_spof ? 4 : 2.75; })
       .attr('marker-end', function(d) {
         return d.is_spof ? 'url(#arrow-spof)' : 'url(#arrow-default)';
       });
 
-  var linkLabel = g.append('g')
-    .selectAll('text')
-    .data(links)
-    .join('text')
-      .attr('class', 'link-label')
-      .attr('text-anchor', 'middle')
-      .text(function(d) { return d.label; });
-
   var node = g.append('g')
     .selectAll('g')
     .data(nodes)
-    .join('g')
-      .call(d3.drag()
-        .on('start', dragstarted)
-        .on('drag', dragged)
-        .on('end', dragended));
+    .join('g');
 
   // Clip path for supplier logos
   svg.select('defs').selectAll('clipPath')
@@ -283,8 +436,7 @@
       return colorMap[d.type] || '#94a3b8';
     })
     .attr('stroke', '#fff')
-    .attr('stroke-width', 2)
-    .style('cursor', 'grab');
+    .attr('stroke-width', 2);
 
   // Logo image for suppliers with a logo
   node.filter(function(d) { return d.logo; })
@@ -317,76 +469,84 @@
     .attr('class', 'node-label')
     .attr('dy', function(d) { return (sizeMap[d.type] || 14) + 14; })
     .attr('text-anchor', 'middle')
-    .text(function(d) {
-      return d.label.length > 22 ? d.label.substring(0, 22) + '...' : d.label;
-    });
+    .text(function(d) { return d.display; });
 
   // Tooltip
   node.append('title')
     .text(function(d) { return d.label + ' (' + d.type + ')'; });
 
-  simulation.on('tick', function() {
-    link
-      .attr('x1', function(d) { return d.source.x; })
-      .attr('y1', function(d) { return d.source.y; })
-      .attr('x2', function(d) { return d.target.x; })
-      .attr('y2', function(d) { return d.target.y; });
+  // Render the current node/edge positions. With a static layout this replaces
+  // the force-simulation tick: call it once after layout and again whenever the
+  // orientation flips.
+  function applyPositions(duration) {
+    var l = duration ? link.transition().duration(duration) : link;
+    l.attr('d', linkPath);
 
-    linkLabel
-      .attr('x', function(d) { return (d.source.x + d.target.x) / 2; })
-      .attr('y', function(d) { return (d.source.y + d.target.y) / 2 - 5; });
+    var n = duration ? node.transition().duration(duration) : node;
+    n.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+  }
 
-    node.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
-  });
-
-  // Zoom
+  // Zoom. The lower bound is the readable floor (MIN_SCALE) defined above.
   var zoom = d3.zoom()
-    .scaleExtent([0.2, 4])
+    .scaleExtent([MIN_SCALE, 4])
     .on('zoom', function(event) { g.attr('transform', event.transform); });
 
   svg.call(zoom);
 
-  function dragstarted(event) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
-    event.subject.fx = event.subject.x;
-    event.subject.fy = event.subject.y;
-  }
-  function dragged(event) {
-    event.subject.fx = event.x;
-    event.subject.fy = event.y;
-  }
-  function dragended(event) {
-    if (!event.active) simulation.alphaTarget(0);
-    event.subject.fx = null;
-    event.subject.fy = null;
-  }
-
-  // Zoom-to-fit: compute bounding box of all nodes and fit the view
-  function zoomToFit(duration) {
+  // Fit the whole graph into the canvas, but never below MIN_SCALE. When the
+  // graph fits, it is centred; when MIN_SCALE forces it larger than the canvas,
+  // it is anchored to the top-left so the user starts at a natural origin and
+  // pans from there.
+  function fitView(duration) {
     if (nodes.length === 0) return;
-    var padding = 60;
+    var pad = 50;
+    var availH = Math.max(1, height - inset); // visible height below the header
     var xMin = d3.min(nodes, function(d) { return d.x; });
     var xMax = d3.max(nodes, function(d) { return d.x; });
     var yMin = d3.min(nodes, function(d) { return d.y; });
     var yMax = d3.max(nodes, function(d) { return d.y; });
-    var bboxW = xMax - xMin + padding * 2;
-    var bboxH = yMax - yMin + padding * 2;
-    var midX = (xMin + xMax) / 2;
-    var midY = (yMin + yMax) / 2;
-    var scale = Math.min(width / bboxW, height / bboxH, 1.5);
-    scale = Math.max(scale, 0.2);
-    var tx = width / 2 - midX * scale;
-    var ty = height / 2 - midY * scale;
+    var bw = (xMax - xMin) + pad * 2;
+    var bh = (yMax - yMin) + pad * 2;
+    var scale = Math.min(width / bw, availH / bh, 1.4);
+    scale = Math.max(scale, MIN_SCALE);
+    var gw = (xMax - xMin) * scale, gh = (yMax - yMin) * scale;
+    var tx = gw <= width ? width / 2 - ((xMin + xMax) / 2) * scale : pad - xMin * scale;
+    // Place content in the band below the header: centre it there when it fits,
+    // else anchor its top at the inset so the first rank rises into the fade.
+    var ty = gh <= availH
+      ? inset + (availH - gh) / 2 - yMin * scale
+      : inset - yMin * scale;
     var t = d3.zoomIdentity.translate(tx, ty).scale(scale);
     svg.transition().duration(duration || 0).call(zoom.transform, t);
   }
 
-  // Auto-fit once simulation settles
-  simulation.on('end', function() { zoomToFit(600); });
+  // Initial paint, then fit the layered layout into view.
+  applyPositions(0);
+  fitView(0);
+
+  // Orientation toggle: re-rank the graph left-to-right <-> top-to-bottom and
+  // remember the choice in the cookie.
+  var orientationBtn = document.getElementById('orientation-toggle');
+  function syncOrientationIcon() {
+    if (!orientationBtn) return;
+    var icon = orientationBtn.querySelector('i');
+    if (icon) icon.className = orientation === 'LR' ? 'bi bi-arrow-left-right' : 'bi bi-arrow-down-up';
+  }
+  syncOrientationIcon();
+  if (orientationBtn) {
+    orientationBtn.addEventListener('click', function() {
+      orientation = orientation === 'LR' ? 'TB' : 'LR';
+      setCookie('depgraph_orientation', orientation);
+      relayoutForViewport();
+      applyPositions(500);
+      fitView(500);
+      syncOrientationIcon();
+    });
+  }
 
   // Toolbar functions
   window.resetZoom = function() {
-    zoomToFit(500);
+    fitView(500);
   };
   window.zoomIn = function() {
     svg.transition().duration(300).call(zoom.scaleBy, 1.3);
@@ -394,9 +554,26 @@
   window.zoomOut = function() {
     svg.transition().duration(300).call(zoom.scaleBy, 0.7);
   };
+
+  // Keep the graph filling the screen when it resizes (rotation, window drag):
+  // re-match the aspect ratio to the new viewport and refit.
+  var resizeTimer = null;
+  window.addEventListener('resize', function() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+      width = container.clientWidth;
+      height = container.clientHeight;
+      if (!width || !height) return;
+      inset = topInset();
+      svg.attr('viewBox', [0, 0, width, height]);
+      relayoutForViewport();
+      applyPositions(0);
+      fitView(0);
+    }, 200);
+  });
   }
 
-  withD3(initGraph);
+  withLibs(initGraph);
 })();
 </script>
 {% endblock %}

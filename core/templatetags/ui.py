@@ -486,6 +486,10 @@ class PageHeaderNode(template.Node):
             accent=accent,
             eyebrow=eyebrow,
             crumbs=crumbs,
+            # When set, the bar renders in its compact (collapsed) form from the
+            # start and stays there - used by full-height pages (e.g. the
+            # dependency graph) that do not scroll, to reclaim vertical space.
+            compact=bool(resolved_kwargs.get("compact")),
             actions_html=mark_safe(actions_html) if actions_html else "",
         ):
             tpl = context.template.engine.get_template("components/page_header.html")
