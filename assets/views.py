@@ -141,7 +141,7 @@ class EssentialAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSu
     text_filters = ESSENTIAL_ASSET_TEXT_FILTERS
     columns = ESSENTIAL_ASSET_COLUMNS
     permission_required = "assets.essential_asset.read"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -244,7 +244,7 @@ class SupportAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumm
     text_filters = SUPPORT_ASSET_TEXT_FILTERS
     columns = SUPPORT_ASSET_COLUMNS
     permission_required = "assets.support_asset.read"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -346,7 +346,7 @@ class DependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
     text_filters = DEPENDENCY_TEXT_FILTERS
     columns = DEPENDENCY_COLUMNS
     permission_required = "assets.dependency.read"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "essential": "essential_asset__name",
@@ -413,7 +413,7 @@ class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
     text_filters = GROUP_TEXT_FILTERS
     columns = GROUP_COLUMNS
     permission_required = "assets.group.read"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -511,7 +511,7 @@ class SupplierListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
     text_filters = SUPPLIER_TEXT_FILTERS
     columns = SUPPLIER_COLUMNS
     permission_required = "assets.supplier.read"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -917,7 +917,7 @@ class SupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, Li
     text_filters = SUPPLIER_DEPENDENCY_TEXT_FILTERS
     columns = SUPPLIER_DEPENDENCY_COLUMNS
     permission_required = "assets.supplier_dependency.read"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "support": "support_asset__name",
@@ -1093,7 +1093,7 @@ class SiteAssetDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, L
     text_filters = SITE_ASSET_DEPENDENCY_TEXT_FILTERS
     columns = SITE_ASSET_DEPENDENCY_COLUMNS
     permission_required = "assets.dependency.read"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "support": "support_asset__name",
@@ -1161,7 +1161,7 @@ class SiteSupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin
     text_filters = SITE_SUPPLIER_DEPENDENCY_TEXT_FILTERS
     columns = SITE_SUPPLIER_DEPENDENCY_COLUMNS
     permission_required = "assets.supplier_dependency.read"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "site": "site__name",

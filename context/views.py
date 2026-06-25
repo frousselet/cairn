@@ -415,7 +415,7 @@ class IssueListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
     filter_groups = ISSUE_FILTER_GROUPS
     text_filters = ISSUE_TEXT_FILTERS
     columns = ISSUE_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -524,7 +524,7 @@ class StakeholderListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumma
     filter_groups = STAKEHOLDER_FILTER_GROUPS
     text_filters = STAKEHOLDER_TEXT_FILTERS
     columns = STAKEHOLDER_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -623,7 +623,7 @@ class ObjectiveListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
     filter_groups = OBJECTIVE_FILTER_GROUPS
     text_filters = OBJECTIVE_TEXT_FILTERS
     columns = OBJECTIVE_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -715,7 +715,7 @@ class SwotListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
     filter_groups = SWOT_FILTER_GROUPS
     text_filters = SWOT_TEXT_FILTERS
     columns = SWOT_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -1036,7 +1036,7 @@ class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
     filter_groups = ROLE_FILTER_GROUPS
     text_filters = ROLE_TEXT_FILTERS
     columns = ROLE_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -1139,7 +1139,7 @@ class ActivityListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
     filter_groups = ACTIVITY_FILTER_GROUPS
     text_filters = ACTIVITY_TEXT_FILTERS
     columns = ACTIVITY_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -1233,7 +1233,7 @@ class IssueTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyP
     permission_required = "context.issue.read"
     template_name = "context/issue_table_body.html"
     context_object_name = "issues"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = IssueListView.sortable_fields
     default_sort = IssueListView.default_sort
     search_fields = ["reference", "name"]
@@ -1251,7 +1251,7 @@ class StakeholderTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Tabl
     permission_required = "context.stakeholder.read"
     template_name = "context/stakeholder_table_body.html"
     context_object_name = "stakeholders"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = StakeholderListView.sortable_fields
     default_sort = StakeholderListView.default_sort
     search_fields = ["reference", "name"]
@@ -1269,7 +1269,7 @@ class ObjectiveTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableB
     permission_required = "context.objective.read"
     template_name = "context/objective_table_body.html"
     context_object_name = "objectives"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = ObjectiveListView.sortable_fields
     default_sort = ObjectiveListView.default_sort
     search_fields = ["reference", "name"]
@@ -1287,7 +1287,7 @@ class SwotTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPa
     permission_required = "context.swot.read"
     template_name = "context/swot_table_body.html"
     context_object_name = "analyses"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = SwotListView.sortable_fields
     default_sort = SwotListView.default_sort
     search_fields = ["reference", "name"]
@@ -1311,7 +1311,7 @@ class RoleTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPa
     permission_required = "context.role.read"
     template_name = "context/role_table_body.html"
     context_object_name = "roles"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = RoleListView.sortable_fields
     default_sort = RoleListView.default_sort
     search_fields = ["reference", "name"]
@@ -1335,7 +1335,7 @@ class ActivityTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBo
     permission_required = "context.activity.read"
     template_name = "context/activity_table_body.html"
     context_object_name = "activities"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = ActivityListView.sortable_fields
     default_sort = ActivityListView.default_sort
     search_fields = ["reference", "name"]
@@ -1537,7 +1537,7 @@ class IndicatorListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
     filter_groups = INDICATOR_FILTER_GROUPS
     text_filters = INDICATOR_TEXT_FILTERS
     columns = INDICATOR_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     indicator_type = None
     sortable_fields = {
         "reference": "reference",
@@ -1575,7 +1575,7 @@ class IndicatorTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableB
     permission_required = "context.indicator.read"
     template_name = "context/indicator_table_body.html"
     context_object_name = "indicators"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = IndicatorListView.sortable_fields
     default_sort = IndicatorListView.default_sort
     search_fields = ["reference", "name"]

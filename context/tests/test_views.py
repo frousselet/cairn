@@ -391,19 +391,19 @@ class TestTableBodyPagination:
 
     def test_first_page_is_capped_and_has_pager(self):
         client, _ = _superuser_client()
-        for _i in range(30):
+        for _i in range(60):
             IssueFactory()
         body = client.get(reverse("context:issue-table-body")).content.decode()
-        assert body.count('class="ref"') == 25
+        assert body.count('class="ref"') == 50
         assert 'id="list-pagination"' in body and 'hx-swap-oob="true"' in body
         assert 'data-page="2"' in body
 
     def test_second_page(self):
         client, _ = _superuser_client()
-        for _i in range(30):
+        for _i in range(60):
             IssueFactory()
         body = client.get(reverse("context:issue-table-body"), {"page": 2}).content.decode()
-        assert body.count('class="ref"') == 5
+        assert body.count('class="ref"') == 10
 
     def test_search_narrows_and_repaginates(self):
         client, _ = _superuser_client()

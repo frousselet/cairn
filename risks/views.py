@@ -576,7 +576,7 @@ class RiskAssessmentListView(
     filter_groups = ASSESSMENT_FILTER_GROUPS
     text_filters = ASSESSMENT_TEXT_FILTERS
     columns = ASSESSMENT_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -678,7 +678,7 @@ class RiskAssessmentTableBodyView(
     permission_required = "risks.assessment.read"
     template_name = "risks/assessment_table_body.html"
     context_object_name = "assessments"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = RiskAssessmentListView.sortable_fields
     default_sort = RiskAssessmentListView.default_sort
     search_fields = ["reference", "name"]
@@ -784,7 +784,7 @@ class RiskCriteriaListView(
     filter_groups = CRITERIA_FILTER_GROUPS
     text_filters = CRITERIA_TEXT_FILTERS
     columns = CRITERIA_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -935,7 +935,7 @@ class RiskCriteriaTableBodyView(
     permission_required = "risks.criteria.read"
     template_name = "risks/criteria_table_body.html"
     context_object_name = "criteria_list"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = RiskCriteriaListView.sortable_fields
     default_sort = RiskCriteriaListView.default_sort
     search_fields = ["reference", "name"]
@@ -983,7 +983,7 @@ class RiskListView(
     filter_groups = RISK_FILTER_GROUPS
     text_filters = RISK_TEXT_FILTERS
     columns = RISK_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -1222,7 +1222,7 @@ class RiskTableBodyView(
     permission_required = "risks.risk.read"
     template_name = "risks/risk_table_body.html"
     context_object_name = "risks"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = RiskListView.sortable_fields
     default_sort = RiskListView.default_sort
     search_fields = ["reference", "name"]
@@ -1356,7 +1356,7 @@ class TreatmentPlanListView(
     filter_groups = TREATMENT_PLAN_FILTER_GROUPS
     text_filters = TREATMENT_PLAN_TEXT_FILTERS
     columns = TREATMENT_PLAN_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -1436,7 +1436,7 @@ class TreatmentPlanTableBodyView(
     permission_required = "risks.treatment.read"
     template_name = "risks/treatment_plan_table_body.html"
     context_object_name = "plans"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = TreatmentPlanListView.sortable_fields
     default_sort = TreatmentPlanListView.default_sort
     search_fields = ["reference", "name", "risk__reference"]
@@ -1570,7 +1570,7 @@ class RiskAcceptanceListView(
     filter_groups = ACCEPTANCE_FILTER_GROUPS
     text_filters = ACCEPTANCE_TEXT_FILTERS
     columns = ACCEPTANCE_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "risk": "risk__reference",
@@ -1640,7 +1640,7 @@ class RiskAcceptanceTableBodyView(
     permission_required = "risks.acceptance.read"
     template_name = "risks/acceptance_table_body.html"
     context_object_name = "acceptances"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = RiskAcceptanceListView.sortable_fields
     default_sort = RiskAcceptanceListView.default_sort
     search_fields = ["reference", "risk__reference", "risk__name"]
@@ -1689,7 +1689,7 @@ class ThreatListView(
     filter_groups = THREAT_FILTER_GROUPS
     text_filters = THREAT_TEXT_FILTERS
     columns = THREAT_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -1773,7 +1773,7 @@ class ThreatTableBodyView(
     permission_required = "risks.threat.read"
     template_name = "risks/threat_table_body.html"
     context_object_name = "threats"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = ThreatListView.sortable_fields
     default_sort = ThreatListView.default_sort
     search_fields = ["reference", "name"]
@@ -1820,7 +1820,7 @@ class VulnerabilityListView(
     filter_groups = VULNERABILITY_FILTER_GROUPS
     text_filters = VULNERABILITY_TEXT_FILTERS
     columns = VULNERABILITY_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -1902,7 +1902,7 @@ class VulnerabilityTableBodyView(
     permission_required = "risks.vulnerability.read"
     template_name = "risks/vulnerability_table_body.html"
     context_object_name = "vulnerabilities"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = VulnerabilityListView.sortable_fields
     default_sort = VulnerabilityListView.default_sort
     search_fields = ["reference", "name"]
@@ -1968,7 +1968,7 @@ class ISO27005RiskListView(
     filter_groups = ISO27005_FILTER_GROUPS
     text_filters = ISO27005_TEXT_FILTERS
     columns = ISO27005_COLUMNS
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "threat": "threat__name",
@@ -2059,7 +2059,7 @@ class ISO27005RiskTableBodyView(
     permission_required = "risks.iso27005.read"
     template_name = "risks/iso27005_risk_table_body.html"
     context_object_name = "analyses"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = ISO27005RiskListView.sortable_fields
     default_sort = ISO27005RiskListView.default_sort
     search_fields = ["reference", "threat__name", "vulnerability__name"]

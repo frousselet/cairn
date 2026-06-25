@@ -6280,8 +6280,9 @@
           body: JSON.stringify({ view_key: viewKey, name: name, query: query, is_shared: !!(sharedEl && sharedEl.checked) })
         })
           .then(function(r) { return r.ok ? r.json() : null; })
-          .then(function(data) {
-            if (!data) return;
+          .then(function(payload) {
+            if (!payload) return;
+            var data = payload.data || payload;  // unwrap the {status, data} envelope
             var empty = listEl.querySelector('.saved-filter-empty');
             if (empty) empty.remove();
             var item = document.createElement('div');

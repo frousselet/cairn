@@ -189,7 +189,7 @@ class UserListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
     model = User
     template_name = "accounts/user_list.html"
     context_object_name = "users"
-    paginate_by = 25
+    paginate_by = 50
     permission_required = "system.users.read"
     sortable_fields = {
         "name": "last_name",
@@ -268,7 +268,7 @@ class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
     model = Group
     template_name = "accounts/group_list.html"
     context_object_name = "groups"
-    paginate_by = 25
+    paginate_by = 50
     permission_required = "system.groups.read"
     sortable_fields = {"name": "name"}
     default_sort = "name"
@@ -596,7 +596,7 @@ class AccessLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
 class CalendarSubscriptionListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
     template_name = "accounts/calendar_subscription_list.html"
     context_object_name = "tokens"
-    paginate_by = 25
+    paginate_by = 50
     permission_required = "system.users.read"
     sortable_fields = {
         "user": "user__last_name",

@@ -25,7 +25,7 @@ class ReportListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = Report
     template_name = "reports/report_list.html"
     context_object_name = "reports"
-    paginate_by = 25
+    paginate_by = 50
 
 
 class SoaReportCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
