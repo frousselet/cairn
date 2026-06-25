@@ -217,12 +217,22 @@ class ListSummaryMixin:
     # Tile tone -> (CSS tone class, Bootstrap icon) for the rail KPI tiles.
     _TONE_STYLE = {
         "success": ("success", "check-circle"),
-        "warning": ("warning", "exclamation-triangle"),
+        "warning": ("warning", "hourglass-split"),
         "danger": ("danger", "x-circle"),
         "info": ("accent", "info-circle"),
         "neutral": ("neutral", "circle"),
         "accent": ("accent", "record-circle"),
     }
+    # Cycling palette for states with no semantic tone, so a tile is NEVER left
+    # flat grey: every state gets a distinct colour + icon.
+    _TONE_PALETTE = [
+        ("accent", "record-circle"),
+        ("warning", "hourglass-split"),
+        ("success", "flag"),
+        ("danger", "slash-circle"),
+        ("accent", "bookmark"),
+        ("warning", "clock-history"),
+    ]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -253,17 +263,21 @@ class ListSummaryMixin:
         }
 
     def _heuristic_style(self, value):
-        """Best-effort tone for a choice-based status code, so even lists without
-        a workflow get coloured, distinctively-iconed tiles. Order matters
-        (danger before success so "non_compliant" isn't read as "compliant")."""
+        """Best-effort tone for a status code, so lists without workflow tones
+        still read semantically. Returns None when nothing matches (the caller
+        then assigns a palette colour, so no tile is ever left flat grey). Order
+        matters (danger before success so "non_compliant" isn't read as
+        "compliant")."""
         v = str(value).lower()
-        if any(k in v for k in ("major", "critical", "non_compliant", "noncompliant", "fail", "reject", "overdue", "blocked", "danger", "closed_ko")):
+        if any(k in v for k in ("major", "critical", "non_compliant", "noncompliant", "fail", "reject", "overdue", "blocked", "danger", "expired", "late", "_ko", "cancel")):
             return self._TONE_STYLE["danger"]
-        if any(k in v for k in ("minor", "partial", "pending", "progress", "monitored", "review", "medium", "warning", "draft")):
+        if any(k in v for k in ("minor", "partial", "pending", "progress", "ongoing", "cours", "monitored", "review", "medium", "warning", "draft", "wip")):
             return self._TONE_STYLE["warning"]
-        if any(k in v for k in ("compliant", "valid", "active", "done", "resolved", "approved", "success", "closed", "passed")):
+        if any(k in v for k in ("compliant", "valid", "active", "done", "complet", "finish", "termin", "resolved", "approved", "success", "closed", "passed", "achiev", "realis")):
             return self._TONE_STYLE["success"]
-        return self._TONE_STYLE["neutral"]
+        if any(k in v for k in ("plan", "scheduled", "prevu", "todo", "backlog", "new", "open", "identif", "draft_new")):
+            return self._TONE_STYLE["accent"]
+        return None
 
     def _summary_label_pairs(self, model):
         """Ordered ``(value, label)`` pairs for the status field.
@@ -301,20 +315,26 @@ class ListSummaryMixin:
                     .annotate(_c=Count("pk"))
                 )
                 styles = self._state_styles(model)
+                palette_i = 0
                 items = []
                 for value, label in self._summary_label_pairs(model):
                     count = counts.get(value, 0)
                     if not count:
                         continue
-                    tone, icon = styles.get(value) or self._heuristic_style(value)
+                    style = styles.get(value) or self._heuristic_style(value)
+                    # No semantic tone (or a plain neutral one): take the next
+                    # palette colour so the tile is never left flat grey.
+                    if style is None or style[0] == "neutral":
+                        style = self._TONE_PALETTE[palette_i % len(self._TONE_PALETTE)]
+                        palette_i += 1
                     items.append(
                         {
                             "value": value,
                             "label": label,
                             "count": count,
                             "active": str(current) == str(value),
-                            "tone": tone,
-                            "icon": icon,
+                            "tone": style[0],
+                            "icon": style[1],
                         }
                     )
                 total = sum(counts.values())
