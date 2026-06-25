@@ -175,9 +175,9 @@ class TableBodyPaginatedMixin:
     return the rows partial PLUS an out-of-band pagination block, so the pager
     (page count, numbers, prev/next) stays in sync with the active filters and
     search on every refresh. The view keeps its rows partial as ``template_name``;
-    set ``paginate_by`` to match the list page (defaults to 25)."""
+    set ``paginate_by`` to match the list page (defaults to 50)."""
 
-    paginate_by = 25
+    paginate_by = 50
 
     def render_to_response(self, context, **response_kwargs):
         rows = render_to_string(self.template_name, context, request=self.request)

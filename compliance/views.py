@@ -165,7 +165,7 @@ class FrameworkListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
     columns = FRAMEWORK_COLUMNS
     template_name = "compliance/framework_list.html"
     context_object_name = "frameworks"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -439,7 +439,7 @@ class RequirementListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumma
     scope_parent_lookup = "framework__scopes"
     template_name = "compliance/requirement_list.html"
     context_object_name = "requirements"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "requirement_number": "requirement_number",
@@ -545,7 +545,7 @@ class AssessmentListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
     columns = ASSESSMENT_COLUMNS
     template_name = "compliance/assessment_list.html"
     context_object_name = "assessments"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -1550,7 +1550,7 @@ class MappingListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMi
     scope_parent_lookup = "source_requirement__framework__scopes"
     template_name = "compliance/mapping_list.html"
     context_object_name = "mappings"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "source": "source_requirement__reference",
         "target": "target_requirement__reference",
@@ -1648,7 +1648,7 @@ class ActionPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
     columns = ACTION_PLAN_COLUMNS
     template_name = "compliance/action_plan_list.html"
     context_object_name = "action_plans"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -1855,7 +1855,7 @@ class FrameworkTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableB
     permission_required = "compliance.framework.read"
     template_name = "compliance/framework_table_body.html"
     context_object_name = "frameworks"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = FrameworkListView.sortable_fields
     default_sort = FrameworkListView.default_sort
     search_fields = ["reference", "name", "short_name"]
@@ -1875,7 +1875,7 @@ class RequirementTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Tabl
     status_param = "compliance_status"
     template_name = "compliance/requirement_table_body.html"
     context_object_name = "requirements"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = RequirementListView.sortable_fields
     default_sort = RequirementListView.default_sort
     search_fields = ["reference", "requirement_number", "name", "framework__name"]
@@ -1898,7 +1898,7 @@ class AssessmentTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Table
     permission_required = "compliance.assessment.read"
     template_name = "compliance/assessment_table_body.html"
     context_object_name = "assessments"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = AssessmentListView.sortable_fields
     default_sort = AssessmentListView.default_sort
     search_fields = ["reference", "name"]
@@ -1921,7 +1921,7 @@ class MappingTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBod
     scope_parent_lookup = "source_requirement__framework__scopes"
     template_name = "compliance/mapping_table_body.html"
     context_object_name = "mappings"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = MappingListView.sortable_fields
     default_sort = MappingListView.default_sort
     search_fields = [
@@ -1947,7 +1947,7 @@ class ActionPlanTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Table
     permission_required = "compliance.action_plan.read"
     template_name = "compliance/action_plan_table_body.html"
     context_object_name = "action_plans"
-    paginate_by = 25
+    paginate_by = 50
     sortable_fields = ActionPlanListView.sortable_fields
     default_sort = ActionPlanListView.default_sort
     search_fields = ["reference", "name"]
