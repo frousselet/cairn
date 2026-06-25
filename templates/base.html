@@ -3319,6 +3319,20 @@
     .mform-meter-text { font-size: .7rem; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
     .form-required { color: var(--text-muted); font-weight: 400; }
 
+    /* ── Multi-step body : constant height across steps ──────
+     * All steps are stacked in a single CSS grid cell, so the body is
+     * always as tall as the TALLEST step and never grows or shrinks when
+     * navigating Back / Next. The inactive steps keep their layout box
+     * (visibility:hidden, not display:none) so they still drive the cell
+     * height; the JS only toggles the [hidden] attribute as before. */
+    .mform-steps { display: grid; grid-template-columns: 1fr; align-items: start; }
+    .mform-steps > .mform-step { grid-area: 1 / 1; min-width: 0; }
+    .mform-steps > .mform-step[hidden] {
+      display: block;          /* cancel the UA display:none from [hidden] */
+      visibility: hidden;      /* stays in layout (sizes the cell), out of tab order */
+      pointer-events: none;
+    }
+
     /* ── Icon picker widget ────────────────────────── */
     .icon-picker { position: relative; }
     .icon-picker-popover {
