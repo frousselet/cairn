@@ -1,18 +1,38 @@
 {% load i18n %}
-{% if is_paginated %}
-<nav class="mt-4">
-  <ul class="pagination justify-content-center">
+{% comment %}
+List paginator. Always renders the #list-pagination container (so an HTMX
+table-body refresh can replace it out-of-band via hx-swap-oob and keep the page
+count in sync with the active filters). Page buttons carry data-page and are
+driven by the shared refreshList() script, which re-sends the current filters +
+search, so paging never loses them.
+{% endcomment %}
+<div id="list-pagination"{% if oob %} hx-swap-oob="true"{% endif %} class="list-pagination">
+  {% if page_obj %}
+  <div class="list-pagination__count">
+    {% blocktrans count counter=page_obj.paginator.count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktrans %}
+  </div>
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav class="list-pagination__nav" aria-label="{% trans 'Pagination' %}">
     {% if page_obj.has_previous %}
-    <li class="page-item">
-      <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
-    </li>
+    <button type="button" class="page-btn page-btn--nav" data-page="{{ page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+    {% else %}
+    <button type="button" class="page-btn page-btn--nav" disabled aria-label="{% trans 'Previous' %}"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
     {% endif %}
-    <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% for num in page_range %}
+      {% if num == page_obj.paginator.ELLIPSIS %}
+        <span class="page-ellipsis" aria-hidden="true">{{ num }}</span>
+      {% elif num == page_obj.number %}
+        <button type="button" class="page-btn is-current" aria-current="page">{{ num }}</button>
+      {% else %}
+        <button type="button" class="page-btn" data-page="{{ num }}">{{ num }}</button>
+      {% endif %}
+    {% endfor %}
     {% if page_obj.has_next %}
-    <li class="page-item">
-      <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
-    </li>
+    <button type="button" class="page-btn page-btn--nav" data-page="{{ page_obj.next_page_number }}" aria-label="{% trans 'Next' %}"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+    {% else %}
+    <button type="button" class="page-btn page-btn--nav" disabled aria-label="{% trans 'Next' %}"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
     {% endif %}
-  </ul>
-</nav>
-{% endif %}
+  </nav>
+  {% endif %}
+  {% endif %}
+</div>

@@ -28,6 +28,7 @@ from core.mixins import (
     PredefinedFilterMixin,
     SavedFilterMixin,
     SortableListMixin,
+    TableBodyPaginatedMixin,
 )
 from .constants import (
     AcceptanceStatus,
@@ -670,14 +671,14 @@ class RiskAssessmentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Dele
 
 
 class RiskAssessmentTableBodyView(
-    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin,
     ScopeFilterMixin, SortableListMixin, ListView
 ):
     model = RiskAssessment
     permission_required = "risks.assessment.read"
     template_name = "risks/assessment_table_body.html"
     context_object_name = "assessments"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = RiskAssessmentListView.sortable_fields
     default_sort = RiskAssessmentListView.default_sort
     search_fields = ["reference", "name"]
@@ -927,14 +928,14 @@ class RiskCriteriaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delete
 
 
 class RiskCriteriaTableBodyView(
-    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin,
     ScopeFilterMixin, SortableListMixin, ListView
 ):
     model = RiskCriteria
     permission_required = "risks.criteria.read"
     template_name = "risks/criteria_table_body.html"
     context_object_name = "criteria_list"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = RiskCriteriaListView.sortable_fields
     default_sort = RiskCriteriaListView.default_sort
     search_fields = ["reference", "name"]
@@ -1213,7 +1214,7 @@ class RiskDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMix
 
 
 class RiskTableBodyView(
-    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin,
     ScopeFilterMixin, SortableListMixin, ListView
 ):
     scope_parent_lookup = "assessment__scopes"
@@ -1221,7 +1222,7 @@ class RiskTableBodyView(
     permission_required = "risks.risk.read"
     template_name = "risks/risk_table_body.html"
     context_object_name = "risks"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = RiskListView.sortable_fields
     default_sort = RiskListView.default_sort
     search_fields = ["reference", "name"]
@@ -1427,7 +1428,7 @@ class TreatmentPlanDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Scope
 
 
 class TreatmentPlanTableBodyView(
-    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin,
     ScopeFilterMixin, SortableListMixin, ListView
 ):
     scope_parent_lookup = "risk__assessment__scopes"
@@ -1435,7 +1436,7 @@ class TreatmentPlanTableBodyView(
     permission_required = "risks.treatment.read"
     template_name = "risks/treatment_plan_table_body.html"
     context_object_name = "plans"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = TreatmentPlanListView.sortable_fields
     default_sort = TreatmentPlanListView.default_sort
     search_fields = ["reference", "name", "risk__reference"]
@@ -1631,7 +1632,7 @@ class RiskAcceptanceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Scop
 
 
 class RiskAcceptanceTableBodyView(
-    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin,
     ScopeFilterMixin, SortableListMixin, ListView
 ):
     scope_parent_lookup = "risk__assessment__scopes"
@@ -1639,7 +1640,7 @@ class RiskAcceptanceTableBodyView(
     permission_required = "risks.acceptance.read"
     template_name = "risks/acceptance_table_body.html"
     context_object_name = "acceptances"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = RiskAcceptanceListView.sortable_fields
     default_sort = RiskAcceptanceListView.default_sort
     search_fields = ["reference", "risk__reference", "risk__name"]
@@ -1765,14 +1766,14 @@ class ThreatDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 
 class ThreatTableBodyView(
-    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin,
     ScopeFilterMixin, SortableListMixin, ListView
 ):
     model = Threat
     permission_required = "risks.threat.read"
     template_name = "risks/threat_table_body.html"
     context_object_name = "threats"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = ThreatListView.sortable_fields
     default_sort = ThreatListView.default_sort
     search_fields = ["reference", "name"]
@@ -1894,14 +1895,14 @@ class VulnerabilityDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delet
 
 
 class VulnerabilityTableBodyView(
-    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin,
     ScopeFilterMixin, SortableListMixin, ListView
 ):
     model = Vulnerability
     permission_required = "risks.vulnerability.read"
     template_name = "risks/vulnerability_table_body.html"
     context_object_name = "vulnerabilities"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = VulnerabilityListView.sortable_fields
     default_sort = VulnerabilityListView.default_sort
     search_fields = ["reference", "name"]
@@ -2050,7 +2051,7 @@ class ISO27005RiskDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
 
 
 class ISO27005RiskTableBodyView(
-    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin,
     ScopeFilterMixin, SortableListMixin, ListView
 ):
     scope_parent_lookup = "assessment__scopes"
@@ -2058,7 +2059,7 @@ class ISO27005RiskTableBodyView(
     permission_required = "risks.iso27005.read"
     template_name = "risks/iso27005_risk_table_body.html"
     context_object_name = "analyses"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = ISO27005RiskListView.sortable_fields
     default_sort = ISO27005RiskListView.default_sort
     search_fields = ["reference", "threat__name", "vulnerability__name"]

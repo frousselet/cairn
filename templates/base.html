@@ -4166,6 +4166,31 @@
     .columns-menu__label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .col-hidden { display: none !important; }
 
+    /* List paginator: result count on the left, page controls on the right. */
+    .list-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+    }
+    .list-pagination:empty { display: none; }
+    .list-pagination__count { font-size: .85rem; color: var(--text-muted); }
+    .list-pagination__nav { display: flex; align-items: center; gap: .25rem; margin-left: auto; }
+    .page-btn {
+      min-width: 2rem; height: 2rem; padding: 0 .5rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border-light); background: var(--surface);
+      color: var(--text-secondary); border-radius: var(--radius-sm);
+      font-size: .85rem; cursor: pointer;
+      transition: border-color .15s var(--ease-out), color .15s var(--ease-out);
+    }
+    .page-btn:hover:not(:disabled):not(.is-current) { border-color: var(--accent); color: var(--accent); }
+    .page-btn.is-current { background: var(--accent); border-color: var(--accent); color: #fff; cursor: default; }
+    .page-btn:disabled { opacity: .4; cursor: default; }
+    .page-ellipsis { padding: 0 .25rem; color: var(--text-muted); }
+
     /* Clean section labels inside the filter offcanvas (bold, not uppercase). */
     .filter-label {
       display: block;
@@ -6012,16 +6037,7 @@
       }
     }
     function applyFilters(form, close) {
-      var tbody = document.getElementById('item-table-body');
-      var qs = new URLSearchParams(new FormData(form)).toString();
-      var listUrl = form.getAttribute('data-list-url') || location.pathname;
-      // Lists without an HTMX table-body endpoint apply filters by navigating.
-      if (!tbody || !tbody.getAttribute('hx-get') || !window.htmx) {
-        window.location = listUrl + (qs ? '?' + qs : '');
-        return;
-      }
-      window.htmx.trigger(tbody, 'refreshTable');
-      history.replaceState(null, '', listUrl + (qs ? '?' + qs : ''));
+      window.refreshList();                 // page resets to 1, filters + search re-sent
       updateIndicator(countActive(form));
       if (close) {
         var oc = document.getElementById('listFilterOffcanvas');
@@ -6060,30 +6076,68 @@
     });
   })();
 
-  /* ── List toolbar search (client-side row filter) ──────
-     Filters the rows of #item-table-body by substring; re-binds and re-applies
-     after each HTMX table-body swap so a filtered/refreshed table stays in sync. */
-  (function() {
-    function bind() {
-      var input = document.querySelector('.list-search-input');
-      var tbody = document.getElementById('item-table-body');
-      if (!input || !tbody) return;
-      function apply() {
-        var q = input.value.trim().toLowerCase();
-        var rows = tbody.querySelectorAll('tr');
-        rows.forEach(function(r) {
-          if (r.querySelector('td[colspan]')) return; /* empty-state row */
-          r.style.display = (!q || r.textContent.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
-        });
-      }
-      if (!input.dataset.listSearchBound) {
-        input.addEventListener('input', apply);
-        input.dataset.listSearchBound = 'true';
-      }
-      apply();
+  /* ── List refresh: one path for search, filters and paging ──────
+     Every refresh re-sends the current filter form + search box + page, so the
+     server returns the right rows AND an out-of-band pagination block. This is
+     why paging never loses the active filters. Lists with an HTMX table-body
+     endpoint refresh in place; lists without one fall back to a navigation. */
+  window.gatherListParams = function() {
+    var p = new URLSearchParams();
+    var form = document.querySelector('.list-filter-form');
+    if (form) {
+      // Predefined facets (multi-select): only the chosen options.
+      form.querySelectorAll('select[multiple]').forEach(function(sel) {
+        if (!sel.name) return;
+        Array.prototype.forEach.call(sel.selectedOptions, function(o) { p.append(sel.name, o.value); });
+      });
+      // Text rules: send the value AND its operator only when a value is typed,
+      // so an untouched rule never leaves "<field>_op=contains" noise in the URL.
+      form.querySelectorAll('input[type="text"]').forEach(function(inp) {
+        var val = (inp.value || '').trim();
+        if (!inp.name || !val) return;
+        p.append(inp.name, val);
+        if (inp.name.slice(-2) === '_q') {
+          var op = form.querySelector('[name="' + inp.name.slice(0, -2) + '_op"]');
+          if (op && op.value) p.append(op.name, op.value);
+        }
+      });
+      // Advanced rules: only those that actually carry a value.
+      form.querySelectorAll('input[name="rule"]').forEach(function(h) {
+        try {
+          var v = JSON.parse(h.value).v;
+          if (Array.isArray(v) ? v.length : String(v == null ? '' : v).trim()) p.append('rule', h.value);
+        } catch (e) { /* ignore */ }
+      });
     }
-    bind();
-    document.body.addEventListener('htmx:afterSettle', bind);
+    var s = document.querySelector('.list-search-input');
+    if (s && s.value.trim()) p.set('q', s.value.trim());
+    return p;
+  };
+  window.refreshList = function(page) {
+    var tbody = document.getElementById('item-table-body');
+    var params = window.gatherListParams();
+    if (page) params.set('page', page);
+    var qs = params.toString();
+    var url = tbody && tbody.getAttribute('hx-get');
+    if (!url || !window.htmx) {
+      window.location = location.pathname + (qs ? '?' + qs : '');
+      return;
+    }
+    window.htmx.ajax('GET', url + (qs ? '?' + qs : ''), { target: '#item-table-body', swap: 'innerHTML' });
+    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+  };
+  (function() {
+    var t;
+    document.body.addEventListener('input', function(e) {
+      if (!e.target.classList || !e.target.classList.contains('list-search-input')) return;
+      clearTimeout(t);
+      t = setTimeout(function() { window.refreshList(); }, 300);
+    });
+    document.body.addEventListener('click', function(e) {
+      var btn = e.target.closest('.page-btn[data-page]');
+      if (!btn || btn.disabled) return;
+      window.refreshList(btn.getAttribute('data-page'));
+    });
   })();
 
   /* ── Advanced filter builder (any-field rules) ──────
@@ -6993,7 +7047,10 @@
       internalHide = true;
       getDrawer().hide();
       var tableBody = document.getElementById('item-table-body');
-      if (tableBody && tableBody.hasAttribute('hx-trigger')) {
+      if (window.refreshList && tableBody && tableBody.getAttribute('hx-get')) {
+        /* Keep the active filters / search / page after a create or edit. */
+        window.refreshList();
+      } else if (tableBody && tableBody.hasAttribute('hx-trigger')) {
         htmx.trigger(tableBody, 'refreshTable');
       } else {
         window.location.reload();

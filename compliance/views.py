@@ -33,6 +33,7 @@ from core.mixins import (
     PredefinedFilterMixin,
     SavedFilterMixin,
     SortableListMixin,
+    TableBodyPaginatedMixin,
 )
 from .forms import (
     ActionPlanTransitionForm,
@@ -1849,12 +1850,12 @@ class ActionPlanCommentCreateView(LoginRequiredMixin, PermissionRequiredMixin, V
 
 # ── Table body views (HTMX partial refresh) ───────────────
 
-class FrameworkTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class FrameworkTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Framework
     permission_required = "compliance.framework.read"
     template_name = "compliance/framework_table_body.html"
     context_object_name = "frameworks"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = FrameworkListView.sortable_fields
     default_sort = FrameworkListView.default_sort
     search_fields = ["reference", "name", "short_name"]
@@ -1867,14 +1868,14 @@ class FrameworkTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Predef
         return self.filter_queryset_advanced(qs)
 
 
-class RequirementTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class RequirementTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Requirement
     permission_required = "compliance.requirement.read"
     scope_parent_lookup = "framework__scopes"
     status_param = "compliance_status"
     template_name = "compliance/requirement_table_body.html"
     context_object_name = "requirements"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = RequirementListView.sortable_fields
     default_sort = RequirementListView.default_sort
     search_fields = ["reference", "requirement_number", "name", "framework__name"]
@@ -1892,12 +1893,12 @@ class RequirementTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Pred
         return self.filter_queryset_advanced(qs)
 
 
-class AssessmentTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class AssessmentTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = ComplianceAssessment
     permission_required = "compliance.assessment.read"
     template_name = "compliance/assessment_table_body.html"
     context_object_name = "assessments"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = AssessmentListView.sortable_fields
     default_sort = AssessmentListView.default_sort
     search_fields = ["reference", "name"]
@@ -1914,13 +1915,13 @@ class AssessmentTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Prede
         return self.filter_queryset_advanced(qs)
 
 
-class MappingTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class MappingTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = RequirementMapping
     permission_required = "compliance.mapping.read"
     scope_parent_lookup = "source_requirement__framework__scopes"
     template_name = "compliance/mapping_table_body.html"
     context_object_name = "mappings"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = MappingListView.sortable_fields
     default_sort = MappingListView.default_sort
     search_fields = [
@@ -1941,12 +1942,12 @@ class MappingTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Predefin
         return self.filter_queryset_advanced(qs)
 
 
-class ActionPlanTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class ActionPlanTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = ComplianceActionPlan
     permission_required = "compliance.action_plan.read"
     template_name = "compliance/action_plan_table_body.html"
     context_object_name = "action_plans"
-    paginate_by = None
+    paginate_by = 25
     sortable_fields = ActionPlanListView.sortable_fields
     default_sort = ActionPlanListView.default_sort
     search_fields = ["reference", "name"]
