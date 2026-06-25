@@ -5415,6 +5415,7 @@
   })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/pell@1.0.6/dist/pell.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
   <script>
   /* ── Global: Rich-text (pell) + TomSelect on all forms ──── */
   (function() {
@@ -5438,10 +5439,32 @@
     /* Strip pell's empty-editor markup back to '' so required-field
        detection and storage never see a phantom value. */
     function normalizeRT(html) {
-      var d = document.createElement('div');
-      d.innerHTML = html || '';
-      if (d.textContent.trim() === '' && !d.querySelector('hr, img, table')) return '';
+      /* Parse without executing/attaching (not an innerHTML sink) just to test
+         whether the editor is visually empty. */
+      var body = new DOMParser().parseFromString(html || '', 'text/html').body;
+      if (body.textContent.trim() === '' && !body.querySelector('hr, img, table')) return '';
       return html;
+    }
+
+    /* Stored rich text is admin/contributor-authored HTML; seeding it into the
+       editor is a DOM-as-HTML sink (stored XSS). Sanitize with DOMPurify before
+       it ever touches innerHTML, keeping only the formatting tags the editor
+       and the server-side sanitizer allow. If DOMPurify is somehow unavailable,
+       fall back to plain text (safe; the original value in the textarea, which
+       is what gets submitted, is left untouched). */
+    var RT_SANITIZE_CONFIG = {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del', 'ins',
+                     'ul', 'ol', 'li', 'a', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote',
+                     'code', 'pre', 'span', 'hr'],
+      ALLOWED_ATTR: ['href', 'target', 'rel']
+    };
+    function seedRichText(host, html) {
+      html = html || '';
+      if (window.DOMPurify && typeof window.DOMPurify.sanitize === 'function') {
+        host.content.innerHTML = window.DOMPurify.sanitize(html, RT_SANITIZE_CONFIG);
+      } else {
+        host.content.textContent = html;
+      }
     }
 
     function rtActions() {
@@ -5490,7 +5513,7 @@
           textarea.dispatchEvent(new Event('input', { bubbles: true }));
         }
       });
-      host.content.innerHTML = textarea.value || '';
+      seedRichText(host, textarea.value);
       var ph = textarea.getAttribute('placeholder');
       if (ph) host.content.setAttribute('data-placeholder', ph);
       textarea._rtHost = host;
