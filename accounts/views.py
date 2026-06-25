@@ -14,9 +14,17 @@ from django.utils.translation import gettext as _, gettext_lazy as _lazy
 from django.views import View
 from django.views.generic import DetailView, ListView
 
-from accounts.constants import PERMISSION_REGISTRY, MODULE_LABELS
+from accounts.constants import PERMISSION_REGISTRY, MODULE_LABELS, AccessEventType, PermissionAction, UserType
 from core.history import EntryKind, classify_record
-from core.mixins import ListSummaryMixin, SortableListMixin
+from core.mixins import (
+    AdvancedFilterMixin,
+    ColumnPreferenceMixin,
+    ListSummaryMixin,
+    PredefinedFilterMixin,
+    SavedFilterMixin,
+    SortableListMixin,
+    TableBodyPaginatedMixin,
+)
 from accounts.forms import (
     CompanySettingsForm,
     GroupForm,
@@ -185,28 +193,84 @@ class CompanySettingsView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 # ── Users ───────────────────────────────────────────────────
 
-class UserListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
+USER_FILTER_GROUPS = [
+    {"param": "type", "field": "user_type", "label": _lazy("Type"), "options": UserType.choices},
+]
+USER_TEXT_FILTERS = [
+    {"param": "name", "field": "last_name", "label": _lazy("Name")},
+    {"param": "email", "field": "email", "label": _lazy("Email")},
+]
+USER_COLUMNS = [
+    {"key": "name", "label": _lazy("Name"), "always": True},
+    {"key": "job_title", "label": _lazy("Job title")},
+    {"key": "status", "label": _lazy("Status")},
+    {"key": "last_login", "label": _lazy("Last login")},
+    {"key": "actions", "label": _lazy("Actions"), "always": True},
+]
+
+USER_SORTABLE_FIELDS = {
+    "name": "last_name",
+    "email": "email",
+    "status": "is_active",
+    "last_login": "last_login",
+}
+
+
+def _user_list_kpis(base):
+    """Coloured KPI tiles for the user list rail, computed from the base queryset
+    (before facets)."""
+    if base is None:
+        return []
+    return [
+        {"label": _("Total"), "value": base.count(), "icon": "people", "tone": "accent"},
+        {"label": _("Active"), "value": base.filter(is_active=True).count(), "icon": "person-check", "tone": "success"},
+        {"label": _("Inactive"), "value": base.filter(is_active=False).count(), "icon": "person-dash", "tone": "accent"},
+        {"label": _("Administrators"), "value": base.filter(is_superuser=True).count(), "icon": "shield-lock", "tone": "warning"},
+    ]
+
+
+class UserListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
     model = User
     template_name = "accounts/user_list.html"
     context_object_name = "users"
     paginate_by = 50
     permission_required = "system.users.read"
-    sortable_fields = {
-        "name": "last_name",
-        "email": "email",
-        "status": "is_active",
-        "last_login": "last_login",
-    }
+    filter_groups = USER_FILTER_GROUPS
+    text_filters = USER_TEXT_FILTERS
+    columns = USER_COLUMNS
+    sortable_fields = USER_SORTABLE_FIELDS
     default_sort = "name"
+    search_fields = ["email", "first_name", "last_name"]
+
     def get_queryset(self):
         qs = User.objects.annotate(group_count=Count("custom_groups"))
         qs = self._apply_sorting(qs)
-        status = self.request.GET.get("status")
-        if status == "active":
-            qs = qs.filter(is_active=True)
-        elif status == "inactive":
-            qs = qs.filter(is_active=False)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["list_kpis"] = _user_list_kpis(getattr(self, "_summary_base_qs", None))
+        return ctx
+
+
+class UserTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, SortableListMixin, ListView):
+    model = User
+    permission_required = "system.users.read"
+    template_name = "accounts/user_table_body.html"
+    context_object_name = "users"
+    paginate_by = 50
+    sortable_fields = USER_SORTABLE_FIELDS
+    default_sort = "name"
+    search_fields = ["email", "first_name", "last_name"]
+    filter_groups = USER_FILTER_GROUPS
+    text_filters = USER_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = User.objects.annotate(group_count=Count("custom_groups"))
+        qs = self._apply_sorting(qs)
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class UserDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
@@ -264,21 +328,66 @@ class UserUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 # ── Groups ──────────────────────────────────────────────────
 
-class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
+GROUP_COLUMNS = [
+    {"key": "name", "label": _lazy("Name"), "always": True},
+    {"key": "users", "label": _lazy("Users")},
+    {"key": "permissions", "label": _lazy("Permissions")},
+    {"key": "actions", "label": _lazy("Actions"), "always": True},
+]
+
+
+class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
     model = Group
     template_name = "accounts/group_list.html"
     context_object_name = "groups"
     paginate_by = 50
     permission_required = "system.groups.read"
+    filter_groups = []
+    columns = GROUP_COLUMNS
     sortable_fields = {"name": "name"}
     default_sort = "name"
     search_fields = ["name", "description"]
 
     def get_queryset(self):
-        return Group.objects.annotate(
+        qs = Group.objects.annotate(
             user_count=Count("users"),
             permission_count=Count("permissions"),
         )
+        qs = self._apply_sorting(qs)
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        base = getattr(self, "_summary_base_qs", None)
+        if base is not None:
+            ctx["list_kpis"] = [
+                {"label": _("Total"), "value": base.count(), "icon": "diagram-3", "tone": "accent"},
+                {"label": _("System groups"), "value": base.filter(is_system=True).count(), "icon": "shield-lock", "tone": "warning"},
+                {"label": _("Custom groups"), "value": base.filter(is_system=False).count(), "icon": "pencil-square", "tone": "success"},
+            ]
+        return ctx
+
+
+class GroupTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, SortableListMixin, ListView):
+    model = Group
+    permission_required = "system.groups.read"
+    template_name = "accounts/group_table_body.html"
+    context_object_name = "groups"
+    paginate_by = 50
+    sortable_fields = {"name": "name"}
+    default_sort = "name"
+    search_fields = ["name", "description"]
+    filter_groups = []
+
+    def get_queryset(self):
+        qs = Group.objects.annotate(
+            user_count=Count("users"),
+            permission_count=Count("permissions"),
+        )
+        qs = self._apply_sorting(qs)
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class GroupDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
@@ -532,85 +641,259 @@ class ImpersonateStopView(LoginRequiredMixin, View):
 
 # ── Permissions ─────────────────────────────────────────────
 
-class PermissionListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ListView):
+
+def _permission_module_options():
+    return [(module, MODULE_LABELS.get(module, module)) for module in PERMISSION_REGISTRY]
+
+
+def _permission_feature_options():
+    seen = {}
+    for features in PERMISSION_REGISTRY.values():
+        for feature, info in features.items():
+            seen.setdefault(feature, info.get("label", feature))
+    return list(seen.items())
+
+
+def _annotate_permission_labels(permissions):
+    """Attach human module/feature labels onto each permission in the page."""
+    feature_labels = {}
+    for features in PERMISSION_REGISTRY.values():
+        for feature, info in features.items():
+            feature_labels.setdefault(feature, info.get("label", feature))
+    for perm in permissions:
+        perm.module_label = MODULE_LABELS.get(perm.module, perm.module)
+        perm.feature_label = feature_labels.get(perm.feature, perm.feature)
+
+
+PERMISSION_FILTER_GROUPS = [
+    {"param": "module", "field": "module", "label": _lazy("Module"), "options": _permission_module_options()},
+    {"param": "feature", "field": "feature", "label": _lazy("Feature"), "options": _permission_feature_options()},
+    {"param": "action", "field": "action", "label": _lazy("Action"), "options": PermissionAction.choices},
+]
+PERMISSION_COLUMNS = [
+    {"key": "codename", "label": _lazy("Codename"), "always": True},
+    {"key": "module", "label": _lazy("Module")},
+    {"key": "feature", "label": _lazy("Feature")},
+    {"key": "action", "label": _lazy("Action")},
+]
+PERMISSION_SORTABLE_FIELDS = {
+    "codename": "codename",
+    "module": "module",
+    "feature": "feature",
+    "action": "action",
+}
+
+
+class PermissionListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
     model = Permission
     template_name = "accounts/permission_list.html"
     context_object_name = "permissions"
     paginate_by = 100
     permission_required = "system.groups.read"
+    filter_groups = PERMISSION_FILTER_GROUPS
+    columns = PERMISSION_COLUMNS
+    sortable_fields = PERMISSION_SORTABLE_FIELDS
+    default_sort = "codename"
+    search_fields = ["codename", "name"]
+
+    def get_queryset(self):
+        qs = self._apply_sorting(Permission.objects.all())
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        # Group permissions by module -> feature
-        grouped = {}
-        for perm in Permission.objects.all():
-            if perm.module not in grouped:
-                grouped[perm.module] = {"label": MODULE_LABELS.get(perm.module, perm.module), "features": {}}
-            if perm.feature not in grouped[perm.module]["features"]:
-                feature_info = PERMISSION_REGISTRY.get(perm.module, {}).get(perm.feature, {})
-                grouped[perm.module]["features"][perm.feature] = {
-                    "label": feature_info.get("label", perm.feature),
-                    "permissions": [],
-                }
-            grouped[perm.module]["features"][perm.feature]["permissions"].append(perm)
-        ctx["grouped_permissions"] = grouped
+        _annotate_permission_labels(ctx["permissions"])
+        base = getattr(self, "_summary_base_qs", None)
+        if base is not None:
+            ctx["list_kpis"] = [
+                {"label": _("Total"), "value": base.count(), "icon": "key", "tone": "accent"},
+                {"label": _("System"), "value": base.filter(is_system=True).count(), "icon": "shield-lock", "tone": "warning"},
+                {"label": _("Modules"), "value": base.values("module").distinct().count(), "icon": "grid", "tone": "success"},
+            ]
+        return ctx
+
+
+class PermissionTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, SortableListMixin, ListView):
+    model = Permission
+    permission_required = "system.groups.read"
+    template_name = "accounts/permission_table_body.html"
+    context_object_name = "permissions"
+    paginate_by = 100
+    sortable_fields = PERMISSION_SORTABLE_FIELDS
+    default_sort = "codename"
+    search_fields = ["codename", "name"]
+    filter_groups = PERMISSION_FILTER_GROUPS
+
+    def get_queryset(self):
+        qs = self._apply_sorting(Permission.objects.all())
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        _annotate_permission_labels(ctx["permissions"])
         return ctx
 
 
 # ── Access Logs ─────────────────────────────────────────────
 
-class AccessLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
+ACCESS_LOG_FILTER_GROUPS = [
+    {"param": "event_type", "field": "event_type", "label": _lazy("Event"), "options": AccessEventType.choices},
+]
+ACCESS_LOG_COLUMNS = [
+    {"key": "date", "label": _lazy("Date"), "always": True},
+    {"key": "email", "label": _lazy("Email")},
+    {"key": "event", "label": _lazy("Event")},
+    {"key": "ip", "label": _lazy("IP")},
+]
+ACCESS_LOG_SORTABLE_FIELDS = {
+    "date": "timestamp",
+    "email": "email_attempted",
+    "event": "event_type",
+}
+
+
+_ACCESS_LOG_SUCCESS_EVENTS = (
+    AccessEventType.LOGIN_SUCCESS,
+    AccessEventType.PASSKEY_LOGIN_SUCCESS,
+)
+_ACCESS_LOG_FAILURE_EVENTS = (
+    AccessEventType.LOGIN_FAILED,
+    AccessEventType.PASSKEY_LOGIN_FAILED,
+)
+
+
+def _access_log_kpis(base):
+    """Coloured KPI tiles for the access-log rail, computed from the base
+    queryset (before facets)."""
+    if base is None:
+        return []
+    from django.utils import timezone as tz
+
+    since = tz.now() - tz.timedelta(hours=24)
+    return [
+        {"label": _("Total"), "value": base.count(), "icon": "clock-history", "tone": "accent"},
+        {"label": _("Successful logins"), "value": base.filter(event_type__in=_ACCESS_LOG_SUCCESS_EVENTS).count(), "icon": "check-circle", "tone": "success"},
+        {"label": _("Failed logins"), "value": base.filter(event_type__in=_ACCESS_LOG_FAILURE_EVENTS).count(), "icon": "x-circle", "tone": "danger"},
+        {"label": _("Last 24h"), "value": base.filter(timestamp__gte=since).count(), "icon": "hourglass", "tone": "warning"},
+    ]
+
+
+class AccessLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
     model = AccessLog
     template_name = "accounts/access_log_list.html"
     context_object_name = "logs"
     paginate_by = 50
     permission_required = "system.audit_trail.read"
-    sortable_fields = {
-        "date": "timestamp",
-        "email": "email_attempted",
-        "event": "event_type",
-    }
+    filter_groups = ACCESS_LOG_FILTER_GROUPS
+    columns = ACCESS_LOG_COLUMNS
+    sortable_fields = ACCESS_LOG_SORTABLE_FIELDS
     default_sort = "date"
     default_sort_order = "desc"
+    search_fields = ["email_attempted"]
 
     def get_queryset(self):
         qs = AccessLog.objects.select_related("user")
-        event_type = self.request.GET.get("event_type")
-        email = self.request.GET.get("email")
-        date_from = self.request.GET.get("date_from")
-        date_to = self.request.GET.get("date_to")
-        if event_type:
-            qs = qs.filter(event_type=event_type)
-        if email:
-            qs = qs.filter(email_attempted__icontains=email)
-        if date_from:
-            qs = qs.filter(timestamp__date__gte=date_from)
-        if date_to:
-            qs = qs.filter(timestamp__date__lte=date_to)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["list_kpis"] = _access_log_kpis(getattr(self, "_summary_base_qs", None))
+        return ctx
+
+
+class AccessLogTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, SortableListMixin, ListView):
+    model = AccessLog
+    permission_required = "system.audit_trail.read"
+    template_name = "accounts/access_log_table_body.html"
+    context_object_name = "logs"
+    paginate_by = 50
+    sortable_fields = ACCESS_LOG_SORTABLE_FIELDS
+    default_sort = "date"
+    default_sort_order = "desc"
+    search_fields = ["email_attempted"]
+    filter_groups = ACCESS_LOG_FILTER_GROUPS
+
+    def get_queryset(self):
+        qs = AccessLog.objects.select_related("user")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 # ── Calendar subscriptions ──────────────────────────────────
 
 
-class CalendarSubscriptionListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
+CALENDAR_SUBSCRIPTION_COLUMNS = [
+    {"key": "user", "label": _lazy("User"), "always": True},
+    {"key": "name", "label": _lazy("Name"), "always": True},
+    {"key": "created", "label": _lazy("Created")},
+    {"key": "client", "label": _lazy("Client")},
+    {"key": "actions", "label": _lazy("Actions"), "always": True},
+]
+CALENDAR_SUBSCRIPTION_SORTABLE_FIELDS = {
+    "user": "user__last_name",
+    "name": "name",
+    "created": "created_at",
+    "last_used": "last_used_at",
+}
+
+
+class CalendarSubscriptionListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
     template_name = "accounts/calendar_subscription_list.html"
     context_object_name = "tokens"
     paginate_by = 50
     permission_required = "system.users.read"
-    sortable_fields = {
-        "user": "user__last_name",
-        "name": "name",
-        "created": "created_at",
-        "last_used": "last_used_at",
-    }
+    filter_groups = []
+    columns = CALENDAR_SUBSCRIPTION_COLUMNS
+    sortable_fields = CALENDAR_SUBSCRIPTION_SORTABLE_FIELDS
     default_sort = "created"
     default_sort_order = "desc"
+    search_fields = ["name", "user__first_name", "user__last_name", "user__email"]
+
+    @property
+    def model(self):
+        from accounts.models import CalendarToken
+        return CalendarToken
 
     def get_queryset(self):
         from accounts.models import CalendarToken
-        qs = CalendarToken.objects.select_related("user")
-        return self._apply_sorting(qs)
+        qs = self._apply_sorting(CalendarToken.objects.select_related("user"))
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        base = getattr(self, "_summary_base_qs", None)
+        if base is not None:
+            ctx["list_kpis"] = [
+                {"label": _("Total"), "value": base.count(), "icon": "calendar-event", "tone": "accent"},
+            ]
+        return ctx
+
+
+class CalendarSubscriptionTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, SortableListMixin, ListView):
+    template_name = "accounts/calendar_subscription_table_body.html"
+    context_object_name = "tokens"
+    paginate_by = 50
+    permission_required = "system.users.read"
+    filter_groups = []
+    sortable_fields = CALENDAR_SUBSCRIPTION_SORTABLE_FIELDS
+    default_sort = "created"
+    default_sort_order = "desc"
+    search_fields = ["name", "user__first_name", "user__last_name", "user__email"]
+
+    @property
+    def model(self):
+        from accounts.models import CalendarToken
+        return CalendarToken
+
+    def get_queryset(self):
+        from accounts.models import CalendarToken
+        qs = self._apply_sorting(CalendarToken.objects.select_related("user"))
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class CalendarSubscriptionRevokeView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -658,39 +941,13 @@ class ActionLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
 
     def get_queryset(self):
         labels = _get_model_labels()
-        module = self.request.GET.get("module")
-        user_filter = self.request.GET.get("user")
-        action = self.request.GET.get("action")
-        date_from = self.request.GET.get("date_from")
-        date_to = self.request.GET.get("date_to")
-
-        # For the approval filter we need post-processing; for others we can filter at DB level
-        filter_approval = action == "approval"
 
         querysets = []
         for hist_model in self._get_historical_models():
             app, model_label = labels.get(hist_model, (None, None))
             if not app:
                 continue
-            if module and app != module:
-                continue
-            # Check model has approval fields, skip if filtering approvals on non-approvable
-            has_approval = hasattr(hist_model, "is_approved")
-            if filter_approval and not has_approval:
-                continue
-            qs = hist_model.objects.select_related("history_user").all()
-            if user_filter:
-                qs = qs.filter(history_user_id=user_filter)
-            if action and not filter_approval:
-                qs = qs.filter(history_type=action)
-            if filter_approval:
-                # Pre-filter to modifications only
-                qs = qs.filter(history_type="~")
-            if date_from:
-                qs = qs.filter(history_date__date__gte=date_from)
-            if date_to:
-                qs = qs.filter(history_date__date__lte=date_to)
-            querysets.append(qs)
+            querysets.append(hist_model.objects.select_related("history_user").all())
 
         if not querysets:
             return []
@@ -705,7 +962,6 @@ class ActionLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         labels = _get_model_labels()
-        filter_approval = self.request.GET.get("action") == "approval"
 
         annotated = []
         for entry in ctx["entries"]:
@@ -723,26 +979,28 @@ class ActionLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
                 approved = bool(getattr(entry, "is_approved", False))
                 entry.action_label = _("Approval") if approved else _("Approval withdrawn")
                 entry.action_badge = "info" if approved else "dark"
+            elif kind == EntryKind.TRANSITION:
+                entry.action_label = _("Transition")
+                entry.action_badge = "info"
+            elif kind == EntryKind.CREATE:
+                entry.action_label = HISTORY_TYPE_LABELS["+"]
+                entry.action_badge = "success"
+            elif kind == EntryKind.DELETE:
+                entry.action_label = HISTORY_TYPE_LABELS["-"]
+                entry.action_badge = "danger"
             else:
-                # If filtering approvals only, skip non-approval entries.
-                if filter_approval:
-                    continue
-                if kind == EntryKind.TRANSITION:
-                    entry.action_label = _("Transition")
-                    entry.action_badge = "info"
-                elif kind == EntryKind.CREATE:
-                    entry.action_label = HISTORY_TYPE_LABELS["+"]
-                    entry.action_badge = "success"
-                elif kind == EntryKind.DELETE:
-                    entry.action_label = HISTORY_TYPE_LABELS["-"]
-                    entry.action_badge = "danger"
-                else:
-                    entry.action_label = HISTORY_TYPE_LABELS["~"]
-                    entry.action_badge = "warning"
+                entry.action_label = HISTORY_TYPE_LABELS["~"]
+                entry.action_badge = "warning"
 
             annotated.append(entry)
 
         ctx["entries"] = annotated
-        ctx["users"] = User.objects.filter(is_active=True).order_by("first_name", "last_name")
-        ctx["module_labels"] = {k: v for k, v in MODULE_LABELS.items() if k != "system"}
+        # Aggregated history has no single model, so the offcanvas advanced
+        # builder and the predefined facets cannot apply. Expose only a coloured
+        # KPI tile for the rail, computed from the full merged list length.
+        paginator = ctx.get("paginator")
+        total = paginator.count if paginator is not None else len(annotated)
+        ctx["list_kpis"] = [
+            {"label": _("Total entries"), "value": total, "icon": "journal-text", "tone": "accent"},
+        ]
         return ctx

@@ -1,0 +1,44 @@
+{% load i18n ui accounts_tags %}
+{% for t in tokens %}
+<tr>
+  <td data-col="user">
+    <span class="cell-people cell-people--sm">
+      {% if t.user.avatar %}
+      <img src="{{ t.user.avatar_32|default:t.user.avatar }}" alt="" class="cell-avatar">
+      {% else %}
+      <span class="cell-avatar-fallback">{{ t.user.display_name|initials }}</span>
+      {% endif %}
+      <span class="cell-stack">
+        <span style="font-weight:600">{{ t.user.display_name }}</span>
+        {% if t.user.job_title %}<span class="cell-sub">{{ t.user.job_title }}</span>{% endif %}
+      </span>
+    </span>
+  </td>
+  <td data-col="name">
+    <i class="bi bi-key me-1" style="color:var(--accent)"></i>{{ t.name }}
+    <span class="text-muted font-monospace small ms-1">...{{ t.token_hint }}</span>
+  </td>
+  <td data-col="created">
+    <span class="cell-stack">
+      <span>{{ t.created_at|date:"d/m/Y H:i" }}</span>
+      {% if t.last_used_at %}<span class="cell-sub" title="{% trans 'Last used' %}"><i class="bi bi-clock-history me-1" aria-hidden="true"></i>{{ t.last_used_at|date:"d/m/Y H:i" }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="client">
+    {% if t.last_user_agent %}
+    <span title="{{ t.last_user_agent }}">{{ t.client_display }}</span>
+    {% else %}-{% endif %}
+  </td>
+  <td class="text-end" data-col="actions">
+    <form method="post" action="{% url 'accounts:calendar-subscription-revoke' t.pk %}"
+          onsubmit="return confirm('{% trans "Revoke this calendar subscription?" %}')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-x-circle me-1"></i>{% trans "Revoke" %}
+      </button>
+    </form>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No active calendar subscription.") message=_("Calendar subscriptions let external calendar clients pull Cairn deadlines via iCal. Generate a feed from your profile.") colspan=5 %}
+{% endfor %}

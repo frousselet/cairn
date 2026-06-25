@@ -28,12 +28,14 @@ urlpatterns = [
 
     # Users
     path("users/", views.UserListView.as_view(), name="user-list"),
+    path("users/table-body/", views.UserTableBodyView.as_view(), name="user-table-body"),
     path("users/create/", views.UserCreateView.as_view(), name="user-create"),
     path("users/<uuid:pk>/", views.UserDetailView.as_view(), name="user-detail"),
     path("users/<uuid:pk>/edit/", views.UserUpdateView.as_view(), name="user-update"),
 
     # Groups
     path("groups/", views.GroupListView.as_view(), name="group-list"),
+    path("groups/table-body/", views.GroupTableBodyView.as_view(), name="group-table-body"),
     path("groups/create/", views.GroupCreateView.as_view(), name="group-create"),
     path("groups/<uuid:pk>/", views.GroupDetailView.as_view(), name="group-detail"),
     path("groups/<uuid:pk>/edit/", views.GroupUpdateView.as_view(), name="group-update"),
@@ -48,13 +50,16 @@ urlpatterns = [
 
     # Permissions
     path("permissions/", views.PermissionListView.as_view(), name="permission-list"),
+    path("permissions/table-body/", views.PermissionTableBodyView.as_view(), name="permission-table-body"),
 
     # Logs
     path("access-logs/", views.AccessLogListView.as_view(), name="access-log-list"),
+    path("access-logs/table-body/", views.AccessLogTableBodyView.as_view(), name="access-log-table-body"),
     path("action-logs/", views.ActionLogListView.as_view(), name="action-log-list"),
 
     # Calendar subscriptions
     path("calendar-subscriptions/", views.CalendarSubscriptionListView.as_view(), name="calendar-subscription-list"),
+    path("calendar-subscriptions/table-body/", views.CalendarSubscriptionTableBodyView.as_view(), name="calendar-subscription-table-body"),
     path("calendar-subscriptions/<uuid:pk>/revoke/", views.CalendarSubscriptionRevokeView.as_view(), name="calendar-subscription-revoke"),
 
     # OAuth credentials (MCP)

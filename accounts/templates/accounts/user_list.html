@@ -7,7 +7,6 @@
 
 {% block content %}
 {% has_perm "system.users.create" as can_create %}
-{% has_perm "system.users.update" as can_update %}
 {% page_header _("Users") nav="accounts:user-list" accent="accounts" %}
   {% if can_create %}
   <a href="{% url 'accounts:user-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'Create a user' %}</a>
@@ -17,84 +16,36 @@
 
 <div class="list-layout">
   <div class="list-main">
-<div class="mb-3 d-flex gap-2">
-  <a href="{% url 'accounts:user-list' %}" class="filter-chip {% if not request.GET.status %}active{% endif %}">{% trans "All" %}</a>
-  <a href="?status=active" class="filter-chip {% if request.GET.status == 'active' %}active{% endif %}">{% trans "Active" %}</a>
-  <a href="?status=inactive" class="filter-chip {% if request.GET.status == 'inactive' %}active{% endif %}">{% trans "Inactive" %}</a>
-</div>
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "name" "Name" col="name" %}
+              <th data-col="job_title">{% trans "Job title" %}</th>
+              {% sortable_th "status" "Status" col="status" %}
+              {% sortable_th "last_login" "Last login" col="last_login" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'accounts:user-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "accounts/user_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "name" "Name" %}
-          <th>{% trans "Job title" %}</th>
-          {% sortable_th "status" "Status" %}
-          {% sortable_th "last_login" "Last login" %}
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for u in users %}
-        <tr>
-          <td>
-            <a href="{% url 'accounts:user-detail' u.pk %}" class="cell-people">
-              {% if u.avatar %}
-              <img src="{{ u.avatar_64|default:u.avatar }}" alt="" class="cell-avatar">
-              {% else %}
-              <span class="cell-avatar-fallback">{{ u.display_name|initials }}</span>
-              {% endif %}
-              <span class="cell-stack">
-                <span class="cell-link">{{ u.display_name }}</span>
-                <span class="cell-sub">{{ u.email }}</span>
-              </span>
-            </a>
-          </td>
-          <td>
-            {% if u.job_title %}
-            <span class="cell-stack">
-              <span>{{ u.job_title }}</span>
-              {% if u.department %}<span class="cell-sub">{{ u.department }}</span>{% endif %}
-            </span>
-            {% elif u.department %}
-            {{ u.department }}
-            {% else %}
-            <span class="cell-empty">-</span>
-            {% endif %}
-          </td>
-          <td>
-            {% if u.is_robot %}<span class="badge bg-info me-1">{% trans "Robot" %}</span>{% endif %}
-            {% if u.is_active %}
-              {% if u.is_locked %}
-              <span class="badge bg-warning text-dark">{% trans "Locked" %}</span>
-              {% else %}
-              <span class="badge bg-success">{% trans "Active" %}</span>
-              {% endif %}
-            {% else %}
-            <span class="badge bg-secondary">{% trans "Inactive" %}</span>
-            {% endif %}
-          </td>
-          <td>{{ u.last_login|date:"d/m/Y H:i"|default:"-" }}</td>
-          <td class="text-end">
-            {% if can_update %}
-            <a href="{% url 'accounts:user-update' u.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No user found.") message=_("Users are the people who can sign in to Cairn. Invite a user to give them access.") colspan=5 %}
-        {% endfor %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

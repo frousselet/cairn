@@ -1,0 +1,51 @@
+{% load i18n ui accounts_tags %}
+{% has_perm "system.users.update" as can_update %}
+{% for u in users %}
+<tr>
+  <td data-col="name">
+    <a href="{% url 'accounts:user-detail' u.pk %}" class="cell-people">
+      {% if u.avatar %}
+      <img src="{{ u.avatar_64|default:u.avatar }}" alt="" class="cell-avatar">
+      {% else %}
+      <span class="cell-avatar-fallback">{{ u.display_name|initials }}</span>
+      {% endif %}
+      <span class="cell-stack">
+        <span class="cell-link">{{ u.display_name }}</span>
+        <span class="cell-sub">{{ u.email }}</span>
+      </span>
+    </a>
+  </td>
+  <td data-col="job_title">
+    {% if u.job_title %}
+    <span class="cell-stack">
+      <span>{{ u.job_title }}</span>
+      {% if u.department %}<span class="cell-sub">{{ u.department }}</span>{% endif %}
+    </span>
+    {% elif u.department %}
+    {{ u.department }}
+    {% else %}
+    <span class="cell-empty">-</span>
+    {% endif %}
+  </td>
+  <td data-col="status">
+    {% if u.is_robot %}<span class="badge bg-info me-1">{% trans "Robot" %}</span>{% endif %}
+    {% if u.is_active %}
+      {% if u.is_locked %}
+      <span class="badge bg-warning text-dark">{% trans "Locked" %}</span>
+      {% else %}
+      <span class="badge bg-success">{% trans "Active" %}</span>
+      {% endif %}
+    {% else %}
+    <span class="badge bg-secondary">{% trans "Inactive" %}</span>
+    {% endif %}
+  </td>
+  <td data-col="last_login">{{ u.last_login|date:"d/m/Y H:i"|default:"-" }}</td>
+  <td class="text-end" data-col="actions">
+    {% if can_update %}
+    <a href="{% url 'accounts:user-update' u.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No user found.") message=_("Users are the people who can sign in to Cairn. Invite a user to give them access.") colspan=5 %}
+{% endfor %}
