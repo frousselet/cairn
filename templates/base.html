@@ -6126,6 +6126,19 @@
     if (s && s.value.trim()) p.set('q', s.value.trim());
     return p;
   };
+  // Build a navigation URL constrained to the current origin + http(s), so a
+  // value coming from a data attribute can never become an open redirect or a
+  // javascript: URL. `query` is a raw query string (with or without leading ?).
+  window.listNavUrl = function(rawPath, query) {
+    var u;
+    try { u = new URL(rawPath || window.location.pathname, window.location.origin); }
+    catch (e) { u = new URL(window.location.pathname, window.location.origin); }
+    if (u.origin !== window.location.origin || !/^https?:$/.test(u.protocol)) {
+      u = new URL(window.location.pathname, window.location.origin);
+    }
+    u.search = query ? (query.charAt(0) === '?' ? query : '?' + query) : '';
+    return u.toString();
+  };
   window.refreshList = function(page) {
     var tbody = document.getElementById('item-table-body');
     var params = window.gatherListParams();
@@ -6133,11 +6146,11 @@
     var qs = params.toString();
     var url = tbody && tbody.getAttribute('hx-get');
     if (!url || !window.htmx) {
-      window.location = location.pathname + (qs ? '?' + qs : '');
+      window.location.assign(window.listNavUrl(location.pathname, qs));
       return;
     }
     window.htmx.ajax('GET', url + (qs ? '?' + qs : ''), { target: '#item-table-body', swap: 'innerHTML' });
-    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+    history.replaceState(null, '', window.listNavUrl(location.pathname, qs));
   };
   (function() {
     var t;
@@ -6267,7 +6280,7 @@
         var applyBtn = e.target.closest('.saved-filter-apply');
         if (applyBtn) {
           var q = applyBtn.closest('.saved-filter-item').getAttribute('data-query') || '';
-          window.location = listUrl + (q ? '?' + q : '');
+          window.location.assign(window.listNavUrl(listUrl, q));
           return;
         }
         var delBtn = e.target.closest('.saved-filter-del');
@@ -6469,7 +6482,7 @@
       });
 
       var qs = current.toString();
-      window.location.href = window.location.pathname + (qs ? '?' + qs : '');
+      window.location.assign(window.listNavUrl(window.location.pathname, qs));
     });
   })();
 
