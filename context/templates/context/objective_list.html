@@ -14,47 +14,39 @@
 
 <div class="list-layout">
   <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Title" col="name" %}
+              <th data-col="owner">{% trans "Owner" %}</th>
+              {% sortable_th "progress" "Progress" col="progress" %}
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              {% sortable_th "target_date" "Target date" col="target_date" %}
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'context:objective-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "context/objective_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-<div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
-  <a href="{% url 'context:objective-list' %}" class="filter-chip {% if not request.GET.status and not request.GET.category %}active{% endif %}">{% trans "All" %}</a>
-  <span class="filter-chip-divider"></span>
-  <a href="?status=draft" class="filter-chip {% if request.GET.status == 'draft' %}active{% endif %}">{% trans "Draft" %}</a>
-  <a href="?status=active" class="filter-chip {% if request.GET.status == 'active' %}active{% endif %}">{% trans "Active" %}</a>
-  <a href="?status=achieved" class="filter-chip {% if request.GET.status == 'achieved' %}active{% endif %}">{% trans "Achieved" %}</a>
-  <a href="?status=not_achieved" class="filter-chip {% if request.GET.status == 'not_achieved' %}active-danger{% endif %}">{% trans "Not achieved" %}</a>
-  <a href="?status=cancelled" class="filter-chip {% if request.GET.status == 'cancelled' %}active{% endif %}">{% trans "Cancelled" %}</a>
-</div>
-
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "name" "Title" %}
-          <th>{% trans "Owner" %}</th>
-          {% sortable_th "progress" "Progress" %}
-          {% sortable_th "workflow_state" "Status" %}
-          {% sortable_th "target_date" "Target date" %}
-          <th>{% trans "Tags" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody id="item-table-body"
-             hx-get="{% url 'context:objective-table-body' %}?{{ request.GET.urlencode }}"
-             hx-trigger="refreshTable"
-             hx-swap="innerHTML">
-        {% include "context/objective_table_body.html" %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

@@ -1,0 +1,20 @@
+{% load i18n scope_tags ui workflow_tags accounts_tags %}
+{% has_perm "risks.criteria.delete" as can_delete_criteria %}
+{% for c in criteria_list %}
+<tr>
+  <td data-col="reference"><a href="{% url 'risks:criteria-detail' c.pk %}" class="ref">{{ c.reference }}</a></td>
+  <td data-col="name"><a href="{% url 'risks:criteria-detail' c.pk %}" class="cell-link">{{ c.name }}</a>{% if c.is_default %} <span class="badge text-bg-success" style="font-size:.65rem">{% trans "Default" %}</span>{% endif %}</td>
+  <td data-col="scopes">{% scope_popover c.scopes.all %}</td>
+  <td data-col="threshold">{{ c.acceptance_threshold }}</td>
+  <td data-col="status">{% workflow_badge c %}</td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=c.tags.all %}</td>
+  <td class="text-end" data-col="actions">
+    <a href="{% url 'risks:criteria-update' c.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    {% if can_delete_criteria and c.is_deletable %}
+    <a href="{% url 'risks:criteria-delete' c.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No risk criteria defined yet.") message=_("Risk criteria are the scales (likelihood, impact) and the level matrix used during assessments. Define them once per methodology.") colspan=7 %}
+{% endfor %}

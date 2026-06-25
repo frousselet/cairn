@@ -6,7 +6,6 @@
 {% load help_tags %}
 
 {% block content %}
-{% has_perm "risks.treatment.delete" as can_delete_plans %}
 {% page_header _("Treatment plans") nav="risks:treatment-plan-list" accent="risks" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'risks:treatment-plan-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New plan' %}</button>
 {% endpage_header %}
@@ -14,88 +13,39 @@
 
 <div class="list-layout">
   <div class="list-main">
-<div class="mb-3 d-flex gap-2">
-  <a href="{% url 'risks:treatment-plan-list' %}" class="filter-chip {% if not request.GET.status %}active{% endif %}">{% trans "All" %}</a>
-  <a href="?status=planned" class="filter-chip {% if request.GET.status == 'planned' %}active{% endif %}">{% trans "Planned" %}</a>
-  <a href="?status=in_progress" class="filter-chip {% if request.GET.status == 'in_progress' %}active{% endif %}">{% trans "In progress" %}</a>
-  <a href="?status=completed" class="filter-chip {% if request.GET.status == 'completed' %}active{% endif %}">{% trans "Completed" %}</a>
-</div>
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Name" col="name" %}
+              <th data-col="owner">{% trans "Owner" %}</th>
+              {% sortable_th "progress" "Progress" col="progress" %}
+              {% sortable_th "target_date" "Target date" col="target_date" %}
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'risks:treatment-plan-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "risks/treatment_plan_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "name" "Name" %}
-          <th>{% trans "Owner" %}</th>
-          {% sortable_th "progress" "Progress" %}
-          {% sortable_th "target_date" "Target date" %}
-          {% sortable_th "workflow_state" "Status" %}
-          <th>{% trans "Tags" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in plans %}
-        <tr>
-          <td><a href="{% url 'risks:treatment-plan-detail' p.pk %}" class="ref">{{ p.reference }}</a></td>
-          <td>
-            <span class="cell-stack">
-              <a href="{% url 'risks:treatment-plan-detail' p.pk %}" class="cell-link">{{ p.name }}</a>
-              <span class="cell-sub">{% if p.risk %}<a href="{% url 'risks:risk-detail' p.risk.pk %}" style="color:inherit;text-decoration:none">{{ p.risk.reference }}</a> • {% endif %}{{ p.get_treatment_type_display }}</span>
-            </span>
-          </td>
-          <td>
-            {% if p.owner %}
-            <span class="cell-people cell-people--sm">
-              {% if p.owner.avatar %}
-              <img src="{{ p.owner.avatar_32|default:p.owner.avatar }}" alt="" class="cell-avatar">
-              {% else %}
-              <span class="cell-avatar-fallback">{{ p.owner.display_name|initials }}</span>
-              {% endif %}
-              <span class="cell-stack">
-                <span style="font-weight:600">{{ p.owner.display_name }}</span>
-                {% if p.owner.job_title %}<span class="cell-sub">{{ p.owner.job_title }}</span>{% endif %}
-              </span>
-            </span>
-            {% else %}<span class="cell-empty">-</span>{% endif %}
-          </td>
-          <td>
-            {% progress_bar p.progress_percentage scheme="progress" %}
-          </td>
-          <td>
-            {% if p.target_date %}
-            <span class="cell-stack">
-              <span>{{ p.target_date }}</span>
-              {% if p.start_date %}<span class="cell-sub" title="{% trans 'Start date' %}"><i class="bi bi-calendar-event me-1" aria-hidden="true"></i>{{ p.start_date }}</span>{% endif %}
-            </span>
-            {% elif p.start_date %}
-            <span class="cell-sub" title="{% trans 'Start date' %}"><i class="bi bi-calendar-event me-1" aria-hidden="true"></i>{{ p.start_date }}</span>
-            {% else %}<span class="cell-empty">-</span>{% endif %}
-          </td>
-          <td>{% workflow_badge p %}</td>
-          <td>{% include "includes/tags_badge.html" with tags=p.tags.all %}</td>
-          <td class="text-end">
-            <a hx-get="{% url 'risks:treatment-plan-update' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-            {% if can_delete_plans and p.is_deletable %}
-            <a href="{% url 'risks:treatment-plan-delete' p.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No treatment plan yet.") message=_("Treatment plans implement the chosen response to a risk (mitigate, transfer, accept, avoid). Track actions, owners and target dates.") colspan=8 %}
-        {% endfor %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

@@ -14,43 +14,38 @@
 
 <div class="list-layout">
   <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Title" col="name" %}
+              <th data-col="items">{% trans "Items" %}</th>
+              {% sortable_th "date" "Analysis date" col="date" %}
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'context:swot-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "context/swot_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-<div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
-  <a href="{% url 'context:swot-list' %}" class="filter-chip {% if not request.GET.status %}active{% endif %}">{% trans "All" %}</a>
-  <a href="?status=draft" class="filter-chip {% if request.GET.status == 'draft' %}active{% endif %}">{% trans "Draft" %}</a>
-  <a href="?status=validated" class="filter-chip {% if request.GET.status == 'validated' %}active{% endif %}">{% trans "Validated" %}</a>
-  <a href="?status=archived" class="filter-chip {% if request.GET.status == 'archived' %}active{% endif %}">{% trans "Archived" %}</a>
-</div>
-
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "name" "Title" %}
-          <th>{% trans "Items" %}</th>
-          {% sortable_th "date" "Analysis date" %}
-          {% sortable_th "workflow_state" "Status" %}
-          <th>{% trans "Tags" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody id="item-table-body"
-             hx-get="{% url 'context:swot-table-body' %}?{{ request.GET.urlencode }}"
-             hx-trigger="refreshTable"
-             hx-swap="innerHTML">
-        {% include "context/swot_table_body.html" %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

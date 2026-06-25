@@ -32,12 +32,20 @@ from core.mixins import (
     SortableListMixin,
 )
 from .constants import (
+    ActivityStatus,
     CollectionMethod,
+    Criticality,
     ImpactLevel,
+    IndicatorStatus,
     IndicatorType,
     IssueStatus,
     IssueType,
+    ObjectiveCategory,
+    ObjectiveStatus,
     PREDEFINED_SOURCE_FORMAT,
+    RoleStatus,
+    RoleType,
+    StakeholderStatus,
 )
 from .forms import (
     ActivityCreateForm,
@@ -233,11 +241,39 @@ def get_dashboard_indicator_slots(user):
 
 # ── Scope ───────────────────────────────────────────────────
 
-class ScopeListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+# Workflow-state facet options mirroring the old status chips (draft / validated
+# / archived); the lifecycle's "pending" state was never offered as a chip.
+WORKFLOW_STATUS_OPTIONS = [
+    ("draft", _l("Draft")),
+    ("validated", _l("Validated")),
+    ("archived", _l("Archived")),
+]
+
+SCOPE_FILTER_GROUPS = [
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": WORKFLOW_STATUS_OPTIONS},
+]
+SCOPE_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+SCOPE_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "status", "label": _l("Status")},
+    {"key": "effective_date", "label": _l("Effective date")},
+    {"key": "responsible", "label": _l("Responsible")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class ScopeListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Scope
     permission_required = "context.scope.read"
     template_name = "context/scope_list.html"
     context_object_name = "scopes"
+    filter_groups = SCOPE_FILTER_GROUPS
+    text_filters = SCOPE_TEXT_FILTERS
+    columns = SCOPE_COLUMNS
     sortable_fields = {
         "reference": "reference",
         "name": "name",
@@ -252,10 +288,8 @@ class ScopeListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("parent_scope")
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(workflow_state=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -461,12 +495,34 @@ class IssueDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 # ── Stakeholder ─────────────────────────────────────────────
 
-class StakeholderListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+STAKEHOLDER_FILTER_GROUPS = [
+    {"param": "type", "field": "type", "label": _l("Type"), "options": IssueType.choices},
+    {"param": "status", "field": "status", "label": _l("Status"), "options": StakeholderStatus.choices},
+]
+STAKEHOLDER_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+STAKEHOLDER_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "scopes", "label": _l("Scopes")},
+    {"key": "category", "label": _l("Category")},
+    {"key": "influence", "label": _l("Influence")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class StakeholderListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Stakeholder
     permission_required = "context.stakeholder.read"
     template_name = "context/stakeholder_list.html"
     context_object_name = "stakeholders"
     status_field = "status"
+    filter_groups = STAKEHOLDER_FILTER_GROUPS
+    text_filters = STAKEHOLDER_TEXT_FILTERS
+    columns = STAKEHOLDER_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -482,13 +538,8 @@ class StakeholderListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumma
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes")
-        type_filter = self.request.GET.get("type")
-        if type_filter:
-            qs = qs.filter(type=type_filter)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class StakeholderDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -543,12 +594,34 @@ class StakeholderDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteV
 
 # ── Objective ───────────────────────────────────────────────
 
-class ObjectiveListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+OBJECTIVE_FILTER_GROUPS = [
+    {"param": "status", "field": "status", "label": _l("Status"), "options": ObjectiveStatus.choices},
+    {"param": "category", "field": "category", "label": _l("Category"), "options": ObjectiveCategory.choices},
+]
+OBJECTIVE_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Title")},
+]
+OBJECTIVE_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Title"), "always": True},
+    {"key": "owner", "label": _l("Owner")},
+    {"key": "progress", "label": _l("Progress")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "target_date", "label": _l("Target date")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class ObjectiveListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Objective
     permission_required = "context.objective.read"
     template_name = "context/objective_list.html"
     context_object_name = "objectives"
     status_field = "status"
+    filter_groups = OBJECTIVE_FILTER_GROUPS
+    text_filters = OBJECTIVE_TEXT_FILTERS
+    columns = OBJECTIVE_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -563,13 +636,8 @@ class ObjectiveListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes").select_related("owner")
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        category_filter = self.request.GET.get("category")
-        if category_filter:
-            qs = qs.filter(category=category_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class ObjectiveDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -621,11 +689,31 @@ class ObjectiveDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteVie
 
 # ── SWOT ────────────────────────────────────────────────────
 
-class SwotListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+SWOT_FILTER_GROUPS = [
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": WORKFLOW_STATUS_OPTIONS},
+]
+SWOT_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Title")},
+]
+SWOT_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Title"), "always": True},
+    {"key": "items", "label": _l("Items")},
+    {"key": "date", "label": _l("Analysis date")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class SwotListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = SwotAnalysis
     permission_required = "context.swot.read"
     template_name = "context/swot_list.html"
     context_object_name = "analyses"
+    filter_groups = SWOT_FILTER_GROUPS
+    text_filters = SWOT_TEXT_FILTERS
+    columns = SWOT_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -644,10 +732,8 @@ class SwotListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
             threat_count=Count("items", filter=Q(items__quadrant="threat")),
             strategy_count=Count("strategies"),
         )
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(workflow_state=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class SwotDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -921,12 +1007,34 @@ class ResponsibilityDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View
 
 # ── Role ────────────────────────────────────────────────────
 
-class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+ROLE_FILTER_GROUPS = [
+    {"param": "type", "field": "type", "label": _l("Type"), "options": RoleType.choices},
+    {"param": "status", "field": "status", "label": _l("Status"), "options": RoleStatus.choices},
+]
+ROLE_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Title")},
+]
+ROLE_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Title"), "always": True},
+    {"key": "type", "label": _l("Type")},
+    {"key": "users", "label": _l("Users")},
+    {"key": "responsibilities", "label": _l("Responsibilities")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Role
     permission_required = "context.role.read"
     template_name = "context/role_list.html"
     context_object_name = "roles"
     status_field = "status"
+    filter_groups = ROLE_FILTER_GROUPS
+    text_filters = ROLE_TEXT_FILTERS
+    columns = ROLE_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -945,13 +1053,8 @@ class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
             consulted_count=Count("responsibilities", filter=Q(responsibilities__raci_type="consulted"), distinct=True),
             informed_count=Count("responsibilities", filter=Q(responsibilities__raci_type="informed"), distinct=True),
         )
-        type_filter = self.request.GET.get("type")
-        if type_filter:
-            qs = qs.filter(type=type_filter)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class RoleDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -1008,12 +1111,33 @@ class RoleDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 # ── Activity ────────────────────────────────────────────────
 
-class ActivityListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+ACTIVITY_FILTER_GROUPS = [
+    {"param": "criticality", "field": "criticality", "label": _l("Criticality"), "options": Criticality.choices},
+    {"param": "status", "field": "status", "label": _l("Status"), "options": ActivityStatus.choices},
+]
+ACTIVITY_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+ACTIVITY_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "criticality", "label": _l("Criticality")},
+    {"key": "owner", "label": _l("Owner")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class ActivityListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Activity
     permission_required = "context.activity.read"
     template_name = "context/activity_list.html"
     context_object_name = "activities"
     status_field = "status"
+    filter_groups = ACTIVITY_FILTER_GROUPS
+    text_filters = ACTIVITY_TEXT_FILTERS
+    columns = ACTIVITY_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -1027,13 +1151,8 @@ class ActivityListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes").select_related("owner", "parent_activity")
-        criticality_filter = self.request.GET.get("criticality")
-        if criticality_filter:
-            qs = qs.filter(criticality=criticality_filter)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class ActivityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -1085,7 +1204,7 @@ class ActivityDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView
 
 # ── Table body views (HTMX partial refresh) ───────────────
 
-class ScopeTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class ScopeTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Scope
     permission_required = "context.scope.read"
     template_name = "context/scope_table_body.html"
@@ -1094,13 +1213,13 @@ class ScopeTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
     sortable_fields = ScopeListView.sortable_fields
     default_sort = ScopeListView.default_sort
     search_fields = ["reference", "name"]
+    filter_groups = SCOPE_FILTER_GROUPS
+    text_filters = SCOPE_TEXT_FILTERS
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("parent_scope").prefetch_related("tags")
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(workflow_state=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1126,7 +1245,7 @@ class IssueTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Predefined
         return self.filter_queryset_advanced(qs)
 
 
-class StakeholderTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class StakeholderTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Stakeholder
     permission_required = "context.stakeholder.read"
     template_name = "context/stakeholder_table_body.html"
@@ -1135,17 +1254,16 @@ class StakeholderTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Scop
     sortable_fields = StakeholderListView.sortable_fields
     default_sort = StakeholderListView.default_sort
     search_fields = ["reference", "name"]
+    filter_groups = STAKEHOLDER_FILTER_GROUPS
+    text_filters = STAKEHOLDER_TEXT_FILTERS
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes")
-        for param, field in [("type", "type"), ("status", "status")]:
-            val = self.request.GET.get(param)
-            if val:
-                qs = qs.filter(**{field: val})
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
-class ObjectiveTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class ObjectiveTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Objective
     permission_required = "context.objective.read"
     template_name = "context/objective_table_body.html"
@@ -1154,17 +1272,16 @@ class ObjectiveTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
     sortable_fields = ObjectiveListView.sortable_fields
     default_sort = ObjectiveListView.default_sort
     search_fields = ["reference", "name"]
+    filter_groups = OBJECTIVE_FILTER_GROUPS
+    text_filters = OBJECTIVE_TEXT_FILTERS
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes").select_related("owner")
-        for param, field in [("status", "status"), ("category", "category")]:
-            val = self.request.GET.get(param)
-            if val:
-                qs = qs.filter(**{field: val})
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
-class SwotTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class SwotTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = SwotAnalysis
     permission_required = "context.swot.read"
     template_name = "context/swot_table_body.html"
@@ -1173,6 +1290,8 @@ class SwotTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
     sortable_fields = SwotListView.sortable_fields
     default_sort = SwotListView.default_sort
     search_fields = ["reference", "name"]
+    filter_groups = SWOT_FILTER_GROUPS
+    text_filters = SWOT_TEXT_FILTERS
 
     def get_queryset(self):
         qs = super().get_queryset().annotate(
@@ -1182,13 +1301,11 @@ class SwotTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
             threat_count=Count("items", filter=Q(items__quadrant="threat")),
             strategy_count=Count("strategies"),
         )
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(workflow_state=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
-class RoleTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class RoleTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Role
     permission_required = "context.role.read"
     template_name = "context/role_table_body.html"
@@ -1197,6 +1314,8 @@ class RoleTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
     sortable_fields = RoleListView.sortable_fields
     default_sort = RoleListView.default_sort
     search_fields = ["reference", "name"]
+    filter_groups = ROLE_FILTER_GROUPS
+    text_filters = ROLE_TEXT_FILTERS
 
     def get_queryset(self):
         qs = super().get_queryset().annotate(
@@ -1206,14 +1325,11 @@ class RoleTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
             consulted_count=Count("responsibilities", filter=Q(responsibilities__raci_type="consulted"), distinct=True),
             informed_count=Count("responsibilities", filter=Q(responsibilities__raci_type="informed"), distinct=True),
         )
-        for param, field in [("type", "type"), ("status", "status")]:
-            val = self.request.GET.get(param)
-            if val:
-                qs = qs.filter(**{field: val})
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
-class ActivityTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class ActivityTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Activity
     permission_required = "context.activity.read"
     template_name = "context/activity_table_body.html"
@@ -1222,14 +1338,13 @@ class ActivityTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFi
     sortable_fields = ActivityListView.sortable_fields
     default_sort = ActivityListView.default_sort
     search_fields = ["reference", "name"]
+    filter_groups = ACTIVITY_FILTER_GROUPS
+    text_filters = ACTIVITY_TEXT_FILTERS
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes").select_related("owner", "parent_activity")
-        for param, field in [("criticality", "criticality"), ("status", "status")]:
-            val = self.request.GET.get(param)
-            if val:
-                qs = qs.filter(**{field: val})
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 @login_required
@@ -1394,12 +1509,33 @@ def _attach_indicator_sparklines(indicators, limit=20):
     return indicators
 
 
-class IndicatorListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+INDICATOR_FILTER_GROUPS = [
+    {"param": "status", "field": "status", "label": _l("Status"), "options": IndicatorStatus.choices},
+]
+INDICATOR_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Title")},
+]
+INDICATOR_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Title"), "always": True},
+    {"key": "current_value", "label": _l("Current value")},
+    {"key": "trend", "label": _l("Trend")},
+    {"key": "collection", "label": _l("Collection")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class IndicatorListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Indicator
     permission_required = "context.indicator.read"
     template_name = "context/indicator_list.html"
     context_object_name = "indicators"
     status_field = "status"
+    filter_groups = INDICATOR_FILTER_GROUPS
+    text_filters = INDICATOR_TEXT_FILTERS
+    columns = INDICATOR_COLUMNS
     paginate_by = 25
     indicator_type = None
     sortable_fields = {
@@ -1418,10 +1554,8 @@ class IndicatorListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
         )
         if self.indicator_type:
             qs = qs.filter(indicator_type=self.indicator_type)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1435,7 +1569,7 @@ class IndicatorListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
         return ctx
 
 
-class IndicatorTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class IndicatorTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Indicator
     permission_required = "context.indicator.read"
     template_name = "context/indicator_table_body.html"
@@ -1444,6 +1578,8 @@ class IndicatorTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
     sortable_fields = IndicatorListView.sortable_fields
     default_sort = IndicatorListView.default_sort
     search_fields = ["reference", "name"]
+    filter_groups = INDICATOR_FILTER_GROUPS
+    text_filters = INDICATOR_TEXT_FILTERS
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related(
@@ -1453,10 +1589,8 @@ class IndicatorTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
         indicator_type = self.request.GET.get("indicator_type")
         if indicator_type:
             qs = qs.filter(indicator_type=indicator_type)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

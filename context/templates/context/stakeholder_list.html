@@ -14,47 +14,39 @@
 
 <div class="list-layout">
   <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Name" col="name" %}
+              <th data-col="scopes">{% trans "Scopes" %}</th>
+              {% sortable_th "category" "Category" col="category" %}
+              {% sortable_th "influence" "Influence" col="influence" %}
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'context:stakeholder-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "context/stakeholder_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-<div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
-  <a href="{% url 'context:stakeholder-list' %}" class="filter-chip {% if not request.GET.type and not request.GET.status %}active{% endif %}">{% trans "All" %}</a>
-  <span class="filter-chip-divider"></span>
-  <a href="?type=internal" class="filter-chip {% if request.GET.type == 'internal' %}active{% endif %}">{% trans "Internal" %}</a>
-  <a href="?type=external" class="filter-chip {% if request.GET.type == 'external' %}active{% endif %}">{% trans "External" %}</a>
-  <span class="filter-chip-divider"></span>
-  <a href="?status=active" class="filter-chip {% if request.GET.status == 'active' %}active{% endif %}">{% trans "Active" %}</a>
-  <a href="?status=inactive" class="filter-chip {% if request.GET.status == 'inactive' %}active{% endif %}">{% trans "Inactive" %}</a>
-</div>
-
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "name" "Name" %}
-          <th>{% trans "Scopes" %}</th>
-          {% sortable_th "category" "Category" %}
-          {% sortable_th "influence" "Influence" %}
-          {% sortable_th "workflow_state" "Status" %}
-          <th>{% trans "Tags" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody id="item-table-body"
-             hx-get="{% url 'context:stakeholder-table-body' %}?{{ request.GET.urlencode }}"
-             hx-trigger="refreshTable"
-             hx-swap="innerHTML">
-        {% include "context/stakeholder_table_body.html" %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

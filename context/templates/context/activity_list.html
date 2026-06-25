@@ -14,49 +14,38 @@
 
 <div class="list-layout">
   <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Name" col="name" %}
+              {% sortable_th "criticality" "Criticality" col="criticality" %}
+              <th data-col="owner">{% trans "Owner" %}</th>
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'context:activity-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "context/activity_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-<div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
-  <a href="{% url 'context:activity-list' %}" class="filter-chip {% if not request.GET.criticality and not request.GET.status %}active{% endif %}">{% trans "All" %}</a>
-  <span class="filter-chip-divider"></span>
-  <a href="?criticality=critical" class="filter-chip {% if request.GET.criticality == 'critical' %}active-danger{% endif %}">{% trans "Critical" %}</a>
-  <a href="?criticality=high" class="filter-chip {% if request.GET.criticality == 'high' %}active-warning{% endif %}">{% trans "High" %}</a>
-  <a href="?criticality=medium" class="filter-chip {% if request.GET.criticality == 'medium' %}active{% endif %}">{% trans "Medium" %}</a>
-  <a href="?criticality=low" class="filter-chip {% if request.GET.criticality == 'low' %}active{% endif %}">{% trans "Low" %}</a>
-  <span class="filter-chip-divider"></span>
-  <a href="?status=active" class="filter-chip {% if request.GET.status == 'active' %}active{% endif %}">{% trans "Active" %}</a>
-  <a href="?status=planned" class="filter-chip {% if request.GET.status == 'planned' %}active{% endif %}">{% trans "Planned" %}</a>
-  <a href="?status=inactive" class="filter-chip {% if request.GET.status == 'inactive' %}active{% endif %}">{% trans "Inactive" %}</a>
-</div>
-
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "name" "Name" %}
-          {% sortable_th "criticality" "Criticality" %}
-          <th>{% trans "Owner" %}</th>
-          {% sortable_th "workflow_state" "Status" %}
-          <th>{% trans "Tags" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody id="item-table-body"
-             hx-get="{% url 'context:activity-table-body' %}?{{ request.GET.urlencode }}"
-             hx-trigger="refreshTable"
-             hx-swap="innerHTML">
-        {% include "context/activity_table_body.html" %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

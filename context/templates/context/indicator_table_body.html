@@ -1,14 +1,14 @@
 {% load i18n ui workflow_tags %}
 {% for indicator in indicators %}
 <tr>
-  <td><a href="{% url 'context:indicator-detail' indicator.pk %}" class="ref">{{ indicator.reference }}</a></td>
-  <td>
+  <td data-col="reference"><a href="{% url 'context:indicator-detail' indicator.pk %}" class="ref">{{ indicator.reference }}</a></td>
+  <td data-col="name">
     <span class="cell-stack">
       <span><a href="{% url 'context:indicator-detail' indicator.pk %}" class="cell-link" style="font-weight:600">{{ indicator.name }}</a>{% if indicator.is_internal %} <span class="badge text-bg-info" style="font-size:.65rem">{% trans "Predefined" %}</span>{% endif %}</span>
       <span class="cell-sub">{{ indicator.get_format_display }}</span>
     </span>
   </td>
-  <td>
+  <td data-col="current_value">
     {% if indicator.current_value %}
     <span class="cell-stack">
       <span class="{% if indicator.is_critical %}text-danger fw-bold{% endif %}">{{ indicator.current_value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}</span>
@@ -18,20 +18,20 @@
     <span class="cell-sub" title="{% trans 'Expected level' %}"><i class="bi bi-bullseye me-1" aria-hidden="true"></i>{{ indicator.expected_level }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}</span>
     {% else %}<span class="cell-empty">-</span>{% endif %}
   </td>
-  <td>
+  <td data-col="trend">
     {% if indicator.sparkline_data %}
     <div class="sparkline-slot" data-sparkline="{{ indicator.sparkline_data|join:',' }}" data-trend="{{ indicator.spark_trend }}" data-critical="{% if indicator.is_critical %}1{% endif %}" style="width:90px;height:28px"></div>
     {% else %}<span class="cell-empty">-</span>{% endif %}
   </td>
-  <td>
+  <td data-col="collection">
     <span class="cell-stack">
       <span>{{ indicator.get_collection_method_display }}</span>
       <span class="cell-sub" title="{% trans 'Review frequency' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ indicator.get_review_frequency_display }}</span>
     </span>
   </td>
-  <td>{% workflow_badge indicator %}</td>
-  <td>{% include "includes/tags_badge.html" with tags=indicator.tags.all %}</td>
-  <td class="text-end">
+  <td data-col="status">{% workflow_badge indicator %}</td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=indicator.tags.all %}</td>
+  <td class="text-end" data-col="actions">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
             hx-get="{% url 'context:indicator-update' indicator.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
       <i class="bi bi-pencil"></i>

@@ -6,7 +6,6 @@
 {% load help_tags %}
 
 {% block content %}
-{% has_perm "risks.criteria.delete" as can_delete_criteria %}
 {% page_header _("Risk criteria") nav="risks:criteria-list" accent="risks" %}
   <a href="{% url 'risks:criteria-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New criteria' %}</a>
 {% endpage_header %}
@@ -14,55 +13,38 @@
 
 <div class="list-layout">
   <div class="list-main">
-<div class="mb-3 d-flex gap-2">
-  <a href="{% url 'risks:criteria-list' %}" class="filter-chip {% if not request.GET.status %}active{% endif %}">{% trans "All" %}</a>
-  <a href="?status=validated" class="filter-chip {% if request.GET.status == 'validated' %}active{% endif %}">{% trans "Validated" %}</a>
-  <a href="?status=draft" class="filter-chip {% if request.GET.status == 'draft' %}active{% endif %}">{% trans "Drafts" %}</a>
-</div>
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Name" col="name" %}
+              <th data-col="scopes">{% trans "Scopes" %}</th>
+              <th data-col="threshold">{% trans "Acceptance threshold" %}</th>
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'risks:criteria-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "risks/criteria_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "name" "Name" %}
-          <th>{% trans "Scopes" %}</th>
-          <th>{% trans "Acceptance threshold" %}</th>
-          {% sortable_th "workflow_state" "Status" %}
-          <th>{% trans "Tags" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for c in criteria_list %}
-        <tr>
-          <td><a href="{% url 'risks:criteria-detail' c.pk %}" class="ref">{{ c.reference }}</a></td>
-          <td><a href="{% url 'risks:criteria-detail' c.pk %}" class="cell-link">{{ c.name }}</a>{% if c.is_default %} <span class="badge text-bg-success" style="font-size:.65rem">{% trans "Default" %}</span>{% endif %}</td>
-          <td>{% scope_popover c.scopes.all %}</td>
-          <td>{{ c.acceptance_threshold }}</td>
-          <td>{% workflow_badge c %}</td>
-          <td>{% include "includes/tags_badge.html" with tags=c.tags.all %}</td>
-          <td class="text-end">
-            <a href="{% url 'risks:criteria-update' c.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-            {% if can_delete_criteria and c.is_deletable %}
-            <a href="{% url 'risks:criteria-delete' c.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No risk criteria defined yet.") message=_("Risk criteria are the scales (likelihood, impact) and the level matrix used during assessments. Define them once per methodology.") colspan=7 %}
-        {% endfor %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

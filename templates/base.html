@@ -6013,9 +6013,14 @@
     }
     function applyFilters(form, close) {
       var tbody = document.getElementById('item-table-body');
-      if (tbody && window.htmx) window.htmx.trigger(tbody, 'refreshTable');
-      var listUrl = form.getAttribute('data-list-url') || location.pathname;
       var qs = new URLSearchParams(new FormData(form)).toString();
+      var listUrl = form.getAttribute('data-list-url') || location.pathname;
+      // Lists without an HTMX table-body endpoint apply filters by navigating.
+      if (!tbody || !tbody.getAttribute('hx-get') || !window.htmx) {
+        window.location = listUrl + (qs ? '?' + qs : '');
+        return;
+      }
+      window.htmx.trigger(tbody, 'refreshTable');
       history.replaceState(null, '', listUrl + (qs ? '?' + qs : ''));
       updateIndicator(countActive(form));
       if (close) {

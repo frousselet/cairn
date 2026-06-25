@@ -1,72 +1,43 @@
 {% extends "base.html" %}
+{% load help_tags i18n table_tags ui workflow_tags %}
 
-{% block title %}{% load i18n ui workflow_tags %}{% trans "Dependencies" %} — Cairn{% endblock %}
-
-{% load help_tags i18n table_tags %}
+{% block title %}{% trans "Dependencies" %} — Cairn{% endblock %}
 
 {% block content %}
 {% page_header _("Dependency relationships") nav="assets:dependency-list" accent="assets" %}
   <a href="{% url 'assets:dependency-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New dependency' %}</a>
 {% endpage_header %}
 {% help_modal "assets.dependency_list" %}
+
 <div class="list-layout">
   <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "essential" "Dependency" col="essential" %}
+              {% sortable_th "type" "Type" col="type" %}
+              {% sortable_th "criticality" "Criticality" col="criticality" %}
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body">
+            {% include "assets/dependency_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-{% include "includes/table_search.html" %}
-
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "essential" "Dependency" %}
-          {% sortable_th "type" "Type" %}
-          {% sortable_th "criticality" "Criticality" %}
-          {% sortable_th "workflow_state" "Status" %}
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for dep in dependencies %}
-        <tr>
-          <td><span class="ref">{{ dep.reference }}</span></td>
-          <td>
-            <span class="cell-stack">
-              <a href="{% url 'assets:essential-asset-detail' dep.essential_asset.pk %}" class="cell-link">{{ dep.essential_asset }}</a>
-              <span class="cell-sub"><i class="bi bi-arrow-return-right me-1" aria-hidden="true"></i><a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" style="color:inherit;text-decoration:none">{{ dep.support_asset }}</a></span>
-            </span>
-          </td>
-          <td>
-            <span class="cell-stack">
-              <span>{{ dep.get_dependency_type_display }}</span>
-              {% if dep.redundancy_level %}<span class="cell-sub" title="{% trans 'Redundancy' %}"><i class="bi bi-hdd-stack me-1" aria-hidden="true"></i>{{ dep.get_redundancy_level_display }}</span>{% endif %}
-            </span>
-          </td>
-          <td>
-            <span class="cell-stack">
-              <span><span class="badge text-bg-{% if dep.criticality == 'critical' %}danger{% elif dep.criticality == 'high' %}warning{% elif dep.criticality == 'medium' %}info{% else %}secondary{% endif %}">{{ dep.get_criticality_display }}</span></span>
-              {% if dep.is_single_point_of_failure %}<span class="cell-sub" style="color:var(--danger)"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>SPOF</span>{% endif %}
-            </span>
-          </td>
-          <td>{% workflow_badge dep %}</td>
-          <td class="text-end">
-            <a href="{% url 'assets:dependency-update' dep.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'assets:dependency-delete' dep.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No asset dependency mapped yet.") message=_("Dependencies declare which support asset feeds which essential asset. Mapping them surfaces single points of failure.") colspan=6 %}
-        {% endfor %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

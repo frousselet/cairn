@@ -1,0 +1,51 @@
+{% load i18n table_tags ui workflow_tags accounts_tags %}
+{% has_perm "risks.acceptance.delete" as can_delete_acceptances %}
+{% for acc in acceptances %}
+<tr>
+  <td data-col="reference"><a href="{% url 'risks:acceptance-detail' acc.pk %}" class="ref">{{ acc.reference }}</a></td>
+  <td data-col="risk">
+    {% if acc.risk %}
+    <span class="cell-stack">
+      <a href="{% url 'risks:risk-detail' acc.risk.pk %}" class="cell-link" title="{{ acc.risk }}">{{ acc.risk }}</a>
+      {% if acc.justification %}<span class="cell-sub" title="{{ acc.justification }}">{{ acc.justification }}</span>{% endif %}
+    </span>
+    {% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td data-col="accepted_by">
+    {% if acc.accepted_by %}
+    <span class="cell-people cell-people--sm">
+      {% if acc.accepted_by.avatar %}
+      <img src="{{ acc.accepted_by.avatar_32|default:acc.accepted_by.avatar }}" alt="" class="cell-avatar">
+      {% else %}
+      <span class="cell-avatar-fallback">{{ acc.accepted_by.display_name|initials }}</span>
+      {% endif %}
+      <span class="cell-stack">
+        <span style="font-weight:600">{{ acc.accepted_by.display_name }}</span>
+        {% if acc.accepted_by.job_title %}<span class="cell-sub">{{ acc.accepted_by.job_title }}</span>{% endif %}
+      </span>
+    </span>
+    {% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td data-col="level">{{ acc.risk_level_at_acceptance|default:"-" }}</td>
+  <td data-col="valid_until">
+    {% if acc.valid_until %}
+    <span class="cell-stack">
+      <span>{{ acc.valid_until }}</span>
+      {% if acc.accepted_at %}<span class="cell-sub" title="{% trans 'Acceptance date' %}"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{{ acc.accepted_at|date }}</span>{% endif %}
+    </span>
+    {% elif acc.accepted_at %}
+    <span class="cell-sub" title="{% trans 'Acceptance date' %}"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{{ acc.accepted_at|date }}</span>
+    {% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td data-col="status">{% workflow_badge acc %}</td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=acc.tags.all %}</td>
+  <td class="text-end" data-col="actions">
+    <a hx-get="{% url 'risks:acceptance-update' acc.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    {% if can_delete_acceptances and acc.is_deletable %}
+    <a href="{% url 'risks:acceptance-delete' acc.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No risk acceptance recorded yet.") message=_("Acceptances formalise the decision to live with a residual risk. Each one is timed, justified and reviewed before expiry.") colspan=8 %}
+{% endfor %}

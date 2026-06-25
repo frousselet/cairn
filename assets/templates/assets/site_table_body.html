@@ -1,0 +1,24 @@
+{% load i18n ui workflow_tags %}
+{% for site in sites %}
+<tr>
+  <td data-col="reference"><a href="{% url 'assets:site-detail' site.pk %}" class="ref">{{ site.reference }}</a></td>
+  <td data-col="name">
+    <div class="d-flex align-items-start" style="padding-left: {{ site.tree_indent }}px;">
+      {% if site.tree_level > 0 %}<span class="text-muted me-1">&boxur;</span>{% endif %}
+      <span class="cell-stack">
+        <a href="{% url 'assets:site-detail' site.pk %}" class="cell-link">{{ site.name }}</a>
+        {% if site.address %}<span class="cell-sub" title="{{ site.address }}">{{ site.address }}</span>{% endif %}
+      </span>
+    </div>
+  </td>
+  <td data-col="type">{{ site.get_type_display }}</td>
+  <td data-col="status">{% workflow_badge site %}</td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=site.tags.all %}</td>
+  <td class="text-end" data-col="actions">
+    <a hx-get="{% url 'assets:site-update' site.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    <a href="{% url 'assets:site-delete' site.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No site declared yet.") message=_("Sites are the physical locations covered by your ISMS - offices, datacenters, factories, anywhere data lives or is processed.") colspan=6 %}
+{% endfor %}

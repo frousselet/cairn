@@ -25,7 +25,15 @@ from django.views.generic import (
 
 from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
-from core.mixins import HtmxFormMixin, ListSummaryMixin, SortableListMixin
+from core.mixins import (
+    AdvancedFilterMixin,
+    ColumnPreferenceMixin,
+    HtmxFormMixin,
+    ListSummaryMixin,
+    PredefinedFilterMixin,
+    SavedFilterMixin,
+    SortableListMixin,
+)
 from .forms import (
     ActionPlanTransitionForm,
     AssessmentResultForm,
@@ -61,7 +69,14 @@ from .constants import (
     ActionPlanStatus,
     AssessmentStatus,
     ComplianceStatus,
+    CoverageLevel,
     FindingType,
+    FrameworkCategory,
+    FrameworkStatus,
+    FrameworkType,
+    MappingType,
+    Priority,
+    RequirementType,
     FINDING_REFERENCE_PREFIXES,
 )
 from .models import (
@@ -122,10 +137,31 @@ class ApproveView(LoginRequiredMixin, View):
 
 # ── Framework ──────────────────────────────────────────────
 
-class FrameworkListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+FRAMEWORK_FILTER_GROUPS = [
+    {"param": "type", "field": "type", "label": _l("Type"), "options": FrameworkType.choices},
+    {"param": "category", "field": "category", "label": _l("Category"), "options": FrameworkCategory.choices},
+    {"param": "status", "field": "status", "label": _l("Status"), "options": FrameworkStatus.choices},
+]
+FRAMEWORK_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+FRAMEWORK_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "compliance", "label": _l("Compliance")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class FrameworkListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Framework
     permission_required = "compliance.framework.read"
     status_field = "status"
+    filter_groups = FRAMEWORK_FILTER_GROUPS
+    text_filters = FRAMEWORK_TEXT_FILTERS
+    columns = FRAMEWORK_COLUMNS
     template_name = "compliance/framework_list.html"
     context_object_name = "frameworks"
     paginate_by = 25
@@ -142,13 +178,8 @@ class FrameworkListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes").select_related("owner")
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        type_filter = self.request.GET.get("type")
-        if type_filter:
-            qs = qs.filter(type=type_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class FrameworkDetailView(
@@ -377,11 +408,33 @@ class FrameworkImportSampleView(LoginRequiredMixin, PermissionRequiredMixin, Vie
 
 # ── Requirement ────────────────────────────────────────────
 
-class RequirementListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+REQUIREMENT_FILTER_GROUPS = [
+    {"param": "type", "field": "type", "label": _l("Type"), "options": RequirementType.choices},
+    {"param": "compliance_status", "field": "compliance_status", "label": _l("Compliance"), "options": ComplianceStatus.choices},
+    {"param": "priority", "field": "priority", "label": _l("Priority"), "options": Priority.choices},
+]
+REQUIREMENT_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Title")},
+]
+REQUIREMENT_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Title"), "always": True},
+    {"key": "compliance", "label": _l("Compliance")},
+    {"key": "risks", "label": _l("Risks")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class RequirementListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Requirement
     permission_required = "compliance.requirement.read"
     status_field = "compliance_status"
     status_param = "compliance_status"
+    filter_groups = REQUIREMENT_FILTER_GROUPS
+    text_filters = REQUIREMENT_TEXT_FILTERS
+    columns = REQUIREMENT_COLUMNS
     scope_parent_lookup = "framework__scopes"
     template_name = "compliance/requirement_list.html"
     context_object_name = "requirements"
@@ -406,10 +459,8 @@ class RequirementListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumma
         framework_filter = self.request.GET.get("framework")
         if framework_filter:
             qs = qs.filter(framework_id=framework_filter)
-        status_filter = self.request.GET.get("compliance_status")
-        if status_filter:
-            qs = qs.filter(compliance_status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class RequirementDetailView(
@@ -466,9 +517,31 @@ class RequirementDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFi
 
 # ── Assessment ─────────────────────────────────────────────
 
-class AssessmentListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+ASSESSMENT_FILTER_GROUPS = [
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": AssessmentStatus.choices},
+]
+ASSESSMENT_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+ASSESSMENT_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "dates", "label": _l("Dates")},
+    {"key": "assessor", "label": _l("Assessor")},
+    {"key": "coverage", "label": _l("Coverage")},
+    {"key": "compliance", "label": _l("Compliance")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class AssessmentListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = ComplianceAssessment
     permission_required = "compliance.assessment.read"
+    filter_groups = ASSESSMENT_FILTER_GROUPS
+    text_filters = ASSESSMENT_TEXT_FILTERS
+    columns = ASSESSMENT_COLUMNS
     template_name = "compliance/assessment_list.html"
     context_object_name = "assessments"
     paginate_by = 25
@@ -483,11 +556,13 @@ class AssessmentListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
     search_fields = ["reference", "name"]
 
     def get_queryset(self):
-        return (
+        qs = (
             super().get_queryset()
             .prefetch_related("scopes", "frameworks")
             .select_related("assessor")
         )
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class AssessmentDetailView(
@@ -1449,9 +1524,28 @@ class FindingsTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 # ── Mapping ────────────────────────────────────────────────
 
-class MappingListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+MAPPING_FILTER_GROUPS = [
+    {"param": "type", "field": "mapping_type", "label": _l("Type"), "options": MappingType.choices},
+    {"param": "coverage", "field": "coverage_level", "label": _l("Coverage"), "options": CoverageLevel.choices},
+]
+MAPPING_TEXT_FILTERS = [
+    {"param": "source", "field": "source_requirement__reference", "label": _l("Source")},
+]
+MAPPING_COLUMNS = [
+    {"key": "source", "label": _l("Source"), "always": True},
+    {"key": "target", "label": _l("Target"), "always": True},
+    {"key": "type", "label": _l("Type")},
+    {"key": "coverage", "label": _l("Coverage")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class MappingListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = RequirementMapping
     permission_required = "compliance.mapping.read"
+    filter_groups = MAPPING_FILTER_GROUPS
+    text_filters = MAPPING_TEXT_FILTERS
+    columns = MAPPING_COLUMNS
     scope_parent_lookup = "source_requirement__framework__scopes"
     template_name = "compliance/mapping_list.html"
     context_object_name = "mappings"
@@ -1471,10 +1565,12 @@ class MappingListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMi
     ]
 
     def get_queryset(self):
-        return super().get_queryset().select_related(
+        qs = super().get_queryset().select_related(
             "source_requirement__framework",
             "target_requirement__framework",
         )
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class MappingDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, DetailView):
@@ -1522,10 +1618,33 @@ class MappingDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
 
 # ── Action Plan ────────────────────────────────────────────
 
-class ActionPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+ACTION_PLAN_FILTER_GROUPS = [
+    {"param": "status", "field": "status", "label": _l("Status"), "options": ActionPlanStatus.choices},
+    {"param": "priority", "field": "priority", "label": _l("Priority"), "options": Priority.choices},
+]
+ACTION_PLAN_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+ACTION_PLAN_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "priority", "label": _l("Priority")},
+    {"key": "supervisor", "label": _l("Supervisor")},
+    {"key": "assignees", "label": _l("Assignees")},
+    {"key": "progress", "label": _l("Progress")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class ActionPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = ComplianceActionPlan
     permission_required = "compliance.action_plan.read"
     status_field = "status"
+    filter_groups = ACTION_PLAN_FILTER_GROUPS
+    text_filters = ACTION_PLAN_TEXT_FILTERS
+    columns = ACTION_PLAN_COLUMNS
     template_name = "compliance/action_plan_list.html"
     context_object_name = "action_plans"
     paginate_by = 25
@@ -1542,10 +1661,8 @@ class ActionPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes", "risks", "findings", "assignees").select_related("owner")
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class ActionPlanDetailView(
@@ -1728,6 +1845,120 @@ class ActionPlanCommentCreateView(LoginRequiredMixin, PermissionRequiredMixin, V
             request=request,
         )
         return HttpResponse(html)
+
+
+# ── Table body views (HTMX partial refresh) ───────────────
+
+class FrameworkTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+    model = Framework
+    permission_required = "compliance.framework.read"
+    template_name = "compliance/framework_table_body.html"
+    context_object_name = "frameworks"
+    paginate_by = None
+    sortable_fields = FrameworkListView.sortable_fields
+    default_sort = FrameworkListView.default_sort
+    search_fields = ["reference", "name", "short_name"]
+    filter_groups = FRAMEWORK_FILTER_GROUPS
+    text_filters = FRAMEWORK_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().prefetch_related("scopes", "tags").select_related("owner")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
+class RequirementTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+    model = Requirement
+    permission_required = "compliance.requirement.read"
+    scope_parent_lookup = "framework__scopes"
+    status_param = "compliance_status"
+    template_name = "compliance/requirement_table_body.html"
+    context_object_name = "requirements"
+    paginate_by = None
+    sortable_fields = RequirementListView.sortable_fields
+    default_sort = RequirementListView.default_sort
+    search_fields = ["reference", "requirement_number", "name", "framework__name"]
+    filter_groups = REQUIREMENT_FILTER_GROUPS
+    text_filters = REQUIREMENT_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("framework", "section").prefetch_related("tags").annotate(
+            risk_count=Count("linked_risks", distinct=True)
+        )
+        framework_filter = self.request.GET.get("framework")
+        if framework_filter:
+            qs = qs.filter(framework_id=framework_filter)
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
+class AssessmentTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+    model = ComplianceAssessment
+    permission_required = "compliance.assessment.read"
+    template_name = "compliance/assessment_table_body.html"
+    context_object_name = "assessments"
+    paginate_by = None
+    sortable_fields = AssessmentListView.sortable_fields
+    default_sort = AssessmentListView.default_sort
+    search_fields = ["reference", "name"]
+    filter_groups = ASSESSMENT_FILTER_GROUPS
+    text_filters = ASSESSMENT_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = (
+            super().get_queryset()
+            .prefetch_related("scopes", "frameworks", "tags")
+            .select_related("assessor")
+        )
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
+class MappingTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+    model = RequirementMapping
+    permission_required = "compliance.mapping.read"
+    scope_parent_lookup = "source_requirement__framework__scopes"
+    template_name = "compliance/mapping_table_body.html"
+    context_object_name = "mappings"
+    paginate_by = None
+    sortable_fields = MappingListView.sortable_fields
+    default_sort = MappingListView.default_sort
+    search_fields = [
+        "source_requirement__reference",
+        "source_requirement__name",
+        "target_requirement__reference",
+        "target_requirement__name",
+    ]
+    filter_groups = MAPPING_FILTER_GROUPS
+    text_filters = MAPPING_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related(
+            "source_requirement__framework",
+            "target_requirement__framework",
+        )
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
+class ActionPlanTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+    model = ComplianceActionPlan
+    permission_required = "compliance.action_plan.read"
+    template_name = "compliance/action_plan_table_body.html"
+    context_object_name = "action_plans"
+    paginate_by = None
+    sortable_fields = ActionPlanListView.sortable_fields
+    default_sort = ActionPlanListView.default_sort
+    search_fields = ["reference", "name"]
+    filter_groups = ACTION_PLAN_FILTER_GROUPS
+    text_filters = ACTION_PLAN_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().prefetch_related(
+            "scopes", "risks", "findings", "assignees", "tags"
+        ).select_related("owner")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class RiskPreviewView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):

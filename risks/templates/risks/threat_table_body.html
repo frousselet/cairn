@@ -1,0 +1,30 @@
+{% load i18n scope_tags ui workflow_tags accounts_tags %}
+{% has_perm "risks.threat.delete" as can_delete_threats %}
+{% for t in threats %}
+<tr>
+  <td data-col="reference"><a href="{% url 'risks:threat-detail' t.pk %}" class="ref">{{ t.reference }}</a></td>
+  <td data-col="name">
+    <span class="cell-stack">
+      <span><a href="{% url 'risks:threat-detail' t.pk %}" class="cell-link" style="font-weight:600">{{ t.name }}</a>{% if t.is_from_catalog %} <span class="badge text-bg-info" style="font-size:.65rem">{% trans "Catalog" %}</span>{% endif %}</span>
+      {% if t.category %}<span class="cell-sub">{{ t.get_category_display }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="type">
+    <span class="cell-stack">
+      <span>{{ t.get_type_display }}</span>
+      {% if t.origin %}<span class="cell-sub">{{ t.get_origin_display }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="scopes">{% scope_popover t.scopes.all %}</td>
+  <td data-col="status">{% workflow_badge t %}</td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=t.tags.all %}</td>
+  <td class="text-end" data-col="actions">
+    <a hx-get="{% url 'risks:threat-update' t.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    {% if can_delete_threats and t.is_deletable %}
+    <a href="{% url 'risks:threat-delete' t.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No threat catalogued yet.") message=_("Threats are the events or sources that could harm assets. Maintain a shared catalogue to keep assessments consistent.") colspan=7 %}
+{% endfor %}
