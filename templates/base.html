@@ -4063,7 +4063,8 @@
        the pagination gap to the same value. (.list-main stays block so the
        not-yet-migrated pages keep their margin-based spacing.) */
     .list-main { min-width: 0; }
-    .list-layout .card { margin-bottom: 0; }
+    .list-layout .card,
+    .list-layout .skeleton-card { margin-bottom: 0; }
     .list-main .pagination { margin-top: 1.5rem; }
     .list-rail { min-width: 0; display: flex; flex-direction: column; gap: 1.5rem; }
     /* KPI rail variant: the rail holds KPI tiles (and, later, charts). When the
@@ -5295,20 +5296,31 @@
      * the browser session round-trip.
      */
     (function() {
+      // Mirrors the standard list layout (page header + main table + KPI rail)
+      // and reuses .list-layout / .list-rail--kpi, so the placeholder follows the
+      // same responsive rules: rail on top + inline when narrow, sticky right
+      // column when wide.
+      var ROW = '<div class="skeleton-line"></div>';
+      var RAIL_TILE = '' +
+        '<div class="skeleton-card">' +
+          '<div class="skeleton-line" style="width:55%;height:.7rem"></div>' +
+          '<div class="skeleton-line" style="width:35%;height:1.4rem;margin-bottom:0"></div>' +
+        '</div>';
       var SKELETON_HTML = '' +
-        '<div class="container-xl">' +
-          '<div class="skeleton-line skeleton-line--eyebrow" aria-hidden="true"></div>' +
-          '<div class="skeleton-line skeleton-line--title" aria-hidden="true"></div>' +
-          '<div class="skeleton-card" aria-hidden="true">' +
-            '<div class="skeleton-line" style="width:30%"></div>' +
-            '<div class="skeleton-line"></div>' +
-            '<div class="skeleton-line"></div>' +
-            '<div class="skeleton-line" style="width:70%"></div>' +
-          '</div>' +
-          '<div class="skeleton-card" aria-hidden="true">' +
-            '<div class="skeleton-line"></div>' +
-            '<div class="skeleton-line"></div>' +
-            '<div class="skeleton-line" style="width:80%"></div>' +
+        '<div class="container-xl" aria-hidden="true">' +
+          '<div class="skeleton-line skeleton-line--eyebrow"></div>' +
+          '<div class="skeleton-line skeleton-line--title"></div>' +
+          '<div class="list-layout">' +
+            '<div class="list-main">' +
+              '<div class="skeleton-card">' +
+                '<div class="skeleton-line" style="width:40%;margin-bottom:1.5rem"></div>' +
+                ROW + ROW + ROW + ROW + ROW + ROW + ROW +
+                '<div class="skeleton-line" style="width:70%;margin-bottom:0"></div>' +
+              '</div>' +
+            '</div>' +
+            '<aside class="list-rail list-rail--kpi">' +
+              RAIL_TILE + RAIL_TILE + RAIL_TILE +
+            '</aside>' +
           '</div>' +
         '</div>';
 
