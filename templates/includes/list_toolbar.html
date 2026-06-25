@@ -1,0 +1,33 @@
+{% load i18n %}
+{% comment %}
+Table card toolbar: client-side search, a "Filters" button opening the filter
+offcanvas, and a "Columns" dropdown. Rendered as the first child of the table
+card, above the .table-responsive. `filter_list_url` is forwarded to the
+offcanvas (included alongside this toolbar by the page).
+{% endcomment %}
+<div class="list-toolbar">
+  <div class="list-toolbar__search">
+    <i class="bi bi-search" aria-hidden="true"></i>
+    <input type="search" class="list-search-input" placeholder="{% trans 'Search…' %}" aria-label="{% trans 'Search' %}" autocomplete="off">
+  </div>
+  <div class="list-toolbar__spacer"></div>
+  {% if list_filters or list_text_filters %}
+  <button type="button" class="btn btn-sm list-filter-toggle {% if list_filters_active %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-bs-toggle="offcanvas" data-bs-target="#listFilterOffcanvas" aria-controls="listFilterOffcanvas">
+    <i class="bi bi-funnel{% if list_filters_active %}-fill{% endif %} me-1" aria-hidden="true"></i>{% trans "Filters" %}
+    <span class="list-toolbar__btn-badge list-filter-count"{% if not list_filters_active %} hidden{% endif %} title="{% trans 'Active filters' %}">{{ list_filters_count }}</span>
+  </button>
+  <button type="button" class="btn btn-sm btn-outline-secondary list-filter-reset" title="{% trans 'Reset filters' %}"{% if not list_filters_active %} hidden{% endif %}>
+    <i class="bi bi-x-lg" aria-hidden="true"></i>
+  </button>
+  {% endif %}
+  {% if list_columns %}
+  <div class="dropdown">
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+      <i class="bi bi-layout-three-columns me-1" aria-hidden="true"></i>{% trans "Columns" %}
+    </button>
+    <div class="dropdown-menu dropdown-menu-end columns-menu">
+      {% include "includes/list_columns_menu.html" %}
+    </div>
+  </div>
+  {% endif %}
+</div>

@@ -25,7 +25,7 @@ from django.views.generic import (
 
 from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
-from core.mixins import HtmxFormMixin, SortableListMixin
+from core.mixins import HtmxFormMixin, ListSummaryMixin, SortableListMixin
 from .forms import (
     ActionPlanTransitionForm,
     AssessmentResultForm,
@@ -122,9 +122,10 @@ class ApproveView(LoginRequiredMixin, View):
 
 # ── Framework ──────────────────────────────────────────────
 
-class FrameworkListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class FrameworkListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Framework
     permission_required = "compliance.framework.read"
+    status_field = "status"
     template_name = "compliance/framework_list.html"
     context_object_name = "frameworks"
     paginate_by = 25
@@ -376,9 +377,11 @@ class FrameworkImportSampleView(LoginRequiredMixin, PermissionRequiredMixin, Vie
 
 # ── Requirement ────────────────────────────────────────────
 
-class RequirementListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class RequirementListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Requirement
     permission_required = "compliance.requirement.read"
+    status_field = "compliance_status"
+    status_param = "compliance_status"
     scope_parent_lookup = "framework__scopes"
     template_name = "compliance/requirement_list.html"
     context_object_name = "requirements"
@@ -463,7 +466,7 @@ class RequirementDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFi
 
 # ── Assessment ─────────────────────────────────────────────
 
-class AssessmentListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class AssessmentListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = ComplianceAssessment
     permission_required = "compliance.assessment.read"
     template_name = "compliance/assessment_list.html"
@@ -1446,7 +1449,7 @@ class FindingsTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 # ── Mapping ────────────────────────────────────────────────
 
-class MappingListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class MappingListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = RequirementMapping
     permission_required = "compliance.mapping.read"
     scope_parent_lookup = "source_requirement__framework__scopes"
@@ -1519,9 +1522,10 @@ class MappingDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
 
 # ── Action Plan ────────────────────────────────────────────
 
-class ActionPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class ActionPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = ComplianceActionPlan
     permission_required = "compliance.action_plan.read"
+    status_field = "status"
     template_name = "compliance/action_plan_list.html"
     context_object_name = "action_plans"
     paginate_by = 25

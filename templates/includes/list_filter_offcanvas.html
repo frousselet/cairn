@@ -1,0 +1,52 @@
+{% load i18n %}
+{% comment %}
+Right offcanvas holding the list's filter builder, opened by the toolbar's
+"Filters" button. The form carries no HTMX itself: the table <tbody> includes it
+via hx-include and refreshes on change, so filtering never reloads the page.
+`filter_list_url` is the bare list URL (Clear button + history URL sync).
+{% endcomment %}
+{% if list_filters or list_text_filters %}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="listFilterOffcanvas" aria-labelledby="listFilterOffcanvasLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="listFilterOffcanvasLabel">
+      <i class="bi bi-funnel me-2" aria-hidden="true"></i>{% trans "Filters" %}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{% trans 'Close' %}"></button>
+  </div>
+  <div class="offcanvas-body">
+    <form class="list-filter-form" data-list-url="{{ filter_list_url }}">
+      {% for group in list_filters %}
+      <div class="list-filter-group mb-3">
+        <label class="form-label text-uppercase text-muted mb-1" style="font-size:.7rem;letter-spacing:.04em">{{ group.label }}</label>
+        <select name="{{ group.param }}" class="form-select form-select-sm" multiple data-ts-filter placeholder="{% trans 'Any' %}">
+          {% for opt in group.options %}
+          <option value="{{ opt.value }}"{% if opt.checked %} selected{% endif %}>{{ opt.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endfor %}
+      {% for rule in list_text_filters %}
+      <div class="list-filter-group mb-3">
+        <label class="form-label text-uppercase text-muted mb-1" style="font-size:.7rem;letter-spacing:.04em">{{ rule.label }}</label>
+        <div class="d-flex gap-1">
+          <select name="{{ rule.param }}_op" class="form-select form-select-sm" style="flex:0 0 8.5rem">
+            {% for op in rule.operators %}
+            <option value="{{ op.value }}"{% if op.selected %} selected{% endif %}>{{ op.label }}</option>
+            {% endfor %}
+          </select>
+          <input type="text" name="{{ rule.param }}_q" value="{{ rule.value }}" class="form-control form-control-sm" autocomplete="off">
+        </div>
+      </div>
+      {% endfor %}
+    </form>
+  </div>
+  <div class="offcanvas-footer">
+    <button type="button" class="btn btn-sm btn-outline-secondary list-filter-reset">
+      <i class="bi bi-x-lg me-1" aria-hidden="true"></i>{% trans "Reset filters" %}
+    </button>
+    <button type="button" class="btn btn-sm btn-primary list-filter-apply">
+      <i class="bi bi-check2 me-1" aria-hidden="true"></i>{% trans "Apply" %}
+    </button>
+  </div>
+</div>
+{% endif %}

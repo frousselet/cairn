@@ -16,6 +16,8 @@
 </div>
 {% help_modal "risks.iso27005_risk_list" %}
 
+<div class="list-layout">
+  <div class="list-main">
 {% include "includes/table_search.html" %}
 <div class="card">
   <div class="table-responsive">
@@ -67,4 +69,9 @@
 </div>
 
 {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail">
+    {% include "includes/list_rail_summary.html" %}
+  </aside>
+</div>
 {% endblock %}

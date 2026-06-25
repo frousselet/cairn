@@ -57,3 +57,34 @@ class SaveSortPreferenceView(LoginRequiredMixin, View):
         request.user.save(update_fields=["table_preferences"])
 
         return JsonResponse({"status": "ok"})
+
+
+class SaveColumnPreferenceView(LoginRequiredMixin, View):
+    """Save the column layout (order + hidden) for a specific list view."""
+
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        view_key = (data.get("view") or "").strip()
+        order = data.get("order")
+        hidden = data.get("hidden")
+        if not view_key:
+            return JsonResponse({"error": "Missing view"}, status=400)
+        if not isinstance(order, list) or not isinstance(hidden, list):
+            return JsonResponse({"error": "Invalid layout"}, status=400)
+
+        # Keep only string keys; cap length to guard against junk payloads.
+        order = [str(k) for k in order][:100]
+        hidden = [str(k) for k in hidden][:100]
+
+        prefs = request.user.column_preferences
+        if not isinstance(prefs, dict):
+            prefs = {}
+        prefs[view_key] = {"order": order, "hidden": hidden}
+        request.user.column_preferences = prefs
+        request.user.save(update_fields=["column_preferences"])
+
+        return JsonResponse({"status": "ok"})

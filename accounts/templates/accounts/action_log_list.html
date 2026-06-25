@@ -7,6 +7,8 @@
 {% page_header _("Action log") nav="accounts:action-log-list" accent="accounts" %}{% endpage_header %}
 {% help_modal "accounts.action_log_list" %}
 
+<div class="list-layout">
+  <div class="list-main">
 <form id="filterForm" method="get">
   <input type="hidden" name="module" value="{{ request.GET.module|default:'' }}">
   <input type="hidden" name="action" value="{{ request.GET.action|default:'' }}">
@@ -94,4 +96,9 @@ function setPill(param, value) {
 </div>
 
 {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail">
+    {% include "includes/list_rail_summary.html" %}
+  </aside>
+</div>
 {% endblock %}

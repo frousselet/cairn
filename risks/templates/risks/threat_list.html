@@ -12,6 +12,8 @@
 {% endpage_header %}
 {% help_modal "risks.threat_list" %}
 
+<div class="list-layout">
+  <div class="list-main">
 {% if parent_assessment %}
 <div class="alert alert-info d-flex align-items-center mb-3" role="status">
   <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
@@ -81,4 +83,9 @@
 </div>
 
 {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail">
+    {% include "includes/list_rail_summary.html" %}
+  </aside>
+</div>
 {% endblock %}

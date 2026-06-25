@@ -9,6 +9,8 @@
   <a href="{% url 'assets:dependency-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New dependency' %}</a>
 {% endpage_header %}
 {% help_modal "assets.dependency_list" %}
+<div class="list-layout">
+  <div class="list-main">
 
 {% include "includes/table_search.html" %}
 
@@ -62,4 +64,9 @@
 </div>
 
 {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail">
+    {% include "includes/list_rail_summary.html" %}
+  </aside>
+</div>
 {% endblock %}

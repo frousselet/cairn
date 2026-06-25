@@ -1,0 +1,21 @@
+{% load i18n %}
+{% comment %}
+KPI tiles for the list rail (entity-specific). Each entry in `list_kpis` is a
+dict {label, value, suffix?, icon?, url?}. On wide screens these stack in the
+sticky right rail; on reduced screens the rail (.list-rail--kpi) moves above the
+table and lays them out inline. Designed to grow into other rail widgets later.
+{% endcomment %}
+{% for kpi in list_kpis %}
+<div class="card kpi-tile kpi-tile--{{ kpi.tone|default:'accent' }}{% if kpi.url %} kpi-tile--link{% endif %}">
+  {% if kpi.url %}<a href="{{ kpi.url }}" class="stretched-link" aria-label="{{ kpi.label }}"></a>{% endif %}
+  <div class="card-body d-flex align-items-center gap-3">
+    {% if kpi.icon %}
+    <span class="kpi-tile__icon kpi-tile__icon--{{ kpi.tone|default:'accent' }}"><i class="bi bi-{{ kpi.icon }}" aria-hidden="true"></i></span>
+    {% endif %}
+    <div class="min-w-0">
+      <div class="text-muted text-truncate" style="font-size:.8rem">{{ kpi.label }}</div>
+      <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ kpi.value }}{% if kpi.suffix %}<span class="text-muted fw-normal" style="font-size:.85rem"> {{ kpi.suffix }}</span>{% endif %}</div>
+    </div>
+  </div>
+</div>
+{% endfor %}
