@@ -2,34 +2,34 @@
 
 `compliance.models.mapping.RequirementMapping`
 
-Correspondance entre deux [Requirements](requirement.md) de référentiels différents.
+Mapping between two [Requirements](requirement.md) from different frameworks.
 
-## Entité : RequirementMapping (Mapping inter-référentiels)
+## Entity: RequirementMapping (Inter-framework mapping)
 
-Représente une correspondance entre deux exigences de référentiels différents. Permet de mutualiser les efforts de conformité et de visualiser les recouvrements.
+Represents a mapping between two requirements from different frameworks. Allows compliance efforts to be shared and overlaps to be visualized.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `source_requirement_id` | relation | FK → Requirement, requis | Exigence source |
-| `target_requirement_id` | relation | FK → Requirement, requis | Exigence cible |
-| `mapping_type` | enum | requis | `equivalent`, `partial_overlap`, `includes`, `included_by`, `related` |
-| `coverage_level` | enum | optionnel | `full`, `partial`, `minimal` |
-| `description` | text | optionnel | Description de la correspondance |
-| `justification` | text | optionnel | Justification du mapping |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `source_requirement_id` | relation | FK → Requirement, required | Source requirement |
+| `target_requirement_id` | relation | FK → Requirement, required | Target requirement |
+| `mapping_type` | enum | required | `equivalent`, `partial_overlap`, `includes`, `included_by`, `related` |
+| `coverage_level` | enum | optional | `full`, `partial`, `minimal` |
+| `description` | text | optional | Mapping description |
+| `justification` | text | optional | Mapping justification |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |
 
-> Contrainte d'unicité : le couple (`source_requirement_id`, `target_requirement_id`) doit être unique.
-> Contrainte : `source_requirement_id` et `target_requirement_id` doivent appartenir à des référentiels différents.
+> Uniqueness constraint: the pair (`source_requirement_id`, `target_requirement_id`) must be unique.
+> Constraint: `source_requirement_id` and `target_requirement_id` must belong to different frameworks.
 
-**Types de mapping :**
+**Mapping types:**
 
 | Type | Description |
 |---|---|
-| `equivalent` | Les deux exigences sont équivalentes (couverture mutuelle) |
-| `partial_overlap` | Les exigences se recouvrent partiellement |
-| `includes` | L'exigence source inclut / couvre l'exigence cible |
-| `included_by` | L'exigence source est incluse / couverte par l'exigence cible |
-| `related` | Les exigences sont liées sans recouvrement direct |
+| `equivalent` | The two requirements are equivalent (mutual coverage) |
+| `partial_overlap` | The requirements partially overlap |
+| `includes` | The source requirement includes / covers the target requirement |
+| `included_by` | The source requirement is included in / covered by the target requirement |
+| `related` | The requirements are related without direct overlap |

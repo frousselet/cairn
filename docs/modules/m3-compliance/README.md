@@ -1,131 +1,131 @@
-# Module 3 : Conformité
+# Module 3: Compliance
 
-## Spécifications fonctionnelles et techniques
+## Functional and technical specifications
 
-**Version :** 1.0
-**Date :** 27 février 2026
-**Statut :** Draft
-
----
-
-## Entités
-
-- [Framework](framework.md) : `compliance.models.framework.Framework`
-- [Section](section.md) : `compliance.models.section.Section`
-- [Requirement](requirement.md) : `compliance.models.requirement.Requirement`
-- [ComplianceAssessment](compliance-assessment.md) : `compliance.models.assessment.ComplianceAssessment` (inclut `AssessmentResult`)
-- [RequirementMapping](requirement-mapping.md) : `compliance.models.mapping.RequirementMapping`
-- [ComplianceActionPlan](compliance-action-plan.md) : `compliance.models.action_plan.ComplianceActionPlan`
-- [Attachment](attachment.md) : `compliance.models.assessment.AssessmentResultAttachment`
+**Version:** 1.0
+**Date:** 27 February 2026
+**Status:** Draft
 
 ---
 
-## 1. Présentation générale
+## Entities
 
-### 1.1 Objectif du module
-
-Le module **Conformité** permet de gérer l'ensemble des référentiels normatifs, légaux et contractuels applicables à l'organisme, d'en décliner les exigences, d'évaluer le niveau de conformité et de suivre les écarts. Il offre également la possibilité de mapper les exigences entre référentiels afin de mutualiser les efforts de mise en conformité.
-
-Ce module s'inscrit dans les exigences de l'ISO 27001 (chapitres 4.2, A.5.31 à A.5.36 notamment), du RGPD, et de toute autre réglementation sectorielle applicable (NIS 2, DORA, HDS, PCI DSS, etc.).
-
-### 1.2 Périmètre fonctionnel
-
-Le module couvre cinq sous-domaines :
-
-1. Référentiels (normes, lois, règlements, contrats, politiques internes)
-2. Exigences par référentiel (décomposition structurée des exigences)
-3. Évaluations de conformité (mesure du niveau de conformité par exigence)
-4. Mapping inter-référentiels (correspondances entre exigences de différents référentiels)
-5. Plans d'action de mise en conformité
-
-### 1.3 Dépendances avec les autres modules
-
-| Module cible | Nature de la dépendance |
-|---|---|
-| Contexte et Organisation | Les parties intéressées expriment des attentes pouvant être liées à des exigences de conformité. Le périmètre (Scope) cadre les référentiels applicables. |
-| Gestion des actifs | Certaines exigences portent sur des catégories d'actifs (données personnelles, infrastructures critiques). |
-| Gestion des risques | Les non-conformités peuvent générer des risques. Les résultats d'appréciation des risques peuvent justifier l'applicabilité d'une exigence. |
-| Mesures | Les mesures de sécurité sont les réponses opérationnelles aux exigences de conformité. Une exigence peut être couverte par une ou plusieurs mesures. |
-| Fournisseurs | Les exigences contractuelles ou réglementaires peuvent s'appliquer aux fournisseurs. |
-| Audits | Les audits évaluent la conformité aux référentiels. Les constats d'audit sont liés aux exigences. |
-| Incidents | Certains incidents révèlent des non-conformités à tracer. |
-| Formations | Certaines exigences imposent des obligations de formation. |
+- [Framework](framework.md): `compliance.models.framework.Framework`
+- [Section](section.md): `compliance.models.section.Section`
+- [Requirement](requirement.md): `compliance.models.requirement.Requirement`
+- [ComplianceAssessment](compliance-assessment.md): `compliance.models.assessment.ComplianceAssessment` (includes `AssessmentResult`)
+- [RequirementMapping](requirement-mapping.md): `compliance.models.mapping.RequirementMapping`
+- [ComplianceActionPlan](compliance-action-plan.md): `compliance.models.action_plan.ComplianceActionPlan`
+- [Attachment](attachment.md): `compliance.models.assessment.AssessmentResultAttachment`
 
 ---
 
-## 3. Règles de gestion
+## 1. General overview
 
-### 3.1 Règles générales
+### 1.1 Module objective
 
-| ID | Règle |
+The **Compliance** module makes it possible to manage all the normative, legal and contractual frameworks applicable to the organization, to break down their requirements, to assess the compliance level and to track gaps. It also offers the ability to map requirements across frameworks in order to share compliance efforts.
+
+This module is aligned with the requirements of ISO 27001 (chapters 4.2, A.5.31 to A.5.36 in particular), the GDPR, and any other applicable sector-specific regulation (NIS 2, DORA, HDS, PCI DSS, etc.).
+
+### 1.2 Functional scope
+
+The module covers five sub-domains:
+
+1. Frameworks (standards, laws, regulations, contracts, internal policies)
+2. Requirements per framework (structured breakdown of requirements)
+3. Compliance assessments (measurement of the compliance level per requirement)
+4. Inter-framework mapping (mappings between requirements of different frameworks)
+5. Compliance action plans
+
+### 1.3 Dependencies with other modules
+
+| Target module | Nature of the dependency |
 |---|---|
-| RG-01 | Tout référentiel doit être rattaché à un **Scope** (périmètre). |
-| RG-02 | La suppression d'un référentiel ou d'une exigence référencé(e) par un autre module (Mesures, Audits, Risques) est interdite. Une désactivation (`status = deprecated` ou `archived`) est utilisée à la place. |
-| RG-03 | Toute modification d'un objet génère une entrée dans le **journal d'audit**. |
-| RG-04 | Les champs `created_at` et `updated_at` sont gérés automatiquement par le système. |
-| RG-05 | Les listes de valeurs paramétrables (catégories, types) sont gérées via la table de configuration dédiée. |
-| RG-06 | Les relations M2M sont stockées dans des tables de jointure dédiées. |
-| RG-07 | Les codes de référence (`reference`) des plans d'action suivent un format paramétrable avec incrémentation automatique. |
-
-### 3.2 Règles de conformité et d'évaluation
-
-| ID | Règle |
-|---|---|
-| RC-01 | Le **niveau de conformité global** d'un référentiel est calculé automatiquement comme la moyenne pondérée des niveaux de conformité de ses exigences applicables. Les exigences non applicables sont exclues du calcul. |
-| RC-02 | Le niveau de conformité d'une **section** est calculé comme la moyenne des niveaux de conformité de ses exigences (et sous-sections) applicables. |
-| RC-03 | Une exigence marquée `is_applicable = false` doit avoir un champ `applicability_justification` renseigné. Le système émet un avertissement dans le cas contraire. |
-| RC-04 | Une exigence avec `compliance_status = compliant` doit avoir un `compliance_level` ≥ 80. Le système émet une alerte de cohérence dans le cas contraire. |
-| RC-05 | Une exigence avec `compliance_status = non_compliant` et `type = mandatory` et un référentiel `is_mandatory = true` déclenche une **alerte critique** de non-conformité réglementaire. |
-| RC-06 | Lors de la validation d'une **ComplianceAssessment**, les résultats (`AssessmentResult`) sont reportés sur les exigences (`Requirement`) correspondantes pour mettre à jour leur `compliance_status` et `compliance_level` courants. |
-| RC-07 | L'historique des évaluations est conservé via les entités `ComplianceAssessment` / `AssessmentResult`. Les anciennes évaluations ne sont jamais écrasées. |
-
-### 3.3 Règles de mapping
-
-| ID | Règle |
-|---|---|
-| RM-01 | Un mapping ne peut exister qu'entre des exigences de **référentiels différents**. |
-| RM-02 | Un mapping de type `equivalent` entre une exigence A et une exigence B implique que le mapping inverse existe automatiquement (symétrie). |
-| RM-03 | Un mapping de type `includes` entre A → B génère automatiquement un mapping inverse `included_by` entre B → A. |
-| RM-04 | Les mappings ne propagent pas automatiquement les niveaux de conformité. La propagation est une **suggestion** présentée à l'utilisateur pour validation manuelle. |
-| RM-05 | Le système détecte et signale les **mappings circulaires** (A → B → C → A) comme avertissement. |
-
-### 3.4 Règles des plans d'action
-
-| ID | Règle |
-|---|---|
-| RP-01 | Un plan d'action avec `target_date` dépassée et `status ≠ completed` ou `cancelled` passe automatiquement en `status = overdue`. |
-| RP-02 | Un plan d'action avec `status = completed` doit avoir `progress_percentage = 100` et `completion_date` renseigné. |
-| RP-03 | La complétion d'un plan d'action déclenche une **suggestion de réévaluation** de l'exigence concernée. |
+| Context and Organization | Interested parties express expectations that may be linked to compliance requirements. The scope frames the applicable frameworks. |
+| Asset management | Some requirements relate to asset categories (personal data, critical infrastructure). |
+| Risk management | Non-conformities can generate risks. Risk assessment results can justify the applicability of a requirement. |
+| Controls | Security controls are the operational responses to compliance requirements. A requirement can be covered by one or more controls. |
+| Suppliers | Contractual or regulatory requirements may apply to suppliers. |
+| Audits | Audits assess compliance with frameworks. Audit findings are linked to requirements. |
+| Incidents | Some incidents reveal non-conformities that must be tracked. |
+| Training | Some requirements impose training obligations. |
 
 ---
 
-## 4. Spécifications API REST
+## 3. Business rules
 
-### 4.1 Conventions générales
+### 3.1 General rules
 
-Identiques aux modules précédents. Base URL : `/api/v1/compliance/`
+| ID | Rule |
+|---|---|
+| RG-01 | Every framework must be attached to a **Scope**. |
+| RG-02 | Deleting a framework or a requirement referenced by another module (Controls, Audits, Risks) is forbidden. A deactivation (`status = deprecated` or `archived`) is used instead. |
+| RG-03 | Any modification of an object generates an entry in the **audit trail**. |
+| RG-04 | The `created_at` and `updated_at` fields are managed automatically by the system. |
+| RG-05 | Configurable value lists (categories, types) are managed through the dedicated configuration table. |
+| RG-06 | M2M relationships are stored in dedicated join tables. |
+| RG-07 | The reference codes (`reference`) of action plans follow a configurable format with automatic incrementation. |
 
-### 4.2 Endpoints : Frameworks (Référentiels)
+### 3.2 Compliance and assessment rules
 
-| Méthode | Endpoint | Description |
+| ID | Rule |
+|---|---|
+| RC-01 | The **overall compliance level** of a framework is computed automatically as the weighted average of the compliance levels of its applicable requirements. Non-applicable requirements are excluded from the calculation. |
+| RC-02 | The compliance level of a **section** is computed as the average of the compliance levels of its applicable requirements (and sub-sections). |
+| RC-03 | A requirement marked `is_applicable = false` must have an `applicability_justification` field filled in. The system issues a warning otherwise. |
+| RC-04 | A requirement with `compliance_status = compliant` must have a `compliance_level` ≥ 80. The system issues a consistency alert otherwise. |
+| RC-05 | A requirement with `compliance_status = non_compliant` and `type = mandatory` and a framework `is_mandatory = true` triggers a **critical alert** of regulatory non-conformity. |
+| RC-06 | When a **ComplianceAssessment** is validated, the results (`AssessmentResult`) are carried over to the corresponding requirements (`Requirement`) to update their current `compliance_status` and `compliance_level`. |
+| RC-07 | The assessment history is retained via the `ComplianceAssessment` / `AssessmentResult` entities. Previous assessments are never overwritten. |
+
+### 3.3 Mapping rules
+
+| ID | Rule |
+|---|---|
+| RM-01 | A mapping can only exist between requirements of **different frameworks**. |
+| RM-02 | A mapping of type `equivalent` between a requirement A and a requirement B implies that the inverse mapping exists automatically (symmetry). |
+| RM-03 | A mapping of type `includes` from A → B automatically generates an inverse `included_by` mapping from B → A. |
+| RM-04 | Mappings do not automatically propagate compliance levels. Propagation is a **suggestion** presented to the user for manual validation. |
+| RM-05 | The system detects and flags **circular mappings** (A → B → C → A) as a warning. |
+
+### 3.4 Action plan rules
+
+| ID | Rule |
+|---|---|
+| RP-01 | An action plan with a past `target_date` and `status ≠ completed` or `cancelled` automatically moves to `status = overdue`. |
+| RP-02 | An action plan with `status = completed` must have `progress_percentage = 100` and `completion_date` filled in. |
+| RP-03 | The completion of an action plan triggers a **reassessment suggestion** for the relevant requirement. |
+
+---
+
+## 4. REST API specifications
+
+### 4.1 General conventions
+
+Identical to the previous modules. Base URL: `/api/v1/compliance/`
+
+### 4.2 Endpoints: Frameworks
+
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/frameworks` | Lister tous les référentiels (filtrable) |
-| `GET` | `/scopes/{scope_id}/frameworks` | Lister les référentiels d'un périmètre |
-| `POST` | `/scopes/{scope_id}/frameworks` | Créer un référentiel |
-| `GET` | `/frameworks/{id}` | Détail d'un référentiel |
-| `PUT` | `/frameworks/{id}` | Mise à jour complète |
-| `PATCH` | `/frameworks/{id}` | Mise à jour partielle |
-| `DELETE` | `/frameworks/{id}` | Supprimer (si non référencé) |
-| `GET` | `/frameworks/{id}/sections` | Lister les sections du référentiel |
-| `GET` | `/frameworks/{id}/requirements` | Lister toutes les exigences du référentiel |
-| `GET` | `/frameworks/{id}/compliance-summary` | Synthèse de conformité (par section, par statut) |
-| `GET` | `/frameworks/{id}/assessments` | Lister les évaluations du référentiel |
+| `GET` | `/frameworks` | List all frameworks (filterable) |
+| `GET` | `/scopes/{scope_id}/frameworks` | List the frameworks of a scope |
+| `POST` | `/scopes/{scope_id}/frameworks` | Create a framework |
+| `GET` | `/frameworks/{id}` | Framework detail |
+| `PUT` | `/frameworks/{id}` | Full update |
+| `PATCH` | `/frameworks/{id}` | Partial update |
+| `DELETE` | `/frameworks/{id}` | Delete (if not referenced) |
+| `GET` | `/frameworks/{id}/sections` | List the framework's sections |
+| `GET` | `/frameworks/{id}/requirements` | List all the framework's requirements |
+| `GET` | `/frameworks/{id}/compliance-summary` | Compliance summary (by section, by status) |
+| `GET` | `/frameworks/{id}/assessments` | List the framework's assessments |
 | `GET` | `/frameworks/{id}/export` | Export (PDF, DOCX, JSON, CSV) |
-| `GET` | `/frameworks/{id}/soa` | Déclaration d'applicabilité (Statement of Applicability) |
-| `GET` | `/frameworks/categories` | Lister les catégories disponibles |
-| `POST` | `/frameworks/import` | Import d'un référentiel (JSON, CSV) |
+| `GET` | `/frameworks/{id}/soa` | Statement of Applicability |
+| `GET` | `/frameworks/categories` | List the available categories |
+| `POST` | `/frameworks/import` | Import a framework (JSON, CSV) |
 
-**Paramètres de filtrage spécifiques :**
+**Specific filtering parameters:**
 
 - `?type=standard|law|regulation|contract|internal_policy`
 - `?category=information_security`
@@ -134,40 +134,40 @@ Identiques aux modules précédents. Base URL : `/api/v1/compliance/`
 - `?status=active`
 - `?owner_id={uuid}`
 - `?compliance_level_min=50&compliance_level_max=80`
-- `?search=terme`
+- `?search=term`
 
-### 4.3 Endpoints : Sections
+### 4.3 Endpoints: Sections
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/frameworks/{framework_id}/sections` | Créer une section |
-| `GET` | `/sections/{id}` | Détail d'une section |
-| `PUT` | `/sections/{id}` | Mise à jour complète |
-| `PATCH` | `/sections/{id}` | Mise à jour partielle |
-| `DELETE` | `/sections/{id}` | Supprimer (si aucune exigence rattachée) |
-| `GET` | `/sections/{id}/children` | Lister les sous-sections |
-| `GET` | `/sections/{id}/requirements` | Lister les exigences de la section |
-| `GET` | `/frameworks/{framework_id}/sections/tree` | Arborescence complète des sections |
-| `PATCH` | `/frameworks/{framework_id}/sections/reorder` | Réordonner les sections |
+| `POST` | `/frameworks/{framework_id}/sections` | Create a section |
+| `GET` | `/sections/{id}` | Section detail |
+| `PUT` | `/sections/{id}` | Full update |
+| `PATCH` | `/sections/{id}` | Partial update |
+| `DELETE` | `/sections/{id}` | Delete (if no requirement attached) |
+| `GET` | `/sections/{id}/children` | List the sub-sections |
+| `GET` | `/sections/{id}/requirements` | List the section's requirements |
+| `GET` | `/frameworks/{framework_id}/sections/tree` | Full section tree |
+| `PATCH` | `/frameworks/{framework_id}/sections/reorder` | Reorder the sections |
 
-### 4.4 Endpoints : Requirements (Exigences)
+### 4.4 Endpoints: Requirements
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/requirements` | Lister toutes les exigences (tous référentiels, filtrable) |
-| `POST` | `/frameworks/{framework_id}/requirements` | Créer une exigence |
-| `GET` | `/requirements/{id}` | Détail d'une exigence |
-| `PUT` | `/requirements/{id}` | Mise à jour complète |
-| `PATCH` | `/requirements/{id}` | Mise à jour partielle |
-| `DELETE` | `/requirements/{id}` | Supprimer (si non référencée) |
-| `PATCH` | `/requirements/{id}/assess` | Évaluer la conformité d'une exigence (mise à jour rapide) |
-| `GET` | `/requirements/{id}/measures` | Lister les mesures liées |
-| `GET` | `/requirements/{id}/mappings` | Lister les mappings de cette exigence |
-| `GET` | `/requirements/{id}/action-plans` | Lister les plans d'action liés |
-| `GET` | `/requirements/{id}/history` | Historique des évaluations de cette exigence |
-| `GET` | `/requirements/categories` | Lister les catégories disponibles |
+| `GET` | `/requirements` | List all requirements (all frameworks, filterable) |
+| `POST` | `/frameworks/{framework_id}/requirements` | Create a requirement |
+| `GET` | `/requirements/{id}` | Requirement detail |
+| `PUT` | `/requirements/{id}` | Full update |
+| `PATCH` | `/requirements/{id}` | Partial update |
+| `DELETE` | `/requirements/{id}` | Delete (if not referenced) |
+| `PATCH` | `/requirements/{id}/assess` | Assess the compliance of a requirement (quick update) |
+| `GET` | `/requirements/{id}/measures` | List the linked controls |
+| `GET` | `/requirements/{id}/mappings` | List the mappings of this requirement |
+| `GET` | `/requirements/{id}/action-plans` | List the linked action plans |
+| `GET` | `/requirements/{id}/history` | Assessment history of this requirement |
+| `GET` | `/requirements/categories` | List the available categories |
 
-**Paramètres de filtrage spécifiques :**
+**Specific filtering parameters:**
 
 - `?framework_id={uuid}`
 - `?section_id={uuid}`
@@ -180,61 +180,61 @@ Identiques aux modules précédents. Base URL : `/api/v1/compliance/`
 - `?priority=high,critical`
 - `?has_measures=true|false`
 - `?has_mappings=true|false`
-- `?search=terme`
+- `?search=term`
 
-### 4.5 Endpoints : Compliance Assessments (Évaluations)
+### 4.5 Endpoints: Compliance Assessments
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/assessments` | Lister toutes les évaluations |
-| `POST` | `/frameworks/{framework_id}/assessments` | Créer une évaluation pour un référentiel |
-| `GET` | `/assessments/{id}` | Détail d'une évaluation |
-| `PUT` | `/assessments/{id}` | Mise à jour complète |
-| `PATCH` | `/assessments/{id}` | Mise à jour partielle |
-| `DELETE` | `/assessments/{id}` | Supprimer (si en draft uniquement) |
-| `POST` | `/assessments/{id}/validate` | Valider l'évaluation (reporte les résultats sur les exigences) |
-| `POST` | `/assessments/{id}/results` | Ajouter ou mettre à jour un résultat |
-| `GET` | `/assessments/{id}/results` | Lister les résultats |
-| `PUT` | `/assessments/{id}/results/{result_id}` | Modifier un résultat |
-| `GET` | `/assessments/{id}/summary` | Synthèse de l'évaluation (KPIs) |
+| `GET` | `/assessments` | List all assessments |
+| `POST` | `/frameworks/{framework_id}/assessments` | Create an assessment for a framework |
+| `GET` | `/assessments/{id}` | Assessment detail |
+| `PUT` | `/assessments/{id}` | Full update |
+| `PATCH` | `/assessments/{id}` | Partial update |
+| `DELETE` | `/assessments/{id}` | Delete (only when in draft) |
+| `POST` | `/assessments/{id}/validate` | Validate the assessment (carries the results over to the requirements) |
+| `POST` | `/assessments/{id}/results` | Add or update a result |
+| `GET` | `/assessments/{id}/results` | List the results |
+| `PUT` | `/assessments/{id}/results/{result_id}` | Modify a result |
+| `GET` | `/assessments/{id}/summary` | Assessment summary (KPIs) |
 | `GET` | `/assessments/{id}/export` | Export (PDF, DOCX, JSON) |
-| `GET` | `/assessments/{id}/comparison` | Comparaison avec l'évaluation précédente |
+| `GET` | `/assessments/{id}/comparison` | Comparison with the previous assessment |
 
-### 4.6 Endpoints : Requirement Mappings (Mappings inter-référentiels)
+### 4.6 Endpoints: Requirement Mappings (Inter-framework mappings)
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/mappings` | Lister tous les mappings (filtrable) |
-| `POST` | `/mappings` | Créer un mapping |
-| `GET` | `/mappings/{id}` | Détail d'un mapping |
-| `PUT` | `/mappings/{id}` | Mise à jour complète |
-| `PATCH` | `/mappings/{id}` | Mise à jour partielle |
-| `DELETE` | `/mappings/{id}` | Supprimer un mapping |
-| `GET` | `/mappings/matrix` | Matrice de mapping entre deux référentiels |
-| `GET` | `/mappings/coverage` | Analyse de couverture entre référentiels |
-| `POST` | `/mappings/import` | Import de mappings en masse (CSV, JSON) |
+| `GET` | `/mappings` | List all mappings (filterable) |
+| `POST` | `/mappings` | Create a mapping |
+| `GET` | `/mappings/{id}` | Mapping detail |
+| `PUT` | `/mappings/{id}` | Full update |
+| `PATCH` | `/mappings/{id}` | Partial update |
+| `DELETE` | `/mappings/{id}` | Delete a mapping |
+| `GET` | `/mappings/matrix` | Mapping matrix between two frameworks |
+| `GET` | `/mappings/coverage` | Coverage analysis between frameworks |
+| `POST` | `/mappings/import` | Bulk import of mappings (CSV, JSON) |
 
-**Paramètres de filtrage :**
+**Filtering parameters:**
 
 - `?source_framework_id={uuid}`
 - `?target_framework_id={uuid}`
 - `?mapping_type=equivalent|partial_overlap`
 - `?coverage_level=full|partial`
 
-### 4.7 Endpoints : Action Plans (Plans d'action)
+### 4.7 Endpoints: Action Plans
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/action-plans` | Lister tous les plans d'action |
-| `POST` | `/action-plans` | Créer un plan d'action |
-| `GET` | `/action-plans/{id}` | Détail d'un plan d'action |
-| `PUT` | `/action-plans/{id}` | Mise à jour complète |
-| `PATCH` | `/action-plans/{id}` | Mise à jour partielle |
-| `DELETE` | `/action-plans/{id}` | Supprimer |
-| `GET` | `/action-plans/overdue` | Lister les plans d'action en retard |
-| `GET` | `/action-plans/dashboard` | Données de tableau de bord (KPIs agrégés) |
+| `GET` | `/action-plans` | List all action plans |
+| `POST` | `/action-plans` | Create an action plan |
+| `GET` | `/action-plans/{id}` | Action plan detail |
+| `PUT` | `/action-plans/{id}` | Full update |
+| `PATCH` | `/action-plans/{id}` | Partial update |
+| `DELETE` | `/action-plans/{id}` | Delete |
+| `GET` | `/action-plans/overdue` | List the overdue action plans |
+| `GET` | `/action-plans/dashboard` | Dashboard data (aggregated KPIs) |
 
-**Paramètres de filtrage :**
+**Filtering parameters:**
 
 - `?requirement_id={uuid}`
 - `?assessment_id={uuid}`
@@ -243,291 +243,291 @@ Identiques aux modules précédents. Base URL : `/api/v1/compliance/`
 - `?status=in_progress|overdue`
 - `?priority=high,critical`
 
-### 4.8 Endpoints transversaux
+### 4.8 Cross-cutting endpoints
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/compliance/dashboard` | Tableau de bord synthétique du module |
-| `GET` | `/compliance/export` | Export global (PDF, DOCX, JSON) |
-| `GET` | `/compliance/audit-trail` | Journal d'audit du module |
-| `GET` | `/compliance/config/enums` | Lister les listes de valeurs paramétrables |
-| `PUT` | `/compliance/config/enums/{enum_name}` | Modifier une liste de valeurs |
-| `GET` | `/compliance/statistics` | Statistiques globales de conformité |
-| `GET` | `/compliance/alerts` | Lister les alertes actives |
+| `GET` | `/compliance/dashboard` | Module summary dashboard |
+| `GET` | `/compliance/export` | Global export (PDF, DOCX, JSON) |
+| `GET` | `/compliance/audit-trail` | Module audit trail |
+| `GET` | `/compliance/config/enums` | List the configurable value lists |
+| `PUT` | `/compliance/config/enums/{enum_name}` | Modify a value list |
+| `GET` | `/compliance/statistics` | Global compliance statistics |
+| `GET` | `/compliance/alerts` | List the active alerts |
 
 ---
 
-## 5. Spécifications d'interface utilisateur
+## 5. User interface specifications
 
 ### 5.1 Navigation
 
-Le module est accessible via un élément de navigation principal « Conformité » se décomposant en sous-menus : Référentiels, Exigences, Évaluations, Mappings, Plans d'action, Tableau de bord.
+The module is accessible via a main navigation item "Compliance" broken down into sub-menus: Frameworks, Requirements, Assessments, Mappings, Action plans, Dashboard.
 
-### 5.2 Vue « Référentiels » (Frameworks)
+### 5.2 "Frameworks" view
 
-- **Liste :** Tableau avec colonnes (Référence, Nom, Type, Catégorie, Obligatoire, Conformité %, Statut, Responsable). Jauge de conformité visuelle pour chaque référentiel. Filtres et tri sur toutes les colonnes.
-- **Détail / Édition :** Formulaire avec onglets :
-  - *Informations générales :* identification, type, catégorie, organisme émetteur, dates, juridiction.
-  - *Applicabilité :* statut d'applicabilité, justification, parties intéressées liées.
-  - *Structure :* arborescence des sections et exigences (tree view éditable).
-  - *Conformité :* synthèse visuelle (graphiques en barres par section, camembert par statut), niveau global.
-  - *Évaluations :* historique des évaluations avec tendance.
-  - *Mappings :* référentiels mappés avec couverture.
-  - *Historique :* journal des modifications.
-- **Actions :** Créer, Modifier, Importer, Exporter, Générer la DdA.
+- **List:** Table with columns (Reference, Name, Type, Category, Mandatory, Compliance %, Status, Owner). Visual compliance gauge for each framework. Filters and sorting on all columns.
+- **Detail / Edit:** Form with tabs:
+  - *General information:* identification, type, category, issuing body, dates, jurisdiction.
+  - *Applicability:* applicability status, justification, linked interested parties.
+  - *Structure:* tree of sections and requirements (editable tree view).
+  - *Compliance:* visual summary (bar charts by section, pie chart by status), overall level.
+  - *Assessments:* assessment history with trend.
+  - *Mappings:* mapped frameworks with coverage.
+  - *History:* change log.
+- **Actions:** Create, Edit, Import, Export, Generate the SoA.
 
-### 5.3 Vue « Exigences » (Requirements)
+### 5.3 "Requirements" view
 
-- **Liste :** Tableau avec colonnes (Référence, Intitulé, Référentiel, Section, Type, Applicable, Statut de conformité, Conformité %, Priorité, Responsable). Code couleur par statut de conformité (rouge/orange/vert/gris). Filtres avancés.
-- **Vue par référentiel :** Exigences regroupées par section, affichage hiérarchique fidèle à la structure du référentiel.
-- **Détail / Édition :** Formulaire avec onglets :
-  - *Informations :* texte de l'exigence, type, catégorie, applicabilité, justification.
-  - *Conformité :* statut, niveau, preuves, écarts. Formulaire d'évaluation rapide.
-  - *Relations :* mesures liées, biens essentiels, risques, attentes de PI.
-  - *Mappings :* exigences mappées dans d'autres référentiels.
-  - *Plans d'action :* actions correctives en cours.
-  - *Historique :* évolution du statut de conformité dans le temps (graphique de tendance).
-- **Actions :** Créer, Modifier, Évaluer, Exporter.
+- **List:** Table with columns (Reference, Title, Framework, Section, Type, Applicable, Compliance status, Compliance %, Priority, Owner). Colour coding by compliance status (red/orange/green/grey). Advanced filters.
+- **View by framework:** Requirements grouped by section, hierarchical display faithful to the framework structure.
+- **Detail / Edit:** Form with tabs:
+  - *Information:* requirement text, type, category, applicability, justification.
+  - *Compliance:* status, level, evidence, gaps. Quick assessment form.
+  - *Relationships:* linked controls, essential assets, risks, interested-party expectations.
+  - *Mappings:* requirements mapped in other frameworks.
+  - *Action plans:* corrective actions in progress.
+  - *History:* evolution of the compliance status over time (trend chart).
+- **Actions:** Create, Edit, Assess, Export.
 
-### 5.4 Vue « Évaluations » (Compliance Assessments)
+### 5.4 "Assessments" view (Compliance Assessments)
 
-- **Liste :** Tableau avec colonnes (Nom, Référentiel, Date, Évaluateur, Conformité %, Statut).
-- **Détail :** Vue de campagne d'évaluation avec :
-  - Barre de progression (exigences évaluées / total).
-  - Liste des exigences avec formulaire d'évaluation en ligne (statut, niveau, preuves, écarts).
-  - Navigation exigence par exigence (mode « assistant ») pour les évaluations systématiques.
-  - Synthèse graphique en temps réel pendant l'évaluation.
-- **Comparaison :** Vue comparative entre deux évaluations successives montrant l'évolution par exigence (progression/régression).
-- **Actions :** Créer, Évaluer, Valider, Exporter, Comparer.
+- **List:** Table with columns (Name, Framework, Date, Assessor, Compliance %, Status).
+- **Detail:** Assessment campaign view with:
+  - Progress bar (requirements assessed / total).
+  - List of requirements with an inline assessment form (status, level, evidence, gaps).
+  - Requirement-by-requirement navigation ("wizard" mode) for systematic assessments.
+  - Real-time graphical summary during the assessment.
+- **Comparison:** Comparative view between two successive assessments showing the evolution per requirement (progress/regression).
+- **Actions:** Create, Assess, Validate, Export, Compare.
 
-### 5.5 Vue « Mappings inter-référentiels »
+### 5.5 "Inter-framework mappings" view
 
-- **Matrice de mapping :** Tableau croisé Référentiel A (lignes) × Référentiel B (colonnes) avec indicateur de correspondance dans chaque cellule. Sélection des deux référentiels via des filtres.
-- **Vue par exigence :** Sélection d'une exigence pour afficher toutes ses correspondances dans les autres référentiels.
-- **Analyse de couverture :** Pour un référentiel donné, pourcentage des exigences couvertes par un autre référentiel. Visualisation en barres empilées.
-- **Détail / Édition :** Formulaire de création/modification d'un mapping avec type, couverture, justification.
-- **Actions :** Créer, Modifier, Importer en masse, Exporter.
+- **Mapping matrix:** Cross table Framework A (rows) × Framework B (columns) with a mapping indicator in each cell. Selection of the two frameworks via filters.
+- **View by requirement:** Selection of a requirement to display all its mappings in the other frameworks.
+- **Coverage analysis:** For a given framework, the percentage of requirements covered by another framework. Stacked-bar visualization.
+- **Detail / Edit:** Form for creating/modifying a mapping with type, coverage, justification.
+- **Actions:** Create, Edit, Bulk import, Export.
 
-### 5.6 Vue « Plans d'action »
+### 5.6 "Action plans" view
 
-- **Liste :** Tableau avec colonnes (Référence, Intitulé, Exigence, Référentiel, Priorité, Responsable, Date cible, Avancement %, Statut). Barre de progression visuelle. Code couleur pour les actions en retard.
-- **Kanban :** Vue en colonnes par statut (Planifié → En cours → Terminé / En retard).
-- **Détail / Édition :** Formulaire avec description de l'écart, plan de remédiation, liens vers mesures et exigence.
-- **Actions :** Créer, Modifier, Clôturer, Exporter.
+- **List:** Table with columns (Reference, Title, Requirement, Framework, Priority, Owner, Target date, Progress %, Status). Visual progress bar. Colour coding for overdue actions.
+- **Kanban:** Column view by status (Planned → In progress → Completed / Overdue).
+- **Detail / Edit:** Form with the gap description, remediation plan, links to controls and requirement.
+- **Actions:** Create, Edit, Close, Export.
 
-### 5.7 Vue « Déclaration d'applicabilité » (Statement of Applicability : DdA)
+### 5.7 "Statement of Applicability" view (SoA)
 
-Vue dédiée spécifique à l'ISO 27001 :
+Dedicated view specific to ISO 27001:
 
-- Tableau listant toutes les mesures de l'Annexe A avec colonnes (Référence, Intitulé, Applicable, Justification d'inclusion/exclusion, Statut de mise en œuvre, Référence à la mesure Cairn).
-- Filtres par section de l'Annexe A, par applicabilité, par statut.
-- Export PDF/DOCX formaté conforme aux attendus d'un audit de certification.
+- Table listing all the Annex A controls with columns (Reference, Title, Applicable, Inclusion/exclusion justification, Implementation status, Reference to the Cairn control).
+- Filters by Annex A section, by applicability, by status.
+- PDF/DOCX export formatted in line with the expectations of a certification audit.
 
-### 5.8 Tableau de bord du module
+### 5.8 Module dashboard
 
-Un tableau de bord synthétique agrège les informations clés :
+A summary dashboard aggregates the key information:
 
-- Niveau de conformité global par référentiel (jauges)
-- Répartition des exigences par statut de conformité (camembert / barres empilées)
-- Évolution du niveau de conformité dans le temps (courbe de tendance par référentiel)
-- Nombre d'exigences non conformes par priorité (critique, haute, moyenne, basse)
-- Non-conformités réglementaires critiques (alertes)
-- Plans d'action en retard
-- Couverture des mappings entre référentiels
-- Prochaines dates de revue et d'évaluation
-- Top 10 des exigences les plus à risque (non conformes, priorité élevée, référentiel obligatoire)
-- Alertes et actions requises
+- Overall compliance level per framework (gauges)
+- Breakdown of requirements by compliance status (pie chart / stacked bars)
+- Evolution of the compliance level over time (trend curve per framework)
+- Number of non-compliant requirements by priority (critical, high, medium, low)
+- Critical regulatory non-conformities (alerts)
+- Overdue action plans
+- Mapping coverage between frameworks
+- Upcoming review and assessment dates
+- Top 10 most at-risk requirements (non-compliant, high priority, mandatory framework)
+- Alerts and required actions
 
 ---
 
-## 6. Permissions et contrôle d'accès
+## 6. Permissions and access control
 
-### 6.1 Modèle RBAC
+### 6.1 RBAC model
 
 | Permission | Description |
 |---|---|
-| `compliance.framework.read` | Consulter les référentiels |
-| `compliance.framework.write` | Créer/modifier les référentiels |
-| `compliance.framework.delete` | Supprimer les référentiels |
-| `compliance.section.read` | Consulter les sections |
-| `compliance.section.write` | Créer/modifier les sections |
-| `compliance.section.delete` | Supprimer les sections |
-| `compliance.requirement.read` | Consulter les exigences |
-| `compliance.requirement.write` | Créer/modifier les exigences |
-| `compliance.requirement.assess` | Évaluer la conformité des exigences |
-| `compliance.requirement.delete` | Supprimer les exigences |
-| `compliance.assessment.read` | Consulter les évaluations |
-| `compliance.assessment.write` | Créer/modifier les évaluations |
-| `compliance.assessment.validate` | Valider une évaluation |
-| `compliance.assessment.delete` | Supprimer les évaluations |
-| `compliance.mapping.read` | Consulter les mappings |
-| `compliance.mapping.write` | Créer/modifier les mappings |
-| `compliance.mapping.delete` | Supprimer les mappings |
-| `compliance.action_plan.read` | Consulter les plans d'action |
-| `compliance.action_plan.write` | Créer/modifier les plans d'action |
-| `compliance.action_plan.delete` | Supprimer les plans d'action |
-| `compliance.import` | Importer des référentiels et mappings en masse |
-| `compliance.export` | Exporter les données du module |
-| `compliance.config.manage` | Gérer les listes de valeurs paramétrables |
-| `compliance.audit_trail.read` | Consulter le journal d'audit |
+| `compliance.framework.read` | View frameworks |
+| `compliance.framework.write` | Create/modify frameworks |
+| `compliance.framework.delete` | Delete frameworks |
+| `compliance.section.read` | View sections |
+| `compliance.section.write` | Create/modify sections |
+| `compliance.section.delete` | Delete sections |
+| `compliance.requirement.read` | View requirements |
+| `compliance.requirement.write` | Create/modify requirements |
+| `compliance.requirement.assess` | Assess the compliance of requirements |
+| `compliance.requirement.delete` | Delete requirements |
+| `compliance.assessment.read` | View assessments |
+| `compliance.assessment.write` | Create/modify assessments |
+| `compliance.assessment.validate` | Validate an assessment |
+| `compliance.assessment.delete` | Delete assessments |
+| `compliance.mapping.read` | View mappings |
+| `compliance.mapping.write` | Create/modify mappings |
+| `compliance.mapping.delete` | Delete mappings |
+| `compliance.action_plan.read` | View action plans |
+| `compliance.action_plan.write` | Create/modify action plans |
+| `compliance.action_plan.delete` | Delete action plans |
+| `compliance.import` | Bulk import frameworks and mappings |
+| `compliance.export` | Export the module's data |
+| `compliance.config.manage` | Manage the configurable value lists |
+| `compliance.audit_trail.read` | View the audit trail |
 
-### 6.2 Rôles applicatifs suggérés
+### 6.2 Suggested application roles
 
-| Rôle | Permissions |
+| Role | Permissions |
 |---|---|
-| **Administrateur** | Toutes les permissions |
-| **RSSI / DPO** | Toutes sauf `*.delete` et `config.manage` |
-| **Auditeur** | `*.read` + `compliance.export` + `compliance.audit_trail.read` |
-| **Évaluateur** | `*.read` + `compliance.requirement.assess` + `compliance.assessment.write` |
-| **Contributeur** | `*.read` + `*.write` (hors validate et config) |
-| **Lecteur** | `*.read` uniquement |
+| **Administrator** | All permissions |
+| **CISO / DPO** | All except `*.delete` and `config.manage` |
+| **Auditor** | `*.read` + `compliance.export` + `compliance.audit_trail.read` |
+| **Assessor** | `*.read` + `compliance.requirement.assess` + `compliance.assessment.write` |
+| **Contributor** | `*.read` + `*.write` (excluding validate and config) |
+| **Reader** | `*.read` only |
 
 ---
 
-## 7. Journalisation et traçabilité
+## 7. Logging and traceability
 
 ### 7.1 Audit Trail
 
-Identique aux modules précédents (§7.1 du Module 1). Les actions spécifiques à ce module incluent :
+Identical to the previous modules (§7.1 of Module 1). The actions specific to this module include:
 
 | Action | Description |
 |---|---|
-| `create` | Création d'un référentiel, section, exigence, mapping ou plan d'action |
-| `update` | Modification d'un objet |
-| `delete` | Suppression d'un objet |
-| `assess` | Évaluation de la conformité d'une exigence |
-| `validate_assessment` | Validation d'une campagne d'évaluation |
-| `import` | Import en masse (référentiel, mappings) |
-| `create_mapping` | Création d'un mapping inter-référentiels |
-| `delete_mapping` | Suppression d'un mapping |
-| `complete_action_plan` | Clôture d'un plan d'action |
+| `create` | Creation of a framework, section, requirement, mapping or action plan |
+| `update` | Modification of an object |
+| `delete` | Deletion of an object |
+| `assess` | Assessment of the compliance of a requirement |
+| `validate_assessment` | Validation of an assessment campaign |
+| `import` | Bulk import (framework, mappings) |
+| `create_mapping` | Creation of an inter-framework mapping |
+| `delete_mapping` | Deletion of a mapping |
+| `complete_action_plan` | Closure of an action plan |
 
-### 7.2 Rétention
+### 7.2 Retention
 
-Identique aux modules précédents. Durée paramétrable, défaut 7 ans.
+Identical to the previous modules. Configurable duration, default 7 years.
 
 ---
 
-## 8. Export et reporting
+## 8. Export and reporting
 
-### 8.1 Formats d'export
+### 8.1 Export formats
 
-| Format | Contenu |
+| Format | Content |
 |---|---|
-| **JSON** | Export brut structuré (pour interopérabilité API) |
-| **PDF** | Document formaté avec synthèse de conformité, détail par référentiel |
-| **DOCX** | Document éditable au format Word |
-| **CSV** | Export tabulaire : référentiels, exigences, résultats d'évaluation, mappings |
+| **JSON** | Raw structured export (for API interoperability) |
+| **PDF** | Formatted document with compliance summary, detail per framework |
+| **DOCX** | Editable document in Word format |
+| **CSV** | Tabular export: frameworks, requirements, assessment results, mappings |
 
 ### 8.2 Import
 
-| Format | Contenu |
+| Format | Content |
 |---|---|
-| **CSV** | Import tabulaire de référentiels (sections + exigences) et de mappings |
-| **JSON** | Import structuré conforme au schéma API |
+| **CSV** | Tabular import of frameworks (sections + requirements) and of mappings |
+| **JSON** | Structured import conforming to the API schema |
 
-L'import supporte les modes : création uniquement, mise à jour uniquement, ou upsert basé sur la référence.
+The import supports the following modes: create only, update only, or upsert based on the reference.
 
-### 8.3 Rapports prédéfinis
+### 8.3 Predefined reports
 
-| Rapport | Description |
+| Report | Description |
 |---|---|
-| Synthèse de conformité | Vue globale par référentiel avec jauges et tendances |
-| Déclaration d'applicabilité (DdA / SoA) | Tableau des exigences avec applicabilité et justification (ISO 27001) |
-| Rapport d'évaluation | Détail des résultats d'une campagne d'évaluation |
-| Rapport d'écarts | Liste des non-conformités avec priorisation |
-| Rapport de couverture inter-référentiels | Analyse de couverture entre deux référentiels via les mappings |
-| Suivi des plans d'action | Liste des plans d'action avec avancement et retards |
-| Rapport de tendance | Évolution de la conformité sur plusieurs évaluations |
-| Rapport données personnelles (RGPD) | Exigences RGPD avec statut de conformité et mesures associées |
+| Compliance summary | Global view per framework with gauges and trends |
+| Statement of Applicability (SoA) | Table of requirements with applicability and justification (ISO 27001) |
+| Assessment report | Detail of the results of an assessment campaign |
+| Gap report | List of non-conformities with prioritization |
+| Inter-framework coverage report | Coverage analysis between two frameworks via the mappings |
+| Action plan tracking | List of action plans with progress and overdue items |
+| Trend report | Evolution of compliance over several assessments |
+| Personal data report (GDPR) | GDPR requirements with compliance status and associated controls |
 
 ---
 
-## 9. Notifications et alertes
+## 9. Notifications and alerts
 
-| Événement | Destinataires | Canal |
+| Événement | Recipients | Channel |
 |---|---|---|
-| Non-conformité critique détectée (exigence obligatoire, référentiel réglementaire) | RSSI, DPO, Responsable du référentiel | In-app, email |
-| Évaluation en attente de validation | Validateur désigné | In-app, email |
-| Plan d'action en retard | Responsable de l'action, RSSI | In-app, email |
-| Date de revue atteinte (référentiel, exigence) | Responsable du référentiel | In-app, email |
-| Référentiel arrivant à expiration | Responsable, Administrateur | In-app, email |
-| Nouvelle évaluation disponible pour un référentiel | Responsable du référentiel | In-app |
-| Import en masse terminé | Utilisateur ayant lancé l'import | In-app, email |
-| Mapping créé sur une exigence dont on est responsable | Responsable de l'exigence | In-app |
-| Plan d'action complété : suggestion de réévaluation | Responsable de l'exigence | In-app |
-| Niveau de conformité passé sous un seuil paramétrable | RSSI, Responsable du référentiel | In-app, email |
+| Critical non-conformity detected (mandatory requirement, regulatory framework) | CISO, DPO, Framework owner | In-app, email |
+| Assessment pending validation | Designated validator | In-app, email |
+| Overdue action plan | Action owner, CISO | In-app, email |
+| Review date reached (framework, requirement) | Framework owner | In-app, email |
+| Framework approaching expiry | Owner, Administrator | In-app, email |
+| New assessment available for a framework | Framework owner | In-app |
+| Bulk import completed | User who started the import | In-app, email |
+| Mapping created on a requirement you own | Requirement owner | In-app |
+| Action plan completed: reassessment suggestion | Requirement owner | In-app |
+| Compliance level dropped below a configurable threshold | CISO, Framework owner | In-app, email |
 
 ---
 
-## 10. Considérations techniques
+## 10. Technical considerations
 
-### 10.1 Calcul automatique des niveaux de conformité
+### 10.1 Automatic calculation of compliance levels
 
-Le calcul du niveau de conformité est effectué côté serveur selon l'algorithme suivant :
+The compliance level is calculated server-side according to the following algorithm:
 
 ```
-Pour chaque Framework F :
-    exigences_applicables = Requirements de F où is_applicable = true
-    F.compliance_level = MOYENNE(compliance_level de chaque exigence applicable)
+For each Framework F:
+    applicable_requirements = Requirements of F where is_applicable = true
+    F.compliance_level = AVERAGE(compliance_level of each applicable requirement)
     
-Pour chaque Section S :
-    exigences_applicables = Requirements de S (et sous-sections) où is_applicable = true
-    S.compliance_level = MOYENNE(compliance_level de chaque exigence applicable)
+For each Section S:
+    applicable_requirements = Requirements of S (and sub-sections) where is_applicable = true
+    S.compliance_level = AVERAGE(compliance_level of each applicable requirement)
 ```
 
-Correspondance statut → niveau par défaut (paramétrable) :
+Default status → level mapping (configurable):
 
-| Statut | Niveau par défaut |
+| Status | Default level |
 |---|---|
 | `not_assessed` | 0 % |
 | `non_compliant` | 0 % |
 | `partially_compliant` | 50 % |
 | `compliant` | 100 % |
-| `not_applicable` | Exclu du calcul |
+| `not_applicable` | Excluded from the calculation |
 
-Le recalcul est déclenché :
-- À la modification du `compliance_status` ou `compliance_level` d'une exigence
-- À la validation d'une évaluation
-- À la modification de l'applicabilité d'une exigence
-- Les résultats sont mis en cache avec invalidation événementielle
+The recalculation is triggered:
+- When the `compliance_status` or `compliance_level` of a requirement is modified
+- When an assessment is validated
+- When the applicability of a requirement is modified
+- The results are cached with event-driven invalidation
 
-### 10.2 Import de référentiels
+### 10.2 Framework import
 
-L'import d'un référentiel complet (sections + exigences) est traité de manière asynchrone :
+The import of a complete framework (sections + requirements) is processed asynchronously:
 
-1. L'utilisateur téléverse le fichier et configure le mapping des colonnes (pour CSV)
-2. Le système valide la structure (hiérarchie des sections, références uniques)
-3. Un rapport de pré-import est généré
-4. L'utilisateur confirme l'import
-5. Le traitement est exécuté en arrière-plan
-6. Un rapport d'import est généré (succès, échecs, doublons)
+1. The user uploads the file and configures the column mapping (for CSV)
+2. The system validates the structure (section hierarchy, unique references)
+3. A pre-import report is generated
+4. The user confirms the import
+5. The processing is executed in the background
+6. An import report is generated (successes, failures, duplicates)
 
-Des **modèles de référentiels prédéfinis** peuvent être fournis (ISO 27001 Annexe A, RGPD, NIS 2, etc.) sous forme de fichiers JSON importables. Ces modèles contiennent la structure et les exigences mais pas les évaluations.
+**Predefined framework templates** can be provided (ISO 27001 Annex A, GDPR, NIS 2, etc.) as importable JSON files. These templates contain the structure and requirements but not the assessments.
 
-### 10.3 Gestion des pièces jointes
+### 10.3 Attachment management
 
-Les pièces jointes (preuves documentaires) sont stockées sur un système de fichiers ou un stockage objet (S3-compatible). Les métadonnées sont en base de données, les fichiers binaires sur le stockage. Taille maximale par fichier paramétrable (défaut : 50 Mo). Types MIME autorisés paramétrables.
+Attachments (documentary evidence) are stored on a file system or object storage (S3-compatible). The metadata is in the database, the binary files on the storage. Configurable maximum size per file (default: 50 MB). Configurable allowed MIME types.
 
 ### 10.4 Multi-tenant
 
-Identique aux modules précédents. Isolation des données via `tenant_id`.
+Identical to the previous modules. Data isolation via `tenant_id`.
 
-### 10.5 Internationalisation (i18n)
+### 10.5 Internationalization (i18n)
 
-Identique aux modules précédents. Support français et anglais minimum. Les référentiels et exigences sont saisis dans la langue de l'utilisateur ; le système ne gère pas la traduction automatique du contenu des exigences.
+Identical to the previous modules. French and English support at minimum. Frameworks and requirements are entered in the user's language; the system does not handle automatic translation of the requirement content.
 
-### 10.6 Performances
+### 10.6 Performance
 
-- Les listes paginées ne doivent pas dépasser un temps de réponse de **200 ms** pour 1 000 enregistrements.
-- Le calcul du niveau de conformité d'un référentiel de 500 exigences doit s'exécuter en moins de **1 seconde**.
-- La matrice de mapping entre deux référentiels de 200 exigences chacun doit se charger en moins de **2 secondes**.
-- Les tableaux de bord agrégés sont mis en cache avec un TTL de **5 minutes**.
-- Les imports volumineux (> 200 exigences) sont traités de manière asynchrone.
+- Paginated lists must not exceed a response time of **200 ms** for 1,000 records.
+- The compliance-level calculation of a 500-requirement framework must run in less than **1 second**.
+- The mapping matrix between two frameworks of 200 requirements each must load in less than **2 seconds**.
+- Aggregated dashboards are cached with a TTL of **5 minutes**.
+- Large imports (> 200 requirements) are processed asynchronously.
 
 ### 10.7 Webhooks
 
-Identique aux modules précédents. Événements spécifiques :
+Identical to the previous modules. Specific events:
 
 - `compliance.framework.created`, `updated`, `deleted`
 - `compliance.requirement.created`, `updated`, `assessed`
@@ -538,49 +538,49 @@ Identique aux modules précédents. Événements spécifiques :
 
 ---
 
-## 11. Critères d'acceptation
+## 11. Acceptance criteria
 
-### 11.1 Fonctionnels
+### 11.1 Functional
 
-- [ ] CRUD complet sur les référentiels, sections, exigences, évaluations, mappings et plans d'action
-- [ ] Toutes les relations entre entités sont fonctionnelles
-- [ ] Les vues liste supportent pagination, tri, filtrage et recherche
-- [ ] La structure hiérarchique des sections est navigable et éditable
-- [ ] L'évaluation de conformité fonctionne exigence par exigence et en mode campagne
-- [ ] Le niveau de conformité est calculé automatiquement à tous les niveaux (exigence, section, référentiel)
-- [ ] La comparaison entre deux évaluations successives est fonctionnelle
-- [ ] Les mappings inter-référentiels sont créables et consultables sous forme de matrice
-- [ ] L'analyse de couverture entre référentiels est fonctionnelle
-- [ ] Les plans d'action sont gérables avec suivi d'avancement
-- [ ] La vue Déclaration d'Applicabilité (DdA) est fonctionnelle et exportable
-- [ ] Les alertes (non-conformité critique, plans en retard, revues) sont fonctionnelles
-- [ ] L'import en masse de référentiels et de mappings est opérationnel
-- [ ] Les exports sont opérationnels dans tous les formats prévus
-- [ ] Le tableau de bord synthétique affiche les données correctes avec tendances
+- [ ] Full CRUD on frameworks, sections, requirements, assessments, mappings and action plans
+- [ ] All relationships between entities are functional
+- [ ] List views support pagination, sorting, filtering and search
+- [ ] The hierarchical structure of sections is navigable and editable
+- [ ] Compliance assessment works requirement by requirement and in campaign mode
+- [ ] The compliance level is calculated automatically at all levels (requirement, section, framework)
+- [ ] The comparison between two successive assessments is functional
+- [ ] Inter-framework mappings can be created and viewed as a matrix
+- [ ] The coverage analysis between frameworks is functional
+- [ ] Action plans can be managed with progress tracking
+- [ ] The Statement of Applicability (SoA) view is functional and exportable
+- [ ] Alerts (critical non-conformity, overdue plans, reviews) are functional
+- [ ] The bulk import of frameworks and mappings is operational
+- [ ] Exports are operational in all the planned formats
+- [ ] The summary dashboard displays the correct data with trends
 
 ### 11.2 API
 
-- [ ] Tous les endpoints documentés sont implémentés et fonctionnels
-- [ ] La documentation OpenAPI (Swagger) est générée automatiquement
-- [ ] Les codes d'erreur et structures de réponse sont conformes aux spécifications
-- [ ] La pagination, le tri et le filtrage fonctionnent sur tous les endpoints de liste
-- [ ] Les webhooks sont déclenchés pour chaque événement de mutation
+- [ ] All documented endpoints are implemented and functional
+- [ ] The OpenAPI (Swagger) documentation is generated automatically
+- [ ] Error codes and response structures conform to the specifications
+- [ ] Pagination, sorting and filtering work on all list endpoints
+- [ ] Webhooks are triggered for every mutation event
 
-### 11.3 Sécurité
+### 11.3 Security
 
-- [ ] Le contrôle d'accès RBAC est appliqué sur chaque endpoint et chaque vue
-- [ ] La permission `compliance.assessment.validate` est requise pour valider une évaluation
-- [ ] La permission `compliance.requirement.assess` est requise pour évaluer une exigence
-- [ ] Le journal d'audit enregistre toutes les opérations
-- [ ] Les données sont isolées entre tenants
-- [ ] Les pièces jointes ne sont accessibles qu'aux utilisateurs autorisés
+- [ ] RBAC access control is applied on each endpoint and each view
+- [ ] The `compliance.assessment.validate` permission is required to validate an assessment
+- [ ] The `compliance.requirement.assess` permission is required to assess a requirement
+- [ ] The audit trail records all operations
+- [ ] Data is isolated between tenants
+- [ ] Attachments are only accessible to authorized users
 
 ### 11.4 Performance
 
-- [ ] Les temps de réponse respectent les seuils définis (§10.6)
-- [ ] Le calcul de conformité respecte le seuil de 1 seconde pour 500 exigences
-- [ ] Les imports volumineux sont traités de manière asynchrone
+- [ ] Response times meet the defined thresholds (§10.6)
+- [ ] The compliance calculation meets the 1-second threshold for 500 requirements
+- [ ] Large imports are processed asynchronously
 
 ---
 
-*Fin des spécifications du Module 3 : Conformité*
+*End of the specifications of Module 3: Compliance*

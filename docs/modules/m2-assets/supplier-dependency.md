@@ -2,59 +2,59 @@
 
 `assets.models.supplier.SupplierDependency`
 
-Relation typée entre un bien support et un fournisseur. Permet d'inventorier la chaîne d'approvisionnement à la maille de l'actif (« le serveur de paie est hébergé par OVH ») et d'alimenter la détection automatique des points uniques de défaillance (SPOF) issus d'une dépendance fournisseur.
+Typed relationship between a support asset and a supplier. It is used to inventory the supply chain at the asset level ("the payroll server is hosted by OVH") and to feed the automatic detection of single points of failure (SPOF) arising from a supplier dependency.
 
-Ne pas confondre avec [`SiteSupplierDependency`](site.md#sitesupplierdependency-rattachement-site-supplier) qui rattache un fournisseur à un site (vue géographique) plutôt qu'à un actif.
+Not to be confused with [`SiteSupplierDependency`](site.md#sitesupplierdependency-rattachement-site-supplier), which attaches a supplier to a site (geographic view) rather than to an asset.
 
-## Champs
+## Fields
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK | Identifiant unique |
-| `reference` | string | auto-généré `SDEP-N`, unique | Référence métier |
-| `support_asset` | FK -> SupportAsset | requis, cascade | Bien support concerné |
-| `supplier` | FK -> Supplier | requis, cascade | Fournisseur intervenant sur cet actif |
-| `dependency_type` | enum | requis | `provides`, `hosts`, `manages`, `develops`, `supports`, `licenses`, `maintains`, `other` |
-| `criticality` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `description` | text | optionnel, HTML | |
-| `is_single_point_of_failure` | boolean | **lecture seule, calculé** | Mis à jour par le service `assets.services.spof_detection` (M2 §3.3 RS-07). Toute valeur fournie en écriture est ignorée. |
-| `redundancy_level` | enum | optionnel | `none`, `partial`, `full`. Saisi par l'opérateur. |
-| `is_approved` / `approved_by` / `approved_at` | boolean / FK -> User / datetime | optionnel | Workflow d'approbation standard |
+| `id` | UUID | PK | Unique identifier |
+| `reference` | string | auto-generated `SDEP-N`, unique | Business reference |
+| `support_asset` | FK -> SupportAsset | required, cascade | Support asset concerned |
+| `supplier` | FK -> Supplier | required, cascade | Supplier operating on this asset |
+| `dependency_type` | enum | required | `provides`, `hosts`, `manages`, `develops`, `supports`, `licenses`, `maintains`, `other` |
+| `criticality` | enum | required | `low`, `medium`, `high`, `critical` |
+| `description` | text | optional, HTML | |
+| `is_single_point_of_failure` | boolean | **read-only, calculated** | Updated by the `assets.services.spof_detection` service (M2 §3.3 RS-07). Any value provided on write is ignored. |
+| `redundancy_level` | enum | optional | `none`, `partial`, `full`. Entered by the operator. |
+| `is_approved` / `approved_by` / `approved_at` | boolean / FK -> User / datetime | optional | Standard approval workflow |
 | `version` | int | auto | |
-| `created_by` | FK -> User | optionnel | |
+| `created_by` | FK -> User | optional | |
 | `created_at` / `updated_at` | datetime | auto | |
 
-## Contrainte d'unicité
+## Uniqueness constraint
 
-Un couple (`support_asset`, `supplier`) ne peut apparaître qu'une fois. Pour deux relations distinctes entre les mêmes actif et fournisseur (par exemple « hosts » + « supports »), créer une seule ligne dont la `description` détaille les rôles, ou élargir la convention de saisie.
+A pair (`support_asset`, `supplier`) may appear only once. For two distinct relationships between the same asset and supplier (for example "hosts" + "supports"), create a single row whose `description` details the roles, or extend the entry convention.
 
-## Énumération `dependency_type`
+## `dependency_type` enumeration
 
-| Valeur | Sens |
+| Value | Meaning |
 |---|---|
-| `provides` | Le fournisseur livre l'actif (produit, équipement) |
-| `hosts` | Le fournisseur héberge l'actif (cloud, colocation) |
-| `manages` | Le fournisseur opère l'actif (managed service) |
-| `develops` | Le fournisseur développe / personnalise l'actif (intégrateur) |
-| `supports` | Le fournisseur fournit le support technique (TMA, SLA) |
-| `licenses` | Le fournisseur concède la licence (éditeur logiciel) |
-| `maintains` | Le fournisseur assure la maintenance physique |
-| `other` | Autre type de dépendance, détaillé dans `description` |
+| `provides` | The supplier delivers the asset (product, equipment) |
+| `hosts` | The supplier hosts the asset (cloud, colocation) |
+| `manages` | The supplier operates the asset (managed service) |
+| `develops` | The supplier develops / customizes the asset (integrator) |
+| `supports` | The supplier provides technical support (application maintenance, SLA) |
+| `licenses` | The supplier grants the license (software vendor) |
+| `maintains` | The supplier provides physical maintenance |
+| `other` | Other type of dependency, detailed in `description` |
 
-## Règles de gestion
+## Business rules
 
-| ID | Règle |
+| ID | Rule |
 |---|---|
-| RG-SDEP-01 | `is_single_point_of_failure` est calculé par le service SPOF. La valeur fournie à l'API/MCP n'est pas persistée : le serveur la réécrase au prochain passage du service. |
-| RG-SDEP-02 | `redundancy_level` est saisi par l'opérateur. Le service SPOF utilise cette valeur (combinée à la criticité et au nombre de fournisseurs alternatifs) pour décider si la dépendance est SPOF. |
-| RG-SDEP-03 | `unique(support_asset, supplier)` est une contrainte d'intégrité. La création d'un doublon est rejetée par la base. |
-| RG-SDEP-04 | La suppression du `SupportAsset` ou du `Supplier` cascade sur la dépendance. La suppression de la dépendance laisse l'actif et le fournisseur intacts. |
+| RG-SDEP-01 | `is_single_point_of_failure` is calculated by the SPOF service. The value provided to the API/MCP is not persisted: the server overwrites it on the next run of the service. |
+| RG-SDEP-02 | `redundancy_level` is entered by the operator. The SPOF service uses this value (combined with the criticality and the number of alternative suppliers) to decide whether the dependency is a SPOF. |
+| RG-SDEP-03 | `unique(support_asset, supplier)` is an integrity constraint. The creation of a duplicate is rejected by the database. |
+| RG-SDEP-04 | Deleting the `SupportAsset` or the `Supplier` cascades to the dependency. Deleting the dependency leaves the asset and the supplier intact. |
 
 ## Endpoints
 
 ### REST
 
-- `GET /api/v1/assets/supplier-dependencies/` : liste avec filtres `support_asset_id`, `supplier_id`, `dependency_type`, `criticality`
+- `GET /api/v1/assets/supplier-dependencies/`: list with filters `support_asset_id`, `supplier_id`, `dependency_type`, `criticality`
 - `POST /api/v1/assets/supplier-dependencies/`
 - `GET /api/v1/assets/supplier-dependencies/<uuid>/`
 - `PUT/PATCH /api/v1/assets/supplier-dependencies/<uuid>/`
@@ -69,14 +69,14 @@ Un couple (`support_asset`, `supplier`) ne peut apparaître qu'une fois. Pour de
 
 | Codename | Description |
 |---|---|
-| `assets.supplier_dependency.read` | Lire les dépendances fournisseur |
-| `assets.supplier_dependency.create` | Créer |
-| `assets.supplier_dependency.update` | Modifier |
-| `assets.supplier_dependency.delete` | Supprimer |
-| `assets.supplier_dependency.approve` | Approuver |
+| `assets.supplier_dependency.read` | Read supplier dependencies |
+| `assets.supplier_dependency.create` | Create |
+| `assets.supplier_dependency.update` | Update |
+| `assets.supplier_dependency.delete` | Delete |
+| `assets.supplier_dependency.approve` | Approve |
 
-## Références
+## References
 
 - [Supplier](supplier.md), [SupportAsset](support-asset.md), [AssetDependency](asset-dependency.md), [Site](site.md)
-- ISO/IEC 27001:2022 §A.5.22 (Surveillance, examen et gestion des changements des services fournisseurs)
-- Service `assets.services.spof_detection` : moteur de calcul de `is_single_point_of_failure`
+- ISO/IEC 27001:2022 §A.5.22 (Monitoring, review and change management of supplier services)
+- `assets.services.spof_detection` service: calculation engine for `is_single_point_of_failure`

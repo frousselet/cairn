@@ -4,14 +4,14 @@
 
 Discussion thread attached to a [ManagementReview](management-review.md), used for pre-meeting arbitration, cancellation rationale, etc.
 
-Fil de discussion attaché à une revue (utile pour arbitrage pré-réunion, justification d'annulation, etc.).
+Discussion thread attached to a review (useful for pre-meeting arbitration, cancellation rationale, etc.).
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
 | `id` | UUID | PK | |
-| `review` | FK → ManagementReview | requis, CASCADE | |
-| `author` | FK → User | requis, SET_NULL | |
-| `content` | text | requis | HTML rich text |
+| `review` | FK → ManagementReview | required, CASCADE | |
+| `author` | FK → User | required, SET_NULL | |
+| `content` | text | required | HTML rich text |
 | `created_at` | datetime | auto | |
 
-Pattern identique à `ComplianceActionPlanComment`.
+Same pattern as `ComplianceActionPlanComment`.

@@ -2,18 +2,18 @@
 
 `risks.models.ebios.attack_path_step.AttackPathStep`
 
-Étape unitaire du chemin d'attaque d'un scénario stratégique. Préfixe de référence : `EAPS`.
+Individual step of the attack path of a strategic scenario. Reference prefix: `EAPS`.
 
-## 4.3.3 Entité : AttackPathStep (Étape du chemin d'attaque)
+## 4.3.3 Entity: AttackPathStep (Attack path step)
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `scenario_id` | relation | FK -> [StrategicScenario](strategic-scenario.md), requis | Scénario parent |
-| `reference` | string | requis, unique, préfixe EAPS | Code (ex. EAPS-1) |
-| `order` | integer | requis | Position dans le chemin (1 = première étape) |
-| `stakeholder_id` | relation | FK -> [EcosystemStakeholder](ecosystem-stakeholder.md), optionnel | Partie prenante impliquée |
-| `description` | text | requis | Description |
-| `action_type` | enum | requis | `initial_access`, `reconnaissance`, `lateral_movement`, `privilege_escalation`, `data_exfiltration`, `disruption`, `manipulation`, `persistence`, `other` |
-| `difficulty` | enum | optionnel | `trivial`, `easy`, `moderate`, `difficult`, `very_difficult` |
-| `created_at`, `updated_at` | - | auto | Standards |
+| `id` | UUID | PK, auto | Unique identifier |
+| `scenario_id` | relation | FK -> [StrategicScenario](strategic-scenario.md), required | Parent scenario |
+| `reference` | string | required, unique, prefix EAPS | Code (e.g. EAPS-1) |
+| `order` | integer | required | Position in the path (1 = first step) |
+| `stakeholder_id` | relation | FK -> [EcosystemStakeholder](ecosystem-stakeholder.md), optional | Stakeholder involved |
+| `description` | text | required | Description |
+| `action_type` | enum | required | `initial_access`, `reconnaissance`, `lateral_movement`, `privilege_escalation`, `data_exfiltration`, `disruption`, `manipulation`, `persistence`, `other` |
+| `difficulty` | enum | optional | `trivial`, `easy`, `moderate`, `difficult`, `very_difficult` |
+| `created_at`, `updated_at` | - | auto | Standard |

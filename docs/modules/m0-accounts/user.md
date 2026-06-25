@@ -2,33 +2,33 @@
 
 `accounts.models.user.User`
 
-Représente un utilisateur de la plateforme Cairn.
+Represents a user of the Cairn platform.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `email` | string | requis, unique, format email | Adresse email (identifiant de connexion) |
-| `first_name` | string | requis, max 150 | Prénom |
-| `last_name` | string | requis, max 150 | Nom de famille |
-| `display_name` | string | calculé ou surchargé, max 255 | Nom d'affichage (`first_name last_name` par défaut) |
-| `job_title` | string | optionnel, max 255 | Fonction / poste |
-| `department` | string | optionnel, max 255 | Direction / service |
-| `phone` | string | optionnel, max 50 | Numéro de téléphone |
-| `avatar` | image | optionnel | Photo de profil |
-| `password` | string | requis, hashé | Mot de passe (bcrypt/argon2) |
-| `is_active` | boolean | requis, défaut true | Compte actif |
-| `is_staff` | boolean | requis, défaut false | Accès à l'interface d'administration Django |
-| `groups` | relation | M2M → Group | Groupes d'appartenance |
-| `language` | enum | requis, défaut `fr` | Langue d'interface préférée (`fr`, `en`) |
-| `timezone` | string | requis, défaut `Europe/Paris` | Fuseau horaire |
-| `theme_preference` | enum | requis, défaut `system` | Thème d'affichage préféré (`light`, `dark`, `system`). `system` suit la préférence du système d'exploitation via `prefers-color-scheme` et réagit à ses changements en temps réel. La préférence est rendue côté serveur (attribut `data-theme-preference` sur `<html>`) pour éviter tout flash de thème incorrect au chargement, avec repli `localStorage` puis `prefers-color-scheme` pour les pages non authentifiées (login, OAuth authorize) |
-| `notification_preferences` | json | optionnel | Préférences de notification (email, in-app) |
-| `last_login` | datetime | auto | Date de dernière connexion |
-| `password_changed_at` | datetime | auto | Date du dernier changement de mot de passe |
-| `failed_login_attempts` | integer | auto, défaut 0 | Nombre de tentatives de connexion échouées consécutives |
-| `locked_until` | datetime | optionnel | Date de fin de verrouillage du compte |
-| `created_by` | relation | FK → User, optionnel | Créateur du compte (null si auto-inscription) |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `email` | string | required, unique, email format | Email address (sign-in identifier) |
+| `first_name` | string | required, max 150 | First name |
+| `last_name` | string | required, max 150 | Last name |
+| `display_name` | string | computed or overridden, max 255 | Display name (`first_name last_name` by default) |
+| `job_title` | string | optional, max 255 | Job title / position |
+| `department` | string | optional, max 255 | Division / department |
+| `phone` | string | optional, max 50 | Phone number |
+| `avatar` | image | optional | Profile picture |
+| `password` | string | required, hashed | Password (bcrypt/argon2) |
+| `is_active` | boolean | required, default true | Active account |
+| `is_staff` | boolean | required, default false | Access to the Django administration interface |
+| `groups` | relation | M2M → Group | Membership groups |
+| `language` | enum | required, default `fr` | Preferred interface language (`fr`, `en`) |
+| `timezone` | string | required, default `Europe/Paris` | Time zone |
+| `theme_preference` | enum | required, default `system` | Preferred display theme (`light`, `dark`, `system`). `system` follows the operating system preference via `prefers-color-scheme` and reacts to its changes in real time. The preference is rendered server-side (`data-theme-preference` attribute on `<html>`) to avoid any incorrect theme flash on load, with a `localStorage` fallback then `prefers-color-scheme` for unauthenticated pages (login, OAuth authorize) |
+| `notification_preferences` | json | optional | Notification preferences (email, in-app) |
+| `last_login` | datetime | auto | Last sign-in date |
+| `password_changed_at` | datetime | auto | Date of the last password change |
+| `failed_login_attempts` | integer | auto, default 0 | Number of consecutive failed login attempts |
+| `locked_until` | datetime | optional | Account lock end date |
+| `created_by` | relation | FK → User, optional | Account creator (null if self-registration) |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |
 
-> Note : Le champ `email` est l'identifiant unique de connexion. Il remplace le champ `username` par défaut de Django.
+> Note: The `email` field is the unique sign-in identifier. It replaces Django's default `username` field.

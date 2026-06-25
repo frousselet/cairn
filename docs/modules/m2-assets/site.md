@@ -2,117 +2,117 @@
 
 `context.models.site.Site`
 
-Lieu physique couvert par le SMSI (siège social, datacenter, bureau, usine, entrepôt, site distant). Sert de conteneur géographique pour les biens supports et les fournisseurs, et permet la cartographie « actifs / fournisseurs par site ».
+Physical location covered by the ISMS (head office, datacenter, office, factory, warehouse, remote site). Serves as a geographic container for support assets and suppliers, and enables the "assets / suppliers per site" mapping.
 
-## Pourquoi un modèle dédié plutôt qu'un `SupportAsset` de type site
+## Why a dedicated model rather than a `SupportAsset` of type site
 
-Les sites étaient initialement modélisables aussi bien comme entités à part qu'à travers le type `site` de `SupportAsset` (avec ses sous-catégories `datacenter` / `office` / `remote_site` / `cloud_region` / `other_site`). Cette double modélisation a été retirée (issue #30, migrations `context.0028` + `assets.0029`). Décision : un site n'est pas un bien support, c'est un conteneur de biens supports. La distinction est désormais :
+Sites were initially modelable both as standalone entities and through the `site` type of `SupportAsset` (with its subcategories `datacenter` / `office` / `remote_site` / `cloud_region` / `other_site`). This dual modeling was removed (issue #30, migrations `context.0028` + `assets.0029`). Decision: a site is not a support asset, it is a container of support assets. The distinction is now:
 
-| Modèle | Sert à... |
+| Model | Used to... |
 |---|---|
-| `Site` | décrire un lieu physique (adresse, hiérarchie, périmètres rattachés) |
-| `SupportAsset` | décrire un actif technique ou humain (avec propriétaire, niveaux DIC, cycle de vie, etc.) |
-| `SiteAssetDependency` | rattacher un bien support à son site d'hébergement |
-| `SiteSupplierDependency` | rattacher un fournisseur à un site qu'il dessert |
+| `Site` | describe a physical location (address, hierarchy, attached scopes) |
+| `SupportAsset` | describe a technical or human asset (with owner, CIA levels, lifecycle, etc.) |
+| `SiteAssetDependency` | attach a support asset to its hosting site |
+| `SiteSupplierDependency` | attach a supplier to a site it serves |
 
-Le type `site` de `SupportAsset` n'existe plus. Les rangées existantes ont été automatiquement converties en `Site` au moment de la migration ; les biens supports qui hébergeaient ces sites doivent être rerattachés via `SiteAssetDependency`.
+The `site` type of `SupportAsset` no longer exists. Existing rows were automatically converted to `Site` at migration time; the support assets that hosted those sites must be re-attached via `SiteAssetDependency`.
 
-## Champs
+## Fields
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `reference` | string | auto-généré `SITE-N`, unique | Référence métier |
-| `scopes` | relation | M2M -> Scope | Périmètres SMSI rattachés (RG-01). Un site peut couvrir plusieurs périmètres (cas multi-filiales partageant un même datacenter). |
-| `name` | string | requis, max 255 | Nom du site (ex. « Siège Lyon Part-Dieu », « Datacenter Bron ») |
-| `type` | enum | requis, défaut `other` | `headquarters`, `office`, `factory`, `warehouse`, `datacenter`, `remote`, `other` |
-| `address` | text | optionnel | Adresse postale, plan, indications d'accès |
-| `description` | text | optionnel | Description libre |
-| `parent_site` | relation | FK -> Site, optionnel | Hiérarchie de sites (groupe -> filiale -> site). Cycles rejetés par `clean()`. |
-| `workflow_state` | enum | requis, défaut `draft` | Cycle de vie unifié : `draft`, `pending`, `validated`, `archived`. Voir [governance/workflow.md](../governance/workflow.md). |
-| `tags` | relation | M2M -> Tag | Étiquettes libres |
-| `is_approved` | boolean | défaut `false` | Site validé par un approbateur |
-| `approved_by` | relation | FK -> User, optionnel | Approbateur |
-| `approved_at` | datetime | optionnel | Date d'approbation |
-| `version` | int | auto-incrémenté | Bumpé à chaque modification majeure |
-| `created_by` | relation | FK -> User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `reference` | string | auto-generated `SITE-N`, unique | Business reference |
+| `scopes` | relation | M2M -> Scope | Attached ISMS scopes (RG-01). A site can cover several scopes (case of multiple subsidiaries sharing the same datacenter). |
+| `name` | string | required, max 255 | Name of the site (e.g. "Lyon Part-Dieu head office", "Bron datacenter") |
+| `type` | enum | required, default `other` | `headquarters`, `office`, `factory`, `warehouse`, `datacenter`, `remote`, `other` |
+| `address` | text | optional | Postal address, map, access directions |
+| `description` | text | optional | Free-text description |
+| `parent_site` | relation | FK -> Site, optional | Site hierarchy (group -> subsidiary -> site). Cycles rejected by `clean()`. |
+| `workflow_state` | enum | required, default `draft` | Unified lifecycle: `draft`, `pending`, `validated`, `archived`. See [governance/workflow.md](../governance/workflow.md). |
+| `tags` | relation | M2M -> Tag | Free-text labels |
+| `is_approved` | boolean | default `false` | Site validated by an approver |
+| `approved_by` | relation | FK -> User, optional | Approver |
+| `approved_at` | datetime | optional | Approval date |
+| `version` | int | auto-incremented | Bumped on each major change |
+| `created_by` | relation | FK -> User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |
 
-## Énumération `type`
+## `type` enumeration
 
-- `headquarters` : siège social
-- `office` : bureau / locaux administratifs
-- `factory` : usine / site de production
-- `warehouse` : entrepôt / centre logistique
-- `datacenter` : datacenter (en propre ou colocation). Inclut désormais les anciennes valeurs `cloud_region` des biens supports, qui sont versées dans cette catégorie par la migration `assets.0029` à défaut d'une entrée dédiée.
-- `remote` : site distant, télétravail organisé, site secondaire
-- `other` : autre cas
+- `headquarters`: head office
+- `office`: office / administrative premises
+- `factory`: factory / production site
+- `warehouse`: warehouse / logistics center
+- `datacenter`: datacenter (owned or colocation). Now also includes the former `cloud_region` values of support assets, which are folded into this category by the `assets.0029` migration for lack of a dedicated entry.
+- `remote`: remote site, organized teleworking, secondary site
+- `other`: other case
 
-Les libellés affichés sont localisés via la couche i18n (`.po`). Les anciennes valeurs françaises (`siege`, `bureau`, `usine`, `entrepot`, `site_distant`, `autre`) ont été renommées en anglais par la migration `context.0027` (issue #31).
+The displayed labels are localized via the i18n layer (`.po`). The former French values (`siege`, `bureau`, `usine`, `entrepot`, `site_distant`, `autre`) were renamed to English by the `context.0027` migration (issue #31).
 
-## Hiérarchie
+## Hierarchy
 
-`parent_site` permet de modéliser un arbre : Groupe -> Filiale -> Site -> Bâtiment. La règle `clean()` détecte et rejette les cycles. Il n'y a pas de contrainte de profondeur ni de contrainte de cohérence entre les périmètres d'un parent et de ses enfants : un site enfant peut appartenir à un périmètre que son parent n'a pas (cas multi-filiales partageant un site).
+`parent_site` makes it possible to model a tree: Group -> Subsidiary -> Site -> Building. The `clean()` rule detects and rejects cycles. There is no depth constraint nor consistency constraint between the scopes of a parent and its children: a child site can belong to a scope that its parent does not have (case of multiple subsidiaries sharing a site).
 
-## Relations dépendances
+## Dependency relations
 
-### `SiteAssetDependency` (rattachement Site <- SupportAsset)
+### `SiteAssetDependency` (Site <- SupportAsset attachment)
 
 `assets.models.site_dependency.SiteAssetDependency`
 
-Un bien support (serveur, équipement réseau, etc.) est hébergé ou localisé sur un site. La relation porte sa propre référence (`SADP-N`), un type de dépendance, une criticité et un drapeau `is_single_point_of_failure` calculé automatiquement.
+A support asset (server, network equipment, etc.) is hosted or located at a site. The relation carries its own reference (`SADP-N`), a dependency type, a criticality and an `is_single_point_of_failure` flag computed automatically.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
 | `id` | UUID | PK | |
-| `reference` | string | auto-généré `SADP-N`, unique | |
-| `site` | FK -> Site | requis | Site qui héberge l'actif |
-| `support_asset` | FK -> SupportAsset | requis | Bien support hébergé |
-| `dependency_type` | enum | requis | `located_at`, `hosted_at`, `deployed_at`, `other` |
-| `criticality` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `description` | text | optionnel | |
-| `is_single_point_of_failure` | boolean | lecture seule | Calculé par le service de détection des SPOF (M2 §3.3 RS-07) |
-| `redundancy_level` | enum | optionnel | `none`, `partial`, `full` |
+| `reference` | string | auto-generated `SADP-N`, unique | |
+| `site` | FK -> Site | required | Site that hosts the asset |
+| `support_asset` | FK -> SupportAsset | required | Hosted support asset |
+| `dependency_type` | enum | required | `located_at`, `hosted_at`, `deployed_at`, `other` |
+| `criticality` | enum | required | `low`, `medium`, `high`, `critical` |
+| `description` | text | optional | |
+| `is_single_point_of_failure` | boolean | read-only | Computed by the SPOF detection service (M2 §3.3 RS-07) |
+| `redundancy_level` | enum | optional | `none`, `partial`, `full` |
 
-### `SiteSupplierDependency` (rattachement Site <- Supplier)
+### `SiteSupplierDependency` (Site <- Supplier attachment)
 
 `assets.models.site_dependency.SiteSupplierDependency`
 
-Un fournisseur dessert / opère / maintient un site.
+A supplier serves / operates / maintains a site.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
 | `id` | UUID | PK | |
-| `reference` | string | auto-généré `SSDP-N`, unique | |
-| `site` | FK -> Site | requis | Site desservi |
-| `supplier` | FK -> Supplier | requis | Fournisseur intervenant sur le site |
-| `dependency_type` | enum | requis | `provides`, `hosts`, `manages`, `develops`, `supports`, `licenses`, `maintains`, `other` |
-| `criticality` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `description` | text | optionnel | |
-| `is_single_point_of_failure` | boolean | lecture seule | Calculé par le service de détection des SPOF |
-| `redundancy_level` | enum | optionnel | `none`, `partial`, `full` |
+| `reference` | string | auto-generated `SSDP-N`, unique | |
+| `site` | FK -> Site | required | Served site |
+| `supplier` | FK -> Supplier | required | Supplier operating on the site |
+| `dependency_type` | enum | required | `provides`, `hosts`, `manages`, `develops`, `supports`, `licenses`, `maintains`, `other` |
+| `criticality` | enum | required | `low`, `medium`, `high`, `critical` |
+| `description` | text | optional | |
+| `is_single_point_of_failure` | boolean | read-only | Computed by the SPOF detection service |
+| `redundancy_level` | enum | optional | `none`, `partial`, `full` |
 
-## Règles de gestion
+## Business rules
 
-| ID | Règle |
+| ID | Rule |
 |---|---|
-| RG-SITE-01 | Un site peut être rattaché à un ou plusieurs `Scope`. Un site sans périmètre est valide (site transverse). |
-| RG-SITE-02 | La hiérarchie `parent_site` ne tolère pas de cycle. Détecté à `clean()`. |
-| RG-SITE-03 | Le `status` est libre : un site peut être `active` simultanément à d'autres sites (la règle RG-02 du module Contexte a été retirée pour cause de hiérarchie multi-périmètres). |
-| RG-SITE-04 | `is_single_point_of_failure` sur les dépendances de site est calculé par le service `assets.services.spof_detection`. La valeur fournie en écriture est ignorée. |
+| RG-SITE-01 | A site can be attached to one or more `Scope`. A site without a scope is valid (cross-cutting site). |
+| RG-SITE-02 | The `parent_site` hierarchy does not tolerate cycles. Detected at `clean()`. |
+| RG-SITE-03 | The `status` is unconstrained: a site can be `active` at the same time as other sites (the RG-02 rule of the Context module was removed because of the multi-scope hierarchy). |
+| RG-SITE-04 | `is_single_point_of_failure` on site dependencies is computed by the `assets.services.spof_detection` service. The value provided on write is ignored. |
 
 ## Endpoints
 
 ### REST
 
-- `GET /api/v1/context/sites/` : liste avec filtres `type`, `workflow_state`, `parent_site_id`
+- `GET /api/v1/context/sites/`: list with filters `type`, `workflow_state`, `parent_site_id`
 - `POST /api/v1/context/sites/`
 - `GET /api/v1/context/sites/<uuid>/`
 - `PUT/PATCH /api/v1/context/sites/<uuid>/`
 - `DELETE /api/v1/context/sites/<uuid>/`
 - `POST /api/v1/context/sites/<uuid>/approve/`
-- Les `SiteAssetDependency` et `SiteSupplierDependency` ont leurs propres routes sous `/api/v1/assets/site-asset-dependencies/` et `/api/v1/assets/site-supplier-dependencies/`.
+- The `SiteAssetDependency` and `SiteSupplierDependency` have their own routes under `/api/v1/assets/site-asset-dependencies/` and `/api/v1/assets/site-supplier-dependencies/`.
 
 ### MCP
 
@@ -124,17 +124,17 @@ Un fournisseur dessert / opère / maintient un site.
 
 | Codename | Description |
 |---|---|
-| `context.site.read` | Lire les sites |
-| `context.site.create` | Créer un site |
-| `context.site.update` | Modifier un site |
-| `context.site.delete` | Supprimer un site |
-| `context.site.approve` | Approuver un site |
+| `context.site.read` | Read sites |
+| `context.site.create` | Create a site |
+| `context.site.update` | Modify a site |
+| `context.site.delete` | Delete a site |
+| `context.site.approve` | Approve a site |
 
 ## Migration
 
-Les rangées historiques `SupportAsset[type=site]` ont été converties en `Site` par la migration `assets.0029`. Le mapping appliqué :
+The historical `SupportAsset[type=site]` rows were converted to `Site` by the `assets.0029` migration. The mapping applied:
 
-| Ancienne `SupportAsset.category` | Nouveau `Site.type` |
+| Former `SupportAsset.category` | New `Site.type` |
 |---|---|
 | `datacenter` | `datacenter` |
 | `office` | `office` |
@@ -142,10 +142,10 @@ Les rangées historiques `SupportAsset[type=site]` ont été converties en `Site
 | `cloud_region` | `datacenter` |
 | `other_site` | `other` |
 
-Les autres champs du bien support (propriétaire, DIC, dates de cycle de vie, etc.) ne sont pas transférés vers Site, qui ne les modélise pas. Les `AssetDependency` qui pointaient sur ces biens supports ont été supprimées par cascade : il faut les recréer en `SiteAssetDependency` côté `Site` si la relation a un sens.
+The other fields of the support asset (owner, CIA, lifecycle dates, etc.) are not transferred to Site, which does not model them. The `AssetDependency` records that pointed to those support assets were deleted by cascade: they must be recreated as `SiteAssetDependency` on the `Site` side if the relation makes sense.
 
-## Références
+## References
 
-- [SupportAsset](support-asset.md), [AssetDependency](asset-dependency.md), [Supplier](#m2-assets-supplier-mdtbd) (fournisseur, spec à venir, issue [#35](https://github.com/frousselet/cairn/issues/35))
-- Migrations : `context.0027` (rename FR -> EN), `context.0028` (scopes M2M), `assets.0029` (drop site type + conversion)
-- Issues : [#30](https://github.com/frousselet/cairn/issues/30) (cette spec), [#31](https://github.com/frousselet/cairn/issues/31) (rename FR -> EN)
+- [SupportAsset](support-asset.md), [AssetDependency](asset-dependency.md), [Supplier](#m2-assets-supplier-mdtbd) (supplier, spec to come, issue [#35](https://github.com/frousselet/cairn/issues/35))
+- Migrations: `context.0027` (rename FR -> EN), `context.0028` (scopes M2M), `assets.0029` (drop site type + conversion)
+- Issues: [#30](https://github.com/frousselet/cairn/issues/30) (this spec), [#31](https://github.com/frousselet/cairn/issues/31) (rename FR -> EN)

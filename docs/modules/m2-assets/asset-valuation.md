@@ -2,19 +2,19 @@
 
 `assets.models.valuation.AssetValuation`
 
-Historique des évaluations DIC d'un bien essentiel, permettant de suivre l'évolution des besoins de sécurité dans le temps.
+History of an essential asset's CIA ratings, allowing the evolution of security needs to be tracked over time.
 
-Conserve l'historique des évaluations DIC d'un bien essentiel, permettant de suivre l'évolution des besoins de sécurité dans le temps.
+Keeps the history of an essential asset's CIA ratings, allowing the evolution of security needs to be tracked over time.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `essential_asset_id` | relation | FK → EssentialAsset, requis | Bien essentiel évalué |
-| `evaluation_date` | date | requis | Date de l'évaluation |
-| `confidentiality_level` | enum | requis | Niveau C à cette date |
-| `integrity_level` | enum | requis | Niveau I à cette date |
-| `availability_level` | enum | requis | Niveau D à cette date |
-| `evaluated_by` | relation | FK → User, requis | Évaluateur |
-| `justification` | text | optionnel | Justification globale de l'évaluation |
-| `context` | text | optionnel | Contexte de l'évaluation (revue annuelle, incident, changement…) |
-| `created_at` | datetime | auto | Date de création |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `essential_asset_id` | relation | FK → EssentialAsset, required | Rated essential asset |
+| `evaluation_date` | date | required | Rating date |
+| `confidentiality_level` | enum | required | C level at this date |
+| `integrity_level` | enum | required | I level at this date |
+| `availability_level` | enum | required | A level at this date |
+| `evaluated_by` | relation | FK → User, required | Evaluator |
+| `justification` | text | optional | Overall justification of the rating |
+| `context` | text | optional | Context of the rating (annual review, incident, change, etc.) |
+| `created_at` | datetime | auto | Creation date |

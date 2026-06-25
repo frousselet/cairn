@@ -2,125 +2,125 @@
 
 `context.models.indicator.Indicator`
 
-Indicateur de pilotage (KPI) du SMSI, manuel, alimenté par API ou prédéfini par Cairn. Quantifie un objectif, le respect d'une exigence ou la performance d'un contrôle, et sert d'entrée aux tableaux de bord et aux revues de direction.
+Steering indicator (KPI) of the ISMS, manual, fed by API or predefined by Cairn. It quantifies an objective, compliance with a requirement, or the performance of a control, and serves as input to dashboards and management reviews.
 
-## Champs
+## Fields
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `reference` | string | auto-généré `INDC-N`, unique | Référence métier |
-| `scopes` | relation | M2M → Scope | Périmètres rattachés (RG-01) |
-| `name` | string | requis, max 255 | Intitulé de l'indicateur |
-| `description` | text | optionnel, HTML | Description et finalité |
-| `indicator_type` | enum | requis | `organizational`, `technical` |
-| `collection_method` | enum | requis, défaut `manual` | `manual`, `api`, `internal` |
-| `format` | enum | requis, défaut `number` | `number`, `boolean` |
-| `unit` | string | optionnel, max 50, interdit pour `boolean` | Unité d'affichage (`%`, `j`, `incidents`, etc.) |
-| `current_value` | string | lecture seule, max 255 | Dernière valeur mesurée (mise à jour automatiquement à chaque `IndicatorMeasurement`) |
-| `expected_level` | string | optionnel, max 255 | Cible attendue (libellé libre) |
-| `critical_threshold_operator` | enum | optionnel | `below`, `above`, `is_false`, `is_true` |
-| `critical_threshold_value` | string | optionnel | Valeur seuil (pour `below` / `above`) |
-| `critical_threshold_min` | float | optionnel, nombres uniquement | Borne basse hors zone critique |
-| `critical_threshold_max` | float | optionnel, nombres uniquement | Borne haute hors zone critique |
-| `review_frequency` | enum | requis | `daily`, `weekly`, `monthly`, `quarterly`, `semi_annual`, `annual` |
-| `first_review_date` | date | requis | Première date de revue (doit être aujourd'hui ou plus tard à la création) |
-| `status` | enum | requis, défaut `active` | `active`, `inactive`, `draft` |
-| `is_internal` | boolean | défaut `false` | `true` = indicateur prédéfini Cairn, alimenté en interne |
-| `internal_source` | enum | requis si `is_internal=true` | `global_compliance_rate`, `framework_compliance_rate`, `objective_progress`, `risk_treatment_rate`, `approved_scopes_rate`, `mandatory_roles_coverage` |
-| `internal_source_parameter` | string | optionnel | Paramètre de la source prédéfinie (par exemple UUID du référentiel pour `framework_compliance_rate`) |
-| `owner` | relation | FK → User, optionnel | Propriétaire métier responsable de la mesure et de la revue |
-| `linked_objectives` | relation | M2M → Objective | Objectifs dont l'indicateur mesure le progrès (ISO 27001 §6.2 / §9.1) |
-| `linked_requirements` | relation | M2M → Requirement | Exigences dont l'indicateur mesure le respect |
-| `tags` | relation | M2M → Tag | Étiquettes libres |
-| `is_approved` | boolean | défaut `false` | Indicateur validé par un approbateur |
-| `approved_by` | relation | FK → User, optionnel | Approbateur |
-| `approved_at` | datetime | optionnel | Date d'approbation |
-| `version` | int | auto-incrémenté | Bumpé à chaque modification majeure |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `reference` | string | auto-generated `INDC-N`, unique | Business reference |
+| `scopes` | relation | M2M → Scope | Linked scopes (RG-01) |
+| `name` | string | required, max 255 | Indicator title |
+| `description` | text | optional, HTML | Description and purpose |
+| `indicator_type` | enum | required | `organizational`, `technical` |
+| `collection_method` | enum | required, default `manual` | `manual`, `api`, `internal` |
+| `format` | enum | required, default `number` | `number`, `boolean` |
+| `unit` | string | optional, max 50, not allowed for `boolean` | Display unit (`%`, `j`, `incidents`, etc.) |
+| `current_value` | string | read-only, max 255 | Last measured value (updated automatically with each `IndicatorMeasurement`) |
+| `expected_level` | string | optional, max 255 | Expected target (free-text label) |
+| `critical_threshold_operator` | enum | optional | `below`, `above`, `is_false`, `is_true` |
+| `critical_threshold_value` | string | optional | Threshold value (for `below` / `above`) |
+| `critical_threshold_min` | float | optional, numbers only | Lower bound outside the critical zone |
+| `critical_threshold_max` | float | optional, numbers only | Upper bound outside the critical zone |
+| `review_frequency` | enum | required | `daily`, `weekly`, `monthly`, `quarterly`, `semi_annual`, `annual` |
+| `first_review_date` | date | required | First review date (must be today or later at creation) |
+| `status` | enum | required, default `active` | `active`, `inactive`, `draft` |
+| `is_internal` | boolean | default `false` | `true` = predefined Cairn indicator, fed internally |
+| `internal_source` | enum | required if `is_internal=true` | `global_compliance_rate`, `framework_compliance_rate`, `objective_progress`, `risk_treatment_rate`, `approved_scopes_rate`, `mandatory_roles_coverage` |
+| `internal_source_parameter` | string | optional | Parameter of the predefined source (for example the framework UUID for `framework_compliance_rate`) |
+| `owner` | relation | FK → User, optional | Business owner responsible for the measurement and the review |
+| `linked_objectives` | relation | M2M → Objective | Objectives whose progress the indicator measures (ISO 27001 §6.2 / §9.1) |
+| `linked_requirements` | relation | M2M → Requirement | Requirements whose compliance the indicator measures |
+| `tags` | relation | M2M → Tag | Free-form tags |
+| `is_approved` | boolean | default `false` | Indicator validated by an approver |
+| `approved_by` | relation | FK → User, optional | Approver |
+| `approved_at` | datetime | optional | Approval date |
+| `version` | int | auto-incremented | Bumped on each major modification |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |
 
 ## Énumérations
 
 ### `indicator_type`
 
-- `organizational` : indicateur métier ou de gouvernance (taux de conformité, couverture des rôles, etc.). Obligatoire pour les indicateurs prédéfinis (`is_internal=true`).
-- `technical` : indicateur technique (temps de réponse, disponibilité, taux d'incidents).
+- `organizational`: business or governance indicator (compliance rate, role coverage, etc.). Mandatory for predefined indicators (`is_internal=true`).
+- `technical`: technical indicator (response time, availability, incident rate).
 
 ### `collection_method`
 
-- `manual` : saisi à la main par un utilisateur via `IndicatorMeasurement`.
-- `api` : alimenté par un appel externe (script, intégration, agent).
-- `internal` : alimenté automatiquement par Cairn à partir d'une `internal_source` (cf. ci-dessous).
+- `manual`: entered manually by a user through `IndicatorMeasurement`.
+- `api`: fed by an external call (script, integration, agent).
+- `internal`: fed automatically by Cairn from an `internal_source` (see below).
 
-### `internal_source` (sources prédéfinies)
+### `internal_source` (predefined sources)
 
 | Source | Format | Unité | Description |
 |---|---|---|---|
-| `global_compliance_rate` | number | `%` | Taux de conformité agrégé : même calcul que la carte « Conformité globale » du tableau de bord (moyenne, sur les référentiels actifs et reportables, de la part d'exigences applicables conformes selon le dernier résultat d'évaluation ; service partagé `compliance.services`) |
-| `framework_compliance_rate` | number | `%` | Taux de conformité d'un référentiel précis (paramètre = UUID du `Framework`), même calcul par exigences que ci-dessus |
-| `objective_progress` | number | `%` | Avancement moyen des objectifs (`Objective.progress_percentage`) |
-| `risk_treatment_rate` | number | `%` | Part des risques dont un plan de traitement est `completed` |
-| `approved_scopes_rate` | number | `%` | Part des `Scope` au statut `active` ET `is_approved=true` |
-| `mandatory_roles_coverage` | number | `%` | Part des rôles avec `is_mandatory=true` qui ont au moins un utilisateur affecté |
+| `global_compliance_rate` | number | `%` | Aggregated compliance rate: same calculation as the "Overall compliance" card on the dashboard (average, over active and reportable frameworks, of the share of applicable requirements that are compliant according to the latest assessment result; shared service `compliance.services`) |
+| `framework_compliance_rate` | number | `%` | Compliance rate of a specific framework (parameter = `Framework` UUID), same per-requirement calculation as above |
+| `objective_progress` | number | `%` | Average progress of objectives (`Objective.progress_percentage`) |
+| `risk_treatment_rate` | number | `%` | Share of risks whose treatment plan is `completed` |
+| `approved_scopes_rate` | number | `%` | Share of `Scope` records with status `active` AND `is_approved=true` |
+| `mandatory_roles_coverage` | number | `%` | Share of roles with `is_mandatory=true` that have at least one assigned user |
 
-Les indicateurs internes sont recalculés périodiquement par un service en arrière-plan ; voir [§ Pilotage automatique](README.md#pilotage-et-calculs-automatiques) du module.
+Internal indicators are recalculated periodically by a background service; see [§ Automated monitoring](README.md#pilotage-et-calculs-automatiques) of the module.
 
-## Sous-entité : `IndicatorMeasurement`
+## Sub-entity: `IndicatorMeasurement`
 
 `context.models.indicator.IndicatorMeasurement`
 
-Une mesure historique d'un indicateur. Plusieurs mesures par indicateur, indexées par date, alimentent les sparklines et l'évolution.
+A historical measurement of an indicator. Several measurements per indicator, indexed by date, feed the sparklines and the trend over time.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK | Identifiant unique |
-| `indicator` | relation | FK → Indicator, requis | Indicateur mesuré |
-| `value` | string | requis, max 255 | Valeur mesurée (nombre ou booléen sérialisé en chaîne) |
-| `recorded_at` | datetime | défaut `now`, indexé | Horodatage de la mesure. Modifiable, ce qui permet d'importer des séries historiques |
-| `recorded_by` | relation | FK → User, optionnel | Auteur de la mesure |
-| `notes` | text | optionnel | Commentaire libre (méthodologie, événement contextuel) |
+| `id` | UUID | PK | Unique identifier |
+| `indicator` | relation | FK → Indicator, required | Measured indicator |
+| `value` | string | required, max 255 | Measured value (number or boolean serialized as a string) |
+| `recorded_at` | datetime | default `now`, indexed | Timestamp of the measurement. Editable, which allows importing historical series |
+| `recorded_by` | relation | FK → User, optional | Author of the measurement |
+| `notes` | text | optional | Free-form comment (methodology, contextual event) |
 
-Le `current_value` de l'indicateur est mis à jour automatiquement à la création de chaque `IndicatorMeasurement` avec la valeur de la mesure la plus récente.
+The indicator's `current_value` is updated automatically when each `IndicatorMeasurement` is created, with the value of the most recent measurement.
 
-## Règles de gestion spécifiques
+## Specific business rules
 
-| ID | Règle |
+| ID | Rule |
 |---|---|
-| RS-IND-01 | Un indicateur prédéfini (`is_internal=true`) doit avoir `indicator_type=organizational`. |
-| RS-IND-02 | Un indicateur prédéfini doit renseigner `internal_source` ; ses `format` et `unit` sont alignés sur `PREDEFINED_SOURCE_FORMAT`. |
-| RS-IND-03 | Un indicateur de `format=boolean` ne peut pas avoir d'`unit`. |
-| RS-IND-04 | Un indicateur de `format=boolean` n'utilise que `is_true` ou `is_false` comme `critical_threshold_operator`. |
-| RS-IND-05 | Un indicateur de `format=number` n'utilise que `below` ou `above` comme `critical_threshold_operator`. |
-| RS-IND-06 | `critical_threshold_min` et `critical_threshold_max` sont réservés au `format=number`. Si les deux sont renseignés, `min < max`. |
-| RS-IND-07 | À la création, `first_review_date` doit être aujourd'hui ou ultérieure. |
-| RS-IND-08 | À chaque création d'`IndicatorMeasurement`, `Indicator.current_value` est mis à jour avec la valeur de la nouvelle mesure. |
+| RS-IND-01 | A predefined indicator (`is_internal=true`) must have `indicator_type=organizational`. |
+| RS-IND-02 | A predefined indicator must set `internal_source`; its `format` and `unit` are aligned with `PREDEFINED_SOURCE_FORMAT`. |
+| RS-IND-03 | An indicator with `format=boolean` cannot have a `unit`. |
+| RS-IND-04 | An indicator with `format=boolean` uses only `is_true` or `is_false` as `critical_threshold_operator`. |
+| RS-IND-05 | An indicator with `format=number` uses only `below` or `above` as `critical_threshold_operator`. |
+| RS-IND-06 | `critical_threshold_min` and `critical_threshold_max` are reserved for `format=number`. If both are set, `min < max`. |
+| RS-IND-07 | At creation, `first_review_date` must be today or later. |
+| RS-IND-08 | On each creation of an `IndicatorMeasurement`, `Indicator.current_value` is updated with the value of the new measurement. |
 
-## État critique (`is_critical`)
+## Critical state (`is_critical`)
 
-Propriété calculée à la lecture, vraie quand :
+Property computed on read, true when:
 
-- `format=boolean` et `current_value` viole l'opérateur configuré (`is_true` → valeur fausse, `is_false` → valeur vraie) ;
-- `format=number` et `current_value < critical_threshold_min` ou `current_value > critical_threshold_max` ;
-- `critical_threshold_operator=below` et `current_value < critical_threshold_value` ;
-- `critical_threshold_operator=above` et `current_value > critical_threshold_value`.
+- `format=boolean` and `current_value` violates the configured operator (`is_true` → false value, `is_false` → true value);
+- `format=number` and `current_value < critical_threshold_min` or `current_value > critical_threshold_max`;
+- `critical_threshold_operator=below` and `current_value < critical_threshold_value`;
+- `critical_threshold_operator=above` and `current_value > critical_threshold_value`.
 
-Un indicateur critique s'affiche avec une bordure rouge sur le tableau de bord et apparaît dans les notifications hebdomadaires.
+A critical indicator is displayed with a red border on the dashboard and appears in the weekly notifications.
 
 ## Endpoints
 
 ### REST
 
-- `GET /api/v1/context/indicators/` : liste avec filtres `indicator_type`, `status`, `format`, `collection_method`, `is_internal`
+- `GET /api/v1/context/indicators/`: list with filters `indicator_type`, `status`, `format`, `collection_method`, `is_internal`
 - `POST /api/v1/context/indicators/`
 - `GET /api/v1/context/indicators/<uuid>/`
 - `PUT/PATCH /api/v1/context/indicators/<uuid>/`
 - `DELETE /api/v1/context/indicators/<uuid>/`
 - `POST /api/v1/context/indicators/<uuid>/approve/`
-- `GET /api/v1/context/indicators/<uuid>/measurements/` : historique des mesures
-- `POST /api/v1/context/indicators/<uuid>/measurements/` : nouvelle mesure
-- `POST /api/v1/context/indicators/batch/` : création en lot
+- `GET /api/v1/context/indicators/<uuid>/measurements/`: measurement history
+- `POST /api/v1/context/indicators/<uuid>/measurements/`: new measurement
+- `POST /api/v1/context/indicators/batch/`: batch creation
 
 ### MCP
 
@@ -131,14 +131,14 @@ Un indicateur critique s'affiche avec une bordure rouge sur le tableau de bord e
 
 | Codename | Description |
 |---|---|
-| `context.indicator.read` | Lire les indicateurs et leurs mesures |
-| `context.indicator.create` | Créer un indicateur et ses mesures |
-| `context.indicator.update` | Modifier un indicateur |
-| `context.indicator.delete` | Supprimer un indicateur |
-| `context.indicator.approve` | Approuver un indicateur |
+| `context.indicator.read` | Read indicators and their measurements |
+| `context.indicator.create` | Create an indicator and its measurements |
+| `context.indicator.update` | Modify an indicator |
+| `context.indicator.delete` | Delete an indicator |
+| `context.indicator.approve` | Approve an indicator |
 
 ## Références
 
-- ISO/IEC 27001:2022 §6.2 (Objectifs de sécurité et mesurabilité) et §9.1 (Surveillance, mesure, analyse, évaluation)
-- [Objective](objective.md), [Requirement](../m3-compliance/requirement.md) : entités cibles des liens M2M
-- [Indicator MCP tools](https://github.com/frousselet/cairn/blob/main/mcp/tools.py) : implémentation
+- ISO/IEC 27001:2022 §6.2 (Security objectives and measurability) and §9.1 (Monitoring, measurement, analysis, evaluation)
+- [Objective](objective.md), [Requirement](../m3-compliance/requirement.md): target entities of the M2M links
+- [Indicator MCP tools](https://github.com/frousselet/cairn/blob/main/mcp/tools.py): implementation

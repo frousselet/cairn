@@ -2,57 +2,57 @@
 
 `risks.models.risk_criteria.RiskCriteria`
 
-Échelles, matrice et seuils d'acceptation utilisés pour une appréciation des risques. Réutilisable entre plusieurs appréciations.
+Scales, matrix and acceptance thresholds used for a risk assessment. Reusable across several assessments.
 
-## 2.2 Entité : RiskCriteria (Critères de risque)
+## 2.2 Entity: RiskCriteria (Risk criteria)
 
-Définit les échelles, la matrice et les seuils d'acceptation utilisés pour une appréciation des risques. Réutilisable entre plusieurs appréciations.
+Defines the scales, the matrix and the acceptance thresholds used for a risk assessment. Reusable across several assessments.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `name` | string | requis, max 255 | Nom du jeu de critères (ex. « Critères 2026 ») |
-| `description` | text | optionnel | Description |
-| `likelihood_scale` | relation | O2M → ScaleLevel | Échelle de vraisemblance |
-| `impact_scale` | relation | O2M → ScaleLevel | Échelle d'impact |
-| `risk_matrix` | json | requis | Matrice de risque (likelihood × impact → risk level) |
-| `risk_levels` | relation | O2M → RiskLevel | Niveaux de risque résultants |
-| `acceptance_threshold` | integer | requis | Seuil d'acceptation (niveau de risque au-delà duquel le traitement est obligatoire) |
-| `is_default` | boolean | requis, défaut false | Critères par défaut pour les nouvelles appréciations |
-| `workflow_state` | enum | requis, défaut `draft` | Cycle de vie unifié : `draft`, `pending`, `validated`, `archived`. Voir [governance/workflow.md](../governance/workflow.md). |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `scope_id` | relation | FK → Scope, required | Attached scope |
+| `name` | string | required, max 255 | Name of the criteria set (e.g. "2026 Criteria") |
+| `description` | text | optional | Description |
+| `likelihood_scale` | relation | O2M → ScaleLevel | Likelihood scale |
+| `impact_scale` | relation | O2M → ScaleLevel | Impact scale |
+| `risk_matrix` | json | required | Risk matrix (likelihood × impact → risk level) |
+| `risk_levels` | relation | O2M → RiskLevel | Resulting risk levels |
+| `acceptance_threshold` | integer | required | Acceptance threshold (risk level above which treatment is mandatory) |
+| `is_default` | boolean | required, default false | Default criteria for new assessments |
+| `workflow_state` | enum | required, default `draft` | Unified lifecycle: `draft`, `pending`, `validated`, `archived`. See [governance/workflow.md](../governance/workflow.md). |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |
 
 ## ScaleLevel
 
 `risks.models.risk_criteria.ScaleLevel`
 
-### 2.3 Sous-entité : ScaleLevel (Niveau d'échelle)
+### 2.3 Sub-entity: ScaleLevel (Scale level)
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `criteria_id` | relation | FK → RiskCriteria, requis | Critères parent |
-| `scale_type` | enum | requis | `likelihood`, `impact` |
-| `level` | integer | requis | Valeur numérique (ex. 1, 2, 3, 4) |
-| `name` | string | requis, max 100 | Libellé (ex. « Rare », « Probable », « Quasi certain ») |
-| `description` | text | optionnel | Description détaillée et exemples |
-| `color` | string | optionnel, format hex | Couleur d'affichage |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `criteria_id` | relation | FK → RiskCriteria, required | Parent criteria |
+| `scale_type` | enum | required | `likelihood`, `impact` |
+| `level` | integer | required | Numeric value (e.g. 1, 2, 3, 4) |
+| `name` | string | required, max 100 | Label (e.g. "Rare", "Likely", "Almost certain") |
+| `description` | text | optional | Detailed description and examples |
+| `color` | string | optional, hex format | Display color |
 
 ## RiskLevel
 
 `risks.models.risk_criteria.RiskLevel`
 
-### 2.4 Sous-entité : RiskLevel (Niveau de risque)
+### 2.4 Sub-entity: RiskLevel (Risk level)
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `criteria_id` | relation | FK → RiskCriteria, requis | Critères parent |
-| `level` | integer | requis | Valeur numérique (ex. 1, 2, 3, 4) |
-| `name` | string | requis, max 100 | Libellé (ex. « Faible », « Modéré », « Élevé », « Critique ») |
-| `description` | text | optionnel | Description et actions attendues |
-| `color` | string | requis, format hex | Couleur d'affichage |
-| `requires_treatment` | boolean | requis | Traitement obligatoire à ce niveau |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `criteria_id` | relation | FK → RiskCriteria, required | Parent criteria |
+| `level` | integer | required | Numeric value (e.g. 1, 2, 3, 4) |
+| `name` | string | required, max 100 | Label (e.g. "Low", "Moderate", "High", "Critical") |
+| `description` | text | optional | Description and expected actions |
+| `color` | string | required, hex format | Display color |
+| `requires_treatment` | boolean | required | Treatment mandatory at this level |

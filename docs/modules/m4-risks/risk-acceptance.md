@@ -2,23 +2,23 @@
 
 `risks.models.acceptance.RiskAcceptance`
 
-Formalise l'acceptation d'un risque par son propriétaire, conformément au processus décisionnel de l'organisme.
+Formalizes the acceptance of a risk by its owner, in accordance with the organization's decision-making process.
 
-## 2.8 Entité : RiskAcceptance (Acceptation de risque)
+## 2.8 Entity: RiskAcceptance (Risk acceptance)
 
-Formalise l'acceptation d'un risque par le propriétaire du risque, conformément au processus décisionnel de l'organisme.
+Formalizes the acceptance of a risk by the risk owner, in accordance with the organization's decision-making process.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `risk_id` | relation | FK → Risk, requis | Risque accepté |
-| `accepted_by` | relation | FK → User, requis | Acceptant (propriétaire du risque) |
-| `accepted_at` | datetime | requis | Date d'acceptation |
-| `risk_level_at_acceptance` | integer | requis | Niveau de risque au moment de l'acceptation |
-| `justification` | text | requis | Justification de l'acceptation |
-| `conditions` | text | optionnel | Conditions d'acceptation (ex. revue trimestrielle) |
-| `valid_until` | date | optionnel | Date de validité de l'acceptation |
-| `review_date` | date | requis | Date de revue obligatoire |
-| `status` | enum | requis | `active`, `expired`, `revoked`, `renewed` |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `risk_id` | relation | FK → Risk, required | Accepted risk |
+| `accepted_by` | relation | FK → User, required | Accepting party (risk owner) |
+| `accepted_at` | datetime | required | Acceptance date |
+| `risk_level_at_acceptance` | integer | required | Risk level at the time of acceptance |
+| `justification` | text | required | Justification for the acceptance |
+| `conditions` | text | optional | Acceptance conditions (e.g. quarterly review) |
+| `valid_until` | date | optional | Validity date of the acceptance |
+| `review_date` | date | required | Mandatory review date |
+| `status` | enum | required | `active`, `expired`, `revoked`, `renewed` |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |

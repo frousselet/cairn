@@ -27,7 +27,7 @@ Each module directory contains:
 ## Conventions
 
 - File names are **kebab-case** of the entity name (`essential-asset.md`, not `EssentialAsset.md`).
-- Entity headers are H1; field tables follow the convention `| Champ | Type | Contraintes | Description |`.
+- Entity headers are H1; field tables follow the convention `| Field | Type | Constraints | Description |`.
 - Cross-references between entities use relative links: `[Objective](objective.md)`.
 - Business rules keep their original identifier (`RG-01`, `RS-04`, etc.) so legacy commit messages and code comments stay searchable. Rules retired by a later decision are kept as struck-through entries with a reason : see `m1-context/README.md` for an example.
 - Enums and choice lists are reproduced verbatim from the model so the doc is grep-able against the code.

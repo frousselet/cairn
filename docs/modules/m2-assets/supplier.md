@@ -2,175 +2,175 @@
 
 `assets.models.supplier.Supplier`
 
-Fournisseur tiers (éditeur logiciel, hébergeur, prestataire de service managé, mainteneur, intégrateur, etc.) intervenant sur les biens supports ou les sites du SMSI. Sert de point d'ancrage à l'analyse de la chaîne d'approvisionnement (ISO 27001:2022 §A.5.19 à §A.5.23), à l'inventaire contractuel et à la revue périodique de conformité des prestataires.
+Third-party supplier (software vendor, host, managed service provider, maintainer, integrator, etc.) operating on the support assets or sites of the ISMS. Serves as the anchor point for supply chain analysis (ISO 27001:2022 §A.5.19 to §A.5.23), the contractual inventory and the periodic compliance review of providers.
 
-## Champs
+## Fields
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `reference` | string | auto-généré `SUPP-N`, unique | Référence métier |
-| `scopes` | relation | M2M -> Scope | Périmètres SMSI concernés par ce fournisseur. Un fournisseur transverse peut rester sans périmètre (liste vide). |
-| `name` | string | requis, max 255 | Nom commercial du fournisseur |
-| `description` | text | optionnel, HTML | Description et contexte d'intervention |
-| `logo` | text | optionnel | Logo data-URI (base64), 128 px |
-| `logo_64` / `logo_32` / `logo_16` | text | optionnel, lecture seule | Variantes du logo générées automatiquement à la mise à jour |
-| `type` | relation | FK -> SupplierType, optionnel | Type de fournisseur (paramétrable, voir sous-entité ci-dessous) |
-| `criticality` | enum | requis, défaut `medium` | `low`, `medium`, `high`, `critical` |
-| `contact_name` | string | optionnel, max 255 | Référent commercial / technique |
-| `contact_email` | email | optionnel | |
-| `contact_phone` | string | optionnel, max 50 | |
-| `website` | url | optionnel | |
-| `address` | text | optionnel | Adresse postale |
-| `country` | string | optionnel, max 100 | Pays (pour analyses de juridiction / RGPD / souveraineté) |
-| `contract_reference` | string | optionnel, max 255 | Référence interne du contrat |
-| `contract_start_date` | date | optionnel | |
-| `contract_end_date` | date | optionnel | Déclenche l'alerte « contrat expiré » via `is_contract_expired` (M2 §9) |
-| `owner` | relation | FK -> User, requis | Propriétaire interne (responsable de la relation contractuelle) |
-| `status` | enum | requis, défaut `active` | `active`, `under_evaluation`, `suspended`, `archived` |
-| `notes` | text | optionnel, HTML | Notes libres |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `reference` | string | auto-generated `SUPP-N`, unique | Business reference |
+| `scopes` | relation | M2M -> Scope | ISMS scopes concerned by this supplier. A cross-cutting supplier can remain without a scope (empty list). |
+| `name` | string | required, max 255 | Trade name of the supplier |
+| `description` | text | optional, HTML | Description and context of operation |
+| `logo` | text | optional | Logo data-URI (base64), 128 px |
+| `logo_64` / `logo_32` / `logo_16` | text | optional, read-only | Logo variants generated automatically on update |
+| `type` | relation | FK -> SupplierType, optional | Supplier type (configurable, see sub-entity below) |
+| `criticality` | enum | required, default `medium` | `low`, `medium`, `high`, `critical` |
+| `contact_name` | string | optional, max 255 | Commercial / technical contact |
+| `contact_email` | email | optional | |
+| `contact_phone` | string | optional, max 50 | |
+| `website` | url | optional | |
+| `address` | text | optional | Postal address |
+| `country` | string | optional, max 100 | Country (for jurisdiction / GDPR / sovereignty analyses) |
+| `contract_reference` | string | optional, max 255 | Internal contract reference |
+| `contract_start_date` | date | optional | |
+| `contract_end_date` | date | optional | Triggers the "contract expired" alert via `is_contract_expired` (M2 §9) |
+| `owner` | relation | FK -> User, required | Internal owner (responsible for the contractual relationship) |
+| `status` | enum | required, default `active` | `active`, `under_evaluation`, `suspended`, `archived` |
+| `notes` | text | optional, HTML | Free-text notes |
 | `tags` | relation | M2M -> Tag | |
-| `is_approved` | boolean | défaut `false` | Validé par un approbateur |
-| `approved_by` / `approved_at` | relation / datetime | optionnel | |
-| `version` | int | auto-incrémenté | Bumpé à chaque modification majeure |
+| `is_approved` | boolean | default `false` | Validated by an approver |
+| `approved_by` / `approved_at` | relation / datetime | optional | |
+| `version` | int | auto-incremented | Bumped on each major change |
 | `created_by` | relation | FK -> User | |
 | `created_at` / `updated_at` | datetime | auto | |
 
-## Énumérations
+## Enumerations
 
 ### `criticality`
 
-`low`, `medium`, `high`, `critical`. Conditionne la fréquence de revue, l'inclusion dans les exports de chaîne d'approvisionnement critique et la priorité des plans d'action sur les non-conformités.
+`low`, `medium`, `high`, `critical`. Drives the review frequency, the inclusion in critical supply chain exports and the priority of action plans on non-conformities.
 
 ### `status`
 
-- `active` : sous contrat, opérations en cours
-- `under_evaluation` : en cours de qualification (audit fournisseur, RFP, étude de risque)
-- `suspended` : intervention temporairement suspendue (incident, manquement, gel)
-- `archived` : contrat terminé, conservation pour traçabilité historique
+- `active`: under contract, operations ongoing
+- `under_evaluation`: being qualified (supplier audit, RFP, risk study)
+- `suspended`: operation temporarily suspended (incident, breach, freeze)
+- `archived`: contract terminated, retained for historical traceability
 
-## Propriétés calculées
+## Computed properties
 
 ### `is_contract_expired`
 
-`true` si `status=active` et `contract_end_date` est dans le passé. Sert d'indicateur visuel sur les vues liste et déclenche les notifications de renouvellement.
+`true` if `status=active` and `contract_end_date` is in the past. Serves as a visual indicator on the list views and triggers renewal notifications.
 
 ### `requirement_compliance_summary`
 
-Dict agrégeant le nombre d'exigences fournisseur (`SupplierRequirement`) par statut (`compliant`, `non_compliant`, `partially_compliant`, `not_assessed`). Utilisé par les tableaux de bord et l'export contrat / SoA.
+Dict aggregating the number of supplier requirements (`SupplierRequirement`) by status (`compliant`, `non_compliant`, `partially_compliant`, `not_assessed`). Used by the dashboards and the contract / SoA export.
 
-## Sous-entité : `SupplierType`
+## Sub-entity: `SupplierType`
 
 `assets.models.supplier.SupplierType`
 
-Type de fournisseur paramétrable par l'administrateur (par exemple « SaaS », « Hébergeur cloud », « Prestataire RH », « Auditeur externe »). Permet d'attacher un socle d'exigences-types réutilisables (voir `SupplierTypeRequirement`) à tous les fournisseurs du même type.
+Supplier type configurable by the administrator (for example "SaaS", "Cloud host", "HR provider", "External auditor"). Makes it possible to attach a reusable set of requirement templates (see `SupplierTypeRequirement`) to all suppliers of the same type.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | int | PK auto-incrémenté | Identifiant numérique (pas UUID, particularité historique) |
-| `reference` | string | auto-généré `SPTY-N`, unique | |
-| `name` | string | requis, max 255, unique | Nom du type |
-| `description` | text | optionnel | |
+| `id` | int | PK auto-incremented | Numeric identifier (not UUID, historical particularity) |
+| `reference` | string | auto-generated `SPTY-N`, unique | |
+| `name` | string | required, max 255, unique | Name of the type |
+| `description` | text | optional | |
 | `created_at` / `updated_at` | datetime | auto | |
 
-## Sous-entité : `SupplierTypeRequirement`
+## Sub-entity: `SupplierTypeRequirement`
 
 `assets.models.supplier.SupplierTypeRequirement`
 
-Exigence-modèle attachée à un `SupplierType`. À la création d'un `Supplier` de ce type, ces exigences peuvent être instanciées en `SupplierRequirement` (voir [supplier-requirement.md](supplier-requirement.md)).
+Requirement template attached to a `SupplierType`. When a `Supplier` of this type is created, these requirements can be instantiated as `SupplierRequirement` (see [supplier-requirement.md](supplier-requirement.md)).
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | int | PK auto-incrémenté | |
-| `supplier_type` | FK -> SupplierType | requis, cascade | |
-| `title` | string | requis, max 500 | Intitulé de l'exigence-type (ex. « Certification ISO 27001 valide ») |
-| `description` | text | optionnel | |
+| `id` | int | PK auto-incremented | |
+| `supplier_type` | FK -> SupplierType | required, cascade | |
+| `title` | string | required, max 500 | Title of the requirement template (e.g. "Valid ISO 27001 certification") |
+| `description` | text | optional | |
 | `created_at` / `updated_at` | datetime | auto | |
 
-## Règles de gestion
+## Business rules
 
-| ID | Règle |
+| ID | Rule |
 |---|---|
-| RG-SUP-01 | `Supplier.owner` est requis : tout fournisseur doit avoir un propriétaire interne nommé responsable de la relation. |
-| RG-SUP-02 | `Supplier.type` est optionnel mais recommandé : sans type, les exigences-types ne s'appliquent pas automatiquement. |
-| RG-SUP-03 | `scopes` est optionnel. Un fournisseur transverse à toute l'organisation peut rester sans périmètre. Les fournisseurs cantonnés à une filiale ou à un périmètre SMSI précis doivent être rattachés (RG-01 cross-module). |
-| RG-SUP-04 | La suppression d'un `Supplier` référencé par un `SupportAsset.supplier`, par une `SupplierDependency`, ou par un `SupplierRequirement` est interdite. Désactiver via `status = archived`. |
-| RG-SUP-05 | `contract_end_date` passée et `status=active` déclenche la propriété calculée `is_contract_expired`. Le statut n'est pas modifié automatiquement : c'est à l'opérateur d'archiver ou de renouveler. |
-| RG-SUP-06 | `requirement_compliance_summary` est recalculé à la lecture, pas stocké. Aucune migration ni action n'est nécessaire après modification d'un `SupplierRequirement`. |
+| RG-SUP-01 | `Supplier.owner` is required: every supplier must have a named internal owner responsible for the relationship. |
+| RG-SUP-02 | `Supplier.type` is optional but recommended: without a type, requirement templates do not apply automatically. |
+| RG-SUP-03 | `scopes` is optional. A supplier that is cross-cutting across the whole organization can remain without a scope. Suppliers confined to a subsidiary or to a specific ISMS scope must be attached (RG-01 cross-module). |
+| RG-SUP-04 | Deleting a `Supplier` referenced by a `SupportAsset.supplier`, by a `SupplierDependency`, or by a `SupplierRequirement` is forbidden. Disable via `status = archived`. |
+| RG-SUP-05 | A past `contract_end_date` and `status=active` triggers the computed property `is_contract_expired`. The status is not changed automatically: it is up to the operator to archive or renew. |
+| RG-SUP-06 | `requirement_compliance_summary` is recomputed on read, not stored. No migration or action is necessary after modifying a `SupplierRequirement`. |
 
 ## Endpoints
 
 ### REST
 
-- `GET /api/v1/assets/suppliers/` : liste avec filtres `type`, `criticality`, `status`, `country`
+- `GET /api/v1/assets/suppliers/`: list with filters `type`, `criticality`, `status`, `country`
 - `POST /api/v1/assets/suppliers/`
 - `GET /api/v1/assets/suppliers/<uuid>/`
 - `PUT/PATCH /api/v1/assets/suppliers/<uuid>/`
 - `DELETE /api/v1/assets/suppliers/<uuid>/`
 - `POST /api/v1/assets/suppliers/<uuid>/approve/`
-- `GET /api/v1/assets/supplier-types/` (CRUD complet)
-- `GET /api/v1/assets/supplier-type-requirements/` (CRUD complet)
+- `GET /api/v1/assets/supplier-types/` (full CRUD)
+- `GET /api/v1/assets/supplier-type-requirements/` (full CRUD)
 
 ### MCP
 
 - `list_suppliers` / `get_supplier` / `create_supplier` / `update_supplier` / `delete_supplier` / `approve_supplier` / `batch_create_suppliers`
-- `update_supplier_logo` : met à jour le logo (data URI ou URL publique) et regénère les variantes 64/32/16
+- `update_supplier_logo`: updates the logo (data URI or public URL) and regenerates the 64/32/16 variants
 - `list_supplier_types` / `create_supplier_type` / `delete_supplier_type`
 - `list_supplier_type_requirements` / `create_supplier_type_requirement` / `delete_supplier_type_requirement`
 
-## Import CSV en masse
+## Bulk CSV import
 
-Les fournisseurs sont le premier consommateur du socle d'import générique (`core/imports`, voir [le module Compliance](../m3-compliance/framework.md) pour le modèle d'origine). Un bouton **Import** au-dessus de la liste des fournisseurs ouvre, dans une modale, le téléversement d'un fichier CSV. Le flux est en trois temps : téléversement -> aperçu (lignes à créer, correspondances existantes, lignes en erreur) -> confirmation.
+Suppliers are the first consumer of the generic import foundation (`core/imports`, see [the Compliance module](../m3-compliance/framework.md) for the original model). An **Import** button above the supplier list opens, in a modal, the upload of a CSV file. The flow has three steps: upload -> preview (rows to create, existing matches, rows in error) -> confirmation.
 
-**Gestion des doublons (par ligne, dans l'aperçu)** : une ligne dont le nom correspond exactement à un fournisseur existant est signalée et propose une case **Remplacer**. Cochée, le fournisseur existant est mis à jour avec les valeurs du CSV ; décochée, l'existant est conservé tel quel et la ligne est ignorée (pas de doublon). En cas de remplacement, la **date de création d'origine est préservée** (la colonne `created_at` du CSV est ignorée pour une mise à jour). Si un nom correspond à plusieurs fournisseurs existants, la ligne passe en erreur (ambiguïté à lever). Les nouvelles lignes créent un fournisseur avec une référence `SUPP-N` auto-générée.
+**Duplicate handling (per row, in the preview)**: a row whose name matches exactly an existing supplier is flagged and offers a **Replace** checkbox. When checked, the existing supplier is updated with the CSV values; when unchecked, the existing one is kept as is and the row is ignored (no duplicate). In the case of a replacement, the **original creation date is preserved** (the `created_at` column of the CSV is ignored for an update). If a name matches several existing suppliers, the row goes into error (ambiguity to be resolved). New rows create a supplier with an auto-generated `SUPP-N` reference.
 
-- **Permission** : `assets.supplier.create` (le téléchargement de l'exemple ne requiert que `assets.supplier.read`).
-- **URLs** : `/imports/supplier/` (formulaire), `/imports/supplier/preview/` (aperçu/confirmation), `/imports/supplier/sample/` (exemple CSV).
-- **Encodage** : `.csv` UTF-8 (BOM toléré), taille max 10 Mo.
+- **Permission**: `assets.supplier.create` (downloading the sample only requires `assets.supplier.read`).
+- **URLs**: `/imports/supplier/` (form), `/imports/supplier/preview/` (preview/confirmation), `/imports/supplier/sample/` (CSV sample).
+- **Encoding**: `.csv` UTF-8 (BOM tolerated), max size 10 MB.
 
-### Colonnes
+### Columns
 
-| Colonne | Obligatoire | Résolution / valeurs |
+| Column | Required | Resolution / values |
 |---|---|---|
-| `name` | oui | Texte |
-| `owner` | non | Utilisateur par e-mail ; vide -> utilisateur courant |
-| `type` | non | `SupplierType` par nom (doit exister) |
-| `criticality` | non | `low` / `medium` / `high` / `critical` (défaut `medium`) |
-| `status` | non | `active` / `under_evaluation` / `suspended` / `archived` (défaut `active`) |
-| `description` | non | Texte |
-| `contact_name` | non | Texte |
-| `contact_email` | non | E-mail valide |
-| `contact_phone` | non | Texte |
-| `website` | non | URL valide |
-| `address` | non | Texte |
-| `country` | non | Texte |
-| `contract_reference` | non | Texte |
-| `contract_start_date` | non | Date `AAAA-MM-JJ` |
-| `contract_end_date` | non | Date `AAAA-MM-JJ` |
-| `notes` | non | Texte |
-| `scopes` | non | Références ou noms de périmètres séparés par `;` (doivent exister) |
-| `tags` | non | Noms de tags séparés par `;` (créés s'ils n'existent pas) |
-| `created_at` | non | Date / date-heure de création d'origine (reprise depuis l'ancien outil) ; appliquée après création pour contourner `auto_now_add`, défaut « maintenant » |
+| `name` | yes | Text |
+| `owner` | no | User by email; empty -> current user |
+| `type` | no | `SupplierType` by name (must exist) |
+| `criticality` | no | `low` / `medium` / `high` / `critical` (default `medium`) |
+| `status` | no | `active` / `under_evaluation` / `suspended` / `archived` (default `active`) |
+| `description` | no | Text |
+| `contact_name` | no | Text |
+| `contact_email` | no | Valid email |
+| `contact_phone` | no | Text |
+| `website` | no | Valid URL |
+| `address` | no | Text |
+| `country` | no | Text |
+| `contract_reference` | no | Text |
+| `contract_start_date` | no | Date `YYYY-MM-DD` |
+| `contract_end_date` | no | Date `YYYY-MM-DD` |
+| `notes` | no | Text |
+| `scopes` | no | Scope references or names separated by `;` (must exist) |
+| `tags` | no | Tag names separated by `;` (created if they do not exist) |
+| `created_at` | no | Original creation date / datetime (carried over from the legacy tool); applied after creation to bypass `auto_now_add`, default "now" |
 
-La création en masse est aussi disponible par programmation via l'outil MCP `batch_create_suppliers` et l'endpoint de lot `/api/v1/assets/suppliers/`.
+Bulk creation is also available programmatically via the MCP tool `batch_create_suppliers` and the batch endpoint `/api/v1/assets/suppliers/`.
 
 ## Permissions
 
 | Codename | Description |
 |---|---|
-| `assets.supplier.read` | Lire les fournisseurs |
-| `assets.supplier.create` | Créer un fournisseur |
-| `assets.supplier.update` | Modifier un fournisseur |
-| `assets.supplier.delete` | Supprimer un fournisseur |
-| `assets.supplier.approve` | Approuver un fournisseur |
+| `assets.supplier.read` | Read suppliers |
+| `assets.supplier.create` | Create a supplier |
+| `assets.supplier.update` | Modify a supplier |
+| `assets.supplier.delete` | Delete a supplier |
+| `assets.supplier.approve` | Approve a supplier |
 
-`SupplierType` et `SupplierTypeRequirement` partagent les mêmes codenames sous le préfixe `assets.config.*`.
+`SupplierType` and `SupplierTypeRequirement` share the same codenames under the `assets.config.*` prefix.
 
-## Références
+## References
 
-- ISO/IEC 27001:2022 Annex A §5.19 à §5.23 (Sécurité de l'information dans les relations fournisseurs)
+- ISO/IEC 27001:2022 Annex A §5.19 to §5.23 (Information security in supplier relationships)
 - ISO/IEC 27036 (Information security in supplier relationships)
-- [SupportAsset](support-asset.md) : `supplier` FK rattache un actif technique à son fournisseur
-- [SupplierRequirement](supplier-requirement.md) : exigences imposées au fournisseur et revues de conformité
-- [SupplierDependency](supplier-dependency.md) : lien actif <-> fournisseur typé
-- Site dependencies : [Site](site.md) et `SiteSupplierDependency` pour les fournisseurs intervenant sur un site donné
+- [SupportAsset](support-asset.md): the `supplier` FK attaches a technical asset to its supplier
+- [SupplierRequirement](supplier-requirement.md): requirements imposed on the supplier and compliance reviews
+- [SupplierDependency](supplier-dependency.md): typed asset <-> supplier link
+- Site dependencies: [Site](site.md) and `SiteSupplierDependency` for suppliers operating on a given site

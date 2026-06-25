@@ -2,60 +2,60 @@
 
 `assets.models.supplier.SupplierRequirement`
 
-Exigence imposée à un fournisseur (par exemple « Certification ISO 27001 valide », « Plan de reprise testé annuellement », « Notification d'incident sous 24 h »). Peut être créée à la main, dérivée d'un `SupplierTypeRequirement` (modèle attaché au type) ou rattachée à une `compliance.Requirement` du SMSI. Sa conformité est évaluée et révisée périodiquement via des `SupplierRequirementReview`.
+Requirement imposed on a supplier (for example "Valid ISO 27001 certification", "Recovery plan tested annually", "Incident notification within 24 h"). Can be created manually, derived from a `SupplierTypeRequirement` (template attached to the type) or linked to a `compliance.Requirement` of the ISMS. Its compliance is assessed and reviewed periodically via `SupplierRequirementReview` records.
 
-## Champs
+## Fields
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | int | PK auto-incrémenté | Identifiant numérique |
-| `supplier` | FK -> Supplier | requis, cascade | Fournisseur concerné |
-| `source_type_requirement` | FK -> SupplierTypeRequirement | optionnel | Origine si l'exigence dérive d'un modèle de type |
-| `requirement` | FK -> compliance.Requirement | optionnel | Lien vers l'exigence SMSI à laquelle elle se rattache (un même contrôle ISO peut être imposé à plusieurs fournisseurs) |
-| `title` | string | requis, max 500 | Intitulé personnalisé, surtout utile quand `requirement` n'est pas renseigné |
-| `description` | text | optionnel | |
-| `compliance_status` | enum | requis, défaut `not_assessed` | `not_assessed`, `compliant`, `partially_compliant`, `non_compliant` |
-| `evidence` | text | optionnel | Description des preuves (références de documents, captures, etc.) |
-| `due_date` | date | optionnel | Échéance contractuelle |
-| `verified_at` | datetime | optionnel | Date de la dernière vérification, mise à jour à chaque `SupplierRequirementReview` |
-| `verified_by` | FK -> User | optionnel | Auteur de la dernière vérification |
+| `id` | int | PK auto-incremented | Numeric identifier |
+| `supplier` | FK -> Supplier | required, cascade | Supplier concerned |
+| `source_type_requirement` | FK -> SupplierTypeRequirement | optional | Origin if the requirement derives from a type template |
+| `requirement` | FK -> compliance.Requirement | optional | Link to the ISMS requirement it relates to (the same ISO control can be imposed on several suppliers) |
+| `title` | string | required, max 500 | Custom title, especially useful when `requirement` is not set |
+| `description` | text | optional | |
+| `compliance_status` | enum | required, default `not_assessed` | `not_assessed`, `compliant`, `partially_compliant`, `non_compliant` |
+| `evidence` | text | optional | Description of the evidence (document references, screenshots, etc.) |
+| `due_date` | date | optional | Contractual deadline |
+| `verified_at` | datetime | optional | Date of the last verification, updated on each `SupplierRequirementReview` |
+| `verified_by` | FK -> User | optional | Author of the last verification |
 | `created_at` / `updated_at` | datetime | auto | |
 
-## Sous-entité : `SupplierRequirementReview`
+## Sub-entity: `SupplierRequirementReview`
 
 `assets.models.supplier.SupplierRequirementReview`
 
-Trace de revue / justification associée à une `SupplierRequirement`. Plusieurs revues par exigence permettent de reconstituer l'historique de conformité et d'attacher des preuves datées (audit, certificat à jour, rapport d'incident).
+Review / justification record associated with a `SupplierRequirement`. Several reviews per requirement make it possible to reconstruct the compliance history and to attach dated evidence (audit, up-to-date certificate, incident report).
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | int | PK auto-incrémenté | |
-| `supplier_requirement` | FK -> SupplierRequirement | requis, cascade | |
-| `review_date` | date | requis | Date de la revue |
-| `reviewer` | FK -> User | optionnel | |
-| `result` | enum | requis, défaut `not_assessed` | Même énumération que `compliance_status` ci-dessus |
-| `comment` | text | optionnel | Justification écrite |
-| `evidence_file` | text | optionnel | Document data-URI uploadé |
-| `evidence_filename` | string | optionnel, max 255 | Nom de fichier original |
+| `id` | int | PK auto-incremented | |
+| `supplier_requirement` | FK -> SupplierRequirement | required, cascade | |
+| `review_date` | date | required | Date of the review |
+| `reviewer` | FK -> User | optional | |
+| `result` | enum | required, default `not_assessed` | Same enumeration as `compliance_status` above |
+| `comment` | text | optional | Written justification |
+| `evidence_file` | text | optional | Uploaded data-URI document |
+| `evidence_filename` | string | optional, max 255 | Original file name |
 | `created_at` / `updated_at` | datetime | auto | |
 
-À l'enregistrement d'une revue avec un `result` final, l'exigence parente met à jour son `compliance_status`, `verified_at` et `verified_by` à partir de la revue la plus récente.
+When a review with a final `result` is saved, the parent requirement updates its `compliance_status`, `verified_at` and `verified_by` from the most recent review.
 
-## Énumération `compliance_status`
+## `compliance_status` enumeration
 
-- `not_assessed` : exigence créée mais jamais évaluée. Pas d'alerte.
-- `compliant` : conforme. Date de prochaine revue calculée d'après la `due_date` ou la fréquence définie au niveau du type.
-- `partially_compliant` : exigence partiellement satisfaite (certaines parties oui, d'autres non). Alerte légère.
-- `non_compliant` : non conforme. Alerte critique, contribue au compteur du tableau de bord.
+- `not_assessed`: requirement created but never assessed. No alert.
+- `compliant`: compliant. Next review date computed from the `due_date` or the frequency defined at the type level.
+- `partially_compliant`: requirement partially satisfied (some parts yes, others no). Mild alert.
+- `non_compliant`: non-compliant. Critical alert, contributes to the dashboard counter.
 
-## Règles de gestion
+## Business rules
 
-| ID | Règle |
+| ID | Rule |
 |---|---|
-| RG-SREQ-01 | Une `SupplierRequirement` doit avoir un `title` non vide même si `requirement` est rattaché : le titre sert au listing rapide sans charger l'exigence SMSI. |
-| RG-SREQ-02 | `source_type_requirement` est immutable une fois posée. Pour remplacer la source, dupliquer l'exigence. |
-| RG-SREQ-03 | À l'enregistrement d'une `SupplierRequirementReview`, son `result` propage au `compliance_status` de l'exigence parente, et `verified_at` / `verified_by` reflètent la revue. |
-| RG-SREQ-04 | Une `SupplierRequirement` au statut `non_compliant` ou avec `due_date` passée sans review apparaît dans la file d'alertes du fournisseur et compte dans `Supplier.requirement_compliance_summary`. |
+| RG-SREQ-01 | A `SupplierRequirement` must have a non-empty `title` even if `requirement` is linked: the title serves the quick listing without loading the ISMS requirement. |
+| RG-SREQ-02 | `source_type_requirement` is immutable once set. To replace the source, duplicate the requirement. |
+| RG-SREQ-03 | When a `SupplierRequirementReview` is saved, its `result` propagates to the `compliance_status` of the parent requirement, and `verified_at` / `verified_by` reflect the review. |
+| RG-SREQ-04 | A `SupplierRequirement` with a `non_compliant` status or with a past `due_date` and no review appears in the supplier's alert queue and counts in `Supplier.requirement_compliance_summary`. |
 
 ## Endpoints
 
@@ -66,7 +66,7 @@ Trace de revue / justification associée à une `SupplierRequirement`. Plusieurs
 - `GET /api/v1/assets/supplier-requirements/<id>/`
 - `PUT/PATCH /api/v1/assets/supplier-requirements/<id>/`
 - `DELETE /api/v1/assets/supplier-requirements/<id>/`
-- `GET /api/v1/assets/supplier-requirement-reviews/` (CRUD complet)
+- `GET /api/v1/assets/supplier-requirement-reviews/` (full CRUD)
 
 ### MCP
 
@@ -75,9 +75,9 @@ Trace de revue / justification associée à une `SupplierRequirement`. Plusieurs
 
 ## Permissions
 
-Les exigences-fournisseur et leurs revues utilisent le préfixe permission `assets.supplier.*` (héritage de l'entité parente Supplier).
+Supplier requirements and their reviews use the `assets.supplier.*` permission prefix (inherited from the parent Supplier entity).
 
-## Références
+## References
 
-- [Supplier](supplier.md) : entité parente
-- [Requirement](../m3-compliance/requirement.md) : référentiel d'exigences SMSI rattachables
+- [Supplier](supplier.md): parent entity
+- [Requirement](../m3-compliance/requirement.md): repository of linkable ISMS requirements

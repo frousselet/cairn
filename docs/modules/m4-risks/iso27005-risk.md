@@ -2,34 +2,34 @@
 
 `risks.models.iso27005_risk.ISO27005Risk`
 
-Analyse détaillée d'un scénario de risque selon la méthodologie ISO 27005 : triplet (menace, vulnérabilité, actif) avec évaluation de la vraisemblance et de l'impact.
+Detailed analysis of a risk scenario following the ISO 27005 methodology: a triplet (threat, vulnerability, asset) with likelihood and impact assessment.
 
-## 3.3 Entité : ISO27005Risk (Analyse de risque ISO 27005)
+## 3.3 Entity: ISO27005Risk (ISO 27005 risk analysis)
 
-Représente l'analyse détaillée d'un scénario de risque selon la méthodologie ISO 27005 : un triplet (menace, vulnérabilité, actif) avec évaluation de la vraisemblance et de l'impact.
+Represents the detailed analysis of a risk scenario following the ISO 27005 methodology: a triplet (threat, vulnerability, asset) with likelihood and impact assessment.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `assessment_id` | relation | FK → RiskAssessment, requis | Appréciation parente (methodology = iso27005) |
-| `threat_id` | relation | FK → Threat, requis | Menace exploitante |
-| `vulnerability_id` | relation | FK → Vulnerability, requis | Vulnérabilité exploitée |
-| `affected_essential_assets` | relation | M2M → EssentialAsset | Biens essentiels impactés |
-| `affected_support_assets` | relation | M2M → SupportAsset | Biens supports ciblés |
-| `threat_likelihood` | integer | requis | Vraisemblance de la menace (sur l'échelle) |
-| `vulnerability_exposure` | integer | requis | Niveau d'exposition de la vulnérabilité (sur l'échelle) |
-| `combined_likelihood` | integer | calculé | Vraisemblance combinée |
-| `impact_confidentiality` | integer | optionnel | Impact sur la confidentialité (sur l'échelle) |
-| `impact_integrity` | integer | optionnel | Impact sur l'intégrité |
-| `impact_availability` | integer | optionnel | Impact sur la disponibilité |
-| `max_impact` | integer | calculé | Impact maximum retenu |
-| `risk_level` | integer | calculé | Niveau de risque (via matrice) |
-| `existing_controls` | text | optionnel | Mesures existantes prises en compte |
-| `existing_measures` | relation | M2M → Measure | Mesures existantes formalisées |
-| `risk_id` | relation | FK → [Risk](risk.md), optionnel | Risque consolidé dans le registre |
-| `description` | text | optionnel | Description narrative du scénario |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `assessment_id` | relation | FK → RiskAssessment, required | Parent assessment (methodology = iso27005) |
+| `threat_id` | relation | FK → Threat, required | Exploiting threat |
+| `vulnerability_id` | relation | FK → Vulnerability, required | Exploited vulnerability |
+| `affected_essential_assets` | relation | M2M → EssentialAsset | Impacted essential assets |
+| `affected_support_assets` | relation | M2M → SupportAsset | Targeted support assets |
+| `threat_likelihood` | integer | required | Threat likelihood (on the scale) |
+| `vulnerability_exposure` | integer | required | Vulnerability exposure level (on the scale) |
+| `combined_likelihood` | integer | computed | Combined likelihood |
+| `impact_confidentiality` | integer | optional | Impact on confidentiality (on the scale) |
+| `impact_integrity` | integer | optional | Impact on integrity |
+| `impact_availability` | integer | optional | Impact on availability |
+| `max_impact` | integer | computed | Maximum impact retained |
+| `risk_level` | integer | computed | Risk level (via matrix) |
+| `existing_controls` | text | optional | Existing controls taken into account |
+| `existing_measures` | relation | M2M → Measure | Formalized existing measures |
+| `risk_id` | relation | FK → [Risk](risk.md), optional | Risk consolidated in the register |
+| `description` | text | optional | Narrative description of the scenario |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |
 
-> Note : Le sous-module ISO 27005 comprend également les entités `Threat` (`risks.models.threat.Threat`) et `Vulnerability` (`risks.models.vulnerability.Vulnerability`), respectivement référentielles pour les menaces et les vulnérabilités utilisées dans les triplets.
+> Note: The ISO 27005 sub-module also includes the entities `Threat` (`risks.models.threat.Threat`) and `Vulnerability` (`risks.models.vulnerability.Vulnerability`), which are the reference catalogs for, respectively, the threats and the vulnerabilities used in the triplets.

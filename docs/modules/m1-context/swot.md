@@ -2,37 +2,37 @@
 
 `context.models.swot.SwotAnalysis`
 
-Représente une analyse SWOT réalisée pour un périmètre donné.
+Represents a SWOT analysis carried out for a given scope.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `name` | string | requis, max 255 | Intitulé de l'analyse |
-| `description` | text | optionnel | Contexte de l'analyse |
-| `analysis_date` | date | requis | Date de réalisation |
-| `workflow_state` | enum | requis, défaut `draft` | Cycle de vie unifié : `draft`, `pending`, `validated`, `archived`. Voir [governance/workflow.md](../governance/workflow.md). |
-| `validated_by` | relation | FK → User | Validateur |
-| `validated_at` | datetime | optionnel | Date de validation |
-| `items` | relation | O2M → SwotItem | Éléments SWOT |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `scope_id` | relation | FK → Scope, required | Linked scope |
+| `name` | string | required, max 255 | Analysis title |
+| `description` | text | optional | Analysis context |
+| `analysis_date` | date | required | Date carried out |
+| `workflow_state` | enum | required, default `draft` | Unified lifecycle: `draft`, `pending`, `validated`, `archived`. See [governance/workflow.md](../governance/workflow.md). |
+| `validated_by` | relation | FK → User | Validator |
+| `validated_at` | datetime | optional | Validation date |
+| `items` | relation | O2M → SwotItem | SWOT items |
+| `review_date` | date | optional | Next review date |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |
 
 ## SwotItem
 
-Sous-entité : élément SWOT.
+Sub-entity: SWOT item.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `swot_analysis_id` | relation | FK → SwotAnalysis, requis | Analyse parente |
-| `quadrant` | enum | requis | `strength`, `weakness`, `opportunity`, `threat` |
-| `description` | text | requis | Description de l'élément |
-| `impact_level` | enum | requis | `low`, `medium`, `high` |
-| `related_issues` | relation | M2M → Issue | Enjeux associés |
-| `related_objectives` | relation | M2M → Objective | Objectifs associés |
-| `order` | integer | requis | Ordre d'affichage dans le quadrant |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `swot_analysis_id` | relation | FK → SwotAnalysis, required | Parent analysis |
+| `quadrant` | enum | required | `strength`, `weakness`, `opportunity`, `threat` |
+| `description` | text | required | Item description |
+| `impact_level` | enum | required | `low`, `medium`, `high` |
+| `related_issues` | relation | M2M → Issue | Associated issues |
+| `related_objectives` | relation | M2M → Objective | Associated objectives |
+| `order` | integer | required | Display order within the quadrant |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |

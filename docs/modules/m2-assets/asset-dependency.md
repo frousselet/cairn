@@ -2,22 +2,22 @@
 
 `assets.models.dependency.AssetDependency`
 
-Relation de dépendance entre un bien essentiel et un bien support, vecteur d'héritage des besoins de sécurité DIC.
+Dependency relationship between an essential asset and a support asset, the vector for inheriting the CIA security needs.
 
-Représente le lien de dépendance entre un bien essentiel et un bien support. C'est via cette relation que les besoins de sécurité DIC sont hérités par les biens supports.
+Represents the dependency link between an essential asset and a support asset. It is through this relationship that the CIA security needs are inherited by support assets.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `essential_asset_id` | relation | FK → EssentialAsset, requis | Bien essentiel source |
-| `support_asset_id` | relation | FK → SupportAsset, requis | Bien support cible |
-| `dependency_type` | enum | requis | `runs_on`, `stored_in`, `transmitted_by`, `managed_by`, `hosted_at`, `protected_by`, `other` |
-| `criticality` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `description` | text | optionnel | Description de la relation de dépendance |
-| `is_single_point_of_failure` | boolean | requis, défaut false | Point unique de défaillance |
-| `redundancy_level` | enum | optionnel | `none`, `partial`, `full` |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `essential_asset_id` | relation | FK → EssentialAsset, required | Source essential asset |
+| `support_asset_id` | relation | FK → SupportAsset, required | Target support asset |
+| `dependency_type` | enum | required | `runs_on`, `stored_in`, `transmitted_by`, `managed_by`, `hosted_at`, `protected_by`, `other` |
+| `criticality` | enum | required | `low`, `medium`, `high`, `critical` |
+| `description` | text | optional | Description of the dependency relationship |
+| `is_single_point_of_failure` | boolean | required, default false | Single point of failure |
+| `redundancy_level` | enum | optional | `none`, `partial`, `full` |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |
 
-> Contrainte d'unicité : le couple (`essential_asset_id`, `support_asset_id`) doit être unique.
+> Uniqueness constraint: the pair (`essential_asset_id`, `support_asset_id`) must be unique.

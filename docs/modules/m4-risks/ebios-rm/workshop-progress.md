@@ -2,28 +2,28 @@
 
 `risks.models.ebios.workshop_progress.EbiosWorkshopProgress`
 
-Tracker de progression par atelier. 6 instances créées automatiquement par appréciation (W0 à W5). Préfixe de référence : `EWSP`.
+Per-workshop progress tracker. 6 instances created automatically per assessment (W0 to W5). Reference prefix: `EWSP`.
 
-## 4.0.2 Entité : EbiosWorkshopProgress (Suivi atelier)
+## 4.0.2 Entity: EbiosWorkshopProgress (Workshop progress)
 
-Tracker de progression par atelier. 6 instances créées automatiquement par appréciation (W0 à W5).
+Per-workshop progress tracker. 6 instances created automatically per assessment (W0 to W5).
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> [RiskAssessment](../risk-assessment.md), requis | Appréciation parente |
-| `reference` | string | requis, unique, préfixe EWSP | Code (ex. EWSP-1) |
-| `workshop_number` | integer | requis, 0 à 5 | Numéro d'atelier |
-| `iteration_type` | enum | requis | `strategic`, `operational` |
-| `iteration_number` | integer | requis, >= 1 | Numéro d'itération du cycle |
-| `status` | enum | requis | `not_started`, `in_progress`, `under_review`, `validated`, `rejected` |
-| `started_at` | datetime | optionnel | Date de démarrage |
-| `validated_by_id` | relation | FK -> User, optionnel | Validateur |
-| `validated_at` | datetime | optionnel | Date de validation |
-| `rejection_reason` | text | optionnel | Motif de rejet (si `status = rejected`) |
-| `deliverables_summary` | text | optionnel | Synthèse des livrables produits |
-| `attachments` | M2M -> File | optionnel | Pièces jointes (rapports atelier) |
-| `notes` | text | optionnel | Notes de l'animateur |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
+| `id` | UUID | PK, auto | Unique identifier |
+| `assessment_id` | relation | FK -> [RiskAssessment](../risk-assessment.md), required | Parent assessment |
+| `reference` | string | required, unique, prefix EWSP | Code (e.g. EWSP-1) |
+| `workshop_number` | integer | required, 0 to 5 | Workshop number |
+| `iteration_type` | enum | required | `strategic`, `operational` |
+| `iteration_number` | integer | required, >= 1 | Cycle iteration number |
+| `status` | enum | required | `not_started`, `in_progress`, `under_review`, `validated`, `rejected` |
+| `started_at` | datetime | optional | Start date |
+| `validated_by_id` | relation | FK -> User, optional | Validator |
+| `validated_at` | datetime | optional | Validation date |
+| `rejection_reason` | text | optional | Rejection reason (if `status = rejected`) |
+| `deliverables_summary` | text | optional | Summary of the deliverables produced |
+| `attachments` | M2M -> File | optional | Attachments (workshop reports) |
+| `notes` | text | optional | Facilitator notes |
+| `created_by`, `created_at`, `updated_at` | - | auto | Standard |
 
-> Contrainte d'unicité : `(assessment_id, workshop_number, iteration_type, iteration_number)`.
+> Uniqueness constraint: `(assessment_id, workshop_number, iteration_type, iteration_number)`.

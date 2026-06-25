@@ -1,10 +1,10 @@
-# Module 1 : Contexte et Organisation
+# Module 1: Context and Organization
 
-## Spécifications fonctionnelles et techniques
+## Functional and technical specifications
 
-**Version :** 1.0
-**Date :** 27 février 2026
-**Statut :** Draft
+**Version:** 1.0
+**Date:** 27 February 2026
+**Status:** Draft
 
 ---
 
@@ -12,91 +12,91 @@
 
 - [Scope](scope.md)
 - [Issue](issue.md)
-- [Stakeholder](stakeholder.md) (et `StakeholderExpectation`)
+- [Stakeholder](stakeholder.md) (and `StakeholderExpectation`)
 - [Objective](objective.md)
-- [SwotAnalysis](swot.md) (et `SwotItem`)
-- [Role](role.md) (et `Responsibility`)
+- [SwotAnalysis](swot.md) (and `SwotItem`)
+- [Role](role.md) (and `Responsibility`)
 - [Activity](activity.md)
 
 ---
 
-## 1. Présentation générale
+## 1. Overview
 
-### 1.1 Objectif du module
+### 1.1 Module objective
 
-Le module **Contexte et Organisation** constitue le socle fondateur de l'outil GRC. Il permet de formaliser et maintenir à jour l'ensemble des éléments de contexte nécessaires à la gouvernance des risques et de la conformité, conformément aux exigences des référentiels ISO 27001, ISO 27005 et EBIOS RM (chapitres 4 et 5 de l'ISO 27001 notamment).
+The **Context and Organization** module is the foundational layer of the GRC tool. It allows the full set of context elements required for risk and compliance governance to be formalized and kept up to date, in line with the requirements of the ISO 27001, ISO 27005 and EBIOS RM standards (notably chapters 4 and 5 of ISO 27001).
 
-### 1.2 Périmètre fonctionnel
+### 1.2 Functional scope
 
-Le module couvre sept sous-domaines :
+The module covers seven sub-domains:
 
-1. Domaine d'application (périmètre du SMSI ou du dispositif GRC)
-2. Enjeux internes et externes
-3. Parties intéressées
-4. Objectifs de sécurité / conformité
-5. Analyse SWOT
-6. Rôles et responsabilités
-7. Activités et processus métier
+1. Scope of application (ISMS or GRC framework scope)
+2. Internal and external issues
+3. Stakeholders
+4. Security / compliance objectives
+5. SWOT analysis
+6. Roles and responsibilities
+7. Business activities and processes
 
-### 1.3 Dépendances avec les autres modules
+### 1.3 Dependencies with other modules
 
-| Module cible | Nature de la dépendance |
+| Target module | Nature of the dependency |
 |---|---|
-| Gestion des actifs | Les activités/processus sont rattachés aux biens essentiels |
-| Gestion des risques | Les enjeux et le périmètre alimentent le contexte d'appréciation des risques |
-| Conformité | Les parties intéressées expriment des exigences rattachées aux référentiels |
-| Mesures | Les objectifs sont déclinés en mesures de sécurité |
-| Fournisseurs | Les parties intéressées de type fournisseur alimentent le module fournisseurs |
-| Audits | Le périmètre conditionne le programme d'audits |
-| Incidents | Les rôles et responsabilités définissent les intervenants en gestion d'incidents |
-| Formations | Les rôles conditionnent les besoins en formation |
+| Asset management | Activities/processes are linked to essential assets |
+| Risk management | Issues and the scope feed the risk assessment context |
+| Compliance | Stakeholders express requirements linked to standards |
+| Measures | Objectives are broken down into security measures |
+| Suppliers | Supplier-type stakeholders feed the suppliers module |
+| Audits | The scope drives the audit program |
+| Incidents | Roles and responsibilities define the actors in incident management |
+| Training | Roles drive training needs |
 
 ---
 
-## Règles de gestion
+## Business rules
 
-### Règles générales
+### General rules
 
-| ID | Règle |
+| ID | Rule |
 |---|---|
-| RG-01 | Tout objet du module doit être rattaché à un **Scope** (périmètre). |
-| ~~RG-02~~ | *Règle retirée.* Initialement : « un seul Scope actif à la fois, les anciennes versions passent en `archived` ». Depuis l'introduction de la hiérarchie de périmètres (`parent_scope_id`), plusieurs Scopes peuvent légitimement être actifs simultanément (un groupe et ses filiales, ou plusieurs périmètres SMSI couvrant des entités distinctes). Le cycle de vie du `status` reste libre - c'est à l'organisation de choisir quels périmètres elle considère actifs. |
-| RG-03 | La suppression d'un objet référencé par un autre module est interdite. Une désactivation (`status = inactive` ou `archived`) est utilisée à la place. |
-| RG-04 | Toute modification d'un objet génère une entrée dans le **journal d'audit** (audit trail) avec l'identifiant utilisateur, la date, l'ancien et le nouveau état. |
-| RG-05 | Les champs `created_at` et `updated_at` sont gérés automatiquement par le système. |
-| RG-06 | Les listes de valeurs de type `enum` paramétrables (catégories d'enjeux, catégories de parties intéressées) sont gérées via une table de configuration dédiée. |
-| RG-07 | Les relations M2M (many-to-many) sont stockées dans des tables de jointure dédiées. |
+| RG-01 | Every object in the module must be linked to a **Scope**. |
+| ~~RG-02~~ | *Rule removed.* Originally: "a single active Scope at a time, older versions move to `archived`". Since the introduction of the scope hierarchy (`parent_scope_id`), several Scopes can legitimately be active at the same time (a group and its subsidiaries, or several ISMS scopes covering distinct entities). The `status` lifecycle remains open : it is up to the organization to choose which scopes it considers active. |
+| RG-03 | Deleting an object referenced by another module is forbidden. Deactivation (`status = inactive` or `archived`) is used instead. |
+| RG-04 | Any modification of an object generates an entry in the **audit trail** with the user identifier, the date, and the old and new state. |
+| RG-05 | The `created_at` and `updated_at` fields are managed automatically by the system. |
+| RG-06 | Configurable `enum` value lists (issue categories, stakeholder categories) are managed through a dedicated configuration table. |
+| RG-07 | M2M (many-to-many) relationships are stored in dedicated join tables. |
 
-### Règles spécifiques
+### Specific rules
 
-| ID | Règle |
+| ID | Rule |
 |---|---|
-| RS-01 | Un **Issue** de type `internal` ne peut avoir que des catégories internes, et inversement pour `external`. |
-| RS-02 | Un **Objective** avec `status = achieved` doit avoir `progress_percentage = 100`. |
-| RS-03 | Un **Objective** enfant (`parent_objective_id` renseigné) doit appartenir au même **Scope** que son parent. |
-| RS-04 | Une **Activity** enfant doit appartenir au même **Scope** que son parent. |
-| RS-05 | Un **SwotItem** de quadrant `strength` ou `weakness` doit être cohérent avec des **Issues** de type `internal` ; `opportunity` et `threat` avec des Issues de type `external`. Cette règle est une recommandation (alerte) et non un blocage. |
-| RS-06 | Un **Role** marqué `is_mandatory = true` doit avoir au moins un utilisateur affecté. Le système émet une alerte de conformité dans le cas contraire. |
-| RS-07 | La matrice **RACI** (via Responsibility) doit respecter la règle : une seule personne `accountable` par activité. Le système émet une alerte si cette règle est violée. |
+| RS-01 | An **Issue** of type `internal` can only have internal categories, and conversely for `external`. |
+| RS-02 | An **Objective** with `status = achieved` must have `progress_percentage = 100`. |
+| RS-03 | A child **Objective** (`parent_objective_id` set) must belong to the same **Scope** as its parent. |
+| RS-04 | A child **Activity** must belong to the same **Scope** as its parent. |
+| RS-05 | A **SwotItem** in the `strength` or `weakness` quadrant must be consistent with `internal` **Issues**; `opportunity` and `threat` with `external` Issues. This rule is a recommendation (warning) and not a hard block. |
+| RS-06 | A **Role** marked `is_mandatory = true` must have at least one assigned user. Otherwise the system raises a compliance warning. |
+| RS-07 | The **RACI** matrix (via Responsibility) must comply with the rule: a single `accountable` person per activity. The system raises a warning if this rule is violated. |
 
 ---
 
-## Spécifications API REST
+## REST API specifications
 
-### Conventions générales
+### General conventions
 
-- **Base URL :** `/api/v1/context/`
-- **Format :** JSON (application/json)
-- **Authentification :** Bearer Token (JWT) ou API Key
-- **Pagination :** `?page=1&page_size=25` (défaut : 25, max : 100)
-- **Tri :** `?ordering=name` ou `?ordering=-created_at` (préfixe `-` = descendant)
-- **Filtrage :** `?status=active&type=internal`
-- **Recherche :** `?search=terme` (recherche full-text sur les champs texte)
-- **Inclusion de relations :** `?include=stakeholders,issues`
-- **Format de date :** ISO 8601 (`2026-02-27T14:30:00Z`)
-- **Codes HTTP :** 200 (OK), 201 (Created), 204 (No Content), 400 (Bad Request), 401 (Unauthorized), 403 (Forbidden), 404 (Not Found), 409 (Conflict), 422 (Unprocessable Entity)
+- **Base URL:** `/api/v1/context/`
+- **Format:** JSON (application/json)
+- **Authentication:** Bearer Token (JWT) or API Key
+- **Pagination:** `?page=1&page_size=25` (default: 25, max: 100)
+- **Sorting:** `?ordering=name` or `?ordering=-created_at` (prefix `-` = descending)
+- **Filtering:** `?status=active&type=internal`
+- **Search:** `?search=term` (full-text search on text fields)
+- **Including relations:** `?include=stakeholders,issues`
+- **Date format:** ISO 8601 (`2026-02-27T14:30:00Z`)
+- **HTTP codes:** 200 (OK), 201 (Created), 204 (No Content), 400 (Bad Request), 401 (Unauthorized), 403 (Forbidden), 404 (Not Found), 409 (Conflict), 422 (Unprocessable Entity)
 
-### Structure de réponse standard
+### Standard response structure
 
 ```json
 {
@@ -111,7 +111,7 @@ Le module couvre sept sous-domaines :
 }
 ```
 
-**Structure d'erreur :**
+**Error structure:**
 
 ```json
 {
@@ -129,327 +129,327 @@ Le module couvre sept sous-domaines :
 }
 ```
 
-### Endpoints : Scope (Domaine d'application)
+### Endpoints: Scope (Scope of application)
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/scopes` | Lister les périmètres |
-| `POST` | `/scopes` | Créer un périmètre |
-| `GET` | `/scopes/{id}` | Détail d'un périmètre |
-| `PUT` | `/scopes/{id}` | Mise à jour complète |
-| `PATCH` | `/scopes/{id}` | Mise à jour partielle |
-| `DELETE` | `/scopes/{id}` | Supprimer (si non référencé) |
-| `POST` | `/scopes/{id}/approve` | Approuver un périmètre |
-| `POST` | `/scopes/{id}/archive` | Archiver un périmètre |
-| `GET` | `/scopes/{id}/history` | Historique des modifications |
+| `GET` | `/scopes` | List scopes |
+| `POST` | `/scopes` | Create a scope |
+| `GET` | `/scopes/{id}` | Scope detail |
+| `PUT` | `/scopes/{id}` | Full update |
+| `PATCH` | `/scopes/{id}` | Partial update |
+| `DELETE` | `/scopes/{id}` | Delete (if not referenced) |
+| `POST` | `/scopes/{id}/approve` | Approve a scope |
+| `POST` | `/scopes/{id}/archive` | Archive a scope |
+| `GET` | `/scopes/{id}/history` | Modification history |
 | `GET` | `/scopes/{id}/export` | Export (PDF, DOCX, JSON) |
 
-### Endpoints : Issues (Enjeux)
+### Endpoints: Issues
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/scopes/{scope_id}/issues` | Lister les enjeux d'un périmètre |
-| `POST` | `/scopes/{scope_id}/issues` | Créer un enjeu |
-| `GET` | `/issues/{id}` | Détail d'un enjeu |
-| `PUT` | `/issues/{id}` | Mise à jour complète |
-| `PATCH` | `/issues/{id}` | Mise à jour partielle |
-| `DELETE` | `/issues/{id}` | Supprimer |
-| `GET` | `/issues` | Lister tous les enjeux (tous périmètres, filtrable) |
-| `GET` | `/issues/categories` | Lister les catégories disponibles |
+| `GET` | `/scopes/{scope_id}/issues` | List the issues of a scope |
+| `POST` | `/scopes/{scope_id}/issues` | Create an issue |
+| `GET` | `/issues/{id}` | Issue detail |
+| `PUT` | `/issues/{id}` | Full update |
+| `PATCH` | `/issues/{id}` | Partial update |
+| `DELETE` | `/issues/{id}` | Delete |
+| `GET` | `/issues` | List all issues (all scopes, filterable) |
+| `GET` | `/issues/categories` | List the available categories |
 
-### Endpoints : Stakeholders (Parties intéressées)
+### Endpoints: Stakeholders
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/scopes/{scope_id}/stakeholders` | Lister les PI d'un périmètre |
-| `POST` | `/scopes/{scope_id}/stakeholders` | Créer une PI |
-| `GET` | `/stakeholders/{id}` | Détail d'une PI |
-| `PUT` | `/stakeholders/{id}` | Mise à jour complète |
-| `PATCH` | `/stakeholders/{id}` | Mise à jour partielle |
-| `DELETE` | `/stakeholders/{id}` | Supprimer |
-| `GET` | `/stakeholders/{id}/expectations` | Lister les attentes d'une PI |
-| `POST` | `/stakeholders/{id}/expectations` | Ajouter une attente |
-| `PUT` | `/stakeholders/{id}/expectations/{exp_id}` | Modifier une attente |
-| `DELETE` | `/stakeholders/{id}/expectations/{exp_id}` | Supprimer une attente |
-| `GET` | `/stakeholders/matrix` | Matrice influence/intérêt (données agrégées) |
+| `GET` | `/scopes/{scope_id}/stakeholders` | List the stakeholders of a scope |
+| `POST` | `/scopes/{scope_id}/stakeholders` | Create a stakeholder |
+| `GET` | `/stakeholders/{id}` | Stakeholder detail |
+| `PUT` | `/stakeholders/{id}` | Full update |
+| `PATCH` | `/stakeholders/{id}` | Partial update |
+| `DELETE` | `/stakeholders/{id}` | Delete |
+| `GET` | `/stakeholders/{id}/expectations` | List a stakeholder's expectations |
+| `POST` | `/stakeholders/{id}/expectations` | Add an expectation |
+| `PUT` | `/stakeholders/{id}/expectations/{exp_id}` | Edit an expectation |
+| `DELETE` | `/stakeholders/{id}/expectations/{exp_id}` | Delete an expectation |
+| `GET` | `/stakeholders/matrix` | Influence/interest matrix (aggregated data) |
 
-### Endpoints : Objectives (Objectifs)
+### Endpoints: Objectives
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/scopes/{scope_id}/objectives` | Lister les objectifs d'un périmètre |
-| `POST` | `/scopes/{scope_id}/objectives` | Créer un objectif |
-| `GET` | `/objectives/{id}` | Détail d'un objectif |
-| `PUT` | `/objectives/{id}` | Mise à jour complète |
-| `PATCH` | `/objectives/{id}` | Mise à jour partielle |
-| `DELETE` | `/objectives/{id}` | Supprimer |
-| `GET` | `/objectives/{id}/children` | Lister les sous-objectifs |
-| `GET` | `/objectives/{id}/measures` | Lister les mesures liées |
-| `GET` | `/objectives/tree` | Arborescence complète des objectifs |
-| `GET` | `/objectives/dashboard` | Données de tableau de bord (KPIs agrégés) |
+| `GET` | `/scopes/{scope_id}/objectives` | List the objectives of a scope |
+| `POST` | `/scopes/{scope_id}/objectives` | Create an objective |
+| `GET` | `/objectives/{id}` | Objective detail |
+| `PUT` | `/objectives/{id}` | Full update |
+| `PATCH` | `/objectives/{id}` | Partial update |
+| `DELETE` | `/objectives/{id}` | Delete |
+| `GET` | `/objectives/{id}/children` | List the sub-objectives |
+| `GET` | `/objectives/{id}/measures` | List the linked measures |
+| `GET` | `/objectives/tree` | Full objective tree |
+| `GET` | `/objectives/dashboard` | Dashboard data (aggregated KPIs) |
 
-### Endpoints : SWOT
+### Endpoints: SWOT
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/scopes/{scope_id}/swot-analyses` | Lister les analyses SWOT |
-| `POST` | `/scopes/{scope_id}/swot-analyses` | Créer une analyse SWOT |
-| `GET` | `/swot-analyses/{id}` | Détail d'une analyse SWOT |
-| `PUT` | `/swot-analyses/{id}` | Mise à jour complète |
-| `PATCH` | `/swot-analyses/{id}` | Mise à jour partielle |
-| `DELETE` | `/swot-analyses/{id}` | Supprimer |
-| `POST` | `/swot-analyses/{id}/validate` | Valider l'analyse |
-| `POST` | `/swot-analyses/{id}/items` | Ajouter un élément SWOT |
-| `PUT` | `/swot-analyses/{id}/items/{item_id}` | Modifier un élément |
-| `DELETE` | `/swot-analyses/{id}/items/{item_id}` | Supprimer un élément |
-| `PATCH` | `/swot-analyses/{id}/items/reorder` | Réordonner les éléments |
+| `GET` | `/scopes/{scope_id}/swot-analyses` | List SWOT analyses |
+| `POST` | `/scopes/{scope_id}/swot-analyses` | Create a SWOT analysis |
+| `GET` | `/swot-analyses/{id}` | SWOT analysis detail |
+| `PUT` | `/swot-analyses/{id}` | Full update |
+| `PATCH` | `/swot-analyses/{id}` | Partial update |
+| `DELETE` | `/swot-analyses/{id}` | Delete |
+| `POST` | `/swot-analyses/{id}/validate` | Validate the analysis |
+| `POST` | `/swot-analyses/{id}/items` | Add a SWOT item |
+| `PUT` | `/swot-analyses/{id}/items/{item_id}` | Edit an item |
+| `DELETE` | `/swot-analyses/{id}/items/{item_id}` | Delete an item |
+| `PATCH` | `/swot-analyses/{id}/items/reorder` | Reorder the items |
 | `GET` | `/swot-analyses/{id}/export` | Export (PDF, image, JSON) |
 
-### Endpoints : Roles (Rôles et responsabilités)
+### Endpoints: Roles (Roles and responsibilities)
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/scopes/{scope_id}/roles` | Lister les rôles d'un périmètre |
-| `POST` | `/scopes/{scope_id}/roles` | Créer un rôle |
-| `GET` | `/roles/{id}` | Détail d'un rôle |
-| `PUT` | `/roles/{id}` | Mise à jour complète |
-| `PATCH` | `/roles/{id}` | Mise à jour partielle |
-| `DELETE` | `/roles/{id}` | Supprimer |
-| `POST` | `/roles/{id}/assign` | Affecter un utilisateur |
-| `DELETE` | `/roles/{id}/assign/{user_id}` | Retirer un utilisateur |
-| `GET` | `/roles/{id}/responsibilities` | Lister les responsabilités |
-| `POST` | `/roles/{id}/responsibilities` | Ajouter une responsabilité |
-| `PUT` | `/roles/{id}/responsibilities/{resp_id}` | Modifier une responsabilité |
-| `DELETE` | `/roles/{id}/responsibilities/{resp_id}` | Supprimer une responsabilité |
-| `GET` | `/scopes/{scope_id}/raci-matrix` | Matrice RACI complète du périmètre |
-| `GET` | `/roles/compliance-check` | Vérifier les rôles obligatoires non pourvus |
+| `GET` | `/scopes/{scope_id}/roles` | List the roles of a scope |
+| `POST` | `/scopes/{scope_id}/roles` | Create a role |
+| `GET` | `/roles/{id}` | Role detail |
+| `PUT` | `/roles/{id}` | Full update |
+| `PATCH` | `/roles/{id}` | Partial update |
+| `DELETE` | `/roles/{id}` | Delete |
+| `POST` | `/roles/{id}/assign` | Assign a user |
+| `DELETE` | `/roles/{id}/assign/{user_id}` | Remove a user |
+| `GET` | `/roles/{id}/responsibilities` | List the responsibilities |
+| `POST` | `/roles/{id}/responsibilities` | Add a responsibility |
+| `PUT` | `/roles/{id}/responsibilities/{resp_id}` | Edit a responsibility |
+| `DELETE` | `/roles/{id}/responsibilities/{resp_id}` | Delete a responsibility |
+| `GET` | `/scopes/{scope_id}/raci-matrix` | Full RACI matrix of the scope |
+| `GET` | `/roles/compliance-check` | Check unfilled mandatory roles |
 
-### Endpoints : Activities (Activités)
+### Endpoints: Activities
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/scopes/{scope_id}/activities` | Lister les activités d'un périmètre |
-| `POST` | `/scopes/{scope_id}/activities` | Créer une activité |
-| `GET` | `/activities/{id}` | Détail d'une activité |
-| `PUT` | `/activities/{id}` | Mise à jour complète |
-| `PATCH` | `/activities/{id}` | Mise à jour partielle |
-| `DELETE` | `/activities/{id}` | Supprimer |
-| `GET` | `/activities/{id}/children` | Lister les sous-activités |
-| `GET` | `/activities/tree` | Arborescence complète |
-| `GET` | `/activities/{id}/assets` | Lister les biens essentiels liés |
+| `GET` | `/scopes/{scope_id}/activities` | List the activities of a scope |
+| `POST` | `/scopes/{scope_id}/activities` | Create an activity |
+| `GET` | `/activities/{id}` | Activity detail |
+| `PUT` | `/activities/{id}` | Full update |
+| `PATCH` | `/activities/{id}` | Partial update |
+| `DELETE` | `/activities/{id}` | Delete |
+| `GET` | `/activities/{id}/children` | List the sub-activities |
+| `GET` | `/activities/tree` | Full tree |
+| `GET` | `/activities/{id}/assets` | List the linked essential assets |
 
-### Endpoints transversaux
+### Cross-cutting endpoints
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/context/dashboard` | Tableau de bord synthétique du module |
-| `GET` | `/context/export` | Export global du contexte (PDF, DOCX, JSON) |
-| `GET` | `/context/audit-trail` | Journal d'audit du module |
-| `GET` | `/context/config/enums` | Lister toutes les listes de valeurs paramétrables |
-| `PUT` | `/context/config/enums/{enum_name}` | Modifier une liste de valeurs |
+| `GET` | `/context/dashboard` | Summary dashboard of the module |
+| `GET` | `/context/export` | Full context export (PDF, DOCX, JSON) |
+| `GET` | `/context/audit-trail` | Audit trail of the module |
+| `GET` | `/context/config/enums` | List all configurable value lists |
+| `PUT` | `/context/config/enums/{enum_name}` | Edit a value list |
 
 ---
 
-## Spécifications d'interface utilisateur
+## User interface specifications
 
 ### Navigation
 
-Le module est accessible via un élément de navigation principal « Contexte & Organisation » se décomposant en sous-menus correspondant à chaque sous-domaine (Périmètre, Enjeux, Parties intéressées, Objectifs, SWOT, Rôles, Activités).
+The module is accessible through a main navigation item "Context & Organization" that breaks down into sub-menus corresponding to each sub-domain (Scope, Issues, Stakeholders, Objectives, SWOT, Roles, Activities).
 
-### Vue « Périmètre » (Scope)
+### "Scope" view
 
-- **Liste :** Tableau avec colonnes (Nom, Version, Statut, Date d'approbation, Date de revue) avec filtres et tri.
-- **Détail / Édition :** Formulaire avec onglets : Informations générales, Périmètres (géographique, organisationnel, technique), Exclusions, Référentiels applicables, Historique.
-- **Actions :** Créer, Modifier, Approuver, Archiver, Exporter.
+- **List:** Table with columns (Name, Version, Status, Approval date, Review date) with filters and sorting.
+- **Detail / Edit:** Form with tabs: General information, Scopes (geographic, organizational, technical), Exclusions, Applicable standards, History.
+- **Actions:** Create, Edit, Approve, Archive, Export.
 
-### Vue « Enjeux » (Issues)
+### "Issues" view
 
-- **Liste :** Tableau filtrable par type (interne/externe), catégorie, niveau d'impact, statut et tendance. Vue alternative en diagramme de type « radar » ou « heatmap ».
-- **Détail / Édition :** Formulaire avec les champs définis dans le modèle de données, section de liaison aux parties intéressées.
-- **Visualisation :** Vue matricielle interne/externe avec code couleur par impact.
+- **List:** Table filterable by type (internal/external), category, impact level, status and trend. Alternative view as a "radar" or "heatmap" chart.
+- **Detail / Edit:** Form with the fields defined in the data model, and a section linking to stakeholders.
+- **Visualization:** Internal/external matrix view color-coded by impact.
 
-### Vue « Parties intéressées » (Stakeholders)
+### "Stakeholders" view
 
-- **Liste :** Tableau filtrable par type, catégorie, influence, intérêt.
-- **Matrice Influence/Intérêt :** Visualisation graphique positionnant chaque PI sur un quadrant (Informer, Satisfaire, Surveiller, Collaborer).
-- **Détail / Édition :** Formulaire avec onglets : Informations, Attentes & Exigences, Relations (enjeux, référentiels).
+- **List:** Table filterable by type, category, influence, interest.
+- **Influence/Interest matrix:** Graphical visualization positioning each stakeholder on a quadrant (Keep informed, Keep satisfied, Monitor, Collaborate).
+- **Detail / Edit:** Form with tabs: Information, Expectations & Requirements, Relationships (issues, standards).
 
-### Vue « Objectifs » (Objectives)
+### "Objectives" view
 
-- **Liste :** Tableau avec barre de progression visuelle, filtrable par catégorie, type, statut, responsable.
-- **Arborescence :** Vue hiérarchique (tree view) des objectifs parent/enfant.
-- **Tableau de bord :** Graphiques de progression globale, répartition par catégorie, objectifs en retard.
-- **Détail / Édition :** Formulaire avec section KPI (valeur cible, actuelle, méthode de mesure).
+- **List:** Table with a visual progress bar, filterable by category, type, status, owner.
+- **Tree:** Hierarchical tree view of parent/child objectives.
+- **Dashboard:** Charts of overall progress, breakdown by category, overdue objectives.
+- **Detail / Edit:** Form with a KPI section (target value, current value, measurement method).
 
-### Vue « SWOT »
+### "SWOT" view
 
-- **Liste :** Tableau des analyses SWOT avec date, statut.
-- **Vue matrice :** Affichage classique en 4 quadrants (Forces, Faiblesses, Opportunités, Menaces) avec drag & drop pour réordonner.
-- **Détail :** Chaque élément affiche son impact et ses liaisons vers les enjeux et objectifs.
-- **Export :** Image (PNG/SVG), PDF.
+- **List:** Table of SWOT analyses with date, status.
+- **Matrix view:** Classic display in 4 quadrants (Strengths, Weaknesses, Opportunities, Threats) with drag & drop to reorder.
+- **Detail:** Each item displays its impact and its links to issues and objectives.
+- **Export:** Image (PNG/SVG), PDF.
 
-### Vue « Rôles et responsabilités »
+### "Roles and responsibilities" view
 
-- **Liste :** Tableau des rôles avec nombre d'utilisateurs affectés, type, statut.
-- **Matrice RACI :** Vue croisée Activités × Rôles avec cellules RACI colorées. Possibilité de modifier directement dans la matrice.
-- **Alertes :** Indicateurs visuels pour les rôles obligatoires non pourvus et les violations de la règle RACI (plusieurs Accountable).
-- **Détail / Édition :** Formulaire avec section responsabilités et affectation d'utilisateurs.
+- **List:** Table of roles with number of assigned users, type, status.
+- **RACI matrix:** Cross view Activities × Roles with color-coded RACI cells. Editing directly within the matrix is possible.
+- **Alerts:** Visual indicators for unfilled mandatory roles and violations of the RACI rule (several Accountable).
+- **Detail / Edit:** Form with a responsibilities section and user assignment.
 
-### Vue « Activités »
+### "Activities" view
 
-- **Liste :** Tableau filtrable par type, criticité, responsable, statut.
-- **Arborescence :** Vue hiérarchique des processus et sous-processus.
-- **Cartographie :** Vue graphique des interdépendances entre activités (optionnel, v2).
-- **Détail / Édition :** Formulaire avec liaisons vers les parties intéressées, objectifs et biens essentiels.
+- **List:** Table filterable by type, criticality, owner, status.
+- **Tree:** Hierarchical view of processes and sub-processes.
+- **Mapping:** Graphical view of the interdependencies between activities (optional, v2).
+- **Detail / Edit:** Form with links to stakeholders, objectives and essential assets.
 
-### Tableau de bord du module
+### Module dashboard
 
-Un tableau de bord synthétique agrège les informations clés :
+A summary dashboard aggregates the key information:
 
-- Nombre d'enjeux par type et impact
-- Matrice influence/intérêt des parties intéressées (miniature)
-- Progression globale des objectifs
-- Dernière analyse SWOT
-- Couverture des rôles obligatoires
-- Activités critiques sans propriétaire
-- Alertes et actions requises
+- Number of issues by type and impact
+- Stakeholder influence/interest matrix (thumbnail)
+- Overall progress of objectives
+- Latest SWOT analysis
+- Coverage of mandatory roles
+- Critical activities without an owner
+- Alerts and required actions
 
 ---
 
-## Permissions et contrôle d'accès
+## Permissions and access control
 
-### Modèle RBAC
+### RBAC model
 
-Le module s'appuie sur un modèle de contrôle d'accès basé sur les rôles (RBAC) défini au niveau global de l'application.
+The module relies on a role-based access control (RBAC) model defined at the global application level.
 
 | Permission | Description |
 |---|---|
-| `context.scope.read` | Consulter les périmètres |
-| `context.scope.write` | Créer/modifier les périmètres |
-| `context.scope.approve` | Approuver un périmètre |
-| `context.scope.delete` | Supprimer un périmètre |
-| `context.issue.read` | Consulter les enjeux |
-| `context.issue.write` | Créer/modifier les enjeux |
-| `context.issue.delete` | Supprimer les enjeux |
-| `context.stakeholder.read` | Consulter les parties intéressées |
-| `context.stakeholder.write` | Créer/modifier les parties intéressées |
-| `context.stakeholder.delete` | Supprimer les parties intéressées |
-| `context.objective.read` | Consulter les objectifs |
-| `context.objective.write` | Créer/modifier les objectifs |
-| `context.objective.delete` | Supprimer les objectifs |
-| `context.swot.read` | Consulter les analyses SWOT |
-| `context.swot.write` | Créer/modifier les analyses SWOT |
-| `context.swot.validate` | Valider une analyse SWOT |
-| `context.swot.delete` | Supprimer les analyses SWOT |
-| `context.role.read` | Consulter les rôles |
-| `context.role.write` | Créer/modifier les rôles |
-| `context.role.assign` | Affecter des utilisateurs aux rôles |
-| `context.role.delete` | Supprimer les rôles |
-| `context.activity.read` | Consulter les activités |
-| `context.activity.write` | Créer/modifier les activités |
-| `context.activity.delete` | Supprimer les activités |
-| `context.config.manage` | Gérer les listes de valeurs paramétrables |
-| `context.export` | Exporter les données du module |
-| `context.audit_trail.read` | Consulter le journal d'audit |
+| `context.scope.read` | View scopes |
+| `context.scope.write` | Create/edit scopes |
+| `context.scope.approve` | Approve a scope |
+| `context.scope.delete` | Delete a scope |
+| `context.issue.read` | View issues |
+| `context.issue.write` | Create/edit issues |
+| `context.issue.delete` | Delete issues |
+| `context.stakeholder.read` | View stakeholders |
+| `context.stakeholder.write` | Create/edit stakeholders |
+| `context.stakeholder.delete` | Delete stakeholders |
+| `context.objective.read` | View objectives |
+| `context.objective.write` | Create/edit objectives |
+| `context.objective.delete` | Delete objectives |
+| `context.swot.read` | View SWOT analyses |
+| `context.swot.write` | Create/edit SWOT analyses |
+| `context.swot.validate` | Validate a SWOT analysis |
+| `context.swot.delete` | Delete SWOT analyses |
+| `context.role.read` | View roles |
+| `context.role.write` | Create/edit roles |
+| `context.role.assign` | Assign users to roles |
+| `context.role.delete` | Delete roles |
+| `context.activity.read` | View activities |
+| `context.activity.write` | Create/edit activities |
+| `context.activity.delete` | Delete activities |
+| `context.config.manage` | Manage configurable value lists |
+| `context.export` | Export the module's data |
+| `context.audit_trail.read` | View the audit trail |
 
-### Rôles applicatifs suggérés
+### Suggested application roles
 
-| Rôle | Permissions |
+| Role | Permissions |
 |---|---|
-| **Administrateur** | Toutes les permissions |
-| **RSSI / DPO** | Toutes sauf `*.delete` et `config.manage` |
-| **Auditeur** | `*.read` + `context.export` + `context.audit_trail.read` |
-| **Contributeur** | `*.read` + `*.write` (hors scope.approve et swot.validate) |
-| **Lecteur** | `*.read` uniquement |
+| **Administrator** | All permissions |
+| **CISO / DPO** | All except `*.delete` and `config.manage` |
+| **Auditor** | `*.read` + `context.export` + `context.audit_trail.read` |
+| **Contributor** | `*.read` + `*.write` (excluding scope.approve and swot.validate) |
+| **Reader** | `*.read` only |
 
 ---
 
-## Journalisation et traçabilité
+## Logging and traceability
 
 ### Audit Trail
 
-Chaque opération de création, modification ou suppression génère un enregistrement d'audit contenant :
+Each create, update or delete operation generates an audit record containing:
 
-| Champ | Description |
+| Field | Description |
 |---|---|
-| `id` | Identifiant unique de l'entrée |
-| `timestamp` | Horodatage UTC |
-| `user_id` | Utilisateur ayant réalisé l'action |
+| `id` | Unique identifier of the entry |
+| `timestamp` | UTC timestamp |
+| `user_id` | User who performed the action |
 | `action` | `create`, `update`, `delete`, `approve`, `validate`, `archive`, `assign`, `unassign` |
-| `entity_type` | Type d'entité concernée (ex. `Scope`, `Issue`, `Stakeholder`) |
-| `entity_id` | Identifiant de l'entité concernée |
-| `changes` | Objet JSON décrivant les champs modifiés (`field`, `old_value`, `new_value`) |
-| `ip_address` | Adresse IP de l'utilisateur |
-| `user_agent` | User-agent du navigateur/client |
+| `entity_type` | Type of entity concerned (e.g. `Scope`, `Issue`, `Stakeholder`) |
+| `entity_id` | Identifier of the entity concerned |
+| `changes` | JSON object describing the modified fields (`field`, `old_value`, `new_value`) |
+| `ip_address` | User's IP address |
+| `user_agent` | User-agent of the browser/client |
 
-### Rétention
+### Retention
 
-Les entrées d'audit sont conservées pendant une durée paramétrable (défaut : 7 ans) conformément aux exigences réglementaires.
-
----
-
-## Export et reporting
-
-### Formats d'export
-
-| Format | Contenu |
-|---|---|
-| **JSON** | Export brut structuré (pour interopérabilité API) |
-| **PDF** | Document formaté avec en-tête, sommaire, sections par entité |
-| **DOCX** | Document éditable au format Word |
-| **CSV** | Export tabulaire par entité (enjeux, PI, objectifs, activités) |
-
-### Rapports prédéfinis
-
-| Rapport | Description |
-|---|---|
-| Déclaration d'applicabilité du contexte | Synthèse du périmètre, enjeux et PI |
-| Matrice des parties intéressées | Matrice influence/intérêt avec attentes |
-| Rapport d'objectifs | État d'avancement de tous les objectifs |
-| SWOT | Visualisation SWOT exportable |
-| Matrice RACI | Matrice croisée activités × rôles |
-| Cartographie des activités | Liste hiérarchique avec criticité |
+Audit entries are kept for a configurable period (default: 7 years) in line with regulatory requirements.
 
 ---
 
-## Notifications et alertes
+## Export and reporting
 
-| Événement | Destinataires | Canal |
+### Export formats
+
+| Format | Content |
+|---|---|
+| **JSON** | Raw structured export (for API interoperability) |
+| **PDF** | Formatted document with header, table of contents, sections per entity |
+| **DOCX** | Editable Word document |
+| **CSV** | Tabular export per entity (issues, stakeholders, objectives, activities) |
+
+### Predefined reports
+
+| Report | Description |
+|---|---|
+| Context statement of applicability | Summary of the scope, issues and stakeholders |
+| Stakeholder matrix | Influence/interest matrix with expectations |
+| Objectives report | Progress status of all objectives |
+| SWOT | Exportable SWOT visualization |
+| RACI matrix | Cross matrix of activities × roles |
+| Activity mapping | Hierarchical list with criticality |
+
+---
+
+## Notifications and alerts
+
+| Événement | Recipients | Channel |
 |---|---|---|
-| Périmètre en attente d'approbation | Approbateurs | In-app, email |
-| Date de revue atteinte (scope, enjeu, PI, objectif, SWOT) | Propriétaire / Créateur | In-app, email |
-| Rôle obligatoire non pourvu | Administrateur, RSSI | In-app, email |
-| Violation de règle RACI | Administrateur | In-app |
-| Objectif en retard (target_date dépassée, statut ≠ achieved) | Propriétaire de l'objectif | In-app, email |
-| Modification du périmètre actif | Tous les contributeurs du périmètre | In-app |
+| Scope pending approval | Approvers | In-app, email |
+| Review date reached (scope, issue, stakeholder, objective, SWOT) | Owner / Creator | In-app, email |
+| Unfilled mandatory role | Administrator, CISO | In-app, email |
+| RACI rule violation | Administrator | In-app |
+| Overdue objective (target_date exceeded, status ≠ achieved) | Objective owner | In-app, email |
+| Modification of the active scope | All contributors of the scope | In-app |
 
 ---
 
-## Considérations techniques
+## Technical considerations
 
-### Versioning des données
+### Data versioning
 
-Le périmètre (Scope) supporte un mécanisme de versioning pour conserver l'historique des évolutions. Chaque version est un snapshot horodaté des données du périmètre à un instant T.
+The Scope supports a versioning mechanism to keep the history of changes. Each version is a timestamped snapshot of the scope data at a point in time.
 
 ### Multi-tenant
 
-Le modèle de données supporte le multi-tenant via un champ `tenant_id` (ou organisation) au niveau de chaque entité racine, permettant l'isolation des données entre organisations.
+The data model supports multi-tenancy through a `tenant_id` (or organization) field on each root entity, allowing data isolation between organizations.
 
-### Internationalisation (i18n)
+### Internationalization (i18n)
 
-Tous les libellés d'interface, messages d'erreur et labels d'enums sont externalisés et traduisibles. Le système supporte à minima le français et l'anglais.
+All interface labels, error messages and enum labels are externalized and translatable. The system supports at least French and English.
 
-### Performances
+### Performance
 
-- Les listes paginées ne doivent pas dépasser un temps de réponse de **200 ms** pour 1 000 enregistrements.
-- Les tableaux de bord agrégés sont mis en cache avec un TTL de **5 minutes**.
-- Les exports volumineux (> 500 enregistrements) sont traités de manière asynchrone avec notification à l'utilisateur.
+- Paginated lists must not exceed a response time of **200 ms** for 1,000 records.
+- Aggregated dashboards are cached with a TTL of **5 minutes**.
+- Large exports (> 500 records) are processed asynchronously with a notification to the user.
 
 ### Webhooks
 
-Chaque événement de mutation (création, modification, suppression, changement de statut) peut déclencher un webhook configurable, permettant l'intégration avec des outils tiers (SIEM, ITSM, outils de BI, etc.).
+Each mutation event (create, update, delete, status change) can trigger a configurable webhook, allowing integration with third-party tools (SIEM, ITSM, BI tools, etc.).
 
-Payload type :
+Typical payload:
 
 ```json
 {
@@ -471,40 +471,40 @@ Payload type :
 
 ---
 
-## Critères d'acceptation
+## Acceptance criteria
 
-### Fonctionnels
+### Functional
 
-- [ ] CRUD complet sur les 7 entités du module
-- [ ] Toutes les relations entre entités sont fonctionnelles
-- [ ] Les vues liste supportent pagination, tri, filtrage et recherche
-- [ ] La matrice RACI est consultable et modifiable
-- [ ] La matrice Influence/Intérêt est affichable graphiquement
-- [ ] La vue SWOT en 4 quadrants est fonctionnelle avec drag & drop
-- [ ] L'arborescence des objectifs et activités est navigable
-- [ ] Les alertes de conformité (rôles obligatoires, RACI) sont fonctionnelles
-- [ ] Les exports sont opérationnels dans tous les formats prévus
-- [ ] Le tableau de bord synthétique affiche les données correctes
+- [ ] Full CRUD on the 7 entities of the module
+- [ ] All relationships between entities are functional
+- [ ] List views support pagination, sorting, filtering and search
+- [ ] The RACI matrix can be viewed and edited
+- [ ] The Influence/Interest matrix can be displayed graphically
+- [ ] The SWOT view in 4 quadrants is functional with drag & drop
+- [ ] The objective and activity tree is navigable
+- [ ] The compliance alerts (mandatory roles, RACI) are functional
+- [ ] Exports are operational in all the planned formats
+- [ ] The summary dashboard displays the correct data
 
 ### API
 
-- [ ] Tous les endpoints documentés sont implémentés et fonctionnels
-- [ ] La documentation OpenAPI (Swagger) est générée automatiquement
-- [ ] Les codes d'erreur et structures de réponse sont conformes aux spécifications
-- [ ] La pagination, le tri et le filtrage fonctionnent sur tous les endpoints de liste
-- [ ] Les webhooks sont déclenchés pour chaque événement de mutation
+- [ ] All documented endpoints are implemented and functional
+- [ ] The OpenAPI (Swagger) documentation is generated automatically
+- [ ] Error codes and response structures comply with the specifications
+- [ ] Pagination, sorting and filtering work on all list endpoints
+- [ ] Webhooks are triggered for every mutation event
 
-### Sécurité
+### Security
 
-- [ ] Le contrôle d'accès RBAC est appliqué sur chaque endpoint et chaque vue
-- [ ] Le journal d'audit enregistre toutes les opérations
-- [ ] Les données sont isolées entre tenants
+- [ ] RBAC access control is applied on every endpoint and every view
+- [ ] The audit trail records all operations
+- [ ] Data is isolated between tenants
 
 ### Performance
 
-- [ ] Les temps de réponse respectent les seuils définis (Performances)
-- [ ] Les exports volumineux sont traités de manière asynchrone
+- [ ] Response times meet the defined thresholds (Performance)
+- [ ] Large exports are processed asynchronously
 
 ---
 
-*Fin des spécifications du Module 1 : Contexte et Organisation*
+*End of the specifications for Module 1: Context and Organization*

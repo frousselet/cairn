@@ -2,16 +2,16 @@
 
 `accounts.models.session.Session`
 
-Représente une session active d'un utilisateur authentifié.
+Represents an active session of an authenticated user.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `user_id` | relation | FK → User, requis | Utilisateur |
-| `token_jti` | string | requis, unique | Identifiant unique du JWT (JTI claim) |
-| `ip_address` | string | requis | Adresse IP de connexion |
-| `user_agent` | string | optionnel | User-agent du navigateur/client |
-| `created_at` | datetime | auto | Date de création (connexion) |
-| `expires_at` | datetime | requis | Date d'expiration |
-| `revoked_at` | datetime | optionnel | Date de révocation (déconnexion explicite) |
-| `is_active` | boolean | requis, défaut true | Session active |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `user_id` | relation | FK → User, required | User |
+| `token_jti` | string | required, unique | Unique JWT identifier (JTI claim) |
+| `ip_address` | string | required | Sign-in IP address |
+| `user_agent` | string | optional | Browser/client user-agent |
+| `created_at` | datetime | auto | Creation date (sign-in) |
+| `expires_at` | datetime | required | Expiration date |
+| `revoked_at` | datetime | optional | Revocation date (explicit sign-out) |
+| `is_active` | boolean | required, default true | Active session |

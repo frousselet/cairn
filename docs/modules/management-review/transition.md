@@ -4,13 +4,13 @@
 
 Status transition journal for a [ManagementReview](management-review.md), aligned with `ComplianceActionPlanTransition`.
 
-Journal des transitions de statut, aligné sur `ComplianceActionPlanTransition`.
+Status transition journal, aligned with `ComplianceActionPlanTransition`.
 
-| Champ | Type | Description |
+| Field | Type | Description |
 |---|---|---|
 | `id` | UUID | PK |
 | `review` | FK → ManagementReview | CASCADE |
 | `from_status`, `to_status` | enum | - |
-| `user` | FK → User | Auteur |
-| `comment` | text | Commentaire obligatoire pour `cancelled` |
+| `user` | FK → User | Author |
+| `comment` | text | Comment required for `cancelled` |
 | `created_at` | datetime | auto |

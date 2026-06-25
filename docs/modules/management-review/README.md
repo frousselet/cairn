@@ -1,11 +1,11 @@
-# Revue de direction : Conformité ISO 27001:2022 (clause 9.3)
+# Management review : ISO 27001:2022 compliance (clause 9.3)
 
-## Spécifications fonctionnelles et techniques
+## Functional and technical specifications
 
 **Version :** 1.0
-**Date :** 17 avril 2026
-**Statut :** Draft
-**Module concerné :** `reports` (transverse : context, compliance, risks, accounts)
+**Date :** 17 April 2026
+**Status :** Draft
+**Module concerned :** `reports` (cross-cutting : context, compliance, risks, accounts)
 
 ## Entities in this module
 
@@ -19,81 +19,81 @@
 
 ---
 
-## 1. Présentation générale
+## 1. Overview
 
-### 1.1 Objectif
+### 1.1 Objective
 
-Doter Cairn d'un processus complet de **revue de direction** conforme à la clause 9.3 de l'ISO 27001:2022. L'état actuel se limite à un **export ponctuel** (PPTX + DOCX) agrégeant les entrées de la clause 9.3.2. Cette spécification ajoute les éléments manquants pour produire des revues de direction **auditables, persistantes et traçables** :
+Equip Cairn with a complete **management review** process compliant with clause 9.3 of ISO 27001:2022. The current state is limited to a **one-off export** (PPTX + DOCX) aggregating the inputs of clause 9.3.2. This specification adds the missing elements to produce **auditable, persistent and traceable** management reviews :
 
-- un cycle de vie complet de la revue (préparation, tenue, clôture)
-- la capture structurée des **décisions** et **changements SMSI** exigés par la clause 9.3.3
-- la **traçabilité revue-à-revue** (suivi des actions issues des revues précédentes)
-- la formalisation des **retours des parties intéressées** (clause 9.3.2.e)
-- la **tendance des mesures** (clause 9.3.2.d.2) via l'exploitation de `IndicatorMeasurement`
+- a complete review lifecycle (preparation, holding, closure)
+- the structured capture of the **decisions** and **ISMS changes** required by clause 9.3.3
+- **review-to-review traceability** (follow-up of actions arising from previous reviews)
+- the formalisation of **stakeholder feedback** (clause 9.3.2.e)
+- **measurement trends** (clause 9.3.2.d.2) by leveraging `IndicatorMeasurement`
 
-### 1.2 Périmètre fonctionnel
+### 1.2 Functional scope
 
-Le module couvre six sous-domaines :
+The module covers six sub-domains :
 
-1. **Revues de direction** (cycle de vie complet : entité persistante [ManagementReview](management-review.md))
-2. **Décisions** issues d'une revue (entité [ManagementReviewDecision](decision.md))
-3. **Changements SMSI** identifiés (entité [IsmsChange](isms-change.md))
-4. **Retours des parties intéressées** (entité [StakeholderFeedback](stakeholder-feedback.md))
-5. **Export enrichi** (PPTX/DOCX) consommant les données persistantes
-6. **Rétrochaînage** des plans d'actions, plans de traitement des risques et objectifs vers la revue décisionnaire
+1. **Management reviews** (full lifecycle : persistent entity [ManagementReview](management-review.md))
+2. **Decisions** arising from a review (entity [ManagementReviewDecision](decision.md))
+3. **ISMS changes** identified (entity [IsmsChange](isms-change.md))
+4. **Stakeholder feedback** (entity [StakeholderFeedback](stakeholder-feedback.md))
+5. **Enriched export** (PPTX/DOCX) consuming the persistent data
+6. **Back-chaining** of action plans, risk treatment plans and objectives to the deciding review
 
-### 1.3 Mapping exhaustif ISO 27001:2022 clause 9.3
+### 1.3 Exhaustive mapping to ISO 27001:2022 clause 9.3
 
-| Clause | Exigence | Couverture actuelle | Couverture cible |
+| Clause | Requirement | Current coverage | Target coverage |
 |---|---|---|---|
-| 9.3.1 | Planification de la revue | Manquante | `ManagementReview.planned_date`, `frequency`, rappels |
-| 9.3.2.a | Actions des revues précédentes | Partielle (plans d'actions listés) | FK `originating_review` sur actions + tableau de suivi |
-| 9.3.2.b | Enjeux externes/internes | Complète | Inchangée |
-| 9.3.2.c | Besoins/attentes des parties intéressées | Complète | Inchangée |
-| 9.3.2.d.1 | Non-conformités et actions correctives | Complète | Inchangée |
-| 9.3.2.d.2 | Surveillance et mesurage | Partielle (valeur courante) | Tendance via `IndicatorMeasurement` |
-| 9.3.2.d.3 | Résultats d'audit | Complète | Inchangée |
-| 9.3.2.d.4 | Atteinte des objectifs SSI | Complète | Inchangée |
-| 9.3.2.e | Retours des parties intéressées | Partielle (attentes) | Nouvelle entité `StakeholderFeedback` |
-| 9.3.2.f | Résultats d'appréciation et plan de traitement | Complète | Inchangée |
-| 9.3.2.g | Opportunités d'amélioration | Partielle (constats d'audit) | Saisie libre dans la revue + constats |
-| 9.3.3 | Sorties (décisions, changements SMSI) | Manquante (placeholder) | `ManagementReviewDecision` + `IsmsChange` |
+| 9.3.1 | Review planning | Missing | `ManagementReview.planned_date`, `frequency`, reminders |
+| 9.3.2.a | Actions from previous reviews | Partial (action plans listed) | FK `originating_review` on actions + follow-up table |
+| 9.3.2.b | External/internal issues | Complete | Unchanged |
+| 9.3.2.c | Needs/expectations of interested parties | Complete | Unchanged |
+| 9.3.2.d.1 | Nonconformities and corrective actions | Complete | Unchanged |
+| 9.3.2.d.2 | Monitoring and measurement | Partial (current value) | Trend via `IndicatorMeasurement` |
+| 9.3.2.d.3 | Audit results | Complete | Unchanged |
+| 9.3.2.d.4 | Achievement of information security objectives | Complete | Unchanged |
+| 9.3.2.e | Stakeholder feedback | Partial (expectations) | New entity `StakeholderFeedback` |
+| 9.3.2.f | Risk assessment results and treatment plan | Complete | Unchanged |
+| 9.3.2.g | Opportunities for improvement | Partial (audit findings) | Free-form entry in the review + findings |
+| 9.3.3 | Outputs (decisions, ISMS changes) | Missing (placeholder) | `ManagementReviewDecision` + `IsmsChange` |
 
-### 1.4 Dépendances avec les autres modules
+### 1.4 Dependencies on other modules
 
-| Module cible | Nature de la dépendance |
+| Target module | Nature of the dependency |
 |---|---|
-| `accounts` | Revue ≠ limitée au créateur : participants multiples, rédacteur, approbateur. Permissions `reports.management_review.*`. |
-| `context` | Indicateurs (tendance), objectifs, enjeux, parties intéressées, retours. |
-| `compliance` | Plans d'actions, constats, audits, référentiels : rétrochaînés à une revue. |
-| `risks` | Appréciations, risques critiques, plans de traitement : rétrochaînés à une revue. |
-| `reports` | Génération des exports PPTX/DOCX enrichis. |
-| `mcp` | Exposition des revues, décisions, retours, changements SMSI. |
+| `accounts` | Review not limited to its creator : multiple participants, minute-taker, approver. Permissions `reports.management_review.*`. |
+| `context` | Indicators (trend), objectives, issues, interested parties, feedback. |
+| `compliance` | Action plans, findings, audits, frameworks : back-chained to a review. |
+| `risks` | Assessments, critical risks, treatment plans : back-chained to a review. |
+| `reports` | Generation of the enriched PPTX/DOCX exports. |
+| `mcp` | Exposure of reviews, decisions, feedback, ISMS changes. |
 
 ---
 
-## Modifications de modèles existants
+## Changes to existing models
 
-Ajout de clés étrangères de **rétrochaînage** (nullable, `SET_NULL`). Permet de répondre au 9.3.2.a et de tracer l'origine décisionnelle.
+Addition of **back-chaining** foreign keys (nullable, `SET_NULL`). Allows clause 9.3.2.a to be addressed and the decisional origin to be traced.
 
-| Modèle | Nouveau champ | Type | Rôle |
+| Model | New field | Type | Role |
 |---|---|---|---|
-| `compliance.ComplianceActionPlan` | `originating_review` | FK → ManagementReview, null=True | Revue d'origine |
-| `compliance.ComplianceActionPlan` | `originating_decision` | FK → ManagementReviewDecision, null=True | Décision source |
-| `risks.RiskTreatmentPlan` | `originating_review` | FK → ManagementReview, null=True | Revue d'origine |
-| `risks.RiskTreatmentPlan` | `originating_decision` | FK → ManagementReviewDecision, null=True | Décision source |
-| `context.Objective` | `originating_review` | FK → ManagementReview, null=True | Revue d'origine |
-| `context.Objective` | `originating_decision` | FK → ManagementReviewDecision, null=True | Décision source |
+| `compliance.ComplianceActionPlan` | `originating_review` | FK → ManagementReview, null=True | Originating review |
+| `compliance.ComplianceActionPlan` | `originating_decision` | FK → ManagementReviewDecision, null=True | Source decision |
+| `risks.RiskTreatmentPlan` | `originating_review` | FK → ManagementReview, null=True | Originating review |
+| `risks.RiskTreatmentPlan` | `originating_decision` | FK → ManagementReviewDecision, null=True | Source decision |
+| `context.Objective` | `originating_review` | FK → ManagementReview, null=True | Originating review |
+| `context.Objective` | `originating_decision` | FK → ManagementReviewDecision, null=True | Source decision |
 
-Aucune suppression. Les migrations sont additives et rétro-compatibles (tous les champs nullables).
+No deletions. The migrations are additive and backward-compatible (all fields nullable).
 
 ---
 
-## 3. Vues et parcours utilisateur
+## 3. Views and user journey
 
 ### 3.1 URL patterns
 
-Fichier : `reports/urls.py`
+File : `reports/urls.py`
 
 ```
 /reports/management-reviews/                    → ManagementReviewListView
@@ -109,7 +109,7 @@ Fichier : `reports/urls.py`
 /reports/management-reviews/<uuid:pk>/decisions/create/ → DecisionCreateView
 /reports/decisions/<uuid:pk>/                           → DecisionDetailView
 /reports/decisions/<uuid:pk>/edit/                      → DecisionUpdateView
-/reports/decisions/<uuid:pk>/promote/                   → DecisionPromoteView (crée un ActionPlan)
+/reports/decisions/<uuid:pk>/promote/                   → DecisionPromoteView (creates an ActionPlan)
 
 /reports/management-reviews/<uuid:pk>/isms-changes/create/ → IsmsChangeCreateView
 /reports/isms-changes/<uuid:pk>/                           → IsmsChangeDetailView
@@ -119,184 +119,184 @@ Fichier : `reports/urls.py`
 /context/stakeholder-feedback/<uuid:pk>/         → StakeholderFeedbackDetailView
 ```
 
-### 3.2 Page de détail `ManagementReviewDetailView`
+### 3.2 Detail page `ManagementReviewDetailView`
 
-Pattern **2 colonnes, pas d'onglets** (cf. `CLAUDE.md` : prefer 2-column card layout). Stepper de statut en haut, sticky sidebar à droite.
+**2-column, no-tabs** pattern (cf. `CLAUDE.md` : prefer 2-column card layout). Status stepper at the top, sticky sidebar on the right.
 
-**Sidebar (colonne droite, sticky)** :
+**Sidebar (right column, sticky)** :
 
-- Badge de statut (stepper miniature)
-- Animateur, approbateur
-- Période de revue (`period_start` → `period_end`)
-- Date planifiée / tenue
-- Participants (liste avec rôles et pastille « présent »)
-- Prochaine revue
-- Boutons : Exporter PPTX, Exporter DOCX, Ajouter une décision, Ajouter un changement SMSI
+- Status badge (mini stepper)
+- Facilitator, approver
+- Review period (`period_start` → `period_end`)
+- Planned / held date
+- Participants (list with roles and "present" indicator)
+- Next review
+- Buttons : Export PPTX, Export DOCX, Add a decision, Add an ISMS change
 
-**Colonne principale** : sections `<details>` repliables, chacune correspondant à une entrée de 9.3.2 :
+**Main column** : collapsible `<details>` sections, each corresponding to a 9.3.2 input :
 
-1. **9.3.2.a Actions des revues précédentes** : tableau des décisions `pending`/`in_progress` issues de revues antérieures, avec statut et échéance.
-2. **9.3.2.b Enjeux** : internes/externes (utilise `Issue` filtré sur la période).
-3. **9.3.2.c Attentes des parties intéressées** : utilise `StakeholderExpectation` filtré.
-4. **9.3.2.d.1 Non-conformités** : utilise `Finding`.
-5. **9.3.2.d.2 Surveillance et mesurage** : tableau avec **colonne « Tendance »** (🔺 amélioration, = stable, 🔻 dégradation) et **« Conformité fréquence »**.
-6. **9.3.2.d.3 Audits** : utilise `ComplianceAssessment`.
-7. **9.3.2.d.4 Objectifs** : utilise `Objective`.
-8. **9.3.2.e Retours des PI** : nouvelle section consommant `StakeholderFeedback`.
-9. **9.3.2.f Risques et plan de traitement** : synthèse + risques critiques.
-10. **9.3.2.g Opportunités d'amélioration** : constats type `IMPROVEMENT_OPPORTUNITY` + champ texte libre `summary`.
-11. **Décisions (sortie 9.3.3)** : tableau éditable, actions inline « Promouvoir en plan d'action ».
-12. **Changements SMSI (sortie 9.3.3)** : liste des `IsmsChange`.
-13. **Synthèse et prochaine revue** : `summary`, `next_review_date`.
-14. **Commentaires** : fil (`ManagementReviewComment`).
-15. **Historique** : `HistoricalRecords` de la revue et de ses décisions.
+1. **9.3.2.a Actions from previous reviews** : table of `pending`/`in_progress` decisions arising from earlier reviews, with status and due date.
+2. **9.3.2.b Issues** : internal/external (uses `Issue` filtered on the period).
+3. **9.3.2.c Stakeholder expectations** : uses `StakeholderExpectation` filtered.
+4. **9.3.2.d.1 Nonconformities** : uses `Finding`.
+5. **9.3.2.d.2 Monitoring and measurement** : table with a **"Trend" column** (🔺 improvement, = stable, 🔻 degradation) and **"Frequency compliance"**.
+6. **9.3.2.d.3 Audits** : uses `ComplianceAssessment`.
+7. **9.3.2.d.4 Objectives** : uses `Objective`.
+8. **9.3.2.e Stakeholder feedback** : new section consuming `StakeholderFeedback`.
+9. **9.3.2.f Risks and treatment plan** : summary + critical risks.
+10. **9.3.2.g Opportunities for improvement** : findings of type `IMPROVEMENT_OPPORTUNITY` + free-text field `summary`.
+11. **Decisions (output 9.3.3)** : editable table, inline "Promote to action plan" actions.
+12. **ISMS changes (output 9.3.3)** : list of `IsmsChange`.
+13. **Summary and next review** : `summary`, `next_review_date`.
+14. **Comments** : thread (`ManagementReviewComment`).
+15. **History** : `HistoricalRecords` of the review and its decisions.
 
-### 3.3 Formulaires
+### 3.3 Forms
 
-- `ManagementReviewForm` : création/édition (title, description, scopes, frequency, period_start, period_end, planned_date, location, facilitator, approver, next_review_date, agenda, summary, tags).
-- `ManagementReviewParticipantFormSet` : gestion inline des participants.
-- `ManagementReviewTransitionForm` : statut cible + commentaire (obligatoire si `cancelled`).
-- `ManagementReviewDecisionForm` : tous les champs de [decision.md](decision.md).
-- `IsmsChangeForm` : tous les champs de [isms-change.md](isms-change.md).
-- `StakeholderFeedbackForm` : tous les champs de [stakeholder-feedback.md](stakeholder-feedback.md).
-- `DecisionPromoteForm` : modal générant un `ComplianceActionPlan` pré-rempli depuis une décision.
+- `ManagementReviewForm` : create/edit (title, description, scopes, frequency, period_start, period_end, planned_date, location, facilitator, approver, next_review_date, agenda, summary, tags).
+- `ManagementReviewParticipantFormSet` : inline management of participants.
+- `ManagementReviewTransitionForm` : target status + comment (required if `cancelled`).
+- `ManagementReviewDecisionForm` : all the fields of [decision.md](decision.md).
+- `IsmsChangeForm` : all the fields of [isms-change.md](isms-change.md).
+- `StakeholderFeedbackForm` : all the fields of [stakeholder-feedback.md](stakeholder-feedback.md).
+- `DecisionPromoteForm` : modal generating a `ComplianceActionPlan` pre-filled from a decision.
 
-### 3.4 Liste `ManagementReviewListView`
+### 3.4 List `ManagementReviewListView`
 
-- `SortableListMixin` (tri persisté par utilisateur)
-- Colonnes : Référence, Titre, Période, Planifiée le, Statut, Animateur, Décisions (count), Scopes
-- Filtres : statut, année, scope, animateur
-- Badges de statut colorés
-- Recherche plein texte sur `title`, `description`, `reference`
+- `SortableListMixin` (sorting persisted per user)
+- Columns : Reference, Title, Period, Planned on, Status, Facilitator, Decisions (count), Scopes
+- Filters : status, year, scope, facilitator
+- Coloured status badges
+- Full-text search on `title`, `description`, `reference`
 
-### 3.5 Snapshot et gel auditabilité
+### 3.5 Snapshot and auditability freeze
 
-À la transition `held → closed`, le bouton **« Clôturer la revue »** exécute :
+On the `held → closed` transition, the **"Close review"** button runs :
 
-1. Génération `gather_management_review_data(...)` avec `period_start`/`period_end` de la revue.
-2. Sérialisation du résultat dans `ManagementReview.snapshot_data` (JSONField).
-3. Les exports ultérieurs consomment **en priorité** `snapshot_data` si non vide. L'UI affiche un badge « Données figées le DD/MM/YYYY » pour signaler l'immuabilité.
+1. Generation of `gather_management_review_data(...)` with the review's `period_start`/`period_end`.
+2. Serialization of the result into `ManagementReview.snapshot_data` (JSONField).
+3. Subsequent exports consume `snapshot_data` **in priority** if it is not empty. The UI displays a "Data frozen on DD/MM/YYYY" badge to signal immutability.
 
-Rationale : une revue clôturée ne doit plus varier avec le temps (exigence d'auditabilité). Les données live continuent d'évoluer mais ne modifient pas le compte rendu approuvé.
+Rationale : a closed review must no longer vary over time (auditability requirement). The live data keeps evolving but does not alter the approved minutes.
 
 ---
 
-## 4. Exports PPTX et DOCX enrichis
+## 4. Enriched PPTX and DOCX exports
 
-### 4.1 Source des données
+### 4.1 Data source
 
-Fichier : `reports/management_review.py` : refactoring de `gather_management_review_data` en **deux modes** :
+File : `reports/management_review.py` : refactoring of `gather_management_review_data` into **two modes** :
 
-- `gather_live(...)` : mode actuel, agrégation live (pour revues `planned`/`in_preparation`/`held`).
-- `gather_from_snapshot(review)` : rehydrate depuis `snapshot_data` (pour revues `closed`).
+- `gather_live(...)` : current mode, live aggregation (for `planned`/`in_preparation`/`held` reviews).
+- `gather_from_snapshot(review)` : rehydrate from `snapshot_data` (for `closed` reviews).
 
-Signature enrichie :
+Enriched signature :
 ```python
 gather_management_review_data(
     user,
-    review=None,              # nouveau : ManagementReview, prioritaire
+    review=None,              # new : ManagementReview, takes priority
     scope_ids=None,
     period_start=None,
     period_end=None,
 )
 ```
 
-Si `review` est fourni :
-- `scope_ids`, `period_start`, `period_end` en sont déduits.
-- Si `review.status == closed`, snapshot utilisé.
-- Les sections 11 (décisions) et 12 (changements SMSI) sont ajoutées.
-- Participants injectés dans la page de garde DOCX et la slide de titre PPTX.
+If `review` is provided :
+- `scope_ids`, `period_start`, `period_end` are derived from it.
+- If `review.status == closed`, the snapshot is used.
+- Sections 11 (decisions) and 12 (ISMS changes) are added.
+- Participants are injected into the DOCX cover page and the PPTX title slide.
 
-### 4.2 Ajouts dans l'export
+### 4.2 Additions to the export
 
-**Section 4b (mesurage)** : nouvelles colonnes :
+**Section 4b (measurement)** : new columns :
 
-| Ref. | Indicateur | Valeur actuelle | Valeur précédente | Tendance | Cible | Conf. fréquence |
+| Ref. | Indicator | Current value | Previous value | Trend | Target | Freq. compliance |
 |---|---|---|---|---|---|---|
 
-**Section 5 (retours PI)** : deux blocs :
-- Tableau `StakeholderFeedback` (canal, sujet, sentiment, sévérité, statut)
-- Tableau existant des attentes applicables
+**Section 5 (stakeholder feedback)** : two blocks :
+- `StakeholderFeedback` table (channel, subject, sentiment, severity, status)
+- existing table of applicable expectations
 
-**Section 9.3.3 (sorties)** : nouvelles slides / sections DOCX :
+**Section 9.3.3 (outputs)** : new slides / DOCX sections :
 
-- **Décisions prises** : tableau (référence, catégorie, titre, responsable, échéance, priorité, statut)
-- **Changements SMSI** : tableau (référence, type, titre, responsable, statut, cible)
-- **Synthèse exécutive** : insertion de `review.summary` (rich text stripé)
-- **Prochaine revue** : `review.next_review_date`
+- **Decisions taken** : table (reference, category, title, owner, due date, priority, status)
+- **ISMS changes** : table (reference, type, title, owner, status, target)
+- **Executive summary** : insertion of `review.summary` (stripped rich text)
+- **Next review** : `review.next_review_date`
 
-**Page de signatures (DOCX)** : remplacer la table vide actuelle par une table pré-remplie avec les participants (nom, fonction, case signature). Si `signature_data` contient une image base64, l'intégrer.
+**Signature page (DOCX)** : replace the current empty table with a table pre-filled with the participants (name, role, signature box). If `signature_data` contains a base64 image, embed it.
 
-### 4.3 Placeholders `[A completer]`
+### 4.3 `[A completer]` placeholders
 
-Suppression complète. Les données sont désormais saisies dans l'UI avant l'export et injectées à partir de la revue persistée.
+Completely removed. The data is now entered in the UI before the export and injected from the persistent review.
 
 ---
 
-## 5. API REST
+## 5. REST API
 
-Fichier : `reports/api/urls.py`, `reports/api/serializers.py`, `reports/api/views.py`.
+File : `reports/api/urls.py`, `reports/api/serializers.py`, `reports/api/views.py`.
 
 Base URL : `/api/v1/reports/`
 
 ### 5.1 Endpoints
 
-| Méthode | URL | Action |
+| Method | URL | Action |
 |---|---|---|
-| GET/POST | `/management-reviews/` | Liste / création |
-| GET/PATCH/DELETE | `/management-reviews/<id>/` | Détail, mise à jour partielle, suppression |
-| POST | `/management-reviews/<id>/transition/` | Transition de statut `{to_status, comment}` |
-| POST | `/management-reviews/<id>/close/` | Clôture (déclenche snapshot) |
-| GET | `/management-reviews/<id>/export/?format=pptx\|docx` | Télécharge l'export |
-| GET/POST | `/management-reviews/<id>/decisions/` | Liste / création de décisions |
-| GET/PATCH/DELETE | `/decisions/<id>/` | Détail décision |
-| POST | `/decisions/<id>/promote-to-action-plan/` | Crée un `ComplianceActionPlan` lié |
-| GET/POST | `/management-reviews/<id>/isms-changes/` | Liste / création changements SMSI |
-| GET/PATCH | `/isms-changes/<id>/` | Détail changement SMSI |
-| GET/POST | `/management-reviews/<id>/participants/` | Gestion participants |
+| GET/POST | `/management-reviews/` | List / create |
+| GET/PATCH/DELETE | `/management-reviews/<id>/` | Detail, partial update, delete |
+| POST | `/management-reviews/<id>/transition/` | Status transition `{to_status, comment}` |
+| POST | `/management-reviews/<id>/close/` | Closure (triggers snapshot) |
+| GET | `/management-reviews/<id>/export/?format=pptx\|docx` | Download the export |
+| GET/POST | `/management-reviews/<id>/decisions/` | List / create decisions |
+| GET/PATCH/DELETE | `/decisions/<id>/` | Decision detail |
+| POST | `/decisions/<id>/promote-to-action-plan/` | Creates a linked `ComplianceActionPlan` |
+| GET/POST | `/management-reviews/<id>/isms-changes/` | List / create ISMS changes |
+| GET/PATCH | `/isms-changes/<id>/` | ISMS change detail |
+| GET/POST | `/management-reviews/<id>/participants/` | Manage participants |
 
-Et dans `context` :
+And in `context` :
 
-| Méthode | URL | Action |
+| Method | URL | Action |
 |---|---|---|
-| GET/POST | `/api/v1/context/stakeholder-feedback/` | Liste / création |
-| GET/PATCH/DELETE | `/api/v1/context/stakeholder-feedback/<id>/` | Détail |
+| GET/POST | `/api/v1/context/stakeholder-feedback/` | List / create |
+| GET/PATCH/DELETE | `/api/v1/context/stakeholder-feedback/<id>/` | Detail |
 
-### 5.2 Sérialisation
+### 5.2 Serialization
 
-- `ManagementReviewSerializer` : exhaustif, inclut `decisions_count`, `participants`, `status_display`, `snapshot_available`.
-- `ManagementReviewDetailSerializer` : étend avec décisions et changements SMSI imbriqués.
-- Permissions : classe `ManagementReviewPermission` héritant de `ModulePermission`.
-- Approval workflow (`ApprovableAPIMixin`) réutilisé pour la transition `held → closed`.
+- `ManagementReviewSerializer` : exhaustive, includes `decisions_count`, `participants`, `status_display`, `snapshot_available`.
+- `ManagementReviewDetailSerializer` : extends it with nested decisions and ISMS changes.
+- Permissions : `ManagementReviewPermission` class inheriting from `ModulePermission`.
+- Approval workflow (`ApprovableAPIMixin`) reused for the `held → closed` transition.
 
 ---
 
-## 6. Outils MCP
+## 6. MCP tools
 
-Fichier : `mcp/tools.py`. Suivre la convention existante (docstring détaillée, `@require_perm`).
+File : `mcp/tools.py`. Follow the existing convention (detailed docstring, `@require_perm`).
 
 | Tool | Permission | Description |
 |---|---|---|
-| `list_management_reviews` | `reports.management_review.read` | Liste filtrée (statut, période, scope). |
-| `get_management_review` | `reports.management_review.read` | Détail d'une revue (id ou référence). |
-| `create_management_review` | `reports.management_review.create` | Crée une revue. |
-| `update_management_review` | `reports.management_review.update` | Met à jour. |
-| `transition_management_review` | `reports.management_review.update` | Transition de statut. |
-| `close_management_review` | `reports.management_review.approve` | Clôture avec snapshot. |
-| `generate_management_review_report` | `reports.management_review.read` | Retourne un export (base64) PPTX ou DOCX. |
-| `list_management_review_decisions` | `reports.management_review.read` | Liste les décisions d'une revue. |
-| `create_management_review_decision` | `reports.management_review.update` | Ajoute une décision. |
-| `promote_decision_to_action_plan` | `reports.management_review.update` + `compliance.action_plan.create` | Génère un plan d'action. |
-| `list_isms_changes` | `reports.management_review.read` | Liste les changements SMSI. |
-| `create_isms_change` | `reports.management_review.update` | Ajoute un changement SMSI. |
-| `list_stakeholder_feedback` | `context.stakeholder_feedback.read` | Liste des retours. |
-| `create_stakeholder_feedback` | `context.stakeholder_feedback.create` | Ajoute un retour. |
+| `list_management_reviews` | `reports.management_review.read` | Filtered list (status, period, scope). |
+| `get_management_review` | `reports.management_review.read` | Detail of a review (id or reference). |
+| `create_management_review` | `reports.management_review.create` | Creates a review. |
+| `update_management_review` | `reports.management_review.update` | Updates it. |
+| `transition_management_review` | `reports.management_review.update` | Status transition. |
+| `close_management_review` | `reports.management_review.approve` | Closure with snapshot. |
+| `generate_management_review_report` | `reports.management_review.read` | Returns an export (base64) PPTX or DOCX. |
+| `list_management_review_decisions` | `reports.management_review.read` | Lists the decisions of a review. |
+| `create_management_review_decision` | `reports.management_review.update` | Adds a decision. |
+| `promote_decision_to_action_plan` | `reports.management_review.update` + `compliance.action_plan.create` | Generates an action plan. |
+| `list_isms_changes` | `reports.management_review.read` | Lists the ISMS changes. |
+| `create_isms_change` | `reports.management_review.update` | Adds an ISMS change. |
+| `list_stakeholder_feedback` | `context.stakeholder_feedback.read` | Lists the feedback. |
+| `create_stakeholder_feedback` | `context.stakeholder_feedback.create` | Adds feedback. |
 
 ---
 
 ## 7. Permissions
 
-Ajouts à `PERMISSION_REGISTRY` (`accounts/constants.py`) :
+Additions to `PERMISSION_REGISTRY` (`accounts/constants.py`) :
 
 ```python
 "reports.management_review.read",
@@ -310,180 +310,180 @@ Ajouts à `PERMISSION_REGISTRY` (`accounts/constants.py`) :
 "context.stakeholder_feedback.delete",
 ```
 
-Attribution aux groupes système :
+Assignment to system groups :
 
-| Groupe | Permissions |
+| Group | Permissions |
 |---|---|
-| Super Admin, Admin | Toutes |
-| RSSI/DPO | Toutes sauf `delete` |
-| Auditeur | `read` uniquement |
-| Contributeur | `read`, `create`, `update` sur stakeholder_feedback ; `read` sur management_review |
-| Lecteur | `read` uniquement |
+| Super Admin, Admin | All |
+| RSSI/DPO | All except `delete` |
+| Auditor | `read` only |
+| Contributor | `read`, `create`, `update` on stakeholder_feedback ; `read` on management_review |
+| Reader | `read` only |
 
-Ajout via **data migration** (pattern éprouvé, cf. migrations existantes populant `PERMISSION_REGISTRY`).
-
----
-
-## 8. Internationalisation
-
-- Toutes les nouvelles chaînes UI sont enveloppées `_()` / `{% trans %}`.
-- Traductions FR systématiques dans `locale/fr/LC_MESSAGES/django.po`.
-- Vérification **pas de doublon** de `msgid` (cf. CLAUDE.md). Utiliser `pgettext_lazy` avec contexte `"management review"` pour désambiguïser si besoin (ex. « Decision », « Status »).
-- `compilemessages` doit réussir sans erreur.
+Added via a **data migration** (proven pattern, cf. existing migrations populating `PERMISSION_REGISTRY`).
 
 ---
 
-## 9. Navigation et helpers
+## 8. Internationalization
 
-- Ajout d'un item **« Revues de direction »** dans le menu principal, sous « Reports » (nouveau sous-groupe).
-- Nouveaux `HelpContent` dans `helpers` pour : page liste, page détail, création décision, création changement SMSI, création feedback.
-- Dashboard (`core/views.py`) : ajout d'un widget « Prochaine revue de direction » (compte à rebours + lien) et « Décisions en retard ».
+- All new UI strings are wrapped with `_()` / `{% trans %}`.
+- Systematic FR translations in `locale/fr/LC_MESSAGES/django.po`.
+- **No-duplicate** check on `msgid` (cf. CLAUDE.md). Use `pgettext_lazy` with the context `"management review"` to disambiguate if needed (e.g. "Decision", "Status").
+- `compilemessages` must succeed without error.
+
+---
+
+## 9. Navigation and helpers
+
+- Addition of a **"Management reviews"** item in the main menu, under "Reports" (new sub-group).
+- New `HelpContent` entries in `helpers` for : list page, detail page, decision creation, ISMS change creation, feedback creation.
+- Dashboard (`core/views.py`) : addition of a "Next management review" widget (countdown + link) and "Overdue decisions".
 
 ---
 
 ## 10. Tests
 
-Couverture minimale attendue :
+Minimum expected coverage :
 
-### 10.1 Unitaires
+### 10.1 Unit
 
-- `reports/tests/test_management_review_model.py` : cycle de vie, snapshot, contrainte de clôture (toutes décisions doivent avoir owner+due_date).
-- `reports/tests/test_decision_model.py` : lien vers plan d'action, rétrochaînage.
+- `reports/tests/test_management_review_model.py` : lifecycle, snapshot, closure constraint (all decisions must have owner+due_date).
+- `reports/tests/test_decision_model.py` : link to action plan, back-chaining.
 - `reports/tests/test_isms_change_model.py` : workflow.
-- `context/tests/test_stakeholder_feedback_model.py` : intégrité, liens.
-- `reports/tests/test_indicator_trend.py` : calcul de tendance, conformité fréquence.
+- `context/tests/test_stakeholder_feedback_model.py` : integrity, links.
+- `reports/tests/test_indicator_trend.py` : trend computation, frequency compliance.
 
-### 10.2 Vues
+### 10.2 Views
 
-- Parcours complet : créer revue → ajouter décisions → clôturer → exporter.
-- Garde-fou : clôture refusée si décision sans `owner` ou `due_date`.
-- Snapshot : données figées après clôture (modif ultérieure d'un indicateur ne doit pas altérer l'export).
+- Full journey : create review → add decisions → close → export.
+- Safeguard : closure refused if a decision has no `owner` or `due_date`.
+- Snapshot : data frozen after closure (a later modification of an indicator must not alter the export).
 
 ### 10.3 API
 
-- CRUD complet sur les 4 nouveaux endpoints.
-- Permissions par rôle (matrice §7).
-- Export via API : vérifier en-têtes `Content-Type` et `Content-Disposition`.
+- Full CRUD on the 4 new endpoints.
+- Per-role permissions (matrix §7).
+- Export via API : check the `Content-Type` and `Content-Disposition` headers.
 
 ### 10.4 MCP
 
-- Chaque tool testé avec succès et refus (permission manquante).
-- `generate_management_review_report` retourne un contenu non vide, bon nom de fichier.
+- Each tool tested with success and refusal (missing permission).
+- `generate_management_review_report` returns non-empty content, correct file name.
 
 ### 10.5 Export
 
-- Test d'intégration : DOCX généré contient les décisions, les participants, la synthèse.
-- Test d'intégration : PPTX généré ne contient plus les placeholders `[A completer]`.
+- Integration test : generated DOCX contains the decisions, the participants, the summary.
+- Integration test : generated PPTX no longer contains the `[A completer]` placeholders.
 
-**Factories** (`factory-boy`) à ajouter : `ManagementReviewFactory`, `ManagementReviewParticipantFactory`, `ManagementReviewDecisionFactory`, `IsmsChangeFactory`, `StakeholderFeedbackFactory`.
-
----
-
-## 11. Migration et compatibilité
-
-### 11.1 Migrations Django
-
-Ordre :
-
-1. `reports/migrations/0002_management_review.py` : création des 5 tables (`ManagementReview`, `ManagementReviewParticipant`, `ManagementReviewDecision`, `IsmsChange`, `ManagementReviewComment`, `ManagementReviewTransition`).
-2. `context/migrations/XXXX_stakeholder_feedback.py` : création `StakeholderFeedback`.
-3. `compliance/migrations/XXXX_action_plan_originating_review.py` : ajout FK nullable.
-4. `risks/migrations/XXXX_treatment_plan_originating_review.py` : ajout FK nullable.
-5. `context/migrations/XXXX_objective_originating_review.py` : ajout FK nullable.
-6. `accounts/migrations/XXXX_management_review_permissions.py` : data migration populant `PERMISSION_REGISTRY` et groupes système.
-
-Toutes additives. Aucune donnée existante perdue.
-
-### 11.2 Compatibilité avec l'export existant
-
-L'export actuel reste **fonctionnel sans revue** : si `review=None`, l'API conserve le comportement de la v0.22 (export live avec scopes+période). Les écrans existants (`report_list.html`, `management_review_form.html`) sont conservés en tant qu'**alternative rapide** pour les utilisateurs qui ne veulent pas créer de revue persistante.
-
-À terme (v+1), dépréciation douce : bandeau d'information recommandant de passer par `ManagementReview`.
+**Factories** (`factory-boy`) to add : `ManagementReviewFactory`, `ManagementReviewParticipantFactory`, `ManagementReviewDecisionFactory`, `IsmsChangeFactory`, `StakeholderFeedbackFactory`.
 
 ---
 
-## 12. CHANGELOG et README
+## 11. Migration and compatibility
 
-Conformément à `CLAUDE.md` :
+### 11.1 Django migrations
 
-- **CHANGELOG.md** : ajouter sous `## [Unreleased]` :
-  - `### Added` : « Persistent management review workflow (ISO 27001:2022 clause 9.3) with decisions, ISMS changes, participants, and snapshot-based auditability. »
-  - `### Added` : « Stakeholder feedback module. »
-  - `### Added` : « Indicator trend analysis in management review exports. »
-  - `### Changed` : « Management review export now consumes persistent review data when available. »
+Order :
 
-- **README.md** : mettre à jour :
-  - Tableau des fonctionnalités (colonne Reports : + Management reviews).
-  - Tableau des MCP tools : ajouter les 14 nouveaux tools.
-  - Tech stack : aucune nouvelle dépendance (python-pptx, python-docx déjà présents).
+1. `reports/migrations/0002_management_review.py` : creation of the 5 tables (`ManagementReview`, `ManagementReviewParticipant`, `ManagementReviewDecision`, `IsmsChange`, `ManagementReviewComment`, `ManagementReviewTransition`).
+2. `context/migrations/XXXX_stakeholder_feedback.py` : creation of `StakeholderFeedback`.
+3. `compliance/migrations/XXXX_action_plan_originating_review.py` : addition of nullable FK.
+4. `risks/migrations/XXXX_treatment_plan_originating_review.py` : addition of nullable FK.
+5. `context/migrations/XXXX_objective_originating_review.py` : addition of nullable FK.
+6. `accounts/migrations/XXXX_management_review_permissions.py` : data migration populating `PERMISSION_REGISTRY` and system groups.
 
----
+All additive. No existing data lost.
 
-## 13. Critères d'acceptation (Definition of Done)
+### 11.2 Compatibility with the existing export
 
-La feature est considérée livrée quand **tous** les critères suivants sont vérifiés :
+The current export remains **functional without a review** : if `review=None`, the API keeps the v0.22 behaviour (live export with scopes+period). The existing screens (`report_list.html`, `management_review_form.html`) are kept as a **quick alternative** for users who do not want to create a persistent review.
 
-### 13.1 Fonctionnels
-
-- [ ] Créer, éditer, transitionner, clôturer, annuler une `ManagementReview` depuis l'UI.
-- [ ] Ajouter participants (internes et externes), décisions, changements SMSI.
-- [ ] Promouvoir une décision en `ComplianceActionPlan` via bouton inline ; le plan créé porte `originating_review` et `originating_decision`.
-- [ ] Créer des `StakeholderFeedback` indépendamment d'une revue.
-- [ ] L'export DOCX/PPTX d'une revue `closed` contient : décisions, changements SMSI, participants, synthèse, prochaine revue : zéro placeholder `[A completer]`.
-- [ ] La tendance des indicateurs apparaît dans la section 4b.
-- [ ] Clôture interdite si une décision est incomplète (message d'erreur clair).
-- [ ] Les données d'une revue `closed` sont gelées (ne varient pas avec modifications ultérieures en base).
-
-### 13.2 Techniques
-
-- [ ] Tous les modèles utilisent `BaseModel` ou `ScopedModel` selon pertinence.
-- [ ] `HistoricalRecords` sur tous les nouveaux modèles métier.
-- [ ] API DRF complète avec permissions, pagination, filtres.
-- [ ] MCP tools exposés avec docstrings et `@require_perm`.
-- [ ] Migration data populant permissions et groupes sans écraser l'existant.
-- [ ] 100% des chaînes UI traduites FR, `compilemessages` OK, pas de doublon `msgid`.
-- [ ] Rendu correct mobile + dark mode sur toutes les nouvelles pages.
-- [ ] Stepper horizontal utilisé pour le workflow de la revue.
-- [ ] Layout 2 colonnes (pas d'onglets) sur la page détail.
-- [ ] Couverture de tests pytest ≥ 80% sur les nouveaux fichiers.
-
-### 13.3 Auditabilité
-
-- [ ] `HistoricalRecords` permet de retrouver qui a modifié quoi et quand sur la revue, les décisions, les changements SMSI.
-- [ ] `snapshot_data` d'une revue close est horodaté et immuable (testé par régression).
-- [ ] Un auditeur externe (rôle `Auditeur`) peut visualiser toute revue close sans pouvoir la modifier.
-- [ ] L'export produit à T+N est identique à l'export produit au moment de la clôture (pour une revue `closed`).
+In time (v+1), soft deprecation : an information banner recommending the use of `ManagementReview`.
 
 ---
 
-## 14. Hors périmètre (pour une v+1)
+## 12. CHANGELOG and README
 
-- Signatures électroniques qualifiées (eIDAS) intégrées : restent manuelles dans le DOCX.
-- Modèle `Policy` formalisé (actuellement `IsmsChange.affected_policies` = texte libre).
-- Rappels automatiques par mail des participants avant la revue.
-- Modèles de revue préconfigurés par industrie/certification.
-- Export PDF (réutilisation du pipeline `reportlab` éventuellement).
-- Tableau de bord « Conformité au processus de revue de direction » (fréquence respectée, délais d'approbation).
+In accordance with `CLAUDE.md` :
+
+- **CHANGELOG.md** : add under `## [Unreleased]` :
+  - `### Added` : "Persistent management review workflow (ISO 27001:2022 clause 9.3) with decisions, ISMS changes, participants, and snapshot-based auditability."
+  - `### Added` : "Stakeholder feedback module."
+  - `### Added` : "Indicator trend analysis in management review exports."
+  - `### Changed` : "Management review export now consumes persistent review data when available."
+
+- **README.md** : update :
+  - Feature table (Reports column : + Management reviews).
+  - MCP tools table : add the 14 new tools.
+  - Tech stack : no new dependency (python-pptx, python-docx already present).
 
 ---
 
-## 15. Estimation
+## 13. Acceptance criteria (Definition of Done)
 
-| Lot | Effort (j.h) |
+The feature is considered delivered when **all** the following criteria are met :
+
+### 13.1 Functional
+
+- [ ] Create, edit, transition, close, cancel a `ManagementReview` from the UI.
+- [ ] Add participants (internal and external), decisions, ISMS changes.
+- [ ] Promote a decision to a `ComplianceActionPlan` via an inline button ; the created plan carries `originating_review` and `originating_decision`.
+- [ ] Create `StakeholderFeedback` independently of a review.
+- [ ] The DOCX/PPTX export of a `closed` review contains : decisions, ISMS changes, participants, summary, next review : zero `[A completer]` placeholder.
+- [ ] The indicator trend appears in section 4b.
+- [ ] Closure forbidden if a decision is incomplete (clear error message).
+- [ ] The data of a `closed` review is frozen (does not vary with later changes in the database).
+
+### 13.2 Technical
+
+- [ ] All models use `BaseModel` or `ScopedModel` as relevant.
+- [ ] `HistoricalRecords` on all new domain models.
+- [ ] Complete DRF API with permissions, pagination, filters.
+- [ ] MCP tools exposed with docstrings and `@require_perm`.
+- [ ] Data migration populating permissions and groups without overwriting the existing ones.
+- [ ] 100% of UI strings translated to FR, `compilemessages` OK, no duplicate `msgid`.
+- [ ] Correct rendering on mobile + dark mode on all new pages.
+- [ ] Horizontal stepper used for the review workflow.
+- [ ] 2-column layout (no tabs) on the detail page.
+- [ ] pytest test coverage ≥ 80% on the new files.
+
+### 13.3 Auditability
+
+- [ ] `HistoricalRecords` makes it possible to retrieve who modified what and when on the review, the decisions, the ISMS changes.
+- [ ] `snapshot_data` of a closed review is timestamped and immutable (regression-tested).
+- [ ] An external auditor (`Auditor` role) can view any closed review without being able to modify it.
+- [ ] The export produced at T+N is identical to the export produced at the time of closure (for a `closed` review).
+
+---
+
+## 14. Out of scope (for a v+1)
+
+- Qualified electronic signatures (eIDAS) integrated : remain manual in the DOCX.
+- Formalised `Policy` model (currently `IsmsChange.affected_policies` = free text).
+- Automatic email reminders to participants before the review.
+- Pre-configured review templates by industry/certification.
+- PDF export (possibly reusing the `reportlab` pipeline).
+- "Management review process compliance" dashboard (frequency respected, approval delays).
+
+---
+
+## 15. Estimate
+
+| Work package | Effort (person-days) |
 |---|---|
-| Modèles + migrations + admin | 3 |
-| Vues UI + templates + workflow stepper | 6 |
-| Formulaires et validations | 2 |
-| Export DOCX/PPTX enrichi + tendance indicateurs + snapshot | 4 |
-| API DRF | 2 |
+| Models + migrations + admin | 3 |
+| UI views + templates + workflow stepper | 6 |
+| Forms and validations | 2 |
+| Enriched DOCX/PPTX export + indicator trends + snapshot | 4 |
+| DRF API | 2 |
 | MCP tools | 2 |
-| `StakeholderFeedback` (modèle, UI, API, MCP) | 2 |
-| Permissions + groupes + data migration | 1 |
-| Tests (unitaires, intégration, API, MCP) | 4 |
-| i18n + traductions FR | 1 |
-| Documentation (README, CHANGELOG) | 0,5 |
-| **Total** | **~27,5 jours** |
+| `StakeholderFeedback` (model, UI, API, MCP) | 2 |
+| Permissions + groups + data migration | 1 |
+| Tests (unit, integration, API, MCP) | 4 |
+| i18n + FR translations | 1 |
+| Documentation (README, CHANGELOG) | 0.5 |
+| **Total** | **~27.5 days** |
 
 ---
 
-_Fin du document._
+_End of document._
