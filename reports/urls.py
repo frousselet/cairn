@@ -7,6 +7,7 @@ app_name = "reports"
 
 urlpatterns = [
     path("", views.ReportListView.as_view(), name="report-list"),
+    path("table-body/", views.ReportTableBodyView.as_view(), name="report-table-body"),
     path("soa/create/", views.SoaReportCreateView.as_view(), name="soa-create"),
     path("audit/create/", views.AuditReportCreateView.as_view(), name="audit-report-create"),
     # Legacy one-shot management review export (kept for backward compatibility)

@@ -1,97 +1,64 @@
 {% extends "base.html" %}
-{% load i18n ui %}
+{% load i18n ui table_tags %}
 
 {% block title %}{% trans "Reports" %} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header _("Reports") nav="reports:report-list" accent="reports" %}{% endpage_header %}
 
-{# ── Report types ──────────────────────────────────────── #}
-<div class="row g-3 mb-4">
-  <div class="col-md-4 col-lg-3">
-    <div class="card h-100">
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "name" "Name" col="name" %}
+              {% sortable_th "status" "Status" col="status" %}
+              {% sortable_th "created" "Created at" col="created" %}
+              <th data-col="author">{% trans "Created by" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'reports:report-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "reports/report_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  {# Rail: report-generation actions instead of KPI tiles. #}
+  <aside class="list-rail list-rail--kpi">
+    <div class="card">
       <div class="card-body d-flex flex-column">
-        <h5 class="card-title"><i class="bi bi-file-earmark-check me-1"></i>{% trans "Statement of Applicability" %}</h5>
+        <div class="fw-semibold mb-2"><i class="bi bi-file-earmark-check me-1" aria-hidden="true"></i>{% trans "Statement of Applicability" %}</div>
         <p class="card-text text-muted small flex-grow-1">{% trans "Generate a Statement of Applicability (SoA) for one or more frameworks, listing each requirement with its applicability status, justification, and linked risks." %}</p>
-        <a href="{% url 'reports:soa-create' %}" class="btn btn-primary btn-sm mt-2">
-          <i class="bi bi-plus-lg me-1"></i>{% trans "Generate" %}
-        </a>
+        <a href="{% url 'reports:soa-create' %}" class="btn btn-sm btn-primary w-100 mt-2"><i class="bi bi-plus-lg me-1"></i>{% trans "Generate" %}</a>
       </div>
     </div>
-  </div>
-  <div class="col-md-4 col-lg-3">
-    <div class="card h-100">
+    <div class="card">
       <div class="card-body d-flex flex-column">
-        <h5 class="card-title"><i class="bi bi-file-earmark-text me-1"></i>{% trans "Audit report" %}</h5>
+        <div class="fw-semibold mb-2"><i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>{% trans "Audit report" %}</div>
         <p class="card-text text-muted small flex-grow-1">{% trans "Generate an audit report for a completed assessment, including summary statistics, findings, and detailed compliance results per requirement." %}</p>
-        <a href="{% url 'reports:audit-report-create' %}" class="btn btn-primary btn-sm mt-2">
-          <i class="bi bi-plus-lg me-1"></i>{% trans "Generate" %}
-        </a>
+        <a href="{% url 'reports:audit-report-create' %}" class="btn btn-sm btn-primary w-100 mt-2"><i class="bi bi-plus-lg me-1"></i>{% trans "Generate" %}</a>
       </div>
     </div>
-  </div>
-  <div class="col-md-4 col-lg-3">
-    <div class="card h-100">
+    <div class="card">
       <div class="card-body d-flex flex-column">
-        <h5 class="card-title"><i class="bi bi-file-earmark-slides me-1"></i>{% trans "Management review" %}</h5>
+        <div class="fw-semibold mb-2"><i class="bi bi-file-earmark-slides me-1" aria-hidden="true"></i>{% trans "Management review" %}</div>
         <p class="card-text text-muted small flex-grow-1">{% trans "Generate management review materials (presentation or meeting minutes) covering action plans, issues, stakeholders, security performance, risks, and improvement opportunities." %}</p>
-        <a href="{% url 'reports:management-review-create' %}" class="btn btn-primary btn-sm mt-2">
-          <i class="bi bi-plus-lg me-1"></i>{% trans "Generate" %}
-        </a>
+        <a href="{% url 'reports:management-review-create' %}" class="btn btn-sm btn-primary w-100 mt-2"><i class="bi bi-plus-lg me-1"></i>{% trans "Generate" %}</a>
       </div>
     </div>
-  </div>
+  </aside>
 </div>
 
-{# ── Generated reports history ─────────────────────────── #}
-<h4 class="mb-3">{% trans "Generated reports" %}</h4>
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          <th>{% trans "Name" %}</th>
-          <th>{% trans "Status" %}</th>
-          <th>{% trans "Created at" %}</th>
-          <th>{% trans "Created by" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for report in reports %}
-        <tr>
-          <td>
-            <span class="cell-stack">
-              <span style="font-weight:600">{{ report.name }}</span>
-              <span class="cell-sub">{{ report.get_report_type_display }}</span>
-            </span>
-          </td>
-          <td>
-            <span class="badge text-bg-{% if report.status == 'completed' %}success{% elif report.status == 'generating' %}info{% elif report.status == 'failed' %}danger{% else %}secondary{% endif %}">
-              {{ report.get_status_display }}
-            </span>
-          </td>
-          <td>{{ report.created_at|date:"d/m/Y H:i" }}</td>
-          <td>{{ report.created_by|default:"-" }}</td>
-          <td class="text-end">
-            {% if report.file_content %}
-            <a href="{% url 'reports:report-download' report.pk %}" hx-boost="false" download class="btn btn-sm btn-outline-primary" title="{% trans 'Download' %}">
-              <i class="bi bi-download"></i>
-            </a>
-            {% endif %}
-            <a href="{% url 'reports:report-delete' report.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}">
-              <i class="bi bi-trash"></i>
-            </a>
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No report generated yet.") message=_("Generated reports (audit reports, SoA, management review packs) are listed here for download.") colspan=5 %}
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-
-{% include "includes/pagination.html" %}
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}
