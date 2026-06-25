@@ -1892,6 +1892,32 @@ with transaction.atomic():
         ind_phishing, ind_mfa, ind_patch, ind_incidents, ind_backup, ind_mttr]]
     elise.dashboard_indicator_charts = [str(i.pk) for i in [
         ind_phishing, ind_mfa, ind_patch, ind_backup, ind_mttr]]
+
+    # Curated default dashboard (captured from the demo dashboard): overall
+    # compliance, a row of KPI indicator tiles, the analytics widgets, and the
+    # Ask Cairn briefing in the rail. The indicator widgets are bound to the
+    # seeded indicators (the exact set / order is just an example) so the layout
+    # is valid on a fresh seed.
+    _dash_indicators = (predefined + [
+        ind_phishing, ind_mfa, ind_patch, ind_incidents, ind_backup, ind_mttr])[:8]
+    _indicator_widgets = [
+        {"key": f"indicator-{ind.pk}", "id": "indicator", "size": "1x1", "zone": "main",
+         "visible": True, "params": {"indicator": str(ind.pk), "show_chart": True}}
+        for ind in _dash_indicators
+    ]
+    elise.dashboard_layout = [
+        {"key": "overall_compliance", "id": "overall_compliance", "size": "4x1", "zone": "main", "visible": True, "params": {"show_target": True, "target": 90}},
+        *_indicator_widgets,
+        {"key": "ongoing_audits", "id": "ongoing_audits", "size": "1x2", "zone": "main", "visible": False, "params": {}},
+        {"key": "active_objectives", "id": "active_objectives", "size": "2x3", "zone": "main", "visible": True, "params": {"sort": "default", "order": []}},
+        {"key": "compliance_by_framework", "id": "compliance_by_framework", "size": "2x3", "zone": "main", "visible": True, "params": {"sort": "default", "order": []}},
+        {"key": "risk_treatment_flow", "id": "risk_treatment_flow", "size": "4x3", "zone": "main", "visible": True, "params": {}},
+        {"key": "risk_matrix_current", "id": "risk_matrix_current", "size": "2x3", "zone": "main", "visible": True, "params": {}},
+        {"key": "risk_matrix_residual", "id": "risk_matrix_residual", "size": "2x3", "zone": "main", "visible": True, "params": {}},
+        {"key": "upcoming_deadlines", "id": "upcoming_deadlines", "size": "1x2", "zone": "rail_top", "visible": False, "params": {}},
+        {"key": "priority_risks", "id": "priority_risks", "size": "1x2", "zone": "rail_top", "visible": False, "params": {}},
+        {"key": "ask_cairn", "id": "ask_cairn", "size": "2x2", "zone": "rail_top", "visible": True, "params": {}},
+    ]
     elise.save()
 
     # ------------------------------------------------------------ housekeeping
