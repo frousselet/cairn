@@ -17,12 +17,13 @@ from accounts.api.serializers import (
     LoginSerializer,
     MeSerializer,
     PermissionSerializer,
+    SavedFilterSerializer,
     UserCreateSerializer,
     UserDetailSerializer,
     UserListSerializer,
 )
 from accounts.constants import AccessEventType, FailureReason
-from accounts.models import AccessLog, CompanySettings, Group, Permission, User
+from accounts.models import AccessLog, CompanySettings, Group, Permission, SavedFilter, User
 
 
 # ── Auth API Views ──────────────────────────────────────────
@@ -396,3 +397,38 @@ class NotificationViewSet(
             is_read=True, read_at=timezone.now()
         )
         return Response({"marked_read": updated})
+
+
+class SavedFilterViewSet(viewsets.ModelViewSet):
+    """Per-user named list filters; reads include filters shared with everyone,
+    but only the owner may modify or delete one. Filter by ?view_key=."""
+
+    serializer_class = SavedFilterSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        from django.db.models import Q
+
+        user = self.request.user
+        qs = SavedFilter.objects.filter(Q(owner=user) | Q(is_shared=True)).select_related("owner")
+        view_key = self.request.query_params.get("view_key")
+        if view_key:
+            qs = qs.filter(view_key=view_key)
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+    def _assert_owner(self, instance):
+        from rest_framework.exceptions import PermissionDenied
+
+        if instance.owner_id != self.request.user.id:
+            raise PermissionDenied("Only the owner can modify this saved filter.")
+
+    def perform_update(self, serializer):
+        self._assert_owner(serializer.instance)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self._assert_owner(instance)
+        instance.delete()

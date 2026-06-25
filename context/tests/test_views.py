@@ -385,6 +385,50 @@ class TestAdvancedFilters:
         assert any(o["value"] == "critical" for o in impact["options"])
 
 
+class TestSavedFilters:
+    """Saved filters: list context (own + shared) and the CRUD API."""
+
+    def test_context_lists_own_and_shared(self):
+        from accounts.models import SavedFilter
+
+        client, user = _superuser_client()
+        other = UserFactory()
+        SavedFilter.objects.create(owner=user, view_key="context.issue", name="Mine", query="status=active")
+        SavedFilter.objects.create(owner=other, view_key="context.issue", name="SharedOne", is_shared=True)
+        SavedFilter.objects.create(owner=other, view_key="context.issue", name="PrivateOne")
+        resp = client.get(reverse("context:issue-list"))
+        names = {sf["name"] for sf in resp.context["saved_filters"]}
+        assert {"Mine", "SharedOne"} <= names
+        assert "PrivateOne" not in names
+        assert resp.context["saved_filter_view_key"] == "context.issue"
+
+    def test_api_create_and_list(self):
+        from accounts.models import SavedFilter
+
+        client, user = _superuser_client()
+        resp = client.post(
+            "/api/v1/saved-filters/",
+            data=json.dumps({"view_key": "context.issue", "name": "F1", "query": "status=active"}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 201
+        assert SavedFilter.objects.filter(owner=user, name="F1").exists()
+        resp = client.get("/api/v1/saved-filters/?view_key=context.issue")
+        assert resp.status_code == 200
+        items = resp.json()["data"]
+        assert any(i["name"] == "F1" for i in items)
+
+    def test_api_cannot_modify_others(self):
+        from accounts.models import SavedFilter
+
+        client, _ = _superuser_client()
+        other = UserFactory()
+        sf = SavedFilter.objects.create(owner=other, view_key="context.issue", name="Foreign", is_shared=True)
+        resp = client.delete(f"/api/v1/saved-filters/{sf.id}/")
+        assert resp.status_code in (403, 404)
+        assert SavedFilter.objects.filter(pk=sf.id).exists()
+
+
 class TestScopeDetailView:
     def test_requires_login(self):
         scope = ScopeFactory()
