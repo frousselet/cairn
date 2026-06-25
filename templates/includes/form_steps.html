@@ -10,13 +10,11 @@
 </div>
 {% endif %}
 {% if form.is_multistep %}
-  <div class="mform-steps" data-mform-steps>
   {% for step in form.iter_steps %}
-    <section class="mform-step" data-mform-step="{{ step.index }}"{% if not step.is_first %} hidden{% endif %}>
-      {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
-    </section>
+  <section class="mform-step" data-mform-step="{{ step.index }}"{% if not step.is_first %} hidden{% endif %}>
+    {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
+  </section>
   {% endfor %}
-  </div>
 {% else %}
   {% for step in form.iter_steps %}
     {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}

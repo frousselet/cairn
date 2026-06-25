@@ -3337,23 +3337,6 @@
     .mform-meter-text { font-size: .7rem; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
     .form-required { color: var(--text-muted); font-weight: 400; }
 
-    /* ── Multi-step body : constant height across steps ──────
-     * All steps are stacked in a single CSS grid cell, so the body is
-     * always as tall as the TALLEST step and never grows or shrinks when
-     * navigating Back / Next. The inactive steps keep their layout box
-     * (visibility:hidden, not display:none) so they still drive the cell
-     * height; the JS only toggles the [hidden] attribute as before. */
-    .mform-steps { display: grid; grid-template-columns: 1fr; align-items: start; }
-    .mform-steps > .mform-step { grid-area: 1 / 1; min-width: 0; }
-    .mform-steps > .mform-step[hidden] {
-      /* !important beats Bootstrap Reboot's `[hidden]{display:none!important}`,
-         which would otherwise pull the step out of the grid and collapse the
-         cell back to the active step's height. */
-      display: block !important;
-      visibility: hidden;      /* stays in layout (sizes the cell), out of tab order */
-      pointer-events: none;
-    }
-
     /* ── Icon picker widget ────────────────────────── */
     .icon-picker { position: relative; }
     .icon-picker-popover {
@@ -3489,6 +3472,85 @@
       display: flex;
       justify-content: flex-end;
       flex-shrink: 0;
+    }
+
+    /* ── Multi-step side navigation (floating arrows outside the modal) ──
+     * Prev (left) and Next (right) sit just outside the dialog, vertically
+     * centred, sharing the frosted button chrome. On the last step the Next
+     * arrow becomes a navy check; clicking it spins while the item saves.
+     * Cancel is the header X or a backdrop click - there is no footer. */
+    #itemDrawer .modal-dialog { position: relative; }
+    .mform-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3rem;
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid var(--border-glass);
+      background: var(--glass);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-md);
+      color: var(--text-secondary);
+      font-size: 1.15rem;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 5;
+      /* .modal-dialog is pointer-events:none (so gaps click through to the
+         backdrop); re-enable it on the arrows themselves. */
+      pointer-events: auto;
+      transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+    }
+    .mform-nav[hidden] { display: none; }
+    .mform-nav--prev { left: -4rem; }
+    .mform-nav--next { right: -4rem; }
+    .mform-nav:hover {
+      background: var(--glass-hover);
+      color: var(--text-primary);
+      border-color: var(--border-light);
+      box-shadow: var(--shadow-lg);
+    }
+    .mform-nav:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-primary) 25%, transparent);
+    }
+    /* Last step : the Next arrow becomes the solid navy "save" check. */
+    .mform-nav--next.is-final {
+      background: var(--btn-primary-bg);
+      color: var(--btn-primary-fg);
+      border-color: transparent;
+    }
+    .mform-nav--next.is-final:hover {
+      background: var(--btn-primary-bg-hover);
+      color: var(--btn-primary-fg);
+    }
+    /* Saving : icon fades out, a spinner takes its place, clicks blocked. */
+    .mform-nav.is-loading { pointer-events: none; }
+    .mform-nav.is-loading i { visibility: hidden; }
+    .mform-nav.is-loading::after {
+      content: "";
+      position: absolute;
+      width: 1.15rem;
+      height: 1.15rem;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: htmx-spin .6s linear infinite;
+    }
+    /* Narrow screens : no room beside the dialog, so the arrows tuck into the
+     * lower corners, floating over the (footerless) multi-step body. */
+    @media (max-width: 575.98px) {
+      .mform-nav { top: auto; bottom: .85rem; transform: none; width: 2.75rem; height: 2.75rem; }
+      .mform-nav--prev { left: .85rem; }
+      .mform-nav--next { right: .85rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .mform-nav.is-loading::after { animation-duration: 1.2s; }
     }
 
     /* ── Sections ─────────────────────────────────── */
@@ -7235,6 +7297,21 @@
   {% endcomment %}
   <div class="modal fade" tabindex="-1" id="itemDrawer" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
+      {% comment %}
+        Multi-step navigation lives OUTSIDE the modal as floating side arrows.
+        The left arrow goes back; the right arrow advances and, on the last
+        step, becomes a check that submits (then spins while saving). Hidden
+        unless a multi-step form is open. Cancel is the header X / backdrop.
+      {% endcomment %}
+      <button type="button" class="mform-nav mform-nav--prev" data-mform-prev hidden aria-label="{% trans 'Previous step' %}">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="mform-nav mform-nav--next" data-mform-next hidden
+              data-required-msg="{% trans 'Fill the required fields to continue.' %}"
+              data-label-next="{% trans 'Next step' %}" data-label-save="{% trans 'Save' %}"
+              aria-label="{% trans 'Next step' %}">
+        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+      </button>
       <div id="drawer-form-content" class="modal-content"></div>
     </div>
   </div>
@@ -7316,6 +7393,11 @@
     /* Cleanup modal content on hide (X, ESC, backdrop, or form save). */
     drawerEl.addEventListener('hidden.bs.modal', function() {
       document.getElementById('drawer-form-content').innerHTML = '';
+      /* Reset the floating side-nav arrows so they never linger between opens. */
+      ['[data-mform-prev]', '[data-mform-next]'].forEach(function(sel) {
+        var b = drawerEl.querySelector(sel);
+        if (b) { b.hidden = true; b.classList.remove('is-loading', 'is-final'); }
+      });
       if (isOnDrawerEntry()) {
         internalHide = false;
         history.back();
@@ -7379,14 +7461,29 @@
       update();
     }
 
-    /* ── Multi-step: wizard with stepper, Back / Next / Save ── */
+    /* Hide / reset the floating side-nav arrows. initStepper re-shows them
+       for multi-step forms; single-step and non-form content leave them off. */
+    function resetDrawerNav() {
+      var modal = document.getElementById('itemDrawer');
+      if (!modal) return;
+      ['[data-mform-prev]', '[data-mform-next]'].forEach(function(sel) {
+        var b = modal.querySelector(sel);
+        if (b) { b.hidden = true; b.classList.remove('is-loading', 'is-final'); }
+      });
+    }
+
+    /* ── Multi-step wizard, driven by the external side arrows ──
+     * Prev (left) / Next (right) float outside the modal. On the last step
+     * Next becomes a save check that, on click, spins while the item saves.
+     * Cancel is the header X or a backdrop click - there is no footer. */
     function initStepper(form) {
       var steps = Array.prototype.slice.call(form.querySelectorAll('[data-mform-step]'));
       var pills = Array.prototype.slice.call(form.querySelectorAll('[data-mform-pill]'));
-      var backBtn = form.querySelector('[data-mform-back]');
-      var nextBtn = form.querySelector('[data-mform-next]');
       var submitBtn = form.querySelector('[data-mform-submit]');
-      if (!steps.length) return;
+      var modal = form.closest('.modal');
+      var prevBtn = modal ? modal.querySelector('[data-mform-prev]') : null;
+      var nextBtn = modal ? modal.querySelector('[data-mform-next]') : null;
+      if (!steps.length || !prevBtn || !nextBtn) return;
 
       var current = 0;
       /* If the server re-rendered with errors, open the first step that
@@ -7403,10 +7500,15 @@
           if (i === current) { p.setAttribute('aria-current', 'step'); }
           else { p.removeAttribute('aria-current'); }
         });
-        if (backBtn) backBtn.hidden = (current === 0);
         var last = (current === steps.length - 1);
-        if (nextBtn) nextBtn.hidden = last;
-        if (submitBtn) submitBtn.hidden = !last;
+        prevBtn.hidden = (current === 0);
+        nextBtn.hidden = false;
+        nextBtn.classList.remove('is-loading');
+        nextBtn.classList.toggle('is-final', last);
+        var icon = nextBtn.querySelector('i');
+        if (icon) icon.className = 'bi ' + (last ? 'bi-check-lg' : 'bi-arrow-right');
+        var lbl = nextBtn.getAttribute(last ? 'data-label-save' : 'data-label-next');
+        if (lbl) nextBtn.setAttribute('aria-label', lbl);
         var firstField = steps[current].querySelector('input, select, textarea');
         if (firstField) { try { firstField.focus(); } catch (_) {} }
       }
@@ -7421,7 +7523,7 @@
             if (wrap && !wrap.querySelector('.mform-step-error')) {
               var msg = document.createElement('div');
               msg.className = 'invalid-feedback d-block mform-step-error';
-              msg.textContent = nextBtn ? (nextBtn.getAttribute('data-required-msg') || '') : '';
+              msg.textContent = nextBtn.getAttribute('data-required-msg') || '';
               wrap.appendChild(msg);
             }
           } else {
@@ -7435,17 +7537,33 @@
         return ok;
       }
 
-      if (nextBtn) nextBtn.addEventListener('click', function() {
-        if (validateCurrent() && current < steps.length - 1) { current++; render(); }
-      });
-      if (backBtn) backBtn.addEventListener('click', function() {
-        if (current > 0) { current--; render(); }
-      });
+      function advance() {
+        if (!validateCurrent()) return;
+        if (current < steps.length - 1) {
+          current++;
+          render();
+        } else {
+          /* Last step : spin the check and submit (HTMX intercepts). */
+          nextBtn.classList.add('is-loading');
+          if (form.requestSubmit) { form.requestSubmit(submitBtn || undefined); }
+          else if (submitBtn) { submitBtn.click(); }
+          else { form.submit(); }
+        }
+      }
+
+      /* Persistent shell arrows : assign (not add) so re-init never stacks
+         duplicate handlers. */
+      nextBtn.onclick = advance;
+      prevBtn.onclick = function() { if (current > 0) { current--; render(); } };
       pills.forEach(function(p, i) {
-        p.addEventListener('click', function() {
-          /* Only allow jumping back to an already-seen step. */
-          if (i < current) { current = i; render(); }
-        });
+        p.onclick = function() { if (i < current) { current = i; render(); } };
+      });
+      /* Enter advances / submits instead of submitting the form prematurely. */
+      form.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target && e.target.tagName !== 'TEXTAREA' && !e.target.isContentEditable) {
+          e.preventDefault();
+          advance();
+        }
       });
       render();
     }
@@ -7456,10 +7574,22 @@
       var form = root.querySelector('form[data-mform]');
       if (!form || form.dataset.mformReady) return;
       form.dataset.mformReady = '1';
+      /* Reset the side-nav; initStepper re-shows it for multi-step forms. */
+      resetDrawerNav();
       if (form.querySelector('[data-mform-stepper]')) initStepper(form);
       var meter = form.querySelector('[data-mform-meter]');
       if (meter) initMeter(form, meter);
     }
+
+    /* Stop the check spinner if the save request ends without closing the
+       modal (validation re-render handles its own reset via initStepper). */
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+      var t = evt.detail && evt.detail.target;
+      if (t && t.id === 'drawer-form-content') {
+        var nb = document.querySelector('#itemDrawer [data-mform-next]');
+        if (nb) nb.classList.remove('is-loading');
+      }
+    });
 
     document.body.addEventListener('htmx:afterSettle', function(evt) {
       if (evt.detail.target && evt.detail.target.id === 'drawer-form-content') {
