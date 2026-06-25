@@ -2,29 +2,29 @@
 
 `risks.models.risk_assessment.RiskAssessment`
 
-Campagne d'appréciation des risques conduite selon l'une ou l'autre méthodologie (ISO 27005 ou EBIOS RM). Entité racine qui regroupe tous les éléments d'analyse.
+Risk assessment campaign conducted following one or the other methodology (ISO 27005 or EBIOS RM). Root entity that groups together all analysis elements.
 
-## 2.1 Entité : RiskAssessment (Appréciation des risques)
+## 2.1 Entity: RiskAssessment (Risk assessment)
 
-Représente une campagne d'appréciation des risques, conduite selon l'une ou l'autre méthodologie. C'est l'entité racine qui regroupe tous les éléments d'analyse.
+Represents a risk assessment campaign, conducted following one or the other methodology. It is the root entity that groups together all analysis elements.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `reference` | string | requis, unique | Code de référence (ex. RA-2026-001) |
-| `name` | string | requis, max 255 | Intitulé de l'appréciation |
-| `description` | text | optionnel | Description et contexte |
-| `methodology` | enum | requis | `iso27005`, `ebios_rm` |
-| `assessment_date` | date | requis | Date de réalisation |
-| `assessor_id` | relation | FK → User, requis | Responsable de l'appréciation |
-| `team_members` | relation | M2M → User | Membres de l'équipe d'appréciation |
-| `risk_criteria_id` | relation | FK → RiskCriteria, requis | Critères de risque appliqués |
-| `status` | enum | requis | `draft`, `in_progress`, `completed`, `validated`, `archived` |
-| `validated_by` | relation | FK → User, optionnel | Validateur |
-| `validated_at` | datetime | optionnel | Date de validation |
-| `next_review_date` | date | optionnel | Prochaine date de revue |
-| `summary` | text | optionnel | Synthèse des résultats |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `scope_id` | relation | FK → Scope, required | Attached scope |
+| `reference` | string | required, unique | Reference code (e.g. RA-2026-001) |
+| `name` | string | required, max 255 | Assessment title |
+| `description` | text | optional | Description and context |
+| `methodology` | enum | required | `iso27005`, `ebios_rm` |
+| `assessment_date` | date | required | Date carried out |
+| `assessor_id` | relation | FK → User, required | Assessment owner |
+| `team_members` | relation | M2M → User | Members of the assessment team |
+| `risk_criteria_id` | relation | FK → RiskCriteria, required | Applied risk criteria |
+| `status` | enum | required | `draft`, `in_progress`, `completed`, `validated`, `archived` |
+| `validated_by` | relation | FK → User, optional | Validator |
+| `validated_at` | datetime | optional | Validation date |
+| `next_review_date` | date | optional | Next review date |
+| `summary` | text | optional | Summary of results |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |

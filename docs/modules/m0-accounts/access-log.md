@@ -2,16 +2,16 @@
 
 `accounts.models.access_log.AccessLog`
 
-Enregistre chaque événement d'authentification pour la traçabilité et la détection d'anomalies.
+Records every authentication event for traceability and anomaly detection.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `timestamp` | datetime | auto | Horodatage UTC |
-| `user_id` | relation | FK → User, optionnel | Utilisateur (null si login échoué sur un compte inexistant) |
-| `email_attempted` | string | requis | Email utilisé pour la tentative |
-| `event_type` | enum | requis | `login_success`, `login_failed`, `logout`, `token_refresh`, `password_change`, `password_reset_request`, `password_reset_complete`, `account_locked`, `account_unlocked` |
-| `ip_address` | string | requis | Adresse IP |
-| `user_agent` | string | optionnel | User-agent |
-| `failure_reason` | string | optionnel | Raison de l'échec (ex. `invalid_password`, `account_locked`, `account_inactive`) |
-| `metadata` | json | optionnel | Données complémentaires |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `timestamp` | datetime | auto | UTC timestamp |
+| `user_id` | relation | FK → User, optional | User (null if the sign-in failed on a non-existent account) |
+| `email_attempted` | string | required | Email used for the attempt |
+| `event_type` | enum | required | `login_success`, `login_failed`, `logout`, `token_refresh`, `password_change`, `password_reset_request`, `password_reset_complete`, `account_locked`, `account_unlocked` |
+| `ip_address` | string | required | IP address |
+| `user_agent` | string | optional | User-agent |
+| `failure_reason` | string | optional | Reason for the failure (e.g. `invalid_password`, `account_locked`, `account_inactive`) |
+| `metadata` | json | optional | Additional data |

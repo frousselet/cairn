@@ -2,22 +2,22 @@
 
 `risks.models.ebios.sr_ov_pair.RiskSourceObjectivePair`
 
-Couple SR/OV : association formelle d'une source de risque et d'un objectif visé, évaluée en pertinence. Préfixe de référence : `ESOV`.
+Risk-source / targeted-objective pair (SR-OV): the formal association of a risk source and a targeted objective, assessed for relevance. Reference prefix: `ESOV`.
 
-## 4.2.3 Entité : RiskSourceObjectivePair (Couple SR/OV)
+## 4.2.3 Entity: RiskSourceObjectivePair (Risk-source / targeted-objective pair (SR-OV))
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> [RiskAssessment](../risk-assessment.md), requis | Appréciation parente |
-| `reference` | string | requis, unique, préfixe ESOV | Code (ex. ESOV-1) |
-| `risk_source_id` | relation | FK -> [RiskSource](risk-source.md), requis | SR |
-| `targeted_objective_id` | relation | FK -> [TargetedObjective](targeted-objective.md), requis | OV |
-| `relevance` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `relevance_justification` | text | optionnel | Justification |
-| `priority_score` | integer | calculé, 1 à 4 | Score agrégé : f(`risk_source.threat_level`, `relevance`) |
-| `is_retained` | boolean | requis, défaut true | Retenu pour l'atelier 3 |
-| `retention_justification` | text | optionnel | Justification |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
+| `id` | UUID | PK, auto | Unique identifier |
+| `assessment_id` | relation | FK -> [RiskAssessment](../risk-assessment.md), required | Parent assessment |
+| `reference` | string | required, unique, prefix ESOV | Code (e.g. ESOV-1) |
+| `risk_source_id` | relation | FK -> [RiskSource](risk-source.md), required | SR |
+| `targeted_objective_id` | relation | FK -> [TargetedObjective](targeted-objective.md), required | OV |
+| `relevance` | enum | required | `low`, `medium`, `high`, `critical` |
+| `relevance_justification` | text | optional | Justification |
+| `priority_score` | integer | computed, 1 to 4 | Aggregated score: f(`risk_source.threat_level`, `relevance`) |
+| `is_retained` | boolean | required, default true | Retained for workshop 3 |
+| `retention_justification` | text | optional | Justification |
+| `created_by`, `created_at`, `updated_at` | - | auto | Standard |
 
-> Contrainte d'unicité : `(assessment_id, risk_source_id, targeted_objective_id)`.
+> Uniqueness constraint: `(assessment_id, risk_source_id, targeted_objective_id)`.

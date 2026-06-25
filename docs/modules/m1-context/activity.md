@@ -2,23 +2,23 @@
 
 `context.models.activity.Activity`
 
-Représente une activité ou un processus métier de l'organisme.
+Represents a business activity or process of the organization.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `reference` | string | requis, unique | Code de référence (ex. ACT-001) |
-| `name` | string | requis, max 255 | Nom de l'activité |
-| `description` | text | optionnel | Description détaillée |
-| `type` | enum | requis | `core_business`, `support`, `management` |
-| `criticality` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `owner_id` | relation | FK → User, requis | Responsable de l'activité |
-| `parent_activity_id` | relation | FK → Activity, optionnel | Activité parente (hiérarchie) |
-| `related_stakeholders` | relation | M2M → Stakeholder | Parties intéressées impliquées |
-| `related_objectives` | relation | M2M → Objective | Objectifs contributifs |
-| `linked_assets` | relation | M2M → EssentialAsset | Biens essentiels supportant l'activité (module Actifs) |
-| `status` | enum | requis | `active`, `inactive`, `planned` |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `scope_id` | relation | FK → Scope, required | Linked scope |
+| `reference` | string | required, unique | Reference code (e.g. ACT-001) |
+| `name` | string | required, max 255 | Activity name |
+| `description` | text | optional | Detailed description |
+| `type` | enum | required | `core_business`, `support`, `management` |
+| `criticality` | enum | required | `low`, `medium`, `high`, `critical` |
+| `owner_id` | relation | FK → User, required | Activity owner |
+| `parent_activity_id` | relation | FK → Activity, optional | Parent activity (hierarchy) |
+| `related_stakeholders` | relation | M2M → Stakeholder | Stakeholders involved |
+| `related_objectives` | relation | M2M → Objective | Contributing objectives |
+| `linked_assets` | relation | M2M → EssentialAsset | Essential assets supporting the activity (Assets module) |
+| `status` | enum | required | `active`, `inactive`, `planned` |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |

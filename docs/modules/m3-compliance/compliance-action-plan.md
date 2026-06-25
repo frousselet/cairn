@@ -2,130 +2,130 @@
 
 `compliance.models.action_plan.ComplianceActionPlan`
 
-Plan d'action visant à corriger un écart de conformité constaté lors d'une [évaluation](compliance-assessment.md), à mitiger un [risque](../m4-risks/risk.md), ou à traiter le constat issu d'une revue de direction. Pilote son cycle de vie via un workflow Kanban à 7 états et conserve l'historique complet des transitions.
+Action plan aimed at remediating a compliance gap identified during an [assessment](compliance-assessment.md), mitigating a [risk](../m4-risks/risk.md), or addressing a finding from a management review. It drives its lifecycle through a 7-state Kanban workflow and retains the full history of transitions.
 
-## Champs
+## Fields
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `reference` | string | auto-généré `CAPL-N`, unique | Référence métier |
-| `scopes` | relation | M2M -> Scope | Périmètres SMSI concernés |
-| `name` | string | requis, max 255 | Intitulé du plan d'action |
-| `description` | text | optionnel, HTML | Description détaillée |
-| `gap_description` | text | requis, HTML | Description de l'écart à combler |
-| `remediation_plan` | text | requis, HTML | Plan de remédiation |
-| `priority` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `owner` | relation | FK -> User, requis, PROTECT | Superviseur (responsable du suivi) |
-| `assignees` | relation | M2M -> User | Affectés (réalisateurs du plan) |
-| `requirements` | relation | M2M -> Requirement | Exigences que le plan adresse |
-| `findings` | relation | M2M -> Finding | Constats d'audit que le plan adresse |
-| `risks` | relation | M2M -> Risk | Risques que le plan mitige |
-| `originating_review` | relation | FK -> ManagementReview, optionnel | Revue de direction qui a généré ce plan |
-| `start_date` | date | optionnel | Date de début prévue |
-| `target_date` | date | requis | Date cible d'achèvement |
-| `completion_date` | date | optionnel | Date d'achèvement effective. Renseignée automatiquement à la transition vers `closed`. |
-| `progress_percentage` | integer | défaut 0, 0-100 | Pourcentage d'avancement. Forcé à 100 à la transition vers `closed`. |
-| `cost_estimate` | decimal(12,2) | optionnel | Estimation du coût |
-| `status` | enum | requis, défaut `new` | Voir « Workflow » ci-dessous. **Lecture seule via REST/MCP standard** : utiliser l'outil `action_plan_transition` pour changer de statut. |
-| `is_overdue` | boolean | calculé, lecture seule | `true` si `target_date` est dépassée et `status` n'est ni `closed` ni `cancelled`. Calculé à la lecture, pas stocké. |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `reference` | string | auto-generated `CAPL-N`, unique | Business reference |
+| `scopes` | relation | M2M -> Scope | Relevant ISMS scopes |
+| `name` | string | required, max 255 | Action plan title |
+| `description` | text | optional, HTML | Detailed description |
+| `gap_description` | text | required, HTML | Description of the gap to be closed |
+| `remediation_plan` | text | required, HTML | Remediation plan |
+| `priority` | enum | required | `low`, `medium`, `high`, `critical` |
+| `owner` | relation | FK -> User, required, PROTECT | Supervisor (responsible for follow-up) |
+| `assignees` | relation | M2M -> User | Assignees (those who carry out the plan) |
+| `requirements` | relation | M2M -> Requirement | Requirements the plan addresses |
+| `findings` | relation | M2M -> Finding | Audit findings the plan addresses |
+| `risks` | relation | M2M -> Risk | Risks the plan mitigates |
+| `originating_review` | relation | FK -> ManagementReview, optional | Management review that generated this plan |
+| `start_date` | date | optional | Planned start date |
+| `target_date` | date | required | Target completion date |
+| `completion_date` | date | optional | Actual completion date. Set automatically on transition to `closed`. |
+| `progress_percentage` | integer | default 0, 0-100 | Progress percentage. Forced to 100 on transition to `closed`. |
+| `cost_estimate` | decimal(12,2) | optional | Cost estimate |
+| `status` | enum | required, default `new` | See "Workflow" below. **Read-only via standard REST/MCP**: use the `action_plan_transition` tool to change the status. |
+| `is_overdue` | boolean | computed, read-only | `true` if `target_date` has passed and `status` is neither `closed` nor `cancelled`. Computed on read, not stored. |
 | `tags` | relation | M2M -> Tag | |
-| `is_approved` / `approved_by` / `approved_at` | bool / FK -> User / datetime | optionnel | Approbation hors workflow |
-| `version` | int | auto-incrémenté | |
+| `is_approved` / `approved_by` / `approved_at` | bool / FK -> User / datetime | optional | Approval outside the workflow |
+| `version` | int | auto-incremented | |
 | `created_by` | relation | FK -> User | |
 | `created_at` / `updated_at` | datetime | auto | |
 
 ## Workflow
 
-Le plan d'action suit un workflow Kanban à 7 états plus `cancelled`. Chaque transition est validée par `ComplianceActionPlan.transition_to(new_status, user, comment)` ; les transitions arrière (« refus ») exigent un commentaire obligatoire et sont enregistrées comme `is_refusal=True` dans l'historique.
+The action plan follows a 7-state Kanban workflow plus `cancelled`. Each transition is validated by `ComplianceActionPlan.transition_to(new_status, user, comment)`; backward transitions ("refusal") require a mandatory comment and are recorded as `is_refusal=True` in the history.
 
 ```text
 new -> to_define -> to_validate -> to_implement -> implementation_to_validate -> validated -> closed
                   <-              <-              <-                            <-
-                                              (refus avec commentaire obligatoire)
+                                              (refusal with mandatory comment)
 
-(toutes les étapes <= implementation_to_validate) -> cancelled  (terminal)
+(all steps <= implementation_to_validate) -> cancelled  (terminal)
 ```
 
-| Statut | Sens |
+| Status | Direction |
 |---|---|
-| `new` | Brouillon créé, en attente de définition |
-| `to_define` | Définition en cours (préciser le plan de remédiation, le périmètre, les ressources) |
-| `to_validate` | Définition soumise, en attente de validation par le superviseur |
-| `to_implement` | Définition validée, en attente d'implémentation par les affectés |
-| `implementation_to_validate` | Implémentation soumise, en attente de validation finale |
-| `validated` | Implémentation validée, prêt à clore |
-| `closed` | Plan terminé (terminal). `completion_date` et `progress_percentage=100` sont auto-renseignés à l'entrée. |
-| `cancelled` | Plan annulé (terminal). Accessible depuis tout statut sauf `validated`, `closed` et `cancelled`. |
+| `new` | Draft created, pending definition |
+| `to_define` | Definition in progress (specify the remediation plan, scope, resources) |
+| `to_validate` | Definition submitted, pending validation by the supervisor |
+| `to_implement` | Definition validated, pending implementation by the assignees |
+| `implementation_to_validate` | Implementation submitted, pending final validation |
+| `validated` | Implementation validated, ready to close |
+| `closed` | Plan completed (terminal). `completion_date` and `progress_percentage=100` are auto-populated on entry. |
+| `cancelled` | Plan cancelled (terminal). Reachable from any status except `validated`, `closed` and `cancelled`. |
 
-> Note UI : le plan d'action conserve ce cycle de vie à 7 états sur le modèle, mais il n'a plus de tableau Kanban dédié. La page `/compliance/action-plans/` est désormais la liste, les transitions se font depuis la page de détail, et les plans apparaissent dans le tableau Kanban global **To do / Doing / Done** (`/kanban/`, voir [governance/kanban.md](../governance/kanban.md)).
+> UI note: the action plan keeps this 7-state lifecycle on the model, but it no longer has a dedicated Kanban board. The `/compliance/action-plans/` page is now the list, transitions are performed from the detail page, and plans appear on the global Kanban board **To do / Doing / Done** (`/kanban/`, see [governance/kanban.md](../governance/kanban.md)).
 
-### Transitions et permissions
+### Transitions and permissions
 
-- **Avancement** : chaque transition forward exige la permission `compliance.action_plan.update` au minimum, et certaines étapes de validation peuvent exiger `compliance.action_plan.approve` (configurable).
-- **Refus** : transition arrière depuis `to_validate -> to_define`, `implementation_to_validate -> to_implement`, etc. Le `comment` est requis pour tracer la raison du refus. La transition est enregistrée en `ActionPlanTransition.is_refusal=True`.
-- **Annulation** : `cancelled` est atteignable depuis `new`, `to_define`, `to_validate`, `to_implement`, `implementation_to_validate` (cf. `ACTION_PLAN_CANCELLABLE_STATUSES`). Une fois `validated` ou `closed`, l'annulation n'est plus possible.
-- **Historique** : chaque transition crée un `ActionPlanTransition` (`from_status`, `to_status`, `performed_by`, `comment`, `is_refusal`, `created_at`). Le détail est accessible via `assessment.transitions.all().order_by('created_at')`.
+- **Progress**: each forward transition requires at least the `compliance.action_plan.update` permission, and some validation steps may require `compliance.action_plan.approve` (configurable).
+- **Refusal**: backward transition from `to_validate -> to_define`, `implementation_to_validate -> to_implement`, etc. The `comment` is required to record the reason for the refusal. The transition is recorded as `ActionPlanTransition.is_refusal=True`.
+- **Cancellation**: `cancelled` is reachable from `new`, `to_define`, `to_validate`, `to_implement`, `implementation_to_validate` (see `ACTION_PLAN_CANCELLABLE_STATUSES`). Once `validated` or `closed`, cancellation is no longer possible.
+- **History**: each transition creates an `ActionPlanTransition` (`from_status`, `to_status`, `performed_by`, `comment`, `is_refusal`, `created_at`). The detail is accessible via `assessment.transitions.all().order_by('created_at')`.
 
-L'API expose `GET /api/v1/compliance/action-plans/<uuid>/allowed-transitions/` (et le MCP `action_plan_allowed_transitions`) qui retourne la liste des transitions possibles depuis le statut courant pour l'utilisateur courant, en tenant compte de ses permissions. C'est l'API à appeler avant de proposer une action UI ou un outil MCP de transition.
+The API exposes `GET /api/v1/compliance/action-plans/<uuid>/allowed-transitions/` (and the MCP `action_plan_allowed_transitions`), which returns the list of transitions available from the current status for the current user, taking their permissions into account. This is the API to call before offering a UI action or an MCP transition tool.
 
-## Règles de gestion
+## Business rules
 
-| ID | Règle |
+| ID | Rule |
 |---|---|
-| RG-CAP-01 | Le `status` n'est pas modifiable directement via `update_compliance_action_plan` : passer par `action_plan_transition` qui applique les règles de workflow, le contrôle de permission, et écrit l'historique. |
-| RG-CAP-02 | Une transition arrière (refus) exige un `comment` non vide. La requête est rejetée avec un 400 explicite si le commentaire manque. |
-| RG-CAP-03 | À la transition vers `closed`, `completion_date` est forcée à la date du jour et `progress_percentage` est forcé à 100. La complétion RP-02 est donc attachée au statut terminal `closed`. |
-| RG-CAP-04 | `is_overdue` est une propriété calculée, vraie ssi `target_date < today` et `status not in (closed, cancelled)`. Sert aux indicateurs et aux filtres « plans en retard ». Pas de migration automatique du statut : le plan reste dans son état Kanban tant qu'un opérateur ne l'a pas avancé ou clos. |
+| RG-CAP-01 | The `status` is not directly modifiable via `update_compliance_action_plan`: use `action_plan_transition`, which applies the workflow rules, the permission check, and writes the history. |
+| RG-CAP-02 | A backward transition (refusal) requires a non-empty `comment`. The request is rejected with an explicit 400 if the comment is missing. |
+| RG-CAP-03 | On transition to `closed`, `completion_date` is forced to today's date and `progress_percentage` is forced to 100. Completion RP-02 is therefore attached to the terminal `closed` status. |
+| RG-CAP-04 | `is_overdue` is a computed property, true iff `target_date < today` and `status not in (closed, cancelled)`. Used for indicators and for the "overdue plans" filters. No automatic status migration: the plan remains in its Kanban state until an operator advances or closes it. |
 
-## Écarts par rapport à la spec d'origine
+## Deviations from the original spec
 
-La spec M3 §2.7 listait un workflow à 5 statuts (`planned`, `in_progress`, `completed`, `cancelled`, `overdue`). L'implémentation a évolué vers un workflow Kanban à 7 états :
+The M3 spec §2.7 listed a 5-status workflow (`planned`, `in_progress`, `completed`, `cancelled`, `overdue`). The implementation evolved towards a 7-state Kanban workflow:
 
-| Spec d'origine | Implémentation actuelle |
+| Original spec | Current implementation |
 |---|---|
-| `planned` | `new` puis `to_define`, `to_validate`, `to_implement` (la définition est un processus, pas un statut) |
-| `in_progress` | `implementation_to_validate` (l'implémentation est en cours de revue) |
-| `completed` | `validated` (implémentation acceptée) puis `closed` (terminal). RP-02 (auto-100% + date) attachée au passage à `closed`. |
-| `cancelled` | `cancelled` (identique) |
-| `overdue` | **Propriété calculée `is_overdue`**, pas un statut. RP-01 (passage automatique en overdue) n'est pas appliquée comme transition de workflow ; à la place, `is_overdue` se calcule à chaque lecture. Évite la friction d'un statut qui se met à jour seul à minuit chaque jour, sans rien perdre côté détection. |
+| `planned` | `new` then `to_define`, `to_validate`, `to_implement` (definition is a process, not a status) |
+| `in_progress` | `implementation_to_validate` (implementation is under review) |
+| `completed` | `validated` (implementation accepted) then `closed` (terminal). RP-02 (auto-100% + date) attached to the move to `closed`. |
+| `cancelled` | `cancelled` (identical) |
+| `overdue` | **Computed property `is_overdue`**, not a status. RP-01 (automatic move to overdue) is not applied as a workflow transition; instead, `is_overdue` is computed on every read. This avoids the friction of a status that updates on its own at midnight every day, without losing anything on the detection side. |
 
-Le workflow plus riche reflète la pratique réelle : le passage de la « définition » à « l'implémentation validée » d'un plan d'action n'est pas un saut binaire mais une chaîne de validations (auditeur -> superviseur -> affecté -> superviseur), et les rejets sont fréquents (« non, cette définition n'est pas assez précise »). Le statut Kanban en 7 étapes capte cette chaîne sans surcharger le code applicatif d'un état parallèle « en attente de quoi ». La spec originale est entérinée comme étant trop simple pour l'usage réel, et l'écart est conservé en l'état avec cette correspondance documentée.
+The richer workflow reflects real-world practice: moving an action plan from "definition" to "validated implementation" is not a binary jump but a chain of validations (auditor -> supervisor -> assignee -> supervisor), and rejections are frequent ("no, this definition is not precise enough"). The 7-step Kanban status captures this chain without burdening the application code with a parallel "waiting for what" state. The original spec is acknowledged as too simple for real usage, and the deviation is kept as is with this documented mapping.
 
 ## Endpoints
 
 ### REST
 
-- `GET /api/v1/compliance/action-plans/` : liste avec filtres `status`, `priority`, `owner_id`, `requirement_id`, `assignee_id`
+- `GET /api/v1/compliance/action-plans/`: list with filters `status`, `priority`, `owner_id`, `requirement_id`, `assignee_id`
 - `POST /api/v1/compliance/action-plans/`
 - `GET /api/v1/compliance/action-plans/<uuid>/`
-- `PATCH /api/v1/compliance/action-plans/<uuid>/` : modification des champs métier (sauf `status`)
+- `PATCH /api/v1/compliance/action-plans/<uuid>/`: modify business fields (except `status`)
 - `DELETE /api/v1/compliance/action-plans/<uuid>/`
 - `POST /api/v1/compliance/action-plans/<uuid>/approve/`
-- `GET /api/v1/compliance/action-plans/<uuid>/allowed-transitions/` : transitions possibles pour l'utilisateur
-- `POST /api/v1/compliance/action-plans/<uuid>/transition/` : applique une transition (`{"status": "...", "comment": "..."}`)
-- `GET /api/v1/compliance/action-plans/<uuid>/transitions/` : historique
+- `GET /api/v1/compliance/action-plans/<uuid>/allowed-transitions/`: transitions available to the user
+- `POST /api/v1/compliance/action-plans/<uuid>/transition/`: apply a transition (`{"status": "...", "comment": "..."}`)
+- `GET /api/v1/compliance/action-plans/<uuid>/transitions/`: history
 
 ### MCP
 
-- `list_action_plans` / `get_action_plan` / `create_action_plan` / `update_action_plan` (sans `status`) / `delete_action_plan` / `approve_action_plan` / `batch_create_action_plans`
-- `action_plan_allowed_transitions(id)` : liste les transitions disponibles
-- `action_plan_transition(id, status, comment=...)` : applique une transition
-- `action_plan_transitions(id)` : historique chronologique
+- `list_action_plans` / `get_action_plan` / `create_action_plan` / `update_action_plan` (without `status`) / `delete_action_plan` / `approve_action_plan` / `batch_create_action_plans`
+- `action_plan_allowed_transitions(id)`: lists the available transitions
+- `action_plan_transition(id, status, comment=...)`: applies a transition
+- `action_plan_transitions(id)`: chronological history
 
 ## Permissions
 
 | Codename | Description |
 |---|---|
-| `compliance.action_plan.read` | Lire les plans d'action |
-| `compliance.action_plan.create` | Créer |
-| `compliance.action_plan.update` | Modifier les champs métier + appliquer les transitions forward standard |
-| `compliance.action_plan.approve` | Appliquer les transitions de validation (`to_validate -> to_implement`, `implementation_to_validate -> validated`) |
-| `compliance.action_plan.delete` | Supprimer |
+| `compliance.action_plan.read` | Read action plans |
+| `compliance.action_plan.create` | Create |
+| `compliance.action_plan.update` | Modify business fields + apply standard forward transitions |
+| `compliance.action_plan.approve` | Apply validation transitions (`to_validate -> to_implement`, `implementation_to_validate -> validated`) |
+| `compliance.action_plan.delete` | Delete |
 
 ## Références
 
-- ISO/IEC 27001:2022 §10.1 (Amélioration continue) et §10.2 (Non-conformité et actions correctives)
-- [ComplianceAssessment](compliance-assessment.md) : source typique des plans d'action via les `Finding`
-- [Risk](../m4-risks/risk.md) et [RiskTreatmentPlan](../m4-risks/risk-treatment-plan.md) : un plan d'action conformité peut être lié à un plan de traitement de risque via `RiskTreatmentPlan.related_action_plans`
-- [ManagementReview](../management-review/management-review.md) : un plan d'action peut être généré à partir d'une décision de revue de direction (`originating_review`)
+- ISO/IEC 27001:2022 §10.1 (Continual improvement) and §10.2 (Nonconformity and corrective action)
+- [ComplianceAssessment](compliance-assessment.md): typical source of action plans via `Finding`
+- [Risk](../m4-risks/risk.md) and [RiskTreatmentPlan](../m4-risks/risk-treatment-plan.md): a compliance action plan can be linked to a risk treatment plan via `RiskTreatmentPlan.related_action_plans`
+- [ManagementReview](../management-review/management-review.md): an action plan can be generated from a management review decision (`originating_review`)

@@ -2,29 +2,29 @@
 
 `risks.models.ebios.pacs_measure.PACSMeasure`
 
-Mesure du PACS (Plan d'Amélioration Continue de la Sécurité). Préfixe de référence : `EPAC`.
+PACS measure (Plan d'Amélioration Continue de la Sécurité - Continuous Security Improvement Plan). Reference prefix: `EPAC`.
 
-## 4.5.2 Entité : PACSMeasure (Mesure du PACS)
+## 4.5.2 Entity: PACSMeasure (PACS measure)
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `summary_id` | relation | FK -> [EbiosSummary](ebios-summary.md), requis | Synthèse parente |
-| `reference` | string | requis, unique, préfixe EPAC | Code (ex. EPAC-1) |
-| `name` | string | requis, max 255 | Intitulé de la mesure |
-| `description` | text | requis | Description |
-| `measure_type` | enum | requis | `governance`, `protection`, `defense`, `resilience`, `awareness` |
-| `linked_treatment_plans` | M2M -> [RiskTreatmentPlan](../risk-treatment-plan.md) | optionnel | Plans de traitement portant la mesure |
-| `linked_baseline_gaps` | M2M -> [BaselineGap](baseline-gap.md) | optionnel | Écarts au socle traités par la mesure |
-| `linked_requirements` | M2M -> Requirement | optionnel | Exigences de conformité couvertes |
-| `owner_id` | relation | FK -> User, requis | Responsable de la mesure |
-| `start_date` | date | optionnel | Date de début |
-| `target_date` | date | requis | Date cible |
-| `completion_date` | date | optionnel | Date de réalisation effective |
-| `cost_estimate` | decimal | optionnel | Coût estimé |
-| `expected_gain` | text | optionnel | Gain attendu (réduction de risque) |
-| `priority` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `status` | enum | requis | `planned`, `in_progress`, `completed`, `cancelled`, `overdue` |
-| `progress_percentage` | integer | optionnel, 0 à 100 | Avancement |
-| `order` | integer | requis | Ordre d'affichage dans le PACS |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
+| `id` | UUID | PK, auto | Unique identifier |
+| `summary_id` | relation | FK -> [EbiosSummary](ebios-summary.md), required | Parent summary |
+| `reference` | string | required, unique, prefix EPAC | Code (e.g. EPAC-1) |
+| `name` | string | required, max 255 | Measure title |
+| `description` | text | required | Description |
+| `measure_type` | enum | required | `governance`, `protection`, `defense`, `resilience`, `awareness` |
+| `linked_treatment_plans` | M2M -> [RiskTreatmentPlan](../risk-treatment-plan.md) | optional | Treatment plans carrying the measure |
+| `linked_baseline_gaps` | M2M -> [BaselineGap](baseline-gap.md) | optional | Baseline gaps addressed by the measure |
+| `linked_requirements` | M2M -> Requirement | optional | Compliance requirements covered |
+| `owner_id` | relation | FK -> User, required | Measure owner |
+| `start_date` | date | optional | Start date |
+| `target_date` | date | required | Target date |
+| `completion_date` | date | optional | Actual completion date |
+| `cost_estimate` | decimal | optional | Estimated cost |
+| `expected_gain` | text | optional | Expected gain (risk reduction) |
+| `priority` | enum | required | `low`, `medium`, `high`, `critical` |
+| `status` | enum | required | `planned`, `in_progress`, `completed`, `cancelled`, `overdue` |
+| `progress_percentage` | integer | optional, 0 to 100 | Progress |
+| `order` | integer | required | Display order within the PACS |
+| `created_by`, `created_at`, `updated_at` | - | auto | Standard |

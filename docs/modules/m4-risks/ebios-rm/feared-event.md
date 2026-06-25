@@ -2,26 +2,26 @@
 
 `risks.models.ebios.feared_event.FearedEvent`
 
-Caractérise une atteinte DIC sur un bien essentiel avec gravité. Préfixe de référence : `EFER`.
+Characterizes a CIA breach on an essential asset together with its severity. Reference prefix: `EFER`.
 
-## 4.1.2 Entité : FearedEvent (Événement redouté)
+## 4.1.2 Entity: FearedEvent (Feared event)
 
-Caractérise une atteinte DIC sur un bien essentiel avec gravité.
+Characterizes a CIA breach on an essential asset together with its severity.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `baseline_id` | relation | FK -> [SecurityBaseline](security-baseline.md), requis | Socle parent |
-| `reference` | string | requis, unique, préfixe EFER | Code (ex. EFER-1) |
-| `essential_asset_id` | relation | FK -> EssentialAsset, requis | Bien essentiel concerné |
-| `name` | string | requis, max 255 | Intitulé court |
-| `description` | text | requis | Description |
-| `dic_criterion` | enum | requis | `confidentiality`, `integrity`, `availability` |
-| `gravity_level` | integer | requis, calculé/saisi | Gravité (échelle impact RiskCriteria) |
-| `gravity_justification` | text | optionnel | Justification de la gravité |
-| `business_impacts` | json | optionnel | Impacts détaillés (clés : `financial`, `legal`, `reputation`, `operational`, `human`, `environmental`) |
-| `criteria_snapshot` | json | calculé | Snapshot du barème au moment de la saisie |
-| `order` | integer | requis | Ordre d'affichage |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
+| `id` | UUID | PK, auto | Unique identifier |
+| `baseline_id` | relation | FK -> [SecurityBaseline](security-baseline.md), required | Parent baseline |
+| `reference` | string | required, unique, prefix EFER | Code (e.g. EFER-1) |
+| `essential_asset_id` | relation | FK -> EssentialAsset, required | Essential asset concerned |
+| `name` | string | required, max 255 | Short title |
+| `description` | text | required | Description |
+| `dic_criterion` | enum | required | `confidentiality`, `integrity`, `availability` |
+| `gravity_level` | integer | required, computed/entered | Severity (RiskCriteria impact scale) |
+| `gravity_justification` | text | optional | Severity justification |
+| `business_impacts` | json | optional | Detailed impacts (keys: `financial`, `legal`, `reputation`, `operational`, `human`, `environmental`) |
+| `criteria_snapshot` | json | computed | Snapshot of the scale at the time of entry |
+| `order` | integer | required | Display order |
+| `created_by`, `created_at`, `updated_at` | - | auto | Standard |
 
-> Règle : pour un même `essential_asset_id`, au plus 3 `FearedEvent` (un par critère DIC). Géré par contrainte d'unicité `(baseline_id, essential_asset_id, dic_criterion)`.
+> Rule: for a given `essential_asset_id`, at most 3 `FearedEvent` (one per CIA criterion). Enforced by the uniqueness constraint `(baseline_id, essential_asset_id, dic_criterion)`.

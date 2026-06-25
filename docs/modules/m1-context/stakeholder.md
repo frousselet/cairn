@@ -2,47 +2,47 @@
 
 `context.models.stakeholder.Stakeholder`
 
-Représente toute personne ou organisme pouvant affecter, être affecté ou se sentir affecté par une décision ou une activité.
+Represents any person or organization that can affect, be affected by, or perceive itself to be affected by a decision or activity.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `name` | string | requis, max 255 | Nom de la partie intéressée |
-| `type` | enum | requis | `internal`, `external` |
-| `category` | enum | requis | Voir liste ci-dessous |
-| `description` | text | optionnel | Description |
-| `contact_name` | string | optionnel | Nom du contact principal |
-| `contact_email` | string | optionnel, format email | Email du contact |
-| `contact_phone` | string | optionnel | Téléphone du contact |
-| `influence_level` | enum | requis | `low`, `medium`, `high` |
-| `interest_level` | enum | requis | `low`, `medium`, `high` |
-| `expectations` | relation | O2M → StakeholderExpectation | Attentes et exigences |
-| `related_issues` | relation | M2M → Issue | Enjeux associés |
-| `status` | enum | requis | `active`, `inactive` |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `scope_id` | relation | FK → Scope, required | Linked scope |
+| `name` | string | required, max 255 | Stakeholder name |
+| `type` | enum | required | `internal`, `external` |
+| `category` | enum | required | See list below |
+| `description` | text | optional | Description |
+| `contact_name` | string | optional | Primary contact name |
+| `contact_email` | string | optional, email format | Contact email |
+| `contact_phone` | string | optional | Contact phone |
+| `influence_level` | enum | required | `low`, `medium`, `high` |
+| `interest_level` | enum | required | `low`, `medium`, `high` |
+| `expectations` | relation | O2M → StakeholderExpectation | Expectations and requirements |
+| `related_issues` | relation | M2M → Issue | Associated issues |
+| `status` | enum | required | `active`, `inactive` |
+| `review_date` | date | optional | Next review date |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |
 
-**Catégories de parties intéressées (valeurs de `category`) :**
+**Stakeholder categories (`category` values):**
 
 `executive_management`, `employees`, `customers`, `suppliers`, `partners`, `regulators`, `shareholders`, `insurers`, `public`, `competitors`, `unions`, `auditors`, `other`
 
-> Note : Les catégories doivent être paramétrables par l'administrateur.
+> Note: Categories must be configurable by the administrator.
 
 ## StakeholderExpectation
 
-Sous-entité : attente d'une partie intéressée.
+Sub-entity: expectation of a stakeholder.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `stakeholder_id` | relation | FK → Stakeholder, requis | Partie intéressée parente |
-| `description` | text | requis | Description de l'attente ou exigence |
-| `type` | enum | requis | `requirement`, `expectation`, `need` |
-| `priority` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `is_applicable` | boolean | requis, défaut true | Applicable au périmètre |
-| `linked_requirements` | relation | M2M → Requirement | Exigences de conformité liées (module Conformité) |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `stakeholder_id` | relation | FK → Stakeholder, required | Parent stakeholder |
+| `description` | text | required | Description of the expectation or requirement |
+| `type` | enum | required | `requirement`, `expectation`, `need` |
+| `priority` | enum | required | `low`, `medium`, `high`, `critical` |
+| `is_applicable` | boolean | required, default true | Applicable to the scope |
+| `linked_requirements` | relation | M2M → Requirement | Linked compliance requirements (Compliance module) |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |

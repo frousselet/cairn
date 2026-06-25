@@ -2,16 +2,16 @@
 
 `accounts.models.permission.SpecialPermission`
 
-Certaines permissions ne suivent pas le modèle CRUD standard et couvrent des actions transversales ou spécifiques.
+Some permissions do not follow the standard CRUD model and cover cross-cutting or specific actions.
 
 | Codename | Description |
 |---|---|
-| `system.admin_django.access` | Afficher le bouton d'accès et accéder à l'interface d'administration Django |
-| `system.users.manage` | Gérer les utilisateurs (créer, modifier, désactiver) |
-| `system.groups.manage` | Gérer les groupes et affecter des permissions |
-| `system.audit_trail.read` | Consulter le journal d'audit global |
-| `system.config.manage` | Accéder à la configuration globale de l'application |
-| `system.webhooks.manage` | Gérer les webhooks |
-| `system.notifications.manage` | Gérer les modèles de notifications |
+| `system.admin_django.access` | Show the access button and access the Django administration interface |
+| `system.users.manage` | Manage users (create, modify, deactivate) |
+| `system.groups.manage` | Manage groups and assign permissions |
+| `system.audit_trail.read` | View the global audit log |
+| `system.config.manage` | Access the application's global configuration |
+| `system.webhooks.manage` | Manage webhooks |
+| `system.notifications.manage` | Manage notification templates |
 
-> Ces permissions spéciales sont créées en tant qu'enregistrements `Permission` avec `module = system` et sont traitées de la même manière que les permissions CRUD par le moteur d'autorisation.
+> These special permissions are created as `Permission` records with `module = system` and are handled in the same way as CRUD permissions by the authorization engine.

@@ -2,27 +2,27 @@
 
 `risks.models.ebios.study_framework.StudyFramework`
 
-Formalise les pré-requis exigés par ANSSI avant l'atelier 1 : participants, référentiels, hypothèses, contraintes. Préfixe de référence : `EFRA`.
+Formalizes the prerequisites required by ANSSI before workshop 1: participants, frameworks, assumptions, constraints. Reference prefix: `EFRA`.
 
-## 4.0.1 Entité : StudyFramework (Cadre de l'étude)
+## 4.0.1 Entity: StudyFramework (Study framework)
 
-Formalise les pré-requis exigés par ANSSI avant l'atelier 1 : participants, référentiels, hypothèses, contraintes.
+Formalizes the prerequisites required by ANSSI before workshop 1: participants, frameworks, assumptions, constraints.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> [RiskAssessment](../risk-assessment.md), requis, unique | Appréciation parente (1 framework par appréciation) |
-| `reference` | string | requis, unique, préfixe EFRA | Code (ex. EFRA-1) |
-| `mission_statement` | text | requis | Description de la mission étudiée |
-| `business_perimeter` | text | requis | Périmètre métier (activités, processus) |
-| `technical_perimeter` | text | requis | Périmètre technique (biens supports, infrastructures) |
-| `temporal_perimeter` | text | requis | Horizon temporel (date de début / fin d'étude) |
-| `financial_envelope` | decimal | optionnel | Enveloppe budgétaire allouée |
-| `participants` | M2M -> User | optionnel | Participants à l'étude |
-| `participants_external` | json | optionnel | Liste de participants externes (nom, rôle, organisation) |
-| `applicable_frameworks` | M2M -> Framework | optionnel | Référentiels applicables (ISO 27001, NIS2, RGPD, etc.) |
-| `assumptions` | text | optionnel | Hypothèses retenues |
-| `constraints` | text | optionnel | Contraintes (organisationnelles, techniques, légales) |
-| `expected_deliverables` | text | optionnel | Livrables attendus |
-| `status` | enum | requis | `draft`, `validated` |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards `BaseModel` |
+| `id` | UUID | PK, auto | Unique identifier |
+| `assessment_id` | relation | FK -> [RiskAssessment](../risk-assessment.md), required, unique | Parent assessment (1 framework per assessment) |
+| `reference` | string | required, unique, prefix EFRA | Code (e.g. EFRA-1) |
+| `mission_statement` | text | required | Description of the mission under study |
+| `business_perimeter` | text | required | Business perimeter (activities, processes) |
+| `technical_perimeter` | text | required | Technical perimeter (support assets, infrastructures) |
+| `temporal_perimeter` | text | required | Time horizon (study start / end date) |
+| `financial_envelope` | decimal | optional | Allocated budget envelope |
+| `participants` | M2M -> User | optional | Study participants |
+| `participants_external` | json | optional | List of external participants (name, role, organization) |
+| `applicable_frameworks` | M2M -> Framework | optional | Applicable frameworks (ISO 27001, NIS2, GDPR, etc.) |
+| `assumptions` | text | optional | Assumptions retained |
+| `constraints` | text | optional | Constraints (organizational, technical, legal) |
+| `expected_deliverables` | text | optional | Expected deliverables |
+| `status` | enum | required | `draft`, `validated` |
+| `created_by`, `created_at`, `updated_at` | - | auto | `BaseModel` standard |

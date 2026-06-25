@@ -4,17 +4,17 @@
 
 Enriched join table between a [ManagementReview](management-review.md) and internal or external participants.
 
-Table de liaison enrichie entre `ManagementReview` et `User` (participants internes ou externes).
+Enriched join table between `ManagementReview` and `User` (internal or external participants).
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
 | `id` | UUID | PK | |
-| `review` | FK → ManagementReview | requis, `on_delete=CASCADE` | Revue parente |
-| `user` | FK → User | optionnel | Participant interne (null pour externes) |
-| `external_name` | string | max 255, optionnel | Nom en clair pour participant externe |
-| `external_role` | string | max 255, optionnel | Fonction en clair pour participant externe |
-| `role` | enum | requis | `facilitator`, `decision_maker`, `contributor`, `observer` |
-| `attended` | boolean | défaut false | A assisté à la réunion |
-| `signature_data` | text | optionnel | Signature (base64 PNG ou texte) pour le DOCX |
+| `review` | FK → ManagementReview | required, `on_delete=CASCADE` | Parent review |
+| `user` | FK → User | optional | Internal participant (null for external) |
+| `external_name` | string | max 255, optional | Plain-text name for an external participant |
+| `external_role` | string | max 255, optional | Plain-text role for an external participant |
+| `role` | enum | required | `facilitator`, `decision_maker`, `contributor`, `observer` |
+| `attended` | boolean | default false | Attended the meeting |
+| `signature_data` | text | optional | Signature (base64 PNG or text) for the DOCX |
 
-> Contrainte : `user` ou (`external_name` + `external_role`) doit être renseigné (`CheckConstraint`).
+> Constraint : `user` or (`external_name` + `external_role`) must be provided (`CheckConstraint`).

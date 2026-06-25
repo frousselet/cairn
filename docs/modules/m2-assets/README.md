@@ -1,10 +1,10 @@
-# Module 2 : Gestion des Actifs
+# Module 2: Asset Management
 
-## Spécifications fonctionnelles et techniques
+## Functional and technical specifications
 
-**Version :** 1.0
-**Date :** 27 février 2026
-**Statut :** Draft
+**Version:** 1.0
+**Date:** 27 February 2026
+**Status:** Draft
 
 ---
 
@@ -22,104 +22,104 @@
 
 ---
 
-## 1. Présentation générale
+## 1. General overview
 
-### 1.1 Objectif du module
+### 1.1 Module objective
 
-Le module **Gestion des Actifs** permet d'identifier, classifier et maintenir à jour l'inventaire des actifs informationnels de l'organisme. Il distingue les **biens essentiels** (processus métier, informations) des **biens supports** (matériels, logiciels, réseaux, personnes, sites) conformément aux approches ISO 27001 (annexe A : A.5.9 à A.5.14), ISO 27005 et EBIOS RM (socle de sécurité et identification des biens supports).
+The **Asset Management** module is used to identify, classify and keep up to date the inventory of the organization's information assets. It distinguishes **essential assets** (business processes, information) from **support assets** (hardware, software, networks, people, sites) in line with the ISO 27001 (Annex A: A.5.9 to A.5.14), ISO 27005 and EBIOS RM approaches (security baseline and identification of support assets).
 
-Ce module constitue le socle de l'appréciation des risques : les biens essentiels portent les besoins de sécurité (critères DIC : Disponibilité, Intégrité, Confidentialité) et les biens supports héritent de ces besoins via leurs relations de dépendance.
+This module is the foundation of risk assessment: essential assets carry the security needs (CIA criteria: Availability, Integrity, Confidentiality) and support assets inherit these needs through their dependency relationships.
 
-### 1.2 Périmètre fonctionnel
+### 1.2 Functional scope
 
-Le module couvre quatre sous-domaines :
+The module covers four sub-domains:
 
-1. Biens essentiels (processus métier et informations)
-2. Biens supports (matériels, logiciels, réseaux, personnes, sites, services)
-3. Relations de dépendance entre biens essentiels et biens supports
-4. Valorisation et classification des actifs (besoins de sécurité DIC)
+1. Essential assets (business processes and information)
+2. Support assets (hardware, software, networks, people, sites, services)
+3. Dependency relationships between essential assets and support assets
+4. Valuation and classification of assets (CIA security needs)
 
-### 1.3 Dépendances avec les autres modules
+### 1.3 Dependencies on other modules
 
-| Module cible | Nature de la dépendance |
+| Target module | Nature of the dependency |
 |---|---|
-| Contexte et Organisation | Les activités/processus (Module 1) sont rattachés aux biens essentiels. Le périmètre (Scope) cadre l'inventaire des actifs. |
-| Gestion des risques | Les biens essentiels et supports sont les sujets de l'appréciation des risques (ISO 27005 et EBIOS RM). Les besoins de sécurité DIC alimentent l'évaluation de l'impact. |
-| Conformité | Certaines exigences réglementaires portent directement sur des catégories d'actifs (données personnelles, données de santé, etc.). |
-| Mesures | Les mesures de sécurité sont appliquées sur des biens supports pour protéger les biens essentiels. |
-| Fournisseurs | Les biens supports de type service externalisé sont liés aux fournisseurs. |
-| Incidents | Les incidents sont rattachés aux actifs impactés. |
+| Context and Organization | Activities/processes (Module 1) are attached to essential assets. The Scope frames the asset inventory. |
+| Risk management | Essential and support assets are the subjects of risk assessment (ISO 27005 and EBIOS RM). The CIA security needs feed the impact evaluation. |
+| Compliance | Some regulatory requirements bear directly on asset categories (personal data, health data, etc.). |
+| Measures | Security measures are applied to support assets to protect essential assets. |
+| Suppliers | Support assets of the outsourced service type are linked to suppliers. |
+| Incidents | Incidents are attached to the impacted assets. |
 
 ---
 
-## 3. Règles de gestion
+## 3. Business rules
 
-### 3.1 Règles générales
+### 3.1 General rules
 
-| ID | Règle |
+| ID | Rule |
 |---|---|
-| RG-01 | Tout actif (bien essentiel ou bien support) doit être rattaché à un **Scope** actif. |
-| RG-02 | Tout actif doit avoir un **propriétaire** (`owner_id`) désigné. |
-| RG-03 | La suppression d'un actif référencé par le module Risques ou Mesures est interdite. Une désactivation (`status = decommissioned` ou `disposed`) est utilisée à la place. |
-| RG-04 | Toute modification d'un actif génère une entrée dans le **journal d'audit**. |
-| RG-05 | Les champs `created_at` et `updated_at` sont gérés automatiquement par le système. |
-| RG-06 | Les listes de valeurs paramétrables (catégories, types) sont gérées via la table de configuration dédiée. |
-| RG-07 | Les relations M2M sont stockées dans des tables de jointure dédiées. |
-| RG-08 | Les codes de référence (`reference`) suivent un format paramétrable avec incrémentation automatique. Le préfixe par défaut est `BE-` pour les biens essentiels et `BS-` pour les biens supports. |
+| RG-01 | Every asset (essential asset or support asset) must be attached to an active **Scope**. |
+| RG-02 | Every asset must have a designated **owner** (`owner_id`). |
+| RG-03 | Deleting an asset referenced by the Risks or Measures module is forbidden. Deactivation (`status = decommissioned` or `disposed`) is used instead. |
+| RG-04 | Every change to an asset generates an entry in the **audit trail**. |
+| RG-05 | The `created_at` and `updated_at` fields are managed automatically by the system. |
+| RG-06 | Configurable value lists (categories, types) are managed through the dedicated configuration table. |
+| RG-07 | M2M relationships are stored in dedicated join tables. |
+| RG-08 | Reference codes (`reference`) follow a configurable format with automatic incrementing. The default prefix is `BE-` for essential assets and `BS-` for support assets. |
 
-### 3.2 Règles de valorisation et héritage DIC
+### 3.2 Valuation and CIA inheritance rules
 
-| ID | Règle |
+| ID | Rule |
 |---|---|
-| RV-01 | Les niveaux DIC (Disponibilité, Intégrité, Confidentialité) d'un bien essentiel sont évalués sur une échelle à 5 niveaux : `negligible` (0), `low` (1), `medium` (2), `high` (3), `critical` (4). |
-| RV-02 | L'échelle DIC et ses descriptions associées sont paramétrables par l'administrateur. |
-| RV-03 | Les niveaux DIC **hérités** par un bien support correspondent au **maximum** des niveaux DIC de tous les biens essentiels auxquels il est rattaché. Ce calcul est effectué automatiquement. |
-| RV-04 | Toute modification des niveaux DIC d'un bien essentiel déclenche un **recalcul** des niveaux hérités de ses biens supports associés. |
-| RV-05 | L'utilisateur peut consulter le détail de l'héritage DIC d'un bien support (quels biens essentiels contribuent à chaque niveau). |
-| RV-06 | Lors de chaque modification des niveaux DIC d'un bien essentiel, un enregistrement `AssetValuation` est créé pour conserver l'historique. |
+| RV-01 | The CIA levels (Availability, Integrity, Confidentiality) of an essential asset are rated on a 5-level scale: `negligible` (0), `low` (1), `medium` (2), `high` (3), `critical` (4). |
+| RV-02 | The CIA scale and its associated descriptions are configurable by the administrator. |
+| RV-03 | The CIA levels **inherited** by a support asset correspond to the **maximum** of the CIA levels of all essential assets to which it is attached. This calculation is performed automatically. |
+| RV-04 | Any change to the CIA levels of an essential asset triggers a **recalculation** of the inherited levels of its associated support assets. |
+| RV-05 | The user can view the detail of a support asset's CIA inheritance (which essential assets contribute to each level). |
+| RV-06 | Each time the CIA levels of an essential asset are changed, an `AssetValuation` record is created to preserve the history. |
 
-### 3.3 Règles spécifiques
+### 3.3 Specific rules
 
-| ID | Règle |
+| ID | Rule |
 |---|---|
-| RS-01 | Un bien essentiel de type `business_process` ne peut avoir que des catégories de processus, et inversement pour `information`. |
-| RS-02 | Un bien support de type donné ne peut avoir que des catégories correspondant à ce type. |
-| RS-03 | Un bien support avec `end_of_life_date` dépassée et `status = active` déclenche une **alerte** de fin de vie. |
-| RS-04 | Un bien support avec `status = decommissioned` ou `disposed` ne peut pas être rattaché à de nouvelles dépendances. |
-| RS-05 | Un bien essentiel marqué `personal_data = true` doit renseigner `data_classification` avec un niveau ≥ `confidential`. Le système émet une alerte dans le cas contraire. |
-| RS-06 | Un bien support enfant (`parent_asset_id` renseigné) doit appartenir au même **Scope** que son parent. |
-| RS-07 | Une relation `AssetDependency` marquée `is_single_point_of_failure = true` avec `redundancy_level = none` déclenche une **alerte** spécifique affichée sur le tableau de bord. |
-| RS-08 | Un bien essentiel sans aucun bien support associé déclenche une **alerte** (bien essentiel non supporté). |
-| RS-09 | Un bien support sans aucun bien essentiel associé déclenche un **avertissement** (bien support orphelin). |
+| RS-01 | An essential asset of type `business_process` can only have process categories, and conversely for `information`. |
+| RS-02 | A support asset of a given type can only have categories matching that type. |
+| RS-03 | A support asset with a past `end_of_life_date` and `status = active` triggers an end-of-life **alert**. |
+| RS-04 | A support asset with `status = decommissioned` or `disposed` cannot be attached to new dependencies. |
+| RS-05 | An essential asset flagged `personal_data = true` must have `data_classification` set to a level ≥ `confidential`. The system raises an alert otherwise. |
+| RS-06 | A child support asset (`parent_asset_id` set) must belong to the same **Scope** as its parent. |
+| RS-07 | An `AssetDependency` relationship flagged `is_single_point_of_failure = true` with `redundancy_level = none` triggers a specific **alert** displayed on the dashboard. |
+| RS-08 | An essential asset without any associated support asset triggers an **alert** (unsupported essential asset). |
+| RS-09 | A support asset without any associated essential asset triggers a **warning** (orphan support asset). |
 
 ---
 
-## 4. Spécifications API REST
+## 4. REST API specifications
 
-### 4.1 Conventions générales
+### 4.1 General conventions
 
-Identiques au Module 1. Base URL : `/api/v1/assets/`
+Identical to Module 1. Base URL: `/api/v1/assets/`
 
-### 4.2 Endpoints : Essential Assets (Biens essentiels)
+### 4.2 Endpoints: Essential Assets
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/essential-assets` | Lister tous les biens essentiels (filtrable) |
-| `GET` | `/scopes/{scope_id}/essential-assets` | Lister les biens essentiels d'un périmètre |
-| `POST` | `/scopes/{scope_id}/essential-assets` | Créer un bien essentiel |
-| `GET` | `/essential-assets/{id}` | Détail d'un bien essentiel |
-| `PUT` | `/essential-assets/{id}` | Mise à jour complète |
-| `PATCH` | `/essential-assets/{id}` | Mise à jour partielle |
-| `DELETE` | `/essential-assets/{id}` | Supprimer (si non référencé) |
-| `GET` | `/essential-assets/{id}/supporting-assets` | Lister les biens supports associés |
-| `GET` | `/essential-assets/{id}/dependencies` | Lister les relations de dépendance |
-| `GET` | `/essential-assets/{id}/valuations` | Historique des valorisations DIC |
-| `POST` | `/essential-assets/{id}/valuations` | Enregistrer une nouvelle valorisation |
-| `GET` | `/essential-assets/{id}/risks` | Lister les risques associés (Module Risques) |
-| `GET` | `/essential-assets/categories` | Lister les catégories disponibles |
-| `GET` | `/essential-assets/dashboard` | Données de tableau de bord (KPIs agrégés) |
+| `GET` | `/essential-assets` | List all essential assets (filterable) |
+| `GET` | `/scopes/{scope_id}/essential-assets` | List the essential assets of a scope |
+| `POST` | `/scopes/{scope_id}/essential-assets` | Create an essential asset |
+| `GET` | `/essential-assets/{id}` | Essential asset detail |
+| `PUT` | `/essential-assets/{id}` | Full update |
+| `PATCH` | `/essential-assets/{id}` | Partial update |
+| `DELETE` | `/essential-assets/{id}` | Delete (if not referenced) |
+| `GET` | `/essential-assets/{id}/supporting-assets` | List the associated support assets |
+| `GET` | `/essential-assets/{id}/dependencies` | List the dependency relationships |
+| `GET` | `/essential-assets/{id}/valuations` | CIA valuation history |
+| `POST` | `/essential-assets/{id}/valuations` | Record a new valuation |
+| `GET` | `/essential-assets/{id}/risks` | List the associated risks (Risks module) |
+| `GET` | `/essential-assets/categories` | List the available categories |
+| `GET` | `/essential-assets/dashboard` | Dashboard data (aggregated KPIs) |
 
-**Paramètres de filtrage spécifiques :**
+**Specific filtering parameters:**
 
 - `?type=business_process|information`
 - `?category=core_process`
@@ -131,32 +131,32 @@ Identiques au Module 1. Base URL : `/api/v1/assets/`
 - `?owner_id={uuid}`
 - `?status=active`
 - `?has_supporting_assets=true|false`
-- `?activity_id={uuid}` (biens essentiels liés à une activité)
+- `?activity_id={uuid}` (essential assets linked to an activity)
 
-### 4.3 Endpoints : Support Assets (Biens supports)
+### 4.3 Endpoints: Support Assets
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/support-assets` | Lister tous les biens supports (filtrable) |
-| `GET` | `/scopes/{scope_id}/support-assets` | Lister les biens supports d'un périmètre |
-| `POST` | `/scopes/{scope_id}/support-assets` | Créer un bien support |
-| `GET` | `/support-assets/{id}` | Détail d'un bien support |
-| `PUT` | `/support-assets/{id}` | Mise à jour complète |
-| `PATCH` | `/support-assets/{id}` | Mise à jour partielle |
-| `DELETE` | `/support-assets/{id}` | Supprimer (si non référencé) |
-| `GET` | `/support-assets/{id}/essential-assets` | Lister les biens essentiels supportés |
-| `GET` | `/support-assets/{id}/dependencies` | Lister les relations de dépendance |
-| `GET` | `/support-assets/{id}/inherited-dic` | Détail du calcul DIC hérité |
-| `GET` | `/support-assets/{id}/children` | Lister les sous-biens supports |
-| `GET` | `/support-assets/{id}/measures` | Lister les mesures appliquées (Module Mesures) |
-| `GET` | `/support-assets/{id}/risks` | Lister les risques associés (Module Risques) |
-| `GET` | `/support-assets/{id}/incidents` | Lister les incidents associés (Module Incidents) |
-| `GET` | `/support-assets/categories` | Lister les catégories disponibles |
-| `GET` | `/support-assets/tree` | Arborescence des biens supports |
-| `GET` | `/support-assets/end-of-life` | Lister les actifs en fin de vie ou proches |
-| `GET` | `/support-assets/dashboard` | Données de tableau de bord (KPIs agrégés) |
+| `GET` | `/support-assets` | List all support assets (filterable) |
+| `GET` | `/scopes/{scope_id}/support-assets` | List the support assets of a scope |
+| `POST` | `/scopes/{scope_id}/support-assets` | Create a support asset |
+| `GET` | `/support-assets/{id}` | Support asset detail |
+| `PUT` | `/support-assets/{id}` | Full update |
+| `PATCH` | `/support-assets/{id}` | Partial update |
+| `DELETE` | `/support-assets/{id}` | Delete (if not referenced) |
+| `GET` | `/support-assets/{id}/essential-assets` | List the supported essential assets |
+| `GET` | `/support-assets/{id}/dependencies` | List the dependency relationships |
+| `GET` | `/support-assets/{id}/inherited-dic` | Detail of the inherited CIA calculation |
+| `GET` | `/support-assets/{id}/children` | List the support sub-assets |
+| `GET` | `/support-assets/{id}/measures` | List the applied measures (Measures module) |
+| `GET` | `/support-assets/{id}/risks` | List the associated risks (Risks module) |
+| `GET` | `/support-assets/{id}/incidents` | List the associated incidents (Incidents module) |
+| `GET` | `/support-assets/categories` | List the available categories |
+| `GET` | `/support-assets/tree` | Support asset tree |
+| `GET` | `/support-assets/end-of-life` | List assets at or near end of life |
+| `GET` | `/support-assets/dashboard` | Dashboard data (aggregated KPIs) |
 
-**Paramètres de filtrage spécifiques :**
+**Specific filtering parameters:**
 
 - `?type=hardware|software|network|person|site|service|paper`
 - `?category=server`
@@ -166,281 +166,281 @@ Identiques au Module 1. Base URL : `/api/v1/assets/`
 - `?owner_id={uuid}`
 - `?supplier_id={uuid}`
 - `?status=active`
-- `?end_of_life_before={date}` (actifs dont la fin de vie est avant une date)
+- `?end_of_life_before={date}` (assets whose end of life is before a date)
 - `?has_essential_assets=true|false`
-- `?is_orphan=true` (pas de bien essentiel associé)
+- `?is_orphan=true` (no associated essential asset)
 - `?group_id={uuid}`
 
-### 4.4 Endpoints : Asset Dependencies (Relations de dépendance)
+### 4.4 Endpoints: Asset Dependencies
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/dependencies` | Lister toutes les relations de dépendance |
-| `POST` | `/dependencies` | Créer une relation de dépendance |
-| `GET` | `/dependencies/{id}` | Détail d'une relation |
-| `PUT` | `/dependencies/{id}` | Mise à jour complète |
-| `PATCH` | `/dependencies/{id}` | Mise à jour partielle |
-| `DELETE` | `/dependencies/{id}` | Supprimer une relation |
-| `GET` | `/dependencies/spof` | Lister les points uniques de défaillance |
-| `GET` | `/dependencies/graph` | Graphe de dépendances (données pour visualisation) |
+| `GET` | `/dependencies` | List all dependency relationships |
+| `POST` | `/dependencies` | Create a dependency relationship |
+| `GET` | `/dependencies/{id}` | Relationship detail |
+| `PUT` | `/dependencies/{id}` | Full update |
+| `PATCH` | `/dependencies/{id}` | Partial update |
+| `DELETE` | `/dependencies/{id}` | Delete a relationship |
+| `GET` | `/dependencies/spof` | List the single points of failure |
+| `GET` | `/dependencies/graph` | Dependency graph (data for visualization) |
 
-### 4.5 Endpoints : Asset Groups (Groupes d'actifs)
+### 4.5 Endpoints: Asset Groups
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/groups` | Lister les groupes d'actifs |
-| `POST` | `/groups` | Créer un groupe |
-| `GET` | `/groups/{id}` | Détail d'un groupe |
-| `PUT` | `/groups/{id}` | Mise à jour complète |
-| `PATCH` | `/groups/{id}` | Mise à jour partielle |
-| `DELETE` | `/groups/{id}` | Supprimer un groupe |
-| `POST` | `/groups/{id}/members` | Ajouter des membres au groupe |
-| `DELETE` | `/groups/{id}/members/{asset_id}` | Retirer un membre du groupe |
-| `GET` | `/groups/{id}/members` | Lister les membres du groupe |
+| `GET` | `/groups` | List the asset groups |
+| `POST` | `/groups` | Create a group |
+| `GET` | `/groups/{id}` | Group detail |
+| `PUT` | `/groups/{id}` | Full update |
+| `PATCH` | `/groups/{id}` | Partial update |
+| `DELETE` | `/groups/{id}` | Delete a group |
+| `POST` | `/groups/{id}/members` | Add members to the group |
+| `DELETE` | `/groups/{id}/members/{asset_id}` | Remove a member from the group |
+| `GET` | `/groups/{id}/members` | List the group members |
 
-### 4.6 Endpoints transversaux
+### 4.6 Cross-cutting endpoints
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/assets/dashboard` | Tableau de bord synthétique du module |
-| `GET` | `/assets/export` | Export global des actifs (PDF, DOCX, JSON, CSV) |
-| `GET` | `/assets/audit-trail` | Journal d'audit du module |
-| `GET` | `/assets/config/enums` | Lister toutes les listes de valeurs paramétrables |
-| `PUT` | `/assets/config/enums/{enum_name}` | Modifier une liste de valeurs |
-| `GET` | `/assets/config/dic-scale` | Consulter l'échelle DIC paramétrée |
-| `PUT` | `/assets/config/dic-scale` | Modifier l'échelle DIC |
-| `GET` | `/assets/statistics` | Statistiques globales (répartition par type, classification, etc.) |
-| `POST` | `/assets/import` | Import en masse (CSV, JSON) |
-| `GET` | `/assets/alerts` | Lister les alertes actives (fin de vie, orphelins, SPOF, etc.) |
+| `GET` | `/assets/dashboard` | Module summary dashboard |
+| `GET` | `/assets/export` | Global asset export (PDF, DOCX, JSON, CSV) |
+| `GET` | `/assets/audit-trail` | Module audit trail |
+| `GET` | `/assets/config/enums` | List all configurable value lists |
+| `PUT` | `/assets/config/enums/{enum_name}` | Edit a value list |
+| `GET` | `/assets/config/dic-scale` | View the configured CIA scale |
+| `PUT` | `/assets/config/dic-scale` | Edit the CIA scale |
+| `GET` | `/assets/statistics` | Global statistics (breakdown by type, classification, etc.) |
+| `POST` | `/assets/import` | Bulk import (CSV, JSON) |
+| `GET` | `/assets/alerts` | List the active alerts (end of life, orphans, SPOF, etc.) |
 
 ---
 
-## 5. Spécifications d'interface utilisateur
+## 5. User interface specifications
 
 ### 5.1 Navigation
 
-Le module est accessible via un élément de navigation principal « Gestion des Actifs » se décomposant en sous-menus : Biens essentiels, Biens supports, Groupes d'actifs, Cartographie des dépendances, Tableau de bord.
+The module is accessible through a main navigation item "Asset Management" that breaks down into sub-menus: Essential assets, Support assets, Asset groups, Dependency mapping, Dashboard.
 
-### 5.2 Vue « Biens essentiels »
+### 5.2 "Essential assets" view
 
-- **Liste :** Tableau avec colonnes (Référence, Nom, Type, Catégorie, Propriétaire, C/I/D, Classification, Statut). Chaque niveau DIC est affiché avec un indicateur coloré (vert → rouge). Filtres et tri sur toutes les colonnes.
-- **Détail / Édition :** Formulaire avec onglets :
-  - *Informations générales :* identification, type, catégorie, propriétaire, dépositaire.
-  - *Valorisation DIC :* évaluation des 3 critères avec curseurs ou sélecteurs, justifications, DMIT/RTO/RPO.
-  - *Classification :* classification des données, données personnelles, contraintes réglementaires.
-  - *Relations :* biens supports associés (avec type de dépendance), activités métier liées.
-  - *Historique :* historique des valorisations et modifications.
-- **Actions :** Créer, Modifier, Évaluer (DIC), Exporter.
+- **List:** Table with columns (Reference, Name, Type, Category, Owner, C/I/A, Classification, Status). Each CIA level is shown with a colored indicator (green : red). Filtering and sorting on all columns.
+- **Detail / Edit:** Form with tabs:
+  - *General information:* identification, type, category, owner, custodian.
+  - *CIA valuation:* rating of the 3 criteria with sliders or selectors, justifications, MTD/RTO/RPO.
+  - *Classification:* data classification, personal data, regulatory constraints.
+  - *Relationships:* associated support assets (with dependency type), linked business activities.
+  - *History:* history of valuations and changes.
+- **Actions:** Create, Edit, Rate (CIA), Export.
 
-### 5.3 Vue « Biens supports »
+### 5.3 "Support assets" view
 
-- **Liste :** Tableau avec colonnes (Référence, Nom, Type, Catégorie, Propriétaire, DIC hérité, Environnement, Exposition, Statut, Fin de vie). Indicateur visuel pour les actifs en fin de vie (icône d'avertissement). Filtres et tri sur toutes les colonnes.
-- **Vue par type :** Affichage groupé par type (matériel, logiciel, réseau, etc.) avec compteurs.
-- **Détail / Édition :** Formulaire avec onglets :
-  - *Informations générales :* identification, type, catégorie, propriétaire, dépositaire.
-  - *Caractéristiques techniques :* fabricant, modèle, version, IP, hostname, OS, numéro de série.
-  - *Cycle de vie :* dates d'acquisition, fin de vie, garantie, environnement, exposition.
-  - *DIC hérité :* affichage en lecture seule des niveaux DIC hérités avec le détail de la provenance (quels biens essentiels).
-  - *Relations :* biens essentiels supportés, sous-biens supports, groupes, mesures appliquées.
-  - *Fournisseur :* lien vers le fournisseur et la référence contrat.
-  - *Historique :* journal des modifications.
-- **Actions :** Créer, Modifier, Décommissionner, Exporter.
+- **List:** Table with columns (Reference, Name, Type, Category, Owner, Inherited CIA, Environment, Exposure, Status, End of life). Visual indicator for assets at end of life (warning icon). Filtering and sorting on all columns.
+- **View by type:** Display grouped by type (hardware, software, network, etc.) with counters.
+- **Detail / Edit:** Form with tabs:
+  - *General information:* identification, type, category, owner, custodian.
+  - *Technical characteristics:* manufacturer, model, version, IP, hostname, OS, serial number.
+  - *Lifecycle:* acquisition, end-of-life and warranty dates, environment, exposure.
+  - *Inherited CIA:* read-only display of the inherited CIA levels with the detail of their origin (which essential assets).
+  - *Relationships:* supported essential assets, support sub-assets, groups, applied measures.
+  - *Supplier:* link to the supplier and the contract reference.
+  - *History:* change log.
+- **Actions:** Create, Edit, Decommission, Export.
 
-### 5.4 Vue « Groupes d'actifs »
+### 5.4 "Asset groups" view
 
-- **Liste :** Tableau avec colonnes (Nom, Type, Nombre de membres, Propriétaire, Statut).
-- **Détail :** Liste des membres avec possibilité d'ajout/retrait, informations du groupe.
-- **Actions :** Créer, Modifier, Ajouter/Retirer des membres, Supprimer.
+- **List:** Table with columns (Name, Type, Number of members, Owner, Status).
+- **Detail:** List of members with the ability to add/remove, group information.
+- **Actions:** Create, Edit, Add/Remove members, Delete.
 
-### 5.5 Vue « Cartographie des dépendances »
+### 5.5 "Dependency mapping" view
 
-- **Graphe interactif :** Visualisation en graphe des relations entre biens essentiels et biens supports. Les nœuds sont colorés par type d'actif, les arêtes annotées par le type de dépendance. Zoom, filtrage par type/criticité, mise en évidence des SPOF.
-- **Matrice de dépendance :** Vue tabulaire croisée biens essentiels × biens supports avec indicateurs de criticité et type de dépendance dans chaque cellule.
-- **Vue par bien essentiel :** Sélection d'un bien essentiel pour afficher tous ses biens supports associés en arborescence.
+- **Interactive graph:** Graph visualization of the relationships between essential assets and support assets. Nodes are colored by asset type, edges annotated by dependency type. Zoom, filtering by type/criticality, highlighting of SPOFs.
+- **Dependency matrix:** Cross-tabulated view of essential assets x support assets with criticality indicators and dependency type in each cell.
+- **View by essential asset:** Selection of an essential asset to display all its associated support assets as a tree.
 
-### 5.6 Vue « Classification et DIC »
+### 5.6 "Classification and CIA" view
 
-- **Heatmap DIC :** Vue matricielle des biens essentiels avec les 3 colonnes C, I, D colorées par niveau. Tri possible par niveau le plus élevé.
-- **Répartition par classification :** Graphique en secteurs ou barres de la répartition des biens par niveau de classification.
-- **Données personnelles :** Vue filtrée des biens essentiels contenant des données personnelles, avec catégories RGPD.
+- **CIA heatmap:** Matrix view of essential assets with the 3 columns C, I, A colored by level. Sortable by the highest level.
+- **Breakdown by classification:** Pie or bar chart of the breakdown of assets by classification level.
+- **Personal data:** Filtered view of essential assets containing personal data, with GDPR categories.
 
-### 5.7 Tableau de bord du module
+### 5.7 Module dashboard
 
-Un tableau de bord synthétique agrège les informations clés :
+A summary dashboard aggregates the key information:
 
-- Nombre total de biens essentiels et supports, répartition par type et statut
-- Répartition des niveaux DIC (graphique en barres empilées)
-- Nombre et liste des biens supports en fin de vie ou proches
-- Nombre et liste des points uniques de défaillance (SPOF)
-- Biens essentiels sans bien support associé
-- Biens supports orphelins (sans bien essentiel)
-- Biens essentiels contenant des données personnelles
-- Activités critiques et leurs biens supports
-- Top 10 des biens supports les plus sollicités (nombre de biens essentiels rattachés)
-- Alertes et actions requises
+- Total number of essential and support assets, breakdown by type and status
+- Breakdown of CIA levels (stacked bar chart)
+- Number and list of support assets at or near end of life
+- Number and list of single points of failure (SPOF)
+- Essential assets without an associated support asset
+- Orphan support assets (without an essential asset)
+- Essential assets containing personal data
+- Critical activities and their support assets
+- Top 10 most-relied-upon support assets (number of attached essential assets)
+- Alerts and required actions
 
 ---
 
-## 6. Permissions et contrôle d'accès
+## 6. Permissions and access control
 
-### 6.1 Modèle RBAC
+### 6.1 RBAC model
 
 | Permission | Description |
 |---|---|
-| `assets.essential.read` | Consulter les biens essentiels |
-| `assets.essential.write` | Créer/modifier les biens essentiels |
-| `assets.essential.evaluate` | Évaluer les niveaux DIC |
-| `assets.essential.delete` | Supprimer les biens essentiels |
-| `assets.support.read` | Consulter les biens supports |
-| `assets.support.write` | Créer/modifier les biens supports |
-| `assets.support.delete` | Supprimer les biens supports |
-| `assets.dependency.read` | Consulter les relations de dépendance |
-| `assets.dependency.write` | Créer/modifier les relations de dépendance |
-| `assets.dependency.delete` | Supprimer les relations de dépendance |
-| `assets.group.read` | Consulter les groupes d'actifs |
-| `assets.group.write` | Créer/modifier les groupes d'actifs |
-| `assets.group.delete` | Supprimer les groupes d'actifs |
-| `assets.import` | Importer des actifs en masse |
-| `assets.export` | Exporter les données du module |
-| `assets.config.manage` | Gérer les listes de valeurs et l'échelle DIC |
-| `assets.audit_trail.read` | Consulter le journal d'audit |
+| `assets.essential.read` | View essential assets |
+| `assets.essential.write` | Create/edit essential assets |
+| `assets.essential.evaluate` | Rate the CIA levels |
+| `assets.essential.delete` | Delete essential assets |
+| `assets.support.read` | View support assets |
+| `assets.support.write` | Create/edit support assets |
+| `assets.support.delete` | Delete support assets |
+| `assets.dependency.read` | View dependency relationships |
+| `assets.dependency.write` | Create/edit dependency relationships |
+| `assets.dependency.delete` | Delete dependency relationships |
+| `assets.group.read` | View asset groups |
+| `assets.group.write` | Create/edit asset groups |
+| `assets.group.delete` | Delete asset groups |
+| `assets.import` | Bulk import assets |
+| `assets.export` | Export the module data |
+| `assets.config.manage` | Manage the value lists and the CIA scale |
+| `assets.audit_trail.read` | View the audit trail |
 
-### 6.2 Rôles applicatifs suggérés
+### 6.2 Suggested application roles
 
-| Rôle | Permissions |
+| Role | Permissions |
 |---|---|
-| **Administrateur** | Toutes les permissions |
-| **RSSI / DPO** | Toutes sauf `*.delete` et `config.manage` |
-| **Auditeur** | `*.read` + `assets.export` + `assets.audit_trail.read` |
-| **Contributeur** | `*.read` + `*.write` + `assets.dependency.write` |
-| **Propriétaire d'actif** | `*.read` + `assets.essential.write` + `assets.support.write` + `assets.essential.evaluate` (restreint à ses propres actifs) |
-| **Lecteur** | `*.read` uniquement |
+| **Administrator** | All permissions |
+| **CISO / DPO** | All except `*.delete` and `config.manage` |
+| **Auditor** | `*.read` + `assets.export` + `assets.audit_trail.read` |
+| **Contributor** | `*.read` + `*.write` + `assets.dependency.write` |
+| **Asset owner** | `*.read` + `assets.essential.write` + `assets.support.write` + `assets.essential.evaluate` (restricted to their own assets) |
+| **Reader** | `*.read` only |
 
 ---
 
-## 7. Journalisation et traçabilité
+## 7. Logging and traceability
 
 ### 7.1 Audit Trail
 
-Identique au Module 1 (§7.1). Les actions spécifiques à ce module incluent :
+Identical to Module 1 (§7.1). The actions specific to this module include:
 
 | Action | Description |
 |---|---|
-| `create` | Création d'un actif, groupe ou dépendance |
-| `update` | Modification d'un actif, groupe ou dépendance |
-| `delete` | Suppression d'un actif, groupe ou dépendance |
-| `evaluate_dic` | Évaluation ou réévaluation des niveaux DIC |
-| `decommission` | Mise hors service d'un actif |
-| `import` | Import en masse d'actifs |
-| `add_dependency` | Ajout d'une relation de dépendance |
-| `remove_dependency` | Suppression d'une relation de dépendance |
-| `add_to_group` | Ajout d'un actif à un groupe |
-| `remove_from_group` | Retrait d'un actif d'un groupe |
+| `create` | Creation of an asset, group or dependency |
+| `update` | Modification of an asset, group or dependency |
+| `delete` | Deletion of an asset, group or dependency |
+| `evaluate_dic` | Rating or re-rating of the CIA levels |
+| `decommission` | Decommissioning of an asset |
+| `import` | Bulk import of assets |
+| `add_dependency` | Addition of a dependency relationship |
+| `remove_dependency` | Removal of a dependency relationship |
+| `add_to_group` | Addition of an asset to a group |
+| `remove_from_group` | Removal of an asset from a group |
 
-### 7.2 Rétention
+### 7.2 Retention
 
-Identique au Module 1 (§7.2). Durée paramétrable, défaut 7 ans.
+Identical to Module 1 (§7.2). Configurable duration, default 7 years.
 
 ---
 
-## 8. Export et reporting
+## 8. Export and reporting
 
-### 8.1 Formats d'export
+### 8.1 Export formats
 
-| Format | Contenu |
+| Format | Content |
 |---|---|
-| **JSON** | Export brut structuré (pour interopérabilité API) |
-| **PDF** | Document formaté avec inventaire, classifications, cartographie |
-| **DOCX** | Document éditable au format Word |
-| **CSV** | Export tabulaire séparé : biens essentiels, biens supports, dépendances |
+| **JSON** | Raw structured export (for API interoperability) |
+| **PDF** | Formatted document with inventory, classifications, mapping |
+| **DOCX** | Editable document in Word format |
+| **CSV** | Separate tabular export: essential assets, support assets, dependencies |
 
 ### 8.2 Import
 
-| Format | Contenu |
+| Format | Content |
 |---|---|
-| **CSV** | Import tabulaire avec mapping de colonnes configurable |
-| **JSON** | Import structuré conforme au schéma API |
+| **CSV** | Tabular import with configurable column mapping |
+| **JSON** | Structured import conforming to the API schema |
 
-L'import supporte les modes suivants : création uniquement, mise à jour uniquement, ou création + mise à jour (upsert basé sur la référence).
+The import supports the following modes: create only, update only, or create + update (upsert based on the reference).
 
-### 8.3 Rapports prédéfinis
+### 8.3 Predefined reports
 
-| Rapport | Description |
+| Report | Description |
 |---|---|
-| Inventaire des biens essentiels | Liste complète avec valorisation DIC et classification |
-| Inventaire des biens supports | Liste complète avec caractéristiques techniques et DIC hérité |
-| Matrice de dépendances | Tableau croisé biens essentiels × biens supports |
-| Rapport de classification | Répartition des actifs par niveau de classification |
-| Rapport données personnelles | Biens essentiels contenant des données personnelles avec catégories |
-| Rapport fin de vie | Biens supports en fin de vie ou arrivant à échéance |
-| Rapport SPOF | Points uniques de défaillance identifiés |
-| Rapport de couverture | Biens essentiels non supportés et biens supports orphelins |
+| Essential asset inventory | Complete list with CIA valuation and classification |
+| Support asset inventory | Complete list with technical characteristics and inherited CIA |
+| Dependency matrix | Cross-tabulation of essential assets x support assets |
+| Classification report | Breakdown of assets by classification level |
+| Personal data report | Essential assets containing personal data with categories |
+| End-of-life report | Support assets at end of life or approaching it |
+| SPOF report | Identified single points of failure |
+| Coverage report | Unsupported essential assets and orphan support assets |
 
 ---
 
-## 9. Notifications et alertes
+## 9. Notifications and alerts
 
-| Événement | Destinataires | Canal |
+| Event | Recipients | Channel |
 |---|---|---|
-| Bien support arrivant en fin de vie (30/60/90 jours avant) | Propriétaire, Administrateur | In-app, email |
-| Bien support en fin de vie dépassée | Propriétaire, RSSI | In-app, email |
-| Bien essentiel sans bien support associé | Propriétaire | In-app |
-| Bien support orphelin (sans bien essentiel) | Propriétaire | In-app |
-| Point unique de défaillance détecté (SPOF sans redondance) | Propriétaire, RSSI | In-app, email |
-| Données personnelles avec classification insuffisante | DPO, Propriétaire | In-app, email |
-| Date de revue atteinte (bien essentiel ou support) | Propriétaire | In-app, email |
-| Modification des niveaux DIC d'un bien essentiel | Propriétaires des biens supports impactés | In-app |
-| Import en masse terminé | Utilisateur ayant lancé l'import | In-app, email |
-| Garantie arrivant à expiration (30/60 jours avant) | Propriétaire | In-app |
+| Support asset approaching end of life (30/60/90 days before) | Owner, Administrator | In-app, email |
+| Support asset past end of life | Owner, CISO | In-app, email |
+| Essential asset without an associated support asset | Owner | In-app |
+| Orphan support asset (without an essential asset) | Owner | In-app |
+| Single point of failure detected (SPOF without redundancy) | Owner, CISO | In-app, email |
+| Personal data with insufficient classification | DPO, Owner | In-app, email |
+| Review date reached (essential or support asset) | Owner | In-app, email |
+| Change to the CIA levels of an essential asset | Owners of the impacted support assets | In-app |
+| Bulk import completed | User who launched the import | In-app, email |
+| Warranty approaching expiry (30/60 days before) | Owner | In-app |
 
 ---
 
-## 10. Considérations techniques
+## 10. Technical considerations
 
-### 10.1 Calcul automatique de l'héritage DIC
+### 10.1 Automatic CIA inheritance calculation
 
-Le calcul des niveaux DIC hérités d'un bien support est effectué côté serveur. L'algorithme est le suivant :
+The calculation of a support asset's inherited CIA levels is performed server-side. The algorithm is as follows:
 
 ```
-Pour chaque bien support BS :
-    BS.inherited_confidentiality = MAX(C de tous les biens essentiels liés via AssetDependency)
-    BS.inherited_integrity = MAX(I de tous les biens essentiels liés via AssetDependency)
-    BS.inherited_availability = MAX(D de tous les biens essentiels liés via AssetDependency)
+For each support asset BS:
+    BS.inherited_confidentiality = MAX(C of all essential assets linked via AssetDependency)
+    BS.inherited_integrity = MAX(I of all essential assets linked via AssetDependency)
+    BS.inherited_availability = MAX(D of all essential assets linked via AssetDependency)
 ```
 
-Ce calcul est déclenché :
-- À la création ou suppression d'une relation `AssetDependency`
-- À la modification des niveaux DIC d'un `EssentialAsset`
-- Les résultats sont mis en cache et invalidés lors des événements ci-dessus
+This calculation is triggered:
+- On the creation or deletion of an `AssetDependency` relationship
+- On a change to the CIA levels of an `EssentialAsset`
+- Results are cached and invalidated on the events above
 
-### 10.2 Import en masse
+### 10.2 Bulk import
 
-L'import en masse d'actifs (CSV, JSON) est traité de manière asynchrone :
+Bulk asset import (CSV, JSON) is processed asynchronously:
 
-1. L'utilisateur téléverse le fichier et configure le mapping des colonnes (pour CSV)
-2. Le système valide le fichier (format, champs requis, cohérence des références)
-3. Un rapport de pré-import est généré (nombre d'enregistrements, erreurs détectées, avertissements)
-4. L'utilisateur confirme l'import
-5. Le traitement est exécuté en arrière-plan avec notification à la fin
-6. Un rapport d'import est généré (succès, échecs, enregistrements ignorés)
+1. The user uploads the file and configures the column mapping (for CSV)
+2. The system validates the file (format, required fields, reference consistency)
+3. A pre-import report is generated (number of records, detected errors, warnings)
+4. The user confirms the import
+5. Processing runs in the background with a notification on completion
+6. An import report is generated (successes, failures, skipped records)
 
-### 10.3 Graphe de dépendances
+### 10.3 Dependency graph
 
-La visualisation du graphe de dépendances s'appuie sur un endpoint API dédié qui retourne les données au format suivant :
+The dependency graph visualization relies on a dedicated API endpoint that returns data in the following format:
 
 ```json
 {
   "nodes": [
     {
       "id": "uuid-xxx",
-      "label": "BE-001 - Processus RH",
+      "label": "BE-001 - HR Process",
       "type": "essential_asset",
       "subtype": "business_process",
       "dic": { "c": 3, "i": 2, "d": 3 }
     },
     {
       "id": "uuid-yyy",
-      "label": "BS-012 - Serveur SIRH",
+      "label": "BS-012 - HRIS Server",
       "type": "support_asset",
       "subtype": "hardware",
       "inherited_dic": { "c": 3, "i": 2, "d": 3 }
@@ -461,23 +461,23 @@ La visualisation du graphe de dépendances s'appuie sur un endpoint API dédié 
 
 ### 10.4 Multi-tenant
 
-Identique au Module 1 (§10.2). Isolation des données via `tenant_id`.
+Identical to Module 1 (§10.2). Data isolation via `tenant_id`.
 
-### 10.5 Internationalisation (i18n)
+### 10.5 Internationalization (i18n)
 
-Identique au Module 1 (§10.3). Support français et anglais minimum.
+Identical to Module 1 (§10.3). French and English support at minimum.
 
-### 10.6 Performances
+### 10.6 Performance
 
-- Les listes paginées ne doivent pas dépasser un temps de réponse de **200 ms** pour 1 000 enregistrements.
-- Le calcul d'héritage DIC doit s'exécuter en moins de **500 ms** pour un bien essentiel lié à 100 biens supports.
-- Le graphe de dépendances doit se charger en moins de **2 secondes** pour 500 nœuds.
-- Les tableaux de bord agrégés sont mis en cache avec un TTL de **5 minutes**.
-- Les imports volumineux (> 500 enregistrements) sont traités de manière asynchrone avec notification.
+- Paginated lists must not exceed a response time of **200 ms** for 1,000 records.
+- The CIA inheritance calculation must run in under **500 ms** for an essential asset linked to 100 support assets.
+- The dependency graph must load in under **2 seconds** for 500 nodes.
+- Aggregated dashboards are cached with a TTL of **5 minutes**.
+- Large imports (> 500 records) are processed asynchronously with a notification.
 
 ### 10.7 Webhooks
 
-Identique au Module 1 (§10.5). Événements spécifiques :
+Identical to Module 1 (§10.5). Specific events:
 
 - `assets.essential_asset.created`, `updated`, `deleted`
 - `assets.essential_asset.dic_evaluated`
@@ -488,42 +488,42 @@ Identique au Module 1 (§10.5). Événements spécifiques :
 
 ---
 
-## 11. Critères d'acceptation
+## 11. Acceptance criteria
 
-### 11.1 Fonctionnels
+### 11.1 Functional
 
-- [ ] CRUD complet sur les biens essentiels, biens supports, groupes et dépendances
-- [ ] Toutes les relations entre entités sont fonctionnelles
-- [ ] Les vues liste supportent pagination, tri, filtrage et recherche
-- [ ] L'évaluation DIC des biens essentiels fonctionne avec historisation
-- [ ] L'héritage DIC vers les biens supports est calculé automatiquement et correctement
-- [ ] Le détail de l'héritage DIC (provenance) est consultable
-- [ ] Le graphe de dépendances est affiché et interactif
-- [ ] La matrice de dépendances est consultable
-- [ ] Les alertes (fin de vie, SPOF, orphelins, données personnelles) sont fonctionnelles
-- [ ] L'import en masse (CSV, JSON) est opérationnel avec pré-validation
-- [ ] Les exports sont opérationnels dans tous les formats prévus
-- [ ] Le tableau de bord synthétique affiche les données correctes
-- [ ] La vue par type et la vue arborescente fonctionnent
+- [ ] Full CRUD on essential assets, support assets, groups and dependencies
+- [ ] All relationships between entities are functional
+- [ ] List views support pagination, sorting, filtering and search
+- [ ] CIA rating of essential assets works with history tracking
+- [ ] CIA inheritance to support assets is calculated automatically and correctly
+- [ ] The detail of CIA inheritance (origin) can be viewed
+- [ ] The dependency graph is displayed and interactive
+- [ ] The dependency matrix can be viewed
+- [ ] The alerts (end of life, SPOF, orphans, personal data) are functional
+- [ ] Bulk import (CSV, JSON) is operational with pre-validation
+- [ ] Exports are operational in all the planned formats
+- [ ] The summary dashboard displays the correct data
+- [ ] The view by type and the tree view work
 
 ### 11.2 API
 
-- [ ] Tous les endpoints documentés sont implémentés et fonctionnels
-- [ ] La documentation OpenAPI (Swagger) est générée automatiquement
-- [ ] Les codes d'erreur et structures de réponse sont conformes aux spécifications
-- [ ] La pagination, le tri et le filtrage fonctionnent sur tous les endpoints de liste
-- [ ] L'endpoint de graphe retourne les données au format spécifié
-- [ ] Les webhooks sont déclenchés pour chaque événement de mutation
+- [ ] All documented endpoints are implemented and functional
+- [ ] The OpenAPI (Swagger) documentation is generated automatically
+- [ ] The error codes and response structures conform to the specifications
+- [ ] Pagination, sorting and filtering work on all list endpoints
+- [ ] The graph endpoint returns data in the specified format
+- [ ] Webhooks are triggered for every mutation event
 
-### 11.3 Sécurité
+### 11.3 Security
 
-- [ ] Le contrôle d'accès RBAC est appliqué sur chaque endpoint et chaque vue
-- [ ] La restriction « propriétaire d'actif » limite bien l'accès aux actifs dont l'utilisateur est propriétaire
-- [ ] Le journal d'audit enregistre toutes les opérations
-- [ ] Les données sont isolées entre tenants
+- [ ] RBAC access control is enforced on every endpoint and every view
+- [ ] The "asset owner" restriction properly limits access to the assets the user owns
+- [ ] The audit trail records all operations
+- [ ] Data is isolated between tenants
 
 ### 11.4 Performance
 
-- [ ] Les temps de réponse respectent les seuils définis (§10.6)
-- [ ] Le calcul d'héritage DIC respecte le seuil de 500 ms
-- [ ] Les imports volumineux sont traités de manière asynchrone
+- [ ] Response times meet the defined thresholds (§10.6)
+- [ ] The CIA inheritance calculation meets the 500 ms threshold
+- [ ] Large imports are processed asynchronously

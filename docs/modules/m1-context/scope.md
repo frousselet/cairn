@@ -2,25 +2,25 @@
 
 `context.models.scope.Scope`
 
-Représente le périmètre couvert par le dispositif GRC.
+Represents the scope covered by the GRC framework.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `name` | string | requis, max 255 | Nom du périmètre |
-| `description` | text | requis | Description détaillée du périmètre |
-| `version` | string | requis | Version du document de périmètre |
-| `workflow_state` | enum | requis, défaut `draft` | Cycle de vie unifié : `draft`, `pending`, `validated`, `archived`. Voir [governance/workflow.md](../governance/workflow.md). |
-| `boundaries` | text | optionnel | Limites et exclusions du périmètre |
-| `justification_exclusions` | text | optionnel | Justification des exclusions |
-| `geographic_scope` | text | optionnel | Périmètre géographique |
-| `organizational_scope` | text | optionnel | Périmètre organisationnel |
-| `technical_scope` | text | optionnel | Périmètre technique |
-| `applicable_standards` | relation | M2M → Referential | Référentiels applicables |
-| `approved_by` | relation | FK → User | Approbateur |
-| `approved_at` | datetime | optionnel | Date d'approbation |
-| `effective_date` | date | optionnel | Date d'entrée en vigueur |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `name` | string | required, max 255 | Scope name |
+| `description` | text | required | Detailed description of the scope |
+| `version` | string | required | Version of the scope document |
+| `workflow_state` | enum | required, default `draft` | Unified lifecycle: `draft`, `pending`, `validated`, `archived`. See [governance/workflow.md](../governance/workflow.md). |
+| `boundaries` | text | optional | Scope boundaries and exclusions |
+| `justification_exclusions` | text | optional | Justification of exclusions |
+| `geographic_scope` | text | optional | Geographic scope |
+| `organizational_scope` | text | optional | Organizational scope |
+| `technical_scope` | text | optional | Technical scope |
+| `applicable_standards` | relation | M2M → Referential | Applicable standards |
+| `approved_by` | relation | FK → User | Approver |
+| `approved_at` | datetime | optional | Approval date |
+| `effective_date` | date | optional | Effective date |
+| `review_date` | date | optional | Next review date |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |

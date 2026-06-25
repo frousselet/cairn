@@ -2,20 +2,20 @@
 
 `assets.models.group.AssetGroup`
 
-Regroupement de biens supports par lot logique (ex. « Serveurs de production ») pour faciliter la gestion et l'appréciation des risques.
+Grouping of support assets into a logical batch (e.g. "Production servers") to facilitate management and risk assessment.
 
-Permet de regrouper des biens supports par lot logique (ex. « Serveurs de production », « Postes de travail site Paris ») pour faciliter la gestion et l'appréciation des risques.
+Allows support assets to be grouped into a logical batch (e.g. "Production servers", "Paris site workstations") to facilitate management and risk assessment.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `name` | string | requis, max 255 | Nom du groupe |
-| `description` | text | optionnel | Description du groupe |
-| `type` | enum | requis | Même typologie que SupportAsset.type |
-| `members` | relation | M2M → SupportAsset | Biens supports membres |
-| `owner_id` | relation | FK → User, optionnel | Responsable du groupe |
-| `status` | enum | requis | `active`, `inactive` |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `scope_id` | relation | FK → Scope, required | Attached scope |
+| `name` | string | required, max 255 | Group name |
+| `description` | text | optional | Group description |
+| `type` | enum | required | Same typology as SupportAsset.type |
+| `members` | relation | M2M → SupportAsset | Member support assets |
+| `owner_id` | relation | FK → User, optional | Group owner |
+| `status` | enum | required | `active`, `inactive` |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |

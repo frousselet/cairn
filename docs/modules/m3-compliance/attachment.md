@@ -2,21 +2,21 @@
 
 `compliance.models.assessment.AssessmentResultAttachment`
 
-Pièce jointe documentaire associée à un résultat d'[évaluation de conformité](compliance-assessment.md) ou à un [plan d'action](compliance-action-plan.md).
+Documentary attachment associated with a [compliance assessment](compliance-assessment.md) result or with an [action plan](compliance-action-plan.md).
 
-## Sous-entité : Attachment (Pièce jointe)
+## Sub-entity: Attachment
 
-Utilisée pour stocker les preuves documentaires associées aux évaluations de conformité.
+Used to store the documentary evidence associated with compliance assessments.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `entity_type` | string | requis | Type d'entité parente (ex. `AssessmentResult`, `ComplianceActionPlan`) |
-| `entity_id` | UUID | requis | Identifiant de l'entité parente |
-| `file_name` | string | requis, max 255 | Nom du fichier |
-| `file_path` | string | requis | Chemin de stockage |
-| `file_size` | integer | requis | Taille en octets |
-| `mime_type` | string | requis | Type MIME |
-| `description` | text | optionnel | Description de la pièce jointe |
-| `uploaded_by` | relation | FK → User, requis | Utilisateur ayant téléversé |
-| `created_at` | datetime | auto | Date de création |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `entity_type` | string | required | Parent entity type (e.g. `AssessmentResult`, `ComplianceActionPlan`) |
+| `entity_id` | UUID | required | Parent entity identifier |
+| `file_name` | string | required, max 255 | File name |
+| `file_path` | string | required | Storage path |
+| `file_size` | integer | required | Size in bytes |
+| `mime_type` | string | required | MIME type |
+| `description` | text | optional | Attachment description |
+| `uploaded_by` | relation | FK → User, required | User who uploaded the file |
+| `created_at` | datetime | auto | Creation date |

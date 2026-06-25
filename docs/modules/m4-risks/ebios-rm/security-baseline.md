@@ -2,21 +2,21 @@
 
 `risks.models.ebios.security_baseline.SecurityBaseline`
 
-Racine de l'atelier 1 EBIOS RM. Une seule par appréciation. Préfixe de référence : `EBSL`.
+Root of EBIOS RM workshop 1. Only one per assessment. Reference prefix: `EBSL`.
 
-## 4.1.1 Entité : SecurityBaseline (Socle de sécurité)
+## 4.1.1 Entity: SecurityBaseline (Security baseline)
 
-Racine de l'atelier 1. Une seule par appréciation.
+Root of workshop 1. Only one per assessment.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> [RiskAssessment](../risk-assessment.md), requis, unique | Appréciation parente |
-| `reference` | string | requis, unique, préfixe EBSL | Code (ex. EBSL-1) |
-| `business_values` | M2M -> Activity | requis | Valeurs métier retenues |
-| `essential_assets` | M2M -> EssentialAsset | requis | Biens essentiels retenus |
-| `support_assets` | M2M -> SupportAsset | requis | Biens supports retenus |
-| `dic_summary` | text | optionnel | Synthèse des besoins de sécurité DIC |
-| `baseline_references` | M2M -> Framework | optionnel | Référentiels du socle (ISO 27002, ANSSI, NIST, etc.) |
-| `status` | enum | requis | `draft`, `in_progress`, `completed` |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
+| `id` | UUID | PK, auto | Unique identifier |
+| `assessment_id` | relation | FK -> [RiskAssessment](../risk-assessment.md), required, unique | Parent assessment |
+| `reference` | string | required, unique, prefix EBSL | Code (e.g. EBSL-1) |
+| `business_values` | M2M -> Activity | required | Business values retained |
+| `essential_assets` | M2M -> EssentialAsset | required | Essential assets retained |
+| `support_assets` | M2M -> SupportAsset | required | Support assets retained |
+| `dic_summary` | text | optional | Summary of CIA security needs |
+| `baseline_references` | M2M -> Framework | optional | Baseline frameworks (ISO 27002, ANSSI, NIST, etc.) |
+| `status` | enum | required | `draft`, `in_progress`, `completed` |
+| `created_by`, `created_at`, `updated_at` | - | auto | Standard |

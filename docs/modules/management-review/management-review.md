@@ -4,39 +4,39 @@
 
 Persistent management review (ISO 27001:2022 clause 9.3) covering its full lifecycle from planning through closure.
 
-Représente une revue de direction planifiée ou tenue. Objet racine persistant qui remplace le fonctionnement "export éphémère" actuel.
+Represents a planned or held management review. Persistent root object that replaces the current "ephemeral export" behaviour.
 
-Fichier : `reports/models/management_review.py`
+File : `reports/models/management_review.py`
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `reference` | string | auto (préfixe `MRVW`), unique | Référence séquentielle (ex. `MRVW-1`) |
-| `title` | string | requis, max 255 | Intitulé (ex. « Revue de direction annuelle 2026 ») |
-| `description` | text | optionnel | Contexte, objet de la revue |
-| `scopes` | relation | M2M → Scope, au moins 1 | Périmètres couverts par la revue |
-| `frequency` | enum | requis | `quarterly`, `semiannual`, `annual`, `exceptional` |
-| `period_start` | date | requis | Début de la période examinée |
-| `period_end` | date | requis | Fin de la période examinée |
-| `planned_date` | date | requis | Date planifiée de la revue |
-| `held_date` | date | optionnel | Date effective de tenue |
-| `location` | string | optionnel, max 255 | Lieu (physique ou visio) |
-| `status` | enum | requis | `planned`, `in_preparation`, `held`, `closed`, `cancelled` |
-| `facilitator` | FK → User | requis | Animateur / rédacteur |
-| `approver` | FK → User | optionnel | Approbateur (typiquement direction) |
-| `approved_at` | datetime | optionnel | Date d'approbation |
-| `next_review_date` | date | optionnel | Date prévue de la prochaine revue |
-| `summary` | text | optionnel | Synthèse exécutive rédigée par l'animateur |
-| `agenda` | text | optionnel | Ordre du jour (HTML rich text) |
-| `minutes` | text | optionnel | Compte rendu détaillé (HTML rich text) |
-| `snapshot_data` | JSONField | optionnel | Snapshot des données agrégées au moment de la clôture (pour geler l'auditabilité) |
-| `created_by` | FK → User | auto | Créateur |
-| `created_at`, `updated_at` | datetime | auto | Traçabilité |
-| `tags` | M2M → Tag | optionnel | Étiquetage libre |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `reference` | string | auto (prefix `MRVW`), unique | Sequential reference (e.g. `MRVW-1`) |
+| `title` | string | required, max 255 | Title (e.g. "Annual management review 2026") |
+| `description` | text | optional | Context, purpose of the review |
+| `scopes` | relation | M2M → Scope, at least 1 | Scopes covered by the review |
+| `frequency` | enum | required | `quarterly`, `semiannual`, `annual`, `exceptional` |
+| `period_start` | date | required | Start of the period under review |
+| `period_end` | date | required | End of the period under review |
+| `planned_date` | date | required | Planned date of the review |
+| `held_date` | date | optional | Actual date held |
+| `location` | string | optional, max 255 | Location (physical or video conference) |
+| `status` | enum | required | `planned`, `in_preparation`, `held`, `closed`, `cancelled` |
+| `facilitator` | FK → User | required | Facilitator / minute-taker |
+| `approver` | FK → User | optional | Approver (typically top management) |
+| `approved_at` | datetime | optional | Approval date |
+| `next_review_date` | date | optional | Planned date of the next review |
+| `summary` | text | optional | Executive summary written by the facilitator |
+| `agenda` | text | optional | Agenda (HTML rich text) |
+| `minutes` | text | optional | Detailed minutes (HTML rich text) |
+| `snapshot_data` | JSONField | optional | Snapshot of the aggregated data at the time of closure (to freeze auditability) |
+| `created_by` | FK → User | auto | Creator |
+| `created_at`, `updated_at` | datetime | auto | Traceability |
+| `tags` | M2M → Tag | optional | Free-form tagging |
 
-**Historique** : `django-simple-history` (`HistoricalRecords`) pour audit-trail.
+**History** : `django-simple-history` (`HistoricalRecords`) for the audit trail.
 
-**Cycle de vie (workflow)** :
+**Lifecycle (workflow)** :
 
 ```
 planned ─► in_preparation ─► held ─► closed
@@ -45,17 +45,17 @@ planned ─► in_preparation ─► held ─► closed
 
 Transitions :
 
-- `planned → in_preparation` : l'animateur verrouille l'ordre du jour et déclenche la collecte des données.
-- `in_preparation → held` : sur saisie de `held_date`. Les données entrées de clause 9.3.2 sont gelées dans `snapshot_data`.
-- `held → closed` : toutes les décisions doivent avoir un responsable et une échéance ; le statut bascule si `approver` valide. Capture `approved_at`.
-- `* → cancelled` : motif obligatoire, stocké via commentaire (cf. [comment.md](comment.md)).
+- `planned → in_preparation` : the facilitator locks the agenda and triggers data collection.
+- `in_preparation → held` : on entry of `held_date`. The entered clause 9.3.2 inputs are frozen in `snapshot_data`.
+- `held → closed` : all decisions must have an owner and a due date ; the status switches once the `approver` validates. Captures `approved_at`.
+- `* → cancelled` : reason required, stored via a comment (cf. [comment.md](comment.md)).
 
-L'UI doit utiliser le **stepper horizontal** décrit dans `CLAUDE.md` (cf. `compliance/templates/compliance/assessment_detail.html`).
+The UI must use the **horizontal stepper** described in `CLAUDE.md` (cf. `compliance/templates/compliance/assessment_detail.html`).
 
 ## Extensions to Indicator / IndicatorMeasurement
 
-**Aucun changement de modèle**. `IndicatorMeasurement` existe déjà (`context/models/indicator.py:352`). La spec impose uniquement d'exploiter ces mesures côté export :
+**No model change**. `IndicatorMeasurement` already exists (`context/models/indicator.py:352`). The spec only requires these measurements to be leveraged on the export side :
 
-- Calcul de la tendance sur la période de revue : comparaison de la **moyenne des mesures** `period_start → period_end` vs. la période précédente équivalente.
-- Marqueur `trend` calculé : `improving`, `stable`, `degrading`, `insufficient_data` (< 2 mesures).
-- Calcul du **respect de la fréquence** : nombre attendu de mesures sur la période (selon `review_frequency`) vs. nombre réel. Remonté en `measurement_compliance_pct`.
+- Trend computed over the review period : comparison of the **average of the measurements** `period_start → period_end` vs. the equivalent previous period.
+- Computed `trend` marker : `improving`, `stable`, `degrading`, `insufficient_data` (< 2 measurements).
+- Computation of **frequency compliance** : expected number of measurements over the period (according to `review_frequency`) vs. the actual number. Reported as `measurement_compliance_pct`.

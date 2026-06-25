@@ -2,32 +2,32 @@
 
 `risks.models.ebios.ecosystem_stakeholder.EcosystemStakeholder`
 
-Partie prenante de l'écosystème pouvant constituer un vecteur d'attaque. Modèle indépendant du `context.Stakeholder` (parties intéressées ISO 9001/27001). Préfixe de référence : `EECS`.
+Ecosystem stakeholder that may constitute an attack vector. Model independent from `context.Stakeholder` (ISO 9001/27001 interested parties). Reference prefix: `EECS`.
 
-## 4.3.1 Entité : EcosystemStakeholder (Partie prenante de l'écosystème)
+## 4.3.1 Entity: EcosystemStakeholder (Ecosystem stakeholder)
 
-Modèle indépendant du `context.Stakeholder` (parties intéressées ISO 9001/27001). Lien optionnel via FK.
+Model independent from `context.Stakeholder` (ISO 9001/27001 interested parties). Optional link via FK.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto | Identifiant unique |
-| `assessment_id` | relation | FK -> [RiskAssessment](../risk-assessment.md), requis | Appréciation parente |
-| `reference` | string | requis, unique, préfixe EECS | Code (ex. EECS-1) |
-| `stakeholder_id` | relation | FK -> Stakeholder, optionnel | Lien Module 1 (si déjà recensé) |
-| `supplier_id` | relation | FK -> Supplier, optionnel | Lien Module 2 (si fournisseur) |
-| `name` | string | requis, max 255 | Nom |
-| `description` | text | optionnel | Description du rôle dans l'écosystème |
-| `category` | enum | requis | `supplier`, `partner`, `subcontractor`, `customer`, `regulator`, `shared_infrastructure`, `client_employee`, `other` |
-| `dependency` | integer | requis, 1 à 4 | Dépendance de l'organisme vis-à-vis de la PP |
-| `penetration` | integer | requis, 1 à 4 | Pénétration de la PP dans l'écosystème |
-| `maturity` | integer | requis, 1 à 4 | Maturité cyber de la PP |
-| `trust` | integer | requis, 1 à 4 | Confiance accordée à la PP |
-| `threat_level` | decimal(4,2) | calculé | `(dependency * penetration) / (maturity * trust)` |
-| `threat_zone` | enum | calculé | `control`, `monitoring`, `danger` (seuils [voir README §2.6](README.md#26-cartographie-de-la-menace-numérique-de-lécosystème)) |
-| `accessible_support_assets` | M2M -> SupportAsset | optionnel | Biens supports accessibles |
-| `is_attack_vector` | boolean | requis, défaut false | Identifié comme vecteur d'attaque |
-| `attack_vector_justification` | text | optionnel | Justification |
-| `criteria_snapshot` | json | calculé | Snapshot des seuils de zonage |
-| `created_by`, `created_at`, `updated_at` | - | auto | Standards |
+| `id` | UUID | PK, auto | Unique identifier |
+| `assessment_id` | relation | FK -> [RiskAssessment](../risk-assessment.md), required | Parent assessment |
+| `reference` | string | required, unique, prefix EECS | Code (e.g. EECS-1) |
+| `stakeholder_id` | relation | FK -> Stakeholder, optional | Module 1 link (if already recorded) |
+| `supplier_id` | relation | FK -> Supplier, optional | Module 2 link (if a supplier) |
+| `name` | string | required, max 255 | Name |
+| `description` | text | optional | Description of the role in the ecosystem |
+| `category` | enum | required | `supplier`, `partner`, `subcontractor`, `customer`, `regulator`, `shared_infrastructure`, `client_employee`, `other` |
+| `dependency` | integer | required, 1 to 4 | Dependency of the organization on the stakeholder |
+| `penetration` | integer | required, 1 to 4 | Penetration of the stakeholder into the ecosystem |
+| `maturity` | integer | required, 1 to 4 | Cyber maturity of the stakeholder |
+| `trust` | integer | required, 1 to 4 | Trust placed in the stakeholder |
+| `threat_level` | decimal(4,2) | computed | `(dependency * penetration) / (maturity * trust)` |
+| `threat_zone` | enum | computed | `control`, `monitoring`, `danger` (thresholds [see README §2.6](README.md#26-mapping-of-the-digital-threat-across-the-ecosystem)) |
+| `accessible_support_assets` | M2M -> SupportAsset | optional | Accessible support assets |
+| `is_attack_vector` | boolean | required, default false | Identified as an attack vector |
+| `attack_vector_justification` | text | optional | Justification |
+| `criteria_snapshot` | json | computed | Snapshot of the zoning thresholds |
+| `created_by`, `created_at`, `updated_at` | - | auto | Standard |
 
-> `threat_level` et `threat_zone` sont calculés dans `save()` selon la formule [README §2.6](README.md#26-cartographie-de-la-menace-numérique-de-lécosystème). Les seuils sont paramétrables sur [`RiskCriteria`](../risk-criteria.md) (clé JSON `ebios_ecosystem_thresholds`).
+> `threat_level` and `threat_zone` are computed in `save()` according to the formula in [README §2.6](README.md#26-mapping-of-the-digital-threat-across-the-ecosystem). The thresholds are configurable on [`RiskCriteria`](../risk-criteria.md) (JSON key `ebios_ecosystem_thresholds`).

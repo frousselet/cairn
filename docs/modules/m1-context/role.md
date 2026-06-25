@@ -2,52 +2,52 @@
 
 `context.models.role.Role`
 
-Représente un rôle au sein du dispositif GRC.
+Represents a role within the GRC framework.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `name` | string | requis, max 255 | Intitulé du rôle |
-| `description` | text | optionnel | Description du rôle |
-| `type` | enum | requis | `governance`, `operational`, `support`, `control` |
-| `responsibilities` | relation | O2M → Responsibility | Responsabilités associées |
-| `assigned_users` | relation | M2M → User | Utilisateurs affectés |
-| `is_mandatory` | boolean | requis, défaut false | Rôle obligatoire (exigé par un référentiel) |
-| `source_standard` | string | optionnel | Référentiel d'origine (ex. "ISO 27001 - §5.3") |
-| `status` | enum | requis | `active`, `inactive` |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `scope_id` | relation | FK → Scope, required | Linked scope |
+| `name` | string | required, max 255 | Role title |
+| `description` | text | optional | Role description |
+| `type` | enum | required | `governance`, `operational`, `support`, `control` |
+| `responsibilities` | relation | O2M → Responsibility | Associated responsibilities |
+| `assigned_users` | relation | M2M → User | Assigned users |
+| `is_mandatory` | boolean | required, default false | Mandatory role (required by a standard) |
+| `source_standard` | string | optional | Source standard (e.g. "ISO 27001 - §5.3") |
+| `status` | enum | required | `active`, `inactive` |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |
 
-Les responsabilités se gèrent directement depuis la page de détail du rôle :
-ajout, modification et suppression via un tiroir (drawer) HTMX, la section se
-rafraîchissant sans rechargement de page. Les actions sont protégées par la
-permission `context.role.update`.
+Responsibilities are managed directly from the role detail page:
+adding, editing and deleting them through an HTMX drawer, with the section
+refreshing without a full page reload. These actions are protected by the
+`context.role.update` permission.
 
-Toute création, modification ou suppression d'une responsabilité **repasse le
-rôle à l'état initial (brouillon)** : l'approbation est réinitialisée, la version
-est incrémentée et la rétrogradation est tracée dans l'historique du rôle, afin
-qu'il soit revalidé. Ce comportement s'applique aussi bien depuis l'interface que
-via l'API REST (`Role.send_back_to_draft()`, source unique). Les rôles dans un
-état terminal (archivé / annulé) ne sont pas affectés.
+Any creation, modification or deletion of a responsibility **sends the role
+back to its initial state (draft)**: the approval is reset, the version is
+incremented and the demotion is recorded in the role's history, so that it can
+be re-validated. This behavior applies both from the interface and through the
+REST API (`Role.send_back_to_draft()`, single source). Roles in a terminal
+state (archived / cancelled) are not affected.
 
-L'historique du rôle **fusionne l'historique de ses responsabilités** (chaque
-responsabilité possède son propre suivi `HistoricalRecords`) : ajout,
-modification et suppression d'une responsabilité apparaissent ainsi sur la
-chronologie du rôle. Une suppression affiche les valeurs de la responsabilité
-retirée et porte un libellé « Responsabilité ».
+The role's history **merges the history of its responsibilities** (each
+responsibility has its own `HistoricalRecords` tracking): adding, modifying and
+deleting a responsibility therefore appear on the role's timeline. A deletion
+displays the values of the removed responsibility and carries a "Responsibility"
+label.
 
 ## Responsibility
 
-Sous-entité : responsabilité associée à un rôle.
+Sub-entity: responsibility associated with a role.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `role_id` | relation | FK → Role, requis | Rôle parent |
-| `description` | text | requis | Description de la responsabilité |
-| `raci_type` | enum | requis | `responsible`, `accountable`, `consulted`, `informed` |
-| `related_activity_id` | relation | FK → Activity, optionnel | Activité associée |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `role_id` | relation | FK → Role, required | Parent role |
+| `description` | text | required | Responsibility description |
+| `raci_type` | enum | required | `responsible`, `accountable`, `consulted`, `informed` |
+| `related_activity_id` | relation | FK → Activity, optional | Associated activity |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |

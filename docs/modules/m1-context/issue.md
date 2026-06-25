@@ -2,29 +2,29 @@
 
 `context.models.issue.Issue`
 
-Représente un enjeu interne ou externe pouvant influencer la capacité de l'organisme à atteindre les résultats attendus de son dispositif GRC.
+Represents an internal or external issue that may influence the organization's ability to achieve the intended outcomes of its GRC framework.
 
-| Champ | Type | Contraintes | Description |
+| Field | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID | PK, auto-généré | Identifiant unique |
-| `scope_id` | relation | FK → Scope, requis | Périmètre rattaché |
-| `name` | string | requis, max 255 | Intitulé de l'enjeu |
-| `description` | text | optionnel | Description détaillée |
-| `type` | enum | requis | `internal`, `external` |
-| `category` | enum | requis | Voir liste ci-dessous |
-| `impact_level` | enum | requis | `low`, `medium`, `high`, `critical` |
-| `trend` | enum | optionnel | `improving`, `stable`, `degrading` |
-| `source` | string | optionnel | Source de l'identification de l'enjeu |
-| `related_stakeholders` | relation | M2M → Stakeholder | Parties intéressées liées |
-| `review_date` | date | optionnel | Prochaine date de revue |
-| `status` | enum | requis | `identified`, `active`, `monitored`, `closed` |
-| `created_by` | relation | FK → User | Créateur |
-| `created_at` | datetime | auto | Date de création |
-| `updated_at` | datetime | auto | Date de dernière modification |
+| `id` | UUID | PK, auto-generated | Unique identifier |
+| `scope_id` | relation | FK → Scope, required | Linked scope |
+| `name` | string | required, max 255 | Issue title |
+| `description` | text | optional | Detailed description |
+| `type` | enum | required | `internal`, `external` |
+| `category` | enum | required | See list below |
+| `impact_level` | enum | required | `low`, `medium`, `high`, `critical` |
+| `trend` | enum | optional | `improving`, `stable`, `degrading` |
+| `source` | string | optional | Source of the issue identification |
+| `related_stakeholders` | relation | M2M → Stakeholder | Linked stakeholders |
+| `review_date` | date | optional | Next review date |
+| `status` | enum | required | `identified`, `active`, `monitored`, `closed` |
+| `created_by` | relation | FK → User | Creator |
+| `created_at` | datetime | auto | Creation date |
+| `updated_at` | datetime | auto | Last modification date |
 
-**Catégories d'enjeux (valeurs de `category`) :**
+**Issue categories (`category` values):**
 
-- *Enjeux internes :* `strategic`, `organizational`, `human_resources`, `technical`, `financial`, `cultural`
-- *Enjeux externes :* `political`, `economic`, `social`, `technological`, `legal`, `environmental`, `competitive`, `regulatory`
+- *Internal issues:* `strategic`, `organizational`, `human_resources`, `technical`, `financial`, `cultural`
+- *External issues:* `political`, `economic`, `social`, `technological`, `legal`, `environmental`, `competitive`, `regulatory`
 
-> Note : Les catégories doivent être paramétrables par l'administrateur (ajout/modification/suppression).
+> Note: Categories must be configurable by the administrator (add/edit/delete).
