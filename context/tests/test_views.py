@@ -183,6 +183,9 @@ class TestListSummaryRail:
         counts = {item["value"]: item["count"] for item in summary["items"]}
         assert counts.get("validated") == 2
         assert counts.get("draft") == 1
+        # Every tile carries a tone + icon so the rail is coloured/distinctive.
+        for item in summary["items"]:
+            assert item["tone"] and item["icon"]
 
     def test_summary_ignores_active_status_facet(self):
         """Counts cover every state even when the list is filtered to one."""

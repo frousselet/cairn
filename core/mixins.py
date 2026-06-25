@@ -214,12 +214,56 @@ class ListSummaryMixin:
     status_field = "workflow_state"
     status_param = "status"
 
+    # Tile tone -> (CSS tone class, Bootstrap icon) for the rail KPI tiles.
+    _TONE_STYLE = {
+        "success": ("success", "check-circle"),
+        "warning": ("warning", "exclamation-triangle"),
+        "danger": ("danger", "x-circle"),
+        "info": ("accent", "info-circle"),
+        "neutral": ("neutral", "circle"),
+        "accent": ("accent", "record-circle"),
+    }
+
     def get_queryset(self):
         qs = super().get_queryset()
         # Snapshot the scope/sort-filtered queryset before the view's own status /
         # type facets, so the summary counts reflect the whole visible list.
         self._summary_base_qs = qs
         return qs
+
+    def _state_styles(self, model):
+        """Map each status value to (tone, icon) from the model's lifecycle
+        workflow tones. Empty for choice-based status fields (those fall back to
+        the keyword heuristic)."""
+        try:
+            field = model._meta.get_field(self.status_field)
+        except Exception:
+            field = None
+        if field is not None and getattr(field, "choices", None):
+            return {}
+        from core.workflow import get_workflow, workflow_name_for
+
+        try:
+            workflow = get_workflow(workflow_name_for(model))
+        except Exception:
+            return {}
+        return {
+            state.code: self._TONE_STYLE.get(getattr(state, "tone", "neutral"), self._TONE_STYLE["neutral"])
+            for state in workflow.states
+        }
+
+    def _heuristic_style(self, value):
+        """Best-effort tone for a choice-based status code, so even lists without
+        a workflow get coloured, distinctively-iconed tiles. Order matters
+        (danger before success so "non_compliant" isn't read as "compliant")."""
+        v = str(value).lower()
+        if any(k in v for k in ("major", "critical", "non_compliant", "noncompliant", "fail", "reject", "overdue", "blocked", "danger", "closed_ko")):
+            return self._TONE_STYLE["danger"]
+        if any(k in v for k in ("minor", "partial", "pending", "progress", "monitored", "review", "medium", "warning", "draft")):
+            return self._TONE_STYLE["warning"]
+        if any(k in v for k in ("compliant", "valid", "active", "done", "resolved", "approved", "success", "closed", "passed")):
+            return self._TONE_STYLE["success"]
+        return self._TONE_STYLE["neutral"]
 
     def _summary_label_pairs(self, model):
         """Ordered ``(value, label)`` pairs for the status field.
@@ -256,16 +300,23 @@ class ListSummaryMixin:
                     .values_list(self.status_field)
                     .annotate(_c=Count("pk"))
                 )
-                items = [
-                    {
-                        "value": value,
-                        "label": label,
-                        "count": counts.get(value, 0),
-                        "active": str(current) == str(value),
-                    }
-                    for value, label in self._summary_label_pairs(model)
-                    if counts.get(value, 0)
-                ]
+                styles = self._state_styles(model)
+                items = []
+                for value, label in self._summary_label_pairs(model):
+                    count = counts.get(value, 0)
+                    if not count:
+                        continue
+                    tone, icon = styles.get(value) or self._heuristic_style(value)
+                    items.append(
+                        {
+                            "value": value,
+                            "label": label,
+                            "count": count,
+                            "active": str(current) == str(value),
+                            "tone": tone,
+                            "icon": icon,
+                        }
+                    )
                 total = sum(counts.values())
             except Exception:
                 # Model without the status field (e.g. users, logs): total only.
