@@ -3328,7 +3328,10 @@
     .mform-steps { display: grid; grid-template-columns: 1fr; align-items: start; }
     .mform-steps > .mform-step { grid-area: 1 / 1; min-width: 0; }
     .mform-steps > .mform-step[hidden] {
-      display: block;          /* cancel the UA display:none from [hidden] */
+      /* !important beats Bootstrap Reboot's `[hidden]{display:none!important}`,
+         which would otherwise pull the step out of the grid and collapse the
+         cell back to the active step's height. */
+      display: block !important;
       visibility: hidden;      /* stays in layout (sizes the cell), out of tab order */
       pointer-events: none;
     }
