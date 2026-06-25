@@ -12,7 +12,7 @@ the same appearance, columns and ergonomics, in both light and dark themes.
 {% extends "base.html" %}
 {% load i18n ui help_tags table_tags workflow_tags %}   {# + entity-specific libs #}
 
-{% block title %}{% trans "<Plural entity>" %} — Cairn{% endblock %}
+{% block title %}{% trans "<Plural entity>" %} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header _("<Plural entity>") eyebrow=_("<Module>") accent="<module-accent>" %}
@@ -20,7 +20,7 @@ the same appearance, columns and ergonomics, in both light and dark themes.
 {% endpage_header %}
 {% help_modal "<app>.<entity>_list" %}
 
-{# OPTIONAL filter chips — keep when the list already had them #}
+{# OPTIONAL filter chips - keep when the list already had them #}
 
 {% include "includes/table_search.html" %}
 
@@ -55,19 +55,18 @@ the same appearance, columns and ergonomics, in both light and dark themes.
 4. **Reference column = clickable pill.**
    `<td><a href="{detail url}" class="ref">{{ obj.reference }}</a></td>`.
    Header: `{% sortable_th "reference" "Ref." %}` (label is always `Ref.`, never
-   `Reference`). Do **not** add `style="text-decoration:none"` — `a.ref` already
+   `Reference`). Do **not** add `style="text-decoration:none"` - `a.ref` already
    handles it. If a row has no reference, omit the column entirely (don't fake one).
 5. **Name column = clickable accent link.**
    `<td><a href="{detail url}" class="cell-link">{{ obj.name }}</a></td>`.
    Header: `{% sortable_th "name" "Name" %}`.
 6. **Cross-references** to another record use `class="cell-link"` too (e.g. an
    essential asset linked from a dependency row). Never reuse the old inline
-   `style="color:var(--accent);text-decoration:none;font-weight:500"` — replace every
+   `style="color:var(--accent);text-decoration:none;font-weight:500"` - replace every
    occurrence with `class="cell-link"`.
 7. **Empty-cell placeholder = ASCII hyphen.** `{{ value|default:"-" }}`. Never the
-   em-dash `—` (U+2014). Replace any `default:"—"` with `default:"-"` and any bare
-   `—` used as an empty marker inside a `<td>` with `-`. (Em-dashes elsewhere, e.g.
-   prose, are out of scope for this pass.)
+   em-dash character (U+2014): use a plain `-` for every empty-cell `default:"..."`
+   filter and for any bare empty-cell marker inside a `<td>`.
 8. **Status column** (workflow entities): `<td>{% workflow_badge obj %}</td>`,
    header `{% sortable_th "workflow_state" "Status" %}`.
 9. **Tags column** (entities with tags): second-to-last column.
@@ -87,7 +86,7 @@ the same appearance, columns and ergonomics, in both light and dark themes.
     - Lists currently missing an Actions column must gain one.
 11. **colspan** in `{% empty_state %}` must equal the exact number of `<th>` columns.
 12. **i18n**: every visible string wrapped in `{% trans %}`/`_()`. Do not edit any
-    `locale/*.po` file in this pass — instead report any *new* English string you
+    `locale/*.po` file in this pass - instead report any *new* English string you
     introduce so it can be translated centrally.
 
 ## Two-line cells and people identity (optional)
@@ -193,6 +192,6 @@ In that case rules 4-11 about the **cells** apply to the partial; rules 1-3 and 
 
 - View/Python logic, URLs, sortable-field definitions.
 - Per-list density tweaks already present (e.g. `style="font-size:.85rem"` on dense
-  numeric cells) — leave them.
+  numeric cells) - leave them.
 - `base.html` and `locale/*.po` (edited centrally).
 - The `permission_list.html` card/badge layout (intentionally not a table).

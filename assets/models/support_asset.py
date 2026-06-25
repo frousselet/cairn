@@ -113,7 +113,7 @@ class SupportAsset(ScopedModel):
         related_name="children",
         verbose_name=_("Parent support asset"),
     )
-    # M2M to Measure omitted — module not yet implemented
+    # M2M to Measure omitted - module not yet implemented
     # related_measures = models.ManyToManyField("measures.Measure", ...)
     status = models.CharField(
         _("Status"),

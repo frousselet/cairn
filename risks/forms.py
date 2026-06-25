@@ -64,7 +64,7 @@ def get_scale_choices(scale_type, criteria=None):
         )
         if levels:
             return [("", "---------")] + [
-                (lvl, f"{lvl} — {name}") for lvl, name in levels
+                (lvl, f"{lvl} - {name}") for lvl, name in levels
             ]
 
     # Ultimate fallback to hardcoded defaults
@@ -73,7 +73,7 @@ def get_scale_choices(scale_type, criteria=None):
         else DEFAULT_IMPACT_SCALES
     )
     return [("", "---------")] + [
-        (lvl, f"{lvl} — {name}") for lvl, name in defaults
+        (lvl, f"{lvl} - {name}") for lvl, name in defaults
     ]
 
 

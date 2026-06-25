@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n ui %}
 
-{% block title %}{% if form.instance.pk %}{% trans "Edit" %}{% else %}{% trans "Add" %}{% endif %} {% trans "requirement" %} — {{ supplier.name }} — Cairn{% endblock %}
+{% block title %}{% if form.instance.pk %}{% trans "Edit" %}{% else %}{% trans "Add" %}{% endif %} {% trans "requirement" %} - {{ supplier.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% if form.instance.pk %}{% trans "Edit requirement" as page_title %}{% else %}{% trans "Add requirement" as page_title %}{% endif %}

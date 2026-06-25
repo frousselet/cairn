@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n ui %}
 
-{% block title %}{% trans "Delete decision" %} — Cairn{% endblock %}
+{% block title %}{% trans "Delete decision" %} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header _("Delete decision") %}
@@ -10,7 +10,7 @@
 
 <div class="card">
   <div class="card-body">
-    <p>{% blocktrans with ref=object.reference title=object.title %}Delete decision <strong>{{ ref }} — {{ title }}</strong>?{% endblocktrans %}</p>
+    <p>{% blocktrans with ref=object.reference title=object.title %}Delete decision <strong>{{ ref }} - {{ title }}</strong>?{% endblocktrans %}</p>
     <p class="text-muted">{% trans "This action cannot be undone." %}</p>
     <form method="post">
       {% csrf_token %}

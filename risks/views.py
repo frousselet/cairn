@@ -103,7 +103,7 @@ def build_risk_matrix(risks_qs, criteria, likelihood_field, impact_field):
         likelihood_field: field name for likelihood on Risk (e.g. "current_likelihood")
         impact_field: field name for impact on Risk (e.g. "current_impact")
 
-    Returns a dict with rows, impact_labels, risk_levels, has_data — or None.
+    Returns a dict with rows, impact_labels, risk_levels, has_data - or None.
     """
     if not criteria:
         return None

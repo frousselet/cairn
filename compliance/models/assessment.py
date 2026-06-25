@@ -299,7 +299,7 @@ class ComplianceAssessment(ScopedModel):
 
         def _effective_level(result):
             # NOT_APPLICABLE requirements are excluded from the compliance
-            # ratio entirely (CAIRN-ASM-04) — the SoA convention is that the
+            # ratio entirely (CAIRN-ASM-04) - the SoA convention is that the
             # requirement does not apply to the scope and must not skew the
             # average toward 100 %. Callers filter the None back out.
             if result.compliance_status == ComplianceStatus.NOT_APPLICABLE:
@@ -395,7 +395,7 @@ class ComplianceAssessment(ScopedModel):
         # mixes the average of its applicable requirements with the levels of its
         # children, so a parent section's level was previously stuck at zero while
         # its sub-sections were correctly recomputed (QA report CAIRN-REQ-04).
-        # We compute the root of each affected branch and recalc only the root —
+        # We compute the root of each affected branch and recalc only the root -
         # recalc cascades down to every descendant.
         from compliance.models.section import Section
 
@@ -460,7 +460,7 @@ class ComplianceAssessment(ScopedModel):
                         req_worst[req.pk] = finding.finding_type
 
         # Update existing results for affected requirements
-        # Skip non-applicable results — findings can be linked but don't change status
+        # Skip non-applicable results - findings can be linked but don't change status
         existing_req_ids = set()
         for result in self.results.filter(requirement_id__in=req_worst.keys()):
             existing_req_ids.add(result.requirement_id)
@@ -564,7 +564,7 @@ class AssessmentResult(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.requirement.reference} — {self.get_compliance_status_display()}"
+        return f"{self.requirement.reference} - {self.get_compliance_status_display()}"
 
 
 ALLOWED_ATTACHMENT_EXTENSIONS = [

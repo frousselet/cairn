@@ -114,7 +114,7 @@ class TestFrameworkCompliance:
 
 
 class TestRequirementMapping:
-    """P1: mapping validation — different frameworks only."""
+    """P1: mapping validation - different frameworks only."""
 
     def test_mapping_different_frameworks_ok(self):
         fw1 = FrameworkFactory()

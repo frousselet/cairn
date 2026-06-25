@@ -3,7 +3,7 @@
 {% load help_tags %}
 {% load accounts_tags %}
 
-{% block title %}{{ action_plan.name }} — Cairn{% endblock %}
+{% block title %}{{ action_plan.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header action_plan.name reference=action_plan.reference nav="compliance:action-plan-list" accent="compliance" %}
@@ -148,7 +148,7 @@
             <small class="text-muted">{{ action_plan.progress_percentage }}%</small>
           </dd>
           <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in action_plan.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">—</span>{% endfor %}</dd>
+          <dd class="mb-0">{% for tag in action_plan.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}</dd>
         </dl>
       </div>
     </div>
@@ -159,13 +159,13 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Supervisor" %}</div>
-          {% if action_plan.owner %}{% user_badge action_plan.owner size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
+          {% if action_plan.owner %}{% user_badge action_plan.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
         </div>
         <div>
           <div class="text-muted small mb-1">{% trans "Assignees" %}</div>
           {% for user in action_plan.assignees.all %}
           <div class="mb-2">{% user_badge user size=28 link=True block=True %}</div>
-          {% empty %}<span class="text-muted">—</span>{% endfor %}
+          {% empty %}<span class="text-muted">-</span>{% endfor %}
         </div>
       </div>
     </div>
@@ -182,7 +182,7 @@
           <dt class="text-muted small mb-1">{% trans "Completion date" %}</dt>
           <dd class="mb-3">{{ action_plan.completion_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Cost estimate" %}</dt>
-          <dd class="mb-0">{% if action_plan.cost_estimate %}{{ action_plan.cost_estimate|floatformat:2 }} €{% else %}—{% endif %}</dd>
+          <dd class="mb-0">{% if action_plan.cost_estimate %}{{ action_plan.cost_estimate|floatformat:2 }} €{% else %}-{% endif %}</dd>
         </dl>
       </div>
     </div>

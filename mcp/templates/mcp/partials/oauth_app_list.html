@@ -11,7 +11,7 @@
       <div style="font-size:.75rem;color:var(--text-muted)">
         {% trans "Created" %} {{ app.created_at|date:"d/m/Y" }}
         {% if app.last_used_at %}
-          — {% trans "Last used" %} {{ app.last_used_at|date:"d/m/Y" }}
+          - {% trans "Last used" %} {{ app.last_used_at|date:"d/m/Y" }}
         {% endif %}
       </div>
     </div>

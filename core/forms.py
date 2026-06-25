@@ -13,7 +13,7 @@ def get_base_model_choices():
     for model in apps.get_models():
         if issubclass(model, BaseModel) and not model._meta.abstract:
             label = f"{model._meta.app_label}.{model._meta.model_name}"
-            verbose = f"{model._meta.app_label} — {model._meta.verbose_name}"
+            verbose = f"{model._meta.app_label} - {model._meta.verbose_name}"
             choices.append((label, verbose))
     choices.sort(key=lambda c: c[0])
     return choices
@@ -71,7 +71,7 @@ class VersioningConfigForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # Model name choices
-        model_choices = [("", _("— Select a model —"))] + get_base_model_choices()
+        model_choices = [("", _("- Select a model -"))] + get_base_model_choices()
         self.fields["model_name"].widget = forms.Select(choices=model_choices)
 
         # Determine model_name from POST data or existing instance

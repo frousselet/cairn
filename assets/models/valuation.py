@@ -44,4 +44,4 @@ class AssetValuation(models.Model):
         ordering = ["-evaluation_date", "-created_at"]
 
     def __str__(self):
-        return f"{self.essential_asset.reference} — {self.evaluation_date}"
+        return f"{self.essential_asset.reference} - {self.evaluation_date}"

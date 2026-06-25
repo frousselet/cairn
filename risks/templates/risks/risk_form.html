@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n ui %}
 
-{% block title %}{% if form.instance.pk %}{% trans "Edit" %}{% else %}{% trans "New" %}{% endif %} {% trans "risk" %} — Cairn{% endblock %}
+{% block title %}{% if form.instance.pk %}{% trans "Edit" %}{% else %}{% trans "New" %}{% endif %} {% trans "risk" %} - Cairn{% endblock %}
 
 {% block content %}
 {% if form.instance.pk %}{% trans "Edit the risk" as page_title %}{% else %}{% trans "New risk" as page_title %}{% endif %}

@@ -40,7 +40,7 @@
             {% if risk.impact_confidentiality %}<span class="badge" style="background:var(--info-soft);color:var(--info)">C</span>{% endif %}
             {% if risk.impact_integrity %}<span class="badge" style="background:var(--warning-soft);color:var(--warning)">I</span>{% endif %}
             {% if risk.impact_availability %}<span class="badge" style="background:var(--danger-soft);color:var(--danger)">A</span>{% endif %}
-            {% if not risk.impact_confidentiality and not risk.impact_integrity and not risk.impact_availability %}—{% endif %}
+            {% if not risk.impact_confidentiality and not risk.impact_integrity and not risk.impact_availability %}-{% endif %}
           </div>
         </div>
         {% if risk.description %}
@@ -264,7 +264,7 @@
             </span>
           </dd>
           <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in risk.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">—</span>{% endfor %}</dd>
+          <dd class="mb-0">{% for tag in risk.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}</dd>
         </dl>
       </div>
     </div>
@@ -301,11 +301,11 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Owner" %}</div>
-          {% if risk.risk_owner %}{% user_badge risk.risk_owner size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
+          {% if risk.risk_owner %}{% user_badge risk.risk_owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
         </div>
         <div>
           <div class="text-muted small mb-1">{% trans "Created by" %}</div>
-          {% if risk.created_by %}{% user_badge risk.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
+          {% if risk.created_by %}{% user_badge risk.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
         </div>
       </div>
     </div>

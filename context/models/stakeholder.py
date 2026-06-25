@@ -69,7 +69,7 @@ class StakeholderExpectation(models.Model):
     type = models.CharField(_("Type"), max_length=20, choices=ExpectationType.choices)
     priority = models.CharField(_("Priority"), max_length=20, choices=Priority.choices)
     is_applicable = models.BooleanField(_("Applicable"), default=True)
-    # M2M to Requirement omitted — module not yet implemented
+    # M2M to Requirement omitted - module not yet implemented
     # linked_requirements = models.ManyToManyField("compliance.Requirement", ...)
     created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
@@ -82,4 +82,4 @@ class StakeholderExpectation(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.stakeholder.name} — {self.get_type_display()}"
+        return f"{self.stakeholder.name} - {self.get_type_display()}"

@@ -2,7 +2,7 @@ from django.db import migrations
 
 # ── English content ─────────────────────────────────────────────────
 HELP_CONTENT_EN = [
-    # ── Context — detail pages ──────────────────────────────────────
+    # ── Context - detail pages ──────────────────────────────────────
     {
         "key": "context.scope_detail",
         "title": "Scope details",
@@ -76,7 +76,7 @@ HELP_CONTENT_EN = [
             "the full change history."
         ),
     },
-    # ── Context — new list pages ────────────────────────────────────
+    # ── Context - new list pages ────────────────────────────────────
     {
         "key": "context.tag_list",
         "title": "Tags",
@@ -107,7 +107,7 @@ HELP_CONTENT_EN = [
             "history, threshold configuration and change log."
         ),
     },
-    # ── Assets — detail pages ───────────────────────────────────────
+    # ── Assets - detail pages ───────────────────────────────────────
     {
         "key": "assets.essential_asset_detail",
         "title": "Essential asset details",
@@ -144,7 +144,7 @@ HELP_CONTENT_EN = [
             "relationships and the associated dependencies."
         ),
     },
-    # ── Assets — new list pages ─────────────────────────────────────
+    # ── Assets - new list pages ─────────────────────────────────────
     {
         "key": "assets.supplier_list",
         "title": "Suppliers",
@@ -219,7 +219,7 @@ HELP_CONTENT_EN = [
             "of physical and environmental threats on the information system."
         ),
     },
-    # ── Compliance — detail pages ───────────────────────────────────
+    # ── Compliance - detail pages ───────────────────────────────────
     {
         "key": "compliance.framework_detail",
         "title": "Framework details",
@@ -266,7 +266,7 @@ HELP_CONTENT_EN = [
             "progress. The history tab tracks all status changes."
         ),
     },
-    # ── Accounts — detail pages ─────────────────────────────────────
+    # ── Accounts - detail pages ─────────────────────────────────────
     {
         "key": "accounts.user_detail",
         "title": "User details",
@@ -285,7 +285,7 @@ HELP_CONTENT_EN = [
             "groups can be edited to adjust permissions."
         ),
     },
-    # ── Risks — detail pages ────────────────────────────────────────
+    # ── Risks - detail pages ────────────────────────────────────────
     {
         "key": "risks.risk_detail",
         "title": "Risk details",
@@ -376,7 +376,7 @@ HELP_CONTENT_EN = [
 
 # ── French content ──────────────────────────────────────────────────
 HELP_CONTENT_FR = [
-    # ── Context — pages détail ──────────────────────────────────────
+    # ── Context - pages détail ──────────────────────────────────────
     {
         "key": "context.scope_detail",
         "title": "Détail du périmètre",
@@ -456,7 +456,7 @@ HELP_CONTENT_FR = [
             "hébergés, les fournisseurs et l'historique complet des modifications."
         ),
     },
-    # ── Context — nouvelles pages liste ─────────────────────────────
+    # ── Context - nouvelles pages liste ─────────────────────────────
     {
         "key": "context.tag_list",
         "title": "Étiquettes",
@@ -490,7 +490,7 @@ HELP_CONTENT_FR = [
             "des modifications."
         ),
     },
-    # ── Assets — pages détail ───────────────────────────────────────
+    # ── Assets - pages détail ───────────────────────────────────────
     {
         "key": "assets.essential_asset_detail",
         "title": "Détail du bien essentiel",
@@ -528,7 +528,7 @@ HELP_CONTENT_FR = [
             "relations fournisseurs et les dépendances associées."
         ),
     },
-    # ── Assets — nouvelles pages liste ──────────────────────────────
+    # ── Assets - nouvelles pages liste ──────────────────────────────
     {
         "key": "assets.supplier_list",
         "title": "Fournisseurs",
@@ -608,7 +608,7 @@ HELP_CONTENT_FR = [
             "le système d'information."
         ),
     },
-    # ── Compliance — pages détail ───────────────────────────────────
+    # ── Compliance - pages détail ───────────────────────────────────
     {
         "key": "compliance.framework_detail",
         "title": "Détail du référentiel",
@@ -659,7 +659,7 @@ HELP_CONTENT_FR = [
             "tous les changements de statut."
         ),
     },
-    # ── Accounts — pages détail ─────────────────────────────────────
+    # ── Accounts - pages détail ─────────────────────────────────────
     {
         "key": "accounts.user_detail",
         "title": "Détail de l'utilisateur",
@@ -680,7 +680,7 @@ HELP_CONTENT_FR = [
             "être modifiés pour ajuster les permissions."
         ),
     },
-    # ── Risks — pages détail ────────────────────────────────────────
+    # ── Risks - pages détail ────────────────────────────────────────
     {
         "key": "risks.risk_detail",
         "title": "Détail du risque",

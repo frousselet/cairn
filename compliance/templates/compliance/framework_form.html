@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n ui %}
 
-{% block title %}{% if form.instance.pk %}{% trans "Edit" %}{% else %}{% trans "New" %}{% endif %} {% trans "framework" %} — Cairn{% endblock %}
+{% block title %}{% if form.instance.pk %}{% trans "Edit" %}{% else %}{% trans "New" %}{% endif %} {% trans "framework" %} - Cairn{% endblock %}
 
 {% block content %}
 {% if form.instance.pk %}{% trans "Edit framework" as page_title %}{% else %}{% trans "New framework" as page_title %}{% endif %}

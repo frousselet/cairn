@@ -46,4 +46,4 @@ class AccessLog(models.Model):
         verbose_name_plural = _("Access logs")
 
     def __str__(self):
-        return f"{self.timestamp} — {self.event_type} — {self.email_attempted}"
+        return f"{self.timestamp} - {self.event_type} - {self.email_attempted}"

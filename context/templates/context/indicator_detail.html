@@ -28,7 +28,7 @@
       <div class="card-body">
         <dl class="row mb-0">
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt>
-          <dd class="col-sm-9">{% grouped_scope_badges indicator.scopes.all %}{% if not indicator.scopes.all %}<span style="color:var(--text-muted)">—</span>{% endif %}</dd>
+          <dd class="col-sm-9">{% grouped_scope_badges indicator.scopes.all %}{% if not indicator.scopes.all %}<span style="color:var(--text-muted)">-</span>{% endif %}</dd>
 
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Indicator type" %}</dt>
           <dd class="col-sm-9">{{ indicator.get_indicator_type_display }}</dd>
@@ -61,7 +61,7 @@
           {% endif %}
 
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
-          <dd class="col-sm-9">{% for tag in indicator.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
+          <dd class="col-sm-9">{% for tag in indicator.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
         </dl>
       </div>
     </div>
@@ -79,7 +79,7 @@
                 {{ indicator.current_value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}
               </span>
               {% if indicator.is_critical %}<span class="badge text-bg-danger ms-1">{% trans "Critical" %}</span>{% endif %}
-            {% else %}—{% endif %}
+            {% else %}-{% endif %}
           </dd>
 
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Expected level" %}</dt>
@@ -90,7 +90,7 @@
             {% if indicator.critical_threshold_operator %}
               {{ indicator.get_critical_threshold_operator_display }}
               {% if indicator.critical_threshold_value %} {{ indicator.critical_threshold_value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}{% endif %}
-            {% else %}—{% endif %}
+            {% else %}-{% endif %}
           </dd>
 
           {% if indicator.format == "number" %}
@@ -98,14 +98,14 @@
           <dd class="col-sm-9">
             {% if indicator.critical_threshold_min != None %}
               {{ indicator.critical_threshold_min }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}
-            {% else %}—{% endif %}
+            {% else %}-{% endif %}
           </dd>
 
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Maximum threshold" %}</dt>
           <dd class="col-sm-9">
             {% if indicator.critical_threshold_max != None %}
               {{ indicator.critical_threshold_max }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}
-            {% else %}—{% endif %}
+            {% else %}-{% endif %}
           </dd>
           {% endif %}
         </dl>

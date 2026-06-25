@@ -48,7 +48,7 @@ def _get_client_ip(request):
     return request.META.get("REMOTE_ADDR")
 
 
-# ── Registration (authenticated user — profile page) ──────
+# ── Registration (authenticated user - profile page) ──────
 
 
 @method_decorator(csrf_protect, name="dispatch")
@@ -131,7 +131,7 @@ class PasskeyRegisterCompleteView(LoginRequiredMixin, View):
         return JsonResponse({"status": "ok"})
 
 
-# ── Authentication (unauthenticated — login page) ─────────
+# ── Authentication (unauthenticated - login page) ─────────
 
 
 @method_decorator(csrf_protect, name="dispatch")

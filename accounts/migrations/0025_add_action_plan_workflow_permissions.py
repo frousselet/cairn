@@ -9,28 +9,28 @@ from django.db import migrations
 NEW_PERMISSIONS = [
     {
         "codename": "compliance.action_plan.validate",
-        "name": "Compliance — Action plans — Validate",
+        "name": "Compliance - Action plans - Validate",
         "module": "compliance",
         "feature": "action_plan",
         "action": "validate",
     },
     {
         "codename": "compliance.action_plan.implement",
-        "name": "Compliance — Action plans — Implement",
+        "name": "Compliance - Action plans - Implement",
         "module": "compliance",
         "feature": "action_plan",
         "action": "implement",
     },
     {
         "codename": "compliance.action_plan.close",
-        "name": "Compliance — Action plans — Close",
+        "name": "Compliance - Action plans - Close",
         "module": "compliance",
         "feature": "action_plan",
         "action": "close",
     },
     {
         "codename": "compliance.action_plan.cancel",
-        "name": "Compliance — Action plans — Cancel",
+        "name": "Compliance - Action plans - Cancel",
         "module": "compliance",
         "feature": "action_plan",
         "action": "cancel",

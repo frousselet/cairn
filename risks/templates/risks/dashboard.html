@@ -40,7 +40,7 @@
       <div class="stat-label">{% trans "Treatment plans" %}</div>
       <div class="stat-value">{{ treatment_plan_total }}</div>
       <div class="stat-sub">
-        {% if overdue_treatment_plan_count %}<span class="text-danger">{{ overdue_treatment_plan_count }} {% trans "overdue" %}</span>{% else %}—{% endif %}
+        {% if overdue_treatment_plan_count %}<span class="text-danger">{{ overdue_treatment_plan_count }} {% trans "overdue" %}</span>{% else %}-{% endif %}
       </div>
     </div>
   </div>
@@ -49,7 +49,7 @@
       <div class="stat-label">{% trans "Active acceptances" %}</div>
       <div class="stat-value">{{ acceptance_total }}</div>
       <div class="stat-sub">
-        {% if expiring_acceptance_count %}<span class="text-warning">{{ expiring_acceptance_count }} {% trans "expiring within 90 days" %}</span>{% else %}—{% endif %}
+        {% if expiring_acceptance_count %}<span class="text-warning">{{ expiring_acceptance_count }} {% trans "expiring within 90 days" %}</span>{% else %}-{% endif %}
       </div>
     </div>
   </div>

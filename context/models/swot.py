@@ -81,7 +81,7 @@ class SwotItem(models.Model):
         ordering = ["quadrant", "order"]
 
     def __str__(self):
-        return f"{self.get_quadrant_display()} — {self.description[:50]}"
+        return f"{self.get_quadrant_display()} - {self.description[:50]}"
 
 
 class SwotStrategy(models.Model):
@@ -110,4 +110,4 @@ class SwotStrategy(models.Model):
         ordering = ["quadrant", "order"]
 
     def __str__(self):
-        return f"{self.get_quadrant_display()} — {self.description[:50]}"
+        return f"{self.get_quadrant_display()} - {self.description[:50]}"

@@ -117,7 +117,7 @@ class RoleAdmin(SimpleHistoryAdmin):
 
     @admin.display(description="Alerte conformité")
     def compliance_alert(self, obj):
-        return obj.compliance_alert or "—"
+        return obj.compliance_alert or "-"
 
 
 @admin.register(Activity)

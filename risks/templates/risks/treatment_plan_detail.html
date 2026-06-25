@@ -171,7 +171,7 @@
             <small class="text-muted">{{ plan.progress_percentage }}%</small>
           </dd>
           <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in plan.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">—</span>{% endfor %}</dd>
+          <dd class="mb-0">{% for tag in plan.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}</dd>
         </dl>
       </div>
     </div>
@@ -182,11 +182,11 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Owner" %}</div>
-          {% if plan.owner %}{% user_badge plan.owner size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
+          {% if plan.owner %}{% user_badge plan.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
         </div>
         <div>
           <div class="text-muted small mb-1">{% trans "Created by" %}</div>
-          {% if plan.created_by %}{% user_badge plan.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
+          {% if plan.created_by %}{% user_badge plan.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
         </div>
       </div>
     </div>

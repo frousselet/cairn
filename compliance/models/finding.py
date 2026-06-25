@@ -56,7 +56,7 @@ class Finding(BaseModel):
         ordering = ["reference"]
 
     def __str__(self):
-        return f"{self.reference} — {self.get_finding_type_display()}"
+        return f"{self.reference} - {self.get_finding_type_display()}"
 
     @classmethod
     def _generate_reference_for_type(cls, finding_type):

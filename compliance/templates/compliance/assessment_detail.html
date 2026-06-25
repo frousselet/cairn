@@ -3,7 +3,7 @@
 {% load help_tags %}
 {% load accounts_tags %}
 
-{% block title %}{{ assessment.name }} — Cairn{% endblock %}
+{% block title %}{{ assessment.name }} - Cairn{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -39,7 +39,7 @@
     {% for fw in assessment.frameworks.all %}
       <a href="{% url 'compliance:framework-detail' fw.pk %}" class="cell-link">{{ fw.short_name|default:fw.name }}</a>{% if not forloop.last %}, {% endif %}
     {% empty %}
-      —
+      -
     {% endfor %}
   </span>
   <span>
@@ -47,7 +47,7 @@
     {{ assessment.assessment_start_date|default:"-" }} → {{ assessment.assessment_end_date|default:"-" }}
   </span>
   <span>
-    {% if assessment.assessor %}{% user_badge assessment.assessor size=24 %}{% else %}—{% endif %}
+    {% if assessment.assessor %}{% user_badge assessment.assessor size=24 %}{% else %}-{% endif %}
   </span>
 </div>
 

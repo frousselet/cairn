@@ -2,7 +2,7 @@
 {% load i18n scope_tags ui workflow_tags %}
 {% load help_tags %}
 
-{% block title %}{{ analysis.name }} — Cairn{% endblock %}
+{% block title %}{{ analysis.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header analysis.name reference=analysis.reference nav="context:swot-list" accent="context" %}
@@ -247,7 +247,7 @@
     <div class="card">
       <div class="card-body">
         <dl class="row mb-0">
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges analysis.scopes.all %}{% if not analysis.scopes.all %}<span style="color:var(--text-muted)">—</span>{% endif %}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges analysis.scopes.all %}{% if not analysis.scopes.all %}<span style="color:var(--text-muted)">-</span>{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Analysis date" %}</dt><dd class="col-sm-9">{{ analysis.analysis_date }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>
           <dd class="col-sm-9">
@@ -255,7 +255,7 @@
           </dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ analysis.description|default:"-"|linebreaksbr }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
-          <dd class="col-sm-9">{% for tag in analysis.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
+          <dd class="col-sm-9">{% for tag in analysis.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
         </dl>
       </div>
     </div>

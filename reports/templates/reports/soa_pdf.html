@@ -188,12 +188,12 @@
               <span class="residual-pill residual-low" title="{% trans 'Residual level' %}">{% trans "Res." %} {{ risk.residual_risk_level }}</span>
               {% endif %}
             {% else %}
-              <span class="residual-pill residual-unknown">{% trans "Res. —" %}</span>
+              <span class="residual-pill residual-unknown">{% trans "Res. -" %}</span>
             {% endif %}
             {% if risk.treatment_decision %}<span class="risk-meta">- {{ risk.treatment_decision }}</span>{% endif %}
           </span>
           {% empty %}
-          —
+          -
           {% endfor %}
         </td>
       </tr>

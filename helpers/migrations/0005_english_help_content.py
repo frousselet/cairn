@@ -157,8 +157,8 @@ HELP_CONTENT_EN = [
             "Dependency relationships link essential assets to the support assets "
             "that carry them. Each dependency is characterised by its type (hosting, "
             "processing, access, transport), its criticality and its level of "
-            "redundancy. Single points of failure (SPOF) — critical support assets "
-            "with no redundancy — are automatically detected and flagged."
+            "redundancy. Single points of failure (SPOF) - critical support assets "
+            "with no redundancy - are automatically detected and flagged."
         ),
     },
     {

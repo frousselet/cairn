@@ -539,7 +539,7 @@ class FrameworkImportForm(forms.Form):
         label=_("Existing framework"),
         help_text=_("Leave blank to create a new framework."),
         widget=forms.Select(attrs={**SELECT_ATTRS, "class": "form-select"}),
-        empty_label=_("— New framework —"),
+        empty_label=_("- New framework -"),
     )
     owner = forms.ModelChoiceField(
         queryset=User.objects.filter(is_active=True),

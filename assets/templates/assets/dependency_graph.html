@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n ui %}
 
-{% block title %}{% trans "Dependency graph" %} — Cairn{% endblock %}
+{% block title %}{% trans "Dependency graph" %} - Cairn{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -179,7 +179,7 @@
 
   var g = svg.append('g');
 
-  // Colors — slightly brighter for readability on page background
+  // Colors - slightly brighter for readability on page background
   var colorMap = {
     essential: '#1E3A8A',
     support: '#34d399',
@@ -225,7 +225,7 @@
       return (sizeMap[d.type] || 14) + 50;
     }));
 
-  // Arrow markers — grey for normal, red for SPOF
+  // Arrow markers - grey for normal, red for SPOF
   svg.append('defs').selectAll('marker')
     .data(['default', 'spof'])
     .join('marker')

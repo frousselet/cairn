@@ -99,4 +99,4 @@ class Responsibility(models.Model):
         ordering = ["role", "raci_type"]
 
     def __str__(self):
-        return f"{self.role.name} — {self.get_raci_type_display()}"
+        return f"{self.role.name} - {self.get_raci_type_display()}"

@@ -2,7 +2,7 @@
 {% load i18n scope_tags ui %}
 {% load help_tags %}
 
-{% block title %}{{ stakeholder.name }} — Cairn{% endblock %}
+{% block title %}{{ stakeholder.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header stakeholder.name reference=stakeholder.reference nav="context:stakeholder-list" accent="context" %}
@@ -23,7 +23,7 @@
     <div class="card">
       <div class="card-body">
         <dl class="row mb-0">
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges stakeholder.scopes.all %}{% if not stakeholder.scopes.all %}<span style="color:var(--text-muted)">—</span>{% endif %}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges stakeholder.scopes.all %}{% if not stakeholder.scopes.all %}<span style="color:var(--text-muted)">-</span>{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt><dd class="col-sm-9">{{ stakeholder.get_type_display }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Category" %}</dt><dd class="col-sm-9">{{ stakeholder.get_category_display }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ stakeholder.description|default:"-"|safe }}</dd>
@@ -34,7 +34,7 @@
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Interest" %}</dt><dd class="col-sm-9">{{ stakeholder.get_interest_level_display }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt><dd class="col-sm-9">{{ stakeholder.get_status_display }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
-          <dd class="col-sm-9">{% for tag in stakeholder.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
+          <dd class="col-sm-9">{% for tag in stakeholder.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
         </dl>
       </div>
     </div>

@@ -2,7 +2,7 @@
 {% load i18n scope_tags ui %}
 {% load help_tags %}
 
-{% block title %}{{ issue.name }} — Cairn{% endblock %}
+{% block title %}{{ issue.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header issue.name reference=issue.reference nav="context:issue-list" accent="context" %}
@@ -16,7 +16,7 @@
 <div class="card">
   <div class="card-body">
     <dl class="row mb-0">
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges issue.scopes.all %}{% if not issue.scopes.all %}<span style="color:var(--text-muted)">—</span>{% endif %}</dd>
+          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges issue.scopes.all %}{% if not issue.scopes.all %}<span style="color:var(--text-muted)">-</span>{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt><dd class="col-sm-9">{{ issue.get_type_display }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Category" %}</dt><dd class="col-sm-9">{{ issue.get_category_display }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Impact level" %}</dt>
@@ -31,7 +31,7 @@
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ issue.description|default:"-"|safe }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Next review" %}</dt><dd class="col-sm-9">{{ issue.review_date|default:"-" }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
-          <dd class="col-sm-9">{% for tag in issue.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
+          <dd class="col-sm-9">{% for tag in issue.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Created on" %}</dt><dd class="col-sm-9">{{ issue.created_at }}</dd>
     </dl>
   </div>

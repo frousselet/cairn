@@ -26,10 +26,10 @@ class Migration(migrations.Migration):
                     "quadrant",
                     models.CharField(
                         choices=[
-                            ("so", "SO — Leverage"),
-                            ("st", "ST — Confront"),
-                            ("wo", "WO — Improve"),
-                            ("wt", "WT — Avoid"),
+                            ("so", "SO - Leverage"),
+                            ("st", "ST - Confront"),
+                            ("wo", "WO - Improve"),
+                            ("wt", "WT - Avoid"),
                         ],
                         max_length=2,
                         verbose_name="Strategy quadrant",
@@ -105,10 +105,10 @@ class Migration(migrations.Migration):
                     "quadrant",
                     models.CharField(
                         choices=[
-                            ("so", "SO — Leverage"),
-                            ("st", "ST — Confront"),
-                            ("wo", "WO — Improve"),
-                            ("wt", "WT — Avoid"),
+                            ("so", "SO - Leverage"),
+                            ("st", "ST - Confront"),
+                            ("wo", "WO - Improve"),
+                            ("wt", "WT - Avoid"),
                         ],
                         max_length=2,
                         verbose_name="Strategy quadrant",

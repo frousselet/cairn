@@ -4299,7 +4299,7 @@ def _register_risks_tools(server):
                            "description": (
                                "Risk matrix as JSON object mapping 'likelihood,impact' to risk level. "
                                "Example for a 5x5 matrix: {\"1,1\": 1, \"1,2\": 2, ..., \"5,5\": 5}. "
-                               "Can be omitted — the matrix will be auto-built from scale levels "
+                               "Can be omitted - the matrix will be auto-built from scale levels "
                                "and risk levels via rebuild_risk_matrix()."
                            ),
                        },
@@ -4971,7 +4971,7 @@ def _register_risks_tools(server):
         "link_risk_requirements",
         (
             "Link one or more compliance requirements to a risk. "
-            "This is additive — existing links are preserved. "
+            "This is additive - existing links are preserved. "
             "Provide a risk_id and a list of requirement_ids to attach."
         ),
         _obj_schema(
@@ -6953,7 +6953,7 @@ def _register_reports_tools(server):
         from reports.generators import generate_soa_pdf
 
         fw_names = ", ".join(fw.short_name or fw.name for fw in frameworks)
-        report_name = f"Statement of Applicability — {fw_names}"
+        report_name = f"Statement of Applicability - {fw_names}"
 
         try:
             filename, pdf_bytes = generate_soa_pdf(frameworks, user)
@@ -7013,7 +7013,7 @@ def _register_reports_tools(server):
         from reports.constants import ReportStatus, ReportType
         from reports.generators import generate_audit_report_pdf
 
-        report_name = f"Audit report — {assessment.reference} : {assessment.name}"
+        report_name = f"Audit report - {assessment.reference} : {assessment.name}"
 
         try:
             filename, pdf_bytes = generate_audit_report_pdf(assessment, user)
@@ -7239,7 +7239,7 @@ def _register_reports_tools(server):
         delete_report,
     )
 
-    # Download report content (base64) — CAIRN-RPT-01
+    # Download report content (base64) - CAIRN-RPT-01
     @require_perm("reports.report.read")
     def download_report(user, arguments):
         import base64
