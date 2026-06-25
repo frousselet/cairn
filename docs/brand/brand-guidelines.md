@@ -591,6 +591,11 @@ backdrop click**. On narrow screens the arrows tuck into the lower corners
 of the dialog. Single-step forms keep the standard sticky footer (Cancel
 left, Save right).
 
+When the active step changes, the modal **morphs its height with a smooth
+260 ms ease** (a measure-swap-measure height tween on the modal content)
+instead of snapping, so steps of different heights feel continuous.
+`prefers-reduced-motion` skips the tween.
+
 ### Anatomy of a field
 
 The four parts of any field, always in this order: label, control,
