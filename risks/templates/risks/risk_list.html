@@ -19,6 +19,8 @@
 </div>
 {% help_modal "risks.risk_list" %}
 
+<div class="list-layout">
+  <div class="list-main">
 <div class="mb-3 d-flex gap-2 flex-wrap">
   <a href="{% url 'risks:risk-list' %}" class="filter-chip {% if not request.GET.status and not request.GET.priority and not has_advanced_filter %}active{% endif %}">{% trans "All" %}</a>
   <a href="?status=identified" class="filter-chip {% if request.GET.status == 'identified' %}active{% endif %}">{% trans "Identified" %}</a>
@@ -179,4 +181,9 @@
 </div>
 
 {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail">
+    {% include "includes/list_rail_summary.html" %}
+  </aside>
+</div>
 {% endblock %}

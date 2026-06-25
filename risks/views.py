@@ -20,7 +20,7 @@ from django.views.generic import (
 
 from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
-from core.mixins import HtmxFormMixin, SortableListMixin
+from core.mixins import HtmxFormMixin, ListSummaryMixin, SortableListMixin
 from .constants import (
     DEFAULT_IMPACT_SCALES,
     DEFAULT_LIKELIHOOD_SCALES,
@@ -519,9 +519,12 @@ class RiskDashboardView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVie
 
 # ── Risk Assessment ─────────────────────────────────────────
 
-class RiskAssessmentListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class RiskAssessmentListView(
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+):
     model = RiskAssessment
     template_name = "risks/assessment_list.html"
+    status_field = "status"
     context_object_name = "assessments"
     permission_required = "risks.assessment.read"
     paginate_by = 25
@@ -684,7 +687,9 @@ class ISO27005ReportExportView(LoginRequiredMixin, PermissionRequiredMixin, Scop
 
 # ── Risk Criteria ───────────────────────────────────────────
 
-class RiskCriteriaListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class RiskCriteriaListView(
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+):
     model = RiskCriteria
     template_name = "risks/criteria_list.html"
     context_object_name = "criteria_list"
@@ -836,10 +841,13 @@ class RiskCriteriaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delete
 
 # ── Risk ────────────────────────────────────────────────────
 
-class RiskListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class RiskListView(
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+):
     scope_parent_lookup = "assessment__scopes"
     model = Risk
     template_name = "risks/risk_list.html"
+    status_field = "status"
     context_object_name = "risks"
     permission_required = "risks.risk.read"
     paginate_by = 25
@@ -1142,10 +1150,13 @@ class RiskRegisterExportView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 # ── Treatment Plan ──────────────────────────────────────────
 
-class TreatmentPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class TreatmentPlanListView(
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskTreatmentPlan
     template_name = "risks/treatment_plan_list.html"
+    status_field = "status"
     context_object_name = "plans"
     permission_required = "risks.treatment.read"
     paginate_by = 25
@@ -1307,10 +1318,13 @@ class TreatmentActionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Del
 
 # ── Risk Acceptance ─────────────────────────────────────────
 
-class RiskAcceptanceListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class RiskAcceptanceListView(
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskAcceptance
     template_name = "risks/acceptance_list.html"
+    status_field = "status"
     context_object_name = "acceptances"
     permission_required = "risks.acceptance.read"
     paginate_by = 25
@@ -1378,9 +1392,12 @@ class RiskAcceptanceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Scop
 
 # ── Threat ──────────────────────────────────────────────────
 
-class ThreatListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class ThreatListView(
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+):
     model = Threat
     template_name = "risks/threat_list.html"
+    status_field = "status"
     context_object_name = "threats"
     permission_required = "risks.threat.read"
     paginate_by = 25
@@ -1466,9 +1483,12 @@ class ThreatDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 # ── Vulnerability ───────────────────────────────────────────
 
-class VulnerabilityListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class VulnerabilityListView(
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+):
     model = Vulnerability
     template_name = "risks/vulnerability_list.html"
+    status_field = "status"
     context_object_name = "vulnerabilities"
     permission_required = "risks.vulnerability.read"
     paginate_by = 25
@@ -1577,7 +1597,9 @@ def scale_choices_api(request):
 
 # ── ISO 27005 Risk ──────────────────────────────────────────
 
-class ISO27005RiskListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class ISO27005RiskListView(
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+):
     scope_parent_lookup = "assessment__scopes"
     model = ISO27005Risk
     template_name = "risks/iso27005_risk_list.html"

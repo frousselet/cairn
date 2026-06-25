@@ -94,6 +94,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         help_text=_("Per-view sort preferences: {view_key: {sort, order}}."),
     )
+    column_preferences = models.JSONField(
+        _("Column preferences"),
+        default=dict,
+        blank=True,
+        help_text=_("Per-view column layout: {view_key: {order: [...], hidden: [...]}}."),
+    )
     collapsed_sections = models.JSONField(
         _("Collapsed sections"),
         default=list,

@@ -18,7 +18,7 @@ from django.views.generic import (
 
 from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
-from core.mixins import HtmxFormMixin, SortableListMixin
+from core.mixins import HtmxFormMixin, ListSummaryMixin, SortableListMixin
 from context.models import Scope, Site
 from .forms import (
     AssetDependencyForm,
@@ -94,10 +94,11 @@ class ApproveView(LoginRequiredMixin, View):
 
 # ── Essential Asset ─────────────────────────────────────────
 
-class EssentialAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class EssentialAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = EssentialAsset
     template_name = "assets/essential_asset_list.html"
     context_object_name = "assets"
+    status_field = "status"
     permission_required = "assets.essential_asset.read"
     paginate_by = 25
     sortable_fields = {
@@ -180,10 +181,11 @@ class EssentialAssetDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Dele
 
 # ── Support Asset ───────────────────────────────────────────
 
-class SupportAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class SupportAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = SupportAsset
     template_name = "assets/support_asset_list.html"
     context_object_name = "assets"
+    status_field = "status"
     permission_required = "assets.support_asset.read"
     paginate_by = 25
     sortable_fields = {
@@ -267,7 +269,7 @@ class SupportAssetDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delete
 
 # ── Dependency ──────────────────────────────────────────────
 
-class DependencyListView(LoginRequiredMixin, PermissionRequiredMixin, SortableListMixin, ListView):
+class DependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
     model = AssetDependency
     template_name = "assets/dependency_list.html"
     context_object_name = "dependencies"
@@ -315,7 +317,7 @@ class DependencyDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteVi
 
 # ── Group ───────────────────────────────────────────────────
 
-class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = AssetGroup
     template_name = "assets/group_list.html"
     context_object_name = "groups"
@@ -389,10 +391,11 @@ class GroupDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 # ── Supplier ──────────────────────────────────────────────
 
-class SupplierListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class SupplierListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Supplier
     template_name = "assets/supplier_list.html"
     context_object_name = "suppliers"
+    status_field = "status"
     permission_required = "assets.supplier.read"
     paginate_by = 25
     sortable_fields = {
@@ -492,7 +495,7 @@ class SupplierArchiveView(LoginRequiredMixin, PermissionRequiredMixin, View):
 # ── Supplier Types ────────────────────────────────────────
 
 
-class SupplierTypeListView(LoginRequiredMixin, PermissionRequiredMixin, SortableListMixin, ListView):
+class SupplierTypeListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
     model = SupplierType
     template_name = "assets/supplier_type_list.html"
     context_object_name = "supplier_types"
@@ -759,7 +762,7 @@ class InstantiateTypeRequirementReviewView(LoginRequiredMixin, PermissionRequire
 
 # ── Supplier Dependencies ─────────────────────────────────
 
-class SupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, SortableListMixin, ListView):
+class SupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
     model = SupplierDependency
     template_name = "assets/supplier_dependency_list.html"
     context_object_name = "dependencies"
@@ -807,7 +810,7 @@ class SupplierDependencyDeleteView(LoginRequiredMixin, PermissionRequiredMixin, 
 
 # ── Sites ─────────────────────────────────────────────────
 
-class SiteListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class SiteListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ListView):
     model = Site
     template_name = "assets/site_list.html"
     context_object_name = "sites"
@@ -894,7 +897,7 @@ class SiteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 # ── Site–Asset Dependencies ──────────────────────────────
 
-class SiteAssetDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, SortableListMixin, ListView):
+class SiteAssetDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
     model = SiteAssetDependency
     template_name = "assets/site_asset_dependency_list.html"
     context_object_name = "dependencies"
@@ -940,7 +943,7 @@ class SiteAssetDependencyDeleteView(LoginRequiredMixin, PermissionRequiredMixin,
 
 # ── Site–Supplier Dependencies ───────────────────────────
 
-class SiteSupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, SortableListMixin, ListView):
+class SiteSupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
     model = SiteSupplierDependency
     template_name = "assets/site_supplier_dependency_list.html"
     context_object_name = "dependencies"

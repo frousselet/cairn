@@ -4042,6 +4042,192 @@
       .sidebar-card--sticky { position: sticky; top: calc(var(--page-header-offset) + 1rem); }
     }
 
+    /* ── Layout: list pages (main area + sticky side rail) ──
+       Same layout and responsive rules as the dashboard zones: the table fills
+       the main area while a side rail (summary, quick actions) sits in the right
+       gutter. Below the wide threshold the grid is a single column and the rail
+       (after the main area in source order) stacks under the table. The threshold
+       (1800px) accounts for the ~15rem sidebar plus the rail: below it the main
+       column would be cramped, so the rail stacks instead, keeping the table full
+       width. From 1800px up the whole page widens to a higher cap (kept centred)
+       and the rail becomes a sticky column that scrolls until it clears the sticky
+       page header, then stays put while the (taller) main column keeps scrolling. */
+    .list-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.5rem;
+      align-items: start;
+    }
+    /* Uniform 1.5rem rhythm inside the list layout: strip the global 2rem card
+       bottom-margin so the rail tiles are spaced only by the flex gap, and pin
+       the pagination gap to the same value. (.list-main stays block so the
+       not-yet-migrated pages keep their margin-based spacing.) */
+    .list-main { min-width: 0; }
+    .list-layout .card { margin-bottom: 0; }
+    .list-main .pagination { margin-top: 1.5rem; }
+    .list-rail { min-width: 0; display: flex; flex-direction: column; gap: 1.5rem; }
+    /* KPI rail variant: the rail holds KPI tiles (and, later, charts). When the
+       layout is stacked it moves ABOVE the table and lays the tiles out inline
+       (a responsive row that wraps); on wide screens it returns to the sticky
+       right column with the tiles stacked. */
+    .list-rail--kpi { order: -1; flex-direction: row; flex-wrap: wrap; gap: 1rem; }
+    .list-rail--kpi > * { flex: 1 1 12rem; min-width: 0; }
+    @media (min-width: 1800px) {
+      .main-content > .container-xl:has(.list-layout) { max-width: 1900px; }
+      .list-layout {
+        --list-rail-w: 24rem;
+        grid-template-columns: minmax(0, 1fr) var(--list-rail-w);
+      }
+      .list-layout > .list-rail {
+        position: sticky;
+        top: calc(var(--page-header-offset) + 1rem);
+        align-self: start;
+      }
+      .list-rail--kpi { order: 0; flex-direction: column; flex-wrap: nowrap; gap: 1.5rem; }
+      .list-rail--kpi > * { flex: none; }
+    }
+    @media (min-width: 2200px) {
+      .list-layout { --list-rail-w: 28rem; }
+    }
+    /* Filter changes swap only the table body via HTMX; fade it during the swap
+       so the refresh reads as a calm transition rather than a hard cut. */
+    #item-table-body { transition: opacity .12s var(--ease-out); }
+    #item-table-body.htmx-swapping { opacity: 0; }
+    @media (prefers-reduced-motion: reduce) {
+      #item-table-body { transition: none; }
+    }
+
+    /* ── List table toolbar (search + Filtres + Colonnes) ── */
+    .list-toolbar {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .list-toolbar__search {
+      position: relative;
+      flex: 1 1 14rem;
+      min-width: 0;
+    }
+    .list-toolbar__search .bi {
+      position: absolute;
+      left: .75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: .9rem;
+      pointer-events: none;
+    }
+    .list-toolbar__search input {
+      width: 100%;
+      padding: .4rem .75rem .4rem 2.1rem;
+      font-size: .875rem;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text-primary);
+    }
+    .list-toolbar__search input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 .15rem var(--accent-soft);
+    }
+    .list-toolbar__spacer { flex: 1 1 auto; }
+    .list-toolbar__btn-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.1rem;
+      height: 1.1rem;
+      padding: 0 .3rem;
+      margin-left: .35rem;
+      font-size: .7rem;
+      font-weight: 600;
+      border-radius: 100px;
+      background: var(--accent);
+      color: #fff;
+    }
+    /* Columns menu: a scrollable list of draggable, toggleable column rows. */
+    .columns-menu { min-width: 15rem; max-height: 22rem; overflow-y: auto; padding: .35rem; }
+    .columns-menu__item {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .35rem .5rem;
+      border-radius: var(--radius-sm);
+      font-size: .85rem;
+      cursor: grab;
+    }
+    .columns-menu__item:hover { background: var(--surface-subtle); }
+    .columns-menu__item.sortable-chosen { background: var(--accent-soft); }
+    .columns-menu__grip { color: var(--text-muted); cursor: grab; }
+    .columns-menu__label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .col-hidden { display: none !important; }
+
+    /* ── KPI rail tiles ──────────────────────────────── */
+    .kpi-tile { position: relative; }
+    .kpi-tile .min-w-0 { min-width: 0; }
+    .kpi-tile__icon {
+      flex: 0 0 auto;
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 1.25rem;
+    }
+    /* Tone variants: semantic colours, reserved for status / severity KPIs. */
+    .kpi-tile__icon--success { background: var(--success-soft); color: var(--success); }
+    .kpi-tile__icon--warning { background: var(--warning-soft); color: var(--warning); }
+    .kpi-tile__icon--danger { background: var(--danger-soft); color: var(--danger); }
+    /* An accent bar keyed to the tile's tone adds a touch of colour: on top when
+       the rail is stacked (narrow), on the left edge when it is the side column
+       (wide). The tone colour is held in --kpi-accent so it drives either edge. */
+    .kpi-tile { --kpi-accent: var(--accent); border-top: 2px solid var(--kpi-accent); }
+    .kpi-tile--success { --kpi-accent: var(--success); }
+    .kpi-tile--warning { --kpi-accent: var(--warning); }
+    .kpi-tile--danger { --kpi-accent: var(--danger); }
+    .kpi-tile--neutral { --kpi-accent: var(--border-light); }
+    @media (min-width: 1800px) {
+      .kpi-tile {
+        border-top: 1px solid var(--border-light);
+        border-left: 3px solid var(--kpi-accent);
+      }
+    }
+
+    /* Filter offcanvas: frosted, page-tinted backdrop (matching the search
+       overlay) rather than Bootstrap's dark veil, plus an action footer. */
+    .offcanvas-backdrop, .offcanvas-backdrop.show {
+      background: color-mix(in srgb, var(--bg-page) 82%, transparent);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+    }
+    .offcanvas-backdrop.show { opacity: 1; }
+    .offcanvas-footer {
+      display: flex;
+      gap: .5rem;
+      justify-content: flex-end;
+      padding: .85rem 1rem;
+      border-top: 1px solid var(--border-light);
+    }
+
+    /* Sticky table header, scoped to the new toolbar tables (the other list
+       pages keep their horizontally-scrolling .table-responsive). The frozen
+       column widths make the table fit its card, so dropping the scroll
+       container's clipping lets the header stick under the page header. */
+    .list-toolbar + .table-responsive { overflow: visible; }
+    .list-toolbar + .table-responsive thead th {
+      position: sticky;
+      top: var(--page-header-offset);
+      z-index: 3;
+      background: var(--surface-raised);
+    }
+
     /* ── Component: approval-banner ────────────────── */
     .approval-banner { margin-bottom: 1rem; }
 
@@ -5004,7 +5190,7 @@
       });
 
       /* TomSelect on multi-selects with data-ts-* attributes */
-      document.querySelectorAll('select[data-ts-risks]:not(.tomselected), select[data-ts-assets]:not(.tomselected), select[data-ts-expectations]:not(.tomselected), select[data-ts-requirements]:not(.tomselected)').forEach(function(el) {
+      document.querySelectorAll('select[data-ts-risks]:not(.tomselected), select[data-ts-assets]:not(.tomselected), select[data-ts-expectations]:not(.tomselected), select[data-ts-requirements]:not(.tomselected), select[data-ts-filter]:not(.tomselected)').forEach(function(el) {
         new TomSelect(el, tsMultiConfig);
       });
     }
@@ -5748,6 +5934,220 @@
 
   initTableSearch();
   document.body.addEventListener('htmx:afterSettle', function() { initTableSearch(); });
+
+  /* ── Filter offcanvas: apply / reset + active-filter indicator ──────
+     Filters are staged in the offcanvas form and applied on "Apply" (the table
+     refreshes via its refreshTable trigger + hx-include of the form); the cross
+     only closes, never validates. Reset clears everything and applies at once.
+     The toolbar button reflects the active state (accent + count) and the URL is
+     kept in sync, all without a full page reload. */
+  (function() {
+    function countActive(form) {
+      var n = 0;
+      form.querySelectorAll('select[multiple]').forEach(function(s) { if (s.selectedOptions.length) n++; });
+      form.querySelectorAll('input[type="text"]').forEach(function(i) { if (i.value.trim()) n++; });
+      return n;
+    }
+    function updateIndicator(n) {
+      var badge = document.querySelector('.list-filter-count');
+      if (badge) { badge.textContent = n; badge.hidden = n === 0; }
+      document.querySelectorAll('.list-toolbar .list-filter-reset').forEach(function(b) { b.hidden = n === 0; });
+      var toggle = document.querySelector('.list-filter-toggle');
+      if (toggle) {
+        toggle.classList.toggle('btn-primary', n > 0);
+        toggle.classList.toggle('btn-outline-secondary', n === 0);
+        var icon = toggle.querySelector('.bi');
+        if (icon) { icon.classList.toggle('bi-funnel-fill', n > 0); icon.classList.toggle('bi-funnel', n === 0); }
+      }
+    }
+    function applyFilters(form, close) {
+      var tbody = document.getElementById('item-table-body');
+      if (tbody && window.htmx) window.htmx.trigger(tbody, 'refreshTable');
+      var listUrl = form.getAttribute('data-list-url') || location.pathname;
+      var qs = new URLSearchParams(new FormData(form)).toString();
+      history.replaceState(null, '', listUrl + (qs ? '?' + qs : ''));
+      updateIndicator(countActive(form));
+      if (close) {
+        var oc = document.getElementById('listFilterOffcanvas');
+        if (oc && window.bootstrap) bootstrap.Offcanvas.getOrCreateInstance(oc).hide();
+      }
+    }
+    function clearForm(form) {
+      form.querySelectorAll('select, input').forEach(function(el) {
+        if (el.tagName === 'SELECT') {
+          if (el.multiple) { if (el.tomselect) el.tomselect.clear(true); else el.selectedIndex = -1; }
+          else { var f = el.options[0] ? el.options[0].value : ''; if (el.tomselect) el.tomselect.setValue(f, true); else el.value = f; }
+        } else if (el.matches('input[type="text"], input[type="search"]')) { el.value = ''; }
+      });
+      var search = document.querySelector('.list-search-input');
+      if (search) { search.value = ''; search.dispatchEvent(new Event('input', { bubbles: true })); }
+    }
+    document.body.addEventListener('click', function(e) {
+      if (e.target.closest('.list-filter-apply')) {
+        var form = document.querySelector('.list-filter-form');
+        if (form) applyFilters(form, true);
+        return;
+      }
+      if (e.target.closest('.list-filter-reset')) {
+        var rform = document.querySelector('.list-filter-form');
+        if (rform) { clearForm(rform); applyFilters(rform, false); }
+      }
+    });
+  })();
+
+  /* ── List toolbar search (client-side row filter) ──────
+     Filters the rows of #item-table-body by substring; re-binds and re-applies
+     after each HTMX table-body swap so a filtered/refreshed table stays in sync. */
+  (function() {
+    function bind() {
+      var input = document.querySelector('.list-search-input');
+      var tbody = document.getElementById('item-table-body');
+      if (!input || !tbody) return;
+      function apply() {
+        var q = input.value.trim().toLowerCase();
+        var rows = tbody.querySelectorAll('tr');
+        rows.forEach(function(r) {
+          if (r.querySelector('td[colspan]')) return; /* empty-state row */
+          r.style.display = (!q || r.textContent.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
+        });
+      }
+      if (!input.dataset.listSearchBound) {
+        input.addEventListener('input', apply);
+        input.dataset.listSearchBound = 'true';
+      }
+      apply();
+    }
+    bind();
+    document.body.addEventListener('htmx:afterSettle', bind);
+  })();
+
+  /* ── Column manager (visibility + order, persisted per user) ──────
+     The Columns dropdown list is the source of truth: its row order is the
+     column order and each checkbox is a column's visibility. The script applies
+     that to the table (reordering <th>/<td> by data-col, hiding via .col-hidden),
+     persists changes, and re-applies after every HTMX table-body swap. */
+  (function() {
+    var saveUrl = '{% url "helpers:save-columns" %}';
+    var csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+
+    function table() {
+      var tbody = document.getElementById('item-table-body');
+      return tbody ? tbody.closest('table') : null;
+    }
+    function menuList() { return document.querySelector('.columns-menu__list'); }
+
+    function readMenu() {
+      var list = menuList();
+      if (!list) return null;
+      var order = [], hidden = [];
+      list.querySelectorAll('.columns-menu__item').forEach(function(li) {
+        var key = li.getAttribute('data-col');
+        order.push(key);
+        var cb = li.querySelector('.columns-menu__toggle');
+        if (cb && !cb.checked && !cb.disabled) hidden.push(key);
+      });
+      return { view: list.getAttribute('data-column-view-key'), order: order, hidden: hidden };
+    }
+
+    function applyToTable() {
+      var state = readMenu(); var tbl = table();
+      if (!state || !tbl) return;
+      var hiddenSet = {};
+      state.hidden.forEach(function(k) { hiddenSet[k] = true; });
+      /* Visibility */
+      tbl.querySelectorAll('th[data-col], td[data-col]').forEach(function(cell) {
+        cell.classList.toggle('col-hidden', !!hiddenSet[cell.getAttribute('data-col')]);
+      });
+      /* Order: reorder each row's data-col cells to match the menu order. */
+      function reorder(row) {
+        var byCol = {};
+        var cells = row.querySelectorAll(':scope > [data-col]');
+        if (!cells.length) return; /* empty-state / non-standard row */
+        cells.forEach(function(c) { byCol[c.getAttribute('data-col')] = c; });
+        state.order.forEach(function(k) { if (byCol[k]) row.appendChild(byCol[k]); });
+      }
+      var headRow = tbl.querySelector('thead tr');
+      if (headRow) reorder(headRow);
+      tbl.querySelectorAll('tbody tr').forEach(reorder);
+    }
+
+    function persist() {
+      var state = readMenu();
+      if (!state || !state.view) return;
+      fetch(saveUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+        body: JSON.stringify(state)
+      }).catch(function() {});
+    }
+
+    function withSortable(cb) {
+      if (window.Sortable) { cb(); return; }
+      var s = document.getElementById('sortable-cdn');
+      if (!s) {
+        s = document.createElement('script');
+        s.id = 'sortable-cdn';
+        s.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js';
+        document.head.appendChild(s);
+      }
+      s.addEventListener('load', cb);
+    }
+
+    function initMenu() {
+      var list = menuList();
+      if (!list || list.dataset.colBound) return;
+      list.dataset.colBound = 'true';
+      list.addEventListener('change', function(e) {
+        if (e.target.classList.contains('columns-menu__toggle')) { applyToTable(); persist(); }
+      });
+      withSortable(function() {
+        window.Sortable.create(list, {
+          handle: '.columns-menu__grip',
+          draggable: '.columns-menu__item',
+          animation: 150,
+          onEnd: function() { applyToTable(); persist(); }
+        });
+      });
+    }
+
+    if (menuList()) { initMenu(); applyToTable(); }
+    document.body.addEventListener('htmx:afterSettle', applyToTable);
+  })();
+
+  /* ── Freeze table column widths (toolbar tables) ──────
+     The toolbar search hides rows client-side; with auto table-layout the column
+     widths would reflow as content disappears. We measure the widths once with
+     every row shown, then pin them via table-layout:fixed so search/filtering
+     never shifts the columns. Re-measured after each HTMX swap and on resize. */
+  (function() {
+    function freeze() {
+      if (!document.querySelector('.list-toolbar')) return; /* new-layout pages only */
+      var tbody = document.getElementById('item-table-body');
+      if (!tbody) return;
+      var table = tbody.closest('table');
+      var headRow = table && table.querySelector('thead tr');
+      if (!headRow) return;
+      /* Show any search-hidden rows so the measurement reflects all content. */
+      var rehide = [];
+      tbody.querySelectorAll('tr').forEach(function(r) {
+        if (r.style.display === 'none') { r.style.display = ''; rehide.push(r); }
+      });
+      var ths = headRow.querySelectorAll('th');
+      table.style.tableLayout = 'auto';
+      ths.forEach(function(th) { th.style.width = ''; });
+      var widths = Array.prototype.map.call(ths, function(th) {
+        return th.classList.contains('col-hidden') ? null : th.getBoundingClientRect().width;
+      });
+      ths.forEach(function(th, i) { if (widths[i] != null) th.style.width = widths[i] + 'px'; });
+      table.style.tableLayout = 'fixed';
+      rehide.forEach(function(r) { r.style.display = 'none'; });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', freeze);
+    else freeze();
+    document.body.addEventListener('htmx:afterSettle', freeze);
+    var rt;
+    window.addEventListener('resize', function() { clearTimeout(rt); rt = setTimeout(freeze, 200); });
+  })();
 
   /* ── Combinable filter chips ─────────────────────── */
   (function() {

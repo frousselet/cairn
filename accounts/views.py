@@ -16,7 +16,7 @@ from django.views.generic import DetailView, ListView
 
 from accounts.constants import PERMISSION_REGISTRY, MODULE_LABELS
 from core.history import EntryKind, classify_record
-from core.mixins import SortableListMixin
+from core.mixins import ListSummaryMixin, SortableListMixin
 from accounts.forms import (
     CompanySettingsForm,
     GroupForm,
@@ -185,7 +185,7 @@ class CompanySettingsView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 # ── Users ───────────────────────────────────────────────────
 
-class UserListView(LoginRequiredMixin, PermissionRequiredMixin, SortableListMixin, ListView):
+class UserListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
     model = User
     template_name = "accounts/user_list.html"
     context_object_name = "users"
@@ -264,7 +264,7 @@ class UserUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 # ── Groups ──────────────────────────────────────────────────
 
-class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, SortableListMixin, ListView):
+class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
     model = Group
     template_name = "accounts/group_list.html"
     context_object_name = "groups"
@@ -532,7 +532,7 @@ class ImpersonateStopView(LoginRequiredMixin, View):
 
 # ── Permissions ─────────────────────────────────────────────
 
-class PermissionListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class PermissionListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ListView):
     model = Permission
     template_name = "accounts/permission_list.html"
     context_object_name = "permissions"
@@ -559,7 +559,7 @@ class PermissionListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
 # ── Access Logs ─────────────────────────────────────────────
 
-class AccessLogListView(LoginRequiredMixin, PermissionRequiredMixin, SortableListMixin, ListView):
+class AccessLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
     model = AccessLog
     template_name = "accounts/access_log_list.html"
     context_object_name = "logs"
@@ -593,7 +593,7 @@ class AccessLogListView(LoginRequiredMixin, PermissionRequiredMixin, SortableLis
 # ── Calendar subscriptions ──────────────────────────────────
 
 
-class CalendarSubscriptionListView(LoginRequiredMixin, PermissionRequiredMixin, SortableListMixin, ListView):
+class CalendarSubscriptionListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
     template_name = "accounts/calendar_subscription_list.html"
     context_object_name = "tokens"
     paginate_by = 25
@@ -647,7 +647,7 @@ def _get_model_labels():
     return MODEL_LABELS
 
 
-class ActionLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class ActionLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ListView):
     template_name = "accounts/action_log_list.html"
     context_object_name = "entries"
     paginate_by = 50

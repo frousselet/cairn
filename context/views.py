@@ -22,8 +22,21 @@ from django.views.generic import (
 
 from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
-from core.mixins import HtmxFormMixin, SortableListMixin
-from .constants import CollectionMethod, IndicatorType, PREDEFINED_SOURCE_FORMAT
+from core.mixins import (
+    ColumnPreferenceMixin,
+    HtmxFormMixin,
+    ListSummaryMixin,
+    PredefinedFilterMixin,
+    SortableListMixin,
+)
+from .constants import (
+    CollectionMethod,
+    ImpactLevel,
+    IndicatorType,
+    IssueStatus,
+    IssueType,
+    PREDEFINED_SOURCE_FORMAT,
+)
 from .forms import (
     ActivityCreateForm,
     ActivityUpdateForm,
@@ -218,7 +231,7 @@ def get_dashboard_indicator_slots(user):
 
 # ── Scope ───────────────────────────────────────────────────
 
-class ScopeListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class ScopeListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Scope
     permission_required = "context.scope.read"
     template_name = "context/scope_list.html"
@@ -336,11 +349,35 @@ class ScopeDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 # ── Issue ───────────────────────────────────────────────────
 
-class IssueListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+ISSUE_FILTER_GROUPS = [
+    {"param": "type", "field": "type", "label": _l("Type"), "options": IssueType.choices},
+    {"param": "impact", "field": "impact_level", "label": _l("Impact"), "options": ImpactLevel.choices},
+    {"param": "status", "field": "status", "label": _l("Status"), "options": IssueStatus.choices},
+]
+ISSUE_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Title")},
+]
+ISSUE_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Title"), "always": True},
+    {"key": "scopes", "label": _l("Scopes")},
+    {"key": "category", "label": _l("Category")},
+    {"key": "impact", "label": _l("Impact")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class IssueListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Issue
     permission_required = "context.issue.read"
     template_name = "context/issue_list.html"
     context_object_name = "issues"
+    status_field = "status"
+    filter_groups = ISSUE_FILTER_GROUPS
+    text_filters = ISSUE_TEXT_FILTERS
+    columns = ISSUE_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -355,16 +392,21 @@ class IssueListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixi
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes")
-        type_filter = self.request.GET.get("type")
-        if type_filter:
-            qs = qs.filter(type=type_filter)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        impact_filter = self.request.GET.get("impact")
-        if impact_filter:
-            qs = qs.filter(impact_level=impact_filter)
-        return qs
+        return self.filter_queryset_predefined(qs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # Entity-specific KPI tiles for the rail, over the scope-filtered list
+        # (the summary base captured before the facets are applied).
+        base = getattr(self, "_summary_base_qs", None)
+        if base is not None:
+            ctx["list_kpis"] = [
+                {"label": _("Total issues"), "value": base.count(), "icon": "exclamation-triangle", "tone": "accent"},
+                {"label": _("Critical impact"), "value": base.filter(impact_level=ImpactLevel.CRITICAL).count(), "icon": "fire", "tone": "danger"},
+                {"label": _("Active"), "value": base.filter(status=IssueStatus.ACTIVE).count(), "icon": "activity", "tone": "warning"},
+                {"label": _("Closed"), "value": base.filter(status=IssueStatus.CLOSED).count(), "icon": "check-circle", "tone": "success"},
+            ]
+        return ctx
 
 
 class IssueDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -416,11 +458,12 @@ class IssueDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 # ── Stakeholder ─────────────────────────────────────────────
 
-class StakeholderListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class StakeholderListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Stakeholder
     permission_required = "context.stakeholder.read"
     template_name = "context/stakeholder_list.html"
     context_object_name = "stakeholders"
+    status_field = "status"
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -497,11 +540,12 @@ class StakeholderDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteV
 
 # ── Objective ───────────────────────────────────────────────
 
-class ObjectiveListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class ObjectiveListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Objective
     permission_required = "context.objective.read"
     template_name = "context/objective_list.html"
     context_object_name = "objectives"
+    status_field = "status"
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -574,7 +618,7 @@ class ObjectiveDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteVie
 
 # ── SWOT ────────────────────────────────────────────────────
 
-class SwotListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class SwotListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = SwotAnalysis
     permission_required = "context.swot.read"
     template_name = "context/swot_list.html"
@@ -874,11 +918,12 @@ class ResponsibilityDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View
 
 # ── Role ────────────────────────────────────────────────────
 
-class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Role
     permission_required = "context.role.read"
     template_name = "context/role_list.html"
     context_object_name = "roles"
+    status_field = "status"
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -960,11 +1005,12 @@ class RoleDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 # ── Activity ────────────────────────────────────────────────
 
-class ActivityListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class ActivityListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Activity
     permission_required = "context.activity.read"
     template_name = "context/activity_list.html"
     context_object_name = "activities"
+    status_field = "status"
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -1059,7 +1105,7 @@ class ScopeTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
         return ctx
 
 
-class IssueTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class IssueTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Issue
     permission_required = "context.issue.read"
     template_name = "context/issue_table_body.html"
@@ -1068,14 +1114,12 @@ class IssueTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
     sortable_fields = IssueListView.sortable_fields
     default_sort = IssueListView.default_sort
     search_fields = ["reference", "name"]
+    filter_groups = ISSUE_FILTER_GROUPS
+    text_filters = ISSUE_TEXT_FILTERS
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes")
-        for param, field in [("type", "type"), ("status", "status"), ("impact", "impact_level")]:
-            val = self.request.GET.get(param)
-            if val:
-                qs = qs.filter(**{field: val})
-        return qs
+        return self.filter_queryset_predefined(qs)
 
 
 class StakeholderTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
@@ -1346,11 +1390,12 @@ def _attach_indicator_sparklines(indicators, limit=20):
     return indicators
 
 
-class IndicatorListView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class IndicatorListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Indicator
     permission_required = "context.indicator.read"
     template_name = "context/indicator_list.html"
     context_object_name = "indicators"
+    status_field = "status"
     paginate_by = 25
     indicator_type = None
     sortable_fields = {

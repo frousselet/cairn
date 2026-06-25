@@ -12,6 +12,8 @@
 {% endpage_header %}
 {% help_modal "risks.treatment_plan_list" %}
 
+<div class="list-layout">
+  <div class="list-main">
 <div class="mb-3 d-flex gap-2">
   <a href="{% url 'risks:treatment-plan-list' %}" class="filter-chip {% if not request.GET.status %}active{% endif %}">{% trans "All" %}</a>
   <a href="?status=planned" class="filter-chip {% if request.GET.status == 'planned' %}active{% endif %}">{% trans "Planned" %}</a>
@@ -91,4 +93,9 @@
 </div>
 
 {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail">
+    {% include "includes/list_rail_summary.html" %}
+  </aside>
+</div>
 {% endblock %}

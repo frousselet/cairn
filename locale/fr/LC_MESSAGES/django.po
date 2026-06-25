@@ -10795,3 +10795,40 @@ msgid "%(count)s audit under way today."
 msgid_plural "%(count)s audits under way today."
 msgstr[0] "%(count)s audit en cours aujourd'hui."
 msgstr[1] "%(count)s audits en cours aujourd'hui."
+
+msgid "Filters"
+msgstr "Filtres"
+
+msgid "Clear filters"
+msgstr "Effacer les filtres"
+
+msgid "Any"
+msgstr "Tous"
+
+msgctxt "filter operator"
+msgid "contains"
+msgstr "contient"
+
+msgctxt "filter operator"
+msgid "is"
+msgstr "est"
+
+msgctxt "filter operator"
+msgid "starts with"
+msgstr "commence par"
+
+msgctxt "filter operator"
+msgid "is not"
+msgstr "n'est pas"
+
+msgid "Active filters"
+msgstr "Filtres actifs"
+
+msgid "Total issues"
+msgstr "Total des enjeux"
+
+msgid "Critical impact"
+msgstr "Impact critique"
+
+msgid "Reset filters"
+msgstr "Réinitialiser les filtres"

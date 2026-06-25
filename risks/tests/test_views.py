@@ -337,11 +337,11 @@ class TestRiskListView:
 
     def test_list_filters_by_status(self):
         client, user = _superuser_client()
-        RiskFactory(name="Identified", status="identified")
-        RiskFactory(name="Closed", status="closed")
+        RiskFactory(name="RiskAlpha", status="identified")
+        RiskFactory(name="RiskOmega", status="closed")
         resp = client.get(reverse("risks:risk-list"), {"status": "identified"})
-        assert b"Identified" in resp.content
-        assert b"Closed" not in resp.content
+        assert b"RiskAlpha" in resp.content
+        assert b"RiskOmega" not in resp.content
 
     def test_list_filters_by_priority(self):
         client, user = _superuser_client()

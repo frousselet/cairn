@@ -1,0 +1,23 @@
+{% load i18n ui %}
+{% comment %}
+Summary card for the list page side rail: total + per-state breakdown, each row
+linking to the matching ?status= filter. Renders nothing when no summary is
+provided. The sticky behaviour lives on the .list-rail container, so the card
+itself is not sticky.
+{% endcomment %}
+{% if list_summary %}
+{% sidebar_card _("Summary") icon="bar-chart" sticky=False %}
+  <div class="d-flex justify-content-between align-items-baseline mb-2">
+    <span class="text-muted">{% trans "Total" %}</span>
+    <strong class="fs-5">{{ list_summary.total }}</strong>
+  </div>
+  {% for item in list_summary.items %}
+  <a href="?{{ list_summary.param }}={{ item.value }}"
+     class="d-flex justify-content-between align-items-center py-1 text-decoration-none{% if item.active %} fw-semibold{% endif %}"
+     style="color:var(--text-secondary)">
+    <span>{{ item.label }}</span>
+    <span class="badge rounded-pill" style="background:var(--surface-subtle);color:var(--text-secondary)">{{ item.count }}</span>
+  </a>
+  {% endfor %}
+{% endsidebar_card %}
+{% endif %}

@@ -6,6 +6,8 @@
 {% block content %}
 {% page_header _("Calendar subscriptions") subtitle=_("Active calendar subscription tokens across all users. Revoking a token immediately disables the corresponding iCal feed.") nav="accounts:calendar-subscription-list" accent="accounts" %}{% endpage_header %}
 
+<div class="list-layout">
+  <div class="list-main">
 <div class="card">
   <div class="table-responsive">
     <table class="table table-hover mb-0">
@@ -68,4 +70,9 @@
 </div>
 
 {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail">
+    {% include "includes/list_rail_summary.html" %}
+  </aside>
+</div>
 {% endblock %}

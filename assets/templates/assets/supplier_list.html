@@ -11,6 +11,8 @@
   <button type="button" class="btn btn-primary" hx-get="{% url 'assets:supplier-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New supplier' %}</button>
 {% endpage_header %}
 {% help_modal "assets.supplier_list" %}
+<div class="list-layout">
+  <div class="list-main">
 
 <div class="mb-3 d-flex gap-2 flex-wrap">
   <a href="{% url 'assets:supplier-list' %}" class="filter-chip {% if not request.GET.status %}active{% endif %}">{% trans "All" %}</a>
@@ -97,4 +99,9 @@
 </div>
 
 {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail">
+    {% include "includes/list_rail_summary.html" %}
+  </aside>
+</div>
 {% endblock %}

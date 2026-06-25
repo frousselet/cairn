@@ -6,7 +6,7 @@ register = template.Library()
 
 
 @register.simple_tag(takes_context=True)
-def sortable_th(context, field_name, label, css_class=""):
+def sortable_th(context, field_name, label, css_class="", col=""):
     label = _(label)
     """Render a sortable <th> element.
 
@@ -15,6 +15,7 @@ def sortable_th(context, field_name, label, css_class=""):
 
     Usage: {% sortable_th "name" "Name" %}
            {% sortable_th "name" "Name" "text-end" %}
+           {% sortable_th "name" "Name" col="name" %}  (column-manager key)
     """
     current_sort = context.get("current_sort", "")
     current_order = context.get("current_order", "asc")
@@ -34,12 +35,14 @@ def sortable_th(context, field_name, label, css_class=""):
         icon = '<i class="bi bi-arrow-down-up sort-icon sort-icon-idle ms-1"></i>'
 
     class_attr = f' class="{css_class}"' if css_class else ""
+    col_attr = format_html(' data-col="{}"', col) if col else ""
 
     return format_html(
-        '<th{class_attr}><a href="#" class="sortable-th text-decoration-none text-reset"'
+        "<th{class_attr}{col_attr}><a href=\"#\" class=\"sortable-th text-decoration-none text-reset\""
         ' data-sort-field="{field}" data-sort-order="{order}"'
         ' style="white-space:nowrap">{label}{icon}</a></th>',
         class_attr=mark_safe(class_attr),
+        col_attr=col_attr,
         field=field_name,
         order=new_order,
         label=label,

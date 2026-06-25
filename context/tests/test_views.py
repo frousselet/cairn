@@ -167,6 +167,159 @@ class TestScopeListView:
         assert b"Child Scope" in resp.content
 
 
+class TestListSummaryRail:
+    """The sticky side rail's summary reflects the whole visible list,
+    independent of the active ``?status=`` facet."""
+
+    def test_summary_totals_and_states(self):
+        client, _ = _superuser_client()
+        # The initial state is forced on create, so set the states directly.
+        ScopeFactory()
+        validated = [ScopeFactory().pk, ScopeFactory().pk]
+        Scope.objects.filter(pk__in=validated).update(workflow_state="validated")
+        resp = client.get(reverse("context:scope-list"))
+        summary = resp.context["list_summary"]
+        assert summary["total"] == 3
+        counts = {item["value"]: item["count"] for item in summary["items"]}
+        assert counts.get("validated") == 2
+        assert counts.get("draft") == 1
+
+    def test_summary_ignores_active_status_facet(self):
+        """Counts cover every state even when the list is filtered to one."""
+        client, _ = _superuser_client()
+        keep = ScopeFactory()
+        ScopeFactory()
+        Scope.objects.filter(pk=keep.pk).update(workflow_state="validated")
+        resp = client.get(reverse("context:scope-list") + "?status=validated")
+        assert resp.context["list_summary"]["total"] == 2
+
+    def test_summary_uses_domain_status_field(self):
+        """Issues facet a domain ``status`` field, not ``workflow_state``."""
+        client, _ = _superuser_client()
+        IssueFactory()
+        resp = client.get(reverse("context:issue-list"))
+        summary = resp.context["list_summary"]
+        assert summary["total"] == 1
+        assert sum(item["count"] for item in summary["items"]) == 1
+
+
+class TestPredefinedFilters:
+    """Combinable predefined facets: multiple values for one facet are
+    OR-combined (``field__in``), via the same widget on the full page and
+    its HTMX table-body view."""
+
+    def _issue(self, name, status):
+        from context.models import Issue
+
+        issue = IssueFactory(name=name)
+        Issue.objects.filter(pk=issue.pk).update(status=status)
+        return issue
+
+    def test_combinable_status_or(self):
+        client, _ = _superuser_client()
+        self._issue("AlphaIssue", "active")
+        self._issue("BetaIssue", "monitored")
+        self._issue("GammaIssue", "closed")
+        resp = client.get(
+            reverse("context:issue-table-body"), {"status": ["active", "monitored"]}
+        )
+        body = resp.content
+        assert b"AlphaIssue" in body
+        assert b"BetaIssue" in body
+        assert b"GammaIssue" not in body
+
+    def test_filter_context_marks_checked(self):
+        client, _ = _superuser_client()
+        resp = client.get(reverse("context:issue-list"), {"status": "active"})
+        groups = {g["param"]: g for g in resp.context["list_filters"]}
+        status_opts = {o["value"]: o["checked"] for o in groups["status"]["options"]}
+        assert status_opts.get("active") is True
+        assert status_opts.get("closed") is False
+        assert resp.context["list_filters_active"] is True
+
+    def _named(self, name):
+        return IssueFactory(name=name)
+
+    def test_text_filter_contains(self):
+        client, _ = _superuser_client()
+        self._named("Alpha")
+        self._named("Alphabet")
+        self._named("Beta")
+        resp = client.get(
+            reverse("context:issue-table-body"), {"name_op": "contains", "name_q": "lph"}
+        )
+        assert b"Alpha" in resp.content and b"Alphabet" in resp.content
+        assert b"Beta" not in resp.content
+
+    def test_text_filter_starts_with(self):
+        client, _ = _superuser_client()
+        self._named("Alpha")
+        self._named("Gamma Alpha")
+        resp = client.get(
+            reverse("context:issue-table-body"), {"name_op": "starts", "name_q": "Alpha"}
+        )
+        assert b"Alpha</a>" in resp.content or b">Alpha<" in resp.content
+        assert b"Gamma Alpha" not in resp.content
+
+    def test_text_filter_is_not(self):
+        client, _ = _superuser_client()
+        self._named("Alpha")
+        self._named("Beta")
+        resp = client.get(
+            reverse("context:issue-table-body"), {"name_op": "isnot", "name_q": "Alpha"}
+        )
+        assert b"Beta" in resp.content
+        # "Alpha" excluded (the exact match is filtered out)
+        assert resp.content.count(b"Alpha") == 0
+
+
+class TestColumnPreferences:
+    """Per-user column visibility/order and the KPI rail context."""
+
+    def test_default_columns(self):
+        client, _ = _superuser_client()
+        resp = client.get(reverse("context:issue-list"))
+        cols = resp.context["list_columns"]
+        by_key = {c["key"]: c for c in cols}
+        assert cols[0]["key"] == "reference"
+        assert by_key["reference"]["always"] is True
+        assert by_key["tags"]["visible"] is True
+
+    def test_saved_preference_reorders_and_hides(self):
+        client, user = _superuser_client()
+        user.column_preferences = {
+            "context.issue": {"order": ["name", "reference", "status"], "hidden": ["tags"]}
+        }
+        user.save(update_fields=["column_preferences"])
+        resp = client.get(reverse("context:issue-list"))
+        cols = resp.context["list_columns"]
+        assert [c["key"] for c in cols][:3] == ["name", "reference", "status"]
+        assert next(c for c in cols if c["key"] == "tags")["visible"] is False
+        # A column added after the saved order still appears (visible) at the end.
+        assert "actions" in [c["key"] for c in cols]
+
+    def test_kpis_present(self):
+        client, _ = _superuser_client()
+        IssueFactory()
+        resp = client.get(reverse("context:issue-list"))
+        assert resp.context["list_kpis"]
+        assert resp.context["list_kpis"][0]["value"] == 1
+
+    def test_save_columns_endpoint(self):
+        client, user = _superuser_client()
+        resp = client.post(
+            reverse("helpers:save-columns"),
+            data=json.dumps(
+                {"view": "context.issue", "order": ["name", "reference"], "hidden": ["tags"]}
+            ),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        user.refresh_from_db()
+        assert user.column_preferences["context.issue"]["hidden"] == ["tags"]
+        assert user.column_preferences["context.issue"]["order"] == ["name", "reference"]
+
+
 class TestScopeDetailView:
     def test_requires_login(self):
         scope = ScopeFactory()

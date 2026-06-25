@@ -1,0 +1,16 @@
+{% load i18n %}
+{% comment %}
+Body of the toolbar's "Columns" dropdown: a draggable, toggleable list of the
+table's columns in the user's saved order. The client script (base.html) reads
+this list as the source of truth, applies visibility + order to the table, and
+persists changes per user. `always` columns are locked visible.
+{% endcomment %}
+<ul class="columns-menu__list list-unstyled mb-0" data-column-view-key="{{ column_view_key }}">
+  {% for col in list_columns %}
+  <li class="columns-menu__item" data-col="{{ col.key }}">
+    <i class="bi bi-grip-vertical columns-menu__grip" aria-hidden="true"></i>
+    <input class="form-check-input m-0 columns-menu__toggle" type="checkbox"{% if col.visible %} checked{% endif %}{% if col.always %} disabled{% endif %} aria-label="{{ col.label }}">
+    <span class="columns-menu__label">{{ col.label }}</span>
+  </li>
+  {% endfor %}
+</ul>
