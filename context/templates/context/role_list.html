@@ -14,49 +14,39 @@
 
 <div class="list-layout">
   <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Title" col="name" %}
+              {% sortable_th "type" "Type" col="type" %}
+              <th data-col="users">{% trans "Users" %}</th>
+              <th data-col="responsibilities">{% trans "Responsibilities" %}</th>
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'context:role-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "context/role_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-<div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
-  <a href="{% url 'context:role-list' %}" class="filter-chip {% if not request.GET.type and not request.GET.status %}active{% endif %}">{% trans "All" %}</a>
-  <span class="filter-chip-divider"></span>
-  <a href="?type=governance" class="filter-chip {% if request.GET.type == 'governance' %}active{% endif %}">{% trans "Governance" %}</a>
-  <a href="?type=operational" class="filter-chip {% if request.GET.type == 'operational' %}active{% endif %}">{% trans "Operational" %}</a>
-  <a href="?type=support" class="filter-chip {% if request.GET.type == 'support' %}active{% endif %}">{% trans "Support" %}</a>
-  <a href="?type=control" class="filter-chip {% if request.GET.type == 'control' %}active{% endif %}">{% trans "Control" %}</a>
-  <span class="filter-chip-divider"></span>
-  <a href="?status=active" class="filter-chip {% if request.GET.status == 'active' %}active{% endif %}">{% trans "Active" %}</a>
-  <a href="?status=inactive" class="filter-chip {% if request.GET.status == 'inactive' %}active{% endif %}">{% trans "Inactive" %}</a>
-</div>
-
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "name" "Title" %}
-          {% sortable_th "type" "Type" %}
-          <th>{% trans "Users" %}</th>
-          <th>{% trans "Responsibilities" %}</th>
-          {% sortable_th "workflow_state" "Status" %}
-          <th>{% trans "Tags" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody id="item-table-body"
-             hx-get="{% url 'context:role-table-body' %}?{{ request.GET.urlencode }}"
-             hx-trigger="refreshTable"
-             hx-swap="innerHTML">
-        {% include "context/role_table_body.html" %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

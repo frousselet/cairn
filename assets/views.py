@@ -18,8 +18,28 @@ from django.views.generic import (
 
 from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
-from core.mixins import HtmxFormMixin, ListSummaryMixin, SortableListMixin
+from core.mixins import (
+    AdvancedFilterMixin,
+    ColumnPreferenceMixin,
+    HtmxFormMixin,
+    ListSummaryMixin,
+    PredefinedFilterMixin,
+    SavedFilterMixin,
+    SortableListMixin,
+)
+from context.constants import Criticality, SiteType
 from context.models import Scope, Site
+from .constants import (
+    DependencyType,
+    EssentialAssetStatus,
+    EssentialAssetType,
+    SiteAssetDependencyType,
+    SiteSupplierDependencyType,
+    SupplierDependencyType,
+    SupplierStatus,
+    SupportAssetStatus,
+    SupportAssetType,
+)
 from .forms import (
     AssetDependencyForm,
     AssetGroupCreateForm,
@@ -94,11 +114,32 @@ class ApproveView(LoginRequiredMixin, View):
 
 # ── Essential Asset ─────────────────────────────────────────
 
-class EssentialAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+ESSENTIAL_ASSET_FILTER_GROUPS = [
+    {"param": "type", "field": "type", "label": _l("Type"), "options": EssentialAssetType.choices},
+    {"param": "status", "field": "status", "label": _l("Status"), "options": EssentialAssetStatus.choices},
+]
+ESSENTIAL_ASSET_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+ESSENTIAL_ASSET_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "owner", "label": _l("Owner")},
+    {"key": "cia", "label": _l("C / I / A")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class EssentialAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = EssentialAsset
     template_name = "assets/essential_asset_list.html"
     context_object_name = "assets"
     status_field = "status"
+    filter_groups = ESSENTIAL_ASSET_FILTER_GROUPS
+    text_filters = ESSENTIAL_ASSET_TEXT_FILTERS
+    columns = ESSENTIAL_ASSET_COLUMNS
     permission_required = "assets.essential_asset.read"
     paginate_by = 25
     sortable_fields = {
@@ -114,13 +155,8 @@ class EssentialAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSu
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes").select_related("owner")
-        asset_type = self.request.GET.get("type")
-        if asset_type:
-            qs = qs.filter(type=asset_type)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class EssentialAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -181,11 +217,32 @@ class EssentialAssetDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Dele
 
 # ── Support Asset ───────────────────────────────────────────
 
-class SupportAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+SUPPORT_ASSET_FILTER_GROUPS = [
+    {"param": "type", "field": "type", "label": _l("Type"), "options": SupportAssetType.choices},
+    {"param": "status", "field": "status", "label": _l("Status"), "options": SupportAssetStatus.choices},
+]
+SUPPORT_ASSET_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+SUPPORT_ASSET_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "owner", "label": _l("Owner")},
+    {"key": "cia", "label": _l("C / I / A")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class SupportAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = SupportAsset
     template_name = "assets/support_asset_list.html"
     context_object_name = "assets"
     status_field = "status"
+    filter_groups = SUPPORT_ASSET_FILTER_GROUPS
+    text_filters = SUPPORT_ASSET_TEXT_FILTERS
+    columns = SUPPORT_ASSET_COLUMNS
     permission_required = "assets.support_asset.read"
     paginate_by = 25
     sortable_fields = {
@@ -202,13 +259,8 @@ class SupportAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumm
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes").select_related("owner")
-        asset_type = self.request.GET.get("type")
-        if asset_type:
-            qs = qs.filter(type=asset_type)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class SupportAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -269,10 +321,30 @@ class SupportAssetDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delete
 
 # ── Dependency ──────────────────────────────────────────────
 
-class DependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
+DEPENDENCY_FILTER_GROUPS = [
+    {"param": "type", "field": "dependency_type", "label": _l("Type"), "options": DependencyType.choices},
+    {"param": "criticality", "field": "criticality", "label": _l("Criticality"), "options": Criticality.choices},
+]
+DEPENDENCY_TEXT_FILTERS = [
+    {"param": "reference", "field": "reference", "label": _l("Ref.")},
+]
+DEPENDENCY_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "essential", "label": _l("Dependency"), "always": True},
+    {"key": "type", "label": _l("Type")},
+    {"key": "criticality", "label": _l("Criticality")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class DependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
     model = AssetDependency
     template_name = "assets/dependency_list.html"
     context_object_name = "dependencies"
+    filter_groups = DEPENDENCY_FILTER_GROUPS
+    text_filters = DEPENDENCY_TEXT_FILTERS
+    columns = DEPENDENCY_COLUMNS
     permission_required = "assets.dependency.read"
     paginate_by = 25
     sortable_fields = {
@@ -287,9 +359,9 @@ class DependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
     search_fields = ["reference", "essential_asset__name", "support_asset__name"]
 
     def get_queryset(self):
-        return super().get_queryset().select_related(
-            "essential_asset", "support_asset"
-        )
+        qs = super().get_queryset().select_related("essential_asset", "support_asset")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class DependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreatedByMixin, CreateView):
@@ -317,10 +389,29 @@ class DependencyDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteVi
 
 # ── Group ───────────────────────────────────────────────────
 
-class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+GROUP_FILTER_GROUPS = [
+    {"param": "type", "field": "type", "label": _l("Type"), "options": SupportAssetType.choices},
+]
+GROUP_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+GROUP_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "owner", "label": _l("Owner")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = AssetGroup
     template_name = "assets/group_list.html"
     context_object_name = "groups"
+    filter_groups = GROUP_FILTER_GROUPS
+    text_filters = GROUP_TEXT_FILTERS
+    columns = GROUP_COLUMNS
     permission_required = "assets.group.read"
     paginate_by = 25
     sortable_fields = {
@@ -333,9 +424,11 @@ class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
     search_fields = ["reference", "name"]
 
     def get_queryset(self):
-        return super().get_queryset().select_related("owner").annotate(
+        qs = super().get_queryset().select_related("owner").annotate(
             member_count=Count("members")
         )
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class GroupDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -391,11 +484,32 @@ class GroupDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 # ── Supplier ──────────────────────────────────────────────
 
-class SupplierListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView):
+SUPPLIER_FILTER_GROUPS = [
+    {"param": "status", "field": "status", "label": _l("Status"), "options": SupplierStatus.choices},
+    {"param": "criticality", "field": "criticality", "label": _l("Criticality"), "options": Criticality.choices},
+]
+SUPPLIER_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+SUPPLIER_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "criticality", "label": _l("Criticality")},
+    {"key": "owner", "label": _l("Owner")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class SupplierListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Supplier
     template_name = "assets/supplier_list.html"
     context_object_name = "suppliers"
     status_field = "status"
+    filter_groups = SUPPLIER_FILTER_GROUPS
+    text_filters = SUPPLIER_TEXT_FILTERS
+    columns = SUPPLIER_COLUMNS
     permission_required = "assets.supplier.read"
     paginate_by = 25
     sortable_fields = {
@@ -410,13 +524,11 @@ class SupplierListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes").select_related("owner", "type")
-        supplier_type = self.request.GET.get("type")
+        supplier_type = self.request.GET.get("supplier_type")
         if supplier_type:
             qs = qs.filter(type_id=supplier_type)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class SupplierDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -495,22 +607,40 @@ class SupplierArchiveView(LoginRequiredMixin, PermissionRequiredMixin, View):
 # ── Supplier Types ────────────────────────────────────────
 
 
-class SupplierTypeListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
+SUPPLIER_TYPE_FILTER_GROUPS = []
+SUPPLIER_TYPE_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+SUPPLIER_TYPE_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "requirements", "label": _l("Requirements")},
+    {"key": "suppliers", "label": _l("Suppliers")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class SupplierTypeListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
     model = SupplierType
     template_name = "assets/supplier_type_list.html"
     context_object_name = "supplier_types"
+    filter_groups = SUPPLIER_TYPE_FILTER_GROUPS
+    text_filters = SUPPLIER_TYPE_TEXT_FILTERS
+    columns = SUPPLIER_TYPE_COLUMNS
     permission_required = "assets.supplier.read"
     sortable_fields = {"reference": "reference", "name": "name"}
     default_sort = "name"
     search_fields = ["reference", "name"]
 
     def get_queryset(self):
-        return (
+        qs = (
             super()
             .get_queryset()
             .annotate(req_count=Count("requirements", distinct=True))
             .prefetch_related("suppliers")
         )
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class SupplierTypeDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
@@ -762,10 +892,30 @@ class InstantiateTypeRequirementReviewView(LoginRequiredMixin, PermissionRequire
 
 # ── Supplier Dependencies ─────────────────────────────────
 
-class SupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
+SUPPLIER_DEPENDENCY_FILTER_GROUPS = [
+    {"param": "type", "field": "dependency_type", "label": _l("Type"), "options": SupplierDependencyType.choices},
+    {"param": "criticality", "field": "criticality", "label": _l("Criticality"), "options": Criticality.choices},
+]
+SUPPLIER_DEPENDENCY_TEXT_FILTERS = [
+    {"param": "reference", "field": "reference", "label": _l("Ref.")},
+]
+SUPPLIER_DEPENDENCY_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "support", "label": _l("Dependency"), "always": True},
+    {"key": "type", "label": _l("Type")},
+    {"key": "criticality", "label": _l("Criticality")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class SupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
     model = SupplierDependency
     template_name = "assets/supplier_dependency_list.html"
     context_object_name = "dependencies"
+    filter_groups = SUPPLIER_DEPENDENCY_FILTER_GROUPS
+    text_filters = SUPPLIER_DEPENDENCY_TEXT_FILTERS
+    columns = SUPPLIER_DEPENDENCY_COLUMNS
     permission_required = "assets.supplier_dependency.read"
     paginate_by = 25
     sortable_fields = {
@@ -780,9 +930,9 @@ class SupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, Li
     search_fields = ["reference", "support_asset__name", "supplier__name"]
 
     def get_queryset(self):
-        return super().get_queryset().select_related(
-            "support_asset", "supplier"
-        )
+        qs = super().get_queryset().select_related("support_asset", "supplier")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class SupplierDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreatedByMixin, CreateView):
@@ -810,14 +960,35 @@ class SupplierDependencyDeleteView(LoginRequiredMixin, PermissionRequiredMixin, 
 
 # ── Sites ─────────────────────────────────────────────────
 
-class SiteListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ListView):
+SITE_FILTER_GROUPS = [
+    {"param": "type", "field": "type", "label": _l("Type"), "options": SiteType.choices},
+]
+SITE_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+SITE_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "type", "label": _l("Type")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class SiteListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ListView):
     model = Site
     template_name = "assets/site_list.html"
     context_object_name = "sites"
+    filter_groups = SITE_FILTER_GROUPS
+    text_filters = SITE_TEXT_FILTERS
+    columns = SITE_COLUMNS
     permission_required = "context.site.read"
 
     def get_queryset(self):
-        return super().get_queryset().select_related("parent_site")
+        qs = super().get_queryset().select_related("parent_site")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -897,10 +1068,30 @@ class SiteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 # ── Site–Asset Dependencies ──────────────────────────────
 
-class SiteAssetDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
+SITE_ASSET_DEPENDENCY_FILTER_GROUPS = [
+    {"param": "type", "field": "dependency_type", "label": _l("Type"), "options": SiteAssetDependencyType.choices},
+    {"param": "criticality", "field": "criticality", "label": _l("Criticality"), "options": Criticality.choices},
+]
+SITE_ASSET_DEPENDENCY_TEXT_FILTERS = [
+    {"param": "reference", "field": "reference", "label": _l("Ref.")},
+]
+SITE_ASSET_DEPENDENCY_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "support", "label": _l("Dependency"), "always": True},
+    {"key": "type", "label": _l("Type")},
+    {"key": "criticality", "label": _l("Criticality")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class SiteAssetDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
     model = SiteAssetDependency
     template_name = "assets/site_asset_dependency_list.html"
     context_object_name = "dependencies"
+    filter_groups = SITE_ASSET_DEPENDENCY_FILTER_GROUPS
+    text_filters = SITE_ASSET_DEPENDENCY_TEXT_FILTERS
+    columns = SITE_ASSET_DEPENDENCY_COLUMNS
     permission_required = "assets.dependency.read"
     paginate_by = 25
     sortable_fields = {
@@ -915,7 +1106,9 @@ class SiteAssetDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, L
     search_fields = ["reference", "support_asset__name", "site__name"]
 
     def get_queryset(self):
-        return super().get_queryset().select_related("support_asset", "site")
+        qs = super().get_queryset().select_related("support_asset", "site")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class SiteAssetDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreatedByMixin, CreateView):
@@ -943,10 +1136,30 @@ class SiteAssetDependencyDeleteView(LoginRequiredMixin, PermissionRequiredMixin,
 
 # ── Site–Supplier Dependencies ───────────────────────────
 
-class SiteSupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, SortableListMixin, ListView):
+SITE_SUPPLIER_DEPENDENCY_FILTER_GROUPS = [
+    {"param": "type", "field": "dependency_type", "label": _l("Type"), "options": SiteSupplierDependencyType.choices},
+    {"param": "criticality", "field": "criticality", "label": _l("Criticality"), "options": Criticality.choices},
+]
+SITE_SUPPLIER_DEPENDENCY_TEXT_FILTERS = [
+    {"param": "reference", "field": "reference", "label": _l("Ref.")},
+]
+SITE_SUPPLIER_DEPENDENCY_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "site", "label": _l("Dependency"), "always": True},
+    {"key": "type", "label": _l("Type")},
+    {"key": "criticality", "label": _l("Criticality")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class SiteSupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView):
     model = SiteSupplierDependency
     template_name = "assets/site_supplier_dependency_list.html"
     context_object_name = "dependencies"
+    filter_groups = SITE_SUPPLIER_DEPENDENCY_FILTER_GROUPS
+    text_filters = SITE_SUPPLIER_DEPENDENCY_TEXT_FILTERS
+    columns = SITE_SUPPLIER_DEPENDENCY_COLUMNS
     permission_required = "assets.supplier_dependency.read"
     paginate_by = 25
     sortable_fields = {
@@ -961,7 +1174,9 @@ class SiteSupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin
     search_fields = ["reference", "site__name", "supplier__name"]
 
     def get_queryset(self):
-        return super().get_queryset().select_related("site", "supplier")
+        qs = super().get_queryset().select_related("site", "supplier")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class SiteSupplierDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreatedByMixin, CreateView):

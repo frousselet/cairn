@@ -1,0 +1,48 @@
+{% load dic_tags i18n ui workflow_tags accounts_tags %}
+{% for asset in assets %}
+<tr{% if asset.is_end_of_life %} class="table-danger"{% endif %}>
+  <td data-col="reference"><a href="{% url 'assets:support-asset-detail' asset.pk %}" class="ref">{{ asset.reference }}</a></td>
+  <td data-col="name">
+    <span class="cell-stack">
+      <a href="{% url 'assets:support-asset-detail' asset.pk %}" class="cell-link">{{ asset.name }}</a>
+      <span class="cell-sub">{{ asset.get_category_display }} • {{ asset.get_type_display }}</span>
+    </span>
+  </td>
+  <td data-col="owner">
+    {% if asset.owner %}
+    <span class="cell-people cell-people--sm">
+      {% if asset.owner.avatar %}
+      <img src="{{ asset.owner.avatar_32|default:asset.owner.avatar }}" alt="" class="cell-avatar">
+      {% else %}
+      <span class="cell-avatar-fallback">{{ asset.owner.display_name|initials }}</span>
+      {% endif %}
+      <span class="cell-stack">
+        <span style="font-weight:600">{{ asset.owner.display_name }}</span>
+        {% if asset.owner.job_title %}<span class="cell-sub">{{ asset.owner.job_title }}</span>{% endif %}
+      </span>
+    </span>
+    {% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td data-col="cia">
+    <span class="d-inline-flex gap-1 align-items-center" style="white-space:nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
+      {{ asset.inherited_confidentiality|dic_badge }}{{ asset.inherited_integrity|dic_badge }}{{ asset.inherited_availability|dic_badge }}
+    </span>
+  </td>
+  <td data-col="status">
+    <span class="cell-stack">
+      {% if asset.is_end_of_life %}
+      <span><span class="badge text-bg-danger">EOL</span></span>
+      {% else %}
+      <span>{% workflow_badge asset %}</span>
+      {% endif %}
+      {% if asset.end_of_life_date %}<span class="cell-sub" title="{% trans 'End of life date' %}"><i class="bi bi-calendar-x me-1" aria-hidden="true"></i>{{ asset.end_of_life_date }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=asset.tags.all %}</td>
+  <td class="text-end" data-col="actions">
+    <a hx-get="{% url 'assets:support-asset-update' asset.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No support asset registered yet.") message=_("Support assets are the IT components (servers, applications, network gear, data stores) that essential assets depend on.") colspan=7 %}
+{% endfor %}

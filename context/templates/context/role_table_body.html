@@ -1,21 +1,21 @@
 {% load i18n ui workflow_tags accounts_tags %}
 {% for role in roles %}
 <tr{% if role.is_mandatory and role.user_count == 0 %} class="table-danger"{% endif %}>
-  <td><a href="{% url 'context:role-detail' role.pk %}" class="ref">{{ role.reference }}</a></td>
-  <td>
+  <td data-col="reference"><a href="{% url 'context:role-detail' role.pk %}" class="ref">{{ role.reference }}</a></td>
+  <td data-col="name">
     <span class="cell-stack">
       <a href="{% url 'context:role-detail' role.pk %}" class="cell-link">{{ role.name }}</a>
       {% if role.source_standard %}<span class="cell-sub">{{ role.source_standard }}</span>{% endif %}
     </span>
   </td>
-  <td>
+  <td data-col="type">
     <span class="cell-stack">
       <span>{{ role.get_type_display }}</span>
       {% if role.is_mandatory %}<span class="cell-sub"><i class="bi bi-asterisk me-1" aria-hidden="true"></i>{% trans "Mandatory" %}</span>{% endif %}
     </span>
   </td>
-  <td>{% user_avatars role.assigned_users.all size=24 %}</td>
-  <td>
+  <td data-col="users">{% user_avatars role.assigned_users.all size=24 %}</td>
+  <td data-col="responsibilities">
     <div class="d-flex gap-1 flex-nowrap">
       {% if role.responsible_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent-soft);color:var(--accent)" title="{% trans 'Responsible (R)' %}">R {{ role.responsible_count }}</span>{% endif %}
       {% if role.accountable_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent-soft);color:var(--accent)" title="{% trans 'Accountable (A)' %}">A {{ role.accountable_count }}</span>{% endif %}
@@ -24,9 +24,9 @@
       {% if not role.responsible_count and not role.accountable_count and not role.consulted_count and not role.informed_count %}<span class="cell-empty" style="font-size:.75rem">-</span>{% endif %}
     </div>
   </td>
-  <td>{% workflow_badge role %}</td>
-  <td>{% include "includes/tags_badge.html" with tags=role.tags.all %}</td>
-  <td class="text-end">
+  <td data-col="status">{% workflow_badge role %}</td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=role.tags.all %}</td>
+  <td class="text-end" data-col="actions">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
             hx-get="{% url 'context:role-update' role.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
       <i class="bi bi-pencil"></i>

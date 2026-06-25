@@ -1,9 +1,9 @@
 {% load i18n ui workflow_tags %}
 {% for analysis in analyses %}
 <tr>
-  <td><a href="{% url 'context:swot-detail' analysis.pk %}" class="ref">{{ analysis.reference }}</a></td>
-  <td><a href="{% url 'context:swot-detail' analysis.pk %}" class="cell-link">{{ analysis.name }}</a></td>
-  <td>
+  <td data-col="reference"><a href="{% url 'context:swot-detail' analysis.pk %}" class="ref">{{ analysis.reference }}</a></td>
+  <td data-col="name"><a href="{% url 'context:swot-detail' analysis.pk %}" class="cell-link">{{ analysis.name }}</a></td>
+  <td data-col="items">
     <div class="d-flex gap-1 flex-nowrap">
       {% if analysis.strength_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--success);color:#fff" title="{% trans 'Strengths' %}">S {{ analysis.strength_count }}</span>{% endif %}
       {% if analysis.weakness_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--danger);color:#fff" title="{% trans 'Weaknesses' %}">W {{ analysis.weakness_count }}</span>{% endif %}
@@ -12,17 +12,17 @@
       {% if not analysis.strength_count and not analysis.weakness_count and not analysis.opportunity_count and not analysis.threat_count %}<span style="color:var(--text-muted);font-size:.75rem">-</span>{% endif %}
     </div>
   </td>
-  <td>
+  <td data-col="date">
     <span class="cell-stack">
       <span>{{ analysis.analysis_date }}</span>
       {% if analysis.review_date %}<span class="cell-sub" title="{% trans 'Next review date' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ analysis.review_date }}</span>{% endif %}
     </span>
   </td>
-  <td>
+  <td data-col="status">
     {% workflow_badge analysis %}
   </td>
-  <td>{% include "includes/tags_badge.html" with tags=analysis.tags.all %}</td>
-  <td class="text-end">
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=analysis.tags.all %}</td>
+  <td class="text-end" data-col="actions">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
             hx-get="{% url 'context:swot-update' analysis.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
       <i class="bi bi-pencil"></i>

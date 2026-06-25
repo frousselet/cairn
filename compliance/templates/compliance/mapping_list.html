@@ -14,52 +14,36 @@
 
 <div class="list-layout">
   <div class="list-main">
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "source" "Source" %}
-          {% sortable_th "target" "Target" %}
-          {% sortable_th "type" "Type" %}
-          {% sortable_th "coverage" "Coverage" %}
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for m in mappings %}
-        <tr>
-          <td>
-            <span class="cell-stack">
-              <a href="{% url 'compliance:mapping-detail' m.pk %}" class="cell-link">{{ m.source_requirement.reference }}</a>
-              <span class="cell-sub">{{ m.source_requirement.framework.short_name|default:m.source_requirement.framework.name }}</span>
-            </span>
-          </td>
-          <td>
-            <span class="cell-stack">
-              <a href="{% url 'compliance:requirement-detail' m.target_requirement.pk %}" class="cell-link">{{ m.target_requirement.reference }}</a>
-              <span class="cell-sub">{{ m.target_requirement.framework.short_name|default:m.target_requirement.framework.name }}</span>
-            </span>
-          </td>
-          <td>{{ m.get_mapping_type_display }}</td>
-          <td>{{ m.get_coverage_level_display|default:"-" }}</td>
-          <td class="text-end">
-            <a hx-get="{% url 'compliance:mapping-update' m.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No inter-framework mapping defined yet.") message=_("Mappings link an answer to one requirement to its equivalent in another framework, so a single assessment can satisfy multiple norms.") colspan=5 %}
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "source" "Source" col="source" %}
+              {% sortable_th "target" "Target" col="target" %}
+              {% sortable_th "type" "Type" col="type" %}
+              {% sortable_th "coverage" "Coverage" col="coverage" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'compliance:mapping-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "compliance/mapping_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-{% include "includes/pagination.html" %}
+    {% include "includes/pagination.html" %}
   </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

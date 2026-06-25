@@ -1,0 +1,49 @@
+{% load i18n table_tags accounts_tags ui workflow_tags %}
+{% has_perm "risks.risk.delete" as can_delete_risks %}
+{% for r in risks %}
+<tr>
+  <td data-col="reference"><a href="{% url 'risks:risk-detail' r.pk %}" class="ref">{{ r.reference }}</a></td>
+  <td data-col="name">
+    <span class="cell-stack">
+      <a href="{% url 'risks:risk-detail' r.pk %}" class="cell-link">{{ r.name }}</a>
+      <span class="cell-sub">{{ r.assessment.reference }} • {{ r.get_risk_source_display }}</span>
+    </span>
+  </td>
+  <td data-col="priority">
+    <span class="cell-stack">
+      <span>{% badge r.priority type="severity" label=r.get_priority_display %}</span>
+      {% if r.current_risk_level is not None %}<span class="cell-sub" title="{% trans 'Current level' %}"><i class="bi bi-speedometer2 me-1" aria-hidden="true"></i>{{ r.current_risk_level }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="status">
+    <span class="cell-stack">
+      <span>{% workflow_badge r %}</span>
+      {% if r.treatment_decision %}<span class="cell-sub" title="{% trans 'Treatment' %}"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>{{ r.get_treatment_decision_display }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="owner">
+    {% if r.risk_owner %}
+    <span class="cell-people cell-people--sm">
+      {% if r.risk_owner.avatar %}
+      <img src="{{ r.risk_owner.avatar_32|default:r.risk_owner.avatar }}" alt="" class="cell-avatar">
+      {% else %}
+      <span class="cell-avatar-fallback">{{ r.risk_owner.display_name|initials }}</span>
+      {% endif %}
+      <span class="cell-stack">
+        <span style="font-weight:600">{{ r.risk_owner.display_name }}</span>
+        {% if r.risk_owner.job_title %}<span class="cell-sub">{{ r.risk_owner.job_title }}</span>{% endif %}
+      </span>
+    </span>
+    {% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=r.tags.all %}</td>
+  <td class="text-end" data-col="actions">
+    <a hx-get="{% url 'risks:risk-update' r.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ r.reference }}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+    {% if can_delete_risks and r.is_deletable %}
+    <a href="{% url 'risks:risk-delete' r.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ r.reference }}"><i class="bi bi-trash" aria-hidden="true"></i></a>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No risks recorded yet.") message=_("Risks are identified through methodology-driven assessments. Open an assessment and use its workflow to create them.") colspan=7 %}
+{% endfor %}

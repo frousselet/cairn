@@ -1,0 +1,24 @@
+{% load i18n ui %}
+{% for m in mappings %}
+<tr>
+  <td data-col="source">
+    <span class="cell-stack">
+      <a href="{% url 'compliance:mapping-detail' m.pk %}" class="cell-link">{{ m.source_requirement.reference }}</a>
+      <span class="cell-sub">{{ m.source_requirement.framework.short_name|default:m.source_requirement.framework.name }}</span>
+    </span>
+  </td>
+  <td data-col="target">
+    <span class="cell-stack">
+      <a href="{% url 'compliance:requirement-detail' m.target_requirement.pk %}" class="cell-link">{{ m.target_requirement.reference }}</a>
+      <span class="cell-sub">{{ m.target_requirement.framework.short_name|default:m.target_requirement.framework.name }}</span>
+    </span>
+  </td>
+  <td data-col="type">{{ m.get_mapping_type_display }}</td>
+  <td data-col="coverage">{{ m.get_coverage_level_display|default:"-" }}</td>
+  <td class="text-end" data-col="actions">
+    <a hx-get="{% url 'compliance:mapping-update' m.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No inter-framework mapping defined yet.") message=_("Mappings link an answer to one requirement to its equivalent in another framework, so a single assessment can satisfy multiple norms.") colspan=5 %}
+{% endfor %}

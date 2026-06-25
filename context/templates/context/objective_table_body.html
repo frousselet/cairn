@@ -1,14 +1,14 @@
 {% load i18n ui workflow_tags accounts_tags %}
 {% for obj in objectives %}
 <tr>
-  <td><a href="{% url 'context:objective-detail' obj.pk %}" class="ref">{{ obj.reference }}</a></td>
-  <td>
+  <td data-col="reference"><a href="{% url 'context:objective-detail' obj.pk %}" class="ref">{{ obj.reference }}</a></td>
+  <td data-col="name">
     <span class="cell-stack">
       <a href="{% url 'context:objective-detail' obj.pk %}" class="cell-link">{{ obj.name }}</a>
       <span class="cell-sub">{{ obj.get_category_display }}</span>
     </span>
   </td>
-  <td>
+  <td data-col="owner">
     {% if obj.owner %}
     <span class="cell-people cell-people--sm">
       {% if obj.owner.avatar %}
@@ -23,11 +23,11 @@
     </span>
     {% else %}<span class="cell-empty">-</span>{% endif %}
   </td>
-  <td>
+  <td data-col="progress">
     {% if obj.progress_percentage is not None %}{% progress_bar obj.progress_percentage scheme="progress" %}{% else %}<span class="cell-empty">-</span>{% endif %}
   </td>
-  <td>{% workflow_badge obj %}</td>
-  <td>
+  <td data-col="status">{% workflow_badge obj %}</td>
+  <td data-col="target_date">
     {% if obj.target_date %}
     <span class="cell-stack">
       <span>{{ obj.target_date }}</span>
@@ -39,8 +39,8 @@
     <span class="cell-empty">-</span>
     {% endif %}
   </td>
-  <td>{% include "includes/tags_badge.html" with tags=obj.tags.all %}</td>
-  <td class="text-end">
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=obj.tags.all %}</td>
+  <td class="text-end" data-col="actions">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
             hx-get="{% url 'context:objective-update' obj.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
       <i class="bi bi-pencil"></i>

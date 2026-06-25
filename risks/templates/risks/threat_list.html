@@ -6,7 +6,6 @@
 {% load help_tags %}
 
 {% block content %}
-{% has_perm "risks.threat.delete" as can_delete_threats %}
 {% page_header _("Threats") nav="risks:threat-list" accent="risks" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'risks:threat-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New threat' %}</button>
 {% endpage_header %}
@@ -26,66 +25,38 @@
 </div>
 {% endif %}
 
-<div class="mb-3 d-flex gap-2">
-  <a href="{% url 'risks:threat-list' %}" class="filter-chip {% if not request.GET.type and not request.GET.status %}active{% endif %}">{% trans "All" %}</a>
-  <a href="?type=deliberate" class="filter-chip {% if request.GET.type == 'deliberate' %}active{% endif %}">{% trans "Deliberate" %}</a>
-  <a href="?type=accidental" class="filter-chip {% if request.GET.type == 'accidental' %}active{% endif %}">{% trans "Accidental" %}</a>
-  <a href="?type=environmental" class="filter-chip {% if request.GET.type == 'environmental' %}active{% endif %}">{% trans "Environmental" %}</a>
-</div>
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Name" col="name" %}
+              {% sortable_th "type" "Type" col="type" %}
+              <th data-col="scopes">{% trans "Scopes" %}</th>
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'risks:threat-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "risks/threat_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "name" "Name" %}
-          {% sortable_th "type" "Type" %}
-          <th>{% trans "Scopes" %}</th>
-          {% sortable_th "workflow_state" "Status" %}
-          <th>{% trans "Tags" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for t in threats %}
-        <tr>
-          <td><a href="{% url 'risks:threat-detail' t.pk %}" class="ref">{{ t.reference }}</a></td>
-          <td>
-            <span class="cell-stack">
-              <span><a href="{% url 'risks:threat-detail' t.pk %}" class="cell-link" style="font-weight:600">{{ t.name }}</a>{% if t.is_from_catalog %} <span class="badge text-bg-info" style="font-size:.65rem">{% trans "Catalog" %}</span>{% endif %}</span>
-              {% if t.category %}<span class="cell-sub">{{ t.get_category_display }}</span>{% endif %}
-            </span>
-          </td>
-          <td>
-            <span class="cell-stack">
-              <span>{{ t.get_type_display }}</span>
-              {% if t.origin %}<span class="cell-sub">{{ t.get_origin_display }}</span>{% endif %}
-            </span>
-          </td>
-          <td>{% scope_popover t.scopes.all %}</td>
-          <td>{% workflow_badge t %}</td>
-          <td>{% include "includes/tags_badge.html" with tags=t.tags.all %}</td>
-          <td class="text-end">
-            <a hx-get="{% url 'risks:threat-update' t.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-            {% if can_delete_threats and t.is_deletable %}
-            <a href="{% url 'risks:threat-delete' t.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No threat catalogued yet.") message=_("Threats are the events or sources that could harm assets. Maintain a shared catalogue to keep assessments consistent.") colspan=7 %}
-        {% endfor %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

@@ -14,66 +14,38 @@
 
 <div class="list-layout">
   <div class="list-main">
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "name" "Title" %}
-          {% sortable_th "compliance" "Compliance" %}
-          <th>{% trans "Risks" %}</th>
-          <th>{% trans "Tags" %}</th>
-          {% sortable_th "workflow_state" "Status" %}
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for req in requirements %}
-        <tr>
-          <td><a href="{% url 'compliance:requirement-detail' req.pk %}" class="ref">{{ req.reference }}</a></td>
-          <td>
-            <span class="cell-stack">
-              <span><a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link" style="font-weight:600" title="{{ req.name }}">{{ req.name }}</a>{% if not req.is_applicable %} <span class="badge text-bg-secondary" style="font-size:.65rem">{% trans "Not applicable" %}</span>{% endif %}</span>
-              <span class="cell-sub">{% if req.requirement_number %}{{ req.requirement_number }} • {% endif %}{{ req.framework.short_name|default:req.framework.name }}</span>
-            </span>
-          </td>
-          <td>
-            <span class="cell-stack">
-              <span>
-                {% if req.compliance_status == 'evaluated' %}
-                <span class="badge" style="background-color:var(--accent);color:var(--accent-contrast)">{{ req.get_compliance_status_display }}</span>
-                {% else %}
-                <span class="badge text-bg-{% if req.compliance_status == 'compliant' or req.compliance_status == 'strength' %}success{% elif req.compliance_status == 'observation' or req.compliance_status == 'improvement_opportunity' or req.compliance_status == 'partially_compliant' %}warning{% elif req.compliance_status == 'major_non_conformity' or req.compliance_status == 'minor_non_conformity' or req.compliance_status == 'non_compliant' %}danger{% elif req.compliance_status == 'not_applicable' %}dark{% else %}secondary{% endif %}">
-                  {{ req.get_compliance_status_display }}
-                </span>
-                {% endif %}
-              </span>
-              <span class="cell-sub">{{ req.compliance_level }}%</span>
-            </span>
-          </td>
-          <td>
-            {% if req.risk_count %}<a href="{% url 'risks:risk-list' %}?linked_requirement={{ req.pk }}" class="badge text-bg-secondary text-decoration-none" title="{% trans 'Linked risks' %}">{{ req.risk_count }}</a>{% else %}<span class="cell-empty">-</span>{% endif %}
-          </td>
-          <td>{% include "includes/tags_badge.html" with tags=req.tags.all %}</td>
-          <td>{% workflow_badge req %}</td>
-          <td class="text-end">
-            <a href="{% url 'compliance:requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No requirement registered yet.") message=_("Requirements are the individual clauses of a framework you must conform to. They are usually loaded with the framework itself.") colspan=7 %}
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Title" col="name" %}
+              {% sortable_th "compliance" "Compliance" col="compliance" %}
+              <th data-col="risks">{% trans "Risks" %}</th>
+              <th data-col="tags">{% trans "Tags" %}</th>
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'compliance:requirement-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "compliance/requirement_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-{% include "includes/pagination.html" %}
+    {% include "includes/pagination.html" %}
   </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

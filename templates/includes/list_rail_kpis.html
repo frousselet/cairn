@@ -1,11 +1,36 @@
 {% load i18n %}
 {% comment %}
-KPI tiles for the list rail (entity-specific). Each entry in `list_kpis` is a
-dict {label, value, suffix?, icon?, url?}. On wide screens these stack in the
-sticky right rail; on reduced screens the rail (.list-rail--kpi) moves above the
-table and lays them out inline. Designed to grow into other rail widgets later.
+KPI tiles for the list rail. A view may provide entity-specific tiles in
+`list_kpis` (each: {label, value, suffix?, icon?, url?, tone?}); otherwise the
+rail falls back to generic tiles derived from `list_summary` (total + per-state
+counts), so every list gets a meaningful rail without per-entity authoring. On
+wide screens these stack in the sticky right rail; on reduced screens the rail
+(.list-rail--kpi) moves above the table and lays them out inline.
 {% endcomment %}
-{% for kpi in list_kpis %}
+{% if not list_kpis and list_summary %}
+<div class="card kpi-tile kpi-tile--accent">
+  <div class="card-body d-flex align-items-center gap-3">
+    <span class="kpi-tile__icon"><i class="bi bi-list-ul" aria-hidden="true"></i></span>
+    <div class="min-w-0">
+      <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Total" %}</div>
+      <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ list_summary.total }}</div>
+    </div>
+  </div>
+</div>
+{# Cap the rail at 4 tiles: the Total plus the first three states. #}
+{% for item in list_summary.items|slice:":3" %}
+<div class="card kpi-tile kpi-tile--neutral">
+  <div class="card-body d-flex align-items-center gap-3">
+    <span class="kpi-tile__icon"><i class="bi bi-dot" aria-hidden="true"></i></span>
+    <div class="min-w-0">
+      <div class="text-muted text-truncate" style="font-size:.8rem">{{ item.label }}</div>
+      <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ item.count }}</div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% for kpi in list_kpis|slice:":4" %}
 <div class="card kpi-tile kpi-tile--{{ kpi.tone|default:'accent' }}{% if kpi.url %} kpi-tile--link{% endif %}">
   {% if kpi.url %}<a href="{{ kpi.url }}" class="stretched-link" aria-label="{{ kpi.label }}"></a>{% endif %}
   <div class="card-body d-flex align-items-center gap-3">

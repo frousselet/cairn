@@ -1,0 +1,42 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% for ap in action_plans %}
+<tr>
+  <td data-col="reference"><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="ref">{{ ap.reference }}</a></td>
+  <td data-col="name">
+    <span class="cell-stack">
+      <a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="cell-link" title="{{ ap.name }}">{{ ap.name }}</a>
+      {% if ap.gap_description %}<span class="cell-sub" title="{{ ap.gap_description }}">{{ ap.gap_description }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="priority">
+    <span class="cell-stack">
+      <span><span class="badge text-bg-{% if ap.priority == 'critical' %}danger{% elif ap.priority == 'high' %}warning{% elif ap.priority == 'medium' %}info{% else %}secondary{% endif %}">{{ ap.get_priority_display }}</span></span>
+      {% if ap.target_date %}<span class="cell-sub" title="{% trans 'Target date' %}"><i class="bi bi-calendar-event me-1" aria-hidden="true"></i>{{ ap.target_date }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="supervisor">
+    {% if ap.owner %}
+    <span class="cell-people cell-people--sm">
+      {% if ap.owner.avatar %}
+      <img src="{{ ap.owner.avatar_32|default:ap.owner.avatar }}" alt="" class="cell-avatar">
+      {% else %}
+      <span class="cell-avatar-fallback">{{ ap.owner.display_name|initials }}</span>
+      {% endif %}
+      <span class="cell-stack">
+        <span style="font-weight:600">{{ ap.owner.display_name }}</span>
+        {% if ap.owner.job_title %}<span class="cell-sub">{{ ap.owner.job_title }}</span>{% endif %}
+      </span>
+    </span>
+    {% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td data-col="assignees">{% user_avatars ap.assignees.all size=20 %}</td>
+  <td data-col="progress">{% progress_bar ap.progress_percentage scheme="progress" %}</td>
+  <td data-col="status">{% workflow_badge ap %}</td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=ap.tags.all %}</td>
+  <td class="text-end" data-col="actions">
+    <a hx-get="{% url 'compliance:action-plan-update' ap.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No action plan opened yet.") message=_("Action plans track remediation work for assessment findings or risk treatments. Each one has an owner, a target date and a workflow.") colspan=9 %}
+{% endfor %}

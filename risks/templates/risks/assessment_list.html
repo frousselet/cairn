@@ -6,7 +6,6 @@
 {% load help_tags %}
 
 {% block content %}
-{% has_perm "risks.assessment.delete" as can_delete_assessments %}
 {% page_header _("Risk assessments") nav="risks:assessment-list" accent="risks" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'risks:assessment-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New assessment' %}</button>
 {% endpage_header %}
@@ -14,87 +13,39 @@
 
 <div class="list-layout">
   <div class="list-main">
-<div class="mb-3 d-flex gap-2">
-  <a href="{% url 'risks:assessment-list' %}" class="filter-chip {% if not request.GET.status %}active{% endif %}">{% trans "All" %}</button>
-  <a href="?status=draft" class="filter-chip {% if request.GET.status == 'draft' %}active{% endif %}">{% trans "Draft" %}</button>
-  <a href="?status=in_progress" class="filter-chip {% if request.GET.status == 'in_progress' %}active{% endif %}">{% trans "In progress" %}</a>
-  <a href="?status=completed" class="filter-chip {% if request.GET.status == 'completed' %}active{% endif %}">{% trans "Completed" %}</a>
-  <a href="?status=validated" class="filter-chip {% if request.GET.status == 'validated' %}active{% endif %}">{% trans "Validated" %}</a>
-</div>
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Name" col="name" %}
+              <th data-col="scopes">{% trans "Scopes" %}</th>
+              <th data-col="assessor">{% trans "Assessor" %}</th>
+              {% sortable_th "date" "Date" col="date" %}
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'risks:assessment-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "risks/assessment_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "name" "Name" %}
-          <th>{% trans "Scopes" %}</th>
-          <th>{% trans "Assessor" %}</th>
-          {% sortable_th "date" "Date" %}
-          {% sortable_th "workflow_state" "Status" %}
-          <th>{% trans "Tags" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for a in assessments %}
-        <tr>
-          <td><a href="{% url 'risks:assessment-detail' a.pk %}" class="ref">{{ a.reference }}</a></td>
-          <td>
-            <span class="cell-stack">
-              <a href="{% url 'risks:assessment-detail' a.pk %}" class="cell-link">{{ a.name }}</a>
-              <span class="cell-sub">{{ a.get_methodology_display }}</span>
-            </span>
-          </td>
-          <td>{% scope_popover a.scopes.all %}</td>
-          <td>
-            {% if a.assessor %}
-            <span class="cell-people cell-people--sm">
-              {% if a.assessor.avatar %}
-              <img src="{{ a.assessor.avatar_32|default:a.assessor.avatar }}" alt="" class="cell-avatar">
-              {% else %}
-              <span class="cell-avatar-fallback">{{ a.assessor.display_name|initials }}</span>
-              {% endif %}
-              <span class="cell-stack">
-                <span style="font-weight:600">{{ a.assessor.display_name }}</span>
-                {% if a.assessor.job_title %}<span class="cell-sub">{{ a.assessor.job_title }}</span>{% endif %}
-              </span>
-            </span>
-            {% else %}<span class="cell-empty">-</span>{% endif %}
-          </td>
-          <td>
-            {% if a.assessment_date %}
-            <span class="cell-stack">
-              <span>{{ a.assessment_date }}</span>
-              {% if a.next_review_date %}<span class="cell-sub" title="{% trans 'Next review' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ a.next_review_date }}</span>{% endif %}
-            </span>
-            {% elif a.next_review_date %}
-            <span class="cell-sub" title="{% trans 'Next review' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ a.next_review_date }}</span>
-            {% else %}<span class="cell-empty">-</span>{% endif %}
-          </td>
-          <td>{% workflow_badge a %}</td>
-          <td>{% include "includes/tags_badge.html" with tags=a.tags.all %}</td>
-          <td class="text-end">
-            <a hx-get="{% url 'risks:assessment-update' a.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-            {% if can_delete_assessments and a.is_deletable %}
-            <a href="{% url 'risks:assessment-delete' a.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No assessment yet.") message=_("Assessments evaluate your conformance to a framework at a point in time. Open one to score every requirement and gather findings.") colspan=8 %}
-        {% endfor %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

@@ -20,8 +20,18 @@ from django.views.generic import (
 
 from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
-from core.mixins import HtmxFormMixin, ListSummaryMixin, SortableListMixin
+from core.mixins import (
+    AdvancedFilterMixin,
+    ColumnPreferenceMixin,
+    HtmxFormMixin,
+    ListSummaryMixin,
+    PredefinedFilterMixin,
+    SavedFilterMixin,
+    SortableListMixin,
+)
 from .constants import (
+    AcceptanceStatus,
+    AssessmentStatus,
     DEFAULT_IMPACT_SCALES,
     DEFAULT_LIKELIHOOD_SCALES,
     DEFAULT_RISK_LEVELS,
@@ -30,7 +40,13 @@ from .constants import (
     Methodology,
     RiskPriority,
     RiskStatus,
+    Severity,
+    ThreatStatus,
+    ThreatType,
     TreatmentDecision,
+    TreatmentPlanStatus,
+    VulnerabilityCategory,
+    VulnerabilityStatus,
 )
 from .views_ebios import build_ebios_stepper_context
 from .forms import (
@@ -519,14 +535,46 @@ class RiskDashboardView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVie
 
 # ── Risk Assessment ─────────────────────────────────────────
 
+# Default 4-state lifecycle options, used for facets on models whose status
+# facet maps to the generic ``workflow_state`` (no domain status field).
+DEFAULT_WORKFLOW_STATUS_OPTIONS = [
+    ("draft", _l("Draft")),
+    ("pending", _l("Pending validation")),
+    ("validated", _l("Validated")),
+    ("archived", _l("Archived")),
+]
+
+ASSESSMENT_FILTER_GROUPS = [
+    {"param": "status", "field": "status", "label": _l("Status"), "options": AssessmentStatus.choices},
+]
+ASSESSMENT_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+ASSESSMENT_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "scopes", "label": _l("Scopes")},
+    {"key": "assessor", "label": _l("Assessor")},
+    {"key": "date", "label": _l("Date")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
 class RiskAssessmentListView(
-    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin,
+    AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin,
+    SortableListMixin, ListView
 ):
     model = RiskAssessment
     template_name = "risks/assessment_list.html"
     status_field = "status"
     context_object_name = "assessments"
     permission_required = "risks.assessment.read"
+    filter_groups = ASSESSMENT_FILTER_GROUPS
+    text_filters = ASSESSMENT_TEXT_FILTERS
+    columns = ASSESSMENT_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -540,10 +588,8 @@ class RiskAssessmentListView(
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes").select_related("assessor", "risk_criteria")
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class RiskAssessmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -623,6 +669,27 @@ class RiskAssessmentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Dele
     success_url = reverse_lazy("risks:assessment-list")
 
 
+class RiskAssessmentTableBodyView(
+    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    ScopeFilterMixin, SortableListMixin, ListView
+):
+    model = RiskAssessment
+    permission_required = "risks.assessment.read"
+    template_name = "risks/assessment_table_body.html"
+    context_object_name = "assessments"
+    paginate_by = None
+    sortable_fields = RiskAssessmentListView.sortable_fields
+    default_sort = RiskAssessmentListView.default_sort
+    search_fields = ["reference", "name"]
+    filter_groups = ASSESSMENT_FILTER_GROUPS
+    text_filters = ASSESSMENT_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().prefetch_related("scopes").select_related("assessor", "risk_criteria")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
 class ISO27005ReportExportView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, View):
     """Generate and return an ISO 27005 risk assessment DOCX report.
 
@@ -687,13 +754,35 @@ class ISO27005ReportExportView(LoginRequiredMixin, PermissionRequiredMixin, Scop
 
 # ── Risk Criteria ───────────────────────────────────────────
 
+CRITERIA_FILTER_GROUPS = [
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": DEFAULT_WORKFLOW_STATUS_OPTIONS},
+]
+CRITERIA_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+CRITERIA_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "scopes", "label": _l("Scopes")},
+    {"key": "threshold", "label": _l("Acceptance threshold")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
 class RiskCriteriaListView(
-    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin,
+    AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin,
+    SortableListMixin, ListView
 ):
     model = RiskCriteria
     template_name = "risks/criteria_list.html"
     context_object_name = "criteria_list"
     permission_required = "risks.criteria.read"
+    filter_groups = CRITERIA_FILTER_GROUPS
+    text_filters = CRITERIA_TEXT_FILTERS
+    columns = CRITERIA_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -705,10 +794,8 @@ class RiskCriteriaListView(
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes")
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(workflow_state=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class RiskCriteriaDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, DetailView):
@@ -839,10 +926,52 @@ class RiskCriteriaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delete
     success_url = reverse_lazy("risks:criteria-list")
 
 
+class RiskCriteriaTableBodyView(
+    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    ScopeFilterMixin, SortableListMixin, ListView
+):
+    model = RiskCriteria
+    permission_required = "risks.criteria.read"
+    template_name = "risks/criteria_table_body.html"
+    context_object_name = "criteria_list"
+    paginate_by = None
+    sortable_fields = RiskCriteriaListView.sortable_fields
+    default_sort = RiskCriteriaListView.default_sort
+    search_fields = ["reference", "name"]
+    filter_groups = CRITERIA_FILTER_GROUPS
+    text_filters = CRITERIA_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().prefetch_related("scopes")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
 # ── Risk ────────────────────────────────────────────────────
 
+RISK_FILTER_GROUPS = [
+    {"param": "status", "field": "status", "label": _l("Status"), "options": RiskStatus.choices},
+    {"param": "priority", "field": "priority", "label": _l("Priority"), "options": RiskPriority.choices},
+    {"param": "treatment_decision", "field": "treatment_decision", "label": _l("Treatment decision"), "options": TreatmentDecision.choices},
+]
+RISK_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+RISK_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "priority", "label": _l("Priority")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "owner", "label": _l("Owner")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
 class RiskListView(
-    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin,
+    AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin,
+    SortableListMixin, ListView
 ):
     scope_parent_lookup = "assessment__scopes"
     model = Risk
@@ -850,6 +979,9 @@ class RiskListView(
     status_field = "status"
     context_object_name = "risks"
     permission_required = "risks.risk.read"
+    filter_groups = RISK_FILTER_GROUPS
+    text_filters = RISK_TEXT_FILTERS
+    columns = RISK_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -869,15 +1001,6 @@ class RiskListView(
         assessment_id = params.get("assessment")
         if assessment_id:
             qs = qs.filter(assessment_id=assessment_id)
-        status_filter = params.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        priority = params.get("priority")
-        if priority:
-            qs = qs.filter(priority=priority)
-        decision = params.get("treatment_decision")
-        if decision:
-            qs = qs.filter(treatment_decision=decision)
 
         date_after = params.get("date_after")
         if date_after:
@@ -898,6 +1021,8 @@ class RiskListView(
             if value:
                 qs = qs.filter(**{lookup: value})
 
+        qs = self.filter_queryset_predefined(qs)
+        qs = self.filter_queryset_advanced(qs)
         # M2M joins can produce duplicate rows; deduplicate.
         return qs.distinct()
 
@@ -1087,6 +1212,54 @@ class RiskDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMix
     success_url = reverse_lazy("risks:risk-list")
 
 
+class RiskTableBodyView(
+    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    ScopeFilterMixin, SortableListMixin, ListView
+):
+    scope_parent_lookup = "assessment__scopes"
+    model = Risk
+    permission_required = "risks.risk.read"
+    template_name = "risks/risk_table_body.html"
+    context_object_name = "risks"
+    paginate_by = None
+    sortable_fields = RiskListView.sortable_fields
+    default_sort = RiskListView.default_sort
+    search_fields = ["reference", "name"]
+    filter_groups = RISK_FILTER_GROUPS
+    text_filters = RISK_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("assessment", "risk_owner")
+        params = self.request.GET
+
+        assessment_id = params.get("assessment")
+        if assessment_id:
+            qs = qs.filter(assessment_id=assessment_id)
+
+        date_after = params.get("date_after")
+        if date_after:
+            qs = qs.filter(created_at__date__gte=date_after)
+        date_before = params.get("date_before")
+        if date_before:
+            qs = qs.filter(created_at__date__lte=date_before)
+
+        m2m_filters = {
+            "essential_asset": "affected_essential_assets__id",
+            "support_asset": "affected_support_assets__id",
+            "threat": "iso27005_sources__threat_id",
+            "vulnerability": "iso27005_sources__vulnerability_id",
+            "linked_requirement": "linked_requirements__id",
+        }
+        for param, lookup in m2m_filters.items():
+            value = params.get(param)
+            if value:
+                qs = qs.filter(**{lookup: value})
+
+        qs = self.filter_queryset_predefined(qs)
+        qs = self.filter_queryset_advanced(qs)
+        return qs.distinct()
+
+
 class RiskRegisterExportView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """Generate and return an Excel export of the risk register.
 
@@ -1150,8 +1323,28 @@ class RiskRegisterExportView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 # ── Treatment Plan ──────────────────────────────────────────
 
+TREATMENT_PLAN_FILTER_GROUPS = [
+    {"param": "status", "field": "status", "label": _l("Status"), "options": TreatmentPlanStatus.choices},
+]
+TREATMENT_PLAN_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+TREATMENT_PLAN_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "owner", "label": _l("Owner")},
+    {"key": "progress", "label": _l("Progress")},
+    {"key": "target_date", "label": _l("Target date")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
 class TreatmentPlanListView(
-    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin,
+    AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin,
+    SortableListMixin, ListView
 ):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskTreatmentPlan
@@ -1159,6 +1352,9 @@ class TreatmentPlanListView(
     status_field = "status"
     context_object_name = "plans"
     permission_required = "risks.treatment.read"
+    filter_groups = TREATMENT_PLAN_FILTER_GROUPS
+    text_filters = TREATMENT_PLAN_TEXT_FILTERS
+    columns = TREATMENT_PLAN_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -1176,10 +1372,8 @@ class TreatmentPlanListView(
         assessment_id = self.request.GET.get("assessment")
         if assessment_id:
             qs = qs.filter(risk__assessment_id=assessment_id)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -1230,6 +1424,31 @@ class TreatmentPlanDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Scope
     template_name = "risks/confirm_delete.html"
     permission_required = "risks.treatment.delete"
     success_url = reverse_lazy("risks:treatment-plan-list")
+
+
+class TreatmentPlanTableBodyView(
+    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    ScopeFilterMixin, SortableListMixin, ListView
+):
+    scope_parent_lookup = "risk__assessment__scopes"
+    model = RiskTreatmentPlan
+    permission_required = "risks.treatment.read"
+    template_name = "risks/treatment_plan_table_body.html"
+    context_object_name = "plans"
+    paginate_by = None
+    sortable_fields = TreatmentPlanListView.sortable_fields
+    default_sort = TreatmentPlanListView.default_sort
+    search_fields = ["reference", "name", "risk__reference"]
+    filter_groups = TREATMENT_PLAN_FILTER_GROUPS
+    text_filters = TREATMENT_PLAN_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("risk", "owner")
+        assessment_id = self.request.GET.get("assessment")
+        if assessment_id:
+            qs = qs.filter(risk__assessment_id=assessment_id)
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 # ── Treatment Action (inline editing under a plan) ──────────
@@ -1318,8 +1537,28 @@ class TreatmentActionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Del
 
 # ── Risk Acceptance ─────────────────────────────────────────
 
+ACCEPTANCE_FILTER_GROUPS = [
+    {"param": "status", "field": "status", "label": _l("Status"), "options": AcceptanceStatus.choices},
+]
+ACCEPTANCE_TEXT_FILTERS = [
+    {"param": "justification", "field": "justification", "label": _l("Justification")},
+]
+ACCEPTANCE_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "risk", "label": _l("Risk"), "always": True},
+    {"key": "accepted_by", "label": _l("Accepted by")},
+    {"key": "level", "label": _l("Level at acceptance")},
+    {"key": "valid_until", "label": _l("Valid until")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
 class RiskAcceptanceListView(
-    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin,
+    AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin,
+    SortableListMixin, ListView
 ):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskAcceptance
@@ -1327,6 +1566,9 @@ class RiskAcceptanceListView(
     status_field = "status"
     context_object_name = "acceptances"
     permission_required = "risks.acceptance.read"
+    filter_groups = ACCEPTANCE_FILTER_GROUPS
+    text_filters = ACCEPTANCE_TEXT_FILTERS
+    columns = ACCEPTANCE_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -1342,10 +1584,8 @@ class RiskAcceptanceListView(
         assessment_id = self.request.GET.get("assessment")
         if assessment_id:
             qs = qs.filter(risk__assessment_id=assessment_id)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class RiskAcceptanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -1390,16 +1630,64 @@ class RiskAcceptanceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Scop
     success_url = reverse_lazy("risks:acceptance-list")
 
 
+class RiskAcceptanceTableBodyView(
+    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    ScopeFilterMixin, SortableListMixin, ListView
+):
+    scope_parent_lookup = "risk__assessment__scopes"
+    model = RiskAcceptance
+    permission_required = "risks.acceptance.read"
+    template_name = "risks/acceptance_table_body.html"
+    context_object_name = "acceptances"
+    paginate_by = None
+    sortable_fields = RiskAcceptanceListView.sortable_fields
+    default_sort = RiskAcceptanceListView.default_sort
+    search_fields = ["reference", "risk__reference", "risk__name"]
+    filter_groups = ACCEPTANCE_FILTER_GROUPS
+    text_filters = ACCEPTANCE_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("risk", "accepted_by")
+        assessment_id = self.request.GET.get("assessment")
+        if assessment_id:
+            qs = qs.filter(risk__assessment_id=assessment_id)
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
 # ── Threat ──────────────────────────────────────────────────
 
+THREAT_FILTER_GROUPS = [
+    {"param": "type", "field": "type", "label": _l("Type"), "options": ThreatType.choices},
+    {"param": "status", "field": "status", "label": _l("Status"), "options": ThreatStatus.choices},
+]
+THREAT_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+THREAT_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "type", "label": _l("Type")},
+    {"key": "scopes", "label": _l("Scopes")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
 class ThreatListView(
-    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin,
+    AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin,
+    SortableListMixin, ListView
 ):
     model = Threat
     template_name = "risks/threat_list.html"
     status_field = "status"
     context_object_name = "threats"
     permission_required = "risks.threat.read"
+    filter_groups = THREAT_FILTER_GROUPS
+    text_filters = THREAT_TEXT_FILTERS
+    columns = THREAT_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -1413,13 +1701,8 @@ class ThreatListView(
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes")
-        threat_type = self.request.GET.get("type")
-        if threat_type:
-            qs = qs.filter(type=threat_type)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1481,16 +1764,61 @@ class ThreatDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy("risks:threat-list")
 
 
+class ThreatTableBodyView(
+    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    ScopeFilterMixin, SortableListMixin, ListView
+):
+    model = Threat
+    permission_required = "risks.threat.read"
+    template_name = "risks/threat_table_body.html"
+    context_object_name = "threats"
+    paginate_by = None
+    sortable_fields = ThreatListView.sortable_fields
+    default_sort = ThreatListView.default_sort
+    search_fields = ["reference", "name"]
+    filter_groups = THREAT_FILTER_GROUPS
+    text_filters = THREAT_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().prefetch_related("scopes")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
 # ── Vulnerability ───────────────────────────────────────────
 
+VULNERABILITY_FILTER_GROUPS = [
+    {"param": "category", "field": "category", "label": _l("Category"), "options": VulnerabilityCategory.choices},
+    {"param": "severity", "field": "severity", "label": _l("Severity"), "options": Severity.choices},
+    {"param": "status", "field": "status", "label": _l("Status"), "options": VulnerabilityStatus.choices},
+]
+VULNERABILITY_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+VULNERABILITY_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "severity", "label": _l("Severity")},
+    {"key": "scopes", "label": _l("Scopes")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
 class VulnerabilityListView(
-    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin,
+    AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin,
+    SortableListMixin, ListView
 ):
     model = Vulnerability
     template_name = "risks/vulnerability_list.html"
     status_field = "status"
     context_object_name = "vulnerabilities"
     permission_required = "risks.vulnerability.read"
+    filter_groups = VULNERABILITY_FILTER_GROUPS
+    text_filters = VULNERABILITY_TEXT_FILTERS
+    columns = VULNERABILITY_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -1504,13 +1832,8 @@ class VulnerabilityListView(
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes")
-        category = self.request.GET.get("category")
-        if category:
-            qs = qs.filter(category=category)
-        status_filter = self.request.GET.get("status")
-        if status_filter:
-            qs = qs.filter(status=status_filter)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1570,6 +1893,27 @@ class VulnerabilityDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delet
     success_url = reverse_lazy("risks:vulnerability-list")
 
 
+class VulnerabilityTableBodyView(
+    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    ScopeFilterMixin, SortableListMixin, ListView
+):
+    model = Vulnerability
+    permission_required = "risks.vulnerability.read"
+    template_name = "risks/vulnerability_table_body.html"
+    context_object_name = "vulnerabilities"
+    paginate_by = None
+    sortable_fields = VulnerabilityListView.sortable_fields
+    default_sort = VulnerabilityListView.default_sort
+    search_fields = ["reference", "name"]
+    filter_groups = VULNERABILITY_FILTER_GROUPS
+    text_filters = VULNERABILITY_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().prefetch_related("scopes")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
 # ── Scale choices API (AJAX) ────────────────────────────────
 
 @login_required
@@ -1597,14 +1941,32 @@ def scale_choices_api(request):
 
 # ── ISO 27005 Risk ──────────────────────────────────────────
 
+ISO27005_FILTER_GROUPS = []
+ISO27005_TEXT_FILTERS = [
+    {"param": "description", "field": "description", "label": _l("Description")},
+]
+ISO27005_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "scenario", "label": _l("Scenario"), "always": True},
+    {"key": "risk_level", "label": _l("Risk level")},
+    {"key": "consolidated", "label": _l("Consolidated risk")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
 class ISO27005RiskListView(
-    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, ScopeFilterMixin, SortableListMixin, ListView
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin,
+    AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin,
+    SortableListMixin, ListView
 ):
     scope_parent_lookup = "assessment__scopes"
     model = ISO27005Risk
     template_name = "risks/iso27005_risk_list.html"
     context_object_name = "analyses"
     permission_required = "risks.iso27005.read"
+    filter_groups = ISO27005_FILTER_GROUPS
+    text_filters = ISO27005_TEXT_FILTERS
+    columns = ISO27005_COLUMNS
     paginate_by = 25
     sortable_fields = {
         "reference": "reference",
@@ -1622,7 +1984,8 @@ class ISO27005RiskListView(
         assessment_id = self.request.GET.get("assessment")
         if assessment_id:
             qs = qs.filter(assessment_id=assessment_id)
-        return qs
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class ISO27005RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -1684,6 +2047,31 @@ class ISO27005RiskDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
     template_name = "risks/confirm_delete.html"
     permission_required = "risks.iso27005.delete"
     success_url = reverse_lazy("risks:iso27005-list")
+
+
+class ISO27005RiskTableBodyView(
+    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    ScopeFilterMixin, SortableListMixin, ListView
+):
+    scope_parent_lookup = "assessment__scopes"
+    model = ISO27005Risk
+    permission_required = "risks.iso27005.read"
+    template_name = "risks/iso27005_risk_table_body.html"
+    context_object_name = "analyses"
+    paginate_by = None
+    sortable_fields = ISO27005RiskListView.sortable_fields
+    default_sort = ISO27005RiskListView.default_sort
+    search_fields = ["reference", "threat__name", "vulnerability__name"]
+    filter_groups = ISO27005_FILTER_GROUPS
+    text_filters = ISO27005_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("assessment", "threat", "vulnerability")
+        assessment_id = self.request.GET.get("assessment")
+        if assessment_id:
+            qs = qs.filter(assessment_id=assessment_id)
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class ISO27005ConsolidateView(LoginRequiredMixin, PermissionRequiredMixin, View):

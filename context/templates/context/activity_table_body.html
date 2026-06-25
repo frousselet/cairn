@@ -1,20 +1,20 @@
 {% load i18n ui workflow_tags accounts_tags %}
 {% for activity in activities %}
 <tr>
-  <td><a href="{% url 'context:activity-detail' activity.pk %}" class="ref">{{ activity.reference }}</a></td>
-  <td>
+  <td data-col="reference"><a href="{% url 'context:activity-detail' activity.pk %}" class="ref">{{ activity.reference }}</a></td>
+  <td data-col="name">
     <span class="cell-stack">
       <a href="{% url 'context:activity-detail' activity.pk %}" class="cell-link">{{ activity.name }}</a>
       {% if activity.parent_activity %}<span class="cell-sub"><i class="bi bi-arrow-return-right me-1" aria-hidden="true"></i>{{ activity.parent_activity.name }}</span>{% endif %}
     </span>
   </td>
-  <td>
+  <td data-col="criticality">
     <span class="cell-stack">
       <span><span class="badge text-bg-{% if activity.criticality == 'critical' %}danger{% elif activity.criticality == 'high' %}warning{% elif activity.criticality == 'medium' %}info{% else %}secondary{% endif %}">{{ activity.get_criticality_display }}</span></span>
       <span class="cell-sub">{{ activity.get_type_display }}</span>
     </span>
   </td>
-  <td>
+  <td data-col="owner">
     {% if activity.owner %}
     <span class="cell-people cell-people--sm">
       {% if activity.owner.avatar %}
@@ -29,9 +29,9 @@
     </span>
     {% else %}<span class="cell-empty">-</span>{% endif %}
   </td>
-  <td>{% workflow_badge activity %}</td>
-  <td>{% include "includes/tags_badge.html" with tags=activity.tags.all %}</td>
-  <td class="text-end">
+  <td data-col="status">{% workflow_badge activity %}</td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=activity.tags.all %}</td>
+  <td class="text-end" data-col="actions">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
             hx-get="{% url 'context:activity-update' activity.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
       <i class="bi bi-pencil"></i>

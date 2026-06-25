@@ -6,7 +6,6 @@
 {% load help_tags %}
 
 {% block content %}
-{% has_perm "risks.acceptance.delete" as can_delete_acceptances %}
 {% page_header _("Risk acceptances") nav="risks:acceptance-list" accent="risks" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'risks:acceptance-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New acceptance' %}</button>
 {% endpage_header %}
@@ -14,87 +13,39 @@
 
 <div class="list-layout">
   <div class="list-main">
-<div class="mb-3 d-flex gap-2">
-  <a href="{% url 'risks:acceptance-list' %}" class="filter-chip {% if not request.GET.status %}active{% endif %}">{% trans "All" %}</a>
-  <a href="?status=active" class="filter-chip {% if request.GET.status == 'active' %}active{% endif %}">{% trans "Active" %}</a>
-  <a href="?status=expired" class="filter-chip {% if request.GET.status == 'expired' %}active{% endif %}">{% trans "Expired" %}</a>
-</div>
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "risk" "Risk" col="risk" %}
+              <th data-col="accepted_by">{% trans "Accepted by" %}</th>
+              <th data-col="level">{% trans "Level at acceptance" %}</th>
+              {% sortable_th "valid_until" "Valid until" col="valid_until" %}
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'risks:acceptance-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "risks/acceptance_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-{% include "includes/table_search.html" %}
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "risk" "Risk" %}
-          <th>{% trans "Accepted by" %}</th>
-          <th>{% trans "Level at acceptance" %}</th>
-          {% sortable_th "valid_until" "Valid until" %}
-          {% sortable_th "workflow_state" "Status" %}
-          <th>{% trans "Tags" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for acc in acceptances %}
-        <tr>
-          <td><a href="{% url 'risks:acceptance-detail' acc.pk %}" class="ref">{{ acc.reference }}</a></td>
-          <td>
-            {% if acc.risk %}
-            <span class="cell-stack">
-              <a href="{% url 'risks:risk-detail' acc.risk.pk %}" class="cell-link" title="{{ acc.risk }}">{{ acc.risk }}</a>
-              {% if acc.justification %}<span class="cell-sub" title="{{ acc.justification }}">{{ acc.justification }}</span>{% endif %}
-            </span>
-            {% else %}<span class="cell-empty">-</span>{% endif %}
-          </td>
-          <td>
-            {% if acc.accepted_by %}
-            <span class="cell-people cell-people--sm">
-              {% if acc.accepted_by.avatar %}
-              <img src="{{ acc.accepted_by.avatar_32|default:acc.accepted_by.avatar }}" alt="" class="cell-avatar">
-              {% else %}
-              <span class="cell-avatar-fallback">{{ acc.accepted_by.display_name|initials }}</span>
-              {% endif %}
-              <span class="cell-stack">
-                <span style="font-weight:600">{{ acc.accepted_by.display_name }}</span>
-                {% if acc.accepted_by.job_title %}<span class="cell-sub">{{ acc.accepted_by.job_title }}</span>{% endif %}
-              </span>
-            </span>
-            {% else %}<span class="cell-empty">-</span>{% endif %}
-          </td>
-          <td>{{ acc.risk_level_at_acceptance|default:"-" }}</td>
-          <td>
-            {% if acc.valid_until %}
-            <span class="cell-stack">
-              <span>{{ acc.valid_until }}</span>
-              {% if acc.accepted_at %}<span class="cell-sub" title="{% trans 'Acceptance date' %}"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{{ acc.accepted_at|date }}</span>{% endif %}
-            </span>
-            {% elif acc.accepted_at %}
-            <span class="cell-sub" title="{% trans 'Acceptance date' %}"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{{ acc.accepted_at|date }}</span>
-            {% else %}<span class="cell-empty">-</span>{% endif %}
-          </td>
-          <td>{% workflow_badge acc %}</td>
-          <td>{% include "includes/tags_badge.html" with tags=acc.tags.all %}</td>
-          <td class="text-end">
-            <a hx-get="{% url 'risks:acceptance-update' acc.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-            {% if can_delete_acceptances and acc.is_deletable %}
-            <a href="{% url 'risks:acceptance-delete' acc.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No risk acceptance recorded yet.") message=_("Acceptances formalise the decision to live with a residual risk. Each one is timed, justified and reviewed before expiry.") colspan=8 %}
-        {% endfor %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

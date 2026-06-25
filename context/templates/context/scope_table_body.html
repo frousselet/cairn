@@ -1,18 +1,18 @@
 {% load i18n ui workflow_tags accounts_tags %}
 {% for scope in scopes %}
 <tr>
-  <td><a href="{% url 'context:scope-detail' scope.pk %}" class="ref">{{ scope.reference }}</a></td>
-  <td>
+  <td data-col="reference"><a href="{% url 'context:scope-detail' scope.pk %}" class="ref">{{ scope.reference }}</a></td>
+  <td data-col="name">
     <div style="padding-left: {{ scope.tree_indent }}px;">
       {% if scope.tree_level > 0 %}<span class="text-muted me-1">└</span>{% endif %}
       {% if scope.icon %}<i class="bi {{ scope.icon }} me-1" aria-hidden="true" style="color:var(--accent)"></i>{% endif %}
       <a href="{% url 'context:scope-detail' scope.pk %}" class="cell-link">{{ scope.name }}</a>
     </div>
   </td>
-  <td>
+  <td data-col="status">
     {% workflow_badge scope %}
   </td>
-  <td>
+  <td data-col="effective_date">
     {% if scope.effective_date %}
     <span class="cell-stack">
       <span>{{ scope.effective_date }}</span>
@@ -24,9 +24,9 @@
     <span class="cell-empty">-</span>
     {% endif %}
   </td>
-  <td>{% user_avatars scope.managers.all %}</td>
-  <td>{% include "includes/tags_badge.html" with tags=scope.tags.all %}</td>
-  <td class="text-end">
+  <td data-col="responsible">{% user_avatars scope.managers.all %}</td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=scope.tags.all %}</td>
+  <td class="text-end" data-col="actions">
     <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
             hx-get="{% url 'context:scope-update' scope.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
       <i class="bi bi-pencil"></i>

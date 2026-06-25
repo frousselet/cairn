@@ -17,6 +17,7 @@ urlpatterns = [
     path("", views.RiskDashboardView.as_view(), name="dashboard"),
     # Assessments
     path("assessments/", views.RiskAssessmentListView.as_view(), name="assessment-list"),
+    path("assessments/table-body/", views.RiskAssessmentTableBodyView.as_view(), name="assessment-table-body"),
     path("assessments/create/", views.RiskAssessmentCreateView.as_view(), name="assessment-create"),
     path("assessments/<uuid:pk>/", views.RiskAssessmentDetailView.as_view(), name="assessment-detail"),
     path("assessments/<uuid:pk>/edit/", views.RiskAssessmentUpdateView.as_view(), name="assessment-update"),
@@ -25,6 +26,7 @@ urlpatterns = [
     path("assessments/<uuid:pk>/export/docx/", views.ISO27005ReportExportView.as_view(), name="assessment-export-docx"),
     # Criteria
     path("criteria/", views.RiskCriteriaListView.as_view(), name="criteria-list"),
+    path("criteria/table-body/", views.RiskCriteriaTableBodyView.as_view(), name="criteria-table-body"),
     path("criteria/create/", views.RiskCriteriaCreateView.as_view(), name="criteria-create"),
     path("criteria/<uuid:pk>/", views.RiskCriteriaDetailView.as_view(), name="criteria-detail"),
     path("criteria/<uuid:pk>/edit/", views.RiskCriteriaUpdateView.as_view(), name="criteria-update"),
@@ -33,6 +35,7 @@ urlpatterns = [
     path("api/scale-choices/", views.scale_choices_api, name="api-scale-choices"),
     # Risk register
     path("register/", views.RiskListView.as_view(), name="risk-list"),
+    path("register/table-body/", views.RiskTableBodyView.as_view(), name="risk-table-body"),
     path("register/export/xlsx/", views.RiskRegisterExportView.as_view(), name="risk-register-export-xlsx"),
     path("register/bulk/", views.RiskBulkActionView.as_view(), name="risk-bulk-action"),
     path("register/create/", views.RiskCreateView.as_view(), name="risk-create"),
@@ -42,6 +45,7 @@ urlpatterns = [
     path("register/<uuid:pk>/approve/", views.ApproveView.as_view(model=Risk, permission_feature="risk", success_url=reverse_lazy("risks:risk-list")), name="risk-approve"),
     # Treatment plans
     path("treatments/", views.TreatmentPlanListView.as_view(), name="treatment-plan-list"),
+    path("treatments/table-body/", views.TreatmentPlanTableBodyView.as_view(), name="treatment-plan-table-body"),
     path("treatments/create/", views.TreatmentPlanCreateView.as_view(), name="treatment-plan-create"),
     path("treatments/<uuid:pk>/", views.TreatmentPlanDetailView.as_view(), name="treatment-plan-detail"),
     path("treatments/<uuid:pk>/edit/", views.TreatmentPlanUpdateView.as_view(), name="treatment-plan-update"),
@@ -53,6 +57,7 @@ urlpatterns = [
     path("treatment-actions/<uuid:pk>/delete/", views.TreatmentActionDeleteView.as_view(), name="treatment-action-delete"),
     # Acceptances
     path("acceptances/", views.RiskAcceptanceListView.as_view(), name="acceptance-list"),
+    path("acceptances/table-body/", views.RiskAcceptanceTableBodyView.as_view(), name="acceptance-table-body"),
     path("acceptances/create/", views.RiskAcceptanceCreateView.as_view(), name="acceptance-create"),
     path("acceptances/<uuid:pk>/", views.RiskAcceptanceDetailView.as_view(), name="acceptance-detail"),
     path("acceptances/<uuid:pk>/edit/", views.RiskAcceptanceUpdateView.as_view(), name="acceptance-update"),
@@ -60,6 +65,7 @@ urlpatterns = [
     path("acceptances/<uuid:pk>/approve/", views.ApproveView.as_view(model=RiskAcceptance, permission_feature="acceptance", success_url=reverse_lazy("risks:acceptance-list")), name="acceptance-approve"),
     # Threats
     path("threats/", views.ThreatListView.as_view(), name="threat-list"),
+    path("threats/table-body/", views.ThreatTableBodyView.as_view(), name="threat-table-body"),
     path("threats/create/", views.ThreatCreateView.as_view(), name="threat-create"),
     path("threats/<uuid:pk>/", views.ThreatDetailView.as_view(), name="threat-detail"),
     path("threats/<uuid:pk>/edit/", views.ThreatUpdateView.as_view(), name="threat-update"),
@@ -67,6 +73,7 @@ urlpatterns = [
     path("threats/<uuid:pk>/approve/", views.ApproveView.as_view(model=Threat, permission_feature="threat", success_url=reverse_lazy("risks:threat-list")), name="threat-approve"),
     # Vulnerabilities
     path("vulnerabilities/", views.VulnerabilityListView.as_view(), name="vulnerability-list"),
+    path("vulnerabilities/table-body/", views.VulnerabilityTableBodyView.as_view(), name="vulnerability-table-body"),
     path("vulnerabilities/create/", views.VulnerabilityCreateView.as_view(), name="vulnerability-create"),
     path("vulnerabilities/<uuid:pk>/", views.VulnerabilityDetailView.as_view(), name="vulnerability-detail"),
     path("vulnerabilities/<uuid:pk>/edit/", views.VulnerabilityUpdateView.as_view(), name="vulnerability-update"),
@@ -74,6 +81,7 @@ urlpatterns = [
     path("vulnerabilities/<uuid:pk>/approve/", views.ApproveView.as_view(model=Vulnerability, permission_feature="vulnerability", success_url=reverse_lazy("risks:vulnerability-list")), name="vulnerability-approve"),
     # ISO 27005 analyses
     path("iso27005/", views.ISO27005RiskListView.as_view(), name="iso27005-list"),
+    path("iso27005/table-body/", views.ISO27005RiskTableBodyView.as_view(), name="iso27005-table-body"),
     path("iso27005/create/", views.ISO27005RiskCreateView.as_view(), name="iso27005-create"),
     path("iso27005/<uuid:pk>/", views.ISO27005RiskDetailView.as_view(), name="iso27005-detail"),
     path("iso27005/<uuid:pk>/edit/", views.ISO27005RiskUpdateView.as_view(), name="iso27005-update"),

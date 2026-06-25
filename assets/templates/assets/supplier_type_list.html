@@ -11,52 +11,35 @@
   <a href="{% url 'assets:supplier-type-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New supplier type' %}</a>
 {% endpage_header %}
 {% help_modal "assets.supplier_type_list" %}
+
 <div class="list-layout">
   <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Name" col="name" %}
+              <th data-col="requirements">{% trans "Requirements" %}</th>
+              <th data-col="suppliers">{% trans "Suppliers" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body">
+            {% include "assets/supplier_type_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-{% include "includes/table_search.html" %}
-
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "name" "Name" %}
-          <th>{% trans "Requirements" %}</th>
-          <th>{% trans "Suppliers" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for st in supplier_types %}
-        <tr>
-          <td><a href="{% url 'assets:supplier-type-detail' st.pk %}" class="ref">{{ st.reference }}</a></td>
-          <td>
-            <span class="cell-stack">
-              <a href="{% url 'assets:supplier-type-detail' st.pk %}" class="cell-link">{{ st.name }}</a>
-              {% if st.description %}<span class="cell-sub" title="{{ st.description }}">{{ st.description }}</span>{% endif %}
-            </span>
-          </td>
-          <td><span class="badge text-bg-secondary">{{ st.req_count }}</span></td>
-          <td>{% supplier_avatars st.suppliers.all %}</td>
-          <td class="text-end">
-            <a href="{% url 'assets:supplier-type-update' st.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'assets:supplier-type-delete' st.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No supplier type defined yet.") message=_("Supplier types group your vendors by category (cloud, software, legal). Each type carries its own baseline requirements.") colspan=5 %}
-        {% endfor %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

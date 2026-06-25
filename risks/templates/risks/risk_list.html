@@ -21,169 +21,38 @@
 
 <div class="list-layout">
   <div class="list-main">
-<div class="mb-3 d-flex gap-2 flex-wrap">
-  <a href="{% url 'risks:risk-list' %}" class="filter-chip {% if not request.GET.status and not request.GET.priority and not has_advanced_filter %}active{% endif %}">{% trans "All" %}</a>
-  <a href="?status=identified" class="filter-chip {% if request.GET.status == 'identified' %}active{% endif %}">{% trans "Identified" %}</a>
-  <a href="?status=analyzed" class="filter-chip {% if request.GET.status == 'analyzed' %}active{% endif %}">{% trans "Analyzed" %}</a>
-  <a href="?status=evaluated" class="filter-chip {% if request.GET.status == 'evaluated' %}active{% endif %}">{% trans "Evaluated" %}</a>
-  <a href="?priority=critical" class="filter-chip {% if request.GET.priority == 'critical' %}active-danger{% endif %}">{% trans "Critical" %}</a>
-  <a href="?priority=high" class="filter-chip {% if request.GET.priority == 'high' %}active-warning{% endif %}">{% trans "High" %}</a>
-</div>
-
-<div class="mb-3 d-flex gap-2 flex-wrap">
-  <span class="small text-muted me-1 align-self-center">{% trans "Decision:" %}</span>
-  {% for key, label in treatment_decision_choices %}
-  <a href="?treatment_decision={{ key }}" class="filter-chip {% if request.GET.treatment_decision == key %}active{% endif %}">{{ label }}</a>
-  {% endfor %}
-</div>
-
-<details class="mb-3" {% if has_advanced_filter %}open{% endif %}>
-  <summary class="small text-muted" style="cursor:pointer;user-select:none">
-    <i class="bi bi-funnel me-1"></i>{% trans "Advanced filters" %}
-    {% if has_advanced_filter %}<span class="badge bg-secondary ms-1">{% trans "Active" %}</span>{% endif %}
-  </summary>
-  <form method="get" class="mt-2">
-    <div class="row g-2 align-items-end">
-      <div class="col-md-2">
-        <label class="form-label small text-muted mb-1">{% trans "Date from" %}</label>
-        <input type="date" name="date_after" value="{{ request.GET.date_after|default:'' }}" class="form-control form-control-sm">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label small text-muted mb-1">{% trans "Date to" %}</label>
-        <input type="date" name="date_before" value="{{ request.GET.date_before|default:'' }}" class="form-control form-control-sm">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label small text-muted mb-1">{% trans "Essential asset" %}</label>
-        <select name="essential_asset" class="form-select form-select-sm">
-          <option value="">—</option>
-          {% for a in essential_asset_choices %}
-          <option value="{{ a.pk }}" {% if request.GET.essential_asset == a.pk|stringformat:"s" %}selected{% endif %}>{{ a.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label small text-muted mb-1">{% trans "Support asset" %}</label>
-        <select name="support_asset" class="form-select form-select-sm">
-          <option value="">—</option>
-          {% for a in support_asset_choices %}
-          <option value="{{ a.pk }}" {% if request.GET.support_asset == a.pk|stringformat:"s" %}selected{% endif %}>{{ a.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label small text-muted mb-1">{% trans "Threat" %}</label>
-        <select name="threat" class="form-select form-select-sm">
-          <option value="">—</option>
-          {% for t in threat_choices %}
-          <option value="{{ t.pk }}" {% if request.GET.threat == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label small text-muted mb-1">{% trans "Vulnerability" %}</label>
-        <select name="vulnerability" class="form-select form-select-sm">
-          <option value="">—</option>
-          {% for v in vulnerability_choices %}
-          <option value="{{ v.pk }}" {% if request.GET.vulnerability == v.pk|stringformat:"s" %}selected{% endif %}>{{ v.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label small text-muted mb-1">{% trans "Linked requirement" %}</label>
-        <select name="linked_requirement" class="form-select form-select-sm">
-          <option value="">—</option>
-          {% for r in requirement_choices %}
-          <option value="{{ r.pk }}" {% if request.GET.linked_requirement == r.pk|stringformat:"s" %}selected{% endif %}>{{ r.requirement_number|default:r.reference }} - {{ r.name|truncatechars:40 }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      {# preserve existing chip-driven filters when submitting advanced ones #}
-      {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
-      {% if request.GET.priority %}<input type="hidden" name="priority" value="{{ request.GET.priority }}">{% endif %}
-      {% if request.GET.treatment_decision %}<input type="hidden" name="treatment_decision" value="{{ request.GET.treatment_decision }}">{% endif %}
-      <div class="col-md-9 d-flex gap-2 mt-2">
-        <button type="submit" class="btn btn-sm btn-primary">{% trans "Apply" %}</button>
-        <a href="{% url 'risks:risk-list' %}" class="btn btn-sm btn-outline-secondary">{% trans "Clear" %}</a>
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Name" col="name" %}
+              {% sortable_th "priority" "Priority" col="priority" %}
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th data-col="owner">{% trans "Owner" %}</th>
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'risks:risk-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "risks/risk_table_body.html" %}
+          </tbody>
+        </table>
       </div>
     </div>
-  </form>
-</details>
 
-{% include "includes/table_search.html" %}
-
-{% has_perm "risks.risk.delete" as can_delete_risks %}
-
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "reference" "Ref." %}
-          {% sortable_th "name" "Name" %}
-          {% sortable_th "priority" "Priority" %}
-          {% sortable_th "workflow_state" "Status" %}
-          <th>{% trans "Owner" %}</th>
-          <th>{% trans "Tags" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in risks %}
-        <tr>
-          <td><a href="{% url 'risks:risk-detail' r.pk %}" class="ref">{{ r.reference }}</a></td>
-          <td>
-            <span class="cell-stack">
-              <a href="{% url 'risks:risk-detail' r.pk %}" class="cell-link">{{ r.name }}</a>
-              <span class="cell-sub">{{ r.assessment.reference }} • {{ r.get_risk_source_display }}</span>
-            </span>
-          </td>
-          <td>
-            <span class="cell-stack">
-              <span>{% badge r.priority type="severity" label=r.get_priority_display %}</span>
-              {% if r.current_risk_level is not None %}<span class="cell-sub" title="{% trans 'Current level' %}"><i class="bi bi-speedometer2 me-1" aria-hidden="true"></i>{{ r.current_risk_level }}</span>{% endif %}
-            </span>
-          </td>
-          <td>
-            <span class="cell-stack">
-              <span>{% workflow_badge r %}</span>
-              {% if r.treatment_decision %}<span class="cell-sub" title="{% trans 'Treatment' %}"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>{{ r.get_treatment_decision_display }}</span>{% endif %}
-            </span>
-          </td>
-          <td>
-            {% if r.risk_owner %}
-            <span class="cell-people cell-people--sm">
-              {% if r.risk_owner.avatar %}
-              <img src="{{ r.risk_owner.avatar_32|default:r.risk_owner.avatar }}" alt="" class="cell-avatar">
-              {% else %}
-              <span class="cell-avatar-fallback">{{ r.risk_owner.display_name|initials }}</span>
-              {% endif %}
-              <span class="cell-stack">
-                <span style="font-weight:600">{{ r.risk_owner.display_name }}</span>
-                {% if r.risk_owner.job_title %}<span class="cell-sub">{{ r.risk_owner.job_title }}</span>{% endif %}
-              </span>
-            </span>
-            {% else %}<span class="cell-empty">-</span>{% endif %}
-          </td>
-          <td>{% include "includes/tags_badge.html" with tags=r.tags.all %}</td>
-          <td class="text-end">
-            <a hx-get="{% url 'risks:risk-update' r.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ r.reference }}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
-            {% if can_delete_risks and r.is_deletable %}
-            <a href="{% url 'risks:risk-delete' r.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ r.reference }}"><i class="bi bi-trash" aria-hidden="true"></i></a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No risks recorded yet.") message=_("Risks are identified through methodology-driven assessments. Open an assessment and use its workflow to create them.") colspan=7 %}
-        {% endfor %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

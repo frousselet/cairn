@@ -1,0 +1,46 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% for a in assessments %}
+<tr>
+  <td data-col="reference"><a href="{% url 'compliance:assessment-detail' a.pk %}" class="ref">{{ a.reference }}</a></td>
+  <td data-col="name">
+    <span class="cell-stack">
+      <a href="{% url 'compliance:assessment-detail' a.pk %}" class="cell-link" title="{{ a.name }}">{{ a.name }}</a>
+      {% with fw_list=a.frameworks.all %}{% if fw_list %}<span class="cell-sub">{% for fw in fw_list %}{{ fw.short_name|default:fw.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}{% endwith %}
+    </span>
+  </td>
+  <td data-col="dates">
+    {% if a.assessment_start_date %}
+    <span class="cell-stack">
+      <span>{{ a.assessment_start_date }}</span>
+      {% if a.business_days_duration %}<span class="cell-sub" title="{% trans 'Working days (excluding weekends)' %}"><i class="bi bi-calendar-range me-1" aria-hidden="true"></i>{% blocktrans count n=a.business_days_duration %}{{ n }} business day{% plural %}{{ n }} business days{% endblocktrans %}</span>{% endif %}
+    </span>
+    {% elif a.assessment_end_date %}
+    <span>{{ a.assessment_end_date }}</span>
+    {% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td data-col="assessor">
+    {% if a.assessor %}
+    <span class="cell-people cell-people--sm">
+      {% if a.assessor.avatar %}
+      <img src="{{ a.assessor.avatar_32|default:a.assessor.avatar }}" alt="" class="cell-avatar">
+      {% else %}
+      <span class="cell-avatar-fallback">{{ a.assessor.display_name|initials }}</span>
+      {% endif %}
+      <span class="cell-stack">
+        <span style="font-weight:600">{{ a.assessor.display_name }}</span>
+        {% if a.assessor.job_title %}<span class="cell-sub">{{ a.assessor.job_title }}</span>{% endif %}
+      </span>
+    </span>
+    {% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td data-col="coverage">{% progress_bar a.coverage_pct variant="info" count=a.covered_count total=a.applicable_count %}</td>
+  <td data-col="compliance">{% progress_bar a.compliance_pct scheme="score" %}</td>
+  <td data-col="status">{% workflow_badge a %}</td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=a.tags.all %}</td>
+  <td class="text-end" data-col="actions">
+    <a hx-get="{% url 'compliance:assessment-update' a.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No assessment yet.") message=_("Assessments evaluate your conformance to a framework at a point in time. Open one to score every requirement and gather findings.") colspan=9 %}
+{% endfor %}

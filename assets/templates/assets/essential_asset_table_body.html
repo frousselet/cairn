@@ -1,0 +1,39 @@
+{% load dic_tags i18n ui workflow_tags accounts_tags %}
+{% for asset in assets %}
+<tr>
+  <td data-col="reference"><a href="{% url 'assets:essential-asset-detail' asset.pk %}" class="ref">{{ asset.reference }}</a></td>
+  <td data-col="name">
+    <span class="cell-stack">
+      <a href="{% url 'assets:essential-asset-detail' asset.pk %}" class="cell-link">{{ asset.name }}</a>
+      <span class="cell-sub">{{ asset.get_category_display }} • {{ asset.get_type_display }}</span>
+    </span>
+  </td>
+  <td data-col="owner">
+    {% if asset.owner %}
+    <span class="cell-people cell-people--sm">
+      {% if asset.owner.avatar %}
+      <img src="{{ asset.owner.avatar_32|default:asset.owner.avatar }}" alt="" class="cell-avatar">
+      {% else %}
+      <span class="cell-avatar-fallback">{{ asset.owner.display_name|initials }}</span>
+      {% endif %}
+      <span class="cell-stack">
+        <span style="font-weight:600">{{ asset.owner.display_name }}</span>
+        {% if asset.owner.job_title %}<span class="cell-sub">{{ asset.owner.job_title }}</span>{% endif %}
+      </span>
+    </span>
+    {% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td data-col="cia">
+    <span class="d-inline-flex gap-1 align-items-center" style="white-space:nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
+      {{ asset.confidentiality_level|dic_badge }}{{ asset.integrity_level|dic_badge }}{{ asset.availability_level|dic_badge }}
+    </span>
+  </td>
+  <td data-col="status">{% workflow_badge asset %}</td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=asset.tags.all %}</td>
+  <td class="text-end" data-col="actions">
+    <a hx-get="{% url 'assets:essential-asset-update' asset.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No essential asset registered yet.") message=_("Essential assets are the information, processes and services whose loss would hurt the business. They sit at the top of every dependency chain.") colspan=7 %}
+{% endfor %}
