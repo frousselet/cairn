@@ -97,8 +97,17 @@ from trust_center.models import (
     TrustCenterSubprocessor,
 )
 
+import json
+import random as _random
+
 TBL = {}
 exec(open("scripts/seed_demo_tables.py").read(), TBL)
+
+# Bulk demo content (50+ items per category) generated for Voltara Energy and
+# stored as data so this script stays readable. Consumed by the bulk-volume
+# section, which wires the foreign keys to the curated objects.
+BULK = json.load(open("scripts/seed_bulk_data.json"))
+RNG = _random.Random(20260625)  # deterministic sampling for reproducible seeds
 
 NOW = timezone.now()
 TODAY = NOW.date()
@@ -1919,6 +1928,387 @@ with transaction.atomic():
         {"key": "ask_cairn", "id": "ask_cairn", "size": "2x2", "zone": "rail_top", "visible": True, "params": {}},
     ]
     elise.save()
+
+    # ============================================================ bulk volume
+    # Generate 50+ items per category (where it makes sense) on top of the
+    # curated narrative, wiring foreign keys to the objects created above so the
+    # whole app is populated with realistic, varied data.
+    print("Bulk volume (50+ per category)...")
+    import unicodedata
+
+    def _email(first, last, i):
+        base = f"{first}.{last}".lower().replace(" ", "").replace("'", "")
+        base = unicodedata.normalize("NFKD", base).encode("ascii", "ignore").decode()
+        base = "".join(ch for ch in base if ch.isalnum() or ch == ".")
+        return f"{base or 'user'}.{i}@voltara.example"
+
+    scope_pool = [scope_group, scope_it, scope_ot, scope_cust, scope_rnd]
+
+    # --- users -----------------------------------------------------------
+    grp_contrib = Group.objects.get(name="Contributeur")
+    grp_aud = Group.objects.get(name="Auditeur")
+    grp_read = Group.objects.get(name="Lecteur") if Group.objects.filter(name="Lecteur").exists() else grp_contrib
+    bulk_users = []
+    for i, u in enumerate(BULK["users"]):
+        usr = mk_user(_email(u["first"], u["last"], i), u["first"], u["last"],
+                      u["job_title"], u["department"])
+        bulk_users.append(usr)
+        dept = (u.get("department") or "").lower()
+        if "audit" in dept:
+            grp_aud.users.add(usr)
+        elif any(k in dept for k in ("security", "legal", "it", "ot", "compliance", "privacy")):
+            grp_contrib.users.add(usr)
+        else:
+            grp_read.users.add(usr)
+    all_users = [elise, david, marc, amelia, thomas, ines, julien, sofia] + bulk_users
+
+    def pick_user():
+        return RNG.choice(all_users)
+
+    # --- roles -----------------------------------------------------------
+    seen_roles = set(Role.objects.values_list("name", flat=True))
+    for r in BULK["roles"]:
+        if r["name"] in seen_roles:
+            continue
+        seen_roles.add(r["name"])
+        role = Role.objects.create(
+            name=r["name"],
+            type="governance" if r.get("governance") else RNG.choice(["operational", "support", "control"]),
+            status="active", **approved(elise),
+        )
+        role.scopes.set([RNG.choice(scope_pool)])
+        role.assigned_users.set(RNG.sample(all_users, k=RNG.randint(1, 3)))
+
+    # --- issues ----------------------------------------------------------
+    ISSUE_INT_CATS = ["strategic", "organizational", "human_resources", "technical", "financial", "cultural"]
+    ISSUE_EXT_CATS = ["political", "economic", "social", "technological", "legal", "environmental", "competitive", "regulatory"]
+    IMPACTS = ["low", "medium", "high", "critical"]
+    for it in BULK["issues"]:
+        internal = it.get("internal")
+        iss = Issue.objects.create(
+            name=it["name"], type="internal" if internal else "external",
+            category=RNG.choice(ISSUE_INT_CATS if internal else ISSUE_EXT_CATS), description=it.get("description", ""),
+            impact_level=RNG.choice(IMPACTS), trend=RNG.choice(["improving", "stable", "degrading"]),
+            status=RNG.choice(["identified", "active", "monitored", "closed"]), **approved(elise),
+        )
+        iss.scopes.set([RNG.choice(scope_pool)])
+
+    # --- stakeholders ----------------------------------------------------
+    SH_INT = ["executive_management", "employees", "auditors", "shareholders"]
+    SH_EXT = ["customers", "suppliers", "partners", "regulators", "insurers", "public", "competitors", "unions", "other"]
+    INF = ["low", "medium", "high"]
+    for s in BULK["stakeholders"]:
+        internal = s.get("internal")
+        sh = Stakeholder.objects.create(
+            name=s["name"], type="internal" if internal else "external",
+            category=RNG.choice(SH_INT if internal else SH_EXT), description=s.get("description", ""),
+            influence_level=RNG.choice(INF), interest_level=RNG.choice(INF),
+            status="active", **approved(elise),
+        )
+        sh.scopes.set([RNG.choice(scope_pool)])
+
+    # --- objectives ------------------------------------------------------
+    OBJ_CATS = ["confidentiality", "integrity", "availability", "compliance", "operational", "strategic"]
+    OBJ_TYPES = ["security", "compliance", "business", "other"]
+    OBJ_FREQ = ["monthly", "quarterly", "semi_annual", "annual"]
+    OBJ_STATUS = ["draft", "active", "active", "achieved", "not_achieved"]
+    for o in BULK["objectives"]:
+        o_status = RNG.choice(OBJ_STATUS)
+        prog = 100 if o_status == "achieved" else RNG.randint(5, 95)
+        obj = Objective.objects.create(
+            name=o["name"], category=RNG.choice(OBJ_CATS), type=RNG.choice(OBJ_TYPES),
+            description=o.get("description", ""), owner=pick_user(), status=o_status,
+            target_value="100", current_value=str(prog), unit=(o.get("unit") or "%")[:20],
+            measurement_frequency=RNG.choice(OBJ_FREQ), progress_percentage=prog,
+            target_date=TODAY + timedelta(days=RNG.randint(30, 420)), **approved(elise),
+        )
+        obj.scopes.set([RNG.choice(scope_pool)])
+
+    # --- activities ------------------------------------------------------
+    for a in BULK["activities"]:
+        act = Activity.objects.create(
+            name=a["name"], type=RNG.choice(["core_business", "support", "management"]),
+            criticality=RNG.choice(["low", "medium", "high", "critical"]),
+            description=a.get("description", ""), owner=pick_user(), status="active", **approved(elise),
+        )
+        act.scopes.set([RNG.choice(scope_pool)])
+
+    # --- essential assets ------------------------------------------------
+    EA_INFO_CATS = ["strategic_data", "operational_data", "personal_data", "financial_data",
+                    "technical_data", "legal_data", "research_data", "commercial_data"]
+    EA_PROC_CATS = ["core_process", "support_process", "management_process"]
+    bulk_essential = []
+    for e in BULK["essential_assets"]:
+        info = e.get("information")
+        pd = bool(e.get("personal_data"))
+        ea = EssentialAsset.objects.create(
+            name=e["name"], type="information" if info else "business_process",
+            category=RNG.choice(EA_INFO_CATS if info else EA_PROC_CATS),
+            description=e.get("description", ""), owner=pick_user(),
+            confidentiality_level=RNG.randint(1, 4), integrity_level=RNG.randint(1, 4),
+            availability_level=RNG.randint(1, 4),
+            data_classification=RNG.choice(["internal", "confidential", "restricted"]),
+            personal_data=pd, personal_data_categories=(["identity", "contact"] if pd else []),
+            status="active", **approved(elise),
+        )
+        ea.scopes.set([RNG.choice(scope_pool)])
+        if pd:
+            ea.tags.add(tag_gdpr)
+        bulk_essential.append(ea)
+
+    # --- support assets --------------------------------------------------
+    KIND_CATS = {
+        "hardware": ["server", "workstation", "laptop", "network_equipment", "storage", "iot_device"],
+        "software": ["operating_system", "database", "application", "middleware", "security_tool", "saas_application"],
+        "network": ["lan", "wan", "vpn", "firewall_zone", "dmz", "internet_link"],
+    }
+    bulk_support = []
+    for s in BULK["support_assets"]:
+        kind = s.get("kind") if s.get("kind") in KIND_CATS else "software"
+        sa = SupportAsset.objects.create(
+            name=s["name"], type=kind, category=RNG.choice(KIND_CATS[kind]),
+            description=s.get("description", ""), owner=pick_user(), environment="production",
+            exposure_level="internet_facing" if s.get("internet_facing") else RNG.choice(["internal", "exposed"]),
+            status="active", **approved(elise),
+        )
+        sa.scopes.set([RNG.choice(scope_pool)])
+        bulk_support.append(sa)
+
+    all_essential = essential_assets + bulk_essential
+    all_support = support_assets + bulk_support
+
+    # A few dependencies so the bulk assets feed the dependency graph / SPOF.
+    DEP_TYPES = ["runs_on", "stored_in", "transmitted_by", "managed_by", "protected_by"]
+    for ea in bulk_essential:
+        for sa in RNG.sample(all_support, k=RNG.randint(1, 3)):
+            spof = RNG.random() < 0.18
+            AssetDependency.objects.create(
+                essential_asset=ea, support_asset=sa, dependency_type=RNG.choice(DEP_TYPES),
+                criticality=RNG.choice(["low", "medium", "high", "critical"]),
+                redundancy_level="none" if spof else RNG.choice(["partial", "full"]),
+                is_single_point_of_failure=spof,
+                created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+            )
+
+    # --- suppliers -------------------------------------------------------
+    TYPE_MAP = {"cloud": st_cloud, "mssp": st_mssp, "industrial": st_industrial,
+                "saas": st_saas, "facility": st_facility}
+    SR_TITLES = ["ISO/IEC 27001 certificate", "SOC 2 Type II report", "GDPR data processing agreement",
+                 "Security questionnaire", "Penetration test report", "EU data residency confirmation"]
+    bulk_suppliers = []
+    for s in BULK["suppliers"]:
+        start = date(2022, 1, 1) + timedelta(days=RNG.randint(0, 1000))
+        sup = Supplier.objects.create(
+            name=s["name"], type=TYPE_MAP.get(s.get("type_key"), st_saas),
+            criticality=s.get("criticality", "medium"), description=s.get("description", ""),
+            country=s.get("country", "France"), owner=pick_user(),
+            contract_start_date=start, contract_end_date=start + timedelta(days=RNG.randint(365, 1460)),
+            status="active", **approved(elise),
+        )
+        sup.scopes.set([scope_group])
+        sup.tags.set([tag_thirdparty])
+        bulk_suppliers.append(sup)
+        for title in RNG.sample(SR_TITLES, k=RNG.randint(1, 3)):
+            SupplierRequirement.objects.create(
+                supplier=sup, title=title,
+                compliance_status=RNG.choice(["not_assessed", "compliant", "compliant",
+                                              "partially_compliant", "non_compliant"]),
+            )
+    # Wire a few supplier dependencies onto bulk support assets.
+    for sa in RNG.sample(bulk_support, k=min(20, len(bulk_support))):
+        SupplierDependency.objects.create(
+            support_asset=sa, supplier=RNG.choice(bulk_suppliers + all_suppliers),
+            dependency_type=RNG.choice(["provides", "hosts", "manages", "maintains", "supports", "licenses"]),
+            criticality=RNG.choice(["low", "medium", "high", "critical"]),
+            redundancy_level=RNG.choice(["none", "partial", "full"]),
+            created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+        )
+
+    # --- threats ---------------------------------------------------------
+    TH_TYPE_BY_ORIGIN = {"human_external": "deliberate", "human_internal": "accidental",
+                         "technical": "other", "natural": "environmental"}
+    TH_CATS = ["malware", "social_engineering", "unauthorized_access", "denial_of_service", "data_breach",
+               "physical_attack", "espionage", "fraud", "sabotage", "human_error", "system_failure",
+               "network_failure", "power_failure", "natural_disaster", "fire", "water_damage", "theft",
+               "supply_chain", "insider_threat", "ransomware", "apt"]
+    bulk_threats = []
+    for t in BULK["threats"]:
+        origin = t.get("origin") if t.get("origin") in TH_TYPE_BY_ORIGIN else "human_external"
+        th = Threat.objects.create(
+            name=t["name"], type=TH_TYPE_BY_ORIGIN[origin], description=t.get("description", ""),
+            origin=origin, category=RNG.choice(TH_CATS), typical_likelihood=RNG.randint(1, 5),
+            status="active", **approved(elise),
+        )
+        th.scopes.set([scope_group])
+        bulk_threats.append(th)
+
+    # --- vulnerabilities -------------------------------------------------
+    V_CATS = ["configuration_weakness", "missing_patch", "design_flaw", "coding_error", "weak_authentication",
+              "insufficient_logging", "lack_of_encryption", "physical_vulnerability", "organizational_weakness",
+              "human_factor", "obsolescence", "insufficient_backup", "network_exposure", "third_party_dependency"]
+    bulk_vulns = []
+    for v in BULK["vulnerabilities"]:
+        vv = Vulnerability.objects.create(
+            name=v["name"], description=v.get("description", ""), category=RNG.choice(V_CATS),
+            severity=v.get("severity", "medium"),
+            status=RNG.choice(["identified", "confirmed", "confirmed", "mitigated", "accepted"]),
+            remediation_guidance="Apply the vendor fix or a documented compensating control.",
+            affected_asset_types=["server", "network_equipment"],
+            created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+        )
+        vv.scopes.set([scope_group])
+        vv.affected_assets.set(RNG.sample(all_support, k=RNG.randint(1, 2)))
+        bulk_vulns.append(vv)
+
+    # --- risks (+ treatment plans / acceptances / iso27005 analyses) -----
+    DECISIONS = ["mitigate", "mitigate", "mitigate", "accept", "transfer", "avoid"]
+    PRIOS = ["low", "medium", "high", "critical"]
+    R_STATUS = ["identified", "analyzed", "evaluated", "treatment_planned",
+                "treatment_in_progress", "treated", "monitoring"]
+    bulk_risks = []
+    for r in BULK["risks"]:
+        il = RNG.randint(2, 5)
+        ii = RNG.randint(2, 5)
+        cl = max(1, il - RNG.randint(0, 1))
+        ci = max(1, ii - RNG.randint(0, 1))
+        rl = max(1, cl - RNG.randint(0, 2))
+        ri = max(1, ci - RNG.randint(0, 1))
+        decision = RNG.choice(DECISIONS)
+        status_value = "accepted" if decision == "accept" else RNG.choice(R_STATUS)
+        risk = mk_risk(
+            r["name"], r.get("description", ""), il, ii, cl, ci, rl, ri, decision,
+            RNG.choice(PRIOS), status_value, pick_user(),
+            c=bool(r.get("c")), i=bool(r.get("i")), a=bool(r.get("a")),
+            source=RNG.choice(["manual", "iso27005_analysis"]),
+        )
+        risk.affected_essential_assets.set(RNG.sample(all_essential, k=RNG.randint(1, 2)))
+        risk.affected_support_assets.set(RNG.sample(all_support, k=RNG.randint(1, 2)))
+        bulk_risks.append((risk, decision, rl, ri))
+
+    for idx, (risk, decision, rl, ri) in enumerate(bulk_risks):
+        if decision == "mitigate" and idx % 2 == 0:
+            tp = RiskTreatmentPlan.objects.create(
+                risk=risk, name=f"Treatment plan : {risk.name[:60]}",
+                description="Mitigation measures to bring the residual risk within appetite.",
+                treatment_type="mitigate", expected_residual_likelihood=rl, expected_residual_impact=ri,
+                cost_estimate=Decimal(str(RNG.choice([15000, 25000, 40000, 60000, 90000]))),
+                owner=risk.risk_owner, start_date=TODAY - timedelta(days=RNG.randint(0, 90)),
+                target_date=TODAY + timedelta(days=RNG.randint(30, 300)),
+                progress_percentage=RNG.randint(0, 100),
+                status=RNG.choice(["planned", "in_progress", "in_progress", "completed", "overdue"]),
+                created_by=risk.risk_owner,
+            )
+            for order in range(1, RNG.randint(2, 4)):
+                st_val = RNG.choice(["planned", "in_progress", "completed"])
+                TreatmentAction.objects.create(
+                    treatment_plan=tp, description=f"Implementation step {order}", owner=risk.risk_owner,
+                    target_date=TODAY + timedelta(days=30 * order), status=st_val, order=order,
+                    completion_date=TODAY - timedelta(days=RNG.randint(1, 30)) if st_val == "completed" else None,
+                )
+        elif decision == "accept":
+            RiskAcceptance.objects.create(
+                risk=risk, accepted_by=elise,
+                justification="Residual risk is within the corporate appetite; further treatment is disproportionate this cycle.",
+                conditions="Reviewed at the next risk committee.",
+                valid_until=TODAY + timedelta(days=RNG.randint(90, 540)),
+                review_date=TODAY + timedelta(days=RNG.randint(60, 300)),
+                status=RNG.choice(["active", "active", "expired"]), created_by=risk.risk_owner,
+            )
+
+    # ISO 27005 analyses linking bulk threats + vulnerabilities to ~25 risks.
+    for risk, _d, _rl, _ri in bulk_risks[:25]:
+        an = ISO27005Risk.objects.create(
+            assessment=assessment, threat=RNG.choice(bulk_threats),
+            vulnerability=RNG.choice(bulk_vulns),
+            threat_likelihood=RNG.randint(2, 5), vulnerability_exposure=RNG.randint(2, 5),
+            impact_confidentiality=RNG.randint(1, 5), impact_integrity=RNG.randint(1, 5),
+            impact_availability=RNG.randint(1, 5),
+            existing_controls="Baseline controls in place; monitored by the SOC.",
+            risk=risk, created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+        )
+        an.affected_support_assets.set(list(risk.affected_support_assets.all()))
+
+    # --- action plans ----------------------------------------------------
+    AP_PRIO = ["low", "medium", "high", "critical"]
+    AP_STATUS = ["new", "to_define", "to_validate", "to_implement", "to_implement", "validated", "closed"]
+    all_reqs = list(iso_reqs.values()) + list(nis2_reqs.values()) + list(vsb_reqs.values())
+    for a in BULK["action_plans"]:
+        ap = ComplianceActionPlan.objects.create(
+            name=a["name"], description=a.get("remediation", ""), gap_description=a.get("gap", ""),
+            remediation_plan=a.get("remediation", ""), priority=RNG.choice(AP_PRIO),
+            owner=pick_user(), created_by=elise,
+            start_date=TODAY - timedelta(days=RNG.randint(0, 150)),
+            target_date=TODAY + timedelta(days=RNG.randint(30, 320)),
+            progress_percentage=RNG.randint(0, 100), status=RNG.choice(AP_STATUS),
+        )
+        ap.scopes.set([RNG.choice(scope_pool)])
+        if RNG.random() < 0.5:
+            ap.requirements.set(RNG.sample(all_reqs, k=RNG.randint(1, 2)))
+
+    # --- indicators ------------------------------------------------------
+    for ind_data in BULK["indicators"]:
+        technical = ind_data.get("technical")
+        above = RNG.random() < 0.5
+        threshold = RNG.randint(5, 95)
+        ind = Indicator.objects.create(
+            name=ind_data["name"], description=ind_data.get("description", ""),
+            indicator_type="technical" if technical else "organizational",
+            collection_method="manual", format="number", unit=(ind_data.get("unit") or "%")[:20],
+            review_frequency="monthly", first_review_date=TODAY + timedelta(days=19),
+            critical_threshold_operator="above" if above else "below",
+            critical_threshold_value=str(threshold),
+            critical_threshold_max=float(threshold) if above else None,
+            critical_threshold_min=float(threshold) if not above else None,
+            status="active", owner=pick_user(), **approved(elise),
+        )
+        ind.scopes.set([RNG.choice(scope_pool)])
+        val = float(RNG.randint(10, 100))
+        for offset in [300, 270, 240, 210, 180, 150, 120, 90, 60, 30]:
+            val = max(0.0, min(100.0, val + RNG.uniform(-8, 8)))
+            IndicatorMeasurement.objects.create(
+                indicator=ind, value=str(round(val, 1)),
+                recorded_at=NOW - timedelta(days=offset), recorded_by=elise,
+            )
+        ind.record_measurement(str(round(max(0.0, min(100.0, val + RNG.uniform(-5, 5))), 1)), recorded_by=elise)
+
+    # --- SWOT analyses (complete) ----------------------------------------
+    for sw in BULK["swots"]:
+        swa = SwotAnalysis.objects.create(
+            name=sw["name"], description="Strategic SWOT analysis for the Voltara ISMS.",
+            analysis_date=TODAY - timedelta(days=RNG.randint(10, 220)),
+            review_date=TODAY + timedelta(days=RNG.randint(180, 420)),
+            validated_by=elise, validated_at=NOW, **approved(elise),
+        )
+        swa.scopes.set([RNG.choice(scope_pool)])
+        for order, item in enumerate(sw.get("items", []), 1):
+            SwotItem.objects.create(
+                swot_analysis=swa, quadrant=item["quadrant"], description=item["description"],
+                impact_level=item.get("impact", "medium"), order=order,
+            )
+        for order, stg in enumerate(sw.get("strategies", []), 1):
+            SwotStrategy.objects.create(
+                swot_analysis=swa, quadrant=stg["quadrant"], description=stg["description"], order=order,
+            )
+
+    # --- findings on every completed/in-progress audit -------------------
+    STATUS_TO_FINDING = {
+        "major_non_conformity": "major_nc", "minor_non_conformity": "minor_nc",
+        "observation": "observation", "improvement_opportunity": "improvement", "strength": "strength",
+    }
+    for asm in [asm_gdpr, asm_nis2, asm_vsb]:
+        for res in asm.results.select_related("requirement"):
+            ft = STATUS_TO_FINDING.get(res.compliance_status)
+            if not ft:
+                continue
+            num = res.requirement.requirement_number
+            f = Finding.objects.create(
+                assessment=asm, finding_type=ft, assessor=asm.assessor or elise, created_by=elise,
+                description=res.finding or f"{num} - {res.get_compliance_status_display()} identified during the assessment.",
+                recommendation="Define and track a corrective action to close the gap.",
+                evidence="Audit interviews and document sampling.",
+                workflow_state="validated", is_approved=True, approved_by=elise, approved_at=NOW,
+            )
+            f.requirements.set([res.requirement])
 
     # ------------------------------------------------------------ housekeeping
     print("SPOF detection and notifications...")
