@@ -19,7 +19,7 @@
 
 {% block content %}
 {% page_header _("Styleguide") subtitle=_("Shared UI primitives used across Cairn") icon="palette" %}
-  <a href="{% url 'home' %}" class="btn btn-outline-secondary"><i class="bi bi-house me-1" aria-hidden="true"></i>{% trans "Back to home" %}</a>
+  <a href="{% url 'home' %}" class="btn btn-secondary"><i class="bi bi-house me-1" aria-hidden="true"></i>{% trans "Back to home" %}</a>
 {% endpage_header %}
 
 <div class="alert alert-info">
@@ -52,7 +52,7 @@
   <div class="sg-section__title">{% trans "Component - page_header" %}</div>
   <div class="sg-card-shell">
     {% page_header _("Risk register") subtitle=_("Top-level register of identified risks") reference="MOD-RISK" icon="exclamation-triangle" %}
-      <a href="#" class="btn btn-outline-secondary"><i class="bi bi-download me-1" aria-hidden="true"></i>{% trans "Export" %}</a>
+      <a href="#" class="btn btn-secondary"><i class="bi bi-download me-1" aria-hidden="true"></i>{% trans "Export" %}</a>
       <a href="#" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New risk" %}</a>
     {% endpage_header %}
   </div>
@@ -64,6 +64,51 @@
     {% page_header _("Stakeholders") eyebrow=_("Context") icon="people" accent="context" %}{% endpage_header %}
     {% page_header _("Management reviews") eyebrow=_("Reports") icon="clipboard-check" accent="reports" %}{% endpage_header %}
     {% page_header _("Users") eyebrow=_("Accounts") icon="person-badge" accent="accounts" %}{% endpage_header %}
+  </div>
+</section>
+
+{# ── Buttons ─────────────────────────────────────────────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Component - buttons (solid frosted system)" %}</div>
+  <p class="text-muted small mb-3">{% trans "Solid fills sharing the frosted chrome of the sidebar search field. Navy = primary action; the neutral button is the search field's light glass; semantic hues fill danger / warning / success / info. No outline / wireframe buttons. The btn-outline-* names are remapped to the same solid fill." %}</p>
+  <h6 class="mt-2 mb-1 text-muted">{% trans "Variants" %}</h6>
+  <div class="sg-row">
+    <button type="button" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Primary" %}</button>
+    <button type="button" class="btn btn-secondary">{% trans "Secondary" %}</button>
+    <button type="button" class="btn btn-success"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Success" %}</button>
+    <button type="button" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Danger" %}</button>
+    <button type="button" class="btn btn-warning"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% trans "Warning" %}</button>
+    <button type="button" class="btn btn-info"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>{% trans "Info" %}</button>
+    <button type="button" class="btn btn-link">{% trans "Link" %}</button>
+  </div>
+  <h6 class="mt-3 mb-1 text-muted">{% trans "Small (.btn-sm) - dense rows & inline affordances" %}</h6>
+  <div class="sg-row">
+    <button type="button" class="btn btn-sm btn-primary">{% trans "Primary" %}</button>
+    <button type="button" class="btn btn-sm btn-secondary">{% trans "Secondary" %}</button>
+    <button type="button" class="btn btn-sm btn-success">{% trans "Success" %}</button>
+    <button type="button" class="btn btn-sm btn-danger">{% trans "Danger" %}</button>
+    <button type="button" class="btn btn-sm btn-warning">{% trans "Warning" %}</button>
+    <button type="button" class="btn btn-sm btn-info">{% trans "Info" %}</button>
+  </div>
+  <h6 class="mt-3 mb-1 text-muted">{% trans "Inside a table - calm, borderless, colour kept on the icon" %}</h6>
+  <table class="table mb-0" style="max-width:24rem">
+    <tbody>
+      <tr>
+        <td>ASST-042</td>
+        <td class="text-end">
+          <a href="#" class="btn btn-sm btn-secondary"><i class="bi bi-eye" aria-hidden="true"></i></a>
+          <a href="#" class="btn btn-sm btn-primary"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+          <button type="button" class="btn btn-sm btn-danger"><i class="bi bi-trash" aria-hidden="true"></i></button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <h6 class="mt-3 mb-1 text-muted">{% trans "Standardized footer placement - Cancel (neutral) left, primary right" %}</h6>
+  <div class="sg-card-shell">
+    <div class="modal-footer" style="border:0;padding:0">
+      <button type="button" class="btn btn-secondary me-auto">{% trans "Cancel" %}</button>
+      <button type="button" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
+    </div>
   </div>
 </section>
 

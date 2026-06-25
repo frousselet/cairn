@@ -196,6 +196,29 @@
       --danger-soft: #FEF2F2;
       --info: var(--color-info);
       --info-soft: #ECFEFF;
+      /* ── Button fills (solid frosted system) ───────────────
+       * Every button shares the frosted chrome of the sidebar search
+       * field (backdrop blur, hairline border, soft shadow, calm hover).
+       * Colour is carried by a SOLID fill - no outline / wireframe
+       * buttons. The neutral / secondary button IS the search field's
+       * light glass. The primary keeps a hint of real frost (translucent
+       * navy); semantic hues use an opaque, slightly deepened fill so the
+       * white label clears WCAG AA. Fill + text are tuned per theme. */
+      --btn-primary-bg: color-mix(in srgb, var(--accent) 92%, transparent);
+      --btn-primary-bg-hover: var(--color-navy-600);
+      --btn-primary-fg: #fff;
+      --btn-danger-bg: #C01C1C;
+      --btn-danger-bg-hover: #A21717;
+      --btn-danger-fg: #fff;
+      --btn-success-bg: #0F7A37;
+      --btn-success-bg-hover: #0C652D;
+      --btn-success-fg: #fff;
+      --btn-warning-bg: #B45309;
+      --btn-warning-bg-hover: #8F4207;
+      --btn-warning-fg: #fff;
+      --btn-info-bg: #0E7490;
+      --btn-info-bg-hover: #0B5F76;
+      --btn-info-fg: #fff;
       /* Motion - cohesive transition system */
       --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
       --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
@@ -260,6 +283,24 @@
       --warning-soft: rgba(245,158,11,.1);
       --danger-soft: rgba(239,68,68,.1);
       --info-soft: rgba(6,182,212,.1);
+      /* Button fills (dark) : vivid semantic hues read best on the dark
+       * canvas with a deep-tinted label rather than white. Primary navy
+       * keeps the white label. */
+      --btn-primary-bg: color-mix(in srgb, var(--accent) 92%, transparent);
+      --btn-primary-bg-hover: #2F4A9E;
+      --btn-primary-fg: #fff;
+      --btn-danger-bg: #ef4444;
+      --btn-danger-bg-hover: #f05a5a;
+      --btn-danger-fg: #2a1212;
+      --btn-success-bg: #10b981;
+      --btn-success-bg-hover: #1fc88f;
+      --btn-success-fg: #08251b;
+      --btn-warning-bg: #f59e0b;
+      --btn-warning-bg-hover: #fbae26;
+      --btn-warning-fg: #2a1c00;
+      --btn-info-bg: #06b6d4;
+      --btn-info-bg-hover: #1ac3df;
+      --btn-info-fg: #04222a;
       --shadow-xs: 0 1px 2px rgba(0,0,0,.16);
       --shadow-sm: 0 1px 3px rgba(0,0,0,.2);
       --shadow-md: 0 4px 16px rgba(0,0,0,.24);
@@ -1467,16 +1508,48 @@
      * neutral secondaries. Smooth transitions on all state changes.
      */
     .btn {
-      border-radius: .625rem;
-      border-width: 1px;
+      /* Frosted chrome shared with the sidebar search field. Per-variant
+         rules below only swap the --btn-* tokens; the chrome is constant. */
+      --btn-bg: var(--glass);
+      --btn-bg-hover: var(--glass-hover);
+      --btn-fg: var(--text-secondary);
+      --btn-fg-hover: var(--text-primary);
+      --btn-border: var(--border-glass);
+      --btn-border-hover: var(--border-light);
+      /* Keep Bootstrap's own state vars in sync so dropdown toggles,
+         .active / .show and disabled states never fall back to blue. */
+      --bs-btn-color: var(--btn-fg);
+      --bs-btn-bg: var(--btn-bg);
+      --bs-btn-border-color: var(--btn-border);
+      --bs-btn-hover-color: var(--btn-fg-hover);
+      --bs-btn-hover-bg: var(--btn-bg-hover);
+      --bs-btn-hover-border-color: var(--btn-border-hover);
+      --bs-btn-active-color: var(--btn-fg-hover);
+      --bs-btn-active-bg: var(--btn-bg-hover);
+      --bs-btn-active-border-color: var(--btn-border-hover);
+      --bs-btn-disabled-color: var(--btn-fg);
+      --bs-btn-disabled-bg: var(--btn-bg);
+      --bs-btn-disabled-border-color: var(--btn-border);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--btn-border);
       font-weight: 500;
       font-size: .875rem;
       padding: .5rem 1rem;
-      transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
       letter-spacing: normal;
       line-height: 1.4;
+      color: var(--btn-fg);
+      background: var(--btn-bg);
+      box-shadow: var(--shadow-sm);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
     }
-    .btn-sm { font-size: .8125rem; padding: .375rem .8125rem; border-radius: .5rem; }
+    .btn:hover {
+      color: var(--btn-fg-hover);
+      background: var(--btn-bg-hover);
+      border-color: var(--btn-border-hover);
+      box-shadow: var(--shadow-md);
+    }
     /* Focus: a subtle NEUTRAL keyboard ring (not the blue accent that the
        generic :focus-visible rule would otherwise draw around buttons). The
        !important removes that generic accent outline even on boosted swaps. */
@@ -1486,96 +1559,116 @@
     }
     .btn:focus:not(:focus-visible) {
       outline: none !important;
-      box-shadow: none !important;
+      box-shadow: var(--shadow-sm) !important;
     }
-    /* ── Button variants : unified outline system ─────────
-     * Every variant is an outline button : a subtle raised fill, a 1px
-     * coloured border + matching text, and a calm soft-tint fill on hover
-     * (never a solid block). Context is carried by the colour : navy
-     * (primary / main action), grey (secondary / neutral), red (danger),
-     * amber (warning), green (success). Bootstrap's solid classes are
-     * remapped to their outline equivalent so the whole UI is consistent.
-     * Info is not part of the palette and renders as neutral grey. */
-    .btn-primary, .btn-outline-primary,
+    /* ── Button variants : solid frosted fills ─────────────
+     * Colour is a SOLID fill, never an outline / wireframe. Navy = primary
+     * / main action; the neutral (secondary) button is the search field's
+     * light frosted glass; danger / warning / success / info carry their
+     * semantic hue. Fill + label colours are AA-tuned per theme via the
+     * --btn-*-bg / --btn-*-fg tokens. Bootstrap's solid and btn-outline-*
+     * class names are remapped to the same fill, so existing markup keeps
+     * working and authors may use either name interchangeably. */
+    .btn-primary, .btn-outline-primary {
+      --btn-bg: var(--btn-primary-bg);
+      --btn-bg-hover: var(--btn-primary-bg-hover);
+      --btn-fg: var(--btn-primary-fg);
+      --btn-fg-hover: var(--btn-primary-fg);
+      --btn-border: transparent;
+      --btn-border-hover: transparent;
+    }
+    /* Neutral / secondary : the search field's light frosted glass. The
+     * default look for every non-semantic action. */
     .btn-secondary, .btn-outline-secondary,
-    .btn-danger, .btn-outline-danger,
-    .btn-warning, .btn-outline-warning,
-    .btn-success, .btn-outline-success,
-    .btn-info, .btn-outline-info {
-      background: var(--surface-raised);
-      border-color: var(--border-light);
+    .btn-light, .btn-outline-light {
+      --btn-bg: var(--glass);
+      --btn-bg-hover: var(--glass-hover);
+      --btn-fg: var(--text-secondary);
+      --btn-fg-hover: var(--text-primary);
+      --btn-border: var(--border-glass);
+      --btn-border-hover: var(--border-light);
     }
-    /* Neutral = grey. The default for every non-semantic action, INCLUDING
-     * the main "primary" action. One single neutral style (the dashboard
-     * button) so nothing looks mixed; emphasis comes from placement and the
-     * leading icon, not colour. Only danger / warning / success carry colour. */
-    .btn-primary, .btn-outline-primary,
-    .btn-secondary, .btn-outline-secondary,
-    .btn-info, .btn-outline-info {
-      --bs-btn-color: var(--text-secondary);
-      --bs-btn-border-color: var(--border-light);
-      --bs-btn-hover-bg: var(--surface-muted);
-      --bs-btn-hover-border-color: var(--border-light);
-      --bs-btn-hover-color: var(--text-primary);
-      --bs-btn-active-bg: var(--surface-muted);
-      --bs-btn-active-border-color: var(--border-light);
-      --bs-btn-active-color: var(--text-primary);
-      --bs-btn-disabled-color: var(--text-secondary);
-      --bs-btn-disabled-border-color: var(--border-light);
-      color: var(--text-secondary);
-      border-color: var(--border-light);
-    }
-    .btn-primary:hover, .btn-outline-primary:hover,
-    .btn-secondary:hover, .btn-outline-secondary:hover,
-    .btn-info:hover, .btn-outline-info:hover {
-      background: var(--surface-muted);
-      color: var(--text-primary);
-      border-color: var(--border-light);
-    }
-    /* Danger = red */
+    /* Danger = solid red */
     .btn-danger, .btn-outline-danger {
-      --bs-btn-color: var(--danger);
-      --bs-btn-border-color: var(--danger);
-      color: var(--danger);
-      border-color: var(--danger);
+      --btn-bg: var(--btn-danger-bg);
+      --btn-bg-hover: var(--btn-danger-bg-hover);
+      --btn-fg: var(--btn-danger-fg);
+      --btn-fg-hover: var(--btn-danger-fg);
+      --btn-border: transparent;
+      --btn-border-hover: transparent;
     }
-    .btn-danger:hover, .btn-outline-danger:hover {
-      background: var(--danger-soft);
-      color: var(--danger);
-      border-color: var(--danger);
-    }
-    /* Warning = amber */
+    /* Warning = solid amber */
     .btn-warning, .btn-outline-warning {
-      --bs-btn-color: var(--warning);
-      --bs-btn-border-color: var(--warning);
-      color: var(--warning);
-      border-color: var(--warning);
+      --btn-bg: var(--btn-warning-bg);
+      --btn-bg-hover: var(--btn-warning-bg-hover);
+      --btn-fg: var(--btn-warning-fg);
+      --btn-fg-hover: var(--btn-warning-fg);
+      --btn-border: transparent;
+      --btn-border-hover: transparent;
     }
-    .btn-warning:hover, .btn-outline-warning:hover {
-      background: var(--warning-soft);
-      color: var(--warning);
-      border-color: var(--warning);
-    }
-    /* Success = green */
+    /* Success = solid green */
     .btn-success, .btn-outline-success {
-      --bs-btn-color: var(--success);
-      --bs-btn-border-color: var(--success);
-      color: var(--success);
-      border-color: var(--success);
+      --btn-bg: var(--btn-success-bg);
+      --btn-bg-hover: var(--btn-success-bg-hover);
+      --btn-fg: var(--btn-success-fg);
+      --btn-fg-hover: var(--btn-success-fg);
+      --btn-border: transparent;
+      --btn-border-hover: transparent;
     }
-    .btn-success:hover, .btn-outline-success:hover {
-      background: var(--success-soft);
-      color: var(--success);
-      border-color: var(--success);
+    /* Info = solid cyan */
+    .btn-info, .btn-outline-info {
+      --btn-bg: var(--btn-info-bg);
+      --btn-bg-hover: var(--btn-info-bg-hover);
+      --btn-fg: var(--btn-info-fg);
+      --btn-fg-hover: var(--btn-info-fg);
+      --btn-border: transparent;
+      --btn-border-hover: transparent;
     }
-    .btn-sm { padding: .3125rem .75rem; font-size: .78rem; }
+    /* Link button : a plain inline text link, no frosted chrome at all. */
+    .btn-link {
+      --btn-bg: transparent;
+      --btn-bg-hover: transparent;
+      --btn-border: transparent;
+      --btn-border-hover: transparent;
+      --btn-fg: var(--accent);
+      --btn-fg-hover: var(--accent-hover);
+      box-shadow: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    .btn-link:hover { box-shadow: none; }
+    .btn-sm { font-size: .78rem; padding: .3125rem .75rem; border-radius: var(--radius-sm); }
 
-    /* In tables, action buttons are borderless : just the (coloured) icon or
-       text, with a soft-tint fill that appears only on hover. Keeps rows calm
-       and uncluttered while preserving the danger/neutral colour cues. */
-    .table .btn { border-color: transparent; box-shadow: none; }
-    .table .btn:not(:hover) { background: transparent; }
-    .table .btn:hover { border-color: transparent; }
+    /* In tables, action buttons stay calm : borderless, no fill until hover,
+       and the icon keeps the variant's COLOUR (not the solid white label) so
+       rows read as quiet icon affordances rather than blocks of colour. */
+    .table .btn {
+      --btn-bg: transparent;
+      --btn-bg-hover: var(--surface-muted);
+      --btn-border: transparent;
+      --btn-border-hover: transparent;
+      box-shadow: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    .table .btn:hover { box-shadow: none; }
+    .table .btn-primary, .table .btn-outline-primary,
+    .table .btn-secondary, .table .btn-outline-secondary {
+      --btn-fg: var(--text-secondary);
+      --btn-fg-hover: var(--text-primary);
+    }
+    .table .btn-danger, .table .btn-outline-danger {
+      --btn-fg: var(--danger); --btn-fg-hover: var(--danger); --btn-bg-hover: var(--danger-soft);
+    }
+    .table .btn-warning, .table .btn-outline-warning {
+      --btn-fg: var(--warning); --btn-fg-hover: var(--warning); --btn-bg-hover: var(--warning-soft);
+    }
+    .table .btn-success, .table .btn-outline-success {
+      --btn-fg: var(--success); --btn-fg-hover: var(--success); --btn-bg-hover: var(--success-soft);
+    }
+    .table .btn-info, .table .btn-outline-info {
+      --btn-fg: var(--info); --btn-fg-hover: var(--info); --btn-bg-hover: var(--info-soft);
+    }
 
     /* ── HTMX loading feedback (buttons & form submit) ── */
     @keyframes htmx-spin {
