@@ -43,6 +43,11 @@
     font-weight: 500;
   }
 
+  /* ── Cascade highlight: spotlight a selected node's dependency chain ── */
+  #graph-svg .dep-dim { opacity: .1; transition: opacity .18s var(--ease-out, ease); }
+  #graph-svg .dep-on { opacity: 1; transition: opacity .18s var(--ease-out, ease); }
+  #graph-svg .dep-root > circle { stroke: var(--color-navy, #1E3A8A); stroke-width: 3.5px; }
+
   /* ── Header toolbar: stats · legend · zoom ─────── */
   .graph-toolbar {
     display: flex;
@@ -492,6 +497,64 @@
     .on('zoom', function(event) { g.attr('transform', event.transform); });
 
   svg.call(zoom);
+
+  // ── Cascade highlight ──────────────────────────────────────────────
+  // Click a node to spotlight its full dependency chain - every node and edge
+  // reachable upstream (what it depends on) and downstream (what depends on it)
+  // - and dim everything else. Click it again, or the background, to clear.
+  var outAdj = {}, inAdj = {};
+  links.forEach(function(l) {
+    (outAdj[l.source.id] = outAdj[l.source.id] || []).push(l);
+    (inAdj[l.target.id] = inAdj[l.target.id] || []).push(l);
+  });
+
+  function cascade(startId) {
+    var activeNodes = {}, activeLinks = new Set();
+    activeNodes[startId] = true;
+    function walk(adj, pickNext) {
+      var stack = [startId], seen = {};
+      seen[startId] = true;
+      while (stack.length) {
+        var id = stack.pop();
+        (adj[id] || []).forEach(function(l) {
+          activeLinks.add(l);
+          var next = pickNext(l);
+          activeNodes[next] = true;
+          if (!seen[next]) { seen[next] = true; stack.push(next); }
+        });
+      }
+    }
+    walk(outAdj, function(l) { return l.target.id; }); // downstream
+    walk(inAdj, function(l) { return l.source.id; });  // upstream
+    return { nodes: activeNodes, links: activeLinks };
+  }
+
+  var selectedId = null;
+  function applyHighlight() {
+    if (!selectedId) {
+      node.classed('dep-dim', false).classed('dep-on', false).classed('dep-root', false);
+      link.classed('dep-dim', false).classed('dep-on', false);
+      return;
+    }
+    var c = cascade(selectedId);
+    node.classed('dep-on', function(d) { return !!c.nodes[d.id]; })
+        .classed('dep-dim', function(d) { return !c.nodes[d.id]; })
+        .classed('dep-root', function(d) { return d.id === selectedId; });
+    link.classed('dep-on', function(d) { return c.links.has(d); })
+        .classed('dep-dim', function(d) { return !c.links.has(d); });
+  }
+
+  node.style('cursor', 'pointer').on('click', function(event, d) {
+    if (event.defaultPrevented) return; // ignore the click that ends a pan
+    event.stopPropagation();
+    selectedId = (selectedId === d.id) ? null : d.id;
+    applyHighlight();
+  });
+  svg.on('click', function(event) {
+    if (event.defaultPrevented || !selectedId) return;
+    selectedId = null;
+    applyHighlight();
+  });
 
   // Fit the whole graph into the canvas, but never below MIN_SCALE. When the
   // graph fits, it is centred; when MIN_SCALE forces it larger than the canvas,
