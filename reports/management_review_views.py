@@ -22,9 +22,19 @@ from django.views.generic import (
     UpdateView,
 )
 
+from django.utils.translation import gettext_lazy as _l
+
 from accounts.mixins import HistoryUrlMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
-from core.mixins import SortableListMixin
+from core.mixins import (
+    AdvancedFilterMixin,
+    ColumnPreferenceMixin,
+    ListSummaryMixin,
+    PredefinedFilterMixin,
+    SavedFilterMixin,
+    SortableListMixin,
+    TableBodyPaginatedMixin,
+)
 from compliance.constants import ActionPlanStatus
 from compliance.models import ComplianceActionPlan
 
@@ -62,14 +72,36 @@ log = logging.getLogger(__name__)
 
 # ─── List ─────────────────────────────────────────────────────────────
 
+MANAGEMENT_REVIEW_FILTER_GROUPS = [
+    {"param": "status", "field": "status", "label": _l("Status"), "options": ManagementReviewStatus.choices},
+]
+MANAGEMENT_REVIEW_TEXT_FILTERS = [
+    {"param": "title", "field": "title", "label": _l("Title")},
+]
+MANAGEMENT_REVIEW_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "title", "label": _l("Title"), "always": True},
+    {"key": "planned", "label": _l("Planned")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "facilitator", "label": _l("Facilitator")},
+    {"key": "decisions", "label": _l("Decisions"), "always": True},
+]
+
+
 class ManagementReviewListView(
-    LoginRequiredMixin, PermissionRequiredMixin, SortableListMixin, ListView,
+    LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin,
+    AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView,
 ):
     permission_required = "reports.management_review.read"
     model = ManagementReview
     template_name = "reports/management_review_list.html"
     context_object_name = "reviews"
-    paginate_by = 25
+    paginate_by = 50
+    status_field = "status"
+    search_fields = ["reference", "title", "description"]
+    filter_groups = MANAGEMENT_REVIEW_FILTER_GROUPS
+    text_filters = MANAGEMENT_REVIEW_TEXT_FILTERS
+    columns = MANAGEMENT_REVIEW_COLUMNS
     sortable_fields = {
         "reference": "reference",
         "title": "title",
@@ -83,24 +115,30 @@ class ManagementReviewListView(
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("facilitator", "approver")
-        q = self.request.GET.get("q", "").strip()
-        status = self.request.GET.get("status", "").strip()
-        if q:
-            qs = qs.filter(
-                Q(title__icontains=q)
-                | Q(reference__icontains=q)
-                | Q(description__icontains=q),
-            )
-        if status:
-            qs = qs.filter(status=status)
-        return qs.distinct()
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["q"] = self.request.GET.get("q", "")
-        ctx["status_filter"] = self.request.GET.get("status", "")
-        ctx["statuses"] = ManagementReviewStatus.choices
-        return ctx
+
+class ManagementReviewTableBodyView(
+    LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin,
+    AdvancedFilterMixin, SortableListMixin, ListView,
+):
+    permission_required = "reports.management_review.read"
+    model = ManagementReview
+    template_name = "reports/management_review_table_body.html"
+    context_object_name = "reviews"
+    paginate_by = 50
+    search_fields = ["reference", "title", "description"]
+    filter_groups = MANAGEMENT_REVIEW_FILTER_GROUPS
+    text_filters = MANAGEMENT_REVIEW_TEXT_FILTERS
+    sortable_fields = ManagementReviewListView.sortable_fields
+    default_sort = "planned_date"
+    default_sort_order = "desc"
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("facilitator", "approver")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 # ─── Detail with stepper and all sections ─────────────────────────────

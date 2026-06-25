@@ -22,6 +22,11 @@ urlpatterns = [
         name="management-review-list",
     ),
     path(
+        "management-reviews/table-body/",
+        mrv.ManagementReviewTableBodyView.as_view(),
+        name="management-review-table-body",
+    ),
+    path(
         "management-reviews/new/",
         mrv.ManagementReviewCreateView.as_view(),
         name="management-review-new",
