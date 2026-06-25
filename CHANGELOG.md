@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-06-25
+
 ### Added
 
 - **New list-page chrome**: a redesigned table experience, built as reusable infrastructure and rolled out across **every list page** - context, assets, risks, compliance, management reviews, reports and the administration lists (users, groups, permissions, access logs, calendar subscriptions, action logs). The rail shows up to four KPI tiles (coloured by state, or entity-specific KPIs such as active users / login successes / failures), except on Reports where it holds the report-generation actions; legacy per-page filter forms (status chips, date-range bars) were removed in favour of the offcanvas. The rail is capped at four tiles. A **table toolbar** carries a client-side search, a **Filters** button and a **Columns** button. The **Filters** button opens a right **offcanvas** (frosted, page-tinted backdrop matching the search overlay) holding a combinable filter builder: predefined facets as multi-select lists (`PredefinedFilterMixin.filter_groups`, OR within a group / AND across groups), free-text rules with an operator (`text_filters`: contains / is / starts with / is not), and a generic **"filter on any field" builder** (`AdvancedFilterMixin`) that introspects the model's fields and relations into a typed registry (text / number / date / choice / boolean / person / relation), each with its operators (= > ≥ < ≤, is / is not, is any of / is none of). Advanced rules are added/removed in the panel, serialised as validated JSON `rule` params (only known fields/operators are ever applied) and ANDed onto the queryset.
@@ -1189,6 +1191,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.32.0]: https://github.com/frousselet/cairn/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/frousselet/cairn/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/frousselet/cairn/compare/v0.29.1...v0.30.0
 [0.29.1]: https://github.com/frousselet/cairn/compare/v0.29.0...v0.29.1
