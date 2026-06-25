@@ -1,5 +1,10 @@
+import json
+
+from django.contrib.auth import get_user_model
+from django.db import models as dj_models
 from django.db.models import Count, F
 from django.http import HttpResponse
+from django.utils.dateparse import parse_date
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
@@ -396,3 +401,184 @@ class ColumnPreferenceMixin:
             ]
             ctx["column_view_key"] = self.get_column_view_key()
         return ctx
+
+
+def _op(label):
+    return pgettext_lazy("filter operator", label)
+
+
+class AdvancedFilterMixin:
+    """Generic "filter on any field" builder for a list page.
+
+    Introspects the model's own fields plus declared relations into a registry of
+    filterable fields, each classified by type with the operators it supports:
+
+    - text (char / text): contains / is / starts with / is not
+    - number, date: = / > / >= / < / <=
+    - choice (a field with ``choices``): is / is not
+    - boolean: is
+    - person (FK/M2M to the user model), relation (other FK/M2M): is any of /
+      is none of (multi-value)
+
+    Rules are sent as repeated ``rule`` query params, each a JSON object
+    ``{"f": field_key, "o": operator, "v": value}`` (``v`` is a list for
+    person/relation). :meth:`filter_queryset_advanced` validates every rule
+    against the registry (only known fields, operators and lookups are ever
+    applied) and ANDs them onto the queryset. ``get_context_data`` exposes
+    ``filter_fields_json`` (the registry) and ``filter_rules_json`` (the active
+    rules) for the offcanvas rule-builder script.
+    """
+
+    advanced_filters = True
+    filter_exclude = frozenset(
+        {
+            "id", "password", "version", "is_approved", "approved_by", "approved_at",
+            "created_by", "created_at", "updated_at", "last_login", "tags",
+        }
+    )
+    filter_extra_fields = []  # extra relation field names (ORM paths) to include
+    filter_max_options = 200
+
+    OPERATORS = {
+        "text": [("contains", _op("contains")), ("is", _op("is")), ("starts", _op("starts with")), ("isnot", _op("is not"))],
+        "number": [("eq", "="), ("gt", ">"), ("gte", "≥"), ("lt", "<"), ("lte", "≤")],
+        "date": [("eq", "="), ("gt", ">"), ("gte", "≥"), ("lt", "<"), ("lte", "≤")],
+        "choice": [("is", _op("is")), ("isnot", _op("is not"))],
+        "boolean": [("is", _op("is"))],
+        "person": [("in", _op("is any of")), ("notin", _op("is none of"))],
+        "relation": [("in", _op("is any of")), ("notin", _op("is none of"))],
+    }
+    _TEXT_LOOKUPS = {"contains": ("icontains", False), "is": ("iexact", False), "starts": ("istartswith", False), "isnot": ("iexact", True)}
+    _SCALAR_LOOKUPS = {"eq": "exact", "gt": "gt", "gte": "gte", "lt": "lt", "lte": "lte"}
+
+    def _classify_field(self, field):
+        if getattr(field, "choices", None):
+            return "choice"
+        if isinstance(field, (dj_models.ForeignKey, dj_models.ManyToManyField)):
+            return "person" if field.related_model is get_user_model() else "relation"
+        if isinstance(field, dj_models.BooleanField):
+            return "boolean"
+        if isinstance(field, (dj_models.DateField, dj_models.DateTimeField)):
+            return "date"
+        if isinstance(field, (dj_models.IntegerField, dj_models.FloatField, dj_models.DecimalField)):
+            return "number"
+        if isinstance(field, (dj_models.CharField, dj_models.TextField)):
+            return "text"
+        return None
+
+    def _iter_model_fields(self):
+        for field in self.model._meta.get_fields():
+            if field.name in self.filter_exclude:
+                continue
+            if field.many_to_many and not field.auto_created:
+                yield field
+            elif getattr(field, "concrete", False) and not field.auto_created:
+                yield field
+
+    def get_filter_fields(self):
+        """Return the registry: ordered list of field definitions (plain dicts)."""
+        fields = []
+        for field in self._iter_model_fields():
+            ftype = self._classify_field(field)
+            if not ftype:
+                continue
+            definition = {
+                "key": field.name,
+                "orm": field.name,
+                "label": str(getattr(field, "verbose_name", field.name)).capitalize(),
+                "type": ftype,
+                "datetime": isinstance(field, dj_models.DateTimeField),
+                "operators": [{"value": v, "label": str(label)} for v, label in self.OPERATORS[ftype]],
+            }
+            if ftype == "choice":
+                definition["options"] = [{"value": str(v), "label": str(label)} for v, label in field.choices]
+            elif ftype in ("person", "relation"):
+                rel = field.related_model
+                definition["options"] = [
+                    {"value": str(o.pk), "label": str(o)}
+                    for o in rel._default_manager.all()[: self.filter_max_options]
+                ]
+            fields.append(definition)
+        return fields
+
+    def _build_condition(self, definition, op, value):
+        """Return (lookup_kwargs, negate) for a rule, or (None, False) if invalid."""
+        ftype = definition["type"]
+        orm = definition["orm"]
+        if ftype == "text":
+            spec = self._TEXT_LOOKUPS.get(op)
+            if not spec or not str(value).strip():
+                return None, False
+            lookup, negate = spec
+            return {f"{orm}__{lookup}": value}, negate
+        if ftype in ("number", "date"):
+            lookup = self._SCALAR_LOOKUPS.get(op)
+            if not lookup:
+                return None, False
+            parsed = self._parse_scalar(ftype, value)
+            if parsed is None:
+                return None, False
+            path = f"{orm}__date" if (ftype == "date" and definition.get("datetime")) else orm
+            return {f"{path}__{lookup}": parsed}, False
+        if ftype == "choice":
+            if not str(value).strip():
+                return None, False
+            return {orm: value}, op == "isnot"
+        if ftype == "boolean":
+            return {orm: str(value).lower() in ("true", "1", "yes", "on")}, False
+        if ftype in ("person", "relation"):
+            ids = value if isinstance(value, list) else [value]
+            ids = [i for i in ids if i not in (None, "")]
+            if not ids:
+                return None, False
+            return {f"{orm}__in": ids}, op == "notin"
+        return None, False
+
+    @staticmethod
+    def _parse_scalar(ftype, value):
+        text = str(value).strip()
+        if not text:
+            return None
+        if ftype == "date":
+            return parse_date(text)
+        try:
+            return float(text) if ("." in text) else int(text)
+        except (TypeError, ValueError):
+            return None
+
+    def filter_queryset_advanced(self, qs):
+        if not self.advanced_filters:
+            return qs
+        by_key = {f["key"]: f for f in self.get_filter_fields()}
+        needs_distinct = False
+        for raw in self.request.GET.getlist("rule"):
+            try:
+                rule = json.loads(raw)
+            except (TypeError, ValueError):
+                continue
+            definition = by_key.get(rule.get("f"))
+            if not definition:
+                continue
+            cond, negate = self._build_condition(definition, rule.get("o"), rule.get("v"))
+            if cond is None:
+                continue
+            qs = qs.exclude(**cond) if negate else qs.filter(**cond)
+            if definition["type"] in ("person", "relation"):
+                needs_distinct = True
+        return qs.distinct() if needs_distinct else qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        if self.advanced_filters:
+            ctx["filter_fields_json"] = json.dumps(self.get_filter_fields())
+            ctx["filter_rules_json"] = json.dumps(
+                [r for r in (_safe_json(raw) for raw in self.request.GET.getlist("rule")) if r is not None]
+            )
+        return ctx
+
+
+def _safe_json(raw):
+    try:
+        return json.loads(raw)
+    except (TypeError, ValueError):
+        return None

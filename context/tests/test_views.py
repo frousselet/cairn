@@ -320,6 +320,71 @@ class TestColumnPreferences:
         assert user.column_preferences["context.issue"]["order"] == ["name", "reference"]
 
 
+class TestAdvancedFilters:
+    """The generic "filter on any field" engine (AdvancedFilterMixin)."""
+
+    @staticmethod
+    def _rule(f, o, v):
+        return json.dumps({"f": f, "o": o, "v": v})
+
+    def test_text_rule_contains(self):
+        client, _ = _superuser_client()
+        IssueFactory(name="AlphaWidget")
+        IssueFactory(name="BetaWidget")
+        resp = client.get(
+            reverse("context:issue-table-body"), {"rule": self._rule("name", "contains", "Alpha")}
+        )
+        assert b"AlphaWidget" in resp.content
+        assert b"BetaWidget" not in resp.content
+
+    def test_choice_rule_is(self):
+        client, _ = _superuser_client()
+        crit = IssueFactory(name="CritWidget")
+        IssueFactory(name="LowWidget")
+        from context.models import Issue
+
+        Issue.objects.filter(pk=crit.pk).update(impact_level="critical")
+        resp = client.get(
+            reverse("context:issue-table-body"),
+            {"rule": self._rule("impact_level", "is", "critical")},
+        )
+        assert b"CritWidget" in resp.content
+        assert b"LowWidget" not in resp.content
+
+    def test_relation_rule_scopes_in(self):
+        client, _ = _superuser_client()
+        scope = ScopeFactory(name="ScopeX")
+        a = IssueFactory(name="ScopedWidget")
+        a.scopes.add(scope)
+        IssueFactory(name="UnscopedWidget")
+        resp = client.get(
+            reverse("context:issue-table-body"),
+            {"rule": self._rule("scopes", "in", [str(scope.pk)])},
+        )
+        assert b"ScopedWidget" in resp.content
+        assert b"UnscopedWidget" not in resp.content
+
+    def test_unknown_field_is_ignored(self):
+        client, _ = _superuser_client()
+        IssueFactory(name="SafeWidget")
+        resp = client.get(
+            reverse("context:issue-table-body"), {"rule": self._rule("password", "is", "x")}
+        )
+        assert resp.status_code == 200
+        assert b"SafeWidget" in resp.content
+
+    def test_registry_exposed_and_filtered(self):
+        client, _ = _superuser_client()
+        resp = client.get(reverse("context:issue-list"))
+        fields = json.loads(resp.context["filter_fields_json"])
+        keys = {f["key"] for f in fields}
+        assert {"name", "impact_level", "scopes"} <= keys
+        assert "password" not in keys and "id" not in keys and "created_by" not in keys
+        impact = next(f for f in fields if f["key"] == "impact_level")
+        assert impact["type"] == "choice"
+        assert any(o["value"] == "critical" for o in impact["options"])
+
+
 class TestScopeDetailView:
     def test_requires_login(self):
         scope = ScopeFactory()
