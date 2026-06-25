@@ -10950,3 +10950,55 @@ msgstr "Orientation"
 #: assets/templates/assets/dependency_graph.html
 msgid "Toggle layout orientation"
 msgstr "Changer l'orientation de la disposition"
+
+#: templates/base.html
+msgid "Bold"
+msgstr "Gras"
+
+#: templates/base.html
+msgid "Italic"
+msgstr "Italique"
+
+#: templates/base.html
+msgid "Underline"
+msgstr "Souligné"
+
+#: templates/base.html
+msgid "Strikethrough"
+msgstr "Barré"
+
+#: templates/base.html
+msgid "Heading"
+msgstr "Titre"
+
+#: templates/base.html
+msgid "Subheading"
+msgstr "Sous-titre"
+
+#: templates/base.html
+msgid "Quote"
+msgstr "Citation"
+
+#: templates/base.html
+msgid "Bulleted list"
+msgstr "Liste à puces"
+
+#: templates/base.html
+msgid "Numbered list"
+msgstr "Liste numérotée"
+
+#: templates/base.html
+msgid "Insert link"
+msgstr "Insérer un lien"
+
+#: templates/base.html
+msgid "Enter the link URL"
+msgstr "Saisissez l'URL du lien"
+
+#: templates/base.html
+msgid "Divider"
+msgstr "Séparateur"
+
+#: templates/base.html
+msgid "Clear formatting"
+msgstr "Effacer la mise en forme"
