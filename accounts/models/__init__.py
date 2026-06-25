@@ -6,8 +6,9 @@ from accounts.models.notification import Notification
 from accounts.models.passkey import Passkey
 from accounts.models.company_settings import CompanySettings
 from accounts.models.calendar_token import CalendarToken
+from accounts.models.saved_filter import SavedFilter
 
 __all__ = [
     "User", "Group", "Permission", "AccessLog", "Notification",
-    "Passkey", "CompanySettings", "CalendarToken",
+    "Passkey", "CompanySettings", "CalendarToken", "SavedFilter",
 ]

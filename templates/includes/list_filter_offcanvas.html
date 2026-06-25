@@ -2,8 +2,9 @@
 {% comment %}
 Right offcanvas holding the list's filter builder, opened by the toolbar's
 "Filters" button. The form carries no HTMX itself: the table <tbody> includes it
-via hx-include and refreshes on change, so filtering never reloads the page.
-`filter_list_url` is the bare list URL (Clear button + history URL sync).
+via hx-include and refreshes on Apply, so filtering never reloads the page.
+`filter_list_url` is the bare list URL (used by the history URL sync).
+Saved filters live in the toolbar dropdown, not here.
 {% endcomment %}
 {% if list_filters or list_text_filters or filter_fields_json %}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="listFilterOffcanvas" aria-labelledby="listFilterOffcanvasLabel">
@@ -16,8 +17,8 @@ via hx-include and refreshes on change, so filtering never reloads the page.
   <div class="offcanvas-body">
     <form class="list-filter-form" data-list-url="{{ filter_list_url }}">
       {% for group in list_filters %}
-      <div class="list-filter-group mb-3">
-        <label class="form-label text-uppercase text-muted mb-1" style="font-size:.7rem;letter-spacing:.04em">{{ group.label }}</label>
+      <div class="list-filter-group">
+        <label class="filter-label">{{ group.label }}</label>
         <select name="{{ group.param }}" class="form-select form-select-sm" multiple data-ts-filter placeholder="{% trans 'Any' %}">
           {% for opt in group.options %}
           <option value="{{ opt.value }}"{% if opt.checked %} selected{% endif %}>{{ opt.label }}</option>
@@ -26,8 +27,8 @@ via hx-include and refreshes on change, so filtering never reloads the page.
       </div>
       {% endfor %}
       {% for rule in list_text_filters %}
-      <div class="list-filter-group mb-3">
-        <label class="form-label text-uppercase text-muted mb-1" style="font-size:.7rem;letter-spacing:.04em">{{ rule.label }}</label>
+      <div class="list-filter-group">
+        <label class="filter-label">{{ rule.label }}</label>
         <div class="d-flex gap-1">
           <select name="{{ rule.param }}_op" class="form-select form-select-sm" style="flex:0 0 8.5rem">
             {% for op in rule.operators %}
@@ -40,7 +41,7 @@ via hx-include and refreshes on change, so filtering never reloads the page.
       {% endfor %}
       {% if filter_fields_json %}
       <div class="list-adv-filters" data-fields="{{ filter_fields_json }}" data-rules="{{ filter_rules_json }}">
-        <label class="form-label text-uppercase text-muted mb-1" style="font-size:.7rem;letter-spacing:.04em">{% trans "Advanced filters" %}</label>
+        <label class="filter-label">{% trans "Advanced filters" %}</label>
         <div class="list-adv-rules"></div>
         <button type="button" class="btn btn-sm btn-outline-secondary list-adv-add">
           <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add filter" %}

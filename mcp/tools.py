@@ -6149,6 +6149,69 @@ def _register_accounts_tools(server):
         get_me,
     )
 
+    # ── Saved filters (per-user list filters; own + shared) ──
+    SavedFilter = _get_model("accounts", "SavedFilter")
+    _sf_fields = ["id", "view_key", "name", "query", "is_shared", "owner_id", "created_at", "updated_at"]
+
+    def list_saved_filters(user, arguments):
+        from django.db.models import Q
+
+        qs = SavedFilter.objects.filter(Q(owner=user) | Q(is_shared=True))
+        view_key = arguments.get("view_key")
+        if view_key:
+            qs = qs.filter(view_key=view_key)
+        return {"items": _serialize_qs(qs, _sf_fields, limit=100)}
+
+    def create_saved_filter(user, arguments):
+        name = (arguments.get("name") or "").strip()
+        view_key = (arguments.get("view_key") or "").strip()
+        if not name or not view_key:
+            return _error("name and view_key are required")
+        obj = SavedFilter.objects.create(
+            owner=user,
+            view_key=view_key,
+            name=name,
+            query=arguments.get("query") or "",
+            is_shared=bool(arguments.get("is_shared")),
+        )
+        return _serialize_obj(obj, _sf_fields)
+
+    def delete_saved_filter(user, arguments):
+        obj = SavedFilter.objects.filter(pk=arguments.get("id"), owner=user).first()
+        if not obj:
+            return _error("Saved filter not found (or not owned by you)")
+        obj.delete()
+        return {"deleted": True}
+
+    server.register_tool(
+        "list_saved_filters",
+        "List the current user's saved list filters (own + shared). Optional view_key "
+        "(e.g. 'context.issue') narrows to one list.",
+        _list_schema({"view_key": {"type": "string", "description": "List key, e.g. context.issue"}}),
+        list_saved_filters,
+    )
+    server.register_tool(
+        "create_saved_filter",
+        "Save a named list filter for the current user. `query` is the list's filter "
+        "query string; `view_key` is the list key (e.g. context.issue).",
+        _obj_schema(
+            {
+                "view_key": {"type": "string", "description": "List key, e.g. context.issue"},
+                "name": {"type": "string", "description": "Filter name"},
+                "query": {"type": "string", "description": "Filter query string"},
+                "is_shared": {"type": "boolean", "description": "Share with everyone (default false)"},
+            },
+            ["view_key", "name"],
+        ),
+        create_saved_filter,
+    )
+    server.register_tool(
+        "delete_saved_filter",
+        "Delete one of the current user's saved list filters by id.",
+        _id_schema(),
+        delete_saved_filter,
+    )
+
     # Update current user profile
     def update_me(user, arguments):
         from accounts.constants import ThemePreference

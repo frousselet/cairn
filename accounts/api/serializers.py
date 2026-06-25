@@ -1,7 +1,7 @@
 from django.contrib.auth import password_validation
 from rest_framework import serializers
 
-from accounts.models import AccessLog, CompanySettings, Group, Notification, Permission, User
+from accounts.models import AccessLog, CompanySettings, Group, Notification, Permission, SavedFilter, User
 from context.models import Scope
 
 
@@ -161,3 +161,15 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     def get_actor_name(self, obj):
         return obj.actor.display_name if obj.actor else ""
+
+
+class SavedFilterSerializer(serializers.ModelSerializer):
+    owner_name = serializers.CharField(source="owner.display_name", read_only=True)
+
+    class Meta:
+        model = SavedFilter
+        fields = (
+            "id", "view_key", "name", "query", "is_shared",
+            "owner", "owner_name", "created_at", "updated_at",
+        )
+        read_only_fields = ("id", "owner", "owner_name", "created_at", "updated_at")

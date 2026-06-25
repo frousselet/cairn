@@ -137,6 +137,9 @@ Additional tools:
 | `update_me` | Update the current user's profile (first_name, last_name, phone, language, timezone, theme_preference) |
 | `get_dashboard_layout` | Get the current user's dashboard widget layout and the widget catalogue |
 | `update_dashboard_layout` | Replace the current user's dashboard widget layout (ordered {id, size, visible}) |
+| `list_saved_filters` | List the current user's saved list filters (own + shared), optionally by view_key |
+| `create_saved_filter` | Save a named list filter (view_key, query, optional is_shared) |
+| `delete_saved_filter` | Delete one of the current user's saved list filters |
 | `list_notifications` | List the current user's in-app notifications with the unread count |
 | `mark_notification_read` | Mark one of the current user's notifications as read |
 | `mark_all_notifications_read` | Mark all of the current user's notifications as read |

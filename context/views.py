@@ -28,6 +28,7 @@ from core.mixins import (
     HtmxFormMixin,
     ListSummaryMixin,
     PredefinedFilterMixin,
+    SavedFilterMixin,
     SortableListMixin,
 )
 from .constants import (
@@ -370,7 +371,7 @@ ISSUE_COLUMNS = [
 ]
 
 
-class IssueListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class IssueListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Issue
     permission_required = "context.issue.read"
     template_name = "context/issue_list.html"

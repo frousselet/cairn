@@ -10843,3 +10843,24 @@ msgstr "est l'un de"
 msgctxt "filter operator"
 msgid "is none of"
 msgstr "n'est aucun de"
+
+msgid "Saved filters"
+msgstr "Filtres enregistrés"
+
+msgid "Select a saved filter…"
+msgstr "Choisir un filtre enregistré…"
+
+msgid "shared"
+msgstr "partagé"
+
+msgid "Name this filter…"
+msgstr "Nommer ce filtre…"
+
+msgid "Share"
+msgstr "Partager"
+
+msgid "Save current filter"
+msgstr "Enregistrer le filtre courant"
+
+msgid "No saved filter yet."
+msgstr "Aucun filtre enregistré."

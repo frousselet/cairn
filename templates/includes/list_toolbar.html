@@ -11,6 +11,37 @@ offcanvas (included alongside this toolbar by the page).
     <input type="search" class="list-search-input" placeholder="{% trans 'Search…' %}" aria-label="{% trans 'Search' %}" autocomplete="off">
   </div>
   <div class="list-toolbar__spacer"></div>
+  {% if saved_filter_view_key %}
+  <div class="dropdown list-saved-filters" data-view-key="{{ saved_filter_view_key }}" data-list-url="{{ request.path }}" data-api="{% url 'saved-filter-list' %}">
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+      <i class="bi bi-bookmark me-1" aria-hidden="true"></i>{% trans "Saved filters" %}
+    </button>
+    <div class="dropdown-menu dropdown-menu-end saved-filters-menu">
+      <div class="saved-filter-list">
+        {% for sf in saved_filters %}
+        <div class="saved-filter-item" data-id="{{ sf.id }}" data-query="{{ sf.query }}" data-owned="{% if sf.owned %}1{% endif %}">
+          <button type="button" class="saved-filter-apply">{{ sf.name }}{% if sf.is_shared and not sf.owned %} <span class="text-muted small">({% trans "shared" %})</span>{% endif %}</button>
+          {% if sf.owned %}<button type="button" class="saved-filter-del" title="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>{% endif %}
+        </div>
+        {% empty %}
+        <div class="saved-filter-empty">{% trans "No saved filter yet." %}</div>
+        {% endfor %}
+      </div>
+      <div class="saved-filter-save">
+        <input type="text" class="form-control form-control-sm saved-filter-name mb-1" placeholder="{% trans 'Name this filter…' %}" autocomplete="off">
+        <div class="d-flex align-items-center justify-content-between gap-2">
+          <div class="form-check m-0">
+            <input class="form-check-input saved-filter-shared" type="checkbox" id="savedFilterShared">
+            <label class="form-check-label small" for="savedFilterShared">{% trans "Share" %}</label>
+          </div>
+          <button type="button" class="btn btn-sm btn-primary saved-filter-save-btn">
+            <i class="bi bi-bookmark-plus me-1" aria-hidden="true"></i>{% trans "Save current filter" %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
   {% if list_filters or list_text_filters or filter_fields_json %}
   <button type="button" class="btn btn-sm list-filter-toggle {% if list_filters_active %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-bs-toggle="offcanvas" data-bs-target="#listFilterOffcanvas" aria-controls="listFilterOffcanvas">
     <i class="bi bi-funnel{% if list_filters_active %}-fill{% endif %} me-1" aria-hidden="true"></i>{% trans "Filters" %}

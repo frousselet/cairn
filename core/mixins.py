@@ -582,3 +582,43 @@ def _safe_json(raw):
         return json.loads(raw)
     except (TypeError, ValueError):
         return None
+
+
+class SavedFilterMixin:
+    """Expose the user's saved filters for this list (own + shared).
+
+    Adds ``saved_filters`` (each: id, name, query, is_shared, owned) and
+    ``saved_filter_view_key`` to the context so the offcanvas can list, apply,
+    save and delete them. The view key is the same ``app_label.model_name`` used
+    by the column preferences.
+    """
+
+    def get_saved_filter_view_key(self):
+        model = getattr(self, "model", None)
+        return f"{model._meta.app_label}.{model._meta.model_name}" if model else ""
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = getattr(self.request, "user", None)
+        if user and user.is_authenticated:
+            from django.db.models import Q
+
+            from accounts.models import SavedFilter
+
+            key = self.get_saved_filter_view_key()
+            saved = (
+                SavedFilter.objects.filter(Q(owner=user) | Q(is_shared=True), view_key=key)
+                .select_related("owner")
+            )
+            ctx["saved_filters"] = [
+                {
+                    "id": str(f.id),
+                    "name": f.name,
+                    "query": f.query,
+                    "is_shared": f.is_shared,
+                    "owned": f.owner_id == user.id,
+                }
+                for f in saved
+            ]
+            ctx["saved_filter_view_key"] = key
+        return ctx
