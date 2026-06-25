@@ -148,10 +148,11 @@ and three semantic colours **reserved for status only**.
 | `--info-soft` | `#ECFEFF` | Info alert / chip background. |
 
 > Rule: no semantic colour is used as decoration. If an element is not a
-> status, it takes navy or a neutral. The one sanctioned exception is the
-> outline of an **action button**, where the semantic colour signals the
-> impact of the action itself (red = destructive, amber = caution,
-> green = confirm) - see Buttons. It still never appears as a solid fill.
+> status, it takes navy or a neutral. The one sanctioned exception is an
+> **action button**, where the semantic colour fills the button to signal
+> the impact of the action itself (red = destructive, amber = caution,
+> green = confirm, cyan = information) - see Buttons. Buttons are the only
+> place a semantic colour appears as a solid fill.
 
 ### Dark mode (warm-charcoal)
 
@@ -348,24 +349,40 @@ live on the `/styleguide` page (visit after login).
 
 ### Buttons
 
-- Rounded corners (`border-radius: 0.625rem`), `1px` border, subtle raised
-  fill (`--surface-raised`).
-- **Every button is an outline button**: no solid fills anywhere. The context
-  is carried by the border + text colour, and hover applies a calm soft-tint
-  fill (`--*-soft`), never a solid block.
-- **Neutral**: grey outline (`--border-light`, secondary text), the dashboard
-  button. This is the single style for every non-semantic action, **including
-  the main / "primary" action** : `btn-primary` and `btn-secondary` look
-  identical. Emphasis comes from placement and the leading icon, not colour.
-- **Danger**: red outline (`--danger`). Destructive actions (delete).
-- **Warning**: amber outline (`--warning`).
-- **Success**: green outline (`--success`). Approve / confirm.
-- Info is **not** part of the button palette: `btn-info` renders as neutral
-  grey.
-- Bootstrap's solid classes (`btn-primary`, `btn-danger`, `btn-success`,
-  `btn-warning`, `btn-secondary`) are remapped in CSS to their outline
-  equivalent, so existing markup keeps working: authors may use either the
-  solid or the `btn-outline-*` name interchangeably.
+- Rounded corners (`border-radius: var(--radius-md)`, 0.625rem), `1px`
+  border, soft shadow (`--shadow-sm`) and the **frosted chrome** of the
+  sidebar search field: a `backdrop-filter: blur(8px)` and a calm hover
+  that lifts the shadow (`--shadow-md`). Every button reads as a member of
+  the same glass family.
+- **Solid fills, never outlines / wireframes.** Colour is carried by a
+  solid fill, not by a border + text colour. The fill + label colour of
+  each semantic variant is AA-tuned per theme through the `--btn-*-bg` /
+  `--btn-*-fg` tokens.
+- **Primary**: solid **navy** (`--accent`, the theme colour), white label.
+  The main action of any screen. Keeps a hint of real frost (a slightly
+  translucent fill).
+- **Neutral / secondary**: the search field's **light frosted glass**
+  (`--glass`, secondary text). The single style for every non-semantic
+  action (Cancel, Back, Export, filters). Calm and quiet; the colour is
+  reserved for primary and semantic actions.
+- **Danger**: solid **red** (`--danger`). Destructive actions (delete).
+- **Warning**: solid **amber** (`--warning`).
+- **Success**: solid **green** (`--success`). Approve / confirm.
+- **Info**: solid **cyan** (`--info`).
+- **In tables**, action buttons stay calm: borderless, no fill until hover,
+  and the icon keeps the variant's *colour* (not the solid white label),
+  so rows read as quiet icon affordances rather than blocks of colour.
+- `.btn-link` remains a plain inline text link (no frosted chrome).
+- Bootstrap's `btn-outline-*` class names are remapped in CSS to the same
+  solid fill as their `btn-*` counterpart, so existing markup keeps
+  working: authors may use either name interchangeably, but **new markup
+  should prefer the solid `btn-*` names**.
+
+**Sizing & placement.** Default buttons (`.btn`) are the standard size;
+use `.btn-sm` only for dense table rows and inline affordances. In modal
+and confirmation footers, placement is standardized: the neutral
+**Cancel** sits on the left (`me-auto`), the **primary / destructive**
+action on the right. Cancel is always neutral (`btn-secondary`), never red.
 
 ### Page header
 
@@ -374,7 +391,7 @@ live on the `/styleguide` page (visit after login).
    eyebrow=_("Risks")
    icon="exclamation-triangle"
    accent="risks" %}
-  <a href="..." class="btn btn-outline-secondary">...</a>
+  <a href="..." class="btn btn-secondary">...</a>
   <a href="..." class="btn btn-primary">
     <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New risk" %}
   </a>
