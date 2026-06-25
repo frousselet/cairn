@@ -368,7 +368,7 @@ class SwotAnalysisBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         widgets = {
             "scopes": ScopeTreeWidget(),
             "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4, "class": "form-control no-jodit"}),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4, "class": "form-control no-richtext"}),
             "analysis_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
@@ -397,7 +397,7 @@ class SwotItemForm(forms.ModelForm):
         fields = ["quadrant", "description", "impact_level", "order"]
         widgets = {
             "quadrant": forms.Select(attrs=SELECT_ATTRS),
-            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3, "class": "form-control no-jodit"}),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3, "class": "form-control no-richtext"}),
             "impact_level": forms.Select(attrs=SELECT_ATTRS),
             "order": forms.NumberInput(attrs=FORM_WIDGET_ATTRS),
         }
@@ -409,7 +409,7 @@ class SwotStrategyForm(forms.ModelForm):
         fields = ["quadrant", "description", "order"]
         widgets = {
             "quadrant": forms.Select(attrs=SELECT_ATTRS),
-            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3, "class": "form-control no-jodit"}),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3, "class": "form-control no-richtext"}),
             "order": forms.NumberInput(attrs=FORM_WIDGET_ATTRS),
         }
 
@@ -421,7 +421,7 @@ class ResponsibilityForm(forms.ModelForm):
         model = Responsibility
         fields = ["description", "raci_type", "related_activity"]
         widgets = {
-            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3, "class": "form-control no-jodit"}),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3, "class": "form-control no-richtext"}),
             "raci_type": forms.Select(attrs=SELECT_ATTRS),
             "related_activity": forms.Select(attrs=SELECT_ATTRS),
         }

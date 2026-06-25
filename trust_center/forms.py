@@ -86,14 +86,14 @@ class TrustCenterSettingsForm(_BootstrapModelForm):
             "custom_css",
         ]
         widgets = {
-            # intro keeps the default Jodit rich-text editor (no "no-jodit").
+            # intro keeps the default rich-text editor (no "no-richtext").
             "intro": forms.Textarea(attrs={"rows": 3}),
             "theme_accent": forms.TextInput(attrs={"type": "color"}),
             # custom_css must stay a raw textarea, not a rich-text editor.
             "custom_css": forms.Textarea(
                 attrs={
                     "rows": 8,
-                    "class": "form-control no-jodit",
+                    "class": "form-control no-richtext",
                     "style": "font-family: var(--bs-font-monospace, monospace);",
                     "spellcheck": "false",
                 }

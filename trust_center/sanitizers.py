@@ -255,8 +255,8 @@ def clean_svg(markup: str) -> str:
     return parser.result()
 
 
-# --- Rich-text (Jodit) sanitization -----------------------------------------
-# Admin-authored fields (intro, descriptions) are edited with the Jodit WYSIWYG
+# --- Rich-text sanitization -------------------------------------------------
+# Admin-authored fields (intro, descriptions) are edited with the pell WYSIWYG
 # and rendered on the public page. A Contributeur can edit settings/descriptions
 # but not publish, so this is a potential stored-XSS path: only a small set of
 # formatting tags is allowed, all attributes are dropped (except safe <a href>),

@@ -36,5 +36,5 @@ def safe_svg(markup):
 
 @register.filter(name="safe_html")
 def safe_html(markup):
-    """Sanitize admin-authored rich text (Jodit) for safe public rendering."""
+    """Sanitize admin-authored rich text for safe public rendering."""
     return mark_safe(clean_html(markup or ""))  # noqa: S308 - sanitized by clean_html

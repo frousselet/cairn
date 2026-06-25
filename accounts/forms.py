@@ -192,7 +192,7 @@ class CompanySettingsForm(forms.ModelForm):
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "app_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Cairn"}),
             "assistant_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ask Cairn"}),
-            "address": forms.Textarea(attrs={"class": "form-control no-jodit", "rows": 3}),
+            "address": forms.Textarea(attrs={"class": "form-control no-richtext", "rows": 3}),
             "accent_color": forms.TextInput(attrs={
                 "class": "form-control", "placeholder": "#1E3A8A",
                 "pattern": "#?[0-9A-Fa-f]{6}", "maxlength": 7,

@@ -802,7 +802,7 @@ Rules:
 | Need | Widget | Notes |
 | --- | --- | --- |
 | Short text | `<input type="text">` (`.form-control`) | Default. |
-| Long text | `<textarea>` (`.form-control`) | Auto-upgraded to **Jodit** rich text on page load. Opt out with `.no-jodit`. |
+| Long text | `<textarea>` (`.form-control`) | Auto-upgraded to **pell** rich text on page load (frosted glass field, Bootstrap-Icons toolbar, semantic attribute-free HTML). Opt out with `.no-richtext`. |
 | Enumerated value | `<select>` (`.form-select`) | Auto-upgraded to **TomSelect** for searchable single-select where appropriate. |
 | Tags | `<select multiple name="tags">` | Always **TomSelect** with the create plugin, initialised by `base.html`. |
 | Date | `<input type="date">` (`.form-control`) | Native picker; format `YYYY-MM-DD`. |
@@ -811,7 +811,7 @@ Rules:
 | Scope tree | Custom radio / checkbox tree | See `templates/includes/scope_tree.html`. |
 | File upload | `<input type="file">` | The parent `<form>` must set `enctype="multipart/form-data"`. |
 
-Widget enhancements (TomSelect, Jodit) are wired centrally in
+Widget enhancements (TomSelect, pell) are wired centrally in
 [`templates/base.html`](../../templates/base.html). Never load them
 manually inside a template.
 
