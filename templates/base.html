@@ -4166,6 +4166,14 @@
     .columns-menu__label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .col-hidden { display: none !important; }
 
+    /* Advanced filter rule rows (offcanvas builder). */
+    .list-adv-filters { margin-top: .25rem; }
+    .list-adv-row { display: flex; flex-wrap: wrap; gap: .35rem; align-items: flex-start; margin-bottom: .5rem; }
+    .list-adv-row__field { flex: 1 1 9rem; min-width: 0; }
+    .list-adv-row__op { flex: 1 1 7rem; min-width: 0; }
+    .list-adv-row__val { flex: 2 1 10rem; min-width: 0; }
+    .list-adv-row__remove { flex: 0 0 auto; }
+
     /* ── KPI rail tiles ──────────────────────────────── */
     .kpi-tile { position: relative; }
     .kpi-tile .min-w-0 { min-width: 0; }
@@ -4215,6 +4223,9 @@
       padding: .85rem 1rem;
       border-top: 1px solid var(--border-light);
     }
+    /* The filter panel holds the rule builder (field + operator + value per row),
+       so it needs more room than the default offcanvas width. */
+    #listFilterOffcanvas { width: min(600px, 94vw); }
 
     /* Sticky table header, scoped to the new toolbar tables (the other list
        pages keep their horizontally-scrolling .table-responsive). The frozen
@@ -5944,8 +5955,21 @@
   (function() {
     function countActive(form) {
       var n = 0;
-      form.querySelectorAll('select[multiple]').forEach(function(s) { if (s.selectedOptions.length) n++; });
-      form.querySelectorAll('input[type="text"]').forEach(function(i) { if (i.value.trim()) n++; });
+      /* Predefined facets (multi-select) + text-rule inputs, excluding the
+         advanced builder's own widgets (which live under .list-adv-rules). */
+      form.querySelectorAll('select[multiple]').forEach(function(s) {
+        if (!s.closest('.list-adv-rules') && s.selectedOptions.length) n++;
+      });
+      form.querySelectorAll('input[type="text"]').forEach(function(i) {
+        if (!i.closest('.list-adv-rules') && i.value.trim()) n++;
+      });
+      /* Advanced rules: each non-empty serialized rule counts once. */
+      form.querySelectorAll('input[name="rule"]').forEach(function(h) {
+        try {
+          var v = JSON.parse(h.value).v;
+          if (Array.isArray(v) ? v.length : String(v == null ? '' : v).trim()) n++;
+        } catch (e) { /* ignore */ }
+      });
       return n;
     }
     function updateIndicator(n) {
@@ -5973,6 +5997,9 @@
       }
     }
     function clearForm(form) {
+      /* Drop the advanced builder rows entirely. */
+      var adv = form.querySelector('.list-adv-rules');
+      if (adv) adv.innerHTML = '';
       form.querySelectorAll('select, input').forEach(function(el) {
         if (el.tagName === 'SELECT') {
           if (el.multiple) { if (el.tomselect) el.tomselect.clear(true); else el.selectedIndex = -1; }
@@ -5982,6 +6009,12 @@
       var search = document.querySelector('.list-search-input');
       if (search) { search.value = ''; search.dispatchEvent(new Event('input', { bubbles: true })); }
     }
+    /* Exposed so the advanced-builder script can refresh the indicator once it
+       has rebuilt the saved rules on load. */
+    window.refreshFilterIndicator = function() {
+      var form = document.querySelector('.list-filter-form');
+      if (form) updateIndicator(countActive(form));
+    };
     document.body.addEventListener('click', function(e) {
       if (e.target.closest('.list-filter-apply')) {
         var form = document.querySelector('.list-filter-form');
@@ -6019,6 +6052,101 @@
     }
     bind();
     document.body.addEventListener('htmx:afterSettle', bind);
+  })();
+
+  /* ── Advanced filter builder (any-field rules) ──────
+     Builds rule rows from the field registry (data-fields) in the offcanvas:
+     each row is a field select + a type-specific operator select + a value
+     widget, serialized into a hidden name="rule" JSON input that the table's
+     hx-include sends on Apply. Saved rules (data-rules) are rebuilt on load. */
+  (function() {
+    var TS_MULTI = { plugins: ['remove_button'], dropdownParent: 'body', maxOptions: 500 };
+    function el(tag, cls) { var e = document.createElement(tag); if (cls) e.className = cls; return e; }
+    function defByKey(fields, k) {
+      for (var i = 0; i < fields.length; i++) if (fields[i].key === k) return fields[i];
+      return fields[0];
+    }
+    function buildValueWidget(def) {
+      var t = def.type, w;
+      if (t === 'number' || t === 'date') {
+        w = el('input', 'form-control form-control-sm list-adv-row__val'); w.type = t;
+      } else if (t === 'choice' || t === 'boolean') {
+        w = el('select', 'form-select form-select-sm list-adv-row__val');
+        var opts = t === 'boolean' ? [{ value: 'true', label: '✓' }, { value: 'false', label: '✗' }] : (def.options || []);
+        opts.forEach(function(o) { var op = document.createElement('option'); op.value = o.value; op.textContent = o.label; w.appendChild(op); });
+      } else if (t === 'person' || t === 'relation') {
+        w = el('select', 'form-select form-select-sm list-adv-row__val'); w.multiple = true;
+        (def.options || []).forEach(function(o) { var op = document.createElement('option'); op.value = o.value; op.textContent = o.label; w.appendChild(op); });
+      } else {
+        w = el('input', 'form-control form-control-sm list-adv-row__val'); w.type = 'text';
+      }
+      return w;
+    }
+    function readValue(def, w) {
+      if (def.type === 'person' || def.type === 'relation') {
+        return Array.prototype.map.call(w.selectedOptions, function(o) { return o.value; });
+      }
+      return w.value;
+    }
+    function makeRow(rulesBox, fields, initial) {
+      var row = el('div', 'list-adv-row');
+      var fieldSel = el('select', 'form-select form-select-sm list-adv-row__field');
+      fields.forEach(function(f) { var o = document.createElement('option'); o.value = f.key; o.textContent = f.label; fieldSel.appendChild(o); });
+      var opSel = el('select', 'form-select form-select-sm list-adv-row__op');
+      var valWrap = el('div', 'list-adv-row__val');
+      var remove = el('button', 'btn btn-sm btn-outline-secondary list-adv-row__remove'); remove.type = 'button'; remove.innerHTML = '<i class="bi bi-x-lg"></i>';
+      var hidden = el('input'); hidden.type = 'hidden'; hidden.name = 'rule';
+      row.appendChild(fieldSel); row.appendChild(opSel); row.appendChild(valWrap); row.appendChild(remove); row.appendChild(hidden);
+      var valWidget;
+      function rebuildOps(def) {
+        opSel.innerHTML = '';
+        def.operators.forEach(function(op) { var o = document.createElement('option'); o.value = op.value; o.textContent = op.label; opSel.appendChild(o); });
+      }
+      function rebuildVal(def, preset) {
+        if (valWidget && valWidget.tomselect) valWidget.tomselect.destroy();
+        valWrap.innerHTML = ''; valWidget = buildValueWidget(def); valWrap.appendChild(valWidget);
+        if (preset != null) {
+          if (def.type === 'person' || def.type === 'relation') {
+            var arr = Array.isArray(preset) ? preset : [preset];
+            Array.prototype.forEach.call(valWidget.options, function(o) { o.selected = arr.indexOf(o.value) !== -1; });
+          } else { valWidget.value = preset; }
+        }
+        if ((def.type === 'person' || def.type === 'relation') && window.TomSelect) new window.TomSelect(valWidget, TS_MULTI);
+        valWidget.addEventListener('change', sync);
+        valWidget.addEventListener('input', sync);
+      }
+      function sync() {
+        var def = defByKey(fields, fieldSel.value);
+        hidden.value = JSON.stringify({ f: fieldSel.value, o: opSel.value, v: readValue(def, valWidget) });
+      }
+      fieldSel.addEventListener('change', function() { var def = defByKey(fields, fieldSel.value); rebuildOps(def); rebuildVal(def, null); sync(); });
+      opSel.addEventListener('change', sync);
+      remove.addEventListener('click', function() { row.remove(); if (window.refreshFilterIndicator) window.refreshFilterIndicator(); });
+      var def0 = initial ? defByKey(fields, initial.f) : fields[0];
+      fieldSel.value = def0.key;
+      rebuildOps(def0);
+      if (initial && initial.o) opSel.value = initial.o;
+      rebuildVal(def0, initial ? initial.v : null);
+      sync();
+      rulesBox.appendChild(row);
+    }
+    function init() {
+      var box = document.querySelector('.list-adv-filters');
+      if (!box || box.dataset.advBound) return;
+      box.dataset.advBound = 'true';
+      var fields = [];
+      try { fields = JSON.parse(box.getAttribute('data-fields') || '[]'); } catch (e) { return; }
+      if (!fields.length) return;
+      var rulesBox = box.querySelector('.list-adv-rules');
+      var saved = [];
+      try { saved = JSON.parse(box.getAttribute('data-rules') || '[]'); } catch (e) { /* ignore */ }
+      saved.forEach(function(r) { makeRow(rulesBox, fields, r); });
+      var addBtn = box.querySelector('.list-adv-add');
+      if (addBtn) addBtn.addEventListener('click', function() { makeRow(rulesBox, fields, null); });
+      if (window.refreshFilterIndicator) window.refreshFilterIndicator();
+    }
+    init();
+    document.body.addEventListener('htmx:afterSettle', init);
   })();
 
   /* ── Column manager (visibility + order, persisted per user) ──────

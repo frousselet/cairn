@@ -23,6 +23,7 @@ from django.views.generic import (
 from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
+    AdvancedFilterMixin,
     ColumnPreferenceMixin,
     HtmxFormMixin,
     ListSummaryMixin,
@@ -369,7 +370,7 @@ ISSUE_COLUMNS = [
 ]
 
 
-class IssueListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class IssueListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Issue
     permission_required = "context.issue.read"
     template_name = "context/issue_list.html"
@@ -392,7 +393,8 @@ class IssueListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes")
-        return self.filter_queryset_predefined(qs)
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1105,7 +1107,7 @@ class ScopeTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
         return ctx
 
 
-class IssueTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+class IssueTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = Issue
     permission_required = "context.issue.read"
     template_name = "context/issue_table_body.html"
@@ -1119,7 +1121,8 @@ class IssueTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Predefined
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes")
-        return self.filter_queryset_predefined(qs)
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class StakeholderTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, SortableListMixin, ListView):

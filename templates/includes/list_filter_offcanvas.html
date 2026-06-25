@@ -5,7 +5,7 @@ Right offcanvas holding the list's filter builder, opened by the toolbar's
 via hx-include and refreshes on change, so filtering never reloads the page.
 `filter_list_url` is the bare list URL (Clear button + history URL sync).
 {% endcomment %}
-{% if list_filters or list_text_filters %}
+{% if list_filters or list_text_filters or filter_fields_json %}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="listFilterOffcanvas" aria-labelledby="listFilterOffcanvasLabel">
   <div class="offcanvas-header">
     <h5 class="offcanvas-title" id="listFilterOffcanvasLabel">
@@ -38,6 +38,15 @@ via hx-include and refreshes on change, so filtering never reloads the page.
         </div>
       </div>
       {% endfor %}
+      {% if filter_fields_json %}
+      <div class="list-adv-filters" data-fields="{{ filter_fields_json }}" data-rules="{{ filter_rules_json }}">
+        <label class="form-label text-uppercase text-muted mb-1" style="font-size:.7rem;letter-spacing:.04em">{% trans "Advanced filters" %}</label>
+        <div class="list-adv-rules"></div>
+        <button type="button" class="btn btn-sm btn-outline-secondary list-adv-add">
+          <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add filter" %}
+        </button>
+      </div>
+      {% endif %}
     </form>
   </div>
   <div class="offcanvas-footer">

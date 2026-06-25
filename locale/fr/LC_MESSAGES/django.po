@@ -10832,3 +10832,14 @@ msgstr "Impact critique"
 
 msgid "Reset filters"
 msgstr "Réinitialiser les filtres"
+
+msgid "Add filter"
+msgstr "Ajouter un filtre"
+
+msgctxt "filter operator"
+msgid "is any of"
+msgstr "est l'un de"
+
+msgctxt "filter operator"
+msgid "is none of"
+msgstr "n'est aucun de"
