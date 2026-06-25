@@ -5,10 +5,19 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _l
 from django.views import View
 from django.views.generic import DeleteView, FormView, ListView
 
 from accounts.views import PermissionRequiredMixin
+from core.mixins import (
+    AdvancedFilterMixin,
+    ColumnPreferenceMixin,
+    PredefinedFilterMixin,
+    SavedFilterMixin,
+    SortableListMixin,
+    TableBodyPaginatedMixin,
+)
 
 from .constants import ReportStatus, ReportType
 from .forms import AuditReportForm, ManagementReviewForm, SoaReportForm
@@ -20,12 +29,70 @@ from .management_review import (
 from .models import Report
 
 
-class ReportListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+REPORT_FILTER_GROUPS = [
+    {"param": "type", "field": "report_type", "label": _l("Type"), "options": ReportType.choices},
+    {"param": "status", "field": "status", "label": _l("Status"), "options": ReportStatus.choices},
+]
+REPORT_TEXT_FILTERS = [
+    {"param": "name", "field": "name", "label": _l("Name")},
+]
+REPORT_COLUMNS = [
+    {"key": "name", "label": _l("Name"), "always": True},
+    {"key": "status", "label": _l("Status")},
+    {"key": "created", "label": _l("Created at")},
+    {"key": "author", "label": _l("Created by")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class ReportListView(
+    LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
+    SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView,
+):
     permission_required = "reports.report.read"
     model = Report
     template_name = "reports/report_list.html"
     context_object_name = "reports"
     paginate_by = 50
+    status_field = "status"
+    search_fields = ["name"]
+    filter_groups = REPORT_FILTER_GROUPS
+    text_filters = REPORT_TEXT_FILTERS
+    columns = REPORT_COLUMNS
+    sortable_fields = {
+        "name": "name",
+        "status": "status",
+        "created": "created_at",
+    }
+    default_sort = "created"
+    default_sort_order = "desc"
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("created_by")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
+class ReportTableBodyView(
+    LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin,
+    AdvancedFilterMixin, SortableListMixin, ListView,
+):
+    permission_required = "reports.report.read"
+    model = Report
+    template_name = "reports/report_table_body.html"
+    context_object_name = "reports"
+    paginate_by = 50
+    search_fields = ["name"]
+    filter_groups = REPORT_FILTER_GROUPS
+    text_filters = REPORT_TEXT_FILTERS
+    sortable_fields = ReportListView.sortable_fields
+    default_sort = "created"
+    default_sort_order = "desc"
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("created_by")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
 
 
 class SoaReportCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormView):

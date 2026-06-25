@@ -1,0 +1,30 @@
+{% load i18n ui %}
+{% for report in reports %}
+<tr>
+  <td data-col="name">
+    <span class="cell-stack">
+      <span style="font-weight:600">{{ report.name }}</span>
+      <span class="cell-sub">{{ report.get_report_type_display }}</span>
+    </span>
+  </td>
+  <td data-col="status">
+    <span class="badge text-bg-{% if report.status == 'completed' %}success{% elif report.status == 'generating' %}info{% elif report.status == 'failed' %}danger{% else %}secondary{% endif %}">
+      {{ report.get_status_display }}
+    </span>
+  </td>
+  <td data-col="created">{{ report.created_at|date:"d/m/Y H:i" }}</td>
+  <td data-col="author">{{ report.created_by|default:"-" }}</td>
+  <td class="text-end" data-col="actions">
+    {% if report.file_content %}
+    <a href="{% url 'reports:report-download' report.pk %}" hx-boost="false" download class="btn btn-sm btn-outline-primary" title="{% trans 'Download' %}">
+      <i class="bi bi-download"></i>
+    </a>
+    {% endif %}
+    <a href="{% url 'reports:report-delete' report.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}">
+      <i class="bi bi-trash"></i>
+    </a>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No report generated yet.") message=_("Generated reports (audit reports, SoA, management review packs) are listed here for download.") colspan=5 %}
+{% endfor %}
