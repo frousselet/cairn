@@ -5,7 +5,11 @@
   whenever the field defines help_text (mandatory per the Forms doctrine).
   Checkboxes use the form-check layout.
 {% endcomment %}
-{% if field.field.widget.input_type == 'checkbox' %}
+{% if field.field.widget.input_type == 'checkbox' and not field.field.widget.allow_multiple_selected %}
+{# Single boolean checkbox: Bootstrap .form-check (input left, label right). A
+   multi-select checkbox widget (e.g. the scope tree) must NOT use .form-check:
+   it would indent the field via padding-left and float every inner checkbox
+   with a negative margin (chevron overlapping the box in Firefox). #}
 <div class="mb-3 form-check"{% if field.field.required %} data-mform-required{% endif %}>
   {{ field }}
   <label for="{{ field.id_for_label }}" class="form-check-label">
