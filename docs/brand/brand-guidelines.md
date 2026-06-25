@@ -580,15 +580,16 @@ remains :
 | Form fits one viewport | Completion meter | Header chip "N of M required", `--accent` fill, `--surface-subtle` track. |
 | Form exceeds one viewport | Step indicator | Header stepper, pills navy / check / faded, thin connecting rule. |
 
-The footer is **sticky** to the modal so the primary action is reachable
-without scrolling regardless of step height.
-
-**Constant height across steps.** A multi-step modal **never resizes when
-navigating** between steps : its body height is fixed to the tallest step
-so Back / Next never make the dialog jump. This is achieved with CSS only -
-the steps are stacked in a single grid cell (`.mform-steps`) and inactive
-steps stay in layout (`visibility:hidden`, not `display:none`), so the cell
-is always sized to the tallest step. No JS measurement is involved.
+**Multi-step navigation lives outside the modal.** A multi-step form has
+**no footer** : navigation is two floating round arrows just outside the
+dialog, vertically centred (`.mform-nav`, rendered once in `base.html` and
+wired by the stepper JS). The left arrow goes back (hidden on the first
+step); the right arrow advances and, on the **last step, becomes a navy
+check** that submits. Clicking the check **spins it in place** while the
+item saves. There is no Cancel button : **cancellation is the header X or a
+backdrop click**. On narrow screens the arrows tuck into the lower corners
+of the dialog. Single-step forms keep the standard sticky footer (Cancel
+left, Save right).
 
 ### Anatomy of a field
 
