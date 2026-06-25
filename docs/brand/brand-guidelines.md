@@ -289,8 +289,8 @@ AND spacing, not from thick borders.
 | --- | --- |
 | `--shadow-xs` | Card at rest (very subtle). |
 | `--shadow-sm` | Button bubble, light raised element. |
-| `--shadow-md` | Card on hover, stat-card hover, dropdown menu. |
-| `--shadow-lg` | Drawer, modal, command palette. |
+| `--shadow-md` | Card on hover, stat-card hover, dropdown menu, button hover, modal / drawer surface. |
+| `--shadow-lg` | Command palette cards, heavy floating panels. |
 | `--shadow-xl` | Element floating above everything. |
 
 ### Spacing
@@ -473,8 +473,13 @@ edit and confirm alike.
   wider multi-step modal for rich objects. Never a two-column metadata
   sidebar - that pattern belonged to the page forms this doctrine
   replaces.
-- The scrim uses `--shadow-lg` on the modal and a soft dim on the page;
-  it enters with `.fw-pop` (honouring `prefers-reduced-motion`).
+- The scrim is **identical to the command palette / search overlay** : a
+  page-tinted translucent veil (`color-mix(--bg-page 82%, transparent)`)
+  with a soft `blur(4px)`, never a dark dim. The modal surface itself
+  carries the **same hairline border and soft frosted shadow as the
+  buttons** (`1px var(--border-light)`, `--shadow-md`), so it reads as a
+  member of the same glass family. It enters with `.fw-pop` (honouring
+  `prefers-reduced-motion`).
 
 Canonical shell : [`templates/includes/modal_form.html`](../../templates/includes/modal_form.html).
 Build every form by extending it and filling its field block. Do not

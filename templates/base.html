@@ -2995,7 +2995,7 @@
       border: 1px solid var(--border-light);
       color: var(--text-primary);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-xl);
+      box-shadow: var(--shadow-md);
     }
     /* Hairlines fading at both ends, like the sidebar demarcation */
     .modal-header {
@@ -3006,10 +3006,16 @@
       border-top: 1px solid transparent;
       border-image: linear-gradient(to right, transparent, var(--border-light) 12%, var(--border-light) 88%, transparent) 1;
     }
-    /* Frosted backdrop, matching the search overlay */
+    /* Frosted backdrop, identical to the command palette / search overlay :
+       a page-tinted translucent veil (not a dark dim) with a soft blur. */
+    .modal-backdrop,
     .modal-backdrop.show {
-      backdrop-filter: blur(4px);
+      background-color: color-mix(in srgb, var(--bg-page) 82%, transparent);
+    }
+    .modal-backdrop.show {
+      opacity: 1;
       -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
     }
 
     /* ── About modal ───────────────────────────────────── */
@@ -3215,11 +3221,12 @@
       min-height: 0;
       max-height: 100%;
     }
-    .modal-backdrop.show { opacity: .25; }
+    /* Backdrop tint + blur are defined above (matches the search overlay). */
     .modal-content {
+      /* Same hairline border and soft frosted shadow as the buttons. */
       border: 1px solid var(--border-light);
-      border-radius: 1rem;
-      box-shadow: var(--shadow-lg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
     }
     /* Hairlines fading at both ends, like the sidebar demarcation
      * (re-declared here because this block wins over the theme-aware
