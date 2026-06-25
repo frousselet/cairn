@@ -13,5 +13,9 @@ class ComplianceConfig(AppConfig):
         # assessment) keeps Section and Framework compliance_level in sync.
         from compliance import signals  # noqa: F401
 
+        # Connect the Risk <-> Requirement M2M handler for risk-driven
+        # applicability (the through model is only resolvable once apps load).
+        signals.connect_risk_link_signal()
+
         # Register the module's specific lifecycle workflows (action plan).
         from compliance import workflows  # noqa: F401

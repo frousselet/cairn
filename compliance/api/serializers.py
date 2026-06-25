@@ -23,6 +23,7 @@ class FrameworkSerializer(serializers.ModelSerializer):
             "publication_date", "effective_date", "expiry_date",
             "issuing_body", "jurisdiction", "url",
             "is_mandatory", "is_applicable", "applicability_justification",
+            "applicability_managed_by_risks",
             "owner", "related_stakeholders",
             "compliance_level", "last_assessment_date",
             "status", "review_date",
@@ -44,6 +45,7 @@ class FrameworkListSerializer(serializers.ModelSerializer):
         fields = [
             "id", "scopes", "reference", "name", "short_name",
             "type", "category", "is_mandatory", "is_applicable",
+            "applicability_managed_by_risks",
             "compliance_level", "status", "owner", "logo_32",
             "created_at",
         ]
@@ -83,6 +85,22 @@ class RequirementSerializer(serializers.ModelSerializer):
             "is_approved", "approved_by", "approved_at", "version",
             "last_assessment_date", "last_assessed_by",
         ]
+
+    def _target_framework(self, validated_data):
+        return validated_data.get("framework") or getattr(
+            self.instance, "framework", None
+        )
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        # For risk-driven frameworks, applicability is system-controlled: ignore
+        # any client-supplied value so it cannot override the rule (the post_save
+        # signal recomputes is_applicable from the linked risks regardless).
+        framework = self._target_framework(attrs)
+        if framework and framework.applicability_managed_by_risks:
+            attrs.pop("is_applicable", None)
+            attrs.pop("applicability_justification", None)
+        return attrs
 
 
 class RequirementListSerializer(serializers.ModelSerializer):

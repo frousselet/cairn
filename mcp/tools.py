@@ -1085,11 +1085,12 @@ Filters: supplier_requirement_id, result
 # Compliance Module - Field Reference
 
 ## framework
-Writable: name (required), short_name, description (HTML), type, category, version_label, source_url, publication_date, effective_date, owner_id, status, scopes
+Writable: name (required), short_name, description (HTML), type, category, version_label, source_url, publication_date, effective_date, owner_id, status, scopes, is_mandatory (bool), is_applicable (bool), applicability_justification, applicability_managed_by_risks (bool)
 - type: standard | law | regulation | contract | internal_policy | industry_framework | other
 - category: information_security | privacy | risk_management | business_continuity | cloud_security | sector_specific | it_governance | quality | contractual | internal | other
 - status: draft | active | under_review | deprecated | archived
-Filters: type, category, status
+- applicability_managed_by_risks: when true, each requirement's is_applicable is derived automatically from its linked risks (applicable iff at least one active risk is linked); the requirement applicability fields become read-only.
+Filters: type, category, status, is_mandatory, is_applicable, applicability_managed_by_risks
 Ref prefix: FRMW
 
 ## section
@@ -1102,6 +1103,7 @@ Ref prefix: SECT
 Writable: framework_id (required), section_id, requirement_number, name (required), description (HTML, required), guidance (HTML),
   type, category, is_applicable (bool), applicability_justification,
   compliance_status, compliance_level (0-100), compliance_evidence (HTML), compliance_finding (HTML),
+  (is_applicable / applicability_justification are read-only and auto-derived when the framework has applicability_managed_by_risks enabled),
   owner_id, priority, target_date, linked_assets (M2M), linked_stakeholder_expectations (M2M), linked_risks (M2M, required - pass [] if none),
   status, tags
 - type: mandatory | recommended | optional
@@ -2961,6 +2963,7 @@ def _register_compliance_tools(server):
                  "publication_date", "effective_date", "expiry_date",
                  "issuing_body", "jurisdiction", "url",
                  "is_mandatory", "is_applicable", "applicability_justification",
+                 "applicability_managed_by_risks",
                  "owner_id", "related_stakeholders",
                  "compliance_level", "last_assessment_date",
                  "status", "review_date", "logo_32",
@@ -2970,6 +2973,7 @@ def _register_compliance_tools(server):
                    "publication_date", "effective_date", "expiry_date",
                    "issuing_body", "jurisdiction", "url",
                    "is_mandatory", "is_applicable", "applicability_justification",
+                   "applicability_managed_by_risks",
                    "status", "review_date", "owner_id", "logo",
                    "scope_ids", "related_stakeholder_ids"]
 
@@ -2978,7 +2982,8 @@ def _register_compliance_tools(server):
                    writable_fields=fw_writable,
                    search_fields=["reference", "name", "short_name", "description"],
                    filters=["type", "category", "status",
-                            "is_mandatory", "is_applicable"],
+                            "is_mandatory", "is_applicable",
+                            "applicability_managed_by_risks"],
                    required_fields=["name"],
                    m2m_fields={"scope_ids": "scopes",
                                "related_stakeholder_ids": "related_stakeholders"},
@@ -3021,6 +3026,17 @@ def _register_compliance_tools(server):
                        "is_applicable": {
                            "type": "boolean",
                            "description": "Whether the framework applies to the organisation (drives Statement of Applicability inclusion).",
+                       },
+                       "applicability_managed_by_risks": {
+                           "type": "boolean",
+                           "description": (
+                               "When true, each requirement's applicability is derived "
+                               "automatically from its linked risks: applicable when at "
+                               "least one active (reportable) risk is linked, not "
+                               "applicable otherwise. The requirement fields "
+                               "is_applicable / applicability_justification then become "
+                               "read-only (writes are ignored)."
+                           ),
                        },
                        "review_date": {"type": "string", "description": "Next review date (ISO 8601)."},
                        "owner_id": {"type": "string", "description": "UUID of the framework owner (user)"},
@@ -3166,7 +3182,11 @@ def _register_compliance_tools(server):
                        },
                        "is_applicable": {
                            "type": "boolean",
-                           "description": "Whether this requirement is applicable.",
+                           "description": (
+                               "Whether this requirement is applicable. Ignored when the "
+                               "framework has applicability_managed_by_risks enabled: "
+                               "applicability is then derived from linked risks."
+                           ),
                        },
                        "target_date": {"type": "string", "description": "Target date for implementation (ISO 8601)."},
                        "owner_id": {"type": "string", "description": "UUID of the requirement owner (user)"},

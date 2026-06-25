@@ -83,8 +83,8 @@ class FrameworkBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
              ["issuing_body", "jurisdiction", "url",
               ["publication_date", "effective_date"], "expiry_date"]),
         Step(_("Applicability"), "check2-square",
-             [["is_mandatory", "is_applicable"], "applicability_justification",
-              ["owner", "review_date"]]),
+             [["is_mandatory", "is_applicable"], "applicability_managed_by_risks",
+              "applicability_justification", ["owner", "review_date"]]),
         Step(_("Scope & status"), "diagram-3", ["scopes", "status", "tags"]),
     ]
 
@@ -95,7 +95,8 @@ class FrameworkBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "type", "category", "framework_version",
             "publication_date", "effective_date", "expiry_date",
             "issuing_body", "jurisdiction", "url",
-            "is_mandatory", "is_applicable", "applicability_justification",
+            "is_mandatory", "is_applicable", "applicability_managed_by_risks",
+            "applicability_justification",
             "owner", "status", "review_date", "tags",
         ]
         widgets = {
@@ -114,6 +115,7 @@ class FrameworkBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "url": forms.URLInput(attrs=FORM_WIDGET_ATTRS),
             "is_mandatory": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
             "is_applicable": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
+            "applicability_managed_by_risks": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
             "applicability_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "owner": forms.Select(attrs=SELECT_ATTRS),
             "status": forms.Select(attrs=SELECT_ATTRS),
@@ -136,6 +138,10 @@ class FrameworkBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "expiry_date": _("Date it expires, if any."),
             "is_mandatory": _("Tick if compliance is mandatory."),
             "is_applicable": _("Tick if the framework applies to the organization."),
+            "applicability_managed_by_risks": _(
+                "Derive each requirement's applicability automatically from its "
+                "linked risks (applicable when at least one active risk is linked)."
+            ),
             "applicability_justification": _("Why the framework is or is not applicable."),
             "owner": _("Person accountable for the framework."),
             "review_date": _("Next date this framework should be reviewed."),
@@ -246,6 +252,19 @@ class RequirementForm(forms.ModelForm):
             )
         if editing:
             self.fields["linked_risks"].initial = self.instance.linked_risks.all()
+
+        # When the framework derives applicability from risks, the applicability
+        # fields are system-controlled: disable them so they cannot be edited
+        # (a disabled field is ignored on submit, and recompute is authoritative).
+        framework = self.instance.framework if self.instance.framework_id else None
+        self.applicability_is_managed = bool(
+            framework and framework.applicability_managed_by_risks
+        )
+        if self.applicability_is_managed:
+            note = _("Managed automatically from linked risks for this framework.")
+            for fname in ("is_applicable", "applicability_justification"):
+                self.fields[fname].disabled = True
+                self.fields[fname].help_text = note
 
     def save(self, commit=True):
         instance = super().save(commit=commit)

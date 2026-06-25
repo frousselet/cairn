@@ -200,6 +200,8 @@
           <dd class="mb-3">{% if framework.is_mandatory %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
           <dt class="text-muted small mb-1">{% trans "Applicable" %}</dt>
           <dd class="mb-3">{% if framework.is_applicable %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Risk-driven applicability" %}</dt>
+          <dd class="mb-3">{% if framework.applicability_managed_by_risks %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
           <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
           <dd class="mb-0">{% for tag in framework.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
         </dl>
