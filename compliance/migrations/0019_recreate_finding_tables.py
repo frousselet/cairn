@@ -31,7 +31,7 @@ def recreate_if_schema_wrong(apps, schema_editor):
         # Schema is correct, nothing to do
         return
 
-    # Schema is wrong — drop stale tables and recreate
+    # Schema is wrong - drop stale tables and recreate
     tables_to_drop = [
         "compliance_finding_requirements",
         "compliance_finding_tags",

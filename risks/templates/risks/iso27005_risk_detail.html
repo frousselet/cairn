@@ -2,7 +2,7 @@
 {% load i18n ui %}
 {% load help_tags %}
 
-{% block title %}{% trans "ISO 27005 analysis" %} — Cairn{% endblock %}
+{% block title %}{% trans "ISO 27005 analysis" %} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header _("ISO 27005 analysis") reference=analysis.reference nav="risks:iso27005-list" accent="risks" %}
@@ -28,11 +28,11 @@
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Threat" %}</dt><dd class="col-sm-9"><a href="{% url 'risks:threat-detail' analysis.threat.pk %}" class="cell-link">{{ analysis.threat }}</a></dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Vulnerability" %}</dt><dd class="col-sm-9"><a href="{% url 'risks:vulnerability-detail' analysis.vulnerability.pk %}" class="cell-link">{{ analysis.vulnerability }}</a></dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Consolidated risk" %}</dt>
-          <dd class="col-sm-9">{% if analysis.risk %}<a href="{% url 'risks:risk-detail' analysis.risk.pk %}" class="cell-link">{{ analysis.risk }}</a>{% else %}—{% endif %}</dd>
+          <dd class="col-sm-9">{% if analysis.risk %}<a href="{% url 'risks:risk-detail' analysis.risk.pk %}" class="cell-link">{{ analysis.risk }}</a>{% else %}-{% endif %}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Existing controls" %}</dt><dd class="col-sm-9">{{ analysis.existing_controls|default:"-"|safe }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ analysis.description|default:"-"|safe }}</dd>
           <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
-          <dd class="col-sm-9">{% for tag in risk.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
+          <dd class="col-sm-9">{% for tag in risk.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
         </dl>
       </div>
     </div>

@@ -7,11 +7,11 @@ from django.db import migrations
 
 
 SITE_PERMISSIONS = [
-    ("context.site.create", "Gouvernance — Sites — Créer", "create"),
-    ("context.site.read", "Gouvernance — Sites — Lire", "read"),
-    ("context.site.update", "Gouvernance — Sites — Modifier", "update"),
-    ("context.site.delete", "Gouvernance — Sites — Supprimer", "delete"),
-    ("context.site.approve", "Gouvernance — Sites — Approuver", "approve"),
+    ("context.site.create", "Gouvernance - Sites - Créer", "create"),
+    ("context.site.read", "Gouvernance - Sites - Lire", "read"),
+    ("context.site.update", "Gouvernance - Sites - Modifier", "update"),
+    ("context.site.delete", "Gouvernance - Sites - Supprimer", "delete"),
+    ("context.site.approve", "Gouvernance - Sites - Approuver", "approve"),
 ]
 
 # Groups filter follows SYSTEM_GROUPS logic from accounts/constants.py

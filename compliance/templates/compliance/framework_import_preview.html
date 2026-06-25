@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n ui %}
 
-{% block title %}{% trans "Import preview" %} — Cairn{% endblock %}
+{% block title %}{% trans "Import preview" %} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header _("Import preview") %}{% endpage_header %}
@@ -9,7 +9,7 @@
 {% if existing_framework %}
 <div class="alert alert-info">
   <i class="bi bi-info-circle me-1"></i>
-  {% blocktrans with ref=existing_framework.reference name=existing_framework.name new_name=framework.name %}Import into existing framework <strong>{{ ref }} — {{ name }}</strong>. The name will be replaced by <strong>{{ new_name }}</strong>.{% endblocktrans %}
+  {% blocktrans with ref=existing_framework.reference name=existing_framework.name new_name=framework.name %}Import into existing framework <strong>{{ ref }} - {{ name }}</strong>. The name will be replaced by <strong>{{ new_name }}</strong>.{% endblocktrans %}
 </div>
 {% endif %}
 
@@ -74,7 +74,7 @@
       {% if not section.is_virtual %}
       <li style="padding-left: {{ section.depth|add:"-1"|floatformat:"0" }}rem;" class="py-1">
         <i class="bi bi-folder text-warning me-1"></i>
-        <strong>{{ section.reference }}</strong> — {{ section.name }}
+        <strong>{{ section.reference }}</strong> - {{ section.name }}
         {% if section.requirements %}
         <ul class="list-unstyled ms-3 mt-1">
           {% for req in section.requirements %}

@@ -400,4 +400,4 @@ class IndicatorMeasurement(models.Model):
         verbose_name_plural = _("Indicator measurements")
 
     def __str__(self):
-        return f"{self.indicator.reference} — {self.value} ({self.recorded_at:%Y-%m-%d})"
+        return f"{self.indicator.reference} - {self.value} ({self.recorded_at:%Y-%m-%d})"

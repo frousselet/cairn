@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load help_tags %}
 {% load ui %}
-{% block title %}{{ account_user.display_name }} — Cairn{% endblock %}
+{% block title %}{{ account_user.display_name }} - Cairn{% endblock %}
 
 {% block content %}
 {% if account_user.is_robot %}{% translate "Robot account" as user_kind %}{% endif %}

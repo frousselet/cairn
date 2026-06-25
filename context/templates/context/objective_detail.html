@@ -3,7 +3,7 @@
 {% load help_tags %}
 {% load accounts_tags %}
 
-{% block title %}{{ objective.name }} — Cairn{% endblock %}
+{% block title %}{{ objective.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header objective.name reference=objective.reference nav="context:objective-list" accent="context" %}
@@ -22,7 +22,7 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
-          {% grouped_scope_badges objective.scopes.all %}{% if not objective.scopes.all %}<span class="text-muted">—</span>{% endif %}
+          {% grouped_scope_badges objective.scopes.all %}{% if not objective.scopes.all %}<span class="text-muted">-</span>{% endif %}
         </div>
         {% if objective.parent_objective %}
         <div class="mb-3">
@@ -73,10 +73,10 @@
             {% if objective.progress_percentage is not None %}
             <div class="progress" style="height:8px"><div class="progress-bar" style="width:{{ objective.progress_percentage }}%"></div></div>
             <small class="text-muted">{{ objective.progress_percentage }}%</small>
-            {% else %}—{% endif %}
+            {% else %}-{% endif %}
           </dd>
           <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in objective.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">—</span>{% endfor %}</dd>
+          <dd class="mb-0">{% for tag in objective.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}</dd>
         </dl>
       </div>
     </div>
@@ -86,7 +86,7 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <div>
           <div class="text-muted small mb-1">{% trans "Owner" %}</div>
-          {% if objective.owner %}{% user_badge objective.owner size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
+          {% if objective.owner %}{% user_badge objective.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
         </div>
       </div>
     </div>

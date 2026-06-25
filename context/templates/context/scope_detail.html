@@ -3,7 +3,7 @@
 {% load help_tags %}
 {% load accounts_tags %}
 
-{% block title %}{{ scope.name }} — Cairn{% endblock %}
+{% block title %}{{ scope.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header scope.name reference=scope.reference nav="context:scope-list" breadcrumb=scope_breadcrumb accent="context" %}
@@ -146,7 +146,7 @@
           <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
           <dd class="mb-3">{{ scope.version }}</dd>
           <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in scope.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">—</span>{% endfor %}</dd>
+          <dd class="mb-0">{% for tag in scope.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}</dd>
         </dl>
       </div>
     </div>
@@ -159,16 +159,16 @@
           <div class="text-muted small mb-1">{% trans "Managers" %}</div>
           {% for manager in scope.managers.all %}
           <div class="mb-1">{% user_badge manager size=28 link=True block=True %}</div>
-          {% empty %}<span class="text-muted">—</span>{% endfor %}
+          {% empty %}<span class="text-muted">-</span>{% endfor %}
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Created by" %}</div>
-          {% if scope.created_by %}{% user_badge scope.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
+          {% if scope.created_by %}{% user_badge scope.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
         </div>
         {% if approval_enabled is not False %}
         <div>
           <div class="text-muted small mb-1">{% trans "Approved by" %}</div>
-          {% if scope.approved_by %}{% user_badge scope.approved_by size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}
+          {% if scope.approved_by %}{% user_badge scope.approved_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
         </div>
         {% endif %}
       </div>

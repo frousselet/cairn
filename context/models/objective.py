@@ -77,7 +77,7 @@ class Objective(ScopedModel):
         related_name="children",
         verbose_name=_("Parent objective"),
     )
-    # M2M to Measure omitted — module not yet implemented
+    # M2M to Measure omitted - module not yet implemented
     # linked_measures = models.ManyToManyField("measures.Measure", ...)
     review_date = models.DateField(_("Next review date"), null=True, blank=True)
     originating_review = models.ForeignKey(

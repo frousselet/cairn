@@ -27,7 +27,7 @@ def dic_badge(value):
     try:
         level = int(value)
     except (TypeError, ValueError):
-        return "—"
+        return "-"
     color, short = DIC_COLORS.get(level, ("secondary", "?"))
     label = DIC_LABELS.get(level, "?")
     return mark_safe(

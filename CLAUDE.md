@@ -57,20 +57,20 @@ python manage.py collectstatic --noinput  # Collect static files
 
 **Base Models** (`context/models/base.py`):
 
-- `BaseModel` — UUID PK, timestamps, `created_by`, approval workflow fields (`is_approved`, `approved_by`, `approved_at`), versioning, tags. All domain models inherit from this.
-- `ScopedModel` — extends `BaseModel` with many-to-many `scopes` for organizational tenancy.
-- `ReferenceGeneratorMixin` — auto-generates sequential references (e.g., `RISK-1`, `ASST-2`). Subclasses set a 4-char `REFERENCE_PREFIX`.
+- `BaseModel` - UUID PK, timestamps, `created_by`, approval workflow fields (`is_approved`, `approved_by`, `approved_at`), versioning, tags. All domain models inherit from this.
+- `ScopedModel` - extends `BaseModel` with many-to-many `scopes` for organizational tenancy.
+- `ReferenceGeneratorMixin` - auto-generates sequential references (e.g., `RISK-1`, `ASST-2`). Subclasses set a 4-char `REFERENCE_PREFIX`.
 
-**App Structure** — each domain app follows a consistent layout:
+**App Structure** - each domain app follows a consistent layout:
 
-- `models/` — model package with one file per model
-- `views.py` — class-based views (Django generic views)
-- `forms.py` — model forms
-- `urls.py` — web UI URL patterns
-- `api/` — DRF serializers, viewsets, and URL routes under `/api/v1/`
-- `constants.py` — choice tuples and enums
-- `templates/<app>/` — Django templates
-- `tests/` — tests with `factories.py` (factory-boy) and `test_*.py` files
+- `models/` - model package with one file per model
+- `views.py` - class-based views (Django generic views)
+- `forms.py` - model forms
+- `urls.py` - web UI URL patterns
+- `api/` - DRF serializers, viewsets, and URL routes under `/api/v1/`
+- `constants.py` - choice tuples and enums
+- `templates/<app>/` - Django templates
+- `tests/` - tests with `factories.py` (factory-boy) and `test_*.py` files
 
 **URL Structure**:
 
@@ -88,10 +88,10 @@ python manage.py collectstatic --noinput  # Collect static files
 
 **View Mixins** (`core/mixins.py`, `accounts/mixins.py`):
 
-- `SortableListMixin` — server-side sorting with user preferences persisted in `User.table_preferences` JSON field
-- `CreatedByMixin` — auto-populates `created_by` on form save
-- `ApprovalContextMixin` / `ApprovableUpdateMixin` — two-step approval workflow (submit → approve)
-- `ScopeFilterMixin` — filters querysets by user's assigned scopes
+- `SortableListMixin` - server-side sorting with user preferences persisted in `User.table_preferences` JSON field
+- `CreatedByMixin` - auto-populates `created_by` on form save
+- `ApprovalContextMixin` / `ApprovableUpdateMixin` - two-step approval workflow (submit → approve)
+- `ScopeFilterMixin` - filters querysets by user's assigned scopes
 
 **MCP Server** (`mcp/`): JSON-RPC 2.0 server with 40+ tools across all modules. Tool permissions enforced via `@require_perm` decorator. OAuth 2.0 authorization flow for external clients.
 
@@ -114,21 +114,21 @@ Detailed specs live in `docs/modules/` : one directory per module (`m0-accounts/
 - **MCP tools are mandatory**: Every new feature must be exposed as MCP tools in `mcp/tools.py` with accurate docstrings and parameter descriptions. MCP is the primary integration surface for external clients.
 - **API endpoints are mandatory**: Every new feature must include corresponding DRF endpoints in the app's `api/` directory (serializers, viewsets, URL routes under `/api/v1/`).
 - **UI quality in both themes**: All templates and CSS must render correctly in light and dark mode. Test both themes when adding or modifying UI components.
-- **Audit-grade rigor**: This platform supports real compliance audits. Data integrity, traceability, and correctness are critical — approval workflows, versioning, history tracking, and permission checks must never be bypassed or degraded.
+- **Audit-grade rigor**: This platform supports real compliance audits. Data integrity, traceability, and correctness are critical - approval workflows, versioning, history tracking, and permission checks must never be bypassed or degraded.
 - **Mobile-first care**: Always test and ensure UI components render well on mobile. Pay special attention to multi-select widgets, sticky bars, and form layouts on small screens.
 - **Systematic French translations**: Every new user-facing string must be wrapped with `_()` or `{% trans %}` and have a corresponding French translation in `locale/fr/LC_MESSAGES/django.po`. Never leave untranslated strings.
 - **No duplicate translation entries**: After modifying `locale/fr/LC_MESSAGES/django.po`, always verify there are no duplicate `msgid` entries (same `msgid` without different `msgctxt`). Duplicates cause `compilemessages` to fail. If a string already exists in the `.po` file (e.g., from another app/context), use `pgettext_lazy` in Python and `{% trans "..." context "..." %}` in templates to disambiguate, and add the entry with a `msgctxt` line in the `.po` file.
 - **Lifecycle workflows govern every domain element**: all `BaseModel` subclasses run a registered lifecycle workflow (`core/workflow.py`; default 4-state Draft / Pending / Validated / Archived, specific workflows declared per app in `<app>/workflows.py` and assigned via `WORKFLOW_NAME`). Governance is state metadata (`counts_in_reports`, `linkable`, `deletable`): never hardcode status values in reports, pickers or deletion logic - use `reportable()` / `linkable()` / `deletable_states()` and the model properties. New entities with operational stages get a specific workflow generated from their transition constants (single source of truth). The canonical spec is `docs/modules/governance/workflow.md`.
 - **Workflow stepper UI for state transitions**: every detail page renders the generic lifecycle stepper: add `WorkflowStepperMixin` (`accounts/mixins.py`) to the DetailView and `{% include "includes/workflow_stepper.html" %}` to the template. The context is built from the registered workflow (done / current / next / future steps, permission-aware next step, refusal / rework button, branch off-ramp for cancelled / archived, shared comment modal gated by each transition's `requires_comment`). Transitions post to `workflow:transition` by default; views with bespoke side effects set `workflow_transition_url_name`. State badges use `{% workflow_badge obj %}`. Never use simple buttons or status selects for workflow transitions, and never reintroduce per-page stepper markup.
-- **Detail page layout — minimize tabs**: When creating or refactoring detail pages, prefer a **2-column card layout** (main content left, metadata sidebar right) with collapsible sections over Bootstrap nav-tabs. Tabs hide content and increase cognitive load — use them only when truly necessary (e.g., assessment detail with distinct Planning/Findings/History views). For most detail pages, display all information directly using stacked cards, collapsible `<details>` or Bootstrap collapse sections, and a sticky sidebar for key metadata (status, people, dates). Reference `compliance/templates/compliance/action_plan_detail.html` as the canonical example of this pattern.
+- **Detail page layout - minimize tabs**: When creating or refactoring detail pages, prefer a **2-column card layout** (main content left, metadata sidebar right) with collapsible sections over Bootstrap nav-tabs. Tabs hide content and increase cognitive load - use them only when truly necessary (e.g., assessment detail with distinct Planning/Findings/History views). For most detail pages, display all information directly using stacked cards, collapsible `<details>` or Bootstrap collapse sections, and a sticky sidebar for key metadata (status, people, dates). Reference `compliance/templates/compliance/action_plan_detail.html` as the canonical example of this pattern.
 - **Branch workflow**: All commits must be made on a new branch (never directly on `main`). The only exception is the release version bump: when tagging a release, the CHANGELOG promotion commit goes directly on `main` with the exact message ``Bump version `vX.Y.Z` ``.
 - **One session = one branch, always**: all the work done in a single session lives on one and the same branch. Create that branch at the first commit and keep committing to it for every subsequent change in the session, even when later requests are unrelated to the first. Never open a second branch or split a session's work across branches/PRs.
 - **GitHub release on every version tag**: after pushing a version tag, always create the matching GitHub Release: `gh release create vX.Y.Z --title "vX.Y.Z"` with the CHANGELOG section of that version as the notes, ending with the full-changelog comparison link (`https://github.com/frousselet/cairn/compare/vPREV...vX.Y.Z`).
 - **Git author**: All commits must be authored as `Claude <noreply@anthropic.com>`. Use `git commit --author="Claude <noreply@anthropic.com>"` for every commit.
 - **Commit messages in English**: All git commit messages must be written in English, regardless of the conversation language.
 - **English for written deliverables**: All GitHub issues, pull request titles and descriptions, and any specification or design document authored from now on must be written in English, regardless of the conversation language. French remains only for user-facing translated UI strings and pre-existing French content (existing French specs under `docs/modules/` are not retroactively translated unless requested).
-- **English in code**: All code must use English — variable names, constant names, function names, class names, comments, docstrings. French is only used in user-facing translated strings (via `_()`, `pgettext_lazy()`, `{% trans %}`) and DB string values that are already stored.
-- **No em dash character**: Never use the em dash character `—` (U+2014) in code, strings, or display text. Use ` : ` or ` - ` instead.
+- **English in code**: All code must use English - variable names, constant names, function names, class names, comments, docstrings. French is only used in user-facing translated strings (via `_()`, `pgettext_lazy()`, `{% trans %}`) and DB string values that are already stored.
+- **No em dash character**: Never use the em dash character (U+2014) in code, strings, or display text. Use ` : ` or ` - ` instead.
 - **Keep README.md up to date**: After any change that adds, removes or modifies a feature, model, MCP tool, dependency, or configuration, update `README.md` accordingly (feature tables, MCP tools section, tech stack, installation instructions). The README is the public-facing documentation and must always reflect the current state of the codebase.
 - **Keep CHANGELOG.md up to date**: Before committing and before creating a version tag, update `CHANGELOG.md` following the [Keep a Changelog](https://keepachangelog.com/) format. Add entries under `## [Unreleased]` with the appropriate category (Added, Changed, Fixed, Removed). When tagging a release, move the unreleased entries under a new `## [x.y.z] - YYYY-MM-DD` heading and add the comparison link at the bottom of the file.
 - **Brand guidelines must be respected**: Any visual, typographic, motion or component change MUST follow `docs/brand/brand-guidelines.md`. This is the single source of truth for the palette (one identity colour: navy `#1E3A8A`; semantic colours reserved for statuses only), typography (a single family, **GitLab Sans** - an Inter v4 derivative, OFL-1.1, self-hosted via `@font-face`, not a Google Font - used for both `--font-sans` and `--font-display`; hierarchy comes from weight, not a second face: titles `h1`/`h2`/page-header/brand at weight 810 and emphasized KPI / Overall compliance values at 900; **no negative tracking** on titles or KPIs - `letter-spacing: normal`, positive tracking only on uppercase eyebrows/badges; no UPPERCASE on titles), spacing / radii / shadow tokens, iconography (Bootstrap Icons exclusively), component principles (1px borders, soft shadows, calm hover states), motion (`--ease-out`, durations 150/220/320 ms, `prefers-reduced-motion` honoured), accessibility commitments (WCAG 2.2 AA), and voice/tone (sober, precise, action-oriented, bilingual). The logo must use the responsive system: `mark.svg` ≥ 24 px, `mark-sm.svg` ≤ 22 px. If a proposed change cannot be expressed within these constraints, update the guidelines first (with user approval), then apply.

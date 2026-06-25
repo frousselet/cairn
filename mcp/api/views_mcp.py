@@ -83,7 +83,7 @@ class McpEndpointView(View):
         return super().dispatch(request, *args, **kwargs)
 
     def _try_authenticate(self, request):
-        """Best-effort authentication for DELETE — never raises."""
+        """Best-effort authentication for DELETE - never raises."""
         from django.contrib.auth.models import AnonymousUser
 
         request.auth = None

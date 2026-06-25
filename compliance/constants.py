@@ -177,7 +177,7 @@ ACTION_PLAN_TRANSITIONS = {
     ActionPlanStatus.CANCELLED: [],
 }
 
-# Backward transitions (refusal) — require a mandatory comment
+# Backward transitions (refusal) - require a mandatory comment
 ACTION_PLAN_REFUSAL_TRANSITIONS = {
     ActionPlanStatus.TO_VALIDATE: ActionPlanStatus.TO_DEFINE,
     ActionPlanStatus.IMPLEMENTATION_TO_VALIDATE: ActionPlanStatus.TO_IMPLEMENT,

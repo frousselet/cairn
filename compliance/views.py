@@ -360,7 +360,7 @@ class FrameworkImportPreviewView(LoginRequiredMixin, PermissionRequiredMixin, Te
 
         if existing_fw:
             msg = _(
-                "Import into \"%(reference)s — %(name)s\" completed "
+                "Import into \"%(reference)s - %(name)s\" completed "
                 "(%(section_count)s sections, "
                 "%(requirement_count)s requirements added)."
             ) % {
@@ -371,7 +371,7 @@ class FrameworkImportPreviewView(LoginRequiredMixin, PermissionRequiredMixin, Te
             }
         else:
             msg = _(
-                "Framework \"%(reference)s — %(name)s\" imported successfully "
+                "Framework \"%(reference)s - %(name)s\" imported successfully "
                 "(%(section_count)s sections, "
                 "%(requirement_count)s requirements)."
             ) % {
@@ -1281,7 +1281,7 @@ class BulkToggleEvaluatedView(LoginRequiredMixin, PermissionRequiredMixin, View)
             AssessmentStatus.PLANNED,
         )
 
-        # IDs of requirements that have findings — those are locked
+        # IDs of requirements that have findings - those are locked
         finding_req_ids = set(
             assessment.findings.values_list("requirements__id", flat=True)
         )

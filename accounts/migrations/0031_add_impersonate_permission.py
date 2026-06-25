@@ -9,7 +9,7 @@ from django.db import migrations
 NEW_PERMISSIONS = [
     {
         "codename": "system.users.impersonate",
-        "name": "System — Users — Impersonate",
+        "name": "System - Users - Impersonate",
         "module": "system",
         "feature": "users",
         "action": "impersonate",

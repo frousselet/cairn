@@ -104,7 +104,7 @@ class Framework(BaseModel):
         assessment outcome into Requirement.compliance_status /
         compliance_level, so reading those fields here mirrors Section's
         algorithm and stays consistent with the requirement-level source of
-        truth — for both direct edits and assessment-driven flows.
+        truth - for both direct edits and assessment-driven flows.
         """
         from compliance.constants import ComplianceStatus
 

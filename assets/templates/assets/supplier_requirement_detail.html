@@ -3,7 +3,7 @@
 {% load help_tags %}
 {% load accounts_tags %}
 
-{% block title %}{{ req.title }} — {{ supplier.name }} — Cairn{% endblock %}
+{% block title %}{{ req.title }} - {{ supplier.name }} - Cairn{% endblock %}
 
 {% block content %}
 <nav aria-label="breadcrumb" class="mb-3">
@@ -60,7 +60,7 @@
         </span>
         <strong>{{ review.review_date|date:"d/m/Y" }}</strong>
         {% if review.reviewer %}
-        <span style="color:var(--text-muted);font-size:.85rem">— {{ review.reviewer }}</span>
+        <span style="color:var(--text-muted);font-size:.85rem">- {{ review.reviewer }}</span>
         {% endif %}
       </div>
       <a href="{% url 'assets:supplier-requirement-review-delete' review.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" onclick="return confirm('{% trans "Delete this review?" %}')"><i class="bi bi-trash"></i></a>

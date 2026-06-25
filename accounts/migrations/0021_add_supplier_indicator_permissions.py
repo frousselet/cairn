@@ -8,23 +8,23 @@ from django.db import migrations
 
 NEW_PERMISSIONS = [
     # assets.supplier
-    ("assets.supplier.create", "Actifs — Fournisseurs — Créer", "assets", "supplier", "create"),
-    ("assets.supplier.read", "Actifs — Fournisseurs — Lire", "assets", "supplier", "read"),
-    ("assets.supplier.update", "Actifs — Fournisseurs — Modifier", "assets", "supplier", "update"),
-    ("assets.supplier.delete", "Actifs — Fournisseurs — Supprimer", "assets", "supplier", "delete"),
-    ("assets.supplier.approve", "Actifs — Fournisseurs — Approuver", "assets", "supplier", "approve"),
+    ("assets.supplier.create", "Actifs - Fournisseurs - Créer", "assets", "supplier", "create"),
+    ("assets.supplier.read", "Actifs - Fournisseurs - Lire", "assets", "supplier", "read"),
+    ("assets.supplier.update", "Actifs - Fournisseurs - Modifier", "assets", "supplier", "update"),
+    ("assets.supplier.delete", "Actifs - Fournisseurs - Supprimer", "assets", "supplier", "delete"),
+    ("assets.supplier.approve", "Actifs - Fournisseurs - Approuver", "assets", "supplier", "approve"),
     # assets.supplier_dependency
-    ("assets.supplier_dependency.create", "Actifs — Dépendances fournisseurs — Créer", "assets", "supplier_dependency", "create"),
-    ("assets.supplier_dependency.read", "Actifs — Dépendances fournisseurs — Lire", "assets", "supplier_dependency", "read"),
-    ("assets.supplier_dependency.update", "Actifs — Dépendances fournisseurs — Modifier", "assets", "supplier_dependency", "update"),
-    ("assets.supplier_dependency.delete", "Actifs — Dépendances fournisseurs — Supprimer", "assets", "supplier_dependency", "delete"),
-    ("assets.supplier_dependency.approve", "Actifs — Dépendances fournisseurs — Approuver", "assets", "supplier_dependency", "approve"),
+    ("assets.supplier_dependency.create", "Actifs - Dépendances fournisseurs - Créer", "assets", "supplier_dependency", "create"),
+    ("assets.supplier_dependency.read", "Actifs - Dépendances fournisseurs - Lire", "assets", "supplier_dependency", "read"),
+    ("assets.supplier_dependency.update", "Actifs - Dépendances fournisseurs - Modifier", "assets", "supplier_dependency", "update"),
+    ("assets.supplier_dependency.delete", "Actifs - Dépendances fournisseurs - Supprimer", "assets", "supplier_dependency", "delete"),
+    ("assets.supplier_dependency.approve", "Actifs - Dépendances fournisseurs - Approuver", "assets", "supplier_dependency", "approve"),
     # context.indicator
-    ("context.indicator.create", "Gouvernance — Indicateurs — Créer", "context", "indicator", "create"),
-    ("context.indicator.read", "Gouvernance — Indicateurs — Lire", "context", "indicator", "read"),
-    ("context.indicator.update", "Gouvernance — Indicateurs — Modifier", "context", "indicator", "update"),
-    ("context.indicator.delete", "Gouvernance — Indicateurs — Supprimer", "context", "indicator", "delete"),
-    ("context.indicator.approve", "Gouvernance — Indicateurs — Approuver", "context", "indicator", "approve"),
+    ("context.indicator.create", "Gouvernance - Indicateurs - Créer", "context", "indicator", "create"),
+    ("context.indicator.read", "Gouvernance - Indicateurs - Lire", "context", "indicator", "read"),
+    ("context.indicator.update", "Gouvernance - Indicateurs - Modifier", "context", "indicator", "update"),
+    ("context.indicator.delete", "Gouvernance - Indicateurs - Supprimer", "context", "indicator", "delete"),
+    ("context.indicator.approve", "Gouvernance - Indicateurs - Approuver", "context", "indicator", "approve"),
 ]
 
 # Groups filter follows SYSTEM_GROUPS logic from accounts/constants.py

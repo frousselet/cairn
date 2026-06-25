@@ -92,7 +92,7 @@ class ScaleLevel(models.Model):
         verbose_name_plural = _("Scale levels")
 
     def __str__(self):
-        return f"{self.get_scale_type_display()} — {self.level}. {self.name}"
+        return f"{self.get_scale_type_display()} - {self.level}. {self.name}"
 
 
 class RiskLevel(models.Model):

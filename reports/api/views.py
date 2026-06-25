@@ -63,7 +63,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
         fw_names = ", ".join(fw.short_name or fw.name for fw in frameworks)
-        report_name = _("Statement of Applicability") + f" — {fw_names}"
+        report_name = _("Statement of Applicability") + f" - {fw_names}"
 
         try:
             filename, pdf_bytes = generate_soa_pdf(frameworks, request.user)
@@ -108,7 +108,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        report_name = _("Audit report") + f" — {assessment.reference} : {assessment.name}"
+        report_name = _("Audit report") + f" - {assessment.reference} : {assessment.name}"
 
         try:
             filename, pdf_bytes = generate_audit_report_pdf(assessment, request.user)

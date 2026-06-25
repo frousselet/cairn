@@ -558,7 +558,7 @@ def validate_parsed_data(parsed, existing_framework=None):
 
     fw = parsed.get("framework", {})
 
-    # Framework required fields — name is always required (used to rename)
+    # Framework required fields - name is always required (used to rename)
     if not fw.get("name"):
         errors.append(_("The framework 'name' field is required."))
 

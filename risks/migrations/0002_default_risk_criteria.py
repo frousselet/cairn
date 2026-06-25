@@ -13,7 +13,7 @@ def create_default_criteria(apps, schema_editor):
     if RiskCriteria.objects.filter(is_default=True).exists():
         return
 
-    # scope is required (ScopedModel) — use first available scope
+    # scope is required (ScopedModel) - use first available scope
     scope = Scope.objects.order_by("created_at").first()
     if not scope:
         return

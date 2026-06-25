@@ -30,7 +30,7 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
-          <div>{% grouped_scope_badges asset.scopes.all %}{% if not asset.scopes.all %}<span class="text-muted">—</span>{% endif %}</div>
+          <div>{% grouped_scope_badges asset.scopes.all %}{% if not asset.scopes.all %}<span class="text-muted">-</span>{% endif %}</div>
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Type" %}</div>
@@ -160,7 +160,7 @@
           <div>
             {% if asset.parent_asset %}
             <a href="{% url 'assets:support-asset-detail' asset.parent_asset.pk %}" class="cell-link">{{ asset.parent_asset }}</a>
-            {% else %}—{% endif %}
+            {% else %}-{% endif %}
           </div>
         </div>
         {% if children %}
@@ -191,7 +191,7 @@
           <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
           <dd class="mb-3">{{ asset.version|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in asset.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}—{% endfor %}</dd>
+          <dd class="mb-0">{% for tag in asset.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
         </dl>
       </div>
     </div>
@@ -202,11 +202,11 @@
         <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
         <dl class="mb-0">
           <dt class="text-muted small mb-1">{% trans "Owner" %}</dt>
-          <dd class="mb-3">{% if asset.owner %}{% user_badge asset.owner size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}</dd>
+          <dd class="mb-3">{% if asset.owner %}{% user_badge asset.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
           <dt class="text-muted small mb-1">{% trans "Custodian" %}</dt>
-          <dd class="mb-3">{% if asset.custodian %}{% user_badge asset.custodian size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}</dd>
+          <dd class="mb-3">{% if asset.custodian %}{% user_badge asset.custodian size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
           <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-          <dd class="mb-0">{% if asset.created_by %}{% user_badge asset.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">—</span>{% endif %}</dd>
+          <dd class="mb-0">{% if asset.created_by %}{% user_badge asset.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
         </dl>
       </div>
     </div>

@@ -61,7 +61,7 @@ def populate(apps, schema_editor):
             perm, _ = Permission.objects.get_or_create(
                 codename=codename,
                 defaults={
-                    "name": f"{module_label} — {feature_label} — Approuver",
+                    "name": f"{module_label} - {feature_label} - Approuver",
                     "module": module,
                     "feature": feature,
                     "action": "approve",

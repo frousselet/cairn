@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n ui %}
 
-{% block title %}{% if form.instance.pk %}{% trans "Edit" %}{% else %}{% trans "New" %}{% endif %} {% trans "stakeholder" %} — Cairn{% endblock %}
+{% block title %}{% if form.instance.pk %}{% trans "Edit" %}{% else %}{% trans "New" %}{% endif %} {% trans "stakeholder" %} - Cairn{% endblock %}
 
 {% block content %}
 {% if form.instance.pk %}{% trans "Edit stakeholder" as page_title %}{% else %}{% trans "New stakeholder" as page_title %}{% endif %}

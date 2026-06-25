@@ -32,7 +32,7 @@ APP_VERSION = _detect_version()
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
-# Reverse proxy support — trust X-Forwarded-Proto so Django knows the
+# Reverse proxy support - trust X-Forwarded-Proto so Django knows the
 # original request was HTTPS (required for secure cookies, CSRF, etc.).
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 

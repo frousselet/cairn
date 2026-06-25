@@ -104,7 +104,7 @@ Python is managed by [mise](https://mise.jdx.dev/), pinned in [`mise.toml`](../m
   - On **macOS**, Homebrew's gettext is *keg-only*: `brew install gettext` does **not** put `msgfmt` on the `PATH`. Add it explicitly, otherwise `compilemessages` won't find it:
     ```bash
     echo 'export PATH="/opt/homebrew/opt/gettext/bin:$PATH"' >> ~/.zshrc  # Apple Silicon
-    # Intel Macs: /usr/local/opt/gettext/bin   — or: brew link gettext --force
+    # Intel Macs: /usr/local/opt/gettext/bin   - or: brew link gettext --force
     ```
 
 ### Setup

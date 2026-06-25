@@ -63,7 +63,7 @@
         rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jodit@4.2.27/es2021/jodit.min.css">
   <style>
-    /* GitLab Sans (OFL-1.1) — variable body face, self-hosted via the
+    /* GitLab Sans (OFL-1.1) - variable body face, self-hosted via the
        @gitlab/fonts npm package mirrored on jsDelivr (not on Google Fonts). */
     @font-face {
       font-family: 'GitLab Sans';
@@ -82,7 +82,7 @@
     /* ── Design tokens ────────────────────────────────── */
     /*
      * Three-layer token system:
-     *   1. Primitive  (--color-*)  — raw palette, opt-in for component-level overrides
+     *   1. Primitive  (--color-*)  - raw palette, opt-in for component-level overrides
      *   2. Semantic   (--surface, --text-*, --accent, --success, ...)
      *   3. Component  (declared near each component definition)
      *
@@ -91,7 +91,7 @@
      * scale without inventing new hex codes.
      */
     :root {
-      /* Typography — GitLab Sans (Inter v4 derivative, OFL) for body/UI and for
+      /* Typography - GitLab Sans (Inter v4 derivative, OFL) for body/UI and for
          titles / emphasized values (KPI); emphasis comes from weight (700) and
          tighter tracking rather than a separate display face. Single source. */
       --font-sans: 'GitLab Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -109,12 +109,12 @@
       --color-neutral-700: #3F3F46;
       --color-neutral-800: #27272A;
       --color-neutral-900: #18181B;
-      /* Single accent — navy (Cairn identity) */
+      /* Single accent - navy (Cairn identity) */
       --color-navy-300: #93C5FD;
       --color-navy-400: #3B5BB8;
       --color-navy-500: #1E3A8A;
       --color-navy-600: #1E2E5E;
-      /* Semantic tones — muted, used sparingly for status only */
+      /* Semantic tones - muted, used sparingly for status only */
       --color-success: #16A34A;
       --color-warning: #D97706;
       --color-danger:  #DC2626;
@@ -155,7 +155,7 @@
       --radius-lg: .875rem;
       --radius-xl: 1.125rem;
       --radius-2xl: 1.5rem;
-      /* Soft, layered shadows — depth comes from shadows, not outlines */
+      /* Soft, layered shadows - depth comes from shadows, not outlines */
       --shadow-xs: 0 1px 2px rgba(0,0,0,.04);
       --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
       --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.04);
@@ -172,7 +172,7 @@
        * while guaranteeing legible text over any backdrop */
       --surface-glass-strong: rgba(255,255,255,.97);
       --bg-page: var(--color-neutral-50);
-      /* Borders — hairline-thin, no thick variants */
+      /* Borders - hairline-thin, no thick variants */
       --border-light: rgba(0,0,0,.08);
       --border-subtle: rgba(0,0,0,.05);
       --border-hairline: rgba(0,0,0,.03);
@@ -322,7 +322,7 @@
     }
     ::selection { background: var(--accent-soft); color: var(--accent); }
 
-    /* ── Typography ladder — Space Grotesk titles, Inter body ───── */
+    /* ── Typography ladder - Space Grotesk titles, Inter body ───── */
     h1 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; letter-spacing: normal; color: var(--text-primary); line-height: 1.2; }
     h2 { font-family: var(--font-display); font-size: 1.375rem; font-weight: 700; letter-spacing: normal; color: var(--text-primary); line-height: 1.25; }
     h3 { font-size: 1.125rem; font-weight: 600; letter-spacing: normal; color: var(--text-primary); line-height: 1.35; }
@@ -464,7 +464,7 @@
       overflow: visible;
     }
 
-    /* ── Sidebar search field — floating glass ────────── */
+    /* ── Sidebar search field - floating glass ────────── */
     .sidebar-search {
       position: sticky;
       top: 0;
@@ -623,7 +623,7 @@
       color: var(--text-muted);
     }
 
-    /* ── Sidebar user footer — floating glass ─────────── */
+    /* ── Sidebar user footer - floating glass ─────────── */
     .sidebar-footer {
       position: sticky;
       bottom: 0;
@@ -1090,7 +1090,7 @@
       transition: margin-left .35s var(--ease-out-expo), padding .35s var(--ease-out-expo);
     }
 
-    /* ── Vertical rhythm — generous breathing room ────
+    /* ── Vertical rhythm - generous breathing room ────
      * The page header sits alone at the top; substantial gap below
      * lets the first content section land cleanly. Cards, rows and
      * sections all share consistent spacing so a long page reads as
@@ -1123,7 +1123,7 @@
     .main-content .mb-3 { margin-bottom: 1.5rem !important; }
     .main-content .mb-4 { margin-bottom: 2.5rem !important; }
 
-    /* ── Cards — Minimal ─────────────────────────────────
+    /* ── Cards - Minimal ─────────────────────────────────
      * 1px hairline border, no shadow by default. Clickable cards
      * (.card--linked) lift gently on hover via shadow only.
      */
@@ -1150,7 +1150,7 @@
     .card-body { padding: 1.75rem 2rem; }
     .card-title { font-weight: 600; color: var(--text-primary); font-size: .9375rem; letter-spacing: normal; margin-bottom: 1.25rem; }
 
-    /* ── List group — Refined ──────────────────────────── */
+    /* ── List group - Refined ──────────────────────────── */
     .list-group {
       border: 1px solid var(--border-light);
       border-radius: .875rem;
@@ -1343,7 +1343,7 @@
       --bs-table-hover-bg: var(--warning-soft);
     }
 
-    /* ── Table badges — dot-pill style (refined) ───────── */
+    /* ── Table badges - dot-pill style (refined) ───────── */
     .table .badge,
     .badge-dot {
       display: inline-flex;
@@ -1371,7 +1371,7 @@
     .table .badge[style*="background-color"],
     .table .badge[style*="background:"] { gap: 0; }
 
-    /* Success — Active, Approved, Compliant, Fulfilled */
+    /* Success - Active, Approved, Compliant, Fulfilled */
     .table .badge.text-bg-success, .table .badge.bg-success,
     .badge-dot.success {
       background: var(--success-soft) !important;
@@ -1380,7 +1380,7 @@
     .table .badge.text-bg-success::before, .table .badge.bg-success::before,
     .badge-dot.success::before { background: var(--success); }
 
-    /* Warning — High, Pending, In Progress, Partially compliant */
+    /* Warning - High, Pending, In Progress, Partially compliant */
     .table .badge.text-bg-warning, .table .badge.bg-warning,
     .badge-dot.warning {
       background: var(--warning-soft) !important;
@@ -1390,7 +1390,7 @@
     .table .badge.text-bg-warning::before, .table .badge.bg-warning::before,
     .badge-dot.warning::before { background: var(--warning); }
 
-    /* Danger — Critical, Expired, Non-compliant, Overdue */
+    /* Danger - Critical, Expired, Non-compliant, Overdue */
     .table .badge.text-bg-danger, .table .badge.bg-danger,
     .badge-dot.danger {
       background: var(--danger-soft) !important;
@@ -1399,7 +1399,7 @@
     .table .badge.text-bg-danger::before, .table .badge.bg-danger::before,
     .badge-dot.danger::before { background: var(--danger); }
 
-    /* Info — Medium, Under review, Identified */
+    /* Info - Medium, Under review, Identified */
     .table .badge.text-bg-info, .table .badge.bg-info,
     .badge-dot.info {
       background: var(--info-soft) !important;
@@ -1408,7 +1408,7 @@
     .table .badge.text-bg-info::before, .table .badge.bg-info::before,
     .badge-dot.info::before { background: var(--info); }
 
-    /* Primary — Deployed, Active objectives */
+    /* Primary - Deployed, Active objectives */
     .table .badge.text-bg-primary, .table .badge.bg-primary,
     .badge-dot.accent {
       background: var(--accent-soft) !important;
@@ -1417,7 +1417,7 @@
     .table .badge.text-bg-primary::before, .table .badge.bg-primary::before,
     .badge-dot.accent::before { background: var(--accent); }
 
-    /* Secondary — Default, Draft, Not assessed */
+    /* Secondary - Default, Draft, Not assessed */
     .table .badge.text-bg-secondary, .table .badge.bg-secondary,
     .badge-dot.secondary {
       background: var(--surface-subtle) !important;
@@ -1426,7 +1426,7 @@
     .table .badge.text-bg-secondary::before, .table .badge.bg-secondary::before,
     .badge-dot.secondary::before { background: var(--text-muted); }
 
-    /* Dark — Archived, Disposed, Inactive */
+    /* Dark - Archived, Disposed, Inactive */
     .table .badge.text-bg-dark, .table .badge.bg-dark {
       background: var(--surface-subtle) !important;
       color: var(--text-secondary) !important;
@@ -1438,13 +1438,13 @@
     .finding-desc h1, .finding-desc h2, .finding-desc h3,
     .finding-desc ul, .finding-desc ol { margin: 0; }
 
-    /* Light — requirement pills in findings table (no dot) */
+    /* Light - requirement pills in findings table (no dot) */
     .table .badge.text-bg-light, .table .badge.bg-light {
       gap: 0;
     }
     .table .badge.text-bg-light::before, .table .badge.bg-light::before { display: none; }
 
-    /* ── Buttons — Minimal ───────────────────────────────
+    /* ── Buttons - Minimal ───────────────────────────────
      * Single subtle 1px border, soft radius, accent primary,
      * neutral secondaries. Smooth transitions on all state changes.
      */
@@ -1600,7 +1600,7 @@
       line-height: 1.5;
     }
 
-    /* ── Tabs — Underline editorial ────────────────────── */
+    /* ── Tabs - Underline editorial ────────────────────── */
     .nav-tabs {
       border-bottom: 1.5px solid var(--border-light);
       gap: 1rem;
@@ -1629,7 +1629,7 @@
       font-weight: 700;
     }
 
-    /* ── Alerts — Minimal ──────────────────────────────── */
+    /* ── Alerts - Minimal ──────────────────────────────── */
     .alert {
       border-radius: var(--radius-md);
       border: 1px solid transparent;
@@ -1757,7 +1757,7 @@
       white-space: nowrap;
     }
 
-    /* ── Forms — Floating glass fields ───────────────────
+    /* ── Forms - Floating glass fields ───────────────────
      * Form inputs are chrome, not features. Fields use the sidebar
      * search field recipe: translucent glass resting on the surface,
      * soft shadow lift, glass border, brighter on hover, surfacing
@@ -1822,7 +1822,7 @@
     .inline-form-bar .form-control,
     .inline-form-bar .form-select { padding: .375rem .625rem; font-size: .8125rem; }
 
-    /* ── Progress bars — Refined ───────────────────────── */
+    /* ── Progress bars - Refined ───────────────────────── */
     .progress {
       border-radius: 100px;
       background: var(--surface-muted);
@@ -1837,7 +1837,7 @@
       transition: width .6s var(--ease-out-expo);
     }
 
-    /* ── Pagination — Soft chrome ──────────────────────── */
+    /* ── Pagination - Soft chrome ──────────────────────── */
     .page-link {
       border-radius: .625rem;
       font-size: .8125rem;
@@ -1866,7 +1866,7 @@
       opacity: .6;
     }
 
-    /* ── Dropdowns — Soft chrome ───────────────────────── */
+    /* ── Dropdowns - Soft chrome ───────────────────────── */
     .dropdown-menu {
       border-radius: .875rem;
       border: 1px solid var(--border-light);
@@ -1900,7 +1900,7 @@
       margin: .375rem 0;
     }
 
-    /* ── Help banner — Brutalist ──────────────────────── */
+    /* ── Help banner - Brutalist ──────────────────────── */
     .help-banner {
       background: var(--warning-soft);
       border: 2px solid var(--border-light);
@@ -2231,7 +2231,7 @@
       .assistant-thinking .dots span { animation: none; opacity: .6; }
     }
 
-    /* ── Hero section — Brutalist painted slab ────────── */
+    /* ── Hero section - Brutalist painted slab ────────── */
     .hero-section {
       background: var(--accent);
       color: #fff;
@@ -2411,7 +2411,7 @@
     }
     a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-index: 2; }
 
-    /* ── Filter chips — Refined editorial ──────────────── */
+    /* ── Filter chips - Refined editorial ──────────────── */
     .filter-chip {
       display: inline-flex;
       align-items: center;
@@ -2715,7 +2715,7 @@
       .ts-control .item { max-width: 45%; font-size: .78rem; }
     }
 
-    /* ── Jodit — floating glass field (both themes) ───── */
+    /* ── Jodit - floating glass field (both themes) ───── */
     /* The default Jodit chrome (grey segmented toolbar, hard borders)
      * is replaced by the form-field language: a glass card that
      * surfaces on focus, a transparent toolbar over it, and a fading
@@ -2878,7 +2878,7 @@
       color: var(--text-secondary);
       text-align: center;
     }
-    /* ── Modals — theme-aware ─────────────────────────── */
+    /* ── Modals - theme-aware ─────────────────────────── */
     .modal-content {
       background: var(--surface-raised);
       border: 1px solid var(--border-light);
@@ -3080,11 +3080,11 @@
     .scope-tree-locked .scope-tree-label input { cursor: default; }
 
     /* ══════════════════════════════════════════════════
-       DRAWER PANEL — Linear / Notion / Stripe inspired
+       DRAWER PANEL - Linear / Notion / Stripe inspired
        Single-column flow, metadata bar, clean sections
        ══════════════════════════════════════════════════ */
 
-    /* ── Container — Centered modal form ───────────── */
+    /* ── Container - Centered modal form ───────────── */
     #itemDrawer .modal-dialog {
       max-width: min(42rem, 96vw);
     }
@@ -3522,7 +3522,7 @@
     .tabular-nums { font-variant-numeric: tabular-nums; }
     .text-on-accent { color: var(--accent-contrast); }
 
-    /* ── Motion — Clean page + content transitions ──── */
+    /* ── Motion - Clean page + content transitions ──── */
     /*
      * Three reusable animations:
      *   fw-fade-in: 220ms ease-out opacity
@@ -4408,7 +4408,7 @@
       overflow: visible;
     }
 
-    /* ── Impersonation banner — Refined ────────────── */
+    /* ── Impersonation banner - Refined ────────────── */
     .impersonation-banner {
       position: fixed;
       top: 0;
@@ -4609,7 +4609,7 @@
           {# Company logo used as the application brand (configured in company settings). #}
           <img src="{{ company.logo_64|default:company.logo }}" alt="{{ company.name }}">
           {% else %}
-          {# Cairn — primary mark (stepped cairn). Light theme: navy 500 bg. Dark theme: navy 400 bg for better contrast on charcoal surface. #}
+          {# Cairn - primary mark (stepped cairn). Light theme: navy 500 bg. Dark theme: navy 400 bg for better contrast on charcoal surface. #}
           <svg class="logo-light" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#1E3A8A"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
           <svg class="logo-dark" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#3B5BB8"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
           {% endif %}
@@ -4938,7 +4938,7 @@
       <div class="modal-content">
         <div class="modal-body about-modal-content py-4 px-3">
           <div class="about-logo">
-            {# Cairn — primary mark in the About modal #}
+            {# Cairn - primary mark in the About modal #}
             <svg class="logo-light" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#1E3A8A"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
             <svg class="logo-dark" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#3B5BB8"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
           </div>
@@ -6465,7 +6465,7 @@
       if (!chip) return;
 
       var chipUrl = new URL(chip.href, window.location.origin);
-      /* "All" chips link to base URL (no query string) — navigate directly */
+      /* "All" chips link to base URL (no query string) - navigate directly */
       if (!chipUrl.search) return;
 
       e.preventDefault();
@@ -6474,7 +6474,7 @@
 
       clicked.forEach(function(value, key) {
         if (current.get(key) === value) {
-          /* Same value already active — toggle off */
+          /* Same value already active - toggle off */
           current.delete(key);
         } else {
           current.set(key, value);
@@ -6498,7 +6498,7 @@
       if (el.dataset.countAnimated) return;
       var original = el.textContent.trim();
 
-      if (!original || /^[\u2014\u2013—-]$/.test(original)) return;
+      if (!original || /^[\u2014\u2013--]$/.test(original)) return;
 
       var numMatch = original.match(/^([\d\s\u00a0\u202f.,]+)([\s\S]*)$/);
       if (!numMatch) return;
@@ -6574,7 +6574,7 @@
       if (!targetWidth) return;
       bar.dataset.barTarget = targetWidth;
       bar.dataset.barPrepared = '1';
-      /* Start at zero — disable CSS transition so it doesn't flash */
+      /* Start at zero - disable CSS transition so it doesn't flash */
       bar.style.transition = 'none';
       bar.style.width = '0%';
     }

@@ -9,28 +9,28 @@ from django.db import migrations
 NEW_PERMISSIONS = [
     {
         "codename": "system.mcp.access",
-        "name": "Système — Serveur MCP — Accéder",
+        "name": "Système - Serveur MCP - Accéder",
         "module": "system",
         "feature": "mcp",
         "action": "access",
     },
     {
         "codename": "system.oauth.create",
-        "name": "Système — Credentials OAuth — Créer",
+        "name": "Système - Credentials OAuth - Créer",
         "module": "system",
         "feature": "oauth",
         "action": "create",
     },
     {
         "codename": "system.oauth.read",
-        "name": "Système — Credentials OAuth — Lire",
+        "name": "Système - Credentials OAuth - Lire",
         "module": "system",
         "feature": "oauth",
         "action": "read",
     },
     {
         "codename": "system.oauth.delete",
-        "name": "Système — Credentials OAuth — Supprimer",
+        "name": "Système - Credentials OAuth - Supprimer",
         "module": "system",
         "feature": "oauth",
         "action": "delete",

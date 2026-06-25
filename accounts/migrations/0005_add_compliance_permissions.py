@@ -67,7 +67,7 @@ def populate(apps, schema_editor):
         for action in info["actions"]:
             codename = f"compliance.{feature}.{action}"
             action_label = ACTION_LABELS.get(action, action)
-            name = f"{MODULE_LABEL} — {info['label']} — {action_label}"
+            name = f"{MODULE_LABEL} - {info['label']} - {action_label}"
             perm, _ = Permission.objects.get_or_create(
                 codename=codename,
                 defaults={

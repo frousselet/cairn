@@ -90,7 +90,7 @@ class Requirement(BaseModel):
         default="",
     )
     target_date = models.DateField(_("Target date"), null=True, blank=True)
-    # M2M relations (some to modules not yet implemented — commented out)
+    # M2M relations (some to modules not yet implemented - commented out)
     # linked_measures = models.ManyToManyField("measures.Measure", blank=True)
     linked_assets = models.ManyToManyField(
         "assets.EssentialAsset",

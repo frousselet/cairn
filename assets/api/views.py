@@ -82,7 +82,7 @@ class EssentialAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPI
         if request.method == "GET":
             vals = asset.valuations.all()
             return Response(AssetValuationSerializer(vals, many=True).data)
-        # POST — create valuation + update asset DIC (RV-06)
+        # POST - create valuation + update asset DIC (RV-06)
         serializer = AssetValuationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         valuation = serializer.save(
@@ -311,7 +311,7 @@ class AssetGroupViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin
         if request.method == "GET":
             members = group.members.all()
             return Response(SupportAssetListSerializer(members, many=True).data)
-        # POST — add members
+        # POST - add members
         asset_ids = request.data.get("asset_ids", [])
         group.members.add(*asset_ids)
         return Response({"status": "success"})

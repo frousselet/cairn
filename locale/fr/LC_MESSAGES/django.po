@@ -613,8 +613,8 @@ msgid "App version last acknowledged by the user in the changelog popup."
 msgstr "Dernière version de l'application reconnue par l'utilisateur dans le changelog."
 
 
-msgid "Access log — Cairn"
-msgstr "Journal d'accès — Cairn"
+msgid "Access log - Cairn"
+msgstr "Journal d'accès - Cairn"
 
 msgid "Administration"
 msgstr "Administration"
@@ -649,8 +649,8 @@ msgstr "Aucun événement d'accès."
 msgid "Access logs trace every sign-in, sign-out and impersonation attempt. They appear here as soon as activity happens."
 msgstr "Les journaux d'accès tracent chaque connexion, déconnexion et tentative d'usurpation. Ils apparaissent ici dès qu'une activité survient."
 
-msgid "Action log — Cairn"
-msgstr "Journal des actions — Cairn"
+msgid "Action log - Cairn"
+msgstr "Journal des actions - Cairn"
 
 msgid "Action log"
 msgstr "Journal des actions"
@@ -719,8 +719,8 @@ msgstr "Aucun abonnement calendrier actif."
 msgid "Calendar subscriptions let external calendar clients pull Cairn deadlines via iCal. Generate a feed from your profile."
 msgstr "Les abonnements calendrier permettent aux clients calendriers externes de récupérer les échéances Cairn via iCal. Générez un flux depuis votre profil."
 
-msgid "Company settings — Cairn"
-msgstr "Paramètres de l'entreprise — Cairn"
+msgid "Company settings - Cairn"
+msgstr "Paramètres de l'entreprise - Cairn"
 
 msgid "Change logo"
 msgstr "Changer le logo"
@@ -845,8 +845,8 @@ msgstr "Aucun périmètre disponible."
 msgid "Save scopes"
 msgstr "Enregistrer les périmètres"
 
-msgid "Groups — Cairn"
-msgstr "Groupes — Cairn"
+msgid "Groups - Cairn"
+msgstr "Groupes - Cairn"
 
 msgid "Create a group"
 msgstr "Créer un groupe"
@@ -866,8 +866,8 @@ msgstr "Aucun groupe créé pour le moment."
 msgid "Groups bundle related items together so you can apply controls and analyses at the right granularity."
 msgstr "Les groupes rassemblent des éléments connexes pour appliquer contrôles et analyses à la bonne granularité."
 
-msgid "Sign in — Cairn"
-msgstr "Se connecter — Cairn"
+msgid "Sign in - Cairn"
+msgstr "Se connecter - Cairn"
 
 msgid "Sign in to your account"
 msgstr "Connectez-vous à votre compte"
@@ -896,20 +896,20 @@ msgstr "Dernière utilisation"
 msgid "No passkeys registered."
 msgstr "Aucune clé d'accès enregistrée."
 
-msgid "Change password — Cairn"
-msgstr "Changer le mot de passe — Cairn"
+msgid "Change password - Cairn"
+msgstr "Changer le mot de passe - Cairn"
 
 msgid "Change password"
 msgstr "Changer le mot de passe"
 
-msgid "Permissions — Cairn"
-msgstr "Permissions — Cairn"
+msgid "Permissions - Cairn"
+msgstr "Permissions - Cairn"
 
 msgid "No permissions defined."
 msgstr "Aucune permission définie."
 
-msgid "My profile — Cairn"
-msgstr "Mon profil — Cairn"
+msgid "My profile - Cairn"
+msgstr "Mon profil - Cairn"
 
 msgid "My profile"
 msgstr "Mon profil"
@@ -1013,8 +1013,8 @@ msgstr "Créé le"
 msgid "No events."
 msgstr "Aucun événement."
 
-msgid "Users — Cairn"
-msgstr "Utilisateurs — Cairn"
+msgid "Users - Cairn"
+msgstr "Utilisateurs - Cairn"
 
 msgid "Create a user"
 msgstr "Créer un utilisateur"
@@ -2022,7 +2022,7 @@ msgstr "Aucun lien site–fournisseur déclaré."
 
 
 msgid "Map which suppliers operate at which sites - useful for site-level audits and incident scoping."
-msgstr "Cartographiez quels fournisseurs opèrent sur quels sites — utile pour les audits par site et le cadrage d'incident."
+msgstr "Cartographiez quels fournisseurs opèrent sur quels sites - utile pour les audits par site et le cadrage d'incident."
 
 msgid "supplier dependency"
 msgstr "dépendance fournisseur"
@@ -2040,7 +2040,7 @@ msgstr "Aucune dépendance fournisseur déclarée."
 
 
 msgid "Track which assets depend on which suppliers - critical for vendor risk and continuity planning."
-msgstr "Suivez quels actifs dépendent de quels fournisseurs — critique pour le risque tiers et le plan de continuité."
+msgstr "Suivez quels actifs dépendent de quels fournisseurs - critique pour le risque tiers et le plan de continuité."
 
 msgid "Archive this supplier?"
 msgstr "Archiver ce fournisseur ?"
@@ -2511,8 +2511,8 @@ msgstr "Référentiel existant"
 msgid "Leave blank to create a new framework."
 msgstr "Laisser vide pour créer un nouveau référentiel."
 
-msgid "— New framework —"
-msgstr "— Nouveau référentiel —"
+msgid "- New framework -"
+msgstr "- Nouveau référentiel -"
 
 msgid "Framework owner"
 msgstr "Propriétaire du référentiel"
@@ -3173,10 +3173,10 @@ msgstr "Aperçu de l'import"
 
 #, python-format
 msgid ""
-"Import into existing framework <strong>%(ref)s — %(name)s</strong>. The name "
+"Import into existing framework <strong>%(ref)s - %(name)s</strong>. The name "
 "will be replaced by <strong>%(new_name)s</strong>."
 msgstr ""
-"Import dans le référentiel existant <strong>%(ref)s — %(name)s</strong>. Le "
+"Import dans le référentiel existant <strong>%(ref)s - %(name)s</strong>. Le "
 "nom sera remplacé par <strong>%(new_name)s</strong>."
 
 msgid "Imported data"
@@ -3316,18 +3316,18 @@ msgstr "Erreur d'import : %(error)s"
 
 #, python-format
 msgid ""
-"Import into \"%(reference)s — %(name)s\" completed (%(section_count)s "
+"Import into \"%(reference)s - %(name)s\" completed (%(section_count)s "
 "sections, %(requirement_count)s requirements added)."
 msgstr ""
-"Import dans « %(reference)s — %(name)s » terminé (%(section_count)s "
+"Import dans « %(reference)s - %(name)s » terminé (%(section_count)s "
 "sections, %(requirement_count)s exigences ajoutées)."
 
 #, python-format
 msgid ""
-"Framework \"%(reference)s — %(name)s\" imported successfully "
+"Framework \"%(reference)s - %(name)s\" imported successfully "
 "(%(section_count)s sections, %(requirement_count)s requirements)."
 msgstr ""
-"Référentiel « %(reference)s — %(name)s » importé avec succès "
+"Référentiel « %(reference)s - %(name)s » importé avec succès "
 "(%(section_count)s sections, %(requirement_count)s exigences)."
 
 #, python-format
@@ -3492,17 +3492,17 @@ msgstr "Opportunité"
 msgid "Threat"
 msgstr "Menace"
 
-msgid "SO — Leverage"
-msgstr "SO — Tirer parti"
+msgid "SO - Leverage"
+msgstr "SO - Tirer parti"
 
-msgid "ST — Confront"
-msgstr "ST — Confronter"
+msgid "ST - Confront"
+msgstr "ST - Confronter"
 
-msgid "WO — Improve"
-msgstr "WO — Améliorer"
+msgid "WO - Improve"
+msgstr "WO - Améliorer"
 
-msgid "WT — Avoid"
-msgstr "WT — Éviter"
+msgid "WT - Avoid"
+msgstr "WT - Éviter"
 
 msgid "Support"
 msgstr "Support"
@@ -4508,8 +4508,8 @@ msgstr ""
 "et une réinitialisation de l'approbation. Si aucun n'est sélectionné, tous "
 "les changements sont considérés comme majeurs."
 
-msgid "— Select a model —"
-msgstr "— Sélectionner un modèle —"
+msgid "- Select a model -"
+msgstr "- Sélectionner un modèle -"
 
 msgid "Model identifier"
 msgstr "Identifiant du modèle"
@@ -4830,8 +4830,8 @@ msgstr "Code d'autorisation OAuth"
 msgid "OAuth authorization codes"
 msgstr "Codes d'autorisation OAuth"
 
-msgid "Authorize — Cairn"
-msgstr "Autoriser — Cairn"
+msgid "Authorize - Cairn"
+msgstr "Autoriser - Cairn"
 
 msgid "An application is requesting access to your account"
 msgstr "Une application demande l'accès à votre compte"
@@ -5545,8 +5545,8 @@ msgstr "Supprimer la décision"
 
 #,, python-format
 #| msgid "Signed in as <strong>%(email)s</strong>"
-msgid "Delete decision <strong>%(ref)s — %(title)s</strong>?"
-msgstr "Supprimer la décision <strong>%(ref)s — %(title)s</strong> ?"
+msgid "Delete decision <strong>%(ref)s - %(title)s</strong>?"
+msgstr "Supprimer la décision <strong>%(ref)s - %(title)s</strong> ?"
 
 
 
@@ -5593,8 +5593,8 @@ msgstr "Supprimer le changement SMSI"
 
 #,, python-format
 #| msgid "Signed in as <strong>%(email)s</strong>"
-msgid "Delete ISMS change <strong>%(ref)s — %(title)s</strong>?"
-msgstr "Supprimer le changement SMSI <strong>%(ref)s — %(title)s</strong> ?"
+msgid "Delete ISMS change <strong>%(ref)s - %(title)s</strong>?"
+msgstr "Supprimer le changement SMSI <strong>%(ref)s - %(title)s</strong> ?"
 
 
 msgid "Edit ISMS change"
@@ -5611,8 +5611,8 @@ msgstr "Supprimer la revue de direction"
 
 #,, python-format
 #| msgid "Signed in as <strong>%(email)s</strong>"
-msgid "Delete management review <strong>%(ref)s — %(title)s</strong>?"
-msgstr "Supprimer la revue de direction <strong>%(ref)s — %(title)s</strong> ?"
+msgid "Delete management review <strong>%(ref)s - %(title)s</strong>?"
+msgstr "Supprimer la revue de direction <strong>%(ref)s - %(title)s</strong> ?"
 
 
 msgid "This action cannot be undone. All linked decisions, ISMS changes, comments and participants will be removed."
@@ -5899,8 +5899,8 @@ msgstr "Niveau résiduel"
 msgid "Res."
 msgstr "Rés."
 
-msgid "Res. —"
-msgstr "Rés. —"
+msgid "Res. -"
+msgstr "Rés. -"
 
 msgid "ISO 27005"
 msgstr "ISO 27005"
@@ -7088,9 +7088,9 @@ msgid "Remediation guidance"
 msgstr "Guide de remédiation"
 
 #,, python-format
-#| msgid "Acceptance — %(risk)s"
+#| msgid "Acceptance - %(risk)s"
 msgid "Acceptance - %(risk)s"
-msgstr "Acceptation — %(risk)s"
+msgstr "Acceptation - %(risk)s"
 
 
 
@@ -8512,8 +8512,8 @@ msgstr "Sélectionnez un modèle pour voir les champs disponibles."
 msgid "No configurable fields for this model."
 msgstr "Aucun champ configurable pour ce modèle."
 
-msgid "Versioning — Cairn"
-msgstr "Versionnement — Cairn"
+msgid "Versioning - Cairn"
+msgstr "Versionnement - Cairn"
 
 msgid "Versioning & approval"
 msgstr "Versioning et approbation"

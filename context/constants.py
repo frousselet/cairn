@@ -149,10 +149,10 @@ class SwotQuadrant(models.TextChoices):
 
 
 class SwotStrategyQuadrant(models.TextChoices):
-    SO = "so", _("SO — Leverage")
-    ST = "st", _("ST — Confront")
-    WO = "wo", _("WO — Improve")
-    WT = "wt", _("WT — Avoid")
+    SO = "so", _("SO - Leverage")
+    ST = "st", _("ST - Confront")
+    WO = "wo", _("WO - Improve")
+    WT = "wt", _("WT - Avoid")
 
 
 class RoleType(models.TextChoices):

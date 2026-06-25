@@ -392,7 +392,7 @@ def _build_permission_name(module, feature, action):
     feature_info = PERMISSION_REGISTRY.get(module, {}).get(feature, {})
     feature_label = feature_info.get("label", feature)
     action_label = ACTION_LABELS.get(action, action)
-    return f"{module_label} — {feature_label} — {action_label}"
+    return f"{module_label} - {feature_label} - {action_label}"
 
 
 def get_all_permissions():

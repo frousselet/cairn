@@ -50,7 +50,7 @@ class Scope(BaseModel):
         verbose_name=_("Managers"),
         help_text=_("Users responsible for this scope. Managers automatically have access to this scope."),
     )
-    # M2M to Referential omitted — module not yet implemented
+    # M2M to Referential omitted - module not yet implemented
     # applicable_standards = models.ManyToManyField("referential.Referential", ...)
     effective_date = models.DateField(
         _("Effective date"), null=True, blank=True

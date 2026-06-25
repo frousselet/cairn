@@ -90,7 +90,7 @@
       </div>
     </a>
     {% else %}
-    {# Empty placeholder — skeleton bars + "+" overlay #}
+    {# Empty placeholder - skeleton bars + "+" overlay #}
     <div class="stat-card h-100 position-relative" style="min-height:130px;overflow:hidden;cursor:pointer;border:1px solid var(--border-light);background:var(--surface-raised)"
          data-bs-toggle="modal" data-bs-target="#indicatorPickerModal">
       <div style="opacity:.35">
@@ -246,7 +246,7 @@
     modal.addEventListener('hidden.bs.modal', function() { location.reload(); });
   }
 
-  // ── SVG sparklines — delegate to global function ──
+  // ── SVG sparklines - delegate to global function ──
   if (window.initSparklines) window.initSparklines();
 })();
 </script>

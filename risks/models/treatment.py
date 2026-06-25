@@ -204,4 +204,4 @@ class TreatmentAction(models.Model):
         verbose_name_plural = _("Treatment actions")
 
     def __str__(self):
-        return f"Action {self.order} — {self.description[:50]}"
+        return f"Action {self.order} - {self.description[:50]}"

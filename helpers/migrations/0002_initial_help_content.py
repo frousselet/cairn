@@ -137,8 +137,8 @@ HELP_CONTENT_FR = [
             "Les relations de dépendance lient les biens essentiels aux biens supports "
             "qui les portent. Chaque dépendance est caractérisée par son type "
             "(hébergement, traitement, accès, transport), sa criticité et son niveau "
-            "de redondance. Les points uniques de défaillance (SPOF) — biens supports "
-            "critiques sans redondance — sont automatiquement détectés et signalés."
+            "de redondance. Les points uniques de défaillance (SPOF) - biens supports "
+            "critiques sans redondance - sont automatiquement détectés et signalés."
         ),
     },
     {

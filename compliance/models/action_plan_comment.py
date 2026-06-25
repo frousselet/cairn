@@ -38,7 +38,7 @@ class ActionPlanComment(models.Model):
         verbose_name_plural = _("Action plan comments")
 
     def __str__(self):
-        return f"{self.author} — {self.created_at:%Y-%m-%d %H:%M}"
+        return f"{self.author} - {self.created_at:%Y-%m-%d %H:%M}"
 
     def clean(self):
         if self.parent and self.parent.parent_id is not None:

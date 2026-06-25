@@ -9,21 +9,21 @@ from django.db import migrations
 NEW_PERMISSIONS = [
     {
         "codename": "reports.report.create",
-        "name": "Reports — Reports — Create",
+        "name": "Reports - Reports - Create",
         "module": "reports",
         "feature": "report",
         "action": "create",
     },
     {
         "codename": "reports.report.read",
-        "name": "Reports — Reports — Read",
+        "name": "Reports - Reports - Read",
         "module": "reports",
         "feature": "report",
         "action": "read",
     },
     {
         "codename": "reports.report.delete",
-        "name": "Reports — Reports — Delete",
+        "name": "Reports - Reports - Delete",
         "module": "reports",
         "feature": "report",
         "action": "delete",

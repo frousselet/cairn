@@ -85,17 +85,17 @@ urlpatterns = [
     path("tags/<uuid:pk>/delete/", views.TagDeleteView.as_view(), name="tag-delete"),
     # Inline tag creation (AJAX)
     path("tags/create-inline/", views.tag_create_inline, name="tag-create-inline"),
-    # Indicators — Organizational
+    # Indicators - Organizational
     path("indicators/organizational/", views.IndicatorListView.as_view(indicator_type=IndicatorType.ORGANIZATIONAL), name="indicator-organizational-list"),
     path("indicators/organizational/create/", views.IndicatorCreateView.as_view(indicator_type=IndicatorType.ORGANIZATIONAL), name="indicator-organizational-create"),
-    # Indicators — Technical
+    # Indicators - Technical
     path("indicators/technical/", views.IndicatorListView.as_view(indicator_type=IndicatorType.TECHNICAL), name="indicator-technical-list"),
     path("indicators/technical/create/", views.IndicatorCreateView.as_view(indicator_type=IndicatorType.TECHNICAL), name="indicator-technical-create"),
-    # Indicators — Predefined
+    # Indicators - Predefined
     path("indicators/predefined/create/", views.PredefinedIndicatorCreateView.as_view(), name="indicator-predefined-create"),
-    # Indicators — table body (HTMX)
+    # Indicators - table body (HTMX)
     path("indicators/table-body/", views.IndicatorTableBodyView.as_view(), name="indicator-table-body"),
-    # Indicators — shared CRUD
+    # Indicators - shared CRUD
     path("indicators/<uuid:pk>/", views.IndicatorDetailView.as_view(), name="indicator-detail"),
     path("indicators/<uuid:pk>/edit/", views.IndicatorUpdateView.as_view(), name="indicator-update"),
     path("indicators/<uuid:pk>/delete/", views.IndicatorDeleteView.as_view(), name="indicator-delete"),
