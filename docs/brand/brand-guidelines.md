@@ -583,6 +583,13 @@ remains :
 The footer is **sticky** to the modal so the primary action is reachable
 without scrolling regardless of step height.
 
+**Constant height across steps.** A multi-step modal **never resizes when
+navigating** between steps : its body height is fixed to the tallest step
+so Back / Next never make the dialog jump. This is achieved with CSS only -
+the steps are stacked in a single grid cell (`.mform-steps`) and inactive
+steps stay in layout (`visibility:hidden`, not `display:none`), so the cell
+is always sized to the tallest step. No JS measurement is involved.
+
 ### Anatomy of a field
 
 The four parts of any field, always in this order: label, control,
