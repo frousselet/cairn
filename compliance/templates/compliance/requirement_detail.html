@@ -45,9 +45,11 @@
         </div>
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Applicable" %}</div>
-          <div>{% if requirement.is_applicable %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</div>
+          <div>{% if requirement.is_applicable %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}
+          {% if requirement.framework.applicability_managed_by_risks %}<span class="badge text-bg-info ms-1" title="{% trans 'Applicability is derived automatically from linked risks for this framework.' %}"><i class="bi bi-shield-check me-1"></i>{% trans "Risk-driven" %}</span>{% endif %}
+          </div>
         </div>
-        {% if not requirement.is_applicable %}
+        {% if requirement.framework.applicability_managed_by_risks or not requirement.is_applicable %}
         <div class="mb-3">
           <div class="text-muted small mb-1">{% trans "Justification" %}</div>
           <div>{{ requirement.applicability_justification|default:"-" }}</div>

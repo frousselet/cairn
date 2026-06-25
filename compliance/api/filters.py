@@ -26,6 +26,7 @@ class FrameworkFilter(django_filters.FilterSet):
             "category": ["exact"],
             "is_mandatory": ["exact"],
             "is_applicable": ["exact"],
+            "applicability_managed_by_risks": ["exact"],
             "status": ["exact"],
             "owner": ["exact"],
         }

@@ -96,6 +96,12 @@
       <div class="card mb-4">
         <div class="card-header"><h6 class="mb-0"><i class="bi bi-check2-circle me-2" style="color:var(--accent)"></i>{% trans "Applicability" %}</h6></div>
         <div class="card-body">
+          {% if form.applicability_is_managed %}
+          <div class="alert alert-info d-flex align-items-start gap-2 py-2 px-3 mb-3" role="alert">
+            <i class="bi bi-shield-check mt-1"></i>
+            <div class="small">{% trans "This framework derives applicability from risks. A requirement is applicable when at least one active risk is linked to it; these fields are read-only." %}</div>
+          </div>
+          {% endif %}
           <div class="mb-3">
             <div class="form-check">
               {{ form.is_applicable }}

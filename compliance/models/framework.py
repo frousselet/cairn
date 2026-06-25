@@ -40,6 +40,16 @@ class Framework(BaseModel):
     applicability_justification = models.TextField(
         _("Applicability justification"), blank=True, default=""
     )
+    applicability_managed_by_risks = models.BooleanField(
+        _("Risk-driven applicability"),
+        default=False,
+        help_text=_(
+            "When enabled, each requirement's applicability is derived "
+            "automatically from its linked risks: applicable when at least one "
+            "active risk is linked, not applicable otherwise. The applicability "
+            "fields then become read-only on requirements of this framework."
+        ),
+    )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,

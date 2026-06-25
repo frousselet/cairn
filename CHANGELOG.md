@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Risk-driven applicability for compliance requirements**: a new per-framework option, **Risk-driven applicability** (`Framework.applicability_managed_by_risks`), makes a framework derive each of its requirements' applicability automatically from the risk register instead of by hand. A requirement is **applicable** as soon as at least one of its linked risks is in an active (reportable) lifecycle state - per `core.workflow.reportable`, so an analyzed/evaluated/treated/... risk counts while a freshly `identified` one does not - and **not applicable** when no active risk is linked. `Requirement.is_applicable` stays a stored field (so the Statement of Applicability, the section/framework compliance recalculation and every `is_applicable` filter keep working unchanged) and is kept in sync by signals: linking/unlinking a risk (from either side, via the UI, REST, MCP `link/unlink/set_risk_requirements` or seeds), a linked risk changing lifecycle state, deleting a linked risk (cascade/bulk included), creating or editing a requirement, and switching the option on (which recomputes every requirement of the framework). While the option is on, a requirement's `is_applicable` and `applicability_justification` become **read-only** in the UI, the REST API and MCP (any supplied value is ignored and the justification is filled automatically); switching the option off freezes the computed values and restores manual control. The option is exposed on the framework form and detail page, on the requirement form and detail page (a "Risk-driven" badge), through the `Framework` / `Requirement` REST serializers and filters, and via the `create_framework` / `update_framework` MCP tools (with `applicability_managed_by_risks`). Documented in `docs/modules/m3-compliance/framework.md` and `requirement.md`.
+
 ## [0.32.0] - 2026-06-25
 
 ### Added
