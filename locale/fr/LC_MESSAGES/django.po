@@ -10864,3 +10864,27 @@ msgstr "Enregistrer le filtre courant"
 
 msgid "No saved filter yet."
 msgstr "Aucun filtre enregistré."
+
+msgid "Administrators"
+msgstr "Administrateurs"
+
+msgid "System groups"
+msgstr "Groupes système"
+
+msgid "Custom groups"
+msgstr "Groupes personnalisés"
+
+msgid "Modules"
+msgstr "Modules"
+
+msgid "Successful logins"
+msgstr "Connexions réussies"
+
+msgid "Failed logins"
+msgstr "Connexions échouées"
+
+msgid "Last 24h"
+msgstr "Dernières 24 h"
+
+msgid "Total entries"
+msgstr "Total des entrées"

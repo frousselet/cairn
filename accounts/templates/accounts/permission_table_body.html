@@ -1,0 +1,11 @@
+{% load i18n ui %}
+{% for perm in permissions %}
+<tr>
+  <td data-col="codename"><code>{{ perm.codename }}</code></td>
+  <td data-col="module">{{ perm.module_label }}</td>
+  <td data-col="feature">{{ perm.feature_label }}</td>
+  <td data-col="action"><span class="badge bg-light text-dark border">{{ perm.get_action_display }}</span></td>
+</tr>
+{% empty %}
+{% empty_state title=_("No permissions defined.") message=_("Permissions are the building blocks of access control. They are seeded automatically from the application's feature registry.") colspan=4 %}
+{% endfor %}

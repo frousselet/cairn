@@ -1,0 +1,21 @@
+{% load i18n ui accounts_tags %}
+{% has_perm "system.groups.update" as can_update %}
+{% for group in groups %}
+<tr>
+  <td data-col="name">
+    <span class="cell-stack">
+      <span><a href="{% url 'accounts:group-detail' group.pk %}" class="cell-link" style="font-weight:600">{{ group.name }}</a>{% if group.is_system %} <span class="badge bg-info" style="font-size:.65rem">{% trans "System" %}</span>{% endif %}</span>
+      {% if group.description %}<span class="cell-sub" title="{{ group.description }}">{{ group.description }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="users">{{ group.user_count }}</td>
+  <td data-col="permissions">{{ group.permission_count }}</td>
+  <td class="text-end" data-col="actions">
+    {% if can_update %}
+    <a href="{% url 'accounts:group-update' group.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No group created yet.") message=_("Groups bundle related items together so you can apply controls and analyses at the right granularity.") colspan=4 %}
+{% endfor %}

@@ -7,7 +7,6 @@
 
 {% block content %}
 {% has_perm "system.groups.create" as can_create %}
-{% has_perm "system.groups.update" as can_update %}
 {% page_header _("Groups") nav="accounts:group-list" accent="accounts" %}
   {% if can_create %}
   <a href="{% url 'accounts:group-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'Create a group' %}</a>
@@ -17,48 +16,35 @@
 
 <div class="list-layout">
   <div class="list-main">
-{% include "includes/table_search.html" %}
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "name" "Name" col="name" %}
+              <th data-col="users">{% trans "Users" %}</th>
+              <th data-col="permissions">{% trans "Permissions" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'accounts:group-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "accounts/group_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          {% sortable_th "name" "Name" %}
-          <th>{% trans "Users" %}</th>
-          <th>{% trans "Permissions" %}</th>
-          <th class="text-end">{% trans "Actions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for group in groups %}
-        <tr>
-          <td>
-            <span class="cell-stack">
-              <span><a href="{% url 'accounts:group-detail' group.pk %}" class="cell-link" style="font-weight:600">{{ group.name }}</a>{% if group.is_system %} <span class="badge bg-info" style="font-size:.65rem">{% trans "System" %}</span>{% endif %}</span>
-              {% if group.description %}<span class="cell-sub" title="{{ group.description }}">{{ group.description }}</span>{% endif %}
-            </span>
-          </td>
-          <td>{{ group.user_count }}</td>
-          <td>{{ group.permission_count }}</td>
-          <td class="text-end">
-            {% if can_update %}
-            <a href="{% url 'accounts:group-update' group.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No group created yet.") message=_("Groups bundle related items together so you can apply controls and analyses at the right granularity.") colspan=4 %}
-        {% endfor %}
-      </tbody>
-    </table>
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-
-{% include "includes/pagination.html" %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}

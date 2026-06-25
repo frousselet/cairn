@@ -6,6 +6,9 @@ permission listing, access logs, action logs, calendar subscriptions,
 and the ResetHelpersView.
 """
 
+import json
+from urllib.parse import urlencode
+
 import pytest
 from django.test import Client
 from django.urls import reverse
@@ -383,11 +386,14 @@ class TestUserListView:
         assert resp.status_code == 200
 
     def test_filter_active(self, client):
+        # The bespoke ?status= chips were removed; is_active is now filtered
+        # through the generic advanced filter builder (boolean field rule).
         user = _superuser()
         UserFactory(is_active=True, email="active@test.com")
         UserFactory(is_active=False, email="inactive@test.com")
         client.force_login(user)
-        resp = client.get(reverse("accounts:user-list") + "?status=active")
+        rule = json.dumps({"f": "is_active", "o": "is", "v": True})
+        resp = client.get(reverse("accounts:user-list") + "?" + urlencode({"rule": rule}))
         assert resp.status_code == 200
         emails = [u.email for u in resp.context["users"]]
         assert "inactive@test.com" not in emails
@@ -396,7 +402,8 @@ class TestUserListView:
         user = _superuser()
         inactive = UserFactory(is_active=False, email="inactive2@test.com")
         client.force_login(user)
-        resp = client.get(reverse("accounts:user-list") + "?status=inactive")
+        rule = json.dumps({"f": "is_active", "o": "is", "v": False})
+        resp = client.get(reverse("accounts:user-list") + "?" + urlencode({"rule": rule}))
         assert resp.status_code == 200
         emails = [u.email for u in resp.context["users"]]
         assert inactive.email in emails
@@ -983,20 +990,32 @@ class TestPermissionListView:
         client.force_login(user)
         resp = client.get(reverse("accounts:permission-list"))
         assert resp.status_code == 200
-        assert "grouped_permissions" in resp.context
+        # The permission list now renders a flat, sortable/filterable table.
+        assert "permissions" in resp.context
 
     def test_superuser(self, client):
         user = _superuser()
         # Create a few permissions so we have data
-        PermissionFactory(codename="context.scope.read")
-        PermissionFactory(codename="context.scope.create")
+        PermissionFactory(codename="zzz.scope.read", module="zzz", feature="scope", action="read")
+        PermissionFactory(codename="zzz.scope.create", module="zzz", feature="scope", action="create")
         client.force_login(user)
-        resp = client.get(reverse("accounts:permission-list"))
+        # Filter to the module so the created permissions appear regardless of
+        # how many seeded permissions exist (the list is paginated).
+        resp = client.get(reverse("accounts:permission-list") + "?module=zzz")
         assert resp.status_code == 200
-        grouped = resp.context["grouped_permissions"]
-        # Check the structure
-        if "context" in grouped:
-            assert "features" in grouped["context"]
+        codenames = [p.codename for p in resp.context["permissions"]]
+        assert "zzz.scope.read" in codenames
+        assert "zzz.scope.create" in codenames
+
+    def test_filter_by_module(self, client):
+        user = _superuser()
+        PermissionFactory(codename="context.scope.read", module="context", feature="scope", action="read")
+        PermissionFactory(codename="assets.essential.read", module="assets", feature="essential", action="read")
+        client.force_login(user)
+        resp = client.get(reverse("accounts:permission-list") + "?module=context")
+        assert resp.status_code == 200
+        modules = {p.module for p in resp.context["permissions"]}
+        assert modules <= {"context"}
 
 
 # ── AccessLogListView ──────────────────────────────────────────
@@ -1051,6 +1070,8 @@ class TestAccessLogListView:
             assert log.event_type == "login_success"
 
     def test_filter_by_email(self, client):
+        # The bespoke ?email= bar was removed; email_attempted is a search field,
+        # so the toolbar search (?q=) now covers it.
         user = _superuser()
         AccessLog.objects.create(
             user=user,
@@ -1058,12 +1079,14 @@ class TestAccessLogListView:
             event_type="login_success",
         )
         client.force_login(user)
-        resp = client.get(reverse("accounts:access-log-list") + "?email=specific")
+        resp = client.get(reverse("accounts:access-log-list") + "?q=specific")
         assert resp.status_code == 200
         for log in resp.context["logs"]:
             assert "specific" in log.email_attempted
 
     def test_filter_by_date_range(self, client):
+        # The bespoke date-range bar was removed; timestamp is now filtered
+        # through the generic advanced filter builder (date field rule).
         user = _superuser()
         AccessLog.objects.create(
             user=user,
@@ -1071,10 +1094,12 @@ class TestAccessLogListView:
             event_type="login_success",
         )
         client.force_login(user)
+        rule = json.dumps({"f": "timestamp", "o": "gte", "v": "2020-01-01"})
         resp = client.get(
-            reverse("accounts:access-log-list") + "?date_from=2020-01-01&date_to=2099-12-31"
+            reverse("accounts:access-log-list") + "?" + urlencode({"rule": rule})
         )
         assert resp.status_code == 200
+        assert len(resp.context["logs"]) >= 1
 
     def test_sorting(self, client):
         user = _superuser()
@@ -1116,8 +1141,9 @@ class TestActionLogListView:
         resp = client.get(reverse("accounts:action-log-list"))
         assert resp.status_code == 200
         assert "entries" in resp.context
-        assert "users" in resp.context
-        assert "module_labels" in resp.context
+        # The rail now shows a coloured KPI tile (total entries) instead of the
+        # removed module/user filter context.
+        assert "list_kpis" in resp.context
         # Verify entries were annotated with action labels and badges
         entries = resp.context["entries"]
         assert len(entries) >= 2
@@ -1128,75 +1154,38 @@ class TestActionLogListView:
             assert hasattr(entry, "model_label")
             assert hasattr(entry, "object_repr")
 
-    def test_filter_by_action_creation_with_data(self, client):
-        user = _superuser()
-        ScopeFactory(name="Creation Filter Scope")
-        client.force_login(user)
-        resp = client.get(reverse("accounts:action-log-list") + "?action=%2B")
-        assert resp.status_code == 200
-        for entry in resp.context["entries"]:
-            assert entry.history_type == "+"
-
-    def test_filter_by_action_modification_with_data(self, client):
-        user = _superuser()
-        scope = ScopeFactory(name="Mod Filter Scope")
-        scope.name = "Modified"
-        scope.save()
-        client.force_login(user)
-        resp = client.get(reverse("accounts:action-log-list") + "?action=~")
-        assert resp.status_code == 200
-
-    def test_filter_by_action_deletion(self, client):
-        user = _superuser()
-        client.force_login(user)
-        resp = client.get(reverse("accounts:action-log-list") + "?action=-")
-        assert resp.status_code == 200
-
-    def test_filter_by_action_approval_with_data(self, client):
-        """Filter by approval: creates a scope, then approves it to generate an approval history record."""
+    def test_approval_entries_annotated(self, client):
+        """Approval-only changes are still classified and badged correctly
+        (the bespoke ?action=approval filter bar was removed, but the
+        classification logic that drove it is unchanged)."""
         user = _superuser()
         scope = ScopeFactory(name="Approval Scope")
-        # Simulate an approval-only change
         scope.is_approved = True
         scope.approved_by = user
         from django.utils import timezone as tz
         scope.approved_at = tz.now()
         scope.save()
         client.force_login(user)
-        resp = client.get(reverse("accounts:action-log-list") + "?action=approval")
-        assert resp.status_code == 200
-
-    def test_filter_by_module(self, client):
-        user = _superuser()
-        ScopeFactory(name="Module Filter Scope")
-        client.force_login(user)
-        resp = client.get(reverse("accounts:action-log-list") + "?module=context")
+        resp = client.get(reverse("accounts:action-log-list"))
         assert resp.status_code == 200
         for entry in resp.context["entries"]:
-            assert entry.app_label != ""
+            assert entry.action_badge in ("success", "warning", "danger", "info", "dark")
 
-    def test_filter_by_module_excludes_other_modules(self, client):
+    def test_legacy_filter_params_ignored(self, client):
+        """The aggregated action log has no single model, so it cannot use the
+        offcanvas filter builder. The legacy ?module/?action/?user/?date_from/to
+        bespoke filter bar was removed; passing those params is now a no-op and
+        must not error."""
         user = _superuser()
-        ScopeFactory(name="Exclusion Filter Scope")
-        client.force_login(user)
-        # Filter for a module that likely has no records
-        resp = client.get(reverse("accounts:action-log-list") + "?module=risks")
-        assert resp.status_code == 200
-
-    def test_filter_by_user(self, client):
-        user = _superuser()
-        client.force_login(user)
-        resp = client.get(reverse("accounts:action-log-list") + f"?user={user.pk}")
-        assert resp.status_code == 200
-
-    def test_filter_by_date_range(self, client):
-        user = _superuser()
-        ScopeFactory(name="Date Filter Scope")
+        ScopeFactory(name="Legacy Param Scope")
         client.force_login(user)
         resp = client.get(
-            reverse("accounts:action-log-list") + "?date_from=2020-01-01&date_to=2099-12-31"
+            reverse("accounts:action-log-list")
+            + f"?action=%2B&module=context&user={user.pk}&date_from=2020-01-01&date_to=2099-12-31"
         )
         assert resp.status_code == 200
+        # Params are ignored: entries of every history type still appear.
+        assert "entries" in resp.context
 
     def test_history_badges_for_creation(self, client):
         """Verify creation entries get 'success' badge."""

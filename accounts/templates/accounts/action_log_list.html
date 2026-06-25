@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load help_tags ui %}
 {% load i18n %}
+
 {% block title %}{% trans "Action log — Cairn" %}{% endblock %}
 
 {% block content %}
@@ -9,96 +10,46 @@
 
 <div class="list-layout">
   <div class="list-main">
-<form id="filterForm" method="get">
-  <input type="hidden" name="module" value="{{ request.GET.module|default:'' }}">
-  <input type="hidden" name="action" value="{{ request.GET.action|default:'' }}">
-  <input type="hidden" name="user" value="{{ request.GET.user|default:'' }}">
-  <input type="hidden" name="date_from" value="{{ request.GET.date_from|default:'' }}">
-  <input type="hidden" name="date_to" value="{{ request.GET.date_to|default:'' }}">
-</form>
-<div class="filter-bar">
-  <div class="filter-bar-group">
-    <span class="filter-bar-label">{% trans "Module" %}</span>
-    <a href="#" class="filter-pill{% if not request.GET.module %} active{% endif %}" onclick="setPill('module','');return false">{% trans "All" %}</a>
-    {% for key, label in module_labels.items %}
-    <a href="#" class="filter-pill{% if request.GET.module == key %} active{% endif %}" onclick="setPill('module','{{ key }}');return false">{{ label }}</a>
-    {% endfor %}
-  </div>
-  <div class="filter-bar-sep"></div>
-  <div class="filter-bar-group">
-    <span class="filter-bar-label">{% trans "Action" %}</span>
-    <a href="#" class="filter-pill{% if not request.GET.action %} active{% endif %}" onclick="setPill('action','');return false">{% trans "All" %}</a>
-    <a href="#" class="filter-pill{% if request.GET.action == '+' %} active{% endif %}" onclick="setPill('action','+');return false"><i class="bi bi-plus-circle"></i> {% trans "Creation" %}</a>
-    <a href="#" class="filter-pill{% if request.GET.action == '~' %} active{% endif %}" onclick="setPill('action','~');return false"><i class="bi bi-pencil"></i> {% trans "Modification" %}</a>
-    <a href="#" class="filter-pill{% if request.GET.action == '-' %} active{% endif %}" onclick="setPill('action','-');return false"><i class="bi bi-trash"></i> {% trans "Deletion" %}</a>
-    <a href="#" class="filter-pill{% if request.GET.action == 'approval' %} active{% endif %}" onclick="setPill('action','approval');return false"><i class="bi bi-check-circle"></i> {% trans "Approval" %}</a>
-  </div>
-  <div class="filter-bar-sep"></div>
-  <div class="filter-bar-group">
-    <span class="filter-bar-label">{% trans "User" %}</span>
-    <a href="#" class="filter-pill{% if not request.GET.user %} active{% endif %}" onclick="setPill('user','');return false">{% trans "All" %}</a>
-    {% for u in users %}
-    <a href="#" class="filter-pill{% if request.GET.user == u.pk|slugify %} active{% endif %}" onclick="setPill('user','{{ u.pk }}');return false">{{ u.display_name }}</a>
-    {% endfor %}
-  </div>
-  <div class="filter-bar-sep"></div>
-  <div class="filter-bar-group">
-    <span class="filter-bar-label">{% trans "Period" %}</span>
-    <input type="date" name="date_from" form="filterForm" class="form-control" value="{{ request.GET.date_from|default:'' }}" onchange="this.form.submit()">
-    <input type="date" name="date_to" form="filterForm" class="form-control" value="{{ request.GET.date_to|default:'' }}" onchange="this.form.submit()">
-  </div>
-  {% if request.GET.module or request.GET.action or request.GET.user or request.GET.date_from or request.GET.date_to %}
-  <a href="{% url 'accounts:action-log-list' %}" class="filter-pill" title="{% trans 'Clear' %}"><i class="bi bi-x-lg"></i> {% trans "Clear" %}</a>
-  {% endif %}
-</div>
-<script>
-function setPill(param, value) {
-  var f = document.getElementById('filterForm');
-  var input = f.querySelector('input[name="'+param+'"]');
-  if (input) input.value = value;
-  f.submit();
-}
-</script>
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover table-sm mb-0">
-      <thead>
-        <tr>
-          <th>{% trans "Date" %}</th>
-          <th>{% trans "User" %}</th>
-          <th>{% trans "Object" %}</th>
-          <th>{% trans "Action" %}</th>
-          <th>{% trans "Item" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for entry in entries %}
-        <tr>
-          <td>{{ entry.history_date|date:"d/m/Y H:i:s" }}</td>
-          <td>{% if entry.history_user %}{{ entry.history_user }}{% else %}{% trans "System" %}{% endif %}</td>
-          <td>
-            <span class="cell-stack">
-              <span>{{ entry.model_label }}</span>
-              <span class="cell-sub">{{ entry.app_label }}</span>
-            </span>
-          </td>
-          <td>
-            <span class="badge text-bg-{{ entry.action_badge }}">{{ entry.action_label }}</span>
-          </td>
-          <td title="{{ entry.object_repr }}">{{ entry.object_repr|truncatechars:80 }}</td>
-        </tr>
-        {% empty %}
-        {% empty_state title=_("No actions recorded yet.") message=_("Action logs trace every state-changing action across the platform. Useful for audit trails and incident investigation.") colspan=5 %}
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0">
+          <thead>
+            <tr>
+              <th>{% trans "Date" %}</th>
+              <th>{% trans "User" %}</th>
+              <th>{% trans "Object" %}</th>
+              <th>{% trans "Action" %}</th>
+              <th>{% trans "Item" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in entries %}
+            <tr>
+              <td>{{ entry.history_date|date:"d/m/Y H:i:s" }}</td>
+              <td>{% if entry.history_user %}{{ entry.history_user }}{% else %}{% trans "System" %}{% endif %}</td>
+              <td>
+                <span class="cell-stack">
+                  <span>{{ entry.model_label }}</span>
+                  <span class="cell-sub">{{ entry.app_label }}</span>
+                </span>
+              </td>
+              <td>
+                <span class="badge text-bg-{{ entry.action_badge }}">{{ entry.action_label }}</span>
+              </td>
+              <td title="{{ entry.object_repr }}">{{ entry.object_repr|truncatechars:80 }}</td>
+            </tr>
+            {% empty %}
+            {% empty_state title=_("No actions recorded yet.") message=_("Action logs trace every state-changing action across the platform. Useful for audit trails and incident investigation.") colspan=5 %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-{% include "includes/pagination.html" %}
+    {% include "includes/pagination.html" %}
   </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
 {% endblock %}

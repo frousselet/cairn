@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load help_tags ui %}
 {% load i18n %}
+{% load table_tags %}
 {% block title %}{% trans "Permissions — Cairn" %}{% endblock %}
 
 {% block content %}
@@ -9,28 +10,35 @@
 
 <div class="list-layout">
   <div class="list-main">
-{% for mod_key, mod_data in grouped_permissions.items %}
-<div class="card mb-4">
-  <div class="card-header"><strong>{{ mod_data.label }}</strong></div>
-  <div class="card-body p-0">
-    {% for feat_key, feat_data in mod_data.features.items %}
-    <div class="px-3 py-2 {% if not forloop.last %}border-bottom{% endif %}">
-      <h6 class="mb-2">{{ feat_data.label }}</h6>
-      <div class="d-flex flex-wrap gap-2">
-        {% for perm in feat_data.permissions %}
-        <span class="badge bg-light text-dark border"><code>{{ perm.codename }}</code> - {{ perm.get_action_display }}</span>
-        {% endfor %}
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "codename" "Codename" col="codename" %}
+              {% sortable_th "module" "Module" col="module" %}
+              {% sortable_th "feature" "Feature" col="feature" %}
+              {% sortable_th "action" "Action" col="action" %}
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'accounts:permission-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "accounts/permission_table_body.html" %}
+          </tbody>
+        </table>
       </div>
     </div>
-    {% endfor %}
+
+    {% include "includes/pagination.html" %}
   </div>
-</div>
-{% empty %}
-<div class="alert alert-info">{% trans "No permissions defined." %}</div>
-{% endfor %}
-  </div>
-  <aside class="list-rail">
-    {% include "includes/list_rail_summary.html" %}
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
   </aside>
 </div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 {% endblock %}
