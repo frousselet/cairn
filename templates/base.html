@@ -7537,11 +7537,38 @@
         return ok;
       }
 
+      /* Smoothly tween the modal's height when the active step (and thus its
+         content height) changes, so the dialog morphs instead of snapping.
+         FLIP : measure before, swap step, measure after, animate between. */
+      var content = document.getElementById('drawer-form-content');
+      var reduceMotion = false;
+      try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) {}
+
+      function goTo(idx) {
+        if (reduceMotion || !content) { current = idx; render(); return; }
+        var start = content.offsetHeight;
+        current = idx;
+        render();
+        var end = content.offsetHeight;
+        if (start === end) return;
+        content.style.height = start + 'px';
+        content.style.overflow = 'hidden';
+        void content.offsetHeight; /* reflow so the start height sticks */
+        content.style.transition = 'height 260ms cubic-bezier(.16,1,.3,1)';
+        content.style.height = end + 'px';
+        content.addEventListener('transitionend', function te(e) {
+          if (e.target !== content || e.propertyName !== 'height') return;
+          content.style.transition = '';
+          content.style.height = '';
+          content.style.overflow = '';
+          content.removeEventListener('transitionend', te);
+        });
+      }
+
       function advance() {
         if (!validateCurrent()) return;
         if (current < steps.length - 1) {
-          current++;
-          render();
+          goTo(current + 1);
         } else {
           /* Last step : spin the check and submit (HTMX intercepts). */
           nextBtn.classList.add('is-loading');
@@ -7554,9 +7581,9 @@
       /* Persistent shell arrows : assign (not add) so re-init never stacks
          duplicate handlers. */
       nextBtn.onclick = advance;
-      prevBtn.onclick = function() { if (current > 0) { current--; render(); } };
+      prevBtn.onclick = function() { if (current > 0) { goTo(current - 1); } };
       pills.forEach(function(p, i) {
-        p.onclick = function() { if (i < current) { current = i; render(); } };
+        p.onclick = function() { if (i < current) { goTo(i); } };
       });
       /* Enter advances / submits instead of submitting the form prematurely. */
       form.addEventListener('keydown', function(e) {
@@ -7571,6 +7598,11 @@
     function initModalForm() {
       var root = document.getElementById('drawer-form-content');
       if (!root) return;
+      /* Drop any leftover inline height/transition from a step animation that
+         was interrupted by a re-render, so the fresh content sizes naturally. */
+      root.style.height = '';
+      root.style.transition = '';
+      root.style.overflow = '';
       var form = root.querySelector('form[data-mform]');
       if (!form || form.dataset.mformReady) return;
       form.dataset.mformReady = '1';
