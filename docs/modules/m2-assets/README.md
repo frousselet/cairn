@@ -254,7 +254,7 @@ The module is accessible through a main navigation item "Asset Management" that 
 
 ### 5.5 "Dependency mapping" view
 
-- **Interactive graph:** Graph visualization of the relationships between essential assets and support assets. Nodes are colored by asset type, edges annotated by dependency type. Zoom, filtering by type/criticality, highlighting of SPOFs.
+- **Interactive graph:** Layered (Sugiyama) graph visualization of the relationships between essential assets, support assets, sites and suppliers. Nodes are ranked into columns following the natural dependency flow (Essential -> Support -> Site -> Supplier) so edges flow one way and the graph stays readable instead of collapsing into a force-directed "hairball". Nodes are colored by asset type, with zoom/pan, an orientation toggle (left-to-right / top-to-bottom, defaulting to horizontal and remembered per device in the `depgraph_orientation` cookie) and highlighting of SPOFs (thicker red edges). Edges are drawn thick with directional arrowheads; nodes are fixed by the layout (no drag) and edges are unlabelled to reduce clutter. Node and edge boxes are sized from the measured caption widths so labels never overlap, the gap between asset-type ranks is sized so the few type ranks span their own axis of the viewport and all fit on screen (top-to-bottom: the type bands fit the height while the populated horizontal axis is panned; left-to-right: the mirror image across the width), and the view is scaled to show as much as possible (refitting on resize) down to a minimum readable zoom, below which the graph stays legible and overflows (anchored top-left for panning) rather than shrinking into illegibility. The layout is computed client-side with dagre; rendering stays on D3.
 - **Dependency matrix:** Cross-tabulated view of essential assets x support assets with criticality indicators and dependency type in each cell.
 - **View by essential asset:** Selection of an essential asset to display all its associated support assets as a tree.
 
@@ -426,7 +426,15 @@ Bulk asset import (CSV, JSON) is processed asynchronously:
 
 ### 10.3 Dependency graph
 
-The dependency graph visualization relies on a dedicated API endpoint that returns data in the following format:
+The dependency graph is rendered with a **layered (Sugiyama) layout** computed
+client-side by [dagre](https://github.com/dagrejs/dagre) and drawn with D3: the
+view feeds dagre the nodes and edges, ranks them into columns along the
+dependency flow (`rankdir: LR`, flippable to `TB`), then reads back the node
+positions and edge waypoints to draw the same circles, supplier logos, SPOF
+styling and tooltips as before. This replaced the previous force-directed
+layout, which produced an unreadable "hairball" beyond a few dozen nodes.
+
+The visualization relies on a dedicated API endpoint that returns data in the following format:
 
 ```json
 {

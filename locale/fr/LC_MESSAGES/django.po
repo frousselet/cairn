@@ -10942,3 +10942,11 @@ msgstr ""
 "Ce référentiel détermine l'applicabilité à partir des risques. Une exigence "
 "est applicable lorsqu'au moins un risque actif lui est associé ; ces champs "
 "sont en lecture seule."
+
+#: assets/templates/assets/dependency_graph.html
+msgid "Orientation"
+msgstr "Orientation"
+
+#: assets/templates/assets/dependency_graph.html
+msgid "Toggle layout orientation"
+msgstr "Changer l'orientation de la disposition"

@@ -172,6 +172,17 @@ class TestPageHeaderTag:
         out = render('{% page_header "Title" %}{% endpage_header %}')
         assert "page-header__eyebrow" not in out
 
+    def test_compact_renders_static_compact_form(self):
+        out = render('{% page_header "Title" compact=True %}{% endpage_header %}')
+        assert "is-compact" in out
+        assert "page-header--static-compact" in out
+        assert "data-page-header-static-compact" in out
+
+    def test_not_compact_by_default(self):
+        out = render('{% page_header "Title" %}{% endpage_header %}')
+        assert "is-compact" not in out
+        assert "data-page-header-static-compact" not in out
+
 
 # ───────────────────────── kpi_card ────────────────────────────────────
 

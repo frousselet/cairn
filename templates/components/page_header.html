@@ -1,5 +1,5 @@
 {% load i18n %}
-<div class="page-header{% if accent %} page-header--accent page-header--accent-{{ accent }}{% endif %}" data-page-header>
+<div class="page-header{% if accent %} page-header--accent page-header--accent-{{ accent }}{% endif %}{% if compact %} is-compact page-header--static-compact{% endif %}" data-page-header{% if compact %} data-page-header-static-compact{% endif %}>
   <div class="page-header__main">
     {% if logo %}<img src="{{ logo }}" alt="" class="page-header__logo">{% elif icon %}<i class="bi bi-{{ icon }} page-header__icon" aria-hidden="true"></i>{% endif %}
     <div class="page-header__text">

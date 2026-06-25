@@ -862,6 +862,7 @@
     }
     .sidebar-collapsed .main-content {
       margin-left: calc(var(--sidebar-collapsed-w) + var(--sidebar-inset) * 2);
+      --main-offset: calc(var(--sidebar-collapsed-w) + var(--sidebar-inset) * 2);
       padding-right: calc(var(--sidebar-collapsed-w) + var(--sidebar-inset) * 2);
     }
     /* Brand: hide text, center icon */
@@ -1084,10 +1085,27 @@
     /* ── Main content ──────────────────────────────────── */
     .main-content {
       margin-left: calc(var(--sidebar-w) + var(--sidebar-inset) * 2);
+      /* Distance from the viewport's left edge to the main area (the sidebar
+         zone). Exposed so the page-header can break its background out to the
+         main area's edges (flush with the sidebar and the screen's right). */
+      --main-offset: calc(var(--sidebar-w) + var(--sidebar-inset) * 2);
       padding: 7rem 3.25rem 5rem;
       min-height: 100vh;
       background: var(--bg-page);
+      /* Clip the page-header's full-bleed breakout so it never adds a horizontal
+         scrollbar. `clip` (unlike hidden/auto) does not create a scroll
+         container, so the sticky header keeps sticking to the viewport. */
+      overflow-x: clip;
       transition: margin-left .35s var(--ease-out-expo), padding .35s var(--ease-out-expo);
+    }
+
+    /* Full-bleed page header: the background band spans the whole main area
+       (flush with the sidebar on the left and the screen edge on the right),
+       while the title/actions stay aligned with the page content via inner
+       padding. The horizontal "margins" thus live INSIDE the header box. */
+    .main-content > .container-xl > .page-header {
+      margin-inline: calc(50% - 50vw + var(--main-offset, 0px) / 2);
+      padding-inline: calc(50vw - 50% - var(--main-offset, 0px) / 2);
     }
 
     /* ── Vertical rhythm - generous breathing room ────
@@ -3009,7 +3027,7 @@
       .sidebar-collapse-toggle { display: none !important; }
       /* Reset collapsed state on mobile */
       .sidebar-collapsed .sidebar { width: calc(100vw - var(--sidebar-inset) * 2); max-width: var(--sidebar-w); }
-      .sidebar-collapsed .main-content { margin-left: 0; padding-right: 1rem; }
+      .sidebar-collapsed .main-content { margin-left: 0; --main-offset: 0px; padding-right: 1rem; }
       .sidebar-collapsed .sidebar-brand { justify-content: flex-start; padding: 1.25rem 1.25rem 1.125rem; flex-direction: row; }
       .sidebar-collapsed .sidebar-brand a { gap: .5rem; }
       .sidebar-collapsed .sidebar-brand .sidebar-link-text { width: auto; height: auto; overflow: visible; opacity: 1; position: static; }
@@ -3027,7 +3045,7 @@
       .sidebar-collapsed .sidebar-body .collapsing { display: block !important; }
       .sidebar-collapsed .sidebar-sub { display: block; padding-left: 3.125rem; }
       .sidebar-collapsed .sidebar-tooltip { display: none !important; }
-      .main-content { margin-left: 0; padding: 6rem 1rem 3.5rem; }
+      .main-content { margin-left: 0; --main-offset: 0px; padding: 6rem 1rem 3.5rem; }
       .main-content h1 { font-size: 1.625rem; }
       .main-content h2 { font-size: 1.25rem; }
       .main-content hr { margin: 1.5rem 0; }
@@ -3702,6 +3720,9 @@
       -webkit-mask-image: none;
       mask-image: none;
     }
+    /* A statically compact bar (full-height, non-scrolling pages such as the
+     * dependency graph) keeps the compact size AND the gradient/blur fade, so
+     * the content below dissolves under it exactly like a pinned bar. */
     /* Compact form once pinned: smaller title, eyebrow + subtitle collapse,
      * tighter padding. The gradient + size change read as "scrolled". */
     .page-header.is-compact {
@@ -5178,6 +5199,10 @@
       var header = document.querySelector('[data-page-header]');
       if (!header || header._compactBound) return;
       header._compactBound = true;
+      // Pages that opt into a permanently compact bar (full-height, non-scrolling
+      // views) keep the collapsed form: don't bind the scroll observer, which
+      // would expand it back once the bar sits fully in view.
+      if (header.hasAttribute('data-page-header-static-compact')) return;
       if (!('IntersectionObserver' in window)) return;
       var io = new IntersectionObserver(function (entries) {
         header.classList.toggle('is-compact', entries[0].intersectionRatio < 1);
