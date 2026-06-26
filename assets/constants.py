@@ -246,8 +246,9 @@ class AssetGroupStatus(models.TextChoices):
 # ── Supplier ───────────────────────────────────────────────
 
 class SupplierStatus(models.TextChoices):
-    ACTIVE = "active", _("Active")
+    # Declaration order is the lifecycle order shown by the workflow stepper.
     UNDER_EVALUATION = "under_evaluation", _("Under evaluation")
+    ACTIVE = "active", _("Active")
     SUSPENDED = "suspended", _("Suspended")
     ARCHIVED = "archived", _("Archived")
 
@@ -257,6 +258,13 @@ class SupplierCriticality(models.TextChoices):
     MEDIUM = "medium", _("Medium")
     HIGH = "high", _("High")
     CRITICAL = "critical", _("Critical")
+
+
+class ContractStatus(models.TextChoices):
+    DRAFT = "draft", _("Draft")
+    ACTIVE = "active", _("Active")
+    EXPIRED = "expired", _("Expired")
+    TERMINATED = "terminated", _("Terminated")
 
 
 class SupplierRequirementStatus(models.TextChoices):

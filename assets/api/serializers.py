@@ -6,6 +6,7 @@ from assets.models import (
     AssetValuation,
     EssentialAsset,
     Supplier,
+    SupplierContact,
     SupplierDependency,
     SupplierRequirement,
     SupportAsset,
@@ -172,6 +173,17 @@ class SupplierRequirementSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
+class SupplierContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupplierContact
+        fields = [
+            "id", "supplier", "name", "profession", "service",
+            "email", "phone", "role",
+            "created_at", "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
 class SupplierSerializer(serializers.ModelSerializer):
     type = serializers.PrimaryKeyRelatedField(
         queryset=SupplierType.objects.all(),
@@ -188,7 +200,7 @@ class SupplierSerializer(serializers.ModelSerializer):
             "id", "scopes", "reference", "name", "description",
             "type", "criticality", "owner",
             "contact_name", "contact_email", "contact_phone",
-            "website", "address", "country",
+            "website", "address", "country", "latitude", "longitude",
             "contract_reference", "contract_start_date", "contract_end_date",
             "status", "notes", "tags",
             "requirement_count",

@@ -120,3 +120,6 @@ if SUPPORT_ASSET_WORKFLOW_NAME not in WORKFLOW_REGISTRY:
     )
 else:
     SUPPORT_ASSET_WORKFLOW = WORKFLOW_REGISTRY[SUPPORT_ASSET_WORKFLOW_NAME]
+
+# NB: the supplier no longer runs a core.workflow workflow - it was migrated to
+# the standardised core.lifecycle engine (see assets/lifecycles.py).

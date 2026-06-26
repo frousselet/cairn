@@ -10,6 +10,7 @@ from django.utils.translation import gettext as _
 from django.views import View
 
 from context.models.base import BaseModel
+from core.lifecycle import LifecycleError
 from core.workflow import (
     PermissionDeniedError,
     WorkflowError,
@@ -46,25 +47,30 @@ class WorkflowTransitionView(LoginRequiredMixin, View):
 
         target = request.POST.get("target_status", "")
         comment = request.POST.get("comment", "").strip() or None
-        workflow = obj.get_workflow()
-        current = obj.workflow_state or workflow.initial_state.code
 
         def has_perm(codename):
             return user.is_superuser or user.has_perm(codename)
 
         try:
-            validate_transition(
-                workflow, current, target,
-                has_perm=has_perm,
-                perm_namespace=obj.workflow_perm_namespace,
-                comment=comment,
-            )
-            obj.transition_to(target, user, comment=comment)
+            if obj.get_lifecycle() is not None:
+                # Standardised engine: validation, application and history all
+                # happen inside transition_to. Role/form gating is a later phase.
+                obj.transition_to(target, user, comment=comment, enforce_permission=False)
+            else:
+                workflow = obj.get_workflow()
+                current = obj.workflow_state or workflow.initial_state.code
+                validate_transition(
+                    workflow, current, target,
+                    has_perm=has_perm,
+                    perm_namespace=obj.workflow_perm_namespace,
+                    comment=comment,
+                )
+                obj.transition_to(target, user, comment=comment)
         except PermissionDeniedError:
             messages.error(
                 request, _("You do not have permission to perform this transition.")
             )
-        except WorkflowError as exc:
+        except (WorkflowError, LifecycleError) as exc:
             messages.error(request, str(exc))
         else:
             messages.success(

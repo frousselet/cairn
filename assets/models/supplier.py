@@ -62,6 +62,9 @@ class SupplierTypeRequirement(models.Model):
 
 class Supplier(ScopedModel):
     REFERENCE_PREFIX = "SUPP"
+    # Runs the standardised lifecycle engine (core/lifecycle.py): the
+    # audit-proof supplier-risk lifecycle. ``workflow_state`` holds the step.
+    LIFECYCLE_NAME = "supplier"
 
     name = models.CharField(_("Name"), max_length=255)
     description = models.TextField(_("Description"), blank=True, default="")
@@ -97,6 +100,8 @@ class Supplier(ScopedModel):
     country = models.CharField(
         _("Country"), max_length=100, blank=True, default=""
     )
+    latitude = models.FloatField(_("Latitude"), null=True, blank=True)
+    longitude = models.FloatField(_("Longitude"), null=True, blank=True)
     contract_reference = models.CharField(
         _("Contract reference"), max_length=255, blank=True, default=""
     )
@@ -116,7 +121,7 @@ class Supplier(ScopedModel):
         _("Status"),
         max_length=20,
         choices=SupplierStatus.choices,
-        default=SupplierStatus.ACTIVE,
+        default=SupplierStatus.UNDER_EVALUATION,
     )
     notes = models.TextField(_("Notes"), blank=True, default="")
 
@@ -161,6 +166,36 @@ class Supplier(ScopedModel):
             "partially_compliant": reqs.filter(compliance_status=SupplierRequirementStatus.PARTIALLY_COMPLIANT).count(),
             "not_assessed": reqs.filter(compliance_status=SupplierRequirementStatus.NOT_ASSESSED).count(),
         }
+
+
+class SupplierContact(models.Model):
+    """A contact person at a supplier. A supplier may have several."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.CASCADE,
+        related_name="contacts",
+        verbose_name=_("Supplier"),
+    )
+    name = models.CharField(_("Name"), max_length=255)
+    profession = models.CharField(_("Profession"), max_length=255, blank=True, default="")
+    service = models.CharField(_("Service"), max_length=255, blank=True, default="")
+    email = models.EmailField(_("Email"), blank=True, default="")
+    phone = models.CharField(_("Phone"), max_length=50, blank=True, default="")
+    role = models.CharField(_("Role"), max_length=100, blank=True, default="")
+    created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
+
+    history = HistoricalRecords()
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = _("Supplier contact")
+        verbose_name_plural = _("Supplier contacts")
+
+    def __str__(self):
+        return self.name
 
 
 class SupplierRequirement(models.Model):

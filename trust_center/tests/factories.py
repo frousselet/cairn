@@ -21,7 +21,10 @@ def validate_framework(framework):
 
 
 def validate_supplier(supplier):
-    supplier.workflow_state = "validated"
+    # Publishable as a subprocessor = ACTIVE status AND a reportable lifecycle
+    # step (here: a completed, compliant review).
+    supplier.status = "active"
+    supplier.workflow_state = "compliant"
     supplier.is_approved = True
     supplier.save()
     return supplier

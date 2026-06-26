@@ -1,0 +1,27 @@
+{% load i18n %}
+{% comment %}
+Standardised-engine lifecycle stepper. The main flow (Draft + intermediate
+steps) is drawn as a connected, wrapping line; a step that is the target of an
+available transition is clickable (forward = right arrow, back = left arrow).
+The Archived exit(s) are detached on a second row (reachable from any state),
+clickable when archiving is available.
+{% endcomment %}
+<div class="stepper stepper--wrap">
+  <div class="stepper__container" id="{{ lc_container_id }}">
+    <div class="stepper__row stepper__row--wrap d-flex flex-wrap align-items-center justify-content-center gap-0" role="list" aria-label="{% trans 'Lifecycle steps' %}">
+      {% for step in lc_steps %}
+        {% if not forloop.first %}
+          <div class="stepper__line stepper__line--{% if step.state == 'done' or step.state == 'current' %}done{% else %}pending{% endif %}" aria-hidden="true"></div>
+        {% endif %}
+        {% include "components/_lifecycle_pill.html" with step=step %}
+      {% endfor %}
+    </div>
+    {% if lc_exits %}
+    <div class="stepper__exits d-flex flex-wrap align-items-center justify-content-center gap-2" role="list" aria-label="{% trans 'Exit' %}">
+      {% for step in lc_exits %}
+        {% include "components/_lifecycle_pill.html" with step=step %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>

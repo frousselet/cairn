@@ -2045,6 +2045,17 @@ msgstr "Suivez quels actifs dépendent de quels fournisseurs - critique pour le 
 msgid "Archive this supplier?"
 msgstr "Archiver ce fournisseur ?"
 
+msgid "Archive supplier"
+msgstr "Archiver le fournisseur"
+
+#, python-format
+msgid ""
+"This will archive <strong>%(name)s</strong>. Archived suppliers are kept for "
+"the audit trail but excluded from active lists."
+msgstr ""
+"Cette action archivera <strong>%(name)s</strong>. Les fournisseurs archivés "
+"sont conservés pour la piste d'audit mais exclus des listes actives."
+
 msgid "The contract for this supplier has expired"
 msgstr "Le contrat de ce fournisseur a expiré"
 
@@ -2211,6 +2222,10 @@ msgstr "Détails techniques"
 msgid "Lifecycle"
 msgstr "Cycle de vie"
 
+#, python-format
+msgid "%(entity)s lifecycle"
+msgstr "Cycle de vie : %(entity)s"
+
 msgid "Env."
 msgstr "Env."
 
@@ -2234,6 +2249,73 @@ msgstr "Élément approuvé."
 
 msgid "Supplier archived."
 msgstr "Fournisseur archivé."
+
+msgid "Supplier restored."
+msgstr "Fournisseur restauré."
+
+msgid "Lifecycle stage"
+msgstr "Étape du cycle de vie"
+
+msgid "Requirements met"
+msgstr "Exigences conformes"
+
+msgid "People & dates"
+msgstr "Personnes et dates"
+
+msgid "Contacts"
+msgstr "Contacts"
+
+msgid "Coordinates"
+msgstr "Coordonnées"
+
+msgid "Profession"
+msgstr "Profession"
+
+msgid "No contract attached yet."
+msgstr "Aucun contrat rattaché pour le moment."
+
+#, python-format
+msgid "%(n)s amendment"
+msgid_plural "%(n)s amendments"
+msgstr[0] "%(n)s avenant"
+msgstr[1] "%(n)s avenants"
+
+# Supplier lifecycle (core.lifecycle) - steps and actions
+msgid "Onboarding"
+msgstr "Intégration"
+
+msgid "Risk scoring"
+msgstr "Évaluation des risques"
+
+msgid "Contracts"
+msgstr "Contrats"
+
+msgid "ICT chain"
+msgstr "Chaîne TIC"
+
+msgid "Cloud"
+msgstr "Cloud"
+
+msgid "Change management"
+msgstr "Gestion du changement"
+
+msgid "Audit & assurance"
+msgstr "Audit et assurance"
+
+msgid "Start onboarding"
+msgstr "Démarrer l'intégration"
+
+msgid "New review cycle"
+msgstr "Nouveau cycle de revue"
+
+msgid "Lifecycle steps"
+msgstr "Étapes du cycle de vie"
+
+msgid "Exit"
+msgstr "Sortie"
+
+msgid "Restore"
+msgstr "Restaurer"
 
 msgid "Standard"
 msgstr "Norme"
@@ -11002,3 +11084,161 @@ msgstr "Séparateur"
 #: templates/base.html
 msgid "Clear formatting"
 msgstr "Effacer la mise en forme"
+
+#: assets/views.py assets/templates/assets/supplier_contact_form.html
+msgid "New contact"
+msgstr "Nouveau contact"
+
+#: assets/views.py assets/templates/assets/supplier_contact_form.html
+msgid "Edit contact"
+msgstr "Modifier le contact"
+
+#: assets/templates/assets/supplier_contact_confirm_delete_modal.html
+msgid "Delete contact"
+msgstr "Supprimer le contact"
+
+#: assets/templates/assets/supplier_detail.html
+msgid "Add contact"
+msgstr "Ajouter un contact"
+
+#: assets/templates/assets/supplier_detail.html
+msgid "No contact yet."
+msgstr "Aucun contact pour le moment."
+
+#: assets/templates/assets/supplier_contact_form.html
+msgid "contact"
+msgstr "contact"
+
+#: assets/forms.py
+msgid "Full name of the contact."
+msgstr "Nom complet du contact."
+
+#: assets/forms.py
+msgid "Job title or profession."
+msgstr "Intitulé de poste ou profession."
+
+#: assets/forms.py
+msgid "Department or service the contact belongs to."
+msgstr "Département ou service auquel appartient le contact."
+
+#: assets/forms.py
+msgid "Contact email address."
+msgstr "Adresse e-mail du contact."
+
+#: assets/forms.py
+msgid "Contact phone number."
+msgstr "Numéro de téléphone du contact."
+
+#: assets/forms.py
+msgid "Role in this relationship (e.g. Primary, Billing, Technical)."
+msgstr "Rôle dans cette relation (ex. : Principal, Facturation, Technique)."
+
+#: assets/templates/assets/supplier_contact_confirm_delete_modal.html
+msgid "Are you sure you want to delete the contact <strong>%(name)s</strong>?"
+msgstr "Êtes-vous sûr de vouloir supprimer le contact <strong>%(name)s</strong> ?"
+
+#: assets/forms.py
+msgid "Contact details"
+msgstr "Coordonnées"
+
+#: assets/forms.py
+msgid "Start typing an address..."
+msgstr "Saisissez une adresse..."
+
+#: templates/base.html
+msgid "No matching address found"
+msgstr "Aucune adresse correspondante"
+
+#: assets/lifecycles.py
+msgid "Integration"
+msgstr "Intégration"
+
+#: assets/lifecycles.py
+msgid "Risk questionnaire"
+msgstr "Questionnaire risques"
+
+#: assets/lifecycles.py
+msgid "Compliant asset"
+msgstr "Actif conforme"
+
+#: assets/lifecycles.py
+msgid "Non-compliant asset"
+msgstr "Actif non conforme"
+
+#: assets/lifecycles.py
+msgid "Start integration"
+msgstr "Démarrer l'intégration"
+
+#: assets/lifecycles.py
+msgid "Send risk questionnaire"
+msgstr "Envoyer le questionnaire risques"
+
+#: assets/lifecycles.py
+msgid "Start evaluation"
+msgstr "Démarrer l'évaluation"
+
+#: assets/lifecycles.py
+msgid "Mark compliant"
+msgstr "Marquer conforme"
+
+#: assets/lifecycles.py
+msgid "Mark non-compliant"
+msgstr "Marquer non conforme"
+
+#: assets/lifecycles.py
+msgid "Compensatory measures"
+msgstr "Mesures compensatoires"
+
+#: assets/lifecycles.py
+msgid "Add compensatory measures"
+msgstr "Ajouter des mesures compensatoires"
+
+#: assets/lifecycles.py
+msgid "Re-evaluate"
+msgstr "Réévaluer"
+
+#: assets/templates/assets/supplier_detail.html
+msgid "Specific"
+msgstr "Spécifique"
+
+#: assets/templates/assets/supplier_detail.html
+msgid "Inherited from %(t)s"
+msgstr "Héritée de %(t)s"
+
+#: assets/templates/assets/supplier_detail.html
+msgid "No requirements for this supplier."
+msgstr "Aucune exigence pour ce fournisseur."
+
+#: assets/templates/assets/supplier_detail.html assets/templates/assets/supplier_requirement_review_form.html
+msgid "Evaluate"
+msgstr "Évaluer"
+
+#: assets/forms.py
+msgid "Supporting evidence (file)"
+msgstr "Justificatif (fichier)"
+
+#: assets/forms.py
+msgid "Written justification for the compliance assessment (rich text)."
+msgstr "Justification écrite de l'évaluation de conformité (texte enrichi)."
+
+#: assets/templates/assets/supplier_requirement_history_modal.html
+msgid "Evaluation history"
+msgstr "Historique des évaluations"
+
+#: assets/templates/assets/supplier_requirement_history_modal.html
+msgid "No evaluation yet."
+msgstr "Aucune évaluation pour le moment."
+
+#: templates/components/page_header.html
+msgid "Last modified by"
+msgstr "Dernière modification par"
+
+#: templates/components/page_header.html
+#, python-format
+msgid "on %(d)s"
+msgstr "le %(d)s"
+
+#: templates/components/page_header.html
+#, python-format
+msgid "Last modified on %(d)s"
+msgstr "Dernière modification le %(d)s"

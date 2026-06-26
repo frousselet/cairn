@@ -607,16 +607,6 @@ class TestSupplierDeleteView:
         assert not Supplier.objects.filter(pk=supplier.pk).exists()
 
 
-class TestSupplierArchiveView:
-    def test_archive_sets_status_to_archived(self, client):
-        supplier = SupplierFactory()
-        url = reverse("assets:supplier-archive", kwargs={"pk": supplier.pk})
-        response = client.post(url)
-        assert response.status_code == 302
-        supplier.refresh_from_db()
-        assert supplier.status == "archived"
-
-
 # ── Supplier Dependency Views ────────────────────────────────
 
 

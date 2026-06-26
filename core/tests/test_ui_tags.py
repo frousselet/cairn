@@ -359,7 +359,7 @@ class TestStepperTag:
         assert 'action="/go/"' in out
         assert 'aria-current="step"' in out
 
-    def test_cancelled_branch_renders_svg_when_anchors_set(self):
+    def test_cancelled_branch_renders_inline_detached(self):
         steps = [
             Step("draft", "Draft", "current"),
             Step("planned", "Planned", "next"),
@@ -369,20 +369,36 @@ class TestStepperTag:
         out = render(
             '{% stepper steps=steps next_status="planned" transition_url="/go/" '
             'cancelled=cancelled can_cancel=True transition_modal_callback="showM" '
-            'entity_id="1" start_value="draft" branch_value="planned" terminal_value="closed" %}',
+            'entity_id="1" %}',
             {"steps": steps, "cancelled": cancelled},
         )
         assert "Cancelled" in out
-        assert "data-stepper-svg" in out
+        # Branch state sits on the same line, detached by a gap, no connector svg
+        assert "stepper__gap" in out
+        assert "data-stepper-svg" not in out
         assert "showM(" in out  # JS callback wired
 
-    def test_no_svg_without_anchors(self):
+    def test_branch_hidden_when_future_and_no_stepper_action(self):
+        # Off-ramp action lives elsewhere (no can_cancel): a not-yet-reached
+        # branch state must not render at all.
         steps = [Step("a", "Alpha", "current")]
         cancelled = Step("cancelled", "Cancelled", "future")
         out = render(
             '{% stepper steps=steps cancelled=cancelled %}',
             {"steps": steps, "cancelled": cancelled},
         )
+        assert "Cancelled" not in out
+
+    def test_branch_shown_when_current(self):
+        # Once the item is on the branch, the state pill renders (detached).
+        steps = [Step("a", "Alpha", "done")]
+        cancelled = Step("cancelled", "Cancelled", "current")
+        out = render(
+            '{% stepper steps=steps cancelled=cancelled %}',
+            {"steps": steps, "cancelled": cancelled},
+        )
+        assert "Cancelled" in out
+        assert "stepper__pill--cancelled-current" in out
         assert "data-stepper-svg" not in out
 
     def test_build_steps_helper_marks_current_and_next(self):

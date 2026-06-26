@@ -1,0 +1,32 @@
+{% load i18n accounts_tags %}
+{% comment %}
+  Read-only evaluation history for a requirement, swapped into the drawer
+  (#drawer-form-content). Header X closes it; no footer (modal convention).
+{% endcomment %}
+<div class="modal-header">
+  <h5 class="modal-title">
+    <span class="drawer-title-icon"><i class="bi bi-clock-history"></i></span>
+    {% trans "Evaluation history" %}
+  </h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+</div>
+<div class="modal-body drawer-body">
+  <p class="text-muted small mb-3"><i class="bi bi-list-check me-1" aria-hidden="true"></i>{% trans "Requirement" %}: <strong>{{ req.title }}</strong></p>
+  {% for review in reviews %}
+  <div class="review-entry">
+    <div class="review-entry__head">
+      <span class="badge text-bg-{% if review.result == 'compliant' %}success{% elif review.result == 'non_compliant' %}danger{% elif review.result == 'partially_compliant' %}warning{% else %}secondary{% endif %}">{{ review.get_result_display }}</span>
+      <strong>{{ review.review_date|date:"d/m/Y" }}</strong>
+      {% if review.reviewer %}<span class="review-entry__by">{% user_badge review.reviewer size=22 %}</span>{% endif %}
+    </div>
+    {% if review.comment %}<div class="review-entry__body">{{ review.comment|safe }}</div>{% endif %}
+    {% if review.evidence_file %}
+    <div class="review-entry__file">
+      <a href="{{ review.evidence_file }}" download="{{ review.evidence_filename }}"><i class="bi bi-file-earmark-arrow-down me-1" aria-hidden="true"></i>{{ review.evidence_filename }}</a>
+    </div>
+    {% endif %}
+  </div>
+  {% empty %}
+  <p class="text-muted text-center py-4 mb-0">{% trans "No evaluation yet." %}</p>
+  {% endfor %}
+</div>

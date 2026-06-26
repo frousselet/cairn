@@ -13,6 +13,7 @@ from assets.models import (
     AssetValuation,
     EssentialAsset,
     Supplier,
+    SupplierContact,
     SupplierDependency,
     SupplierRequirement,
     SupportAsset,
@@ -32,6 +33,7 @@ from .serializers import (
     AssetValuationSerializer,
     EssentialAssetListSerializer,
     EssentialAssetSerializer,
+    SupplierContactSerializer,
     SupplierDependencySerializer,
     SupplierListSerializer,
     SupplierRequirementSerializer,
@@ -361,6 +363,16 @@ class SupplierViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin,
         serializer.save(supplier=supplier)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=["get", "post"])
+    def contacts(self, request, pk=None):
+        supplier = self.get_object()
+        if request.method == "GET":
+            return Response(SupplierContactSerializer(supplier.contacts.all(), many=True).data)
+        serializer = SupplierContactSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(supplier=supplier)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
     @action(detail=False, methods=["get"])
     def dashboard(self, request):
         qs = self.filter_queryset(self.get_queryset())
@@ -374,6 +386,16 @@ class SupplierViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin,
             "by_status": by_status,
             "by_criticality": by_criticality,
         })
+
+
+class SupplierContactViewSet(viewsets.ModelViewSet):
+    queryset = SupplierContact.objects.select_related("supplier").all()
+    serializer_class = SupplierContactSerializer
+    permission_classes = [ContextPermission]
+    permission_feature = "supplier"
+    filterset_fields = ["supplier", "role"]
+    search_fields = ["name", "profession", "service", "email", "phone", "role"]
+    ordering_fields = ["name", "created_at"]
 
 
 class SupplierDependencyViewSet(BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):

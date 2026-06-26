@@ -17,6 +17,7 @@ from .models import (
     SiteAssetDependency,
     SiteSupplierDependency,
     Supplier,
+    SupplierContact,
     SupplierDependency,
     SupplierRequirement,
     SupplierRequirementReview,
@@ -311,12 +312,9 @@ class SupplierBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     steps = [
         Step(_("Identity"), "truck",
              [[("logo", "auto"), "name"], ["type", "criticality"], "owner", "description"]),
-        Step(_("Contact"), "person-lines-fill",
-             ["contact_name", ["contact_email", "contact_phone"], "website",
-              "country", "address"]),
-        Step(_("Contract"), "file-earmark-text",
-             ["contract_reference", ["contract_start_date", "contract_end_date"], "notes"]),
-        Step(_("Scope & status"), "diagram-3", ["scopes", "status", "tags"]),
+        Step(_("Coordinates"), "geo-alt",
+             ["website", "country", "address"]),
+        Step(_("Scope & status"), "diagram-3", ["scopes", "status", "tags", "notes"]),
     ]
 
     class Meta:
@@ -324,9 +322,7 @@ class SupplierBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         fields = [
             "scopes", "name", "description",
             "type", "criticality", "owner",
-            "contact_name", "contact_email", "contact_phone",
-            "website", "address", "country",
-            "contract_reference", "contract_start_date", "contract_end_date",
+            "website", "address", "country", "latitude", "longitude",
             "status", "notes", "tags",
         ]
         widgets = {
@@ -336,15 +332,16 @@ class SupplierBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "type": forms.Select(attrs=SELECT_ATTRS),
             "criticality": forms.Select(attrs=SELECT_ATTRS),
             "owner": forms.Select(attrs=SELECT_ATTRS),
-            "contact_name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "contact_email": forms.EmailInput(attrs=FORM_WIDGET_ATTRS),
-            "contact_phone": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "website": forms.URLInput(attrs=FORM_WIDGET_ATTRS),
-            "address": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 2}),
+            "address": forms.TextInput(attrs={
+                **FORM_WIDGET_ATTRS,
+                "data-address-autocomplete": "photon",
+                "autocomplete": "off",
+                "placeholder": _("Start typing an address..."),
+            }),
             "country": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "contract_reference": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "contract_start_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
-            "contract_end_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+            "latitude": forms.HiddenInput(),
+            "longitude": forms.HiddenInput(),
             "status": forms.Select(attrs=SELECT_ATTRS),
             "notes": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
@@ -356,15 +353,9 @@ class SupplierBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "criticality": _("How critical this supplier is."),
             "owner": _("Person accountable for the relationship."),
             "description": _("What the supplier provides."),
-            "contact_name": _("Primary contact person."),
-            "contact_email": _("Email of the primary contact."),
-            "contact_phone": _("Phone of the primary contact."),
             "website": _("Supplier website."),
             "country": _("Country where the supplier operates."),
             "address": _("Postal address of the supplier."),
-            "contract_reference": _("Reference of the governing contract."),
-            "contract_start_date": _("Contract start date."),
-            "contract_end_date": _("Contract end date."),
             "notes": _("Free-form notes about the supplier."),
             "status": _("Lifecycle state of the supplier."),
             "scopes": _("Organizational scopes this supplier applies to."),
@@ -398,6 +389,37 @@ class SupplierCreateForm(SupplierBaseForm):
 
 class SupplierUpdateForm(SupplierBaseForm):
     """Supplier edition modal form."""
+
+
+class SupplierContactForm(SteppedFormMixin, forms.ModelForm):
+    """Create / edit a contact person attached to a supplier."""
+
+    steps = [
+        Step(_("Identity"), "person-badge",
+             ["name", ["profession", "service"], "role"]),
+        Step(_("Contact details"), "envelope-at",
+             [["email", "phone"]]),
+    ]
+
+    class Meta:
+        model = SupplierContact
+        fields = ["name", "profession", "service", "email", "phone", "role"]
+        widgets = {
+            "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "profession": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "service": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "email": forms.EmailInput(attrs=FORM_WIDGET_ATTRS),
+            "phone": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "role": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+        }
+        help_texts = {
+            "name": _("Full name of the contact."),
+            "profession": _("Job title or profession."),
+            "service": _("Department or service the contact belongs to."),
+            "email": _("Contact email address."),
+            "phone": _("Contact phone number."),
+            "role": _("Role in this relationship (e.g. Primary, Billing, Technical)."),
+        }
 
 
 class SupplierTypeForm(forms.ModelForm):
@@ -446,13 +468,18 @@ class SupplierRequirementForm(forms.ModelForm):
         }
 
 
-class SupplierRequirementReviewForm(forms.ModelForm):
+class SupplierRequirementReviewForm(SteppedFormMixin, forms.ModelForm):
     evidence_file = forms.FileField(
-        label=_("Supporting evidence"),
+        label=_("Supporting evidence (file)"),
         required=False,
         widget=forms.ClearableFileInput(attrs=FORM_WIDGET_ATTRS),
         help_text=_("Upload a supporting document (certificate, report, etc.)."),
     )
+
+    steps = [
+        Step(_("Assessment"), "clipboard-check", [["review_date", "result"]]),
+        Step(_("Evidence"), "paperclip", ["comment", "evidence_file"]),
+    ]
 
     class Meta:
         model = SupplierRequirementReview
@@ -461,6 +488,9 @@ class SupplierRequirementReviewForm(forms.ModelForm):
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "result": forms.Select(attrs=SELECT_ATTRS),
             "comment": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
+        }
+        help_texts = {
+            "comment": _("Written justification for the compliance assessment (rich text)."),
         }
 
     def save(self, commit=True):

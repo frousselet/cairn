@@ -1027,7 +1027,7 @@ Ref prefix: AGRP
 
 ## supplier
 Writable: name (required), description (HTML), type, criticality, owner_id (required),
-  contact_name, contact_email, contact_phone, website, address, country,
+  contact_name, contact_email, contact_phone, website, address, country, latitude, longitude,
   contract_reference, contract_start_date, contract_end_date, status, notes (HTML), tags, scopes
 - type: INTEGER (SupplierType ID, NOT a UUID). Use list_supplier_types to get valid IDs.
 - criticality: low | medium | high | critical
@@ -1079,6 +1079,10 @@ Filters: supplier_id, compliance_status
 Writable: supplier_requirement_id (required), review_date, reviewer_id, result, comment, evidence_file
 - result: not_assessed | compliant | partially_compliant | non_compliant
 Filters: supplier_requirement_id, result
+
+## supplier_contact
+Writable: supplier_id (required), name (required), profession, service, email, phone, role
+Filters: supplier_id, role
 """
 
     TOPIC_COMPLIANCE = """\
@@ -2345,6 +2349,7 @@ def _register_assets_tools(server):
     SupplierTypeRequirement = _get_model("assets", "SupplierTypeRequirement")
     SupplierRequirement = _get_model("assets", "SupplierRequirement")
     SupplierRequirementReview = _get_model("assets", "SupplierRequirementReview")
+    SupplierContact = _get_model("assets", "SupplierContact")
 
     ea_fields = ["id", "reference", "scopes", "name", "description", "type", "category",
                  "owner_id", "owner_name", "custodian_id", "status",
@@ -2606,20 +2611,22 @@ def _register_assets_tools(server):
     sup_fields = ["id", "reference", "scopes", "name", "description", "type", "type_name",
                   "criticality",
                   "status", "contact_name", "contact_email", "contact_phone",
-                  "website", "address", "country",
+                  "website", "address", "country", "latitude", "longitude",
                   "contract_reference", "contract_start_date", "contract_end_date",
                   "is_contract_expired",
                   "logo", "logo_16", "logo_32", "logo_64",
                   "notes", "owner_id", "owner_name", "is_approved", "created_at"]
     sup_writable = ["name", "description", "type", "criticality", "status",
                     "contact_name", "contact_email", "contact_phone",
-                    "website", "address", "country",
+                    "website", "address", "country", "latitude", "longitude",
                     "contract_reference", "contract_start_date", "contract_end_date",
                     "notes", "owner_id", "scope_ids"]
 
     _sup_field_overrides = {
         "description": _html_field("Description"),
         "notes": _html_field("Notes"),
+        "latitude": {"type": "number", "description": "Latitude of the supplier address (WGS84)."},
+        "longitude": {"type": "number", "description": "Longitude of the supplier address (WGS84)."},
         "type": {"type": "integer", "description": "ID of a SupplierType. Use list_supplier_types to get valid IDs."},
         "criticality": {
             "type": "string",
@@ -2945,6 +2952,22 @@ def _register_assets_tools(server):
                    field_overrides={
                        "comment": _html_field("Comment"),
                    })
+
+    # Supplier contacts (people attached to a supplier; no approve)
+    sc_fields = ["id", "supplier_id", "name", "profession", "service",
+                 "email", "phone", "role", "created_at", "updated_at"]
+    sc_writable = ["supplier_id", "name", "profession", "service",
+                   "email", "phone", "role"]
+
+    _register_crud(server, "supplier_contact", SupplierContact,
+                   "assets.supplier",
+                   list_fields=sc_fields,
+                   writable_fields=sc_writable,
+                   search_fields=["name", "profession", "service", "email", "phone", "role"],
+                   filters=["supplier_id", "role"],
+                   scope_filtered=False,
+                   has_approve=False,
+                   required_fields=["supplier_id", "name"])
 
 
 # ── Compliance Module ──────────────────────────────────────

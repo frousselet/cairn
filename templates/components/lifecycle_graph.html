@@ -1,0 +1,459 @@
+{% load i18n %}
+{% comment %}
+Schema-driven lifecycle graph: a horizontally-wrapping BOUSTROPHEDON (snake) flow
+of pill nodes for the linear spine, plus a special-cased terminal BRANCH (the
+pair of outcome pills stacked immediately after their common predecessor) and an
+absolutely-positioned SVG arrow overlay. NO scaling / zoom : pills render at
+their natural readable size. Responsiveness comes ONLY from the snake repacking
+onto more horizontal rows as the width shrinks (never a vertical single column,
+never a horizontal scrollbar); the branch column reflows below its source when it
+no longer fits beside it. Forward edges follow the spine and diverge into the
+branch; the loop back-edges (one per branch outcome) are MERGED into a single
+return lane when they share the same target (compliant + non_compliant both go
+back to the risk questionnaire), so the diagram reads as "evaluation yields
+conforme or non-conforme, then re-evaluate". The archive exit and the archived
+restore are routed around the OUTSIDE (margins / lanes) so they never cross a
+pill. Everything is generated from lc_steps / lc_exits / lc_graph_edges (no
+hardcoded steps).
+{% endcomment %}
+<div class="lc-graph" id="{{ lc_container_id }}" data-transition-url="{{ lc_transition_url }}">
+
+  {% comment %} Hidden form : clicking an actionable node submits this with the chosen target. {% endcomment %}
+  <form method="post" action="{{ lc_transition_url }}" class="lc-graph__form d-none" data-lc-form hx-boost="false">
+    {% csrf_token %}
+    <input type="hidden" name="target_status" value="" data-lc-target>
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  </form>
+
+  <div class="lc-graph__stage" data-lc-stage>
+    <svg class="lc-graph__svg" data-lc-svg aria-hidden="true" focusable="false"></svg>
+
+    <div class="lc-graph__flow" data-lc-flow>
+      {% for step in lc_steps %}
+        {% if step.actionable %}
+          <button type="button"
+                  class="lc-pill lc-pill--{{ step.state }} lc-pill--actionable"
+                  data-step="{{ step.value }}"
+                  data-lc-node
+                  aria-label="{{ step.action_label }}"
+                  title="{{ step.action_label }}">{% if step.number %}<span class="lc-pill__num">{{ step.number }}</span>{% endif %}{{ step.label }}</button>
+        {% else %}
+          <span class="lc-pill lc-pill--{{ step.state }}"
+                data-step="{{ step.value }}"
+                data-lc-node
+                title="{{ step.label }}">{% if step.number %}<span class="lc-pill__num">{{ step.number }}</span>{% endif %}{{ step.label }}</span>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {% if lc_exits %}
+      <div class="lc-graph__exits" data-lc-exits>
+        {% for step in lc_exits %}
+          {% if step.actionable %}
+            <button type="button"
+                    class="lc-pill lc-pill--{{ step.state }} lc-pill--actionable lc-pill--exit"
+                    data-step="{{ step.value }}"
+                    data-lc-node
+                    aria-label="{{ step.action_label }}"
+                    title="{{ step.action_label }}">{{ step.label }}</button>
+          {% else %}
+            <span class="lc-pill lc-pill--{{ step.state }} lc-pill--exit"
+                  data-step="{{ step.value }}"
+                  data-lc-node
+                  title="{{ step.label }}">{{ step.label }}</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  <script type="application/json" data-lc-edges>{{ lc_graph_edges|safe }}</script>
+
+  <script>
+  (function () {
+    var root = document.getElementById('{{ lc_container_id }}');
+    if (!root || root.dataset.lcInit) { return; }
+    root.dataset.lcInit = '1';
+
+    var SVGNS = 'http://www.w3.org/2000/svg';
+    var stage = root.querySelector('[data-lc-stage]');
+    var svgEl = root.querySelector('[data-lc-svg]');
+    var flow = root.querySelector('[data-lc-flow]');
+    var exitsWrap = root.querySelector('[data-lc-exits]');
+    var form = root.querySelector('[data-lc-form]');
+    var targetInput = root.querySelector('[data-lc-target]');
+
+    var edges;
+    try { edges = JSON.parse(root.querySelector('[data-lc-edges]').textContent) || []; }
+    catch (e) { edges = []; }
+
+    function token(name, fallback) {
+      var v = getComputedStyle(document.documentElement).getPropertyValue(name);
+      v = (v || '').trim();
+      return v || fallback;
+    }
+
+    {% comment %} Classify schema edges. forwardSet : spine + branch divergence.
+       loopEdges : every back-edge among the intermediates (a branch outcome may
+       loop back). exitEdge / restoreEdge : to/from the detached Archived pill. {% endcomment %}
+    var forwardSet = {}, forwardList = [], loopEdges = [], exitEdge = null, restoreEdge = null;
+    edges.forEach(function (e) {
+      if (e.kind === 'forward') { forwardSet[e.source + '>' + e.target] = true; forwardList.push(e); }
+      else if (e.kind === 'loop') { loopEdges.push(e); }
+      else if (e.kind === 'exit') { exitEdge = e; }
+      else if (e.kind === 'restore') { restoreEdge = e; }
+    });
+
+    {% comment %} Branch detection : a node that forwards into 2+ targets is a
+       branch source; those targets are the stacked branch members. {% endcomment %}
+    var forwardOut = {};   // source -> [targets]
+    forwardList.forEach(function (e) {
+      (forwardOut[e.source] = forwardOut[e.source] || []).push(e.target);
+    });
+    var branchSourceOf = {};  // member id -> its branch source id
+    var branchMembers = {};   // member id -> true
+    Object.keys(forwardOut).forEach(function (src) {
+      var tgts = forwardOut[src];
+      if (tgts.length >= 2) {
+        tgts.forEach(function (t) { branchSourceOf[t] = src; branchMembers[t] = true; });
+      }
+    });
+    {% comment %} Propagate membership along forward edges : a forward target of a
+       branch member is a branch "tail" (e.g. non_compliant -> compensatory_measures),
+       laid out trailing its source OFF the spine rather than wrapped onto it. {% endcomment %}
+    var grew = true;
+    while (grew) {
+      grew = false;
+      forwardList.forEach(function (e) {
+        if (branchMembers[e.source] && !branchMembers[e.target]) {
+          branchMembers[e.target] = true;
+          branchSourceOf[e.target] = e.source;
+          grew = true;
+        }
+      });
+    }
+
+    {% comment %} Merge loop back-edges that share the same TARGET into one return
+       lane : both branch outcomes return to the same earlier step, so they join
+       into a single merged path with two short feeders instead of two full
+       outside loops. loopGroups : target -> { target, sources:[ids], label }. {% endcomment %}
+    var loopGroups = [], loopGroupByTarget = {};
+    loopEdges.forEach(function (lp) {
+      var g = loopGroupByTarget[lp.target];
+      if (!g) {
+        g = { target: lp.target, sources: [], label: lp.label || '' };
+        loopGroupByTarget[lp.target] = g;
+        loopGroups.push(g);
+      }
+      g.sources.push(lp.source);
+      if (!g.label && lp.label) { g.label = lp.label; }
+    });
+
+    {% comment %} Click an actionable node -> submit the transition. {% endcomment %}
+    Array.prototype.forEach.call(root.querySelectorAll('[data-lc-node].lc-pill--actionable'), function (btn) {
+      btn.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        targetInput.value = btn.getAttribute('data-step');
+        form.submit();
+      });
+    });
+
+    {% comment %} Rounded orthogonal path from an ordered list of points. {% endcomment %}
+    function orthoPath(pts, r) {
+      if (pts.length < 2) { return ''; }
+      r = r || 6;
+      var d = 'M' + pts[0].x + ',' + pts[0].y;
+      for (var i = 1; i < pts.length - 1; i++) {
+        var prev = pts[i - 1], cur = pts[i], nxt = pts[i + 1];
+        var inDx = Math.sign(cur.x - prev.x), inDy = Math.sign(cur.y - prev.y);
+        var outDx = Math.sign(nxt.x - cur.x), outDy = Math.sign(nxt.y - cur.y);
+        var inLen = Math.hypot(cur.x - prev.x, cur.y - prev.y);
+        var outLen = Math.hypot(nxt.x - cur.x, nxt.y - cur.y);
+        var rr = Math.min(r, inLen / 2, outLen / 2);
+        var p1 = { x: cur.x - inDx * rr, y: cur.y - inDy * rr };
+        var p2 = { x: cur.x + outDx * rr, y: cur.y + outDy * rr };
+        d += ' L' + p1.x + ',' + p1.y + ' Q' + cur.x + ',' + cur.y + ' ' + p2.x + ',' + p2.y;
+      }
+      var last = pts[pts.length - 1];
+      d += ' L' + last.x + ',' + last.y;
+      return d;
+    }
+
+    function addPath(d, cls, marker) {
+      var p = document.createElementNS(SVGNS, 'path');
+      p.setAttribute('d', d);
+      p.setAttribute('class', 'lc-edge lc-edge--' + cls);
+      p.setAttribute('fill', 'none');
+      if (marker) { p.setAttribute('marker-end', marker); }
+      svgEl.appendChild(p);
+    }
+    function addLabel(text, x, y, anchor) {
+      if (!text) { return; }
+      var t = document.createElementNS(SVGNS, 'text');
+      t.setAttribute('x', x); t.setAttribute('y', y);
+      t.setAttribute('class', 'lc-edge-label');
+      t.setAttribute('text-anchor', anchor || 'middle');
+      t.textContent = text;
+      svgEl.appendChild(t);
+    }
+    function buildMarkers() {
+      var defs = document.createElementNS(SVGNS, 'defs');
+      [['lc-arrow-accent-{{ lc_container_id }}', token('--accent', '#1E3A8A')],
+       ['lc-arrow-muted-{{ lc_container_id }}', token('--text-muted', '#94a3b8')]].forEach(function (pair) {
+        var m = document.createElementNS(SVGNS, 'marker');
+        m.setAttribute('id', pair[0]); m.setAttribute('viewBox', '0 -5 10 10');
+        m.setAttribute('refX', '8'); m.setAttribute('refY', '0');
+        m.setAttribute('markerWidth', '7'); m.setAttribute('markerHeight', '7');
+        m.setAttribute('orient', 'auto');
+        var p = document.createElementNS(SVGNS, 'path');
+        p.setAttribute('d', 'M0,-5L10,0L0,5'); p.setAttribute('fill', pair[1]);
+        m.appendChild(p); defs.appendChild(m);
+      });
+      svgEl.appendChild(defs);
+    }
+    var ARROW = 'url(#lc-arrow-accent-{{ lc_container_id }})';
+    var ARROW_MUTED = 'url(#lc-arrow-muted-{{ lc_container_id }})';
+
+    {% comment %} ----- layout: snake-pack the SPINE, then stack the BRANCH ----- {% endcomment %}
+    {% comment %} Gaps are generous so every arrow has a visible shaft, not just a head. {% endcomment %}
+    var GAPX = 46, ROW_GAP = 42, TOP_PAD = 54, SIDE = 34, BRANCH_GAPX = 40, BRANCH_GAPY = 16;
+
+    function layout() {
+      var nodeEls = Array.prototype.slice.call(flow.querySelectorAll('[data-lc-node]'));
+      if (!nodeEls.length) { return null; }
+      {% comment %} reset to natural flow to measure intrinsic sizes {% endcomment %}
+      nodeEls.forEach(function (el) { el.style.position = ''; el.style.left = ''; el.style.top = ''; });
+      var nodes = nodeEls.map(function (el) {
+        return { id: el.getAttribute('data-step'), el: el, w: el.offsetWidth, h: el.offsetHeight };
+      });
+      var byId = {};
+      nodes.forEach(function (n) { byId[n.id] = n; });
+      var pillH = nodes[0].h;
+      var stageW = stage.clientWidth || root.clientWidth || 320;
+      var avail = Math.max(60, stageW - 2 * SIDE);
+
+      {% comment %} The spine is every flow node that is NOT a branch member. The
+         branch members are laid out relative to their source, off the spine. {% endcomment %}
+      var spine = nodes.filter(function (n) { return !branchMembers[n.id]; });
+      var membersBySource = {};
+      nodes.forEach(function (n) {
+        var src = branchSourceOf[n.id];
+        if (src) { (membersBySource[src] = membersBySource[src] || []).push(n); }
+      });
+
+      {% comment %} greedy snake-pack the spine (chain order). A spine node that
+         is a branch source reserves extra width for the branch column beside it
+         so the pair fits on the same row when possible. {% endcomment %}
+      function branchColWidth(n) {
+        var ms = membersBySource[n.id];
+        if (!ms) { return 0; }
+        var w = 0;
+        ms.forEach(function (m) { w = Math.max(w, m.w + branchColWidth(m)); });
+        return BRANCH_GAPX + w;
+      }
+      var rows = [], cur = [], curW = 0;
+      spine.forEach(function (n) {
+        var need = n.w + branchColWidth(n);
+        var add = (cur.length ? GAPX : 0) + need;
+        if (cur.length && curW + add > avail) { rows.push(cur); cur = []; curW = 0; add = need; }
+        cur.push(n); curW += add;
+      });
+      if (cur.length) { rows.push(cur); }
+      rows.forEach(function (row) {
+        row.width = row.reduce(function (s, n, i) {
+          return s + n.w + branchColWidth(n) + (i ? GAPX : 0);
+        }, 0);
+      });
+      var maxRowW = Math.max.apply(null, rows.map(function (r) { return r.width; }));
+      var blockLeft = SIDE + Math.max(0, (avail - maxRowW) / 2);
+      var rowPitch = pillH + ROW_GAP;
+
+      function place(n, x, y, r) {
+        n.left = x; n.top = y; n.h = pillH;
+        n.right = x + n.w; n.bottom = y + pillH;
+        n.cx = x + n.w / 2; n.cy = y + pillH / 2; n.row = r;
+      }
+
+      var maxBottom = TOP_PAD;
+      {% comment %} Stack a node's branch members in a column to its right, vertically
+         centred on it (4a above the line, 4b below); recurse so a tail (e.g.
+         compensatory_measures) trails its branch-member source (non_compliant). {% endcomment %}
+      function placeMembers(parent, r) {
+        var ms = membersBySource[parent.id];
+        if (!ms) { return parent.right; }
+        var colH = ms.length * pillH + (ms.length - 1) * BRANCH_GAPY;
+        var by = parent.cy - colH / 2;
+        var bx = parent.right + BRANCH_GAPX;
+        var rightMost = bx;
+        ms.forEach(function (m, mi) {
+          place(m, bx, by + mi * (pillH + BRANCH_GAPY), r);
+          maxBottom = Math.max(maxBottom, m.bottom);
+          rightMost = Math.max(rightMost, placeMembers(m, r), m.right);
+        });
+        return rightMost;
+      }
+      rows.forEach(function (row, r) {
+        var physical = (r % 2 === 0) ? row : row.slice().reverse();
+        var x = blockLeft, y = TOP_PAD + r * rowPitch;
+        physical.forEach(function (n) {
+          place(n, x, y, r);
+          x += n.w + GAPX;
+          if (membersBySource[n.id]) {
+            x = Math.max(x, placeMembers(n, r) + GAPX);
+          }
+          maxBottom = Math.max(maxBottom, n.bottom);
+        });
+      });
+
+      nodes.forEach(function (n) {
+        n.el.style.position = 'absolute';
+        n.el.style.left = n.left + 'px';
+        n.el.style.top = n.top + 'px';
+        n.el.style.margin = '0';
+      });
+      var flowH = maxBottom;
+      flow.style.position = 'relative';
+      flow.style.height = flowH + 'px';
+
+      return { nodes: nodes, byId: byId, spine: spine, rows: rows, pillH: pillH,
+               flowH: flowH, blockLeft: blockLeft, maxRowW: maxRowW, stageW: stageW };
+    }
+
+    function draw() {
+      var L = layout();
+      while (svgEl.firstChild) { svgEl.removeChild(svgEl.firstChild); }
+      if (!L) { return; }
+
+      {% comment %} stage box now includes the absolutely-laid flow + the exits row {% endcomment %}
+      var W = stage.clientWidth, H = stage.clientHeight;
+      svgEl.setAttribute('width', W); svgEl.setAttribute('height', H);
+      svgEl.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      buildMarkers();
+
+      var nodes = L.nodes, byId = L.byId, spine = L.spine;
+
+      {% comment %} ---- forward edges along the snake spine ---- {% endcomment %}
+      for (var i = 0; i < spine.length - 1; i++) {
+        var a = spine[i], b = spine[i + 1];
+        if (!forwardSet[a.id + '>' + b.id]) { continue; }
+        if (a.row === b.row) {
+          var x1 = (b.cx > a.cx) ? a.right : a.left;
+          var x2 = (b.cx > a.cx) ? b.left - 1 : b.right + 1;
+          addPath('M' + x1 + ',' + a.cy + ' L' + x2 + ',' + b.cy, 'forward', ARROW);
+        } else {
+          var gy = (a.bottom + b.top) / 2;
+          addPath(orthoPath([
+            { x: a.cx, y: a.bottom }, { x: a.cx, y: gy },
+            { x: b.cx, y: gy }, { x: b.cx, y: b.top - 1 }
+          ], 7), 'forward', ARROW);
+        }
+      }
+
+      {% comment %} ---- branch divergence : short arrows from the source's right
+         edge to each stacked branch member's left edge (a compact decision
+         fork : 4a above the spine line, 4b below it) ---- {% endcomment %}
+      forwardList.forEach(function (e) {
+        if (!branchMembers[e.target]) { return; }
+        var s = byId[e.source], t = byId[e.target];
+        if (!s || !t) { return; }
+        var midx = (s.right + t.left) / 2;
+        addPath(orthoPath([
+          { x: s.right, y: s.cy }, { x: midx, y: s.cy },
+          { x: midx, y: t.cy }, { x: t.left - 1, y: t.cy }
+        ], 8), 'forward', ARROW);
+      });
+
+      {% comment %} Outside lanes. Risers sit about HALFWAY between the stage edge
+         and the pill block (an "entre-deux"). Loop groups that share a target are
+         MERGED : one return lane (bottom + left + top into the target from above),
+         fed by a short stub from each member's bottom. Restore sits just outside
+         the loops. ---- {% endcomment %}
+      var restoreLane = Math.max(8, L.blockLeft - 36); // restore riser, just left of the first pill (a little slack)
+      {% comment %} Pill-block vertical extent : loops arc just ABOVE (top side) or
+         BELOW (bottom side) the pills, never wrapping the left margin. {% endcomment %}
+      var blockTop = Infinity, blockBot = 0;
+      nodes.forEach(function (n) { blockTop = Math.min(blockTop, n.top); blockBot = Math.max(blockBot, n.bottom); });
+      var topArcBase = blockTop - 14, botArcBase = blockBot + 16;
+
+      {% comment %} ---- loop return arcs : one per distinct target. Each loop arcs
+         on the side closest to its outcome (OVER the top when the source sits at /
+         above its target, UNDER the bottom otherwise), spanning only [target ..
+         source] so loops stay local and never pile up in the margins. Sources that
+         share a target merge into one arrowed return; multiple arcs on the same
+         side are staggered. ---- {% endcomment %}
+      var topIdx = 0, botIdx = 0;
+      loopGroups.forEach(function (g) {
+        var t = byId[g.target];
+        if (!t) { return; }
+        var members = g.sources.map(function (id) { return byId[id]; }).filter(Boolean);
+        if (!members.length) { return; }
+        var avgCy = members.reduce(function (s, m) { return s + m.cy; }, 0) / members.length;
+        {% comment %} Route on the side the source EXITS toward : an upper branch
+           member (above its fork parent) arcs over the TOP margin, a lower member
+           under the BOTTOM margin, so a loop never crosses its sibling, the spine
+           or the other loop. Spine-origin loops default over the top. {% endcomment %}
+        var par = byId[branchSourceOf[members[0].id]];
+        var goTop = par ? (members[0].cy < par.cy - 1) : (avgCy <= t.cy);
+        var lane = goTop ? (topArcBase - topIdx * 16) : (botArcBase + botIdx * 16);
+        if (goTop) { topIdx++; } else { botIdx++; }
+        var junctionX = members.reduce(function (m, n) { return Math.min(m, n.cx); }, Infinity);
+        {% comment %} per-member feeder to the shared lane (no arrowhead), then the
+           single merged return left into the target, carrying the only arrowhead. {% endcomment %}
+        members.forEach(function (m) {
+          addPath(orthoPath([
+            { x: m.cx, y: goTop ? m.top : m.bottom }, { x: m.cx, y: lane },
+            { x: junctionX, y: lane }
+          ], 8), 'loop');
+        });
+        addPath(orthoPath([
+          { x: junctionX, y: lane }, { x: t.cx, y: lane },
+          { x: t.cx, y: goTop ? t.top - 1 : t.bottom + 1 }
+        ], 8), 'loop', ARROW);
+        if (g.label) {
+          addLabel(g.label, (t.cx + junctionX) / 2, goTop ? lane - 6 : lane + 13, 'middle');
+        }
+      });
+      var loopBottom = botArcBase + Math.max(0, botIdx - 1) * 16;
+
+      {% comment %} ---- exit + restore (to/from the detached Archived pill) ---- {% endcomment %}
+      if (exitsWrap) {
+        var exEls = Array.prototype.slice.call(exitsWrap.querySelectorAll('[data-lc-node]'));
+        if (exEls.length) {
+          var sb = stage.getBoundingClientRect();
+          var er = exEls[0].getBoundingClientRect();
+          var arch = {
+            cx: er.left - sb.left + er.width / 2, top: er.top - sb.top,
+            bottom: er.bottom - sb.top, left: er.left - sb.left, cy: er.top - sb.top + er.height / 2
+          };
+          if (exitEdge) {
+            var fTop = Math.max(loopBottom + 10, arch.top - 26);
+            addPath(orthoPath([{ x: arch.cx, y: fTop }, { x: arch.cx, y: arch.top - 2 }], 6),
+                    'exit', ARROW_MUTED);
+            if (exitEdge.label) { addLabel(exitEdge.label, arch.cx + 10, (fTop + arch.top) / 2 + 3, 'start'); }
+          }
+          if (restoreEdge && byId[restoreEdge.target]) {
+            var d0 = byId[restoreEdge.target];
+            addPath(orthoPath([
+              { x: arch.left - 1, y: arch.cy }, { x: restoreLane, y: arch.cy },
+              { x: restoreLane, y: d0.cy }, { x: d0.left - 1, y: d0.cy }
+            ], 7), 'restore', ARROW_MUTED);
+            if (restoreEdge.label) { addLabel(restoreEdge.label, restoreLane + 6, (arch.cy + d0.cy) / 2, 'start'); }
+          }
+        }
+      }
+    }
+
+    var raf = null;
+    function schedule() {
+      if (raf) { cancelAnimationFrame(raf); }
+      raf = requestAnimationFrame(function () { raf = null; draw(); });
+    }
+    schedule();
+    if (document.fonts && document.fonts.ready) { document.fonts.ready.then(schedule); }
+    if (window.ResizeObserver) { new ResizeObserver(schedule).observe(stage); }
+    else { window.addEventListener('resize', schedule); }
+    document.body.addEventListener('htmx:afterSettle', schedule);
+    new MutationObserver(schedule).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+  })();
+  </script>
+</div>

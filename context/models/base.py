@@ -90,6 +90,34 @@ class BaseModel(ReferenceGeneratorMixin):
         verbose_name=_("Tags"),
     )
 
+    # --- Lifecycle ---------------------------------------------------------
+    #
+    # Two engines coexist during the migration. A model that sets
+    # ``LIFECYCLE_NAME`` runs the standardised engine (``core/lifecycle.py``):
+    # ``workflow_state`` holds the step code, governance / transitions / history
+    # route through it. Every other model keeps the first-generation engine
+    # (``core/workflow.py``) below.
+    LIFECYCLE_NAME = None
+
+    def get_lifecycle(self):
+        """Return the standardised :class:`~core.lifecycle.Lifecycle` or ``None``."""
+        if not self.LIFECYCLE_NAME:
+            return None
+        from core.lifecycle import LIFECYCLE_REGISTRY
+
+        return LIFECYCLE_REGISTRY.get(self.LIFECYCLE_NAME)
+
+    def _current_step(self, lifecycle=None):
+        """The current :class:`~core.lifecycle.Step` (new engine), or ``None``."""
+        lifecycle = lifecycle or self.get_lifecycle()
+        if lifecycle is None:
+            return None
+        code = self.workflow_state or lifecycle.initial_step.code
+        try:
+            return lifecycle.step(code)
+        except Exception:
+            return None
+
     # --- Lifecycle workflow (see core/workflow.py) -------------------------
 
     def get_workflow(self):
@@ -105,14 +133,31 @@ class BaseModel(ReferenceGeneratorMixin):
     @property
     def lifecycle_label(self):
         """Human label of the current state (falls back to the raw code)."""
+        step = self._current_step()
+        if step is not None:
+            return step.label
         try:
             return self.get_lifecycle_state().label
         except Exception:
             return self.workflow_state
 
     @property
+    def lifecycle_tone(self):
+        """UI tone of the current state (badge colour category)."""
+        step = self._current_step()
+        if step is not None:
+            return step.tone
+        try:
+            return self.get_lifecycle_state().tone
+        except Exception:
+            return "neutral"
+
+    @property
     def counts_in_reports(self):
         """Whether this element is included in reports / KPIs / calendar."""
+        step = self._current_step()
+        if step is not None:
+            return step.counts_in_reports
         try:
             return self.get_lifecycle_state().counts_in_reports
         except Exception:
@@ -121,6 +166,9 @@ class BaseModel(ReferenceGeneratorMixin):
     @property
     def is_linkable(self):
         """Whether this element may currently participate in a link."""
+        step = self._current_step()
+        if step is not None:
+            return step.linkable
         try:
             return self.get_lifecycle_state().linkable
         except Exception:
@@ -129,6 +177,9 @@ class BaseModel(ReferenceGeneratorMixin):
     @property
     def is_deletable(self):
         """Whether this element may currently be deleted."""
+        step = self._current_step()
+        if step is not None:
+            return step.deletable
         try:
             return self.get_lifecycle_state().deletable
         except Exception:
@@ -146,6 +197,13 @@ class BaseModel(ReferenceGeneratorMixin):
 
     def available_transitions(self, user=None):
         """Transitions leaving the current state (optionally filtered by ``user``)."""
+        lifecycle = self.get_lifecycle()
+        if lifecycle is not None:
+            from core.lifecycle import available_transitions as _avail
+
+            code = self.workflow_state or lifecycle.initial_step.code
+            return _avail(lifecycle, code, instance=self, user=user)
+
         from core.workflow import allowed_transitions
 
         has_perm = user.has_perm if user is not None else None
@@ -165,6 +223,23 @@ class BaseModel(ReferenceGeneratorMixin):
         enforcement point); ``Effect.NOTIFY_OWNER`` is wired in the notification phase.
         """
         from django.utils import timezone
+
+        lifecycle = self.get_lifecycle()
+        if lifecycle is not None:
+            # Standardised engine: validate, apply and record the event in one
+            # place. Returns the matched core.lifecycle.Transition.
+            from core.lifecycle_service import perform_transition
+
+            _event, transition = perform_transition(
+                self,
+                target,
+                user=user,
+                comment=comment,
+                lifecycle=lifecycle,
+                enforce_permission=enforce_permission,
+                save=save,
+            )
+            return transition
 
         from core.workflow import Effect, apply_transition
 
@@ -205,6 +280,10 @@ class BaseModel(ReferenceGeneratorMixin):
         state, without clobbering the richer states (``pending``, ``archived``)
         that only the workflow path sets.
         """
+        # Standardised-engine entities do not use the legacy approval mirror:
+        # their step codes are not draft/validated and must never be clobbered.
+        if self.get_lifecycle() is not None:
+            return
         try:
             workflow = self.get_workflow()
         except Exception:

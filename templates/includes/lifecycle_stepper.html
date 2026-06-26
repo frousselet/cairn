@@ -1,0 +1,10 @@
+{% load i18n %}
+{% if lc_enabled %}
+  {% if lc_layout == "graph" %}
+    {% include "components/lifecycle_graph.html" %}
+  {% elif lc_layout == "cycle" %}
+    {% include "components/lifecycle_cycle.html" %}
+  {% else %}
+    {% include "components/lifecycle_stepper.html" %}
+  {% endif %}
+{% endif %}

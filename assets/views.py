@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -16,7 +17,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
+from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
@@ -51,6 +52,7 @@ from .forms import (
     SiteUpdateForm,
     SiteSupplierDependencyForm,
     SupplierDependencyForm,
+    SupplierContactForm,
     SupplierCreateForm,
     SupplierUpdateForm,
     SupplierRequirementForm,
@@ -68,6 +70,7 @@ from .models import (
     SiteAssetDependency,
     SiteSupplierDependency,
     Supplier,
+    SupplierContact,
     SupplierDependency,
     SupplierRequirement,
     SupplierRequirementReview,
@@ -531,7 +534,7 @@ class SupplierListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
         return self.filter_queryset_advanced(qs)
 
 
-class SupplierDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class SupplierDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Supplier
     template_name = "assets/supplier_detail.html"
     context_object_name = "supplier"
@@ -541,14 +544,41 @@ class SupplierDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["requirements"] = self.object.requirements.select_related(
-            "requirement", "verified_by"
+        reqs = list(
+            self.object.requirements.select_related(
+                "requirement", "verified_by", "source_type_requirement"
+            ).prefetch_related("reviews")
         )
+        ctx["requirements"] = reqs
         ctx["compliance_summary"] = self.object.requirement_compliance_summary
-        if self.object.type:
-            ctx["type_requirements"] = self.object.type.requirements.all()
-        else:
-            ctx["type_requirements"] = []
+        type_requirements = list(self.object.type.requirements.all()) if self.object.type else []
+        ctx["type_requirements"] = type_requirements
+
+        # Unified compliance rows : every actual SupplierRequirement (labelled
+        # "inherited" when it came from a type requirement, "specific" otherwise),
+        # plus the type requirements not yet instantiated into a review (shown as
+        # pending inherited rows). Avoids the previous two-table duplication.
+        instantiated_type_ids = {
+            r.source_type_requirement_id for r in reqs if r.source_type_requirement_id
+        }
+        rows = [
+            {"kind": "requirement", "inherited": bool(r.source_type_requirement_id),
+             "title": r.title or "", "req": r}
+            for r in reqs
+        ]
+        rows += [
+            {"kind": "type_template", "inherited": True, "title": tr.title or "", "type_req": tr}
+            for tr in type_requirements
+            if tr.pk not in instantiated_type_ids
+        ]
+        # Inherited rows grouped first, then specific; alphabetical within each.
+        rows.sort(key=lambda r: (not r["inherited"], r["title"].lower()))
+        ctx["compliance_rows"] = rows
+        # Top-level contracts only (amendments are nested under their parent).
+        ctx["contracts"] = (
+            self.object.contracts.filter(parent__isnull=True)
+            .prefetch_related("suppliers", "amendments")
+        )
         return ctx
 
 
@@ -591,17 +621,68 @@ class SupplierDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView
     success_url = reverse_lazy("assets:supplier-list")
 
 
-class SupplierArchiveView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Archive a supplier (set status to 'archived')."""
+# ── Supplier Contacts ─────────────────────────────────────
 
+class SupplierContactCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreateView):
+    model = SupplierContact
+    form_class = SupplierContactForm
+    template_name = "assets/supplier_contact_form.html"
+    modal_template_name = "assets/supplier_contact_form_modal.html"
+    modal_title_create = _l("New contact")
+    modal_title_update = _l("Edit contact")
     permission_required = "assets.supplier.update"
 
-    def post(self, request, pk):
-        supplier = get_object_or_404(Supplier, pk=pk)
-        supplier.status = "archived"
-        supplier.save(update_fields=["status"])
-        messages.success(request, _("Supplier archived."))
-        return redirect("assets:supplier-list")
+    def dispatch(self, request, *args, **kwargs):
+        self.supplier = get_object_or_404(Supplier, pk=kwargs["supplier_pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.supplier = self.supplier
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["supplier"] = self.supplier
+        return ctx
+
+    def get_success_url(self):
+        return reverse_lazy("assets:supplier-detail", kwargs={"pk": self.supplier.pk})
+
+
+class SupplierContactUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
+    model = SupplierContact
+    form_class = SupplierContactForm
+    template_name = "assets/supplier_contact_form.html"
+    modal_template_name = "assets/supplier_contact_form_modal.html"
+    modal_title_create = _l("New contact")
+    modal_title_update = _l("Edit contact")
+    permission_required = "assets.supplier.update"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["supplier"] = self.object.supplier
+        return ctx
+
+    def get_success_url(self):
+        return reverse_lazy("assets:supplier-detail", kwargs={"pk": self.object.supplier.pk})
+
+
+class SupplierContactDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = SupplierContact
+    template_name = "assets/supplier_contact_confirm_delete_modal.html"
+    permission_required = "assets.supplier.update"
+
+    def get_success_url(self):
+        return reverse_lazy("assets:supplier-detail", kwargs={"pk": self.object.supplier.pk})
+
+    def form_valid(self, form):
+        """Delete and, for HTMX, close the drawer + reload the detail page."""
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        self.object.delete()
+        if self.request.headers.get("HX-Request") == "true":
+            return HttpResponse(status=204, headers={"HX-Trigger": "formSaved"})
+        return redirect(success_url)
 
 
 # ── Supplier Types ────────────────────────────────────────
@@ -818,41 +899,61 @@ class SupplierRequirementDetailView(LoginRequiredMixin, PermissionRequiredMixin,
 
 # ── Supplier Requirement Reviews ──────────────────────────
 
-class SupplierRequirementReviewCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class _RequirementReviewModalBase(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreateView):
+    """Shared base : evaluate a requirement in the HTMX drawer modal.
+
+    Subclasses resolve the target ``SupplierRequirement`` (an existing one, or
+    one instantiated on save from a type requirement). Saving records a review
+    (compliance level + justification + evidence file) and rolls the result up
+    onto the requirement's compliance status / verification.
+    """
+
     model = SupplierRequirementReview
     form_class = SupplierRequirementReviewForm
     template_name = "assets/supplier_requirement_review_form.html"
+    modal_template_name = "assets/supplier_requirement_review_form_modal.html"
+    modal_title_create = _l("Evaluate requirement")
+    modal_title_update = _l("Evaluate requirement")
     permission_required = "assets.supplier.create"
 
-    def dispatch(self, request, *args, **kwargs):
-        self.supplier_requirement = get_object_or_404(
-            SupplierRequirement, pk=kwargs["requirement_pk"]
-        )
-        return super().dispatch(request, *args, **kwargs)
+    def get_requirement(self):
+        raise NotImplementedError
 
     def form_valid(self, form):
-        form.instance.supplier_requirement = self.supplier_requirement
+        req = self.get_requirement()
+        form.instance.supplier_requirement = req
         form.instance.reviewer = self.request.user
         response = super().form_valid(form)
-        # Update the requirement's compliance status from the review
-        req = self.supplier_requirement
         req.compliance_status = form.instance.result
         req.verified_at = timezone.now()
         req.verified_by = self.request.user
-        req.save(update_fields=["compliance_status", "verified_at", "verified_by"])
+        req.save(update_fields=["compliance_status", "verified_at", "verified_by", "updated_at"])
         return response
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["supplier_requirement"] = self.supplier_requirement
-        ctx["supplier"] = self.supplier_requirement.supplier
+        ctx["supplier"] = self.supplier
+        ctx["requirement_title"] = self.requirement_title
+        if ctx.get("is_modal") and self.requirement_title:
+            ctx["modal_title"] = f'{_("Evaluate")} : {self.requirement_title}'
         return ctx
 
     def get_success_url(self):
-        return reverse_lazy(
-            "assets:supplier-requirement-detail",
-            kwargs={"pk": self.supplier_requirement.pk},
+        return reverse_lazy("assets:supplier-detail", kwargs={"pk": self.supplier.pk})
+
+
+class SupplierRequirementReviewCreateView(_RequirementReviewModalBase):
+    def dispatch(self, request, *args, **kwargs):
+        self.supplier_requirement = get_object_or_404(
+            SupplierRequirement.objects.select_related("supplier"),
+            pk=kwargs["requirement_pk"],
         )
+        self.supplier = self.supplier_requirement.supplier
+        self.requirement_title = self.supplier_requirement.title
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_requirement(self):
+        return self.supplier_requirement
 
 
 class SupplierRequirementReviewDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
@@ -867,27 +968,37 @@ class SupplierRequirementReviewDeleteView(LoginRequiredMixin, PermissionRequired
         )
 
 
-class InstantiateTypeRequirementReviewView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Get-or-create a SupplierRequirement from a type requirement, then redirect to the review form."""
+class InstantiateTypeRequirementReviewView(_RequirementReviewModalBase):
+    """Evaluate a type requirement from the drawer : on save, instantiate it as a
+    SupplierRequirement for this supplier (idempotent), then record the review."""
 
-    permission_required = "assets.supplier.create"
+    def dispatch(self, request, *args, **kwargs):
+        self.supplier = get_object_or_404(Supplier, pk=kwargs["supplier_pk"])
+        self.type_req = get_object_or_404(SupplierTypeRequirement, pk=kwargs["type_req_pk"])
+        self.requirement_title = self.type_req.title
+        return super().dispatch(request, *args, **kwargs)
 
-    def post(self, request, supplier_pk, type_req_pk):
-        supplier = get_object_or_404(Supplier, pk=supplier_pk)
-        type_req = get_object_or_404(SupplierTypeRequirement, pk=type_req_pk)
-
+    def get_requirement(self):
         req, _created = SupplierRequirement.objects.get_or_create(
-            supplier=supplier,
-            source_type_requirement=type_req,
-            defaults={
-                "title": type_req.title,
-                "description": type_req.description,
-            },
+            supplier=self.supplier,
+            source_type_requirement=self.type_req,
+            defaults={"title": self.type_req.title, "description": self.type_req.description},
         )
-        return redirect(
-            "assets:supplier-requirement-review-create",
-            requirement_pk=req.pk,
-        )
+        return req
+
+
+class SupplierRequirementReviewHistoryView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    """Read-only evaluation history (reviews) for a requirement, shown in the drawer."""
+
+    model = SupplierRequirement
+    template_name = "assets/supplier_requirement_history_modal.html"
+    context_object_name = "req"
+    permission_required = "assets.supplier.read"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["reviews"] = self.object.reviews.select_related("reviewer")
+        return ctx
 
 
 # ── Supplier Dependencies ─────────────────────────────────
