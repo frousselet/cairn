@@ -1,6 +1,7 @@
 """Address field (plain autocomplete input) + coordinates + Leaflet map display."""
 
 import re
+from urllib.parse import urlparse
 
 import pytest
 from django.urls import reverse
@@ -58,7 +59,8 @@ class TestSupplierMap:
         assert 'id="supplier-map"' in html
         assert 'data-lat="48.87"' in html and 'data-lon="2.32"' in html
         assert "leaflet@1.9.4/dist/leaflet.js" in html
-        assert "basemaps.cartocdn.com" in html
+        urls = re.findall(r'https?://[^\s"\'<>]+', html)
+        assert any(urlparse(u).hostname == "basemaps.cartocdn.com" for u in urls)
 
     def test_no_map_without_address_or_coords(self, client):
         client.force_login(UserFactory(is_superuser=True, is_staff=True))
