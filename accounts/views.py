@@ -937,7 +937,17 @@ class ActionLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
     permission_required = "system.audit_trail.read"
 
     def _get_historical_models(self):
-        return [m for m in apps.get_models() if m.__name__.startswith("Historical")]
+        # Only true per-record history models (they carry history_user). Exclude
+        # the auto-generated M2M through-history models (e.g. from
+        # HistoricalRecords(m2m_fields=[...])), which track relation rows, have no
+        # history_user, and whose change is already represented by the parent's
+        # history entry.
+        return [
+            m
+            for m in apps.get_models()
+            if m.__name__.startswith("Historical")
+            and any(f.name == "history_user" for f in m._meta.fields)
+        ]
 
     def get_queryset(self):
         labels = _get_model_labels()

@@ -5,220 +5,220 @@
 
 {% block title %}{{ supplier.name }} - Cairn{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
 {% block content %}
-{% page_header supplier.name reference=supplier.reference nav="assets:supplier-list" accent="assets" %}
+{% page_header supplier.name reference=supplier.reference nav="assets:supplier-list" accent="assets" logo=supplier.logo_64|default:supplier.logo %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'assets:supplier-update' supplier.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  {% if supplier.status != 'archived' %}
-  <form method="post" action="{% url 'assets:supplier-archive' supplier.pk %}">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-outline-warning" onclick="return confirm('{% trans "Archive this supplier?" %}')">{% trans "Archive" %}</button>
-  </form>
-  {% endif %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'assets:supplier-update' supplier.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</button>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.supplier_detail" %}
 
-{% include "includes/workflow_stepper.html" %}
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if supplier.tags.all %}
+<div class="detail-tags d-flex flex-wrap justify-content-center gap-2 mb-4">
+  {% for tag in supplier.tags.all %}<span class="badge" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% endfor %}
+</div>
+{% endif %}
+
+{% if supplier.notes %}
+<div class="note-cartouche" role="note">{{ supplier.notes|safe }}</div>
+{% endif %}
 
 {% if supplier.is_contract_expired %}
 <div class="alert alert-warning">{% trans "The contract for this supplier has expired" %} ({{ supplier.contract_end_date }}).</div>
 {% endif %}
 
-<div class="row">
-  {# ── Left column : main content ── #}
-  <div class="col-lg-8">
+<div class="detail-layout">
+  {# ── Main content ── #}
+  <div class="detail-main">
 
-    {# General #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
-          <div>{% grouped_scope_badges supplier.scopes.all %}{% if not supplier.scopes.all %}<span class="text-muted">-</span>{% endif %}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Type" %}</div>
-          <div>{% if supplier.type %}<a href="{% url 'assets:supplier-type-detail' supplier.type.pk %}" style="color:var(--accent);text-decoration:none">{{ supplier.type.name }}</a>{% else %}-{% endif %}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ supplier.description|default:"-"|safe }}</div>
-        </div>
-        <div class="mb-0">
-          <div class="text-muted small mb-1">{% trans "Notes" %}</div>
-          <div>{{ supplier.notes|default:"-"|safe }}</div>
-        </div>
+    {# ── 1. Overview : info overlaid on a hero map that bleeds behind the contacts ── #}
+    <div class="card supplier-card{% if not supplier.address and supplier.latitude is None %} supplier-card--nomap{% endif %}">
+      {% if supplier.address or supplier.latitude is not None %}
+      {# Hero map : absolute background on the card's right, continuing behind the     #}
+      {# contacts. Keeps the exact #supplier-map id / class / data-* for the init JS.  #}
+      <div class="supplier-card__map" aria-hidden="true">
+        <div id="supplier-map" class="entity-map"
+             data-lat="{{ supplier.latitude|default_if_none:'' }}"
+             data-lon="{{ supplier.longitude|default_if_none:'' }}"
+             data-address="{{ supplier.address|striptags }}"></div>
       </div>
-    </div>
-
-    {# Contact #}
-    <div class="card mb-4">
+      {% endif %}
       <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-person-lines-fill me-1"></i>{% trans "Contact" %}</h6>
-        <div class="row">
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "Contact name" %}</div>
-            <div>{{ supplier.contact_name|default:"-" }}</div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "Contact email" %}</div>
-            <div>{% if supplier.contact_email %}<a href="mailto:{{ supplier.contact_email }}">{{ supplier.contact_email }}</a>{% else %}-{% endif %}</div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "Contact phone" %}</div>
-            <div>{{ supplier.contact_phone|default:"-" }}</div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "Website" %}</div>
-            <div>{% if supplier.website %}<a href="{{ supplier.website }}" target="_blank" rel="noopener">{{ supplier.website }}</a>{% else %}-{% endif %}</div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "Address" %}</div>
-            <div>{{ supplier.address|default:"-"|safe }}</div>
-          </div>
-          <div class="col-sm-6 mb-0">
-            <div class="text-muted small mb-1">{% trans "Country" %}</div>
-            <div>{{ supplier.country|default:"-" }}</div>
+        <div class="supplier-overview{% if not supplier.address and supplier.latitude is None %} supplier-overview--nomap{% endif %}">
+          <div class="supplier-overview__info">
+            {% if supplier.description %}
+            <div class="ov-row ov-row--rich ov-row--lead" role="group" aria-label="{% trans 'Description' %}">
+              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-card-text"></i></span>
+              <div class="ov-row__value ov-rich">{{ supplier.description|safe }}</div>
+            </div>
+            {% endif %}
+            {% if supplier.type %}
+            <div class="ov-row" role="group" aria-label="{% trans 'Type' %}">
+              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-tag"></i></span>
+              <div class="ov-row__value"><a href="{% url 'assets:supplier-type-detail' supplier.type.pk %}" class="ov-link">{{ supplier.type.name }}</a></div>
+            </div>
+            {% endif %}
+            {% if supplier.website %}
+            <div class="ov-row" role="group" aria-label="{% trans 'Website' %}">
+              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-globe"></i></span>
+              <div class="ov-row__value text-truncate"><a href="{{ supplier.website }}" target="_blank" rel="noopener" class="ov-link">{{ supplier.website }}</a></div>
+            </div>
+            {% endif %}
+            {% if supplier.address %}
+            <div class="ov-row" role="group" aria-label="{% trans 'Address' %}">
+              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-geo-alt"></i></span>
+              <div class="ov-row__value">{{ supplier.address|striptags }}</div>
+            </div>
+            {% endif %}
           </div>
         </div>
-      </div>
-    </div>
 
-    {# Contract #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-file-earmark-text me-1"></i>{% trans "Contract" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Contract reference" %}</div>
-          <div>{{ supplier.contract_reference|default:"-" }}</div>
+        {% with contacts=supplier.contacts.all %}
+        <div class="detail-subhead detail-subhead--action">
+          <span><i class="bi bi-person-lines-fill me-1"></i>{% trans "Contacts" %}</span>
+          <button type="button" class="btn btn-sm btn-outline-secondary" hx-get="{% url 'assets:supplier-contact-create' supplier.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Add contact' %}" aria-label="{% trans 'Add contact' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
         </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Contract start date" %}</div>
-          <div>{{ supplier.contract_start_date|default:"-" }}</div>
-        </div>
-        <div class="mb-0">
-          <div class="text-muted small mb-1">{% trans "Contract end date" %}</div>
-          <div>
-            {{ supplier.contract_end_date|default:"-" }}
-            {% if supplier.is_contract_expired %}<span class="badge text-bg-danger">{% trans "Expired" %}</span>{% endif %}
+        {% if contacts %}
+        <div class="contact-grid">
+          {% for ct in contacts %}
+          <div class="contact-card">
+            <div class="contact-card__head">
+              <span class="contact-card__avatar" aria-hidden="true">{{ ct.name.0|upper }}</span>
+              <div class="min-w-0">
+                <div class="contact-card__name">{{ ct.name }}</div>
+                {% if ct.profession or ct.service %}<div class="contact-card__title">{{ ct.profession }}{% if ct.profession and ct.service %} · {% endif %}{{ ct.service }}</div>{% endif %}
+              </div>
+              <div class="contact-card__actions">
+                <button type="button" class="btn" hx-get="{% url 'assets:supplier-contact-update' ct.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></button>
+                <button type="button" class="btn btn--danger" hx-get="{% url 'assets:supplier-contact-delete' ct.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+            {% if ct.role or ct.email or ct.phone %}
+            <div class="contact-card__meta">
+              {% if ct.role %}<span class="contact-card__row"><i class="bi bi-person-badge" aria-hidden="true"></i><span>{{ ct.role }}</span></span>{% endif %}
+              {% if ct.email %}<a class="contact-card__row" href="mailto:{{ ct.email }}"><i class="bi bi-envelope" aria-hidden="true"></i><span>{{ ct.email }}</span></a>{% endif %}
+              {% if ct.phone %}<a class="contact-card__row" href="tel:{{ ct.phone }}"><i class="bi bi-telephone" aria-hidden="true"></i><span>{{ ct.phone }}</span></a>{% endif %}
+            </div>
+            {% endif %}
           </div>
+          {% endfor %}
         </div>
-      </div>
-    </div>
-
-    {# Requirements #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-list-check me-1"></i>{% trans "Requirements" %} <span class="badge text-bg-secondary">{{ requirements|length }}{% if type_requirements %} + {{ type_requirements|length }}{% endif %}</span></h6>
-
-        {% if supplier.type and type_requirements %}
-        <h6 class="mb-3">{% trans "Type requirements" %} <small style="color:var(--text-muted);font-weight:normal">({% trans "inherited from" %} <a href="{% url 'assets:supplier-type-detail' supplier.type.pk %}" style="color:var(--accent);text-decoration:none">{{ supplier.type.name }}</a>)</small></h6>
-        <div class="table-responsive mb-4">
-          <table class="table table-hover mb-0">
-            <thead>
-              <tr>
-                <th>{% trans "Title" %}</th>
-                <th class="text-end">{% trans "Actions" %}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for req in type_requirements %}
-              <tr>
-                <td>
-                  <span class="cell-stack">
-                    <span style="font-weight:600">{{ req.title }}</span>
-                    {% if req.description %}<span class="cell-sub" title="{{ req.description }}">{{ req.description }}</span>{% endif %}
-                  </span>
-                </td>
-                <td>
-                  <form method="post" action="{% url 'assets:instantiate-type-requirement-review' supplier.pk req.pk %}" class="d-inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Add review" %}</button>
-                  </form>
-                </td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="2" class="text-center py-4" style="color:var(--text-muted)">{% trans "No type requirements." %}</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        {% else %}
+        <p class="text-muted small mb-0">{% trans "No contact yet." %}</p>
         {% endif %}
+        {% endwith %}
+      </div>
+    </div>
 
+    {# ── 2. Contrats : autonomous contracts shown as cards (no table) ── #}
+    <div class="card">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-file-earmark-text me-1"></i>{% trans "Contracts" %} <span class="badge text-bg-secondary">{{ contracts|length }}</span></h6>
+        {% if contracts %}
+        <div class="contract-grid">
+          {% for c in contracts %}
+          <div class="contract-card">
+            <div class="contract-card__top">
+              <span class="contract-card__title text-truncate">{% if c.label %}{{ c.label }}{% elif c.reference %}{{ c.reference }}{% else %}{% trans "Contract" %}{% endif %}</span>
+              <span class="badge text-bg-{% if c.status == 'active' %}success{% elif c.status == 'expired' %}danger{% elif c.status == 'terminated' %}dark{% else %}secondary{% endif %}">{{ c.get_status_display }}</span>
+            </div>
+            <div class="contract-card__meta">
+              {% if c.label and c.reference %}<span><i class="bi bi-hash" aria-hidden="true"></i>{{ c.reference }}</span>{% endif %}
+              {% if c.start_date or c.end_date %}<span><i class="bi bi-calendar-range" aria-hidden="true"></i>{{ c.start_date|default:"…" }} → {{ c.end_date|default:"…" }}</span>{% endif %}
+              {% if c.amount %}<span><i class="bi bi-cash-coin" aria-hidden="true"></i>{{ c.amount }} {{ c.currency }}</span>{% endif %}
+            </div>
+            {% if c.suppliers.count > 1 %}
+            <div class="contract-card__parties">
+              {% for sup in c.suppliers.all %}<span class="party-chip">{% if sup.logo %}<img src="{{ sup.logo_16|default:sup.logo }}" alt="">{% endif %}{{ sup.name }}</span>{% endfor %}
+            </div>
+            {% endif %}
+            {% if c.amendments.count %}<div class="contract-card__amend"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> {% blocktrans count n=c.amendments.count %}{{ n }} amendment{% plural %}{{ n }} amendments{% endblocktrans %}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-muted small py-2">{% trans "No contract attached yet." %}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── 3. Conformité ── #}
+    <div class="card">
+      <div class="card-body">
         <div class="d-flex align-items-center mb-3">
-          <h6 class="mb-0">{% trans "Specific requirements" %}</h6>
+          <h6 class="text-muted small fw-semibold mb-0"><i class="bi bi-list-check me-1"></i>{% trans "Compliance" %} <span class="badge text-bg-secondary">{{ compliance_rows|length }}</span></h6>
           <a href="{% url 'assets:supplier-requirement-create' supplier.pk %}" class="btn btn-sm btn-primary ms-auto">{% trans "Add requirement" %}</a>
         </div>
 
-        {% if compliance_summary.total > 0 %}
-        <div class="row g-3 mb-3">
-          <div class="col-md-3">
-            <div class="stat-card">
-              <div class="stat-card-label">{% trans "Total" %}</div>
-              <div class="stat-card-value">{{ compliance_summary.total }}</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <div class="stat-card-icon success"><i class="bi bi-check-circle"></i></div>
-              <div class="stat-card-label">{% trans "Compliant" %}</div>
-              <div class="stat-card-value">{{ compliance_summary.compliant }}</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <div class="stat-card-icon danger"><i class="bi bi-x-circle"></i></div>
-              <div class="stat-card-label">{% trans "Non-compliant" %}</div>
-              <div class="stat-card-value">{{ compliance_summary.non_compliant }}</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card">
-              <div class="stat-card-icon warning"><i class="bi bi-exclamation-circle"></i></div>
-              <div class="stat-card-label">{% trans "Not assessed" %}</div>
-              <div class="stat-card-value">{{ compliance_summary.not_assessed }}</div>
-            </div>
-          </div>
-        </div>
-        {% endif %}
-
+        {% comment %}One table grouping inherited (from the supplier type) and specific requirements; the Origin badge differentiates them.{% endcomment %}
         <div class="table-responsive">
           <table class="table table-hover mb-0">
             <thead>
               <tr>
                 <th>{% trans "Title" %}</th>
+                <th>{% trans "Origin" %}</th>
                 <th>{% trans "Status" %}</th>
-                <th>{% trans "Reviews" %}</th>
                 <th>{% trans "Due date" %}</th>
                 <th>{% trans "Verified by" %}</th>
                 <th class="text-end">{% trans "Actions" %}</th>
               </tr>
             </thead>
             <tbody>
-              {% for req in requirements %}
+              {% for row in compliance_rows %}
+              {% if row.kind == "requirement" %}{% with req=row.req %}
               <tr>
                 <td>
                   <span class="cell-stack">
                     <a href="{% url 'assets:supplier-requirement-detail' req.pk %}" class="cell-link">{{ req.title }}</a>
-                    {% if req.requirement %}<span class="cell-sub">{{ req.requirement.reference }} {{ req.requirement.name }}</span>{% endif %}
+                    {% if req.requirement %}<span class="cell-sub">{{ req.requirement.reference }} {{ req.requirement.name }}</span>{% elif req.description %}<span class="cell-sub cell-rich">{{ req.description|safe }}</span>{% endif %}
                   </span>
+                </td>
+                <td>
+                  {% if row.inherited %}<a href="{% url 'assets:supplier-type-detail' supplier.type.pk %}" class="badge ov-origin ov-origin--inherited text-decoration-none" title="{% blocktrans with t=supplier.type.name %}Inherited from {{ t }}{% endblocktrans %}"><i class="bi bi-diagram-2 me-1" aria-hidden="true"></i>{% trans "Inherited" %}</a>{% else %}<span class="badge ov-origin ov-origin--specific">{% trans "Specific" %}</span>{% endif %}
                 </td>
                 <td>
                   <span class="badge text-bg-{% if req.compliance_status == 'compliant' %}success{% elif req.compliance_status == 'non_compliant' %}danger{% elif req.compliance_status == 'partially_compliant' %}warning{% else %}secondary{% endif %}">
                     {{ req.get_compliance_status_display }}
                   </span>
                 </td>
-                <td><span class="badge text-bg-secondary">{{ req.reviews.count }}</span></td>
                 <td>{{ req.due_date|default:"-" }}</td>
                 <td>{% if req.verified_by %}{% user_badge req.verified_by size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
-                <td class="text-end">
-                  <a href="{% url 'assets:supplier-requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
-                  <a href="{% url 'assets:supplier-requirement-delete' req.pk %}" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></a>
+                <td class="text-end text-nowrap">
+                  <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'assets:supplier-requirement-review-create' req.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Evaluate' %}" aria-label="{% trans 'Evaluate' %}"><i class="bi bi-clipboard-check"></i></button>
+                  {% if req.reviews.all %}
+                  <button type="button" class="btn btn-sm btn-outline-secondary" hx-get="{% url 'assets:supplier-requirement-history' req.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Evaluation history' %}" aria-label="{% trans 'Evaluation history' %}"><i class="bi bi-clock-history"></i></button>
+                  {% endif %}
+                  {% if not row.inherited %}
+                  <a href="{% url 'assets:supplier-requirement-update' req.pk %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+                  <a href="{% url 'assets:supplier-requirement-delete' req.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+                  {% endif %}
                 </td>
               </tr>
+              {% endwith %}{% else %}{% with tr=row.type_req %}
+              <tr>
+                <td>
+                  <span class="cell-stack">
+                    <span style="font-weight:600">{{ tr.title }}</span>
+                    {% if tr.description %}<span class="cell-sub cell-rich" title="{{ tr.description|striptags }}">{{ tr.description|safe }}</span>{% endif %}
+                  </span>
+                </td>
+                <td><a href="{% url 'assets:supplier-type-detail' supplier.type.pk %}" class="badge ov-origin ov-origin--inherited text-decoration-none" title="{% blocktrans with t=supplier.type.name %}Inherited from {{ t }}{% endblocktrans %}"><i class="bi bi-diagram-2 me-1" aria-hidden="true"></i>{% trans "Inherited" %}</a></td>
+                <td><span class="badge text-bg-secondary">{% trans "Not assessed" %}</span></td>
+                <td><span class="cell-empty">-</span></td>
+                <td><span class="cell-empty">-</span></td>
+                <td class="text-end text-nowrap">
+                  <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'assets:instantiate-type-requirement-review' supplier.pk tr.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Evaluate' %}" aria-label="{% trans 'Evaluate' %}"><i class="bi bi-clipboard-check"></i></button>
+                </td>
+              </tr>
+              {% endwith %}{% endif %}
               {% empty %}
-              <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted)">{% trans "No specific requirements for this supplier." %}</td></tr>
+              <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted)">{% trans "No requirements for this supplier." %}</td></tr>
               {% endfor %}
             </tbody>
           </table>
@@ -228,58 +228,139 @@
 
   </div>
 
-  {# ── Right sidebar : metadata ── #}
-  <div class="col-lg-4">
+  {# ── Metadata rail (small info only) ── #}
+  <div class="detail-rail">
 
-    {# Status #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
-          <dd class="mb-3">
-            <span class="badge text-bg-{% if supplier.status == 'active' %}success{% elif supplier.status == 'under_evaluation' %}info{% elif supplier.status == 'suspended' %}warning{% else %}dark{% endif %}">
-              {{ supplier.get_status_display }}
-            </span>
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Criticality" %}</dt>
-          <dd class="mb-3">
-            <span class="badge text-bg-{% if supplier.criticality == 'critical' %}danger{% elif supplier.criticality == 'high' %}warning{% elif supplier.criticality == 'medium' %}info{% else %}secondary{% endif %}">
-              {{ supplier.get_criticality_display }}
-            </span>
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in supplier.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
-        </dl>
+    {% comment %} Rail widgets : list-page kpi-tile chrome. Placeholder content for now - to be refined. {% endcomment %}
+
+    {# Widget 1 : lifecycle stage #}
+    <div class="card kpi-tile kpi-tile--accent">
+      <div class="card-body d-flex align-items-center gap-3">
+        <span class="kpi-tile__icon"><i class="bi bi-signpost-split" aria-hidden="true"></i></span>
+        <div class="min-w-0">
+          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Lifecycle stage" %}</div>
+          <div class="fw-bold text-truncate" style="font-size:1.05rem;line-height:1.2">{{ supplier.lifecycle_label }}</div>
+        </div>
       </div>
     </div>
 
-    {# People #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Owner" %}</dt>
-          <dd class="mb-3">{% if supplier.owner %}{% user_badge supplier.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-          <dd class="mb-0">{% if supplier.created_by %}{% user_badge supplier.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-        </dl>
+    {# Widget 2 : criticality #}
+    <div class="card kpi-tile kpi-tile--{% if supplier.criticality == 'critical' %}danger{% elif supplier.criticality == 'high' %}warning{% else %}neutral{% endif %}">
+      <div class="card-body d-flex align-items-center gap-3">
+        <span class="kpi-tile__icon kpi-tile__icon--{% if supplier.criticality == 'critical' %}danger{% elif supplier.criticality == 'high' %}warning{% else %}neutral{% endif %}"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+        <div class="min-w-0">
+          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Criticality" %}</div>
+          <div class="fw-bold text-truncate" style="font-size:1.05rem;line-height:1.2">{{ supplier.get_criticality_display }}</div>
+        </div>
       </div>
     </div>
 
-    {# Dates #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
-          <dd class="mb-3">{{ supplier.created_at }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>
-          <dd class="mb-0">{{ supplier.updated_at }}</dd>
-        </dl>
+    {# Widget 3 : requirements compliance #}
+    <div class="card kpi-tile kpi-tile--success">
+      <div class="card-body d-flex align-items-center gap-3">
+        <span class="kpi-tile__icon kpi-tile__icon--success"><i class="bi bi-list-check" aria-hidden="true"></i></span>
+        <div class="min-w-0">
+          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Requirements met" %}</div>
+          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ compliance_summary.compliant }}<span class="text-muted fw-normal" style="font-size:.85rem"> / {{ compliance_summary.total }}</span></div>
+        </div>
+      </div>
+    </div>
+
+    {# Widget 4 : asset dependencies #}
+    <div class="card kpi-tile kpi-tile--neutral">
+      <div class="card-body d-flex align-items-center gap-3">
+        <span class="kpi-tile__icon kpi-tile__icon--neutral"><i class="bi bi-diagram-3" aria-hidden="true"></i></span>
+        <div class="min-w-0">
+          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Dependencies" %}</div>
+          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ supplier.asset_dependencies.count }}</div>
+        </div>
       </div>
     </div>
 
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+{% comment %}
+  Render the supplier address on an OpenStreetMap (Leaflet) map. Coordinates
+  captured from the Photon pick are used directly; otherwise the address text
+  is geocoded once (client-side) to place the marker. Re-runs on HTMX swaps.
+{% endcomment %}
+(function () {
+  // CARTO basemaps : free, no API key, meant for embedding (OSM's own tile
+  // servers block app usage), with light / dark styles that follow the theme.
+  var ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  var docEl = document.documentElement;
+  function tileUrl() {
+    var dark = docEl.getAttribute('data-bs-theme') === 'dark';
+    return 'https://{s}.basemaps.cartocdn.com/' + (dark ? 'dark_all' : 'light_all') + '/{z}/{x}/{y}{r}.png';
+  }
+  function accent() {
+    return (getComputedStyle(docEl).getPropertyValue('--accent') || '').trim() || '#1E3A8A';
+  }
+  function initSupplierMap() {
+    var el = document.getElementById('supplier-map');
+    if (!el || el.dataset.mapReady || !window.L) { return; }
+
+    function render(lat, lon) {
+      el.dataset.mapReady = '1';
+      // Static map : drag and every zoom interaction disabled, no zoom buttons.
+      var map = L.map(el, {
+        zoomControl: false, dragging: false, scrollWheelZoom: false,
+        doubleClickZoom: false, boxZoom: false, touchZoom: false, keyboard: false
+      });
+      var center = L.latLng(lat, lon);
+      var layer = L.tileLayer(tileUrl(), {
+        maxZoom: 19, subdomains: 'abcd', attribution: ATTR
+      }).addTo(map);
+      // Brand-navy dot with a white ring (matches the Ruby map treatment).
+      L.circleMarker(center, {
+        radius: 7, color: '#ffffff', weight: 2.5, fillColor: accent(), fillOpacity: 1
+      }).addTo(map);
+      // Centre the marker within the VISIBLE map : pushed right of the left fade
+      // (under the info column) and up out of the band that bleeds behind the
+      // contacts. On the stacked mobile layout (vertical fade) keep it centred.
+      // Recomputed on every resize so it tracks the map size.
+      function applyView() {
+        map.setView(center, 15, { animate: false });
+        var size = map.getSize();
+        if (size.x > 0 && window.matchMedia('(min-width: 701px)').matches) {
+          // Target pixel for the marker : well right of the left fade, upper band.
+          var tx = size.x * 0.77, ty = size.y * 0.40;
+          // Recentre so the marker (currently at the element centre) lands there.
+          var c = map.containerPointToLatLng([size.x - tx, size.y - ty]);
+          map.setView(c, 15, { animate: false });
+        }
+      }
+      applyView();
+      map.on('resize', applyView);
+      // Swap the basemap when the user toggles light / dark.
+      new MutationObserver(function () { layer.setUrl(tileUrl()); })
+        .observe(docEl, { attributes: true, attributeFilter: ['data-bs-theme'] });
+      setTimeout(function () { map.invalidateSize(); applyView(); }, 120);
+    }
+
+    var lat = parseFloat(el.dataset.lat), lon = parseFloat(el.dataset.lon);
+    if (!isNaN(lat) && !isNaN(lon)) { render(lat, lon); return; }
+
+    var addr = (el.dataset.address || '').trim();
+    if (!addr) { el.style.display = 'none'; return; }
+    fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(addr) + '&limit=1')
+      .then(function (r) { return r.ok ? r.json() : { features: [] }; })
+      .then(function (d) {
+        var f = (d.features || [])[0];
+        if (f && f.geometry && f.geometry.coordinates) {
+          render(f.geometry.coordinates[1], f.geometry.coordinates[0]);
+        } else { el.style.display = 'none'; }
+      })
+      .catch(function () { el.style.display = 'none'; });
+  }
+  if (window.L) { initSupplierMap(); }
+  else { document.addEventListener('DOMContentLoaded', initSupplierMap); }
+  document.body.addEventListener('htmx:afterSettle', initSupplierMap);
+})();
+</script>
 {% endblock %}

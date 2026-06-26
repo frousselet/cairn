@@ -14,7 +14,8 @@ replaced the two historical mechanisms: the boolean approval workflow
 Declared in code, assigned per model, governed by flags:
 
 - **`State`** : `code`, translatable `label`, UI `tone` (badge colour), `branch`
-  (off-ramp states like cancelled / archived, drawn below the stepper's main flow),
+  (off-ramp states like cancelled / archived, shown on the stepper's single line
+  but detached by a gap with no connector to the main flow),
   and the governance flags:
   - `counts_in_reports` - included in reports, KPIs, the calendar and exports;
   - `linkable` - may be targeted by a new link;
@@ -143,9 +144,13 @@ Decisions recorded during the rollout:
   deprecated alias. Link tools enforce the linking rules with explicit error lists.
 - **UI** : every detail page renders the generic stepper
   (`includes/workflow_stepper.html`, context built by
-  `accounts.mixins.WorkflowStepperMixin`) - main flow pills, permission-aware next
-  step, refusal / rework button, branch off-ramp, shared comment modal gated by each
-  transition's `requires_comment`. Transitions post to `workflow:transition`
+  `accounts.mixins.WorkflowStepperMixin`) - a single centred line drawn directly on
+  the page background (no card) holding the main flow pills and the branch off-ramp
+  (detached, no connector). Both the forward next step and an allowed backward move
+  are **clickable pills** (the earlier state is clickable to move back to it - e.g.
+  Suspended -> Active to reactivate - rather than a separate "Refuse" button), with the
+  shared comment modal gated by each transition's `requires_comment`. Transitions post
+  to `workflow:transition`
   (`/workflow/<app>/<model>/<pk>/transition/`, validated-referer redirect) or to the
   entity's bespoke endpoint (`workflow_transition_url_name`). State badges render
   via `{% workflow_badge obj %}` (`helpers.templatetags.workflow_tags`).

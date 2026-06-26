@@ -2451,6 +2451,32 @@
     }
     .cell-stack > .cell-link { font-weight: 600; }
 
+    /* Origin badge : differentiates a requirement inherited from the supplier
+       type from one attached directly to the supplier. */
+    .ov-origin {
+      font-weight: 600; font-size: .72rem; letter-spacing: .01em;
+      padding: .25rem .55rem; border-radius: 999px; white-space: nowrap;
+    }
+    .ov-origin--inherited { background: var(--accent-soft); color: var(--accent); }
+    .ov-origin--specific {
+      background: var(--surface-muted); color: var(--text-muted);
+      border: 1px solid var(--border-light);
+    }
+    /* Rich-text (pell HTML) shown compactly inside a table sub-cell. */
+    .cell-rich p { display: inline; margin: 0; }
+    .cell-rich ul, .cell-rich ol { margin: .1rem 0; padding-left: 1.1rem; }
+
+    /* Evaluation-history timeline (drawer modal). */
+    .review-entry { padding-left: 1.1rem; border-left: 2px solid var(--border-light); margin: 0 0 1.1rem .15rem; }
+    .review-entry:last-child { margin-bottom: 0; }
+    .review-entry__head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .35rem; }
+    .review-entry__body { font-size: .9rem; color: var(--text-secondary); line-height: 1.5; }
+    .review-entry__body > :first-child { margin-top: 0; }
+    .review-entry__body > :last-child { margin-bottom: 0; }
+    .review-entry__file { margin-top: .45rem; font-size: .85rem; }
+    .review-entry__file a { color: var(--accent); text-decoration: none; }
+    .review-entry__file a:hover { text-decoration: underline; }
+
     /* People cell: avatar + two-line identity (used in the users admin table).
        Block-level flex so the td's vertical-align:middle centres it
        deterministically and the primary lines line up across columns. */
@@ -3959,9 +3985,6 @@
       overflow: hidden;
       pointer-events: none;
     }
-    /* With a logo (e.g. the dashboard) the title block is taller, so centre the
-       whole header - title and actions line up on the logo's vertical midline. */
-    .page-header:has(.page-header__logo) { align-items: center; }
     .page-header__main {
       display: flex;
       align-items: flex-start;
@@ -3971,24 +3994,27 @@
       transition: gap var(--transition-normal);
     }
     .page-header.is-compact .page-header__main { gap: .5rem; }
-    /* Centre the logo with the title block when a logo is present. */
-    .page-header__main:has(.page-header__logo) { align-items: center; }
     .page-header__icon {
       font-size: 1.625rem;
       color: var(--accent);
       flex-shrink: 0;
       margin-top: .25rem;
     }
-    .page-header__logo {
-      width: 4.5rem;
-      height: 4.5rem;
-      object-fit: contain;
-      flex-shrink: 0;
-      transition: width var(--transition-normal), height var(--transition-normal);
+    /* Entity logo : rendered INSIDE the title, in front of the name, sized to the
+       title text height and vertically centred on the title line (flex, so the
+       alignment is exact rather than an approximate vertical-align). */
+    .page-header__title:has(.page-header__logo) {
+      display: inline-flex;
+      align-items: center;
     }
-    .page-header.is-compact .page-header__logo {
-      width: 2.25rem;
-      height: 2.25rem;
+    .page-header__logo {
+      height: .92em;
+      width: auto;
+      max-width: 1.8em;
+      object-fit: contain;
+      border-radius: 5px;
+      margin-right: .45em;
+      flex-shrink: 0;
     }
     .page-header__text { min-width: 0; }
     .page-header__title {
@@ -4053,6 +4079,32 @@
     .page-header__actions {
       flex-shrink: 0;
       margin-left: 0;
+    }
+    /* "Last modified by X on DATE" : a muted meta line sitting just left of the
+       action buttons on detail pages. Centred on the button row height. */
+    .page-header__modified {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      flex-shrink: 0;
+      min-height: 2.375rem;
+      font-size: .8rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .page-header__modified .user-badge { font-size: .8rem; }
+    /* Soft pill + solid-navy avatar (white initials), matching the dashboard
+       AI-summary people chips. Opt-in via {% user_badge ... chip=True %}. */
+    .user-badge--chip {
+      padding: .0625rem .4375rem .0625rem .125rem;
+      border-radius: 100px;
+      background: var(--accent-soft);
+      color: var(--text-primary);
+      font-weight: 550;
+      line-height: 1.4;
+    }
+    @media (max-width: 575.98px) {
+      .page-header__modified { white-space: normal; min-height: 0; width: 100%; }
     }
     /* Module accent variant - bold editorial banner.
      *
@@ -4308,6 +4360,347 @@
     @media (min-width: 2200px) {
       .list-layout { --list-rail-w: 28rem; }
     }
+
+    /* ── Detail page layout: main content + metadata rail ─────────
+       Mirrors .list-layout / the dashboard zones, and uses the SAME responsive
+       thresholds: a single full-width column by default (the rail floating
+       ABOVE the main content as small metadata), then from 1800px up the page
+       widens to a higher cap and the rail becomes a sticky right column. Both
+       columns are flex so their cards are spaced by the gap alone (the global
+       2rem card margin is stripped inside). */
+    .detail-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.5rem;
+      align-items: start;
+    }
+    .detail-layout .detail-main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    /* Stacked above the content (below the wide breakpoint) the rail lays its
+       widgets out as a wrapping ROW (4 columns), like the list-page KPI rail;
+       it only becomes a stacked sticky column in the wide side-rail below. */
+    .detail-layout .detail-rail {
+      order: -1;
+      min-width: 0;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .detail-layout .detail-rail > * { flex: 1 1 8rem; min-width: 0; }
+    /* In the wrapping-row (stacked) mode the columns are narrow, so each tile
+       stacks its content vertically (icon on top, centred) to give the label /
+       value the full column width instead of truncating beside the icon. */
+    .detail-layout .detail-rail .kpi-tile .card-body {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: .5rem;
+    }
+    .detail-layout .detail-rail .kpi-tile .min-w-0 { width: 100%; }
+    /* Narrow columns : let the label / value wrap rather than truncate to a stub. */
+    .detail-layout .detail-rail .kpi-tile .text-truncate {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+    }
+    .detail-layout .card { margin-bottom: 0; }
+    /* Contracts as cards (no table) : a responsive bento-ish grid. */
+    .contract-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+      gap: 1rem;
+    }
+    .contract-card {
+      display: flex;
+      flex-direction: column;
+      gap: .55rem;
+      padding: .85rem 1rem;
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      background: var(--surface-subtle);
+    }
+    .contract-card__top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .contract-card__title { font-weight: 600; min-width: 0; }
+    .contract-card__meta { display: flex; flex-direction: column; gap: .3rem; font-size: .82rem; color: var(--text-secondary); }
+    .contract-card__meta i { width: 1rem; margin-right: .4rem; color: var(--text-muted); }
+    .contract-card__parties { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+    .party-chip {
+      display: inline-flex; align-items: center; gap: .3rem;
+      font-size: .72rem; line-height: 1.4;
+      background: var(--surface); border: 1px solid var(--border-light);
+      border-radius: 999px; padding: .15rem .55rem;
+    }
+    .party-chip img { width: 16px; height: 16px; border-radius: 4px; object-fit: cover; }
+    .contract-card__amend { font-size: .78rem; color: var(--text-muted); }
+
+    /* Contacts as cards (people attached to a supplier). */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+      /* Equal-height rows so every card matches the tallest, regardless of row. */
+      grid-auto-rows: 1fr;
+      gap: 1rem;
+    }
+    .contact-card {
+      display: flex;
+      flex-direction: column;
+      gap: .85rem;
+      padding: 1.05rem 1.1rem;
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      background: var(--surface-subtle);
+    }
+    .contact-card__head { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+    .contact-card__head > .min-w-0 { flex: 1 1 auto; min-width: 0; }
+    .contact-card__avatar {
+      width: 40px; height: 40px; flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--accent); color: var(--accent-contrast);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .95rem; line-height: 1;
+    }
+    .contact-card__name { font-weight: 650; font-size: .98rem; line-height: 1.3; word-break: break-word; }
+    .contact-card__title { color: var(--text-muted); font-size: .82rem; margin-top: .1rem; line-height: 1.35; }
+    .contact-card__actions { display: flex; gap: .1rem; flex-shrink: 0; margin-left: auto; align-self: flex-start; }
+    .contact-card__actions .btn {
+      --btn-bg: transparent; --btn-bg-hover: var(--surface);
+      --btn-fg: var(--text-muted); --btn-fg-hover: var(--accent);
+      --btn-border: transparent; --btn-border-hover: transparent;
+      padding: .25rem .35rem; border-radius: 8px;
+      box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+      line-height: 1; font-size: .95rem;
+    }
+    .contact-card__actions .btn:hover { box-shadow: none; }
+    .contact-card__actions .btn--danger { --btn-fg-hover: var(--danger); }
+    .contact-card__meta { display: flex; flex-direction: column; gap: .5rem; font-size: .84rem; min-width: 0; }
+    .contact-card__row { display: flex; align-items: flex-start; gap: .55rem; line-height: 1.45; color: var(--text-secondary); text-decoration: none; word-break: break-word; }
+    .contact-card__row > span { min-width: 0; }
+    .contact-card__row i { flex-shrink: 0; width: 1rem; text-align: center; color: var(--text-muted); font-size: .9rem; line-height: inherit; }
+    a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
+
+    /* Address autocomplete (Photon / OSM) suggestion dropdown. */
+    .address-ac { position: relative; }
+    .address-ac__menu {
+      position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--surface); border: 1px solid var(--border-light);
+      border-radius: 10px; box-shadow: var(--shadow-md);
+      padding: .25rem; max-height: 15rem; overflow-y: auto;
+    }
+    .address-ac__item {
+      display: flex; align-items: flex-start; gap: .5rem;
+      width: 100%; text-align: left;
+      padding: .45rem .55rem; border: 0; background: transparent;
+      border-radius: 7px; font-size: .85rem; line-height: 1.35;
+      color: var(--text-secondary); cursor: pointer;
+    }
+    .address-ac__item i { color: var(--text-muted); font-size: .85rem; line-height: 1.4; flex-shrink: 0; }
+    .address-ac__item:hover, .address-ac__item.is-active { background: var(--surface-muted); color: var(--text-primary); }
+    .address-ac__empty { padding: .5rem .6rem; font-size: .82rem; color: var(--text-muted); }
+
+    /* Leaflet map (CARTO basemaps) showing an entity's address. UI polish
+       adapted from the Ruby theme's rybu-map, recoloured to the Cairn palette
+       and keyed on data-bs-theme rather than prefers-color-scheme. */
+    .entity-map {
+      height: 260px; width: 100%;
+      border: 1px solid var(--border-light); border-radius: 12px;
+      overflow: hidden; z-index: 0; background: var(--surface-muted);
+    }
+    /* Beat Leaflet's default #ddd container flash with double-class specificity. */
+    .entity-map.leaflet-container { background: var(--surface-muted); }
+    /* Zoom buttons hidden (drag / double-click / pinch still zoom). */
+    .entity-map .leaflet-control-zoom { display: none !important; }
+    /* Attribution stays out of the way and fades in on hover / focus only. */
+    .entity-map .leaflet-control-attribution {
+      background: color-mix(in srgb, var(--surface) 80%, transparent) !important;
+      color: var(--text-muted) !important; font-size: 10px !important;
+      padding: 2px 6px !important; border-top-left-radius: 6px;
+      -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+      opacity: 0; transition: opacity 180ms var(--ease-out, ease);
+    }
+    .entity-map:hover .leaflet-control-attribution,
+    .entity-map:focus-within .leaflet-control-attribution { opacity: 1; }
+    .entity-map .leaflet-control-attribution a { color: var(--accent) !important; }
+    /* Brand-navy circle marker with a soft halo so it reads on either basemap. */
+    .entity-map .leaflet-overlay-pane circle { filter: drop-shadow(0 1px 2px rgba(2, 6, 23, .35)); }
+    [data-bs-theme="dark"] .entity-map .leaflet-overlay-pane circle {
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 60%, transparent)) drop-shadow(0 1px 1px rgba(0, 0, 0, .5));
+    }
+
+    /* ── Supplier overview : info overlaid on a hero map ──────────────────────
+       The map is an absolute background on the card's right that bleeds to the
+       card edges, continues DOWN behind the top of the contacts, and is melted
+       into the panel by a fade (var(--surface-raised) -> transparent) so the
+       overlaid info text and contacts stay legible in BOTH themes. */
+    .supplier-card { position: relative; overflow: hidden; }
+    .supplier-card__map { position: absolute; top: 0; left: 0; right: 0; height: 30rem; z-index: 0; }
+    .supplier-card__map .entity-map {
+      position: absolute; inset: 0; height: 100%; width: 100%;
+      border: 0; border-radius: 0; background: var(--surface-muted);
+    }
+    /* Layered fade ON TOP of the map; never intercepts pointer events. Opaque on
+       the left (under the info), fading clear toward the marker on the right, and
+       melting into the panel along the bottom so the map dissolves behind contacts. */
+    .supplier-card__map::after {
+      content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 401;
+      background:
+        linear-gradient(to right,
+          var(--surface-raised) 0%,
+          color-mix(in srgb, var(--surface-raised) 88%, transparent) 24%,
+          color-mix(in srgb, var(--surface-raised) 45%, transparent) 46%,
+          color-mix(in srgb, var(--surface-raised) 10%, transparent) 70%,
+          transparent 100%),
+        linear-gradient(to bottom,
+          color-mix(in srgb, var(--surface-raised) 45%, transparent) 0%,
+          transparent 12%, transparent 50%,
+          color-mix(in srgb, var(--surface-raised) 78%, transparent) 82%,
+          var(--surface-raised) 100%);
+    }
+    .supplier-card__map .leaflet-control-container { z-index: 500; }
+    /* Content overlays the map; card-body is transparent so the map shows through. */
+    .supplier-card > .card-body { position: relative; z-index: 1; }
+
+    /* Overview is now the info block only, vertically centred over the map's top. */
+    .supplier-overview { min-height: 22rem; display: flex; align-items: center; }
+    .supplier-overview__info {
+      max-width: 32rem; min-width: 0;
+      padding-left: 2.5rem;            /* extra left breathing room beyond card padding */
+      display: flex; flex-direction: column; gap: .85rem;
+    }
+    /* No map : plain card, no overlay. */
+    .supplier-card--nomap { overflow: visible; }
+    .supplier-card--nomap .supplier-overview,
+    .supplier-overview--nomap { min-height: 0; display: block; }
+    .supplier-card--nomap .supplier-overview__info,
+    .supplier-overview--nomap .supplier-overview__info { padding-left: 0; max-width: none; }
+
+    /* Label-less info row : the icon stands in for the field name. The accessible
+       name is on the wrapper (role=group + aria-label); the icon is decorative. */
+    .supplier-overview .ov-row {
+      display: grid;
+      grid-template-columns: 1.4rem minmax(0, 1fr);
+      column-gap: .7rem;
+      align-items: start;
+      min-width: 0;
+    }
+    .supplier-overview .ov-row__icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 1.5rem; color: var(--text-muted); font-size: .95rem; line-height: 1;
+    }
+    .supplier-overview .ov-row__value {
+      min-width: 0; color: var(--text-primary); font-size: .9rem; line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+    /* Lead row : the description shown first and a touch larger. */
+    .supplier-overview .ov-row--lead .ov-row__value { font-size: 1.02rem; line-height: 1.5; }
+    .supplier-overview .ov-row--lead .ov-row__icon { height: 1.6rem; font-size: 1.02rem; }
+    .supplier-overview .ov-link { color: var(--accent); text-decoration: none; }
+    .supplier-overview .ov-link:hover { text-decoration: underline; }
+    /* Drop the separator line between the merged zone and the next subsection. */
+    /* Match the sibling card titles (h6.text-muted -> --bs-secondary-color) rather than the lighter eyebrow grey. */
+    .supplier-overview + .detail-subhead { border-top: 0; margin-top: 0; padding-top: 0; color: var(--bs-secondary-color); }
+    .supplier-overview--nomap + .detail-subhead { margin-top: 1.25rem; }
+
+    /* Note shown centered under the tags as a soft yellow cartouche. */
+    .note-cartouche {
+      max-width: 44rem;
+      margin: 0 auto 1.5rem;
+      text-align: center;
+      background: var(--warning-soft);
+      border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+      border-radius: var(--radius-md);
+      padding: .65rem 1.1rem;
+      font-size: .9rem;
+      line-height: 1.5;
+      color: #92400E;
+    }
+    [data-bs-theme="dark"] .note-cartouche { color: #FCD34D; }
+    .note-cartouche > :first-child { margin-top: 0; }
+    .note-cartouche > :last-child { margin-bottom: 0; }
+    .note-cartouche p { margin-bottom: .35rem; }
+    .note-cartouche p:last-child { margin-bottom: 0; }
+    .supplier-overview .ov-rich > :first-child { margin-top: 0; }
+    .supplier-overview .ov-rich > :last-child { margin-bottom: 0; }
+    .supplier-overview .ov-rich p { margin-bottom: .5rem; }
+    .supplier-overview .ov-rich p:last-child { margin-bottom: 0; }
+    .supplier-overview .ov-rich ul,
+    .supplier-overview .ov-rich ol { margin-bottom: .5rem; padding-left: 1.25rem; }
+
+    @media (max-width: 991.98px) {
+      .supplier-overview__info { padding-left: 1.5rem; }
+    }
+
+    /* Stack on narrow widths : the map becomes a normal band below the content,
+       no overlap, with the fade rotated to top->bottom. */
+    @media (max-width: 700px) {
+      .supplier-card { display: flex; flex-direction: column; }
+      .supplier-card > .card-body { order: 1; }
+      .supplier-card__map {
+        position: relative; order: 2; height: 14rem; width: auto;
+        border-top: 1px solid var(--border-light);
+      }
+      .supplier-card__map::after {
+        background: linear-gradient(to bottom,
+          var(--surface-raised) 0%,
+          color-mix(in srgb, var(--surface-raised) 70%, transparent) 12%,
+          color-mix(in srgb, var(--surface-raised) 18%, transparent) 38%,
+          transparent 70%);
+      }
+      .supplier-overview { min-height: 0; display: block; }
+      .supplier-overview__info { padding-left: 0; max-width: none; }
+    }
+
+    /* Sub-section header inside a detail card (e.g. Contact / People within Général). */
+    .detail-subhead {
+      margin: 1.5rem 0 .85rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-light);
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--text-muted);
+    }
+    .detail-subhead--action {
+      display: flex; align-items: center; justify-content: flex-start; gap: .5rem;
+    }
+    .detail-subhead--action > span { display: inline-flex; align-items: center; min-width: 0; }
+    .detail-subhead--action .btn {
+      text-transform: none; letter-spacing: normal;
+      --bs-btn-padding-y: .1rem; --bs-btn-padding-x: .4rem; --bs-btn-font-size: .72rem;
+      line-height: 1; flex-shrink: 0;
+    }
+    @media (min-width: 1800px) {
+      .main-content > .container-xl:has(.detail-layout) { max-width: 1900px; }
+      .detail-layout {
+        --detail-rail-w: 24rem;
+        grid-template-columns: minmax(0, 1fr) var(--detail-rail-w);
+      }
+      .detail-layout .detail-rail {
+        order: 0;
+        position: sticky;
+        top: calc(var(--page-header-offset) + 1rem);
+        align-self: start;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      .detail-layout .detail-rail > * { flex: none; }
+      /* Wide side-rail : tiles are wide, so revert to the icon-beside-text row. */
+      .detail-layout .detail-rail .kpi-tile .card-body {
+        flex-direction: row;
+        align-items: center;
+        text-align: left;
+        gap: 1rem;
+      }
+    }
+    @media (min-width: 2200px) {
+      .detail-layout { --detail-rail-w: 28rem; }
+    }
+
     /* Filter changes swap only the table body via HTMX; fade it during the swap
        so the refresh reads as a calm transition rather than a hard cut. */
     #item-table-body { transition: opacity .12s var(--ease-out); }
@@ -4555,13 +4948,205 @@
       margin-left: auto;
     }
 
-    /* ── Component: stepper ────────────────────────── */
+    /* ── Component: stepper ──────────────────────────
+       Renders directly on the page background (no card), as a single centred
+       line. The row is sized to its content and centred via auto inline
+       margins; when it is wider than the viewport the container scrolls. */
+    .stepper { margin-bottom: 2rem; }
     .stepper__container {
       overflow-x: auto;
       position: relative;
       padding: .25rem 0;
     }
-    .stepper__row { padding: .25rem 0; }
+    .stepper__row {
+      width: max-content;
+      max-width: 100%;
+      margin-inline: auto;
+      padding: .25rem 0;
+    }
+    /* Detached gap before a branch state (archived / cancelled): a space, no
+       connector line. */
+    .stepper__gap { flex-shrink: 0; width: 2.5rem; }
+    /* Wrapping variant (standardised-engine lifecycles, which can have many
+       steps and cycles): the row spans the full width and wraps across lines
+       instead of staying on a single scrolling line. */
+    .stepper--wrap .stepper__row {
+      width: 100%;
+      max-width: 100%;
+      flex-wrap: wrap;
+      row-gap: .75rem;
+    }
+    .stepper__pill--action { font-weight: 600; }
+    /* Detached exit row (Archived): sits below the main flow, no connector. */
+    .stepper__exits { margin-top: 1rem; }
+
+    /* ── Cyclic lifecycle: responsive horizontal flow (SVG) ───────────
+       The pills wrap onto centred rows when they do not fit (no horizontal
+       scroll). [arrow + pill] are grouped so they never split across a wrap.
+       The loop-back transition is an SVG arrow routed below + around the left
+       (head-room reserved by padding-bottom). The Archived exit sits below. */
+    .lc-loop { position: relative; margin-bottom: 2rem; padding-bottom: 2.5rem; }
+    .lc-loop__svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      overflow: visible;
+    }
+    .lc-loop__row { gap: .55rem .15rem; }
+    .lc-unit { display: inline-flex; align-items: center; flex-shrink: 0; }
+    /* Directional separator between steps: a short line + arrowhead. */
+    .lc-sep {
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
+      color: var(--border-light);
+      margin: 0 .1rem;
+    }
+    .lc-sep__line { width: 1.1rem; height: 2px; background: currentColor; }
+    .lc-sep__head { font-size: .7rem; margin-left: -3px; line-height: 1; }
+    .lc-sep--done { color: var(--accent); }
+    .lc-loop .stepper__exits { margin-top: 1rem; }
+
+    /* ── Cyclic lifecycle as a horizontally-wrapping flow of pills ──
+       Schema-driven, theme-aware, never scrolls horizontally and never scales.
+       The main-flow steps are real HTML pills in a centred flex-wrap row : on a
+       narrow screen they wrap onto MORE horizontal rows (the flow always reads
+       left-to-right, never a vertical single column, never shrunk). An SVG
+       overlay, sized to the stage box and measured from the rendered pill
+       positions, draws the arrows : forward (solid accent), the cycle back-edge
+       (dashed accent), the archive exit and the archived restore (dashed
+       muted). The Archived exit sits detached on its own row below the flow. */
+    /* No card chrome : the diagram rests directly on the page background, with
+       a little breathing room below so it is not glued to the tags. */
+    .lc-graph {
+      position: relative;
+      margin: 2.25rem 0 3.5rem;     /* breathing room above and below the diagram */
+      overflow-x: hidden;           /* guarantees no horizontal scroll */
+    }
+    /* The stage is the shared coordinate space of the pills and the SVG overlay. */
+    .lc-graph__stage {
+      position: relative;
+      width: 100%;
+    }
+    /* Overlay sits under the pills ; sized in px inline by the renderer. */
+    .lc-graph__svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: visible;
+    }
+    /* Pills wrap onto extra HORIZONTAL rows ; the gap leaves room for the
+       step-down connectors when a pill wraps to the next row. */
+    .lc-graph__flow {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem 1.75rem;
+    }
+    /* Archived exit : detached, centred, on its own row below the flow with room
+       above for the dashed feeder. */
+    .lc-graph__exits {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: .75rem;
+      /* Reserve room above for the dashed loop lane + the muted archive feeder
+         (routed at maxBottom + 18 / + 38 in the renderer). */
+      margin-top: 4.5rem;
+    }
+
+    /* Pill nodes : reuse the chip visual language via theme tokens. Natural,
+       readable size at all widths (no scaling). */
+    .lc-pill {
+      display: inline-flex;
+      align-items: center;
+      font-family: "GitLab Sans", sans-serif;
+      font-size: .75rem;
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: normal;
+      padding: .4rem .8rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-light);
+      background: var(--surface-subtle);
+      color: var(--text-muted);
+      white-space: nowrap;
+      transition: background-color .18s var(--ease-out, ease),
+                  border-color .18s var(--ease-out, ease),
+                  color .18s var(--ease-out, ease);
+    }
+    button.lc-pill { cursor: default; }
+    /* Leading step number (operational stages only). Inherits the pill colour so
+       it reads correctly on the navy current pill and the muted others. */
+    .lc-pill__num {
+      font-weight: 700;
+      margin-right: .45rem;
+      opacity: .65;
+      font-variant-numeric: tabular-nums;
+    }
+    .lc-pill--current .lc-pill__num,
+    .lc-pill--actionable .lc-pill__num { opacity: .85; }
+
+    .lc-pill--done {
+      background: var(--surface-subtle);
+      border-color: var(--border-light);
+      color: var(--text-secondary);
+    }
+    .lc-pill--current {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-contrast);
+      font-weight: 600;
+    }
+    .lc-pill--future {
+      background: var(--surface-subtle);
+      border-style: dashed;
+      border-color: var(--border-light);
+      color: var(--text-muted);
+    }
+
+    /* Actionable next-step pills : success-tinted, clearly clickable. */
+    .lc-pill--actionable {
+      background: var(--surface);
+      border-color: var(--success, #16A34A);
+      border-style: solid;
+      color: var(--success, #16A34A);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .lc-pill--actionable:hover {
+      background: color-mix(in srgb, var(--success, #16A34A) 12%, var(--surface));
+    }
+    .lc-pill--actionable:focus-visible {
+      outline: 2px solid var(--success, #16A34A);
+      outline-offset: 2px;
+    }
+
+    /* SVG edges. */
+    .lc-edge { transition: opacity .18s var(--ease-out, ease); }
+    .lc-edge--forward { stroke: var(--accent); stroke-width: 2; opacity: .85; }
+    .lc-edge--loop { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; opacity: .7; }
+    .lc-edge--exit { stroke: var(--text-muted); stroke-width: 1.6; stroke-dasharray: 4 4; opacity: .7; }
+    .lc-edge--restore { stroke: var(--text-muted); stroke-width: 1.6; stroke-dasharray: 4 4; opacity: .7; }
+    .lc-edge-label {
+      fill: var(--text-secondary);
+      font-family: "GitLab Sans", sans-serif;
+      font-size: 10.5px;
+      letter-spacing: normal;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .lc-pill, .lc-edge { transition: none; }
+    }
     .stepper__line {
       flex-shrink: 0;
       width: 2rem;
@@ -4611,19 +5196,8 @@
     }
     .stepper__pill-form { margin: 0; flex-shrink: 0; }
     .stepper__pill--cancel,
-    .stepper__pill--refuse {
+    .stepper__pill--back {
       border-width: 2px;
-    }
-    .stepper__cancelled-row { margin-top: 1rem; }
-    .stepper__refuse-row { margin-top: .75rem; }
-    .stepper__svg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      overflow: visible;
     }
 
     /* ── Impersonation banner - Refined ────────────── */
@@ -5580,6 +6154,125 @@
       initGlobalWidgets();
     }
     document.body.addEventListener('htmx:afterSettle', initGlobalWidgets);
+  })();
+  </script>
+
+  {% comment %}
+    Address autocomplete via Photon (OpenStreetMap, https://photon.komoot.io):
+    free, open-source, no API key, CORS-enabled. Any text input carrying
+    data-address-autocomplete gets a debounced type-ahead. Picking a suggestion
+    fills the address (and a sibling country field when empty). Self-host Photon
+    later by overriding window.ADDRESS_AC_ENDPOINT.
+  {% endcomment %}
+  <script>
+  (function() {
+    var ENDPOINT = window.ADDRESS_AC_ENDPOINT || 'https://photon.komoot.io/api/';
+    var LANG = (document.documentElement.lang || 'en').slice(0, 2);
+    var PHOTON_LANG = (['en', 'fr', 'de', 'it'].indexOf(LANG) >= 0) ? LANG : 'en';
+    var EMPTY = '{% trans "No matching address found" %}';
+
+    function debounce(fn, ms) {
+      var t; return function() { var a = arguments, c = this; clearTimeout(t); t = setTimeout(function() { fn.apply(c, a); }, ms); };
+    }
+    function label(p) {
+      var line1 = [p.housenumber, p.street].filter(Boolean).join(' ') || p.name || '';
+      var line2 = [p.postcode, p.city].filter(Boolean).join(' ');
+      return [line1, line2, p.country].filter(Boolean).join(', ');
+    }
+
+    function initAddressAC(input) {
+      if (input.dataset.acReady) { return; }
+      input.dataset.acReady = '1';
+      input.setAttribute('autocomplete', 'off');
+
+      var wrap = document.createElement('div');
+      wrap.className = 'address-ac';
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+      var menu = document.createElement('div');
+      menu.className = 'address-ac__menu';
+      menu.hidden = true;
+      wrap.appendChild(menu);
+
+      var items = [], active = -1, controller = null;
+
+      function close() { menu.hidden = true; menu.innerHTML = ''; items = []; active = -1; }
+      function setField(form, name, value) {
+        if (!form) { return; }
+        var el = form.querySelector('[name="' + name + '"]');
+        if (el) { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); }
+      }
+      function choose(f) {
+        var p = f.properties || {};
+        input.value = label(p);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        var form = input.closest('form');
+        if (form && p.country) {
+          var c = form.querySelector('[name="country"]');
+          if (c && !c.value) { c.value = p.country; c.dispatchEvent(new Event('input', { bubbles: true })); }
+        }
+        // Photon geometry is [lon, lat] : persist it so the map is instant + exact.
+        var coords = f.geometry && f.geometry.coordinates;
+        if (coords && coords.length === 2) {
+          setField(form, 'longitude', coords[0]);
+          setField(form, 'latitude', coords[1]);
+        }
+        close();
+      }
+      function render() {
+        menu.innerHTML = '';
+        if (!items.length) {
+          var e = document.createElement('div');
+          e.className = 'address-ac__empty';
+          e.textContent = EMPTY;
+          menu.appendChild(e);
+          menu.hidden = false;
+          return;
+        }
+        items.forEach(function(f, i) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'address-ac__item' + (i === active ? ' is-active' : '');
+          b.innerHTML = '<i class="bi bi-geo-alt" aria-hidden="true"></i>';
+          b.appendChild(document.createTextNode(label(f.properties || {})));
+          b.addEventListener('mousedown', function(ev) { ev.preventDefault(); choose(f); });
+          menu.appendChild(b);
+        });
+        menu.hidden = false;
+      }
+
+      var search = debounce(function() {
+        var q = input.value.trim();
+        if (q.length < 3) { close(); return; }
+        if (controller) { controller.abort(); }
+        controller = new AbortController();
+        var url = ENDPOINT + '?q=' + encodeURIComponent(q) + '&limit=5&lang=' + PHOTON_LANG;
+        fetch(url, { signal: controller.signal })
+          .then(function(r) { return r.ok ? r.json() : { features: [] }; })
+          .then(function(d) {
+            items = (d.features || []).filter(function(f) { return f && f.properties; });
+            active = -1; render();
+          })
+          .catch(function() { /* aborted or offline: leave the menu as-is */ });
+      }, 280);
+
+      input.addEventListener('input', search);
+      input.addEventListener('keydown', function(e) {
+        if (menu.hidden || !items.length) { return; }
+        if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, items.length - 1); render(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); render(); }
+        else if (e.key === 'Enter') { if (active >= 0) { e.preventDefault(); choose(items[active]); } }
+        else if (e.key === 'Escape') { close(); }
+      });
+      input.addEventListener('blur', function() { setTimeout(close, 150); });
+    }
+
+    function initAll() {
+      document.querySelectorAll('input[data-address-autocomplete]:not([data-ac-ready])').forEach(initAddressAC);
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initAll); }
+    else { initAll(); }
+    document.body.addEventListener('htmx:afterSettle', initAll);
   })();
   </script>
   <script>
@@ -6812,7 +7505,7 @@
       if (el.dataset.countAnimated) return;
       var original = el.textContent.trim();
 
-      if (!original || /^[\u2014\u2013--]$/.test(original)) return;
+      if (!original || /^[\u2014\u2013-]$/.test(original)) return;
 
       var numMatch = original.match(/^([\d\s\u00a0\u202f.,]+)([\s\S]*)$/);
       if (!numMatch) return;

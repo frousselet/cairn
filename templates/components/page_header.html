@@ -1,18 +1,29 @@
-{% load i18n %}
+{% load i18n accounts_tags %}
 <div class="page-header{% if accent %} page-header--accent page-header--accent-{{ accent }}{% endif %}{% if compact %} is-compact page-header--static-compact{% endif %}" data-page-header{% if compact %} data-page-header-static-compact{% endif %}>
   <div class="page-header__main">
-    {% if logo %}<img src="{{ logo }}" alt="" class="page-header__logo">{% elif icon %}<i class="bi bi-{{ icon }} page-header__icon" aria-hidden="true"></i>{% endif %}
+    {% if icon and not logo %}<i class="bi bi-{{ icon }} page-header__icon" aria-hidden="true"></i>{% endif %}
     <div class="page-header__text">
       {% if crumbs %}
       <nav class="page-header__breadcrumb" aria-label="{% trans 'Breadcrumb' %}">
         {% for crumb in crumbs %}{% if not forloop.first %}<i class="bi bi-chevron-right page-header__crumb-sep" aria-hidden="true"></i>{% endif %}{% if crumb.url %}<a href="{{ crumb.url }}" class="page-header__crumb">{{ crumb.label }}</a>{% else %}<span class="page-header__crumb page-header__crumb--current">{{ crumb.label }}</span>{% endif %}{% endfor %}
       </nav>
       {% elif eyebrow %}<div class="page-header__eyebrow">{{ eyebrow }}</div>{% endif %}
-      <h1 class="page-header__title mb-0">{{ title }}</h1>
+      <h1 class="page-header__title mb-0">{% if logo %}<img src="{{ logo }}" alt="" class="page-header__logo">{% endif %}{{ title }}</h1>
       {% if reference and not crumbs %}<span class="ref page-header__reference">{{ reference }}</span>{% endif %}
       {% if subtitle %}<div class="page-header__subtitle">{{ subtitle }}</div>{% endif %}
     </div>
   </div>
+  {% if modified_at %}
+  <div class="page-header__modified">
+    {% if modified_by %}
+    <span>{% trans "Last modified by" %}</span>
+    {% user_badge modified_by size=20 chip=True %}
+    <span>{% blocktrans with d=modified_at|date:"d/m/Y H:i" %}on {{ d }}{% endblocktrans %}</span>
+    {% else %}
+    <span>{% blocktrans with d=modified_at|date:"d/m/Y H:i" %}Last modified on {{ d }}{% endblocktrans %}</span>
+    {% endif %}
+  </div>
+  {% endif %}
   {% if actions_html %}
   <div class="page-header__actions header-actions">
     {{ actions_html }}

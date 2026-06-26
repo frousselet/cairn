@@ -1,3 +1,4 @@
+from .contract import Contract
 from .essential_asset import EssentialAsset
 from .support_asset import SupportAsset
 from .dependency import AssetDependency
@@ -6,6 +7,7 @@ from .site_dependency import SiteAssetDependency, SiteSupplierDependency
 from .valuation import AssetValuation
 from .supplier import (
     Supplier,
+    SupplierContact,
     SupplierDependency,
     SupplierRequirement,
     SupplierRequirementReview,
@@ -14,6 +16,7 @@ from .supplier import (
 )
 
 __all__ = [
+    "Contract",
     "EssentialAsset",
     "SupportAsset",
     "AssetDependency",
@@ -22,6 +25,7 @@ __all__ = [
     "SiteAssetDependency",
     "SiteSupplierDependency",
     "Supplier",
+    "SupplierContact",
     "SupplierDependency",
     "SupplierRequirement",
     "SupplierRequirementReview",

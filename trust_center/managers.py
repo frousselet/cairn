@@ -31,10 +31,14 @@ class CertificationQuerySet(PublicationQuerySet):
 
 class SubprocessorQuerySet(PublicationQuerySet):
     def published(self):
+        # Publishable when the supplier is ACTIVE *and* in a reportable lifecycle
+        # step. The supplier runs the new lifecycle engine, so reportability comes
+        # from its lifecycle steps (onboarded, not draft / archived), not the
+        # legacy workflow engine.
         from assets.constants import SupplierStatus
-        from core.workflow import reportable_states
+        from assets.lifecycles import SUPPLIER_LIFECYCLE
 
-        supplier_states = list(reportable_states("assets.Supplier"))
+        supplier_states = list(SUPPLIER_LIFECYCLE.reportable_step_codes)
         return (
             super()
             .published()

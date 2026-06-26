@@ -16,6 +16,7 @@ from django import template
 from django.urls import NoReverseMatch, reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext, gettext_lazy as _
+from django.views.generic.detail import BaseDetailView
 
 from core.navigation import NAV_TREE
 
@@ -477,6 +478,22 @@ class PageHeaderNode(template.Node):
             if parent_label:
                 crumbs.append({"label": parent_label, "url": parent_url})
             crumbs.extend(extra)
+        # On detail pages, surface who last touched the object and when, shown in
+        # the header just before the action buttons. The "who" comes from the
+        # latest simple-history record (history_user); the "when" from the
+        # object's updated_at (falling back to the record's history_date).
+        # Gated on BaseDetailView so lists, forms and other pages never show it.
+        modified_by = None
+        modified_at = None
+        obj = context.get("object")
+        if obj is not None and isinstance(context.get("view"), BaseDetailView) and hasattr(obj, "history"):
+            try:
+                last = obj.history.first()
+            except Exception:
+                last = None
+            if last is not None:
+                modified_by = getattr(last, "history_user", None)
+                modified_at = getattr(obj, "updated_at", None) or getattr(last, "history_date", None)
         with context.push(
             title=title,
             subtitle=resolved_kwargs.get("subtitle"),
@@ -486,6 +503,8 @@ class PageHeaderNode(template.Node):
             accent=accent,
             eyebrow=eyebrow,
             crumbs=crumbs,
+            modified_by=modified_by,
+            modified_at=modified_at,
             # When set, the bar renders in its compact (collapsed) form from the
             # start and stays there - used by full-height pages (e.g. the
             # dependency graph) that do not scroll, to reclaim vertical space.
@@ -603,9 +622,6 @@ def stepper(
     can_cancel=False,
     can_refuse=False,
     refusal=None,
-    start_value=None,
-    branch_value=None,
-    terminal_value=None,
     transition_modal_callback=None,
     entity_id=None,
 ):
@@ -618,14 +634,10 @@ def stepper(
       visual treatment.
     * ``transition_url``: URL to POST status transitions to.
 
-    Optional cancellation branch (the SVG L-shape connecting the main
-    flow to a "Cancelled" pill below):
+    Optional branch state (archived / cancelled) rendered on the same
+    line as the main flow, detached by a gap with no connector:
 
-    * ``cancelled``: a step descriptor for the cancelled state.
-    * ``start_value`` / ``branch_value`` / ``terminal_value``: the
-      ``value`` field of the three pills used as anchors for the SVG
-      branch (start, divergence point, end). Required when ``cancelled``
-      is provided.
+    * ``cancelled``: a step descriptor for the branch state.
     * ``can_cancel``: whether the user may trigger the transition.
     * ``transition_modal_callback`` + ``entity_id``: name and argument
       of the JS callback opening the comment modal.
@@ -644,9 +656,6 @@ def stepper(
         "can_cancel": can_cancel,
         "can_refuse": can_refuse,
         "refusal": refusal,
-        "start_value": start_value,
-        "branch_value": branch_value,
-        "terminal_value": terminal_value,
         "transition_modal_callback": transition_modal_callback,
         "entity_id": entity_id,
     }

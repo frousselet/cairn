@@ -1,0 +1,77 @@
+{% load i18n %}
+{% comment %}
+Cyclic lifecycle (SVG): the connected pill line with a directional arrow between
+steps that have a real transition (schema-derived, not declaration order), and a
+loop-back arrow (schema: lc_loop_from -> lc_loop_to) routed below and around the
+left into the earlier step. The pills wrap onto centred rows when they do not
+fit (no horizontal scroll). The Archived exit sits apart below.
+{% endcomment %}
+<div class="lc-loop" id="{{ lc_container_id }}">
+  <svg class="lc-loop__svg" data-lc-loop aria-hidden="true"></svg>
+  <div class="lc-loop__row d-flex flex-wrap justify-content-center align-items-center" role="list" aria-label="{% trans 'Lifecycle steps' %}">
+    {% for step in lc_steps %}
+      <span class="lc-unit">
+        {% if step.flow_from_prev %}<span class="lc-sep {% if step.state == 'done' or step.state == 'current' %}lc-sep--done{% endif %}" aria-hidden="true"><span class="lc-sep__line"></span><i class="bi bi-caret-right-fill lc-sep__head"></i></span>{% endif %}
+        {% if step.value == lc_loop_from %}
+          {% include "components/_lifecycle_pill.html" with step=step marker="lc-loop-from" %}
+        {% elif step.value == lc_loop_to %}
+          {% include "components/_lifecycle_pill.html" with step=step marker="lc-loop-to" %}
+        {% else %}
+          {% include "components/_lifecycle_pill.html" with step=step %}
+        {% endif %}
+      </span>
+    {% endfor %}
+  </div>
+
+  {% if lc_exits %}
+  <div class="stepper__exits d-flex flex-wrap align-items-center justify-content-center gap-2" role="list" aria-label="{% trans 'Exit' %}">
+    {% for step in lc_exits %}
+      {% include "components/_lifecycle_pill.html" with step=step %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <script>
+  (function(){
+    var c = document.getElementById('{{ lc_container_id }}');
+    if (!c) return;
+    var svg = c.querySelector('[data-lc-loop]');
+    var to = c.querySelector('[data-lc-loop-to]');     // earlier step (cycle target)
+    var from = c.querySelector('[data-lc-loop-from]');  // later step (cycle source)
+    if (!svg) return;
+    if (!to || !from) { svg.innerHTML = ''; return; }
+    function draw(){
+      var cr = c.getBoundingClientRect();
+      var fr = to.getBoundingClientRect(), lr = from.getBoundingClientRect();
+      svg.setAttribute('width', cr.width); svg.setAttribute('height', cr.height);
+      svg.setAttribute('viewBox', '0 0 ' + cr.width + ' ' + cr.height);
+      var xS = lr.left + lr.width / 2 - cr.left, yS = lr.bottom - cr.top;  // last pill bottom-centre
+      var xE = fr.left + fr.width / 2 - cr.left, yEb = fr.bottom - cr.top; // first pill bottom-centre
+      var railX = 6;
+      var base = cr.height - 3;          // baseline below everything (incl. exits)
+      var midY = yEb + 9;                // just below the first pill's row
+      var r = 7;
+      // Down from the last step, along the base to the left rail, up the rail,
+      // across just under the first step's row, then up into it. Straight
+      // segments, rounded corners only.
+      var d = 'M ' + xS + ' ' + yS +
+        ' L ' + xS + ' ' + (base - r) +
+        ' Q ' + xS + ' ' + base + ' ' + (xS - r) + ' ' + base +
+        ' L ' + (railX + r) + ' ' + base +
+        ' Q ' + railX + ' ' + base + ' ' + railX + ' ' + (base - r) +
+        ' L ' + railX + ' ' + (midY + r) +
+        ' Q ' + railX + ' ' + midY + ' ' + (railX + r) + ' ' + midY +
+        ' L ' + (xE - r) + ' ' + midY +
+        ' Q ' + xE + ' ' + midY + ' ' + xE + ' ' + (midY - r) +
+        ' L ' + xE + ' ' + (yEb + 1);
+      var col = 'var(--accent)';
+      svg.innerHTML =
+        '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2" opacity="0.7"></path>' +
+        '<path d="M ' + (xE - 4) + ' ' + (yEb + 8) + ' L ' + xE + ' ' + (yEb + 1) + ' L ' + (xE + 4) + ' ' + (yEb + 8) + ' Z" fill="' + col + '"></path>';
+    }
+    requestAnimationFrame(draw);
+    window.addEventListener('resize', draw);
+    document.body.addEventListener('htmx:afterSettle', draw);
+  })();
+  </script>
+</div>

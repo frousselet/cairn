@@ -16,6 +16,10 @@ class AssetsConfig(AppConfig):
         # commands, servers).
         from assets import workflows  # noqa: F401
 
+        # Register the module's standardised lifecycles (new engine). Same
+        # every-context requirement as the workflows above.
+        from assets import lifecycles  # noqa: F401
+
         # Register the supplier CSV bulk importer with the generic import
         # registry. Must run in every context (tests, management commands,
         # servers) so the import URLs resolve.

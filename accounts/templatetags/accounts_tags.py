@@ -51,7 +51,7 @@ def has_module_perms(context, module):
 
 
 @register.inclusion_tag("includes/user_badge.html")
-def user_badge(user, size=28, link=False, name=True, block=False):
+def user_badge(user, size=28, link=False, name=True, block=False, chip=False):
     """Render a user avatar + display name badge.
 
     Usage:
@@ -59,6 +59,7 @@ def user_badge(user, size=28, link=False, name=True, block=False):
         {% user_badge some_user %}
         {% user_badge some_user size=32 link=True %}
         {% user_badge some_user size=24 name=False %}
+        {% user_badge some_user size=20 chip=True %}
 
     Parameters:
         user  - User instance (required)
@@ -66,6 +67,8 @@ def user_badge(user, size=28, link=False, name=True, block=False):
         link  - Render name as link to user detail (default False)
         name  - Show display name next to avatar (default True)
         block - Use d-flex instead of d-inline-flex (default False)
+        chip  - Render as a soft pill with a solid-navy avatar (white initials),
+                matching the dashboard AI-summary people chips (default False)
     """
     size = int(size)
     if size >= 48:
@@ -95,6 +98,7 @@ def user_badge(user, size=28, link=False, name=True, block=False):
         "show_name": name,
         "link": link,
         "block": block,
+        "chip": chip,
     }
 
 

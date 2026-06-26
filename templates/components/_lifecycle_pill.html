@@ -1,0 +1,18 @@
+{% load i18n %}
+{% comment %}One lifecycle pill: a clickable transition form when actionable, else a static state pill. Expects `step` and `lc_transition_url`; optional `marker` adds a `data-<marker>` hook (loop endpoints).{% endcomment %}
+{% if step.actionable %}
+  <form method="post" action="{{ lc_transition_url }}" class="stepper__pill-form" role="listitem">
+    {% csrf_token %}
+    <input type="hidden" name="target_status" value="{{ step.value }}">
+    <button type="submit"{% if marker %} data-{{ marker }}{% endif %} class="btn btn-sm stepper__pill stepper__pill--action {% if step.state == 'done' %}btn-outline-secondary{% else %}btn-outline-success{% endif %}" title="{{ step.action_label }}">
+      <i class="bi bi-arrow-{% if step.state == 'done' %}left{% else %}right{% endif %}-circle" aria-hidden="true"></i> {{ step.label }}
+    </button>
+  </form>
+{% else %}
+  <span{% if marker %} data-{{ marker }}{% endif %} class="stepper__pill stepper__pill--{{ step.state }}"
+        role="listitem"
+        {% if step.state == 'current' %}aria-current="step"{% endif %}>
+    {% if step.state == 'done' %}<i class="bi bi-check-circle-fill stepper__pill-icon" aria-hidden="true"></i>{% elif step.state == 'current' %}<i class="bi bi-circle-fill stepper__pill-icon stepper__pill-icon--current" aria-hidden="true"></i>{% else %}<i class="bi bi-circle stepper__pill-icon stepper__pill-icon--future" aria-hidden="true"></i>{% endif %}
+    {{ step.label }}
+  </span>
+{% endif %}
