@@ -60,7 +60,10 @@ class TestSupplierMap:
         assert 'data-lat="48.87"' in html and 'data-lon="2.32"' in html
         assert "leaflet@1.9.4/dist/leaflet.js" in html
         urls = re.findall(r'https?://[^\s"\'<>]+', html)
-        assert any(urlparse(u).hostname == "basemaps.cartocdn.com" for u in urls)
+        # Leaflet's {s} subdomain placeholder makes the parsed hostname
+        # "{s}.basemaps.cartocdn.com", so accept the CARTO domain or any subdomain.
+        hosts = [urlparse(u).hostname or "" for u in urls]
+        assert any(h == "basemaps.cartocdn.com" or h.endswith(".basemaps.cartocdn.com") for h in hosts)
 
     def test_no_map_without_address_or_coords(self, client):
         client.force_login(UserFactory(is_superuser=True, is_staff=True))
