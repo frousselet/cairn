@@ -17,6 +17,7 @@ from compliance.models import (
     RequirementMapping,
     Section,
 )
+from core.transition_messages import transition_error_detail
 from .filters import (
     ComplianceActionPlanFilter,
     ComplianceAssessmentFilter,
@@ -228,7 +229,7 @@ class ComplianceAssessmentViewSet(
             assessment.transition_to(new_status)
         except ValueError as e:
             return Response(
-                {"detail": str(e)},
+                {"detail": transition_error_detail(e)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # When closing, propagate results to requirements and frameworks
@@ -394,7 +395,7 @@ class ComplianceActionPlanViewSet(
                 serializer.validated_data.get("comment", ""),
             )
         except ValueError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": transition_error_detail(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(ComplianceActionPlanSerializer(action_plan).data)
 
     @action(detail=True, methods=["get"], url_path="transitions")

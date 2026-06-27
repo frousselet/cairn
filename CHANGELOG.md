@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Workflow transition API errors no longer return the raw exception string (CodeQL `py/stack-trace-exposure`) : the scope `archive` endpoint maps known transition errors to safe, translatable messages via the shared `core.transition_messages` helper (promoted from `trust_center`).
+- Workflow transition API errors no longer return the raw exception string (CodeQL `py/stack-trace-exposure`) : the scope `archive`, compliance assessment / action-plan and management-review transition endpoints map known transition errors to safe, translatable messages via the shared `core.transition_messages` helper (promoted from `trust_center`).
 
 ## [0.32.0] - 2026-06-25
 
