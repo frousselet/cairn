@@ -143,6 +143,28 @@ class TestScopeViewSet:
         assert response.status_code == 200
         assert _data(response)["workflow_state"] == "archived"
 
+    def test_archive_action_error_returns_safe_detail(self):
+        # A failed transition must return a safe, translatable message, never
+        # the raw exception string (CodeQL py/stack-trace-exposure).
+        from unittest.mock import patch
+
+        from core.workflow import IllegalTransitionError
+
+        scope = ScopeFactory(workflow_state="in_force")
+        with patch(
+            "context.models.scope.Scope.transition_to",
+            side_effect=IllegalTransitionError("sensitive internal detail"),
+        ):
+            response = self.client.post(
+                f"/api/v1/context/scopes/{scope.pk}/archive/"
+            )
+        assert response.status_code == 400
+        body = response.content.decode()
+        # The raw exception text must never reach the client.
+        assert "sensitive internal detail" not in body
+        # A safe, translatable message is returned instead.
+        assert "This transition is not allowed from the current state." in body
+
     def test_unauthenticated(self):
         client = APIClient()
         response = client.get("/api/v1/context/scopes/")
