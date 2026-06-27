@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from accounts.api.permissions import ModulePermission
 from compliance.constants import ActionPlanStatus, AssessmentStatus
 from compliance.models import ComplianceActionPlan, ComplianceAssessment, Framework
+from core.transition_messages import transition_error_detail
 from reports.constants import ManagementReviewStatus, ReportStatus, ReportType
 from reports.generators import generate_audit_report_pdf, generate_soa_pdf
 from reports.management_review import (
@@ -229,7 +230,7 @@ class ManagementReviewViewSet(viewsets.ModelViewSet):
             review.transition_to(target, request.user, comment=comment)
         except ValueError as exc:
             return Response(
-                {"detail": str(exc)},
+                {"detail": transition_error_detail(exc)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
