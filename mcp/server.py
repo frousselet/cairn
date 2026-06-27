@@ -127,7 +127,7 @@ class McpServer:
             logger.exception("MCP method %s failed", method)
             if is_notification:
                 return None
-            return jsonrpc_error(INTERNAL_ERROR, str(e) or "Internal error", req_id)
+            return jsonrpc_error(INTERNAL_ERROR, "Internal error", req_id)
 
     def _get_method_handler(self, method):
         handlers = {

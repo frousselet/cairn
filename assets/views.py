@@ -97,22 +97,23 @@ class ApproveView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
         from core.models import VersioningConfig
+        from core.redirects import safe_redirect_target
 
         obj = get_object_or_404(self.model, pk=pk)
         if not VersioningConfig.is_approval_enabled(self.model):
             messages.error(request, _("Approval is disabled for this item type."))
-            return redirect(request.META.get("HTTP_REFERER", "/"))
+            return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER")))
         feature = self.permission_feature or self.model._meta.model_name
         codename = f"assets.{feature}.approve"
         if not request.user.is_superuser and not request.user.has_perm(codename):
             messages.error(request, _("You do not have permission to approve this item."))
-            return redirect(request.META.get("HTTP_REFERER", "/"))
+            return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER")))
         obj.is_approved = True
         obj.approved_by = request.user
         obj.approved_at = timezone.now()
         obj.save(update_fields=["is_approved", "approved_by", "approved_at"])
         messages.success(request, _("Item approved."))
-        return redirect(request.META.get("HTTP_REFERER", self.success_url or "/"))
+        return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER"), self.success_url or "/"))
 
 
 # ── Essential Asset ─────────────────────────────────────────

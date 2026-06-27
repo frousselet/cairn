@@ -90,8 +90,9 @@ class OAuthAuthorizeView(View):
         if not request.user.is_authenticated:
             login_url = settings.LOGIN_URL
             # Preserve the full authorize URL as the next parameter
+            from urllib.parse import quote
             authorize_url = request.get_full_path()
-            return HttpResponseRedirect(f"{login_url}?next={authorize_url}")
+            return HttpResponseRedirect(f"{login_url}?next={quote(authorize_url)}")
 
         # User is authenticated - show consent page
         return render(request, "mcp/authorize.html", {
