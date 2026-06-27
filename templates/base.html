@@ -6569,15 +6569,20 @@
         /* Build flyout content */
         var titleSpan = btn.querySelector('.sidebar-link-text');
         var title = titleSpan ? titleSpan.textContent.trim() : '';
-        var html = '<div class="flyout-title">' + title + '</div>';
+        flyout.replaceChildren();
+        var titleDiv = document.createElement('div');
+        titleDiv.className = 'flyout-title';
+        titleDiv.textContent = title;
+        flyout.appendChild(titleDiv);
         var links = collapseEl.querySelectorAll('a');
         var currentPath = location.pathname;
         links.forEach(function(a) {
-          var cls = a.getAttribute('href') === currentPath ? ' class="active"' : '';
-          html += '<a href="' + a.getAttribute('href') + '"' + cls + '>' + a.textContent.trim() + '</a>';
+          var link = document.createElement('a');
+          link.setAttribute('href', a.getAttribute('href'));
+          if (a.getAttribute('href') === currentPath) { link.className = 'active'; }
+          link.textContent = a.textContent.trim();
+          flyout.appendChild(link);
         });
-
-        flyout.innerHTML = html;
 
         /* Position: right of the button, vertically aligned */
         var sidebar = document.getElementById('sidebar');

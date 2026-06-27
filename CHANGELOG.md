@@ -47,6 +47,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - Workflow transition API errors no longer return the raw exception string (CodeQL `py/stack-trace-exposure`) : the scope `archive`, compliance assessment / action-plan and management-review transition endpoints map known transition errors to safe, translatable messages via the shared `core.transition_messages` helper (promoted from `trust_center`).
+- Open redirects closed (CodeQL `py/url-redirection`) : `Referer`-header and `next`-parameter redirects (the approval views in context / assets / compliance / risks, the login view and the OAuth authorize flow) are validated with a shared `core.redirects.safe_redirect_target` guard before redirecting.
+- MCP JSON-RPC internal errors and the batch-create error path no longer echo raw exception text to the client (CodeQL `py/stack-trace-exposure`); the exception is logged server-side and a generic message is returned.
+- Sidebar flyout menu built with DOM APIs instead of `innerHTML` string concatenation (CodeQL `js/xss-through-dom`).
+- CI `Tests` workflow pinned to least-privilege `contents: read` token permissions (CodeQL `actions/missing-workflow-permissions`).
 
 ## [0.32.0] - 2026-06-25
 

@@ -74,7 +74,8 @@ class LoginView(View):
             user = authenticate(request, username=email, password=password)
             if user is not None:
                 login(request, user)
-                next_url = request.GET.get("next", "/")
+                from core.redirects import safe_redirect_target
+                next_url = safe_redirect_target(request, request.GET.get("next"))
                 return redirect(next_url)
             else:
                 # Check if account is locked for better messaging

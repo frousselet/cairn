@@ -1,6 +1,7 @@
 import logging
 
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework import status as http_status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
@@ -304,7 +305,7 @@ class BatchCreateMixin:
                     results.append({
                         "index": index,
                         "status": "error",
-                        "errors": {"non_field_errors": [str(e)]},
+                        "errors": {"non_field_errors": [_("This item could not be created.")]},
                     })
                     error_count += 1
             else:
