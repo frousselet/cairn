@@ -765,9 +765,10 @@ class AssessmentTransitionView(LoginRequiredMixin, PermissionRequiredMixin, View
                 _("Please fill the required fields before advancing: %(fields)s")
                 % {"fields": ", ".join(missing)},
             )
+            from core.redirects import safe_redirect_target
             edit_url = reverse("compliance:assessment-update", args=[pk])
             safe_status = new_status if new_status in AssessmentStatus.values else ""
-            return redirect(f"{edit_url}?status={safe_status}")
+            return redirect(safe_redirect_target(request, f"{edit_url}?status={safe_status}"))
 
         try:
             assessment.transition_to(new_status)
