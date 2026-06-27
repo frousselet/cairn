@@ -1,0 +1,72 @@
+name: Feature request
+description: Suggest a new feature or improvement for Cairn
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement. Cairn is a Governance, Risk and Compliance platform, so please describe the GRC need behind your request.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight checklist
+      options:
+        - label: I searched existing issues and this has not been requested yet.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What problem does this solve? Who is affected and in what workflow?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the feature or behaviour you would like.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Accounts & access control
+        - Context & organisation
+        - Assets & suppliers
+        - Compliance
+        - Risks (ISO 27005 / EBIOS RM)
+        - Reports & management review
+        - Trust Center
+        - Assistant (Ask Cairn)
+        - Dashboard & steering
+        - Lifecycle & workflow
+        - REST API
+        - MCP server
+        - UI / theming
+        - i18n / translations
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How will we know this is done? List concrete, testable outcomes.
+    validations:
+      required: false
+  - type: textarea
+    id: references
+    attributes:
+      label: Mockups / references
+      description: Screenshots, links or references to standards (ISO 27001, EBIOS RM, NIS2, ...) that inform this request.
+    validations:
+      required: false
