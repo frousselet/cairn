@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/frousselet/cairn/tree/main/docs
+    about: Read the module specifications and feature reference before opening an issue.
+  - name: Questions & discussions
+    url: https://github.com/frousselet/cairn/discussions
+    about: Ask usage questions or share ideas for discussion.
