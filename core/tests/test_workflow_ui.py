@@ -1,7 +1,10 @@
 """Tests for the generic workflow UI surfaces (issue #105, phase 7a).
 
 Covers the stepper context mixin, the shared transition endpoint and the
-state badge tag, piloted on the Scope detail page (default workflow).
+state badge tag, piloted on the Issue detail page (default workflow). Scope used
+to be the pilot but it now runs the standardised lifecycle engine
+(``core/lifecycle.py``), so the generic *default-workflow* UI is exercised here
+on another entity that still runs ``core/workflow.py``.
 """
 
 import pytest
@@ -9,8 +12,8 @@ from django.test import Client
 from django.urls import reverse
 
 from accounts.tests.factories import GroupFactory, PermissionFactory, UserFactory
-from context.models import Scope
-from context.tests.factories import ScopeFactory
+from context.models import Issue
+from context.tests.factories import IssueFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -35,10 +38,10 @@ def _client(user):
 
 
 class TestStepperContext:
-    def test_draft_scope_offers_submit(self):
+    def test_draft_issue_offers_submit(self):
         client = _client(UserFactory(is_superuser=True))
-        scope = ScopeFactory()
-        response = client.get(reverse("context:scope-detail", args=[scope.pk]))
+        issue = IssueFactory()
+        response = client.get(reverse("context:issue-detail", args=[issue.pk]))
         assert response.status_code == 200
         steps = response.context["wf_steps"]
         assert [s["value"] for s in steps] == ["draft", "pending", "validated"]
@@ -50,69 +53,69 @@ class TestStepperContext:
         assert response.context["wf_can_cancel"] is False  # draft cannot archive
 
     def test_pending_without_approve_permission_hides_validate(self):
-        user = _user_with_perms("context.scope.read", "context.scope.update")
-        scope = ScopeFactory()
-        scope.transition_to("pending")
-        response = _client(user).get(reverse("context:scope-detail", args=[scope.pk]))
+        user = _user_with_perms("context.issue.read", "context.issue.update")
+        issue = IssueFactory()
+        issue.transition_to("pending")
+        response = _client(user).get(reverse("context:issue-detail", args=[issue.pk]))
         steps = {s["value"]: s["state"] for s in response.context["wf_steps"]}
         assert steps["pending"] == "current"
         assert steps["validated"] == "future"  # not offered without .approve
         # Send back to draft is the backward move.
         assert response.context["wf_refusal"]["status"] == "draft"
 
-    def test_validated_scope_offers_archive_branch(self):
+    def test_validated_issue_offers_archive_branch(self):
         client = _client(UserFactory(is_superuser=True))
-        scope = ScopeFactory(is_approved=True)
-        response = client.get(reverse("context:scope-detail", args=[scope.pk]))
+        issue = IssueFactory(is_approved=True)
+        response = client.get(reverse("context:issue-detail", args=[issue.pk]))
         assert response.context["wf_can_cancel"] is True
         assert response.context["wf_next_status"] is None
 
     def test_stepper_renders_in_page(self):
         client = _client(UserFactory(is_superuser=True))
-        scope = ScopeFactory()
-        response = client.get(reverse("context:scope-detail", args=[scope.pk]))
+        issue = IssueFactory()
+        response = client.get(reverse("context:issue-detail", args=[issue.pk]))
         content = response.content.decode()
         assert "workflow-stepper-" in content
         assert "workflowTransitionModal" in content
 
 
 class TestTransitionEndpoint:
-    def _url(self, scope):
+    def _url(self, issue):
         return reverse(
             "workflow:transition",
-            kwargs={"app_label": "context", "model": "scope", "pk": scope.pk},
+            kwargs={"app_label": "context", "model": "issue", "pk": issue.pk},
         )
 
     def test_submit_transition(self):
         client = _client(UserFactory(is_superuser=True))
-        scope = ScopeFactory()
-        response = client.post(self._url(scope), {"target_status": "pending"})
+        issue = IssueFactory()
+        response = client.post(self._url(issue), {"target_status": "pending"})
         assert response.status_code == 302
-        scope.refresh_from_db()
-        assert scope.workflow_state == "pending"
+        issue.refresh_from_db()
+        assert issue.workflow_state == "pending"
 
     def test_permission_denied_keeps_state(self):
-        user = _user_with_perms("context.scope.read", "context.scope.update")
-        scope = ScopeFactory()
-        scope.transition_to("pending")
-        response = _client(user).post(self._url(scope), {"target_status": "validated"})
+        user = _user_with_perms("context.issue.read", "context.issue.update")
+        issue = IssueFactory()
+        issue.transition_to("pending")
+        response = _client(user).post(self._url(issue), {"target_status": "validated"})
         assert response.status_code == 302
-        scope.refresh_from_db()
-        assert scope.workflow_state == "pending"
+        issue.refresh_from_db()
+        assert issue.workflow_state == "pending"
 
     def test_illegal_transition_keeps_state(self):
         client = _client(UserFactory(is_superuser=True))
-        scope = ScopeFactory()
-        response = client.post(self._url(scope), {"target_status": "archived"})
+        issue = IssueFactory()
+        response = client.post(self._url(issue), {"target_status": "archived"})
         assert response.status_code == 302
-        scope.refresh_from_db()
-        assert scope.workflow_state == "draft"
+        issue.refresh_from_db()
+        assert issue.workflow_state == "draft"
 
     def test_unsafe_referer_falls_back_to_root(self):
         client = _client(UserFactory(is_superuser=True))
-        scope = ScopeFactory()
+        issue = IssueFactory()
         response = client.post(
-            self._url(scope),
+            self._url(issue),
             {"target_status": "pending"},
             HTTP_REFERER="https://evil.example.com/phish",
         )
@@ -121,17 +124,17 @@ class TestTransitionEndpoint:
 
     def test_safe_next_is_honoured(self):
         client = _client(UserFactory(is_superuser=True))
-        scope = ScopeFactory()
-        detail = reverse("context:scope-detail", args=[scope.pk])
+        issue = IssueFactory()
+        detail = reverse("context:issue-detail", args=[issue.pk])
         response = client.post(
-            self._url(scope), {"target_status": "pending", "next": detail},
+            self._url(issue), {"target_status": "pending", "next": detail},
         )
         assert response["Location"] == detail
 
     def test_unknown_model_is_404(self):
         client = _client(UserFactory(is_superuser=True))
-        scope = ScopeFactory()
-        url = self._url(scope).replace("/scope/", "/nope/")
+        issue = IssueFactory()
+        url = self._url(issue).replace("/issue/", "/nope/")
         response = client.post(url, {"target_status": "pending"})
         assert response.status_code == 404
 
@@ -205,16 +208,16 @@ class TestWorkflowBadgeTag:
     def test_badge_renders_tone_and_label(self):
         from helpers.templatetags.workflow_tags import workflow_badge
 
-        scope = ScopeFactory(is_approved=True)
-        ctx = workflow_badge(scope)
+        issue = IssueFactory(is_approved=True)
+        ctx = workflow_badge(issue)
         assert ctx["badge_class"] == "success"
         assert str(ctx["label"])  # translated label present
 
     def test_badge_handles_stale_state(self):
         from helpers.templatetags.workflow_tags import workflow_badge
 
-        scope = ScopeFactory()
-        Scope.objects.filter(pk=scope.pk).update(workflow_state="ghost")
-        scope.refresh_from_db()
-        ctx = workflow_badge(scope)
+        issue = IssueFactory()
+        Issue.objects.filter(pk=issue.pk).update(workflow_state="ghost")
+        issue.refresh_from_db()
+        ctx = workflow_badge(issue)
         assert ctx["badge_class"] == "secondary"

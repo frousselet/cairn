@@ -5,91 +5,92 @@
 
 {% block title %}{{ scope.name }} - Cairn{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
 {% block content %}
 {% page_header scope.name reference=scope.reference nav="context:scope-list" breadcrumb=scope_breadcrumb accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:scope-update' scope.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'context:scope-update' scope.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.scope_detail" %}
-{% include "includes/workflow_stepper.html" %}
 
-<div class="row g-4">
-  {# ── Left column: main content ─────────────────────── #}
-  <div class="col-lg-8">
+{% include "includes/lifecycle_stepper.html" %}
 
-    {# ── Description ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
-        {% if scope.parent_scope %}
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Parent scope" %}</div>
-          <a href="{% url 'context:scope-detail' scope.parent_scope.pk %}" class="cell-link">{{ scope.parent_scope.name }}</a>
-        </div>
-        {% endif %}
-        <div>
-          <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ scope.description|safe }}</div>
-        </div>
+{% if scope.tags.all %}
+<div class="detail-tags d-flex flex-wrap justify-content-center gap-2 mb-4">
+  {% for tag in scope.tags.all %}<span class="badge" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% endfor %}
+</div>
+{% endif %}
+
+<div class="detail-layout">
+  {# ── Main content ── #}
+  <div class="detail-main">
+
+    {% comment %} 1. Overview : perimeter info overlaid on a hero map of its sites.
+       Reuses the shared entity-hero pattern (piloted on suppliers): the included
+       sites are geocoded client-side and plotted, so the overview shows the
+       perimeter's geographic footprint. {% endcomment %}
+    <div class="card supplier-card{% if not has_site_map %} supplier-card--nomap{% endif %}">
+      {% if has_site_map %}
+      <div class="supplier-card__map" aria-hidden="true">
+        <div id="scope-map" class="entity-map" data-sites="{{ scope_sites_json }}"></div>
       </div>
-    </div>
-
-    {# ── Scope details ── #}
-    {% if scope.geographic_scope or scope.organizational_scope or scope.technical_scope %}
-    <div class="card mb-4">
+      {% endif %}
       <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-layers me-1"></i>{% trans "Scope details" %}</h6>
-        {% if scope.geographic_scope %}
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Geographic" %}</div>
-          <div>{{ scope.geographic_scope|safe }}</div>
+        <div class="supplier-overview{% if not has_site_map %} supplier-overview--nomap{% endif %}">
+          <div class="supplier-overview__info">
+            {% if scope.description %}
+            <div class="ov-row ov-row--rich ov-row--lead" role="group" aria-label="{% trans 'Description' %}">
+              <span class="ov-row__icon" aria-hidden="true"><i class="bi {% if scope.icon %}{{ scope.icon }}{% else %}bi-card-text{% endif %}"></i></span>
+              <div class="ov-row__value ov-rich">{{ scope.description|safe }}</div>
+            </div>
+            {% endif %}
+            {% if scope.parent_scope %}
+            <div class="ov-row" role="group" aria-label="{% trans 'Parent scope' %}">
+              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-diagram-2"></i></span>
+              <div class="ov-row__value"><a href="{% url 'context:scope-detail' scope.parent_scope.pk %}" class="ov-link">{{ scope.parent_scope.name }}</a></div>
+            </div>
+            {% endif %}
+            {% if scope.geographic_scope %}
+            <div class="ov-row" role="group" aria-label="{% trans 'Geographic scope' %}">
+              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-globe"></i></span>
+              <div class="ov-row__value">{{ scope.geographic_scope|safe }}</div>
+            </div>
+            {% endif %}
+            {% if scope.organizational_scope %}
+            <div class="ov-row" role="group" aria-label="{% trans 'Organizational scope' %}">
+              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-building"></i></span>
+              <div class="ov-row__value">{{ scope.organizational_scope|safe }}</div>
+            </div>
+            {% endif %}
+            {% if scope.technical_scope %}
+            <div class="ov-row" role="group" aria-label="{% trans 'Technical scope' %}">
+              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-cpu"></i></span>
+              <div class="ov-row__value">{{ scope.technical_scope|safe }}</div>
+            </div>
+            {% endif %}
+            {% if scope.effective_date %}
+            <div class="ov-row" role="group" aria-label="{% trans 'Effective date' %}">
+              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-calendar-check"></i></span>
+              <div class="ov-row__value">{% trans "In force since" %} {{ scope.effective_date }}{% if scope.review_date %} · <span class="text-muted">{% trans "next review" %} {{ scope.review_date }}</span>{% endif %}</div>
+            </div>
+            {% elif scope.review_date %}
+            <div class="ov-row" role="group" aria-label="{% trans 'Next review' %}">
+              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-arrow-repeat"></i></span>
+              <div class="ov-row__value">{% trans "Next review" %} {{ scope.review_date }}</div>
+            </div>
+            {% endif %}
+          </div>
         </div>
-        {% endif %}
-        {% if scope.organizational_scope %}
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Organizational" %}</div>
-          <div>{{ scope.organizational_scope|safe }}</div>
-        </div>
-        {% endif %}
-        {% if scope.technical_scope %}
-        <div>
-          <div class="text-muted small mb-1">{% trans "Technical" %}</div>
-          <div>{{ scope.technical_scope|safe }}</div>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
 
-    {# ── Boundaries ── #}
-    {% if scope.boundaries or scope.justification_exclusions %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-bounding-box me-1"></i>{% trans "Boundaries and exclusions" %}</h6>
-        {% if scope.boundaries %}
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Boundaries" %}</div>
-          <div>{{ scope.boundaries|safe }}</div>
-        </div>
-        {% endif %}
-        {% if scope.justification_exclusions %}
-        <div>
-          <div class="text-muted small mb-1">{% trans "Justification" %}</div>
-          <div>{{ scope.justification_exclusions|safe }}</div>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
-
-    {# ── Sites ── #}
-    {% if scope.included_sites.all or scope.excluded_sites.all %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-geo-alt me-1"></i>{% trans "Sites" %}</h6>
+        {# ── Sites ── #}
+        {% if scope.included_sites.all or scope.excluded_sites.all %}
+        <div class="detail-subhead"><span><i class="bi bi-geo-alt me-1"></i>{% trans "Sites" %}</span></div>
         {% if scope.included_sites.all %}
-        <div class="mb-3">
+        <div class="mb-2">
           <div class="text-muted small mb-1">{% trans "Included sites" %}</div>
           <div class="d-flex flex-wrap gap-1">
             {% for site in scope.included_sites.all %}
@@ -108,93 +109,233 @@
           </div>
         </div>
         {% endif %}
-      </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    {# ── Sub-scopes ── #}
-    {% if children %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Sub-scopes" %}</h6>
-        <ul class="list-group list-group-flush">
-          {% for child in children %}
-          <li class="list-group-item px-0{% if forloop.first %} pt-0{% endif %}{% if forloop.last %} pb-0{% endif %}">
-            <a href="{% url 'context:scope-detail' child.pk %}" class="cell-link">{{ child.name }}</a>
-            {% workflow_badge child %}
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-    {% endif %}
-
-  </div>
-
-  {# ── Right column: metadata sidebar ────────────────── #}
-  <div class="col-lg-4">
-
-    {# ── Status ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
-          <dd class="mb-3">
-            {% workflow_badge scope %}
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
-          <dd class="mb-3">{{ scope.version }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in scope.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}</dd>
-        </dl>
-      </div>
-    </div>
-
-    {# ── People ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Managers" %}</div>
+        {# ── Managers ── #}
+        <div class="detail-subhead"><span><i class="bi bi-people me-1"></i>{% trans "Managers" %}</span></div>
+        {% if scope.managers.all %}
+        <div class="contact-grid">
           {% for manager in scope.managers.all %}
-          <div class="mb-1">{% user_badge manager size=28 link=True block=True %}</div>
-          {% empty %}<span class="text-muted">-</span>{% endfor %}
+          <div class="contact-card">
+            <div class="contact-card__head">
+              <span class="contact-card__avatar" aria-hidden="true">{{ manager.display_name.0|upper }}</span>
+              <div class="min-w-0">
+                <div class="contact-card__name">{{ manager.display_name }}</div>
+                {% if manager.email %}<div class="contact-card__title">{{ manager.email }}</div>{% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
         </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Created by" %}</div>
-          {% if scope.created_by %}{% user_badge scope.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
-        </div>
-        {% if approval_enabled is not False %}
-        <div>
-          <div class="text-muted small mb-1">{% trans "Approved by" %}</div>
-          {% if scope.approved_by %}{% user_badge scope.approved_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
-        </div>
+        {% else %}
+        <p class="text-muted small mb-0">{% trans "No manager assigned yet." %}</p>
         {% endif %}
       </div>
     </div>
 
-    {# ── Dates ── #}
-    <div class="card mb-4">
+    {# ── 2. Sub-scopes ── #}
+    {% if children %}
+    <div class="card">
       <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Effective date" %}</dt>
-          <dd class="mb-3">{{ scope.effective_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Next review" %}</dt>
-          <dd class="mb-3">{{ scope.review_date|default:"-" }}</dd>
-          {% if approval_enabled is not False %}
-          <dt class="text-muted small mb-1">{% trans "Approval date" %}</dt>
-          <dd class="mb-3">{{ scope.approved_at|default:"-" }}</dd>
-          {% endif %}
-          <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
-          <dd class="mb-3">{{ scope.created_at }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>
-          <dd class="mb-0">{{ scope.updated_at }}</dd>
-        </dl>
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Sub-scopes" %} <span class="badge text-bg-secondary">{{ children|length }}</span></h6>
+        <div class="contract-grid">
+          {% for child in children %}
+          <div class="contract-card">
+            <div class="contract-card__top">
+              <a href="{% url 'context:scope-detail' child.pk %}" class="contract-card__title cell-link text-truncate">{% if child.icon %}<i class="bi {{ child.icon }} me-1" aria-hidden="true"></i>{% endif %}{{ child.name }}</a>
+              {% workflow_badge child %}
+            </div>
+            <div class="contract-card__meta">
+              <span><i class="bi bi-geo-alt" aria-hidden="true"></i>{% blocktrans count n=child.included_sites.count %}{{ n }} site{% plural %}{{ n }} sites{% endblocktrans %}</span>
+              {% if child.managers.all %}<span><i class="bi bi-people" aria-hidden="true"></i>{{ child.managers.count }}</span>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── 3. Boundaries and exclusions ── #}
+    {% if scope.boundaries or scope.justification_exclusions %}
+    <div class="card">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-bounding-box me-1"></i>{% trans "Boundaries and exclusions" %}</h6>
+        {% if scope.boundaries %}
+        <div class="{% if scope.justification_exclusions %}mb-3{% endif %}">
+          <div class="text-muted small mb-1">{% trans "Boundaries" %}</div>
+          <div>{{ scope.boundaries|safe }}</div>
+        </div>
+        {% endif %}
+        {% if scope.justification_exclusions %}
+        <div>
+          <div class="text-muted small mb-1">{% trans "Justification" %}</div>
+          <div>{{ scope.justification_exclusions|safe }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── 4. Record (audit metadata) ── #}
+    <div class="card">
+      <div class="card-body">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "Governance" %}</h6>
+            <dl class="mb-0">
+              <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
+              <dd class="mb-3">{{ scope.version }}</dd>
+              <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
+              <dd class="{% if approval_enabled is not False %}mb-3{% else %}mb-0{% endif %}">{% if scope.created_by %}{% user_badge scope.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+              {% if approval_enabled is not False %}
+              <dt class="text-muted small mb-1">{% trans "Approved by" %}</dt>
+              <dd class="mb-0">{% if scope.approved_by %}{% user_badge scope.approved_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+              {% endif %}
+            </dl>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-clock-history me-1"></i>{% trans "Dates" %}</h6>
+            <dl class="mb-0">
+              {% if approval_enabled is not False %}
+              <dt class="text-muted small mb-1">{% trans "Approval date" %}</dt>
+              <dd class="mb-3">{{ scope.approved_at|default:"-" }}</dd>
+              {% endif %}
+              <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
+              <dd class="mb-3">{{ scope.created_at }}</dd>
+              <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>
+              <dd class="mb-0">{{ scope.updated_at }}</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {# ── Rail : strategic KPI tiles (the perimeter's compliance / coverage) ── #}
+  <div class="detail-rail">
+
+    {# Widget 1 : compliance posture (the headline governance number) #}
+    <div class="card kpi-tile kpi-tile--accent">
+      <div class="card-body d-flex align-items-center gap-3">
+        <span class="kpi-tile__icon"><i class="bi bi-clipboard-check" aria-hidden="true"></i></span>
+        <div class="min-w-0">
+          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Compliance rate" %}</div>
+          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{% if kpi_compliance_rate is None %}<span class="text-muted">-</span>{% else %}{{ kpi_compliance_rate }}%{% endif %}</div>
+        </div>
+      </div>
+    </div>
+
+    {# Widget 2 : security objectives #}
+    <div class="card kpi-tile kpi-tile--info">
+      <div class="card-body d-flex align-items-center gap-3">
+        <span class="kpi-tile__icon kpi-tile__icon--info"><i class="bi bi-bullseye" aria-hidden="true"></i></span>
+        <div class="min-w-0">
+          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Objectives" %}</div>
+          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ kpi_objectives }}</div>
+        </div>
+      </div>
+    </div>
+
+    {# Widget 3 : essential assets protected (value at stake) #}
+    <div class="card kpi-tile kpi-tile--success">
+      <div class="card-body d-flex align-items-center gap-3">
+        <span class="kpi-tile__icon kpi-tile__icon--success"><i class="bi bi-gem" aria-hidden="true"></i></span>
+        <div class="min-w-0">
+          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Essential assets" %}</div>
+          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ kpi_essential_assets }}</div>
+        </div>
+      </div>
+    </div>
+
+    {# Widget 4 : geographic footprint #}
+    <div class="card kpi-tile kpi-tile--warning">
+      <div class="card-body d-flex align-items-center gap-3">
+        <span class="kpi-tile__icon kpi-tile__icon--warning"><i class="bi bi-geo-alt" aria-hidden="true"></i></span>
+        <div class="min-w-0">
+          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Sites" %}</div>
+          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ scope.included_sites.count }}</div>
+        </div>
       </div>
     </div>
 
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+{% comment %}
+  Plot the perimeter's included sites on a static OpenStreetMap (Leaflet/CARTO)
+  hero map. Each site is geocoded once from its address (client-side, Photon);
+  the map then fits the bounds of every located site so the overview reads as the
+  perimeter's geographic footprint. Theme-aware basemap, re-runs on HTMX swaps.
+{% endcomment %}
+(function () {
+  var ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  var docEl = document.documentElement;
+  function tileUrl() {
+    var dark = docEl.getAttribute('data-bs-theme') === 'dark';
+    return 'https://{s}.basemaps.cartocdn.com/' + (dark ? 'dark_all' : 'light_all') + '/{z}/{x}/{y}{r}.png';
+  }
+  function accent() {
+    return (getComputedStyle(docEl).getPropertyValue('--accent') || '').trim() || '#1E3A8A';
+  }
+  function initScopeMap() {
+    var el = document.getElementById('scope-map');
+    if (!el || el.dataset.mapReady || !window.L) { return; }
+    var sites;
+    try { sites = JSON.parse(el.dataset.sites || '[]'); } catch (e) { sites = []; }
+    if (!sites.length) { el.style.display = 'none'; return; }
+    el.dataset.mapReady = '1';
+
+    var map = L.map(el, {
+      zoomControl: false, dragging: false, scrollWheelZoom: false,
+      doubleClickZoom: false, boxZoom: false, touchZoom: false, keyboard: false
+    });
+    var layer = L.tileLayer(tileUrl(), {
+      maxZoom: 19, subdomains: 'abcd', attribution: ATTR
+    }).addTo(map);
+    map.setView([46.6, 2.4], 5);  // France-ish default until markers resolve
+
+    var latlngs = [];
+    function fit() {
+      if (!latlngs.length) { el.style.display = 'none'; return; }
+      if (latlngs.length === 1) {
+        map.setView(latlngs[0], 12, { animate: false });
+      } else {
+        map.fitBounds(L.latLngBounds(latlngs).pad(0.25), { animate: false });
+      }
+      setTimeout(function () { map.invalidateSize(); }, 120);
+    }
+
+    var pending = sites.length;
+    sites.forEach(function (s) {
+      var addr = (s.address || '').trim();
+      if (!addr) { if (--pending === 0) { fit(); } return; }
+      fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(addr) + '&limit=1')
+        .then(function (r) { return r.ok ? r.json() : { features: [] }; })
+        .then(function (d) {
+          var f = (d.features || [])[0];
+          if (f && f.geometry && f.geometry.coordinates) {
+            var ll = [f.geometry.coordinates[1], f.geometry.coordinates[0]];
+            latlngs.push(ll);
+            L.circleMarker(ll, {
+              radius: 7, color: '#ffffff', weight: 2.5, fillColor: accent(), fillOpacity: 1
+            }).addTo(map).bindTooltip(s.name || addr);
+          }
+        })
+        .catch(function () {})
+        .finally(function () { if (--pending === 0) { fit(); } });
+    });
+
+    new MutationObserver(function () { layer.setUrl(tileUrl()); })
+      .observe(docEl, { attributes: true, attributeFilter: ['data-bs-theme'] });
+  }
+  if (window.L) { initScopeMap(); }
+  document.body.addEventListener('htmx:afterSwap', initScopeMap);
+})();
+</script>
 {% endblock %}

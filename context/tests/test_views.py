@@ -145,9 +145,9 @@ class TestScopeListView:
 
     def test_list_with_status_filter(self):
         client, _ = _superuser_client()
-        ScopeFactory(workflow_state="validated")
+        ScopeFactory(workflow_state="in_force")
         ScopeFactory()
-        resp = client.get(reverse("context:scope-list") + "?status=active")
+        resp = client.get(reverse("context:scope-list") + "?status=in_force")
         assert resp.status_code == 200
 
     def test_list_with_search(self):
@@ -175,13 +175,13 @@ class TestListSummaryRail:
         client, _ = _superuser_client()
         # The initial state is forced on create, so set the states directly.
         ScopeFactory()
-        validated = [ScopeFactory().pk, ScopeFactory().pk]
-        Scope.objects.filter(pk__in=validated).update(workflow_state="validated")
+        in_force = [ScopeFactory().pk, ScopeFactory().pk]
+        Scope.objects.filter(pk__in=in_force).update(workflow_state="in_force")
         resp = client.get(reverse("context:scope-list"))
         summary = resp.context["list_summary"]
         assert summary["total"] == 3
         counts = {item["value"]: item["count"] for item in summary["items"]}
-        assert counts.get("validated") == 2
+        assert counts.get("in_force") == 2
         assert counts.get("draft") == 1
         # Every tile carries a tone + icon so the rail is coloured/distinctive.
         for item in summary["items"]:
@@ -192,8 +192,8 @@ class TestListSummaryRail:
         client, _ = _superuser_client()
         keep = ScopeFactory()
         ScopeFactory()
-        Scope.objects.filter(pk=keep.pk).update(workflow_state="validated")
-        resp = client.get(reverse("context:scope-list") + "?status=validated")
+        Scope.objects.filter(pk=keep.pk).update(workflow_state="in_force")
+        resp = client.get(reverse("context:scope-list") + "?status=in_force")
         assert resp.context["list_summary"]["total"] == 2
 
     def test_summary_uses_domain_status_field(self):

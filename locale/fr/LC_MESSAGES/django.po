@@ -11242,3 +11242,58 @@ msgstr "le %(d)s"
 #, python-format
 msgid "Last modified on %(d)s"
 msgstr "Dernière modification le %(d)s"
+
+#: context/lifecycles.py
+msgid "Definition"
+msgstr "Définition"
+
+#: context/lifecycles.py
+msgid "In force"
+msgstr "En vigueur"
+
+#: context/lifecycles.py
+msgid "Start definition"
+msgstr "Démarrer la définition"
+
+#: context/lifecycles.py
+msgid "Submit for validation"
+msgstr "Soumettre à validation"
+
+#: context/lifecycles.py
+msgid "Put in force"
+msgstr "Mettre en vigueur"
+
+#: context/templates/context/scope_detail.html
+msgid "Compliance rate"
+msgstr "Taux de conformité"
+
+#: context/templates/context/scope_detail.html
+msgid "In force since"
+msgstr "En vigueur depuis"
+
+#: context/templates/context/scope_detail.html
+msgid "next review"
+msgstr "prochaine revue"
+
+#: context/templates/context/scope_detail.html
+msgid "No manager assigned yet."
+msgstr "Aucun responsable assigné pour le moment."
+
+#: context/templates/context/scope_detail.html
+#, python-format
+msgid "%(n)s site"
+msgid_plural "%(n)s sites"
+msgstr[0] "%(n)s site"
+msgstr[1] "%(n)s sites"
+
+#: context/lifecycles.py
+msgid "Start review"
+msgstr "Démarrer la revue"
+
+#: context/lifecycles.py
+msgid "Complete review"
+msgstr "Terminer la revue"
+
+#: context/lifecycles.py
+msgid "Validation"
+msgstr "Validation"

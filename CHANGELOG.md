@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Scopes migrated to the new lifecycle engine (`core/lifecycle.py`), running the perimeter lifecycle Draft -> Definition -> Validation -> In force -> Review (periodic, looping back to In force), Archived as the from-any exit; `in_force` and `review` scopes count in reports and are linkable.
+- Scope detail page redesigned on the standardised detail layout (piloted on suppliers): a hero overview with the perimeter's included sites plotted on a theme-aware map, icon-led info rows (dimensions, parent, in-force dates), manager cards, sub-scope cards, and a strategic KPI rail (compliance rate, objectives, essential assets, sites) with one accent colour per tile.
+- Governance helpers (`reportable` / `linkable` / `deletable_states`), the list summary rail, the state badge and the unified history timeline are now lifecycle-engine-aware, resolving a model's steps when it sets `LIFECYCLE_NAME` (fixes raw-code badges and missing rail tiles for standardised-engine entities).
+- Generic MCP `transition_<entity>` / `<entity>_allowed_transitions` tools route standardised-engine entities through the lifecycle service (previously default-workflow only).
+- Lifecycle graph renderer given more breathing room (wider pill gaps, higher loop-arc clearance) so short single-step loops (e.g. a periodic Review) read as airy arcs instead of cramped bumps.
 - History trigger is icon-only (clock icon + tooltip).
 - Suppliers migrated to the new lifecycle engine (`core/lifecycle.py`), running the supplier-risk lifecycle; old status workflow and title-bar Archive/Restore removed.
 - New `LifecycleStepperMixin` and stepper template render any lifecycle; cyclic ones draw as a responsive snake-flow graph with schema-derived SVG arrows.

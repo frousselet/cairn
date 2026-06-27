@@ -9,6 +9,10 @@ from .base import BaseModel
 
 class Scope(BaseModel):
     REFERENCE_PREFIX = "SCOP"
+    # Runs the standardised lifecycle engine (core/lifecycle.py): the perimeter
+    # governance flow (Draft -> Definition -> Validation -> In force, with
+    # Archived as the exit). ``workflow_state`` holds the step code.
+    LIFECYCLE_NAME = "scope"
 
     name = models.CharField(_("Name"), max_length=255)
     description = models.TextField(_("Description"))
