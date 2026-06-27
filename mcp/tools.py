@@ -475,6 +475,22 @@ def _transition_handler(model_class, perm_namespace, scope_filtered=True):
             if not qs.exists():
                 return _error("Access denied: object is outside your allowed scopes.")
 
+        # Standardised engine (model sets LIFECYCLE_NAME): transition_to runs the
+        # validation, application and history through the lifecycle service.
+        if obj.get_lifecycle() is not None:
+            from core.lifecycle import LifecycleError
+
+            current = obj.workflow_state
+            try:
+                obj.transition_to(target, user, comment=comment, enforce_permission=False)
+            except LifecycleError as e:
+                return _error(str(e))
+            return {
+                "id": str(pk),
+                "previous_state": current,
+                "workflow_state": obj.workflow_state,
+            }
+
         from core.workflow import WorkflowError, validate_transition
 
         workflow = obj.get_workflow()
@@ -513,6 +529,28 @@ def _allowed_transitions_handler(model_class, perm_namespace, scope_filtered=Tru
             qs = _filter_by_scopes(model_class.objects.filter(pk=pk), user)
             if not qs.exists():
                 return _error("Access denied: object is outside your allowed scopes.")
+
+        # Standardised engine (model sets LIFECYCLE_NAME): list the steps the
+        # caller may move to from the current step (restriction is by role /
+        # named user, resolved through available_transitions).
+        lifecycle = obj.get_lifecycle()
+        if lifecycle is not None:
+            current = obj.workflow_state or lifecycle.initial_step.code
+            transitions = obj.available_transitions(user=user)
+            return {
+                "id": str(pk),
+                "workflow_state": current,
+                "workflow": lifecycle.name,
+                "allowed_transitions": [
+                    {
+                        "target": t.target,
+                        "verb": str(t.label),
+                        "action": "update",
+                        "requires_comment": t.requires_comment,
+                    }
+                    for t in transitions
+                ],
+            }
 
         from core.workflow import allowed_transitions
 

@@ -462,15 +462,48 @@ def sync_legacy_status(instance, save_kwargs, default_status):
 # --- Module-level governance helpers (accept a model, label or workflow) ----
 
 
+def _lifecycle_code_set(model_or_label, attr: str):
+    """Governance code set from the standardised engine, or ``None``.
+
+    When the resolved model runs the standardised ``core.lifecycle`` engine (it
+    sets ``LIFECYCLE_NAME``), return the requested code set off its Lifecycle so
+    the cross-cutting governance helpers (``reportable`` / ``linkable`` /
+    ``deletable_states``) read the right steps. Returns ``None`` for legacy
+    models (or a passed-in :class:`Workflow`), so the caller falls back to the
+    first-generation workflow.
+    """
+    if isinstance(model_or_label, Workflow):
+        return None
+    model = _resolve_model(model_or_label)
+    name = getattr(model, "LIFECYCLE_NAME", None) if model is not None else None
+    if not name:
+        return None
+    try:
+        from core.lifecycle import get_lifecycle
+
+        return getattr(get_lifecycle(name), attr)
+    except Exception:
+        return None
+
+
 def reportable_states(model_or_label) -> frozenset:
+    codes = _lifecycle_code_set(model_or_label, "reportable_step_codes")
+    if codes is not None:
+        return codes
     return resolve_workflow(model_or_label).reportable_state_codes
 
 
 def linkable_states(model_or_label) -> frozenset:
+    codes = _lifecycle_code_set(model_or_label, "linkable_step_codes")
+    if codes is not None:
+        return codes
     return resolve_workflow(model_or_label).linkable_state_codes
 
 
 def deletable_states(model_or_label) -> frozenset:
+    codes = _lifecycle_code_set(model_or_label, "deletable_step_codes")
+    if codes is not None:
+        return codes
     return resolve_workflow(model_or_label).deletable_state_codes
 
 

@@ -5,7 +5,7 @@ import pytest
 from accounts.tests.factories import UserFactory
 from context.constants import RaciType, RoleType
 from context.models import Responsibility, Role
-from context.tests.factories import ScopeFactory
+from context.tests.factories import IssueFactory, ScopeFactory
 from core.history import (
     EntryKind,
     ExtraSource,
@@ -47,22 +47,24 @@ def test_classify_update_regular_field():
 def test_classify_transition_forward():
     scope = ScopeFactory()  # draft
     user = UserFactory()
-    scope.transition_to("pending", user)
+    scope.transition_to("definition", user)
     record = _latest(scope)
     assert classify_record(record) is EntryKind.TRANSITION
     entry = build_entry(record)
     assert entry.kind is EntryKind.TRANSITION
     assert entry.from_state == "draft"
-    assert entry.to_state == "pending"
+    assert entry.to_state == "definition"
     assert entry.is_refusal is False
 
 
 def test_build_entry_transition_refusal_is_backward():
-    scope = ScopeFactory()
+    # The scope lifecycle is forward-only; a backward move (refusal) is exercised
+    # on a default-workflow entity that allows sending back (pending -> draft).
+    issue = IssueFactory()
     user = UserFactory()
-    scope.transition_to("pending", user)
-    scope.transition_to("draft", user)  # send back to draft = backward
-    record = _latest(scope)
+    issue.transition_to("pending", user)
+    issue.transition_to("draft", user)  # send back to draft = backward
+    record = _latest(issue)
     entry = build_entry(record)
     assert entry.kind is EntryKind.TRANSITION
     assert entry.from_state == "pending"
@@ -74,11 +76,12 @@ def test_classify_approval_only_change():
     """An approval-field-only change (no lifecycle move) is an APPROVAL event."""
     scope = ScopeFactory()
     u1, u2 = UserFactory(), UserFactory()
-    # First move to validated (this record also flips workflow_state -> transition).
+    # On the standardised engine, approval is independent of the lifecycle step:
+    # flipping is_approved leaves workflow_state untouched.
     scope.is_approved = True
     scope.approved_by = u1
     scope.save()
-    assert scope.workflow_state == "validated"
+    assert scope.workflow_state == "draft"
     # Now change only the approver, leaving is_approved/workflow_state untouched.
     scope.approved_by = u2
     scope.save()
@@ -132,7 +135,7 @@ def test_build_timeline_merges_extra_entries():
 def test_extra_source_suppresses_generic_transitions():
     scope = ScopeFactory()
     user = UserFactory()
-    scope.transition_to("pending", user)  # generic transition record
+    scope.transition_to("definition", user)  # generic transition record
     extra = ExtraSource(entries=(), suppress_generic_transitions=True)
     timeline = build_timeline(scope, extra=extra)
     assert all(e.kind is not EntryKind.TRANSITION for e in timeline)
@@ -141,12 +144,12 @@ def test_extra_source_suppresses_generic_transitions():
 def test_as_dict_transition_shape():
     scope = ScopeFactory()
     user = UserFactory()
-    scope.transition_to("pending", user)
+    scope.transition_to("definition", user)
     entry = build_entry(_latest(scope))
     data = entry.as_dict()
     assert data["kind"] == "transition"
     assert data["from_state"] == "draft"
-    assert data["to_state"] == "pending"
+    assert data["to_state"] == "definition"
     assert "is_refusal" in data
     # history_date is serialized as an ISO string for API/MCP portability.
     assert isinstance(data["history_date"], str)

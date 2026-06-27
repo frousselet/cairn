@@ -392,7 +392,7 @@ class LifecycleStepperMixin:
                 },
             ),
         })
-        if lifecycle.layout == "cycle":
+        if lifecycle.layout in ("cycle", "graph"):
             import json
 
             # Position of every intermediate step on the spine. A transition

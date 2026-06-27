@@ -89,16 +89,27 @@ transition is open to anyone with access; superusers always pass.
 ## Migration plan (incremental)
 
 1. Foundation: engine + `LifecycleEvent` + service + tests. **Done.**
-2. Per-entity lifecycle definitions registered in each app. **Supplier done**
-   (`assets/lifecycles.py`: the audit-proof supplier-risk lifecycle - Draft →
-   Onboarding → Risk scoring → Contracts → ICT chain → Cloud → Monitoring →
-   Change management → Audit & assurance, cycling, with Archived as the exit).
+2. Per-entity lifecycle definitions registered in each app. **Supplier and
+   Scope done.** Supplier (`assets/lifecycles.py`): the audit-proof
+   supplier-risk lifecycle - Draft → Onboarding → Risk questionnaire →
+   Evaluation → Compliant / Non-compliant, cycling, with Archived as the exit.
+   Scope (`context/lifecycles.py`): the perimeter governance lifecycle - Draft →
+   Definition → Validation → In force → Review (periodic, looping back to In
+   force), with Archived as the from-any exit (and restore to Draft); `in_force`
+   and `review` count in reports and are linkable.
    `BaseModel` routes governance / transitions / history through the new engine
-   whenever a model sets `LIFECYCLE_NAME` (`Supplier.LIFECYCLE_NAME = "supplier"`).
+   whenever a model sets `LIFECYCLE_NAME` (`Supplier.LIFECYCLE_NAME = "supplier"`,
+   `Scope.LIFECYCLE_NAME = "scope"`).
 3. Stepper UI reads through `LifecycleStepperMixin` +
    `includes/lifecycle_stepper.html` (main flow as a connected wrapping line,
    available transition targets clickable, the Archived exit detached). DRF and
-   MCP perform through the service. **Stepper done; DRF/MCP pending.**
+   MCP perform through the service. **Stepper done. DRF/MCP done**: the generic
+   `transition_<entity>` / `<entity>_allowed_transitions` MCP tools and the
+   `WorkflowTransitionView` endpoint branch on `get_lifecycle()` and route
+   standardised-engine entities through `transition_to` / `available_transitions`.
 4. Reports / KPIs / linking / deletion read the governance code sets from the
-   resolved lifecycle.
+   resolved lifecycle. **Done**: `reportable()` / `linkable()` /
+   `deletable_states()`, the list summary rail and the unified history timeline
+   resolve a model's code set off its lifecycle when it sets `LIFECYCLE_NAME`,
+   falling back to the legacy workflow otherwise.
 5. Retire `core/workflow.py` once every entity is migrated.

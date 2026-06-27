@@ -182,6 +182,7 @@ with transaction.atomic():
         icon="bi-buildings",
         effective_date=date(2025, 1, 1),
         review_date=date(2026, 7, 15),
+        workflow_state="in_force",
         **approved(elise),
     )
     scope_group.managers.set([elise])
@@ -193,6 +194,7 @@ with transaction.atomic():
         parent_scope=scope_group,
         icon="bi-pc-display",
         effective_date=date(2025, 1, 1),
+        workflow_state="in_force",
         **approved(elise),
     )
     scope_it.managers.set([marc])
@@ -203,6 +205,7 @@ with transaction.atomic():
         parent_scope=scope_group,
         icon="bi-lightning-charge",
         effective_date=date(2025, 1, 1),
+        workflow_state="in_force",
         **approved(elise),
     )
     scope_ot.managers.set([thomas])
@@ -214,6 +217,7 @@ with transaction.atomic():
         parent_scope=scope_group,
         icon="bi-people",
         effective_date=date(2025, 6, 1),
+        workflow_state="in_force",
         **approved(elise),
     )
     scope_cust.managers.set([ines])
@@ -223,7 +227,7 @@ with transaction.atomic():
         description="Experimental perimeter for grid storage and forecasting research projects.",
         parent_scope=scope_group,
         icon="bi-lightbulb",
-        workflow_state="pending",
+        workflow_state="validation",
         created_by=marc,
     )
     all_scopes = [scope_group, scope_it, scope_ot, scope_cust]

@@ -241,25 +241,42 @@ class ListSummaryMixin:
         self._summary_base_qs = qs
         return qs
 
+    def _lifecycle_states(self, model):
+        """Ordered state/step objects for the model's active lifecycle engine.
+
+        A model that sets ``LIFECYCLE_NAME`` runs the standardised
+        ``core.lifecycle`` engine: its steps drive the rail. Every other model
+        keeps the legacy ``core.workflow`` engine. Both expose ``code``,
+        ``label`` and ``tone``, so the rail consumes them uniformly. Returns an
+        empty tuple when no lifecycle resolves.
+        """
+        lifecycle_name = getattr(model, "LIFECYCLE_NAME", None)
+        if lifecycle_name:
+            from core.lifecycle import LIFECYCLE_REGISTRY
+
+            lifecycle = LIFECYCLE_REGISTRY.get(lifecycle_name)
+            if lifecycle is not None:
+                return lifecycle.steps
+        from core.workflow import get_workflow, workflow_name_for
+
+        try:
+            return get_workflow(workflow_name_for(model)).states
+        except Exception:
+            return ()
+
     def _state_styles(self, model):
         """Map each status value to (tone, icon) from the model's lifecycle
-        workflow tones. Empty for choice-based status fields (those fall back to
-        the keyword heuristic)."""
+        tones. Empty for choice-based status fields (those fall back to the
+        keyword heuristic)."""
         try:
             field = model._meta.get_field(self.status_field)
         except Exception:
             field = None
         if field is not None and getattr(field, "choices", None):
             return {}
-        from core.workflow import get_workflow, workflow_name_for
-
-        try:
-            workflow = get_workflow(workflow_name_for(model))
-        except Exception:
-            return {}
         return {
             state.code: self._TONE_STYLE.get(getattr(state, "tone", "neutral"), self._TONE_STYLE["neutral"])
-            for state in workflow.states
+            for state in self._lifecycle_states(model)
         }
 
     def _heuristic_style(self, value):
@@ -292,13 +309,7 @@ class ListSummaryMixin:
             field = None
         if field is not None and getattr(field, "choices", None):
             return [(value, label) for value, label in field.choices]
-        from core.workflow import get_workflow, workflow_name_for
-
-        try:
-            workflow = get_workflow(workflow_name_for(model))
-        except Exception:
-            return []
-        return [(state.code, state.label) for state in workflow.states]
+        return [(state.code, state.label) for state in self._lifecycle_states(model)]
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

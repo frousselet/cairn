@@ -85,11 +85,12 @@ class ScopeViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, Cre
     @action(detail=True, methods=["post"])
     def archive(self, request, pk=None):
         scope = self.get_object()
+        from core.lifecycle import LifecycleError
         from core.workflow import WorkflowError
 
         try:
             scope.transition_to("archived", request.user)
-        except WorkflowError as exc:
+        except (WorkflowError, LifecycleError) as exc:
             return Response({"detail": str(exc)}, status=400)
         return Response(ScopeSerializer(scope).data)
 

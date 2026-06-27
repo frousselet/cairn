@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from compliance.constants import AssessmentStatus
 from compliance.models import ComplianceAssessment, Framework
 from context.models import Scope
+from core.workflow import reportable
 from reports.constants import (
     DecisionCategory,
     DecisionInputClause,
@@ -89,7 +90,9 @@ class ManagementReviewForm(forms.Form):
     )
 
     scopes = forms.ModelMultipleChoiceField(
-        queryset=Scope.objects.filter(workflow_state="validated").order_by("name"),
+        # In-force scopes only : read the governance code set off the scope
+        # lifecycle rather than hardcoding the step.
+        queryset=reportable(Scope.objects.all()).order_by("name"),
         label=_("Scopes"),
         required=False,
         help_text=_("Optionally filter data by scope. Leave empty to include all data."),

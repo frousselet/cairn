@@ -8,7 +8,7 @@ Manage your organisation's security posture, track compliance with regulatory fr
 
 ## What you get
 
-- **Governance** : organisational scopes, sites, strategic issues, stakeholders, objectives, SWOT, roles and activities
+- **Governance** : organisational scopes (with a Draft -> Definition -> Validation -> In force -> Review perimeter lifecycle), sites, strategic issues, stakeholders, objectives, SWOT, roles and activities
 - **Assets** : essential and support assets with CIA valuation, dependencies, SPOF detection and a supplier registry (contacts, multi-party contracts, mapped addresses, a risk lifecycle and per-requirement compliance evaluation) with CSV bulk import
 - **Risks** : ISO 27005 and EBIOS RM (ANSSI v1.5, workshops 0 to 5) assessments, threat and vulnerability catalogs, treatment plans and formal risk acceptance
 - **Compliance** : frameworks, requirements, assessments, findings, action plans and inter-framework mappings, with Excel import and an optional **risk-driven applicability** mode (a framework derives each requirement's applicability automatically from its linked risks)

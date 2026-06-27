@@ -163,32 +163,52 @@ def _safe_prev(record):
         return None
 
 
-def _is_backward_transition(model, from_code: str, to_code: str) -> bool:
-    """Whether ``from_code -> to_code`` moves back along the main flow.
+def _main_flow_and_labels(model):
+    """Return ``(main_flow_codes, {code: label})`` for the model's active engine.
 
-    Recomputed from the registered workflow (the single source of truth) rather
-    than persisted, mirroring :class:`accounts.mixins.WorkflowStepperMixin`'s
-    refusal logic. Branch off-ramps (cancelled / archived) are not refusals.
+    Standardised engine (model sets ``LIFECYCLE_NAME``): the Draft + intermediate
+    steps form the main flow (Archived exits sit off it); legacy engine: the
+    non-branch workflow states. Both expose ``code`` / ``label``, so the history
+    timeline reads them uniformly. Empty on failure.
     """
+    name = getattr(model, "LIFECYCLE_NAME", None)
+    if name:
+        try:
+            from core.lifecycle import StepKind, get_lifecycle
+
+            lifecycle = get_lifecycle(name)
+            main = [s.code for s in lifecycle.steps if s.kind != StepKind.ARCHIVED]
+            labels = {s.code: str(s.label) for s in lifecycle.steps}
+            return main, labels
+        except Exception:
+            pass
     try:
         from core.workflow import resolve_workflow
 
         workflow = resolve_workflow(model)
         main = [s.code for s in workflow.states if not s.branch]
-        if from_code in main and to_code in main:
-            return main.index(to_code) < main.index(from_code)
+        labels = {s.code: str(s.label) for s in workflow.states}
+        return main, labels
     except Exception:
-        pass
+        return [], {}
+
+
+def _is_backward_transition(model, from_code: str, to_code: str) -> bool:
+    """Whether ``from_code -> to_code`` moves back along the main flow.
+
+    Recomputed from the registered workflow / lifecycle (the single source of
+    truth) rather than persisted, mirroring :class:`accounts.mixins.WorkflowStepperMixin`'s
+    refusal logic. Branch off-ramps (cancelled / archived) are not refusals.
+    """
+    main, _ = _main_flow_and_labels(model)
+    if from_code in main and to_code in main:
+        return main.index(to_code) < main.index(from_code)
     return False
 
 
 def _state_label(model, code: str) -> str:
-    try:
-        from core.workflow import resolve_workflow
-
-        return str(resolve_workflow(model).state(code).label)
-    except Exception:
-        return code
+    _, labels = _main_flow_and_labels(model)
+    return labels.get(code, code)
 
 
 def snapshot(record) -> tuple[FieldChange, ...]:

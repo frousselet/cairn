@@ -20,7 +20,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
+from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
@@ -250,8 +250,18 @@ WORKFLOW_STATUS_OPTIONS = [
     ("archived", _l("Archived")),
 ]
 
+# Scopes run the standardised perimeter lifecycle (core/lifecycle.py), so their
+# status facet offers the lifecycle step codes, not the default-workflow ones.
+SCOPE_STATUS_OPTIONS = [
+    ("draft", _l("Draft")),
+    ("definition", _l("Definition")),
+    ("validation", _l("Validation")),
+    ("in_force", _l("In force")),
+    ("archived", _l("Archived")),
+]
+
 SCOPE_FILTER_GROUPS = [
-    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": WORKFLOW_STATUS_OPTIONS},
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": SCOPE_STATUS_OPTIONS},
 ]
 SCOPE_TEXT_FILTERS = [
     {"param": "name", "field": "name", "label": _l("Name")},
@@ -331,7 +341,7 @@ class ScopeListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
         return result
 
 
-class ScopeDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, WorkflowStepperMixin, HistoryUrlMixin, DetailView):
+class ScopeDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, LifecycleStepperMixin, HistoryUrlMixin, DetailView):
     model = Scope
     permission_required = "context.scope.read"
     template_name = "context/scope_detail.html"
@@ -352,6 +362,36 @@ class ScopeDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMi
             for a in ancestors
         ]
         ctx["children"] = self.object.children.exclude(workflow_state="archived")
+        # Strategic KPI tiles for the detail rail : the perimeter's compliance
+        # posture, security objectives and the value it protects. Counts use the
+        # governance-reportable set so the rail mirrors what counts in reports.
+        from compliance.services import (
+            active_frameworks_for_scoring,
+            overall_compliance_rate,
+        )
+        from core.workflow import reportable
+
+        scope = self.object
+        scoped_frameworks = scope.frameworks.all()
+        ctx["kpi_compliance_rate"] = (
+            overall_compliance_rate(scoped_frameworks)
+            if active_frameworks_for_scoring(scoped_frameworks).exists()
+            else None
+        )
+        ctx["kpi_objectives"] = reportable(scope.objective_set.all()).count()
+        ctx["kpi_essential_assets"] = reportable(scope.essentialasset_set.all()).count()
+        # Hero map payload : the perimeter's included sites (geocoded client-side
+        # from their address, like the supplier address map), so the overview
+        # shows the geographic footprint.
+        included = scope.included_sites.all()
+        ctx["included_sites"] = included
+        map_sites = [
+            {"name": site.full_path, "address": (site.address or "").strip()}
+            for site in included
+            if (site.address or "").strip()
+        ]
+        ctx["scope_sites_json"] = json.dumps(map_sites)
+        ctx["has_site_map"] = bool(map_sites)
         return ctx
 
 

@@ -216,7 +216,12 @@ hardcoded steps).
 
     {% comment %} ----- layout: snake-pack the SPINE, then stack the BRANCH ----- {% endcomment %}
     {% comment %} Gaps are generous so every arrow has a visible shaft, not just a head. {% endcomment %}
-    var GAPX = 46, ROW_GAP = 42, TOP_PAD = 54, SIDE = 34, BRANCH_GAPX = 40, BRANCH_GAPY = 16;
+    var GAPX = 58, ROW_GAP = 48, TOP_PAD = 72, SIDE = 34, BRANCH_GAPX = 40, BRANCH_GAPY = 16;
+    {% comment %} Vertical clearance reserved for the loop return arcs above / below
+       the pill block, and the per-extra-loop stagger. Generous enough that a short
+       single-step loop (e.g. Review -> In force) reads as an airy arc with room for
+       its label, not a cramped bump hugging the pills. {% endcomment %}
+    var LOOP_TOP_CLEAR = 30, LOOP_BOT_CLEAR = 26, LOOP_STAGGER = 20;
 
     function layout() {
       var nodeEls = Array.prototype.slice.call(flow.querySelectorAll('[data-lc-node]'));
@@ -373,7 +378,7 @@ hardcoded steps).
          BELOW (bottom side) the pills, never wrapping the left margin. {% endcomment %}
       var blockTop = Infinity, blockBot = 0;
       nodes.forEach(function (n) { blockTop = Math.min(blockTop, n.top); blockBot = Math.max(blockBot, n.bottom); });
-      var topArcBase = blockTop - 14, botArcBase = blockBot + 16;
+      var topArcBase = blockTop - LOOP_TOP_CLEAR, botArcBase = blockBot + LOOP_BOT_CLEAR;
 
       {% comment %} ---- loop return arcs : one per distinct target. Each loop arcs
          on the side closest to its outcome (OVER the top when the source sits at /
@@ -394,7 +399,7 @@ hardcoded steps).
            or the other loop. Spine-origin loops default over the top. {% endcomment %}
         var par = byId[branchSourceOf[members[0].id]];
         var goTop = par ? (members[0].cy < par.cy - 1) : (avgCy <= t.cy);
-        var lane = goTop ? (topArcBase - topIdx * 16) : (botArcBase + botIdx * 16);
+        var lane = goTop ? (topArcBase - topIdx * LOOP_STAGGER) : (botArcBase + botIdx * LOOP_STAGGER);
         if (goTop) { topIdx++; } else { botIdx++; }
         var junctionX = members.reduce(function (m, n) { return Math.min(m, n.cx); }, Infinity);
         {% comment %} per-member feeder to the shared lane (no arrowhead), then the
@@ -413,7 +418,7 @@ hardcoded steps).
           addLabel(g.label, (t.cx + junctionX) / 2, goTop ? lane - 6 : lane + 13, 'middle');
         }
       });
-      var loopBottom = botArcBase + Math.max(0, botIdx - 1) * 16;
+      var loopBottom = botArcBase + Math.max(0, botIdx - 1) * LOOP_STAGGER;
 
       {% comment %} ---- exit + restore (to/from the detached Archived pill) ---- {% endcomment %}
       if (exitsWrap) {

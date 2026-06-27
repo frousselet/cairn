@@ -87,8 +87,8 @@ class TestDashboardWithPopulatedData:
         assert resp.context["scope_count"] == 2
 
     def test_active_scopes_returned(self):
-        ScopeFactory(is_approved=True)
-        ScopeFactory()
+        ScopeFactory(workflow_state="in_force")  # authoritative, counts
+        ScopeFactory()  # draft, does not count
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
         assert len(resp.context["active_scopes"]) == 1

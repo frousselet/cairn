@@ -112,7 +112,10 @@ def test_resolve_workflow_defaults_to_default():
 
 
 def test_module_helpers_accept_labels():
-    assert reportable_states("context.scope") == {"validated"}
+    # A standardised-engine model (scope) resolves its lifecycle code set by label.
+    assert reportable_states("context.scope") == {"in_force", "review"}
+    # A default-workflow model resolves through its label too.
+    assert reportable_states("context.issue") == {"validated"}
     # A model with a declared specific workflow resolves through its label too.
     assert deletable_states("assets.supportasset") == {"in_stock", "active"}
 

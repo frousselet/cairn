@@ -126,19 +126,22 @@ class TestScopeViewSet:
         assert response.status_code == 204
 
     def test_archive_action(self):
-        scope = ScopeFactory(is_approved=True)  # validated: archivable
+        scope = ScopeFactory(workflow_state="in_force")  # archivable
         response = self.client.post(
             f"/api/v1/context/scopes/{scope.pk}/archive/"
         )
         assert response.status_code == 200
         assert _data(response)["workflow_state"] == "archived"
 
-    def test_archive_action_rejects_draft(self):
-        scope = ScopeFactory()  # draft cannot be archived (RG-LC)
+    def test_archive_action_from_draft(self):
+        # The standardised perimeter lifecycle exposes Archive as a from-any
+        # transition, so a Draft scope can be archived (abandoned) directly.
+        scope = ScopeFactory()  # draft
         response = self.client.post(
             f"/api/v1/context/scopes/{scope.pk}/archive/"
         )
-        assert response.status_code == 400
+        assert response.status_code == 200
+        assert _data(response)["workflow_state"] == "archived"
 
     def test_unauthenticated(self):
         client = APIClient()
