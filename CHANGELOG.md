@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- List and detail views no longer return HTTP 500 on a malformed query/POST parameter (issue #154) : a new `core.query_params` helper (`parse_uuid` / `parse_int` / `parse_date_param`) coerces untrusted values before they reach the ORM, so an invalid value skips the filter instead of raising `ValidationError` / `ValueError` / `OverflowError` at query time. Covers the risk register (list, table-body, bulk action, Excel export), treatments, acceptances, threats, vulnerabilities, ISO 27005 and scale-choices endpoints, the compliance requirements list, the suppliers list (`?supplier_type=`) and the calendar feed (`?start=` / `?end=`).
 - WebSockets now work under `manage.py runserver` : added `daphne` (first in `INSTALLED_APPS`, and to `requirements.txt`) so the dev server runs the ASGI stack instead of plain WSGI. Without it every `/ws/...` route (live dashboard and notification consumers) returned `404`; production (uvicorn `core.asgi:application`) was unaffected.
 - Scope tree field layout / Firefox checkbox : multi-select widgets get the full-width layout, fixing the narrowed field and hidden first checkbox.
 

@@ -28,6 +28,7 @@ from core.mixins import (
     SavedFilterMixin,
     SortableListMixin,
 )
+from core.query_params import parse_int
 from context.constants import Criticality, SiteType
 from context.models import Scope, Site
 from .constants import (
@@ -528,8 +529,8 @@ class SupplierListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related("scopes").select_related("owner", "type")
-        supplier_type = self.request.GET.get("supplier_type")
-        if supplier_type:
+        supplier_type = parse_int(self.request.GET.get("supplier_type"))
+        if supplier_type is not None:
             qs = qs.filter(type_id=supplier_type)
         qs = self.filter_queryset_predefined(qs)
         return self.filter_queryset_advanced(qs)
