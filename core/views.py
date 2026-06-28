@@ -1520,6 +1520,10 @@ class GlobalSearchView(LoginRequiredMixin, View):
     """Return search results as JSON, grouped by category."""
 
     MAX_PER_CATEGORY = 5
+    # Hard cap on the query length. An unbounded ?q= builds a LIKE pattern of
+    # the same size: ~50k chars raises "LIKE or GLOB pattern too complex" on
+    # SQLite (HTTP 500) and is an unbounded-work DoS vector on any backend.
+    MAX_QUERY_LENGTH = 128
 
     def _scope_ids(self):
         user = self.request.user
@@ -1612,7 +1616,7 @@ class GlobalSearchView(LoginRequiredMixin, View):
         return {"label": str(_("Actions")), "icon": "bi-lightning-charge", "items": items} if items else None
 
     def get(self, request):
-        q = request.GET.get("q", "").strip()
+        q = request.GET.get("q", "").strip()[: self.MAX_QUERY_LENGTH]
         if len(q) < 2:
             # Empty / short query: show navigation + actions instead of nothing.
             groups = []

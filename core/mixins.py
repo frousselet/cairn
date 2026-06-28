@@ -386,6 +386,10 @@ class PredefinedFilterMixin:
 
     filter_groups = []
     text_filters = []
+    # Hard cap on the toolbar search length, mirroring the global search: an
+    # unbounded ?q= builds an equally long LIKE pattern, which raises
+    # OperationalError on SQLite and is an unbounded-work DoS vector elsewhere.
+    max_search_length = 128
 
     # value -> (label, ORM lookup, negate). Order drives the operator dropdown.
     TEXT_OPERATORS = [
@@ -406,7 +410,7 @@ class PredefinedFilterMixin:
         # across the view's search_fields, so it narrows the real queryset and
         # the pagination reflects it. A query wrapped in double quotes ("A.5.1")
         # means an exact (case-insensitive) match; otherwise it is a substring.
-        search = self.request.GET.get("q", "").strip()
+        search = self.request.GET.get("q", "").strip()[: self.max_search_length]
         search_fields = getattr(self, "search_fields", None)
         if search and search_fields:
             if len(search) >= 2 and search[0] == '"' and search[-1] == '"':
