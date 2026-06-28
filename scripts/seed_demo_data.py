@@ -8,8 +8,7 @@ Run inside the web container:
     docker compose exec -T web python manage.py shell -c "exec(open('scripts/seed_demo_data.py').read())"
 """
 
-import datetime
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 from urllib.parse import quote
 
@@ -114,6 +113,76 @@ TODAY = NOW.date()
 PASSWORD = "VoltaraDemo!2026"
 
 
+# All demo dates are derived from TODAY so the dataset never goes stale: audits
+# stay completed and in the past, contracts keep realistic horizons, and
+# upcoming reviews stay in the near future regardless of when the seed is run.
+def days_ago(n):
+    return TODAY - timedelta(days=n)
+
+
+def days_ahead(n):
+    return TODAY + timedelta(days=n)
+
+
+def months_ago(n):
+    return TODAY - timedelta(days=round(30.4 * n))
+
+
+def months_ahead(n):
+    return TODAY + timedelta(days=round(30.4 * n))
+
+
+def years_ago(n):
+    return TODAY - timedelta(days=round(365.25 * n))
+
+
+def years_ahead(n):
+    return TODAY + timedelta(days=round(365.25 * n))
+
+
+def semester_label(d):
+    """`H1 YYYY` / `H2 YYYY` for a date, for management-review titles."""
+    return f"H{1 if d.month <= 6 else 2} {d.year}"
+
+
+# Real city coordinates per country so every supplier hero map renders a marker
+# at a plausible location on a fresh seed. The supplier map uses the stored
+# latitude/longitude first and only falls back to geocoding the address text, so
+# seeding both keeps the maps working offline and pin-accurate.
+SUPPLIER_CITIES = {
+    "France": ("Paris", 48.8566, 2.3522),
+    "Germany": ("Berlin", 52.5200, 13.4050),
+    "Netherlands": ("Amsterdam", 52.3676, 4.9041),
+    "Ireland": ("Dublin", 53.3498, -6.2603),
+    "Spain": ("Madrid", 40.4168, -3.7038),
+    "Sweden": ("Stockholm", 59.3293, 18.0686),
+    "Switzerland": ("Zurich", 47.3769, 8.5417),
+    "Austria": ("Vienna", 48.2082, 16.3738),
+    "Denmark": ("Copenhagen", 55.6761, 12.5683),
+    "Norway": ("Oslo", 59.9139, 10.7522),
+    "Finland": ("Helsinki", 60.1699, 24.9384),
+}
+
+
+def supplier_location(country):
+    """A plausible (address, latitude, longitude) for a supplier in `country`.
+
+    The street is generated; the city and base coordinates are real, with a
+    small jitter so markers do not all stack on the exact city centre.
+    """
+    city, lat, lon = SUPPLIER_CITIES.get(country, SUPPLIER_CITIES["France"])
+    street = RNG.choice([
+        "Innovation Avenue", "Technology Park", "Business Center", "Commerce Square",
+        "Industrial Estate", "Office Quarter", "Enterprise Way", "Market Street",
+    ])
+    address = f"{RNG.randint(1, 200)} {street}, {city}, {country}"
+    return (
+        address,
+        round(lat + RNG.uniform(-0.04, 0.04), 6),
+        round(lon + RNG.uniform(-0.04, 0.04), 6),
+    )
+
+
 def approved(user):
     """Kwargs marking a default-lifecycle object as validated."""
     return {
@@ -180,8 +249,8 @@ with transaction.atomic():
         geographic_scope="France",
         organizational_scope="All departments",
         icon="bi-buildings",
-        effective_date=date(2025, 1, 1),
-        review_date=date(2026, 7, 15),
+        effective_date=months_ago(18),
+        review_date=days_ahead(17),
         workflow_state="in_force",
         **approved(elise),
     )
@@ -193,7 +262,7 @@ with transaction.atomic():
         description="Corporate information systems: ERP, collaboration, customer portal and end-user computing.",
         parent_scope=scope_group,
         icon="bi-pc-display",
-        effective_date=date(2025, 1, 1),
+        effective_date=months_ago(18),
         workflow_state="in_force",
         **approved(elise),
     )
@@ -204,7 +273,7 @@ with transaction.atomic():
         description="Industrial control systems for the wind, solar and hydro production fleet: SCADA, PLCs, historian.",
         parent_scope=scope_group,
         icon="bi-lightning-charge",
-        effective_date=date(2025, 1, 1),
+        effective_date=months_ago(18),
         workflow_state="in_force",
         **approved(elise),
     )
@@ -216,7 +285,7 @@ with transaction.atomic():
         description="Customer-facing processes: contracting, billing, support and the self-service portal.",
         parent_scope=scope_group,
         icon="bi-people",
-        effective_date=date(2025, 6, 1),
+        effective_date=months_ago(13),
         workflow_state="in_force",
         **approved(elise),
     )
@@ -321,14 +390,14 @@ with transaction.atomic():
     )
     StakeholderExpectation.objects.create(
         stakeholder=sh_excom, type="requirement", priority="critical",
-        description="ISO/IEC 27001 certification obtained before the end of 2026.",
+        description="ISO/IEC 27001 certification obtained within the next 12 months.",
     )
 
     issue_nis2 = Issue.objects.create(
         name="NIS2 enforcement deadline", type="external", category="regulatory",
         description="Voltara qualifies as an essential entity; full compliance evidence is expected at the next supervision cycle.",
         impact_level="critical", trend="degrading", status="active",
-        source="Legal watch", review_date=date(2026, 9, 1), **approved(elise),
+        source="Legal watch", review_date=months_ahead(2), **approved(elise),
     )
     issue_ransomware = Issue.objects.create(
         name="Ransomware wave targeting energy operators", type="external", category="technological",
@@ -365,47 +434,49 @@ with transaction.atomic():
         description="Pass the stage 1 and stage 2 certification audits on the group ISMS scope.",
         owner=elise, status="active", target_value="100", current_value="72", unit="%",
         measurement_frequency="quarterly", progress_percentage=72,
-        target_date=date(2026, 12, 15), review_date=date(2026, 6, 25), **approved(elise),
+        target_date=months_ahead(6), review_date=days_ago(3), **approved(elise),
     )
     obj_phishing = Objective.objects.create(
         name="Phishing click rate below 5%", category="confidentiality", type="security",
         owner=elise, status="active", target_value="5", current_value="4.8", unit="%",
         measurement_frequency="monthly", progress_percentage=85,
-        target_date=date(2026, 12, 31), **approved(elise),
+        target_date=months_ahead(6), **approved(elise),
     )
     obj_mfa = Objective.objects.create(
         name="100% MFA coverage on privileged access", category="confidentiality", type="security",
         owner=marc, status="active", target_value="100", current_value="97", unit="%",
         measurement_frequency="monthly", progress_percentage=97,
-        target_date=date(2026, 9, 30), **approved(elise),
+        target_date=months_ahead(3), **approved(elise),
     )
     obj_scada = Objective.objects.create(
         name="SCADA availability at 99.95%", category="availability", type="business",
         owner=thomas, status="active", target_value="99.95", current_value="99.91", unit="%",
         measurement_frequency="monthly", progress_percentage=90,
-        target_date=date(2026, 12, 31), **approved(elise),
+        target_date=months_ahead(6), **approved(elise),
     )
     obj_nis2 = Objective.objects.create(
         name="NIS2 compliance programme completed", category="compliance", type="compliance",
         owner=amelia, status="active", target_value="100", current_value="55", unit="%",
         measurement_frequency="quarterly", progress_percentage=55,
-        target_date=date(2026, 10, 17), **approved(elise),
+        target_date=days_ahead(111), **approved(elise),
     )
     obj_edr = Objective.objects.create(
         name="EDR deployed on all workstations", category="integrity", type="security",
         owner=marc, status="achieved", target_value="100", current_value="100", unit="%",
         measurement_frequency="monthly", progress_percentage=100,
-        target_date=date(2026, 3, 31), **approved(elise),
+        target_date=months_ago(3), **approved(elise),
     )
     for o in [obj_iso, obj_phishing, obj_mfa, obj_scada, obj_nis2, obj_edr]:
         o.scopes.set([scope_group])
     obj_nis2.related_issues.set([issue_nis2])
     obj_iso.related_stakeholders.set([sh_excom])
 
+    swot_analysis_date = months_ago(4)
     swot = SwotAnalysis.objects.create(
-        name="2026 Security posture SWOT",
+        name=f"{swot_analysis_date.year} Security posture SWOT",
         description="Annual strategic review of the security programme ahead of the certification audit.",
-        analysis_date=date(2026, 2, 10), review_date=date(2027, 2, 10),
+        analysis_date=swot_analysis_date,
+        review_date=swot_analysis_date + timedelta(days=365),
         validated_by=elise, validated_at=NOW, **approved(elise),
     )
     swot.scopes.set([scope_group])
@@ -553,41 +624,53 @@ with transaction.atomic():
         description="IaaS and colocation provider hosting production workloads.",
         contact_name="Account team", contact_email="account@cloudnord.example",
         country="France", contract_reference="CTR-2024-031",
-        contract_start_date=date(2024, 3, 1), contract_end_date=date(2027, 2, 28),
+        address="2 Rue Kellermann, 59100 Roubaix, France",
+        latitude=50.6916, longitude=3.2014,
+        contract_start_date=months_ago(28), contract_end_date=months_ahead(8),
         owner=marc, status="active", **approved(elise),
     )
     sup_sentinel = Supplier.objects.create(
         name="SentinelWatch", type=st_mssp, criticality="high",
         description="24x7 managed SOC operating the SIEM platform.",
         country="France", contract_reference="CTR-2023-104",
-        contract_start_date=date(2023, 7, 1), contract_end_date=date(2026, 6, 30),
+        address="92 Avenue des Champs-Elysees, 75008 Paris, France",
+        latitude=48.8698, longitude=2.3079,
+        contract_start_date=years_ago(3), contract_end_date=days_ahead(2),
         owner=elise, status="active", **approved(elise),
     )
     sup_turbintech = Supplier.objects.create(
         name="TurbinTech GmbH", type=st_industrial, criticality="high",
         description="Turbine vendor with permanent remote maintenance access.",
         country="Germany", contract_reference="CTR-2022-018",
-        contract_start_date=date(2022, 1, 1), contract_end_date=date(2028, 12, 31),
+        address="Dreekamp 5, 26605 Aurich, Germany",
+        latitude=53.4719, longitude=7.4828,
+        contract_start_date=years_ago(4.5), contract_end_date=years_ahead(2.5),
         owner=thomas, status="active", **approved(elise),
     )
     sup_paycore = Supplier.objects.create(
         name="PayCore", type=st_saas, criticality="high",
         description="Payment processing service for customer invoicing.",
         country="Netherlands", contract_reference="CTR-2024-077",
-        contract_start_date=date(2024, 9, 1), contract_end_date=date(2027, 8, 31),
+        address="Simon Carmiggeltstraat 6-50, 1011 DJ Amsterdam, Netherlands",
+        latitude=52.3743, longitude=4.9009,
+        contract_start_date=months_ago(22), contract_end_date=months_ahead(14),
         owner=ines, status="active", **approved(elise),
     )
     sup_hrline = Supplier.objects.create(
         name="HRline", type=st_saas, criticality="medium",
         description="HR information system (SaaS).",
-        country="France", contract_start_date=date(2023, 1, 1),
-        contract_end_date=date(2026, 12, 31), owner=amelia, status="active", **approved(elise),
+        country="France", address="32 Rue de la Republique, 69002 Lyon, France",
+        latitude=45.7640, longitude=4.8357,
+        contract_start_date=years_ago(3.5),
+        contract_end_date=months_ahead(6), owner=amelia, status="active", **approved(elise),
     )
     sup_facil = Supplier.objects.create(
         name="FacilEnergie Services", type=st_facility, criticality="low",
         description="Facility maintenance for the Lyon HQ; contract renewal under negotiation.",
         country="France", contract_reference="CTR-2021-090",
-        contract_start_date=date(2021, 5, 1), contract_end_date=date(2026, 4, 30),
+        address="47 Cours Emile Zola, 69100 Villeurbanne, France",
+        latitude=45.7679, longitude=4.8795,
+        contract_start_date=years_ago(5), contract_end_date=days_ago(59),
         owner=david, status="active", **approved(elise),
     )
     all_suppliers = [sup_cloudnord, sup_sentinel, sup_turbintech, sup_paycore, sup_hrline, sup_facil]
@@ -595,11 +678,12 @@ with transaction.atomic():
         s.scopes.set([scope_group])
         s.tags.set([tag_thirdparty])
 
+    sr_cloud_iso_due = months_ahead(11)
     sr_cloud_iso = SupplierRequirement.objects.create(
         supplier=sup_cloudnord, source_type_requirement=str_iso_cert,
         title="Valid ISO/IEC 27001 certification", compliance_status="compliant",
-        evidence="Certificate FR-27001-2210, valid until 2027-05.",
-        due_date=date(2027, 5, 31), verified_at=NOW, verified_by=ines,
+        evidence=f"Certificate FR-27001-2210, valid until {sr_cloud_iso_due:%Y-%m}.",
+        due_date=sr_cloud_iso_due, verified_at=NOW, verified_by=ines,
     )
     SupplierRequirement.objects.create(
         supplier=sup_cloudnord, source_type_requirement=str_eu_data,
@@ -611,14 +695,14 @@ with transaction.atomic():
         supplier=sup_sentinel, source_type_requirement=str_soc2,
         title="Independent assurance report (SOC 2 type II)",
         compliance_status="partially_compliant",
-        evidence="2025 report received; scope excludes the OT monitoring service.",
+        evidence="Latest assurance report received; scope excludes the OT monitoring service.",
     )
     SupplierRequirement.objects.create(
         supplier=sup_turbintech, source_type_requirement=str_patch_sla,
         title="Security patch SLA on industrial firmware",
         compliance_status="non_compliant",
         evidence="Current contract has no security patching commitment.",
-        due_date=date(2026, 9, 30),
+        due_date=days_ahead(94),
     )
     SupplierRequirement.objects.create(
         supplier=sup_paycore, source_type_requirement=str_dpa,
@@ -630,19 +714,19 @@ with transaction.atomic():
         title="GDPR data processing agreement", compliance_status="not_assessed",
     )
     SupplierRequirementReview.objects.create(
-        supplier_requirement=sr_cloud_iso, review_date=date(2026, 1, 10),
+        supplier_requirement=sr_cloud_iso, review_date=days_ago(169),
         reviewer=ines, result="compliant",
         comment="Certificate verified against the accreditation registry.",
     )
     SupplierRequirementReview.objects.create(
-        supplier_requirement=sr_sentinel_soc2, review_date=date(2026, 3, 5),
+        supplier_requirement=sr_sentinel_soc2, review_date=days_ago(115),
         reviewer=ines, result="partially_compliant",
         comment="OT monitoring still out of the assurance scope; uplift requested.",
     )
     SupplierRequirementReview.objects.create(
-        supplier_requirement=sr_sentinel_soc2, review_date=date(2026, 6, 24),
+        supplier_requirement=sr_sentinel_soc2, review_date=days_ago(4),
         reviewer=ines, result="not_assessed",
-        comment="Scheduled review of the 2026 report covering the OT extension.",
+        comment="Scheduled review of the latest report covering the OT extension.",
     )
 
     ea_control = EssentialAsset.objects.create(
@@ -710,7 +794,7 @@ with transaction.atomic():
         description="Redundant pair of supervision servers in the wind farm control room.",
         owner=thomas, location="Normandy Wind Farm", environment="production",
         exposure_level="internal", operating_system="Windows Server 2019",
-        acquisition_date=date(2021, 6, 1), end_of_life_date=date(2029, 6, 1),
+        acquisition_date=years_ago(5), end_of_life_date=years_ahead(3),
         status="active", **approved(elise),
     )
     sa_historian = SupportAsset.objects.create(
@@ -766,7 +850,7 @@ with transaction.atomic():
         name="Legacy metering gateway", type="hardware", category="network_equipment",
         description="End-of-life gateway collecting meter data at the hydro station; replacement planned.",
         owner=thomas, location="Alpine Hydro Station", environment="production",
-        end_of_life_date=date(2026, 3, 31), status="active", **approved(elise),
+        end_of_life_date=months_ago(3), status="active", **approved(elise),
     )
     sa_wan = SupportAsset.objects.create(
         name="MPLS WAN", type="network", category="wan",
@@ -872,20 +956,22 @@ with transaction.atomic():
     for g in [grp_ot, grp_cloud, grp_euc]:
         g.scopes.set([scope_group])
 
+    val_custdata_old = years_ago(1)
+    val_custdata_new = months_ago(5)
     AssetValuation.objects.create(
-        essential_asset=ea_custdata, evaluation_date=date(2025, 6, 20),
+        essential_asset=ea_custdata, evaluation_date=val_custdata_old,
         confidentiality_level=3, integrity_level=3, availability_level=2,
-        evaluated_by=amelia, context="2025 annual review",
+        evaluated_by=amelia, context=f"{val_custdata_old.year} annual review",
         justification="Initial valuation at confidential level.",
     )
     AssetValuation.objects.create(
-        essential_asset=ea_custdata, evaluation_date=date(2026, 1, 22),
+        essential_asset=ea_custdata, evaluation_date=val_custdata_new,
         confidentiality_level=4, integrity_level=3, availability_level=2,
-        evaluated_by=amelia, context="2026 annual review",
+        evaluated_by=amelia, context=f"{val_custdata_new.year} annual review",
         justification="Raised confidentiality after the portal exposure assessment.",
     )
     AssetValuation.objects.create(
-        essential_asset=ea_telemetry, evaluation_date=date(2026, 2, 12),
+        essential_asset=ea_telemetry, evaluation_date=days_ago(136),
         confidentiality_level=2, integrity_level=4, availability_level=4,
         evaluated_by=thomas, context="EBIOS RM workshop 1",
         justification="Integrity and availability drive safe plant operation.",
@@ -919,7 +1005,7 @@ with transaction.atomic():
             description="Information security management systems: requirements (Annex A controls).",
             type="standard", category="information_security", framework_version="2022",
             issuing_body="ISO/IEC", is_mandatory=True, owner=elise, status="active",
-            effective_date=date(2025, 1, 1), review_date=date(2026, 5, 20),
+            effective_date=months_ago(18), review_date=days_ago(39),
             **approved(elise),
         ),
         TBL["ISO27001_SECTIONS"],
@@ -931,7 +1017,7 @@ with transaction.atomic():
             description="Measures for a high common level of cybersecurity across the Union.",
             type="regulation", category="sector_specific", jurisdiction="European Union",
             issuing_body="European Union", is_mandatory=True, owner=amelia, status="active",
-            effective_date=date(2024, 10, 17), **approved(elise),
+            effective_date=months_ago(20), **approved(elise),
         ),
         TBL["NIS2_SECTIONS"],
         category_per_section={"Art. 20": "organizational", "Art. 21": "organizational", "Art. 23": "organizational"},
@@ -943,7 +1029,7 @@ with transaction.atomic():
             description="Regulation (EU) 2016/679 on the protection of personal data.",
             type="law", category="privacy", jurisdiction="European Union",
             issuing_body="European Union", is_mandatory=True, owner=amelia, status="active",
-            effective_date=date(2018, 5, 25), **approved(elise),
+            effective_date=years_ago(8), **approved(elise),
         ),
         TBL["GDPR_SECTIONS"],
         category_per_section={"Ch. II": "legal", "Ch. III": "legal", "Ch. IV": "organizational"},
@@ -954,7 +1040,7 @@ with transaction.atomic():
             description="Internal minimum security requirements applicable to all systems.",
             type="internal_policy", category="internal", framework_version="3.1",
             issuing_body="Voltara Energy", owner=elise, status="active",
-            effective_date=date(2025, 9, 1), **approved(elise),
+            effective_date=months_ago(10), **approved(elise),
         ),
         TBL["BASELINE_SECTIONS"],
         category_per_section={"VSB-1": "technical", "VSB-2": "technical", "VSB-3": "organizational"},
@@ -1031,22 +1117,27 @@ with transaction.atomic():
             res.save()
         assessment.recalculate_counts()
 
+    # Every audit is completed and dated in the past, spread across the last
+    # ~8 months, so the assessment register always reads as a mature programme
+    # with no half-finished or not-yet-started audits on a fresh seed.
+    asm_iso_start, asm_iso_end = days_ago(55), days_ago(35)
     asm_iso = ComplianceAssessment.objects.create(
-        name="ISO 27001 internal audit 2026",
+        name=f"ISO 27001 internal audit {asm_iso_end.year}",
         description="Annual internal audit covering the full Annex A control set before the certification audit.",
         assessor=sofia, created_by=sofia,
-        assessment_start_date=date(2026, 5, 18), assessment_end_date=date(2026, 6, 26),
-        status="in_progress",
+        assessment_start_date=asm_iso_start, assessment_end_date=asm_iso_end,
+        status="completed",
     )
     asm_iso.scopes.set([scope_group])
     asm_iso.frameworks.set([fw_iso])
     asm_iso.sync_results(sofia)
     apply_results(asm_iso, iso_reqs, ISO_RESULT_OVERRIDES)
 
+    asm_gdpr_start, asm_gdpr_end = days_ago(165), days_ago(147)
     asm_gdpr = ComplianceAssessment.objects.create(
-        name="GDPR compliance review 2026",
+        name=f"GDPR compliance review {asm_gdpr_end.year}",
         assessor=amelia, created_by=amelia,
-        assessment_start_date=date(2026, 2, 2), assessment_end_date=date(2026, 2, 20),
+        assessment_start_date=asm_gdpr_start, assessment_end_date=asm_gdpr_end,
         status="completed",
     )
     asm_gdpr.scopes.set([scope_group])
@@ -1058,10 +1149,11 @@ with transaction.atomic():
         "improvement_opportunity": ["GDPR-28"],
     })
 
+    asm_nis2_start, asm_nis2_end = days_ago(225), days_ago(207)
     asm_nis2 = ComplianceAssessment.objects.create(
         name="NIS2 gap assessment",
         assessor=ines, created_by=ines,
-        assessment_start_date=date(2026, 1, 12), assessment_end_date=date(2026, 1, 30),
+        assessment_start_date=asm_nis2_start, assessment_end_date=asm_nis2_end,
         status="completed",
     )
     asm_nis2.scopes.set([scope_group])
@@ -1074,11 +1166,12 @@ with transaction.atomic():
         "not_assessed": ["NIS2-20.2", "NIS2-23.3"],
     })
 
+    asm_vsb_start, asm_vsb_end = days_ago(100), days_ago(86)
     asm_vsb = ComplianceAssessment.objects.create(
-        name="Security baseline self-check H1 2026",
+        name=f"Security baseline self-check {semester_label(asm_vsb_end)}",
         assessor=ines, created_by=ines,
-        assessment_start_date=date(2026, 6, 1), assessment_end_date=date(2026, 6, 15),
-        status="in_progress",
+        assessment_start_date=asm_vsb_start, assessment_end_date=asm_vsb_end,
+        status="completed",
     )
     asm_vsb.scopes.set([scope_group])
     asm_vsb.frameworks.set([fw_vsb])
@@ -1088,16 +1181,21 @@ with transaction.atomic():
         "minor_non_conformity": ["VSB-1.2", "VSB-3.3"],
     })
 
+    asm_stage1_start, asm_stage1_end = days_ago(20), days_ago(16)
     asm_stage1 = ComplianceAssessment.objects.create(
         name="ISO 27001 certification audit : stage 1",
         description="Stage 1 documentation review by the certification body.",
         assessor=sofia, created_by=elise,
-        assessment_start_date=date(2026, 9, 14), assessment_end_date=date(2026, 9, 18),
-        status="planned",
+        assessment_start_date=asm_stage1_start, assessment_end_date=asm_stage1_end,
+        status="completed",
     )
     asm_stage1.scopes.set([scope_group])
     asm_stage1.frameworks.set([fw_iso])
     asm_stage1.sync_results(sofia)
+    apply_results(asm_stage1, iso_reqs, {
+        "observation": ["A.5.1", "A.5.37"],
+        "improvement_opportunity": ["A.8.9"],
+    })
 
     f_major = Finding.objects.create(
         assessment=asm_iso, finding_type="major_nc", assessor=sofia, created_by=sofia,
@@ -1143,11 +1241,11 @@ with transaction.atomic():
     print("Action plans...")
     ap_ot_exercise = ComplianceActionPlan.objects.create(
         name="Run OT incident response exercises",
-        description="Close the major non-conformity raised by the 2026 internal audit.",
+        description="Close the major non-conformity raised by the latest internal audit.",
         gap_description="Incident response has never been exercised on the industrial environment.",
         remediation_plan="Design an OT tabletop scenario, run it with the plant teams, capture lessons learned and update the runbooks.",
         priority="critical", owner=elise, created_by=elise,
-        start_date=date(2026, 5, 1), target_date=date(2026, 8, 31),
+        start_date=days_ago(58), target_date=days_ahead(64),
         progress_percentage=35, status="to_implement",
     )
     ap_ot_exercise.scopes.set([scope_ot])
@@ -1160,7 +1258,7 @@ with transaction.atomic():
     )
     ActionPlanComment.objects.create(
         action_plan=ap_ot_exercise, author=thomas, parent=c1,
-        content="Proposed the week of July 6th, control room available on Tuesday.",
+        content="Proposed early next month, control room available on a Tuesday.",
     )
 
     ap_evidence = ComplianceActionPlan.objects.create(
@@ -1168,7 +1266,7 @@ with transaction.atomic():
         gap_description="Quarterly access reviews leave no retained evidence.",
         remediation_plan="Introduce a signed review log stored in the GRC tool with a 3-year retention.",
         priority="high", owner=marc, created_by=ines,
-        start_date=date(2026, 4, 1), target_date=date(2026, 6, 25),
+        start_date=days_ago(88), target_date=days_ago(3),
         progress_percentage=80, status="implementation_to_validate",
     )
     ap_evidence.scopes.set([scope_it])
@@ -1181,7 +1279,7 @@ with transaction.atomic():
         gap_description="Two supplier contracts lack security and audit clauses.",
         remediation_plan="Negotiate the standard security annex with TurbinTech and FacilEnergie at renewal.",
         priority="high", owner=ines, created_by=ines,
-        start_date=date(2026, 3, 1), target_date=date(2026, 5, 30),
+        start_date=days_ago(119), target_date=days_ago(29),
         progress_percentage=60, status="to_implement",
     )
     ap_contracts.scopes.set([scope_group])
@@ -1193,7 +1291,7 @@ with transaction.atomic():
         gap_description="Single NTP source for the whole infrastructure.",
         remediation_plan="Add a second independent NTP source and monitor drift.",
         priority="medium", owner=marc, created_by=marc,
-        target_date=date(2026, 7, 15), progress_percentage=10, status="to_validate",
+        target_date=days_ahead(17), progress_percentage=10, status="to_validate",
     )
     ap_ntp.scopes.set([scope_it])
     ap_ntp.findings.set([f_obs])
@@ -1203,7 +1301,7 @@ with transaction.atomic():
         gap_description="No centralised detection on industrial network segments.",
         remediation_plan="Deploy collection probes on OT segments and onboard sources to the managed SOC.",
         priority="high", owner=elise, created_by=elise,
-        target_date=date(2026, 10, 30), status="to_define",
+        target_date=days_ahead(124), status="to_define",
     )
     ap_siem_ot.scopes.set([scope_ot])
     ap_siem_ot.findings.set([f_improv])
@@ -1213,7 +1311,7 @@ with transaction.atomic():
         gap_description="The 24-hour early warning obligation cannot be met reliably today.",
         remediation_plan="Define the notification workflow, templates and on-call escalation to meet the 24h/72h deadlines.",
         priority="critical", owner=amelia, created_by=amelia,
-        start_date=date(2026, 5, 11), target_date=date(2026, 7, 4),
+        start_date=days_ago(48), target_date=days_ahead(6),
         progress_percentage=50, status="to_implement",
     )
     ap_nis2_runbook.scopes.set([scope_group])
@@ -1224,8 +1322,8 @@ with transaction.atomic():
         gap_description="Telemetry historian stored unencrypted.",
         remediation_plan="Enable transparent data encryption and rotate keys via the HSM.",
         priority="high", owner=thomas, created_by=thomas,
-        start_date=date(2026, 2, 1), target_date=date(2026, 4, 15),
-        completion_date=date(2026, 4, 10), progress_percentage=100, status="closed",
+        start_date=days_ago(147), target_date=days_ago(74),
+        completion_date=days_ago(79), progress_percentage=100, status="closed",
     )
     ap_historian_enc.scopes.set([scope_ot])
 
@@ -1234,8 +1332,8 @@ with transaction.atomic():
         gap_description="Third-party maintenance accounts authenticated with passwords only.",
         remediation_plan="Issue hardware tokens to maintainers and enforce MFA on the VPN profile.",
         priority="high", owner=marc, created_by=marc,
-        start_date=date(2026, 1, 15), target_date=date(2026, 3, 31),
-        completion_date=date(2026, 3, 25), progress_percentage=100, status="closed",
+        start_date=days_ago(164), target_date=days_ago(89),
+        completion_date=days_ago(95), progress_percentage=100, status="closed",
     )
     ap_mfa_contractors.scopes.set([scope_it])
 
@@ -1244,7 +1342,7 @@ with transaction.atomic():
         gap_description="End-of-life gateway at the hydro station.",
         remediation_plan="Superseded by the OT segmentation programme which includes the replacement.",
         priority="medium", owner=thomas, created_by=thomas,
-        target_date=date(2026, 9, 30), status="cancelled",
+        target_date=days_ahead(94), status="cancelled",
     ).scopes.set([scope_ot])
 
     # ------------------------------------------------------------------- risks
@@ -1331,12 +1429,13 @@ with transaction.atomic():
         vuln_objs[name] = v
 
     print("Risk assessment and risks...")
+    enterprise_assessment_date = months_ago(4)
     assessment = RiskAssessment.objects.create(
-        name="2026 Enterprise risk assessment",
+        name=f"{enterprise_assessment_date.year} Enterprise risk assessment",
         description="Annual ISO 27005 assessment of the group scope, feeding the treatment plan portfolio.",
-        methodology="iso27005", assessment_date=date(2026, 3, 2),
+        methodology="iso27005", assessment_date=enterprise_assessment_date,
         assessor=julien, risk_criteria=criteria, status="in_progress",
-        next_review_date=date(2026, 7, 1), created_by=julien,
+        next_review_date=days_ahead(3), created_by=julien,
     )
     assessment.scopes.set([scope_group])
 
@@ -1442,7 +1541,7 @@ with transaction.atomic():
     r_historian.affected_essential_assets.set([ea_telemetry, ea_forecast])
     r_historian.affected_support_assets.set([sa_historian])
     r_flood.affected_support_assets.set([sa_metering])
-    r_ransomware.review_date = date(2026, 6, 30)
+    r_ransomware.review_date = days_ahead(2)
     r_ransomware.save()
 
     for threat_name, vuln_name, tl, ve, ic, ii, ia, controls, risk_link in [
@@ -1475,18 +1574,18 @@ with transaction.atomic():
         description="Zone and conduit architecture per IEC 62443, with firewalls between office IT and plant networks.",
         treatment_type="mitigate", expected_residual_likelihood=2, expected_residual_impact=4,
         cost_estimate=Decimal("180000.00"), owner=thomas,
-        start_date=date(2026, 2, 1), target_date=date(2026, 11, 30),
+        start_date=days_ago(147), target_date=days_ahead(155),
         progress_percentage=45, status="in_progress", created_by=thomas,
     )
     for order, (desc, status_value, target) in enumerate([
-        ("Design the zone and conduit model for all plants", "completed", date(2026, 3, 31)),
-        ("Deploy segmentation firewalls at the wind farm", "in_progress", date(2026, 8, 31)),
-        ("Validate conduits and update network documentation", "planned", date(2026, 11, 15)),
+        ("Design the zone and conduit model for all plants", "completed", days_ago(89)),
+        ("Deploy segmentation firewalls at the wind farm", "in_progress", days_ahead(64)),
+        ("Validate conduits and update network documentation", "planned", days_ahead(140)),
     ], 1):
         TreatmentAction.objects.create(
             treatment_plan=tp_segmentation, description=desc, owner=thomas,
             target_date=target, status=status_value, order=order,
-            completion_date=date(2026, 3, 28) if status_value == "completed" else None,
+            completion_date=days_ago(92) if status_value == "completed" else None,
         )
     tp_segmentation.related_action_plans.set([ap_siem_ot])
 
@@ -1495,7 +1594,7 @@ with transaction.atomic():
         description="Immutable copies for critical systems with quarterly restoration tests.",
         treatment_type="mitigate", expected_residual_likelihood=2, expected_residual_impact=3,
         cost_estimate=Decimal("60000.00"), owner=marc,
-        start_date=date(2026, 3, 16), target_date=date(2026, 7, 10),
+        start_date=days_ago(104), target_date=days_ahead(12),
         progress_percentage=70, status="in_progress", created_by=marc,
     )
     for order, (desc, status_value) in enumerate([
@@ -1505,6 +1604,7 @@ with transaction.atomic():
         TreatmentAction.objects.create(
             treatment_plan=tp_backup, description=desc, owner=marc,
             status=status_value, order=order,
+            completion_date=days_ago(40) if status_value == "completed" else None,
         )
     tp_backup.related_action_plans.set([ap_historian_enc])
 
@@ -1513,7 +1613,7 @@ with transaction.atomic():
         description="TLS uplift, dependency patching and a third-party penetration test.",
         treatment_type="mitigate", expected_residual_likelihood=2, expected_residual_impact=3,
         cost_estimate=Decimal("35000.00"), owner=ines,
-        start_date=date(2026, 3, 2), target_date=date(2026, 5, 31),
+        start_date=days_ago(118), target_date=days_ago(28),
         progress_percentage=80, status="overdue", created_by=ines,
     )
     RiskTreatmentPlan.objects.create(
@@ -1521,45 +1621,46 @@ with transaction.atomic():
         description="FIDO2 keys for privileged and finance users.",
         treatment_type="mitigate", expected_residual_likelihood=3, expected_residual_impact=2,
         cost_estimate=Decimal("28000.00"), owner=marc,
-        start_date=date(2026, 1, 5), target_date=date(2026, 4, 30),
-        completion_date=date(2026, 4, 28), progress_percentage=100,
+        start_date=days_ago(174), target_date=days_ago(59),
+        completion_date=days_ago(61), progress_percentage=100,
         status="completed", created_by=marc,
     )
     RiskTreatmentPlan.objects.create(
         risk=r_mssp, name="MSSP contract security uplift",
         description="Extend the SOC 2 scope to OT monitoring and add breach notification clauses.",
         treatment_type="transfer", owner=elise,
-        start_date=date(2026, 7, 1), target_date=date(2026, 9, 15),
+        start_date=days_ahead(3), target_date=days_ahead(79),
         status="planned", created_by=elise,
     )
 
     RiskAcceptance.objects.create(
         risk=r_power, accepted_by=elise,
-        justification="Generator autonomy covers 48 hours and a second feed is contracted for 2027; further mitigation is disproportionate this year.",
+        justification="Generator autonomy covers 48 hours and a second feed is contracted for next year; further mitigation is disproportionate this year.",
         conditions="Quarterly generator tests; review on datacenter contract renewal.",
-        valid_until=date(2026, 7, 2), review_date=date(2026, 6, 28),
+        valid_until=days_ahead(4), review_date=TODAY,
         status="active", created_by=marc,
     )
     RiskAcceptance.objects.create(
         risk=r_flood, accepted_by=elise,
-        justification="Flood barriers installed in 2025 reduce exposure; residual level within appetite.",
+        justification="Flood barriers installed last year reduce exposure; residual level within appetite.",
         conditions="Re-assess after any flood alert on the Romanche valley.",
-        valid_until=date(2027, 3, 31), review_date=date(2026, 12, 15),
+        valid_until=days_ahead(276), review_date=days_ahead(170),
         status="active", created_by=thomas,
     )
     RiskAcceptance.objects.create(
         risk=r_historian, accepted_by=elise, accepted_at=NOW - timedelta(days=400),
         risk_level_at_acceptance=4,
-        justification="Temporary acceptance pending the 2026 historian redundancy budget.",
-        valid_until=date(2026, 4, 30), status="expired", created_by=thomas,
+        justification="Temporary acceptance pending the historian redundancy budget.",
+        valid_until=days_ago(59), status="expired", created_by=thomas,
     )
 
     # ------------------------------------------------------------------- EBIOS
     print("EBIOS RM study...")
+    ebios_assessment_date = days_ago(82)
     ebios = RiskAssessment.objects.create(
         name="EBIOS RM : SCADA & industrial operations",
         description="Strategic cycle covering the production fleet, workshops 0 to 3.",
-        methodology="ebios_rm", assessment_date=date(2026, 4, 7),
+        methodology="ebios_rm", assessment_date=ebios_assessment_date,
         assessor=julien, risk_criteria=criteria, status="in_progress",
         created_by=julien,
     )
@@ -1569,10 +1670,10 @@ with transaction.atomic():
     sf.mission_statement = "Assess and treat cyber risks threatening the safe operation of the production fleet."
     sf.business_perimeter = "Electricity generation and plant maintenance activities."
     sf.technical_perimeter = "SCADA supervision, turbine PLCs, plant historian, vendor remote access."
-    sf.temporal_perimeter = "Strategic cycle 2026-2027."
+    sf.temporal_perimeter = f"Strategic cycle {ebios_assessment_date.year}-{ebios_assessment_date.year + 1}."
     sf.assumptions = "No major SCADA upgrade during the study."
     sf.constraints = "Workshops must not interfere with plant operations."
-    sf.expected_deliverables = "Risk mapping, strategic scenarios, PACS input for the 2027 budget."
+    sf.expected_deliverables = f"Risk mapping, strategic scenarios, PACS input for the {ebios_assessment_date.year + 1} budget."
     sf.participants_external = [
         {"name": "C. Renard", "role": "EBIOS RM facilitator", "organization": "Astreinte Conseil"},
     ]
@@ -1772,13 +1873,14 @@ with transaction.atomic():
 
     # ------------------------------------------------------- management review
     print("Management reviews...")
+    mr_closed_period_start = days_ago(362)
     mr_closed = ManagementReview.objects.create(
-        title="H2 2025 management review",
+        title=f"{semester_label(mr_closed_period_start)} management review",
         description="Semi-annual ISO 27001 clause 9.3 review of the ISMS.",
-        frequency="semiannual", period_start=date(2025, 7, 1), period_end=date(2025, 12, 31),
-        planned_date=date(2026, 1, 20), held_date=date(2026, 1, 20),
+        frequency="semiannual", period_start=mr_closed_period_start, period_end=days_ago(179),
+        planned_date=days_ago(159), held_date=days_ago(159),
         location="Lyon HQ, board room", facilitator=elise, approver=david,
-        next_review_date=date(2026, 7, 10),
+        next_review_date=days_ahead(12),
         summary="The ISMS is effective overall; OT monitoring and NIS2 readiness require investment.",
         agenda="Audit results; risk register evolution; objectives; resources.",
         minutes="The committee reviewed the audit programme, the risk register and approved two structuring decisions.",
@@ -1798,21 +1900,22 @@ with transaction.atomic():
         title="Extend SOC monitoring to the OT perimeter",
         description="Allocate budget to deploy OT probes and onboard plant log sources to the managed SOC.",
         rationale="Detection coverage gap confirmed by the risk assessment and the internal audit.",
-        owner=thomas, due_date=date(2026, 10, 30), priority="high",
+        owner=thomas, due_date=days_ahead(124), priority="high",
         status="in_progress", linked_action_plan=ap_siem_ot,
     )
     ManagementReviewDecision.objects.create(
         review=mr_closed, category="improvement", input_clause="g",
         title="Renew cyber insurance with extended OT coverage",
-        description="Negotiate the 2026 policy to cover production interruption from cyber events.",
-        owner=david, due_date=date(2026, 3, 31), priority="medium",
-        status="implemented", implemented_at=date(2026, 3, 15),
+        description="Negotiate the renewed policy to cover production interruption from cyber events.",
+        owner=david, due_date=days_ago(89), priority="medium",
+        status="implemented", implemented_at=days_ago(105),
         implementation_evidence="Policy CY-2026-114 signed with OT business interruption rider.",
     )
+    mr_next_period_start = days_ago(178)
     mr_next = ManagementReview.objects.create(
-        title="H1 2026 management review",
-        frequency="semiannual", period_start=date(2026, 1, 1), period_end=date(2026, 6, 30),
-        planned_date=date(2026, 7, 10), facilitator=elise, approver=david,
+        title=f"{semester_label(mr_next_period_start)} management review",
+        frequency="semiannual", period_start=mr_next_period_start, period_end=days_ago(2),
+        planned_date=days_ahead(12), facilitator=elise, approver=david,
         agenda="Internal audit results; certification readiness; NIS2 programme; KPI review.",
         status="planned", created_by=elise,
     )
@@ -2101,11 +2204,14 @@ with transaction.atomic():
                  "Security questionnaire", "Penetration test report", "EU data residency confirmation"]
     bulk_suppliers = []
     for s in BULK["suppliers"]:
-        start = date(2022, 1, 1) + timedelta(days=RNG.randint(0, 1000))
+        start = years_ago(4.5) + timedelta(days=RNG.randint(0, 1000))
+        s_country = s.get("country", "France")
+        s_address, s_lat, s_lon = supplier_location(s_country)
         sup = Supplier.objects.create(
             name=s["name"], type=TYPE_MAP.get(s.get("type_key"), st_saas),
             criticality=s.get("criticality", "medium"), description=s.get("description", ""),
-            country=s.get("country", "France"), owner=pick_user(),
+            country=s_country, address=s_address, latitude=s_lat, longitude=s_lon,
+            owner=pick_user(),
             contract_start_date=start, contract_end_date=start + timedelta(days=RNG.randint(365, 1460)),
             status="active", **approved(elise),
         )
@@ -2191,15 +2297,19 @@ with transaction.atomic():
 
     for idx, (risk, decision, rl, ri) in enumerate(bulk_risks):
         if decision == "mitigate" and idx % 2 == 0:
+            tp_status = RNG.choice(["planned", "in_progress", "in_progress", "completed", "overdue"])
+            tp_done = tp_status == "completed"
             tp = RiskTreatmentPlan.objects.create(
                 risk=risk, name=f"Treatment plan : {risk.name[:60]}",
                 description="Mitigation measures to bring the residual risk within appetite.",
                 treatment_type="mitigate", expected_residual_likelihood=rl, expected_residual_impact=ri,
                 cost_estimate=Decimal(str(RNG.choice([15000, 25000, 40000, 60000, 90000]))),
-                owner=risk.risk_owner, start_date=TODAY - timedelta(days=RNG.randint(0, 90)),
-                target_date=TODAY + timedelta(days=RNG.randint(30, 300)),
-                progress_percentage=RNG.randint(0, 100),
-                status=RNG.choice(["planned", "in_progress", "in_progress", "completed", "overdue"]),
+                owner=risk.risk_owner, start_date=TODAY - timedelta(days=RNG.randint(30, 120)),
+                target_date=(TODAY - timedelta(days=RNG.randint(1, 30)) if tp_status == "overdue"
+                             else TODAY + timedelta(days=RNG.randint(30, 300))),
+                progress_percentage=100 if tp_done else RNG.randint(0, 95),
+                status=tp_status,
+                completion_date=TODAY - timedelta(days=RNG.randint(1, 30)) if tp_done else None,
                 created_by=risk.risk_owner,
             )
             for order in range(1, RNG.randint(2, 4)):
@@ -2210,13 +2320,16 @@ with transaction.atomic():
                     completion_date=TODAY - timedelta(days=RNG.randint(1, 30)) if st_val == "completed" else None,
                 )
         elif decision == "accept":
+            ra_expired = RNG.choice([False, False, True])
             RiskAcceptance.objects.create(
                 risk=risk, accepted_by=elise,
                 justification="Residual risk is within the corporate appetite; further treatment is disproportionate this cycle.",
                 conditions="Reviewed at the next risk committee.",
-                valid_until=TODAY + timedelta(days=RNG.randint(90, 540)),
-                review_date=TODAY + timedelta(days=RNG.randint(60, 300)),
-                status=RNG.choice(["active", "active", "expired"]), created_by=risk.risk_owner,
+                valid_until=(TODAY - timedelta(days=RNG.randint(1, 60)) if ra_expired
+                             else TODAY + timedelta(days=RNG.randint(90, 540))),
+                review_date=(TODAY - timedelta(days=RNG.randint(1, 30)) if ra_expired
+                             else TODAY + timedelta(days=RNG.randint(60, 300))),
+                status="expired" if ra_expired else "active", created_by=risk.risk_owner,
             )
 
     # ISO 27005 analyses linking bulk threats + vulnerabilities to ~25 risks.
@@ -2237,13 +2350,16 @@ with transaction.atomic():
     AP_STATUS = ["new", "to_define", "to_validate", "to_implement", "to_implement", "validated", "closed"]
     all_reqs = list(iso_reqs.values()) + list(nis2_reqs.values()) + list(vsb_reqs.values())
     for a in BULK["action_plans"]:
+        ap_status = RNG.choice(AP_STATUS)
+        ap_closed = ap_status == "closed"
         ap = ComplianceActionPlan.objects.create(
             name=a["name"], description=a.get("remediation", ""), gap_description=a.get("gap", ""),
             remediation_plan=a.get("remediation", ""), priority=RNG.choice(AP_PRIO),
             owner=pick_user(), created_by=elise,
-            start_date=TODAY - timedelta(days=RNG.randint(0, 150)),
+            start_date=TODAY - timedelta(days=RNG.randint(30, 150)),
             target_date=TODAY + timedelta(days=RNG.randint(30, 320)),
-            progress_percentage=RNG.randint(0, 100), status=RNG.choice(AP_STATUS),
+            progress_percentage=100 if ap_closed else RNG.randint(0, 95), status=ap_status,
+            completion_date=TODAY - timedelta(days=RNG.randint(1, 30)) if ap_closed else None,
         )
         ap.scopes.set([RNG.choice(scope_pool)])
         if RNG.random() < 0.5:
