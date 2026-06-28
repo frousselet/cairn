@@ -20,6 +20,7 @@ from assets.models import (
     AssetDependency,
     AssetGroup,
     AssetValuation,
+    Contract,
     EssentialAsset,
     SiteAssetDependency,
     SiteSupplierDependency,
@@ -677,6 +678,64 @@ with transaction.atomic():
     for s in all_suppliers:
         s.scopes.set([scope_group])
         s.tags.set([tag_thirdparty])
+
+    # ── Contracts (Documents) ────────────────────────────────
+    print("Contracts...")
+    _demo_pdf = (
+        b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
+        b"2 0 obj<</Type/Pages/Kids[]/Count 0>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n"
+    )
+
+    def _attach_pdf(contract, name):
+        contract.file_content = _demo_pdf
+        contract.file_name = name
+        contract.content_type = "application/pdf"
+        contract.save(update_fields=["file_content", "file_name", "content_type"])
+
+    ctr_cloudnord = Contract.objects.create(
+        label="CloudNord IaaS master services agreement", status="active",
+        start_date=months_ago(28), end_date=months_ahead(8),
+        amount=480000, currency="EUR",
+        notes="Production hosting and colocation. Renewal review due Q3.",
+        **approved(elise),
+    )
+    ctr_cloudnord.scopes.set([scope_group])
+    ctr_cloudnord.suppliers.set([sup_cloudnord])
+    ctr_cloudnord.clients.set([sh_customers])
+    ctr_cloudnord.tags.set([tag_thirdparty])
+    _attach_pdf(ctr_cloudnord, "cloudnord-msa-2024.pdf")
+
+    ctr_cloudnord_amendment = Contract.objects.create(
+        label="Amendment 1 - additional region (Gravelines)", status="active",
+        start_date=months_ago(6), end_date=months_ahead(8),
+        amount=60000, currency="EUR", parent=ctr_cloudnord,
+        notes="Adds a second availability region for disaster recovery.",
+        **approved(elise),
+    )
+    ctr_cloudnord_amendment.scopes.set([scope_group])
+    ctr_cloudnord_amendment.suppliers.set([sup_cloudnord])
+    _attach_pdf(ctr_cloudnord_amendment, "cloudnord-amendment-1.pdf")
+
+    ctr_sentinel = Contract.objects.create(
+        label="SentinelWatch managed SOC agreement", status="active",
+        start_date=years_ago(3), end_date=days_ahead(2),
+        amount=240000, currency="EUR",
+        notes="24x7 SOC. Expiring soon, renewal in progress.",
+        **approved(elise),
+    )
+    ctr_sentinel.scopes.set([scope_group])
+    ctr_sentinel.suppliers.set([sup_sentinel])
+    ctr_sentinel.tags.set([tag_thirdparty])
+
+    ctr_facil = Contract.objects.create(
+        label="FacilEnergie facility maintenance (terminated)", status="terminated",
+        start_date=years_ago(5), end_date=days_ago(59),
+        amount=85000, currency="EUR",
+        notes="Not renewed; replaced by an internal facilities team.",
+        **approved(elise),
+    )
+    ctr_facil.scopes.set([scope_group])
+    ctr_facil.suppliers.set([sup_facil])
 
     sr_cloud_iso_due = months_ahead(11)
     sr_cloud_iso = SupplierRequirement.objects.create(

@@ -1,6 +1,6 @@
 # MCP Server (Model Context Protocol)
 
-Cairn ships with a built-in JSON-RPC 2.0 MCP server exposing 536 tools across all modules, so AI assistants and external clients can read and manage GRC data directly. Authentication uses OAuth 2.0. All tools enforce RBAC permissions and scope-based tenancy.
+Cairn ships with a built-in JSON-RPC 2.0 MCP server exposing 545 tools across all modules, so AI assistants and external clients can read and manage GRC data directly. Authentication uses OAuth 2.0. All tools enforce RBAC permissions and scope-based tenancy.
 
 ## Endpoints
 
@@ -63,6 +63,7 @@ Additional tools:
 | `asset_group` | Yes | type, status |
 | `supplier` | Yes | type, criticality, status |
 | `supplier_dependency` | Yes | support_asset_id, supplier_id |
+| `contract` | Yes | status (parties via scope_ids/supplier_ids/client_ids; PDF upload is web-only) |
 | `asset_valuation` | No | essential_asset_id |
 | `supplier_type` | No | - |
 | `supplier_type_requirement` | No | supplier_type_id |

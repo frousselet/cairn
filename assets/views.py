@@ -1,7 +1,9 @@
+from urllib.parse import quote
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -32,6 +34,7 @@ from core.query_params import parse_int
 from context.constants import Criticality, SiteType
 from context.models import Scope, Site
 from .constants import (
+    ContractStatus,
     DependencyType,
     EssentialAssetStatus,
     EssentialAssetType,
@@ -46,6 +49,8 @@ from .forms import (
     AssetDependencyForm,
     AssetGroupCreateForm,
     AssetGroupUpdateForm,
+    ContractCreateForm,
+    ContractUpdateForm,
     EssentialAssetCreateForm,
     EssentialAssetUpdateForm,
     SiteAssetDependencyForm,
@@ -67,6 +72,7 @@ from .forms import (
 from .models import (
     AssetDependency,
     AssetGroup,
+    Contract,
     EssentialAsset,
     SiteAssetDependency,
     SiteSupplierDependency,
@@ -218,6 +224,143 @@ class EssentialAssetDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Dele
     template_name = "assets/confirm_delete.html"
     permission_required = "assets.essential_asset.delete"
     success_url = reverse_lazy("assets:essential-asset-list")
+
+
+# ── Contract (Documents) ────────────────────────────────────
+
+def _attachment_disposition(filename):
+    """Build a safe Content-Disposition value (no header injection / breakout)."""
+    safe = "".join(ch for ch in (filename or "") if ch not in '"\\\r\n').strip() or "document.pdf"
+    return f"attachment; filename=\"{safe}\"; filename*=UTF-8''{quote(safe)}"
+
+
+CONTRACT_FILTER_GROUPS = [
+    {"param": "status", "field": "status", "label": _l("Status"), "options": ContractStatus.choices},
+]
+CONTRACT_TEXT_FILTERS = [
+    {"param": "label", "field": "label", "label": _l("Title")},
+]
+CONTRACT_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "label", "label": _l("Title"), "always": True},
+    {"key": "parties", "label": _l("Parties")},
+    {"key": "end_date", "label": _l("End date")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class ContractListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
+    model = Contract
+    template_name = "assets/contract_list.html"
+    context_object_name = "contracts"
+    status_field = "status"
+    filter_groups = CONTRACT_FILTER_GROUPS
+    text_filters = CONTRACT_TEXT_FILTERS
+    columns = CONTRACT_COLUMNS
+    permission_required = "assets.contract.read"
+    paginate_by = 50
+    sortable_fields = {
+        "reference": "reference",
+        "label": "label",
+        "end_date": "end_date",
+        "workflow_state": "workflow_state",
+    }
+    default_sort = "reference"
+    search_fields = ["reference", "label", "notes"]
+
+    def get_queryset(self):
+        # Top-level contracts only : amendments are nested under their parent.
+        qs = (
+            super()
+            .get_queryset()
+            .filter(parent__isnull=True)
+            .prefetch_related("scopes", "suppliers", "clients", "amendments")
+        )
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
+class ContractDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+    model = Contract
+    template_name = "assets/contract_detail.html"
+    context_object_name = "contract"
+    permission_required = "assets.contract.read"
+    approval_feature = "contract"
+    approve_url_name = "assets:contract-approve"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["amendments"] = self.object.amendments.prefetch_related(
+            "suppliers", "clients"
+        )
+        ctx["suppliers"] = self.object.suppliers.all()
+        ctx["clients"] = self.object.clients.all()
+        return ctx
+
+
+class ContractCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
+    model = Contract
+    form_class = ContractCreateForm
+    template_name = "assets/contract_form.html"
+    permission_required = "assets.contract.create"
+    modal_template_name = "assets/contract_form_modal.html"
+    modal_title_create = _l("New contract")
+    modal_title_update = _l("Edit contract")
+    success_url = reverse_lazy("assets:contract-list")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+
+class ContractUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+    model = Contract
+    form_class = ContractUpdateForm
+    template_name = "assets/contract_form.html"
+    permission_required = "assets.contract.update"
+    modal_template_name = "assets/contract_form_modal.html"
+    modal_title_create = _l("New contract")
+    modal_title_update = _l("Edit contract")
+    success_url = reverse_lazy("assets:contract-list")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+
+class ContractDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = Contract
+    template_name = "assets/confirm_delete.html"
+    permission_required = "assets.contract.delete"
+    success_url = reverse_lazy("assets:contract-list")
+
+
+class ContractDocumentDownloadView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Stream a contract's attached PDF, scope-filtered and permission-gated."""
+
+    permission_required = "assets.contract.read"
+
+    def get(self, request, pk):
+        qs = Contract.objects.all()
+        if not request.user.is_superuser:
+            scope_ids = request.user.get_allowed_scope_ids()
+            if scope_ids is not None:
+                qs = qs.filter(scopes__id__in=scope_ids).distinct()
+        contract = get_object_or_404(qs, pk=pk)
+        data = contract.get_file_bytes()
+        if not data:
+            raise Http404()
+        resp = HttpResponse(
+            data, content_type=contract.content_type or "application/pdf"
+        )
+        resp["Content-Disposition"] = _attachment_disposition(
+            contract.file_name or f"{contract.reference}.pdf"
+        )
+        return resp
 
 
 # ── Support Asset ───────────────────────────────────────────

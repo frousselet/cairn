@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+
+{% block title %}{% if form.instance.pk %}{% trans "Edit" %}{% else %}{% trans "New" %}{% endif %} {% trans "contract" %} - Cairn{% endblock %}
+
+{% block content %}
+{% if form.instance.pk %}{% trans "Edit contract" as page_title %}{% else %}{% trans "New contract" as page_title %}{% endif %}
+{% page_header page_title nav="assets:contract-list" accent="assets" %}
+{% endpage_header %}
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <div class="row">
+    {# ── Left column: core fields ────────────────────── #}
+    <div class="col-lg-8">
+
+      {# ── Identity ──────────────────────────────────── #}
+      <div class="card mb-4">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-file-earmark-text me-2" style="color:var(--accent)"></i>{% trans "Identity" %}</h6></div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label for="{{ form.label.id_for_label }}" class="form-label">{{ form.label.label }}</label>
+            {{ form.label }}
+            {% for error in form.label.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="mb-3">
+                <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }} *</label>
+                {{ form.status }}
+                {% for error in form.status.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="mb-0">
+                <label for="{{ form.parent.id_for_label }}" class="form-label">{{ form.parent.label }}</label>
+                {{ form.parent }}
+                <div class="form-text">{{ form.parent.help_text }}</div>
+                {% for error in form.parent.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ── Parties ───────────────────────────────────── #}
+      <div class="card mb-4">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-people me-2" style="color:var(--accent)"></i>{% trans "Parties" %}</h6></div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="mb-0">
+                <label for="{{ form.suppliers.id_for_label }}" class="form-label">{{ form.suppliers.label }}</label>
+                {{ form.suppliers }}
+                {% for error in form.suppliers.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="mb-0">
+                <label for="{{ form.clients.id_for_label }}" class="form-label">{{ form.clients.label }}</label>
+                {{ form.clients }}
+                {% for error in form.clients.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ── Terms ─────────────────────────────────────── #}
+      <div class="card mb-4">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-cash-coin me-2" style="color:var(--accent)"></i>{% trans "Terms" %}</h6></div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="mb-3">
+                <label for="{{ form.start_date.id_for_label }}" class="form-label">{{ form.start_date.label }}</label>
+                {{ form.start_date }}
+                {% for error in form.start_date.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="mb-3">
+                <label for="{{ form.end_date.id_for_label }}" class="form-label">{{ form.end_date.label }}</label>
+                {{ form.end_date }}
+                {% for error in form.end_date.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="mb-0">
+                <label for="{{ form.amount.id_for_label }}" class="form-label">{{ form.amount.label }}</label>
+                {{ form.amount }}
+                {% for error in form.amount.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="mb-0">
+                <label for="{{ form.currency.id_for_label }}" class="form-label">{{ form.currency.label }}</label>
+                {{ form.currency }}
+                {% for error in form.currency.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ── Document ──────────────────────────────────── #}
+      <div class="card mb-4">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-file-earmark-pdf me-2" style="color:var(--accent)"></i>{% trans "Document" %}</h6></div>
+        <div class="card-body">
+          {% if form.instance.file_name %}
+          <p class="mb-2"><i class="bi bi-paperclip me-1" aria-hidden="true"></i>{{ form.instance.file_name }}</p>
+          {% endif %}
+          <label for="{{ form.upload.id_for_label }}" class="form-label">{{ form.upload.label }}</label>
+          {{ form.upload }}
+          <div class="form-text">{{ form.upload.help_text }}</div>
+          {% for error in form.upload.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ── Right column: scope, notes, tags ─────────────── #}
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-diagram-3 me-2" style="color:var(--accent)"></i>{% trans "Scope" %}</h6></div>
+        <div class="card-body">
+          <label for="{{ form.scopes.id_for_label }}" class="form-label">{{ form.scopes.label }} *</label>
+          {{ form.scopes }}
+          {% for error in form.scopes.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-journal-text me-2" style="color:var(--accent)"></i>{% trans "Notes" %}</h6></div>
+        <div class="card-body">
+          {{ form.notes }}
+          {% for error in form.notes.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-tags me-2" style="color:var(--accent)"></i>{% trans "Tags" %}</h6></div>
+        <div class="card-body">
+          {{ form.tags }}
+          {% for error in form.tags.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Actions ───────────────────────────────────── #}
+  <div class="d-flex gap-2 form-actions-sticky">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{% trans "Save" %}</button>
+    <a href="{% url 'assets:contract-list' %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

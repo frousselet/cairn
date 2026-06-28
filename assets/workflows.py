@@ -14,7 +14,9 @@ creation-default states are deletable.
 Imported from ``AssetsConfig.ready()`` so registration happens at startup.
 """
 
-from assets.constants import EssentialAssetStatus, SupportAssetStatus
+from django.utils.translation import gettext_lazy as _
+
+from assets.constants import ContractStatus, EssentialAssetStatus, SupportAssetStatus
 from core.workflow import (
     WORKFLOW_REGISTRY,
     State,
@@ -25,6 +27,7 @@ from core.workflow import (
 
 ESSENTIAL_ASSET_WORKFLOW_NAME = "essential_asset"
 SUPPORT_ASSET_WORKFLOW_NAME = "support_asset"
+CONTRACT_WORKFLOW_NAME = "contract"
 
 # code -> (counts_in_reports, linkable, deletable, is_initial, is_terminal, tone)
 _ESSENTIAL_ASSET_STATE_FLAGS = {
@@ -120,6 +123,80 @@ if SUPPORT_ASSET_WORKFLOW_NAME not in WORKFLOW_REGISTRY:
     )
 else:
     SUPPORT_ASSET_WORKFLOW = WORKFLOW_REGISTRY[SUPPORT_ASSET_WORKFLOW_NAME]
+
+
+# The contract lifecycle is declared explicitly (not via _build) because the
+# "terminate" transitions require a comment. draft is the only deletable /
+# initial state; terminated is terminal; expired contracts are no longer
+# linkable but still count in reports (they belong to audit history).
+def _build_contract_workflow():
+    states = [
+        State(
+            ContractStatus.DRAFT.value,
+            ContractStatus.DRAFT.label,
+            counts_in_reports=True,
+            linkable=True,
+            deletable=True,
+            is_initial=True,
+            tone="secondary",
+        ),
+        State(
+            ContractStatus.ACTIVE.value,
+            ContractStatus.ACTIVE.label,
+            counts_in_reports=True,
+            linkable=True,
+            tone="success",
+        ),
+        State(
+            ContractStatus.EXPIRED.value,
+            ContractStatus.EXPIRED.label,
+            counts_in_reports=True,
+            tone="warning",
+        ),
+        State(
+            ContractStatus.TERMINATED.value,
+            ContractStatus.TERMINATED.label,
+            counts_in_reports=True,
+            is_terminal=True,
+            tone="dark",
+        ),
+    ]
+    transitions = [
+        Transition(
+            ContractStatus.DRAFT.value, ContractStatus.ACTIVE.value, _("Activate")
+        ),
+        Transition(
+            ContractStatus.DRAFT.value,
+            ContractStatus.TERMINATED.value,
+            _("Terminate"),
+            requires_comment=True,
+        ),
+        Transition(
+            ContractStatus.ACTIVE.value, ContractStatus.EXPIRED.value, _("Expire")
+        ),
+        Transition(
+            ContractStatus.ACTIVE.value,
+            ContractStatus.TERMINATED.value,
+            _("Terminate"),
+            requires_comment=True,
+        ),
+        Transition(
+            ContractStatus.EXPIRED.value, ContractStatus.ACTIVE.value, _("Renew")
+        ),
+        Transition(
+            ContractStatus.EXPIRED.value,
+            ContractStatus.TERMINATED.value,
+            _("Terminate"),
+            requires_comment=True,
+        ),
+    ]
+    return Workflow(CONTRACT_WORKFLOW_NAME, states, transitions)
+
+
+if CONTRACT_WORKFLOW_NAME not in WORKFLOW_REGISTRY:
+    CONTRACT_WORKFLOW = register_workflow(_build_contract_workflow())
+else:
+    CONTRACT_WORKFLOW = WORKFLOW_REGISTRY[CONTRACT_WORKFLOW_NAME]
 
 # NB: the supplier no longer runs a core.workflow workflow - it was migrated to
 # the standardised core.lifecycle engine (see assets/lifecycles.py).

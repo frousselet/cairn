@@ -2,6 +2,7 @@ import factory
 
 from accounts.tests.factories import UserFactory
 from assets.constants import (
+    ContractStatus,
     DependencyType,
     DICLevel,
     EssentialAssetCategory,
@@ -11,6 +12,7 @@ from assets.constants import (
     SupportAssetCategory,
     SupportAssetType,
 )
+from assets.models.contract import Contract
 from assets.models.dependency import AssetDependency
 from assets.models.essential_asset import EssentialAsset
 from assets.models.supplier import (
@@ -115,6 +117,33 @@ class SupplierFactory(factory.django.DjangoModelFactory):
         if not create or not extracted:
             return
         self.scopes.add(*extracted)
+
+
+class ContractFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Contract
+
+    reference = factory.Sequence(lambda n: f"CTRT-{n:03d}")
+    label = factory.Sequence(lambda n: f"Contract {n}")
+    status = ContractStatus.ACTIVE
+
+    @factory.post_generation
+    def scopes(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.scopes.add(*extracted)
+
+    @factory.post_generation
+    def suppliers(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.suppliers.add(*extracted)
+
+    @factory.post_generation
+    def clients(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.clients.add(*extracted)
 
 
 class SupplierRequirementFactory(factory.django.DjangoModelFactory):

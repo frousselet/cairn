@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load i18n ui workflow_tags accounts_tags %}
+
+{% block title %}{{ contract.label|default:contract.reference }} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header contract.label|default:contract.reference reference=contract.reference nav="assets:contract-list" accent="assets" %}
+  {% include "includes/history_trigger.html" %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'assets:contract-update' contract.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</button>
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+
+{% include "includes/workflow_stepper.html" %}
+
+<div class="row g-4">
+
+  {# ── LEFT COLUMN ── #}
+  <div class="col-lg-8">
+
+    {# ── Notes ── #}
+    {% if contract.notes %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-2"><i class="bi bi-journal-text me-1"></i>{% trans "Notes" %}</h6>
+        <div>{{ contract.notes|safe }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── Parties ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "Parties" %}</h6>
+        <div class="{% if clients %}mb-3 pb-3 border-bottom{% endif %}">
+          <div class="fw-medium mb-2" style="font-size:.85rem"><i class="bi bi-truck me-1"></i>{% trans "Suppliers" %}</div>
+          {% for supplier in suppliers %}
+          <div class="d-flex align-items-baseline mb-2">
+            <span class="ref flex-shrink-0" style="width:5.5rem;display:inline-block">{{ supplier.reference }}</span>
+            <a href="{% url 'assets:supplier-detail' supplier.pk %}" style="text-decoration:none;color:var(--accent);font-weight:500">{{ supplier.name }}</a>
+          </div>
+          {% empty %}<span class="text-muted">-</span>{% endfor %}
+        </div>
+        <div>
+          <div class="fw-medium mb-2" style="font-size:.85rem"><i class="bi bi-person-badge me-1"></i>{% trans "Clients" %}</div>
+          {% for client in clients %}
+          <div class="d-flex align-items-baseline mb-2">
+            <span class="ref flex-shrink-0" style="width:5.5rem;display:inline-block">{{ client.reference }}</span>
+            <a href="{% url 'context:stakeholder-detail' client.pk %}" style="text-decoration:none;color:var(--accent);font-weight:500">{{ client.name }}</a>
+          </div>
+          {% empty %}<span class="text-muted">-</span>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ── Amendments ── #}
+    {% if amendments %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-file-earmark-plus me-1"></i>{% trans "Amendments" %}</h6>
+        {% for amendment in amendments %}
+        <div class="d-flex align-items-baseline justify-content-between mb-2">
+          <div class="d-flex align-items-baseline">
+            <span class="ref flex-shrink-0" style="width:5.5rem;display:inline-block">{{ amendment.reference }}</span>
+            <a href="{% url 'assets:contract-detail' amendment.pk %}" style="text-decoration:none;color:var(--accent);font-weight:500">{{ amendment.label|default:_("Untitled") }}</a>
+          </div>
+          {% workflow_badge amendment %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── Document ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-file-earmark-pdf me-1"></i>{% trans "Document" %}</h6>
+        {% if contract.has_document %}
+        <a href="{% url 'assets:contract-document' contract.pk %}" class="btn btn-outline-primary">
+          <i class="bi bi-download me-1" aria-hidden="true"></i>{{ contract.file_name|default:_("Download PDF") }}
+        </a>
+        {% comment %} Future : automatic content extraction via Ask Cairn will index this PDF. {% endcomment %}
+        {% else %}
+        <p class="text-muted mb-0">{% trans "No document attached. Edit the contract to upload a PDF." %}</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  {# ── RIGHT COLUMN (sidebar) ── #}
+  <div class="col-lg-4">
+
+    {# ── Status & terms ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
+          <dd class="mb-3">{% workflow_badge contract %}</dd>
+          {% if contract.is_amendment %}
+          <dt class="text-muted small mb-1">{% trans "Amends contract" %}</dt>
+          <dd class="mb-3"><a href="{% url 'assets:contract-detail' contract.parent.pk %}" style="text-decoration:none;color:var(--accent);font-weight:500">{{ contract.parent.reference }}</a></dd>
+          {% endif %}
+          <dt class="text-muted small mb-1">{% trans "Start date" %}</dt>
+          <dd class="mb-3">{{ contract.start_date|default:"-" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "End date" %}</dt>
+          <dd class="mb-3">{{ contract.end_date|default:"-" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Amount" %}</dt>
+          <dd class="mb-0">{% if contract.amount %}{{ contract.amount|floatformat:2 }} {{ contract.currency }}{% else %}-{% endif %}</dd>
+        </dl>
+      </div>
+    </div>
+
+    {# ── Scopes ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-2"><i class="bi bi-diagram-3 me-1"></i>{% trans "Scopes" %}</h6>
+        {% for scope in contract.scopes.all %}<span class="badge text-bg-secondary me-1 mb-1">{{ scope.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}
+      </div>
+    </div>
+
+    {# ── Tags ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-2"><i class="bi bi-tags me-1"></i>{% trans "Tags" %}</h6>
+        {% for tag in contract.tags.all %}<span class="badge me-1 mb-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}
+      </div>
+    </div>
+
+    {# ── Metadata ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Approved" %}</dt>
+          <dd class="mb-3">
+            {% if contract.is_approved %}<span class="badge text-bg-success">{% trans "Yes" %}</span>{% else %}<span class="badge text-bg-secondary">{% trans "No" %}</span>{% endif %}
+            {% if can_approve and not contract.is_approved %}
+            <form method="post" action="{{ approve_url }}" class="d-inline ms-1">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-success">{% trans "Approve" %}</button></form>
+            {% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
+          <dd class="mb-3">{% if contract.created_by %}{% user_badge contract.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created at" %}</dt>
+          <dd class="mb-0">{{ contract.created_at|date:"Y-m-d H:i" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

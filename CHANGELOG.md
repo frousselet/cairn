@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New **Documents** area in the Assets module, starting with **Contracts**. A contract is a first-class scoped entity with a dedicated lifecycle (Draft -> Active -> Expired/Terminated; Terminate requires a comment), parties as the union of supplier parties and client (customer stakeholder) parties, amendments (avenants) as child contracts, and a single attached **PDF** stored inline in the database and served through a permission-checked, scope-filtered download view (strict validation: `.pdf` extension + `%PDF-` magic bytes + 25 MB cap). Full vertical slice: web CRUD with the generic workflow stepper and a 2-column detail page, DRF API (`/api/v1/assets/contracts/`, `document_url` exposed but never the raw bytes), MCP tools (`list/get/create/update/delete/approve/transition_contract`, parties via `scope_ids`/`supplier_ids`/`client_ids`; PDF upload is web-only), `assets.contract.*` permissions, a new Documents sidebar group, demo seed data, and module documentation. Automatic PDF content extraction via Ask Cairn is left as a clean seam for a later iteration.
+
 ### Changed
 
 - Demo seed (`scripts/seed_demo_data.py`) now derives every date from the current date instead of hardcoded 2024-2027 literals, so the dataset never goes stale: five audits are completed and spread across the past months, plus three that are deliberately in progress (distinct assessors, distinct date ranges, only a fraction of controls reviewed so far) so the "in progress" state is always represented without any stale or empty future-planned assessment; contracts and reviews keep realistic horizons, and year-bearing labels (audit names, management-review semesters, SWOT, EBIOS cycle) are computed at seed time. Bulk closed/completed action and treatment plans now get a completion date, overdue plans a past target, and expired risk acceptances a past validity, so status and dates stay consistent.

@@ -11297,3 +11297,117 @@ msgstr "Terminer la revue"
 #: context/lifecycles.py
 msgid "Validation"
 msgstr "Validation"
+
+msgid "New contract"
+msgstr "Nouveau contrat"
+
+msgid "Edit contract"
+msgstr "Modifier le contrat"
+
+msgid "contract"
+msgstr "contrat"
+
+msgid "Clients"
+msgstr "Clients"
+
+msgid "Parties"
+msgstr "Parties"
+
+msgid "Amendments"
+msgstr "Avenants"
+
+msgid "Amends contract"
+msgstr "Avenant au contrat"
+
+msgid "Terms"
+msgstr "Conditions"
+
+msgid "Scope & filing"
+msgstr "Périmètre et classement"
+
+msgid "Amount"
+msgstr "Montant"
+
+msgid "Currency"
+msgstr "Devise"
+
+msgid "Untitled"
+msgstr "Sans titre"
+
+msgid "PDF document"
+msgstr "Document PDF"
+
+msgid "PDF attached"
+msgstr "PDF joint"
+
+msgid "Download PDF"
+msgstr "Télécharger le PDF"
+
+msgid "Activate"
+msgstr "Activer"
+
+msgid "Expire"
+msgstr "Expirer"
+
+msgid "Renew"
+msgstr "Renouveler"
+
+msgid "Terminate"
+msgstr "Résilier"
+
+msgid "Attach the contract as a PDF file (25 MB max)."
+msgstr "Joindre le contrat sous forme de fichier PDF (25 Mo max)."
+
+msgid "Short title of the contract."
+msgstr "Titre court du contrat."
+
+msgid "Lifecycle state of the contract."
+msgstr "État du cycle de vie du contrat."
+
+msgid "If this contract is an amendment, the contract it amends."
+msgstr "Si ce contrat est un avenant, le contrat qu'il modifie."
+
+msgid "Supplier parties to the contract."
+msgstr "Fournisseurs parties au contrat."
+
+msgid "Client (customer) parties to the contract."
+msgstr "Clients parties au contrat."
+
+msgid "Date the contract takes effect."
+msgstr "Date de prise d'effet du contrat."
+
+msgid "Date the contract ends."
+msgstr "Date de fin du contrat."
+
+msgid "Contract value."
+msgstr "Valeur du contrat."
+
+msgid "ISO 4217 currency code (e.g. EUR)."
+msgstr "Code devise ISO 4217 (par ex. EUR)."
+
+msgid "Free-form notes about the contract."
+msgstr "Notes libres sur le contrat."
+
+msgid "Organizational scopes this contract applies to."
+msgstr "Périmètres organisationnels concernés par ce contrat."
+
+msgid "A contract must be attached to at least one scope."
+msgstr "Un contrat doit être rattaché à au moins un périmètre."
+
+msgid "Only PDF files are accepted."
+msgstr "Seuls les fichiers PDF sont acceptés."
+
+msgid "The PDF exceeds the maximum allowed size of 25 MB."
+msgstr "Le PDF dépasse la taille maximale autorisée de 25 Mo."
+
+msgid "The uploaded file is not a valid PDF."
+msgstr "Le fichier téléversé n'est pas un PDF valide."
+
+msgid "No document attached. Edit the contract to upload a PDF."
+msgstr "Aucun document joint. Modifiez le contrat pour téléverser un PDF."
+
+msgid "No contract registered yet."
+msgstr "Aucun contrat enregistré pour le moment."
+
+msgid "Contracts capture agreements with your suppliers and clients - link parties, attach the PDF, and track amendments."
+msgstr "Les contrats formalisent les accords avec vos fournisseurs et clients - liez les parties, joignez le PDF et suivez les avenants."

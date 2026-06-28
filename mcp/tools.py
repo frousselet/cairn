@@ -874,7 +874,7 @@ References are read-only and sequential. Reference prefixes by entity:
   Scope=SCOP, Issue=ISSU, Stakeholder=STKH, Objective=OBJT, SwotAnalysis=SWOT,
   Role=ROLE, Activity=ACTV, Site=SITE, Indicator=INDI,
   EssentialAsset=EAST, SupportAsset=SAST, AssetDependency=ADEP, AssetGroup=AGRP,
-  Supplier=SUPP, SupplierType=SPTY, SupplierDependency=SDEP,
+  Supplier=SUPP, SupplierType=SPTY, SupplierDependency=SDEP, Contract=CTRT,
   SiteAssetDependency=SADP, SiteSupplierDependency=SSDP,
   Framework=FRMW, Section=SECT, Requirement=REQT, ComplianceAssessment=CASS,
   Finding=(NCMAJ/NCMIN/OBS/OA/STR per type), ActionPlan=ACTPL,
@@ -1496,6 +1496,7 @@ assets.dependency.read/create/update/delete
 assets.group.read/create/update/delete/approve
 assets.supplier.read/create/update/delete/approve
 assets.supplier_dependency.read/create/update/delete
+assets.contract.read/create/update/delete/approve
 
 ### Compliance (compliance.*)
 compliance.framework.read/create/update/delete/approve
@@ -2378,6 +2379,7 @@ def _register_assets_tools(server):
     SupportAsset = _get_model("assets", "SupportAsset")
     AssetDependency = _get_model("assets", "AssetDependency")
     AssetGroup = _get_model("assets", "AssetGroup")
+    Contract = _get_model("assets", "Contract")
     Supplier = _get_model("assets", "Supplier")
     SupplierDependency = _get_model("assets", "SupplierDependency")
     SiteAssetDependency = _get_model("assets", "SiteAssetDependency")
@@ -2645,6 +2647,60 @@ def _register_assets_tools(server):
                            "description": "UUIDs of support assets to include in this group.",
                        },
                    })
+
+    contract_fields = ["id", "reference", "label", "status",
+                       "start_date", "end_date", "amount", "currency",
+                       "scopes", "suppliers", "clients", "parent",
+                       "file_name", "notes", "is_approved", "created_at"]
+    contract_writable = ["label", "status", "start_date", "end_date",
+                         "amount", "currency", "notes", "parent_id",
+                         "scope_ids", "supplier_ids", "client_ids"]
+
+    _register_crud(server, "contract", Contract, "assets.contract",
+                   list_fields=contract_fields,
+                   writable_fields=contract_writable,
+                   search_fields=["reference", "label", "notes"],
+                   filters=["status"],
+                   required_fields=["scope_ids"],
+                   m2m_fields={
+                       "scope_ids": "scopes",
+                       "supplier_ids": "suppliers",
+                       "client_ids": "clients",
+                   },
+                   field_overrides={
+                       "notes": _html_field("Notes"),
+                       "status": {
+                           "type": "string",
+                           "description": "Contract status.",
+                           "enum": ["draft", "active", "expired", "terminated"],
+                       },
+                       "start_date": {"type": "string", "description": "Start date (YYYY-MM-DD)."},
+                       "end_date": {"type": "string", "description": "End date (YYYY-MM-DD)."},
+                       "amount": {"type": "number", "description": "Contract value."},
+                       "currency": {"type": "string", "description": "ISO 4217 currency code (e.g. EUR)."},
+                       "parent_id": {
+                           "type": "string",
+                           "description": "UUID of the contract this one amends (avenant); omit for a top-level contract.",
+                       },
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Scopes this contract belongs to (RG-01). At least one is required.",
+                       },
+                       "supplier_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "UUIDs of supplier parties (use list_suppliers).",
+                       },
+                       "client_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "UUIDs of client parties: customer stakeholders (use list_stakeholders).",
+                       },
+                   })
+    # NB: the attached PDF (Contract.file_content) cannot be uploaded through MCP
+    # (binary payloads are out of scope for the JSON transport). Attach or replace
+    # the document via the web UI; list_/get_contract expose file_name only.
 
     sup_fields = ["id", "reference", "scopes", "name", "description", "type", "type_name",
                   "criticality",

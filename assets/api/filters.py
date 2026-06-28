@@ -3,11 +3,29 @@ import django_filters
 from assets.models import (
     AssetDependency,
     AssetGroup,
+    Contract,
     EssentialAsset,
     Supplier,
     SupplierDependency,
     SupportAsset,
 )
+
+
+class ContractFilter(django_filters.FilterSet):
+    scope = django_filters.UUIDFilter(field_name="scopes__id")
+    supplier = django_filters.UUIDFilter(field_name="suppliers__id")
+    client = django_filters.UUIDFilter(field_name="clients__id")
+    parent = django_filters.UUIDFilter(field_name="parent_id")
+    is_amendment = django_filters.BooleanFilter(method="filter_is_amendment")
+
+    class Meta:
+        model = Contract
+        fields = {
+            "status": ["exact"],
+        }
+
+    def filter_is_amendment(self, queryset, name, value):
+        return queryset.filter(parent__isnull=not value)
 
 
 class EssentialAssetFilter(django_filters.FilterSet):
