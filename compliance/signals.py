@@ -12,6 +12,7 @@ recomputed automatically from its linked risks (see
 the framework option itself changes.
 """
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import (
     m2m_changed,
     post_delete,
@@ -29,7 +30,14 @@ def _recalculate_chain(requirement):
     the root recomputes the whole branch. Framework.recalculate_compliance is
     called afterwards to refresh the overall framework level (RC-01).
     """
-    section = getattr(requirement, "section", None)
+    # During a Framework cascade delete the requirement's related section /
+    # framework rows may already be gone, so accessing the FK raises
+    # ObjectDoesNotExist (not caught by getattr's default) instead of returning
+    # the related object. Treat a vanished relation as "nothing to recompute".
+    try:
+        section = requirement.section
+    except ObjectDoesNotExist:
+        section = None
     if section is not None:
         root = section
         while root.parent_section_id:
@@ -40,7 +48,10 @@ def _recalculate_chain(requirement):
             # Never let aggregation failures bubble up from a save signal.
             pass
 
-    framework = getattr(requirement, "framework", None)
+    try:
+        framework = requirement.framework
+    except ObjectDoesNotExist:
+        framework = None
     if framework is not None:
         try:
             framework.recalculate_compliance()

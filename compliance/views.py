@@ -1810,7 +1810,10 @@ class ActionPlanCommentCreateView(LoginRequiredMixin, PermissionRequiredMixin, V
         if not content:
             return HttpResponse(status=400)
 
-        parent_id = request.POST.get("parent")
+        # A malformed parent id would raise ValidationError in get_object_or_404
+        # (HTTP 500); coerce it first so a bad value falls back to a top-level
+        # comment instead of crashing.
+        parent_id = parse_uuid(request.POST.get("parent"))
         parent = None
         if parent_id:
             parent = get_object_or_404(

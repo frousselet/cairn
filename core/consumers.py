@@ -46,6 +46,11 @@ class DashboardConsumer(AsyncWebsocketConsumer):
                 content = json.loads(text_data)
             except (json.JSONDecodeError, TypeError):
                 return
+            # A valid-JSON but non-object frame (123, [1], null, true, 1.5) has
+            # no .get and would raise AttributeError, killing the live dashboard
+            # socket with close code 1011.
+            if not isinstance(content, dict):
+                return
             if content.get("type") == "refresh":
                 user = self.scope.get("user")
                 if user and not user.is_anonymous:

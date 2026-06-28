@@ -1,4 +1,5 @@
 import json
+import math
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -32,6 +33,7 @@ from core.mixins import (
     SortableListMixin,
     TableBodyPaginatedMixin,
 )
+from core.query_params import parse_uuid
 from .constants import (
     ActivityStatus,
     CollectionMethod,
@@ -143,6 +145,11 @@ def _format_number(value):
     try:
         num = float(value)
     except (ValueError, TypeError):
+        return value
+    # A stored "nan" / "inf" parses as a float but int(num) below raises
+    # ValueError / OverflowError, crashing every dashboard render. Display the
+    # raw value instead of formatting a non-finite number.
+    if not math.isfinite(num):
         return value
     # For string values with an explicit decimal point, preserve original precision
     if isinstance(value, str) and '.' in value:
@@ -1467,9 +1474,15 @@ def dashboard_indicator_toggle(request):
     except (json.JSONDecodeError, ValueError):
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    indicator_id = data.get("indicator_id", "").strip()
-    if not indicator_id:
+    # A valid-JSON non-object body (123, [1], "x") has no .get; guard before use.
+    if not isinstance(data, dict):
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    raw_id = data.get("indicator_id", "")
+    indicator_id = parse_uuid(raw_id if isinstance(raw_id, str) else "")
+    if indicator_id is None:
         return JsonResponse({"error": "indicator_id is required"}, status=400)
+    indicator_id = str(indicator_id)
 
     # Verify the indicator exists
     if not Indicator.objects.filter(pk=indicator_id).exists():
@@ -1504,7 +1517,12 @@ def dashboard_indicator_chart_toggle(request):
     except (json.JSONDecodeError, ValueError):
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    indicator_id = data.get("indicator_id", "").strip()
+    # A valid-JSON non-object body (123, [1], "x") has no .get; guard before use.
+    if not isinstance(data, dict):
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    raw_id = data.get("indicator_id", "")
+    indicator_id = raw_id.strip() if isinstance(raw_id, str) else ""
     if not indicator_id:
         return JsonResponse({"error": "indicator_id is required"}, status=400)
 

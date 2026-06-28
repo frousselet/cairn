@@ -1,3 +1,5 @@
+import math
+
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
@@ -772,8 +774,12 @@ class IndicatorMeasurementForm(forms.ModelForm):
             # (space, non-breaking space) and convert decimal comma to dot.
             normalized = value.replace("\u00a0", "").replace("\u202f", "").replace(" ", "").replace(",", ".")
             try:
-                float(normalized)
+                number = float(normalized)
             except (ValueError, TypeError):
+                raise forms.ValidationError(_("Please enter a valid number."))
+            # Reject "nan" / "inf": they parse as floats but later crash the
+            # dashboard's number formatting (int(nan) -> ValueError).
+            if not math.isfinite(number):
                 raise forms.ValidationError(_("Please enter a valid number."))
             return normalized
         return value
