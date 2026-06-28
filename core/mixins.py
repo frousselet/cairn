@@ -1,4 +1,5 @@
 import json
+import math
 
 from django.contrib.auth import get_user_model
 from django.db import models as dj_models
@@ -10,6 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
 from core.db import NaturalSortKey
+from core.query_params import INT_MAX, INT_MIN, parse_int, parse_uuid
 
 
 class HtmxFormMixin:
@@ -620,6 +622,17 @@ class AdvancedFilterMixin:
                     {"value": str(o.pk), "label": str(o)}
                     for o in rel._default_manager.all()[: self.filter_max_options]
                 ]
+                # Remember the related PK type so a rule's values can be
+                # validated against it (a UUID PK rejects a non-UUID value, an
+                # integer PK rejects an out-of-range one) before they reach the
+                # ORM, instead of crashing the list with a 500.
+                pk_field = rel._meta.pk
+                if isinstance(pk_field, dj_models.UUIDField):
+                    definition["pk_kind"] = "uuid"
+                elif isinstance(pk_field, dj_models.IntegerField):
+                    definition["pk_kind"] = "int"
+                else:
+                    definition["pk_kind"] = "other"
             fields.append(definition)
         return fields
 
@@ -651,6 +664,16 @@ class AdvancedFilterMixin:
         if ftype in ("person", "relation"):
             ids = value if isinstance(value, list) else [value]
             ids = [i for i in ids if i not in (None, "")]
+            # Validate each id against the related PK type, dropping any the
+            # database could not handle (a non-UUID for a UUID PK raises
+            # ValidationError; an oversized integer for an integer PK raises
+            # OverflowError). An empty result means the rule matches nothing,
+            # so it is skipped rather than applied.
+            pk_kind = definition.get("pk_kind")
+            if pk_kind == "uuid":
+                ids = [u for u in (parse_uuid(i) for i in ids) if u is not None]
+            elif pk_kind == "int":
+                ids = [n for n in (parse_int(i) for i in ids) if n is not None]
             if not ids:
                 return None, False
             return {f"{orm}__in": ids}, op == "notin"
@@ -662,11 +685,23 @@ class AdvancedFilterMixin:
         if not text:
             return None
         if ftype == "date":
-            return parse_date(text)
-        try:
-            return float(text) if ("." in text) else int(text)
-        except (TypeError, ValueError):
-            return None
+            # parse_date returns None for an unparseable string but raises
+            # ValueError on a well-formed yet out-of-calendar date such as
+            # "2024-02-30"; treat both as "no value".
+            try:
+                return parse_date(text)
+            except (TypeError, ValueError):
+                return None
+        if "." in text:
+            try:
+                number = float(text)
+            except (TypeError, ValueError):
+                return None
+            # Reject inf / nan so a non-finite value never reaches the column.
+            return number if math.isfinite(number) else None
+        # Bound the magnitude so an oversized integer (e.g. 10**40) cannot
+        # raise OverflowError when it reaches an integer column.
+        return parse_int(text, min_value=INT_MIN, max_value=INT_MAX)
 
     def filter_queryset_advanced(self, qs):
         if not self.advanced_filters:
@@ -677,6 +712,10 @@ class AdvancedFilterMixin:
             try:
                 rule = json.loads(raw)
             except (TypeError, ValueError):
+                continue
+            # A rule must be an object; a bare JSON scalar/array (e.g. ?rule=5)
+            # has no .get and would raise AttributeError.
+            if not isinstance(rule, dict):
                 continue
             definition = by_key.get(rule.get("f"))
             if not definition:
