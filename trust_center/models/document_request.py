@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel
+from core.query_params import parse_uuid
 from trust_center.constants import DocumentRequestState
 from trust_center.workflows import DOCUMENT_REQUEST_WORKFLOW_NAME
 
@@ -99,7 +100,11 @@ class DocumentRequest(BaseModel):
         Propagates :class:`signing.SignatureExpired` / :class:`signing.BadSignature`
         so the caller can distinguish an expired link from a tampered one.
         """
-        pk = cls._signer().unsign(token, max_age=max_age)
+        pk = parse_uuid(cls._signer().unsign(token, max_age=max_age))
+        if pk is None:
+            # Validly signed but with a non-UUID payload (a forged token built
+            # with a leaked SECRET_KEY); filtering would raise ValidationError.
+            return None
         return cls.objects.filter(pk=pk).first()
 
     def issue_download_link(self, ttl_seconds):

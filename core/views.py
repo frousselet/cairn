@@ -30,7 +30,7 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from core.changelog import get_changelog_between
-from core.query_params import parse_date_param
+from core.query_params import parse_date_param, parse_uuid
 from core.dashboard import (
     DASHBOARD_WIDGETS,
     WIDGETS_BY_ID,
@@ -1510,8 +1510,11 @@ class CalendarSubscribeView(LoginRequiredMixin, View):
                 "new_token": ct,
             })
         elif action == "revoke":
-            token_id = request.POST.get("token_id")
-            request.user.calendar_tokens.filter(pk=token_id).delete()
+            # Coerce to a UUID first: a malformed token_id would otherwise raise
+            # ValidationError when the pk filter is evaluated (HTTP 500).
+            token_id = parse_uuid(request.POST.get("token_id"))
+            if token_id:
+                request.user.calendar_tokens.filter(pk=token_id).delete()
         tokens = request.user.calendar_tokens.all()
         return render(request, "calendar_subscribe.html", {"tokens": tokens})
 
