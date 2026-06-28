@@ -30,6 +30,7 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from core.changelog import get_changelog_between
+from core.query_params import parse_date_param
 from core.dashboard import (
     DASHBOARD_WIDGETS,
     WIDGETS_BY_ID,
@@ -922,6 +923,13 @@ ALL_CATEGORIES = [
 def get_calendar_events(user, start=None, end=None, categories=None):
     """Fetch calendar events for *user*. Returns list of event dicts."""
     from core.workflow import reportable
+
+    # ``start`` / ``end`` may come straight from the ``?start=`` / ``?end=``
+    # query params (CalendarEventsView). Coerce them to dates so a malformed
+    # value (e.g. ``notadate``) is ignored instead of raising ValidationError
+    # when it reaches the ORM date filter. Already-parsed dates pass through.
+    start = parse_date_param(start)
+    end = parse_date_param(end)
 
     events = []
     if not categories:

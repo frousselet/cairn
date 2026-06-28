@@ -35,6 +35,7 @@ from core.mixins import (
     SortableListMixin,
     TableBodyPaginatedMixin,
 )
+from core.query_params import parse_uuid
 from .forms import (
     ActionPlanTransitionForm,
     AssessmentResultForm,
@@ -458,7 +459,7 @@ class RequirementListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumma
         qs = super().get_queryset().select_related("framework", "section").annotate(
             risk_count=Count("linked_risks", distinct=True)
         )
-        framework_filter = self.request.GET.get("framework")
+        framework_filter = parse_uuid(self.request.GET.get("framework"))
         if framework_filter:
             qs = qs.filter(framework_id=framework_filter)
         qs = self.filter_queryset_predefined(qs)
@@ -1053,7 +1054,7 @@ class AssessmentResultCreateView(EditableAssessmentGuardMixin, LoginRequiredMixi
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["assessment"] = self.get_assessment()
-        req_pk = self.request.GET.get("requirement")
+        req_pk = parse_uuid(self.request.GET.get("requirement"))
         if req_pk:
             kwargs["requirement_instance"] = get_object_or_404(
                 Requirement, pk=req_pk
@@ -1063,7 +1064,7 @@ class AssessmentResultCreateView(EditableAssessmentGuardMixin, LoginRequiredMixi
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["assessment"] = self.get_assessment()
-        req_pk = self.request.GET.get("requirement")
+        req_pk = parse_uuid(self.request.GET.get("requirement"))
         if req_pk:
             ctx["requirement_obj"] = get_object_or_404(Requirement, pk=req_pk)
         return ctx
@@ -1074,7 +1075,7 @@ class AssessmentResultCreateView(EditableAssessmentGuardMixin, LoginRequiredMixi
         form.instance.assessed_by = self.request.user
         form.instance.assessed_at = timezone.now()
         # If requirement was disabled in the form, set it from the URL param
-        req_pk = self.request.GET.get("requirement")
+        req_pk = parse_uuid(self.request.GET.get("requirement"))
         if req_pk and not form.cleaned_data.get("requirement"):
             form.instance.requirement = get_object_or_404(Requirement, pk=req_pk)
         response = super().form_valid(form)
@@ -1889,7 +1890,7 @@ class RequirementTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Tabl
         qs = super().get_queryset().select_related("framework", "section").prefetch_related("tags").annotate(
             risk_count=Count("linked_risks", distinct=True)
         )
-        framework_filter = self.request.GET.get("framework")
+        framework_filter = parse_uuid(self.request.GET.get("framework"))
         if framework_filter:
             qs = qs.filter(framework_id=framework_filter)
         qs = self.filter_queryset_predefined(qs)

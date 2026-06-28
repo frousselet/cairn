@@ -30,6 +30,7 @@ from core.mixins import (
     SortableListMixin,
     TableBodyPaginatedMixin,
 )
+from core.query_params import parse_date_param, parse_uuid
 from .constants import (
     AcceptanceStatus,
     AssessmentStatus,
@@ -1000,14 +1001,14 @@ class RiskListView(
         qs = super().get_queryset().select_related("assessment", "risk_owner")
         params = self.request.GET
 
-        assessment_id = params.get("assessment")
+        assessment_id = parse_uuid(params.get("assessment"))
         if assessment_id:
             qs = qs.filter(assessment_id=assessment_id)
 
-        date_after = params.get("date_after")
+        date_after = parse_date_param(params.get("date_after"))
         if date_after:
             qs = qs.filter(created_at__date__gte=date_after)
-        date_before = params.get("date_before")
+        date_before = parse_date_param(params.get("date_before"))
         if date_before:
             qs = qs.filter(created_at__date__lte=date_before)
 
@@ -1019,7 +1020,7 @@ class RiskListView(
             "linked_requirement": "linked_requirements__id",
         }
         for param, lookup in m2m_filters.items():
-            value = params.get(param)
+            value = parse_uuid(params.get(param))
             if value:
                 qs = qs.filter(**{lookup: value})
 
@@ -1102,7 +1103,9 @@ class RiskBulkActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get("action", "")
-        ids = request.POST.getlist("risk_ids")
+        # Coerce to valid UUIDs up front: a malformed id would otherwise raise
+        # ValidationError when the pk__in filter is evaluated (HTTP 500).
+        ids = [pk for pk in (parse_uuid(i) for i in request.POST.getlist("risk_ids")) if pk]
         if action not in self.SUPPORTED_ACTIONS:
             messages.error(request, _("Unsupported bulk action."))
             return redirect("risks:risk-list")
@@ -1234,14 +1237,14 @@ class RiskTableBodyView(
         qs = super().get_queryset().select_related("assessment", "risk_owner")
         params = self.request.GET
 
-        assessment_id = params.get("assessment")
+        assessment_id = parse_uuid(params.get("assessment"))
         if assessment_id:
             qs = qs.filter(assessment_id=assessment_id)
 
-        date_after = params.get("date_after")
+        date_after = parse_date_param(params.get("date_after"))
         if date_after:
             qs = qs.filter(created_at__date__gte=date_after)
-        date_before = params.get("date_before")
+        date_before = parse_date_param(params.get("date_before"))
         if date_before:
             qs = qs.filter(created_at__date__lte=date_before)
 
@@ -1253,7 +1256,7 @@ class RiskTableBodyView(
             "linked_requirement": "linked_requirements__id",
         }
         for param, lookup in m2m_filters.items():
-            value = params.get(param)
+            value = parse_uuid(params.get(param))
             if value:
                 qs = qs.filter(**{lookup: value})
 
@@ -1281,7 +1284,7 @@ class RiskRegisterExportView(LoginRequiredMixin, PermissionRequiredMixin, View):
             if scope_ids is not None:
                 qs = qs.filter(assessment__scopes__id__in=scope_ids).distinct()
 
-        assessment_id = request.GET.get("assessment")
+        assessment_id = parse_uuid(request.GET.get("assessment"))
         if assessment_id:
             qs = qs.filter(assessment_id=assessment_id)
         status_filter = request.GET.get("status")
@@ -1371,7 +1374,7 @@ class TreatmentPlanListView(
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("risk", "owner")
-        assessment_id = self.request.GET.get("assessment")
+        assessment_id = parse_uuid(self.request.GET.get("assessment"))
         if assessment_id:
             qs = qs.filter(risk__assessment_id=assessment_id)
         qs = self.filter_queryset_predefined(qs)
@@ -1446,7 +1449,7 @@ class TreatmentPlanTableBodyView(
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("risk", "owner")
-        assessment_id = self.request.GET.get("assessment")
+        assessment_id = parse_uuid(self.request.GET.get("assessment"))
         if assessment_id:
             qs = qs.filter(risk__assessment_id=assessment_id)
         qs = self.filter_queryset_predefined(qs)
@@ -1583,7 +1586,7 @@ class RiskAcceptanceListView(
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("risk", "accepted_by")
-        assessment_id = self.request.GET.get("assessment")
+        assessment_id = parse_uuid(self.request.GET.get("assessment"))
         if assessment_id:
             qs = qs.filter(risk__assessment_id=assessment_id)
         qs = self.filter_queryset_predefined(qs)
@@ -1650,7 +1653,7 @@ class RiskAcceptanceTableBodyView(
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("risk", "accepted_by")
-        assessment_id = self.request.GET.get("assessment")
+        assessment_id = parse_uuid(self.request.GET.get("assessment"))
         if assessment_id:
             qs = qs.filter(risk__assessment_id=assessment_id)
         qs = self.filter_queryset_predefined(qs)
@@ -1710,7 +1713,7 @@ class ThreatListView(
         ctx = super().get_context_data(**kwargs)
         # When opened via "Manage" from a risk assessment workflow, keep a
         # back link so the user does not lose the assessment context.
-        assessment_id = self.request.GET.get("assessment")
+        assessment_id = parse_uuid(self.request.GET.get("assessment"))
         ctx["parent_assessment"] = None
         if assessment_id:
             ctx["parent_assessment"] = RiskAssessment.objects.filter(pk=assessment_id).first()
@@ -1839,7 +1842,7 @@ class VulnerabilityListView(
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        assessment_id = self.request.GET.get("assessment")
+        assessment_id = parse_uuid(self.request.GET.get("assessment"))
         ctx["parent_assessment"] = None
         if assessment_id:
             ctx["parent_assessment"] = RiskAssessment.objects.filter(pk=assessment_id).first()
@@ -1923,7 +1926,7 @@ def scale_choices_api(request):
     """Return scale choices JSON for a given assessment's criteria."""
     from .forms import get_scale_choices
 
-    assessment_id = request.GET.get("assessment")
+    assessment_id = parse_uuid(request.GET.get("assessment"))
     criteria = None
     if assessment_id:
         try:
@@ -1983,7 +1986,7 @@ class ISO27005RiskListView(
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("assessment", "threat", "vulnerability")
-        assessment_id = self.request.GET.get("assessment")
+        assessment_id = parse_uuid(self.request.GET.get("assessment"))
         if assessment_id:
             qs = qs.filter(assessment_id=assessment_id)
         qs = self.filter_queryset_predefined(qs)
@@ -2069,7 +2072,7 @@ class ISO27005RiskTableBodyView(
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("assessment", "threat", "vulnerability")
-        assessment_id = self.request.GET.get("assessment")
+        assessment_id = parse_uuid(self.request.GET.get("assessment"))
         if assessment_id:
             qs = qs.filter(assessment_id=assessment_id)
         qs = self.filter_queryset_predefined(qs)
