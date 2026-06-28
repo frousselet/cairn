@@ -14,6 +14,7 @@ python-docx
 fido2
 channels
 channels-redis
+daphne
 icalendar
 uvicorn[standard]
 httpx
