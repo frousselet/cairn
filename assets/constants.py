@@ -267,6 +267,12 @@ class ContractStatus(models.TextChoices):
     TERMINATED = "terminated", _("Terminated")
 
 
+# A contract's attached document must be a PDF. Magic bytes + size cap are used
+# to validate uploads (the file is stored inline in the database).
+CONTRACT_PDF_MAGIC = b"%PDF-"
+CONTRACT_MAX_PDF_BYTES = 25 * 1024 * 1024  # 25 MB
+
+
 class SupplierRequirementStatus(models.TextChoices):
     NOT_ASSESSED = "not_assessed", _("Not assessed")
     COMPLIANT = "compliant", _("Compliant")

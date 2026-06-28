@@ -4,15 +4,18 @@ from django import forms
 from django.forms import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
 
-from context.models import Scope, Site
+from context.constants import StakeholderCategory
+from context.models import Scope, Site, Stakeholder
 from context.widgets import ImageUploadWidget, ScopeTreeWidget
 from core.modal_forms import Step, SteppedFormMixin
 from helpers.image_utils import generate_image_variants
 
+from .constants import CONTRACT_MAX_PDF_BYTES, CONTRACT_PDF_MAGIC
 from .models import (
     AssetDependency,
     AssetGroup,
     AssetValuation,
+    Contract,
     EssentialAsset,
     SiteAssetDependency,
     SiteSupplierDependency,
@@ -647,3 +650,120 @@ class AssetValuationForm(forms.ModelForm):
             "justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "context": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
         }
+
+
+class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    upload = forms.FileField(
+        label=_("PDF document"),
+        required=False,
+        widget=forms.ClearableFileInput(
+            attrs={**FORM_WIDGET_ATTRS, "accept": "application/pdf,.pdf"}
+        ),
+        help_text=_("Attach the contract as a PDF file (25 MB max)."),
+    )
+
+    steps = [
+        Step(_("Identity"), "file-earmark-text",
+             ["label", ["status", "parent"]]),
+        Step(_("Parties"), "people",
+             ["suppliers", "clients"]),
+        Step(_("Terms"), "cash-coin",
+             [["start_date", "end_date"], ["amount", "currency"]]),
+        Step(_("Document"), "file-earmark-pdf",
+             ["upload"]),
+        Step(_("Scope & filing"), "diagram-3",
+             ["scopes", "notes", "tags"]),
+    ]
+
+    class Meta:
+        model = Contract
+        fields = [
+            "scopes", "label", "status", "parent",
+            "suppliers", "clients",
+            "start_date", "end_date", "amount", "currency",
+            "notes", "tags",
+        ]
+        widgets = {
+            "scopes": ScopeTreeWidget(),
+            "label": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "status": forms.Select(attrs=SELECT_ATTRS),
+            "parent": forms.Select(attrs=SELECT_ATTRS),
+            "suppliers": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 5}),
+            "clients": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 5}),
+            "start_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+            "end_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+            "amount": forms.NumberInput(attrs=FORM_WIDGET_ATTRS),
+            "currency": forms.TextInput(attrs={**FORM_WIDGET_ATTRS, "maxlength": 3}),
+            "notes": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
+            "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+        }
+        help_texts = {
+            "label": _("Short title of the contract."),
+            "status": _("Lifecycle state of the contract."),
+            "parent": _("If this contract is an amendment, the contract it amends."),
+            "suppliers": _("Supplier parties to the contract."),
+            "clients": _("Client (customer) parties to the contract."),
+            "start_date": _("Date the contract takes effect."),
+            "end_date": _("Date the contract ends."),
+            "amount": _("Contract value."),
+            "currency": _("ISO 4217 currency code (e.g. EUR)."),
+            "notes": _("Free-form notes about the contract."),
+            "scopes": _("Organizational scopes this contract applies to."),
+            "tags": _("Free-form labels for filtering and grouping."),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Clients are customer stakeholders.
+        self.fields["clients"].queryset = Stakeholder.objects.filter(
+            category=StakeholderCategory.CUSTOMERS
+        )
+        # A contract can only amend a top-level contract, never itself.
+        parent_qs = Contract.objects.filter(parent__isnull=True)
+        if self.instance and self.instance.pk:
+            parent_qs = parent_qs.exclude(pk=self.instance.pk)
+        self.fields["parent"].queryset = parent_qs
+
+    def clean(self):
+        cleaned = super().clean()
+        if not cleaned.get("scopes"):
+            self.add_error(
+                "scopes", _("A contract must be attached to at least one scope.")
+            )
+        upload = cleaned.get("upload")
+        if upload:
+            name = (upload.name or "").lower()
+            if not name.endswith(".pdf"):
+                self.add_error("upload", _("Only PDF files are accepted."))
+            elif upload.size and upload.size > CONTRACT_MAX_PDF_BYTES:
+                self.add_error(
+                    "upload",
+                    _("The PDF exceeds the maximum allowed size of 25 MB."),
+                )
+            else:
+                header = upload.read(len(CONTRACT_PDF_MAGIC))
+                upload.seek(0)
+                if header != CONTRACT_PDF_MAGIC:
+                    self.add_error(
+                        "upload", _("The uploaded file is not a valid PDF.")
+                    )
+        return cleaned
+
+    def _post_clean(self):
+        # Store the uploaded PDF inline on the instance before model validation.
+        upload = self.cleaned_data.get("upload") if hasattr(self, "cleaned_data") else None
+        if upload and "upload" not in self.errors:
+            self.instance.file_content = upload.read()
+            self.instance.file_name = upload.name
+            self.instance.content_type = (
+                getattr(upload, "content_type", "") or "application/pdf"
+            )
+        super()._post_clean()
+
+
+class ContractCreateForm(ContractBaseForm):
+    """Contract creation modal form."""
+
+
+class ContractUpdateForm(ContractBaseForm):
+    """Contract edition modal form."""

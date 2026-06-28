@@ -1,0 +1,29 @@
+{% load i18n ui workflow_tags %}
+{% for contract in contracts %}
+<tr{% if contract.is_expired %} class="table-warning"{% endif %}>
+  <td data-col="reference"><a href="{% url 'assets:contract-detail' contract.pk %}" class="ref">{{ contract.reference }}</a></td>
+  <td data-col="label">
+    <a href="{% url 'assets:contract-detail' contract.pk %}" class="cell-link">
+      {% if contract.label %}{{ contract.label }}{% else %}<span class="cell-empty">{% trans "Untitled" %}</span>{% endif %}
+    </a>
+    {% if contract.has_document %}<i class="bi bi-file-earmark-pdf-fill ms-1 text-danger" title="{% trans 'PDF attached' %}" aria-hidden="true"></i>{% endif %}
+  </td>
+  <td data-col="parties">
+    <span class="cell-stack">
+      {% for supplier in contract.suppliers.all %}<span class="cell-sub"><i class="bi bi-truck me-1" aria-hidden="true"></i>{{ supplier.name }}</span>{% endfor %}
+      {% for client in contract.clients.all %}<span class="cell-sub"><i class="bi bi-person-badge me-1" aria-hidden="true"></i>{{ client.name }}</span>{% endfor %}
+      {% if not contract.suppliers.all and not contract.clients.all %}<span class="cell-empty">-</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="end_date">
+    {% if contract.end_date %}<span{% if contract.is_expired %} class="text-danger fw-semibold"{% endif %}>{{ contract.end_date }}</span>{% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td data-col="status"><span>{% workflow_badge contract %}</span></td>
+  <td data-col="tags">{% include "includes/tags_badge.html" with tags=contract.tags.all %}</td>
+  <td class="text-end" data-col="actions">
+    <a hx-get="{% url 'assets:contract-update' contract.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No contract registered yet.") message=_("Contracts capture agreements with your suppliers and clients - link parties, attach the PDF, and track amendments.") colspan=7 %}
+{% endfor %}

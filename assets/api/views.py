@@ -11,6 +11,7 @@ from assets.models import (
     AssetDependency,
     AssetGroup,
     AssetValuation,
+    Contract,
     EssentialAsset,
     Supplier,
     SupplierContact,
@@ -21,6 +22,7 @@ from assets.models import (
 from .filters import (
     AssetDependencyFilter,
     AssetGroupFilter,
+    ContractFilter,
     EssentialAssetFilter,
     SupplierDependencyFilter,
     SupplierFilter,
@@ -31,6 +33,8 @@ from .serializers import (
     AssetGroupListSerializer,
     AssetGroupSerializer,
     AssetValuationSerializer,
+    ContractListSerializer,
+    ContractSerializer,
     EssentialAssetListSerializer,
     EssentialAssetSerializer,
     SupplierContactSerializer,
@@ -411,3 +415,21 @@ class SupplierDependencyViewSet(BatchCreateMixin, ApprovableAPIMixin, HistoryAPI
         "supplier__reference", "supplier__name",
     ]
     ordering_fields = ["dependency_type", "criticality", "created_at"]
+
+
+class ContractViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+    queryset = Contract.objects.prefetch_related(
+        "scopes", "suppliers", "clients"
+    ).all()
+    filterset_class = ContractFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "contract"
+    search_fields = ["reference", "label", "notes"]
+    ordering_fields = [
+        "reference", "label", "status", "start_date", "end_date", "created_at",
+    ]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return ContractListSerializer
+        return ContractSerializer

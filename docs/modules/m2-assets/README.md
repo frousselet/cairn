@@ -19,6 +19,7 @@
 - [Supplier](./supplier.md) (third-party vendor, with `SupplierType` and `SupplierTypeRequirement` sub-entities)
 - [SupplierRequirement](./supplier-requirement.md) (security requirement enforced on a supplier, with `SupplierRequirementReview` sub-entity)
 - [SupplierDependency](./supplier-dependency.md) (support-asset to supplier link)
+- [Contract](./contract.md) (Documents area: multi-party contract with parties, amendments and an attached PDF)
 
 ---
 

@@ -1,9 +1,11 @@
+from django.urls import reverse
 from rest_framework import serializers
 
 from assets.models import (
     AssetDependency,
     AssetGroup,
     AssetValuation,
+    Contract,
     EssentialAsset,
     Supplier,
     SupplierContact,
@@ -253,3 +255,44 @@ class SupplierDependencySerializer(serializers.ModelSerializer):
             "id", "reference", "created_by", "created_at", "updated_at",
             "is_approved", "approved_by", "approved_at", "version",
         ]
+
+
+class ContractSerializer(serializers.ModelSerializer):
+    """Full contract representation (the inline PDF bytes are never exposed)."""
+
+    document_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Contract
+        fields = [
+            "id", "scopes", "reference", "label", "status",
+            "start_date", "end_date", "amount", "currency",
+            "parent", "suppliers", "clients", "notes", "tags",
+            "file_name", "content_type", "document_url",
+            "version",
+            "is_approved", "approved_by", "approved_at",
+            "created_by", "created_at", "updated_at",
+        ]
+        read_only_fields = [
+            "id", "reference", "file_name", "content_type", "document_url",
+            "created_by", "created_at", "updated_at",
+            "is_approved", "approved_by", "approved_at", "version",
+        ]
+
+    def get_document_url(self, obj):
+        if not obj.has_document:
+            return None
+        return reverse("assets:contract-document", kwargs={"pk": obj.pk})
+
+
+class ContractListSerializer(serializers.ModelSerializer):
+    has_document = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Contract
+        fields = [
+            "id", "scopes", "reference", "label", "status",
+            "start_date", "end_date", "amount", "currency",
+            "parent", "has_document", "created_at",
+        ]
+        read_only_fields = ["id", "reference", "created_at"]

@@ -3,7 +3,7 @@ from django.views.generic import RedirectView
 
 from context.models import Site
 from . import views
-from .models import AssetDependency, AssetGroup, EssentialAsset, SiteAssetDependency, SiteSupplierDependency, Supplier, SupplierDependency, SupportAsset
+from .models import AssetDependency, AssetGroup, Contract, EssentialAsset, SiteAssetDependency, SiteSupplierDependency, Supplier, SupplierDependency, SupportAsset
 
 app_name = "assets"
 
@@ -53,6 +53,14 @@ urlpatterns = [
     path("suppliers/<uuid:pk>/edit/", views.SupplierUpdateView.as_view(), name="supplier-update"),
     path("suppliers/<uuid:pk>/delete/", views.SupplierDeleteView.as_view(), name="supplier-delete"),
     path("suppliers/<uuid:pk>/approve/", views.ApproveView.as_view(model=Supplier, permission_feature="supplier", success_url=reverse_lazy("assets:supplier-list")), name="supplier-approve"),
+    # Contracts (Documents)
+    path("contracts/", views.ContractListView.as_view(), name="contract-list"),
+    path("contracts/create/", views.ContractCreateView.as_view(), name="contract-create"),
+    path("contracts/<uuid:pk>/", views.ContractDetailView.as_view(), name="contract-detail"),
+    path("contracts/<uuid:pk>/edit/", views.ContractUpdateView.as_view(), name="contract-update"),
+    path("contracts/<uuid:pk>/delete/", views.ContractDeleteView.as_view(), name="contract-delete"),
+    path("contracts/<uuid:pk>/document/", views.ContractDocumentDownloadView.as_view(), name="contract-document"),
+    path("contracts/<uuid:pk>/approve/", views.ApproveView.as_view(model=Contract, permission_feature="contract", success_url=reverse_lazy("assets:contract-list")), name="contract-approve"),
     # Supplier Contacts
     path("suppliers/<uuid:supplier_pk>/contacts/create/", views.SupplierContactCreateView.as_view(), name="supplier-contact-create"),
     path("supplier-contacts/<uuid:pk>/edit/", views.SupplierContactUpdateView.as_view(), name="supplier-contact-update"),

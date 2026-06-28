@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load i18n ui workflow_tags accounts_tags %}
+{% load table_tags %}
+
+{% block title %}{% trans "Contracts" %} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header _("Contracts") nav="assets:contract-list" accent="assets" %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'assets:contract-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New contract' %}</button>
+{% endpage_header %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "label" "Title" col="label" %}
+              <th data-col="parties">{% trans "Parties" %}</th>
+              {% sortable_th "end_date" "End date" col="end_date" %}
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body">
+            {% include "assets/contract_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}
