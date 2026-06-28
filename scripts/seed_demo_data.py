@@ -1197,6 +1197,55 @@ with transaction.atomic():
         "improvement_opportunity": ["A.8.9"],
     })
 
+    # Several audits are deliberately left in progress, on different date ranges
+    # and assigned to different assessors, so the demo exercises that state and
+    # the "my assessments" / calendar views look realistic. Each one has only a
+    # fraction of its controls reviewed so far (mostly compliant with a few
+    # findings), the rest still pending. Relative dates keep them always ongoing.
+    def seed_in_progress_audit(name, description, framework, assessor, start, end,
+                               fraction, findings):
+        asm = ComplianceAssessment.objects.create(
+            name=name, description=description, assessor=assessor, created_by=assessor,
+            assessment_start_date=start, assessment_end_date=end, status="in_progress",
+        )
+        asm.scopes.set([scope_group])
+        asm.frameworks.set([framework])
+        asm.sync_results(assessor)
+        results = list(
+            asm.results.select_related("requirement").order_by("requirement__requirement_number")
+        )
+        for idx, res in enumerate(results[: int(len(results) * fraction)]):
+            if res.compliance_status == "not_applicable":
+                continue
+            status_value = findings.get(idx, "compliant")
+            res.compliance_status = status_value
+            res.compliance_level = COMPLIANCE_LEVEL_DEFAULTS[status_value]
+            if status_value == "compliant":
+                res.evidence = "Reviewed during the audit interviews and sampling."
+            res.save()
+        asm.recalculate_counts()
+        return asm
+
+    seed_in_progress_audit(
+        "ISO 27001 certification audit : stage 2",
+        "Stage 2 certification audit by the certification body, currently under way.",
+        fw_iso, sofia, days_ago(5), days_ahead(9), 0.45,
+        {3: "minor_non_conformity", 7: "observation",
+         12: "minor_non_conformity", 18: "improvement_opportunity"},
+    )
+    seed_in_progress_audit(
+        "NIS2 annual re-assessment",
+        "Annual review of the NIS2 measures, in progress.",
+        fw_nis2, ines, days_ago(12), days_ahead(16), 0.6,
+        {1: "minor_non_conformity", 4: "improvement_opportunity"},
+    )
+    seed_in_progress_audit(
+        "GDPR processing activities review",
+        "Periodic review of the records of processing and security of processing, in progress.",
+        fw_gdpr, amelia, days_ago(22), days_ahead(3), 0.35,
+        {0: "observation", 3: "minor_non_conformity"},
+    )
+
     f_major = Finding.objects.create(
         assessment=asm_iso, finding_type="major_nc", assessor=sofia, created_by=sofia,
         description=FINDING_TEXT["A.5.26"],
