@@ -122,7 +122,7 @@ class McpServer:
             logger.debug("Invalid params for MCP method %s: %s", method, e, exc_info=True)
             if is_notification:
                 return None
-            return jsonrpc_error(INVALID_PARAMS, str(e) or "Invalid params", req_id)
+            return jsonrpc_error(INVALID_PARAMS, "Invalid params", req_id)
         except Exception as e:
             logger.exception("MCP method %s failed", method)
             if is_notification:
