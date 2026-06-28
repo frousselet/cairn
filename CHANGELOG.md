@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- WebSockets now work under `manage.py runserver` : added `daphne` (first in `INSTALLED_APPS`, and to `requirements.txt`) so the dev server runs the ASGI stack instead of plain WSGI. Without it every `/ws/...` route (live dashboard and notification consumers) returned `404`; production (uvicorn `core.asgi:application`) was unaffected.
 - Scope tree field layout / Firefox checkbox : multi-select widgets get the full-width layout, fixing the narrowed field and hidden first checkbox.
 
 ### Security

@@ -42,6 +42,10 @@ _trusted = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in _trusted.split(",") if o.strip()]
 
 INSTALLED_APPS = [
+    # "daphne" must come first so its ASGI-aware runserver replaces Django's
+    # default WSGI one (Channels 4 requirement). Without it, `manage.py
+    # runserver` serves WSGI only and every /ws/ WebSocket route returns 404.
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
