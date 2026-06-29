@@ -93,9 +93,62 @@ class ApprovableAPIMixin:
                 qs = qs.filter(workflow_state__in=states)
         return qs
 
+    def _lifecycle_transition(self, request, obj, lifecycle):
+        """Handle GET/POST transition for an entity on the standardised engine."""
+        from django.core.exceptions import ValidationError
+        from core.lifecycle import LifecycleError
+        from core.transition_messages import transition_error_detail
+
+        current = obj.workflow_state or lifecycle.initial_step.code
+
+        if request.method == "GET":
+            transitions = obj.available_transitions(user=request.user)
+            return Response({
+                "workflow": lifecycle.name,
+                "workflow_state": current,
+                "allowed_transitions": [
+                    {
+                        "target": t.target,
+                        "verb": str(t.label),
+                        "action": "update",
+                        "requires_comment": t.requires_comment,
+                    }
+                    for t in transitions
+                ],
+            })
+
+        target = request.data.get("target_state")
+        comment = request.data.get("comment") or None
+        if not target:
+            return Response(
+                {"detail": "target_state is required."},
+                status=http_status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            obj.transition_to(target, request.user, comment=comment)
+        except (LifecycleError, ValidationError) as exc:
+            return Response(
+                {"detail": transition_error_detail(exc)},
+                status=http_status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = self.get_serializer(obj)
+        return Response(serializer.data)
+
     @action(detail=True, methods=["get", "post"], url_path="transition")
     def transition(self, request, **kwargs):
         """GET: list the caller's allowed lifecycle transitions. POST: perform one."""
+        obj = self.get_object()
+
+        # Standardised lifecycle engine (model sets LIFECYCLE_NAME): list /
+        # perform the transition through the lifecycle service, so the API
+        # reflects the real step graph (e.g. a site's commissioning ->
+        # operational flow) instead of the legacy default workflow. The endpoint
+        # is already gated by the module permission (read for GET, update for
+        # POST), the enforcement point for transitions.
+        lifecycle = obj.get_lifecycle() if hasattr(obj, "get_lifecycle") else None
+        if lifecycle is not None:
+            return self._lifecycle_transition(request, obj, lifecycle)
+
         from core.workflow import (
             PermissionDeniedError,
             WorkflowError,
@@ -103,7 +156,6 @@ class ApprovableAPIMixin:
             validate_transition,
         )
 
-        obj = self.get_object()
         workflow = obj.get_workflow()
         current = obj.workflow_state or workflow.initial_state.code
         namespace = self._get_perm_namespace()

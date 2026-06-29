@@ -9,6 +9,11 @@ from .base import ScopedModel
 
 class Site(ScopedModel):
     REFERENCE_PREFIX = "SITE"
+    # Runs the standardised lifecycle engine (core/lifecycle.py): the operational
+    # flow of a physical location (Draft -> Commissioning -> Operational ->
+    # Review, with Decommissioned and Archived as the off-ramps). ``workflow_state``
+    # holds the step code. See context/lifecycles.py.
+    LIFECYCLE_NAME = "site"
 
     name = models.CharField(_("Name"), max_length=255)
     type = models.CharField(

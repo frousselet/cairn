@@ -11707,3 +11707,21 @@ msgstr "Démarrer l'évaluation"
 
 msgid "Certify"
 msgstr "Certifier"
+
+msgid "Commissioning"
+msgstr "Mise en service"
+
+msgid "Start commissioning"
+msgstr "Démarrer la mise en service"
+
+msgid "Bring into service"
+msgstr "Mettre en service"
+
+msgid "Decommission"
+msgstr "Décommissionner"
+
+msgid "Hosted support assets"
+msgstr "Actifs supports hébergés"
+
+msgid "Hosted assets"
+msgstr "Actifs hébergés"

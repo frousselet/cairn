@@ -38,7 +38,7 @@ NAV_TREE = {
     "assets:essential-asset-list": ("Assets", "Goods", "Essential assets"),
     "assets:support-asset-list": ("Assets", "Goods", "Support assets"),
     "assets:group-list": ("Assets", "Goods", "Asset groups"),
-    "assets:site-list": ("Assets", "Sites", "Sites"),
+    "assets:site-list": ("Assets", None, "Sites"),
     "assets:supplier-list": ("Assets", "Suppliers", "Suppliers"),
     "assets:supplier-type-list": ("Assets", "Suppliers", "Supplier types"),
     "assets:contract-list": ("Assets", "Documents", "Contracts"),

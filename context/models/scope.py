@@ -105,6 +105,24 @@ class Scope(BaseModel):
             parent = parent.parent_scope
         return ancestors
 
+    def get_descendants(self):
+        """Return all sub-scopes in the subtree, breadth-first (excluding self).
+
+        The ``seen`` guard keeps a (defensively) malformed cyclic hierarchy from
+        looping forever, even though ``clean()`` rejects cycles on write.
+        """
+        descendants = []
+        seen = {self.pk}
+        queue = list(self.children.all())
+        while queue:
+            scope = queue.pop(0)
+            if scope.pk in seen:
+                continue
+            seen.add(scope.pk)
+            descendants.append(scope)
+            queue.extend(scope.children.all())
+        return descendants
+
     @property
     def full_path(self):
         """Full hierarchical path (e.g. Group / Subsidiary / Site)."""

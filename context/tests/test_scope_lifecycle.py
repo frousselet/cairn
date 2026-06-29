@@ -185,6 +185,45 @@ def test_scope_detail_renders_graph_stepper(client, django_user_model):
     assert ctx["kpi_essential_assets"] == 0
 
 
+def test_scope_map_plots_descendant_scope_sites(client, django_user_model):
+    """The hero map payload covers the scope's own sites plus its sub-scopes'."""
+    from context.tests.factories import SiteFactory
+
+    _superuser_client(client, django_user_model)
+    root = ScopeFactory()
+    child = ScopeFactory(parent_scope=root)
+    grandchild = ScopeFactory(parent_scope=child)
+
+    own = SiteFactory(name="Own", address="1 rue A, Lyon")
+    sub = SiteFactory(name="Sub", address="2 rue B, Paris")
+    deep = SiteFactory(name="Deep", address="3 rue C, Lille")
+    no_addr = SiteFactory(name="NoAddr", address="")
+    root.included_sites.add(own)
+    child.included_sites.add(sub, no_addr)
+    grandchild.included_sites.add(deep)
+
+    resp = client.get(reverse("context:scope-detail", kwargs={"pk": root.pk}))
+    assert resp.status_code == 200
+    ctx = resp.context
+    # The "Included sites" badges stay the scope's own direct sites only.
+    assert list(ctx["included_sites"]) == [own]
+    # The map footprint aggregates own + descendant sites that have an address.
+    map_names = {s["name"] for s in json.loads(ctx["scope_sites_json"])}
+    assert map_names == {"Own", "Sub", "Deep"}
+    assert ctx["has_site_map"] is True
+
+
+def test_scope_get_descendants_breadth_first():
+    root = ScopeFactory()
+    child_a = ScopeFactory(parent_scope=root)
+    child_b = ScopeFactory(parent_scope=root)
+    grandchild = ScopeFactory(parent_scope=child_a)
+    descendants = set(root.get_descendants())
+    assert descendants == {child_a, child_b, grandchild}
+    # A leaf scope has no descendants.
+    assert grandchild.get_descendants() == []
+
+
 def test_scope_with_stale_step_renders_gracefully(client, django_user_model):
     _superuser_client(client, django_user_model)
     scope = ScopeFactory()

@@ -13,9 +13,11 @@ from context.constants import (
     SwotQuadrant,
     SwotStrategyQuadrant,
 )
+from context.constants import SiteType
 from context.models.issue import Issue
 from context.models.objective import Objective
 from context.models.scope import Scope
+from context.models.site import Site
 from context.models.swot import SwotAnalysis, SwotItem, SwotStrategy
 
 
@@ -25,6 +27,20 @@ class ScopeFactory(factory.django.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: f"Scope {n}")
     description = "Test scope"
+
+
+class SiteFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Site
+
+    name = factory.Sequence(lambda n: f"Site {n}")
+    type = SiteType.OFFICE
+
+    @factory.post_generation
+    def scopes(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.scopes.add(*extracted)
 
 
 class IssueFactory(factory.django.DjangoModelFactory):

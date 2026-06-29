@@ -1471,7 +1471,7 @@ class SiteListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
         return result
 
 
-class SiteDetailView(LoginRequiredMixin, PermissionRequiredMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class SiteDetailView(LoginRequiredMixin, PermissionRequiredMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Site
     template_name = "assets/site_detail.html"
     context_object_name = "site"
@@ -1479,12 +1479,29 @@ class SiteDetailView(LoginRequiredMixin, PermissionRequiredMixin, ApprovalContex
     approve_url_name = "assets:site-approve"
 
     def get_queryset(self):
-        return super().get_queryset().select_related("parent_site")
+        return super().get_queryset().select_related("parent_site").prefetch_related(
+            "children",
+            "asset_dependencies__support_asset",
+            "supplier_dependencies__supplier",
+        )
 
     def get_context_data(self, **kwargs):
+        from django.urls import reverse
+
         ctx = super().get_context_data(**kwargs)
-        ctx["ancestors"] = self.object.get_ancestors()
-        ctx["children"] = self.object.children.exclude(workflow_state="archived")
+        site = self.object
+        ancestors = site.get_ancestors()
+        ctx["ancestors"] = ancestors
+        # Site ancestry for the page_header breadcrumb (Sites > parent > ... >
+        # current): each ancestor links to its detail page.
+        ctx["site_breadcrumb"] = [
+            {"label": a.name, "url": reverse("assets:site-detail", kwargs={"pk": a.pk})}
+            for a in ancestors
+        ]
+        ctx["children"] = site.children.exclude(workflow_state="archived")
+        # Related dependencies surfaced on the detail page and counted in the rail.
+        ctx["asset_dependencies"] = site.asset_dependencies.all()
+        ctx["supplier_dependencies"] = site.supplier_dependencies.all()
         return ctx
 
 
