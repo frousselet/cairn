@@ -12,7 +12,9 @@
     .ob-count { font-size: 1.0625rem; font-weight: 700; color: var(--text-primary); letter-spacing: normal; }
     .ob-count .ob-pct { color: var(--text-muted); font-weight: 550; }
     /* Clear, legible migration / phase name. */
-    .ob-step { margin-top: .5rem; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: .82rem; color: var(--text-secondary); word-break: break-word; min-height: 1.1rem; }
+    .ob-step { margin-top: .5rem; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: .72rem; color: var(--text-secondary); word-break: break-word; min-height: 1rem; }
+    /* Reassuring hint that the user can leave and come back. */
+    .ob-hint { margin-top: 1.25rem; font-size: .85rem; color: var(--text-muted); }
     @media (prefers-reduced-motion: reduce) { .ob-bar-fill { transition: none; } }
 {% endblock %}
 
@@ -24,6 +26,7 @@
       <div class="ob-bar-track"><div class="ob-bar-fill" id="ob-bar"></div></div>
       <div class="ob-count" id="ob-count">{% trans "Preparing..." %}</div>
       <div class="ob-step" id="ob-step"></div>
+      <p class="ob-hint">{% trans "It may take a while. You can close this window and come back later." %}</p>
     </div>
 
     <div id="ob-error" style="display:none">

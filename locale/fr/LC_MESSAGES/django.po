@@ -11493,11 +11493,29 @@ msgstr "et %(extra)s de plus"
 msgid "Start from scratch"
 msgstr "Partir de zéro"
 
-msgid "Create your administrator account and begin with an empty instance."
-msgstr "Créez votre compte administrateur et démarrez avec une instance vide."
+msgid "Configure your company, create your administrator account, and begin with an empty instance."
+msgstr "Configurez votre entreprise, créez votre compte administrateur et démarrez avec une instance vide."
 
-msgid "Create admin account"
-msgstr "Créer le compte administrateur"
+msgid "Set up my instance"
+msgstr "Configurer mon instance"
+
+msgid "Set up your company and your administrator account."
+msgstr "Configurez votre entreprise et votre compte administrateur."
+
+msgid "Your company"
+msgstr "Votre entreprise"
+
+msgid "All optional. You can change any of this later in Settings."
+msgstr "Tout est facultatif. Vous pourrez modifier ces éléments plus tard dans les paramètres."
+
+msgid "Add a logo"
+msgstr "Ajouter un logo"
+
+msgid "Administrator account"
+msgstr "Compte administrateur"
+
+msgid "Continue"
+msgstr "Continuer"
 
 msgid "Start with sample data"
 msgstr "Démarrer avec des données d'exemple"
@@ -11525,6 +11543,11 @@ msgstr "Chargement des données d'exemple"
 
 msgid "Preparing..."
 msgstr "Préparation..."
+
+msgid "It may take a while. You can close this window and come back later."
+msgstr ""
+"Cela peut prendre un moment. Vous pouvez fermer cette fenêtre et revenir plus "
+"tard."
 
 msgid "Something went wrong"
 msgstr "Une erreur est survenue"

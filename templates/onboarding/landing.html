@@ -76,11 +76,11 @@
       <div class="ob-tile{% if not can_initialise %} disabled{% endif %}">
         <i class="bi bi-rocket-takeoff ob-tile-icon"></i>
         <div class="ob-tile-title">{% trans "Start from scratch" %}</div>
-        <div class="ob-tile-desc">{% trans "Create your administrator account and begin with an empty instance." %}</div>
+        <div class="ob-tile-desc">{% trans "Configure your company, create your administrator account, and begin with an empty instance." %}</div>
         {% if can_initialise %}
-          <a href="{% url 'onboarding:scratch' %}" class="btn-outline-accent text-center text-decoration-none">{% trans "Create admin account" %}</a>
+          <a href="{% url 'onboarding:scratch' %}" class="btn-outline-accent text-center text-decoration-none">{% trans "Set up my instance" %}</a>
         {% else %}
-          <button class="btn-outline-accent" disabled>{% trans "Create admin account" %}</button>
+          <button class="btn-outline-accent" disabled>{% trans "Set up my instance" %}</button>
         {% endif %}
       </div>
 

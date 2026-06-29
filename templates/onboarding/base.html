@@ -87,22 +87,14 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #1E3A8A 0%, #1E2E5E 100%);
+      background: #1E3A8A;
       padding: 1.5rem;
       position: relative;
       overflow-x: hidden;
       color: var(--text-primary);
     }
-    body::before {
-      content: '';
-      position: absolute;
-      top: -30%; right: -20%;
-      width: 60%; height: 80%;
-      background: radial-gradient(circle, rgba(255,255,255,.06) 0%, transparent 70%);
-      pointer-events: none;
-    }
     [data-bs-theme="dark"] body {
-      background: linear-gradient(135deg, #0F1011 0%, #16181B 50%, #1C1F23 100%);
+      background: #0F1011;
     }
     .ob-wrapper {
       width: 100%;
@@ -110,6 +102,10 @@
       position: relative;
       z-index: 1;
       animation: obFadeIn .5s var(--ease-out-expo);
+      /* Lift the content a touch above the optical centre for a more natural
+         placement (a centred flex item is raised by half of its bottom margin),
+         while keeping the composition balanced. */
+      margin-bottom: clamp(4rem, 18vh, 10rem);
     }
     @keyframes obFadeIn {
       from { opacity: 0; transform: translateY(12px); }

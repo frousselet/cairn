@@ -159,6 +159,15 @@ class TestScratch:
         "password2": "Sup3rSecret!pw",
     }
 
+    def test_get_renders_company_and_admin_steps(self, client):
+        resp = client.get(reverse("onboarding:scratch"))
+        assert resp.status_code == 200
+        # Both wizard steps are present in the single page / single form.
+        assert b'id="ob-panel-1"' in resp.content
+        assert b'id="ob-panel-2"' in resp.content
+        assert b'id="id_name"' in resp.content        # company step field
+        assert b'id="id_email"' in resp.content        # admin step field
+
     def test_creates_superuser_and_signs_in(self, client):
         resp = client.post(reverse("onboarding:scratch"), self.VALID)
         assert resp.status_code == 302
@@ -180,6 +189,38 @@ class TestScratch:
         assert resp.status_code == 302
         assert resp.url == "/"
         assert User.objects.count() == 1
+
+    def test_company_settings_saved_with_admin(self, client):
+        from accounts.models import CompanySettings
+
+        data = dict(self.VALID, name="Voltara Energy", app_name="Voltara GRC", accent_color="2563EB")
+        resp = client.post(reverse("onboarding:scratch"), data)
+        assert resp.status_code == 302
+        assert resp.url == "/"
+        company = CompanySettings.objects.get()
+        assert company.name == "Voltara Energy"
+        assert company.app_name == "Voltara GRC"
+        assert company.accent_color == "#2563EB"  # normalised by the form
+
+    def test_nothing_persisted_when_admin_invalid(self, client):
+        from accounts.models import CompanySettings
+
+        # Valid company step, but the passwords do not match: the whole submit is
+        # rejected and neither the admin nor the company settings are written.
+        data = dict(self.VALID, password2="different", name="Voltara Energy")
+        resp = client.post(reverse("onboarding:scratch"), data)
+        assert resp.status_code == 200
+        assert User.objects.count() == 0
+        assert CompanySettings.objects.count() == 0
+
+    def test_invalid_accent_colour_rejected(self, client):
+        from accounts.models import CompanySettings
+
+        data = dict(self.VALID, accent_color="not-a-colour")
+        resp = client.post(reverse("onboarding:scratch"), data)
+        assert resp.status_code == 200
+        assert User.objects.count() == 0
+        assert CompanySettings.objects.count() == 0
 
 
 @pytest.mark.django_db

@@ -29,7 +29,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Then open [http://localhost:8000](http://localhost:8000). On a fresh database a **first-run onboarding screen** greets you: it shows the database migration state and lets you either **start from scratch** (create the first administrator account) or **start with sample data** (load the demo dataset behind a live progress bar, then sign you in automatically). See [first-run onboarding](docs/modules/m0-accounts/onboarding.md). You can still create an admin from the CLI instead (`docker compose exec web python manage.py createsuperuser`).
+Then open [http://localhost:8000](http://localhost:8000). On a fresh database a **first-run onboarding screen** greets you: it shows the database migration state and lets you either **start from scratch** (a two-step wizard: configure your company, then create the first administrator account - everything is sent in a single request, so nothing is written to the database until the admin exists) or **start with sample data** (load the demo dataset behind a live progress bar, then sign you in automatically). See [first-run onboarding](docs/modules/m0-accounts/onboarding.md). You can still create an admin from the CLI instead (`docker compose exec web python manage.py createsuperuser`).
 
 Prefer pure Python for debugging? Cairn also runs with no Docker and no external service using [mise](https://mise.jdx.dev/) (SQLite + in-memory channels), with ready-to-use VS Code launch configurations - see [running in pure Python for debugging](docs/installation.md#option-3--run-in-pure-python-for-debugging-mise).
 

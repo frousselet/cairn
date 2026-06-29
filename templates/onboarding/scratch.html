@@ -1,49 +1,281 @@
 {% extends "onboarding/base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Create administrator - Cairn" %}{% endblock %}
+{% block title %}{% trans "Set up Cairn" %}{% endblock %}
+
+{% block extra_style %}
+    .ob-wiz { display: grid; grid-template-columns: 1fr 220px; gap: 1.5rem; align-items: start; }
+    @media (max-width: 619.98px) { .ob-wiz { grid-template-columns: 1fr; } }
+    /* ── Side rail: vertical stepper + actions ─────────────────────── */
+    .ob-rail { position: sticky; top: 1rem; display: flex; flex-direction: column; gap: 1.25rem; }
+    @media (max-width: 619.98px) { .ob-rail { position: static; order: -1; } }
+    .ob-stepper { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .25rem; }
+    @media (max-width: 619.98px) { .ob-stepper { flex-direction: row; gap: 1rem; } }
+    .ob-stepper li { display: flex; align-items: center; gap: .625rem; padding: .5rem .625rem; border-radius: var(--radius-sm); color: var(--text-muted); font-size: .8125rem; font-weight: 550; }
+    .ob-stepper li.active { background: var(--accent-soft); color: var(--accent); }
+    .ob-stepper li.done { color: var(--text-secondary); }
+    .ob-stepper .sd { flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; background: var(--surface-subtle); border: 1px solid var(--border-light); color: var(--text-muted); }
+    .ob-stepper li.active .sd { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .ob-stepper li.done .sd { background: var(--ok); border-color: var(--ok); color: #fff; }
+    .ob-actions { display: flex; flex-direction: column; gap: .5rem; }
+    .ob-actions .btn-accent, .ob-actions .ob-btn-ghost { width: 100%; text-align: center; }
+    .ob-btn-ghost { background: transparent; border: 1px solid var(--border-light); color: var(--text-secondary); border-radius: var(--radius-sm); padding: .625rem 1rem; font-weight: 600; font-size: .8125rem; transition: all .2s var(--ease-out-expo); text-decoration: none; }
+    .ob-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    /* ── Form bits ─────────────────────────────────────────────────── */
+    .ob-panel { display: none; }
+    .ob-panel.active { display: block; }
+    .ob-hint { font-size: .72rem; color: var(--text-muted); margin-top: .25rem; }
+    .ob-logo-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+    .ob-logo-prev { width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: contain; border: 1px solid var(--border-light); background: var(--surface-subtle); padding: 4px; }
+    .ob-logo-ph { width: 64px; height: 64px; border-radius: var(--radius-md); background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid var(--border-light); }
+    .ob-logo-cam { position: absolute; bottom: -4px; right: -4px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: .65rem; border: 2px solid var(--surface); }
+    .form-check-label { font-size: .8125rem; color: var(--text-secondary); }
+    .form-text { font-size: .72rem; color: var(--text-muted); margin-top: .25rem; }
+    .ob-color-picker { width: 2.5rem; height: 2.375rem; padding: .125rem; border: 1px solid var(--border-light); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; flex-shrink: 0; }
+{% endblock %}
 
 {% block content %}
-  <p class="ob-subtitle">{% trans "Create the first administrator account." %}</p>
+  <p class="ob-subtitle">{% trans "Set up your company and your administrator account." %}</p>
 
-  <div class="ob-card" style="max-width:460px;margin:0 auto;">
-    {% if form.non_field_errors %}
-      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-    {% endif %}
+  <div class="ob-card">
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    {% if company_form.non_field_errors %}<div class="alert alert-danger">{{ company_form.non_field_errors }}</div>{% endif %}
 
-    <form method="post" action="{% url 'onboarding:scratch' %}">
+    <form method="post" action="{% url 'onboarding:scratch' %}" enctype="multipart/form-data" id="ob-form">
       {% csrf_token %}
-      <div class="mb-3">
-        <label for="id_email" class="form-label">{% trans "Email address" %}</label>
-        {{ form.email }}
-        {% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>{% endif %}
-      </div>
-      <div class="row g-3 mb-3">
-        <div class="col-sm-6">
-          <label for="id_first_name" class="form-label">{% trans "First name" %}</label>
-          {{ form.first_name }}
-          {% if form.first_name.errors %}<div class="invalid-feedback d-block">{{ form.first_name.errors.0 }}</div>{% endif %}
+      {{ company_form.remove_logo }}
+      {{ company_form.logo_resized }}
+
+      <div class="ob-wiz">
+        {# ── Panels ──────────────────────────────────────────────── #}
+        <div>
+          {# Step 1 : Company #}
+          <section class="ob-panel" id="ob-panel-1" aria-labelledby="ob-h-1">
+            <h1 class="ob-h1 mb-1" id="ob-h-1">{% trans "Your company" %}</h1>
+            <p class="ob-hint mb-3">{% trans "All optional. You can change any of this later in Settings." %}</p>
+
+            <div class="ob-logo-row">
+              <div class="position-relative" style="flex-shrink:0">
+                <img id="ob-logo-prev" class="ob-logo-prev" alt="" style="display:none">
+                <div id="ob-logo-ph" class="ob-logo-ph"><i class="bi bi-building"></i></div>
+                <label for="{{ company_form.logo_file.id_for_label }}" class="ob-logo-cam" title="{% trans 'Add a logo' %}"><i class="bi bi-camera-fill"></i></label>
+                <div class="d-none">{{ company_form.logo_file }}</div>
+              </div>
+              <div class="form-check form-switch m-0">
+                {{ company_form.use_logo_as_app_brand }}
+                <label class="form-check-label" for="{{ company_form.use_logo_as_app_brand.id_for_label }}">{{ company_form.use_logo_as_app_brand.label }}</label>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ company_form.name.id_for_label }}" class="form-label">{{ company_form.name.label }}</label>
+              {{ company_form.name }}
+              {% if company_form.name.errors %}<div class="invalid-feedback d-block">{{ company_form.name.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+              <label for="{{ company_form.app_name.id_for_label }}" class="form-label">{{ company_form.app_name.label }}</label>
+              {{ company_form.app_name }}
+              <div class="form-text">{{ company_form.app_name.help_text }}</div>
+              {% if company_form.app_name.errors %}<div class="invalid-feedback d-block">{{ company_form.app_name.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+              <label for="{{ company_form.assistant_name.id_for_label }}" class="form-label">{{ company_form.assistant_name.label }}</label>
+              {{ company_form.assistant_name }}
+              <div class="form-text">{{ company_form.assistant_name.help_text }}</div>
+              {% if company_form.assistant_name.errors %}<div class="invalid-feedback d-block">{{ company_form.assistant_name.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+              <label for="{{ company_form.accent_color.id_for_label }}" class="form-label">{{ company_form.accent_color.label }}</label>
+              <div class="d-flex align-items-center gap-2">
+                <input type="color" id="ob-accent-picker" class="ob-color-picker" value="{{ company_form.instance.accent_color|default:'#1E3A8A' }}" aria-label="{% trans 'Pick accent colour' %}">
+                <div style="max-width:11rem">{{ company_form.accent_color }}</div>
+              </div>
+              <div class="form-text">{{ company_form.accent_color.help_text }}</div>
+              {% if company_form.accent_color.errors %}<div class="invalid-feedback d-block">{{ company_form.accent_color.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="mb-0">
+              <label for="{{ company_form.address.id_for_label }}" class="form-label">{{ company_form.address.label }}</label>
+              {{ company_form.address }}
+              {% if company_form.address.errors %}<div class="invalid-feedback d-block">{{ company_form.address.errors.0 }}</div>{% endif %}
+            </div>
+          </section>
+
+          {# Step 2 : Administrator #}
+          <section class="ob-panel" id="ob-panel-2" aria-labelledby="ob-h-2">
+            <h1 class="ob-h1 mb-3" id="ob-h-2">{% trans "Administrator account" %}</h1>
+            <div class="mb-3">
+              <label for="id_email" class="form-label">{% trans "Email address" %}</label>
+              {{ form.email }}
+              {% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label for="id_first_name" class="form-label">{% trans "First name" %}</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}<div class="invalid-feedback d-block">{{ form.first_name.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-sm-6">
+                <label for="id_last_name" class="form-label">{% trans "Last name" %}</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}<div class="invalid-feedback d-block">{{ form.last_name.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="id_password1" class="form-label">{% trans "Password" %}</label>
+              {{ form.password1 }}
+              {% if form.password1.errors %}<div class="invalid-feedback d-block">{{ form.password1.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="mb-0">
+              <label for="id_password2" class="form-label">{% trans "Confirm password" %}</label>
+              {{ form.password2 }}
+              {% if form.password2.errors %}<div class="invalid-feedback d-block">{{ form.password2.errors.0 }}</div>{% endif %}
+            </div>
+          </section>
         </div>
-        <div class="col-sm-6">
-          <label for="id_last_name" class="form-label">{% trans "Last name" %}</label>
-          {{ form.last_name }}
-          {% if form.last_name.errors %}<div class="invalid-feedback d-block">{{ form.last_name.errors.0 }}</div>{% endif %}
-        </div>
-      </div>
-      <div class="mb-3">
-        <label for="id_password1" class="form-label">{% trans "Password" %}</label>
-        {{ form.password1 }}
-        {% if form.password1.errors %}<div class="invalid-feedback d-block">{{ form.password1.errors.0 }}</div>{% endif %}
-      </div>
-      <div class="mb-3">
-        <label for="id_password2" class="form-label">{% trans "Confirm password" %}</label>
-        {{ form.password2 }}
-        {% if form.password2.errors %}<div class="invalid-feedback d-block">{{ form.password2.errors.0 }}</div>{% endif %}
-      </div>
-      <div class="d-flex align-items-center justify-content-between mt-4">
-        <a href="{% url 'onboarding:landing' %}" class="ob-link"><i class="bi bi-arrow-left me-1"></i>{% trans "Back" %}</a>
-        <button type="submit" class="btn-accent">{% trans "Create and sign in" %}</button>
+
+        {# ── Side rail ───────────────────────────────────────────── #}
+        <aside class="ob-rail">
+          <ol class="ob-stepper" id="ob-stepper">
+            <li data-step="1" id="ob-dot-1"><span class="sd">1</span>{% trans "Company" %}</li>
+            <li data-step="2" id="ob-dot-2"><span class="sd">2</span>{% trans "Administrator" %}</li>
+          </ol>
+          <div class="ob-actions">
+            {# Step 1 actions #}
+            <div class="ob-act" data-act="1">
+              <button type="button" class="btn-accent" onclick="obGo(2)">{% trans "Continue" %}<i class="bi bi-arrow-right ms-1"></i></button>
+              <a href="{% url 'onboarding:landing' %}" class="ob-btn-ghost d-block">{% trans "Back to setup" %}</a>
+            </div>
+            {# Step 2 actions #}
+            <div class="ob-act" data-act="2" style="display:none">
+              <button type="submit" class="btn-accent">{% trans "Create and sign in" %}</button>
+              <button type="button" class="ob-btn-ghost" onclick="obGo(1)"><i class="bi bi-arrow-left me-1"></i>{% trans "Back" %}</button>
+            </div>
+          </div>
+        </aside>
       </div>
     </form>
   </div>
+{% endblock %}
+
+{% block extra_script %}
+  {% include "includes/image_resize.html" %}
+  <script>
+  (function () {
+    var form = document.getElementById('ob-form');
+    var STORE_KEY = 'cairn-onboarding-company-v1';
+
+    // ── Step navigation ────────────────────────────────────────────
+    function setStep(n) {
+      for (var i = 1; i <= 2; i++) {
+        var panel = document.getElementById('ob-panel-' + i);
+        var dot = document.getElementById('ob-dot-' + i);
+        var act = document.querySelector('.ob-act[data-act="' + i + '"]');
+        if (panel) panel.classList.toggle('active', i === n);
+        if (act) act.style.display = (i === n) ? '' : 'none';
+        if (dot) {
+          dot.classList.toggle('active', i === n);
+          dot.classList.toggle('done', i < n);
+        }
+      }
+      try { sessionStorage.setItem(STORE_KEY + ':step', String(n)); } catch (e) {}
+    }
+    // Let the step dots act as navigation too.
+    document.getElementById('ob-stepper').addEventListener('click', function (e) {
+      var li = e.target.closest('li[data-step]');
+      if (li) setStep(parseInt(li.getAttribute('data-step'), 10));
+    });
+    window.obGo = function (n) {
+      setStep(n);
+      var first = document.querySelector('#ob-panel-' + n + ' input:not([type=hidden]), #ob-panel-' + n + ' textarea');
+      if (first) first.focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // ── Browser-local persistence (no DB until the final submit) ───
+    // Passwords are deliberately never written to storage.
+    function persistField(el) {
+      if (!el.name || el.type === 'file' || el.type === 'password' || el.name === 'csrfmiddlewaretoken') return false;
+      return true;
+    }
+    function persist() {
+      var data = {};
+      form.querySelectorAll('input, select, textarea').forEach(function (el) {
+        if (!persistField(el)) return;
+        data[el.name] = (el.type === 'checkbox') ? el.checked : el.value;
+      });
+      try { sessionStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+    function restore() {
+      var raw;
+      try { raw = sessionStorage.getItem(STORE_KEY); } catch (e) { return; }
+      if (!raw) return;
+      var data;
+      try { data = JSON.parse(raw); } catch (e) { return; }
+      Object.keys(data).forEach(function (name) {
+        var el = form.querySelector('[name="' + (window.CSS && CSS.escape ? CSS.escape(name) : name) + '"]');
+        if (!el || !persistField(el)) return;
+        if (el.type === 'checkbox') el.checked = !!data[name];
+        else el.value = data[name];
+      });
+    }
+    form.addEventListener('input', persist);
+    form.addEventListener('change', persist);
+    // Clear the local copy once it has been sent (or once an admin exists).
+    form.addEventListener('submit', function () {
+      try { sessionStorage.removeItem(STORE_KEY); sessionStorage.removeItem(STORE_KEY + ':step'); } catch (e) {}
+    });
+
+    // ── Logo upload (resize client-side into the hidden field) ─────
+    var logoInput = document.getElementById('{{ company_form.logo_file.id_for_label }}');
+    var logoResized = document.getElementById('id_logo_resized');
+    var removeLogo = document.getElementById('id_remove_logo');
+    function showLogo(dataUri) {
+      var img = document.getElementById('ob-logo-prev');
+      var ph = document.getElementById('ob-logo-ph');
+      if (dataUri) {
+        img.src = dataUri; img.style.display = ''; ph.style.display = 'none';
+      } else {
+        img.removeAttribute('src'); img.style.display = 'none'; ph.style.display = '';
+      }
+    }
+    logoInput.addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      if (removeLogo) removeLogo.value = '';
+      var hide = showImageUploadSpinner(document.getElementById('ob-logo-ph').style.display === 'none'
+        ? document.getElementById('ob-logo-prev') : document.getElementById('ob-logo-ph'));
+      resizeImageFile(file, 128, function (dataUri) {
+        logoResized.value = dataUri;
+        showLogo(dataUri);
+        persist();
+        hide();
+      });
+    });
+
+    // ── Accent colour: keep the picker and the hex field in sync ───
+    var picker = document.getElementById('ob-accent-picker');
+    var hex = document.getElementById('{{ company_form.accent_color.id_for_label }}');
+    if (picker && hex) {
+      picker.addEventListener('input', function () { hex.value = picker.value.toUpperCase(); persist(); });
+      hex.addEventListener('input', function () {
+        var v = hex.value.trim();
+        if (/^#?[0-9A-Fa-f]{6}$/.test(v)) picker.value = (v.charAt(0) === '#' ? v : '#' + v);
+      });
+    }
+
+    // ── Boot: restore local values, then show the right step ───────
+    restore();
+    if (logoResized && logoResized.value) showLogo(logoResized.value);
+    if (picker && hex && hex.value) {
+      var hv = hex.value.trim();
+      if (/^#?[0-9A-Fa-f]{6}$/.test(hv)) picker.value = (hv.charAt(0) === '#' ? hv : '#' + hv);
+    }
+    var serverStep = parseInt('{{ active_step|default:1 }}', 10);
+    var savedStep = null;
+    try { savedStep = parseInt(sessionStorage.getItem(STORE_KEY + ':step'), 10); } catch (e) {}
+    // A server-side validation error wins (it points at the step to fix);
+    // otherwise resume where the operator left off.
+    setStep(serverStep === 2 ? 2 : (savedStep === 2 ? 2 : 1));
+  })();
+  </script>
 {% endblock %}
