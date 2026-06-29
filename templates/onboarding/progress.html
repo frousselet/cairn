@@ -12,7 +12,9 @@
     .ob-count { font-size: 1.0625rem; font-weight: 700; color: var(--text-primary); letter-spacing: normal; }
     .ob-count .ob-pct { color: var(--text-muted); font-weight: 550; }
     /* Clear, legible migration / phase name. */
-    .ob-step { margin-top: .5rem; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: .72rem; color: var(--text-secondary); word-break: break-word; min-height: 1rem; }
+    /* Single line: a long migration name is truncated with an ellipsis rather
+       than wrapping. */
+    .ob-step { margin-top: .5rem; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: .72rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; min-height: 1rem; }
     /* Reassuring hint that the user can leave and come back. */
     .ob-hint { margin-top: 1.25rem; font-size: .85rem; color: var(--text-muted); }
     @media (prefers-reduced-motion: reduce) { .ob-bar-fill { transition: none; } }
@@ -75,12 +77,13 @@
         count.innerHTML = TR_STEP + ' ' + data.current + ' ' + TR_OF + ' ' + data.total +
                           ' <span class="ob-pct">(' + pct + '%)</span>';
       }
-      if (data.label) { step.textContent = data.label; }
+      if (data.label) { step.textContent = data.label; step.title = data.label; }
       if (data.status === 'done') {
         finished = true;
         bar.style.width = '100%';
         count.textContent = '{{ tr_finishing|escapejs }}';
         step.textContent = '';
+        step.removeAttribute('title');
         setTimeout(function () { window.location.href = completeUrl; }, 600);
       }
     }
