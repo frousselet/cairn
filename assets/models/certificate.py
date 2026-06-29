@@ -120,7 +120,6 @@ class Certificate(ScopedModel):
         if self.expiry_date and self.status in (
             CertificateStatus.VALID,
             CertificateStatus.UNDER_RENEWAL,
-            CertificateStatus.SUSPENDED,
         ):
             return self.expiry_date <= timezone.now().date()
         return False
