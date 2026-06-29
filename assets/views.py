@@ -321,7 +321,7 @@ class ContractListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
         return result
 
 
-class ContractDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class ContractDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Contract
     template_name = "assets/contract_detail.html"
     context_object_name = "contract"

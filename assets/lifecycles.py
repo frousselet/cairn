@@ -105,3 +105,54 @@ def _build_supplier_lifecycle() -> Lifecycle:
 
 
 SUPPLIER_LIFECYCLE = register_lifecycle(_build_supplier_lifecycle())
+
+
+# ── Contract lifecycle ──────────────────────────────────────────────────────
+#
+# A contract moves Draft -> Active, can Expire (and be Renewed back to Active),
+# and can be Terminated from any state (the Archived exit; terminated contracts
+# stay in reports for audit history). The step codes are exactly the
+# ``ContractStatus`` values, so the legacy ``status`` field stays coherent with
+# ``workflow_state`` via ``sync_legacy_status`` in ``Contract.save()``.
+CONTRACT_LIFECYCLE_NAME = "contract"
+
+
+def _build_contract_lifecycle() -> Lifecycle:
+    steps = [
+        draft_step(),
+        Step(
+            "active",
+            _("Active"),
+            kind=StepKind.INTERMEDIATE,
+            counts_in_reports=True,
+            linkable=True,
+            tone="success",
+        ),
+        Step(
+            "expired",
+            _("Expired"),
+            kind=StepKind.INTERMEDIATE,
+            counts_in_reports=True,
+            tone="warning",
+        ),
+        # Terminated is the Archived exit, but kept in reports for traceability.
+        Step(
+            "terminated",
+            _("Terminated"),
+            kind=StepKind.ARCHIVED,
+            counts_in_reports=True,
+            tone="dark",
+        ),
+    ]
+    transitions = [
+        Transition("active", source="draft", label=_("Activate")),
+        Transition("expired", source="active", label=_("Expire")),
+        Transition("active", source="expired", label=_("Renew")),
+        Transition(
+            "terminated", source=ANY, label=_("Terminate"), requires_comment=True
+        ),
+    ]
+    return Lifecycle(CONTRACT_LIFECYCLE_NAME, steps, transitions, layout="line")
+
+
+CONTRACT_LIFECYCLE = register_lifecycle(_build_contract_lifecycle())
