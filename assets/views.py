@@ -334,8 +334,11 @@ class ContractDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
         ctx["amendments"] = self.object.amendments.prefetch_related(
             "suppliers", "clients"
         )
-        ctx["suppliers"] = self.object.suppliers.all()
-        ctx["clients"] = self.object.clients.all()
+        suppliers = self.object.suppliers.all()
+        clients = self.object.clients.all()
+        ctx["suppliers"] = suppliers
+        ctx["clients"] = clients
+        ctx["party_count"] = suppliers.count() + clients.count()
         ctx["superseded_by"] = self.object.superseded_by.all()
         return ctx
 

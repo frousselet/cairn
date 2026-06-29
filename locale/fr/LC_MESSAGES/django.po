@@ -11429,3 +11429,15 @@ msgstr "Annule et remplace un autre contrat"
 
 msgid "The contract or amendment this one cancels and replaces."
 msgstr "Le contrat ou l'avenant que celui-ci annule et remplace."
+
+msgid "This contract has been cancelled and replaced"
+msgstr "Ce contrat a été annulé et remplacé"
+
+msgid "Term"
+msgstr "Période"
+
+msgid "No party linked yet."
+msgstr "Aucune partie liée pour le moment."
+
+msgid "PDF"
+msgstr "PDF"
