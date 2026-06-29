@@ -875,6 +875,7 @@ References are read-only and sequential. Reference prefixes by entity:
   Role=ROLE, Activity=ACTV, Site=SITE, Indicator=INDI,
   EssentialAsset=EAST, SupportAsset=SAST, AssetDependency=ADEP, AssetGroup=AGRP,
   Supplier=SUPP, SupplierType=SPTY, SupplierDependency=SDEP, Contract=CTRT,
+  Certificate=CERT,
   SiteAssetDependency=SADP, SiteSupplierDependency=SSDP,
   Framework=FRMW, Section=SECT, Requirement=REQT, ComplianceAssessment=CASS,
   Finding=(NCMAJ/NCMIN/OBS/OA/STR per type), ActionPlan=ACTPL,
@@ -1497,6 +1498,7 @@ assets.group.read/create/update/delete/approve
 assets.supplier.read/create/update/delete/approve
 assets.supplier_dependency.read/create/update/delete
 assets.contract.read/create/update/delete/approve
+assets.certificate.read/create/update/delete/approve
 
 ### Compliance (compliance.*)
 compliance.framework.read/create/update/delete/approve
@@ -2380,6 +2382,7 @@ def _register_assets_tools(server):
     AssetDependency = _get_model("assets", "AssetDependency")
     AssetGroup = _get_model("assets", "AssetGroup")
     Contract = _get_model("assets", "Contract")
+    Certificate = _get_model("assets", "Certificate")
     Supplier = _get_model("assets", "Supplier")
     SupplierDependency = _get_model("assets", "SupplierDependency")
     SiteAssetDependency = _get_model("assets", "SiteAssetDependency")
@@ -2706,6 +2709,63 @@ def _register_assets_tools(server):
     # NB: the attached PDF (Contract.file_content) cannot be uploaded through MCP
     # (binary payloads are out of scope for the JSON transport). Attach or replace
     # the document via the web UI; list_/get_contract expose file_name only.
+
+    certificate_fields = ["id", "reference", "label", "framework",
+                          "status", "certificate_number", "issuer",
+                          "issue_date", "expiry_date", "scope_statement",
+                          "scopes", "sites", "supersedes",
+                          "file_name", "notes", "is_approved", "created_at"]
+    certificate_writable = ["label", "status",
+                           "certificate_number", "issuer", "issue_date",
+                           "expiry_date", "scope_statement", "notes",
+                           "framework_id", "supersedes_id", "scope_ids", "site_ids"]
+
+    _register_crud(server, "certificate", Certificate, "assets.certificate",
+                   list_fields=certificate_fields,
+                   writable_fields=certificate_writable,
+                   search_fields=["reference", "label", "issuer", "certificate_number", "notes"],
+                   filters=["status"],
+                   required_fields=["scope_ids", "framework_id"],
+                   m2m_fields={
+                       "scope_ids": "scopes",
+                       "site_ids": "sites",
+                   },
+                   field_overrides={
+                       "notes": _html_field("Notes"),
+                       "framework_id": {
+                           "type": "string",
+                           "description": "UUID of the framework (référentiel) this certificate "
+                                          "attests compliance to (use list_frameworks). Required.",
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": "Certificate lifecycle status.",
+                           "enum": ["draft", "valid", "under_renewal", "suspended", "expired", "archived"],
+                       },
+                       "certificate_number": {"type": "string", "description": "Official certificate number from the certification body."},
+                       "issuer": {"type": "string", "description": "Certification body that issued the certificate (e.g. AFNOR, BSI)."},
+                       "issue_date": {"type": "string", "description": "Issue date (YYYY-MM-DD)."},
+                       "expiry_date": {"type": "string", "description": "Expiry date (YYYY-MM-DD)."},
+                       "scope_statement": {"type": "string", "description": "Perimeter covered by the certificate (free text)."},
+                       "supersedes_id": {
+                           "type": "string",
+                           "description": "UUID of the previous certificate this one renews and replaces.",
+                       },
+                       "scope_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "Scopes this certificate belongs to (RG-01). At least one is required.",
+                       },
+                       "site_ids": {
+                           "type": "array",
+                           "items": {"type": "string"},
+                           "description": "UUIDs of sites covered by the certified perimeter (use list_sites).",
+                       },
+                   })
+    # NB: the attached PDF (Certificate.file_content) cannot be uploaded through
+    # MCP (binary payloads are out of scope for the JSON transport). Attach or
+    # replace the document via the web UI; list_/get_certificate expose
+    # file_name only.
 
     sup_fields = ["id", "reference", "scopes", "name", "description", "type", "type_name",
                   "criticality",

@@ -3,7 +3,7 @@ from django.views.generic import RedirectView
 
 from context.models import Site
 from . import views
-from .models import AssetDependency, AssetGroup, Contract, EssentialAsset, SiteAssetDependency, SiteSupplierDependency, Supplier, SupplierDependency, SupportAsset
+from .models import AssetDependency, AssetGroup, Certificate, Contract, EssentialAsset, SiteAssetDependency, SiteSupplierDependency, Supplier, SupplierDependency, SupportAsset
 
 app_name = "assets"
 
@@ -61,6 +61,14 @@ urlpatterns = [
     path("contracts/<uuid:pk>/delete/", views.ContractDeleteView.as_view(), name="contract-delete"),
     path("contracts/<uuid:pk>/document/", views.ContractDocumentDownloadView.as_view(), name="contract-document"),
     path("contracts/<uuid:pk>/approve/", views.ApproveView.as_view(model=Contract, permission_feature="contract", success_url=reverse_lazy("assets:contract-list")), name="contract-approve"),
+    # Certificates (Documents)
+    path("certificates/", views.CertificateListView.as_view(), name="certificate-list"),
+    path("certificates/create/", views.CertificateCreateView.as_view(), name="certificate-create"),
+    path("certificates/<uuid:pk>/", views.CertificateDetailView.as_view(), name="certificate-detail"),
+    path("certificates/<uuid:pk>/edit/", views.CertificateUpdateView.as_view(), name="certificate-update"),
+    path("certificates/<uuid:pk>/delete/", views.CertificateDeleteView.as_view(), name="certificate-delete"),
+    path("certificates/<uuid:pk>/document/", views.CertificateDocumentDownloadView.as_view(), name="certificate-document"),
+    path("certificates/<uuid:pk>/approve/", views.ApproveView.as_view(model=Certificate, permission_feature="certificate", success_url=reverse_lazy("assets:certificate-list")), name="certificate-approve"),
     # Supplier Contacts
     path("suppliers/<uuid:supplier_pk>/contacts/create/", views.SupplierContactCreateView.as_view(), name="supplier-contact-create"),
     path("supplier-contacts/<uuid:pk>/edit/", views.SupplierContactUpdateView.as_view(), name="supplier-contact-update"),

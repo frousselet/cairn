@@ -31,9 +31,11 @@ from core.mixins import (
     SortableListMixin,
 )
 from core.query_params import parse_int
+from compliance.models import Framework
 from context.constants import Criticality, SiteType
 from context.models import Scope, Site
 from .constants import (
+    CertificateStatus,
     ContractStatus,
     DependencyType,
     EssentialAssetStatus,
@@ -49,6 +51,8 @@ from .forms import (
     AssetDependencyForm,
     AssetGroupCreateForm,
     AssetGroupUpdateForm,
+    CertificateCreateForm,
+    CertificateUpdateForm,
     ContractCreateForm,
     ContractUpdateForm,
     EssentialAssetCreateForm,
@@ -72,6 +76,7 @@ from .forms import (
 from .models import (
     AssetDependency,
     AssetGroup,
+    Certificate,
     Contract,
     EssentialAsset,
     SiteAssetDependency,
@@ -402,6 +407,153 @@ class ContractDocumentDownloadView(LoginRequiredMixin, PermissionRequiredMixin, 
         )
         resp["Content-Disposition"] = _attachment_disposition(
             contract.file_name or f"{contract.reference}.pdf"
+        )
+        return resp
+
+
+# ── Certificate (Documents) ─────────────────────────────────
+
+CERTIFICATE_TEXT_FILTERS = [
+    {"param": "label", "field": "label", "label": _l("Title")},
+    {"param": "issuer", "field": "issuer", "label": _l("Certification body")},
+]
+CERTIFICATE_COLUMNS = [
+    {"key": "reference", "label": _l("Ref."), "always": True},
+    {"key": "label", "label": _l("Title"), "always": True},
+    {"key": "framework", "label": _l("Framework")},
+    {"key": "issuer", "label": _l("Certification body")},
+    {"key": "expiry_date", "label": _l("Expiry date")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "tags", "label": _l("Tags")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class CertificateListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
+    model = Certificate
+    template_name = "assets/certificate_list.html"
+    context_object_name = "certificates"
+    status_field = "status"
+    text_filters = CERTIFICATE_TEXT_FILTERS
+    columns = CERTIFICATE_COLUMNS
+    permission_required = "assets.certificate.read"
+    paginate_by = 50
+    sortable_fields = {
+        "reference": "reference",
+        "label": "label",
+        "framework": "framework__short_name",
+        "issuer": "issuer",
+        "expiry_date": "expiry_date",
+        "workflow_state": "workflow_state",
+    }
+    default_sort = "-expiry_date"
+    search_fields = [
+        "reference", "label", "issuer", "certificate_number", "notes",
+        "framework__name", "framework__short_name",
+    ]
+
+    @property
+    def filter_groups(self):
+        # The framework (référentiel) facet is data-driven, so build its options
+        # from the existing frameworks at request time.
+        return [
+            {
+                "param": "framework",
+                "field": "framework",
+                "label": _l("Framework"),
+                "options": [
+                    (str(fw.pk), fw.short_name or fw.name)
+                    for fw in Framework.objects.order_by("short_name", "name")
+                ],
+            },
+            {"param": "status", "field": "status", "label": _l("Status"), "options": CertificateStatus.choices},
+        ]
+
+    def get_queryset(self):
+        qs = (
+            super()
+            .get_queryset()
+            .select_related("framework", "supersedes")
+            .prefetch_related("scopes", "sites", "tags", "superseded_by")
+        )
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
+class CertificateDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+    model = Certificate
+    template_name = "assets/certificate_detail.html"
+    context_object_name = "certificate"
+    permission_required = "assets.certificate.read"
+    approval_feature = "certificate"
+    approve_url_name = "assets:certificate-approve"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["sites"] = self.object.sites.all()
+        ctx["superseded_by"] = self.object.superseded_by.all()
+        return ctx
+
+
+class CertificateCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
+    model = Certificate
+    form_class = CertificateCreateForm
+    template_name = "assets/certificate_form.html"
+    permission_required = "assets.certificate.create"
+    modal_template_name = "assets/certificate_form_modal.html"
+    modal_title_create = _l("New certificate")
+    modal_title_update = _l("Edit certificate")
+    success_url = reverse_lazy("assets:certificate-list")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+
+class CertificateUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+    model = Certificate
+    form_class = CertificateUpdateForm
+    template_name = "assets/certificate_form.html"
+    permission_required = "assets.certificate.update"
+    modal_template_name = "assets/certificate_form_modal.html"
+    modal_title_create = _l("New certificate")
+    modal_title_update = _l("Edit certificate")
+    success_url = reverse_lazy("assets:certificate-list")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+
+class CertificateDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = Certificate
+    template_name = "assets/confirm_delete.html"
+    permission_required = "assets.certificate.delete"
+    success_url = reverse_lazy("assets:certificate-list")
+
+
+class CertificateDocumentDownloadView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Stream a certificate's attached PDF, scope-filtered and permission-gated."""
+
+    permission_required = "assets.certificate.read"
+
+    def get(self, request, pk):
+        qs = Certificate.objects.all()
+        if not request.user.is_superuser:
+            scope_ids = request.user.get_allowed_scope_ids()
+            if scope_ids is not None:
+                qs = qs.filter(scopes__id__in=scope_ids).distinct()
+        certificate = get_object_or_404(qs, pk=pk)
+        data = certificate.get_file_bytes()
+        if not data:
+            raise Http404()
+        resp = HttpResponse(
+            data, content_type=certificate.content_type or "application/pdf"
+        )
+        resp["Content-Disposition"] = _attachment_disposition(
+            certificate.file_name or f"{certificate.reference}.pdf"
         )
         return resp
 

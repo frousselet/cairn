@@ -2,6 +2,7 @@ import factory
 
 from accounts.tests.factories import UserFactory
 from assets.constants import (
+    CertificateStatus,
     ContractStatus,
     DependencyType,
     DICLevel,
@@ -12,6 +13,7 @@ from assets.constants import (
     SupportAssetCategory,
     SupportAssetType,
 )
+from assets.models.certificate import Certificate
 from assets.models.contract import Contract
 from assets.models.dependency import AssetDependency
 from assets.models.essential_asset import EssentialAsset
@@ -144,6 +146,29 @@ class ContractFactory(factory.django.DjangoModelFactory):
         if not create or not extracted:
             return
         self.clients.add(*extracted)
+
+
+class CertificateFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Certificate
+
+    reference = factory.Sequence(lambda n: f"CERT-{n:03d}")
+    label = factory.Sequence(lambda n: f"Certificate {n}")
+    framework = factory.SubFactory("compliance.tests.factories.FrameworkFactory")
+    status = CertificateStatus.VALID
+    issuer = "AFNOR Certification"
+
+    @factory.post_generation
+    def scopes(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.scopes.add(*extracted)
+
+    @factory.post_generation
+    def sites(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+        self.sites.add(*extracted)
 
 
 class SupplierRequirementFactory(factory.django.DjangoModelFactory):

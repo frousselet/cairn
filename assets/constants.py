@@ -276,6 +276,30 @@ CONTRACT_PDF_MAGIC = b"%PDF-"
 CONTRACT_MAX_PDF_BYTES = 25 * 1024 * 1024  # 25 MB
 
 
+# ── Certificate (Documents) ─────────────────────────────────
+
+class CertificateStatus(models.TextChoices):
+    """Lifecycle states of a company certificate.
+
+    The codes match the certificate lifecycle steps (see
+    ``assets/lifecycles.py``) so the legacy ``status`` field stays coherent
+    with ``workflow_state``.
+    """
+
+    DRAFT = "draft", _("Draft")
+    VALID = "valid", _("Valid")
+    UNDER_RENEWAL = "under_renewal", _("Under renewal")
+    SUSPENDED = "suspended", _("Suspended")
+    EXPIRED = "expired", _("Expired")
+    ARCHIVED = "archived", _("Archived")
+
+
+# A certificate's attached document must be a PDF, validated and stored inline
+# exactly like a contract document.
+CERTIFICATE_PDF_MAGIC = b"%PDF-"
+CERTIFICATE_MAX_PDF_BYTES = 25 * 1024 * 1024  # 25 MB
+
+
 class SupplierRequirementStatus(models.TextChoices):
     NOT_ASSESSED = "not_assessed", _("Not assessed")
     COMPLIANT = "compliant", _("Compliant")

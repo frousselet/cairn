@@ -193,3 +193,86 @@ def _build_contract_lifecycle() -> Lifecycle:
 
 
 CONTRACT_LIFECYCLE = register_lifecycle(_build_contract_lifecycle())
+
+
+# ── Certificate lifecycle ───────────────────────────────────────────────────
+#
+# Draft (the generic engine entry) -> Valid (the certificate is in force). While
+# valid it runs a recurring recertification cycle (Valid <-> Under renewal) and
+# may be Suspended by the certification body (Suspended <-> Valid). A certificate
+# Expires when it lapses or is not renewed in time; it is NOT renewed in place: a
+# new certificate supersedes it ("annule et remplace"), keeping the full history.
+# Any state can be Archived (the exit; archived certificates stay in reports for
+# traceability). The step codes are exactly the ``CertificateStatus`` values, so
+# the legacy ``status`` field stays coherent with ``workflow_state`` via
+# ``sync_legacy_status`` in ``Certificate.save()``.
+CERTIFICATE_LIFECYCLE_NAME = "certificate"
+
+
+def _build_certificate_lifecycle() -> Lifecycle:
+    steps = [
+        # The mandatory generic Draft entry (application / preparation stage).
+        draft_step(),
+        Step(
+            "valid",
+            _("Valid"),
+            kind=StepKind.INTERMEDIATE,
+            counts_in_reports=True,
+            linkable=True,
+            tone="success",
+        ),
+        # Periodic recertification: the certificate stays valid while renewed,
+        # then loops back to Valid for the next certification cycle.
+        Step(
+            "under_renewal",
+            _("Under renewal"),
+            kind=StepKind.INTERMEDIATE,
+            counts_in_reports=True,
+            linkable=True,
+            tone="info",
+        ),
+        Step(
+            "suspended",
+            _("Suspended"),
+            kind=StepKind.INTERMEDIATE,
+            counts_in_reports=True,
+            tone="warning",
+        ),
+        Step(
+            "expired",
+            _("Expired"),
+            kind=StepKind.INTERMEDIATE,
+            counts_in_reports=True,
+            tone="warning",
+        ),
+        Step(
+            "archived",
+            _("Archived"),
+            kind=StepKind.ARCHIVED,
+            counts_in_reports=True,
+            tone="dark",
+        ),
+    ]
+    transitions = [
+        Transition("valid", source="draft", label=_("Issue certificate")),
+        # Recurring recertification cycle: valid <-> under renewal.
+        Transition("under_renewal", source="valid", label=_("Start renewal")),
+        Transition("valid", source="under_renewal", label=_("Renewed")),
+        # Suspension by the certification body, and reinstatement.
+        Transition("suspended", source="valid", label=_("Suspend")),
+        Transition("valid", source="suspended", label=_("Reinstate")),
+        # Expiry. No renewal in place: an expired certificate is replaced by a
+        # new one (supersedes / "annule et remplace").
+        Transition("expired", source="valid", label=_("Expire")),
+        Transition("expired", source="under_renewal", label=_("Expire")),
+        Transition("expired", source="suspended", label=_("Expire")),
+        # Exit from any step (archived certificates stay in reports).
+        Transition("archived", source=ANY, label=_("Archive")),
+    ]
+    # "graph" routes the detail stepper to the directed-graph renderer: the
+    # recertification back-edge (under_renewal -> valid) and the suspension loop
+    # draw cleanly, with Archive as the archived exit.
+    return Lifecycle(CERTIFICATE_LIFECYCLE_NAME, steps, transitions, layout="graph")
+
+
+CERTIFICATE_LIFECYCLE = register_lifecycle(_build_certificate_lifecycle())

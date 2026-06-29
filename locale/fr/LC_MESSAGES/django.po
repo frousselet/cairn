@@ -11579,3 +11579,128 @@ msgstr "Recharger"
 
 msgid "Lost connection to the server. Check that it is running, then reload."
 msgstr "Connexion au serveur perdue. Vérifiez qu'il est démarré, puis rechargez."
+
+# ── Certificates (Documents) ──────────────────────────────
+
+msgid "A certificate must be attached to at least one scope."
+msgstr "Un certificat doit être rattaché à au moins un périmètre."
+
+msgid "Attach the certificate as a PDF file (25 MB max)."
+msgstr "Joindre le certificat sous forme de fichier PDF (25 Mo max)."
+
+msgid "certificate"
+msgstr "certificat"
+
+msgid "Certificate"
+msgstr "Certificat"
+
+msgid "Certificate number"
+msgstr "Numéro de certificat"
+
+msgid "Certificates"
+msgstr "Certificats"
+
+msgid "Certification body"
+msgstr "Organisme certificateur"
+
+msgid "Certification body that issued the certificate (e.g. AFNOR, BSI)."
+msgstr "Organisme certificateur ayant délivré le certificat (ex. AFNOR, BSI)."
+
+msgid "Certified scope"
+msgstr "Périmètre certifié"
+
+msgid "Covered sites"
+msgstr "Sites couverts"
+
+msgid "Date the certificate expires."
+msgstr "Date d'expiration du certificat."
+
+msgid "Date the certificate was issued."
+msgstr "Date de délivrance du certificat."
+
+msgid "Edit certificate"
+msgstr "Modifier le certificat"
+
+msgid "Free-form notes about the certificate."
+msgstr "Notes libres sur le certificat."
+
+msgid "Issuance"
+msgstr "Délivrance"
+
+msgid "Issue certificate"
+msgstr "Délivrer le certificat"
+
+msgid "Issue date"
+msgstr "Date de délivrance"
+
+msgid "Lifecycle state of the certificate."
+msgstr "État du cycle de vie du certificat."
+
+msgid "New certificate"
+msgstr "Nouveau certificat"
+
+msgid "No certificate registered yet."
+msgstr "Aucun certificat enregistré pour l'instant."
+
+msgid "No document attached. Edit the certificate to upload a PDF."
+msgstr "Aucun document joint. Modifiez le certificat pour téléverser un PDF."
+
+msgid "Official certificate number from the certification body."
+msgstr "Numéro officiel du certificat délivré par l'organisme certificateur."
+
+msgid "Organizational scopes this certificate applies to."
+msgstr "Périmètres organisationnels auxquels s'applique ce certificat."
+
+msgid "Perimeter covered by the certificate (free text)."
+msgstr "Périmètre couvert par le certificat (texte libre)."
+
+msgid "Reinstate"
+msgstr "Rétablir"
+
+msgid "Renewed and replaced"
+msgstr "Renouvelé et remplacé"
+
+msgid "Renewed and replaced by"
+msgstr "Renouvelé et remplacé par"
+
+msgid "Renews and replaces"
+msgstr "Renouvelle et remplace"
+
+msgid "Renews and replaces another certificate"
+msgstr "Renouvelle et remplace un autre certificat"
+
+msgid "Renews / replaces"
+msgstr "Renouvelle / remplace"
+
+msgid "Short title of the certificate."
+msgstr "Titre court du certificat."
+
+msgid "Sites covered by the certified perimeter."
+msgstr "Sites couverts par le périmètre certifié."
+
+msgid "Start renewal"
+msgstr "Démarrer le renouvellement"
+
+msgid "Suspend"
+msgstr "Suspendre"
+
+msgid "The expiry date cannot be earlier than the issue date."
+msgstr "La date d'expiration ne peut pas être antérieure à la date de délivrance."
+
+msgid "The framework (référentiel) this certificate attests compliance to."
+msgstr "Le référentiel auquel ce certificat atteste la conformité."
+
+msgid "The previous certificate this one renews and replaces."
+msgstr "Le certificat précédent que celui-ci renouvelle et remplace."
+
+msgid "This certificate has been renewed and replaced"
+msgstr "Ce certificat a été renouvelé et remplacé"
+
+msgid "This certificate has expired."
+msgstr "Ce certificat a expiré."
+
+msgid "Under renewal"
+msgstr "En cours de renouvellement"
+
+msgid "Valid"
+msgstr "Valide"

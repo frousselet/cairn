@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load i18n ui workflow_tags accounts_tags %}
+{% load table_tags %}
+
+{% block title %}{% trans "Certificates" %} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header _("Certificates") nav="assets:certificate-list" accent="assets" %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'assets:certificate-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New certificate' %}</button>
+{% endpage_header %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "label" "Title" col="label" %}
+              {% sortable_th "framework" "Framework" col="framework" %}
+              {% sortable_th "issuer" "Certification body" col="issuer" %}
+              {% sortable_th "expiry_date" "Expiry date" col="expiry_date" %}
+              {% sortable_th "workflow_state" "Status" col="status" %}
+              <th data-col="tags">{% trans "Tags" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body">
+            {% include "assets/certificate_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

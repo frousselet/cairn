@@ -153,6 +153,10 @@ PERMISSION_REGISTRY = {
             "actions": ["create", "read", "update", "delete", "approve"],
             "label": _("Contracts"),
         },
+        "certificate": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("Certificates"),
+        },
         "import": {
             "actions": ["create"],
             "label": _("Asset import"),
