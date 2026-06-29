@@ -16,6 +16,7 @@
 - [SpecialPermission](special-permission.md)
 - [Session](session.md)
 - [AccessLog](access-log.md)
+- [First-run onboarding](onboarding.md)
 
 ---
 

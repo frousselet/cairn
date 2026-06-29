@@ -6,24 +6,17 @@
     "version": "2.0.0",
     "tasks": [
         {
-            // Prepares a ready-to-use environment, in three steps:
-            //  1. compilemessages: builds the .mo translation catalogs so the UI
-            //     renders in French (and any other locale). Non-fatal: if the
-            //     gettext `msgfmt` binary is missing it is skipped with a hint,
-            //     so F5 still launches (the UI just falls back to English).
-            //  2. migrate --noinput: applies all migrations (including the data
-            //     migrations that populate permissions, system groups and risk
-            //     criteria). Idempotent.
-            //  3. demo seed (Voltara Energy, scripts/seed_demo_data.py): populates
-            //     all modules for realistic screens. The script is NOT
-            //     idempotent, so it is guarded: it is only replayed if the database
-            //     does not already contain the demo user.
-            // Wired as the preLaunchTask of the launch configs -> run on every
-            // F5; only migrate/seed do real work once initialized, and
-            // compilemessages refreshes the catalog when .po files change.
+            // Pre-launch step for F5. It ONLY compiles translation catalogs
+            // (.po -> .mo) so the UI renders in French; it deliberately does NOT
+            // migrate or seed. On a fresh database the first-run onboarding screen
+            // applies the migrations (with a live progress bar) and then lets you
+            // create an admin or load the Voltara Energy demo dataset, so the whole
+            // setup is visible in the browser. compilemessages is DB-free and
+            // non-fatal: if the gettext `msgfmt` binary is missing it is skipped
+            // (the UI falls back to English) and F5 still launches.
             "label": "stack: bootstrap",
             "type": "shell",
-            "command": "${command:python.interpreterPath} manage.py migrate --noinput && ${command:python.interpreterPath} manage.py shell -c \"from accounts.models import User; print('Demo data already present - skipping seed.') if User.objects.filter(email='elise.moreau@voltara.example').exists() else exec(open('scripts/seed_demo_data.py').read())\" && (${command:python.interpreterPath} manage.py compilemessages || true)",
+            "command": "${command:python.interpreterPath} manage.py compilemessages || true",
             "options": {
                 "cwd": "${workspaceFolder}",
                 "env": {
@@ -34,6 +27,25 @@
                 "reveal": "silent",
                 "panel": "shared",
                 "close": true
+            },
+            "problemMatcher": []
+        },
+        {
+            // Applies all migrations on demand (data migrations included). Normally
+            // the onboarding screen does this for you on a fresh database; use this
+            // only if you prefer to migrate from the CLI before launching.
+            "label": "stack: migrate",
+            "type": "shell",
+            "command": "${command:python.interpreterPath} manage.py migrate --noinput",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "DJANGO_SETTINGS_MODULE": "core.settings_local"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
             },
             "problemMatcher": []
         },

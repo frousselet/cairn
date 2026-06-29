@@ -4,8 +4,10 @@
     // (db.sqlite3 file) and Redis with an in-memory channel layer: no
     // dependency to install or start separately.
     //
-    // First run: run the "stack: migrate" task first
-    // (Terminal > Run Task…) to create the SQLite schema.
+    // First run: just press F5. On an empty database the first-run onboarding
+    // screen applies the migrations (with a live progress bar) and then lets you
+    // create an admin or load the demo dataset - no manual task needed. To start
+    // over, delete db.sqlite3 and press F5 again.
     "version": "0.2.0",
     "configurations": [
         {
