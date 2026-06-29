@@ -126,7 +126,7 @@
           <div class="contract-card">
             <div class="contract-card__top">
               <span class="contract-card__title text-truncate">{% if c.label %}{{ c.label }}{% elif c.reference %}{{ c.reference }}{% else %}{% trans "Contract" %}{% endif %}</span>
-              <span class="badge text-bg-{% if c.status == 'active' %}success{% elif c.status == 'expired' %}danger{% elif c.status == 'terminated' %}dark{% else %}secondary{% endif %}">{{ c.get_status_display }}</span>
+              <span class="badge text-bg-{% if c.status == 'active' %}success{% elif c.status == 'under_review' %}info{% elif c.status == 'expired' %}warning{% elif c.status == 'archived' %}dark{% else %}secondary{% endif %}">{{ c.get_status_display }}</span>
             </div>
             <div class="contract-card__meta">
               {% if c.label and c.reference %}<span><i class="bi bi-hash" aria-hidden="true"></i>{{ c.reference }}</span>{% endif %}

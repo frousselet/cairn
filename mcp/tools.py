@@ -2673,7 +2673,7 @@ def _register_assets_tools(server):
                        "status": {
                            "type": "string",
                            "description": "Contract status.",
-                           "enum": ["draft", "active", "under_review", "expired", "terminated"],
+                           "enum": ["draft", "signing", "active", "under_review", "expired", "archived"],
                        },
                        "start_date": {"type": "string", "description": "Start date (YYYY-MM-DD)."},
                        "end_date": {"type": "string", "description": "End date (YYYY-MM-DD)."},

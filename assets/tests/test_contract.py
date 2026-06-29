@@ -65,10 +65,10 @@ class TestContractModel:
         today = datetime.date.today()
         past = Contract.objects.create(status="active", end_date=today - datetime.timedelta(days=1))
         future = Contract.objects.create(status="active", end_date=today + datetime.timedelta(days=1))
-        terminated = Contract.objects.create(status="terminated", end_date=today - datetime.timedelta(days=1))
+        archived = Contract.objects.create(status="archived", end_date=today - datetime.timedelta(days=1))
         assert past.is_expired is True
         assert future.is_expired is False
-        assert terminated.is_expired is False  # only active contracts expire
+        assert archived.is_expired is False  # only in-force contracts expire
 
 
 @pytest.mark.django_db
@@ -101,23 +101,43 @@ class TestContractLifecycle:
         assert c.workflow_state == "draft"
 
     def test_available_transitions_from_draft(self):
+        # Draft (generic entry) is distinct from "Contract draft": the first
+        # move is into drafting; archive is always available.
         c = Contract.objects.create(label="WF", status=ContractStatus.DRAFT)
         targets = {t.target for t in c.available_transitions()}
-        assert targets == {"active", "terminated"}
+        assert targets == {"drafting", "archived"}
 
-    def test_legal_transition(self):
+    def test_entry_chain_and_review_cycle(self):
         c = Contract.objects.create(label="WF", status=ContractStatus.DRAFT)
-        c.transition_to("active")
+        c.transition_to("drafting")   # Start drafting
+        c.transition_to("signing")    # Send for signature
+        c.transition_to("active")     # Bring into force
         c.refresh_from_db()
         assert c.workflow_state == "active"
         assert c.status == "active"  # legacy status kept in sync
+        # In force <-> Under review recurring cycle.
+        assert {t.target for t in c.available_transitions()} == {"under_review", "expired", "archived"}
+        c.transition_to("under_review")
+        assert "active" in {t.target for t in c.available_transitions()}  # Reviewed
+        c.transition_to("active")
+        c.refresh_from_db()
+        assert c.workflow_state == "active"
+
+    def test_expired_cannot_be_renewed_in_place(self):
+        from core.lifecycle import IllegalTransitionError
+
+        c = Contract.objects.create(label="WF", status="expired")
+        # No expired -> active : an expired contract is replaced (supersedes).
+        with pytest.raises(IllegalTransitionError):
+            c.transition_to("active")
+        assert {t.target for t in c.available_transitions()} == {"archived"}
 
     def test_illegal_transition_raises(self):
         from core.lifecycle import IllegalTransitionError
 
         c = Contract.objects.create(label="WF", status=ContractStatus.DRAFT)
         with pytest.raises(IllegalTransitionError):
-            c.transition_to("expired")  # draft -> expired is not a legal move
+            c.transition_to("active")  # draft must go through "signing" first
 
     def test_draft_is_deletable_active_is_not(self):
         from core.workflow import LifecycleProtectedError
