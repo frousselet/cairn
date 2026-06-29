@@ -9,13 +9,15 @@ database the session/auth tables a WebSocket would need do not exist yet.
 
 from django.contrib import messages
 from django.contrib.auth import login
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views import View
 
-from accounts.models import User
+from accounts.forms import CompanySettingsForm
+from accounts.models import CompanySettings, User
 
 from .forms import FirstAdminForm
 from .runner import is_running, progress_snapshot, start_migrations, start_seed
@@ -92,14 +94,34 @@ class OnboardingProgressView(View):
 
 
 class OnboardingScratchView(View):
-    """Create the first super-admin, then sign them in."""
+    """Two-step "start from scratch" wizard: configure the company, then create
+    the first super-admin and sign them in.
+
+    Both steps live in a single page and a single ``<form>``; the company step is
+    purely client-side (its values are held in the browser, not the database)
+    until the final submit, which creates the admin **and** persists the company
+    settings together in one transaction. Nothing is written to the database
+    before the administrator exists.
+    """
+
+    def _render(self, request, *, form, company_form, active_step):
+        return render(request, "onboarding/scratch.html", {
+            "form": form,
+            "company_form": company_form,
+            "active_step": active_step,
+        })
 
     def get(self, request):
         if not is_first_run():
             return redirect("/")
         if not migration_status()["up_to_date"]:
             return redirect("onboarding:landing")
-        return render(request, "onboarding/scratch.html", {"form": FirstAdminForm()})
+        return self._render(
+            request,
+            form=FirstAdminForm(),
+            company_form=CompanySettingsForm(instance=CompanySettings()),
+            active_step=1,
+        )
 
     def post(self, request):
         if not is_first_run():
@@ -107,13 +129,22 @@ class OnboardingScratchView(View):
         if not migration_status()["up_to_date"]:
             return redirect("onboarding:landing")
         form = FirstAdminForm(request.POST)
-        if form.is_valid():
-            user = form.save()
+        company_form = CompanySettingsForm(request.POST, request.FILES, instance=CompanySettings())
+        # Validate both before touching the database: the company settings and the
+        # admin account are committed together or not at all.
+        company_valid = company_form.is_valid()
+        admin_valid = form.is_valid()
+        if company_valid and admin_valid:
+            with transaction.atomic():
+                user = form.save()
+                company_form.save()
             mark_initialised()
             login(request, user, backend=LOGIN_BACKEND)
             messages.success(request, _("Welcome to Cairn. Your administrator account is ready."))
             return redirect("/")
-        return render(request, "onboarding/scratch.html", {"form": form})
+        # Surface the step that holds the error (company first, then admin).
+        active_step = 1 if not company_valid else 2
+        return self._render(request, form=form, company_form=company_form, active_step=active_step)
 
 
 class OnboardingSeedView(View):

@@ -48,8 +48,18 @@ under `templates/onboarding/`:
      to the app when done). The progress bar surfaces an error if the backend
      connection drops (repeated poll failures).
    - Once the schema is ready, a first run shows the two initialisation choices.
-2. **Start from scratch** (`onboarding:scratch`) - `FirstAdminForm` creates the
-   first `create_superuser`, signs them in, and redirects to the dashboard.
+2. **Start from scratch** (`onboarding:scratch`) - a two-step wizard on a single
+   page / single `<form>`: **step 1 configures the company** (`CompanySettingsForm`
+   - name, application name, assistant name, accent colour, logo, address, all
+   optional) and **step 2 creates the administrator** (`FirstAdminForm`). The
+   side rail carries the vertical stepper and the navigation buttons. The whole
+   submit creates the super-admin **and** persists the company settings in one
+   `transaction.atomic()` block, then signs the admin in and redirects to the
+   dashboard. **Nothing is written to the database until the administrator is
+   created**: the company step is held in the browser (`sessionStorage`, cleared
+   on submit, passwords never stored) and everything is sent in a single request.
+   A server-side validation error re-opens the wizard on the offending step
+   (company first, then admin).
 3. **Start with sample data** (`onboarding:seed`) - starts the demo seed on a
    background thread and renders the progress bar. The seed
    (`scripts/seed_demo_data.py`) reports each phase through an injected

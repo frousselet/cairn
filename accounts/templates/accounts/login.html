@@ -72,6 +72,11 @@
       --radius-md: .625rem;
       --radius-sm: .5rem;
       --ease-out-expo: cubic-bezier(.16,1,.3,1);
+      /* Frosted "glass" neutral button chrome (mirrors the app interface). */
+      --glass: rgba(255,255,255,.5);
+      --glass-hover: rgba(0,0,0,.035);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.06);
+      --shadow-md: 0 6px 18px rgba(0,0,0,.10);
     }
     [data-bs-theme="dark"] {
       --surface: #16181B;
@@ -82,6 +87,10 @@
       --accent: #3B5BB8;
       --accent-soft: rgba(59,91,184,.15);
       --accent-glow: rgba(59,91,184,.22);
+      --glass: rgba(255,255,255,.04);
+      --glass-hover: rgba(255,255,255,.08);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
+      --shadow-md: 0 6px 18px rgba(0,0,0,.4);
     }
     body {
       font-family: 'GitLab Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -92,33 +101,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #1E3A8A 0%, #1E2E5E 100%);
+      background: {{ company.accent_color|default:'#1E3A8A' }};
       padding: 1.5rem;
       position: relative;
-      overflow: hidden;
-    }
-    body::before {
-      content: '';
-      position: absolute;
-      top: -30%;
-      right: -20%;
-      width: 60%;
-      height: 80%;
-      background: radial-gradient(circle, rgba(255,255,255,.06) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    body::after {
-      content: '';
-      position: absolute;
-      bottom: -20%;
-      left: -15%;
-      width: 50%;
-      height: 60%;
-      background: radial-gradient(circle, rgba(255,255,255,.04) 0%, transparent 70%);
-      pointer-events: none;
+      overflow-x: hidden;
     }
     [data-bs-theme="dark"] body {
-      background: linear-gradient(135deg, #0F1011 0%, #16181B 50%, #1C1F23 100%);
+      background: #0F1011;
     }
     .login-wrapper {
       max-width: 400px;
@@ -126,6 +115,10 @@
       position: relative;
       z-index: 1;
       animation: loginFadeIn .5s var(--ease-out-expo);
+      /* Lift the content a touch above the optical centre for a more natural
+         placement (a centred flex item is raised by half of its bottom margin),
+         while keeping the composition balanced. */
+      margin-bottom: clamp(4rem, 18vh, 10rem);
     }
     @keyframes loginFadeIn {
       from { opacity: 0; transform: translateY(12px); }
@@ -222,19 +215,76 @@
       border-radius: var(--radius-sm);
       font-size: .8125rem;
     }
+    /* Frosted "glass" neutral button - the same recipe as the app interface:
+       translucent fill, hairline border, soft shadow, backdrop blur, calm
+       hover. Used for the passkey sign-in action. */
+    .btn-glass {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-light);
+      background: var(--glass);
+      color: var(--text-secondary);
+      font-weight: 550;
+      font-size: .8125rem;
+      padding: .5625rem;
+      box-shadow: var(--shadow-sm);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      cursor: pointer;
+      transition: background-color .2s var(--ease-out-expo), color .2s var(--ease-out-expo), border-color .2s var(--ease-out-expo), box-shadow .2s var(--ease-out-expo);
+    }
+    .btn-glass:hover {
+      background: var(--glass-hover);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-md);
+    }
+    .btn-glass:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-primary) 22%, transparent);
+    }
     ::selection { background: var(--accent-soft); color: var(--accent); }
+    /* A custom company logo shows edge-to-edge: drop the navy chip framing. */
+    .login-brand-icon img { width: 100%; height: 100%; object-fit: contain; }
+    .login-brand-icon.has-logo { box-shadow: none; border-radius: 0; }
+    {% if ACCENT_LIGHT %}
+    /* Company accent colour (company settings): override the navy accent tokens
+       so the focus ring, primary button and selection match the brand. The body
+       canvas already uses the raw accent colour above. */
+    :root {
+      --accent: {{ ACCENT_LIGHT }};
+      --accent-hover: color-mix(in srgb, {{ ACCENT_LIGHT }} 82%, black);
+      --accent-soft: color-mix(in srgb, {{ ACCENT_LIGHT }} 12%, white);
+      --accent-glow: color-mix(in srgb, {{ ACCENT_LIGHT }} 22%, transparent);
+    }
+    [data-bs-theme="dark"] {
+      --accent: {{ ACCENT_DARK }};
+      --accent-hover: color-mix(in srgb, {{ ACCENT_DARK }} 80%, white);
+      --accent-soft: color-mix(in srgb, {{ ACCENT_DARK }} 18%, transparent);
+      --accent-glow: color-mix(in srgb, {{ ACCENT_DARK }} 28%, transparent);
+    }
+    {% endif %}
   </style>
 </head>
 <body>
   <div class="login-wrapper">
     <div class="login-card">
       <div class="login-brand">
+        {% if company.use_logo_as_app_brand and company.logo %}
+        {# Company logo used as the application brand (configured in company settings). #}
+        <span class="login-brand-icon has-logo">
+          <img src="{{ company.logo_128|default:company.logo }}" alt="{{ company.name }}">
+        </span>
+        {% else %}
         <span class="login-brand-icon">
           {# Cairn - primary mark #}
           <svg class="logo-light" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#1E3A8A"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
           <svg class="logo-dark" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#3B5BB8"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
         </span>
-        <span class="login-brand-text">Cairn</span>
+        {% endif %}
+        <span class="login-brand-text">{{ APP_NAME|default:"Cairn" }}</span>
       </div>
       <p class="login-subtitle">{% trans "Sign in to your account" %}</p>
 
@@ -272,8 +322,7 @@
         <div class="d-flex align-items-center gap-2 mt-3 mb-3">
           <hr class="flex-grow-1"><span style="color:var(--text-muted);font-size:.75rem">{% trans "or" %}</span><hr class="flex-grow-1">
         </div>
-        <button type="button" id="passkey-login-btn" class="btn btn-outline-secondary w-100"
-                style="border-radius:var(--radius-sm);font-size:.8125rem;font-weight:550;padding:.5625rem"
+        <button type="button" id="passkey-login-btn" class="btn-glass"
                 onclick="passkeyLogin()">
           <i class="bi bi-fingerprint me-2"></i>{% trans "Sign in with a passkey" %}
         </button>
