@@ -155,7 +155,7 @@ class CertificateFactory(factory.django.DjangoModelFactory):
     reference = factory.Sequence(lambda n: f"CERT-{n:03d}")
     label = factory.Sequence(lambda n: f"Certificate {n}")
     framework = factory.SubFactory("compliance.tests.factories.FrameworkFactory")
-    status = CertificateStatus.VALID
+    status = CertificateStatus.CERTIFIED
     issuer = "AFNOR Certification"
 
     @factory.post_generation

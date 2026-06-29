@@ -36,8 +36,9 @@ A certificate is a company certification record inside the **Documents** area of
 
 ### `status`
 
-- `draft`: the generic engine entry - the certificate is being prepared / applied for
-- `valid`: the certificate is in force
+- `draft`: the generic engine entry - the certificate record is being prepared
+- `assessment`: the certification audit is under way (not certified yet)
+- `certified`: the certificate is granted and in force
 - `under_renewal`: in force, undergoing a recertification / surveillance audit
 - `suspended`: **terminal** - suspended by the certification body (no reinstatement; replaced by a new certificate)
 - `expired`: **terminal** - lapsed or not renewed in time, kept for audit history (no new links; replaced by a new certificate)
@@ -50,13 +51,14 @@ Certificate runs the standardised lifecycle engine (`core.lifecycle`, `LIFECYCLE
 | Step | kind | terminal | counts_in_reports | linkable | deletable |
 |---|---|:--:|:--:|:--:|:--:|
 | draft | Draft (generic entry) | | | | yes |
-| valid | Intermediate | | yes | yes | |
+| assessment | Intermediate | | yes | | |
+| certified | Intermediate | | yes | yes | |
 | under_renewal | Intermediate | | yes | yes | |
 | suspended | Intermediate | yes | yes | | |
 | expired | Intermediate | yes | yes | | |
 | archived | Archived (exit) | | yes | | |
 
-Transitions: `draft -> valid` (Issue certificate), the recurring recertification cycle `valid -> under_renewal` (Start renewal) / `under_renewal -> valid` (Renewed) - the only non-terminal branch - then `valid -> suspended` (Suspend), `valid -> expired` / `under_renewal -> expired` (Expire), and `any -> archived` (Archive). **Suspended and Expired are terminal**: there is no reinstatement and no renewal in place - re-certifying means issuing a new certificate that supersedes this one via `supersedes` ("annule et remplace"), so the renewal history is kept; the only move out of a terminal state is Archive (terminality is structural - those steps have no outgoing transition other than the from-any Archive). The recertification back-edge makes the lifecycle cyclic, which is why it uses the `graph` layout. `archived` is the exit but still counts in reports for traceability. Approval (`is_approved`) is an independent axis. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_certificate` tool is permission-gated.
+Transitions: the linear path to certification `draft -> assessment` (Start assessment) / `assessment -> certified` (Certify), then the recurring recertification cycle `certified -> under_renewal` (Start renewal) / `under_renewal -> certified` (Renewed) - the only non-terminal branch - with the terminal outcomes of the renewal `under_renewal -> suspended` (Suspend) and `under_renewal -> expired` (Expire), and `any -> archived` (Archive). **Suspended and Expired are terminal**: there is no reinstatement and no renewal in place - re-certifying means issuing a new certificate that supersedes this one via `supersedes` ("annule et remplace"), so the renewal history is kept; the only move out of a terminal state is Archive (terminality is structural - those steps have no outgoing transition other than the from-any Archive). The recertification back-edge makes the lifecycle cyclic, which is why it uses the `graph` layout. `archived` is the exit but still counts in reports for traceability. Approval (`is_approved`) is an independent axis. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_certificate` tool is permission-gated.
 
 ## Computed properties
 

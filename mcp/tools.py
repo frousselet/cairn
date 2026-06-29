@@ -2740,7 +2740,7 @@ def _register_assets_tools(server):
                        "status": {
                            "type": "string",
                            "description": "Certificate lifecycle status.",
-                           "enum": ["draft", "valid", "under_renewal", "suspended", "expired", "archived"],
+                           "enum": ["draft", "assessment", "certified", "under_renewal", "suspended", "expired", "archived"],
                        },
                        "certificate_number": {"type": "string", "description": "Official certificate number from the certification body."},
                        "issuer": {"type": "string", "description": "Certification body that issued the certificate (e.g. AFNOR, BSI)."},

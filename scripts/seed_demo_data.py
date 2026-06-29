@@ -1191,7 +1191,7 @@ with transaction.atomic():
     cert_iso27001_2013.sites.set([site_dc])
 
     cert_iso27001 = Certificate.objects.create(
-        label="ISO/IEC 27001:2022 certificate", framework=fw_iso, status="valid",
+        label="ISO/IEC 27001:2022 certificate", framework=fw_iso, status="certified",
         issuer="AFNOR Certification", certificate_number="FR-27001-2210",
         issue_date=months_ago(5), expiry_date=years_ahead(2.5),
         scope_statement=(
@@ -1222,16 +1222,28 @@ with transaction.atomic():
     cert_hds.sites.set([site_dc])
     _attach_pdf(cert_hds, "hds-2023-voltara.pdf")
 
-    # ISO 9001 : quality management, valid.
+    # ISO 9001 : quality management, certified.
     cert_iso9001 = Certificate.objects.create(
         label="ISO 9001:2015 certificate", framework=fw_iso9001,
-        status="valid", issuer="LRQA", certificate_number="QMS-9001-7782",
+        status="certified", issuer="LRQA", certificate_number="QMS-9001-7782",
         issue_date=years_ago(2), expiry_date=years_ahead(1),
         scope_statement="Quality management for energy delivery and customer operations.",
         **approved(elise),
     )
     cert_iso9001.scopes.set([scope_group])
     cert_iso9001.sites.set([site_hq])
+
+    # NIS2 : initial certification audit under way (assessment stage).
+    cert_nis2 = Certificate.objects.create(
+        label="NIS2 conformity assessment", framework=fw_nis2,
+        status="assessment", issuer="ANSSI",
+        issue_date=months_ago(1),
+        scope_statement="Initial conformity assessment of the SCADA supervision platform.",
+        notes="Certification audit in progress; no certificate issued yet.",
+        **approved(elise),
+    )
+    cert_nis2.scopes.set([scope_group, scope_it])
+    cert_nis2.sites.set([site_dc])
 
     for num in ["A.8.4", "A.8.28", "A.8.30"]:
         r = iso_reqs[num]

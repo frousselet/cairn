@@ -11627,8 +11627,6 @@ msgstr "Notes libres sur le certificat."
 msgid "Issuance"
 msgstr "Délivrance"
 
-msgid "Issue certificate"
-msgstr "Délivrer le certificat"
 
 msgid "Issue date"
 msgstr "Date de délivrance"
@@ -11700,5 +11698,12 @@ msgstr "Ce certificat a expiré."
 msgid "Under renewal"
 msgstr "En cours de renouvellement"
 
-msgid "Valid"
-msgstr "Valide"
+
+msgid "Certified"
+msgstr "Certifié"
+
+msgid "Start assessment"
+msgstr "Démarrer l'évaluation"
+
+msgid "Certify"
+msgstr "Certifier"
