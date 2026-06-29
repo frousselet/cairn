@@ -329,30 +329,33 @@ with transaction.atomic():
     )
     all_scopes = [scope_group, scope_it, scope_ot, scope_cust]
 
+    # Sites run the operational lifecycle (core.lifecycle "site"): most are
+    # in service, one is under periodic review and the newest plant is still
+    # being commissioned - so the dataset exercises several lifecycle steps.
     site_hq = Site.objects.create(
-        name="Lyon HQ", type="headquarters",
+        name="Lyon HQ", type="headquarters", workflow_state="operational",
         address="18 quai Rambaud, 69002 Lyon, France", **approved(elise),
     )
     site_dc = Site.objects.create(
-        name="Roubaix Datacenter", type="datacenter",
+        name="Roubaix Datacenter", type="datacenter", workflow_state="operational",
         address="Parc des Moulins, 59100 Roubaix, France",
         description="Colocation datacenter hosting production IT workloads.", **approved(elise),
     )
     site_wind = Site.objects.create(
-        name="Normandy Wind Farm", type="factory",
+        name="Normandy Wind Farm", type="factory", workflow_state="review",
         address="Plateau du Neubourg, 27110 Le Neubourg, France",
         description="48-turbine onshore wind farm with local control room.", **approved(elise),
     )
     site_solar = Site.objects.create(
-        name="Provence Solar Plant", type="factory",
+        name="Provence Solar Plant", type="factory", workflow_state="commissioning",
         address="Route de la Durance, 04100 Manosque, France", **approved(elise),
     )
     site_hydro = Site.objects.create(
-        name="Alpine Hydro Station", type="factory",
+        name="Alpine Hydro Station", type="factory", workflow_state="operational",
         address="Vallee de la Romanche, 38220 Livet-et-Gavet, France", **approved(elise),
     )
     site_office = Site.objects.create(
-        name="Bordeaux Regional Office", type="office",
+        name="Bordeaux Regional Office", type="office", workflow_state="operational",
         address="12 cours du Medoc, 33300 Bordeaux, France", **approved(elise),
     )
     all_sites = [site_hq, site_dc, site_wind, site_solar, site_hydro, site_office]

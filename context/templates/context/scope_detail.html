@@ -5,10 +5,6 @@
 
 {% block title %}{{ scope.name }} - Cairn{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-{% endblock %}
-
 {% block content %}
 {% page_header scope.name reference=scope.reference nav="context:scope-list" breadcrumb=scope_breadcrumb accent="context" %}
   {% include "includes/history_trigger.html" %}
@@ -265,13 +261,13 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 {% comment %}
-  Plot the perimeter's included sites on a static OpenStreetMap (Leaflet/CARTO)
-  hero map. Each site is geocoded once from its address (client-side, Photon);
-  the map then fits the bounds of every located site so the overview reads as the
-  perimeter's geographic footprint. Theme-aware basemap, re-runs on HTMX swaps.
+  Plot the perimeter's included sites (and its sub-scopes' sites) on a static
+  OpenStreetMap (Leaflet/CARTO) hero map. Each site is geocoded once from its
+  address (client-side, Photon); the map then frames every located site in the
+  clear upper-right zone (out of the gradient fade). Leaflet is loaded through the
+  shared window.ensureLeaflet loader so the map appears on boosted navigation too.
 {% endcomment %}
 (function () {
   var ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
@@ -301,15 +297,38 @@
     map.setView([46.6, 2.4], 5);  // France-ish default until markers resolve
 
     var latlngs = [];
-    function fit() {
-      if (!latlngs.length) { el.style.display = 'none'; return; }
+    // Frame the markers in the clear upper-right zone, out of the gradient that
+    // fades the map on the left (under the info column) and along the bottom. On
+    // desktop we reserve that faded area as padding; on the stacked mobile view
+    // (no left fade) we just fit the bounds normally.
+    function position() {
+      var size = map.getSize();
+      var desktop = size.x > 0 && window.matchMedia('(min-width: 701px)').matches;
       if (latlngs.length === 1) {
         map.setView(latlngs[0], 12, { animate: false });
-      } else {
-        map.fitBounds(L.latLngBounds(latlngs).pad(0.25), { animate: false });
+        if (desktop) {
+          var tx = size.x * 0.72, ty = size.y * 0.42;
+          map.setView(map.containerPointToLatLng([size.x - tx, size.y - ty]), 12, { animate: false });
+        }
+      } else if (latlngs.length > 1) {
+        var bounds = L.latLngBounds(latlngs);
+        if (desktop) {
+          map.fitBounds(bounds, {
+            paddingTopLeft: [Math.round(size.x * 0.45), 16],
+            paddingBottomRight: [24, Math.round(size.y * 0.28)],
+            animate: false
+          });
+        } else {
+          map.fitBounds(bounds.pad(0.2), { animate: false });
+        }
       }
-      setTimeout(function () { map.invalidateSize(); }, 120);
     }
+    function fit() {
+      if (!latlngs.length) { el.style.display = 'none'; return; }
+      position();
+      setTimeout(function () { map.invalidateSize(); position(); }, 120);
+    }
+    map.on('resize', position);
 
     var pending = sites.length;
     sites.forEach(function (s) {
@@ -334,8 +353,9 @@
     new MutationObserver(function () { layer.setUrl(tileUrl()); })
       .observe(docEl, { attributes: true, attributeFilter: ['data-bs-theme'] });
   }
-  if (window.L) { initScopeMap(); }
-  document.body.addEventListener('htmx:afterSwap', initScopeMap);
+  // Runs on first load and on every boosted #page-shell swap (this block is
+  // re-executed by htmx), waiting for the shared loader to make Leaflet ready.
+  window.ensureLeaflet(initScopeMap);
 })();
 </script>
 {% endblock %}

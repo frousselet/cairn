@@ -388,15 +388,21 @@ class ScopeDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMi
         )
         ctx["kpi_objectives"] = reportable(scope.objective_set.all()).count()
         ctx["kpi_essential_assets"] = reportable(scope.essentialasset_set.all()).count()
-        # Hero map payload : the perimeter's included sites (geocoded client-side
-        # from their address, like the supplier address map), so the overview
-        # shows the geographic footprint.
+        # Hero map payload : the perimeter's own included sites PLUS the sites of
+        # all its sub-scopes (descendants), deduplicated and geocoded client-side
+        # from their address (like the supplier address map). A parent perimeter's
+        # map therefore shows the geographic footprint of its whole subtree. The
+        # "Included sites" badges above stay the scope's own direct sites.
         included = scope.included_sites.all()
         ctx["included_sites"] = included
+        footprint = {}
+        for source in [scope, *scope.get_descendants()]:
+            for site in source.included_sites.all():
+                if site.pk not in footprint and (site.address or "").strip():
+                    footprint[site.pk] = site
         map_sites = [
             {"name": site.full_path, "address": (site.address or "").strip()}
-            for site in included
-            if (site.address or "").strip()
+            for site in footprint.values()
         ]
         ctx["scope_sites_json"] = json.dumps(map_sites)
         ctx["has_site_map"] = bool(map_sites)

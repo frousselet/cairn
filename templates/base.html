@@ -5365,6 +5365,44 @@
     }
   </style>
   {% endif %}
+  <script>
+    /* ── Lazy, idempotent Leaflet loader ─────────────────────────────
+     *
+     * The hero maps (supplier / scope / site detail) live in the boosted
+     * #page-shell, so their inline init re-runs on every hx-boost
+     * navigation - but an external <script src="leaflet"> placed in the
+     * swapped content loads ASYNC, so the init fired before window.L
+     * existed and the map only appeared after a hard refresh (where the
+     * blocking <script> is ready in time).
+     *
+     * Defined here in <head> (so it exists before any #page-shell script
+     * runs, on first load and on boosts alike). It injects the Leaflet
+     * CSS + JS once and invokes every queued callback when the library
+     * is ready - a detail page just calls window.ensureLeaflet(init). */
+    (function () {
+      var CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      var JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      var waiters = [];
+      function flush() { var q = waiters.splice(0); q.forEach(function (cb) { try { cb(); } catch (e) {} }); }
+      window.ensureLeaflet = function (cb) {
+        if (typeof cb !== 'function') return;
+        if (window.L) { cb(); return; }
+        waiters.push(cb);
+        if (window.__leafletLoading) return;
+        window.__leafletLoading = true;
+        if (!document.getElementById('leaflet-css')) {
+          var link = document.createElement('link');
+          link.id = 'leaflet-css'; link.rel = 'stylesheet'; link.href = CSS;
+          document.head.appendChild(link);
+        }
+        var s = document.createElement('script');
+        s.src = JS; s.async = true;
+        s.onload = flush;
+        s.onerror = function () { window.__leafletLoading = false; };
+        document.head.appendChild(s);
+      };
+    })();
+  </script>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
       hx-boost="true">
@@ -5490,14 +5528,10 @@
         <a href="{% url 'assets:support-asset-list' %}" class="sidebar-link sidebar-sub">{% trans "Support assets" %}</a>
         <a href="{% url 'assets:group-list' %}" class="sidebar-link sidebar-sub">{% trans "Asset groups" %}</a>
       </div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navSites" aria-expanded="true">
+      <a href="{% url 'assets:site-list' %}" class="sidebar-link">
         <i class="bi bi-building"></i> <span class="sidebar-link-text">{% trans "Sites" %}</span>
-        <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Sites" %}</span>
-      </button>
-      <div class="collapse show" id="navSites">
-        <a href="{% url 'assets:site-list' %}" class="sidebar-link sidebar-sub">{% trans "Sites" %}</a>
-      </div>
+      </a>
       <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navSuppliers" aria-expanded="true">
         <i class="bi bi-truck"></i> <span class="sidebar-link-text">{% trans "Suppliers" %}</span>
         <i class="bi bi-chevron-down"></i>

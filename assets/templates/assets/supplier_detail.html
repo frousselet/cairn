@@ -5,10 +5,6 @@
 
 {% block title %}{{ supplier.name }} - Cairn{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-{% endblock %}
-
 {% block content %}
 {% page_header supplier.name reference=supplier.reference nav="assets:supplier-list" accent="assets" logo=supplier.logo_64|default:supplier.logo %}
   {% include "includes/history_trigger.html" %}
@@ -282,12 +278,13 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 {% comment %}
   Render the supplier address on an OpenStreetMap (Leaflet) map. Coordinates
   captured from the Photon pick are used directly; otherwise the address text
-  is geocoded once (client-side) to place the marker. Re-runs on HTMX swaps.
+  is geocoded once (client-side) to place the marker. Leaflet is loaded through
+  the shared window.ensureLeaflet loader so the map appears on boosted navigation
+  too, not only after a hard refresh.
 {% endcomment %}
 (function () {
   // CARTO basemaps : free, no API key, meant for embedding (OSM's own tile
@@ -358,9 +355,9 @@
       })
       .catch(function () { el.style.display = 'none'; });
   }
-  if (window.L) { initSupplierMap(); }
-  else { document.addEventListener('DOMContentLoaded', initSupplierMap); }
-  document.body.addEventListener('htmx:afterSettle', initSupplierMap);
+  // Runs on first load and on every boosted #page-shell swap (this block is
+  // re-executed by htmx), waiting for the shared loader to make Leaflet ready.
+  window.ensureLeaflet(initSupplierMap);
 })();
 </script>
 {% endblock %}

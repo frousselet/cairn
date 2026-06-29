@@ -29,7 +29,7 @@ The `site` type of `SupportAsset` no longer exists. Existing rows were automatic
 | `address` | text | optional | Postal address, map, access directions |
 | `description` | text | optional | Free-text description |
 | `parent_site` | relation | FK -> Site, optional | Site hierarchy (group -> subsidiary -> site). Cycles rejected by `clean()`. |
-| `workflow_state` | enum | required, default `draft` | Unified lifecycle: `draft`, `pending`, `validated`, `archived`. See [governance/workflow.md](../governance/workflow.md). |
+| `workflow_state` | enum | required, default `draft` | Standardised site lifecycle (`core.lifecycle`): `draft`, `commissioning`, `operational`, `review`, `decommissioned`, `archived`. See the [Lifecycle](#lifecycle) section and [governance/workflow.md](../governance/workflow.md). |
 | `tags` | relation | M2M -> Tag | Free-text labels |
 | `is_approved` | boolean | default `false` | Site validated by an approver |
 | `approved_by` | relation | FK -> User, optional | Approver |
@@ -54,6 +54,23 @@ The displayed labels are localized via the i18n layer (`.po`). The former French
 ## Hierarchy
 
 `parent_site` makes it possible to model a tree: Group -> Subsidiary -> Site -> Building. The `clean()` rule detects and rejects cycles. There is no depth constraint nor consistency constraint between the scopes of a parent and its children: a child site can belong to a scope that its parent does not have (case of multiple subsidiaries sharing a site).
+
+## Lifecycle
+
+The site runs the standardised lifecycle engine (`core.lifecycle`, defined in `context/lifecycles.py` as the `site` lifecycle, `layout="graph"`), rendered with the directed-graph stepper on the detail page. It models the operational life of a physical location:
+
+| Step | Code | Authoritative? | Meaning |
+|---|---|---|---|
+| Draft | `draft` | no (deletable) | Initial stub, just created. |
+| Commissioning | `commissioning` | no | Being brought online (built, fitted out, connected). |
+| Operational | `operational` | yes (counts in reports, linkable) | In service. |
+| Under review | `review` | yes (counts in reports, linkable) | Periodic re-examination of an in-service site; loops back to Operational. |
+| Decommissioned | `decommissioned` | no | Taken out of service for good; kept for traceability. |
+| Archived | `archived` | no | From-any exit; can be restored to Draft. |
+
+Transitions: `draft -> commissioning -> operational`; `operational <-> review` (periodic loop); `operational -> decommissioned`; `any -> archived`; `archived -> draft` (restore). Only the `operational` and `review` steps count in reports and are linkable, mirroring the governance the legacy default workflow expressed (only the validated-equivalent state counted / linked). The web detail page (transitions via the generic stepper), the REST `.../transition/` action and the MCP `transition_site` / `site_allowed_transitions` tools all route through the lifecycle service, which records a `LifecycleEvent` for every move.
+
+The detail page itself uses the standardised 2-column layout (hero overview with an address map, sub-sites, hosted-asset and supplier dependencies, an audit-metadata card, and a sticky KPI rail).
 
 ## Dependency relations
 
@@ -99,7 +116,7 @@ A supplier serves / operates / maintains a site.
 |---|---|
 | RG-SITE-01 | A site can be attached to one or more `Scope`. A site without a scope is valid (cross-cutting site). |
 | RG-SITE-02 | The `parent_site` hierarchy does not tolerate cycles. Detected at `clean()`. |
-| RG-SITE-03 | The `status` is unconstrained: a site can be `active` at the same time as other sites (the RG-02 rule of the Context module was removed because of the multi-scope hierarchy). |
+| RG-SITE-03 | The lifecycle step (`workflow_state`) is unconstrained across sites: any number of sites can be `operational` at once (the single-active rule of the Context module was removed because of the multi-scope hierarchy). |
 | RG-SITE-04 | `is_single_point_of_failure` on site dependencies is computed by the `assets.services.spof_detection` service. The value provided on write is ignored. |
 
 ## Endpoints
@@ -111,12 +128,14 @@ A supplier serves / operates / maintains a site.
 - `GET /api/v1/context/sites/<uuid>/`
 - `PUT/PATCH /api/v1/context/sites/<uuid>/`
 - `DELETE /api/v1/context/sites/<uuid>/`
-- `POST /api/v1/context/sites/<uuid>/approve/`
+- `GET/POST /api/v1/context/sites/<uuid>/transition/`: list the caller's allowed lifecycle transitions (GET) or perform one (POST `target_state`, optional `comment`)
+- `POST /api/v1/context/sites/<uuid>/approve/` (deprecated alias of the validate transition)
 - The `SiteAssetDependency` and `SiteSupplierDependency` have their own routes under `/api/v1/assets/site-asset-dependencies/` and `/api/v1/assets/site-supplier-dependencies/`.
 
 ### MCP
 
 - `list_sites` / `get_site` / `create_site` / `update_site` / `delete_site` / `approve_site` / `batch_create_sites`
+- `transition_site` / `site_allowed_transitions` (lifecycle transitions, route through the lifecycle service)
 - `list_site_asset_dependencys` / `create_site_asset_dependency` / ...
 - `list_site_supplier_dependencys` / `create_site_supplier_dependency` / ...
 
@@ -147,5 +166,5 @@ The other fields of the support asset (owner, CIA, lifecycle dates, etc.) are no
 ## References
 
 - [SupportAsset](support-asset.md), [AssetDependency](asset-dependency.md), [Supplier](#m2-assets-supplier-mdtbd) (supplier, spec to come, issue [#35](https://github.com/frousselet/cairn/issues/35))
-- Migrations: `context.0027` (rename FR -> EN), `context.0028` (scopes M2M), `assets.0029` (drop site type + conversion)
+- Migrations: `context.0027` (rename FR -> EN), `context.0028` (scopes M2M), `assets.0029` (drop site type + conversion), `context.0034` (migrate onto the standardised `site` lifecycle)
 - Issues: [#30](https://github.com/frousselet/cairn/issues/30) (this spec), [#31](https://github.com/frousselet/cairn/issues/31) (rename FR -> EN)
