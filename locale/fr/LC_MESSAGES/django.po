@@ -11444,3 +11444,21 @@ msgstr "PDF"
 
 msgid "Conclude review"
 msgstr "Clôturer la revue"
+
+msgid "Contract draft"
+msgstr "Projet de contrat"
+
+msgid "Under signature"
+msgstr "En signature"
+
+msgid "Start drafting"
+msgstr "Démarrer la rédaction"
+
+msgid "Send for signature"
+msgstr "Envoyer en signature"
+
+msgid "Bring into force"
+msgstr "Mettre en vigueur"
+
+msgid "Reviewed"
+msgstr "Révisé"

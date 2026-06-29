@@ -109,27 +109,45 @@ SUPPLIER_LIFECYCLE = register_lifecycle(_build_supplier_lifecycle())
 
 # ── Contract lifecycle ──────────────────────────────────────────────────────
 #
-# A contract moves Draft -> Active, can Expire (and be Renewed back to Active),
-# and can be Terminated from any state (the Archived exit; terminated contracts
-# stay in reports for audit history). The step codes are exactly the
-# ``ContractStatus`` values, so the legacy ``status`` field stays coherent with
-# ``workflow_state`` via ``sync_legacy_status`` in ``Contract.save()``.
+# Draft (the generic engine entry) -> Contract draft ("projet de contrat") ->
+# Under signature -> In force. While in force it runs a recurring review cycle
+# (In force <-> Under review) and may Expire. An expired contract is NOT renewed
+# in place: a new contract supersedes it ("annule et remplace"). Any state can
+# be Archived (the exit; archived contracts stay in reports for traceability).
+# The step codes are exactly the ``ContractStatus`` values, so the legacy
+# ``status`` field stays coherent with ``workflow_state`` via
+# ``sync_legacy_status`` in ``Contract.save()``.
 CONTRACT_LIFECYCLE_NAME = "contract"
 
 
 def _build_contract_lifecycle() -> Lifecycle:
     steps = [
+        # The mandatory generic Draft entry (not a contract stage on its own).
         draft_step(),
         Step(
+            "drafting",
+            _("Contract draft"),
+            kind=StepKind.INTERMEDIATE,
+            counts_in_reports=True,
+            tone="secondary",
+        ),
+        Step(
+            "signing",
+            _("Under signature"),
+            kind=StepKind.INTERMEDIATE,
+            counts_in_reports=True,
+            tone="info",
+        ),
+        Step(
             "active",
-            _("Active"),
+            _("In force"),
             kind=StepKind.INTERMEDIATE,
             counts_in_reports=True,
             linkable=True,
             tone="success",
         ),
         # Periodic contract review: the contract stays in force while reviewed,
-        # then loops back to active for the next review round.
+        # then loops back to In force for the next review round.
         Step(
             "under_review",
             _("Under review"),
@@ -145,32 +163,32 @@ def _build_contract_lifecycle() -> Lifecycle:
             counts_in_reports=True,
             tone="warning",
         ),
-        # Terminated is the Archived exit, but kept in reports for traceability.
         Step(
-            "terminated",
-            _("Terminated"),
+            "archived",
+            _("Archived"),
             kind=StepKind.ARCHIVED,
             counts_in_reports=True,
             tone="dark",
         ),
     ]
     transitions = [
-        Transition("active", source="draft", label=_("Activate")),
-        # Recurring review cycle: active -> under_review -> active.
+        Transition("drafting", source="draft", label=_("Start drafting")),
+        Transition("signing", source="drafting", label=_("Send for signature")),
+        Transition("active", source="signing", label=_("Bring into force")),
+        # Recurring review cycle: in force <-> under review.
         Transition("under_review", source="active", label=_("Start review")),
-        Transition("active", source="under_review", label=_("Conclude review")),
-        # Expiry and renewal.
+        Transition("active", source="under_review", label=_("Reviewed")),
+        # Expiry. No renewal in place: an expired contract is replaced by a new
+        # one (supersedes / "annule et remplace").
         Transition("expired", source="active", label=_("Expire")),
-        Transition("active", source="expired", label=_("Renew")),
         # Exit from any step.
         Transition(
-            "terminated", source=ANY, label=_("Terminate"), requires_comment=True
+            "archived", source=ANY, label=_("Archive"), requires_comment=True
         ),
     ]
     # "graph" routes the detail stepper to the schema-driven directed-graph
     # renderer (dagre + D3, like Suppliers / Scopes): the review back-edge
-    # (under_review -> active) and Renew (expired -> active) draw as loops, and
-    # Terminate as the archived exit.
+    # (under_review -> active) draws as a loop and Archive as the archived exit.
     return Lifecycle(CONTRACT_LIFECYCLE_NAME, steps, transitions, layout="graph")
 
 

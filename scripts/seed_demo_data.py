@@ -739,7 +739,7 @@ with transaction.atomic():
     ctr_sentinel_renewal.tags.set([tag_thirdparty])
 
     ctr_facil = Contract.objects.create(
-        label="FacilEnergie facility maintenance (terminated)", status="terminated",
+        label="FacilEnergie facility maintenance (archived)", status="archived",
         start_date=years_ago(5), end_date=days_ago(59),
         amount=85000, currency="EUR",
         notes="Not renewed; replaced by an internal facilities team.",
@@ -747,6 +747,16 @@ with transaction.atomic():
     )
     ctr_facil.scopes.set([scope_group])
     ctr_facil.suppliers.set([sup_facil])
+
+    ctr_paycore = Contract.objects.create(
+        label="PayCore payment processing agreement", status="signing",
+        start_date=days_ahead(20), amount=120000, currency="EUR",
+        notes="New payment processing contract, awaiting signature by both parties.",
+        **approved(elise),
+    )
+    ctr_paycore.scopes.set([scope_group])
+    ctr_paycore.suppliers.set([sup_paycore])
+    ctr_paycore.tags.set([tag_thirdparty])
 
     sr_cloud_iso_due = months_ahead(11)
     sr_cloud_iso = SupplierRequirement.objects.create(

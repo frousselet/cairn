@@ -12,7 +12,7 @@ A contract is an autonomous, potentially multi-party document inside the **Docum
 | `reference` | string | auto-generated `CTRT-N`, unique | Business reference |
 | `scopes` | relation | M2M -> Scope | ISMS scopes concerned by the contract. At least one scope is required by the form (RG-CTR-01). |
 | `label` | string | optional, max 255 | Short title of the contract |
-| `status` | enum | required, default `draft` | `draft`, `active`, `expired`, `terminated` (drives the lifecycle workflow) |
+| `status` | enum | required, default `draft` | `draft`, `drafting`, `signing`, `active`, `under_review`, `expired`, `archived` (mirrors the lifecycle step) |
 | `start_date` | date | optional | Effective date |
 | `end_date` | date | optional | Termination date; drives `is_expired` |
 | `amount` | decimal | optional, 14,2 | Contract value |
@@ -36,25 +36,29 @@ A contract is an autonomous, potentially multi-party document inside the **Docum
 
 ### `status`
 
-- `draft`: being prepared (initial state, deletable)
+- `draft`: the generic engine entry (record created); distinct from the `drafting` contract stage
+- `drafting`: "projet de contrat" - the contract is being drafted / negotiated
+- `signing`: under signature
 - `active`: in force
 - `under_review`: in force, undergoing a periodic contract review
 - `expired`: past its end date, kept for audit history (no new links)
-- `terminated`: ended (terminal state)
+- `archived`: ended / filed (the lifecycle exit)
 
 ## Lifecycle
 
-Contract runs the standardised lifecycle engine (`core.lifecycle`, `LIFECYCLE_NAME = "contract"`, see `assets/lifecycles.py`), like Suppliers and Scopes. It is rendered by the generic lifecycle stepper (`LifecycleStepperMixin` + `includes/lifecycle_stepper.html`; the state badge is `{% workflow_badge %}`, which reads the current step). The step codes are exactly the `ContractStatus` values, so the legacy `status` field stays coherent with `workflow_state` (`sync_legacy_status` in `Contract.save()`).
+Contract runs the standardised lifecycle engine (`core.lifecycle`, `LIFECYCLE_NAME = "contract"`, see `assets/lifecycles.py`), like Suppliers and Scopes, and is rendered with the **directed-graph stepper** (`LifecycleStepperMixin` + `includes/lifecycle_stepper.html`, `layout="graph"`; the state badge is `{% workflow_badge %}`, which reads the current step). The step codes are exactly the `ContractStatus` values, so the legacy `status` field stays coherent with `workflow_state` (`sync_legacy_status` in `Contract.save()`).
 
 | Step | kind | counts_in_reports | linkable | deletable |
 |---|---|:--:|:--:|:--:|
-| draft | Draft (entry) | | | yes |
+| draft | Draft (generic entry) | | | yes |
+| drafting | Intermediate | yes | | |
+| signing | Intermediate | yes | | |
 | active | Intermediate | yes | yes | |
 | under_review | Intermediate | yes | yes | |
 | expired | Intermediate | yes | | |
-| terminated | Archived (exit) | yes | | |
+| archived | Archived (exit) | yes | | |
 
-Transitions: `draft -> active` (Activate), `active -> under_review` (Start review) / `under_review -> active` (Conclude review) - the recurring review cycle, `active -> expired` (Expire), `expired -> active` (Renew), and `any -> terminated` (Terminate, requires a comment). The lifecycle is therefore cyclic (review and renewal loops), which is why it uses the `graph` layout (the directed-graph stepper). `terminated` is the Archived exit but still counts in reports for traceability. Approval (`is_approved`) is an independent axis. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_contract` tool is permission-gated.
+Transitions: `draft -> drafting` (Start drafting), `drafting -> signing` (Send for signature), `signing -> active` (Bring into force), the recurring review cycle `active -> under_review` (Start review) / `under_review -> active` (Reviewed), `active -> expired` (Expire), and `any -> archived` (Archive, requires a comment). There is deliberately **no** `expired -> active`: an expired contract is not renewed in place but replaced by a new one via `supersedes` ("annule et remplace"). The review back-edge makes the lifecycle cyclic, which is why it uses the `graph` layout. `archived` is the exit but still counts in reports for traceability. Approval (`is_approved`) is an independent axis. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_contract` tool is permission-gated.
 
 ## Computed properties
 

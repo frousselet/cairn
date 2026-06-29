@@ -262,10 +262,12 @@ class SupplierCriticality(models.TextChoices):
 
 class ContractStatus(models.TextChoices):
     DRAFT = "draft", _("Draft")
-    ACTIVE = "active", _("Active")
+    DRAFTING = "drafting", _("Contract draft")
+    SIGNING = "signing", _("Under signature")
+    ACTIVE = "active", _("In force")
     UNDER_REVIEW = "under_review", _("Under review")
     EXPIRED = "expired", _("Expired")
-    TERMINATED = "terminated", _("Terminated")
+    ARCHIVED = "archived", _("Archived")
 
 
 # A contract's attached document must be a PDF. Magic bytes + size cap are used
