@@ -77,7 +77,7 @@ class TestCertificateLifecycle:
         c = Certificate.objects.create(label="WF", status=CertificateStatus.DRAFT)
         assert {t.target for t in c.available_transitions()} == {"valid", "archived"}
 
-    def test_recertification_and_suspension_cycle(self):
+    def test_recertification_cycle(self):
         c = Certificate.objects.create(label="WF", status=CertificateStatus.DRAFT)
         c.transition_to("valid")  # Issue
         c.refresh_from_db()
@@ -85,16 +85,22 @@ class TestCertificateLifecycle:
         assert c.status == "valid"  # legacy status kept in sync
         targets = {t.target for t in c.available_transitions()}
         assert targets == {"under_renewal", "suspended", "expired", "archived"}
-        # Recertification loop.
+        # Recertification loop: valid <-> under_renewal (the only non-terminal branch).
         c.transition_to("under_renewal")
-        assert "valid" in {t.target for t in c.available_transitions()}
-        c.transition_to("valid")
-        # Suspension loop.
-        c.transition_to("suspended")
         assert "valid" in {t.target for t in c.available_transitions()}
         c.transition_to("valid")
         c.refresh_from_db()
         assert c.workflow_state == "valid"
+
+    def test_suspended_is_terminal(self):
+        from core.lifecycle import IllegalTransitionError
+
+        c = Certificate.objects.create(label="WF", status="valid")
+        c.transition_to("suspended")
+        # Suspended is definitive: no reinstatement, the only move is Archive.
+        assert {t.target for t in c.available_transitions()} == {"archived"}
+        with pytest.raises(IllegalTransitionError):
+            c.transition_to("valid")
 
     def test_archive_from_any_state_without_comment(self):
         for start in ["valid", "under_renewal", "suspended", "expired"]:

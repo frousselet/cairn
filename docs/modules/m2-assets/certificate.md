@@ -39,30 +39,30 @@ A certificate is a company certification record inside the **Documents** area of
 - `draft`: the generic engine entry - the certificate is being prepared / applied for
 - `valid`: the certificate is in force
 - `under_renewal`: in force, undergoing a recertification / surveillance audit
-- `suspended`: suspended by the certification body
-- `expired`: lapsed or not renewed in time, kept for audit history (no new links)
+- `suspended`: **terminal** - suspended by the certification body (no reinstatement; replaced by a new certificate)
+- `expired`: **terminal** - lapsed or not renewed in time, kept for audit history (no new links; replaced by a new certificate)
 - `archived`: filed (the lifecycle exit)
 
 ## Lifecycle
 
 Certificate runs the standardised lifecycle engine (`core.lifecycle`, `LIFECYCLE_NAME = "certificate"`, see `assets/lifecycles.py`), like Contract / Suppliers / Scopes, and is rendered with the **directed-graph stepper** (`LifecycleStepperMixin` + `includes/lifecycle_stepper.html`, `layout="graph"`; the state badge is `{% workflow_badge %}`, which reads the current step). The step codes are exactly the `CertificateStatus` values, so the legacy `status` field stays coherent with `workflow_state` (`sync_legacy_status` in `Certificate.save()`).
 
-| Step | kind | counts_in_reports | linkable | deletable |
-|---|---|:--:|:--:|:--:|
-| draft | Draft (generic entry) | | | yes |
-| valid | Intermediate | yes | yes | |
-| under_renewal | Intermediate | yes | yes | |
-| suspended | Intermediate | yes | | |
-| expired | Intermediate | yes | | |
-| archived | Archived (exit) | yes | | |
+| Step | kind | terminal | counts_in_reports | linkable | deletable |
+|---|---|:--:|:--:|:--:|:--:|
+| draft | Draft (generic entry) | | | | yes |
+| valid | Intermediate | | yes | yes | |
+| under_renewal | Intermediate | | yes | yes | |
+| suspended | Intermediate | yes | yes | | |
+| expired | Intermediate | yes | yes | | |
+| archived | Archived (exit) | | yes | | |
 
-Transitions: `draft -> valid` (Issue certificate), the recurring recertification cycle `valid -> under_renewal` (Start renewal) / `under_renewal -> valid` (Renewed), the suspension loop `valid -> suspended` (Suspend) / `suspended -> valid` (Reinstate), expiry from `valid` / `under_renewal` / `suspended` (Expire), and `any -> archived` (Archive). There is deliberately **no** renewal in place from `expired`: an expired certificate is replaced by a new one via `supersedes` ("annule et remplace"). The recertification back-edge makes the lifecycle cyclic, which is why it uses the `graph` layout. `archived` is the exit but still counts in reports for traceability. Approval (`is_approved`) is an independent axis. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_certificate` tool is permission-gated.
+Transitions: `draft -> valid` (Issue certificate), the recurring recertification cycle `valid -> under_renewal` (Start renewal) / `under_renewal -> valid` (Renewed) - the only non-terminal branch - then `valid -> suspended` (Suspend), `valid -> expired` / `under_renewal -> expired` (Expire), and `any -> archived` (Archive). **Suspended and Expired are terminal**: there is no reinstatement and no renewal in place - re-certifying means issuing a new certificate that supersedes this one via `supersedes` ("annule et remplace"), so the renewal history is kept; the only move out of a terminal state is Archive (terminality is structural - those steps have no outgoing transition other than the from-any Archive). The recertification back-edge makes the lifecycle cyclic, which is why it uses the `graph` layout. `archived` is the exit but still counts in reports for traceability. Approval (`is_approved`) is an independent axis. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_certificate` tool is permission-gated.
 
 ## Computed properties
 
 - `framework_label`: the framework's abbreviation (`short_name`) or full `name`, or `""` when no framework is set.
 - `is_superseded`: `true` when at least one other certificate renews and replaces this one (`superseded_by` is non-empty).
-- `is_expired`: `true` when `expiry_date` is in the past and the status is `valid`, `under_renewal` or `suspended`.
+- `is_expired`: `true` when `expiry_date` is in the past and the status is `valid` or `under_renewal` (the live states).
 - `has_document`: `true` when a PDF is attached.
 - `site_names`: covered-site display names (read-only, for API / assistant output).
 - `get_file_bytes()`: returns the attached PDF bytes, or `None`.

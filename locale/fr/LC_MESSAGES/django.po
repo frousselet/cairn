@@ -11654,8 +11654,6 @@ msgstr "Périmètres organisationnels auxquels s'applique ce certificat."
 msgid "Perimeter covered by the certificate (free text)."
 msgstr "Périmètre couvert par le certificat (texte libre)."
 
-msgid "Reinstate"
-msgstr "Rétablir"
 
 msgid "Renewed and replaced"
 msgstr "Renouvelé et remplacé"
