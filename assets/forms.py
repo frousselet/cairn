@@ -664,7 +664,7 @@ class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
 
     steps = [
         Step(_("Identity"), "file-earmark-text",
-             ["label", ["status", "parent"]]),
+             ["label", ["status", "parent"], "supersedes"]),
         Step(_("Parties"), "people",
              ["suppliers", "clients"]),
         Step(_("Terms"), "cash-coin",
@@ -678,7 +678,7 @@ class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     class Meta:
         model = Contract
         fields = [
-            "scopes", "label", "status", "parent",
+            "scopes", "label", "status", "parent", "supersedes",
             "suppliers", "clients",
             "start_date", "end_date", "amount", "currency",
             "notes", "tags",
@@ -688,6 +688,7 @@ class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "label": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "status": forms.Select(attrs=SELECT_ATTRS),
             "parent": forms.Select(attrs=SELECT_ATTRS),
+            "supersedes": forms.Select(attrs=SELECT_ATTRS),
             "suppliers": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 5}),
             "clients": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 5}),
             "start_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
@@ -701,6 +702,7 @@ class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "label": _("Short title of the contract."),
             "status": _("Lifecycle state of the contract."),
             "parent": _("If this contract is an amendment, the contract it amends."),
+            "supersedes": _("The contract or amendment this one cancels and replaces."),
             "suppliers": _("Supplier parties to the contract."),
             "clients": _("Client (customer) parties to the contract."),
             "start_date": _("Date the contract takes effect."),
@@ -723,6 +725,11 @@ class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         if self.instance and self.instance.pk:
             parent_qs = parent_qs.exclude(pk=self.instance.pk)
         self.fields["parent"].queryset = parent_qs
+        # "Cancels and replaces" can target any other contract or amendment.
+        supersedes_qs = Contract.objects.all()
+        if self.instance and self.instance.pk:
+            supersedes_qs = supersedes_qs.exclude(pk=self.instance.pk)
+        self.fields["supersedes"].queryset = supersedes_qs
 
     def clean(self):
         cleaned = super().clean()

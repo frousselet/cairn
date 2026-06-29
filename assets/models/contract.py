@@ -45,6 +45,17 @@ class Contract(ScopedModel):
         verbose_name=_("Amends contract"),
     )
 
+    # "Cancels and replaces" : this contract (or amendment) supersedes a
+    # previous one. The superseded contract stays for traceability.
+    supersedes = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="superseded_by",
+        verbose_name=_("Cancels and replaces"),
+    )
+
     # Parties : supplier parties and client (customer stakeholder) parties.
     suppliers = models.ManyToManyField(
         "assets.Supplier",
@@ -93,6 +104,11 @@ class Contract(ScopedModel):
     @property
     def is_amendment(self):
         return self.parent_id is not None
+
+    @property
+    def is_superseded(self):
+        """Whether this contract has been cancelled and replaced by another."""
+        return self.superseded_by.exists()
 
     @property
     def is_expired(self):

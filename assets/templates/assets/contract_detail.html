@@ -100,6 +100,16 @@
           <dt class="text-muted small mb-1">{% trans "Amends contract" %}</dt>
           <dd class="mb-3"><a href="{% url 'assets:contract-detail' contract.parent.pk %}" style="text-decoration:none;color:var(--accent);font-weight:500">{{ contract.parent.reference }}</a></dd>
           {% endif %}
+          {% if contract.supersedes_id %}
+          <dt class="text-muted small mb-1">{% trans "Cancels and replaces" %}</dt>
+          <dd class="mb-3"><a href="{% url 'assets:contract-detail' contract.supersedes.pk %}" style="text-decoration:none;color:var(--accent);font-weight:500">{{ contract.supersedes.reference }}</a> {{ contract.supersedes.label }}</dd>
+          {% endif %}
+          {% if superseded_by %}
+          <dt class="text-muted small mb-1">{% trans "Cancelled and replaced by" %}</dt>
+          <dd class="mb-3">
+            {% for newer in superseded_by %}<a href="{% url 'assets:contract-detail' newer.pk %}" style="text-decoration:none;color:var(--accent);font-weight:500">{{ newer.reference }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+          </dd>
+          {% endif %}
           <dt class="text-muted small mb-1">{% trans "Start date" %}</dt>
           <dd class="mb-3">{{ contract.start_date|default:"-" }}</dd>
           <dt class="text-muted small mb-1">{% trans "End date" %}</dt>
