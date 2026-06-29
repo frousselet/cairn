@@ -42,6 +42,7 @@ NAV_TREE = {
     "assets:supplier-list": ("Assets", "Suppliers", "Suppliers"),
     "assets:supplier-type-list": ("Assets", "Suppliers", "Supplier types"),
     "assets:contract-list": ("Assets", "Documents", "Contracts"),
+    "assets:certificate-list": ("Assets", "Documents", "Certificates"),
     "assets:dependency-list": ("Assets", "Dependencies", "Asset dependencies"),
     "assets:supplier-dependency-list": ("Assets", "Dependencies", "Supplier dependencies"),
     "assets:site-asset-dependency-list": ("Assets", "Dependencies", "Site–asset dependencies"),

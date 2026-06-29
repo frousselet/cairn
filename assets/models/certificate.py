@@ -118,7 +118,7 @@ class Certificate(ScopedModel):
         from django.utils import timezone
 
         if self.expiry_date and self.status in (
-            CertificateStatus.VALID,
+            CertificateStatus.CERTIFIED,
             CertificateStatus.UNDER_RENEWAL,
         ):
             return self.expiry_date <= timezone.now().date()

@@ -287,7 +287,8 @@ class CertificateStatus(models.TextChoices):
     """
 
     DRAFT = "draft", _("Draft")
-    VALID = "valid", _("Valid")
+    ASSESSMENT = "assessment", _("Assessment")
+    CERTIFIED = "certified", _("Certified")
     UNDER_RENEWAL = "under_renewal", _("Under renewal")
     SUSPENDED = "suspended", _("Suspended")
     EXPIRED = "expired", _("Expired")

@@ -54,8 +54,8 @@ class TestCertificateModel:
 
     def test_is_expired(self):
         today = datetime.date.today()
-        past = Certificate.objects.create(status="valid", expiry_date=today - datetime.timedelta(days=1))
-        future = Certificate.objects.create(status="valid", expiry_date=today + datetime.timedelta(days=1))
+        past = Certificate.objects.create(status="certified", expiry_date=today - datetime.timedelta(days=1))
+        future = Certificate.objects.create(status="certified", expiry_date=today + datetime.timedelta(days=1))
         archived = Certificate.objects.create(status="archived", expiry_date=today - datetime.timedelta(days=1))
         assert past.is_expired is True
         assert future.is_expired is False
@@ -75,35 +75,39 @@ class TestCertificateLifecycle:
 
     def test_available_transitions_from_draft(self):
         c = Certificate.objects.create(label="WF", status=CertificateStatus.DRAFT)
-        assert {t.target for t in c.available_transitions()} == {"valid", "archived"}
+        assert {t.target for t in c.available_transitions()} == {"assessment", "archived"}
 
-    def test_recertification_cycle(self):
+    def test_certification_path_and_recertification_cycle(self):
         c = Certificate.objects.create(label="WF", status=CertificateStatus.DRAFT)
-        c.transition_to("valid")  # Issue
+        c.transition_to("assessment")  # Start assessment
+        c.transition_to("certified")   # Certify
         c.refresh_from_db()
-        assert c.workflow_state == "valid"
-        assert c.status == "valid"  # legacy status kept in sync
-        targets = {t.target for t in c.available_transitions()}
-        assert targets == {"under_renewal", "suspended", "expired", "archived"}
-        # Recertification loop: valid <-> under_renewal (the only non-terminal branch).
+        assert c.workflow_state == "certified"
+        assert c.status == "certified"  # legacy status kept in sync
+        # From Certified, the only forward move is Start renewal (plus Archive).
+        assert {t.target for t in c.available_transitions()} == {"under_renewal", "archived"}
+        # Recertification cycle: under_renewal -> certified (renewed) is the only
+        # non-terminal branch; the others are terminal.
         c.transition_to("under_renewal")
-        assert "valid" in {t.target for t in c.available_transitions()}
-        c.transition_to("valid")
+        assert {t.target for t in c.available_transitions()} == {
+            "certified", "suspended", "expired", "archived",
+        }
+        c.transition_to("certified")
         c.refresh_from_db()
-        assert c.workflow_state == "valid"
+        assert c.workflow_state == "certified"
 
     def test_suspended_is_terminal(self):
         from core.lifecycle import IllegalTransitionError
 
-        c = Certificate.objects.create(label="WF", status="valid")
+        c = Certificate.objects.create(label="WF", status="under_renewal")
         c.transition_to("suspended")
         # Suspended is definitive: no reinstatement, the only move is Archive.
         assert {t.target for t in c.available_transitions()} == {"archived"}
         with pytest.raises(IllegalTransitionError):
-            c.transition_to("valid")
+            c.transition_to("certified")
 
     def test_archive_from_any_state_without_comment(self):
-        for start in ["valid", "under_renewal", "suspended", "expired"]:
+        for start in ["assessment", "certified", "under_renewal", "suspended", "expired"]:
             c = Certificate.objects.create(label=f"WF {start}", status=start)
             assert "archived" in {t.target for t in c.available_transitions()}
             c.transition_to("archived")  # no comment provided
@@ -113,7 +117,7 @@ class TestCertificateLifecycle:
 
     def test_archive_via_transition_endpoint(self, client):
         client.force_login(UserFactory(is_superuser=True, is_staff=True))
-        c = CertificateFactory(status="valid", scopes=[ScopeFactory()])
+        c = CertificateFactory(status="certified", scopes=[ScopeFactory()])
         url = reverse(
             "workflow:transition",
             kwargs={"app_label": "assets", "model": "certificate", "pk": c.pk},
@@ -124,12 +128,12 @@ class TestCertificateLifecycle:
         assert c.workflow_state == "archived"
         assert c.status == "archived"
 
-    def test_expired_cannot_be_renewed_in_place(self):
+    def test_expired_is_terminal(self):
         from core.lifecycle import IllegalTransitionError
 
         c = Certificate.objects.create(label="WF", status="expired")
         with pytest.raises(IllegalTransitionError):
-            c.transition_to("valid")
+            c.transition_to("certified")
         assert {t.target for t in c.available_transitions()} == {"archived"}
 
     def test_illegal_transition_raises(self):
@@ -137,16 +141,16 @@ class TestCertificateLifecycle:
 
         c = Certificate.objects.create(label="WF", status=CertificateStatus.DRAFT)
         with pytest.raises(IllegalTransitionError):
-            c.transition_to("under_renewal")  # draft must go through "valid" first
+            c.transition_to("certified")  # draft must go through "assessment" first
 
-    def test_draft_is_deletable_valid_is_not(self):
+    def test_draft_is_deletable_certified_is_not(self):
         from core.workflow import LifecycleProtectedError
 
         draft = Certificate.objects.create(label="D", status=CertificateStatus.DRAFT)
         draft.delete()  # allowed
-        valid = Certificate.objects.create(label="V", status=CertificateStatus.VALID)
+        certified = Certificate.objects.create(label="C", status=CertificateStatus.CERTIFIED)
         with pytest.raises(LifecycleProtectedError):
-            valid.delete()
+            certified.delete()
 
 
 @pytest.mark.django_db
@@ -166,7 +170,7 @@ class TestCertificateForm:
         form = CertificateCreateForm(
             user=UserFactory(is_superuser=True),
             data={"label": "X", "framework": str(fw.pk),
-                  "status": "valid", "scopes": [str(scope.pk)],
+                  "status": "certified", "scopes": [str(scope.pk)],
                   "issue_date": "2025-01-01", "expiry_date": "2024-01-01"},
         )
         assert not form.is_valid()
@@ -245,9 +249,13 @@ class TestCertificatePermissions:
         assert client.get(reverse("assets:certificate-list")).status_code == 200
 
     def test_list_header_has_breadcrumb(self, client):
+        # The header eyebrow must render the NAV_TREE trail
+        # (Assets > Documents > Certificates), like every other list page.
         client.force_login(UserFactory(is_superuser=True, is_staff=True))
         resp = client.get(reverse("assets:certificate-list"))
         assert b"page-header__breadcrumb" in resp.content
+        assert b"Documents" in resp.content
+        assert b"Certificates" in resp.content
 
     def test_detail_renders_with_lifecycle_stepper(self, client):
         client.force_login(UserFactory(is_superuser=True, is_staff=True))
@@ -258,6 +266,11 @@ class TestCertificatePermissions:
         assert site.name.encode() in resp.content
         # The lifecycle renders with the standardised directed-graph stepper.
         assert b"data-lc-edges" in resp.content
+        # The detail header eyebrow mirrors the sidebar trail and links back to
+        # the list (Assets > Documents > Certificates > CERT-N).
+        assert b"page-header__breadcrumb" in resp.content
+        assert reverse("assets:certificate-list").encode() in resp.content
+        assert certificate.reference.encode() in resp.content
 
 
 @pytest.mark.django_db
