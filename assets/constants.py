@@ -263,6 +263,7 @@ class SupplierCriticality(models.TextChoices):
 class ContractStatus(models.TextChoices):
     DRAFT = "draft", _("Draft")
     ACTIVE = "active", _("Active")
+    UNDER_REVIEW = "under_review", _("Under review")
     EXPIRED = "expired", _("Expired")
     TERMINATED = "terminated", _("Terminated")
 

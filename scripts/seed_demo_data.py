@@ -693,10 +693,10 @@ with transaction.atomic():
         contract.save(update_fields=["file_content", "file_name", "content_type"])
 
     ctr_cloudnord = Contract.objects.create(
-        label="CloudNord IaaS master services agreement", status="active",
+        label="CloudNord IaaS master services agreement", status="under_review",
         start_date=months_ago(28), end_date=months_ahead(8),
         amount=480000, currency="EUR",
-        notes="Production hosting and colocation. Renewal review due Q3.",
+        notes="Production hosting and colocation. Under periodic renewal review.",
         **approved(elise),
     )
     ctr_cloudnord.scopes.set([scope_group])
