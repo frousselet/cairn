@@ -18,7 +18,7 @@ class Contract(ScopedModel):
     """
 
     REFERENCE_PREFIX = "CTRT"
-    WORKFLOW_NAME = "contract"
+    LIFECYCLE_NAME = "contract"
 
     label = models.CharField(_("Title"), max_length=255, blank=True, default="")
     status = models.CharField(
@@ -91,13 +91,11 @@ class Contract(ScopedModel):
     def __str__(self):
         return self.label or self.reference or str(self.id)
 
-    @property
-    def workflow_perm_namespace(self):
-        return "assets.contract"
-
     def save(self, *args, **kwargs):
         from core.workflow import sync_legacy_status
 
+        # The lifecycle step codes are the ContractStatus values, so keep the
+        # legacy ``status`` field coherent with ``workflow_state``.
         sync_legacy_status(self, kwargs, ContractStatus.DRAFT)
         super().save(*args, **kwargs)
 

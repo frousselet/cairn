@@ -41,18 +41,18 @@ A contract is an autonomous, potentially multi-party document inside the **Docum
 - `expired`: past its end date, kept for audit history (no new links)
 - `terminated`: ended (terminal state)
 
-## Lifecycle workflow
+## Lifecycle
 
-Contract runs a dedicated `core.workflow` workflow (`WORKFLOW_NAME = "contract"`, see `assets/workflows.py`). It is rendered by the generic stepper (`WorkflowStepperMixin` + `includes/workflow_stepper.html` + `{% workflow_badge %}`).
+Contract runs the standardised lifecycle engine (`core.lifecycle`, `LIFECYCLE_NAME = "contract"`, see `assets/lifecycles.py`), like Suppliers and Scopes. It is rendered by the generic lifecycle stepper (`LifecycleStepperMixin` + `includes/lifecycle_stepper.html`; the state badge is `{% workflow_badge %}`, which reads the current step). The step codes are exactly the `ContractStatus` values, so the legacy `status` field stays coherent with `workflow_state` (`sync_legacy_status` in `Contract.save()`).
 
-| State | counts_in_reports | linkable | deletable | initial | terminal |
-|---|:--:|:--:|:--:|:--:|:--:|
-| draft | yes | yes | yes | yes | |
-| active | yes | yes | | | |
-| expired | yes | | | | |
-| terminated | yes | | | | yes |
+| Step | kind | counts_in_reports | linkable | deletable |
+|---|---|:--:|:--:|:--:|
+| draft | Draft (entry) | | | yes |
+| active | Intermediate | yes | yes | |
+| expired | Intermediate | yes | | |
+| terminated | Archived (exit) | yes | | |
 
-Transitions: `draft -> active` (Activate), `active -> expired` (Expire), `expired -> active` (Renew), and `* -> terminated` (Terminate, requires a comment). Approval (`is_approved`) is a separate axis (the workflow has no `validated` state).
+Transitions: `draft -> active` (Activate), `active -> expired` (Expire), `expired -> active` (Renew), and `any -> terminated` (Terminate, requires a comment). `terminated` is the Archived exit but still counts in reports for traceability. Approval (`is_approved`) is an independent axis. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_contract` tool is permission-gated.
 
 ## Computed properties
 
