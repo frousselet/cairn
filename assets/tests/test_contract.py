@@ -212,6 +212,13 @@ class TestContractPermissions:
         client.force_login(UserFactory(is_superuser=True, is_staff=True))
         assert client.get(reverse("assets:contract-list")).status_code == 200
 
+    def test_list_header_has_breadcrumb(self, client):
+        # The header must render the breadcrumb (Assets > Documents > Contracts),
+        # like every other list page (NAV_TREE registration).
+        client.force_login(UserFactory(is_superuser=True, is_staff=True))
+        resp = client.get(reverse("assets:contract-list"))
+        assert b"page-header__breadcrumb" in resp.content
+
     def test_detail_renders_with_parties_and_amendment(self, client):
         client.force_login(UserFactory(is_superuser=True, is_staff=True))
         supplier = SupplierFactory(name="Acme")
