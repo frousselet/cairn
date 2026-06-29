@@ -181,10 +181,10 @@ def _build_contract_lifecycle() -> Lifecycle:
         # Expiry. No renewal in place: an expired contract is replaced by a new
         # one (supersedes / "annule et remplace").
         Transition("expired", source="active", label=_("Expire")),
-        # Exit from any step.
-        Transition(
-            "archived", source=ANY, label=_("Archive"), requires_comment=True
-        ),
+        # Exit from any step. (No requires_comment: the lifecycle stepper UI
+        # does not collect a comment yet - that gating is a later phase, and the
+        # supplier archive transition is unrestricted for the same reason.)
+        Transition("archived", source=ANY, label=_("Archive")),
     ]
     # "graph" routes the detail stepper to the schema-driven directed-graph
     # renderer (dagre + D3, like Suppliers / Scopes): the review back-edge

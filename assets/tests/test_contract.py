@@ -123,6 +123,32 @@ class TestContractLifecycle:
         c.refresh_from_db()
         assert c.workflow_state == "active"
 
+    def test_archive_from_any_state_without_comment(self):
+        # The lifecycle stepper UI collects no comment, so Archive must not be
+        # comment-gated (otherwise the transition silently fails).
+        for start in ["drafting", "signing", "active", "expired"]:
+            c = Contract.objects.create(label=f"WF {start}", status=start)
+            assert "archived" in {t.target for t in c.available_transitions()}
+            c.transition_to("archived")  # no comment provided
+            c.refresh_from_db()
+            assert c.workflow_state == "archived"
+            assert c.status == "archived"
+
+    def test_archive_via_transition_endpoint(self, client):
+        # Reproduce the stepper action: the lifecycle form POSTs target_status
+        # only (no comment). Archive must move the contract to archived.
+        client.force_login(UserFactory(is_superuser=True, is_staff=True))
+        c = ContractFactory(status="active", scopes=[ScopeFactory()])
+        url = reverse(
+            "workflow:transition",
+            kwargs={"app_label": "assets", "model": "contract", "pk": c.pk},
+        )
+        resp = client.post(url, {"target_status": "archived"})
+        assert resp.status_code == 302
+        c.refresh_from_db()
+        assert c.workflow_state == "archived"
+        assert c.status == "archived"
+
     def test_expired_cannot_be_renewed_in_place(self):
         from core.lifecycle import IllegalTransitionError
 
