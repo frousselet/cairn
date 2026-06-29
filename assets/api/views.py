@@ -11,6 +11,7 @@ from assets.models import (
     AssetDependency,
     AssetGroup,
     AssetValuation,
+    Certificate,
     Contract,
     EssentialAsset,
     Supplier,
@@ -22,6 +23,7 @@ from assets.models import (
 from .filters import (
     AssetDependencyFilter,
     AssetGroupFilter,
+    CertificateFilter,
     ContractFilter,
     EssentialAssetFilter,
     SupplierDependencyFilter,
@@ -33,6 +35,8 @@ from .serializers import (
     AssetGroupListSerializer,
     AssetGroupSerializer,
     AssetValuationSerializer,
+    CertificateListSerializer,
+    CertificateSerializer,
     ContractListSerializer,
     ContractSerializer,
     EssentialAssetListSerializer,
@@ -433,3 +437,25 @@ class ContractViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin,
         if self.action == "list":
             return ContractListSerializer
         return ContractSerializer
+
+
+class CertificateViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+    queryset = Certificate.objects.select_related("framework").prefetch_related(
+        "scopes", "sites"
+    ).all()
+    filterset_class = CertificateFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "certificate"
+    search_fields = [
+        "reference", "label", "issuer", "certificate_number", "notes",
+        "framework__name", "framework__short_name",
+    ]
+    ordering_fields = [
+        "reference", "label", "issuer",
+        "issue_date", "expiry_date", "status", "created_at",
+    ]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return CertificateListSerializer
+        return CertificateSerializer

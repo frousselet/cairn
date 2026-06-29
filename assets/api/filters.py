@@ -3,6 +3,7 @@ import django_filters
 from assets.models import (
     AssetDependency,
     AssetGroup,
+    Certificate,
     Contract,
     EssentialAsset,
     Supplier,
@@ -26,6 +27,25 @@ class ContractFilter(django_filters.FilterSet):
 
     def filter_is_amendment(self, queryset, name, value):
         return queryset.filter(parent__isnull=not value)
+
+
+class CertificateFilter(django_filters.FilterSet):
+    scope = django_filters.UUIDFilter(field_name="scopes__id")
+    site = django_filters.UUIDFilter(field_name="sites__id")
+    framework = django_filters.UUIDFilter(field_name="framework_id")
+    supersedes = django_filters.UUIDFilter(field_name="supersedes_id")
+    expiry_before = django_filters.DateFilter(
+        field_name="expiry_date", lookup_expr="lte"
+    )
+    expiry_after = django_filters.DateFilter(
+        field_name="expiry_date", lookup_expr="gte"
+    )
+
+    class Meta:
+        model = Certificate
+        fields = {
+            "status": ["exact"],
+        }
 
 
 class EssentialAssetFilter(django_filters.FilterSet):

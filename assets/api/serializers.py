@@ -5,6 +5,7 @@ from assets.models import (
     AssetDependency,
     AssetGroup,
     AssetValuation,
+    Certificate,
     Contract,
     EssentialAsset,
     Supplier,
@@ -296,3 +297,49 @@ class ContractListSerializer(serializers.ModelSerializer):
             "parent", "has_document", "created_at",
         ]
         read_only_fields = ["id", "reference", "created_at"]
+
+
+class CertificateSerializer(serializers.ModelSerializer):
+    """Full certificate representation (the inline PDF bytes are never exposed)."""
+
+    document_url = serializers.SerializerMethodField()
+    framework_label = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Certificate
+        fields = [
+            "id", "scopes", "reference", "label",
+            "framework", "framework_label", "status",
+            "certificate_number", "issuer", "issue_date", "expiry_date",
+            "scope_statement", "sites", "supersedes", "notes", "tags",
+            "file_name", "content_type", "document_url",
+            "version",
+            "is_approved", "approved_by", "approved_at",
+            "created_by", "created_at", "updated_at",
+        ]
+        read_only_fields = [
+            "id", "reference", "framework_label",
+            "file_name", "content_type", "document_url",
+            "created_by", "created_at", "updated_at",
+            "is_approved", "approved_by", "approved_at", "version",
+        ]
+
+    def get_document_url(self, obj):
+        if not obj.has_document:
+            return None
+        return reverse("assets:certificate-document", kwargs={"pk": obj.pk})
+
+
+class CertificateListSerializer(serializers.ModelSerializer):
+    has_document = serializers.BooleanField(read_only=True)
+    framework_label = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Certificate
+        fields = [
+            "id", "scopes", "reference", "label",
+            "framework", "framework_label", "status",
+            "issuer", "issue_date", "expiry_date",
+            "has_document", "created_at",
+        ]
+        read_only_fields = ["id", "reference", "framework_label", "created_at"]

@@ -1,3 +1,4 @@
+from .certificate import Certificate
 from .contract import Contract
 from .essential_asset import EssentialAsset
 from .support_asset import SupportAsset
@@ -16,6 +17,7 @@ from .supplier import (
 )
 
 __all__ = [
+    "Certificate",
     "Contract",
     "EssentialAsset",
     "SupportAsset",

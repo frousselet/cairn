@@ -20,6 +20,7 @@ from assets.models import (
     AssetDependency,
     AssetGroup,
     AssetValuation,
+    Certificate,
     Contract,
     EssentialAsset,
     SiteAssetDependency,
@@ -1153,6 +1154,84 @@ with transaction.atomic():
     )
     fw_nis2.tags.set([tag_nis2])
     fw_gdpr.tags.set([tag_gdpr])
+
+    # ── Certificates (Documents) ─────────────────────────────
+    # The company's own certificates, each attached to the framework
+    # (référentiel) it attests compliance to. Two extra certification
+    # référentiels (HDS, ISO 9001) round out the demo set.
+    _phase("Certificates...")
+
+    fw_hds = Framework.objects.create(
+        name="Hébergement de Données de Santé (HDS)", short_name="HDS",
+        description="French health-data hosting certification referential.",
+        type="standard", category="sector_specific", framework_version="2018",
+        issuing_body="ANS", jurisdiction="France", owner=elise, status="active",
+        **approved(elise),
+    )
+    fw_hds.scopes.set([scope_group])
+    fw_iso9001 = Framework.objects.create(
+        name="ISO 9001:2015", short_name="ISO 9001",
+        description="Quality management systems: requirements.",
+        type="standard", category="quality", framework_version="2015",
+        issuing_body="ISO", owner=elise, status="active",
+        **approved(elise),
+    )
+    fw_iso9001.scopes.set([scope_group])
+
+    # ISO/IEC 27001 : current 2022 certificate, renewing the lapsed 2013 one.
+    cert_iso27001_2013 = Certificate.objects.create(
+        label="ISO/IEC 27001:2013 certificate", framework=fw_iso, status="expired",
+        issuer="AFNOR Certification", certificate_number="FR-27001-1909",
+        issue_date=years_ago(6), expiry_date=years_ago(0.5),
+        scope_statement="ISMS covering the energy management platform hosting and operations.",
+        notes="Superseded by the 2022 transition certificate.",
+        **approved(elise),
+    )
+    cert_iso27001_2013.scopes.set([scope_group])
+    cert_iso27001_2013.sites.set([site_dc])
+
+    cert_iso27001 = Certificate.objects.create(
+        label="ISO/IEC 27001:2022 certificate", framework=fw_iso, status="valid",
+        issuer="AFNOR Certification", certificate_number="FR-27001-2210",
+        issue_date=months_ago(5), expiry_date=years_ahead(2.5),
+        scope_statement=(
+            "Information security management system for the SCADA supervision "
+            "platform, the customer self-service portal and the supporting IT "
+            "infrastructure, operated from the Paris datacenter and Lyon HQ."
+        ),
+        supersedes=cert_iso27001_2013,
+        notes="Renews and replaces the 2013 certificate after the 2022 transition audit.",
+        **approved(elise),
+    )
+    cert_iso27001.scopes.set([scope_group, scope_it])
+    cert_iso27001.sites.set([site_dc, site_hq])
+    cert_iso27001.tags.set([tag_nis2])
+    _attach_pdf(cert_iso27001, "iso27001-2022-voltara.pdf")
+
+    # HDS : health-data hosting certificate, currently in its renewal audit.
+    cert_hds = Certificate.objects.create(
+        label="HDS certificate (health data hosting)", framework=fw_hds,
+        status="under_renewal", issuer="Bureau Veritas Certification",
+        certificate_number="HDS-2023-0481",
+        issue_date=years_ago(3), expiry_date=months_ahead(1),
+        scope_statement="Hosting of health-related telemetry for energy-assisted care sites.",
+        notes="Surveillance / renewal audit scheduled before expiry.",
+        **approved(elise),
+    )
+    cert_hds.scopes.set([scope_group, scope_it])
+    cert_hds.sites.set([site_dc])
+    _attach_pdf(cert_hds, "hds-2023-voltara.pdf")
+
+    # ISO 9001 : quality management, valid.
+    cert_iso9001 = Certificate.objects.create(
+        label="ISO 9001:2015 certificate", framework=fw_iso9001,
+        status="valid", issuer="LRQA", certificate_number="QMS-9001-7782",
+        issue_date=years_ago(2), expiry_date=years_ahead(1),
+        scope_statement="Quality management for energy delivery and customer operations.",
+        **approved(elise),
+    )
+    cert_iso9001.scopes.set([scope_group])
+    cert_iso9001.sites.set([site_hq])
 
     for num in ["A.8.4", "A.8.28", "A.8.30"]:
         r = iso_reqs[num]

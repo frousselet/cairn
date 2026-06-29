@@ -4,17 +4,24 @@ from django import forms
 from django.forms import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
 
+from compliance.models import Framework
 from context.constants import StakeholderCategory
 from context.models import Scope, Site, Stakeholder
 from context.widgets import ImageUploadWidget, ScopeTreeWidget
 from core.modal_forms import Step, SteppedFormMixin
 from helpers.image_utils import generate_image_variants
 
-from .constants import CONTRACT_MAX_PDF_BYTES, CONTRACT_PDF_MAGIC
+from .constants import (
+    CERTIFICATE_MAX_PDF_BYTES,
+    CERTIFICATE_PDF_MAGIC,
+    CONTRACT_MAX_PDF_BYTES,
+    CONTRACT_PDF_MAGIC,
+)
 from .models import (
     AssetDependency,
     AssetGroup,
     AssetValuation,
+    Certificate,
     Contract,
     EssentialAsset,
     SiteAssetDependency,
@@ -774,3 +781,130 @@ class ContractCreateForm(ContractBaseForm):
 
 class ContractUpdateForm(ContractBaseForm):
     """Contract edition modal form."""
+
+
+class CertificateBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    upload = forms.FileField(
+        label=_("PDF document"),
+        required=False,
+        widget=forms.ClearableFileInput(
+            attrs={**FORM_WIDGET_ATTRS, "accept": "application/pdf,.pdf"}
+        ),
+        help_text=_("Attach the certificate as a PDF file (25 MB max)."),
+    )
+
+    steps = [
+        Step(_("Identity"), "patch-check",
+             ["label", "framework", "supersedes"]),
+        Step(_("Issuance"), "award",
+             ["issuer", "certificate_number", ["issue_date", "expiry_date"], "status"]),
+        Step(_("Certified scope"), "diagram-3",
+             ["scope_statement", "sites"]),
+        Step(_("Document"), "file-earmark-pdf",
+             ["upload"]),
+        Step(_("Scope & filing"), "folder",
+             ["scopes", "notes", "tags"]),
+    ]
+
+    class Meta:
+        model = Certificate
+        fields = [
+            "scopes", "label", "framework", "supersedes",
+            "issuer", "certificate_number", "issue_date", "expiry_date", "status",
+            "scope_statement", "sites",
+            "notes", "tags",
+        ]
+        widgets = {
+            "scopes": ScopeTreeWidget(),
+            "label": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "framework": forms.Select(attrs=SELECT_ATTRS),
+            "supersedes": forms.Select(attrs=SELECT_ATTRS),
+            "issuer": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "certificate_number": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "issue_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+            "expiry_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+            "status": forms.Select(attrs=SELECT_ATTRS),
+            "scope_statement": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "sites": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 5}),
+            "notes": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
+            "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
+        }
+        help_texts = {
+            "label": _("Short title of the certificate."),
+            "framework": _("The framework (référentiel) this certificate attests compliance to."),
+            "supersedes": _("The previous certificate this one renews and replaces."),
+            "issuer": _("Certification body that issued the certificate (e.g. AFNOR, BSI)."),
+            "certificate_number": _("Official certificate number from the certification body."),
+            "issue_date": _("Date the certificate was issued."),
+            "expiry_date": _("Date the certificate expires."),
+            "status": _("Lifecycle state of the certificate."),
+            "scope_statement": _("Perimeter covered by the certificate (free text)."),
+            "sites": _("Sites covered by the certified perimeter."),
+            "notes": _("Free-form notes about the certificate."),
+            "scopes": _("Organizational scopes this certificate applies to."),
+            "tags": _("Free-form labels for filtering and grouping."),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # A certificate always attests compliance to a framework (référentiel).
+        self.fields["framework"].required = True
+        self.fields["framework"].queryset = Framework.objects.order_by(
+            "short_name", "name"
+        )
+        # A certificate can only renew another certificate, never itself.
+        supersedes_qs = Certificate.objects.all()
+        if self.instance and self.instance.pk:
+            supersedes_qs = supersedes_qs.exclude(pk=self.instance.pk)
+        self.fields["supersedes"].queryset = supersedes_qs
+
+    def clean(self):
+        cleaned = super().clean()
+        if not cleaned.get("scopes"):
+            self.add_error(
+                "scopes", _("A certificate must be attached to at least one scope.")
+            )
+        issue_date = cleaned.get("issue_date")
+        expiry_date = cleaned.get("expiry_date")
+        if issue_date and expiry_date and expiry_date < issue_date:
+            self.add_error(
+                "expiry_date",
+                _("The expiry date cannot be earlier than the issue date."),
+            )
+        upload = cleaned.get("upload")
+        if upload:
+            name = (upload.name or "").lower()
+            if not name.endswith(".pdf"):
+                self.add_error("upload", _("Only PDF files are accepted."))
+            elif upload.size and upload.size > CERTIFICATE_MAX_PDF_BYTES:
+                self.add_error(
+                    "upload",
+                    _("The PDF exceeds the maximum allowed size of 25 MB."),
+                )
+            else:
+                header = upload.read(len(CERTIFICATE_PDF_MAGIC))
+                upload.seek(0)
+                if header != CERTIFICATE_PDF_MAGIC:
+                    self.add_error(
+                        "upload", _("The uploaded file is not a valid PDF.")
+                    )
+        return cleaned
+
+    def _post_clean(self):
+        # Store the uploaded PDF inline on the instance before model validation.
+        upload = self.cleaned_data.get("upload") if hasattr(self, "cleaned_data") else None
+        if upload and "upload" not in self.errors:
+            self.instance.file_content = upload.read()
+            self.instance.file_name = upload.name
+            self.instance.content_type = (
+                getattr(upload, "content_type", "") or "application/pdf"
+            )
+        super()._post_clean()
+
+
+class CertificateCreateForm(CertificateBaseForm):
+    """Certificate creation modal form."""
+
+
+class CertificateUpdateForm(CertificateBaseForm):
+    """Certificate edition modal form."""
