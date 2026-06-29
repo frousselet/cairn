@@ -128,6 +128,16 @@ def _build_contract_lifecycle() -> Lifecycle:
             linkable=True,
             tone="success",
         ),
+        # Periodic contract review: the contract stays in force while reviewed,
+        # then loops back to active for the next review round.
+        Step(
+            "under_review",
+            _("Under review"),
+            kind=StepKind.INTERMEDIATE,
+            counts_in_reports=True,
+            linkable=True,
+            tone="info",
+        ),
         Step(
             "expired",
             _("Expired"),
@@ -146,13 +156,22 @@ def _build_contract_lifecycle() -> Lifecycle:
     ]
     transitions = [
         Transition("active", source="draft", label=_("Activate")),
+        # Recurring review cycle: active -> under_review -> active.
+        Transition("under_review", source="active", label=_("Start review")),
+        Transition("active", source="under_review", label=_("Conclude review")),
+        # Expiry and renewal.
         Transition("expired", source="active", label=_("Expire")),
         Transition("active", source="expired", label=_("Renew")),
+        # Exit from any step.
         Transition(
             "terminated", source=ANY, label=_("Terminate"), requires_comment=True
         ),
     ]
-    return Lifecycle(CONTRACT_LIFECYCLE_NAME, steps, transitions, layout="line")
+    # "graph" routes the detail stepper to the schema-driven directed-graph
+    # renderer (dagre + D3, like Suppliers / Scopes): the review back-edge
+    # (under_review -> active) and Renew (expired -> active) draw as loops, and
+    # Terminate as the archived exit.
+    return Lifecycle(CONTRACT_LIFECYCLE_NAME, steps, transitions, layout="graph")
 
 
 CONTRACT_LIFECYCLE = register_lifecycle(_build_contract_lifecycle())

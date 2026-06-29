@@ -229,6 +229,8 @@ class TestContractPermissions:
         assert resp.status_code == 200
         assert b"Acme" in resp.content
         assert b"Avenant 1" in resp.content
+        # The lifecycle renders with the standardised directed-graph stepper.
+        assert b"data-lc-edges" in resp.content
 
 
 @pytest.mark.django_db

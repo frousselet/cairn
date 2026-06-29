@@ -11441,3 +11441,6 @@ msgstr "Aucune partie liée pour le moment."
 
 msgid "PDF"
 msgstr "PDF"
+
+msgid "Conclude review"
+msgstr "Clôturer la revue"

@@ -38,6 +38,7 @@ A contract is an autonomous, potentially multi-party document inside the **Docum
 
 - `draft`: being prepared (initial state, deletable)
 - `active`: in force
+- `under_review`: in force, undergoing a periodic contract review
 - `expired`: past its end date, kept for audit history (no new links)
 - `terminated`: ended (terminal state)
 
@@ -49,10 +50,11 @@ Contract runs the standardised lifecycle engine (`core.lifecycle`, `LIFECYCLE_NA
 |---|---|:--:|:--:|:--:|
 | draft | Draft (entry) | | | yes |
 | active | Intermediate | yes | yes | |
+| under_review | Intermediate | yes | yes | |
 | expired | Intermediate | yes | | |
 | terminated | Archived (exit) | yes | | |
 
-Transitions: `draft -> active` (Activate), `active -> expired` (Expire), `expired -> active` (Renew), and `any -> terminated` (Terminate, requires a comment). `terminated` is the Archived exit but still counts in reports for traceability. Approval (`is_approved`) is an independent axis. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_contract` tool is permission-gated.
+Transitions: `draft -> active` (Activate), `active -> under_review` (Start review) / `under_review -> active` (Conclude review) - the recurring review cycle, `active -> expired` (Expire), `expired -> active` (Renew), and `any -> terminated` (Terminate, requires a comment). The lifecycle is therefore cyclic (review and renewal loops), which is why it uses the `graph` layout (the directed-graph stepper). `terminated` is the Archived exit but still counts in reports for traceability. Approval (`is_approved`) is an independent axis. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_contract` tool is permission-gated.
 
 ## Computed properties
 
