@@ -269,17 +269,56 @@ class ContractListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
     }
     default_sort = "reference"
     search_fields = ["reference", "label", "notes"]
+    paginate_by = None  # tree view shows the whole contract / amendment hierarchy
 
     def get_queryset(self):
-        # Top-level contracts only : amendments are nested under their parent.
         qs = (
             super()
             .get_queryset()
-            .filter(parent__isnull=True)
-            .prefetch_related("scopes", "suppliers", "clients", "amendments")
+            .select_related("parent", "supersedes")
+            .prefetch_related("scopes", "suppliers", "clients", "superseded_by")
         )
         qs = self.filter_queryset_predefined(qs)
         return self.filter_queryset_advanced(qs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["contracts"] = self._build_tree(list(ctx["contracts"]))
+        return ctx
+
+    @staticmethod
+    def _build_tree(contracts):
+        """Return contracts in depth-first order: a top-level contract followed
+        by its amendments (avenants), annotated with tree_level / tree_indent.
+
+        Sibling order is preserved from the queryset, so server-side sorting
+        applies within each parent group while keeping the hierarchy intact.
+        """
+        by_parent = {}
+        for c in contracts:
+            by_parent.setdefault(c.parent_id, []).append(c)
+
+        result = []
+        visited = set()
+
+        def walk(parent_id, level):
+            for c in by_parent.get(parent_id, []):
+                c.tree_level = level
+                c.tree_indent = level * 24
+                result.append(c)
+                visited.add(c.pk)
+                walk(c.pk, level + 1)
+
+        walk(None, 0)
+
+        # Orphans (a parent filtered out by scope access / facets).
+        for c in contracts:
+            if c.pk not in visited:
+                c.tree_level = 0
+                c.tree_indent = 0
+                result.append(c)
+
+        return result
 
 
 class ContractDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
@@ -297,6 +336,7 @@ class ContractDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
         )
         ctx["suppliers"] = self.object.suppliers.all()
         ctx["clients"] = self.object.clients.all()
+        ctx["superseded_by"] = self.object.superseded_by.all()
         return ctx
 
 

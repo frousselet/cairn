@@ -2650,10 +2650,11 @@ def _register_assets_tools(server):
 
     contract_fields = ["id", "reference", "label", "status",
                        "start_date", "end_date", "amount", "currency",
-                       "scopes", "suppliers", "clients", "parent",
+                       "scopes", "suppliers", "clients", "parent", "supersedes",
                        "file_name", "notes", "is_approved", "created_at"]
     contract_writable = ["label", "status", "start_date", "end_date",
                          "amount", "currency", "notes", "parent_id",
+                         "supersedes_id",
                          "scope_ids", "supplier_ids", "client_ids"]
 
     _register_crud(server, "contract", Contract, "assets.contract",
@@ -2681,6 +2682,10 @@ def _register_assets_tools(server):
                        "parent_id": {
                            "type": "string",
                            "description": "UUID of the contract this one amends (avenant); omit for a top-level contract.",
+                       },
+                       "supersedes_id": {
+                           "type": "string",
+                           "description": "UUID of the contract or amendment this one cancels and replaces.",
                        },
                        "scope_ids": {
                            "type": "array",

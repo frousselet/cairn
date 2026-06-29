@@ -267,7 +267,7 @@ class ContractSerializer(serializers.ModelSerializer):
         fields = [
             "id", "scopes", "reference", "label", "status",
             "start_date", "end_date", "amount", "currency",
-            "parent", "suppliers", "clients", "notes", "tags",
+            "parent", "supersedes", "suppliers", "clients", "notes", "tags",
             "file_name", "content_type", "document_url",
             "version",
             "is_approved", "approved_by", "approved_at",

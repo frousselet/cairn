@@ -727,6 +727,17 @@ with transaction.atomic():
     ctr_sentinel.suppliers.set([sup_sentinel])
     ctr_sentinel.tags.set([tag_thirdparty])
 
+    ctr_sentinel_renewal = Contract.objects.create(
+        label="SentinelWatch managed SOC agreement (2026 renewal)", status="active",
+        start_date=days_ahead(2), end_date=years_ahead(3),
+        amount=255000, currency="EUR", supersedes=ctr_sentinel,
+        notes="Renewal that cancels and replaces the 2023 SOC agreement.",
+        **approved(elise),
+    )
+    ctr_sentinel_renewal.scopes.set([scope_group])
+    ctr_sentinel_renewal.suppliers.set([sup_sentinel])
+    ctr_sentinel_renewal.tags.set([tag_thirdparty])
+
     ctr_facil = Contract.objects.create(
         label="FacilEnergie facility maintenance (terminated)", status="terminated",
         start_date=years_ago(5), end_date=days_ago(59),

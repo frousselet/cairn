@@ -11411,3 +11411,21 @@ msgstr "Aucun contrat enregistré pour le moment."
 
 msgid "Contracts capture agreements with your suppliers and clients - link parties, attach the PDF, and track amendments."
 msgstr "Les contrats formalisent les accords avec vos fournisseurs et clients - liez les parties, joignez le PDF et suivez les avenants."
+
+msgid "Cancels and replaces"
+msgstr "Annule et remplace"
+
+msgid "Cancelled and replaced by"
+msgstr "Annulé et remplacé par"
+
+msgid "Cancelled and replaced"
+msgstr "Annulé et remplacé"
+
+msgid "Replaced"
+msgstr "Remplacé"
+
+msgid "Cancels and replaces another contract"
+msgstr "Annule et remplace un autre contrat"
+
+msgid "The contract or amendment this one cancels and replaces."
+msgstr "Le contrat ou l'avenant que celui-ci annule et remplace."

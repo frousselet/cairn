@@ -3,10 +3,14 @@
 <tr{% if contract.is_expired %} class="table-warning"{% endif %}>
   <td data-col="reference"><a href="{% url 'assets:contract-detail' contract.pk %}" class="ref">{{ contract.reference }}</a></td>
   <td data-col="label">
-    <a href="{% url 'assets:contract-detail' contract.pk %}" class="cell-link">
-      {% if contract.label %}{{ contract.label }}{% else %}<span class="cell-empty">{% trans "Untitled" %}</span>{% endif %}
-    </a>
-    {% if contract.has_document %}<i class="bi bi-file-earmark-pdf-fill ms-1 text-danger" title="{% trans 'PDF attached' %}" aria-hidden="true"></i>{% endif %}
+    <div style="padding-left: {{ contract.tree_indent|default:0 }}px;">
+      {% if contract.tree_level > 0 %}<span class="text-muted me-1">└</span>{% endif %}
+      <a href="{% url 'assets:contract-detail' contract.pk %}" class="cell-link{% if contract.is_superseded %} text-decoration-line-through text-muted{% endif %}">
+        {% if contract.label %}{{ contract.label }}{% else %}<span class="cell-empty">{% trans "Untitled" %}</span>{% endif %}
+      </a>
+      {% if contract.has_document %}<i class="bi bi-file-earmark-pdf-fill ms-1 text-danger" title="{% trans 'PDF attached' %}" aria-hidden="true"></i>{% endif %}
+      {% if contract.is_superseded %}<span class="badge text-bg-secondary ms-1" title="{% trans 'Cancelled and replaced' %}">{% trans "Replaced" %}</span>{% elif contract.supersedes_id %}<span class="badge text-bg-light border ms-1" title="{% trans 'Cancels and replaces another contract' %}"><i class="bi bi-arrow-repeat" aria-hidden="true"></i></span>{% endif %}
+    </div>
   </td>
   <td data-col="parties">
     <span class="cell-stack">

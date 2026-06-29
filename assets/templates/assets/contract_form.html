@@ -37,13 +37,19 @@
               </div>
             </div>
             <div class="col-sm-6">
-              <div class="mb-0">
+              <div class="mb-3">
                 <label for="{{ form.parent.id_for_label }}" class="form-label">{{ form.parent.label }}</label>
                 {{ form.parent }}
                 <div class="form-text">{{ form.parent.help_text }}</div>
                 {% for error in form.parent.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
               </div>
             </div>
+          </div>
+          <div class="mb-0">
+            <label for="{{ form.supersedes.id_for_label }}" class="form-label">{{ form.supersedes.label }}</label>
+            {{ form.supersedes }}
+            <div class="form-text">{{ form.supersedes.help_text }}</div>
+            {% for error in form.supersedes.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
           </div>
         </div>
       </div>

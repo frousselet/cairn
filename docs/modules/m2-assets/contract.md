@@ -18,6 +18,7 @@ A contract is an autonomous, potentially multi-party document inside the **Docum
 | `amount` | decimal | optional, 14,2 | Contract value |
 | `currency` | string | optional, max 3 | ISO 4217 currency code |
 | `parent` | relation | FK -> Contract, optional | The contract this one amends (avenant). `null` for a top-level contract |
+| `supersedes` | relation | FK -> Contract, optional, `SET_NULL` | The contract or amendment this one cancels and replaces ("annule et remplace"). Reverse: `superseded_by` |
 | `suppliers` | relation | M2M -> Supplier | Supplier parties |
 | `clients` | relation | M2M -> Stakeholder | Client parties (customer stakeholders) |
 | `file_content` | binary | optional, not exposed via API | Inline PDF bytes (stored in the database) |
@@ -56,6 +57,7 @@ Transitions: `draft -> active` (Activate), `active -> expired` (Expire), `expire
 ## Computed properties
 
 - `is_amendment`: `true` when `parent` is set.
+- `is_superseded`: `true` when at least one other contract cancels and replaces this one (`superseded_by` is non-empty).
 - `is_expired`: `true` when `status=active` and `end_date` is in the past.
 - `has_document`: `true` when a PDF is attached.
 - `supplier_names` / `client_names`: party display names (read-only, for API / assistant output).
@@ -69,7 +71,8 @@ Transitions: `draft -> active` (Activate), `active -> expired` (Expire), `expire
 | RG-CTR-02 | The attached document must be a PDF: extension `.pdf` + magic bytes `%PDF-` + size <= 25 MB. The file is stored inline in the database (`file_content`). |
 | RG-CTR-03 | Parties are the union of `suppliers` (supplier parties) and `clients` (customer stakeholders). Any number of parties is allowed. |
 | RG-CTR-04 | An amendment (avenant) is a child contract pointing to its parent via `parent`. A contract can only amend a top-level contract, never itself. |
-| RG-CTR-05 | The contract list shows top-level contracts only; amendments are nested under their parent. |
+| RG-CTR-05 | The contract list is a hierarchy (like the scope tree): each top-level contract is followed by its amendments, indented under it. |
+| RG-CTR-08 | A contract or amendment can cancel and replace ("annule et remplace") another via `supersedes`. The superseded contract is kept for traceability and flagged in the UI (struck-through, "Replaced" badge); deleting the replacement nulls the link (`SET_NULL`), it does not cascade. |
 | RG-CTR-06 | Deletion is only allowed in the `draft` state (lifecycle governance). |
 | RG-CTR-07 | The PDF is served only through the permission-checked, scope-filtered download view, never directly via `MEDIA_URL`. |
 

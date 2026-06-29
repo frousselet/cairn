@@ -328,3 +328,48 @@ class TestContractMCPRegistered:
                      "update_contract", "delete_contract", "transition_contract",
                      "contract_allowed_transitions"]:
             assert name in server._tools
+
+
+@pytest.mark.django_db
+class TestContractHierarchyAndSupersede:
+    def test_list_shows_amendments_nested(self, client):
+        client.force_login(UserFactory(is_superuser=True, is_staff=True))
+        parent = ContractFactory(reference="CTRT-100", label="Parent MSA")
+        child = ContractFactory(reference="CTRT-101", label="Avenant 1", parent=parent)
+        resp = client.get(reverse("assets:contract-list"))
+        assert resp.status_code == 200
+        rows = list(resp.context["contracts"])
+        by_pk = {c.pk: c for c in rows}
+        assert by_pk[parent.pk].tree_level == 0
+        assert by_pk[child.pk].tree_level == 1
+        # the amendment renders directly under its parent
+        assert rows.index(by_pk[parent.pk]) + 1 == rows.index(by_pk[child.pk])
+
+    def test_supersedes_relationship(self):
+        old = ContractFactory()
+        new = ContractFactory(supersedes=old)
+        assert new.supersedes == old
+        assert old.is_superseded is True
+        assert new.is_superseded is False
+        assert list(old.superseded_by.all()) == [new]
+
+    def test_supersedes_set_null_on_replacement_delete(self):
+        old = ContractFactory(status=ContractStatus.DRAFT)
+        new = ContractFactory(status=ContractStatus.DRAFT, supersedes=old)
+        old.delete()  # draft -> deletable; SET_NULL keeps the survivor
+        new.refresh_from_db()
+        assert new.supersedes is None
+
+    def test_supersedes_queryset_excludes_self(self):
+        c = ContractFactory()
+        form = ContractCreateForm(user=UserFactory(is_superuser=True), instance=c)
+        assert c not in list(form.fields["supersedes"].queryset)
+
+    def test_detail_shows_supersede_both_directions(self, client):
+        client.force_login(UserFactory(is_superuser=True, is_staff=True))
+        old = ContractFactory(reference="CTRT-200", label="Old deal")
+        new = ContractFactory(reference="CTRT-201", label="New deal", supersedes=old)
+        resp_old = client.get(reverse("assets:contract-detail", kwargs={"pk": old.pk}))
+        assert b"CTRT-201" in resp_old.content  # replaced by
+        resp_new = client.get(reverse("assets:contract-detail", kwargs={"pk": new.pk}))
+        assert b"CTRT-200" in resp_new.content  # cancels and replaces
