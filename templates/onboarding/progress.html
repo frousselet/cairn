@@ -1,0 +1,100 @@
+{% extends "onboarding/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ heading }} - Cairn{% endblock %}
+
+{% block extra_style %}
+    .ob-progress-card { max-width: 540px; margin: 0 auto; text-align: center; }
+    .ob-spinner { font-size: 2rem; color: var(--accent); margin-bottom: 1rem; }
+    .ob-bar-track { height: 10px; border-radius: 999px; background: var(--surface-subtle); border: 1px solid var(--border-light); overflow: hidden; margin: 1.25rem 0 1rem; }
+    .ob-bar-fill { height: 100%; width: 0; border-radius: 999px; background: var(--accent); transition: width .35s var(--ease-out-expo); }
+    /* Prominent step counter. */
+    .ob-count { font-size: 1.0625rem; font-weight: 700; color: var(--text-primary); letter-spacing: normal; }
+    .ob-count .ob-pct { color: var(--text-muted); font-weight: 550; }
+    /* Clear, legible migration / phase name. */
+    .ob-step { margin-top: .5rem; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: .82rem; color: var(--text-secondary); word-break: break-word; min-height: 1.1rem; }
+    @media (prefers-reduced-motion: reduce) { .ob-bar-fill { transition: none; } }
+{% endblock %}
+
+{% block content %}
+  <div class="ob-card ob-progress-card">
+    <div id="ob-running">
+      <div class="ob-spinner"><span class="spinner-border" role="status" aria-hidden="true"></span></div>
+      <h1 class="ob-h1">{{ heading }}</h1>
+      <div class="ob-bar-track"><div class="ob-bar-fill" id="ob-bar"></div></div>
+      <div class="ob-count" id="ob-count">{% trans "Preparing..." %}</div>
+      <div class="ob-step" id="ob-step"></div>
+    </div>
+
+    <div id="ob-error" style="display:none">
+      <div class="ob-spinner"><i class="bi bi-exclamation-triangle-fill" style="color:var(--warn)"></i></div>
+      <h1 class="ob-h1">{% trans "Something went wrong" %}</h1>
+      <p class="ob-tile-desc" id="ob-error-msg" style="color:var(--text-secondary);margin:.5rem 0 1.25rem"></p>
+      <button type="button" class="btn-accent" onclick="window.location.reload()">{% trans "Reload" %}</button>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_script %}
+  {% trans "Step" as tr_step %}
+  {% trans "of" as tr_of %}
+  {% trans "Finishing up..." as tr_finishing %}
+  {% trans "Lost connection to the server. Check that it is running, then reload." as tr_lost %}
+  <script>
+  (function () {
+    var bar = document.getElementById('ob-bar');
+    var step = document.getElementById('ob-step');
+    var count = document.getElementById('ob-count');
+    var runningBox = document.getElementById('ob-running');
+    var errorBox = document.getElementById('ob-error');
+    var errorMsg = document.getElementById('ob-error-msg');
+    var pollUrl = '{{ poll_url|escapejs }}';
+    var completeUrl = '{{ complete_url|escapejs }}';
+    var TR_STEP = '{{ tr_step|escapejs }}';
+    var TR_OF = '{{ tr_of|escapejs }}';
+    var TR_LOST = '{{ tr_lost|escapejs }}';
+    var finished = false;
+    var failures = 0;
+    var MAX_FAILURES = 6;  // ~4s of dead backend before we surface an error
+
+    function showError(msg) {
+      finished = true;
+      runningBox.style.display = 'none';
+      errorMsg.textContent = msg || '';
+      errorBox.style.display = 'block';
+    }
+
+    function render(data) {
+      if (data.status === 'error') { showError(data.error); return; }
+      if (data.total) {
+        var pct = Math.min(100, Math.round((data.current / data.total) * 100));
+        bar.style.width = pct + '%';
+        count.innerHTML = TR_STEP + ' ' + data.current + ' ' + TR_OF + ' ' + data.total +
+                          ' <span class="ob-pct">(' + pct + '%)</span>';
+      }
+      if (data.label) { step.textContent = data.label; }
+      if (data.status === 'done') {
+        finished = true;
+        bar.style.width = '100%';
+        count.textContent = '{{ tr_finishing|escapejs }}';
+        step.textContent = '';
+        setTimeout(function () { window.location.href = completeUrl; }, 600);
+      }
+    }
+
+    function poll() {
+      if (finished) return;
+      fetch(pollUrl, {headers: {'Accept': 'application/json'}})
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+        .then(function (data) { failures = 0; render(data); })
+        .catch(function () {
+          failures += 1;
+          if (failures >= MAX_FAILURES) { showError(TR_LOST); }
+        })
+        .finally(function () { if (!finished) setTimeout(poll, 700); });
+    }
+
+    poll();
+  })();
+  </script>
+{% endblock %}

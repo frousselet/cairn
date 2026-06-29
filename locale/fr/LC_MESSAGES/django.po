@@ -11462,3 +11462,120 @@ msgstr "Mettre en vigueur"
 
 msgid "Reviewed"
 msgstr "Révisé"
+
+# First-run onboarding (core/onboarding, templates/onboarding)
+msgid "Set up Cairn"
+msgstr "Configurer Cairn"
+
+msgid "First time here? Let's get your instance ready."
+msgstr "Première visite ? Préparons votre instance."
+
+msgid "Migration status is unavailable. The database may be unreachable."
+msgstr "L'état des migrations est indisponible. La base de données est peut-être injoignable."
+
+msgid "Database is up to date"
+msgstr "Base de données à jour"
+
+msgid "%(applied)s of %(total)s migrations applied."
+msgstr "%(applied)s migrations appliquées sur %(total)s."
+
+msgid "%(counter)s migration pending"
+msgid_plural "%(counter)s migrations pending"
+msgstr[0] "%(counter)s migration en attente"
+msgstr[1] "%(counter)s migrations en attente"
+
+msgid "Apply migrations before initialising. With Docker this happens automatically at startup; otherwise run:"
+msgstr "Appliquez les migrations avant d'initialiser. Avec Docker, cela se fait automatiquement au démarrage ; sinon, exécutez :"
+
+msgid "and %(extra)s more"
+msgstr "et %(extra)s de plus"
+
+msgid "Start from scratch"
+msgstr "Partir de zéro"
+
+msgid "Create your administrator account and begin with an empty instance."
+msgstr "Créez votre compte administrateur et démarrez avec une instance vide."
+
+msgid "Create admin account"
+msgstr "Créer le compte administrateur"
+
+msgid "Start with sample data"
+msgstr "Démarrer avec des données d'exemple"
+
+msgid "Load the Voltara Energy demo dataset to explore every module right away."
+msgstr "Chargez le jeu de données de démonstration Voltara Energy pour explorer immédiatement tous les modules."
+
+msgid "Load sample data"
+msgstr "Charger les données d'exemple"
+
+msgid "Create administrator - Cairn"
+msgstr "Créer l'administrateur - Cairn"
+
+msgid "Create the first administrator account."
+msgstr "Créez le premier compte administrateur."
+
+msgid "Create and sign in"
+msgstr "Créer et se connecter"
+
+msgid "Loading sample data - Cairn"
+msgstr "Chargement des données d'exemple - Cairn"
+
+msgid "Loading sample data"
+msgstr "Chargement des données d'exemple"
+
+msgid "Preparing..."
+msgstr "Préparation..."
+
+msgid "Something went wrong"
+msgstr "Une erreur est survenue"
+
+msgid "Back to setup"
+msgstr "Retour à la configuration"
+
+msgid "Connection lost. Reconnecting..."
+msgstr "Connexion perdue. Reconnexion..."
+
+msgid "step"
+msgstr "étape"
+
+msgid "of"
+msgstr "sur"
+
+msgid "Finishing up..."
+msgstr "Finalisation..."
+
+msgid "A user with this email already exists."
+msgstr "Un utilisateur avec cet e-mail existe déjà."
+
+msgid "The two password fields do not match."
+msgstr "Les deux mots de passe ne correspondent pas."
+
+msgid "Welcome to Cairn. Your administrator account is ready."
+msgstr "Bienvenue dans Cairn. Votre compte administrateur est prêt."
+
+msgid "Apply the database migrations before loading sample data."
+msgstr "Appliquez les migrations de la base de données avant de charger les données d'exemple."
+
+msgid "Sample data could not be loaded. Please try again."
+msgstr "Les données d'exemple n'ont pas pu être chargées. Veuillez réessayer."
+
+msgid "Sample data loaded. Signed in as %(name)s."
+msgstr "Données d'exemple chargées. Connecté en tant que %(name)s."
+
+msgid "Setting up the database"
+msgstr "Préparation de la base de données"
+
+msgid "The database is not ready yet. Please wait for migrations to finish."
+msgstr "La base de données n'est pas encore prête. Veuillez attendre la fin des migrations."
+
+msgid "Updating the database"
+msgstr "Mise à jour de la base de données"
+
+msgid "Step"
+msgstr "Étape"
+
+msgid "Reload"
+msgstr "Recharger"
+
+msgid "Lost connection to the server. Check that it is running, then reload."
+msgstr "Connexion au serveur perdue. Vérifiez qu'il est démarré, puis rechargez."

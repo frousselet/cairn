@@ -24,9 +24,25 @@ connection.ensure_connection()
 done
 echo "Database is ready."
 
-echo "Applying database migrations…"
-# One-time fixup: migration 0022_company_settings was renamed to 0023_company_settings
-python -c "
+# A fresh, un-initialised database is migrated from the first-run onboarding
+# screen instead, so the operator sees live progress. Only auto-migrate here when
+# the instance already has users (an upgrade) or when a super-admin is being
+# provisioned non-interactively via env vars (automated setup, no onboarding).
+INITIALISED=$(python -c "
+import os, django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+django.setup()
+try:
+    from accounts.models import User
+    print('yes' if User.objects.exists() else 'no')
+except Exception:
+    print('no')
+" 2>/dev/null || echo "no")
+
+if [ "$INITIALISED" = "yes" ] || [ -n "$DJANGO_SUPERUSER_EMAIL" ]; then
+    echo "Applying database migrations…"
+    # One-time fixup: migration 0022_company_settings was renamed to 0023_company_settings
+    python -c "
 import django, os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
@@ -36,7 +52,10 @@ with connection.cursor() as c:
     if c.fetchone():
         c.execute(\"UPDATE django_migrations SET name='0023_company_settings' WHERE app='accounts' AND name='0022_company_settings'\")
 " 2>/dev/null || true
-python manage.py migrate --noinput
+    python manage.py migrate --noinput
+else
+    echo "Fresh database detected: migrations will be applied from the onboarding screen."
+fi
 
 echo "Compiling translation files…"
 python manage.py compilemessages

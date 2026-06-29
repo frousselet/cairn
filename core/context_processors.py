@@ -68,9 +68,16 @@ def company(request):
     every template (sidebar brand, tab titles). Uses .first() so a GET never
     creates the singleton row; APP_NAME falls back to "Cairn" and
     ASSISTANT_NAME (the AI assistant brand) to "Ask Cairn"."""
+    from django.db import DatabaseError
+
     from accounts.models import CompanySettings
 
-    settings_obj = CompanySettings.objects.first()
+    try:
+        settings_obj = CompanySettings.objects.first()
+    except DatabaseError:
+        # Fresh database (tables not migrated yet): the onboarding screen renders
+        # before any table exists, so fall back to defaults instead of crashing.
+        settings_obj = None
     app_name = (settings_obj.app_name if settings_obj and settings_obj.app_name else "Cairn")
     assistant_name = (
         settings_obj.assistant_name

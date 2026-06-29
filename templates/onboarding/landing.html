@@ -1,0 +1,98 @@
+{% extends "onboarding/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Set up Cairn" %}{% endblock %}
+
+{% block extra_style %}
+    .ob-mig {
+      display: flex; align-items: flex-start; gap: .75rem;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: .875rem 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .ob-mig i { font-size: 1.15rem; line-height: 1.4; }
+    .ob-mig .ok { color: var(--ok); }
+    .ob-mig .warn { color: var(--warn); }
+    .ob-mig .muted { color: var(--text-muted); }
+    .ob-mig-title { font-weight: 600; font-size: .8125rem; color: var(--text-primary); }
+    .ob-mig-detail { font-size: .78rem; color: var(--text-secondary); margin-top: .15rem; }
+    .ob-mig-list { margin: .4rem 0 0; padding-left: 1rem; font-size: .75rem; color: var(--text-muted); }
+    .ob-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 575.98px) { .ob-choices { grid-template-columns: 1fr; } }
+    .ob-tile {
+      display: flex; flex-direction: column;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      background: var(--surface);
+      transition: border-color .2s var(--ease-out-expo), box-shadow .2s var(--ease-out-expo), transform .2s var(--ease-out-expo);
+    }
+    .ob-tile:not(.disabled):hover { border-color: var(--accent); box-shadow: 0 8px 24px var(--accent-glow); transform: translateY(-2px); }
+    .ob-tile.disabled { opacity: .55; }
+    .ob-tile-icon { font-size: 1.5rem; color: var(--accent); margin-bottom: .5rem; }
+    .ob-tile-title { font-weight: 700; font-size: .9375rem; color: var(--text-primary); margin-bottom: .25rem; }
+    .ob-tile-desc { font-size: .8125rem; color: var(--text-secondary); flex: 1; margin-bottom: 1rem; }
+    .ob-tile form { margin: 0; }
+    .ob-tile .btn-accent, .ob-tile .btn-outline-accent { width: 100%; }
+    .btn-outline-accent {
+      background: transparent; border: 1px solid var(--accent); color: var(--accent);
+      border-radius: var(--radius-sm); padding: .625rem 1rem; font-weight: 600; font-size: .8125rem;
+      transition: all .2s var(--ease-out-expo);
+    }
+    .btn-outline-accent:hover { background: var(--accent); color: #fff; }
+{% endblock %}
+
+{% block content %}
+  <p class="ob-subtitle">{% trans "First time here? Let's get your instance ready." %}</p>
+
+  <div class="ob-card">
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {# ── Database migration state ───────────────────────────────────── #}
+    <div class="ob-mig">
+      {% if migration.available %}
+        <i class="bi bi-check-circle-fill ok"></i>
+        <div>
+          <div class="ob-mig-title">{% trans "Database is up to date" %}</div>
+          <div class="ob-mig-detail">{% blocktrans with applied=migration.applied total=migration.total %}{{ applied }} of {{ total }} migrations applied.{% endblocktrans %}</div>
+        </div>
+      {% else %}
+        <i class="bi bi-question-circle muted"></i>
+        <div>
+          <div class="ob-mig-title">{% trans "Database" %}</div>
+          <div class="ob-mig-detail">{% trans "Migration status is unavailable. The database may be unreachable." %}</div>
+        </div>
+      {% endif %}
+    </div>
+
+    {# ── Initialisation choices ─────────────────────────────────────── #}
+    <div class="ob-choices">
+      <div class="ob-tile{% if not can_initialise %} disabled{% endif %}">
+        <i class="bi bi-rocket-takeoff ob-tile-icon"></i>
+        <div class="ob-tile-title">{% trans "Start from scratch" %}</div>
+        <div class="ob-tile-desc">{% trans "Create your administrator account and begin with an empty instance." %}</div>
+        {% if can_initialise %}
+          <a href="{% url 'onboarding:scratch' %}" class="btn-outline-accent text-center text-decoration-none">{% trans "Create admin account" %}</a>
+        {% else %}
+          <button class="btn-outline-accent" disabled>{% trans "Create admin account" %}</button>
+        {% endif %}
+      </div>
+
+      <div class="ob-tile{% if not can_initialise %} disabled{% endif %}">
+        <i class="bi bi-database-fill-down ob-tile-icon"></i>
+        <div class="ob-tile-title">{% trans "Start with sample data" %}</div>
+        <div class="ob-tile-desc">{% trans "Load the Voltara Energy demo dataset to explore every module right away." %}</div>
+        <form method="post" action="{% url 'onboarding:seed' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-accent" {% if not can_initialise %}disabled{% endif %}>{% trans "Load sample data" %}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,201 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% trans "Set up Cairn" %}{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%231E3A8A'/%3E%3Cpath d='M 19 38 A 14 14 0 1 1 45 38' stroke='%23fff' stroke-width='6' stroke-linecap='round' fill='none'/%3E%3Crect x='22' y='40' width='20' height='4' rx='1' fill='%23fff'/%3E%3Crect x='25' y='33' width='14' height='4' rx='1' fill='%23fff'/%3E%3Crect x='28' y='26' width='8' height='4' rx='1' fill='%23fff'/%3E%3C/svg%3E">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+        crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        rel="stylesheet">
+  <script>
+  (function(){
+    var root = document.documentElement;
+    var STORAGE_KEY = 'theme-preference';
+    var mql = window.matchMedia('(prefers-color-scheme: dark)');
+    function getPreference(){
+      try { var saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === 'light' || saved === 'dark' || saved === 'system') return saved;
+      } catch(e){}
+      return 'system';
+    }
+    function resolve(pref){
+      if (pref === 'light' || pref === 'dark') return pref;
+      return mql.matches ? 'dark' : 'light';
+    }
+    function apply(pref){
+      root.setAttribute('data-bs-theme', resolve(pref));
+      root.setAttribute('data-theme-preference', pref);
+    }
+    apply(getPreference());
+    mql.addEventListener('change', function(){
+      if (root.getAttribute('data-theme-preference') === 'system') apply('system');
+    });
+  })();
+  </script>
+  <style>
+    /* GitLab Sans (OFL-1.1) - self-hosted via @gitlab/fonts on jsDelivr. */
+    @font-face {
+      font-family: 'GitLab Sans';
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: swap;
+      src: url('https://cdn.jsdelivr.net/npm/@gitlab/fonts@1.3.1/gitlab-sans/GitLabSans.woff2') format('woff2');
+    }
+    :root {
+      --accent: #1E3A8A;
+      --accent-hover: #1E2E5E;
+      --accent-soft: #EEF2FF;
+      --accent-glow: rgba(30,58,138,.20);
+      --surface: #FFFFFF;
+      --surface-subtle: #F8FAFC;
+      --border-light: rgba(0,0,0,.08);
+      --text-primary: #18181B;
+      --text-secondary: #52525B;
+      --text-muted: #A1A1AA;
+      --ok: #15803D;
+      --warn: #B45309;
+      --radius-lg: 1.125rem;
+      --radius-md: .625rem;
+      --radius-sm: .5rem;
+      --ease-out-expo: cubic-bezier(.16,1,.3,1);
+    }
+    [data-bs-theme="dark"] {
+      --surface: #16181B;
+      --surface-subtle: #1C1F23;
+      --border-light: rgba(255,255,255,.10);
+      --text-primary: #E4E4E7;
+      --text-secondary: #A1A1AA;
+      --text-muted: #71717A;
+      --accent: #3B5BB8;
+      --accent-soft: rgba(59,91,184,.15);
+      --accent-glow: rgba(59,91,184,.22);
+      --ok: #4ADE80;
+      --warn: #FBBF24;
+    }
+    body {
+      font-family: 'GitLab Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1E3A8A 0%, #1E2E5E 100%);
+      padding: 1.5rem;
+      position: relative;
+      overflow-x: hidden;
+      color: var(--text-primary);
+    }
+    body::before {
+      content: '';
+      position: absolute;
+      top: -30%; right: -20%;
+      width: 60%; height: 80%;
+      background: radial-gradient(circle, rgba(255,255,255,.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    [data-bs-theme="dark"] body {
+      background: linear-gradient(135deg, #0F1011 0%, #16181B 50%, #1C1F23 100%);
+    }
+    .ob-wrapper {
+      width: 100%;
+      max-width: 720px;
+      position: relative;
+      z-index: 1;
+      animation: obFadeIn .5s var(--ease-out-expo);
+    }
+    @keyframes obFadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .ob-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .625rem;
+      margin-bottom: .5rem;
+    }
+    .ob-brand-icon {
+      display: inline-flex;
+      width: 2.5rem; height: 2.5rem;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+    .ob-brand-icon svg { width: 100%; height: 100%; }
+    .ob-brand-text {
+      font-weight: 810;
+      font-size: 1.3125rem;
+      color: #fff;
+      letter-spacing: normal;
+    }
+    .ob-subtitle {
+      text-align: center;
+      color: rgba(255,255,255,.72);
+      font-size: .875rem;
+      margin-bottom: 1.75rem;
+    }
+    .ob-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      box-shadow: 0 24px 64px rgba(0,0,0,.18), 0 8px 24px rgba(0,0,0,.1);
+      padding: 1.75rem;
+    }
+    [data-bs-theme="dark"] .ob-card {
+      box-shadow: 0 24px 64px rgba(0,0,0,.45), 0 8px 24px rgba(0,0,0,.3);
+      border-color: rgba(255,255,255,.06);
+    }
+    h1.ob-h1, h2.ob-h2 { font-weight: 810; letter-spacing: normal; color: var(--text-primary); }
+    h1.ob-h1 { font-size: 1.25rem; }
+    h2.ob-h2 { font-size: 1rem; }
+    .form-label { font-size: .78rem; font-weight: 550; color: var(--text-secondary); margin-bottom: .375rem; }
+    .form-control {
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-light);
+      padding: .5625rem .875rem;
+      font-size: .8125rem;
+      color: var(--text-primary);
+      background: var(--surface);
+      transition: border-color .2s var(--ease-out-expo), box-shadow .2s var(--ease-out-expo);
+    }
+    .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .btn-accent {
+      background: var(--accent); border: none; color: #fff;
+      border-radius: var(--radius-sm); padding: .625rem 1rem;
+      font-weight: 600; font-size: .8125rem;
+      transition: all .2s var(--ease-out-expo);
+      box-shadow: 0 1px 3px var(--accent-glow);
+    }
+    .btn-accent:hover { background: var(--accent-hover); transform: translateY(-1px); color: #fff; }
+    .btn-accent:disabled { opacity: .55; transform: none; cursor: not-allowed; }
+    .alert { border-radius: var(--radius-sm); font-size: .8125rem; }
+    a.ob-link { color: var(--accent); text-decoration: none; font-weight: 550; font-size: .8125rem; }
+    a.ob-link:hover { text-decoration: underline; }
+    ::selection { background: var(--accent-soft); color: var(--accent); }
+    {% block extra_style %}{% endblock %}
+  </style>
+</head>
+<body>
+  <div class="ob-wrapper">
+    <div class="ob-brand">
+      <span class="ob-brand-icon">
+        <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#1E3A8A"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
+      </span>
+      <span class="ob-brand-text">Cairn</span>
+    </div>
+    {% block content %}{% endblock %}
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+          crossorigin="anonymous"></script>
+  {% block extra_script %}{% endblock %}
+</body>
+</html>

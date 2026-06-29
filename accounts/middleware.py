@@ -1,8 +1,25 @@
 from django.conf import settings
 from django.contrib.auth import login, get_user_model
+from django.db import DatabaseError
 from django.utils import translation
 
 IMPERSONATION_SESSION_KEY = "_impersonation_original_user_id"
+
+
+def _is_authenticated(request):
+    """Whether the request user is authenticated, tolerating a not-ready database.
+
+    On a brand-new install the first-run onboarding screen renders before the
+    schema is migrated, so the session/auth tables do not exist yet. Resolving
+    ``request.user`` then raises ``DatabaseError``; with no tables there can be no
+    authenticated user, so we treat that as anonymous instead of crashing.
+    """
+    if not hasattr(request, "user"):
+        return False
+    try:
+        return request.user.is_authenticated
+    except DatabaseError:
+        return False
 
 
 class UserLanguageMiddleware:
@@ -17,7 +34,7 @@ class UserLanguageMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if hasattr(request, "user") and request.user.is_authenticated:
+        if _is_authenticated(request):
             lang = getattr(request.user, "language", "")
             if lang:
                 translation.activate(lang)
@@ -25,7 +42,7 @@ class UserLanguageMiddleware:
 
         response = self.get_response(request)
 
-        if hasattr(request, "user") and request.user.is_authenticated:
+        if _is_authenticated(request):
             lang = getattr(request.user, "language", "")
             if lang:
                 response.set_cookie(settings.LANGUAGE_COOKIE_NAME, lang)
@@ -52,7 +69,7 @@ class ImpersonationMiddleware:
     def __call__(self, request):
         request.impersonator = None
 
-        if not hasattr(request, "user") or not request.user.is_authenticated:
+        if not _is_authenticated(request):
             return self.get_response(request)
 
         original_id = request.session.get(IMPERSONATION_SESSION_KEY)

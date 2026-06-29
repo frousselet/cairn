@@ -98,15 +98,28 @@ from trust_center.models import (
 )
 
 import json
+import os as _os
 import random as _random
 
+
+# Resolve the auxiliary data files relative to a base dir when one is injected
+# (the onboarding runner passes ``SEED_BASE_DIR`` so the script works regardless
+# of the process working directory). The shell/CLI path keeps the historical
+# working-directory-relative behaviour.
+_SEED_BASE = globals().get("SEED_BASE_DIR", "")
+
+
+def _seed_path(rel):
+    return _os.path.join(_SEED_BASE, rel) if _SEED_BASE else rel
+
+
 TBL = {}
-exec(open("scripts/seed_demo_tables.py").read(), TBL)
+exec(open(_seed_path("scripts/seed_demo_tables.py")).read(), TBL)
 
 # Bulk demo content (50+ items per category) generated for Voltara Energy and
 # stored as data so this script stays readable. Consumed by the bulk-volume
 # section, which wires the foreign keys to the curated objects.
-BULK = json.load(open("scripts/seed_bulk_data.json"))
+BULK = json.load(open(_seed_path("scripts/seed_bulk_data.json")))
 RNG = _random.Random(20260625)  # deterministic sampling for reproducible seeds
 
 NOW = timezone.now()
@@ -194,9 +207,22 @@ def approved(user):
     }
 
 
+# Progress reporting. When the onboarding runner exec()s this script it injects a
+# ``SEED_PROGRESS`` callable in the namespace; each phase then both prints (for
+# the CLI/shell path) and reports its label to the live progress bar. Outside the
+# runner ``SEED_PROGRESS`` is absent and ``_phase`` is a plain print.
+_report = globals().get("SEED_PROGRESS")
+
+
+def _phase(label):
+    print(label)
+    if _report:
+        _report(label)
+
+
 with transaction.atomic():
     # ------------------------------------------------------------------ users
-    print("Users and groups...")
+    _phase("Users and groups...")
     elise = User.objects.create_superuser(
         email="elise.moreau@voltara.example", password=PASSWORD,
         first_name="Elise", last_name="Moreau",
@@ -233,7 +259,7 @@ with transaction.atomic():
     cs.save()
 
     # ------------------------------------------------------------------- tags
-    print("Tags...")
+    _phase("Tags...")
     tag_scada = Tag.objects.create(name="SCADA", color="#b45309")
     tag_gdpr = Tag.objects.create(name="GDPR", color="#1E3A8A")
     tag_nis2 = Tag.objects.create(name="NIS2", color="#0e7490")
@@ -242,7 +268,7 @@ with transaction.atomic():
     tag_thirdparty = Tag.objects.create(name="Third party", color="#6d28d9")
 
     # ----------------------------------------------------------------- scopes
-    print("Scopes and sites...")
+    _phase("Scopes and sites...")
     scope_group = Scope.objects.create(
         name="Voltara Group",
         description="Group-wide information security management system covering corporate IT, industrial operations and customer services.",
@@ -340,7 +366,7 @@ with transaction.atomic():
     scope_it.included_sites.set([site_hq, site_dc, site_office])
 
     # ------------------------------------------------------------ stakeholders
-    print("Stakeholders, issues, expectations...")
+    _phase("Stakeholders, issues, expectations...")
     sh_regulator = Stakeholder.objects.create(
         name="Energy Regulatory Commission", type="external", category="regulators",
         description="National regulator overseeing energy market operators.",
@@ -429,7 +455,7 @@ with transaction.atomic():
     issue_scada.related_stakeholders.set([sh_grid])
 
     # --------------------------------------------------------------- objectives
-    print("Objectives, SWOT, roles, activities...")
+    _phase("Objectives, SWOT, roles, activities...")
     obj_iso = Objective.objects.create(
         name="Achieve ISO/IEC 27001 certification", category="compliance", type="compliance",
         description="Pass the stage 1 and stage 2 certification audits on the group ISMS scope.",
@@ -585,7 +611,7 @@ with transaction.atomic():
     )
 
     # ------------------------------------------------------------------ assets
-    print("Suppliers and assets...")
+    _phase("Suppliers and assets...")
     st_cloud = SupplierType.objects.create(
         name="Cloud & hosting provider", description="IaaS, PaaS and colocation suppliers.",
     )
@@ -680,7 +706,7 @@ with transaction.atomic():
         s.tags.set([tag_thirdparty])
 
     # ── Contracts (Documents) ────────────────────────────────
-    print("Contracts...")
+    _phase("Contracts...")
     _demo_pdf = (
         b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
         b"2 0 obj<</Type/Pages/Kids[]/Count 0>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n"
@@ -1058,7 +1084,7 @@ with transaction.atomic():
     )
 
     # -------------------------------------------------------------- compliance
-    print("Frameworks and requirements...")
+    _phase("Frameworks and requirements...")
 
     def build_framework(meta, sections_table, category_per_section=None, default_priority="medium"):
         fw = Framework.objects.create(**meta)
@@ -1162,7 +1188,7 @@ with transaction.atomic():
             coverage_level=coverage, justification=justification, created_by=ines,
         )
 
-    print("Assessments and results...")
+    _phase("Assessments and results...")
     ISO_RESULT_OVERRIDES = {
         "major_non_conformity": ["A.5.26", "A.8.22"],
         "minor_non_conformity": ["A.5.18", "A.5.20", "A.5.21", "A.6.5", "A.7.4", "A.8.8", "A.8.12", "A.8.19"],
@@ -1367,7 +1393,7 @@ with transaction.atomic():
     )
     f_strength.requirements.set([iso_reqs["A.6.3"]])
 
-    print("Action plans...")
+    _phase("Action plans...")
     ap_ot_exercise = ComplianceActionPlan.objects.create(
         name="Run OT incident response exercises",
         description="Close the major non-conformity raised by the latest internal audit.",
@@ -1475,7 +1501,7 @@ with transaction.atomic():
     ).scopes.set([scope_ot])
 
     # ------------------------------------------------------------------- risks
-    print("Risk criteria, threats, vulnerabilities...")
+    _phase("Risk criteria, threats, vulnerabilities...")
     criteria = RiskCriteria.objects.create(
         name="Voltara corporate risk criteria (5x5)",
         description="Group-wide likelihood and impact scales with a 5-level risk grid.",
@@ -1557,7 +1583,7 @@ with transaction.atomic():
         v.affected_assets.set(affected)
         vuln_objs[name] = v
 
-    print("Risk assessment and risks...")
+    _phase("Risk assessment and risks...")
     enterprise_assessment_date = months_ago(4)
     assessment = RiskAssessment.objects.create(
         name=f"{enterprise_assessment_date.year} Enterprise risk assessment",
@@ -1697,7 +1723,7 @@ with transaction.atomic():
         )
         analysis.affected_support_assets.set(list(risk_link.affected_support_assets.all()))
 
-    print("Treatment plans and acceptances...")
+    _phase("Treatment plans and acceptances...")
     tp_segmentation = RiskTreatmentPlan.objects.create(
         risk=r_scada, name="IT/OT segmentation programme",
         description="Zone and conduit architecture per IEC 62443, with firewalls between office IT and plant networks.",
@@ -1784,7 +1810,7 @@ with transaction.atomic():
     )
 
     # ------------------------------------------------------------------- EBIOS
-    print("EBIOS RM study...")
+    _phase("EBIOS RM study...")
     ebios_assessment_date = days_ago(82)
     ebios = RiskAssessment.objects.create(
         name="EBIOS RM : SCADA & industrial operations",
@@ -2001,7 +2027,7 @@ with transaction.atomic():
         )
 
     # ------------------------------------------------------- management review
-    print("Management reviews...")
+    _phase("Management reviews...")
     mr_closed_period_start = days_ago(362)
     mr_closed = ManagementReview.objects.create(
         title=f"{semester_label(mr_closed_period_start)} management review",
@@ -2051,7 +2077,7 @@ with transaction.atomic():
     mr_next.scopes.set([scope_group])
 
     # --------------------------------------------------------------- indicators
-    print("Indicators and measurements...")
+    _phase("Indicators and measurements...")
     month_offsets = [330, 300, 270, 240, 210, 180, 150, 120, 90, 60, 30, 0]
 
     def seed_indicator(name, desc, unit, series_key, operator, threshold, ind_type="technical",
@@ -2169,7 +2195,7 @@ with transaction.atomic():
     # Generate 50+ items per category (where it makes sense) on top of the
     # curated narrative, wiring foreign keys to the objects created above so the
     # whole app is populated with realistic, varied data.
-    print("Bulk volume (50+ per category)...")
+    _phase("Bulk volume (50+ per category)...")
     import unicodedata
 
     def _email(first, last, i):
@@ -2560,7 +2586,7 @@ with transaction.atomic():
             f.requirements.set([res.requirement])
 
     # ------------------------------------------------------------ housekeeping
-    print("SPOF detection and notifications...")
+    _phase("SPOF detection and notifications...")
     SpofDetector().apply()
 
     from django.contrib.contenttypes.models import ContentType
@@ -2582,7 +2608,7 @@ with transaction.atomic():
     )
 
     # ----------------------------------------------------------- trust center
-    print("Trust Center...")
+    _phase("Trust Center...")
     # A simple Voltara mark (lightning bolt) as an SVG data URI, used as the
     # public hero logo and the favicon.
     voltara_logo = "data:image/svg+xml," + quote(

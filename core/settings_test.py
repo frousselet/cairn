@@ -15,6 +15,10 @@ PASSWORD_HASHERS = [
 
 AUTH_PASSWORD_VALIDATORS = []
 
+# Keep the first-run onboarding redirect out of the way of the rest of the
+# suite; onboarding tests opt back in with @override_settings.
+ONBOARDING_REDIRECT_ENABLED = False
+
 # Use in-memory channel layer for tests (no Redis dependency)
 CHANNEL_LAYERS = {
     "default": {

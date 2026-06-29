@@ -25,6 +25,7 @@ urlpatterns = [
     path("authorize", OAuthAuthorizeView.as_view(), name="oauth-authorize"),
 
     path("i18n/", include("django.conf.urls.i18n")),
+    path("onboarding/", include("core.onboarding.urls")),
     path("", GeneralDashboardView.as_view(), name="home"),
     path("dashboard/indicators-partial/", DashboardIndicatorsPartialView.as_view(), name="dashboard-indicators-partial"),
     path("dashboard/indicator-widget/", DashboardIndicatorWidgetPartialView.as_view(), name="dashboard-indicator-widget"),
