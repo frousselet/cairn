@@ -66,13 +66,14 @@ class RequirementFilter(django_filters.FilterSet):
 
 
 class ComplianceAssessmentFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     scope = django_filters.UUIDFilter(field_name="scope_id")
     framework = django_filters.UUIDFilter(field_name="frameworks")
 
     class Meta:
         model = ComplianceAssessment
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "assessor": ["exact"],
             "assessment_start_date": ["gte", "lte"],
             "assessment_end_date": ["gte", "lte"],
@@ -96,6 +97,7 @@ class RequirementMappingFilter(django_filters.FilterSet):
 
 
 class ComplianceActionPlanFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     scope = django_filters.UUIDFilter(field_name="scope_id")
     risk = django_filters.UUIDFilter(field_name="risks__id")
     finding = django_filters.UUIDFilter(field_name="findings__id")
@@ -105,5 +107,5 @@ class ComplianceActionPlanFilter(django_filters.FilterSet):
         fields = {
             "priority": ["exact"],
             "owner": ["exact"],
-            "status": ["exact"],
+            "workflow_state": ["exact"],
         }

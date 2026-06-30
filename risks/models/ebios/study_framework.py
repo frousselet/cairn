@@ -3,11 +3,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.models.base import BaseModel
-from risks.constants import EbiosStudyFrameworkStatus
+from context.models.base import BaseModel, LegacyStatusMixin
 
 
-class StudyFramework(BaseModel):
+class StudyFramework(LegacyStatusMixin, BaseModel):
     """EBIOS RM Workshop 0 - Study framework.
 
     Captures the pre-requisites required by ANSSI before workshop 1:
@@ -57,12 +56,6 @@ class StudyFramework(BaseModel):
     assumptions = models.TextField(_("Assumptions"), blank=True)
     constraints = models.TextField(_("Constraints"), blank=True)
     expected_deliverables = models.TextField(_("Expected deliverables"), blank=True)
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=EbiosStudyFrameworkStatus.choices,
-        default=EbiosStudyFrameworkStatus.DRAFT,
-    )
     history = HistoricalRecords()
 
     class Meta:
@@ -74,11 +67,6 @@ class StudyFramework(BaseModel):
     def workflow_perm_namespace(self):
         return "risks.ebios_assessment"
 
-    def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
-        sync_legacy_status(self, kwargs, EbiosStudyFrameworkStatus.DRAFT)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.reference} : {self.assessment.name}"

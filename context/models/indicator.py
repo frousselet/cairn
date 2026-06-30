@@ -13,7 +13,6 @@ from context.constants import (
     IndicatorFormat,
     IndicatorStatus,
     IndicatorType,
-    PREDEFINED_SOURCE_FORMAT,
     PredefinedIndicatorSource,
     MeasurementFrequency,
 )

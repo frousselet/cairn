@@ -197,7 +197,7 @@ def generate_audit_report_pdf(assessment, user):
     """
     from weasyprint import HTML
 
-    from compliance.constants import ComplianceStatus, FindingType
+    from compliance.constants import FindingType
 
     # Gather results grouped by framework
     frameworks = list(assessment.frameworks.all())

@@ -22,10 +22,8 @@ from risks.constants import (
     Methodology,
 )
 from risks.models import (
-    BaselineGap,
     EbiosWorkshopProgress,
     FearedEvent,
-    RiskAssessment,
     SecurityBaseline,
     StudyFramework,
 )

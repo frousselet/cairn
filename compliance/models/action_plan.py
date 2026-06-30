@@ -11,10 +11,10 @@ from compliance.constants import (
     ActionPlanStatus,
     Priority,
 )
-from context.models.base import ScopedModel
+from context.models.base import LegacyStatusMixin, ScopedModel
 
 
-class ComplianceActionPlan(ScopedModel):
+class ComplianceActionPlan(LegacyStatusMixin, ScopedModel):
     REFERENCE_PREFIX = "CAPL"
     LIFECYCLE_NAME = "action_plan"
 
@@ -68,12 +68,6 @@ class ComplianceActionPlan(ScopedModel):
         null=True,
         blank=True,
     )
-    status = models.CharField(
-        _("Status"),
-        max_length=30,
-        choices=ActionPlanStatus.choices,
-        default=ActionPlanStatus.NEW,
-    )
     originating_review = models.ForeignKey(
         "reports.ManagementReview",
         on_delete=models.SET_NULL,
@@ -112,11 +106,6 @@ class ComplianceActionPlan(ScopedModel):
             allowed.append(ActionPlanStatus.CANCELLED)
         return allowed
 
-    def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
-        sync_legacy_status(self, kwargs, ActionPlanStatus.NEW)
-        super().save(*args, **kwargs)
 
     def transition_to(self, target, user=None, comment=None, *, enforce_permission=False, save=True):
         """Perform a lifecycle transition with validation and audit trail.

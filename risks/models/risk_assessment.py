@@ -3,11 +3,11 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.models.base import ScopedModel
-from risks.constants import AssessmentStatus, Methodology
+from context.models.base import LegacyStatusMixin, ScopedModel
+from risks.constants import Methodology
 
 
-class RiskAssessment(ScopedModel):
+class RiskAssessment(LegacyStatusMixin, ScopedModel):
     REFERENCE_PREFIX = "RASS"
     LIFECYCLE_NAME = "risk_assessment"
 
@@ -36,12 +36,6 @@ class RiskAssessment(ScopedModel):
         related_name="assessments",
         verbose_name=_("Risk criteria"),
     )
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=AssessmentStatus.choices,
-        default=AssessmentStatus.DRAFT,
-    )
     validated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -64,11 +58,6 @@ class RiskAssessment(ScopedModel):
     def workflow_perm_namespace(self):
         return "risks.assessment"
 
-    def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
-        sync_legacy_status(self, kwargs, AssessmentStatus.DRAFT)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.reference} : {self.name}"

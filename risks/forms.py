@@ -121,14 +121,14 @@ class RiskAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
              ["name", ["methodology", "assessor"], "description"]),
         Step(_("Criteria & planning"), "sliders",
              ["risk_criteria", ["assessment_date", "next_review_date"], "summary"]),
-        Step(_("Scope & status"), "diagram-3", ["status", "scopes", "tags"]),
+        Step(_("Scope & status"), "diagram-3", ["scopes", "tags"]),
     ]
 
     class Meta:
         model = RiskAssessment
         fields = [
             "scopes", "name", "description", "methodology",
-            "assessment_date", "assessor", "risk_criteria", "status",
+            "assessment_date", "assessor", "risk_criteria",
             "next_review_date", "summary", "tags",
         ]
         widgets = {
@@ -139,7 +139,6 @@ class RiskAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
             "assessment_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "assessor": forms.Select(attrs=SELECT_ATTRS),
             "risk_criteria": forms.Select(attrs=SELECT_ATTRS),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "next_review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "summary": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
@@ -153,7 +152,6 @@ class RiskAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
             "assessment_date": _("Date the assessment is conducted."),
             "next_review_date": _("Next date this assessment should be reviewed."),
             "summary": _("Executive summary of the results."),
-            "status": _("Lifecycle state of the assessment."),
             "scopes": _("Organizational scopes this assessment applies to."),
             "tags": _("Free-form labels for filtering and grouping."),
         }
@@ -178,7 +176,7 @@ class RiskBaseForm(SteppedFormMixin, forms.ModelForm):
               ["treatment_decision", "priority"], "treatment_justification"]),
         Step(_("Relations & status"), "diagram-3",
              ["affected_essential_assets", "affected_support_assets",
-              "linked_requirements", ["status", "review_date"], "tags"]),
+              "linked_requirements", "review_date", "tags"]),
     ]
 
     class Meta:
@@ -191,7 +189,7 @@ class RiskBaseForm(SteppedFormMixin, forms.ModelForm):
             "initial_likelihood", "initial_impact",
             "current_likelihood", "current_impact",
             "treatment_decision", "treatment_justification",
-            "risk_owner", "priority", "status", "review_date", "tags",
+            "risk_owner", "priority", "review_date", "tags",
         ]
         widgets = {
             "assessment": forms.Select(attrs=SELECT_ATTRS),
@@ -212,7 +210,6 @@ class RiskBaseForm(SteppedFormMixin, forms.ModelForm):
             "treatment_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "risk_owner": forms.Select(attrs=SELECT_ATTRS),
             "priority": forms.Select(attrs=SELECT_ATTRS),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
@@ -235,7 +232,6 @@ class RiskBaseForm(SteppedFormMixin, forms.ModelForm):
             "affected_essential_assets": _("Essential assets at risk."),
             "affected_support_assets": _("Support assets at risk."),
             "linked_requirements": _("Requirements related to this risk."),
-            "status": _("Lifecycle state of the risk."),
             "review_date": _("Next date this risk should be reviewed."),
             "tags": _("Free-form labels for filtering and grouping."),
         }
@@ -302,7 +298,7 @@ class RiskTreatmentPlanBaseForm(SteppedFormMixin, forms.ModelForm):
              ["name", ["risk", "treatment_type"], "owner", "description"]),
         Step(_("Residual & planning"), "speedometer2",
              [["expected_residual_likelihood", "expected_residual_impact"],
-              ["cost_estimate", "status"], ["start_date", "target_date"]]),
+              "cost_estimate", ["start_date", "target_date"]]),
         Step(_("Relations & tags"), "diagram-3", ["related_action_plans", "tags"]),
     ]
 
@@ -311,7 +307,7 @@ class RiskTreatmentPlanBaseForm(SteppedFormMixin, forms.ModelForm):
         fields = [
             "risk", "name", "description", "treatment_type",
             "expected_residual_likelihood", "expected_residual_impact",
-            "cost_estimate", "owner", "start_date", "target_date", "status", "tags",
+            "cost_estimate", "owner", "start_date", "target_date", "tags",
             "related_action_plans",
         ]
         widgets = {
@@ -325,7 +321,6 @@ class RiskTreatmentPlanBaseForm(SteppedFormMixin, forms.ModelForm):
             "owner": forms.Select(attrs=SELECT_ATTRS),
             "start_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "target_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
             "related_action_plans": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 6}),
         }
@@ -338,7 +333,6 @@ class RiskTreatmentPlanBaseForm(SteppedFormMixin, forms.ModelForm):
             "expected_residual_likelihood": _("Expected likelihood after treatment."),
             "expected_residual_impact": _("Expected impact after treatment."),
             "cost_estimate": _("Estimated cost."),
-            "status": _("Lifecycle state of the plan."),
             "start_date": _("Planned start date."),
             "target_date": _("Planned completion date."),
             "related_action_plans": _("Compliance action plans linked to this treatment."),
@@ -488,7 +482,7 @@ class VulnerabilityBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         Step(_("Identity"), "bug",
              ["name", ["category", "severity"], "description", "remediation_guidance"]),
         Step(_("Scope & status"), "diagram-3",
-             ["affected_assets", "is_from_catalog", "status", "scopes", "tags"]),
+             ["affected_assets", "is_from_catalog", "scopes", "tags"]),
     ]
 
     class Meta:
@@ -496,7 +490,7 @@ class VulnerabilityBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         fields = [
             "scopes", "name", "description", "category",
             "severity", "affected_assets", "remediation_guidance",
-            "is_from_catalog", "status", "tags",
+            "is_from_catalog", "tags",
         ]
         widgets = {
             "scopes": ScopeTreeWidget(),
@@ -507,7 +501,6 @@ class VulnerabilityBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "affected_assets": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 5}),
             "remediation_guidance": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "is_from_catalog": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
         help_texts = {
@@ -518,7 +511,6 @@ class VulnerabilityBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "remediation_guidance": _("How to remediate it."),
             "affected_assets": _("Assets affected by this vulnerability."),
             "is_from_catalog": _("Tick if taken from a catalog."),
-            "status": _("Lifecycle state of the vulnerability."),
             "scopes": _("Organizational scopes this vulnerability applies to."),
             "tags": _("Free-form labels for filtering and grouping."),
         }

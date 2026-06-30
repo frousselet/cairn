@@ -2,7 +2,6 @@
 
 import pytest
 
-from accounts.tests.factories import UserFactory
 from compliance.constants import AssessmentStatus
 from compliance.models import ComplianceAssessment
 from compliance.tests.factories import ComplianceAssessmentFactory

@@ -27,18 +27,20 @@ class RiskCriteriaFilter(django_filters.FilterSet):
 
 
 class RiskAssessmentFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     scope = django_filters.UUIDFilter(field_name="scope_id")
     assessor = django_filters.UUIDFilter(field_name="assessor_id")
 
     class Meta:
         model = RiskAssessment
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "methodology": ["exact"],
         }
 
 
 class RiskFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     assessment = django_filters.UUIDFilter(field_name="assessment_id")
     risk_owner = django_filters.UUIDFilter(field_name="risk_owner_id")
 
@@ -64,7 +66,7 @@ class RiskFilter(django_filters.FilterSet):
     class Meta:
         model = Risk
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "priority": ["exact"],
             "risk_source": ["exact"],
             "treatment_decision": ["exact"],
@@ -78,6 +80,7 @@ class RiskFilter(django_filters.FilterSet):
 
 
 class RiskTreatmentPlanFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     risk = django_filters.UUIDFilter(field_name="risk_id")
     assessment = django_filters.UUIDFilter(field_name="risk__assessment_id")
     owner = django_filters.UUIDFilter(field_name="owner_id")
@@ -85,19 +88,20 @@ class RiskTreatmentPlanFilter(django_filters.FilterSet):
     class Meta:
         model = RiskTreatmentPlan
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "treatment_type": ["exact"],
         }
 
 
 class RiskAcceptanceFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     risk = django_filters.UUIDFilter(field_name="risk_id")
     assessment = django_filters.UUIDFilter(field_name="risk__assessment_id")
 
     class Meta:
         model = RiskAcceptance
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
         }
 
 
@@ -116,6 +120,7 @@ class ThreatFilter(django_filters.FilterSet):
 
 
 class VulnerabilityFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     scope = django_filters.UUIDFilter(field_name="scope_id")
 
     class Meta:
@@ -123,7 +128,7 @@ class VulnerabilityFilter(django_filters.FilterSet):
         fields = {
             "category": ["exact"],
             "severity": ["exact"],
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "is_from_catalog": ["exact"],
         }
 

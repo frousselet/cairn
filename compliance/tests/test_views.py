@@ -11,7 +11,6 @@ from context.tests.factories import ScopeFactory
 from compliance.constants import (
     ActionPlanStatus,
     AssessmentStatus,
-    ComplianceStatus,
     FindingType,
     FrameworkCategory,
     FrameworkType,

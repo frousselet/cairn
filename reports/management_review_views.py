@@ -7,7 +7,6 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
@@ -39,8 +38,6 @@ from compliance.constants import ActionPlanStatus
 from compliance.models import ComplianceActionPlan
 
 from .constants import (
-    MANAGEMENT_REVIEW_CANCELLABLE_STATUSES,
-    MANAGEMENT_REVIEW_TRANSITIONS,
     ManagementReviewStatus,
 )
 from .forms import (

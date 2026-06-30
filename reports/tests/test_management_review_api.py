@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 from accounts.tests.factories import UserFactory
 from compliance.models import ComplianceActionPlan
 from reports.constants import ManagementReviewStatus
-from reports.models import ManagementReview, ManagementReviewDecision
+from reports.models import ManagementReview
 
 from .factories import (
     IsmsChangeFactory,
@@ -222,7 +222,6 @@ class TestIsmsChangeAPI:
 
 class TestPermissionGates:
     def setup_method(self):
-        from accounts.tests.factories import GroupFactory, PermissionFactory
         self.client = APIClient()
         # Non-superuser, no perms
         self.user = UserFactory(is_superuser=False)

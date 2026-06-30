@@ -1,13 +1,11 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from risks.constants import EbiosWorkshopStatus
 from risks.models import (
     AttackPathStep,
     AttackTechnique,
     BaselineGap,
     EbiosSummary,
-    EbiosWorkshopProgress,
     EcosystemStakeholder,
     FearedEvent,
     OperationalScenario,
@@ -107,7 +105,6 @@ class BaselineGapForm(forms.ModelForm):
             "description",
             "severity",
             "recommended_remediation",
-            "status",
         ]
         widgets = {
             "reference_source": forms.TextInput(attrs={"class": "form-control"}),
@@ -115,7 +112,6 @@ class BaselineGapForm(forms.ModelForm):
             "description": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
             "severity": forms.Select(attrs={"class": "form-select"}),
             "recommended_remediation": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
-            "status": forms.Select(attrs={"class": "form-select"}),
         }
 
 
@@ -314,7 +310,6 @@ class EbiosSummaryForm(forms.ModelForm):
         fields = [
             "residual_risk_strategy", "monitoring_plan", "pacs_summary",
             "next_strategic_cycle_date", "next_operational_cycle_date",
-            "status",
         ]
         widgets = {
             "residual_risk_strategy": forms.Textarea(attrs={"rows": 4, "class": "form-control"}),
@@ -322,7 +317,6 @@ class EbiosSummaryForm(forms.ModelForm):
             "pacs_summary": forms.Textarea(attrs={"rows": 4, "class": "form-control"}),
             "next_strategic_cycle_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "next_operational_cycle_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "status": forms.Select(attrs={"class": "form-select"}),
         }
 
 
@@ -334,7 +328,7 @@ class PACSMeasureForm(forms.ModelForm):
             "linked_treatment_plans", "linked_baseline_gaps", "linked_requirements",
             "owner", "start_date", "target_date", "completion_date",
             "cost_estimate", "expected_gain",
-            "priority", "status", "progress_percentage", "order",
+            "priority", "progress_percentage", "order",
         ]
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control"}),
@@ -350,7 +344,6 @@ class PACSMeasureForm(forms.ModelForm):
             "cost_estimate": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
             "expected_gain": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
             "priority": forms.Select(attrs={"class": "form-select"}),
-            "status": forms.Select(attrs={"class": "form-select"}),
             "progress_percentage": forms.NumberInput(attrs={"class": "form-control", "min": 0, "max": 100}),
             "order": forms.NumberInput(attrs={"class": "form-control"}),
         }

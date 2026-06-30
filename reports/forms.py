@@ -7,14 +7,7 @@ from compliance.models import ComplianceAssessment, Framework
 from context.models import Scope
 from core.workflow import reportable
 from reports.constants import (
-    DecisionCategory,
-    DecisionInputClause,
     DecisionPriority,
-    DecisionStatus,
-    IsmsChangeStatus,
-    IsmsChangeType,
-    ManagementReviewFrequency,
-    ParticipantRole,
 )
 from reports.models import (
     IsmsChange,
@@ -47,7 +40,7 @@ class SoaReportForm(forms.Form):
 class AuditReportForm(forms.Form):
     assessment = forms.ModelChoiceField(
         queryset=ComplianceAssessment.objects.filter(
-            status__in=[AssessmentStatus.COMPLETED, AssessmentStatus.CLOSED],
+            workflow_state__in=[AssessmentStatus.COMPLETED, AssessmentStatus.CLOSED],
         ).order_by("-assessment_end_date", "-created_at"),
         label=_("Assessment"),
         help_text=_("Select a completed or closed audit to generate the report."),

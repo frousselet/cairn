@@ -16,11 +16,9 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import DeleteView, DetailView, UpdateView
 
-from accounts.mixins import ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import HtmxFormMixin
 from risks.constants import (
-    EBIOS_WORKSHOP_COUNT,
     EbiosIterationType,
     EbiosWorkshopNumber,
     EbiosWorkshopStatus,

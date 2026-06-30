@@ -17,7 +17,7 @@ from risks.constants import (
     PACSMeasureStatus,
     PACSMeasureType,
 )
-from risks.models import EbiosSummary, PACSMeasure
+from risks.models import EbiosSummary
 from risks.tests.factories import (
     BaselineGapFactory,
     EbiosAssessmentFactory,

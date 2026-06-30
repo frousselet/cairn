@@ -3980,7 +3980,7 @@ def _register_compliance_tools(server):
         qs = ComplianceActionPlan.objects.all()
         columns = {}
         for status_choice in APS:
-            plans = qs.filter(status=status_choice.value)
+            plans = qs.filter(workflow_state=status_choice.value)
             columns[status_choice.value] = [
                 {"id": str(p.pk), "reference": p.reference, "name": p.name,
                  "priority": p.priority, "status": p.status,
@@ -7271,7 +7271,7 @@ def _register_reports_tools(server):
             qs = qs.filter(assessment_id=assessment_id)
         status_filter = arguments.get("status")
         if status_filter:
-            qs = qs.filter(status=status_filter)
+            qs = qs.filter(workflow_state=status_filter)
         priority = arguments.get("priority")
         if priority:
             qs = qs.filter(priority=priority)
@@ -7607,7 +7607,7 @@ def _register_reports_tools(server):
         qs = MR.objects.all()
         status_filter = arguments.get("status")
         if status_filter:
-            qs = qs.filter(status=status_filter)
+            qs = qs.filter(workflow_state=status_filter)
         scope_id = arguments.get("scope_id")
         if scope_id:
             qs = qs.filter(scopes__id=scope_id)

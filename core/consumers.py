@@ -158,7 +158,7 @@ class DashboardConsumer(AsyncWebsocketConsumer):
         spof_results = SpofDetector().detect_all()
         spof_count = spof_results["total_spof"]
         eol_count = SupportAsset.objects.filter(
-            end_of_life_date__lte=today, status="active"
+            end_of_life_date__lte=today, workflow_state="active"
         ).count()
         personal_data_count = EssentialAsset.objects.filter(personal_data=True).count()
         supplier_count = Supplier.objects.count()
@@ -177,12 +177,12 @@ class DashboardConsumer(AsyncWebsocketConsumer):
         risk_count = Risk.objects.count()
         treatment_plan_count = RiskTreatmentPlan.objects.count()
         treatment_in_progress_count = RiskTreatmentPlan.objects.filter(
-            status="in_progress"
+            workflow_state="in_progress"
         ).count()
         critical_risk_count = Risk.objects.filter(priority="critical").count()
-        acceptance_count = RiskAcceptance.objects.filter(status="active").count()
+        acceptance_count = RiskAcceptance.objects.filter(workflow_state="active").count()
         expiring_acceptance_count = RiskAcceptance.objects.filter(
-            status="active",
+            workflow_state="active",
             valid_until__lte=today + timedelta(days=30),
             valid_until__gte=today,
         ).count()
@@ -214,7 +214,7 @@ class DashboardConsumer(AsyncWebsocketConsumer):
         action_plan_count = filter_scoped(ComplianceActionPlan.objects.all()).count()
         overdue_plan_count = filter_scoped(
             ComplianceActionPlan.objects.filter(target_date__lt=today).exclude(
-                status__in=["completed", "cancelled"]
+                workflow_state__in=["completed", "cancelled"]
             )
         ).count()
         mapping_count = RequirementMapping.objects.count()

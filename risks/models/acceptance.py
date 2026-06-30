@@ -4,11 +4,11 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.models.base import BaseModel
+from context.models.base import BaseModel, LegacyStatusMixin
 from risks.constants import AcceptanceStatus
 
 
-class RiskAcceptance(BaseModel):
+class RiskAcceptance(LegacyStatusMixin, BaseModel):
     REFERENCE_PREFIX = "RACC"
     LIFECYCLE_NAME = "risk_acceptance"
 
@@ -34,12 +34,6 @@ class RiskAcceptance(BaseModel):
     conditions = models.TextField(_("Conditions"), blank=True)
     valid_until = models.DateField(_("Valid until"), null=True, blank=True)
     review_date = models.DateField(_("Review date"), null=True, blank=True)
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=AcceptanceStatus.choices,
-        default=AcceptanceStatus.ACTIVE,
-    )
     history = HistoricalRecords()
 
     class Meta:
@@ -67,7 +61,5 @@ class RiskAcceptance(BaseModel):
                 current = getattr(self.risk, "current_risk_level", None)
                 if current is not None:
                     self.risk_level_at_acceptance = current
-        from core.workflow import sync_legacy_status
 
-        sync_legacy_status(self, kwargs, AcceptanceStatus.ACTIVE)
         super().save(*args, **kwargs)

@@ -3,15 +3,14 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.models.base import BaseModel
+from context.models.base import BaseModel, LegacyStatusMixin
 from risks.constants import (
     PACSMeasurePriority,
-    PACSMeasureStatus,
     PACSMeasureType,
 )
 
 
-class PACSMeasure(BaseModel):
+class PACSMeasure(LegacyStatusMixin, BaseModel):
     """EBIOS RM Workshop 5 - PACS measure.
 
     Structured entry of the Plan d'Amélioration Continue de la Sécurité.
@@ -81,12 +80,6 @@ class PACSMeasure(BaseModel):
         choices=PACSMeasurePriority.choices,
         default=PACSMeasurePriority.MEDIUM,
     )
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=PACSMeasureStatus.choices,
-        default=PACSMeasureStatus.PLANNED,
-    )
     progress_percentage = models.PositiveSmallIntegerField(
         _("Progress percentage"), null=True, blank=True,
     )
@@ -102,11 +95,6 @@ class PACSMeasure(BaseModel):
     def workflow_perm_namespace(self):
         return "risks.ebios_summary"
 
-    def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
-        sync_legacy_status(self, kwargs, PACSMeasureStatus.PLANNED)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.reference} : {self.name}"

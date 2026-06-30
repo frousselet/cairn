@@ -1,4 +1,4 @@
-from django.db.models import Count, Max, Q
+from django.db.models import Count
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -10,14 +10,12 @@ from context.api.permissions import ContextPermission
 from assets.models import (
     AssetDependency,
     AssetGroup,
-    AssetValuation,
     Certificate,
     Contract,
     EssentialAsset,
     Supplier,
     SupplierContact,
     SupplierDependency,
-    SupplierRequirement,
     SupportAsset,
 )
 from .filters import (
@@ -63,7 +61,7 @@ class EssentialAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPI
     permission_feature = "essential_asset"
     search_fields = ["reference", "name", "description"]
     ordering_fields = [
-        "reference", "name", "type", "category", "status",
+        "reference", "name", "type", "category", "workflow_state",
         "confidentiality_level", "integrity_level", "availability_level",
         "created_at",
     ]
@@ -114,7 +112,7 @@ class EssentialAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPI
         qs = self.filter_queryset(self.get_queryset())
         total = qs.count()
         by_type = dict(qs.values_list("type").annotate(c=Count("id")).values_list("type", "c"))
-        by_status = dict(qs.values_list("status").annotate(c=Count("id")).values_list("status", "c"))
+        by_status = dict(qs.values_list("workflow_state").annotate(c=Count("id")).values_list("workflow_state", "c"))
         unsupported = qs.filter(dependencies_as_essential__isnull=True).count()
         personal_data_count = qs.filter(personal_data=True).count()
         return Response({
@@ -133,7 +131,7 @@ class SupportAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMi
     permission_feature = "support_asset"
     search_fields = ["reference", "name", "description", "hostname", "ip_address"]
     ordering_fields = [
-        "reference", "name", "type", "category", "status",
+        "reference", "name", "type", "category", "workflow_state",
         "inherited_confidentiality", "inherited_integrity",
         "inherited_availability", "end_of_life_date", "created_at",
     ]
@@ -194,7 +192,7 @@ class SupportAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMi
         today = timezone.now().date()
         qs = self.filter_queryset(self.get_queryset()).filter(
             end_of_life_date__isnull=False,
-            status__in=["in_stock", "deployed", "active", "under_maintenance"],
+            workflow_state__in=["in_stock", "deployed", "active", "under_maintenance"],
         ).order_by("end_of_life_date")
         return Response(SupportAssetListSerializer(qs, many=True).data)
 
@@ -204,11 +202,11 @@ class SupportAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMi
         today = timezone.now().date()
         total = qs.count()
         by_type = dict(qs.values_list("type").annotate(c=Count("id")).values_list("type", "c"))
-        by_status = dict(qs.values_list("status").annotate(c=Count("id")).values_list("status", "c"))
+        by_status = dict(qs.values_list("workflow_state").annotate(c=Count("id")).values_list("workflow_state", "c"))
         orphans = qs.filter(dependencies_as_support__isnull=True).count()
         eol_count = qs.filter(
             end_of_life_date__lte=today,
-            status="active",
+            workflow_state="active",
         ).count()
         return Response({
             "total": total,
@@ -430,7 +428,7 @@ class ContractViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin,
     permission_feature = "contract"
     search_fields = ["reference", "label", "notes"]
     ordering_fields = [
-        "reference", "label", "status", "start_date", "end_date", "created_at",
+        "reference", "label", "workflow_state", "start_date", "end_date", "created_at",
     ]
 
     def get_serializer_class(self):
@@ -452,7 +450,7 @@ class CertificateViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMix
     ]
     ordering_fields = [
         "reference", "label", "issuer",
-        "issue_date", "expiry_date", "status", "created_at",
+        "issue_date", "expiry_date", "workflow_state", "created_at",
     ]
 
     def get_serializer_class(self):

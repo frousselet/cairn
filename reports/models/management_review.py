@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.models.base import ScopedModel
+from context.models.base import LegacyStatusMixin, ScopedModel
 from reports.constants import (
     MANAGEMENT_REVIEW_CANCELLABLE_STATUSES,
     MANAGEMENT_REVIEW_TRANSITIONS,
@@ -22,7 +22,7 @@ from reports.constants import (
 )
 
 
-class ManagementReview(ScopedModel):
+class ManagementReview(LegacyStatusMixin, ScopedModel):
     """Persistent management review record (ISO 27001:2022 clause 9.3).
 
     Captures the full life cycle of a management review: planning, preparation,
@@ -46,12 +46,6 @@ class ManagementReview(ScopedModel):
     planned_date = models.DateField(_("Planned date"))
     held_date = models.DateField(_("Held date"), null=True, blank=True)
     location = models.CharField(_("Location"), max_length=255, blank=True, default="")
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=ManagementReviewStatus.choices,
-        default=ManagementReviewStatus.PLANNED,
-    )
     facilitator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -120,11 +114,6 @@ class ManagementReview(ScopedModel):
     def workflow_perm_namespace(self):
         return "reports.management_review"
 
-    def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
-        sync_legacy_status(self, kwargs, ManagementReviewStatus.PLANNED)
-        super().save(*args, **kwargs)
 
     def transition_to(self, target, user=None, comment=None, *, enforce_permission=False, save=True):
         """Perform a status transition with audit trail.

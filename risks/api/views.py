@@ -75,7 +75,7 @@ class RiskAssessmentViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIM
     permission_classes = [ContextPermission]
     permission_feature = "assessment"
     search_fields = ["reference", "name", "description"]
-    ordering_fields = ["reference", "name", "status", "assessment_date", "created_at"]
+    ordering_fields = ["reference", "name", "workflow_state", "assessment_date", "created_at"]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -90,7 +90,7 @@ class RiskViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin, His
     permission_classes = [ContextPermission]
     permission_feature = "risk"
     search_fields = ["reference", "name", "description"]
-    ordering_fields = ["reference", "name", "priority", "status", "current_risk_level", "created_at"]
+    ordering_fields = ["reference", "name", "priority", "workflow_state", "current_risk_level", "created_at"]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -105,7 +105,7 @@ class RiskTreatmentPlanViewSet(BatchCreateMixin, ScopeFilterAPIMixin, Approvable
     permission_classes = [ContextPermission]
     permission_feature = "treatment"
     search_fields = ["reference", "name", "description"]
-    ordering_fields = ["reference", "name", "status", "target_date", "progress_percentage", "created_at"]
+    ordering_fields = ["reference", "name", "workflow_state", "target_date", "progress_percentage", "created_at"]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -120,7 +120,7 @@ class RiskAcceptanceViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPI
     permission_classes = [ContextPermission]
     permission_feature = "acceptance"
     search_fields = ["justification", "conditions"]
-    ordering_fields = ["status", "valid_until", "created_at"]
+    ordering_fields = ["workflow_state", "valid_until", "created_at"]
 
     def get_serializer_class(self):
         return RiskAcceptanceSerializer
@@ -146,7 +146,7 @@ class VulnerabilityViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIM
     permission_classes = [ContextPermission]
     permission_feature = "vulnerability"
     search_fields = ["reference", "name", "description"]
-    ordering_fields = ["reference", "name", "category", "severity", "status", "created_at"]
+    ordering_fields = ["reference", "name", "category", "severity", "workflow_state", "created_at"]
 
     def get_serializer_class(self):
         if self.action == "list":

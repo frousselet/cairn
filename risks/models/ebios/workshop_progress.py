@@ -3,15 +3,14 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.models.base import BaseModel
+from context.models.base import BaseModel, LegacyStatusMixin
 from risks.constants import (
     EbiosIterationType,
     EbiosWorkshopNumber,
-    EbiosWorkshopStatus,
 )
 
 
-class EbiosWorkshopProgress(BaseModel):
+class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
     """Tracks the progression of an EBIOS RM workshop for an assessment.
 
     Six instances are created automatically when an assessment with
@@ -43,12 +42,6 @@ class EbiosWorkshopProgress(BaseModel):
         _("Iteration number"),
         default=1,
     )
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=EbiosWorkshopStatus.choices,
-        default=EbiosWorkshopStatus.NOT_STARTED,
-    )
     started_at = models.DateTimeField(_("Started at"), null=True, blank=True)
     validated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -79,11 +72,6 @@ class EbiosWorkshopProgress(BaseModel):
     def workflow_perm_namespace(self):
         return "risks.ebios_assessment"
 
-    def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
-        sync_legacy_status(self, kwargs, EbiosWorkshopStatus.NOT_STARTED)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.reference} : W{self.workshop_number} ({self.get_status_display()})"

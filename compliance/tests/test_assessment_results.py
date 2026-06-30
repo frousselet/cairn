@@ -1,9 +1,7 @@
 import pytest
 from django.urls import reverse
-from django.utils import timezone
 
 from compliance.constants import AssessmentStatus, ComplianceStatus
-from compliance.models.assessment import AssessmentResult
 from compliance.tests.factories import (
     AssessmentResultFactory,
     ComplianceAssessmentFactory,

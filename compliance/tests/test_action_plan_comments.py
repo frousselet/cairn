@@ -1,6 +1,5 @@
 import pytest
 from django.core.exceptions import ValidationError
-from django.test import RequestFactory
 from django.urls import reverse
 
 from accounts.tests.factories import UserFactory

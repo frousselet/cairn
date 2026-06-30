@@ -13,6 +13,7 @@ from assets.models import (
 
 
 class ContractFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     scope = django_filters.UUIDFilter(field_name="scopes__id")
     supplier = django_filters.UUIDFilter(field_name="suppliers__id")
     client = django_filters.UUIDFilter(field_name="clients__id")
@@ -22,7 +23,7 @@ class ContractFilter(django_filters.FilterSet):
     class Meta:
         model = Contract
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
         }
 
     def filter_is_amendment(self, queryset, name, value):
@@ -30,6 +31,7 @@ class ContractFilter(django_filters.FilterSet):
 
 
 class CertificateFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     scope = django_filters.UUIDFilter(field_name="scopes__id")
     site = django_filters.UUIDFilter(field_name="sites__id")
     framework = django_filters.UUIDFilter(field_name="framework_id")
@@ -44,11 +46,12 @@ class CertificateFilter(django_filters.FilterSet):
     class Meta:
         model = Certificate
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
         }
 
 
 class EssentialAssetFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     scope = django_filters.UUIDFilter(field_name="scope_id")
     owner = django_filters.UUIDFilter(field_name="owner_id")
     confidentiality_level = django_filters.NumberFilter()
@@ -70,7 +73,7 @@ class EssentialAssetFilter(django_filters.FilterSet):
         fields = {
             "type": ["exact"],
             "category": ["exact"],
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "personal_data": ["exact"],
             "data_classification": ["exact"],
         }
@@ -82,6 +85,7 @@ class EssentialAssetFilter(django_filters.FilterSet):
 
 
 class SupportAssetFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     scope = django_filters.UUIDFilter(field_name="scope_id")
     owner = django_filters.UUIDFilter(field_name="owner_id")
     end_of_life_before = django_filters.DateFilter(
@@ -104,7 +108,7 @@ class SupportAssetFilter(django_filters.FilterSet):
         fields = {
             "type": ["exact"],
             "category": ["exact"],
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "exposure_level": ["exact"],
             "environment": ["exact"],
         }

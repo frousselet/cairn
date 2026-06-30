@@ -7,7 +7,6 @@ Old fields: assessment_date, review_date, validated_by, validated_at
 New fields: assessment_start_date, assessment_end_date
 """
 
-import django.db.models.deletion
 from django.db import migrations, models
 
 

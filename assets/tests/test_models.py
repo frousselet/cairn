@@ -18,7 +18,6 @@ from assets.tests.factories import (
     SupplierRequirementFactory,
     SupportAssetFactory,
 )
-from context.tests.factories import ScopeFactory
 
 pytestmark = pytest.mark.django_db
 

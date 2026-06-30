@@ -265,7 +265,7 @@ def gather_management_review_data(user, scope_ids=None,
         "overdue": action_plans.filter(
             target_date__lt=now.date(),
         ).exclude(
-            status__in=[
+            workflow_state__in=[
                 ActionPlanStatus.CLOSED,
                 ActionPlanStatus.CANCELLED,
                 ActionPlanStatus.VALIDATED,
@@ -273,13 +273,13 @@ def gather_management_review_data(user, scope_ids=None,
         ).count(),
     }
     for status_value, status_label in ActionPlanStatus.choices:
-        count = action_plans.filter(status=status_value).count()
+        count = action_plans.filter(workflow_state=status_value).count()
         if count:
             action_plan_stats["by_status"][str(status_label)] = count
 
     active_action_plans = list(
         action_plans.exclude(
-            status__in=[ActionPlanStatus.CLOSED, ActionPlanStatus.CANCELLED],
+            workflow_state__in=[ActionPlanStatus.CLOSED, ActionPlanStatus.CANCELLED],
         ).order_by("target_date")[:20]
     )
     action_plan_rows = []
@@ -396,7 +396,7 @@ def gather_management_review_data(user, scope_ids=None,
     assessments = _period_filter_date(assessments, "assessment_end_date")
     recent_assessments = list(
         assessments.filter(
-            status__in=[AssessmentStatus.COMPLETED, AssessmentStatus.CLOSED],
+            workflow_state__in=[AssessmentStatus.COMPLETED, AssessmentStatus.CLOSED],
         ).order_by("-assessment_end_date")[:10]
     )
 
@@ -519,7 +519,7 @@ def gather_management_review_data(user, scope_ids=None,
         "overdue": treatment_plans.filter(
             target_date__lt=now.date(),
         ).exclude(
-            status__in=["completed", "cancelled"],
+            workflow_state__in=["completed", "cancelled"],
         ).count(),
     }
     for status_value, status_label in [
@@ -527,13 +527,13 @@ def gather_management_review_data(user, scope_ids=None,
         ("completed", "Completed"), ("cancelled", "Cancelled"),
         ("overdue", "Overdue"),
     ]:
-        count = treatment_plans.filter(status=status_value).count()
+        count = treatment_plans.filter(workflow_state=status_value).count()
         if count:
             tp_stats["by_status"][str(status_label)] = count
 
     active_treatment_plans = list(
         treatment_plans.exclude(
-            status__in=["completed", "cancelled"],
+            workflow_state__in=["completed", "cancelled"],
         ).order_by("target_date")[:15]
     )
     treatment_plan_rows = []

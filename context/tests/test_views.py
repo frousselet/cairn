@@ -36,7 +36,6 @@ from context.constants import (
     RoleType,
     StakeholderCategory,
     StakeholderStatus,
-    Trend,
 )
 from context.models import (
     Activity,

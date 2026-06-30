@@ -136,6 +136,7 @@ class ManagementReviewSerializer(serializers.ModelSerializer):
         source="has_snapshot", read_only=True,
     )
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = ManagementReview
         fields = [

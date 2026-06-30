@@ -4,7 +4,7 @@ import logging
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.db.models import Prefetch
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
@@ -51,7 +51,6 @@ from .forms import (
     RequirementForm,
     RequirementMappingCreateForm,
     RequirementMappingUpdateForm,
-    SectionForm,
 )
 from .import_utils import (
     execute_import,
@@ -91,10 +90,8 @@ from .models import (
     Framework,
     Requirement,
     RequirementMapping,
-    Section,
 )
 from .models.assessment import ALLOWED_ATTACHMENT_EXTENSIONS
-from context.models import Scope
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -652,7 +649,6 @@ class AssessmentDetailView(
         ctx["finding_type_counts"] = finding_type_counts
         # Status-based lock flags
         from compliance.constants import (
-            ASSESSMENT_FROZEN_STATUSES,
             ASSESSMENT_LOCKED_STATUSES,
         )
         ctx["is_locked"] = assessment.status in ASSESSMENT_LOCKED_STATUSES
@@ -1624,7 +1620,7 @@ class MappingDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilter
 # ── Action Plan ────────────────────────────────────────────
 
 ACTION_PLAN_FILTER_GROUPS = [
-    {"param": "status", "field": "status", "label": _l("Status"), "options": ActionPlanStatus.choices},
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": ActionPlanStatus.choices},
     {"param": "priority", "field": "priority", "label": _l("Priority"), "options": Priority.choices},
 ]
 ACTION_PLAN_TEXT_FILTERS = [
@@ -1646,7 +1642,7 @@ ACTION_PLAN_COLUMNS = [
 class ActionPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = ComplianceActionPlan
     permission_required = "compliance.action_plan.read"
-    status_field = "status"
+    status_field = "workflow_state"
     filter_groups = ACTION_PLAN_FILTER_GROUPS
     text_filters = ACTION_PLAN_TEXT_FILTERS
     columns = ACTION_PLAN_COLUMNS

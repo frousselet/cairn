@@ -90,7 +90,7 @@ class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
              [["max_tolerable_downtime", "recovery_time_objective", "recovery_point_objective"],
               ["data_classification", "personal_data"], "regulatory_constraints"]),
         Step(_("Relations & status"), "diagram-3",
-             ["related_activities", ["status", "review_date"], "scopes", "tags"]),
+             ["related_activities", "review_date", "scopes", "tags"]),
     ]
 
     class Meta:
@@ -105,7 +105,7 @@ class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
             "recovery_point_objective",
             "data_classification", "personal_data",
             "regulatory_constraints",
-            "related_activities", "status", "review_date", "tags",
+            "related_activities", "review_date", "tags",
         ]
         widgets = {
             "scopes": ScopeTreeWidget(),
@@ -128,7 +128,6 @@ class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
             "personal_data": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
             "regulatory_constraints": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "related_activities": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 5}),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
@@ -152,7 +151,6 @@ class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
             "personal_data": _("Tick if the asset handles personal data."),
             "regulatory_constraints": _("Laws or regulations applying to the asset."),
             "related_activities": _("Business activities relying on this asset."),
-            "status": _("Lifecycle state of the asset."),
             "review_date": _("Next date this asset should be reviewed."),
             "scopes": _("Organizational scopes this asset applies to."),
             "tags": _("Free-form labels for filtering and grouping."),
@@ -179,7 +177,7 @@ class SupportAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
               ["warranty_expiry_date", "contract_reference"],
               ["exposure_level", "environment"]]),
         Step(_("Relations & status"), "diagram-3",
-             ["parent_asset", ["status", "review_date"], "scopes", "tags"]),
+             ["parent_asset", "review_date", "scopes", "tags"]),
     ]
 
     class Meta:
@@ -192,7 +190,7 @@ class SupportAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "acquisition_date", "end_of_life_date", "warranty_expiry_date",
             "contract_reference",
             "exposure_level", "environment",
-            "parent_asset", "status", "review_date", "tags",
+            "parent_asset", "review_date", "tags",
         ]
         widgets = {
             "scopes": ScopeTreeWidget(),
@@ -217,7 +215,6 @@ class SupportAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "exposure_level": forms.Select(attrs=SELECT_ATTRS),
             "environment": forms.Select(attrs=SELECT_ATTRS),
             "parent_asset": forms.Select(attrs=SELECT_ATTRS),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
@@ -243,7 +240,6 @@ class SupportAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "exposure_level": _("How exposed the asset is to threats."),
             "environment": _("Environment (production, test, etc.)."),
             "parent_asset": _("Parent asset, if this is a component."),
-            "status": _("Lifecycle state of the asset."),
             "review_date": _("Next date this asset should be reviewed."),
             "scopes": _("Organizational scopes this asset applies to."),
             "tags": _("Free-form labels for filtering and grouping."),
@@ -671,7 +667,7 @@ class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
 
     steps = [
         Step(_("Identity"), "file-earmark-text",
-             ["label", ["status", "parent"], "supersedes"]),
+             ["label", "parent", "supersedes"]),
         Step(_("Parties"), "people",
              ["suppliers", "clients"]),
         Step(_("Terms"), "cash-coin",
@@ -685,7 +681,7 @@ class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
     class Meta:
         model = Contract
         fields = [
-            "scopes", "label", "status", "parent", "supersedes",
+            "scopes", "label", "parent", "supersedes",
             "suppliers", "clients",
             "start_date", "end_date", "amount", "currency",
             "notes", "tags",
@@ -693,7 +689,6 @@ class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         widgets = {
             "scopes": ScopeTreeWidget(),
             "label": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "parent": forms.Select(attrs=SELECT_ATTRS),
             "supersedes": forms.Select(attrs=SELECT_ATTRS),
             "suppliers": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 5}),
@@ -707,7 +702,6 @@ class ContractBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         }
         help_texts = {
             "label": _("Short title of the contract."),
-            "status": _("Lifecycle state of the contract."),
             "parent": _("If this contract is an amendment, the contract it amends."),
             "supersedes": _("The contract or amendment this one cancels and replaces."),
             "suppliers": _("Supplier parties to the contract."),
@@ -797,7 +791,7 @@ class CertificateBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         Step(_("Identity"), "patch-check",
              ["label", "framework", "supersedes"]),
         Step(_("Issuance"), "award",
-             ["issuer", "certificate_number", ["issue_date", "expiry_date"], "status"]),
+             ["issuer", "certificate_number", ["issue_date", "expiry_date"]]),
         Step(_("Certified scope"), "diagram-3",
              ["scope_statement", "sites"]),
         Step(_("Document"), "file-earmark-pdf",
@@ -810,7 +804,7 @@ class CertificateBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         model = Certificate
         fields = [
             "scopes", "label", "framework", "supersedes",
-            "issuer", "certificate_number", "issue_date", "expiry_date", "status",
+            "issuer", "certificate_number", "issue_date", "expiry_date",
             "scope_statement", "sites",
             "notes", "tags",
         ]
@@ -823,7 +817,6 @@ class CertificateBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "certificate_number": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "issue_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "expiry_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "scope_statement": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "sites": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 5}),
             "notes": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
@@ -837,7 +830,6 @@ class CertificateBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "certificate_number": _("Official certificate number from the certification body."),
             "issue_date": _("Date the certificate was issued."),
             "expiry_date": _("Date the certificate expires."),
-            "status": _("Lifecycle state of the certificate."),
             "scope_statement": _("Perimeter covered by the certificate (free text)."),
             "sites": _("Sites covered by the certified perimeter."),
             "notes": _("Free-form notes about the certificate."),

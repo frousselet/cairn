@@ -176,6 +176,7 @@ class FindingListSerializer(serializers.ModelSerializer):
 
 
 class ComplianceAssessmentSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = ComplianceAssessment
         fields = [
@@ -205,6 +206,7 @@ class ComplianceAssessmentSerializer(serializers.ModelSerializer):
 class ComplianceAssessmentListSerializer(serializers.ModelSerializer):
     framework_names = serializers.SerializerMethodField()
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = ComplianceAssessment
         fields = [
@@ -249,6 +251,7 @@ class RequirementMappingSerializer(serializers.ModelSerializer):
 class ComplianceActionPlanSerializer(serializers.ModelSerializer):
     allowed_transitions = serializers.SerializerMethodField()
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = ComplianceActionPlan
         fields = [
@@ -295,6 +298,7 @@ class ActionPlanTransitionHistorySerializer(serializers.ModelSerializer):
 
 
 class ComplianceActionPlanListSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = ComplianceActionPlan
         fields = [

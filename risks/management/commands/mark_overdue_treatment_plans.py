@@ -41,7 +41,7 @@ class Command(BaseCommand):
                 target_date__isnull=False,
                 target_date__lt=today,
             )
-            .exclude(status__in=TERMINAL_STATUSES)
+            .exclude(workflow_state__in=TERMINAL_STATUSES)
             .select_related("risk", "owner")
             .order_by("target_date")
         )
@@ -51,8 +51,8 @@ class Command(BaseCommand):
             # Use a loop (not .update()) so HistoricalRecords captures each
             # transition and any pre_save signals fire.
             for plan in candidates:
-                plan.status = TreatmentPlanStatus.OVERDUE
-                plan.save(update_fields=["status", "updated_at"])
+                plan.workflow_state = TreatmentPlanStatus.OVERDUE
+                plan.save(update_fields=["workflow_state", "updated_at"])
 
         verb = "Would mark" if dry_run else "Marked"
         style = self.style.WARNING if count else self.style.SUCCESS

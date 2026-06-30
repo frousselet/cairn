@@ -3,7 +3,6 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from simple_history.models import HistoricalRecords
 
 
 class ReferenceGeneratorMixin(models.Model):
@@ -40,6 +39,30 @@ class ReferenceGeneratorMixin(models.Model):
 
     class Meta:
         abstract = True
+
+
+class LegacyStatusMixin:
+    """Expose ``status`` as a read/write alias of the lifecycle ``workflow_state``.
+
+    For the entities whose legacy ``status`` column merely duplicated
+    ``workflow_state`` (the lifecycle step code, kept in sync by the now-removed
+    ``sync_legacy_status``): the duplicate DB column is dropped, while
+    ``obj.status`` (read and write, including ``Model(status=...)`` since Django
+    accepts property kwargs) and ``obj.get_status_display()`` keep working by
+    delegating to the single ``workflow_state`` field and its lifecycle step.
+    Mixed in *before* :class:`BaseModel` so the property shadows nothing.
+    """
+
+    @property
+    def status(self):
+        return self.workflow_state
+
+    @status.setter
+    def status(self, value):
+        self.workflow_state = value
+
+    def get_status_display(self):
+        return str(self.lifecycle_label)
 
 
 class BaseModel(ReferenceGeneratorMixin):

@@ -12,7 +12,6 @@ from core.workflow import deletable_states
 from risks.constants import (
     BaselineGapStatus,
     EbiosStudyFrameworkStatus,
-    EbiosSummaryStatus,
     EbiosWorkshopStatus,
     PACSMeasureStatus,
 )
