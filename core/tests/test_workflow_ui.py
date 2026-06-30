@@ -43,40 +43,40 @@ class TestStepperContext:
         issue = IssueFactory()
         response = client.get(reverse("context:issue-detail", args=[issue.pk]))
         assert response.status_code == 200
-        steps = response.context["wf_steps"]
+        steps = response.context["lc_steps"]
         assert [s["value"] for s in steps] == ["draft", "pending", "validated"]
         assert steps[0]["state"] == "current"
-        assert steps[1]["state"] == "next"
-        assert response.context["wf_next_status"] == "pending"
-        # Archived renders as the branch, not a main step.
-        assert response.context["wf_cancelled"]["value"] == "archived"
-        assert response.context["wf_can_cancel"] is False  # draft cannot archive
+        assert steps[1]["actionable"] is True  # submit -> pending
+        # Archived renders as a detached exit, not a main step.
+        exits = response.context["lc_exits"]
+        assert exits[0]["value"] == "archived"
+        assert exits[0]["actionable"] is False  # draft cannot archive
 
     def test_pending_without_approve_permission_hides_validate(self):
         user = _user_with_perms("context.issue.read", "context.issue.update")
         issue = IssueFactory()
         issue.transition_to("pending")
         response = _client(user).get(reverse("context:issue-detail", args=[issue.pk]))
-        steps = {s["value"]: s["state"] for s in response.context["wf_steps"]}
-        assert steps["pending"] == "current"
-        assert steps["validated"] == "future"  # not offered without .approve
-        # Send back to draft is the backward move.
-        assert response.context["wf_refusal"]["status"] == "draft"
+        steps = {s["value"]: s for s in response.context["lc_steps"]}
+        assert steps["pending"]["state"] == "current"
+        assert steps["validated"]["actionable"] is False  # not offered without .approve
+        # Send back to draft (update) is offered.
+        assert steps["draft"]["actionable"] is True
 
     def test_validated_issue_offers_archive_branch(self):
         client = _client(UserFactory(is_superuser=True))
         issue = IssueFactory(is_approved=True)
         response = client.get(reverse("context:issue-detail", args=[issue.pk]))
-        assert response.context["wf_can_cancel"] is True
-        assert response.context["wf_next_status"] is None
+        archived = next(e for e in response.context["lc_exits"] if e["value"] == "archived")
+        assert archived["actionable"] is True  # validated can archive
 
     def test_stepper_renders_in_page(self):
         client = _client(UserFactory(is_superuser=True))
         issue = IssueFactory()
         response = client.get(reverse("context:issue-detail", args=[issue.pk]))
         content = response.content.decode()
-        assert "workflow-stepper-" in content
-        assert "workflowTransitionModal" in content
+        assert "lifecycle-stepper-" in content
+        assert "lifecycleCommentModal" in content
 
 
 class TestTransitionEndpoint:

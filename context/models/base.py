@@ -100,12 +100,15 @@ class BaseModel(ReferenceGeneratorMixin):
     LIFECYCLE_NAME = None
 
     def get_lifecycle(self):
-        """Return the standardised :class:`~core.lifecycle.Lifecycle` or ``None``."""
-        if not self.LIFECYCLE_NAME:
-            return None
-        from core.lifecycle import LIFECYCLE_REGISTRY
+        """Return the :class:`~core.lifecycle.Lifecycle` this element runs.
 
-        return LIFECYCLE_REGISTRY.get(self.LIFECYCLE_NAME)
+        A model declaring ``LIFECYCLE_NAME`` runs that lifecycle; every other
+        model runs the standardised default lifecycle. Never ``None`` (every
+        ``BaseModel`` is governed by the lifecycle engine).
+        """
+        from core.lifecycle import resolve_lifecycle
+
+        return resolve_lifecycle(type(self))
 
     def _current_step(self, lifecycle=None):
         """The current :class:`~core.lifecycle.Step` (new engine), or ``None``."""
@@ -244,6 +247,7 @@ class BaseModel(ReferenceGeneratorMixin):
         if lifecycle is not None:
             # Standardised engine: validate, apply and record the event in one
             # place. Returns the matched core.lifecycle.Transition.
+            from core.lifecycle import DEFAULT_LIFECYCLE_NAME
             from core.lifecycle_service import perform_transition
 
             _event, transition = perform_transition(
@@ -253,8 +257,32 @@ class BaseModel(ReferenceGeneratorMixin):
                 comment=comment,
                 lifecycle=lifecycle,
                 enforce_permission=enforce_permission,
-                save=save,
+                save=False,
             )
+            # The default lifecycle keeps the legacy approval flag coupled to the
+            # state: reaching the authoritative (validated) step stamps approval,
+            # leaving it clears the stamp. Specific lifecycles keep is_approved as
+            # an independent axis and never touch it here. Applied before the
+            # single save so the move and the stamp share one history record.
+            if lifecycle.name == DEFAULT_LIFECYCLE_NAME:
+                approved = lifecycle.step(target).counts_in_reports
+                if approved:
+                    self.is_approved = True
+                    if user is not None:
+                        self.approved_by = user
+                        self.approved_at = timezone.now()
+                else:
+                    self.is_approved = False
+                    self.approved_by = None
+                    self.approved_at = None
+            if save:
+                self.save()
+                # Submitting a default-lifecycle element for validation
+                # (draft -> pending) notifies its owners (RG-LC-06).
+                if user is not None and lifecycle.name == DEFAULT_LIFECYCLE_NAME and target == "pending":
+                    from accounts.notifications import notify_lifecycle_submitted
+
+                    notify_lifecycle_submitted(self, actor=user)
             return transition
 
         from core.workflow import Effect, apply_transition
@@ -291,20 +319,15 @@ class BaseModel(ReferenceGeneratorMixin):
 
         During the migration period both the legacy approval flow (which writes
         ``is_approved``) and the workflow path (which writes ``workflow_state``)
-        are active. For an element on a lifecycle that has both ``validated`` and
-        ``draft`` states (the default lifecycle), mirror the binary flag onto the
-        state, without clobbering the richer states (``pending``, ``archived``)
-        that only the workflow path sets.
+        are active. Only the **default lifecycle** mirrors the binary flag onto
+        the state (``draft`` <-> ``validated``), without clobbering the richer
+        states (``pending``, ``archived``); a model on a specific lifecycle keeps
+        ``is_approved`` as an independent axis.
         """
-        # Standardised-engine entities do not use the legacy approval mirror:
-        # their step codes are not draft/validated and must never be clobbered.
-        if self.get_lifecycle() is not None:
-            return
-        try:
-            workflow = self.get_workflow()
-        except Exception:
-            return
-        if not workflow.subsumes_approval:
+        from core.lifecycle import DEFAULT_LIFECYCLE_NAME
+
+        lifecycle = self.get_lifecycle()
+        if lifecycle is None or lifecycle.name != DEFAULT_LIFECYCLE_NAME:
             return
         before = self.workflow_state
         if self.is_approved and self.workflow_state in ("", "draft", "pending"):

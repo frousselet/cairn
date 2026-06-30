@@ -1169,7 +1169,7 @@ class TestThreatApproveView:
         # The legacy approval bar is retired: validation goes through the
         # lifecycle stepper (the approve endpoint stays for API compat).
         assert reverse("risks:threat-approve", args=[threat.pk]).encode() not in resp.content
-        assert b"workflow-stepper-" in resp.content
+        assert b"lifecycle-stepper-" in resp.content
 
     def test_update_resets_approval(self):
         client, user = _superuser_client()
@@ -1237,7 +1237,7 @@ class TestISO27005RiskApproveView:
         # The legacy approval bar is retired: validation goes through the
         # lifecycle stepper (the approve endpoint stays for API compat).
         assert reverse("risks:iso27005-approve", args=[analysis.pk]).encode() not in resp.content
-        assert b"workflow-stepper-" in resp.content
+        assert b"lifecycle-stepper-" in resp.content
 
 
 # ── Risk Criteria Views ─────────────────────────────────────

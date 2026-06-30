@@ -21,7 +21,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin, WorkflowStepperMixin
+from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
@@ -501,7 +501,7 @@ class IssueListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
         return ctx
 
 
-class IssueDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class IssueDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Issue
     permission_required = "context.issue.read"
     template_name = "context/issue_detail.html"
@@ -597,7 +597,7 @@ class StakeholderListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumma
         return self.filter_queryset_advanced(qs)
 
 
-class StakeholderDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class StakeholderDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Stakeholder
     permission_required = "context.stakeholder.read"
     template_name = "context/stakeholder_detail.html"
@@ -695,7 +695,7 @@ class ObjectiveListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
         return self.filter_queryset_advanced(qs)
 
 
-class ObjectiveDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class ObjectiveDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Objective
     permission_required = "context.objective.read"
     template_name = "context/objective_detail.html"
@@ -791,7 +791,7 @@ class SwotListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
         return self.filter_queryset_advanced(qs)
 
 
-class SwotDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class SwotDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = SwotAnalysis
     permission_required = "context.swot.read"
     template_name = "context/swot_detail.html"
@@ -1112,7 +1112,7 @@ class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
         return self.filter_queryset_advanced(qs)
 
 
-class RoleDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class RoleDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Role
     permission_required = "context.role.read"
     template_name = "context/role_detail.html"
@@ -1210,7 +1210,7 @@ class ActivityListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
         return self.filter_queryset_advanced(qs)
 
 
-class ActivityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class ActivityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Activity
     permission_required = "context.activity.read"
     template_name = "context/activity_detail.html"
@@ -1664,7 +1664,7 @@ class IndicatorTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableB
         return ctx
 
 
-class IndicatorDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class IndicatorDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Indicator
     permission_required = "context.indicator.read"
     template_name = "context/indicator_detail.html"
