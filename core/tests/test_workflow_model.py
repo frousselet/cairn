@@ -8,11 +8,11 @@ import pytest
 from accounts.tests.factories import UserFactory
 from context.models import Issue
 from context.tests.factories import IssueFactory
+from core.lifecycle import IllegalTransitionError
 from core.models import VersioningConfig
 from core.workflow import (
     DEFAULT_WORKFLOW,
     WORKFLOW_REGISTRY,
-    IllegalTransitionError,
     LifecycleProtectedError,
     State,
     Transition,

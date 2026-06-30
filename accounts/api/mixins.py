@@ -96,7 +96,7 @@ class ApprovableAPIMixin:
     def _lifecycle_transition(self, request, obj, lifecycle):
         """Handle GET/POST transition for an entity on the standardised engine."""
         from django.core.exceptions import ValidationError
-        from core.lifecycle import LifecycleError
+        from core.lifecycle import LifecycleError, TransitionNotAllowedError
         from core.transition_messages import transition_error_detail
 
         current = obj.workflow_state or lifecycle.initial_step.code
@@ -125,7 +125,9 @@ class ApprovableAPIMixin:
                 status=http_status.HTTP_400_BAD_REQUEST,
             )
         try:
-            obj.transition_to(target, request.user, comment=comment)
+            obj.transition_to(target, request.user, comment=comment, enforce_permission=True)
+        except TransitionNotAllowedError as exc:
+            raise PermissionDenied(transition_error_detail(exc))
         except (LifecycleError, ValidationError) as exc:
             return Response(
                 {"detail": transition_error_detail(exc)},

@@ -534,10 +534,10 @@ DEFAULT_LIFECYCLE = register_lifecycle(
             archived_step(),
         ],
         transitions=[
-            Transition("pending", source="draft", label=_lazy("Submit")),
-            Transition("draft", source="pending", label=_lazy("Send back to draft")),
-            Transition("validated", source="pending", label=_lazy("Validate")),
-            Transition("archived", source="validated", label=_lazy("Archive")),
+            Transition("pending", source="draft", label=_lazy("Submit"), permission_action="update"),
+            Transition("draft", source="pending", label=_lazy("Send back to draft"), permission_action="update"),
+            Transition("validated", source="pending", label=_lazy("Validate"), permission_action="approve"),
+            Transition("archived", source="validated", label=_lazy("Archive"), permission_action="approve"),
         ],
         layout="line",
     )

@@ -482,7 +482,7 @@ def _transition_handler(model_class, perm_namespace, scope_filtered=True):
 
             current = obj.workflow_state
             try:
-                obj.transition_to(target, user, comment=comment, enforce_permission=False)
+                obj.transition_to(target, user, comment=comment, enforce_permission=True)
             except LifecycleError as e:
                 return _error(str(e))
             return {
