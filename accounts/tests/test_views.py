@@ -10,10 +10,9 @@ import json
 from urllib.parse import urlencode
 
 import pytest
-from django.test import Client
 from django.urls import reverse
 
-from accounts.models import AccessLog, CalendarToken, CompanySettings, Group, Permission
+from accounts.models import AccessLog, CalendarToken, CompanySettings, Group
 from accounts.tests.factories import GroupFactory, PermissionFactory, UserFactory
 from context.tests.factories import ScopeFactory
 

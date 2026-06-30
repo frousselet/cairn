@@ -7,7 +7,7 @@ from assets.constants import EssentialAssetStatus, SupportAssetStatus
 from assets.models import EssentialAsset, SupportAsset
 from assets.tests.factories import EssentialAssetFactory, SupportAssetFactory
 from core.lifecycle import IllegalTransitionError, get_lifecycle, resolve_lifecycle
-from core.workflow import LifecycleProtectedError  # delete() guard (relocated at decommission)
+from core.lifecycle import LifecycleProtectedError  # delete() guard (relocated at decommission)
 
 pytestmark = pytest.mark.django_db
 

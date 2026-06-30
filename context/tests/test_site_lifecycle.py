@@ -113,7 +113,7 @@ def test_site_transition_records_event():
 
 
 def test_reportable_helper_uses_site_lifecycle():
-    from core.workflow import reportable
+    from core.lifecycle import reportable
 
     SiteFactory()  # draft
     SiteFactory(workflow_state="operational")

@@ -144,88 +144,43 @@ class BaseModel(ReferenceGeneratorMixin):
         except Exception:
             return None
 
-    # --- Lifecycle workflow (see core/workflow.py) -------------------------
-
-    def get_workflow(self):
-        """Return the :class:`~core.workflow.Workflow` this element runs."""
-        from core.workflow import resolve_workflow
-
-        return resolve_workflow(type(self))
-
-    def get_lifecycle_state(self):
-        """Return the current :class:`~core.workflow.State` object."""
-        return self.get_workflow().state(self.workflow_state)
+    # --- Lifecycle governance (read off the current step) ------------------
 
     @property
     def lifecycle_label(self):
-        """Human label of the current state (falls back to the raw code)."""
+        """Human label of the current step (falls back to the raw code)."""
         step = self._current_step()
-        if step is not None:
-            return step.label
-        try:
-            return self.get_lifecycle_state().label
-        except Exception:
-            return self.workflow_state
+        return step.label if step is not None else self.workflow_state
 
     @property
     def lifecycle_tone(self):
-        """UI tone of the current state (badge colour category)."""
+        """UI tone of the current step (badge colour category)."""
         step = self._current_step()
-        if step is not None:
-            return step.tone
-        try:
-            return self.get_lifecycle_state().tone
-        except Exception:
-            return "neutral"
+        return step.tone if step is not None else "neutral"
 
     @property
     def counts_in_reports(self):
         """Whether this element is included in reports / KPIs / calendar."""
         step = self._current_step()
-        if step is not None:
-            return step.counts_in_reports
-        try:
-            return self.get_lifecycle_state().counts_in_reports
-        except Exception:
-            return False
+        return step.counts_in_reports if step is not None else False
 
     @property
     def is_linkable(self):
         """Whether this element may currently participate in a link."""
         step = self._current_step()
-        if step is not None:
-            return step.linkable
-        try:
-            return self.get_lifecycle_state().linkable
-        except Exception:
-            return False
+        return step.linkable if step is not None else False
 
     @property
     def is_deletable(self):
         """Whether this element may currently be deleted."""
         step = self._current_step()
-        if step is not None:
-            return step.deletable
-        try:
-            return self.get_lifecycle_state().deletable
-        except Exception:
-            return False
+        return step.deletable if step is not None else False
 
     @property
     def is_terminal_state(self):
-        """Whether the current lifecycle state is a terminal / archived one.
-
-        Engine-agnostic: the standardised engine's ARCHIVED step kind, or the
-        legacy workflow's terminal flag, so callers (link guards, transition
-        gating) never reach into a specific engine.
-        """
+        """Whether the current step is a terminal / archived one."""
         step = self._current_step()
-        if step is not None:
-            return step.is_archived
-        try:
-            return self.get_lifecycle_state().is_terminal
-        except Exception:
-            return False
+        return step.is_archived if step is not None else False
 
     @property
     def workflow_perm_namespace(self):
@@ -233,105 +188,62 @@ class BaseModel(ReferenceGeneratorMixin):
 
         Defaults to ``<app_label>.<model_name>``. Models whose permission feature
         differs from their model name (e.g. ``compliance.action_plan``) override
-        this when their specific workflow is wired.
+        this.
         """
         return f"{self._meta.app_label}.{self._meta.model_name}"
 
     def available_transitions(self, user=None):
-        """Transitions leaving the current state (optionally filtered by ``user``)."""
+        """Transitions leaving the current step (optionally filtered by ``user``)."""
+        from core.lifecycle import available_transitions as _avail
+
         lifecycle = self.get_lifecycle()
-        if lifecycle is not None:
-            from core.lifecycle import available_transitions as _avail
-
-            code = self.workflow_state or lifecycle.initial_step.code
-            return _avail(lifecycle, code, instance=self, user=user)
-
-        from core.workflow import allowed_transitions
-
-        has_perm = user.has_perm if user is not None else None
-        namespace = self.workflow_perm_namespace if user is not None else None
-        return allowed_transitions(
-            self.get_workflow(),
-            self.workflow_state,
-            has_perm=has_perm,
-            perm_namespace=namespace,
-        )
+        code = self.workflow_state or lifecycle.initial_step.code
+        return _avail(lifecycle, code, instance=self, user=user)
 
     def transition_to(self, target, user=None, comment=None, *, enforce_permission=False, save=True):
-        """Validate and apply a lifecycle transition, then persist.
+        """Validate, apply and record a lifecycle transition, then persist.
 
-        Mutates ``workflow_state`` and keeps the legacy ``is_approved`` flag aligned.
-        Permission enforcement is opt-in here (the view / API / MCP layer is the
-        enforcement point); ``Effect.NOTIFY_OWNER`` is wired in the notification phase.
+        Returns the matched :class:`core.lifecycle.Transition`. Permission
+        enforcement is opt-in here (the view / API / MCP layer is the enforcement
+        point). The default lifecycle keeps the legacy ``is_approved`` flag
+        coupled to the state and notifies owners on submit.
         """
         from django.utils import timezone
 
+        from core.lifecycle import DEFAULT_LIFECYCLE_NAME
+        from core.lifecycle_service import perform_transition
+
         lifecycle = self.get_lifecycle()
-        if lifecycle is not None:
-            # Standardised engine: validate, apply and record the event in one
-            # place. Returns the matched core.lifecycle.Transition.
-            from core.lifecycle import DEFAULT_LIFECYCLE_NAME
-            from core.lifecycle_service import perform_transition
-
-            _event, transition = perform_transition(
-                self,
-                target,
-                user=user,
-                comment=comment,
-                lifecycle=lifecycle,
-                enforce_permission=enforce_permission,
-                save=False,
-            )
-            # The default lifecycle keeps the legacy approval flag coupled to the
-            # state: reaching the authoritative (validated) step stamps approval,
-            # leaving it clears the stamp. Specific lifecycles keep is_approved as
-            # an independent axis and never touch it here. Applied before the
-            # single save so the move and the stamp share one history record.
-            if lifecycle.name == DEFAULT_LIFECYCLE_NAME:
-                approved = lifecycle.step(target).counts_in_reports
-                if approved:
-                    self.is_approved = True
-                    if user is not None:
-                        self.approved_by = user
-                        self.approved_at = timezone.now()
-                else:
-                    self.is_approved = False
-                    self.approved_by = None
-                    self.approved_at = None
-            if save:
-                self.save()
-                # Submitting a default-lifecycle element for validation
-                # (draft -> pending) notifies its owners (RG-LC-06).
-                if user is not None and lifecycle.name == DEFAULT_LIFECYCLE_NAME and target == "pending":
-                    from accounts.notifications import notify_lifecycle_submitted
-
-                    notify_lifecycle_submitted(self, actor=user)
-            return transition
-
-        from core.workflow import Effect, apply_transition
-
-        workflow = self.get_workflow()
-        has_perm = user.has_perm if (enforce_permission and user is not None) else None
-        namespace = self.workflow_perm_namespace if (enforce_permission and user is not None) else None
-        transition = apply_transition(
+        _event, transition = perform_transition(
             self,
             target,
-            workflow=workflow,
-            has_perm=has_perm,
-            perm_namespace=namespace,
+            user=user,
             comment=comment,
+            lifecycle=lifecycle,
+            enforce_permission=enforce_permission,
+            save=False,
         )
-        new_state = workflow.state(target)
-        if workflow.subsumes_approval:
-            # Default-lifecycle-shaped workflows mirror the legacy approval flag;
-            # operational workflows keep is_approved as an independent axis.
-            self.is_approved = new_state.counts_in_reports
-        if Effect.STAMP_VALIDATION in transition.effects and user is not None:
-            self.approved_by = user
-            self.approved_at = timezone.now()
+        # The default lifecycle keeps the legacy approval flag coupled to the
+        # state: reaching the authoritative (validated) step stamps approval,
+        # leaving it clears the stamp. Specific lifecycles keep is_approved as an
+        # independent axis and never touch it here. Applied before the single
+        # save so the move and the stamp share one history record.
+        if lifecycle.name == DEFAULT_LIFECYCLE_NAME:
+            approved = lifecycle.step(target).counts_in_reports
+            if approved:
+                self.is_approved = True
+                if user is not None:
+                    self.approved_by = user
+                    self.approved_at = timezone.now()
+            else:
+                self.is_approved = False
+                self.approved_by = None
+                self.approved_at = None
         if save:
             self.save()
-            if Effect.NOTIFY_OWNER in transition.effects:
+            # Submitting a default-lifecycle element for validation
+            # (draft -> pending) notifies its owners (RG-LC-06).
+            if user is not None and lifecycle.name == DEFAULT_LIFECYCLE_NAME and target == "pending":
                 from accounts.notifications import notify_lifecycle_submitted
 
                 notify_lifecycle_submitted(self, actor=user)
@@ -394,7 +306,7 @@ class BaseModel(ReferenceGeneratorMixin):
         user-initiated deletion of a single element.
         """
         if not self.is_deletable:
-            from core.workflow import LifecycleProtectedError
+            from core.lifecycle import LifecycleProtectedError
 
             raise LifecycleProtectedError(
                 f"{self._meta.verbose_name} cannot be deleted in its current "

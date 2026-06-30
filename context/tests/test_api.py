@@ -148,7 +148,7 @@ class TestScopeViewSet:
         # the raw exception string (CodeQL py/stack-trace-exposure).
         from unittest.mock import patch
 
-        from core.workflow import IllegalTransitionError
+        from core.lifecycle import IllegalTransitionError
 
         scope = ScopeFactory(workflow_state="in_force")
         with patch(

@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from compliance.constants import AssessmentStatus
 from compliance.models import ComplianceAssessment, Framework
 from context.models import Scope
-from core.workflow import reportable
+from core.lifecycle import reportable
 from reports.constants import (
     DecisionPriority,
 )

@@ -207,7 +207,7 @@ def _coerce_field_value(model_class, field_name, value):
     from django.db.models import (
         IntegerField, PositiveIntegerField, PositiveSmallIntegerField,
         SmallIntegerField, BigIntegerField, BooleanField, FloatField,
-        DecimalField, JSONField, ForeignKey, AutoField,
+        JSONField, ForeignKey, AutoField,
     )
     int_types = (IntegerField, PositiveIntegerField, PositiveSmallIntegerField,
                  SmallIntegerField, BigIntegerField)
@@ -475,38 +475,15 @@ def _transition_handler(model_class, perm_namespace, scope_filtered=True):
             if not qs.exists():
                 return _error("Access denied: object is outside your allowed scopes.")
 
-        # Standardised engine (model sets LIFECYCLE_NAME): transition_to runs the
-        # validation, application and history through the lifecycle service.
-        if obj.get_lifecycle() is not None:
-            from core.lifecycle import LifecycleError
+        # transition_to runs the validation, application (incl. the per-transition
+        # role / permission) and history through the lifecycle service.
+        from core.lifecycle import LifecycleError
 
-            current = obj.workflow_state
-            try:
-                obj.transition_to(target, user, comment=comment, enforce_permission=True)
-            except LifecycleError as e:
-                return _error(str(e))
-            return {
-                "id": str(pk),
-                "previous_state": current,
-                "workflow_state": obj.workflow_state,
-            }
-
-        from core.workflow import WorkflowError, validate_transition
-
-        workflow = obj.get_workflow()
-        current = obj.workflow_state or workflow.initial_state.code
-
-        def has_perm(codename):
-            return user.is_superuser or user.has_perm(codename)
-
+        current = obj.workflow_state
         try:
-            validate_transition(
-                workflow, current, target,
-                has_perm=has_perm, perm_namespace=perm_namespace, comment=comment,
-            )
-        except WorkflowError as e:
+            obj.transition_to(target, user, comment=comment, enforce_permission=True)
+        except LifecycleError as e:
             return _error(str(e))
-        obj.transition_to(target, user, comment=comment)
         return {
             "id": str(pk),
             "previous_state": current,
@@ -530,48 +507,20 @@ def _allowed_transitions_handler(model_class, perm_namespace, scope_filtered=Tru
             if not qs.exists():
                 return _error("Access denied: object is outside your allowed scopes.")
 
-        # Standardised engine (model sets LIFECYCLE_NAME): list the steps the
-        # caller may move to from the current step (restriction is by role /
-        # named user, resolved through available_transitions).
+        # List the steps the caller may move to from the current step (the
+        # per-transition role / permission is resolved by available_transitions).
         lifecycle = obj.get_lifecycle()
-        if lifecycle is not None:
-            current = obj.workflow_state or lifecycle.initial_step.code
-            transitions = obj.available_transitions(user=user)
-            return {
-                "id": str(pk),
-                "workflow_state": current,
-                "workflow": lifecycle.name,
-                "allowed_transitions": [
-                    {
-                        "target": t.target,
-                        "verb": str(t.label),
-                        "action": "update",
-                        "requires_comment": t.requires_comment,
-                    }
-                    for t in transitions
-                ],
-            }
-
-        from core.workflow import allowed_transitions
-
-        workflow = obj.get_workflow()
-        current = obj.workflow_state or workflow.initial_state.code
-
-        def has_perm(codename):
-            return user.is_superuser or user.has_perm(codename)
-
-        transitions = allowed_transitions(
-            workflow, current, has_perm=has_perm, perm_namespace=perm_namespace,
-        )
+        current = obj.workflow_state or lifecycle.initial_step.code
+        transitions = obj.available_transitions(user=user)
         return {
             "id": str(pk),
             "workflow_state": current,
-            "workflow": workflow.name,
+            "workflow": lifecycle.name,
             "allowed_transitions": [
                 {
                     "target": t.target,
-                    "verb": str(t.verb),
-                    "action": t.action,
+                    "verb": str(t.label),
+                    "action": "update",
                     "requires_comment": t.requires_comment,
                 }
                 for t in transitions
@@ -5123,7 +5072,7 @@ def _register_risks_tools(server):
             risk = Risk.objects.get(pk=risk_id)
         except Risk.DoesNotExist:
             return _error("Risk not found.")
-        from core.workflow import linkable_states
+        from core.lifecycle import linkable_states
         if risk.is_terminal_state:
             return _error(
                 f"Risk is in the terminal '{risk.workflow_state}' lifecycle state "
@@ -5260,7 +5209,7 @@ def _register_risks_tools(server):
         except Risk.DoesNotExist:
             return _error("Risk not found.")
         if req_ids:
-            from core.workflow import linkable_states
+            from core.lifecycle import linkable_states
             if risk.is_terminal_state:
                 return _error(
                     f"Risk is in the terminal '{risk.workflow_state}' lifecycle state "
@@ -5377,7 +5326,7 @@ def _register_risks_tools(server):
             plan = RiskTreatmentPlan.objects.get(pk=plan_id)
         except RiskTreatmentPlan.DoesNotExist:
             return _error("Treatment plan not found.")
-        from core.workflow import linkable_states
+        from core.lifecycle import linkable_states
         if plan.is_terminal_state:
             return _error(
                 f"Treatment plan is in the terminal '{plan.workflow_state}' lifecycle "
@@ -5483,7 +5432,7 @@ def _register_risks_tools(server):
         except RiskTreatmentPlan.DoesNotExist:
             return _error("Treatment plan not found.")
         if ap_ids:
-            from core.workflow import linkable_states
+            from core.lifecycle import linkable_states
             if plan.is_terminal_state:
                 return _error(
                     f"Treatment plan is in the terminal '{plan.workflow_state}' "

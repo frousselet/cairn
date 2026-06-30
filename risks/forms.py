@@ -254,7 +254,7 @@ class RiskBaseForm(SteppedFormMixin, forms.ModelForm):
                 widget=forms.Select(attrs=SELECT_ATTRS),
             )
         # Link pickers only offer linkable elements (existing links are kept)
-        from core.workflow import linkable_or_linked
+        from core.lifecycle import linkable_or_linked
 
         editing = bool(self.instance and self.instance.pk)
         for fname in (
@@ -371,7 +371,7 @@ class RiskTreatmentPlanBaseForm(SteppedFormMixin, forms.ModelForm):
             widget=forms.Select(attrs=SELECT_ATTRS),
         )
         # Link picker only offers linkable action plans (existing links are kept)
-        from core.workflow import linkable_or_linked
+        from core.lifecycle import linkable_or_linked
 
         field = self.fields["related_action_plans"]
         field.queryset = linkable_or_linked(

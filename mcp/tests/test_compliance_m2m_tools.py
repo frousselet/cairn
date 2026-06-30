@@ -5,7 +5,6 @@ import json
 import pytest
 
 from accounts.tests.factories import UserFactory
-from compliance.constants import FindingType
 from compliance.tests.factories import (
     ComplianceAssessmentFactory,
     FindingFactory,

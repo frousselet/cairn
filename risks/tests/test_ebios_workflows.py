@@ -8,7 +8,7 @@ from core.lifecycle import (
     IllegalTransitionError,
     resolve_lifecycle,
 )
-from core.workflow import deletable_states
+from core.lifecycle import deletable_states
 from risks.constants import (
     BaselineGapStatus,
     EbiosStudyFrameworkStatus,
@@ -107,7 +107,7 @@ class TestGovernanceFlags:
         assert deletable_states(PACSMeasure) == {"planned"}
 
     def test_cancelled_pacs_measures_leave_reports(self):
-        from core.workflow import reportable_states
+        from core.lifecycle import reportable_states
 
         assert reportable_states(PACSMeasure) == {
             "planned", "in_progress", "overdue", "completed",

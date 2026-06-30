@@ -4,7 +4,7 @@ import pytest
 
 from accounts.tests.factories import UserFactory
 from core.lifecycle import IllegalTransitionError, resolve_lifecycle
-from core.workflow import (
+from core.lifecycle import (
     LifecycleProtectedError,
     deletable_states,
     reportable_states,

@@ -1,6 +1,6 @@
 """Tests for the BaseModel lifecycle API and the is_approved <-> workflow_state sync.
 
-Exercised through a concrete model (context.Issue, on the default workflow).
+Exercised through a concrete model (context.Issue, on the default lifecycle).
 """
 
 import pytest
@@ -8,31 +8,7 @@ import pytest
 from accounts.tests.factories import UserFactory
 from context.models import Issue
 from context.tests.factories import IssueFactory
-from core.lifecycle import IllegalTransitionError
-from core.models import VersioningConfig
-from core.workflow import (
-    DEFAULT_WORKFLOW,
-    WORKFLOW_REGISTRY,
-    LifecycleProtectedError,
-    State,
-    Transition,
-    Workflow,
-    register_workflow,
-)
-
-# A throwaway workflow registered once, used by the assignment test below.
-_ASSIGN_WF = "test_assignment_workflow"
-if _ASSIGN_WF not in WORKFLOW_REGISTRY:
-    register_workflow(
-        Workflow(
-            _ASSIGN_WF,
-            [
-                State("open", "Open", is_initial=True),
-                State("done", "Done", is_terminal=True, counts_in_reports=True),
-            ],
-            [Transition("open", "done", "Finish")],
-        )
-    )
+from core.lifecycle import IllegalTransitionError, LifecycleProtectedError, resolve_lifecycle
 
 
 @pytest.mark.django_db
@@ -44,8 +20,8 @@ class TestLifecycleDefaults:
         assert issue.is_linkable is False
         assert issue.is_deletable is True
 
-    def test_get_workflow_is_default(self):
-        assert IssueFactory().get_workflow() is DEFAULT_WORKFLOW
+    def test_resolves_to_default_lifecycle(self):
+        assert resolve_lifecycle(Issue).name == "default"
 
 
 @pytest.mark.django_db
@@ -128,29 +104,8 @@ class TestTransitions:
 
 
 @pytest.mark.django_db
-class TestWorkflowAssignment:
-    def setup_method(self):
-        VersioningConfig.clear_cache()
-
-    def teardown_method(self):
-        VersioningConfig.clear_cache()
-
-    def test_blank_assignment_uses_default(self):
-        VersioningConfig.objects.create(model_name="context.issue", workflow_name="")
-        assert IssueFactory().get_workflow() is DEFAULT_WORKFLOW
-
-    def test_unknown_assignment_falls_back_to_default(self):
-        VersioningConfig.objects.create(model_name="context.issue", workflow_name="nope")
-        assert IssueFactory().get_workflow() is DEFAULT_WORKFLOW
-
-    def test_assigned_workflow_is_resolved(self):
-        VersioningConfig.objects.create(model_name="context.issue", workflow_name=_ASSIGN_WF)
-        assert IssueFactory().get_workflow().name == _ASSIGN_WF
-
-
-@pytest.mark.django_db
 def test_reportable_and_linkable_queryset_helpers():
-    from core.workflow import linkable, reportable
+    from core.lifecycle import linkable, reportable
 
     IssueFactory()  # draft
     IssueFactory(is_approved=True)  # validated
@@ -160,7 +115,7 @@ def test_reportable_and_linkable_queryset_helpers():
 
 @pytest.mark.django_db
 def test_linkable_or_linked_keeps_existing_links():
-    from core.workflow import linkable_or_linked
+    from core.lifecycle import linkable_or_linked
 
     draft = IssueFactory()
     validated = IssueFactory(is_approved=True)

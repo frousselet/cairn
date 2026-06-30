@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import mixins, status, viewsets
@@ -22,7 +22,7 @@ from accounts.api.serializers import (
     UserDetailSerializer,
     UserListSerializer,
 )
-from accounts.constants import AccessEventType, FailureReason
+from accounts.constants import AccessEventType
 from accounts.models import AccessLog, CompanySettings, Group, Permission, SavedFilter, User
 
 

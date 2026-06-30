@@ -29,7 +29,7 @@ from context.constants import (
     CollectionMethod,
     MeasurementFrequency,
 )
-from context.models import Activity, Indicator, Issue, Objective, Role, Scope, Site, Stakeholder, SwotAnalysis
+from context.models import Activity, Indicator, Role, Site, Stakeholder
 from context.models.indicator import IndicatorMeasurement
 from context.tests.factories import (
     IssueFactory,

@@ -316,7 +316,7 @@ class Indicator(ScopedModel):
 
     def _compute_objective_progress(self):
         from context.models import Objective
-        from core.workflow import reportable
+        from core.lifecycle import reportable
         objectives = reportable(Objective.objects.exclude(progress_percentage__isnull=True))
         if not objectives.exists():
             return "0"
@@ -324,7 +324,7 @@ class Indicator(ScopedModel):
         return str(round(sum(values) / len(values), 1))
 
     def _compute_risk_treatment_rate(self):
-        from core.workflow import reportable
+        from core.lifecycle import reportable
         from risks.models import Risk
         risks = reportable(Risk.objects.all())
         total = risks.count()

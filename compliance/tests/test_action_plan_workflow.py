@@ -134,14 +134,14 @@ class TestActionPlanGovernance:
         assert validated.is_deletable is False
 
     def test_delete_guard_applies(self):
-        from core.workflow import LifecycleProtectedError
+        from core.lifecycle import LifecycleProtectedError
 
         plan = ComplianceActionPlanFactory(status=ActionPlanStatus.VALIDATED)
         with pytest.raises(LifecycleProtectedError):
             plan.delete()
 
     def test_linkable_uses_specific_states(self):
-        from core.workflow import linkable
+        from core.lifecycle import linkable
 
         ComplianceActionPlanFactory()  # new: not linkable
         live = ComplianceActionPlanFactory(status=ActionPlanStatus.TO_IMPLEMENT)
