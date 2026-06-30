@@ -18,7 +18,7 @@ from risks.constants import (
 
 class Risk(BaseModel):
     REFERENCE_PREFIX = "RISK"
-    WORKFLOW_NAME = "risk"
+    LIFECYCLE_NAME = "risk"
 
     assessment = models.ForeignKey(
         "risks.RiskAssessment",

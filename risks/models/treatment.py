@@ -20,7 +20,7 @@ from risks.constants import (
 
 class RiskTreatmentPlan(BaseModel):
     REFERENCE_PREFIX = "RTPL"
-    WORKFLOW_NAME = "risk_treatment_plan"
+    LIFECYCLE_NAME = "risk_treatment_plan"
 
     risk = models.ForeignKey(
         "risks.Risk",

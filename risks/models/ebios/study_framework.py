@@ -15,7 +15,7 @@ class StudyFramework(BaseModel):
     Exactly one instance per ebios_rm RiskAssessment.
     """
 
-    WORKFLOW_NAME = "ebios_study_framework"
+    LIFECYCLE_NAME = "ebios_study_framework"
 
     REFERENCE_PREFIX = "EFRA"
 

@@ -18,7 +18,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
+from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
@@ -595,7 +595,7 @@ class RiskAssessmentListView(
         return self.filter_queryset_advanced(qs)
 
 
-class RiskAssessmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class RiskAssessmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = RiskAssessment
     template_name = "risks/assessment_detail.html"
     context_object_name = "assessment"
@@ -1151,7 +1151,7 @@ class RiskBulkActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect("risks:risk-list")
 
 
-class RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     scope_parent_lookup = "assessment__scopes"
     model = Risk
     template_name = "risks/risk_detail.html"
@@ -1381,7 +1381,7 @@ class TreatmentPlanListView(
         return self.filter_queryset_advanced(qs)
 
 
-class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskTreatmentPlan
     template_name = "risks/treatment_plan_detail.html"
@@ -1593,7 +1593,7 @@ class RiskAcceptanceListView(
         return self.filter_queryset_advanced(qs)
 
 
-class RiskAcceptanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class RiskAcceptanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskAcceptance
     template_name = "risks/acceptance_detail.html"
@@ -1849,7 +1849,7 @@ class VulnerabilityListView(
         return ctx
 
 
-class VulnerabilityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class VulnerabilityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Vulnerability
     template_name = "risks/vulnerability_detail.html"
     context_object_name = "vulnerability"

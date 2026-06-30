@@ -186,6 +186,22 @@ class BaseModel(ReferenceGeneratorMixin):
             return False
 
     @property
+    def is_terminal_state(self):
+        """Whether the current lifecycle state is a terminal / archived one.
+
+        Engine-agnostic: the standardised engine's ARCHIVED step kind, or the
+        legacy workflow's terminal flag, so callers (link guards, transition
+        gating) never reach into a specific engine.
+        """
+        step = self._current_step()
+        if step is not None:
+            return step.is_archived
+        try:
+            return self.get_lifecycle_state().is_terminal
+        except Exception:
+            return False
+
+    @property
     def workflow_perm_namespace(self):
         """Permission feature path used to build transition codenames.
 

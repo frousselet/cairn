@@ -10,7 +10,7 @@ from risks.constants import AcceptanceStatus
 
 class RiskAcceptance(BaseModel):
     REFERENCE_PREFIX = "RACC"
-    WORKFLOW_NAME = "risk_acceptance"
+    LIFECYCLE_NAME = "risk_acceptance"
 
     risk = models.ForeignKey(
         "risks.Risk",

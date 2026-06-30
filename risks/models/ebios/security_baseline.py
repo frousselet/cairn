@@ -13,7 +13,7 @@ class SecurityBaseline(BaseModel):
     and baseline references. Exactly one instance per ebios_rm RiskAssessment.
     """
 
-    WORKFLOW_NAME = "ebios_security_baseline"
+    LIFECYCLE_NAME = "ebios_security_baseline"
 
     REFERENCE_PREFIX = "EBSL"
 

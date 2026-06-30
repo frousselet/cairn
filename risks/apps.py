@@ -10,5 +10,6 @@ class RisksConfig(AppConfig):
     def ready(self):
         from risks import signals  # noqa: F401
 
-        # Register the module's specific lifecycle workflows.
-        from risks import workflows  # noqa: F401
+        # Register the module's standardised lifecycles (risk, assessment,
+        # treatment plan, acceptance, vulnerability and the EBIOS deliverables).
+        from risks import lifecycles  # noqa: F401
