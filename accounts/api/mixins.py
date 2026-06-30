@@ -18,66 +18,10 @@ from core.history import (
 logger = logging.getLogger(__name__)
 
 
-class ApprovableAPIMixin:
-    """Reset approval on update; add approve/reject actions to ViewSets.
-
-    Respects VersioningConfig: only triggers version bump and approval reset
-    when a "major" field has changed. If approval is disabled for the model,
-    approval fields are left unchanged.
-    """
-
-    def _get_perm_namespace(self):
-        """``module.feature`` permission path of the entity (workflow codenames)."""
-        module = getattr(self, "permission_module", None)
-        if not module and hasattr(self, "queryset") and self.queryset is not None:
-            module = self.queryset.model._meta.app_label
-        feature = getattr(self, "permission_feature", None)
-        if not feature and hasattr(self, "queryset") and self.queryset is not None:
-            feature = self.queryset.model._meta.model_name
-        return f"{module}.{feature}"
-
-    def _get_approve_codename(self):
-        return f"{self._get_perm_namespace()}.approve"
-
-    def _is_major_change(self, serializer):
-        """Determine if the update includes at least one major field."""
-        from core.models import VersioningConfig
-
-        model_class = serializer.instance.__class__
-        if not VersioningConfig.is_approval_enabled(model_class):
-            return False
-        major_fields = VersioningConfig.get_major_fields(model_class)
-        if major_fields is None:
-            return True  # All changes are major
-        changed = set(serializer.validated_data.keys())
-        return bool(changed & major_fields)
-
-    def perform_update(self, serializer):
-        if self._is_major_change(serializer):
-            current_version = serializer.instance.version or 0
-            serializer.save(
-                is_approved=False,
-                approved_by=None,
-                approved_at=None,
-                version=current_version + 1,
-            )
-        else:
-            serializer.save()
-
-    def _terminal_state_response(self, obj):
-        """A 400 response if the element is in a terminal lifecycle state, else None."""
-        try:
-            if obj.is_terminal_state:
-                return Response(
-                    {"detail": (
-                        f"Element is in the terminal '{obj.workflow_state}' "
-                        "lifecycle state."
-                    )},
-                    status=http_status.HTTP_400_BAD_REQUEST,
-                )
-        except Exception:
-            pass
-        return None
+class LifecycleAPIMixin:
+    """Lifecycle support for ViewSets: a ``?workflow_state=`` list filter and a
+    ``/transition/`` action (GET lists the caller's allowed steps, POST performs
+    one through the lifecycle service)."""
 
     def get_queryset(self):
         """Support filtering any lifecycle entity list by ``?workflow_state=``."""
@@ -147,39 +91,6 @@ class ApprovableAPIMixin:
         """
         obj = self.get_object()
         return self._lifecycle_transition(request, obj, obj.get_lifecycle())
-
-    @action(detail=True, methods=["post"])
-    def approve(self, request, **kwargs):
-        """Deprecated alias of the validate transition (kept for compatibility)."""
-        obj = self.get_object()
-        codename = self._get_approve_codename()
-        if not request.user.is_superuser and not request.user.has_perm(codename):
-            raise PermissionDenied("Permission d'approbation requise.")
-        terminal = self._terminal_state_response(obj)
-        if terminal is not None:
-            return terminal
-        obj.is_approved = True
-        obj.approved_by = request.user
-        obj.approved_at = timezone.now()
-        obj.save(update_fields=["is_approved", "approved_by", "approved_at"])
-        serializer = self.get_serializer(obj)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["post"])
-    def reject(self, request, **kwargs):
-        obj = self.get_object()
-        codename = self._get_approve_codename()
-        if not request.user.is_superuser and not request.user.has_perm(codename):
-            raise PermissionDenied("Permission d'approbation requise.")
-        terminal = self._terminal_state_response(obj)
-        if terminal is not None:
-            return terminal
-        obj.is_approved = False
-        obj.approved_by = None
-        obj.approved_at = None
-        obj.save(update_fields=["is_approved", "approved_by", "approved_at"])
-        serializer = self.get_serializer(obj)
-        return Response(serializer.data)
 
 
 class HistoryAPIMixin:

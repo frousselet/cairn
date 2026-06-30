@@ -4,7 +4,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from accounts.api.mixins import ApprovableAPIMixin, BatchCreateMixin, HistoryAPIMixin, ScopeFilterAPIMixin
+from accounts.api.mixins import LifecycleAPIMixin, BatchCreateMixin, HistoryAPIMixin, ScopeFilterAPIMixin
 from assets.services.spof_detection import SpofDetector
 from context.api.permissions import ContextPermission
 from assets.models import (
@@ -54,7 +54,7 @@ class CreatedByMixin:
         serializer.save(created_by=self.request.user)
 
 
-class EssentialAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class EssentialAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = EssentialAsset.objects.select_related("owner", "custodian").prefetch_related("scopes").all()
     filterset_class = EssentialAssetFilter
     permission_classes = [ContextPermission]
@@ -124,7 +124,7 @@ class EssentialAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPI
         })
 
 
-class SupportAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class SupportAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = SupportAsset.objects.select_related("owner", "custodian", "parent_asset").prefetch_related("scopes").all()
     filterset_class = SupportAssetFilter
     permission_classes = [ContextPermission]
@@ -217,7 +217,7 @@ class SupportAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMi
         })
 
 
-class AssetDependencyViewSet(BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class AssetDependencyViewSet(BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = AssetDependency.objects.select_related(
         "essential_asset", "support_asset"
     ).all()
@@ -300,7 +300,7 @@ class AssetDependencyViewSet(BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMix
         })
 
 
-class AssetGroupViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class AssetGroupViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = AssetGroup.objects.select_related("owner").prefetch_related("scopes", "members").all()
     filterset_class = AssetGroupFilter
     permission_classes = [ContextPermission]
@@ -335,7 +335,7 @@ class AssetGroupViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SupplierViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class SupplierViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = Supplier.objects.select_related("owner").prefetch_related("scopes").all()
     filterset_class = SupplierFilter
     permission_classes = [ContextPermission]
@@ -404,7 +404,7 @@ class SupplierContactViewSet(viewsets.ModelViewSet):
     ordering_fields = ["name", "created_at"]
 
 
-class SupplierDependencyViewSet(BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class SupplierDependencyViewSet(BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = SupplierDependency.objects.select_related(
         "support_asset", "supplier"
     ).all()
@@ -419,7 +419,7 @@ class SupplierDependencyViewSet(BatchCreateMixin, ApprovableAPIMixin, HistoryAPI
     ordering_fields = ["dependency_type", "criticality", "created_at"]
 
 
-class ContractViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class ContractViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = Contract.objects.prefetch_related(
         "scopes", "suppliers", "clients"
     ).all()
@@ -437,7 +437,7 @@ class ContractViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin,
         return ContractSerializer
 
 
-class CertificateViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class CertificateViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = Certificate.objects.select_related("framework").prefetch_related(
         "scopes", "sites"
     ).all()

@@ -282,30 +282,6 @@ class TestRiskAssessmentDeleteView:
         assert not RiskAssessment.objects.filter(pk=pk).exists()
 
 
-class TestRiskAssessmentApproveView:
-    def test_approve_assessment(self):
-        client, user = _superuser_client()
-        assessment = RiskAssessmentFactory()
-        assert assessment.is_approved is False
-        resp = client.post(reverse("risks:assessment-approve", args=[assessment.pk]))
-        assert resp.status_code == 302
-        assessment.refresh_from_db()
-        assert assessment.is_approved is True
-        assert assessment.approved_by == user
-
-    def test_detail_exposes_approve_url(self):
-        client, _ = _superuser_client()
-        assessment = RiskAssessmentFactory()
-        resp = client.get(reverse("risks:assessment-detail", args=[assessment.pk]))
-        assert resp.status_code == 200
-        # The legacy approval bar is retired: validation goes through the
-        # lifecycle stepper (the approve endpoint stays for API compat).
-        assert reverse("risks:assessment-approve", args=[assessment.pk]).encode() not in resp.content
-        assert b"lifecycle-stepper-" in resp.content
-
-
-# ── Risk Views ──────────────────────────────────────────────
-
 
 class TestRiskListView:
     def test_login_required(self):
@@ -529,30 +505,6 @@ class TestRiskDeleteView:
         assert resp.status_code == 302
         assert not Risk.objects.filter(pk=pk).exists()
 
-
-class TestRiskApproveView:
-    def test_approve_risk(self):
-        client, user = _superuser_client()
-        risk = RiskFactory()
-        assert risk.is_approved is False
-        resp = client.post(reverse("risks:risk-approve", args=[risk.pk]))
-        assert resp.status_code == 302
-        risk.refresh_from_db()
-        assert risk.is_approved is True
-        assert risk.approved_by == user
-
-    def test_detail_exposes_approve_url(self):
-        client, _ = _superuser_client()
-        risk = RiskFactory()
-        resp = client.get(reverse("risks:risk-detail", args=[risk.pk]))
-        assert resp.status_code == 200
-        # The legacy approval bar is retired: validation goes through the
-        # lifecycle stepper (the approve endpoint stays for API compat).
-        assert reverse("risks:risk-approve", args=[risk.pk]).encode() not in resp.content
-        assert b"lifecycle-stepper-" in resp.content
-
-
-# ── Treatment Plan Views ────────────────────────────────────
 
 
 class TestTreatmentPlanListView:
@@ -822,36 +774,6 @@ class TestTreatmentActionViews:
         assert reverse("risks:treatment-action-delete", args=[action.pk]).encode() in body
 
 
-class TestTreatmentPlanApproveView:
-    def test_approve_plan(self):
-        client, user = _superuser_client()
-        risk = RiskFactory()
-        plan = RiskTreatmentPlan.objects.create(
-            risk=risk, name="ToApprove", treatment_type="mitigate",
-        )
-        assert plan.is_approved is False
-        resp = client.post(reverse("risks:treatment-plan-approve", args=[plan.pk]))
-        assert resp.status_code == 302
-        plan.refresh_from_db()
-        assert plan.is_approved is True
-        assert plan.approved_by == user
-
-    def test_detail_exposes_approve_url(self):
-        client, _ = _superuser_client()
-        risk = RiskFactory()
-        plan = RiskTreatmentPlan.objects.create(
-            risk=risk, name="ApproveURL", treatment_type="mitigate",
-        )
-        resp = client.get(reverse("risks:treatment-plan-detail", args=[plan.pk]))
-        assert resp.status_code == 200
-        # The legacy approval bar is retired: validation goes through the
-        # lifecycle stepper (the approve endpoint stays for API compat).
-        assert reverse("risks:treatment-plan-approve", args=[plan.pk]).encode() not in resp.content
-        assert b"lifecycle-stepper-" in resp.content
-
-
-# ── Risk Acceptance Views ───────────────────────────────────
-
 
 class TestRiskAcceptanceListView:
     def test_login_required(self):
@@ -911,80 +833,6 @@ class TestRiskAcceptanceDeleteView:
         assert resp.status_code == 302
         assert not RiskAcceptance.objects.filter(pk=pk).exists()
 
-
-class TestRiskAcceptanceApproveView:
-    def test_login_required(self):
-        risk = RiskFactory()
-        acceptance = RiskAcceptance.objects.create(risk=risk, justification="J")
-        resp = Client().post(reverse("risks:acceptance-approve", args=[acceptance.pk]))
-        assert resp.status_code == 302
-
-    def test_approve_acceptance(self):
-        client, user = _superuser_client()
-        risk = RiskFactory()
-        acceptance = RiskAcceptance.objects.create(
-            risk=risk, justification="J", status="active"
-        )
-        assert acceptance.is_approved is False
-        resp = client.post(reverse("risks:acceptance-approve", args=[acceptance.pk]))
-        assert resp.status_code == 302
-        acceptance.refresh_from_db()
-        assert acceptance.is_approved is True
-        assert acceptance.approved_by == user
-        assert acceptance.approved_at is not None
-
-    def test_approve_only_accepts_post(self):
-        client, _ = _superuser_client()
-        risk = RiskFactory()
-        acceptance = RiskAcceptance.objects.create(risk=risk, justification="J")
-        resp = client.get(reverse("risks:acceptance-approve", args=[acceptance.pk]))
-        assert resp.status_code == 405
-
-    def test_approve_without_permission_redirects(self):
-        user = UserFactory(is_superuser=False, is_staff=False)
-        client = Client()
-        client.force_login(user)
-        risk = RiskFactory()
-        acceptance = RiskAcceptance.objects.create(risk=risk, justification="J")
-        resp = client.post(reverse("risks:acceptance-approve", args=[acceptance.pk]))
-        # PermissionRequiredMixin denies before the view runs
-        assert resp.status_code in (302, 403)
-        acceptance.refresh_from_db()
-        assert acceptance.is_approved is False
-
-    def test_detail_exposes_approve_url(self):
-        client, _ = _superuser_client()
-        risk = RiskFactory()
-        acceptance = RiskAcceptance.objects.create(risk=risk, justification="J")
-        resp = client.get(reverse("risks:acceptance-detail", args=[acceptance.pk]))
-        assert resp.status_code == 200
-        # The legacy approval bar is retired: validation goes through the
-        # lifecycle stepper (the approve endpoint stays for API compat).
-        assert reverse("risks:acceptance-approve", args=[acceptance.pk]).encode() not in resp.content
-        assert b"lifecycle-stepper-" in resp.content
-
-    def test_update_resets_approval(self):
-        client, user = _superuser_client()
-        risk = RiskFactory()
-        acceptance = RiskAcceptance.objects.create(
-            risk=risk, justification="Original", status="active",
-            is_approved=True, approved_by=user,
-        )
-        resp = client.post(
-            reverse("risks:acceptance-update", args=[acceptance.pk]),
-            {
-                "risk": str(risk.pk),
-                "justification": "Updated justification",
-                "status": "active",
-            },
-        )
-        assert resp.status_code == 302
-        acceptance.refresh_from_db()
-        assert acceptance.is_approved is False
-        assert acceptance.approved_by is None
-
-
-# ── Threat Views ────────────────────────────────────────────
 
 
 class TestThreatListView:
@@ -1150,97 +998,7 @@ class TestVulnerabilityDeleteView:
         assert not Vulnerability.objects.filter(pk=pk).exists()
 
 
-class TestThreatApproveView:
-    def test_approve_threat(self):
-        client, user = _superuser_client()
-        threat = Threat.objects.create(name="Phish", type=ThreatType.DELIBERATE)
-        assert threat.is_approved is False
-        resp = client.post(reverse("risks:threat-approve", args=[threat.pk]))
-        assert resp.status_code == 302
-        threat.refresh_from_db()
-        assert threat.is_approved is True
-        assert threat.approved_by == user
 
-    def test_detail_exposes_approve_url(self):
-        client, _ = _superuser_client()
-        threat = Threat.objects.create(name="Phish2", type=ThreatType.DELIBERATE)
-        resp = client.get(reverse("risks:threat-detail", args=[threat.pk]))
-        assert resp.status_code == 200
-        # The legacy approval bar is retired: validation goes through the
-        # lifecycle stepper (the approve endpoint stays for API compat).
-        assert reverse("risks:threat-approve", args=[threat.pk]).encode() not in resp.content
-        assert b"lifecycle-stepper-" in resp.content
-
-    def test_update_resets_approval(self):
-        client, user = _superuser_client()
-        threat = Threat.objects.create(
-            name="ApprovedThreat", type=ThreatType.DELIBERATE,
-            is_approved=True, approved_by=user,
-        )
-        resp = client.post(
-            reverse("risks:threat-update", args=[threat.pk]),
-            {"name": "Renamed", "type": ThreatType.DELIBERATE, "status": "active"},
-        )
-        assert resp.status_code == 302
-        threat.refresh_from_db()
-        assert threat.is_approved is False
-        assert threat.approved_by is None
-
-
-class TestVulnerabilityApproveView:
-    def test_approve_vulnerability(self):
-        client, user = _superuser_client()
-        vuln = Vulnerability.objects.create(name="VulnApprove", severity="medium")
-        assert vuln.is_approved is False
-        resp = client.post(reverse("risks:vulnerability-approve", args=[vuln.pk]))
-        assert resp.status_code == 302
-        vuln.refresh_from_db()
-        assert vuln.is_approved is True
-        assert vuln.approved_by == user
-
-    def test_detail_exposes_approve_url(self):
-        client, _ = _superuser_client()
-        vuln = Vulnerability.objects.create(name="VulnApprove2", severity="low")
-        resp = client.get(reverse("risks:vulnerability-detail", args=[vuln.pk]))
-        assert resp.status_code == 200
-        # The legacy approval bar is retired: validation goes through the
-        # lifecycle stepper (the approve endpoint stays for API compat).
-        assert reverse("risks:vulnerability-approve", args=[vuln.pk]).encode() not in resp.content
-        assert b"lifecycle-stepper-" in resp.content
-
-
-class TestISO27005RiskApproveView:
-    def _make_analysis(self):
-        threat = Threat.objects.create(name="T-iso", type=ThreatType.DELIBERATE)
-        vuln = Vulnerability.objects.create(name="V-iso", severity="medium")
-        assessment = RiskAssessmentFactory()
-        from risks.models import ISO27005Risk
-        return ISO27005Risk.objects.create(
-            assessment=assessment, threat=threat, vulnerability=vuln,
-        )
-
-    def test_approve_iso27005(self):
-        client, user = _superuser_client()
-        analysis = self._make_analysis()
-        assert analysis.is_approved is False
-        resp = client.post(reverse("risks:iso27005-approve", args=[analysis.pk]))
-        assert resp.status_code == 302
-        analysis.refresh_from_db()
-        assert analysis.is_approved is True
-        assert analysis.approved_by == user
-
-    def test_detail_exposes_approve_url(self):
-        client, _ = _superuser_client()
-        analysis = self._make_analysis()
-        resp = client.get(reverse("risks:iso27005-detail", args=[analysis.pk]))
-        assert resp.status_code == 200
-        # The legacy approval bar is retired: validation goes through the
-        # lifecycle stepper (the approve endpoint stays for API compat).
-        assert reverse("risks:iso27005-approve", args=[analysis.pk]).encode() not in resp.content
-        assert b"lifecycle-stepper-" in resp.content
-
-
-# ── Risk Criteria Views ─────────────────────────────────────
 
 
 class TestRiskCriteriaListView:

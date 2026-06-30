@@ -21,7 +21,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
+from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
@@ -99,39 +99,6 @@ class CreatedByMixin:
         return super().form_valid(form)
 
 
-class ApproveView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Generic approve view for context domain models."""
-
-    model = None
-    permission_feature = None
-    permission_required = None
-    success_url = None
-
-    def dispatch(self, request, *args, **kwargs):
-        if not self.permission_required:
-            feature = self.permission_feature or self.model._meta.model_name
-            self.permission_required = f"context.{feature}.approve"
-        return super().dispatch(request, *args, **kwargs)
-
-    def post(self, request, pk):
-        from core.models import VersioningConfig
-        from core.redirects import safe_redirect_target
-
-        obj = get_object_or_404(self.model, pk=pk)
-        if not VersioningConfig.is_approval_enabled(self.model):
-            messages.error(request, _("Approval is disabled for this item type."))
-            return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER")))
-        feature = self.permission_feature or self.model._meta.model_name
-        codename = f"context.{feature}.approve"
-        if not request.user.is_superuser and not request.user.has_perm(codename):
-            messages.error(request, _("You do not have permission to approve this item."))
-            return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER")))
-        obj.is_approved = True
-        obj.approved_by = request.user
-        obj.approved_at = timezone.now()
-        obj.save(update_fields=["is_approved", "approved_by", "approved_at"])
-        messages.success(request, _("Item approved."))
-        return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER"), self.success_url or "/"))
 
 
 # ── Dashboard indicator helpers ──────────────────────────────
@@ -348,12 +315,11 @@ class ScopeListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
         return result
 
 
-class ScopeDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, LifecycleStepperMixin, HistoryUrlMixin, DetailView):
+class ScopeDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, LifecycleStepperMixin, HistoryUrlMixin, DetailView):
     model = Scope
     permission_required = "context.scope.read"
     template_name = "context/scope_detail.html"
     context_object_name = "scope"
-    approve_url_name = "context:scope-approve"
 
     def get_queryset(self):
         return super().get_queryset().select_related("parent_scope")
@@ -419,7 +385,7 @@ class ScopeCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin
     success_url = reverse_lazy("context:scope-list")
 
 
-class ScopeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, UpdateView):
+class ScopeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
     model = Scope
     permission_required = "context.scope.update"
     form_class = ScopeUpdateForm
@@ -500,12 +466,11 @@ class IssueListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
         return ctx
 
 
-class IssueDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class IssueDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Issue
     permission_required = "context.issue.read"
     template_name = "context/issue_detail.html"
     context_object_name = "issue"
-    approve_url_name = "context:issue-approve"
 
 
 class IssueCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -524,7 +489,7 @@ class IssueCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin
         return kwargs
 
 
-class IssueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class IssueUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Issue
     permission_required = "context.issue.update"
     form_class = IssueUpdateForm
@@ -596,12 +561,11 @@ class StakeholderListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumma
         return self.filter_queryset_advanced(qs)
 
 
-class StakeholderDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class StakeholderDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Stakeholder
     permission_required = "context.stakeholder.read"
     template_name = "context/stakeholder_detail.html"
     context_object_name = "stakeholder"
-    approve_url_name = "context:stakeholder-approve"
 
     def get_queryset(self):
         return super().get_queryset().prefetch_related("expectations")
@@ -623,7 +587,7 @@ class StakeholderCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFor
         return kwargs
 
 
-class StakeholderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class StakeholderUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Stakeholder
     permission_required = "context.stakeholder.update"
     form_class = StakeholderUpdateForm
@@ -694,12 +658,11 @@ class ObjectiveListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
         return self.filter_queryset_advanced(qs)
 
 
-class ObjectiveDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ObjectiveDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Objective
     permission_required = "context.objective.read"
     template_name = "context/objective_detail.html"
     context_object_name = "objective"
-    approve_url_name = "context:objective-approve"
 
 
 class ObjectiveCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -718,7 +681,7 @@ class ObjectiveCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
         return kwargs
 
 
-class ObjectiveUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class ObjectiveUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Objective
     permission_required = "context.objective.update"
     form_class = ObjectiveUpdateForm
@@ -790,13 +753,11 @@ class SwotListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
         return self.filter_queryset_advanced(qs)
 
 
-class SwotDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class SwotDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = SwotAnalysis
     permission_required = "context.swot.read"
     template_name = "context/swot_detail.html"
     context_object_name = "analysis"
-    approval_feature = "swot"
-    approve_url_name = "context:swot-approve"
 
     def get_queryset(self):
         return super().get_queryset().prefetch_related("items", "strategies")
@@ -839,7 +800,7 @@ class SwotCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
         return kwargs
 
 
-class SwotUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class SwotUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = SwotAnalysis
     permission_required = "context.swot.update"
     form_class = SwotAnalysisUpdateForm
@@ -1111,12 +1072,11 @@ class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
         return self.filter_queryset_advanced(qs)
 
 
-class RoleDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class RoleDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Role
     permission_required = "context.role.read"
     template_name = "context/role_detail.html"
     context_object_name = "role"
-    approve_url_name = "context:role-approve"
 
     def get_queryset(self):
         return super().get_queryset().prefetch_related(
@@ -1140,7 +1100,7 @@ class RoleCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
         return kwargs
 
 
-class RoleUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class RoleUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Role
     permission_required = "context.role.update"
     form_class = RoleUpdateForm
@@ -1209,12 +1169,11 @@ class ActivityListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
         return self.filter_queryset_advanced(qs)
 
 
-class ActivityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ActivityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Activity
     permission_required = "context.activity.read"
     template_name = "context/activity_detail.html"
     context_object_name = "activity"
-    approve_url_name = "context:activity-approve"
 
 
 class ActivityCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -1233,7 +1192,7 @@ class ActivityCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMi
         return kwargs
 
 
-class ActivityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class ActivityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Activity
     permission_required = "context.activity.update"
     form_class = ActivityUpdateForm
@@ -1663,12 +1622,11 @@ class IndicatorTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableB
         return ctx
 
 
-class IndicatorDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class IndicatorDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Indicator
     permission_required = "context.indicator.read"
     template_name = "context/indicator_detail.html"
     context_object_name = "indicator"
-    approve_url_name = "context:indicator-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1751,7 +1709,7 @@ class PredefinedIndicatorCreateView(LoginRequiredMixin, PermissionRequiredMixin,
         return response
 
 
-class IndicatorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class IndicatorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Indicator
     permission_required = "context.indicator.update"
     template_name = "context/indicator_form.html"

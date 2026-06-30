@@ -23,7 +23,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
+from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
@@ -107,32 +107,6 @@ class CreatedByMixin:
 
 
 
-class ApproveView(LoginRequiredMixin, View):
-    """Generic approve view for compliance domain models."""
-
-    model = None
-    permission_feature = None
-    success_url = None
-
-    def post(self, request, pk):
-        from core.models import VersioningConfig
-        from core.redirects import safe_redirect_target
-
-        obj = get_object_or_404(self.model, pk=pk)
-        if not VersioningConfig.is_approval_enabled(self.model):
-            messages.error(request, _("Approval is disabled for this item type."))
-            return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER")))
-        feature = self.permission_feature or self.model._meta.model_name
-        codename = f"compliance.{feature}.approve"
-        if not request.user.is_superuser and not request.user.has_perm(codename):
-            messages.error(request, _("You do not have permission to approve this item."))
-            return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER")))
-        obj.is_approved = True
-        obj.approved_by = request.user
-        obj.approved_at = timezone.now()
-        obj.save(update_fields=["is_approved", "approved_by", "approved_at"])
-        messages.success(request, _("Item approved."))
-        return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER"), self.success_url or "/"))
 
 
 # ── Framework ──────────────────────────────────────────────
@@ -183,13 +157,12 @@ class FrameworkListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
 
 
 class FrameworkDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
 ):
     model = Framework
     permission_required = "compliance.framework.read"
     template_name = "compliance/framework_detail.html"
     context_object_name = "framework"
-    approve_url_name = "compliance:framework-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -218,7 +191,7 @@ class FrameworkCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
         return kwargs
 
 
-class FrameworkUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class FrameworkUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Framework
     permission_required = "compliance.framework.update"
     form_class = FrameworkUpdateForm
@@ -464,14 +437,13 @@ class RequirementListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumma
 
 
 class RequirementDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
 ):
     model = Requirement
     permission_required = "compliance.requirement.read"
     scope_parent_lookup = "framework__scopes"
     template_name = "compliance/requirement_detail.html"
     context_object_name = "requirement"
-    approve_url_name = "compliance:requirement-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -496,7 +468,7 @@ class RequirementCreateView(LoginRequiredMixin, PermissionRequiredMixin, Created
         return reverse("compliance:requirement-detail", kwargs={"pk": self.object.pk})
 
 
-class RequirementUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovableUpdateMixin, UpdateView):
+class RequirementUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, UpdateView):
     model = Requirement
     permission_required = "compliance.requirement.update"
     scope_parent_lookup = "framework__scopes"
@@ -566,15 +538,13 @@ class AssessmentListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
 
 
 class AssessmentDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
 ):
     model = ComplianceAssessment
     lifecycle_transition_url_name = "compliance:assessment-transition"
     permission_required = "compliance.assessment.read"
     template_name = "compliance/assessment_detail.html"
     context_object_name = "assessment"
-    approval_feature = "assessment"
-    approve_url_name = "compliance:assessment-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -679,7 +649,7 @@ class AssessmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxForm
 
 
 class AssessmentUpdateView(
-    LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView
+    LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView
 ):
     model = ComplianceAssessment
     permission_required = "compliance.assessment.update"
@@ -1667,15 +1637,13 @@ class ActionPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
 
 
 class ActionPlanDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
 ):
     model = ComplianceActionPlan
     lifecycle_transition_url_name = "compliance:action-plan-transition"
     permission_required = "compliance.action_plan.read"
     template_name = "compliance/action_plan_detail.html"
     context_object_name = "action_plan"
-    approval_feature = "action_plan"
-    approve_url_name = "compliance:action-plan-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1732,7 +1700,7 @@ class ActionPlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxForm
 
 
 class ActionPlanUpdateView(
-    LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView
+    LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView
 ):
     model = ComplianceActionPlan
     permission_required = "compliance.action_plan.update"

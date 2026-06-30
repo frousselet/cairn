@@ -19,7 +19,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
+from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
@@ -100,32 +100,6 @@ class CreatedByMixin:
 
 
 
-class ApproveView(LoginRequiredMixin, View):
-    """Generic approve view for assets domain models."""
-
-    model = None
-    permission_feature = None
-    success_url = None
-
-    def post(self, request, pk):
-        from core.models import VersioningConfig
-        from core.redirects import safe_redirect_target
-
-        obj = get_object_or_404(self.model, pk=pk)
-        if not VersioningConfig.is_approval_enabled(self.model):
-            messages.error(request, _("Approval is disabled for this item type."))
-            return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER")))
-        feature = self.permission_feature or self.model._meta.model_name
-        codename = f"assets.{feature}.approve"
-        if not request.user.is_superuser and not request.user.has_perm(codename):
-            messages.error(request, _("You do not have permission to approve this item."))
-            return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER")))
-        obj.is_approved = True
-        obj.approved_by = request.user
-        obj.approved_at = timezone.now()
-        obj.save(update_fields=["is_approved", "approved_by", "approved_at"])
-        messages.success(request, _("Item approved."))
-        return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER"), self.success_url or "/"))
 
 
 # ── Essential Asset ─────────────────────────────────────────
@@ -175,13 +149,11 @@ class EssentialAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSu
         return self.filter_queryset_advanced(qs)
 
 
-class EssentialAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class EssentialAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = EssentialAsset
     template_name = "assets/essential_asset_detail.html"
     context_object_name = "asset"
     permission_required = "assets.essential_asset.read"
-    approval_feature = "essential_asset"
-    approve_url_name = "assets:essential-asset-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -208,7 +180,7 @@ class EssentialAssetCreateView(LoginRequiredMixin, PermissionRequiredMixin, Htmx
         return kwargs
 
 
-class EssentialAssetUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class EssentialAssetUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = EssentialAsset
     form_class = EssentialAssetUpdateForm
     template_name = "assets/essential_asset_form.html"
@@ -326,13 +298,11 @@ class ContractListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
         return result
 
 
-class ContractDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ContractDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Contract
     template_name = "assets/contract_detail.html"
     context_object_name = "contract"
     permission_required = "assets.contract.read"
-    approval_feature = "contract"
-    approve_url_name = "assets:contract-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -364,7 +334,7 @@ class ContractCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMi
         return kwargs
 
 
-class ContractUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class ContractUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Contract
     form_class = ContractUpdateForm
     template_name = "assets/contract_form.html"
@@ -480,13 +450,11 @@ class CertificateListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumma
         return self.filter_queryset_advanced(qs)
 
 
-class CertificateDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class CertificateDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Certificate
     template_name = "assets/certificate_detail.html"
     context_object_name = "certificate"
     permission_required = "assets.certificate.read"
-    approval_feature = "certificate"
-    approve_url_name = "assets:certificate-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -511,7 +479,7 @@ class CertificateCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFor
         return kwargs
 
 
-class CertificateUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class CertificateUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Certificate
     form_class = CertificateUpdateForm
     template_name = "assets/certificate_form.html"
@@ -606,13 +574,11 @@ class SupportAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumm
         return self.filter_queryset_advanced(qs)
 
 
-class SupportAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class SupportAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = SupportAsset
     template_name = "assets/support_asset_detail.html"
     context_object_name = "asset"
     permission_required = "assets.support_asset.read"
-    approval_feature = "support_asset"
-    approve_url_name = "assets:support-asset-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -639,7 +605,7 @@ class SupportAssetCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFo
         return kwargs
 
 
-class SupportAssetUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class SupportAssetUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = SupportAsset
     form_class = SupportAssetUpdateForm
     template_name = "assets/support_asset_form.html"
@@ -715,7 +681,7 @@ class DependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreatedB
     success_url = reverse_lazy("assets:dependency-list")
 
 
-class DependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ApprovableUpdateMixin, UpdateView):
+class DependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = AssetDependency
     form_class = AssetDependencyForm
     template_name = "assets/dependency_form.html"
@@ -774,13 +740,11 @@ class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
         return self.filter_queryset_advanced(qs)
 
 
-class GroupDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class GroupDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = AssetGroup
     template_name = "assets/group_detail.html"
     context_object_name = "group"
     permission_required = "assets.group.read"
-    approval_feature = "group"
-    approve_url_name = "assets:group-approve"
 
     def get_queryset(self):
         return super().get_queryset().prefetch_related("members")
@@ -802,7 +766,7 @@ class GroupCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin
         return kwargs
 
 
-class GroupUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class GroupUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = AssetGroup
     form_class = AssetGroupUpdateForm
     template_name = "assets/group_form.html"
@@ -874,13 +838,11 @@ class SupplierListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryM
         return self.filter_queryset_advanced(qs)
 
 
-class SupplierDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class SupplierDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Supplier
     template_name = "assets/supplier_detail.html"
     context_object_name = "supplier"
     permission_required = "assets.supplier.read"
-    approval_feature = "supplier"
-    approve_url_name = "assets:supplier-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -938,7 +900,7 @@ class SupplierCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMi
         return kwargs
 
 
-class SupplierUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class SupplierUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Supplier
     form_class = SupplierUpdateForm
     template_name = "assets/supplier_form.html"
@@ -1394,7 +1356,7 @@ class SupplierDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, 
     success_url = reverse_lazy("assets:supplier-dependency-list")
 
 
-class SupplierDependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ApprovableUpdateMixin, UpdateView):
+class SupplierDependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = SupplierDependency
     form_class = SupplierDependencyForm
     template_name = "assets/supplier_dependency_form.html"
@@ -1471,12 +1433,11 @@ class SiteListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
         return result
 
 
-class SiteDetailView(LoginRequiredMixin, PermissionRequiredMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class SiteDetailView(LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Site
     template_name = "assets/site_detail.html"
     context_object_name = "site"
     permission_required = "context.site.read"
-    approve_url_name = "assets:site-approve"
 
     def get_queryset(self):
         return super().get_queryset().select_related("parent_site").prefetch_related(
@@ -1516,7 +1477,7 @@ class SiteCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
     success_url = reverse_lazy("assets:site-list")
 
 
-class SiteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, UpdateView):
+class SiteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
     model = Site
     form_class = SiteUpdateForm
     template_name = "assets/site_form.html"
@@ -1587,7 +1548,7 @@ class SiteAssetDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin,
     success_url = reverse_lazy("assets:site-asset-dependency-list")
 
 
-class SiteAssetDependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ApprovableUpdateMixin, UpdateView):
+class SiteAssetDependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = SiteAssetDependency
     form_class = SiteAssetDependencyForm
     permission_required = "assets.dependency.update"
@@ -1655,7 +1616,7 @@ class SiteSupplierDependencyCreateView(LoginRequiredMixin, PermissionRequiredMix
     success_url = reverse_lazy("assets:site-supplier-dependency-list")
 
 
-class SiteSupplierDependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ApprovableUpdateMixin, UpdateView):
+class SiteSupplierDependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = SiteSupplierDependency
     form_class = SiteSupplierDependencyForm
     template_name = "assets/site_supplier_dependency_form.html"

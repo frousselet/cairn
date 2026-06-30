@@ -23,7 +23,6 @@ urlpatterns = [
     path("frameworks/<uuid:pk>/", views.FrameworkDetailView.as_view(), name="framework-detail"),
     path("frameworks/<uuid:pk>/edit/", views.FrameworkUpdateView.as_view(), name="framework-update"),
     path("frameworks/<uuid:pk>/delete/", views.FrameworkDeleteView.as_view(), name="framework-delete"),
-    path("frameworks/<uuid:pk>/approve/", views.ApproveView.as_view(model=Framework, success_url=reverse_lazy("compliance:framework-list")), name="framework-approve"),
     # Requirements
     path("requirements/", views.RequirementListView.as_view(), name="requirement-list"),
     path("requirements/table-body/", views.RequirementTableBodyView.as_view(), name="requirement-table-body"),
@@ -31,7 +30,6 @@ urlpatterns = [
     path("requirements/<uuid:pk>/", views.RequirementDetailView.as_view(), name="requirement-detail"),
     path("requirements/<uuid:pk>/edit/", views.RequirementUpdateView.as_view(), name="requirement-update"),
     path("requirements/<uuid:pk>/delete/", views.RequirementDeleteView.as_view(), name="requirement-delete"),
-    path("requirements/<uuid:pk>/approve/", views.ApproveView.as_view(model=Requirement, success_url=reverse_lazy("compliance:requirement-list")), name="requirement-approve"),
     # Assessments
     path("assessments/", views.AssessmentListView.as_view(), name="assessment-list"),
     path("assessments/table-body/", views.AssessmentTableBodyView.as_view(), name="assessment-table-body"),
@@ -39,7 +37,6 @@ urlpatterns = [
     path("assessments/<uuid:pk>/", views.AssessmentDetailView.as_view(), name="assessment-detail"),
     path("assessments/<uuid:pk>/edit/", views.AssessmentUpdateView.as_view(), name="assessment-update"),
     path("assessments/<uuid:pk>/delete/", views.AssessmentDeleteView.as_view(), name="assessment-delete"),
-    path("assessments/<uuid:pk>/approve/", views.ApproveView.as_view(model=ComplianceAssessment, permission_feature="assessment", success_url=reverse_lazy("compliance:assessment-list")), name="assessment-approve"),
     # Assessment Results
     path("assessments/<uuid:pk>/results-table-body/", views.AssessmentResultsTableBodyView.as_view(), name="assessment-results-table-body"),
     path("assessments/<uuid:assessment_pk>/results/create/", views.AssessmentResultCreateView.as_view(), name="assessment-result-create"),
@@ -70,7 +67,6 @@ urlpatterns = [
     path("action-plans/<uuid:pk>/delete/", views.ActionPlanDeleteView.as_view(), name="action-plan-delete"),
     path("action-plans/<uuid:pk>/comments/", views.ActionPlanCommentCreateView.as_view(), name="action-plan-comments"),
     path("action-plans/<uuid:pk>/transition/", views.ActionPlanTransitionView.as_view(), name="action-plan-transition"),
-    path("action-plans/<uuid:pk>/approve/", views.ApproveView.as_view(model=ComplianceActionPlan, permission_feature="action_plan", success_url=reverse_lazy("compliance:action-plan-list")), name="action-plan-approve"),
     # Drawer previews
     path("preview/risk/<uuid:pk>/", views.RiskPreviewView.as_view(), name="risk-preview"),
     path("preview/finding/<uuid:pk>/", views.FindingPreviewView.as_view(), name="finding-preview"),

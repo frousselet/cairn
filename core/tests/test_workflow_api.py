@@ -121,16 +121,6 @@ class TestTransitionEndpoint:
         items = payload["results"] if isinstance(payload, dict) and "results" in payload else payload
         assert [item["id"] for item in items] == [str(validated.pk)]
 
-    def test_approve_action_rejects_terminal_state(self):
-        self.client.force_authenticate(self.superuser)
-        issue = IssueFactory(is_approved=True)
-        issue.transition_to("archived")
-        response = self.client.post(f"/api/v1/context/issues/{issue.pk}/approve/")
-        assert response.status_code == 400
-        issue.refresh_from_db()
-        assert issue.workflow_state == "archived"
-        assert issue.is_approved is False
-
 
 class TestTransitionMCPTools:
     def setup_method(self):
@@ -210,18 +200,4 @@ class TestTransitionMCPTools:
         assert issue.is_approved is True
         assert issue.approved_by == self.superuser
 
-    def test_approve_alias_rejects_terminal_state(self):
-        issue = IssueFactory(is_approved=True)
-        issue.transition_to("archived")
-        result = self._call(self.superuser, "approve_issue", {"id": str(issue.pk)})
-        assert "error" in result
-        issue.refresh_from_db()
-        assert issue.workflow_state == "archived"
 
-    def test_approve_alias_still_validates_draft(self):
-        issue = IssueFactory()
-        result = self._call(self.superuser, "approve_issue", {"id": str(issue.pk)})
-        assert result.get("approved") is True
-        assert result.get("workflow_state") == "validated"
-        issue.refresh_from_db()
-        assert issue.workflow_state == "validated"
