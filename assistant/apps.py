@@ -35,6 +35,6 @@ class AssistantConfig(AppConfig):
         ):
             return
 
-        from assistant.semantic import rebuild_index_async
+        from assistant.semantic import rebuild_index_on_startup
 
-        rebuild_index_async()
+        rebuild_index_on_startup()

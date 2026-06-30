@@ -69,6 +69,20 @@ def schema_ready():
     return False
 
 
+def instance_ready():
+    """Whether the instance is ready for background database work.
+
+    ``True`` once the schema is fully migrated *and* the first user exists.
+    Background jobs (SPOF detection, semantic-index rebuild) gate their database
+    access on this so they never query tables that the first-run onboarding
+    migrations have not created yet, nor contend with the migration in flight.
+
+    ``schema_ready()`` is checked first and short-circuits, so an un-migrated
+    database never reaches the user query.
+    """
+    return schema_ready() and not is_first_run()
+
+
 def migration_status():
     """Return the database migration state without applying anything.
 

@@ -14,7 +14,7 @@ from django.urls import reverse
 from accounts.models import User
 from accounts.tests.factories import UserFactory
 from core.onboarding import state as ob_state
-from core.onboarding.state import is_first_run, migration_status
+from core.onboarding.state import instance_ready, is_first_run, migration_status
 
 PENDING = {"available": True, "up_to_date": False, "applied": 1, "total": 3, "pending": ["a.0002", "a.0003"]}
 
@@ -51,6 +51,31 @@ class TestIsFirstRun:
 
         monkeypatch.setattr(User.objects, "exists", boom)
         assert is_first_run() is True
+
+
+@pytest.mark.django_db
+class TestInstanceReady:
+    """``instance_ready`` gates background jobs (SPOF, semantic index) off the
+    database until the schema is migrated and the first user exists."""
+
+    def test_false_when_schema_not_ready(self, monkeypatch):
+        # Schema not migrated: must short-circuit and never query the user table.
+        def _should_not_run():
+            raise AssertionError("is_first_run queried while schema not ready")
+
+        monkeypatch.setattr(ob_state, "schema_ready", lambda: False)
+        monkeypatch.setattr(ob_state, "is_first_run", _should_not_run)
+        assert instance_ready() is False
+
+    def test_false_when_first_run(self, monkeypatch):
+        monkeypatch.setattr(ob_state, "schema_ready", lambda: True)
+        monkeypatch.setattr(ob_state, "is_first_run", lambda: True)
+        assert instance_ready() is False
+
+    def test_true_when_ready_and_initialised(self, monkeypatch):
+        monkeypatch.setattr(ob_state, "schema_ready", lambda: True)
+        monkeypatch.setattr(ob_state, "is_first_run", lambda: False)
+        assert instance_ready() is True
 
 
 @pytest.mark.django_db

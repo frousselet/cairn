@@ -19,7 +19,10 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# autobahn (transitive dep of daphne) refuses to emit a pure-Python wheel when
+# its optional NVX C extension can't compile (no gcc in python:slim). Opt out of
+# the native extension so the pure-Python build is allowed.
+RUN AUTOBAHN_USE_NVX=0 pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
