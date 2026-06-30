@@ -83,7 +83,6 @@ from .models import (
     Responsibility,
     Role,
     Scope,
-    Site,
     Stakeholder,
     SwotAnalysis,
     SwotItem,

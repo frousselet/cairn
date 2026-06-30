@@ -12,10 +12,10 @@ from compliance.constants import (
     FINDING_SEVERITY_ORDER,
     FINDING_TYPE_COMPLIANCE_LEVEL,
 )
-from context.models.base import ScopedModel
+from context.models.base import LegacyStatusMixin, ScopedModel
 
 
-class ComplianceAssessment(ScopedModel):
+class ComplianceAssessment(LegacyStatusMixin, ScopedModel):
     REFERENCE_PREFIX = "CAST"
     LIFECYCLE_NAME = "compliance_assessment"
 
@@ -64,12 +64,6 @@ class ComplianceAssessment(ScopedModel):
     evaluated_count = models.PositiveIntegerField(_("Evaluated"), default=0)
     not_assessed_count = models.PositiveIntegerField(_("Not assessed"), default=0)
     not_applicable_count = models.PositiveIntegerField(_("Not applicable"), default=0)
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=AssessmentStatus.choices,
-        default=AssessmentStatus.DRAFT,
-    )
 
     history = HistoricalRecords()
 
@@ -141,11 +135,6 @@ class ComplianceAssessment(ScopedModel):
     def workflow_perm_namespace(self):
         return "compliance.assessment"
 
-    def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
-        sync_legacy_status(self, kwargs, AssessmentStatus.DRAFT)
-        super().save(*args, **kwargs)
 
     def transition_to(self, target, user=None, comment=None, *, enforce_permission=False, save=True):
         """Validate and perform a status transition.
@@ -425,7 +414,6 @@ class ComplianceAssessment(ScopedModel):
         For each requirement that has findings linked in this assessment,
         the most severe finding determines the compliance status and level.
         """
-        from compliance.models.finding import Finding
 
         # Map finding_type -> ComplianceStatus
         FINDING_TYPE_TO_STATUS = {

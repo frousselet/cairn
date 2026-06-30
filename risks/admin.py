@@ -50,9 +50,9 @@ class RiskCriteriaAdmin(SimpleHistoryAdmin):
 class RiskAssessmentAdmin(SimpleHistoryAdmin):
     list_display = (
         "reference", "name", "methodology", "assessor",
-        "status", "assessment_date",
+        "workflow_state", "assessment_date",
     )
-    list_filter = ("status", "methodology")
+    list_filter = ("workflow_state", "methodology")
     search_fields = ("reference", "name", "description")
     readonly_fields = ("id", "reference", "created_at", "updated_at")
     filter_horizontal = ("scopes", "tags")
@@ -95,10 +95,10 @@ class RiskAdminForm(dj_forms.ModelForm):
 class RiskAdmin(SimpleHistoryAdmin):
     form = RiskAdminForm
     list_display = (
-        "reference", "name", "assessment", "priority", "status",
+        "reference", "name", "assessment", "priority", "workflow_state",
         "current_risk_level", "treatment_decision", "risk_owner",
     )
-    list_filter = ("status", "priority", "treatment_decision", "risk_source")
+    list_filter = ("workflow_state", "priority", "treatment_decision", "risk_source")
     search_fields = ("reference", "name", "description")
     readonly_fields = (
         "id", "reference", "created_at", "updated_at",
@@ -138,9 +138,9 @@ class RiskTreatmentPlanAdmin(SimpleHistoryAdmin):
     form = TreatmentPlanAdminForm
     list_display = (
         "reference", "name", "risk", "treatment_type",
-        "owner", "progress_percentage", "status", "target_date",
+        "owner", "progress_percentage", "workflow_state", "target_date",
     )
-    list_filter = ("status", "treatment_type")
+    list_filter = ("workflow_state", "treatment_type")
     search_fields = ("reference", "name", "description")
     readonly_fields = ("id", "reference", "created_at", "updated_at")
     filter_horizontal = ("tags",)
@@ -151,9 +151,9 @@ class RiskTreatmentPlanAdmin(SimpleHistoryAdmin):
 class RiskAcceptanceAdmin(SimpleHistoryAdmin):
     list_display = (
         "risk", "accepted_by", "accepted_at",
-        "risk_level_at_acceptance", "status", "valid_until",
+        "risk_level_at_acceptance", "workflow_state", "valid_until",
     )
-    list_filter = ("status",)
+    list_filter = ("workflow_state",)
     search_fields = ("justification", "conditions")
     readonly_fields = ("id", "reference", "created_at", "updated_at")
     filter_horizontal = ("tags",)
@@ -175,9 +175,9 @@ class ThreatAdmin(SimpleHistoryAdmin):
 class VulnerabilityAdmin(SimpleHistoryAdmin):
     list_display = (
         "reference", "name", "category", "severity",
-        "status", "is_from_catalog",
+        "workflow_state", "is_from_catalog",
     )
-    list_filter = ("category", "severity", "status", "is_from_catalog")
+    list_filter = ("category", "severity", "workflow_state", "is_from_catalog")
     search_fields = ("reference", "name", "description")
     readonly_fields = ("id", "reference", "created_at", "updated_at")
     filter_horizontal = ("scopes", "affected_assets", "tags")

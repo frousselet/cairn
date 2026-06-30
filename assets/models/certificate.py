@@ -3,10 +3,10 @@ from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from assets.constants import CertificateStatus
-from context.models.base import ScopedModel
+from context.models.base import LegacyStatusMixin, ScopedModel
 
 
-class Certificate(ScopedModel):
+class Certificate(LegacyStatusMixin, ScopedModel):
     """A company certificate stored and historised against a framework.
 
     A certificate attests that the company (or a defined perimeter of it) is
@@ -35,12 +35,6 @@ class Certificate(ScopedModel):
         blank=True,
         related_name="certificates",
         verbose_name=_("Framework"),
-    )
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=CertificateStatus.choices,
-        default=CertificateStatus.DRAFT,
     )
     certificate_number = models.CharField(
         _("Certificate number"), max_length=120, blank=True, default=""
@@ -94,11 +88,8 @@ class Certificate(ScopedModel):
         return self.label or self.reference or str(self.id)
 
     def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
         # The lifecycle step codes are the CertificateStatus values, so keep the
         # legacy ``status`` field coherent with ``workflow_state``.
-        sync_legacy_status(self, kwargs, CertificateStatus.DRAFT)
         super().save(*args, **kwargs)
 
     @property

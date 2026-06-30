@@ -12,7 +12,6 @@ from django.core.management import call_command
 from django.utils import timezone
 
 from risks.constants import AcceptanceStatus, TreatmentPlanStatus
-from risks.models import RiskAcceptance, RiskTreatmentPlan
 from risks.tests.factories import (
     RiskAcceptanceFactory,
     RiskFactory,
@@ -137,7 +136,7 @@ class TestMarkOverdueTreatmentPlans:
         )
         RiskTreatmentPlan.objects.filter(pk=plan.pk).update(
             target_date=today - timedelta(days=days_past),
-            status=status or TreatmentPlanStatus.IN_PROGRESS,
+            workflow_state=status or TreatmentPlanStatus.IN_PROGRESS,
         )
         plan.refresh_from_db()
         return plan

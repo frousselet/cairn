@@ -3,10 +3,10 @@ from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from assets.constants import ContractStatus
-from context.models.base import ScopedModel
+from context.models.base import LegacyStatusMixin, ScopedModel
 
 
-class Contract(ScopedModel):
+class Contract(LegacyStatusMixin, ScopedModel):
     """A contract: an autonomous, potentially multi-party document.
 
     A contract is not necessarily between only two parties : it links one or
@@ -21,12 +21,6 @@ class Contract(ScopedModel):
     LIFECYCLE_NAME = "contract"
 
     label = models.CharField(_("Title"), max_length=255, blank=True, default="")
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=ContractStatus.choices,
-        default=ContractStatus.DRAFT,
-    )
     start_date = models.DateField(_("Start date"), null=True, blank=True)
     end_date = models.DateField(_("End date"), null=True, blank=True)
     amount = models.DecimalField(
@@ -92,11 +86,8 @@ class Contract(ScopedModel):
         return self.label or self.reference or str(self.id)
 
     def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
         # The lifecycle step codes are the ContractStatus values, so keep the
         # legacy ``status`` field coherent with ``workflow_state``.
-        sync_legacy_status(self, kwargs, ContractStatus.DRAFT)
         super().save(*args, **kwargs)
 
     @property

@@ -21,16 +21,18 @@ from risks.models import (
 
 
 class StudyFrameworkFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     assessment = django_filters.UUIDFilter(field_name="assessment_id")
 
     class Meta:
         model = StudyFramework
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
         }
 
 
 class EbiosWorkshopProgressFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     assessment = django_filters.UUIDFilter(field_name="assessment_id")
 
     class Meta:
@@ -39,17 +41,18 @@ class EbiosWorkshopProgressFilter(django_filters.FilterSet):
             "workshop_number": ["exact"],
             "iteration_type": ["exact"],
             "iteration_number": ["exact"],
-            "status": ["exact"],
+            "workflow_state": ["exact"],
         }
 
 
 class SecurityBaselineFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     assessment = django_filters.UUIDFilter(field_name="assessment_id")
 
     class Meta:
         model = SecurityBaseline
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "is_approved": ["exact"],
         }
 
@@ -67,6 +70,7 @@ class FearedEventFilter(django_filters.FilterSet):
 
 
 class BaselineGapFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     baseline = django_filters.UUIDFilter(field_name="baseline_id")
     linked_requirement = django_filters.UUIDFilter(field_name="linked_requirement_id")
 
@@ -74,7 +78,7 @@ class BaselineGapFilter(django_filters.FilterSet):
         model = BaselineGap
         fields = {
             "severity": ["exact"],
-            "status": ["exact"],
+            "workflow_state": ["exact"],
         }
 
 
@@ -223,16 +227,18 @@ class AttackTechniqueFilter(django_filters.FilterSet):
 
 
 class EbiosSummaryFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     assessment = django_filters.UUIDFilter(field_name="assessment_id")
 
     class Meta:
         model = EbiosSummary
         fields = {
-            "status": ["exact"],
+            "workflow_state": ["exact"],
         }
 
 
 class PACSMeasureFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="workflow_state")
     summary = django_filters.UUIDFilter(field_name="summary_id")
     assessment = django_filters.UUIDFilter(field_name="summary__assessment_id")
     owner = django_filters.UUIDFilter(field_name="owner_id")
@@ -242,6 +248,6 @@ class PACSMeasureFilter(django_filters.FilterSet):
         fields = {
             "measure_type": ["exact"],
             "priority": ["exact"],
-            "status": ["exact"],
+            "workflow_state": ["exact"],
             "target_date": ["exact", "gte", "lte"],
         }

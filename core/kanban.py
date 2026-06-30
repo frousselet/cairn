@@ -120,8 +120,21 @@ def _scope_filter(qs, scope_ids):
 
 
 def _status_labels(model):
-    """Map status value -> human label from a model's status field choices."""
-    return dict(model._meta.get_field("status").flatchoices)
+    """Map state value -> human label.
+
+    From the legacy ``status`` field's choices when present, otherwise from the
+    model's lifecycle steps (entities whose duplicate ``status`` column was
+    removed read their labels off ``workflow_state``'s lifecycle).
+    """
+    try:
+        return dict(model._meta.get_field("status").flatchoices)
+    except Exception:
+        from core.lifecycle import resolve_lifecycle
+
+        try:
+            return {s.code: str(s.label) for s in resolve_lifecycle(model).steps}
+        except Exception:
+            return {}
 
 
 def _make_card(*, column, type_key, reference, title, url, owner, due_date,

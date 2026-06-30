@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.models.base import BaseModel
+from context.models.base import BaseModel, LegacyStatusMixin
 from risks.constants import (
     ActionStatus,
     DEFAULT_IMPACT_SCALES,
@@ -18,7 +18,7 @@ from risks.constants import (
 )
 
 
-class RiskTreatmentPlan(BaseModel):
+class RiskTreatmentPlan(LegacyStatusMixin, BaseModel):
     REFERENCE_PREFIX = "RTPL"
     LIFECYCLE_NAME = "risk_treatment_plan"
 
@@ -63,12 +63,6 @@ class RiskTreatmentPlan(BaseModel):
         _("Progress (%)"),
         default=0,
         validators=[MaxValueValidator(100)],
-    )
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=TreatmentPlanStatus.choices,
-        default=TreatmentPlanStatus.PLANNED,
     )
     originating_review = models.ForeignKey(
         "reports.ManagementReview",
@@ -163,9 +157,7 @@ class RiskTreatmentPlan(BaseModel):
             and self.target_date < timezone.localdate()
         ):
             self.status = TreatmentPlanStatus.OVERDUE
-        from core.workflow import sync_legacy_status
 
-        sync_legacy_status(self, kwargs, TreatmentPlanStatus.PLANNED)
         super().save(*args, **kwargs)
 
 

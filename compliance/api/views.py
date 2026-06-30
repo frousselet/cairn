@@ -208,7 +208,7 @@ class ComplianceAssessmentViewSet(
     permission_classes = [CompliancePermission]
     permission_feature = "assessment"
     search_fields = ["name", "description"]
-    ordering_fields = ["name", "assessment_start_date", "overall_compliance_level", "status", "created_at"]
+    ordering_fields = ["name", "assessment_start_date", "overall_compliance_level", "workflow_state", "created_at"]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -374,7 +374,7 @@ class ComplianceActionPlanViewSet(
     search_fields = ["reference", "name", "description"]
     ordering_fields = [
         "reference", "name", "priority", "target_date",
-        "progress_percentage", "status", "created_at",
+        "progress_percentage", "workflow_state", "created_at",
     ]
 
     def get_serializer_class(self):
@@ -412,7 +412,7 @@ class ComplianceActionPlanViewSet(
         qs = self.filter_queryset(self.get_queryset())
         result = {}
         for status_choice in ActionPlanStatus:
-            plans = qs.filter(status=status_choice.value)
+            plans = qs.filter(workflow_state=status_choice.value)
             result[status_choice.value] = ComplianceActionPlanListSerializer(plans, many=True).data
         return Response(result)
 
@@ -422,8 +422,8 @@ class ComplianceActionPlanViewSet(
         qs = self.filter_queryset(self.get_queryset())
         total = qs.count()
         by_status = {}
-        for item in qs.values("status"):
-            st = item["status"]
+        for item in qs.values("workflow_state"):
+            st = item["workflow_state"]
             by_status[st] = by_status.get(st, 0) + 1
         by_priority = {}
         for item in qs.values("priority"):
@@ -431,7 +431,7 @@ class ComplianceActionPlanViewSet(
             by_priority[p] = by_priority.get(p, 0) + 1
         overdue = qs.filter(
             target_date__lt=timezone.now().date()
-        ).exclude(status__in=[ActionPlanStatus.CLOSED, ActionPlanStatus.CANCELLED]).count()
+        ).exclude(workflow_state__in=[ActionPlanStatus.CLOSED, ActionPlanStatus.CANCELLED]).count()
         return Response({
             "total": total,
             "by_status": by_status,

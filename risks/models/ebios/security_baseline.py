@@ -2,11 +2,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.models.base import BaseModel
-from risks.constants import EbiosBaselineStatus
+from context.models.base import BaseModel, LegacyStatusMixin
 
 
-class SecurityBaseline(BaseModel):
+class SecurityBaseline(LegacyStatusMixin, BaseModel):
     """EBIOS RM Workshop 1 - Security baseline.
 
     Root of the W1 deliverables: business values, support assets, DIC summary
@@ -48,12 +47,6 @@ class SecurityBaseline(BaseModel):
         related_name="ebios_security_baselines",
         verbose_name=_("Baseline references"),
     )
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=EbiosBaselineStatus.choices,
-        default=EbiosBaselineStatus.DRAFT,
-    )
     history = HistoricalRecords()
 
     class Meta:
@@ -65,11 +58,6 @@ class SecurityBaseline(BaseModel):
     def workflow_perm_namespace(self):
         return "risks.ebios_baseline"
 
-    def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
-        sync_legacy_status(self, kwargs, EbiosBaselineStatus.DRAFT)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.reference} : {self.assessment.name}"

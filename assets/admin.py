@@ -41,9 +41,9 @@ class EssentialAssetAdmin(SimpleHistoryAdmin):
     list_display = (
         "reference", "name", "type", "category", "owner",
         "confidentiality_level", "integrity_level", "availability_level",
-        "status",
+        "workflow_state",
     )
-    list_filter = ("type", "category", "status", "data_classification", "personal_data")
+    list_filter = ("type", "category", "workflow_state", "data_classification", "personal_data")
     search_fields = ("reference", "name", "description")
     readonly_fields = ("id", "reference", "created_at", "updated_at")
     filter_horizontal = ("related_activities", "tags")
@@ -55,9 +55,9 @@ class SupportAssetAdmin(SimpleHistoryAdmin):
     list_display = (
         "reference", "name", "type", "category", "owner",
         "inherited_confidentiality", "inherited_integrity", "inherited_availability",
-        "environment", "status", "end_of_life_date",
+        "environment", "workflow_state", "end_of_life_date",
     )
-    list_filter = ("type", "category", "status", "environment", "exposure_level")
+    list_filter = ("type", "category", "workflow_state", "environment", "exposure_level")
     search_fields = ("reference", "name", "description", "hostname", "ip_address")
     readonly_fields = (
         "id", "reference", "created_at", "updated_at",

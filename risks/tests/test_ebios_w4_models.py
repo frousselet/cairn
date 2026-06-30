@@ -18,7 +18,7 @@ from risks.constants import (
     MitreAttackTactic,
     ThreatLevelV,
 )
-from risks.models import AttackTechnique, MitreAttackTechnique, OperationalScenario
+from risks.models import AttackTechnique, MitreAttackTechnique
 from risks.tests.factories import (
     AttackTechniqueFactory,
     EbiosAssessmentFactory,

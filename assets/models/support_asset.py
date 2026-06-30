@@ -14,10 +14,10 @@ from assets.constants import (
     SupportAssetStatus,
     SupportAssetType,
 )
-from context.models.base import ScopedModel
+from context.models.base import LegacyStatusMixin, ScopedModel
 
 
-class SupportAsset(ScopedModel):
+class SupportAsset(LegacyStatusMixin, ScopedModel):
     REFERENCE_PREFIX = "SAST"
     LIFECYCLE_NAME = "support_asset"
 
@@ -115,12 +115,6 @@ class SupportAsset(ScopedModel):
     )
     # M2M to Measure omitted - module not yet implemented
     # related_measures = models.ManyToManyField("measures.Measure", ...)
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=SupportAssetStatus.choices,
-        default=SupportAssetStatus.ACTIVE,
-    )
     review_date = models.DateField(_("Next review date"), null=True, blank=True)
 
     history = HistoricalRecords()
@@ -159,10 +153,7 @@ class SupportAsset(ScopedModel):
         return "assets.support_asset"
 
     def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
         self.clean()
-        sync_legacy_status(self, kwargs, SupportAssetStatus.ACTIVE)
         super().save(*args, **kwargs)
 
     def recalculate_inherited_dic(self):

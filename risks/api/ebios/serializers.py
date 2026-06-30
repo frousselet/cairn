@@ -21,6 +21,7 @@ from risks.models import (
 
 
 class StudyFrameworkSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = StudyFramework
         fields = [
@@ -49,6 +50,7 @@ class EbiosWorkshopProgressSerializer(serializers.ModelSerializer):
     workshop_label = serializers.CharField(source="get_workshop_number_display", read_only=True)
     status_label = serializers.CharField(source="get_status_display", read_only=True)
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = EbiosWorkshopProgress
         fields = [
@@ -83,6 +85,7 @@ class EbiosWorkshopProgressSerializer(serializers.ModelSerializer):
 
 
 class SecurityBaselineSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = SecurityBaseline
         fields = [
@@ -146,6 +149,7 @@ class BaselineGapSerializer(serializers.ModelSerializer):
     severity_label = serializers.CharField(source="get_severity_display", read_only=True)
     status_label = serializers.CharField(source="get_status_display", read_only=True)
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = BaselineGap
         fields = [
@@ -512,6 +516,7 @@ class PACSMeasureSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     priority_label = serializers.CharField(source="get_priority_display", read_only=True)
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = PACSMeasure
         fields = [
@@ -555,6 +560,7 @@ class EbiosSummarySerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     pacs_measures = PACSMeasureSerializer(many=True, read_only=True)
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = EbiosSummary
         fields = [

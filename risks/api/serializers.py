@@ -64,6 +64,7 @@ class RiskCriteriaListSerializer(serializers.ModelSerializer):
 class RiskAssessmentSerializer(serializers.ModelSerializer):
     assessor_name = serializers.CharField(source="assessor.get_full_name", read_only=True, default="")
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = RiskAssessment
         fields = [
@@ -82,6 +83,7 @@ class RiskAssessmentSerializer(serializers.ModelSerializer):
 class RiskAssessmentListSerializer(serializers.ModelSerializer):
     assessor_name = serializers.CharField(source="assessor.get_full_name", read_only=True, default="")
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = RiskAssessment
         fields = [
@@ -95,6 +97,7 @@ class RiskAssessmentListSerializer(serializers.ModelSerializer):
 class RiskSerializer(serializers.ModelSerializer):
     risk_owner_name = serializers.CharField(source="risk_owner.get_full_name", read_only=True, default="")
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = Risk
         fields = [
@@ -122,6 +125,7 @@ class RiskSerializer(serializers.ModelSerializer):
 class RiskListSerializer(serializers.ModelSerializer):
     risk_owner_name = serializers.CharField(source="risk_owner.get_full_name", read_only=True, default="")
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = Risk
         fields = [
@@ -147,6 +151,7 @@ class RiskTreatmentPlanSerializer(serializers.ModelSerializer):
     owner_name = serializers.CharField(source="owner.get_full_name", read_only=True, default="")
     actions = TreatmentActionSerializer(many=True, read_only=True)
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = RiskTreatmentPlan
         fields = [
@@ -168,6 +173,7 @@ class RiskTreatmentPlanSerializer(serializers.ModelSerializer):
 class RiskTreatmentPlanListSerializer(serializers.ModelSerializer):
     owner_name = serializers.CharField(source="owner.get_full_name", read_only=True, default="")
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = RiskTreatmentPlan
         fields = [
@@ -181,6 +187,7 @@ class RiskTreatmentPlanListSerializer(serializers.ModelSerializer):
 class RiskAcceptanceSerializer(serializers.ModelSerializer):
     accepted_by_name = serializers.CharField(source="accepted_by.get_full_name", read_only=True, default="")
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = RiskAcceptance
         fields = [
@@ -223,6 +230,7 @@ class ThreatListSerializer(serializers.ModelSerializer):
 
 
 class VulnerabilitySerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = Vulnerability
         fields = [
@@ -240,6 +248,7 @@ class VulnerabilitySerializer(serializers.ModelSerializer):
 
 
 class VulnerabilityListSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = Vulnerability
         fields = [

@@ -5,11 +5,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.models.base import BaseModel
-from risks.constants import EbiosSummaryStatus
+from context.models.base import BaseModel, LegacyStatusMixin
 
 
-class EbiosSummary(BaseModel):
+class EbiosSummary(LegacyStatusMixin, BaseModel):
     """EBIOS RM Workshop 5 - Assessment summary.
 
     Single instance per ebios_rm RiskAssessment. Holds the residual risk
@@ -60,12 +59,6 @@ class EbiosSummary(BaseModel):
         verbose_name=_("Validated by"),
     )
     validated_at = models.DateTimeField(_("Validated at"), null=True, blank=True)
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=EbiosSummaryStatus.choices,
-        default=EbiosSummaryStatus.DRAFT,
-    )
     history = HistoricalRecords()
 
     class Meta:
@@ -77,11 +70,6 @@ class EbiosSummary(BaseModel):
     def workflow_perm_namespace(self):
         return "risks.ebios_summary"
 
-    def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
-        sync_legacy_status(self, kwargs, EbiosSummaryStatus.DRAFT)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.reference} : {self.assessment.name}"
@@ -107,7 +95,7 @@ class EbiosSummary(BaseModel):
             }
         return {
             "total": risks.count(),
-            "by_status": dict(Counter(risks.values_list("status", flat=True))),
+            "by_status": dict(Counter(risks.values_list("workflow_state", flat=True))),
             "by_priority": dict(Counter(risks.values_list("priority", flat=True))),
             "by_initial_risk_level": {
                 str(k): v

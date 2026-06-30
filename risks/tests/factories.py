@@ -1,6 +1,5 @@
 import factory
 
-from context.tests.factories import ScopeFactory
 from risks.constants import (
     AcceptanceStatus,
     ActionStatus,

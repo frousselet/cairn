@@ -2,7 +2,7 @@ from urllib.parse import quote
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -33,7 +33,7 @@ from core.mixins import (
 from core.query_params import parse_int
 from compliance.models import Framework
 from context.constants import Criticality, SiteType
-from context.models import Scope, Site
+from context.models import Site
 from .constants import (
     CertificateStatus,
     ContractStatus,

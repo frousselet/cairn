@@ -157,7 +157,7 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
             "site_supplier": len([d for d in spof_results["site_supplier_dependencies"] if d["is_spof"]]),
         }
         ctx["eol_count"] = SupportAsset.objects.filter(
-            end_of_life_date__lte=today, status="active"
+            end_of_life_date__lte=today, workflow_state="active"
         ).count()
         ctx["personal_data_count"] = EssentialAsset.objects.filter(
             personal_data=True
@@ -180,16 +180,16 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         ctx["risk_count"] = Risk.objects.count()
         ctx["treatment_plan_count"] = RiskTreatmentPlan.objects.count()
         ctx["treatment_in_progress_count"] = RiskTreatmentPlan.objects.filter(
-            status="in_progress"
+            workflow_state="in_progress"
         ).count()
         ctx["critical_risk_count"] = Risk.objects.filter(
             priority="critical"
         ).count()
         ctx["acceptance_count"] = RiskAcceptance.objects.filter(
-            status="active"
+            workflow_state="active"
         ).count()
         ctx["expiring_acceptance_count"] = RiskAcceptance.objects.filter(
-            status="active",
+            workflow_state="active",
             valid_until__lte=today + timedelta(days=30),
             valid_until__gte=today,
         ).count()
@@ -339,7 +339,7 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         ctx["overdue_plan_count"] = self._filter_scoped(
             ComplianceActionPlan.objects.filter(
                 target_date__lt=today
-            ).exclude(status__in=["closed", "cancelled"])
+            ).exclude(workflow_state__in=["closed", "cancelled"])
         ).count()
         ctx["mapping_count"] = RequirementMapping.objects.count()
 
@@ -1244,7 +1244,7 @@ def ongoing_audits_queryset(user, today):
             assessment_start_date__lte=today,
             assessment_end_date__gte=today,
         )
-        .exclude(status__in=[AssessmentStatus.DRAFT, AssessmentStatus.CANCELLED])
+        .exclude(workflow_state__in=[AssessmentStatus.DRAFT, AssessmentStatus.CANCELLED])
         .select_related("assessor")
         .prefetch_related("frameworks", "scopes")
         .order_by("assessment_end_date", "name")

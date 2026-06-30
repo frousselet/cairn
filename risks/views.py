@@ -38,7 +38,6 @@ from .constants import (
     DEFAULT_LIKELIHOOD_SCALES,
     DEFAULT_RISK_LEVELS,
     DEFAULT_RISK_MATRIX,
-    EbiosIterationType,
     Methodology,
     RiskPriority,
     RiskStatus,
@@ -73,7 +72,6 @@ from .forms import (
     VulnerabilityCreateForm,
     VulnerabilityUpdateForm,
 )
-from context.models import Scope
 from .models import (
     ISO27005Risk,
     Risk,
@@ -424,7 +422,7 @@ class RiskDashboardView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVie
 
         # Aggregations
         status_counts = dict(
-            risks_qs.values_list("status").annotate(n=Count("pk"))
+            risks_qs.values_list("workflow_state").annotate(n=Count("pk"))
         )
         ctx["risk_status_breakdown"] = [
             {"key": key, "label": str(label), "count": status_counts.get(key, 0)}
@@ -506,9 +504,9 @@ class RiskDashboardView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVie
         ctx["treatment_plan_total"] = plans_qs.count()
         terminal = {"completed", "cancelled"}
         overdue_plans = (
-            plans_qs.exclude(status__in=terminal)
+            plans_qs.exclude(workflow_state__in=terminal)
             .filter(
-                Q(status="overdue")
+                Q(workflow_state="overdue")
                 | Q(target_date__isnull=False, target_date__lt=today)
             )
             .select_related("risk", "owner")
@@ -519,10 +517,10 @@ class RiskDashboardView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVie
 
         # Acceptances expiring within 90 days
         acceptances_qs = self._scoped_acceptances()
-        ctx["acceptance_total"] = acceptances_qs.filter(status="active").count()
+        ctx["acceptance_total"] = acceptances_qs.filter(workflow_state="active").count()
         expiring = (
             acceptances_qs.filter(
-                status="active",
+                workflow_state="active",
                 valid_until__isnull=False,
                 valid_until__gte=today,
                 valid_until__lte=today + _td(days=90),
@@ -548,7 +546,7 @@ DEFAULT_WORKFLOW_STATUS_OPTIONS = [
 ]
 
 ASSESSMENT_FILTER_GROUPS = [
-    {"param": "status", "field": "status", "label": _l("Status"), "options": AssessmentStatus.choices},
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": AssessmentStatus.choices},
 ]
 ASSESSMENT_TEXT_FILTERS = [
     {"param": "name", "field": "name", "label": _l("Name")},
@@ -572,7 +570,7 @@ class RiskAssessmentListView(
 ):
     model = RiskAssessment
     template_name = "risks/assessment_list.html"
-    status_field = "status"
+    status_field = "workflow_state"
     context_object_name = "assessments"
     permission_required = "risks.assessment.read"
     filter_groups = ASSESSMENT_FILTER_GROUPS
@@ -953,7 +951,7 @@ class RiskCriteriaTableBodyView(
 # ── Risk ────────────────────────────────────────────────────
 
 RISK_FILTER_GROUPS = [
-    {"param": "status", "field": "status", "label": _l("Status"), "options": RiskStatus.choices},
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": RiskStatus.choices},
     {"param": "priority", "field": "priority", "label": _l("Priority"), "options": RiskPriority.choices},
     {"param": "treatment_decision", "field": "treatment_decision", "label": _l("Treatment decision"), "options": TreatmentDecision.choices},
 ]
@@ -979,7 +977,7 @@ class RiskListView(
     scope_parent_lookup = "assessment__scopes"
     model = Risk
     template_name = "risks/risk_list.html"
-    status_field = "status"
+    status_field = "workflow_state"
     context_object_name = "risks"
     permission_required = "risks.risk.read"
     filter_groups = RISK_FILTER_GROUPS
@@ -1289,7 +1287,7 @@ class RiskRegisterExportView(LoginRequiredMixin, PermissionRequiredMixin, View):
             qs = qs.filter(assessment_id=assessment_id)
         status_filter = request.GET.get("status")
         if status_filter:
-            qs = qs.filter(status=status_filter)
+            qs = qs.filter(workflow_state=status_filter)
         priority = request.GET.get("priority")
         if priority:
             qs = qs.filter(priority=priority)
@@ -1329,7 +1327,7 @@ class RiskRegisterExportView(LoginRequiredMixin, PermissionRequiredMixin, View):
 # ── Treatment Plan ──────────────────────────────────────────
 
 TREATMENT_PLAN_FILTER_GROUPS = [
-    {"param": "status", "field": "status", "label": _l("Status"), "options": TreatmentPlanStatus.choices},
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": TreatmentPlanStatus.choices},
 ]
 TREATMENT_PLAN_TEXT_FILTERS = [
     {"param": "name", "field": "name", "label": _l("Name")},
@@ -1354,7 +1352,7 @@ class TreatmentPlanListView(
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskTreatmentPlan
     template_name = "risks/treatment_plan_list.html"
-    status_field = "status"
+    status_field = "workflow_state"
     context_object_name = "plans"
     permission_required = "risks.treatment.read"
     filter_groups = TREATMENT_PLAN_FILTER_GROUPS
@@ -1543,7 +1541,7 @@ class TreatmentActionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Del
 # ── Risk Acceptance ─────────────────────────────────────────
 
 ACCEPTANCE_FILTER_GROUPS = [
-    {"param": "status", "field": "status", "label": _l("Status"), "options": AcceptanceStatus.choices},
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": AcceptanceStatus.choices},
 ]
 ACCEPTANCE_TEXT_FILTERS = [
     {"param": "justification", "field": "justification", "label": _l("Justification")},
@@ -1568,7 +1566,7 @@ class RiskAcceptanceListView(
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskAcceptance
     template_name = "risks/acceptance_list.html"
-    status_field = "status"
+    status_field = "workflow_state"
     context_object_name = "acceptances"
     permission_required = "risks.acceptance.read"
     filter_groups = ACCEPTANCE_FILTER_GROUPS
@@ -1795,7 +1793,7 @@ class ThreatTableBodyView(
 VULNERABILITY_FILTER_GROUPS = [
     {"param": "category", "field": "category", "label": _l("Category"), "options": VulnerabilityCategory.choices},
     {"param": "severity", "field": "severity", "label": _l("Severity"), "options": Severity.choices},
-    {"param": "status", "field": "status", "label": _l("Status"), "options": VulnerabilityStatus.choices},
+    {"param": "status", "field": "workflow_state", "label": _l("Status"), "options": VulnerabilityStatus.choices},
 ]
 VULNERABILITY_TEXT_FILTERS = [
     {"param": "name", "field": "name", "label": _l("Name")},
@@ -1818,7 +1816,7 @@ class VulnerabilityListView(
 ):
     model = Vulnerability
     template_name = "risks/vulnerability_list.html"
-    status_field = "status"
+    status_field = "workflow_state"
     context_object_name = "vulnerabilities"
     permission_required = "risks.vulnerability.read"
     filter_groups = VULNERABILITY_FILTER_GROUPS

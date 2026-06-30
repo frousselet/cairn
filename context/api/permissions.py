@@ -1,4 +1,4 @@
-from accounts.api.permissions import DRF_ACTION_MAP, ModulePermission
+from accounts.api.permissions import ModulePermission
 
 # Additional action mappings for context-specific actions
 CONTEXT_ACTION_MAP = {

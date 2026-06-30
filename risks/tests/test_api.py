@@ -897,7 +897,6 @@ class TestTreatmentActionViewSet:
         assert response.status_code == 201, response.json()
 
     def test_filter_by_treatment_plan(self):
-        from risks.models import TreatmentAction
         from risks.tests.factories import TreatmentActionFactory
         p1 = self._make_plan()
         p2 = self._make_plan()

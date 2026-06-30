@@ -3,10 +3,9 @@ from django.utils import timezone
 
 from accounts.tests.factories import UserFactory
 from compliance.constants import (
-    ACTION_PLAN_TRANSITIONS,
     ActionPlanStatus,
 )
-from compliance.models import ActionPlanTransition, ComplianceActionPlan
+from compliance.models import ActionPlanTransition
 from compliance.tests.factories import ComplianceActionPlanFactory
 
 pytestmark = pytest.mark.django_db

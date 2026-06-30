@@ -20,8 +20,6 @@ from risks.constants import (
     EbiosWorkshopStatus,
 )
 from risks.models import (
-    BaselineGap,
-    EbiosWorkshopProgress,
     FearedEvent,
 )
 from risks.tests.factories import (
@@ -301,7 +299,6 @@ class TestWorkshopW2W5Views:
     def test_get_create_forms_render(self, client):
         """Regression: each create form should render its GET page without a template error."""
         from risks.tests.factories import (
-            EbiosSummaryFactory,
             OperationalScenarioFactory,
             RiskSourceFactory,
             StrategicScenarioFactory,

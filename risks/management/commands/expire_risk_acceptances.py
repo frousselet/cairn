@@ -40,13 +40,13 @@ class Command(BaseCommand):
         dry_run = options["dry_run"]
 
         to_expire = RiskAcceptance.objects.filter(
-            status=AcceptanceStatus.ACTIVE,
+            workflow_state=AcceptanceStatus.ACTIVE,
             valid_until__isnull=False,
             valid_until__lt=today,
         )
         expired_count = to_expire.count()
         if expired_count and not dry_run:
-            to_expire.update(status=AcceptanceStatus.EXPIRED)
+            to_expire.update(workflow_state=AcceptanceStatus.EXPIRED)
 
         verb = "Would expire" if dry_run else "Expired"
         style = self.style.WARNING if expired_count else self.style.SUCCESS
@@ -55,7 +55,7 @@ class Command(BaseCommand):
         if reminder_days > 0:
             upcoming = (
                 RiskAcceptance.objects.filter(
-                    status=AcceptanceStatus.ACTIVE,
+                    workflow_state=AcceptanceStatus.ACTIVE,
                     valid_until__isnull=False,
                     valid_until__gte=today,
                     valid_until__lte=today + timedelta(days=reminder_days),

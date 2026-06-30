@@ -1,17 +1,13 @@
 import base64
 
 from django import forms
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
 from context.models import Scope
 from context.widgets import ImageUploadWidget, ScopeTreeWidget
 from compliance.constants import (
-    ASSESSMENT_FROZEN_STATUSES,
     ASSESSMENT_LOCKED_STATUSES,
-    ASSESSMENT_STATUS_TRANSITIONS,
-    AssessmentStatus,
     ComplianceStatus,
 )
 from helpers.image_utils import generate_image_variants
@@ -19,7 +15,6 @@ from .models import (
     ComplianceActionPlan,
     ComplianceAssessment,
     AssessmentResult,
-    AssessmentResultAttachment,
     Finding,
     Framework,
     Requirement,
@@ -285,7 +280,7 @@ class ComplianceAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.Mode
              ["name", "frameworks", "assessor", "description"]),
         Step(_("Planning & status"), "calendar-check",
              [["assessment_start_date", "assessment_end_date"], "limitations",
-              "status", "scopes", "tags"]),
+              "scopes", "tags"]),
     ]
 
     class Meta:
@@ -294,7 +289,7 @@ class ComplianceAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.Mode
             "scopes", "frameworks", "name", "description", "limitations",
             "assessment_start_date", "assessment_end_date",
             "assessor",
-            "status", "tags",
+            "tags",
         ]
         widgets = {
             "scopes": ScopeTreeWidget(),
@@ -305,7 +300,6 @@ class ComplianceAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.Mode
             "assessment_start_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "assessment_end_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "assessor": forms.Select(attrs=SELECT_ATTRS),
-            "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
         help_texts = {
@@ -316,47 +310,22 @@ class ComplianceAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.Mode
             "limitations": _("Known limitations or exclusions."),
             "assessment_start_date": _("Assessment start date."),
             "assessment_end_date": _("Assessment end date."),
-            "status": _("Lifecycle state of the assessment."),
             "scopes": _("Organizational scopes this assessment applies to."),
             "tags": _("Free-form labels for filtering and grouping."),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Restrict status choices to valid transitions
-        if self.instance and self.instance.pk:
-            current = self.instance.status
-            allowed = ASSESSMENT_STATUS_TRANSITIONS.get(current, [])
-            valid_statuses = [current] + allowed
-            self.fields["status"].choices = [
-                (k, v) for k, v in AssessmentStatus.choices if k in valid_statuses
-            ]
-            # Lock metadata fields for IN_PROGRESS+ statuses
-            if current in ASSESSMENT_LOCKED_STATUSES:
-                for field_name in self.fields:
-                    if field_name != "status":
-                        self.fields[field_name].disabled = True
+        # The lifecycle step is driven by the stepper, not this form: once the
+        # assessment is locked (in progress onward), its metadata is read-only.
+        if self.instance and self.instance.pk and self.instance.status in ASSESSMENT_LOCKED_STATUSES:
+            for field in self.fields.values():
+                field.disabled = True
 
     def clean(self):
         cleaned = super().clean()
-        status = cleaned.get("status")
-        # Dates required from PLANNED onward
-        if status and status not in (AssessmentStatus.DRAFT, AssessmentStatus.CANCELLED):
-            if not cleaned.get("assessment_start_date"):
-                self.add_error(
-                    "assessment_start_date",
-                    _("Start date is required for this status."),
-                )
-            if not cleaned.get("assessment_end_date"):
-                self.add_error(
-                    "assessment_end_date",
-                    _("End date is required for this status."),
-                )
-            if not cleaned.get("frameworks"):
-                self.add_error(
-                    "frameworks",
-                    _("At least one framework is required for this status."),
-                )
+        # Required-field gating per target step lives in the transition view; the
+        # form only enforces a coherent date range.
         start = cleaned.get("assessment_start_date")
         end = cleaned.get("assessment_end_date")
         if start and end and end < start:

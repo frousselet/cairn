@@ -10,13 +10,12 @@ from assets.constants import (
     DICLevel,
     DataClassification,
     EssentialAssetCategory,
-    EssentialAssetStatus,
     EssentialAssetType,
 )
-from context.models.base import ScopedModel
+from context.models.base import LegacyStatusMixin, ScopedModel
 
 
-class EssentialAsset(ScopedModel):
+class EssentialAsset(LegacyStatusMixin, ScopedModel):
     REFERENCE_PREFIX = "EAST"
     LIFECYCLE_NAME = "essential_asset"
 
@@ -91,12 +90,6 @@ class EssentialAsset(ScopedModel):
         related_name="essential_assets",
         verbose_name=_("Business activities"),
     )
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=EssentialAssetStatus.choices,
-        default=EssentialAssetStatus.IDENTIFIED,
-    )
     review_date = models.DateField(_("Next review date"), null=True, blank=True)
 
     history = HistoricalRecords()
@@ -130,16 +123,12 @@ class EssentialAsset(ScopedModel):
         return "assets.essential_asset"
 
     def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
         self.clean()
-        sync_legacy_status(self, kwargs, EssentialAssetStatus.IDENTIFIED)
         super().save(*args, **kwargs)
         # RV-04: recalculate inherited DIC on all linked support assets
         self._recalculate_support_assets_dic()
 
     def _recalculate_support_assets_dic(self):
-        from .support_asset import SupportAsset
         for dep in self.dependencies_as_essential.select_related("support_asset"):
             dep.support_asset.recalculate_inherited_dic()
 

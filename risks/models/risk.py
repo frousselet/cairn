@@ -5,18 +5,17 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.models.base import BaseModel
+from context.models.base import BaseModel, LegacyStatusMixin
 from risks.constants import (
     DEFAULT_IMPACT_SCALES,
     DEFAULT_LIKELIHOOD_SCALES,
     RiskPriority,
     RiskSourceType,
-    RiskStatus,
     TreatmentDecision,
 )
 
 
-class Risk(BaseModel):
+class Risk(LegacyStatusMixin, BaseModel):
     REFERENCE_PREFIX = "RISK"
     LIFECYCLE_NAME = "risk"
 
@@ -111,12 +110,6 @@ class Risk(BaseModel):
         max_length=20,
         choices=RiskPriority.choices,
         default=RiskPriority.LOW,
-    )
-    status = models.CharField(
-        _("Status"),
-        max_length=30,
-        choices=RiskStatus.choices,
-        default=RiskStatus.IDENTIFIED,
     )
     review_date = models.DateField(_("Review date"), null=True, blank=True)
     linked_requirements = models.ManyToManyField(
@@ -259,7 +252,5 @@ class Risk(BaseModel):
             )
             if calculated is not None:
                 self.residual_risk_level = calculated
-        from core.workflow import sync_legacy_status
 
-        sync_legacy_status(self, kwargs, RiskStatus.IDENTIFIED)
         super().save(*args, **kwargs)

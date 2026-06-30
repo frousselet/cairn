@@ -26,7 +26,6 @@ from assets.models.supplier import (
 )
 from assets.models.support_asset import SupportAsset
 from context.constants import Criticality
-from context.tests.factories import ScopeFactory
 
 
 class EssentialAssetFactory(factory.django.DjangoModelFactory):

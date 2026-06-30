@@ -51,6 +51,7 @@ class AssetDependencySerializer(serializers.ModelSerializer):
 
 
 class EssentialAssetSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = EssentialAsset
         fields = [
@@ -74,6 +75,7 @@ class EssentialAssetSerializer(serializers.ModelSerializer):
 class EssentialAssetListSerializer(serializers.ModelSerializer):
     owner_name = serializers.CharField(source="owner.get_full_name", read_only=True)
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = EssentialAsset
         fields = [
@@ -86,6 +88,7 @@ class EssentialAssetListSerializer(serializers.ModelSerializer):
 
 
 class SupportAssetSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = SupportAsset
         fields = [
@@ -115,6 +118,7 @@ class SupportAssetSerializer(serializers.ModelSerializer):
 class SupportAssetListSerializer(serializers.ModelSerializer):
     owner_name = serializers.CharField(source="owner.get_full_name", read_only=True)
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = SupportAsset
         fields = [
@@ -263,6 +267,7 @@ class ContractSerializer(serializers.ModelSerializer):
 
     document_url = serializers.SerializerMethodField()
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = Contract
         fields = [
@@ -289,6 +294,7 @@ class ContractSerializer(serializers.ModelSerializer):
 class ContractListSerializer(serializers.ModelSerializer):
     has_document = serializers.BooleanField(read_only=True)
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = Contract
         fields = [
@@ -305,6 +311,7 @@ class CertificateSerializer(serializers.ModelSerializer):
     document_url = serializers.SerializerMethodField()
     framework_label = serializers.CharField(read_only=True)
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = Certificate
         fields = [
@@ -334,6 +341,7 @@ class CertificateListSerializer(serializers.ModelSerializer):
     has_document = serializers.BooleanField(read_only=True)
     framework_label = serializers.CharField(read_only=True)
 
+    status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = Certificate
         fields = [

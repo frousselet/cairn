@@ -11,11 +11,6 @@ from compliance.models import ComplianceActionPlan
 from context.models import Indicator, IndicatorMeasurement
 from reports.constants import ManagementReviewStatus
 from reports.management_review import _compute_indicator_trend
-from reports.models import (
-    IsmsChange,
-    ManagementReview,
-    ManagementReviewDecision,
-)
 
 from .factories import (
     IsmsChangeFactory,

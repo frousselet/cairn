@@ -44,9 +44,9 @@ class IsmsChangeInline(admin.TabularInline):
 class ManagementReviewAdmin(admin.ModelAdmin):
     list_display = (
         "reference", "title", "frequency", "period_start", "period_end",
-        "planned_date", "status", "facilitator",
+        "planned_date", "workflow_state", "facilitator",
     )
-    list_filter = ("status", "frequency", "scopes")
+    list_filter = ("workflow_state", "frequency", "scopes")
     search_fields = ("reference", "title", "description")
     readonly_fields = ("reference", "snapshot_taken_at", "created_at", "updated_at")
     filter_horizontal = ("scopes", "tags")

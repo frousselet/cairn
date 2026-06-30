@@ -2,11 +2,11 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from context.models.base import BaseModel
-from risks.constants import BaselineGapStatus, Severity
+from context.models.base import BaseModel, LegacyStatusMixin
+from risks.constants import Severity
 
 
-class BaselineGap(BaseModel):
+class BaselineGap(LegacyStatusMixin, BaseModel):
     """EBIOS RM Workshop 1 - Baseline gap.
 
     Gap observed between the current security state and the applicable
@@ -47,12 +47,6 @@ class BaselineGap(BaseModel):
         default=Severity.MEDIUM,
     )
     recommended_remediation = models.TextField(_("Recommended remediation"), blank=True)
-    status = models.CharField(
-        _("Status"),
-        max_length=20,
-        choices=BaselineGapStatus.choices,
-        default=BaselineGapStatus.IDENTIFIED,
-    )
     order = models.PositiveIntegerField(_("Order"), default=0)
     history = HistoricalRecords()
 
@@ -65,11 +59,6 @@ class BaselineGap(BaseModel):
     def workflow_perm_namespace(self):
         return "risks.ebios_baseline"
 
-    def save(self, *args, **kwargs):
-        from core.workflow import sync_legacy_status
-
-        sync_legacy_status(self, kwargs, BaselineGapStatus.IDENTIFIED)
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.reference} : {self.reference_source}"

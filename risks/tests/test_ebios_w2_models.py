@@ -19,7 +19,7 @@ from risks.constants import (
     ThreatLevelV,
     compute_anssi_threat_level,
 )
-from risks.models import RiskSource, RiskSourceObjectivePair, TargetedObjective
+from risks.models import RiskSource, RiskSourceObjectivePair
 from risks.tests.factories import (
     EbiosAssessmentFactory,
     RiskCriteriaFactory,
