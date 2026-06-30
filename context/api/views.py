@@ -4,7 +4,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from accounts.api.mixins import ApprovableAPIMixin, BatchCreateMixin, HistoryAPIMixin, ScopeFilterAPIMixin
+from accounts.api.mixins import LifecycleAPIMixin, BatchCreateMixin, HistoryAPIMixin, ScopeFilterAPIMixin
 from context.models import (
     Activity,
     Indicator,
@@ -74,7 +74,7 @@ class CreatedByMixin:
         serializer.save(created_by=self.request.user)
 
 
-class ScopeViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class ScopeViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = Scope.objects.select_related("parent_scope").all()
     serializer_class = ScopeSerializer
     filterset_class = ScopeFilter
@@ -95,7 +95,7 @@ class ScopeViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, Cre
         return Response(ScopeSerializer(scope).data)
 
 
-class SiteViewSet(ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class SiteViewSet(LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = Site.objects.select_related("parent_site").all()
     serializer_class = SiteSerializer
     filterset_class = SiteFilter
@@ -104,7 +104,7 @@ class SiteViewSet(ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.
     ordering_fields = ["name", "type", "workflow_state", "created_at"]
 
 
-class IssueViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class IssueViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = Issue.objects.prefetch_related("scopes").all()
     serializer_class = IssueSerializer
     filterset_class = IssueFilter
@@ -113,7 +113,7 @@ class IssueViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, Cre
     ordering_fields = ["name", "type", "impact_level", "status", "created_at"]
 
 
-class StakeholderViewSet(BatchCreateMixin, ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class StakeholderViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = Stakeholder.objects.prefetch_related("scopes", "expectations").all()
     filterset_class = StakeholderFilter
     permission_classes = [ContextPermission]
@@ -146,7 +146,7 @@ class StakeholderExpectationViewSet(CreatedByMixin, viewsets.ModelViewSet):
         serializer.save(stakeholder_id=self.kwargs["stakeholder_pk"])
 
 
-class ObjectiveViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class ObjectiveViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = Objective.objects.select_related("owner", "parent_objective").prefetch_related("scopes").all()
     serializer_class = ObjectiveSerializer
     filterset_class = ObjectiveFilter
@@ -189,7 +189,7 @@ class ObjectiveViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin,
         })
 
 
-class SwotAnalysisViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class SwotAnalysisViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = SwotAnalysis.objects.select_related("validated_by").prefetch_related("scopes", "items", "strategies").all()
     filterset_class = SwotAnalysisFilter
     permission_classes = [ContextPermission]
@@ -262,7 +262,7 @@ class SwotStrategyViewSet(viewsets.ModelViewSet):
         return Response({"status": "success"})
 
 
-class RoleViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class RoleViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = Role.objects.prefetch_related(
         "scopes", "assigned_users", "responsibilities"
     ).all()
@@ -333,7 +333,7 @@ class ResponsibilityViewSet(viewsets.ModelViewSet):
         self._send_role_back_to_draft()
 
 
-class ActivityViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class ActivityViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = Activity.objects.select_related("owner", "parent_activity").prefetch_related("scopes").all()
     serializer_class = ActivitySerializer
     filterset_class = ActivityFilter
@@ -355,7 +355,7 @@ class ActivityViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, 
         return Response(serializer.data)
 
 
-class IndicatorViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class IndicatorViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = Indicator.objects.prefetch_related("scopes", "measurements").all()
     filterset_class = IndicatorFilter
     permission_classes = [ContextPermission]

@@ -105,7 +105,7 @@ class TestMcpEndpoint:
         assert "create_scope" in tool_names
         assert "update_scope" in tool_names
         assert "delete_scope" in tool_names
-        assert "approve_scope" in tool_names
+        assert "transition_scope" in tool_names
         assert "list_frameworks" in tool_names
         assert "list_risks" in tool_names
         assert "list_essential_assets" in tool_names

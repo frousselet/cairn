@@ -580,22 +580,6 @@ class TestScopeDeleteView:
         assert not Scope.objects.filter(pk=scope.pk).exists()
 
 
-class TestScopeApproveView:
-    def test_requires_login(self):
-        scope = ScopeFactory()
-        client = Client()
-        resp = client.post(reverse("context:scope-approve", args=[scope.pk]))
-        assert resp.status_code == 302
-
-    def test_approve_scope(self):
-        client, user = _superuser_client()
-        scope = ScopeFactory()
-        resp = client.post(reverse("context:scope-approve", args=[scope.pk]))
-        assert resp.status_code == 302
-        scope.refresh_from_db()
-        assert scope.is_approved is True
-        assert scope.approved_by == user
-
 
 class TestScopeTableBodyView:
     def test_returns_200(self):
@@ -762,16 +746,6 @@ class TestIssueDeleteView:
         assert not Issue.objects.filter(pk=issue.pk).exists()
 
 
-class TestIssueApproveView:
-    def test_approve_issue(self):
-        client, user = _superuser_client()
-        issue = IssueFactory()
-        resp = client.post(reverse("context:issue-approve", args=[issue.pk]))
-        assert resp.status_code == 302
-        issue.refresh_from_db()
-        assert issue.is_approved is True
-        assert issue.approved_by == user
-
 
 class TestIssueTableBodyView:
     def test_returns_200(self):
@@ -933,15 +907,6 @@ class TestStakeholderDeleteView:
         assert not Stakeholder.objects.filter(pk=sh.pk).exists()
 
 
-class TestStakeholderApproveView:
-    def test_approve_stakeholder(self):
-        client, user = _superuser_client()
-        sh = _make_stakeholder()
-        resp = client.post(reverse("context:stakeholder-approve", args=[sh.pk]))
-        assert resp.status_code == 302
-        sh.refresh_from_db()
-        assert sh.is_approved is True
-
 
 class TestStakeholderTableBodyView:
     def test_returns_200(self):
@@ -1100,16 +1065,6 @@ class TestObjectiveDeleteView:
         assert not Objective.objects.filter(pk=obj.pk).exists()
 
 
-class TestObjectiveApproveView:
-    def test_approve_objective(self):
-        client, user = _superuser_client()
-        obj = ObjectiveFactory()
-        resp = client.post(reverse("context:objective-approve", args=[obj.pk]))
-        assert resp.status_code == 302
-        obj.refresh_from_db()
-        assert obj.is_approved is True
-        assert obj.approved_by == user
-
 
 class TestObjectiveTableBodyView:
     def test_returns_200(self):
@@ -1255,15 +1210,6 @@ class TestRoleDeleteView:
         assert resp.status_code == 302
         assert not Role.objects.filter(pk=role.pk).exists()
 
-
-class TestRoleApproveView:
-    def test_approve_role(self):
-        client, user = _superuser_client()
-        role = _make_role()
-        resp = client.post(reverse("context:role-approve", args=[role.pk]))
-        assert resp.status_code == 302
-        role.refresh_from_db()
-        assert role.is_approved is True
 
 
 class TestRoleTableBodyView:
@@ -1417,15 +1363,6 @@ class TestActivityDeleteView:
         assert resp.status_code == 302
         assert not Activity.objects.filter(pk=activity.pk).exists()
 
-
-class TestActivityApproveView:
-    def test_approve_activity(self):
-        client, user = _superuser_client()
-        activity = _make_activity(owner=user)
-        resp = client.post(reverse("context:activity-approve", args=[activity.pk]))
-        assert resp.status_code == 302
-        activity.refresh_from_db()
-        assert activity.is_approved is True
 
 
 class TestActivityTableBodyView:
@@ -1828,15 +1765,6 @@ class TestIndicatorDeleteView:
         assert not Indicator.objects.filter(pk=ind.pk).exists()
 
 
-class TestIndicatorApproveView:
-    def test_approve_indicator(self):
-        client, user = _superuser_client()
-        ind = _make_indicator()
-        resp = client.post(reverse("context:indicator-approve", args=[ind.pk]))
-        assert resp.status_code == 302
-        ind.refresh_from_db()
-        assert ind.is_approved is True
-
 
 class TestIndicatorTableBodyView:
     def test_returns_200(self):
@@ -2069,34 +1997,8 @@ class TestDashboardIndicatorChartToggle:
 
 
 # ══════════════════════════════════════════════════════════
-# ApproveView edge cases
 # ══════════════════════════════════════════════════════════
 
-
-class TestApproveViewEdgeCases:
-    def test_approve_only_accepts_post(self):
-        """GET requests to approve should return 405."""
-        client, _ = _superuser_client()
-        scope = ScopeFactory()
-        resp = client.get(reverse("context:scope-approve", args=[scope.pk]))
-        assert resp.status_code == 405
-
-    def test_approve_with_referer_redirects_back(self):
-        """Approve should redirect back to the HTTP_REFERER if present."""
-        client, user = _superuser_client()
-        scope = ScopeFactory()
-        detail_url = reverse("context:scope-detail", args=[scope.pk])
-        resp = client.post(
-            reverse("context:scope-approve", args=[scope.pk]),
-            HTTP_REFERER=detail_url,
-        )
-        assert resp.status_code == 302
-        assert resp.url == detail_url
-
-
-# ══════════════════════════════════════════════════════════
-# Context dashboard redirect
-# ══════════════════════════════════════════════════════════
 
 
 class TestContextDashboardRedirect:

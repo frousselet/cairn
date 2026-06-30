@@ -4,7 +4,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from accounts.api.mixins import ApprovableAPIMixin, BatchCreateMixin, HistoryAPIMixin, ScopeFilterAPIMixin
+from accounts.api.mixins import LifecycleAPIMixin, BatchCreateMixin, HistoryAPIMixin, ScopeFilterAPIMixin
 from compliance.constants import ActionPlanStatus
 from compliance.models import (
     ActionPlanComment,
@@ -57,7 +57,7 @@ class CreatedByMixin:
 
 class FrameworkViewSet(
     ScopeFilterAPIMixin,
-    ApprovableAPIMixin,
+    LifecycleAPIMixin,
     HistoryAPIMixin,
     CreatedByMixin,
     viewsets.ModelViewSet,
@@ -138,7 +138,7 @@ class SectionViewSet(BatchCreateMixin, ScopeFilterAPIMixin, viewsets.ModelViewSe
 class RequirementViewSet(
     BatchCreateMixin,
     ScopeFilterAPIMixin,
-    ApprovableAPIMixin,
+    LifecycleAPIMixin,
     HistoryAPIMixin,
     CreatedByMixin,
     viewsets.ModelViewSet,
@@ -196,7 +196,7 @@ class RequirementViewSet(
 
 class ComplianceAssessmentViewSet(
     ScopeFilterAPIMixin,
-    ApprovableAPIMixin,
+    LifecycleAPIMixin,
     HistoryAPIMixin,
     CreatedByMixin,
     viewsets.ModelViewSet,
@@ -360,7 +360,7 @@ class RequirementMappingViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
 
 class ComplianceActionPlanViewSet(
     ScopeFilterAPIMixin,
-    ApprovableAPIMixin,
+    LifecycleAPIMixin,
     HistoryAPIMixin,
     CreatedByMixin,
     viewsets.ModelViewSet,

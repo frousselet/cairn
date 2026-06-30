@@ -526,10 +526,10 @@ class TestScopeFilterAPIMixin:
         assert str(self.scope2.pk) not in ids
 
 
-# ── ApprovableAPIMixin ──────────────────────────────────────
+# ── LifecycleAPIMixin ──────────────────────────────────────
 
 
-class TestApprovableAPIMixin:
+class TestLifecycleAPIMixin:
     def setup_method(self):
         from context.tests.factories import ScopeFactory
 
@@ -538,38 +538,7 @@ class TestApprovableAPIMixin:
         self.client.force_authenticate(user=self.user)
         self.scope = ScopeFactory(name="Approvable Scope")
 
-    def test_approve_action(self):
-        response = self.client.post(
-            f"/api/v1/context/scopes/{self.scope.pk}/approve/"
-        )
-        assert response.status_code == 200
-        assert _data(response)["is_approved"] is True
 
-    def test_reject_action(self):
-        self.scope.is_approved = True
-        self.scope.save()
-        response = self.client.post(
-            f"/api/v1/context/scopes/{self.scope.pk}/reject/"
-        )
-        assert response.status_code == 200
-        assert _data(response)["is_approved"] is False
-
-    def test_approve_without_permission(self):
-        user = UserFactory(is_superuser=False)
-        client = APIClient()
-        client.force_authenticate(user=user)
-        group = GroupFactory()
-        for action in ["read", "update"]:
-            perm = PermissionFactory(codename=f"context.scope.{action}")
-            group.permissions.add(perm)
-        group.users.add(user)
-        response = client.post(
-            f"/api/v1/context/scopes/{self.scope.pk}/approve/"
-        )
-        assert response.status_code == 403
-
-
-# ── HistoryAPIMixin ─────────────────────────────────────────
 
 
 class TestHistoryAPIMixin:

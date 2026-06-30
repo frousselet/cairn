@@ -370,17 +370,6 @@ def _update_handler(model_class, writable_fields, scope_filtered=True, m2m_field
                     setattr(obj, target, _coerce_field_value(
                         model_class, field_name, arguments[field_name]))
                     changed_fields.add(field_name)
-        # Reset approval on update (respects VersioningConfig)
-        if hasattr(obj, "is_approved") and hasattr(obj, "version"):
-            from core.models import VersioningConfig
-            if VersioningConfig.is_approval_enabled(model_class):
-                major_fields = VersioningConfig.get_major_fields(model_class)
-                is_major = major_fields is None or bool(changed_fields & major_fields)
-                if is_major:
-                    obj.is_approved = False
-                    obj.approved_by = None
-                    obj.approved_at = None
-                    obj.version = (obj.version or 0) + 1
         try:
             obj.full_clean()
             obj.save()
@@ -416,38 +405,6 @@ def _delete_handler(model_class, scope_filtered=True):
             )
         obj.delete()
         return {"deleted": True, "id": str(pk)}
-    return handler
-
-
-def _approve_handler(model_class, scope_filtered=True):
-    """Create a generic approve handler.
-
-    Deprecated alias of the validate transition: kept for backward
-    compatibility, it directly stamps the approval fields and relies on the
-    BaseModel save sync to promote ``workflow_state`` to ``validated``.
-    Terminal-state elements can no longer be approved.
-    """
-    def handler(user, arguments):
-        pk = arguments.get("id")
-        if not pk:
-            raise InvalidParamsError("id is required.")
-        try:
-            obj = model_class.objects.get(pk=pk)
-        except model_class.DoesNotExist:
-            return _error(f"{model_class.__name__} not found.")
-        try:
-            if obj.is_terminal_state:
-                return _error(
-                    f"Cannot approve {model_class.__name__}: it is in the "
-                    f"terminal '{obj.workflow_state}' lifecycle state."
-                )
-        except Exception:
-            pass
-        obj.is_approved = True
-        obj.approved_by = user
-        obj.approved_at = timezone.now()
-        obj.save(update_fields=["is_approved", "approved_by", "approved_at"])
-        return {"approved": True, "id": str(pk), "workflow_state": obj.workflow_state}
     return handler
 
 
@@ -798,7 +755,7 @@ Every entity follows a consistent CRUD pattern:
 | Batch Create | `batch_create_{entity}s` | Create up to 500 items. Param: items (array). Non-atomic: valid items are created even if others fail |
 | Update | `update_{entity}` | Update by ID. Param: id + only the fields to change (partial update) |
 | Delete | `delete_{entity}` | Delete by ID. Param: id |
-| Approve | `approve_{entity}` | Approve (where workflow applies). Param: id |
+| Transition | `transition_{entity}` | Move to a lifecycle step. Params: id, target_state, optional comment |
 
 ## Key Concepts
 
@@ -813,9 +770,11 @@ Most entities have a `scopes` M2M field (array of scope UUIDs).
 Users only see objects within their assigned scopes (unless superuser).
 Always pass scopes when creating scoped entities, or they will be invisible to non-superusers.
 
-### Approval Workflow
-Entities with `is_approved` support a two-step workflow: create/update, then approve_*.
-Updating a major field resets approval to false and increments version.
+### Lifecycle
+Each entity moves through a lifecycle of steps (e.g. draft -> pending -> validated
+-> archived). Use `transition_{entity}(id, target_state)` to move it; the move is
+validated against the entity's lifecycle (legal step, required permission /
+mandatory comment). `{entity}_allowed_transitions(id)` lists the legal next steps.
 
 ### References
 Most entities auto-generate a unique reference on creation (e.g. RISK-1, REQT-42, SUPP-3).
@@ -1322,13 +1281,14 @@ Status values: draft | planned | in_progress | completed | closed | cancelled
 6. generate_audit_report(assessment_id="<uuid>", title="ISO 27001 Audit Report 2025")
 7. update_compliance_assessment(id="<uuid>", status="closed")
 
-## Approval Workflow (all approvable entities)
+## Lifecycle transitions (all lifecycle entities)
 
-Any entity with approve_* tool follows:
-1. Create or update the entity
-2. Call approve_{entity}(id="<uuid>") to mark as approved
-3. If a major field is later updated, approval resets automatically (is_approved=false, version increments)
-4. Re-approve after review
+Each entity moves through a lifecycle of steps:
+1. Create the entity (it starts on its lifecycle's initial step)
+2. Call transition_{entity}(id="<uuid>", target_state="<step>") to advance it
+   (e.g. draft -> pending -> validated -> archived)
+3. {entity}_allowed_transitions(id="<uuid>") lists the legal next steps
+4. A backward / refusal move may require a comment
 """
 
     TOPIC_BATCH = """\
@@ -1418,7 +1378,7 @@ All permissions follow: module.feature.action
 - create: create new entities
 - update: modify existing entities
 - delete: remove entities
-- approve: approve entities (where approval workflow applies)
+- approve: validate / archive in the lifecycle (the permission gating those transitions)
 
 ## Special action plan permissions
 - compliance.action_plan.validate: approve or refuse at validation stages
@@ -3371,14 +3331,6 @@ def _register_compliance_tools(server):
         _id_schema(),
         require_perm("compliance.assessment.delete")(
             _delete_handler(ComplianceAssessment)
-        ),
-    )
-    server.register_tool(
-        "approve_compliance_assessment",
-        "Approve a compliance assessment",
-        _id_schema(),
-        require_perm("compliance.assessment.approve")(
-            _approve_handler(ComplianceAssessment)
         ),
     )
 
@@ -6767,17 +6719,6 @@ def _update_supplier_with_logo_handler(model_class, writable_fields):
                 _apply_logo_from_url(obj, image_url)
             except ValueError as e:
                 return _error(str(e))
-        # Reset approval on update (respects VersioningConfig)
-        if hasattr(obj, "is_approved") and hasattr(obj, "version"):
-            from core.models import VersioningConfig
-            if VersioningConfig.is_approval_enabled(model_class):
-                major_fields = VersioningConfig.get_major_fields(model_class)
-                is_major = major_fields is None or bool(changed_fields & major_fields)
-                if is_major:
-                    obj.is_approved = False
-                    obj.approved_by = None
-                    obj.approved_at = None
-                    obj.version = (obj.version or 0) + 1
         try:
             obj.full_clean()
             obj.save()
@@ -6952,19 +6893,8 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
         ),
     )
 
-    # Approve (deprecated alias) + lifecycle transitions
+    # Lifecycle transitions
     if has_approve:
-        server.register_tool(
-            f"approve_{entity_name}",
-            f"Approve a {display_name}. Deprecated: prefer transition_{entity_name} "
-            f"with target_state='validated', which validates the workflow and "
-            f"runs its side effects.",
-            _id_schema(),
-            require_perm(f"{perm_prefix}.approve")(
-                _approve_handler(model_class, scope_filtered)
-            ),
-        )
-
         transition_tool = f"transition_{entity_name}"
         if transition_tool not in server._tools:
             server.register_tool(

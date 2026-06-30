@@ -114,13 +114,6 @@ class TestRiskAssessmentViewSet:
         response = self.client.delete(f"/api/v1/risks/assessments/{ra.pk}/")
         assert response.status_code == 204
 
-    def test_approve(self):
-        ra = RiskAssessmentFactory()
-        response = self.client.post(f"/api/v1/risks/assessments/{ra.pk}/approve/")
-        assert response.status_code == 200, response.json()
-        ra.refresh_from_db()
-        assert ra.is_approved is True
-        assert ra.approved_by == self.user
 
     def test_unauthenticated(self):
         client = APIClient()
@@ -174,12 +167,6 @@ class TestRiskViewSet:
         response = self.client.delete(f"/api/v1/risks/risks/{risk.pk}/")
         assert response.status_code == 204
 
-    def test_approve(self):
-        risk = RiskFactory()
-        response = self.client.post(f"/api/v1/risks/risks/{risk.pk}/approve/")
-        assert response.status_code == 200, response.json()
-        risk.refresh_from_db()
-        assert risk.is_approved is True
 
     def test_filter_by_treatment_decision(self):
         RiskFactory(name="A1", treatment_decision="avoid")
@@ -355,19 +342,6 @@ class TestRiskTreatmentPlanViewSet:
         )
         assert response.status_code == 204
 
-    def test_approve(self):
-        from risks.models import RiskTreatmentPlan
-
-        risk = RiskFactory()
-        rtp = RiskTreatmentPlan.objects.create(
-            risk=risk, name="Approvable Plan", treatment_type="mitigate"
-        )
-        response = self.client.post(
-            f"/api/v1/risks/treatment-plans/{rtp.pk}/approve/",
-        )
-        assert response.status_code == 200, response.json()
-        rtp.refresh_from_db()
-        assert rtp.is_approved is True
 
     def test_unauthenticated(self):
         client = APIClient()
@@ -445,57 +419,8 @@ class TestRiskAcceptanceViewSet:
         response = self.client.delete(f"/api/v1/risks/acceptances/{ra.pk}/")
         assert response.status_code == 204
 
-    def test_approve(self):
-        from risks.models import RiskAcceptance
 
-        risk = RiskFactory()
-        ra = RiskAcceptance.objects.create(
-            risk=risk, accepted_by=self.user,
-            justification="Approve me", status="active",
-        )
-        assert ra.is_approved is False
-        response = self.client.post(f"/api/v1/risks/acceptances/{ra.pk}/approve/")
-        assert response.status_code == 200, response.json()
-        ra.refresh_from_db()
-        assert ra.is_approved is True
-        assert ra.approved_by == self.user
-        assert ra.approved_at is not None
 
-    def test_reject(self):
-        from django.utils import timezone
-
-        from risks.models import RiskAcceptance
-
-        risk = RiskFactory()
-        ra = RiskAcceptance.objects.create(
-            risk=risk, accepted_by=self.user,
-            justification="Reject me", status="active",
-            is_approved=True, approved_by=self.user, approved_at=timezone.now(),
-        )
-        response = self.client.post(f"/api/v1/risks/acceptances/{ra.pk}/reject/")
-        assert response.status_code == 200, response.json()
-        ra.refresh_from_db()
-        assert ra.is_approved is False
-        assert ra.approved_by is None
-
-    def test_update_resets_approval(self):
-        from risks.models import RiskAcceptance
-
-        risk = RiskFactory()
-        ra = RiskAcceptance.objects.create(
-            risk=risk, accepted_by=self.user,
-            justification="Original", status="active",
-            is_approved=True, approved_by=self.user,
-        )
-        response = self.client.patch(
-            f"/api/v1/risks/acceptances/{ra.pk}/",
-            {"justification": "Reworded"},
-            format="json",
-        )
-        assert response.status_code == 200
-        ra.refresh_from_db()
-        assert ra.is_approved is False
-        assert ra.approved_by is None
 
     def test_unauthenticated(self):
         client = APIClient()
@@ -553,14 +478,6 @@ class TestThreatViewSet:
         response = self.client.delete(f"/api/v1/risks/threats/{t.pk}/")
         assert response.status_code == 204
 
-    def test_approve(self):
-        from risks.models import Threat
-        t = Threat.objects.create(name="Approvable", type="deliberate")
-        response = self.client.post(f"/api/v1/risks/threats/{t.pk}/approve/")
-        assert response.status_code == 200, response.json()
-        t.refresh_from_db()
-        assert t.is_approved is True
-        assert t.approved_by == self.user
 
     def test_unauthenticated(self):
         client = APIClient()
@@ -624,15 +541,6 @@ class TestVulnerabilityViewSet:
         response = self.client.delete(f"/api/v1/risks/vulnerabilities/{v.pk}/")
         assert response.status_code == 204
 
-    def test_approve(self):
-        from risks.models import Vulnerability
-        v = Vulnerability.objects.create(name="Approvable", severity="high")
-        response = self.client.post(
-            f"/api/v1/risks/vulnerabilities/{v.pk}/approve/",
-        )
-        assert response.status_code == 200, response.json()
-        v.refresh_from_db()
-        assert v.is_approved is True
 
     def test_unauthenticated(self):
         client = APIClient()
@@ -752,28 +660,6 @@ class TestISO27005RiskViewSet:
         client = APIClient()
         response = client.get("/api/v1/risks/iso27005-risks/")
         assert response.status_code in (401, 403)
-
-    def test_approve(self):
-        from risks.models import ISO27005Risk, Threat, Vulnerability
-
-        ra = RiskAssessmentFactory()
-        threat = Threat.objects.create(name="T-approve", type="deliberate")
-        vuln = Vulnerability.objects.create(
-            name="V-approve", category="design_flaw", severity="medium",
-        )
-        iso = ISO27005Risk.objects.create(
-            assessment=ra, threat=threat, vulnerability=vuln,
-        )
-        response = self.client.post(
-            f"/api/v1/risks/iso27005-risks/{iso.pk}/approve/",
-        )
-        assert response.status_code == 200, response.json()
-        iso.refresh_from_db()
-        assert iso.is_approved is True
-        assert iso.approved_by == self.user
-
-
-# ── Batch create endpoints ─────────────────────────────────
 
 
 class TestBatchCreateThreats:

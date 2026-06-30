@@ -18,7 +18,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
+from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
@@ -330,42 +330,6 @@ class CreatedByMixin:
 
 
 
-class ApproveView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Generic approve view for risks domain models."""
-
-    model = None
-    permission_feature = None
-    success_url = None
-
-    def get_permission_required(self):
-        feature = self.permission_feature or (self.model._meta.model_name if self.model else None)
-        if feature:
-            return f"risks.{feature}.approve"
-        return None
-
-    @property
-    def permission_required(self):
-        return self.get_permission_required()
-
-    def post(self, request, pk):
-        from core.models import VersioningConfig
-        from core.redirects import safe_redirect_target
-
-        obj = get_object_or_404(self.model, pk=pk)
-        if not VersioningConfig.is_approval_enabled(self.model):
-            messages.error(request, _("Approval is disabled for this item type."))
-            return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER")))
-        feature = self.permission_feature or self.model._meta.model_name
-        codename = f"risks.{feature}.approve"
-        if not request.user.is_superuser and not request.user.has_perm(codename):
-            messages.error(request, _("You do not have permission to approve this item."))
-            return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER")))
-        obj.is_approved = True
-        obj.approved_by = request.user
-        obj.approved_at = timezone.now()
-        obj.save(update_fields=["is_approved", "approved_by", "approved_at"])
-        messages.success(request, _("Item approved."))
-        return redirect(safe_redirect_target(request, request.META.get("HTTP_REFERER"), self.success_url or "/"))
 
 
 # ── Risk Dashboard ──────────────────────────────────────────
@@ -593,14 +557,12 @@ class RiskAssessmentListView(
         return self.filter_queryset_advanced(qs)
 
 
-class RiskAssessmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class RiskAssessmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = RiskAssessment
     template_name = "risks/assessment_detail.html"
     context_object_name = "assessment"
     permission_required = "risks.assessment.read"
     approval_module = "risks"
-    approval_feature = "assessment"
-    approve_url_name = "risks:assessment-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -647,7 +609,7 @@ class RiskAssessmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, Htmx
         return kwargs
 
 
-class RiskAssessmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ApprovableUpdateMixin, ScopeFilterMixin, UpdateView):
+class RiskAssessmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = RiskAssessment
     form_class = RiskAssessmentUpdateForm
     template_name = "risks/assessment_form.html"
@@ -1149,15 +1111,13 @@ class RiskBulkActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect("risks:risk-list")
 
 
-class RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     scope_parent_lookup = "assessment__scopes"
     model = Risk
     template_name = "risks/risk_detail.html"
     context_object_name = "risk"
     permission_required = "risks.risk.read"
     approval_module = "risks"
-    approval_feature = "risk"
-    approve_url_name = "risks:risk-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1195,7 +1155,7 @@ class RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin,
         return initial
 
 
-class RiskUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, ApprovableUpdateMixin, UpdateView):
+class RiskUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UpdateView):
     scope_parent_lookup = "assessment__scopes"
     model = Risk
     form_class = RiskUpdateForm
@@ -1379,15 +1339,13 @@ class TreatmentPlanListView(
         return self.filter_queryset_advanced(qs)
 
 
-class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskTreatmentPlan
     template_name = "risks/treatment_plan_detail.html"
     context_object_name = "plan"
     permission_required = "risks.treatment.read"
     approval_module = "risks"
-    approval_feature = "treatment"
-    approve_url_name = "risks:treatment-plan-approve"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1409,7 +1367,7 @@ class TreatmentPlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxF
     success_url = reverse_lazy("risks:treatment-plan-list")
 
 
-class TreatmentPlanUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, ApprovableUpdateMixin, UpdateView):
+class TreatmentPlanUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UpdateView):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskTreatmentPlan
     form_class = RiskTreatmentPlanUpdateForm
@@ -1591,15 +1549,13 @@ class RiskAcceptanceListView(
         return self.filter_queryset_advanced(qs)
 
 
-class RiskAcceptanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class RiskAcceptanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskAcceptance
     template_name = "risks/acceptance_detail.html"
     context_object_name = "acceptance"
     permission_required = "risks.acceptance.read"
     approval_module = "risks"
-    approval_feature = "acceptance"
-    approve_url_name = "risks:acceptance-approve"
 
 
 class RiskAcceptanceCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -1613,7 +1569,7 @@ class RiskAcceptanceCreateView(LoginRequiredMixin, PermissionRequiredMixin, Htmx
     success_url = reverse_lazy("risks:acceptance-list")
 
 
-class RiskAcceptanceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, ApprovableUpdateMixin, UpdateView):
+class RiskAcceptanceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UpdateView):
     scope_parent_lookup = "risk__assessment__scopes"
     model = RiskAcceptance
     form_class = RiskAcceptanceUpdateForm
@@ -1718,14 +1674,12 @@ class ThreatListView(
         return ctx
 
 
-class ThreatDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ThreatDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Threat
     template_name = "risks/threat_detail.html"
     context_object_name = "threat"
     permission_required = "risks.threat.read"
     approval_module = "risks"
-    approval_feature = "threat"
-    approve_url_name = "risks:threat-approve"
 
 
 class ThreatCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -1744,7 +1698,7 @@ class ThreatCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixi
         return kwargs
 
 
-class ThreatUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, ApprovableUpdateMixin, UpdateView):
+class ThreatUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Threat
     form_class = ThreatUpdateForm
     template_name = "risks/threat_form.html"
@@ -1847,14 +1801,12 @@ class VulnerabilityListView(
         return ctx
 
 
-class VulnerabilityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class VulnerabilityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = Vulnerability
     template_name = "risks/vulnerability_detail.html"
     context_object_name = "vulnerability"
     permission_required = "risks.vulnerability.read"
     approval_module = "risks"
-    approval_feature = "vulnerability"
-    approve_url_name = "risks:vulnerability-approve"
 
 
 class VulnerabilityCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -1873,7 +1825,7 @@ class VulnerabilityCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxF
         return kwargs
 
 
-class VulnerabilityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, ApprovableUpdateMixin, UpdateView):
+class VulnerabilityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView):
     model = Vulnerability
     form_class = VulnerabilityUpdateForm
     template_name = "risks/vulnerability_form.html"
@@ -1991,15 +1943,13 @@ class ISO27005RiskListView(
         return self.filter_queryset_advanced(qs)
 
 
-class ISO27005RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ISO27005RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     scope_parent_lookup = "assessment__scopes"
     model = ISO27005Risk
     template_name = "risks/iso27005_risk_detail.html"
     context_object_name = "analysis"
     permission_required = "risks.iso27005.read"
     approval_module = "risks"
-    approval_feature = "iso27005"
-    approve_url_name = "risks:iso27005-approve"
 
 
 class ISO27005RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -2026,7 +1976,7 @@ class ISO27005RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFo
         return reverse_lazy("risks:iso27005-list")
 
 
-class ISO27005RiskUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, ApprovableUpdateMixin, UpdateView):
+class ISO27005RiskUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UpdateView):
     scope_parent_lookup = "assessment__scopes"
     model = ISO27005Risk
     form_class = ISO27005RiskUpdateForm

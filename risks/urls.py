@@ -22,7 +22,6 @@ urlpatterns = [
     path("assessments/<uuid:pk>/", views.RiskAssessmentDetailView.as_view(), name="assessment-detail"),
     path("assessments/<uuid:pk>/edit/", views.RiskAssessmentUpdateView.as_view(), name="assessment-update"),
     path("assessments/<uuid:pk>/delete/", views.RiskAssessmentDeleteView.as_view(), name="assessment-delete"),
-    path("assessments/<uuid:pk>/approve/", views.ApproveView.as_view(model=RiskAssessment, permission_feature="assessment", success_url=reverse_lazy("risks:assessment-list")), name="assessment-approve"),
     path("assessments/<uuid:pk>/export/docx/", views.ISO27005ReportExportView.as_view(), name="assessment-export-docx"),
     # Criteria
     path("criteria/", views.RiskCriteriaListView.as_view(), name="criteria-list"),
@@ -42,7 +41,6 @@ urlpatterns = [
     path("register/<uuid:pk>/", views.RiskDetailView.as_view(), name="risk-detail"),
     path("register/<uuid:pk>/edit/", views.RiskUpdateView.as_view(), name="risk-update"),
     path("register/<uuid:pk>/delete/", views.RiskDeleteView.as_view(), name="risk-delete"),
-    path("register/<uuid:pk>/approve/", views.ApproveView.as_view(model=Risk, permission_feature="risk", success_url=reverse_lazy("risks:risk-list")), name="risk-approve"),
     # Treatment plans
     path("treatments/", views.TreatmentPlanListView.as_view(), name="treatment-plan-list"),
     path("treatments/table-body/", views.TreatmentPlanTableBodyView.as_view(), name="treatment-plan-table-body"),
@@ -50,7 +48,6 @@ urlpatterns = [
     path("treatments/<uuid:pk>/", views.TreatmentPlanDetailView.as_view(), name="treatment-plan-detail"),
     path("treatments/<uuid:pk>/edit/", views.TreatmentPlanUpdateView.as_view(), name="treatment-plan-update"),
     path("treatments/<uuid:pk>/delete/", views.TreatmentPlanDeleteView.as_view(), name="treatment-plan-delete"),
-    path("treatments/<uuid:pk>/approve/", views.ApproveView.as_view(model=RiskTreatmentPlan, permission_feature="treatment", success_url=reverse_lazy("risks:treatment-plan-list")), name="treatment-plan-approve"),
     # Treatment actions (inline editing under a plan)
     path("treatments/<uuid:plan_pk>/actions/create/", views.TreatmentActionCreateView.as_view(), name="treatment-action-create"),
     path("treatment-actions/<uuid:pk>/edit/", views.TreatmentActionUpdateView.as_view(), name="treatment-action-update"),
@@ -62,7 +59,6 @@ urlpatterns = [
     path("acceptances/<uuid:pk>/", views.RiskAcceptanceDetailView.as_view(), name="acceptance-detail"),
     path("acceptances/<uuid:pk>/edit/", views.RiskAcceptanceUpdateView.as_view(), name="acceptance-update"),
     path("acceptances/<uuid:pk>/delete/", views.RiskAcceptanceDeleteView.as_view(), name="acceptance-delete"),
-    path("acceptances/<uuid:pk>/approve/", views.ApproveView.as_view(model=RiskAcceptance, permission_feature="acceptance", success_url=reverse_lazy("risks:acceptance-list")), name="acceptance-approve"),
     # Threats
     path("threats/", views.ThreatListView.as_view(), name="threat-list"),
     path("threats/table-body/", views.ThreatTableBodyView.as_view(), name="threat-table-body"),
@@ -70,7 +66,6 @@ urlpatterns = [
     path("threats/<uuid:pk>/", views.ThreatDetailView.as_view(), name="threat-detail"),
     path("threats/<uuid:pk>/edit/", views.ThreatUpdateView.as_view(), name="threat-update"),
     path("threats/<uuid:pk>/delete/", views.ThreatDeleteView.as_view(), name="threat-delete"),
-    path("threats/<uuid:pk>/approve/", views.ApproveView.as_view(model=Threat, permission_feature="threat", success_url=reverse_lazy("risks:threat-list")), name="threat-approve"),
     # Vulnerabilities
     path("vulnerabilities/", views.VulnerabilityListView.as_view(), name="vulnerability-list"),
     path("vulnerabilities/table-body/", views.VulnerabilityTableBodyView.as_view(), name="vulnerability-table-body"),
@@ -78,7 +73,6 @@ urlpatterns = [
     path("vulnerabilities/<uuid:pk>/", views.VulnerabilityDetailView.as_view(), name="vulnerability-detail"),
     path("vulnerabilities/<uuid:pk>/edit/", views.VulnerabilityUpdateView.as_view(), name="vulnerability-update"),
     path("vulnerabilities/<uuid:pk>/delete/", views.VulnerabilityDeleteView.as_view(), name="vulnerability-delete"),
-    path("vulnerabilities/<uuid:pk>/approve/", views.ApproveView.as_view(model=Vulnerability, permission_feature="vulnerability", success_url=reverse_lazy("risks:vulnerability-list")), name="vulnerability-approve"),
     # ISO 27005 analyses
     path("iso27005/", views.ISO27005RiskListView.as_view(), name="iso27005-list"),
     path("iso27005/table-body/", views.ISO27005RiskTableBodyView.as_view(), name="iso27005-table-body"),
@@ -86,7 +80,6 @@ urlpatterns = [
     path("iso27005/<uuid:pk>/", views.ISO27005RiskDetailView.as_view(), name="iso27005-detail"),
     path("iso27005/<uuid:pk>/edit/", views.ISO27005RiskUpdateView.as_view(), name="iso27005-update"),
     path("iso27005/<uuid:pk>/delete/", views.ISO27005RiskDeleteView.as_view(), name="iso27005-delete"),
-    path("iso27005/<uuid:pk>/approve/", views.ApproveView.as_view(model=ISO27005Risk, permission_feature="iso27005", success_url=reverse_lazy("risks:iso27005-list")), name="iso27005-approve"),
     path("iso27005/<uuid:pk>/consolidate/", views.ISO27005ConsolidateView.as_view(), name="iso27005-consolidate"),
 
     # EBIOS RM workshop transitions and detail pages

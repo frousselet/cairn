@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from accounts.api.mixins import (
-    ApprovableAPIMixin,
+    LifecycleAPIMixin,
     BatchCreateMixin,
     HistoryAPIMixin,
 )
@@ -107,7 +107,7 @@ class EbiosWorkshopProgressViewSet(
 
 
 class SecurityBaselineViewSet(
-    ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         SecurityBaseline.objects.select_related("assessment")
@@ -156,7 +156,7 @@ class BaselineGapViewSet(
 
 
 class RiskSourceViewSet(
-    BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = RiskSource.objects.select_related("assessment").all()
     serializer_class = RiskSourceSerializer
@@ -190,7 +190,7 @@ class TargetedObjectiveViewSet(
 
 
 class RiskSourceObjectivePairViewSet(
-    BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         RiskSourceObjectivePair.objects.select_related(
@@ -212,7 +212,7 @@ class RiskSourceObjectivePairViewSet(
 
 
 class EcosystemStakeholderViewSet(
-    BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         EcosystemStakeholder.objects.select_related("assessment", "stakeholder", "supplier")
@@ -272,7 +272,7 @@ class EcosystemStakeholderViewSet(
 
 
 class StrategicScenarioViewSet(
-    BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         StrategicScenario.objects.select_related(
@@ -332,7 +332,7 @@ class MitreAttackTechniqueViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class OperationalScenarioViewSet(
-    BatchCreateMixin, ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         OperationalScenario.objects.select_related(
@@ -462,7 +462,7 @@ class AttackTechniqueViewSet(
 
 
 class EbiosSummaryViewSet(
-    ApprovableAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         EbiosSummary.objects.select_related("assessment", "validated_by")
