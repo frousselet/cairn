@@ -2,7 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from assets.constants import SupplierStatus
-from core.workflow import PermissionDeniedError
+from core.lifecycle import TransitionNotAllowedError
 from trust_center.constants import PublicationState
 from trust_center.models import TrustCenterDocument, TrustCenterSettings
 from trust_center.tests.factories import (
@@ -90,21 +90,20 @@ def test_document_clean_requires_exactly_one_source():
 
 
 def test_publish_transition_requires_approve_permission():
+    from accounts.models import Group
+    from accounts.tests.factories import UserFactory
+
     cert = TrustCenterCertificationFactory()
+    user = UserFactory()
+    Group.objects.get(name="Contributeur").users.add(user)  # .update but not .approve
 
-    class _User:
-        is_superuser = False
-
-        def has_perm(self, codename):
-            return codename != "trust_center.certification.approve"
-
-    with pytest.raises(PermissionDeniedError):
+    with pytest.raises(TransitionNotAllowedError):
         cert.transition_to(
-            PublicationState.PUBLISHED, _User(), enforce_permission=True
+            PublicationState.PUBLISHED, user, enforce_permission=True
         )
 
     # Archiving a draft only needs update, which the user has.
     cert.transition_to(
-        PublicationState.ARCHIVED, _User(), enforce_permission=True
+        PublicationState.ARCHIVED, user, enforce_permission=True
     )
     assert cert.workflow_state == PublicationState.ARCHIVED

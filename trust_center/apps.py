@@ -8,7 +8,7 @@ class TrustCenterConfig(AppConfig):
     verbose_name = _("Trust Center")
 
     def ready(self):
-        # Register the module's specific lifecycle workflows (publication,
-        # document request) so they are available before any model resolves
-        # its workflow.
-        from trust_center import workflows  # noqa: F401
+        # Register the module's standardised lifecycles (publication, document
+        # request) so they are available before any model resolves its
+        # lifecycle.
+        from trust_center import lifecycles  # noqa: F401

@@ -11,8 +11,8 @@ from django.views import View
 
 from context.models.base import BaseModel
 from core.lifecycle import LifecycleError
+from core.transition_messages import transition_error_detail
 from core.workflow import (
-    PermissionDeniedError,
     WorkflowError,
     validate_transition,
 )
@@ -53,9 +53,10 @@ class WorkflowTransitionView(LoginRequiredMixin, View):
 
         try:
             if obj.get_lifecycle() is not None:
-                # Standardised engine: validation, application and history all
-                # happen inside transition_to. Role/form gating is a later phase.
-                obj.transition_to(target, user, comment=comment, enforce_permission=False)
+                # Standardised engine: validation (incl. role / per-transition
+                # permission), application and history all happen inside
+                # transition_to.
+                obj.transition_to(target, user, comment=comment, enforce_permission=True)
             else:
                 workflow = obj.get_workflow()
                 current = obj.workflow_state or workflow.initial_state.code
@@ -66,12 +67,8 @@ class WorkflowTransitionView(LoginRequiredMixin, View):
                     comment=comment,
                 )
                 obj.transition_to(target, user, comment=comment)
-        except PermissionDeniedError:
-            messages.error(
-                request, _("You do not have permission to perform this transition.")
-            )
         except (WorkflowError, LifecycleError) as exc:
-            messages.error(request, str(exc))
+            messages.error(request, transition_error_detail(exc))
         else:
             messages.success(
                 request,

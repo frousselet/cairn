@@ -6,7 +6,7 @@ from simple_history.models import HistoricalRecords
 from context.models.base import BaseModel
 from trust_center.constants import DEFAULT_FILE_ICON, FILE_TYPE_ICONS, DocumentAccess
 from trust_center.managers import DocumentQuerySet
-from trust_center.workflows import PUBLICATION_WORKFLOW_NAME
+from trust_center.lifecycles import PUBLICATION_LIFECYCLE_NAME as PUBLICATION_WORKFLOW_NAME
 
 
 class TrustCenterDocument(BaseModel):
@@ -19,7 +19,7 @@ class TrustCenterDocument(BaseModel):
     """
 
     REFERENCE_PREFIX = "TCDO"
-    WORKFLOW_NAME = PUBLICATION_WORKFLOW_NAME
+    LIFECYCLE_NAME = PUBLICATION_WORKFLOW_NAME
 
     title = models.CharField(_("Title"), max_length=255)
     description = models.TextField(_("Description"), blank=True, default="")

@@ -34,7 +34,7 @@
   </div>
   <div class="col-12 col-lg-4">
     {% sidebar_card _("Lifecycle") icon="diagram-2" %}
-      {% include "includes/workflow_stepper.html" %}
+      {% include "includes/lifecycle_stepper.html" %}
       <div class="small text-muted mt-3">
         <div>{% trans "Reference" %}: {{ obj.reference }}</div>
         <div>{% trans "Updated" %}: {{ obj.updated_at|date:"SHORT_DATETIME_FORMAT" }}</div>

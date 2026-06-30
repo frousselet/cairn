@@ -10,7 +10,7 @@ from simple_history.models import HistoricalRecords
 from context.models.base import BaseModel
 from core.query_params import parse_uuid
 from trust_center.constants import DocumentRequestState
-from trust_center.workflows import DOCUMENT_REQUEST_WORKFLOW_NAME
+from trust_center.lifecycles import DOCUMENT_REQUEST_LIFECYCLE_NAME as DOCUMENT_REQUEST_WORKFLOW_NAME
 
 DOWNLOAD_TOKEN_SALT = "trust_center.document_request.download"
 
@@ -26,7 +26,7 @@ class DocumentRequest(BaseModel):
     """
 
     REFERENCE_PREFIX = "DREQ"
-    WORKFLOW_NAME = DOCUMENT_REQUEST_WORKFLOW_NAME
+    LIFECYCLE_NAME = DOCUMENT_REQUEST_WORKFLOW_NAME
 
     # Override the BaseModel default ("draft") so requests start in "pending".
     workflow_state = models.CharField(

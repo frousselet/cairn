@@ -6,7 +6,7 @@ from simple_history.models import HistoricalRecords
 from context.models.base import BaseModel
 from trust_center.constants import MeasureCategory
 from trust_center.managers import MeasureQuerySet
-from trust_center.workflows import PUBLICATION_WORKFLOW_NAME
+from trust_center.lifecycles import PUBLICATION_LIFECYCLE_NAME as PUBLICATION_WORKFLOW_NAME
 
 BOOTSTRAP_ICON_VALIDATOR = RegexValidator(
     r"^bi-[a-z0-9-]+$",
@@ -22,7 +22,7 @@ class TrustCenterMeasure(BaseModel):
     """
 
     REFERENCE_PREFIX = "TCME"
-    WORKFLOW_NAME = PUBLICATION_WORKFLOW_NAME
+    LIFECYCLE_NAME = PUBLICATION_WORKFLOW_NAME
 
     title = models.CharField(_("Title"), max_length=255)
     description = models.TextField(_("Description"), blank=True, default="")

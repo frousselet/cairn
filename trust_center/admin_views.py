@@ -25,9 +25,9 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import HistoryUrlMixin, WorkflowStepperMixin
+from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin
 from accounts.views import PermissionRequiredMixin
-from core.workflow import WorkflowError
+from core.lifecycle import LifecycleError
 from trust_center.constants import DocumentRequestState
 from trust_center.forms import (
     CertificationForm,
@@ -220,7 +220,7 @@ class EntityUpdateView(LoginRequiredMixin, _EntityBase, UpdateView):
         return reverse("trust_center_manage:detail", args=[self.entity, self.object.pk])
 
 
-class EntityDetailView(LoginRequiredMixin, _EntityBase, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class EntityDetailView(LoginRequiredMixin, _EntityBase, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     action = "read"
     template_name = "trust_center/manage/entity_detail.html"
     context_object_name = "obj"
@@ -266,7 +266,7 @@ class DocumentRequestListView(LoginRequiredMixin, PermissionRequiredMixin, ListV
 
 
 class DocumentRequestDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
 ):
     model = DocumentRequest
     template_name = "trust_center/manage/request_detail.html"
@@ -274,7 +274,7 @@ class DocumentRequestDetailView(
     context_object_name = "obj"
     # Approve carries side effects (issue token + email), so transitions go to a
     # bespoke endpoint instead of the generic workflow:transition.
-    workflow_transition_url_name = "trust_center_manage:request-transition"
+    lifecycle_transition_url_name = "trust_center_manage:request-transition"
 
 
 class DocumentRequestTransitionView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -290,7 +290,7 @@ class DocumentRequestTransitionView(LoginRequiredMixin, PermissionRequiredMixin,
             obj.transition_to(
                 target, request.user, comment=comment, enforce_permission=True
             )
-        except WorkflowError as exc:
+        except LifecycleError as exc:
             messages.error(request, transition_error_detail(exc))
             return redirect("trust_center_manage:request-detail", pk=pk)
 

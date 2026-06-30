@@ -4,7 +4,7 @@ from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel
 from trust_center.managers import CertificationQuerySet
-from trust_center.workflows import PUBLICATION_WORKFLOW_NAME
+from trust_center.lifecycles import PUBLICATION_LIFECYCLE_NAME as PUBLICATION_WORKFLOW_NAME
 
 
 class TrustCenterCertification(BaseModel):
@@ -16,7 +16,7 @@ class TrustCenterCertification(BaseModel):
     """
 
     REFERENCE_PREFIX = "TCCE"
-    WORKFLOW_NAME = PUBLICATION_WORKFLOW_NAME
+    LIFECYCLE_NAME = PUBLICATION_WORKFLOW_NAME
 
     framework = models.ForeignKey(
         "compliance.Framework",
