@@ -17,7 +17,7 @@ from context.models.base import ScopedModel
 
 class ComplianceAssessment(ScopedModel):
     REFERENCE_PREFIX = "CAST"
-    WORKFLOW_NAME = "compliance_assessment"
+    LIFECYCLE_NAME = "compliance_assessment"
 
     frameworks = models.ManyToManyField(
         "compliance.Framework",

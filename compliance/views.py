@@ -23,7 +23,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, ScopeFilterMixin, WorkflowStepperMixin
+from accounts.mixins import ApprovableUpdateMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin, WorkflowStepperMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
@@ -569,10 +569,10 @@ class AssessmentListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
 
 
 class AssessmentDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
 ):
     model = ComplianceAssessment
-    workflow_transition_url_name = "compliance:assessment-transition"
+    lifecycle_transition_url_name = "compliance:assessment-transition"
     permission_required = "compliance.assessment.read"
     template_name = "compliance/assessment_detail.html"
     context_object_name = "assessment"
@@ -1671,10 +1671,10 @@ class ActionPlanListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
 
 
 class ActionPlanDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
 ):
     model = ComplianceActionPlan
-    workflow_transition_url_name = "compliance:action-plan-transition"
+    lifecycle_transition_url_name = "compliance:action-plan-transition"
     permission_required = "compliance.action_plan.read"
     template_name = "compliance/action_plan_detail.html"
     context_object_name = "action_plan"

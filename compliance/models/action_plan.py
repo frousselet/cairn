@@ -16,7 +16,7 @@ from context.models.base import ScopedModel
 
 class ComplianceActionPlan(ScopedModel):
     REFERENCE_PREFIX = "CAPL"
-    WORKFLOW_NAME = "action_plan"
+    LIFECYCLE_NAME = "action_plan"
 
     name = models.CharField(_("Name"), max_length=255)
     description = models.TextField(_("Description"), blank=True, default="")

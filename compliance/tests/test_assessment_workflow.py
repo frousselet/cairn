@@ -6,39 +6,37 @@ from accounts.tests.factories import UserFactory
 from compliance.constants import AssessmentStatus
 from compliance.models import ComplianceAssessment
 from compliance.tests.factories import ComplianceAssessmentFactory
-from core.workflow import (
+from core.lifecycle import (
     IllegalTransitionError,
-    LifecycleProtectedError,
-    deletable_states,
-    linkable_states,
-    reportable_states,
-    resolve_workflow,
+    get_lifecycle,
+    resolve_lifecycle,
 )
+from core.workflow import LifecycleProtectedError  # delete() guard (relocated at decommission)
 
 pytestmark = pytest.mark.django_db
 
 
-class TestAssessmentWorkflowDefinition:
-    def test_model_resolves_to_specific_workflow(self):
-        workflow = resolve_workflow(ComplianceAssessment)
-        assert workflow.name == "compliance_assessment"
-        assert workflow.initial_state.code == "draft"
-        assert workflow.subsumes_approval is False  # no 'validated' state
+class TestAssessmentLifecycleDefinition:
+    def test_model_resolves_to_specific_lifecycle(self):
+        lifecycle = resolve_lifecycle(ComplianceAssessment)
+        assert lifecycle.name == "compliance_assessment"
+        assert lifecycle.initial_step.code == "draft"
 
-    def test_state_codes_match_status_values(self):
-        workflow = resolve_workflow(ComplianceAssessment)
-        assert {s.code for s in workflow.states} == {s.value for s in AssessmentStatus}
+    def test_step_codes_match_status_values(self):
+        lifecycle = resolve_lifecycle(ComplianceAssessment)
+        assert {s.code for s in lifecycle.steps} == {s.value for s in AssessmentStatus}
 
     def test_governance_flags(self):
-        assert deletable_states(ComplianceAssessment) == {"draft"}
-        assert linkable_states(ComplianceAssessment) == set()
-        assert reportable_states(ComplianceAssessment) == {
+        lifecycle = get_lifecycle("compliance_assessment")
+        assert lifecycle.deletable_step_codes == {"draft"}
+        assert lifecycle.linkable_step_codes == set()
+        assert lifecycle.reportable_step_codes == {
             "planned", "in_progress", "completed", "closed",
         }
 
     def test_terminal_states(self):
-        workflow = resolve_workflow(ComplianceAssessment)
-        assert {s.code for s in workflow.states if s.is_terminal} == {"closed", "cancelled"}
+        lifecycle = resolve_lifecycle(ComplianceAssessment)
+        assert {s.code for s in lifecycle.steps if s.is_archived} == {"closed", "cancelled"}
 
 
 class TestAssessmentStateSync:

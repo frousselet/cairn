@@ -22,6 +22,7 @@ hardcoded steps).
   <form method="post" action="{{ lc_transition_url }}" class="lc-graph__form d-none" data-lc-form hx-boost="false">
     {% csrf_token %}
     <input type="hidden" name="target_status" value="" data-lc-target>
+    <input type="hidden" name="comment" value="" data-lc-comment>
     <input type="hidden" name="next" value="{{ request.get_full_path }}">
   </form>
 
@@ -35,6 +36,7 @@ hardcoded steps).
                   class="lc-pill lc-pill--{{ step.state }} lc-pill--actionable"
                   data-step="{{ step.value }}"
                   data-lc-node
+                  {% if step.requires_comment %}data-lc-requires-comment data-lc-title="{{ step.action_label }}"{% endif %}
                   aria-label="{{ step.action_label }}"
                   title="{{ step.action_label }}">{% if step.number %}<span class="lc-pill__num">{{ step.number }}</span>{% endif %}{{ step.label }}</button>
         {% else %}
@@ -54,6 +56,7 @@ hardcoded steps).
                     class="lc-pill lc-pill--{{ step.state }} lc-pill--actionable lc-pill--exit"
                     data-step="{{ step.value }}"
                     data-lc-node
+                    {% if step.requires_comment %}data-lc-requires-comment data-lc-title="{{ step.action_label }}"{% endif %}
                     aria-label="{{ step.action_label }}"
                     title="{{ step.action_label }}">{{ step.label }}</button>
           {% else %}
@@ -149,12 +152,21 @@ hardcoded steps).
       if (!g.label && lp.label) { g.label = lp.label; }
     });
 
-    {% comment %} Click an actionable node -> submit the transition. {% endcomment %}
+    {% comment %} Click an actionable node -> submit the transition (a comment
+       modal is interposed first when the transition requires one). {% endcomment %}
+    var commentInput = root.querySelector('[data-lc-form] [data-lc-comment]');
     Array.prototype.forEach.call(root.querySelectorAll('[data-lc-node].lc-pill--actionable'), function (btn) {
       btn.addEventListener('click', function (ev) {
         ev.preventDefault();
         targetInput.value = btn.getAttribute('data-step');
-        form.submit();
+        if (commentInput) { commentInput.value = ''; }
+        var requiresComment = btn.hasAttribute('data-lc-requires-comment');
+        var title = btn.getAttribute('data-lc-title') || btn.getAttribute('aria-label') || '';
+        if (window.cairnLifecycleTransition) {
+          window.cairnLifecycleTransition(form, requiresComment, title, commentInput);
+        } else {
+          form.submit();
+        }
       });
     });
 
