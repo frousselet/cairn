@@ -33,7 +33,7 @@ def build_soa_frameworks_data(frameworks):
     from django.db.models import Prefetch
 
     from compliance.models import ComplianceActionPlan
-    from core.workflow import reportable
+    from core.lifecycle import reportable
     from risks.models import Risk
 
     frameworks_data = []
@@ -504,7 +504,7 @@ def generate_risk_register_xlsx(risks_qs, user):
     from openpyxl.styles import Alignment, Font, PatternFill
     from openpyxl.utils import get_column_letter
 
-    from core.workflow import reportable
+    from core.lifecycle import reportable
 
     risks_qs = reportable(risks_qs)
 

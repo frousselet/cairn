@@ -3,9 +3,7 @@
 import json
 
 import pytest
-from django.test import TestCase, RequestFactory
 
-from accounts.models import Group, Permission
 from accounts.tests.factories import GroupFactory, PermissionFactory, UserFactory
 from mcp.models import OAuthAccessToken, OAuthApplication
 from mcp.models.oauth import _generate_client_id, _generate_client_secret

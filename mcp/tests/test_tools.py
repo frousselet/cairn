@@ -5,8 +5,6 @@ import json
 import pytest
 
 from accounts.tests.factories import GroupFactory, PermissionFactory, UserFactory
-from mcp.models import OAuthAccessToken, OAuthApplication
-from mcp.models.oauth import _generate_client_secret
 from mcp.server import McpServer
 from mcp.tools import register_all_tools
 

@@ -14,9 +14,7 @@ from compliance.constants import (
     ComplianceStatus,
     FindingType,
 )
-from compliance.models.assessment import AssessmentResult, ComplianceAssessment
 from compliance.tests.factories import (
-    AssessmentResultFactory,
     ComplianceAssessmentFactory,
     FindingFactory,
     FrameworkFactory,

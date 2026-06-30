@@ -19,7 +19,7 @@ class PublicationQuerySet(models.QuerySet):
 
 class CertificationQuerySet(PublicationQuerySet):
     def published(self):
-        from core.workflow import reportable_states
+        from core.lifecycle import reportable_states
 
         framework_states = list(reportable_states("compliance.Framework"))
         return (

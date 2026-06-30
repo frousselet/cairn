@@ -99,7 +99,7 @@ def test_scope_transition_records_event():
 
 
 def test_in_force_scope_blocks_deletion():
-    from core.workflow import LifecycleProtectedError
+    from core.lifecycle import LifecycleProtectedError
 
     scope = ScopeFactory(workflow_state="in_force")
     with pytest.raises(LifecycleProtectedError):
@@ -108,7 +108,7 @@ def test_in_force_scope_blocks_deletion():
 
 
 def test_reportable_helper_uses_scope_lifecycle():
-    from core.workflow import linkable, reportable
+    from core.lifecycle import linkable, reportable
 
     ScopeFactory()  # draft
     ScopeFactory(workflow_state="in_force")

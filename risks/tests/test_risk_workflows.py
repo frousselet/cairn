@@ -4,7 +4,7 @@ import pytest
 
 from accounts.tests.factories import UserFactory
 from core.lifecycle import IllegalTransitionError, resolve_lifecycle
-from core.workflow import (
+from core.lifecycle import (
     LifecycleProtectedError,
     deletable_states,
     linkable_states,
@@ -63,7 +63,7 @@ class TestRiskWorkflow:
             risk.delete()
 
     def test_register_excludes_identified(self):
-        from core.workflow import reportable
+        from core.lifecycle import reportable
 
         RiskFactory()  # identified
         live = RiskFactory(status=RiskStatus.EVALUATED)

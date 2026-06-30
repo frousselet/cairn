@@ -376,7 +376,7 @@ class ScopeDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMi
             active_frameworks_for_scoring,
             overall_compliance_rate,
         )
-        from core.workflow import reportable
+        from core.lifecycle import reportable
 
         scope = self.object
         scoped_frameworks = scope.frameworks.all()

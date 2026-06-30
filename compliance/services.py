@@ -105,7 +105,7 @@ def annotate_compliance_segments(frameworks):
 
 def active_frameworks_for_scoring(queryset=None):
     """Active, reportable frameworks whose score feeds the overall average."""
-    from core.workflow import reportable
+    from core.lifecycle import reportable
 
     from compliance.models import Framework
 

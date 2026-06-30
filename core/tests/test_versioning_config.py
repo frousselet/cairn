@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from context.models import Scope
 from context.tests.factories import ScopeFactory
-from core.models import VersioningConfig, _config_cache
+from core.models import VersioningConfig
 
 
 @pytest.mark.django_db

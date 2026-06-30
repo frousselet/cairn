@@ -166,7 +166,7 @@ class TestContractLifecycle:
             c.transition_to("active")  # draft must go through "signing" first
 
     def test_draft_is_deletable_active_is_not(self):
-        from core.workflow import LifecycleProtectedError
+        from core.lifecycle import LifecycleProtectedError
 
         draft = Contract.objects.create(label="D", status=ContractStatus.DRAFT)
         draft.delete()  # allowed

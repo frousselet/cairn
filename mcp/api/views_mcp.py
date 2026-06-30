@@ -8,7 +8,6 @@ Implements the MCP 2025-03-26 Streamable HTTP transport:
 
 import json
 import logging
-import secrets
 
 from django.http import JsonResponse, StreamingHttpResponse
 from django.utils.decorators import method_decorator

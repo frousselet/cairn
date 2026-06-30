@@ -10,14 +10,10 @@ class AssetsConfig(AppConfig):
     verbose_name = _("Assets")
 
     def ready(self):
-        # Register the module's specific lifecycle workflows (essential and
-        # support assets). Must run before the server-process early returns
-        # below: workflows are needed in every context (tests, management
-        # commands, servers).
-        from assets import workflows  # noqa: F401
-
-        # Register the module's standardised lifecycles (new engine). Same
-        # every-context requirement as the workflows above.
+        # Register the module's standardised lifecycles (essential and support
+        # assets). Must run before the server-process early returns below:
+        # lifecycles are needed in every context (tests, management commands,
+        # servers).
         from assets import lifecycles  # noqa: F401
 
         # Register the supplier CSV bulk importer with the generic import

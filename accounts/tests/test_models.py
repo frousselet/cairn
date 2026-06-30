@@ -3,7 +3,7 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
-from accounts.constants import LOCKOUT_DURATION_MINUTES, MAX_FAILED_ATTEMPTS
+from accounts.constants import MAX_FAILED_ATTEMPTS
 from accounts.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db

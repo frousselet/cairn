@@ -144,7 +144,7 @@ class TestCertificateLifecycle:
             c.transition_to("certified")  # draft must go through "assessment" first
 
     def test_draft_is_deletable_certified_is_not(self):
-        from core.workflow import LifecycleProtectedError
+        from core.lifecycle import LifecycleProtectedError
 
         draft = Certificate.objects.create(label="D", status=CertificateStatus.DRAFT)
         draft.delete()  # allowed

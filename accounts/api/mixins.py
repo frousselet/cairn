@@ -138,81 +138,15 @@ class ApprovableAPIMixin:
 
     @action(detail=True, methods=["get", "post"], url_path="transition")
     def transition(self, request, **kwargs):
-        """GET: list the caller's allowed lifecycle transitions. POST: perform one."""
+        """GET: list the caller's allowed lifecycle transitions. POST: perform one.
+
+        Lists / performs the transition through the lifecycle service, so the API
+        reflects the real step graph. The endpoint is gated by the module
+        permission (read for GET, update for POST) and the per-transition role /
+        permission is enforced inside ``_lifecycle_transition``.
+        """
         obj = self.get_object()
-
-        # Standardised lifecycle engine (model sets LIFECYCLE_NAME): list /
-        # perform the transition through the lifecycle service, so the API
-        # reflects the real step graph (e.g. a site's commissioning ->
-        # operational flow) instead of the legacy default workflow. The endpoint
-        # is already gated by the module permission (read for GET, update for
-        # POST), the enforcement point for transitions.
-        lifecycle = obj.get_lifecycle() if hasattr(obj, "get_lifecycle") else None
-        if lifecycle is not None:
-            return self._lifecycle_transition(request, obj, lifecycle)
-
-        from core.workflow import (
-            PermissionDeniedError,
-            WorkflowError,
-            allowed_transitions,
-            validate_transition,
-        )
-
-        workflow = obj.get_workflow()
-        current = obj.workflow_state or workflow.initial_state.code
-        namespace = self._get_perm_namespace()
-
-        def has_perm(codename):
-            return request.user.is_superuser or request.user.has_perm(codename)
-
-        if request.method == "GET":
-            transitions = allowed_transitions(
-                workflow, current, has_perm=has_perm, perm_namespace=namespace,
-            )
-            return Response({
-                "workflow": workflow.name,
-                "workflow_state": current,
-                "allowed_transitions": [
-                    {
-                        "target": t.target,
-                        "verb": str(t.verb),
-                        "action": t.action,
-                        "requires_comment": t.requires_comment,
-                    }
-                    for t in transitions
-                ],
-            })
-
-        target = request.data.get("target_state")
-        comment = request.data.get("comment") or None
-        if not target:
-            return Response(
-                {"detail": "target_state is required."},
-                status=http_status.HTTP_400_BAD_REQUEST,
-            )
-        try:
-            validate_transition(
-                workflow, current, target,
-                has_perm=has_perm, perm_namespace=namespace, comment=comment,
-            )
-        except PermissionDeniedError as e:
-            logger.warning("Permission denied during workflow transition validation: %s", e)
-            raise PermissionDenied("You do not have permission to perform this transition.")
-        except WorkflowError:
-            logger.warning(
-                "Workflow transition validation failed (user_id=%s, current=%s, target=%s)",
-                getattr(request.user, "id", None),
-                current,
-                target,
-                exc_info=True,
-            )
-            return Response(
-                {"detail": "Invalid workflow transition request."},
-                status=http_status.HTTP_400_BAD_REQUEST,
-            )
-        obj.transition_to(target, request.user, comment=comment)
-        serializer = self.get_serializer(obj)
-        return Response(serializer.data)
+        return self._lifecycle_transition(request, obj, obj.get_lifecycle())
 
     @action(detail=True, methods=["post"])
     def approve(self, request, **kwargs):

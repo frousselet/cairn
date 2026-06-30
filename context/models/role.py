@@ -59,7 +59,7 @@ class Role(ScopedModel):
                 return
         except Exception:
             pass
-        draft_code = self.get_workflow().initial_state.code
+        draft_code = self.get_lifecycle().initial_step.code
         if self.workflow_state == draft_code and not self.is_approved:
             return  # already a plain draft, nothing to record
         self.workflow_state = draft_code

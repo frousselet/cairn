@@ -231,7 +231,7 @@ class RequirementForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        from core.workflow import linkable_or_linked
+        from core.lifecycle import linkable_or_linked
         from risks.models import Risk
 
         editing = bool(self.instance and self.instance.pk)

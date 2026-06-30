@@ -8,15 +8,11 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db.models import (
-    Avg,
     Case,
     Count,
     IntegerField,
-    Max,
-    OuterRef,
     Prefetch,
     Q,
-    Subquery,
     Value,
     When,
 )
@@ -113,7 +109,7 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         ctx["company"] = CompanySettings.objects.first()
 
         # ── Gouvernance ──────────────────────────────────
-        from core.workflow import reportable
+        from core.lifecycle import reportable
 
         scopes = self._filter_scopes(Scope.objects.all())
         ctx["scope_count"] = scopes.count()
@@ -922,7 +918,7 @@ ALL_CATEGORIES = [
 
 def get_calendar_events(user, start=None, end=None, categories=None):
     """Fetch calendar events for *user*. Returns list of event dicts."""
-    from core.workflow import reportable
+    from core.lifecycle import reportable
 
     # ``start`` / ``end`` may come straight from the ``?start=`` / ``?end=``
     # query params (CalendarEventsView). Coerce them to dates so a malformed

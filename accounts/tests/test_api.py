@@ -1,7 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
 
-from accounts.models import AccessLog, CompanySettings, Group, Permission
+from accounts.models import AccessLog, CompanySettings
 from accounts.tests.factories import GroupFactory, PermissionFactory, UserFactory
 
 pytestmark = pytest.mark.django_db

@@ -7,7 +7,6 @@ from django.db.models import Count, F, Q
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils.dateparse import parse_date
-from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
 from core.db import NaturalSortKey
@@ -244,25 +243,16 @@ class ListSummaryMixin:
         return qs
 
     def _lifecycle_states(self, model):
-        """Ordered state/step objects for the model's active lifecycle engine.
+        """Ordered :class:`~core.lifecycle.Step` objects for the model's lifecycle.
 
-        A model that sets ``LIFECYCLE_NAME`` runs the standardised
-        ``core.lifecycle`` engine: its steps drive the rail. Every other model
-        keeps the legacy ``core.workflow`` engine. Both expose ``code``,
-        ``label`` and ``tone``, so the rail consumes them uniformly. Returns an
-        empty tuple when no lifecycle resolves.
+        The model's own lifecycle (``LIFECYCLE_NAME``) or the default one; its
+        steps (each exposing ``code`` / ``label`` / ``tone``) drive the rail.
+        Returns an empty tuple when no lifecycle resolves.
         """
-        lifecycle_name = getattr(model, "LIFECYCLE_NAME", None)
-        if lifecycle_name:
-            from core.lifecycle import LIFECYCLE_REGISTRY
-
-            lifecycle = LIFECYCLE_REGISTRY.get(lifecycle_name)
-            if lifecycle is not None:
-                return lifecycle.steps
-        from core.workflow import get_workflow, workflow_name_for
+        from core.lifecycle import resolve_lifecycle
 
         try:
-            return get_workflow(workflow_name_for(model)).states
+            return resolve_lifecycle(model).steps
         except Exception:
             return ()
 

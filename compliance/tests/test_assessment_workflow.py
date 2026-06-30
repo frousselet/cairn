@@ -10,7 +10,7 @@ from core.lifecycle import (
     get_lifecycle,
     resolve_lifecycle,
 )
-from core.workflow import LifecycleProtectedError  # delete() guard (relocated at decommission)
+from core.lifecycle import LifecycleProtectedError  # delete() guard (relocated at decommission)
 
 pytestmark = pytest.mark.django_db
 
@@ -108,7 +108,7 @@ class TestAssessmentGovernance:
             planned.delete()
 
     def test_reportable_follows_states(self):
-        from core.workflow import reportable
+        from core.lifecycle import reportable
 
         ComplianceAssessmentFactory(status=AssessmentStatus.DRAFT)
         live = ComplianceAssessmentFactory(status=AssessmentStatus.PLANNED)

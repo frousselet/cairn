@@ -1,6 +1,4 @@
-from django.db import connection
 from django.db.models import CharField, Func
-from django.db.models.expressions import Col
 
 
 class NaturalSortKey(Func):

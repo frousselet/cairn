@@ -87,11 +87,10 @@ class ScopeViewSet(ScopeFilterAPIMixin, ApprovableAPIMixin, HistoryAPIMixin, Cre
         scope = self.get_object()
         from core.lifecycle import LifecycleError
         from core.transition_messages import transition_error_detail
-        from core.workflow import WorkflowError
 
         try:
             scope.transition_to("archived", request.user)
-        except (WorkflowError, LifecycleError) as exc:
+        except LifecycleError as exc:
             return Response({"detail": transition_error_detail(exc)}, status=400)
         return Response(ScopeSerializer(scope).data)
 

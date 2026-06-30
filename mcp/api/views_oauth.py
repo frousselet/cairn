@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from mcp.models import OAuthAccessToken, OAuthApplication, OAuthAuthorizationCode
-from mcp.models.oauth import _generate_client_id, _generate_client_secret
+from mcp.models.oauth import _generate_client_secret
 
 
 class OAuthTokenView(APIView):

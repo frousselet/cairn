@@ -8,7 +8,7 @@ from core.lifecycle import (
     IllegalTransitionError,
     resolve_lifecycle,
 )
-from core.workflow import (
+from core.lifecycle import (
     LifecycleProtectedError,
     deletable_states,
     linkable_states,

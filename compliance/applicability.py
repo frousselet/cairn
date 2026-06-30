@@ -14,7 +14,7 @@ sync with the risk register.
 
 from django.utils.translation import gettext_lazy as _
 
-from core.workflow import reportable
+from core.lifecycle import reportable
 
 APPLICABLE_AUTO_JUSTIFICATION = _(
     "Automatically applicable: at least one active risk is linked to this "

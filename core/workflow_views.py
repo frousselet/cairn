@@ -12,10 +12,6 @@ from django.views import View
 from context.models.base import BaseModel
 from core.lifecycle import LifecycleError
 from core.transition_messages import transition_error_detail
-from core.workflow import (
-    WorkflowError,
-    validate_transition,
-)
 
 
 class WorkflowTransitionView(LoginRequiredMixin, View):
@@ -48,26 +44,11 @@ class WorkflowTransitionView(LoginRequiredMixin, View):
         target = request.POST.get("target_status", "")
         comment = request.POST.get("comment", "").strip() or None
 
-        def has_perm(codename):
-            return user.is_superuser or user.has_perm(codename)
-
         try:
-            if obj.get_lifecycle() is not None:
-                # Standardised engine: validation (incl. role / per-transition
-                # permission), application and history all happen inside
-                # transition_to.
-                obj.transition_to(target, user, comment=comment, enforce_permission=True)
-            else:
-                workflow = obj.get_workflow()
-                current = obj.workflow_state or workflow.initial_state.code
-                validate_transition(
-                    workflow, current, target,
-                    has_perm=has_perm,
-                    perm_namespace=obj.workflow_perm_namespace,
-                    comment=comment,
-                )
-                obj.transition_to(target, user, comment=comment)
-        except (WorkflowError, LifecycleError) as exc:
+            # Validation (incl. role / per-transition permission), application
+            # and history all happen inside transition_to.
+            obj.transition_to(target, user, comment=comment, enforce_permission=True)
+        except LifecycleError as exc:
             messages.error(request, transition_error_detail(exc))
         else:
             messages.success(

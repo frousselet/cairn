@@ -15,7 +15,7 @@ without import cycles.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 
@@ -164,30 +164,18 @@ def _safe_prev(record):
 
 
 def _main_flow_and_labels(model):
-    """Return ``(main_flow_codes, {code: label})`` for the model's active engine.
+    """Return ``(main_flow_codes, {code: label})`` for the model's lifecycle.
 
-    Standardised engine (model sets ``LIFECYCLE_NAME``): the Draft + intermediate
-    steps form the main flow (Archived exits sit off it); legacy engine: the
-    non-branch workflow states. Both expose ``code`` / ``label``, so the history
-    timeline reads them uniformly. Empty on failure.
+    The Draft + intermediate steps form the main flow (Archived exits sit off
+    it); the history timeline reads ``code`` / ``label`` from them. Empty on
+    failure.
     """
-    name = getattr(model, "LIFECYCLE_NAME", None)
-    if name:
-        try:
-            from core.lifecycle import StepKind, get_lifecycle
-
-            lifecycle = get_lifecycle(name)
-            main = [s.code for s in lifecycle.steps if s.kind != StepKind.ARCHIVED]
-            labels = {s.code: str(s.label) for s in lifecycle.steps}
-            return main, labels
-        except Exception:
-            pass
     try:
-        from core.workflow import resolve_workflow
+        from core.lifecycle import StepKind, resolve_lifecycle
 
-        workflow = resolve_workflow(model)
-        main = [s.code for s in workflow.states if not s.branch]
-        labels = {s.code: str(s.label) for s in workflow.states}
+        lifecycle = resolve_lifecycle(model)
+        main = [s.code for s in lifecycle.steps if s.kind != StepKind.ARCHIVED]
+        labels = {s.code: str(s.label) for s in lifecycle.steps}
         return main, labels
     except Exception:
         return [], {}
@@ -196,9 +184,8 @@ def _main_flow_and_labels(model):
 def _is_backward_transition(model, from_code: str, to_code: str) -> bool:
     """Whether ``from_code -> to_code`` moves back along the main flow.
 
-    Recomputed from the registered workflow / lifecycle (the single source of
-    truth) rather than persisted, mirroring :class:`accounts.mixins.WorkflowStepperMixin`'s
-    refusal logic. Branch off-ramps (cancelled / archived) are not refusals.
+    Recomputed from the registered lifecycle (the single source of truth) rather
+    than persisted. Branch off-ramps (cancelled / archived) are not refusals.
     """
     main, _ = _main_flow_and_labels(model)
     if from_code in main and to_code in main:

@@ -7,7 +7,6 @@ Protocol version: 2025-03-26
 
 import json
 import logging
-import uuid
 
 logger = logging.getLogger(__name__)
 
