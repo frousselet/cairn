@@ -8,5 +8,5 @@ class ReportsConfig(AppConfig):
     verbose_name = _("Reports")
 
     def ready(self):
-        # Register the module's specific lifecycle workflows (management review).
-        from reports import workflows  # noqa: F401
+        # Register the module's standardised lifecycle (management review).
+        from reports import lifecycles  # noqa: F401

@@ -24,7 +24,7 @@ from django.views.generic import (
 
 from django.utils.translation import gettext_lazy as _l
 
-from accounts.mixins import HistoryUrlMixin, WorkflowStepperMixin
+from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
@@ -144,10 +144,10 @@ class ManagementReviewTableBodyView(
 # ─── Detail with stepper and all sections ─────────────────────────────
 
 class ManagementReviewDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView,
+    LoginRequiredMixin, PermissionRequiredMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView,
 ):
     permission_required = "reports.management_review.read"
-    workflow_transition_url_name = "reports:management-review-transition"
+    lifecycle_transition_url_name = "reports:management-review-transition"
     model = ManagementReview
     template_name = "reports/management_review_detail.html"
     context_object_name = "review"

@@ -32,7 +32,7 @@ class ManagementReview(ScopedModel):
     """
 
     REFERENCE_PREFIX = "MRVW"
-    WORKFLOW_NAME = "management_review"
+    LIFECYCLE_NAME = "management_review"
 
     title = models.CharField(_("Title"), max_length=255)
     description = models.TextField(_("Description"), blank=True, default="")
@@ -129,23 +129,23 @@ class ManagementReview(ScopedModel):
     def transition_to(self, target, user=None, comment=None, *, enforce_permission=False, save=True):
         """Perform a status transition with audit trail.
 
-        Routed through the workflow framework (the ``management_review``
-        workflow is generated from the same constants as before), keeping the
-        legacy contract. Raises ValueError when:
+        Routed through the standardised lifecycle engine (the
+        ``management_review`` lifecycle is generated from the same constants as
+        before), keeping the legacy contract. Raises ValueError when:
           - the transition is not allowed,
           - the transition is a cancellation without a comment,
           - closure preconditions are not met.
         """
-        from core.workflow import validate_transition
+        from core.lifecycle import validate_transition
         from reports.models.management_review_transition import (
             ManagementReviewTransition,
         )
 
-        workflow = self.get_workflow()
-        previous = self.workflow_state or self.status or workflow.initial_state.code
+        lifecycle = self.get_lifecycle()
+        previous = self.workflow_state or self.status or lifecycle.initial_step.code
         # Legality and mandatory-comment checks first (legacy precedence),
         # then the closure preconditions.
-        validate_transition(workflow, previous, target, comment=comment)
+        validate_transition(lifecycle, previous, target, comment=comment, enforce_permission=False)
         if target == ManagementReviewStatus.CLOSED:
             ok, reasons = self.can_close()
             if not ok:
