@@ -29,6 +29,7 @@ context (tests, management commands, servers).
 
 from django.utils.translation import gettext_lazy as _
 
+from assets.constants import EssentialAssetStatus, SupportAssetStatus
 from core.lifecycle import (
     ANY,
     Lifecycle,
@@ -37,6 +38,7 @@ from core.lifecycle import (
     Transition,
     archived_step,
     draft_step,
+    lifecycle_from_state_flags,
     register_lifecycle,
 )
 
@@ -293,3 +295,84 @@ def _build_certificate_lifecycle() -> Lifecycle:
 
 
 CERTIFICATE_LIFECYCLE = register_lifecycle(_build_certificate_lifecycle())
+
+
+# ── Essential asset ─────────────────────────────────────────
+#
+# The information / business-asset lifecycle, ported from the legacy
+# essential_asset workflow (same step codes, labels and governance flags). A
+# freshly identified asset is the deletable entry; active and under-review are
+# authoritative operational stages (an asset is periodically re-examined,
+# looping Active <-> Under review); decommissioned is the exit, kept in reports
+# as audit history. Rendered with the directed-graph stepper.
+
+ESSENTIAL_ASSET_LIFECYCLE_NAME = "essential_asset"
+
+# (code, label, counts_in_reports, linkable, deletable, is_initial, is_terminal, tone)
+_ESSENTIAL_ASSET_STEPS = [
+    (EssentialAssetStatus.IDENTIFIED.value, EssentialAssetStatus.IDENTIFIED.label, True, True, True, True, False, "secondary"),
+    (EssentialAssetStatus.ACTIVE.value, EssentialAssetStatus.ACTIVE.label, True, True, False, False, False, "success"),
+    (EssentialAssetStatus.UNDER_REVIEW.value, EssentialAssetStatus.UNDER_REVIEW.label, True, True, False, False, False, "warning"),
+    (EssentialAssetStatus.DECOMMISSIONED.value, EssentialAssetStatus.DECOMMISSIONED.label, True, False, False, False, True, "dark"),
+]
+
+_ESSENTIAL_ASSET_TRANSITIONS = [
+    (EssentialAssetStatus.IDENTIFIED.value, EssentialAssetStatus.ACTIVE.value, EssentialAssetStatus.ACTIVE.label),
+    (EssentialAssetStatus.IDENTIFIED.value, EssentialAssetStatus.DECOMMISSIONED.value, EssentialAssetStatus.DECOMMISSIONED.label),
+    (EssentialAssetStatus.ACTIVE.value, EssentialAssetStatus.UNDER_REVIEW.value, EssentialAssetStatus.UNDER_REVIEW.label),
+    (EssentialAssetStatus.UNDER_REVIEW.value, EssentialAssetStatus.ACTIVE.value, EssentialAssetStatus.ACTIVE.label),
+    (EssentialAssetStatus.UNDER_REVIEW.value, EssentialAssetStatus.DECOMMISSIONED.value, EssentialAssetStatus.DECOMMISSIONED.label),
+    (EssentialAssetStatus.ACTIVE.value, EssentialAssetStatus.DECOMMISSIONED.value, EssentialAssetStatus.DECOMMISSIONED.label),
+]
+
+ESSENTIAL_ASSET_LIFECYCLE = register_lifecycle(
+    lifecycle_from_state_flags(
+        ESSENTIAL_ASSET_LIFECYCLE_NAME,
+        _ESSENTIAL_ASSET_STEPS,
+        _ESSENTIAL_ASSET_TRANSITIONS,
+        layout="graph",
+    )
+)
+
+
+# ── Support asset ───────────────────────────────────────────
+#
+# The IT-infrastructure lifecycle, ported from the legacy support_asset
+# workflow. A support asset is created Active (the entry); In stock covers
+# hardware received but not yet deployed; Active <-> Under maintenance is the
+# operational cycle; Decommissioned then Disposed are the end of service
+# (Disposed is the exit). Every stage stays in reports (decommissioned and
+# disposed assets are audit history), terminal-bound stages are not linkable.
+
+SUPPORT_ASSET_LIFECYCLE_NAME = "support_asset"
+
+_SUPPORT_ASSET_STEPS = [
+    (SupportAssetStatus.ACTIVE.value, SupportAssetStatus.ACTIVE.label, True, True, True, True, False, "success"),
+    (SupportAssetStatus.IN_STOCK.value, SupportAssetStatus.IN_STOCK.label, True, True, True, False, False, "secondary"),
+    (SupportAssetStatus.DEPLOYED.value, SupportAssetStatus.DEPLOYED.label, True, True, False, False, False, "info"),
+    (SupportAssetStatus.UNDER_MAINTENANCE.value, SupportAssetStatus.UNDER_MAINTENANCE.label, True, True, False, False, False, "warning"),
+    (SupportAssetStatus.DECOMMISSIONED.value, SupportAssetStatus.DECOMMISSIONED.label, True, False, False, False, False, "dark"),
+    (SupportAssetStatus.DISPOSED.value, SupportAssetStatus.DISPOSED.label, True, False, False, False, True, "dark"),
+]
+
+_SUPPORT_ASSET_TRANSITIONS = [
+    (SupportAssetStatus.IN_STOCK.value, SupportAssetStatus.DEPLOYED.value, SupportAssetStatus.DEPLOYED.label),
+    (SupportAssetStatus.IN_STOCK.value, SupportAssetStatus.ACTIVE.value, SupportAssetStatus.ACTIVE.label),
+    (SupportAssetStatus.IN_STOCK.value, SupportAssetStatus.DECOMMISSIONED.value, SupportAssetStatus.DECOMMISSIONED.label),
+    (SupportAssetStatus.DEPLOYED.value, SupportAssetStatus.ACTIVE.value, SupportAssetStatus.ACTIVE.label),
+    (SupportAssetStatus.DEPLOYED.value, SupportAssetStatus.DECOMMISSIONED.value, SupportAssetStatus.DECOMMISSIONED.label),
+    (SupportAssetStatus.ACTIVE.value, SupportAssetStatus.UNDER_MAINTENANCE.value, SupportAssetStatus.UNDER_MAINTENANCE.label),
+    (SupportAssetStatus.ACTIVE.value, SupportAssetStatus.DECOMMISSIONED.value, SupportAssetStatus.DECOMMISSIONED.label),
+    (SupportAssetStatus.UNDER_MAINTENANCE.value, SupportAssetStatus.ACTIVE.value, SupportAssetStatus.ACTIVE.label),
+    (SupportAssetStatus.UNDER_MAINTENANCE.value, SupportAssetStatus.DECOMMISSIONED.value, SupportAssetStatus.DECOMMISSIONED.label),
+    (SupportAssetStatus.DECOMMISSIONED.value, SupportAssetStatus.DISPOSED.value, SupportAssetStatus.DISPOSED.label),
+]
+
+SUPPORT_ASSET_LIFECYCLE = register_lifecycle(
+    lifecycle_from_state_flags(
+        SUPPORT_ASSET_LIFECYCLE_NAME,
+        _SUPPORT_ASSET_STEPS,
+        _SUPPORT_ASSET_TRANSITIONS,
+        layout="graph",
+    )
+)

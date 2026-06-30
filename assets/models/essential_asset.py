@@ -18,7 +18,7 @@ from context.models.base import ScopedModel
 
 class EssentialAsset(ScopedModel):
     REFERENCE_PREFIX = "EAST"
-    WORKFLOW_NAME = "essential_asset"
+    LIFECYCLE_NAME = "essential_asset"
 
     name = models.CharField(_("Name"), max_length=255)
     description = models.TextField(_("Description"), blank=True, default="")
