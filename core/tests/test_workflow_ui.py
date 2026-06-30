@@ -168,8 +168,8 @@ class TestStepperRollout:
         risk = RiskFactory()
         response = client.get(reverse("risks:risk-detail", args=[risk.pk]))
         assert response.status_code == 200
-        assert "workflow-stepper-" in response.content.decode()
-        steps = response.context["wf_steps"]
+        assert "lifecycle-stepper-" in response.content.decode()
+        steps = response.context["lc_steps"]
         assert steps[0]["value"] == "identified"
         assert steps[0]["state"] == "current"
 
@@ -191,13 +191,13 @@ class TestStepperRollout:
             reverse("compliance:assessment-detail", args=[assessment.pk])
         )
         assert response.status_code == 200
-        assert response.context["wf_transition_url"] == reverse(
+        assert response.context["lc_transition_url"] == reverse(
             "compliance:assessment-transition", args=[assessment.pk]
         )
         # The bespoke endpoint (required-fields gating, close side effects)
         # accepts the shared component's parameter name.
         response = client.post(
-            response.context["wf_transition_url"], {"target_status": "planned"},
+            response.context["lc_transition_url"], {"target_status": "planned"},
         )
         assessment.refresh_from_db()
         assert assessment.status == "planned"

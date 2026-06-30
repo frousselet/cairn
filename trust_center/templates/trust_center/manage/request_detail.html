@@ -37,7 +37,7 @@
   </div>
   <div class="col-12 col-lg-4">
     {% sidebar_card _("Lifecycle") icon="diagram-2" %}
-      {% include "includes/workflow_stepper.html" %}
+      {% include "includes/lifecycle_stepper.html" %}
       <div class="small text-muted mt-3">
         {% if obj.reviewed_by %}<div>{% trans "Reviewed by" %}: {{ obj.reviewed_by }}</div>{% endif %}
         {% if obj.reviewed_at %}<div>{% trans "Reviewed at" %}: {{ obj.reviewed_at|date:"SHORT_DATETIME_FORMAT" }}</div>{% endif %}

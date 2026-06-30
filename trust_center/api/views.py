@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.api.permissions import ModulePermission
-from core.workflow import PermissionDeniedError, WorkflowError
+from core.lifecycle import LifecycleError, TransitionNotAllowedError
 from trust_center.models import (
     TrustCenterCertification,
     TrustCenterDocument,
@@ -69,12 +69,12 @@ class _ManagedViewSet(viewsets.ModelViewSet):
                 comment=ser.validated_data.get("comment", ""),
                 enforce_permission=True,
             )
-        except PermissionDeniedError as exc:
+        except TransitionNotAllowedError as exc:
             return Response(
                 {"detail": transition_error_detail(exc)},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        except WorkflowError as exc:
+        except LifecycleError as exc:
             return Response(
                 {"detail": transition_error_detail(exc)},
                 status=status.HTTP_400_BAD_REQUEST,

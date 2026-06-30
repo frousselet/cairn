@@ -151,6 +151,11 @@ class Transition:
     allowed_roles: tuple = ()
     allowed_users: Callable | None = field(default=None, compare=False)
     requires_comment: bool = False
+    # Optional Django-permission suffix (e.g. "approve") required to perform the
+    # transition, built against the instance's ``workflow_perm_namespace``. Empty
+    # for the common case (gating is by role / open); set by publishing surfaces
+    # that keep a per-transition permission (e.g. the trust center).
+    permission_action: str = field(default="", compare=False)
 
     @property
     def from_any(self) -> bool:
@@ -383,6 +388,13 @@ def user_can_perform(transition: Transition, instance, user) -> bool:
         return False
     if getattr(user, "is_superuser", False):
         return True
+    # Optional per-transition Django permission (publishing surfaces): the user
+    # must hold ``<workflow_perm_namespace>.<permission_action>``.
+    action = getattr(transition, "permission_action", "")
+    if action:
+        namespace = getattr(instance, "workflow_perm_namespace", None)
+        if namespace and not user.has_perm(f"{namespace}.{action}"):
+            return False
     if not transition.is_restricted:
         return True
     if transition.allowed_roles and _user_in_roles(user, transition.allowed_roles, instance):
@@ -457,7 +469,8 @@ def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="
     is_terminal, tone)``. The one ``is_initial`` state becomes the mandatory
     ``DRAFT`` entry step; every ``is_terminal`` state becomes an ``ARCHIVED``
     exit step; the rest are ``INTERMEDIATE``. ``transitions`` is an iterable of
-    ``(source, target, label)`` or ``(source, target, label, requires_comment)``.
+    ``(source, target, label)``, ``(source, target, label, requires_comment)`` or
+    ``(source, target, label, requires_comment, permission_action)``.
     """
     steps = []
     for code, label, counts, can_link, can_delete, is_initial, is_terminal, tone in state_flags_items:
@@ -482,8 +495,15 @@ def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="
     for t in transitions:
         source, target, label = t[0], t[1], t[2]
         requires_comment = t[3] if len(t) > 3 else False
+        permission_action = t[4] if len(t) > 4 else ""
         built.append(
-            Transition(target=target, source=source, label=label, requires_comment=requires_comment)
+            Transition(
+                target=target,
+                source=source,
+                label=label,
+                requires_comment=requires_comment,
+                permission_action=permission_action,
+            )
         )
     return Lifecycle(name, steps, built, layout=layout)
 

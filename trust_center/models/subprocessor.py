@@ -4,7 +4,7 @@ from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel
 from trust_center.managers import SubprocessorQuerySet
-from trust_center.workflows import PUBLICATION_WORKFLOW_NAME
+from trust_center.lifecycles import PUBLICATION_LIFECYCLE_NAME as PUBLICATION_WORKFLOW_NAME
 
 
 class TrustCenterSubprocessor(BaseModel):
@@ -16,7 +16,7 @@ class TrustCenterSubprocessor(BaseModel):
     """
 
     REFERENCE_PREFIX = "TCSP"
-    WORKFLOW_NAME = PUBLICATION_WORKFLOW_NAME
+    LIFECYCLE_NAME = PUBLICATION_WORKFLOW_NAME
 
     supplier = models.ForeignKey(
         "assets.Supplier",
