@@ -9,6 +9,7 @@ the column portable across PostgreSQL and the SQLite test database.
 import logging
 import math
 import threading
+import time
 
 from django.conf import settings
 from django.core.cache import cache
@@ -26,6 +27,9 @@ logger = logging.getLogger(__name__)
 # idempotent anyway.
 REBUILD_LOCK_KEY = "assistant:semantic:rebuild-lock"
 REBUILD_LOCK_TTL = 1800  # seconds
+# How often the startup rebuild re-probes readiness while the instance is still
+# being set up (first-run onboarding: migrations running, no user yet).
+READINESS_POLL_INTERVAL = 5  # seconds
 
 
 def requirement_text(requirement):
@@ -161,6 +165,57 @@ def rebuild_index_async(*, force=False):
             logger.exception("Semantic index rebuild failed")
         finally:
             cache.delete(REBUILD_LOCK_KEY)
+            # A worker thread owns its own DB connections; close them so they
+            # are not leaked back to the pool.
+            connections.close_all()
+
+    threading.Thread(target=_worker, name="semantic-rebuild", daemon=True).start()
+    return True
+
+
+def rebuild_index_on_startup():
+    """Background rebuild for the server boot hook, deferred until the instance
+    is ready.
+
+    On a fresh database the first-run migrations have not created the index or
+    requirement tables yet (and the migration may still be running during
+    onboarding), so the worker waits until the schema is migrated and the
+    instance is initialised before touching the ORM. The rebuild lock is acquired
+    only once that point is reached, so it is not held during the wait. A
+    brand-new instance has no requirements to index, so this is effectively a
+    no-op until real content exists.
+
+    Returns True if the deferred rebuild thread was started, False if semantic
+    search is disabled.
+    """
+    if not settings.AI_ASSISTANT_SEMANTIC_ENABLED:
+        return False
+
+    def _worker():
+        from core.onboarding import runner
+        from core.onboarding.state import instance_ready
+
+        try:
+            # Wait for the schema and the first user. While an onboarding
+            # migration or seed is in flight, stay off the database entirely (no
+            # readiness probe): on SQLite a stray read contends with the job's
+            # write lock and stalls it.
+            while runner.is_running() or not instance_ready():
+                connections.close_all()
+                time.sleep(READINESS_POLL_INTERVAL)
+            if not cache.add(REBUILD_LOCK_KEY, "1", REBUILD_LOCK_TTL):
+                return
+            try:
+                result = rebuild_index(force=False)
+                logger.info(
+                    "Semantic index rebuilt: %(embedded)s embedded, %(pruned)s pruned",
+                    result,
+                )
+            finally:
+                cache.delete(REBUILD_LOCK_KEY)
+        except Exception:
+            logger.exception("Semantic index rebuild failed")
+        finally:
             # A worker thread owns its own DB connections; close them so they
             # are not leaked back to the pool.
             connections.close_all()
