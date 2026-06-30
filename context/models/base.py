@@ -300,7 +300,26 @@ class BaseModel(ReferenceGeneratorMixin):
             if update_fields is not None:
                 save_kwargs["update_fields"] = set(update_fields) | {"workflow_state"}
 
+    def _ensure_initial_step(self):
+        """On creation, snap ``workflow_state`` to the lifecycle's initial step.
+
+        The field default (``"draft"``) is only valid for lifecycles that have a
+        draft step; a specific lifecycle whose entry step uses a different code
+        (e.g. a risk starting at ``identified``) gets its initial step here, so a
+        freshly created element is never parked on a code outside its lifecycle.
+        Only acts on new rows and never overrides a value that is already a valid
+        step of the lifecycle.
+        """
+        if not self._state.adding:
+            return
+        lifecycle = self.get_lifecycle()
+        if lifecycle is None:
+            return
+        if not self.workflow_state or not lifecycle.has_step(self.workflow_state):
+            self.workflow_state = lifecycle.initial_step.code
+
     def save(self, *args, **kwargs):
+        self._ensure_initial_step()
         self._sync_lifecycle_with_approval(kwargs)
         super().save(*args, **kwargs)
 

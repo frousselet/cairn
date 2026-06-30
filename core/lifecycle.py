@@ -41,6 +41,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from django.utils.module_loading import import_string
+from django.utils.translation import gettext_lazy as _lazy
 
 # --- Step kinds -------------------------------------------------------------
 
@@ -438,3 +439,106 @@ def validate_transition(
             f"A comment is required for the transition '{transition.code}'."
         )
     return transition
+
+
+# --- Legacy port helper -----------------------------------------------------
+
+
+def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="line"):
+    """Build a :class:`Lifecycle` from legacy ``(code, label, flags)`` tuples.
+
+    The single workflow-to-lifecycle porting helper: each app feeds it the same
+    per-state governance data its old ``core.workflow`` machine used, so the
+    standardised lifecycle keeps the identical step codes, labels and governance
+    flags (no ``workflow_state`` data migration is needed).
+
+    ``state_flags_items`` is an iterable of
+    ``(code, label, counts_in_reports, linkable, deletable, is_initial,
+    is_terminal, tone)``. The one ``is_initial`` state becomes the mandatory
+    ``DRAFT`` entry step; every ``is_terminal`` state becomes an ``ARCHIVED``
+    exit step; the rest are ``INTERMEDIATE``. ``transitions`` is an iterable of
+    ``(source, target, label)`` or ``(source, target, label, requires_comment)``.
+    """
+    steps = []
+    for code, label, counts, can_link, can_delete, is_initial, is_terminal, tone in state_flags_items:
+        if is_initial:
+            kind = StepKind.DRAFT
+        elif is_terminal:
+            kind = StepKind.ARCHIVED
+        else:
+            kind = StepKind.INTERMEDIATE
+        steps.append(
+            Step(
+                code,
+                label,
+                kind=kind,
+                counts_in_reports=counts,
+                linkable=can_link,
+                deletable=can_delete,
+                tone=tone,
+            )
+        )
+    built = []
+    for t in transitions:
+        source, target, label = t[0], t[1], t[2]
+        requires_comment = t[3] if len(t) > 3 else False
+        built.append(
+            Transition(target=target, source=source, label=label, requires_comment=requires_comment)
+        )
+    return Lifecycle(name, steps, built, layout=layout)
+
+
+# --- Default lifecycle ------------------------------------------------------
+#
+# The 4-step lifecycle every model runs unless it declares a specific
+# ``LIFECYCLE_NAME``. It mirrors the historical default workflow: only
+# "validated" counts in reports and is linkable, only "draft" can be deleted,
+# "archived" is the exit.
+
+DEFAULT_LIFECYCLE_NAME = "default"
+
+DEFAULT_LIFECYCLE = register_lifecycle(
+    Lifecycle(
+        DEFAULT_LIFECYCLE_NAME,
+        steps=[
+            draft_step(),
+            Step("pending", _lazy("Pending validation"), kind=StepKind.INTERMEDIATE, tone="info"),
+            Step(
+                "validated",
+                _lazy("Validated"),
+                kind=StepKind.INTERMEDIATE,
+                counts_in_reports=True,
+                linkable=True,
+                tone="success",
+            ),
+            archived_step(),
+        ],
+        transitions=[
+            Transition("pending", source="draft", label=_lazy("Submit")),
+            Transition("draft", source="pending", label=_lazy("Send back to draft")),
+            Transition("validated", source="pending", label=_lazy("Validate")),
+            Transition("archived", source="validated", label=_lazy("Archive")),
+        ],
+        layout="line",
+    )
+)
+
+
+def lifecycle_name_for(model_or_label) -> str:
+    """Resolve the lifecycle name assigned to a model.
+
+    Precedence: the model's declared ``LIFECYCLE_NAME`` class attribute, then the
+    default lifecycle. Mirrors the historical ``core.workflow.workflow_name_for``
+    so callers never branch on assignment logic.
+    """
+    name = getattr(model_or_label, "LIFECYCLE_NAME", None)
+    if name and name in LIFECYCLE_REGISTRY:
+        return name
+    return DEFAULT_LIFECYCLE_NAME
+
+
+def resolve_lifecycle(model_or_label) -> Lifecycle:
+    """Return the :class:`Lifecycle` a model runs (its own or the default)."""
+    if isinstance(model_or_label, Lifecycle):
+        return model_or_label
+    return get_lifecycle(lifecycle_name_for(model_or_label))
