@@ -70,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Open redirects closed (CodeQL `py/url-redirection`) : `Referer`-header and `next`-parameter redirects (the approval views in context / assets / compliance / risks, the login view and the OAuth authorize flow) are validated with a shared `core.redirects.safe_redirect_target` guard before redirecting.
 - MCP JSON-RPC internal errors and the batch-create error path no longer echo raw exception text to the client (CodeQL `py/stack-trace-exposure`); the exception is logged server-side and a generic message is returned.
 - Sidebar flyout menu built with DOM APIs instead of `innerHTML` string concatenation (CodeQL `js/xss-through-dom`).
+- Onboarding logo preview validates the data URI before assigning it to `img.src` (CodeQL `js/xss-through-dom`, "DOM text reinterpreted as HTML"): `isSafeImageDataUri()` only accepts a base64 `data:image/...` URI, so a restored hidden-field value can never carry another scheme.
 - CI `Tests` workflow pinned to least-privilege `contents: read` token permissions (CodeQL `actions/missing-workflow-permissions`).
 
 ## [0.32.0] - 2026-06-25

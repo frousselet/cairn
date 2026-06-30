@@ -229,10 +229,15 @@
     var logoInput = document.getElementById('{{ company_form.logo_file.id_for_label }}');
     var logoResized = document.getElementById('id_logo_resized');
     var removeLogo = document.getElementById('id_remove_logo');
+    function isSafeImageDataUri(value) {
+      // Only allow a base64 image data URI before feeding it to img.src, so an
+      // untrusted value (restored hidden field) can never become another scheme.
+      return /^data:image\/(?:png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(value || '');
+    }
     function showLogo(dataUri) {
       var img = document.getElementById('ob-logo-prev');
       var ph = document.getElementById('ob-logo-ph');
-      if (dataUri) {
+      if (dataUri && isSafeImageDataUri(dataUri)) {
         img.src = dataUri; img.style.display = ''; ph.style.display = 'none';
       } else {
         img.removeAttribute('src'); img.style.display = 'none'; ph.style.display = '';
