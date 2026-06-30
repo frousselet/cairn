@@ -20,7 +20,7 @@ class PACSMeasure(BaseModel):
     as a traceability matrix.
     """
 
-    WORKFLOW_NAME = "ebios_pacs_measure"
+    LIFECYCLE_NAME = "ebios_pacs_measure"
 
     REFERENCE_PREFIX = "EPAC"
 

@@ -436,7 +436,7 @@ def _approve_handler(model_class, scope_filtered=True):
         except model_class.DoesNotExist:
             return _error(f"{model_class.__name__} not found.")
         try:
-            if obj.get_lifecycle_state().is_terminal:
+            if obj.is_terminal_state:
                 return _error(
                     f"Cannot approve {model_class.__name__}: it is in the "
                     f"terminal '{obj.workflow_state}' lifecycle state."
@@ -5124,7 +5124,7 @@ def _register_risks_tools(server):
         except Risk.DoesNotExist:
             return _error("Risk not found.")
         from core.workflow import linkable_states
-        if risk.get_lifecycle_state().is_terminal:
+        if risk.is_terminal_state:
             return _error(
                 f"Risk is in the terminal '{risk.workflow_state}' lifecycle state "
                 "and cannot gain new links."
@@ -5261,7 +5261,7 @@ def _register_risks_tools(server):
             return _error("Risk not found.")
         if req_ids:
             from core.workflow import linkable_states
-            if risk.get_lifecycle_state().is_terminal:
+            if risk.is_terminal_state:
                 return _error(
                     f"Risk is in the terminal '{risk.workflow_state}' lifecycle state "
                     "and cannot gain new links."
@@ -5378,7 +5378,7 @@ def _register_risks_tools(server):
         except RiskTreatmentPlan.DoesNotExist:
             return _error("Treatment plan not found.")
         from core.workflow import linkable_states
-        if plan.get_lifecycle_state().is_terminal:
+        if plan.is_terminal_state:
             return _error(
                 f"Treatment plan is in the terminal '{plan.workflow_state}' lifecycle "
                 "state and cannot gain new links."
@@ -5484,7 +5484,7 @@ def _register_risks_tools(server):
             return _error("Treatment plan not found.")
         if ap_ids:
             from core.workflow import linkable_states
-            if plan.get_lifecycle_state().is_terminal:
+            if plan.is_terminal_state:
                 return _error(
                     f"Treatment plan is in the terminal '{plan.workflow_state}' "
                     "lifecycle state and cannot gain new links."

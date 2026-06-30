@@ -67,7 +67,7 @@ class ApprovableAPIMixin:
     def _terminal_state_response(self, obj):
         """A 400 response if the element is in a terminal lifecycle state, else None."""
         try:
-            if obj.get_lifecycle_state().is_terminal:
+            if obj.is_terminal_state:
                 return Response(
                     {"detail": (
                         f"Element is in the terminal '{obj.workflow_state}' "

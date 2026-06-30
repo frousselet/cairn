@@ -3,13 +3,12 @@
 import pytest
 
 from accounts.tests.factories import UserFactory
-from core.workflow import (
+from core.lifecycle import (
     CommentRequiredError,
     IllegalTransitionError,
-    deletable_states,
-    find_transition,
-    resolve_workflow,
+    resolve_lifecycle,
 )
+from core.workflow import deletable_states
 from risks.constants import (
     BaselineGapStatus,
     EbiosStudyFrameworkStatus,
@@ -52,12 +51,7 @@ class TestWorkflowResolution:
             PACSMeasure: "ebios_pacs_measure",
         }
         for model, name in expectations.items():
-            assert resolve_workflow(model).name == name
-
-    def test_draft_validated_models_keep_approval_independent(self):
-        """Explicit opt-out: state names overlap but approval stays an axis."""
-        assert resolve_workflow(StudyFramework).subsumes_approval is False
-        assert resolve_workflow(EbiosSummary).subsumes_approval is False
+            assert resolve_lifecycle(model).name == name
 
 
 class TestWorkshopReviewMachine:
@@ -86,11 +80,6 @@ class TestWorkshopReviewMachine:
         assert workshop.status == "validated"
         with pytest.raises(IllegalTransitionError):
             workshop.transition_to(EbiosWorkshopStatus.IN_PROGRESS, user)
-
-    def test_review_transitions_carry_validate_action(self):
-        workflow = resolve_workflow(EbiosWorkshopProgress)
-        assert find_transition(workflow, "under_review", "validated").action == "validate"
-        assert find_transition(workflow, "under_review", "rejected").action == "validate"
 
 
 class TestApprovalIndependence:

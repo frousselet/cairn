@@ -14,7 +14,7 @@ class BaselineGap(BaseModel):
     a compliance Requirement for traceability.
     """
 
-    WORKFLOW_NAME = "ebios_baseline_gap"
+    LIFECYCLE_NAME = "ebios_baseline_gap"
 
     REFERENCE_PREFIX = "EBGP"
 

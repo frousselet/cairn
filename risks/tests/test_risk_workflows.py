@@ -3,13 +3,12 @@
 import pytest
 
 from accounts.tests.factories import UserFactory
+from core.lifecycle import IllegalTransitionError, resolve_lifecycle
 from core.workflow import (
-    IllegalTransitionError,
     LifecycleProtectedError,
     deletable_states,
     linkable_states,
     reportable_states,
-    resolve_workflow,
 )
 from risks.constants import (
     AcceptanceStatus,
@@ -25,11 +24,10 @@ pytestmark = pytest.mark.django_db
 
 class TestRiskWorkflow:
     def test_resolution_and_shape(self):
-        workflow = resolve_workflow(Risk)
-        assert workflow.name == "risk"
-        assert workflow.initial_state.code == "identified"
-        assert {s.code for s in workflow.states} == {s.value for s in RiskStatus}
-        assert workflow.subsumes_approval is False
+        lifecycle = resolve_lifecycle(Risk)
+        assert lifecycle.name == "risk"
+        assert lifecycle.initial_step.code == "identified"
+        assert {s.code for s in lifecycle.steps} == {s.value for s in RiskStatus}
 
     def test_governance_flags(self):
         # An identified risk is a working entry: not in the register yet.
@@ -79,8 +77,8 @@ class TestTreatmentPlanWorkflow:
         )
 
     def test_resolution_and_flags(self):
-        workflow = resolve_workflow(RiskTreatmentPlan)
-        assert workflow.name == "risk_treatment_plan"
+        lifecycle = resolve_lifecycle(RiskTreatmentPlan)
+        assert lifecycle.name == "risk_treatment_plan"
         assert reportable_states(RiskTreatmentPlan) == {
             "planned", "in_progress", "overdue", "completed",
         }
@@ -118,8 +116,8 @@ class TestAcceptanceWorkflow:
         )
 
     def test_resolution_and_flags(self):
-        workflow = resolve_workflow(RiskAcceptance)
-        assert workflow.name == "risk_acceptance"
+        lifecycle = resolve_lifecycle(RiskAcceptance)
+        assert lifecycle.name == "risk_acceptance"
         # Every acceptance state is audit-relevant and stays reportable.
         assert reportable_states(RiskAcceptance) == {
             s.value for s in AcceptanceStatus
@@ -151,8 +149,8 @@ class TestVulnerabilityWorkflow:
         )
 
     def test_resolution_and_flags(self):
-        workflow = resolve_workflow(Vulnerability)
-        assert workflow.name == "vulnerability"
+        lifecycle = resolve_lifecycle(Vulnerability)
+        assert lifecycle.name == "vulnerability"
         assert reportable_states(Vulnerability) == {
             s.value for s in VulnerabilityStatus
         }

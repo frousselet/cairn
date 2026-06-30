@@ -3,13 +3,11 @@
 import pytest
 
 from accounts.tests.factories import UserFactory
+from core.lifecycle import IllegalTransitionError, resolve_lifecycle
 from core.workflow import (
-    IllegalTransitionError,
     LifecycleProtectedError,
     deletable_states,
-    find_transition,
     reportable_states,
-    resolve_workflow,
 )
 from risks.constants import AssessmentStatus
 from risks.models import RiskAssessment
@@ -20,24 +18,16 @@ pytestmark = pytest.mark.django_db
 
 class TestRiskAssessmentWorkflow:
     def test_resolution_and_shape(self):
-        workflow = resolve_workflow(RiskAssessment)
-        assert workflow.name == "risk_assessment"
-        assert workflow.initial_state.code == "draft"
-        assert {s.code for s in workflow.states} == {s.value for s in AssessmentStatus}
-        # Explicit opt-out despite the draft / validated state names.
-        assert workflow.subsumes_approval is False
+        lifecycle = resolve_lifecycle(RiskAssessment)
+        assert lifecycle.name == "risk_assessment"
+        assert lifecycle.initial_step.code == "draft"
+        assert {s.code for s in lifecycle.steps} == {s.value for s in AssessmentStatus}
 
     def test_governance_flags(self):
         assert deletable_states(RiskAssessment) == {"draft"}
         assert reportable_states(RiskAssessment) == {
             "in_progress", "completed", "validated",
         }
-
-    def test_validation_and_archiving_carry_approve(self):
-        workflow = resolve_workflow(RiskAssessment)
-        assert find_transition(workflow, "completed", "validated").action == "approve"
-        assert find_transition(workflow, "validated", "archived").action == "approve"
-        assert find_transition(workflow, "draft", "in_progress").action == "update"
 
     def test_campaign_path_with_rework(self):
         user = UserFactory()

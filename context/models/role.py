@@ -55,7 +55,7 @@ class Role(ScopedModel):
         Single source of truth shared by the web views and the REST API.
         """
         try:
-            if self.get_lifecycle_state().is_terminal:
+            if self.is_terminal_state:
                 return
         except Exception:
             pass

@@ -19,7 +19,7 @@ class EbiosWorkshopProgress(BaseModel):
     iteration_number=1). New iterations are created via the `iterate` action.
     """
 
-    WORKFLOW_NAME = "ebios_workshop"
+    LIFECYCLE_NAME = "ebios_workshop"
 
     REFERENCE_PREFIX = "EWSP"
 

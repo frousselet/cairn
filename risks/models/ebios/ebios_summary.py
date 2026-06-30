@@ -20,7 +20,7 @@ class EbiosSummary(BaseModel):
     the user controls when the cartography baseline is set.
     """
 
-    WORKFLOW_NAME = "ebios_summary"
+    LIFECYCLE_NAME = "ebios_summary"
 
     REFERENCE_PREFIX = "ESUM"
 
