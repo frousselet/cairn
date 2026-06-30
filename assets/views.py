@@ -175,7 +175,7 @@ class EssentialAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSu
         return self.filter_queryset_advanced(qs)
 
 
-class EssentialAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class EssentialAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = EssentialAsset
     template_name = "assets/essential_asset_detail.html"
     context_object_name = "asset"
@@ -606,7 +606,7 @@ class SupportAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumm
         return self.filter_queryset_advanced(qs)
 
 
-class SupportAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, WorkflowStepperMixin, DetailView):
+class SupportAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ApprovalContextMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = SupportAsset
     template_name = "assets/support_asset_detail.html"
     context_object_name = "asset"

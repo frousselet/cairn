@@ -19,7 +19,7 @@ from context.models.base import ScopedModel
 
 class SupportAsset(ScopedModel):
     REFERENCE_PREFIX = "SAST"
-    WORKFLOW_NAME = "support_asset"
+    LIFECYCLE_NAME = "support_asset"
 
     name = models.CharField(_("Name"), max_length=255)
     description = models.TextField(_("Description"), blank=True, default="")
