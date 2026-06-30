@@ -269,12 +269,28 @@ class LifecycleStepperMixin:
     declaration order, marked done / current / future and flagged actionable
     when it is the target of a transition available to the user) plus the data
     the ``includes/lifecycle_stepper.html`` partial needs. Transitions post to
-    the shared ``workflow:transition`` endpoint (new-engine aware).
+    the shared ``workflow:transition`` endpoint by default; a view whose bespoke
+    transition endpoint carries extra side effects (required-fields gating,
+    audit rows, recalculations) sets ``lifecycle_transition_url_name``.
     """
 
-    def get_context_data(self, **kwargs):
+    lifecycle_transition_url_name = None
+
+    def get_lifecycle_transition_url(self, obj):
         from django.urls import reverse
 
+        if self.lifecycle_transition_url_name:
+            return reverse(self.lifecycle_transition_url_name, kwargs={"pk": obj.pk})
+        return reverse(
+            "workflow:transition",
+            kwargs={
+                "app_label": obj._meta.app_label,
+                "model": obj._meta.model_name,
+                "pk": obj.pk,
+            },
+        )
+
+    def get_context_data(self, **kwargs):
         from core.lifecycle import StepKind
 
         ctx = super().get_context_data(**kwargs)
@@ -295,6 +311,7 @@ class LifecycleStepperMixin:
         else:
             available = obj.available_transitions(user=self.request.user)
         target_to_label = {t.target: t.label for t in available}
+        target_to_requires_comment = {t.target: t.requires_comment for t in available}
         # Explicit step-to-step edges (a wildcard "from any state" is not a flow
         # edge): the inter-step arrow is drawn only where a real transition links
         # two consecutive steps - so the arrows reflect the schema, not the
@@ -317,6 +334,7 @@ class LifecycleStepperMixin:
                 "state": state,
                 "actionable": step.code in target_to_label,
                 "action_label": target_to_label.get(step.code, step.label),
+                "requires_comment": bool(target_to_requires_comment.get(step.code, False)),
             }
 
         # Branch detection : when a single intermediate step forwards (to a
@@ -383,14 +401,7 @@ class LifecycleStepperMixin:
             "lc_current_label": obj.lifecycle_label,
             "lc_entity_label": str(obj._meta.verbose_name),
             "lc_container_id": f"lifecycle-stepper-{obj.pk}",
-            "lc_transition_url": reverse(
-                "workflow:transition",
-                kwargs={
-                    "app_label": obj._meta.app_label,
-                    "model": obj._meta.model_name,
-                    "pk": obj.pk,
-                },
-            ),
+            "lc_transition_url": self.get_lifecycle_transition_url(obj),
         })
         if lifecycle.layout in ("cycle", "graph"):
             import json
@@ -439,6 +450,7 @@ class LifecycleStepperMixin:
                     "state": state_by_code.get(code, "future"),
                     "actionable": code in target_to_label,
                     "action_label": str(target_to_label.get(code, s.label)),
+                    "requires_comment": bool(target_to_requires_comment.get(code, False)),
                 })
 
             graph_edges = []

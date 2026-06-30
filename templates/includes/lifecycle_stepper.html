@@ -7,4 +7,71 @@
   {% else %}
     {% include "components/lifecycle_stepper.html" %}
   {% endif %}
+
+  {# ── Shared transition comment modal (transitions that require a comment) ── #}
+  <div class="modal fade" id="lifecycleCommentModal" tabindex="-1" aria-labelledby="lifecycleCommentModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="lifecycleCommentModalTitle">{% trans "Transition" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <label for="lifecycleCommentField" class="form-label">{% trans "Comment" %}</label>
+          <textarea class="form-control" id="lifecycleCommentField" rows="3"></textarea>
+          <div class="form-text">{% trans "A comment is required for this transition." %}</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="button" class="btn btn-primary" id="lifecycleCommentConfirm">{% trans "Confirm" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function () {
+    if (window.cairnLifecycleTransition) { return; }
+    var modalEl = document.getElementById('lifecycleCommentModal');
+    var field = document.getElementById('lifecycleCommentField');
+    var confirmBtn = document.getElementById('lifecycleCommentConfirm');
+    var titleEl = document.getElementById('lifecycleCommentModalTitle');
+    var pending = null;  // { form, commentInput }
+
+    // Programmatic submit helper shared by the graph stepper: when the
+    // transition requires a comment, collect it in the modal first, otherwise
+    // submit immediately.
+    window.cairnLifecycleTransition = function (form, requiresComment, title, commentInput) {
+      if (!requiresComment) { form.submit(); return; }
+      pending = { form: form, commentInput: commentInput || form.querySelector('[data-lc-comment]') };
+      field.value = '';
+      field.classList.remove('is-invalid');
+      titleEl.textContent = title || '{% trans "Transition" %}';
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    };
+
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', function () {
+        if (!pending) { return; }
+        if (!field.value.trim()) { field.classList.add('is-invalid'); field.focus(); return; }
+        if (pending.commentInput) { pending.commentInput.value = field.value.trim(); }
+        var form = pending.form;
+        pending = null;
+        bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        form.dataset.lcConfirmed = '1';
+        form.submit();
+      });
+    }
+
+    // The line / cycle steppers use one <form> per actionable pill. Intercept
+    // the submit of any comment-requiring pill form and route it through the
+    // modal (the graph stepper calls cairnLifecycleTransition directly).
+    document.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form.matches || !form.matches('.stepper__pill-form[data-lc-requires-comment]')) { return; }
+      if (form.dataset.lcConfirmed) { return; }
+      e.preventDefault();
+      window.cairnLifecycleTransition(form, true, form.getAttribute('data-lc-title') || '', null);
+    });
+  })();
+  </script>
 {% endif %}

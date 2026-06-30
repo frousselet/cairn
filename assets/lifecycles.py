@@ -330,7 +330,7 @@ ESSENTIAL_ASSET_LIFECYCLE = register_lifecycle(
         ESSENTIAL_ASSET_LIFECYCLE_NAME,
         _ESSENTIAL_ASSET_STEPS,
         _ESSENTIAL_ASSET_TRANSITIONS,
-        layout="graph",
+        layout="line",
     )
 )
 
@@ -373,6 +373,6 @@ SUPPORT_ASSET_LIFECYCLE = register_lifecycle(
         SUPPORT_ASSET_LIFECYCLE_NAME,
         _SUPPORT_ASSET_STEPS,
         _SUPPORT_ASSET_TRANSITIONS,
-        layout="graph",
+        layout="line",
     )
 )

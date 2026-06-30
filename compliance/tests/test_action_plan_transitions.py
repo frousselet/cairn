@@ -75,13 +75,13 @@ class TestActionPlanTransitions:
     def test_invalid_transition_raises(self):
         user = UserFactory()
         ap = ComplianceActionPlanFactory(status=ActionPlanStatus.NEW)
-        with pytest.raises(ValueError, match="Cannot transition"):
+        with pytest.raises(ValueError, match="Cannot move"):
             ap.transition_to(ActionPlanStatus.CLOSED, user)
 
     def test_invalid_skip_transition(self):
         user = UserFactory()
         ap = ComplianceActionPlanFactory(status=ActionPlanStatus.NEW)
-        with pytest.raises(ValueError, match="Cannot transition"):
+        with pytest.raises(ValueError, match="Cannot move"):
             ap.transition_to(ActionPlanStatus.TO_VALIDATE, user)
 
 
@@ -145,13 +145,13 @@ class TestCancellation:
     def test_cannot_cancel_from_closed(self):
         user = UserFactory()
         ap = ComplianceActionPlanFactory(status=ActionPlanStatus.CLOSED)
-        with pytest.raises(ValueError, match="Cannot transition"):
+        with pytest.raises(ValueError, match="Cannot move"):
             ap.transition_to(ActionPlanStatus.CANCELLED, user)
 
     def test_cannot_cancel_from_cancelled(self):
         user = UserFactory()
         ap = ComplianceActionPlanFactory(status=ActionPlanStatus.CANCELLED)
-        with pytest.raises(ValueError, match="Cannot transition"):
+        with pytest.raises(ValueError, match="Cannot move"):
             ap.transition_to(ActionPlanStatus.CANCELLED, user)
 
 

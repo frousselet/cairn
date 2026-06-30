@@ -17,5 +17,5 @@ class ComplianceConfig(AppConfig):
         # applicability (the through model is only resolvable once apps load).
         signals.connect_risk_link_signal()
 
-        # Register the module's specific lifecycle workflows (action plan).
-        from compliance import workflows  # noqa: F401
+        # Register the module's standardised lifecycles (action plan, assessment).
+        from compliance import lifecycles  # noqa: F401
