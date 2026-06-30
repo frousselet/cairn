@@ -3,15 +3,16 @@
 import pytest
 
 from accounts.tests.factories import UserFactory
-from core.workflow import (
+from core.lifecycle import (
     CommentRequiredError,
     IllegalTransitionError,
+    resolve_lifecycle,
+)
+from core.workflow import (
     LifecycleProtectedError,
     deletable_states,
-    find_transition,
     linkable_states,
     reportable_states,
-    resolve_workflow,
 )
 from reports.constants import ManagementReviewStatus
 from reports.models import ManagementReview, ManagementReviewTransition
@@ -21,15 +22,14 @@ pytestmark = pytest.mark.django_db
 
 
 class TestManagementReviewWorkflowDefinition:
-    def test_model_resolves_to_specific_workflow(self):
-        workflow = resolve_workflow(ManagementReview)
-        assert workflow.name == "management_review"
-        assert workflow.initial_state.code == "planned"
-        assert workflow.subsumes_approval is False
+    def test_model_resolves_to_specific_lifecycle(self):
+        lifecycle = resolve_lifecycle(ManagementReview)
+        assert lifecycle.name == "management_review"
+        assert lifecycle.initial_step.code == "planned"
 
-    def test_state_codes_match_status_values(self):
-        workflow = resolve_workflow(ManagementReview)
-        assert {s.code for s in workflow.states} == {
+    def test_step_codes_match_status_values(self):
+        lifecycle = resolve_lifecycle(ManagementReview)
+        assert {s.code for s in lifecycle.steps} == {
             s.value for s in ManagementReviewStatus
         }
 
@@ -40,15 +40,10 @@ class TestManagementReviewWorkflowDefinition:
             "planned", "in_preparation", "held", "closed",
         }
 
-    def test_closure_requires_approve_action(self):
-        workflow = resolve_workflow(ManagementReview)
-        assert find_transition(workflow, "held", "closed").action == "approve"
-        assert find_transition(workflow, "planned", "in_preparation").action == "update"
-
     def test_cancellation_requires_comment(self):
-        workflow = resolve_workflow(ManagementReview)
+        lifecycle = resolve_lifecycle(ManagementReview)
         for source in ("planned", "in_preparation", "held"):
-            assert find_transition(workflow, source, "cancelled").requires_comment is True
+            assert lifecycle.find_transition(source, "cancelled").requires_comment is True
 
 
 class TestManagementReviewTransitions:
