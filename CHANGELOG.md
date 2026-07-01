@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.33.3] - 2026-07-01
+
 ### Fixed
 
 - Static files are now served by the ASGI app via WhiteNoise, so they load under `DEBUG=False` behind uvicorn without a reverse proxy (the previous setup returned `text/html` 404s that `nosniff` blocked).
@@ -1236,6 +1238,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.33.3]: https://github.com/frousselet/cairn/compare/v0.33.2...v0.33.3
 [0.33.2]: https://github.com/frousselet/cairn/compare/v0.33.1...v0.33.2
 [0.33.1]: https://github.com/frousselet/cairn/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/frousselet/cairn/compare/v0.32.0...v0.33.0
