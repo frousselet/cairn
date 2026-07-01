@@ -18,55 +18,10 @@ from django.views.generic import ListView, UpdateView, View
 from core.lifecycle import (
     LIFECYCLE_REGISTRY,
     LifecycleError,
-    StepKind,
     lifecycle_from_json,
     lifecycle_to_json,
 )
 from core.models import LifecycleDefinition
-
-
-def lifecycle_preview_context(lifecycle, *, container_id):
-    """Build the (non-interactive) dagre-renderer context for a preview graph."""
-    archived = {s.code for s in lifecycle.steps if s.kind == StepKind.ARCHIVED}
-    main_codes = [s.code for s in lifecycle.steps if s.kind != StepKind.ARCHIVED]
-    flow_pos = {c: i for i, c in enumerate(main_codes)}
-    current = lifecycle.initial_step.code
-    nodes = [
-        {
-            "id": s.code,
-            "label": str(s.label),
-            "tone": s.tone,
-            "kind": s.kind.value,
-            "state": "current" if s.code == current else "future",
-            "actionable": False,
-            "action_label": str(s.label),
-            "requires_comment": False,
-        }
-        for s in lifecycle.steps
-    ]
-    edges = []
-    for t in lifecycle.transitions:
-        if t.target in archived:
-            kind = "exit"
-        elif t.source in archived:
-            kind = "restore"
-        elif (
-            t.source in flow_pos
-            and t.target in flow_pos
-            and flow_pos[t.target] <= flow_pos[t.source]
-        ):
-            kind = "loop"
-        else:
-            kind = "forward"
-        edges.append({"source": t.source, "target": t.target, "kind": kind, "label": str(t.label)})
-    return {
-        "lc_enabled": True,
-        "lc_layout": "graph",
-        "lc_graph_nodes": json.dumps(nodes),
-        "lc_graph_edges": json.dumps(edges),
-        "lc_container_id": container_id,
-        "lc_transition_url": "#",
-    }
 
 
 class LifecycleDefinitionForm(forms.ModelForm):
@@ -147,13 +102,21 @@ class LifecycleDefinitionUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        try:
-            lifecycle = self.object.build()
-            ctx["preview"] = lifecycle_preview_context(
-                lifecycle, container_id=f"lc-preview-{self.object.name}"
-            )
-        except Exception:
-            ctx["preview"] = None
+        # Feed the graphical editor the current definition + the vocabularies it
+        # offers in its dropdowns (step kinds, tones).
+        source = self.object.definition
+        if self.request.method == "POST":
+            raw = self.request.POST.get("definition_text")
+            if raw:
+                try:
+                    source = json.loads(raw)
+                except json.JSONDecodeError:
+                    source = self.object.definition
+        ctx["definition_json"] = json.dumps(source)
+        ctx["step_kinds"] = ["draft", "intermediate", "archived"]
+        ctx["tones"] = [
+            "neutral", "secondary", "info", "primary", "success", "warning", "danger", "dark", "muted",
+        ]
         return ctx
 
 
