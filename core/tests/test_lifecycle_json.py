@@ -17,6 +17,72 @@ from core.lifecycle import (
 from core.models import LifecycleDefinition
 
 
+def _reachable_from_draft(lc):
+    from collections import defaultdict, deque
+
+    from core.lifecycle import ANY
+
+    adj = defaultdict(list)
+    for t in lc.transitions:
+        if t.source != ANY:
+            adj[t.source].append(t.target)
+    seen = {lc.initial_step.code}
+    dq = deque(seen)
+    while dq:
+        for m in adj[dq.popleft()]:
+            if m not in seen:
+                seen.add(m)
+                dq.append(m)
+    seen |= {t.target for t in lc.transitions if t.source == ANY}
+    return seen
+
+
+def _can_reach_archived(lc):
+    from collections import defaultdict, deque
+
+    from core.lifecycle import ANY, StepKind
+
+    radj = defaultdict(list)
+    has_any = False
+    for t in lc.transitions:
+        if t.source == ANY:
+            has_any = True
+        else:
+            radj[t.target].append(t.source)
+    if has_any:
+        return {s.code for s in lc.steps}
+    archived = {s.code for s in lc.steps if s.kind == StepKind.ARCHIVED}
+    seen = set(archived)
+    dq = deque(archived)
+    while dq:
+        for m in radj[dq.popleft()]:
+            if m not in seen:
+                seen.add(m)
+                dq.append(m)
+    return seen
+
+
+@pytest.mark.parametrize("name", sorted(LIFECYCLE_REGISTRY))
+def test_every_lifecycle_satisfies_the_framework_invariants(name):
+    """Framework guarantee: every registered lifecycle is a well-formed graph.
+
+    - a single Draft entry and at least one Archived exit (enforced at build);
+    - every step is reachable from Draft;
+    - every step can reach an Archived exit (no dead ends);
+    - it survives a JSON round-trip unchanged.
+    Prevents any lifecycle (built-in or future) from shipping an orphan step, a
+    dead end or a lossy definition.
+    """
+    lc = LIFECYCLE_REGISTRY[name]
+    codes = {s.code for s in lc.steps}
+    assert lc.initial_step.code, "must have a Draft entry"
+    assert lc.archived_steps, "must have an Archived exit"
+    assert codes - _reachable_from_draft(lc) == set(), "orphan step(s) unreachable from Draft"
+    assert codes - _can_reach_archived(lc) == set(), "step(s) cannot reach an Archived exit"
+    rebuilt = lifecycle_from_json(name, lifecycle_to_json(lc))
+    assert [s.code for s in rebuilt.steps] == [s.code for s in lc.steps]
+
+
 def test_round_trip_preserves_every_registered_lifecycle():
     """to_json -> from_json reproduces each built-in lifecycle exactly."""
     for name, lc in LIFECYCLE_REGISTRY.items():

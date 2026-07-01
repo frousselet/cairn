@@ -91,7 +91,7 @@
 {{ step_kinds|json_script:"lc-kinds" }}
 {{ tones|json_script:"lc-tones" }}
 
-<script src="{% static 'js/lifecycle_graph.js' %}"></script>
+<script src="{% static_v 'js/lifecycle_graph.js' %}"></script>
 <script>
 (function () {
   var form = document.getElementById('lc-edit-form');
