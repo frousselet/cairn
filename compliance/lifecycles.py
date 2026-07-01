@@ -84,7 +84,7 @@ ACTION_PLAN_LIFECYCLE = register_lifecycle(
         ACTION_PLAN_LIFECYCLE_NAME,
         _action_plan_steps(),
         _action_plan_transitions(),
-        layout="line",
+        layout="graph",
     )
 )
 
@@ -93,6 +93,6 @@ ASSESSMENT_LIFECYCLE = register_lifecycle(
         ASSESSMENT_LIFECYCLE_NAME,
         _assessment_steps(),
         _assessment_transitions(),
-        layout="line",
+        layout="graph",
     )
 )

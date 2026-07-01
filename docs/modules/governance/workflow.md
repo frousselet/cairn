@@ -84,8 +84,17 @@ machinery.
 ## Specific lifecycles
 
 The registered specific lifecycles preserve the operational semantics that the
-4-step default does not cover. Step codes equal the historical status values, so no
-`workflow_state` data migration was needed.
+4-step default does not cover. Their domain step codes equal the historical status
+values.
+
+**Universal Draft / Archived bookends.** Every lifecycle is bookended by the generic
+`draft` entry and `archived` exit (the scope / supplier pattern), so every stepper
+graph starts at **Draft** and ends at **Archived**. When a specific lifecycle's
+domain states do not already provide `draft` / `archived`, the port helper prepends /
+appends them and auto-wires `draft -> <domain initial>`, `any -> archived` and
+`archived -> draft` (restore). A new element therefore starts in Draft; the domain's
+former initial / terminal states (identified, closed, planned, ...) become ordinary
+steps that keep their governance flags and lead into the Archived exit.
 
 | Lifecycle | Model | Highlights |
 |---|---|---|

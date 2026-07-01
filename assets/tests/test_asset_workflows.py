@@ -16,26 +16,30 @@ class TestEssentialAssetLifecycle:
     def test_model_resolves_to_specific_lifecycle(self):
         lifecycle = resolve_lifecycle(EssentialAsset)
         assert lifecycle.name == "essential_asset"
-        assert lifecycle.initial_step.code == "identified"
+        # Generic Draft entry bookends every lifecycle.
+        assert lifecycle.initial_step.code == "draft"
 
     def test_step_codes_match_status_values(self):
         lifecycle = resolve_lifecycle(EssentialAsset)
-        assert {s.code for s in lifecycle.steps} == {s.value for s in EssentialAssetStatus}
+        assert {s.code for s in lifecycle.steps} == {
+            s.value for s in EssentialAssetStatus
+        } | {"draft", "archived"}
 
     def test_governance_flags(self):
         lifecycle = get_lifecycle("essential_asset")
-        assert lifecycle.deletable_step_codes == {"identified"}
+        assert lifecycle.deletable_step_codes == {"draft", "identified"}
         assert lifecycle.linkable_step_codes == {"identified", "active", "under_review"}
         # Decommissioned assets stay in reports (audit history).
         assert lifecycle.reportable_step_codes == {s.value for s in EssentialAssetStatus}
 
     def test_creation_aligns_state(self):
         asset = EssentialAssetFactory()
-        assert asset.workflow_state == asset.status == "identified"
+        assert asset.workflow_state == asset.status == "draft"
 
     def test_lifecycle_path(self):
         user = UserFactory()
         asset = EssentialAssetFactory()
+        asset.transition_to(EssentialAssetStatus.IDENTIFIED, user)  # leave Draft
         asset.transition_to(EssentialAssetStatus.ACTIVE, user)
         asset.transition_to(EssentialAssetStatus.UNDER_REVIEW, user)
         asset.transition_to(EssentialAssetStatus.ACTIVE, user)
@@ -63,15 +67,18 @@ class TestSupportAssetLifecycle:
     def test_model_resolves_to_specific_lifecycle(self):
         lifecycle = resolve_lifecycle(SupportAsset)
         assert lifecycle.name == "support_asset"
-        assert lifecycle.initial_step.code == "active"  # model creation default
+        # Generic Draft entry bookends every lifecycle.
+        assert lifecycle.initial_step.code == "draft"
 
     def test_step_codes_match_status_values(self):
         lifecycle = resolve_lifecycle(SupportAsset)
-        assert {s.code for s in lifecycle.steps} == {s.value for s in SupportAssetStatus}
+        assert {s.code for s in lifecycle.steps} == {
+            s.value for s in SupportAssetStatus
+        } | {"draft", "archived"}
 
     def test_governance_flags(self):
         lifecycle = get_lifecycle("support_asset")
-        assert lifecycle.deletable_step_codes == {"in_stock", "active"}
+        assert lifecycle.deletable_step_codes == {"draft", "in_stock", "active"}
         # Consistent with RS-04: no new links on decommissioned / disposed.
         assert lifecycle.linkable_step_codes == {
             "in_stock", "deployed", "active", "under_maintenance",
@@ -80,7 +87,8 @@ class TestSupportAssetLifecycle:
 
     def test_disposal_path(self):
         user = UserFactory()
-        asset = SupportAssetFactory()  # active
+        asset = SupportAssetFactory()  # draft
+        asset.transition_to(SupportAssetStatus.ACTIVE, user)  # leave Draft
         asset.transition_to(SupportAssetStatus.UNDER_MAINTENANCE, user)
         asset.transition_to(SupportAssetStatus.ACTIVE, user)
         asset.transition_to(SupportAssetStatus.DECOMMISSIONED, user)

@@ -20,15 +20,18 @@ class TestActionPlanLifecycleDefinition:
     def test_model_resolves_to_specific_lifecycle(self):
         lifecycle = resolve_lifecycle(ComplianceActionPlan)
         assert lifecycle.name == "action_plan"
-        assert lifecycle.initial_step.code == "new"
+        # Generic Draft entry bookends every lifecycle.
+        assert lifecycle.initial_step.code == "draft"
 
     def test_step_codes_match_status_values(self):
         lifecycle = resolve_lifecycle(ComplianceActionPlan)
-        assert {s.code for s in lifecycle.steps} == {s.value for s in ActionPlanStatus}
+        assert {s.code for s in lifecycle.steps} == {
+            s.value for s in ActionPlanStatus
+        } | {"draft", "archived"}
 
     def test_governance_flags(self):
         lifecycle = get_lifecycle("action_plan")
-        assert lifecycle.deletable_step_codes == {"new", "to_define"}
+        assert lifecycle.deletable_step_codes == {"draft", "new", "to_define"}
         assert lifecycle.linkable_step_codes == {
             "to_implement", "implementation_to_validate", "validated",
         }
@@ -39,7 +42,9 @@ class TestActionPlanLifecycleDefinition:
 
     def test_terminal_states(self):
         lifecycle = resolve_lifecycle(ComplianceActionPlan)
-        assert {s.code for s in lifecycle.steps if s.is_archived} == {"closed", "cancelled"}
+        # The generic Archived exit is the single terminal; the domain's own
+        # closed / cancelled outcomes lead into it.
+        assert {s.code for s in lifecycle.steps if s.is_archived} == {"archived"}
 
     def test_refusals_require_a_comment(self):
         lifecycle = resolve_lifecycle(ComplianceActionPlan)

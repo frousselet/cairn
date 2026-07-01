@@ -233,7 +233,7 @@ def _build(name, status_enum, flags, transition_pairs):
         transitions.append(
             (source.value, target.value, status_enum(target).label, options.get("requires_comment", False))
         )
-    return lifecycle_from_state_flags(name, steps, transitions, layout="line")
+    return lifecycle_from_state_flags(name, steps, transitions, layout="graph")
 
 
 _DEFINITIONS = [

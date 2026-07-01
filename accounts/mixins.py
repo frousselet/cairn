@@ -224,22 +224,30 @@ class LifecycleStepperMixin:
                     "requires_comment": bool(target_to_requires_comment.get(code, False)),
                 })
 
+            # Edge classification is keyed off the full main-flow order (Draft +
+            # intermediates) and the Archived step kind, NOT the intermediates
+            # alone : a send-back to Draft (pending -> draft) is a loop, and an
+            # archive edge from a specific step (validated -> archived) is an
+            # exit - both used to be mis-read as forward, which turned the source
+            # into a spurious two-target branch and overlapped the nodes.
+            archived_codes = {s.code for s in lifecycle.steps if s.kind == StepKind.ARCHIVED}
+            flow_pos = {code: i for i, code in enumerate(main_codes)}
             graph_edges = []
             for t in lifecycle.transitions:
-                if t.source == ANY:
-                    kind = "exit"                         # any -> archived
-                    source = ANY
-                elif t.source == "archived":
-                    kind = "restore"                      # archived -> draft
+                if t.target in archived_codes:
+                    kind = "exit"                         # (any or a step) -> archived
+                    source = t.source
+                elif t.source in archived_codes:
+                    kind = "restore"                      # archived -> earlier step
                     source = t.source
                 elif (
-                    t.source in pos
-                    and t.target in pos
-                    and pos[t.target] <= pos[t.source]
+                    t.source in flow_pos
+                    and t.target in flow_pos
+                    and flow_pos[t.target] <= flow_pos[t.source]
                 ):
-                    # Any back-edge among the intermediates is a loop. There may
-                    # be several (e.g. each terminal branch outcome loops back to
-                    # an earlier step) - they are all classified and drawn.
+                    # A back-edge along the main flow (including the send-back to
+                    # Draft) is a loop, never a forward branch. Several may exist
+                    # (each terminal branch outcome looping back) - all are drawn.
                     kind = "loop"
                     source = t.source
                 else:

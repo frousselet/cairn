@@ -170,7 +170,7 @@ class TestStepperRollout:
         assert response.status_code == 200
         assert "lifecycle-stepper-" in response.content.decode()
         steps = response.context["lc_steps"]
-        assert steps[0]["value"] == "identified"
+        assert steps[0]["value"] == "draft"
         assert steps[0]["state"] == "current"
 
     def test_assessment_detail_uses_bespoke_transition_url(self):

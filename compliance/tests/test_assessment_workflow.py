@@ -23,7 +23,11 @@ class TestAssessmentLifecycleDefinition:
 
     def test_step_codes_match_status_values(self):
         lifecycle = resolve_lifecycle(ComplianceAssessment)
-        assert {s.code for s in lifecycle.steps} == {s.value for s in AssessmentStatus}
+        # The domain states already include "draft"; the generic Archived exit
+        # is appended.
+        assert {s.code for s in lifecycle.steps} == {
+            s.value for s in AssessmentStatus
+        } | {"archived"}
 
     def test_governance_flags(self):
         lifecycle = get_lifecycle("compliance_assessment")
@@ -35,7 +39,8 @@ class TestAssessmentLifecycleDefinition:
 
     def test_terminal_states(self):
         lifecycle = resolve_lifecycle(ComplianceAssessment)
-        assert {s.code for s in lifecycle.steps if s.is_archived} == {"closed", "cancelled"}
+        # The generic Archived exit is the single terminal.
+        assert {s.code for s in lifecycle.steps if s.is_archived} == {"archived"}
 
 
 class TestAssessmentStateSync:

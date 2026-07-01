@@ -25,16 +25,17 @@ class TestManagementReviewWorkflowDefinition:
     def test_model_resolves_to_specific_lifecycle(self):
         lifecycle = resolve_lifecycle(ManagementReview)
         assert lifecycle.name == "management_review"
-        assert lifecycle.initial_step.code == "planned"
+        # Generic Draft entry bookends every lifecycle.
+        assert lifecycle.initial_step.code == "draft"
 
     def test_step_codes_match_status_values(self):
         lifecycle = resolve_lifecycle(ManagementReview)
         assert {s.code for s in lifecycle.steps} == {
             s.value for s in ManagementReviewStatus
-        }
+        } | {"draft", "archived"}
 
     def test_governance_flags(self):
-        assert deletable_states(ManagementReview) == {"planned"}
+        assert deletable_states(ManagementReview) == {"draft", "planned"}
         assert linkable_states(ManagementReview) == set()
         assert reportable_states(ManagementReview) == {
             "planned", "in_preparation", "held", "closed",

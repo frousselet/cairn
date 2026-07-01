@@ -26,8 +26,11 @@ class TestRiskWorkflow:
     def test_resolution_and_shape(self):
         lifecycle = resolve_lifecycle(Risk)
         assert lifecycle.name == "risk"
-        assert lifecycle.initial_step.code == "identified"
-        assert {s.code for s in lifecycle.steps} == {s.value for s in RiskStatus}
+        # Every lifecycle is bookended by the generic Draft entry / Archived exit.
+        assert lifecycle.initial_step.code == "draft"
+        assert {s.code for s in lifecycle.steps} == {
+            s.value for s in RiskStatus
+        } | {"draft", "archived"}
 
     def test_governance_flags(self):
         # An identified risk is a working entry: not in the register yet.
@@ -37,12 +40,13 @@ class TestRiskWorkflow:
         assert linkable_states(Risk) == {
             s.value for s in RiskStatus
         } - {"identified", "closed"}
-        assert deletable_states(Risk) == {"identified"}
+        assert deletable_states(Risk) == {"draft", "identified"}
 
     def test_process_path(self):
         user = UserFactory()
         risk = RiskFactory()
         for target in (
+            RiskStatus.IDENTIFIED,
             RiskStatus.ANALYZED, RiskStatus.EVALUATED,
             RiskStatus.TREATMENT_PLANNED, RiskStatus.TREATMENT_IN_PROGRESS,
             RiskStatus.TREATED, RiskStatus.MONITORING,
@@ -82,7 +86,7 @@ class TestTreatmentPlanWorkflow:
         assert reportable_states(RiskTreatmentPlan) == {
             "planned", "in_progress", "overdue", "completed",
         }
-        assert deletable_states(RiskTreatmentPlan) == {"planned"}
+        assert deletable_states(RiskTreatmentPlan) == {"draft", "planned"}
 
     def test_overdue_auto_flip_syncs_workflow_state(self):
         from datetime import timedelta
@@ -111,6 +115,7 @@ class TestTreatmentPlanWorkflow:
 
 class TestAcceptanceWorkflow:
     def _acceptance(self, **kwargs):
+        kwargs.setdefault("status", AcceptanceStatus.ACTIVE)
         return RiskAcceptance.objects.create(
             risk=RiskFactory(), justification="Residual risk acceptable", **kwargs
         )
@@ -122,7 +127,7 @@ class TestAcceptanceWorkflow:
         assert reportable_states(RiskAcceptance) == {
             s.value for s in AcceptanceStatus
         }
-        assert deletable_states(RiskAcceptance) == {"active"}
+        assert deletable_states(RiskAcceptance) == {"draft", "active"}
 
     def test_renewal_cycle(self):
         user = UserFactory()
@@ -144,6 +149,7 @@ class TestAcceptanceWorkflow:
 
 class TestVulnerabilityWorkflow:
     def _vulnerability(self, **kwargs):
+        kwargs.setdefault("status", VulnerabilityStatus.IDENTIFIED)
         return Vulnerability.objects.create(
             name="Unpatched server", description="CVE pending", **kwargs
         )
@@ -154,7 +160,7 @@ class TestVulnerabilityWorkflow:
         assert reportable_states(Vulnerability) == {
             s.value for s in VulnerabilityStatus
         }
-        assert deletable_states(Vulnerability) == {"identified"}
+        assert deletable_states(Vulnerability) == {"draft", "identified"}
 
     def test_false_positive_direct_close(self):
         user = UserFactory()

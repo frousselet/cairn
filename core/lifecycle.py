@@ -456,7 +456,7 @@ def validate_transition(
 # --- Legacy port helper -----------------------------------------------------
 
 
-def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="line"):
+def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="graph"):
     """Build a :class:`Lifecycle` from legacy ``(code, label, flags)`` tuples.
 
     The single workflow-to-lifecycle porting helper: each app feeds it the same
@@ -466,17 +466,32 @@ def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="
 
     ``state_flags_items`` is an iterable of
     ``(code, label, counts_in_reports, linkable, deletable, is_initial,
-    is_terminal, tone)``. The one ``is_initial`` state becomes the mandatory
-    ``DRAFT`` entry step; every ``is_terminal`` state becomes an ``ARCHIVED``
-    exit step; the rest are ``INTERMEDIATE``. ``transitions`` is an iterable of
-    ``(source, target, label)``, ``(source, target, label, requires_comment)`` or
+    is_terminal, tone)``. Every lifecycle is bookended by the generic **Draft**
+    entry and **Archived** exit (the scope / supplier pattern): when the domain
+    states do not already provide a ``"draft"`` / ``"archived"`` code, a generic
+    :func:`draft_step` / :func:`archived_step` is prepended / appended, and the
+    engine auto-wires ``draft -> <initial domain state>``, ``any -> archived``
+    and ``archived -> draft`` (restore). Domain states (including the former
+    initial / terminal ones) are ``INTERMEDIATE`` and keep their governance
+    flags. ``transitions`` is an iterable of ``(source, target, label)``,
+    ``(source, target, label, requires_comment)`` or
     ``(source, target, label, requires_comment, permission_action)``.
     """
+    from django.utils.translation import gettext_lazy as _
+
+    items = list(state_flags_items)
+    codes = {it[0] for it in items}
+    has_draft = "draft" in codes
+    has_archived = "archived" in codes
+
     steps = []
-    for code, label, counts, can_link, can_delete, is_initial, is_terminal, tone in state_flags_items:
-        if is_initial:
+    if not has_draft:
+        steps.append(draft_step())
+    initial_codes = []
+    for code, label, counts, can_link, can_delete, is_initial, is_terminal, tone in items:
+        if code == "draft":
             kind = StepKind.DRAFT
-        elif is_terminal:
+        elif code == "archived":
             kind = StepKind.ARCHIVED
         else:
             kind = StepKind.INTERMEDIATE
@@ -491,7 +506,16 @@ def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="
                 tone=tone,
             )
         )
+        if is_initial and code != "draft":
+            initial_codes.append(code)
+    if not has_archived:
+        steps.append(archived_step())
+
     built = []
+    if not has_draft:
+        # Wire the generic Draft entry into the domain's own initial state(s).
+        for ic in initial_codes:
+            built.append(Transition(target=ic, source="draft", label=_("Start")))
     for t in transitions:
         source, target, label = t[0], t[1], t[2]
         requires_comment = t[3] if len(t) > 3 else False
@@ -505,6 +529,10 @@ def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="
                 permission_action=permission_action,
             )
         )
+    if not has_archived:
+        # Universal Archived exit (reachable from any state) + restore to Draft.
+        built.append(Transition(target="archived", source=ANY, label=_("Archive")))
+        built.append(Transition(target="draft", source="archived", label=_("Restore")))
     return Lifecycle(name, steps, built, layout=layout)
 
 
@@ -539,7 +567,7 @@ DEFAULT_LIFECYCLE = register_lifecycle(
             Transition("validated", source="pending", label=_lazy("Validate"), permission_action="approve"),
             Transition("archived", source="validated", label=_lazy("Archive"), permission_action="approve"),
         ],
-        layout="line",
+        layout="graph",
     )
 )
 
