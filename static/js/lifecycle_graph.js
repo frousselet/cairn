@@ -83,9 +83,19 @@
       outEdges.push({ points: [dot, { x: t.x, y: t.y - t.h / 2 }], kind: "exit", label: "", available: e.available, source: null, target: e.target });
     });
     // Edges touching a detached node (e.g. restore archived -> draft) as a curve.
+    // Trim the endpoints to the node borders so the arrowhead is not hidden
+    // under the node (dagre already trims the main edges).
+    function trimToRect(node, toward) {
+      var dx = toward.x - node.x, dy = toward.y - node.y;
+      if (!dx && !dy) { return { x: node.x, y: node.y }; }
+      var hw = node.w / 2 + 2, hh = H / 2 + 2;
+      var k = Math.min(dx ? hw / Math.abs(dx) : Infinity, dy ? hh / Math.abs(dy) : Infinity);
+      return { x: node.x + dx * k, y: node.y + dy * k };
+    }
     incident.forEach(function (e) {
       var s = pos[e.source], t = pos[e.target]; if (!s || !t) { return; }
-      outEdges.push({ points: [{ x: s.x, y: s.y }, { x: (s.x + t.x) / 2, y: Math.max(s.y, t.y) + 26 }, { x: t.x, y: t.y }], kind: e.kind || "restore", label: e.label, available: e.available, source: e.source, target: e.target });
+      var mid = { x: (s.x + t.x) / 2, y: Math.max(s.y, t.y) + 26 };
+      outEdges.push({ points: [trimToRect(s, mid), mid, trimToRect(t, mid)], kind: e.kind || "restore", label: e.label, available: e.available, source: e.source, target: e.target });
     });
 
     // Normalize so nothing sits at a negative coordinate.
@@ -122,7 +132,7 @@
     var col = toneColor(n.tone);
     var muted = token("--text-muted", "#94a3b8");
     var surface = token("--surface", "#ffffff");
-    var s = { fill: surface, text: token("--text", "#0f172a"), stroke: col, dash: null, weight: 1.6 };
+    var s = { fill: surface, text: token("--text-primary", "#0f172a"), stroke: col, dash: null, weight: 1.6 };
     if (opts.mode === "editor") {
       // A definition : every step is editable, so all are solid-outlined in tone.
       if (n.id === opts.selected || n.id === opts.connectFrom) { s.stroke = token("--bs-success", "#16a34a"); s.weight = 2.5; }
