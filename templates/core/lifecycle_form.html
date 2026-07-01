@@ -1,55 +1,337 @@
 {% extends "base.html" %}
-{% load i18n ui %}
+{% load i18n ui static %}
 {% block title %}{{ object.label|default:object.name }} - {% trans "Lifecycle" %} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header object.label|default:object.name subtitle=_("Edit the JSON definition. Draft is always the entry, Archived the exit; the graph below updates on save.") nav="core:lifecycle-list" accent="accounts" %}{% endpage_header %}
+{% page_header object.label|default:object.name subtitle=_("Build the lifecycle visually. Draft is always the entry, Archived the exit; connect steps to define the allowed moves.") nav="core:lifecycle-list" accent="accounts" %}{% endpage_header %}
 
-<div class="row g-4">
-  <div class="col-lg-6">
-    <div class="card">
-      <div class="card-body">
-        <form method="post" novalidate>
-          {% csrf_token %}
-          <div class="mb-3">
-            <label for="id_label" class="form-label fw-semibold">{% trans "Display name" %}</label>
-            {{ form.label }}
-            {% for e in form.label.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+<form method="post" id="lc-edit-form" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="definition_text" id="id_definition_text">
+  {% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
+  {% for e in form.definition_text.errors %}<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-1"></i>{{ e }}</div>{% endfor %}
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
+        <div class="flex-grow-1" style="min-width:220px;">
+          <label for="id_label" class="form-label small fw-semibold mb-1">{% trans "Display name" %}</label>
+          <input type="text" name="label" id="id_label" class="form-control" value="{{ object.label|default:object.name }}">
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary" data-lc-add-step><i class="bi bi-plus-lg me-1"></i>{% trans "Add step" %}</button>
+          <button type="button" class="btn btn-outline-primary" data-lc-connect><i class="bi bi-arrow-left-right me-1"></i>{% trans "Connect" %}</button>
+        </div>
+      </div>
+      <div class="lc-hint text-muted small mb-2" data-lc-hint></div>
+      <div class="lc-edit-canvas" data-lc-canvas>
+        <svg data-lc-svg xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;overflow:visible;"></svg>
+      </div>
+      <div data-lc-validation class="small mt-2"></div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-list-ol me-1"></i>{% trans "Steps" %}</h6>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0 lc-steps-table">
+              <thead><tr>
+                <th>{% trans "Code" %}</th><th>{% trans "Label" %}</th><th>{% trans "Kind" %}</th>
+                <th class="text-center" title="{% trans 'Counts in reports' %}"><i class="bi bi-bar-chart"></i></th>
+                <th class="text-center" title="{% trans 'Linkable' %}"><i class="bi bi-link-45deg"></i></th>
+                <th class="text-center" title="{% trans 'Deletable' %}"><i class="bi bi-trash"></i></th>
+                <th>{% trans "Tone" %}</th><th></th>
+              </tr></thead>
+              <tbody data-lc-steps></tbody>
+            </table>
           </div>
-          <div class="mb-2">
-            <label for="id_definition_text" class="form-label fw-semibold">{{ form.definition_text.label }}</label>
-            {{ form.definition_text }}
-            {% if form.definition_text.help_text %}<div class="form-text">{{ form.definition_text.help_text }}</div>{% endif %}
-            {% for e in form.definition_text.errors %}<div class="text-danger small mt-1"><i class="bi bi-exclamation-triangle me-1"></i>{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="text-muted small fw-semibold mb-0"><i class="bi bi-arrow-right me-1"></i>{% trans "Transitions" %}</h6>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-lc-add-transition><i class="bi bi-plus-lg me-1"></i>{% trans "Add" %}</button>
           </div>
-          <div class="d-flex justify-content-between align-items-center mt-3">
-            <a href="{% url 'core:lifecycle-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
-            <div class="d-flex gap-2">
-              {% if object.is_system %}
-              <button type="submit" form="reset-form" class="btn btn-outline-secondary" title="{% trans 'Restore the code default' %}">{% trans "Reset to default" %}</button>
-              {% endif %}
-              <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
-            </div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0 lc-trans-table">
+              <thead><tr>
+                <th>{% trans "From" %}</th><th>{% trans "To" %}</th><th>{% trans "Label" %}</th>
+                <th class="text-center" title="{% trans 'Requires comment' %}"><i class="bi bi-chat-left-text"></i></th>
+                <th title="{% trans 'Permission action' %}">{% trans "Perm." %}</th><th></th>
+              </tr></thead>
+              <tbody data-lc-transitions></tbody>
+            </table>
           </div>
-        </form>
-        {% if object.is_system %}
-        <form id="reset-form" method="post" action="{% url 'core:lifecycle-reset' object.name %}" class="d-none">{% csrf_token %}</form>
-        {% endif %}
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="col-lg-6">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-2"><i class="bi bi-diagram-3 me-1"></i>{% trans "Preview" %}</h6>
-        {% if preview %}
-          {% include "components/lifecycle_dagre.html" with lc_graph_nodes=preview.lc_graph_nodes lc_graph_edges=preview.lc_graph_edges lc_container_id=preview.lc_container_id lc_transition_url=preview.lc_transition_url %}
-        {% else %}
-          <div class="text-muted small py-4">{% trans "The current definition is invalid, so there is nothing to preview." %}</div>
-        {% endif %}
-      </div>
+  <div class="d-flex justify-content-between align-items-center mt-4">
+    <a href="{% url 'core:lifecycle-list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
+    <div class="d-flex gap-2">
+      {% if object.is_system %}
+      <button type="submit" form="reset-form" class="btn btn-outline-secondary">{% trans "Reset to default" %}</button>
+      {% endif %}
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{% trans "Save" %}</button>
     </div>
   </div>
-</div>
+</form>
+{% if object.is_system %}
+<form id="reset-form" method="post" action="{% url 'core:lifecycle-reset' object.name %}" class="d-none">{% csrf_token %}</form>
+{% endif %}
+
+<script id="lc-model" type="application/json">{{ definition_json|safe }}</script>
+{{ step_kinds|json_script:"lc-kinds" }}
+{{ tones|json_script:"lc-tones" }}
+
+<script>
+(function () {
+  var form = document.getElementById('lc-edit-form');
+  if (!form || form.dataset.lcInit) { return; }
+  form.dataset.lcInit = '1';
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var hidden = document.getElementById('id_definition_text');
+  var svg = form.querySelector('[data-lc-svg]');
+  var canvas = form.querySelector('[data-lc-canvas]');
+  var stepsBody = form.querySelector('[data-lc-steps]');
+  var transBody = form.querySelector('[data-lc-transitions]');
+  var hintEl = form.querySelector('[data-lc-hint]');
+  var validEl = form.querySelector('[data-lc-validation]');
+  var KINDS = JSON.parse(document.getElementById('lc-kinds').textContent);
+  var TONES = JSON.parse(document.getElementById('lc-tones').textContent);
+
+  var model;
+  try { model = JSON.parse(document.getElementById('lc-model').textContent); } catch (e) { model = {}; }
+  model.layout = model.layout || 'graph';
+  model.steps = Array.isArray(model.steps) ? model.steps : [];
+  model.transitions = Array.isArray(model.transitions) ? model.transitions : [];
+
+  var selected = null;      // step code currently highlighted
+  var connectMode = false;
+  var connectFrom = null;
+
+  function token(name, fb) { var v = getComputedStyle(document.documentElement).getPropertyValue(name); return (v || '').trim() || fb; }
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    if (attrs) { Object.keys(attrs).forEach(function (k) { if (k === 'class') e.className = attrs[k]; else if (k === 'html') e.innerHTML = attrs[k]; else e.setAttribute(k, attrs[k]); }); }
+    (children || []).forEach(function (c) { e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return e;
+  }
+  function stepCodes() { return model.steps.map(function (s) { return s.code; }); }
+  function uniqueCode(base) {
+    var codes = stepCodes(), c = base, i = 1;
+    while (codes.indexOf(c) !== -1) { c = base + '_' + (++i); }
+    return c;
+  }
+
+  function sync() { hidden.value = JSON.stringify(model); validate(); }
+
+  function validate() {
+    var msgs = [];
+    var drafts = model.steps.filter(function (s) { return s.kind === 'draft'; }).length;
+    var archived = model.steps.filter(function (s) { return s.kind === 'archived'; }).length;
+    var codes = stepCodes();
+    if (drafts !== 1) { msgs.push('{% trans "Exactly one Draft step is required." %}'); }
+    if (archived < 1) { msgs.push('{% trans "At least one Archived step is required." %}'); }
+    if (new Set(codes).size !== codes.length) { msgs.push('{% trans "Step codes must be unique." %}'); }
+    model.transitions.forEach(function (t) {
+      if (t.source !== '*' && codes.indexOf(t.source) === -1) { msgs.push('{% trans "Transition from an unknown step." %}'); }
+      if (codes.indexOf(t.target) === -1) { msgs.push('{% trans "Transition to an unknown step." %}'); }
+    });
+    var uniq = []; msgs.forEach(function (m) { if (uniq.indexOf(m) === -1) uniq.push(m); });
+    if (uniq.length) {
+      validEl.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>' + uniq.join(' ') + '</span>';
+    } else {
+      validEl.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>{% trans "Valid lifecycle." %}</span>';
+    }
+  }
+
+  // ---- steps table ----
+  function renderSteps() {
+    stepsBody.innerHTML = '';
+    model.steps.forEach(function (s, i) {
+      var codeI = el('input', { type: 'text', value: s.code, class: 'form-control form-control-sm font-monospace' });
+      codeI.addEventListener('change', function () {
+        var old = s.code, nw = codeI.value.trim().replace(/[^a-z0-9_]/gi, '_').toLowerCase() || old;
+        if (nw !== old && stepCodes().indexOf(nw) !== -1) { nw = uniqueCode(nw); }
+        codeI.value = nw; s.code = nw;
+        model.transitions.forEach(function (t) { if (t.source === old) t.source = nw; if (t.target === old) t.target = nw; });
+        if (selected === old) selected = nw;
+        renderTransitions(); renderDiagram(); sync();
+      });
+      var labelI = el('input', { type: 'text', value: s.label || '', class: 'form-control form-control-sm' });
+      labelI.addEventListener('input', function () { s.label = labelI.value; renderDiagram(); sync(); });
+      var kindS = el('select', { class: 'form-select form-select-sm' });
+      KINDS.forEach(function (k) { var o = el('option', { value: k }, [k]); if (s.kind === k) o.selected = true; kindS.appendChild(o); });
+      kindS.addEventListener('change', function () { s.kind = kindS.value; renderDiagram(); sync(); });
+      function chk(field) {
+        var c = el('input', { type: 'checkbox', class: 'form-check-input' }); c.checked = !!s[field];
+        c.addEventListener('change', function () { s[field] = c.checked; renderDiagram(); sync(); });
+        return el('td', { class: 'text-center' }, [c]);
+      }
+      var toneS = el('select', { class: 'form-select form-select-sm' });
+      TONES.forEach(function (t) { var o = el('option', { value: t }, [t]); if ((s.tone || 'neutral') === t) o.selected = true; toneS.appendChild(o); });
+      toneS.addEventListener('change', function () { s.tone = toneS.value; renderDiagram(); sync(); });
+      var del = el('button', { type: 'button', class: 'btn btn-sm btn-outline-danger', title: '{% trans "Delete" %}' }, []);
+      del.innerHTML = '<i class="bi bi-trash"></i>';
+      del.addEventListener('click', function () {
+        model.transitions = model.transitions.filter(function (t) { return t.source !== s.code && t.target !== s.code; });
+        model.steps.splice(i, 1);
+        renderSteps(); renderTransitions(); renderDiagram(); sync();
+      });
+      var tr = el('tr', s.code === selected ? { class: 'table-active' } : {}, [
+        el('td', {}, [codeI]), el('td', {}, [labelI]), el('td', {}, [kindS]),
+        chk('counts_in_reports'), chk('linkable'), chk('deletable'),
+        el('td', {}, [toneS]), el('td', { class: 'text-end' }, [del]),
+      ]);
+      tr.dataset.code = s.code;
+      stepsBody.appendChild(tr);
+    });
+  }
+
+  // ---- transitions table ----
+  function stepSelect(value) {
+    var sel = el('select', { class: 'form-select form-select-sm' });
+    model.steps.forEach(function (s) { var o = el('option', { value: s.code }, [s.code]); if (s.code === value) o.selected = true; sel.appendChild(o); });
+    var star = el('option', { value: '*' }, ['* (any)']); if (value === '*') star.selected = true; sel.appendChild(star);
+    return sel;
+  }
+  function renderTransitions() {
+    transBody.innerHTML = '';
+    model.transitions.forEach(function (t, i) {
+      var src = stepSelect(t.source); src.addEventListener('change', function () { t.source = src.value; renderDiagram(); sync(); });
+      var tgt = stepSelect(t.target); tgt.addEventListener('change', function () { t.target = tgt.value; renderDiagram(); sync(); });
+      var lab = el('input', { type: 'text', value: t.label || '', class: 'form-control form-control-sm' });
+      lab.addEventListener('input', function () { t.label = lab.value; renderDiagram(); sync(); });
+      var rc = el('input', { type: 'checkbox', class: 'form-check-input' }); rc.checked = !!t.requires_comment;
+      rc.addEventListener('change', function () { t.requires_comment = rc.checked; sync(); });
+      var perm = el('input', { type: 'text', value: t.permission_action || '', class: 'form-control form-control-sm', placeholder: '-' , style: 'max-width:90px' });
+      perm.addEventListener('input', function () { t.permission_action = perm.value; sync(); });
+      var del = el('button', { type: 'button', class: 'btn btn-sm btn-outline-danger' }, []); del.innerHTML = '<i class="bi bi-trash"></i>';
+      del.addEventListener('click', function () { model.transitions.splice(i, 1); renderTransitions(); renderDiagram(); sync(); });
+      transBody.appendChild(el('tr', {}, [
+        el('td', {}, [src]), el('td', {}, [tgt]), el('td', {}, [lab]),
+        el('td', { class: 'text-center' }, [rc]), el('td', {}, [perm]), el('td', { class: 'text-end' }, [del]),
+      ]));
+    });
+  }
+
+  // ---- diagram (dagre) ----
+  var measureCtx = document.createElement('canvas').getContext('2d');
+  function tw(t) { measureCtx.font = '600 13px "GitLab Sans", system-ui, sans-serif'; return measureCtx.measureText(t).width; }
+  var lineGen = null;
+  function classify(t) {
+    var archived = {}; model.steps.forEach(function (s) { if (s.kind === 'archived') archived[s.code] = 1; });
+    var main = model.steps.filter(function (s) { return s.kind !== 'archived'; }).map(function (s) { return s.code; });
+    var pos = {}; main.forEach(function (c, i) { pos[c] = i; });
+    if (archived[t.target]) return 'exit';
+    if (archived[t.source]) return 'restore';
+    if (pos[t.source] !== undefined && pos[t.target] !== undefined && pos[t.target] <= pos[t.source]) return 'loop';
+    return 'forward';
+  }
+  function renderDiagram() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    if (!window.d3 || !window.dagre || !model.steps.length) { return; }
+    if (!lineGen) lineGen = d3.line().x(function (p) { return p.x; }).y(function (p) { return p.y; }).curve(d3.curveBasis);
+    var narrow = canvas.clientWidth > 0 && canvas.clientWidth < 640;
+    var g = new dagre.graphlib.Graph({ multigraph: true });
+    g.setGraph({ rankdir: narrow ? 'TB' : 'LR', nodesep: 26, ranksep: 58, edgesep: 18, marginx: 18, marginy: 20, ranker: 'network-simplex' });
+    g.setDefaultEdgeLabel(function () { return {}; });
+    model.steps.forEach(function (s) { g.setNode(s.code, { width: Math.max(72, tw(s.label || s.code) + 36), height: 40 }); });
+    var edges = [];
+    model.transitions.forEach(function (t, i) {
+      var srcs = t.source === '*' ? model.steps.filter(function (s) { return s.kind !== 'archived' && s.code !== t.target; }).map(function (s) { return s.code; }) : [t.source];
+      srcs.forEach(function (sc) {
+        if (g.hasNode(sc) && g.hasNode(t.target) && sc !== t.target) { g.setEdge(sc, t.target, {}, 'e' + i + '_' + sc); edges.push({ s: sc, t: t.target, label: t.label, kind: classify(t), id: 'e' + i + '_' + sc }); }
+      });
+    });
+    try { dagre.layout(g); } catch (e) { return; }
+    var gg = g.graph();
+    svg.setAttribute('viewBox', '0 0 ' + (gg.width || 300) + ' ' + (gg.height || 160));
+    var accent = token('--accent', '#1E3A8A'), muted = token('--text-muted', '#94a3b8');
+    var defs = document.createElementNS(SVGNS, 'defs');
+    [['lcm-a', accent], ['lcm-m', muted]].forEach(function (p) {
+      var m = document.createElementNS(SVGNS, 'marker'); m.setAttribute('id', p[0]); m.setAttribute('viewBox', '0 -5 10 10'); m.setAttribute('refX', '9'); m.setAttribute('refY', '0'); m.setAttribute('markerWidth', '6.5'); m.setAttribute('markerHeight', '6.5'); m.setAttribute('orient', 'auto');
+      var pa = document.createElementNS(SVGNS, 'path'); pa.setAttribute('d', 'M0,-4.5L9,0L0,4.5'); pa.setAttribute('fill', p[1]); m.appendChild(pa); defs.appendChild(m);
+    });
+    svg.appendChild(defs);
+    edges.forEach(function (e) {
+      var de = g.edge(e.s, e.t, e.id); if (!de || !de.points) return;
+      var loop = e.kind === 'loop' || e.kind === 'restore';
+      var path = document.createElementNS(SVGNS, 'path'); path.setAttribute('d', lineGen(de.points)); path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', loop ? muted : accent); path.setAttribute('stroke-width', '1.6'); path.setAttribute('opacity', '0.85');
+      if (loop) path.setAttribute('stroke-dasharray', '5 4');
+      path.setAttribute('marker-end', 'url(#' + (loop ? 'lcm-m' : 'lcm-a') + ')');
+      svg.appendChild(path);
+      if (e.label) { var mid = de.points[Math.floor(de.points.length / 2)]; var tx = document.createElementNS(SVGNS, 'text'); tx.setAttribute('x', mid.x); tx.setAttribute('y', mid.y - 5); tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('font-size', '10.5'); tx.setAttribute('fill', muted); tx.textContent = e.label; svg.appendChild(tx); }
+    });
+    model.steps.forEach(function (s) {
+      var p = g.node(s.code); if (!p) return;
+      var isDraft = s.kind === 'draft', isArch = s.kind === 'archived', isSel = s.code === selected;
+      var grp = document.createElementNS(SVGNS, 'g'); grp.setAttribute('transform', 'translate(' + (p.x - p.width / 2) + ',' + (p.y - p.height / 2) + ')'); grp.style.cursor = 'pointer';
+      var rect = document.createElementNS(SVGNS, 'rect'); rect.setAttribute('width', p.width); rect.setAttribute('height', p.height); rect.setAttribute('rx', 20);
+      rect.setAttribute('fill', isDraft ? accent : token('--surface', '#fff'));
+      rect.setAttribute('stroke', isSel ? token('--bs-success', '#16a34a') : (isArch ? muted : token('--border-color', '#e2e8f0')));
+      rect.setAttribute('stroke-width', isSel || connectFrom === s.code ? 2.5 : 1);
+      if (isArch) rect.setAttribute('stroke-dasharray', '5 4');
+      grp.appendChild(rect);
+      var tx = document.createElementNS(SVGNS, 'text'); tx.setAttribute('x', p.width / 2); tx.setAttribute('y', p.height / 2); tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('dominant-baseline', 'central'); tx.setAttribute('font-size', '13'); tx.setAttribute('font-weight', '600');
+      tx.setAttribute('fill', isDraft ? '#fff' : (isArch ? muted : token('--text', '#0f172a'))); tx.textContent = s.label || s.code; grp.appendChild(tx);
+      grp.addEventListener('click', function () { onNodeClick(s.code); });
+      svg.appendChild(grp);
+    });
+  }
+
+  function onNodeClick(code) {
+    if (connectMode) {
+      if (!connectFrom) { connectFrom = code; hint('{% trans "Now click the target step." %}'); renderDiagram(); return; }
+      if (connectFrom !== code) { model.transitions.push({ source: connectFrom, target: code, label: '' }); }
+      connectMode = false; connectFrom = null; hint(''); renderTransitions(); renderDiagram(); sync(); return;
+    }
+    selected = (selected === code) ? null : code;
+    renderSteps(); renderDiagram();
+    var row = stepsBody.querySelector('tr[data-code="' + code + '"]');
+    if (row) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  function hint(t) { hintEl.textContent = t; hintEl.className = 'lc-hint small mb-2 ' + (t ? 'text-primary' : 'text-muted'); }
+
+  form.querySelector('[data-lc-add-step]').addEventListener('click', function () {
+    var code = uniqueCode('step'); model.steps.splice(Math.max(1, model.steps.length - 1), 0, { code: code, label: 'New step', kind: 'intermediate', counts_in_reports: true, linkable: true, deletable: false, tone: 'secondary' });
+    selected = code; renderSteps(); renderTransitions(); renderDiagram(); sync();
+  });
+  form.querySelector('[data-lc-add-transition]').addEventListener('click', function () {
+    if (model.steps.length < 2) return; model.transitions.push({ source: model.steps[0].code, target: model.steps[1].code, label: '' }); renderTransitions(); renderDiagram(); sync();
+  });
+  form.querySelector('[data-lc-connect]').addEventListener('click', function () {
+    connectMode = !connectMode; connectFrom = null; hint(connectMode ? '{% trans "Click the source step." %}' : ''); renderDiagram();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && connectMode) { connectMode = false; connectFrom = null; hint(''); renderDiagram(); } });
+  form.addEventListener('submit', function () { sync(); });
+
+  function boot() {
+    if (!window.d3 || !window.dagre) { return void setTimeout(boot, 60); }
+    renderSteps(); renderTransitions(); renderDiagram(); sync();
+    if (window.ResizeObserver) new ResizeObserver(renderDiagram).observe(canvas);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderDiagram);
+    new MutationObserver(renderDiagram).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+  }
+  function loadScript(id, src, cb) { if (document.getElementById(id)) return cb(); var s = document.createElement('script'); s.id = id; s.src = src; s.onload = cb; document.head.appendChild(s); }
+  (window.d3 ? function (cb) { cb(); } : function (cb) { loadScript('d3-lib', '{% static "vendor/d3.v7.min.js" %}', cb); })(function () {
+    (window.dagre ? function (cb) { cb(); } : function (cb) { loadScript('dagre-lib', '{% static "vendor/dagre.min.js" %}', cb); })(boot);
+  });
+})();
+</script>
+
+<style>
+  .lc-edit-canvas { border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 1rem; background: var(--surface-muted, #f8fafc); min-height: 220px; }
+  .lc-steps-table td, .lc-trans-table td { padding: .25rem .35rem; }
+  .lc-steps-table .form-control, .lc-steps-table .form-select, .lc-trans-table .form-control, .lc-trans-table .form-select { min-width: 60px; }
+</style>
 {% endblock %}

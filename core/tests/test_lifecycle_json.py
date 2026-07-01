@@ -109,4 +109,5 @@ def test_admin_list_and_edit_render(client):
     assert client.get(reverse("core:lifecycle-list")).status_code == 200
     resp = client.get(reverse("core:lifecycle-edit", kwargs={"name": "support_asset"}))
     assert resp.status_code == 200
-    assert resp.context["preview"] is not None
+    assert "in_stock" in resp.context["definition_json"]
+    assert "lc-edit-form" in resp.content.decode()
