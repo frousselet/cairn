@@ -32,7 +32,6 @@ Compliance assessment campaign, **multi-framework**, covering one or more [Frame
 | `status` | enum | required, default `draft` | See "Lifecycle" below |
 | `results` | reverse FK | O2M -> AssessmentResult | Per-requirement results |
 | `findings` | reverse M2M | <- compliance.Finding (`Finding.assessment`) | Attached audit findings |
-| `is_approved` / `approved_by` / `approved_at` | bool / FK -> User / datetime | optional | Approval indicator, an orthogonal axis to `status` (see "Lifecycle") |
 | `version` | int | auto-incremented | Bumped on each major change |
 | `tags` | relation | M2M -> Tag | |
 | `created_by` | relation | FK -> User | Creator |
@@ -57,14 +56,9 @@ Compliance assessment campaign, **multi-framework**, covering one or more [Frame
 | `closed` | Finished and closed (terminal). The RC-06 carry-over (`recalculate_counts`) is triggered here |
 | `cancelled` | Assessment cancelled (terminal). No carry-over is triggered |
 
-### Validation and approval
+### Validation
 
-`is_approved` is an **orthogonal axis** to `status`, captured by the `approve_compliance_assessment` action (REST `POST /assessments/<uuid>/approve/`, MCP `approve_compliance_assessment`). Approval can be set at any time (typically when the assessment is `completed` or `closed`) and represents the formal validation of the result by an approver (CISO, DPO, executive committee).
-
-The `validated` status listed in the original M3 spec §2.4 does not exist in the implemented enum: "validation" is carried by the pair (`status=closed`, `is_approved=true`). This separation was chosen to allow:
-
-- **closing** an assessment without formally validating it (recurring internal audit whose results are consumed immediately without an approver's signature);
-- **approving** an assessment across several successive levels (the auditor moves it to `completed`, the CISO moves it to `closed`, the DPO or the committee approves it later via `is_approved`).
+The `validated` status listed in the original M3 spec §2.4 does not exist in the implemented enum: "validation" is carried by reaching `status=closed`, the terminal state that counts in reports.
 
 The `archived` status from the original spec was not carried over either: `closed` plays the terminal role, and a potential need for explicit archiving can be added later through a flag or a separate status without breaking the current workflow.
 
@@ -73,7 +67,7 @@ The `archived` status from the original spec was not carried over either: `close
 | `draft` | `draft` |
 | `in_progress` | `planned` or `in_progress` (the implementation distinguishes planning from execution) |
 | `completed` | `completed` |
-| `validated` | `closed` + `is_approved=true` |
+| `validated` | `closed` |
 | `archived` | `closed` (terminal). No dedicated status for now |
 
 ### Allowed transitions
@@ -98,7 +92,7 @@ The REST API `POST /assessments/<uuid>/transition/` and the MCP `update_complian
 
 ### RC-06 trigger
 
-The carry-over of results onto requirements (RC-06) is triggered on **closure** (`completed -> closed`), not on approval. `approve_compliance_assessment` triggers no calculation, it is purely a validation signature. This separation makes it possible to review and correct a closed assessment before approving it, without the approval having to recompute anything.
+The carry-over of results onto requirements (RC-06) is triggered on **closure** (`completed -> closed`), the point at which the assessment reaches the reportable terminal state.
 
 ## Divergences from the original spec
 

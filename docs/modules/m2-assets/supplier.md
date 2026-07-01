@@ -30,8 +30,6 @@ Third-party supplier (software vendor, host, managed service provider, maintaine
 | `status` | enum | required, default `active` | `active`, `under_evaluation`, `suspended`, `archived` |
 | `notes` | text | optional, HTML | Free-text notes |
 | `tags` | relation | M2M -> Tag | |
-| `is_approved` | boolean | default `false` | Validated by an approver |
-| `approved_by` / `approved_at` | relation / datetime | optional | |
 | `version` | int | auto-incremented | Bumped on each major change |
 | `created_by` | relation | FK -> User | |
 | `created_at` / `updated_at` | datetime | auto | |
@@ -107,13 +105,12 @@ Requirement template attached to a `SupplierType`. When a `Supplier` of this typ
 - `GET /api/v1/assets/suppliers/<uuid>/`
 - `PUT/PATCH /api/v1/assets/suppliers/<uuid>/`
 - `DELETE /api/v1/assets/suppliers/<uuid>/`
-- `POST /api/v1/assets/suppliers/<uuid>/approve/`
 - `GET /api/v1/assets/supplier-types/` (full CRUD)
 - `GET /api/v1/assets/supplier-type-requirements/` (full CRUD)
 
 ### MCP
 
-- `list_suppliers` / `get_supplier` / `create_supplier` / `update_supplier` / `delete_supplier` / `approve_supplier` / `batch_create_suppliers`
+- `list_suppliers` / `get_supplier` / `create_supplier` / `update_supplier` / `delete_supplier` / `batch_create_suppliers`
 - `update_supplier_logo`: updates the logo (data URI or public URL) and regenerates the 64/32/16 variants
 - `list_supplier_types` / `create_supplier_type` / `delete_supplier_type`
 - `list_supplier_type_requirements` / `create_supplier_type_requirement` / `delete_supplier_type_requirement`
@@ -162,7 +159,6 @@ Bulk creation is also available programmatically via the MCP tool `batch_create_
 | `assets.supplier.create` | Create a supplier |
 | `assets.supplier.update` | Modify a supplier |
 | `assets.supplier.delete` | Delete a supplier |
-| `assets.supplier.approve` | Approve a supplier |
 
 `SupplierType` and `SupplierTypeRequirement` share the same codenames under the `assets.config.*` prefix.
 

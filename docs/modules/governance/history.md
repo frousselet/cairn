@@ -30,13 +30,11 @@ the context, assets, compliance, risks, reports and trust-center modules.
 | `create` | `+` record | field snapshot |
 | `update` | `~` record with ordinary field diffs | per-field `old -> new` diff |
 | `transition` | `~` record whose delta touches `workflow_state` | `from -> to` state labels (+ comment where one exists) |
-| `approval` | `~` record whose delta is approval fields only | "Approval granted / revoked" |
 | `delete` | `-` record | field snapshot |
 
-Precedence on a modification: **transition > approval-only > update**. Approval and
-version churn (`is_approved`, `approved_by`, `approved_at`, `version`) are hidden from
-ordinary diffs. A transition's `is_refusal` flag is **recomputed from the registered
-workflow** (a backward move along the main flow), never persisted.
+Precedence on a modification: **transition > update**. Version churn (`version`) is
+hidden from ordinary diffs. A transition's `is_refusal` flag is **recomputed from the
+registered lifecycle** (a backward move along the main flow), never persisted.
 
 ### Merged sources
 

@@ -267,7 +267,6 @@ And in `context` :
 - `ManagementReviewSerializer` : exhaustive, includes `decisions_count`, `participants`, `status_display`, `snapshot_available`.
 - `ManagementReviewDetailSerializer` : extends it with nested decisions and ISMS changes.
 - Permissions : `ManagementReviewPermission` class inheriting from `ModulePermission`.
-- Approval workflow (`ApprovableAPIMixin`) reused for the `held → closed` transition.
 
 ---
 

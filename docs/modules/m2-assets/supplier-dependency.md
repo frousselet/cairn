@@ -19,7 +19,6 @@ Not to be confused with [`SiteSupplierDependency`](site.md#sitesupplierdependenc
 | `description` | text | optional, HTML | |
 | `is_single_point_of_failure` | boolean | **read-only, calculated** | Updated by the `assets.services.spof_detection` service (M2 §3.3 RS-07). Any value provided on write is ignored. |
 | `redundancy_level` | enum | optional | `none`, `partial`, `full`. Entered by the operator. |
-| `is_approved` / `approved_by` / `approved_at` | boolean / FK -> User / datetime | optional | Standard approval workflow |
 | `version` | int | auto | |
 | `created_by` | FK -> User | optional | |
 | `created_at` / `updated_at` | datetime | auto | |
@@ -59,11 +58,10 @@ A pair (`support_asset`, `supplier`) may appear only once. For two distinct rela
 - `GET /api/v1/assets/supplier-dependencies/<uuid>/`
 - `PUT/PATCH /api/v1/assets/supplier-dependencies/<uuid>/`
 - `DELETE /api/v1/assets/supplier-dependencies/<uuid>/`
-- `POST /api/v1/assets/supplier-dependencies/<uuid>/approve/`
 
 ### MCP
 
-`list_supplier_dependencys`, `get_supplier_dependency`, `create_supplier_dependency`, `update_supplier_dependency`, `delete_supplier_dependency`, `approve_supplier_dependency`, `batch_create_supplier_dependencys`.
+`list_supplier_dependencys`, `get_supplier_dependency`, `create_supplier_dependency`, `update_supplier_dependency`, `delete_supplier_dependency`, `batch_create_supplier_dependencys`.
 
 ## Permissions
 
@@ -73,7 +71,6 @@ A pair (`support_asset`, `supplier`) may appear only once. For two distinct rela
 | `assets.supplier_dependency.create` | Create |
 | `assets.supplier_dependency.update` | Update |
 | `assets.supplier_dependency.delete` | Delete |
-| `assets.supplier_dependency.approve` | Approve |
 
 ## References
 

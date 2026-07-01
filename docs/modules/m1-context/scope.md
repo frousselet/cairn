@@ -17,8 +17,6 @@ Represents the scope covered by the GRC framework.
 | `organizational_scope` | text | optional | Organizational scope |
 | `technical_scope` | text | optional | Technical scope |
 | `applicable_standards` | relation | M2M → Referential | Applicable standards |
-| `approved_by` | relation | FK → User | Approver |
-| `approved_at` | datetime | optional | Approval date |
 | `effective_date` | date | optional | Effective date |
 | `review_date` | date | optional | Next review date |
 | `created_by` | relation | FK → User | Creator |

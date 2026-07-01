@@ -31,9 +31,6 @@ The `site` type of `SupportAsset` no longer exists. Existing rows were automatic
 | `parent_site` | relation | FK -> Site, optional | Site hierarchy (group -> subsidiary -> site). Cycles rejected by `clean()`. |
 | `workflow_state` | enum | required, default `draft` | Standardised site lifecycle (`core.lifecycle`): `draft`, `commissioning`, `operational`, `review`, `decommissioned`, `archived`. See the [Lifecycle](#lifecycle) section and [governance/workflow.md](../governance/workflow.md). |
 | `tags` | relation | M2M -> Tag | Free-text labels |
-| `is_approved` | boolean | default `false` | Site validated by an approver |
-| `approved_by` | relation | FK -> User, optional | Approver |
-| `approved_at` | datetime | optional | Approval date |
 | `version` | int | auto-incremented | Bumped on each major change |
 | `created_by` | relation | FK -> User | Creator |
 | `created_at` | datetime | auto | Creation date |
@@ -129,12 +126,11 @@ A supplier serves / operates / maintains a site.
 - `PUT/PATCH /api/v1/context/sites/<uuid>/`
 - `DELETE /api/v1/context/sites/<uuid>/`
 - `GET/POST /api/v1/context/sites/<uuid>/transition/`: list the caller's allowed lifecycle transitions (GET) or perform one (POST `target_state`, optional `comment`)
-- `POST /api/v1/context/sites/<uuid>/approve/` (deprecated alias of the validate transition)
 - The `SiteAssetDependency` and `SiteSupplierDependency` have their own routes under `/api/v1/assets/site-asset-dependencies/` and `/api/v1/assets/site-supplier-dependencies/`.
 
 ### MCP
 
-- `list_sites` / `get_site` / `create_site` / `update_site` / `delete_site` / `approve_site` / `batch_create_sites`
+- `list_sites` / `get_site` / `create_site` / `update_site` / `delete_site` / `batch_create_sites`
 - `transition_site` / `site_allowed_transitions` (lifecycle transitions, route through the lifecycle service)
 - `list_site_asset_dependencys` / `create_site_asset_dependency` / ...
 - `list_site_supplier_dependencys` / `create_site_supplier_dependency` / ...
@@ -147,7 +143,6 @@ A supplier serves / operates / maintains a site.
 | `context.site.create` | Create a site |
 | `context.site.update` | Modify a site |
 | `context.site.delete` | Delete a site |
-| `context.site.approve` | Approve a site |
 
 ## Migration
 

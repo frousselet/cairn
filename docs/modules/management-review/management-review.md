@@ -24,7 +24,6 @@ File : `reports/models/management_review.py`
 | `status` | enum | required | `planned`, `in_preparation`, `held`, `closed`, `cancelled` |
 | `facilitator` | FK → User | required | Facilitator / minute-taker |
 | `approver` | FK → User | optional | Approver (typically top management) |
-| `approved_at` | datetime | optional | Approval date |
 | `next_review_date` | date | optional | Planned date of the next review |
 | `summary` | text | optional | Executive summary written by the facilitator |
 | `agenda` | text | optional | Agenda (HTML rich text) |
@@ -47,7 +46,7 @@ Transitions :
 
 - `planned → in_preparation` : the facilitator locks the agenda and triggers data collection.
 - `in_preparation → held` : on entry of `held_date`. The entered clause 9.3.2 inputs are frozen in `snapshot_data`.
-- `held → closed` : all decisions must have an owner and a due date ; the status switches once the `approver` validates. Captures `approved_at`.
+- `held → closed` : all decisions must have an owner and a due date ; the status switches once the `approver` validates.
 - `* → cancelled` : reason required, stored via a comment (cf. [comment.md](comment.md)).
 
 The UI must use the **horizontal stepper** described in `CLAUDE.md` (cf. `compliance/templates/compliance/assessment_detail.html`).

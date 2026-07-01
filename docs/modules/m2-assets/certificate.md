@@ -26,8 +26,6 @@ A certificate is a company certification record inside the **Documents** area of
 | `content_type` | string | optional, max 100 | MIME type (`application/pdf`) |
 | `notes` | text | optional, HTML | Free-text notes |
 | `tags` | relation | M2M -> Tag | |
-| `is_approved` | boolean | default `false` | Validated by an approver (independent of the workflow state) |
-| `approved_by` / `approved_at` | relation / datetime | optional | |
 | `version` | int | auto-incremented | Bumped on each major change |
 | `created_by` | relation | FK -> User | |
 | `created_at` / `updated_at` | datetime | auto | |
@@ -58,7 +56,7 @@ Certificate runs the standardised lifecycle engine (`core.lifecycle`, `LIFECYCLE
 | expired | Intermediate | yes | yes | | |
 | archived | Archived (exit) | | yes | | |
 
-Transitions: the linear path to certification `draft -> assessment` (Start assessment) / `assessment -> certified` (Certify), then the recurring recertification cycle `certified -> under_renewal` (Start renewal) / `under_renewal -> certified` (Renewed) - the only non-terminal branch - with the terminal outcomes of the renewal `under_renewal -> suspended` (Suspend) and `under_renewal -> expired` (Expire), and `any -> archived` (Archive). **Suspended and Expired are terminal**: there is no reinstatement and no renewal in place - re-certifying means issuing a new certificate that supersedes this one via `supersedes` ("annule et remplace"), so the renewal history is kept; the only move out of a terminal state is Archive (terminality is structural - those steps have no outgoing transition other than the from-any Archive). The recertification back-edge makes the lifecycle cyclic, which is why it uses the `graph` layout. `archived` is the exit but still counts in reports for traceability. Approval (`is_approved`) is an independent axis. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_certificate` tool is permission-gated.
+Transitions: the linear path to certification `draft -> assessment` (Start assessment) / `assessment -> certified` (Certify), then the recurring recertification cycle `certified -> under_renewal` (Start renewal) / `under_renewal -> certified` (Renewed) - the only non-terminal branch - with the terminal outcomes of the renewal `under_renewal -> suspended` (Suspend) and `under_renewal -> expired` (Expire), and `any -> archived` (Archive). **Suspended and Expired are terminal**: there is no reinstatement and no renewal in place - re-certifying means issuing a new certificate that supersedes this one via `supersedes` ("annule et remplace"), so the renewal history is kept; the only move out of a terminal state is Archive (terminality is structural - those steps have no outgoing transition other than the from-any Archive). The recertification back-edge makes the lifecycle cyclic, which is why it uses the `graph` layout. `archived` is the exit but still counts in reports for traceability. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_certificate` tool is permission-gated.
 
 ## Computed properties
 
@@ -91,7 +89,6 @@ Transitions: the linear path to certification `draft -> assessment` (Start asses
 - `GET /api/v1/assets/certificates/<uuid>/`
 - `PUT/PATCH /api/v1/assets/certificates/<uuid>/`
 - `DELETE /api/v1/assets/certificates/<uuid>/`
-- `POST /api/v1/assets/certificates/<uuid>/approve/`
 
 The serializer exposes `framework_label` and `document_url` (the protected download path) but never the raw `file_content`. The PDF cannot be uploaded via the JSON API; use the web form.
 
@@ -102,7 +99,7 @@ The serializer exposes `framework_label` and `document_url` (the protected downl
 
 ### MCP
 
-- `list_certificates` / `get_certificate` / `create_certificate` / `update_certificate` / `delete_certificate` / `approve_certificate` / `batch_create_certificates`
+- `list_certificates` / `get_certificate` / `create_certificate` / `update_certificate` / `delete_certificate` / `batch_create_certificates`
 - `transition_certificate` / `certificate_allowed_transitions`
 - The framework, scopes and covered sites are set via `framework_id`, `scope_ids`, `site_ids`. The PDF cannot be uploaded through MCP (binary payloads are out of scope for the JSON transport).
 
@@ -114,7 +111,6 @@ The serializer exposes `framework_label` and `document_url` (the protected downl
 | `assets.certificate.create` | Create a certificate |
 | `assets.certificate.update` | Modify a certificate |
 | `assets.certificate.delete` | Delete a certificate |
-| `assets.certificate.approve` | Approve a certificate |
 
 ## References
 
