@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.33.2] - 2026-07-01
+
 ### Fixed
 
 - Static assets are now re-collected at container start (not only at image build), so newly added JS/CSS reach `STATIC_ROOT` under the compose bind-mount and no-rebuild deploys, fixing `text/html`/`nosniff` errors on files like `lifecycle_graph.js`.
@@ -1230,6 +1232,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.33.2]: https://github.com/frousselet/cairn/compare/v0.33.1...v0.33.2
 [0.33.1]: https://github.com/frousselet/cairn/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/frousselet/cairn/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/frousselet/cairn/compare/v0.31.0...v0.32.0
