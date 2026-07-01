@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.33.1] - 2026-07-01
+
 ### Fixed
 
 - First-run onboarding is now safe under multiple web workers: the migration/seed runner and its progress live in the shared Redis cache behind a cross-worker lock, so several uvicorn workers no longer race the same migrations (duplicate-column crashes, progress bar jumping backwards).
@@ -1224,6 +1226,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.33.1]: https://github.com/frousselet/cairn/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/frousselet/cairn/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/frousselet/cairn/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/frousselet/cairn/compare/v0.30.0...v0.31.0
