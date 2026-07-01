@@ -369,7 +369,11 @@ SUPPORT_ASSET_DEFINITION = {
         {"code": "under_maintenance", "label": "Under maintenance", "kind": "intermediate",
          "counts_in_reports": True, "linkable": True, "tone": "warning"},
         {"code": "decommissioned", "label": "Decommissioned", "kind": "intermediate",
-         "counts_in_reports": True, "tone": "dark"},
+         "counts_in_reports": True, "tone": "dark",
+         # Decommissioning takes the asset out of service : confirm before the
+         # move (a "confirm" trigger with no custom message -> the default,
+         # translated "Are you sure?").
+         "triggers": [{"type": "confirm"}]},
         {"code": "disposed", "label": "Disposed", "kind": "intermediate",
          "counts_in_reports": True, "tone": "dark"},
         {"code": "archived", "label": "Archived", "kind": "archived", "tone": "muted"},

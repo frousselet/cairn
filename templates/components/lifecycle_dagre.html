@@ -39,10 +39,16 @@ a single dot -> target arrow with the target detached below the flow.
   function go(id, n) {
     targetInput.value = id;
     if (commentInput) { commentInput.value = ''; }
-    var requiresComment = !!(n && n.requires_comment);
     var title = (n && (n.action_label || n.label)) || '';
-    if (window.cairnLifecycleTransition) { window.cairnLifecycleTransition(form, requiresComment, title, commentInput); }
-    else { form.submit(); }
+    if (window.cairnLifecycleTransition) {
+      window.cairnLifecycleTransition(form, {
+        requiresComment: !!(n && n.requires_comment),
+        confirm: !!(n && n.confirm),
+        confirmMessage: (n && n.confirm_message) || '',
+        title: title,
+        commentInput: commentInput,
+      });
+    } else { form.submit(); }
   }
   function render() {
     window.CairnLifecycleGraph.render(svg, nodes, edges, {

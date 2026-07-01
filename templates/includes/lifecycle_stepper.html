@@ -6,6 +6,25 @@
     {% include "components/lifecycle_stepper.html" %}
   {% endif %}
 
+  {# ── Shared confirmation modal ("confirm" trigger on the target step) ── #}
+  <div class="modal fade" id="lifecycleConfirmModal" tabindex="-1" aria-labelledby="lifecycleConfirmModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="lifecycleConfirmModalTitle">{% trans "Confirm" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-0" id="lifecycleConfirmMessage">{% trans "Are you sure?" %}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "No" %}</button>
+          <button type="button" class="btn btn-primary" id="lifecycleConfirmYes">{% trans "Yes" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   {# ── Shared transition comment modal (transitions that require a comment) ── #}
   <div class="modal fade" id="lifecycleCommentModal" tabindex="-1" aria-labelledby="lifecycleCommentModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -33,19 +52,54 @@
     var field = document.getElementById('lifecycleCommentField');
     var confirmBtn = document.getElementById('lifecycleCommentConfirm');
     var titleEl = document.getElementById('lifecycleCommentModalTitle');
-    var pending = null;  // { form, commentInput }
+    var confirmModalEl = document.getElementById('lifecycleConfirmModal');
+    var confirmTitleEl = document.getElementById('lifecycleConfirmModalTitle');
+    var confirmMsgEl = document.getElementById('lifecycleConfirmMessage');
+    var confirmYesBtn = document.getElementById('lifecycleConfirmYes');
+    var DEFAULT_CONFIRM = '{% trans "Are you sure?" %}';
+    var pending = null;      // { form, commentInput } for the comment modal
+    var confirmNext = null;  // continuation to run when "Yes" is clicked
 
-    // Programmatic submit helper shared by the graph stepper: when the
-    // transition requires a comment, collect it in the modal first, otherwise
-    // submit immediately.
-    window.cairnLifecycleTransition = function (form, requiresComment, title, commentInput) {
-      if (!requiresComment) { form.submit(); return; }
+    function collectComment(form, title, commentInput) {
       pending = { form: form, commentInput: commentInput || form.querySelector('[data-lc-comment]') };
       field.value = '';
       field.classList.remove('is-invalid');
       titleEl.textContent = title || '{% trans "Transition" %}';
       bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+
+    // Perform a lifecycle transition, running the target step's triggers (a
+    // "confirm" Yes/No modal, then a required comment) before submitting. New
+    // trigger types slot into this chain. Options: { requiresComment, confirm,
+    // confirmMessage, title, commentInput }. A boolean 2nd arg is tolerated as
+    // the legacy (form, requiresComment, title, commentInput) signature.
+    window.cairnLifecycleTransition = function (form, opts, legacyTitle, legacyComment) {
+      if (typeof opts === 'boolean' || opts == null) {
+        opts = { requiresComment: !!opts, title: legacyTitle, commentInput: legacyComment };
+      }
+      var title = opts.title || '{% trans "Transition" %}';
+      function afterConfirm() {
+        if (opts.requiresComment) { collectComment(form, title, opts.commentInput); }
+        else { form.dataset.lcConfirmed = '1'; form.submit(); }
+      }
+      if (opts.confirm && confirmModalEl) {
+        confirmNext = afterConfirm;
+        confirmTitleEl.textContent = title;
+        confirmMsgEl.textContent = opts.confirmMessage || DEFAULT_CONFIRM;
+        bootstrap.Modal.getOrCreateInstance(confirmModalEl).show();
+      } else {
+        afterConfirm();
+      }
     };
+
+    if (confirmYesBtn) {
+      confirmYesBtn.addEventListener('click', function () {
+        var next = confirmNext;
+        confirmNext = null;
+        bootstrap.Modal.getOrCreateInstance(confirmModalEl).hide();
+        if (next) { next(); }
+      });
+    }
 
     if (confirmBtn) {
       confirmBtn.addEventListener('click', function () {
@@ -61,14 +115,19 @@
     }
 
     // The line / cycle steppers use one <form> per actionable pill. Intercept
-    // the submit of any comment-requiring pill form and route it through the
-    // modal (the graph stepper calls cairnLifecycleTransition directly).
+    // the submit of any pill form carrying a trigger flag and route it through
+    // the modal chain (the graph stepper calls cairnLifecycleTransition directly).
     document.addEventListener('submit', function (e) {
       var form = e.target;
-      if (!form.matches || !form.matches('.stepper__pill-form[data-lc-requires-comment]')) { return; }
+      if (!form.matches || !form.matches('.stepper__pill-form[data-lc-requires-comment], .stepper__pill-form[data-lc-confirm]')) { return; }
       if (form.dataset.lcConfirmed) { return; }
       e.preventDefault();
-      window.cairnLifecycleTransition(form, true, form.getAttribute('data-lc-title') || '', null);
+      window.cairnLifecycleTransition(form, {
+        requiresComment: form.hasAttribute('data-lc-requires-comment'),
+        confirm: form.hasAttribute('data-lc-confirm'),
+        confirmMessage: form.getAttribute('data-lc-confirm-message') || '',
+        title: form.getAttribute('data-lc-title') || '',
+      });
     });
   })();
   </script>

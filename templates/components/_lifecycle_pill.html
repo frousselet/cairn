@@ -1,7 +1,7 @@
 {% load i18n %}
 {% comment %}One lifecycle pill: a clickable transition form when actionable, else a static state pill. Expects `step` and `lc_transition_url`; optional `marker` adds a `data-<marker>` hook (loop endpoints).{% endcomment %}
 {% if step.actionable %}
-  <form method="post" action="{{ lc_transition_url }}" class="stepper__pill-form" role="listitem"{% if step.requires_comment %} data-lc-requires-comment data-lc-title="{{ step.action_label }}"{% endif %}>
+  <form method="post" action="{{ lc_transition_url }}" class="stepper__pill-form" role="listitem" data-lc-title="{{ step.action_label }}"{% if step.requires_comment %} data-lc-requires-comment{% endif %}{% if step.confirm %} data-lc-confirm data-lc-confirm-message="{{ step.confirm_message }}"{% endif %}>
     {% csrf_token %}
     <input type="hidden" name="target_status" value="{{ step.value }}">
     <input type="hidden" name="comment" data-lc-comment value="">

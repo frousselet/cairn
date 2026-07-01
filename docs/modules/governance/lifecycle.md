@@ -36,8 +36,16 @@ Three layers, deliberately separated so the schema stays pure and testable:
 
 - **`StepKind`** : `DRAFT`, `INTERMEDIATE`, `ARCHIVED`.
 - **`Step`** : `code`, translatable `label`, `kind`, the governance flags
-  (`counts_in_reports`, `linkable`, `deletable`) and a UI `tone`. Helpers
-  `draft_step()` / `archived_step()` build the canonical bookends.
+  (`counts_in_reports`, `linkable`, `deletable`), a UI `tone` and a list of
+  `triggers` (see below). Helpers `draft_step()` / `archived_step()` build the
+  canonical bookends.
+- **`Trigger`** : a behaviour fired when the entity **enters** a step (a
+  transition targets it), as `type` + type-specific `config`. The first type is
+  `confirm` : a Yes/No confirmation modal shown before the move, with an optional
+  `config["message"]` (blank ⇒ the default, translated *"Are you sure?"*). A step
+  may carry several triggers; unknown types round-trip untouched but are ignored
+  by the UI, so a newer definition stays forward-compatible on an older build.
+  New types slot in by handling the `type` in the stepper - no schema change.
 - **`Transition`** : `target`, `source` (a step code or `ANY`), `label`,
   `form_class` (a Django `Form` class or its dotted path), `allowed_roles`
   (a tuple of `RoleType`), `allowed_users` (a callable `(instance) → iterable`),

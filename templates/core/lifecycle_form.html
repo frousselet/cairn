@@ -43,7 +43,9 @@
             <th class="text-center" title="{% trans 'Counts in reports' %}"><i class="bi bi-bar-chart"></i></th>
             <th class="text-center" title="{% trans 'Linkable' %}"><i class="bi bi-link-45deg"></i></th>
             <th class="text-center" title="{% trans 'Deletable' %}"><i class="bi bi-trash"></i></th>
-            <th>{% trans "Tone" %}</th><th></th>
+            <th>{% trans "Tone" %}</th>
+            <th class="text-center" title="{% trans 'Confirmation on entry (Are you sure?)' %}"><i class="bi bi-patch-question"></i></th>
+            <th></th>
           </tr></thead>
           <tbody data-lc-steps></tbody>
         </table>
@@ -108,6 +110,15 @@
   }
   function stepCodes() { return model.steps.map(function (s) { return s.code; }); }
   function uniqueCode(base) { var c = base, i = 1, codes = stepCodes(); while (codes.indexOf(c) !== -1) { c = base + '_' + (++i); } return c; }
+  // Triggers are a list per step; a "confirm" trigger asks before entering the
+  // step. Toggling the checkbox adds / removes the confirm entry while keeping
+  // any other (e.g. future) triggers untouched.
+  function hasConfirm(s) { return Array.isArray(s.triggers) && s.triggers.some(function (t) { return t && t.type === 'confirm'; }); }
+  function setConfirm(s, on) {
+    var others = (s.triggers || []).filter(function (t) { return !(t && t.type === 'confirm'); });
+    if (on) { others.push({ type: 'confirm' }); }
+    if (others.length) { s.triggers = others; } else { delete s.triggers; }
+  }
 
   function sync() {
     hidden.value = JSON.stringify(model);
@@ -156,6 +167,8 @@
       var toneS = el('select', { class: 'form-select form-select-sm' });
       TONES.forEach(function (t) { var o = el('option', { value: t }, [t]); if ((s.tone || 'neutral') === t) o.selected = true; toneS.appendChild(o); });
       toneS.addEventListener('change', function () { s.tone = toneS.value; renderDiagram(); sync(); });
+      var confirmC = el('input', { type: 'checkbox', class: 'form-check-input' }); confirmC.checked = hasConfirm(s);
+      confirmC.addEventListener('change', function () { setConfirm(s, confirmC.checked); sync(); });
       var del = el('button', { type: 'button', class: 'btn btn-sm btn-outline-danger' }); del.innerHTML = '<i class="bi bi-trash"></i>';
       del.addEventListener('click', function () {
         model.transitions = model.transitions.filter(function (t) { return t.source !== s.code && t.target !== s.code; });
@@ -163,7 +176,8 @@
       });
       stepsBody.appendChild(el('tr', {}, [
         el('td', {}, [codeI]), el('td', {}, [labelI]), el('td', {}, [kindS]),
-        chk('counts_in_reports'), chk('linkable'), chk('deletable'), el('td', {}, [toneS]), el('td', { class: 'text-end' }, [del]),
+        chk('counts_in_reports'), chk('linkable'), chk('deletable'), el('td', {}, [toneS]),
+        el('td', { class: 'text-center' }, [confirmC]), el('td', { class: 'text-end' }, [del]),
       ]));
     });
   }

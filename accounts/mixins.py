@@ -101,6 +101,7 @@ class LifecycleStepperMixin:
         current_idx = main_codes.index(current) if current in main_codes else None
 
         def describe(step, state):
+            confirm = step.confirm_trigger
             return {
                 "value": step.code,
                 "label": step.label,
@@ -109,6 +110,10 @@ class LifecycleStepperMixin:
                 "actionable": step.code in target_to_label,
                 "action_label": target_to_label.get(step.code, step.label),
                 "requires_comment": bool(target_to_requires_comment.get(step.code, False)),
+                # A "confirm" trigger on the target step asks "Are you sure?"
+                # before the move (the message is optional, blank -> default).
+                "confirm": confirm is not None,
+                "confirm_message": str(confirm.config.get("message", "")) if confirm else "",
             }
 
         # Branch detection : when a single intermediate step forwards (to a
@@ -216,6 +221,7 @@ class LifecycleStepperMixin:
             graph_nodes = []
             for s in lifecycle.steps:
                 code = s.code
+                confirm = s.confirm_trigger
                 graph_nodes.append({
                     "id": code,
                     "label": str(s.label),
@@ -225,6 +231,9 @@ class LifecycleStepperMixin:
                     "actionable": code in target_to_label,
                     "action_label": str(target_to_label.get(code, s.label)),
                     "requires_comment": bool(target_to_requires_comment.get(code, False)),
+                    # "confirm" trigger : ask before moving INTO this step.
+                    "confirm": confirm is not None,
+                    "confirm_message": str(confirm.config.get("message", "")) if confirm else "",
                 })
 
             # Edge classification is keyed off the full main-flow order (Draft +
