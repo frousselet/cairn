@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.33.0] - 2026-07-01
+
 ### Added
 
 - **Lifecycle step triggers (starting with a confirmation modal).** A lifecycle step can now carry a list of **triggers** fired when an entity **enters** it. The first type is `confirm` : a Yes/No *"Are you sure?"* modal shown before the transition is performed (with an optional custom message; blank falls back to the translated default). Triggers are part of the JSON definition (`"triggers": [{"type": "confirm"}]`) and round-trip losslessly; a step may carry several, and unknown types are preserved untouched so a newer definition stays forward-compatible on an older build. The Cairn admin lifecycle editor gains a **Confirm** column in the Steps tab to toggle it per step, and the reference **Support asset** lifecycle now confirms before **Decommissioned**. The stepper runs the target step's triggers as a chain before submitting (confirmation, then the existing required-comment modal), so new trigger types slot in with no schema change.
@@ -1263,6 +1265,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.33.0]: https://github.com/frousselet/cairn/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/frousselet/cairn/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/frousselet/cairn/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/frousselet/cairn/compare/v0.29.1...v0.30.0
