@@ -83,12 +83,14 @@ class TestWorkshopReviewMachine:
 
 class TestGovernanceFlags:
     def test_only_initial_states_deletable(self):
-        assert deletable_states(EbiosWorkshopProgress) == {"not_started"}
+        # Every lifecycle now carries the generic deletable Draft entry; the
+        # domain's own initial state keeps its deletable flag too.
+        assert deletable_states(EbiosWorkshopProgress) == {"draft", "not_started"}
         assert deletable_states(StudyFramework) == {"draft"}
         assert deletable_states(SecurityBaseline) == {"draft"}
         assert deletable_states(EbiosSummary) == {"draft"}
-        assert deletable_states(BaselineGap) == {"identified"}
-        assert deletable_states(PACSMeasure) == {"planned"}
+        assert deletable_states(BaselineGap) == {"draft", "identified"}
+        assert deletable_states(PACSMeasure) == {"draft", "planned"}
 
     def test_cancelled_pacs_measures_leave_reports(self):
         from core.lifecycle import reportable_states
@@ -104,6 +106,7 @@ class TestGapAndMeasurePaths:
         baseline = _singleton(SecurityBaseline, _ebios_assessment())
         gap = BaselineGap.objects.create(
             baseline=baseline, reference_source="ISO 27002", description="No MFA",
+            status=BaselineGapStatus.IDENTIFIED,
         )
         gap.transition_to(BaselineGapStatus.ACCEPTED, user)
         gap.transition_to(BaselineGapStatus.IN_REMEDIATION, user)
@@ -114,7 +117,9 @@ class TestGapAndMeasurePaths:
     def test_pacs_overdue_recovery(self):
         user = UserFactory()
         summary = _singleton(EbiosSummary, _ebios_assessment())
-        measure = PACSMeasure.objects.create(summary=summary, name="Harden bastion")
+        measure = PACSMeasure.objects.create(
+            summary=summary, name="Harden bastion", status=PACSMeasureStatus.PLANNED,
+        )
         measure.transition_to(PACSMeasureStatus.IN_PROGRESS, user)
         measure.transition_to(PACSMeasureStatus.OVERDUE, user)
         measure.transition_to(PACSMeasureStatus.COMPLETED, user)

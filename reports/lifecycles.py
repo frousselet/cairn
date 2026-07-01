@@ -54,6 +54,6 @@ MANAGEMENT_REVIEW_LIFECYCLE = register_lifecycle(
         MANAGEMENT_REVIEW_LIFECYCLE_NAME,
         _steps(),
         _transitions(),
-        layout="line",
+        layout="graph",
     )
 )

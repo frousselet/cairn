@@ -5024,7 +5024,11 @@
     .lc-graph {
       position: relative;
       margin: 2.25rem 0 3.5rem;     /* breathing room above and below the diagram */
-      overflow-x: hidden;           /* guarantees no horizontal scroll */
+      /* The snake layout wraps to the available width, so most graphs fit with no
+         scroll. A very wide graph (many branch outcomes) on a narrow screen scrolls
+         horizontally as a safety net rather than overlapping or clipping any node. */
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
     /* The stage is the shared coordinate space of the pills and the SVG overlay. */
     .lc-graph__stage {

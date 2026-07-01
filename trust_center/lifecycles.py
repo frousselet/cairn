@@ -53,7 +53,7 @@ PUBLICATION_LIFECYCLE = register_lifecycle(
         PUBLICATION_LIFECYCLE_NAME,
         _steps(PUBLICATION_STATES),
         _publication_transitions(),
-        layout="line",
+        layout="graph",
     )
 )
 
@@ -62,6 +62,6 @@ DOCUMENT_REQUEST_LIFECYCLE = register_lifecycle(
         DOCUMENT_REQUEST_LIFECYCLE_NAME,
         _steps(DOCUMENT_REQUEST_STATES),
         _document_request_transitions(),
-        layout="line",
+        layout="graph",
     )
 )
