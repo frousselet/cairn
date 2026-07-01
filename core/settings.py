@@ -74,6 +74,12 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Serve collected static files directly from the ASGI app (uvicorn does not
+    # serve static, and core/urls.py only wires them under DEBUG). Without this,
+    # every /static/ request falls through to Django's 404 (text/html), which
+    # X-Content-Type-Options: nosniff then blocks. Must sit right after
+    # SecurityMiddleware. In DEBUG, staticfiles/runserver handle serving instead.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "trust_center.middleware.TrustCenterHostMiddleware",

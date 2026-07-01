@@ -1,4 +1,5 @@
 Django
+whitenoise  # serve static files from the ASGI app (uvicorn) under DEBUG=False
 psycopg[binary]
 gunicorn
 django-htmx

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Static files are now served by the ASGI app via WhiteNoise, so they load under `DEBUG=False` behind uvicorn without a reverse proxy (the previous setup returned `text/html` 404s that `nosniff` blocked).
+
 ## [0.33.2] - 2026-07-01
 
 ### Fixed
