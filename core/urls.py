@@ -62,7 +62,6 @@ urlpatterns = [
     path("api/v1/trust-center/", include("trust_center.api.urls")),
     path("api/v1/assistant/", include("assistant.api.urls")),
     path("api/v1/", include("mcp.urls")),
-    path("config/", include("core.versioning_urls")),
     path("workflow/", include("core.workflow_urls")),
     path("history/", include("core.history_urls")),
     path("imports/", include("core.imports.urls")),

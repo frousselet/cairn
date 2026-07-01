@@ -5639,9 +5639,6 @@
         <a href="{% url 'accounts:company-settings' %}" class="sidebar-link sidebar-sub">{% trans "Company" %}</a>
         {% endif %}
         <a href="{% url 'context:tag-list' %}" class="sidebar-link sidebar-sub">{% trans "Tags" %}</a>
-        {% if can_config %}
-        <a href="{% url 'core:versioning-config-list' %}" class="sidebar-link sidebar-sub">{% trans "Versioning" %}</a>
-        {% endif %}
         {% if can_users %}
         <a href="{% url 'accounts:calendar-subscription-list' %}" class="sidebar-link sidebar-sub">{% trans "Calendar subscriptions" %}</a>
         {% endif %}
