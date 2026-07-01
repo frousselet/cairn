@@ -73,19 +73,19 @@
     var outEdges = [], dots = [];
     mainEdges.forEach(function (e, i) {
       var de = g.edge(e.source, e.target, "e" + i);
-      outEdges.push({ points: (de && de.points) ? de.points : [pos[e.source], pos[e.target]], kind: e.kind, label: e.label, available: e.available });
+      outEdges.push({ points: (de && de.points) ? de.points : [pos[e.source], pos[e.target]], kind: e.kind, label: e.label, available: e.available, source: e.source, target: e.target });
     });
     // One dot -> target per "any" transition (the dot is the arrow's origin).
     wildcard.forEach(function (e) {
       var t = pos[e.target]; if (!t) { return; }
       var dot = { x: t.x, y: t.y - t.h / 2 - 26 };
       dots.push({ x: dot.x, y: dot.y, label: e.label, available: e.available });
-      outEdges.push({ points: [dot, { x: t.x, y: t.y - t.h / 2 }], kind: "exit", label: "", available: e.available });
+      outEdges.push({ points: [dot, { x: t.x, y: t.y - t.h / 2 }], kind: "exit", label: "", available: e.available, source: null, target: e.target });
     });
     // Edges touching a detached node (e.g. restore archived -> draft) as a curve.
     incident.forEach(function (e) {
       var s = pos[e.source], t = pos[e.target]; if (!s || !t) { return; }
-      outEdges.push({ points: [{ x: s.x, y: s.y }, { x: (s.x + t.x) / 2, y: Math.max(s.y, t.y) + 26 }, { x: t.x, y: t.y }], kind: e.kind || "restore", label: e.label, available: e.available });
+      outEdges.push({ points: [{ x: s.x, y: s.y }, { x: (s.x + t.x) / 2, y: Math.max(s.y, t.y) + 26 }, { x: t.x, y: t.y }], kind: e.kind || "restore", label: e.label, available: e.available, source: e.source, target: e.target });
     });
 
     // Normalize so nothing sits at a negative coordinate.
@@ -154,29 +154,47 @@
     svg.style.width = L.width + "px"; svg.style.height = L.height + "px"; svg.style.maxWidth = "none";
 
     var accent = token("--accent", "#1E3A8A"), muted = token("--text-muted", "#94a3b8");
-    var uid = "lg" + Math.floor(L.width) + "x" + Math.floor(L.height);
+    var uid = "lg" + Math.floor(L.width) + "x" + Math.floor(L.height) + "_" + Math.floor(L.edges.length);
     var line = d3.line().x(function (p) { return p.x; }).y(function (p) { return p.y; }).curve(d3.curveBasis);
     var defs = document.createElementNS(SVGNS, "defs");
-    [[uid + "a", accent], [uid + "m", muted]].forEach(function (p) {
-      var m = document.createElementNS(SVGNS, "marker");
-      m.setAttribute("id", p[0]); m.setAttribute("viewBox", "0 -5 10 10"); m.setAttribute("refX", "9");
-      m.setAttribute("refY", "0"); m.setAttribute("markerWidth", "6.5"); m.setAttribute("markerHeight", "6.5"); m.setAttribute("orient", "auto");
-      var pa = document.createElementNS(SVGNS, "path"); pa.setAttribute("d", "M0,-4.5L9,0L0,4.5"); pa.setAttribute("fill", p[1]);
-      m.appendChild(pa); defs.appendChild(m);
-    });
     svg.appendChild(defs);
+
+    // One arrowhead marker per colour, created on demand and reused.
+    var markerByColor = {};
+    function markerFor(color) {
+      if (markerByColor[color]) { return markerByColor[color]; }
+      var id = uid + "mk" + Object.keys(markerByColor).length;
+      var m = document.createElementNS(SVGNS, "marker");
+      m.setAttribute("id", id); m.setAttribute("viewBox", "0 -5 10 10"); m.setAttribute("refX", "9");
+      m.setAttribute("refY", "0"); m.setAttribute("markerWidth", "6.5"); m.setAttribute("markerHeight", "6.5"); m.setAttribute("orient", "auto");
+      var pa = document.createElementNS(SVGNS, "path"); pa.setAttribute("d", "M0,-4.5L9,0L0,4.5"); pa.setAttribute("fill", color);
+      m.appendChild(pa); defs.appendChild(m);
+      markerByColor[color] = id; return id;
+    }
+    var gradN = 0;
 
     L.edges.forEach(function (e) {
       if (!e.points || e.points.length < 2) { return; }
-      // Line language : SOLID theme colour = transition possible now, DASHED grey
-      // = not possible. In the editor every defined transition is "possible".
+      // SOLID = transition possible now, DASHED = not possible (in the editor
+      // every defined transition is "possible").
       var possible = (opts.mode === "editor") ? true : !!e.available;
+      // The line is a gradient from the source bubble's colour to the target's.
+      var srcCol = (e.source && byId[e.source]) ? toneColor(byId[e.source].tone) : accent;
+      var tgtCol = (e.target && byId[e.target]) ? toneColor(byId[e.target].tone) : accent;
+      var p0 = e.points[0], pN = e.points[e.points.length - 1];
+      var gid = uid + "g" + (gradN++);
+      var grad = document.createElementNS(SVGNS, "linearGradient");
+      grad.setAttribute("id", gid); grad.setAttribute("gradientUnits", "userSpaceOnUse");
+      grad.setAttribute("x1", p0.x); grad.setAttribute("y1", p0.y); grad.setAttribute("x2", pN.x); grad.setAttribute("y2", pN.y);
+      var s0 = document.createElementNS(SVGNS, "stop"); s0.setAttribute("offset", "0%"); s0.setAttribute("stop-color", srcCol); grad.appendChild(s0);
+      var s1 = document.createElementNS(SVGNS, "stop"); s1.setAttribute("offset", "100%"); s1.setAttribute("stop-color", tgtCol); grad.appendChild(s1);
+      defs.appendChild(grad);
       var path = document.createElementNS(SVGNS, "path");
       path.setAttribute("d", line(e.points)); path.setAttribute("fill", "none");
-      path.setAttribute("stroke", possible ? accent : muted); path.setAttribute("stroke-width", "1.6");
-      path.setAttribute("opacity", possible ? "1" : "0.7");
+      path.setAttribute("stroke", "url(#" + gid + ")"); path.setAttribute("stroke-width", "1.8");
+      path.setAttribute("opacity", possible ? "1" : "0.6");
       if (!possible) { path.setAttribute("stroke-dasharray", "5 4"); }
-      path.setAttribute("marker-end", "url(#" + (possible ? uid + "a" : uid + "m") + ")");
+      path.setAttribute("marker-end", "url(#" + markerFor(tgtCol) + ")");
       // Transition labels are not drawn (they clutter tight loops); kept as a
       // hover tooltip so the verb is still discoverable.
       if (e.label) { var tt = document.createElementNS(SVGNS, "title"); tt.textContent = e.label; path.appendChild(tt); }
