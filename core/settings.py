@@ -149,6 +149,30 @@ DATABASES = {
     }
 }
 
+# Cache
+#
+# Redis-backed and therefore *shared across worker processes*. This is a
+# correctness requirement, not just an optimisation: the app runs several
+# uvicorn workers in production (see the Dockerfile CMD), and multiple code
+# paths coordinate across those processes through the cache - the first-run
+# onboarding runner (single migration/seed across the fleet), the semantic
+# index rebuild lock, the SPOF scheduler's single-runner gate and the trust
+# centre rate limiter. The default per-process LocMemCache would make each of
+# those locks/counters local to one worker and silently ineffective.
+# Redis is already a hard dependency (Channels layer), so this adds no new
+# infrastructure. The test settings override this with a local-memory cache
+# (the suite is single-process and must not need a live Redis).
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://{host}:{port}/1".format(
+            host=os.environ.get("REDIS_HOST", "redis"),
+            port=int(os.environ.get("REDIS_PORT", 6379)),
+        ),
+        "KEY_PREFIX": "cairn",
+    }
+}
+
 # Custom User Model
 AUTH_USER_MODEL = "accounts.User"
 

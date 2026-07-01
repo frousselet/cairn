@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- First-run onboarding is now safe under multiple web workers: the migration/seed runner and its progress live in the shared Redis cache behind a cross-worker lock, so several uvicorn workers no longer race the same migrations (duplicate-column crashes, progress bar jumping backwards).
+- Configured a shared Redis cache (`CACHES`), making the semantic-index rebuild lock, the new SPOF single-runner gate and the trust-centre rate limiter effective across worker processes instead of silently per-process.
+
 ## [0.33.0] - 2026-07-01
 
 ### Added

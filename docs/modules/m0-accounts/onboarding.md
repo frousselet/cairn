@@ -70,9 +70,10 @@ under `templates/onboarding/`:
 
 ## Progress transport: polling, not WebSockets
 
-Both background jobs (migrations and seed) publish progress to a process-global
-store in `core/onboarding/runner.py`, exposed as JSON by `onboarding:progress`
-(`progress.json`). The progress bar polls that endpoint.
+Both background jobs (migrations and seed) publish progress to the **shared
+cache** (Redis in production, see `settings.CACHES`) in `core/onboarding/runner.py`,
+exposed as JSON by `onboarding:progress` (`progress.json`). The progress bar polls
+that endpoint.
 
 Polling is deliberate. On a fresh database the session and auth tables do not
 exist yet, so the Channels auth stack (and DB-backed sessions) cannot run during
@@ -80,6 +81,32 @@ the **migration** phase - a WebSocket would fail before the very tables it needs
 are created. The JSON poll touches neither the database nor the session, so it
 works before any table exists. Using one mechanism for both phases keeps the
 client simple.
+
+## Concurrency: one migration across all workers
+
+Production runs several uvicorn workers (see the Dockerfile `CMD`). Every web
+request - including the onboarding landing view's automatic `start_migrations()`
+call - can land on a different worker process. The runner therefore coordinates
+through the **shared cache**, not a per-process flag:
+
+- `start_migrations()` / `start_seed()` acquire a cross-worker lock with an atomic
+  `cache.add()` (Redis SET-NX). Exactly one worker wins and runs the job on a
+  background thread; every other worker (and any second request) gets `False` and
+  simply watches the shared progress. Without this, each worker would believe no
+  job was running and launch its **own** migration - several processes applying
+  the same DDL at once, which fails with duplicate-column / duplicate-type errors
+  and makes the bar jump backwards.
+- `is_running()` reads that shared lock, so `OnboardingMiddleware` and the
+  background schedulers (SPOF detection, semantic-index rebuild) all agree on
+  whether a job is in flight regardless of which worker they run in.
+- The lock carries a TTL refreshed by a heartbeat on each migration / seed step,
+  so a worker that dies mid-job frees the instance within a few minutes instead of
+  wedging onboarding forever.
+
+A per-process `LocMemCache` (Django's default when no `CACHES` is configured)
+would make every one of these locks local to a single worker and silently
+ineffective, so a shared cache backend is a correctness requirement here, not an
+optimisation.
 
 Note: the migration runner applies migrations with ``MigrationExecutor`` (for the
 per-migration progress callback) and then emits the ``post_migrate`` signal
