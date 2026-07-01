@@ -26,8 +26,6 @@ A contract is an autonomous, potentially multi-party document inside the **Docum
 | `content_type` | string | optional, max 100 | MIME type (`application/pdf`) |
 | `notes` | text | optional, HTML | Free-text notes |
 | `tags` | relation | M2M -> Tag | |
-| `is_approved` | boolean | default `false` | Validated by an approver (independent of the workflow state) |
-| `approved_by` / `approved_at` | relation / datetime | optional | |
 | `version` | int | auto-incremented | Bumped on each major change |
 | `created_by` | relation | FK -> User | |
 | `created_at` / `updated_at` | datetime | auto | |
@@ -58,7 +56,7 @@ Contract runs the standardised lifecycle engine (`core.lifecycle`, `LIFECYCLE_NA
 | expired | Intermediate | yes | | |
 | archived | Archived (exit) | yes | | |
 
-Transitions: `draft -> drafting` (Start drafting), `drafting -> signing` (Send for signature), `signing -> active` (Bring into force), the recurring review cycle `active -> under_review` (Start review) / `under_review -> active` (Reviewed), `active -> expired` (Expire), and `any -> archived` (Archive). There is deliberately **no** `expired -> active`: an expired contract is not renewed in place but replaced by a new one via `supersedes` ("annule et remplace"). The review back-edge makes the lifecycle cyclic, which is why it uses the `graph` layout. `archived` is the exit but still counts in reports for traceability. Approval (`is_approved`) is an independent axis. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_contract` tool is permission-gated.
+Transitions: `draft -> drafting` (Start drafting), `drafting -> signing` (Send for signature), `signing -> active` (Bring into force), the recurring review cycle `active -> under_review` (Start review) / `under_review -> active` (Reviewed), `active -> expired` (Expire), and `any -> archived` (Archive). There is deliberately **no** `expired -> active`: an expired contract is not renewed in place but replaced by a new one via `supersedes` ("annule et remplace"). The review back-edge makes the lifecycle cyclic, which is why it uses the `graph` layout. `archived` is the exit but still counts in reports for traceability. As with every lifecycle entity today, web transitions are gated on authentication + scope (role/form gating is a later platform-wide phase); the MCP `transition_contract` tool is permission-gated.
 
 ## Computed properties
 
@@ -91,7 +89,6 @@ Transitions: `draft -> drafting` (Start drafting), `drafting -> signing` (Send f
 - `GET /api/v1/assets/contracts/<uuid>/`
 - `PUT/PATCH /api/v1/assets/contracts/<uuid>/`
 - `DELETE /api/v1/assets/contracts/<uuid>/`
-- `POST /api/v1/assets/contracts/<uuid>/approve/`
 
 The serializer exposes `document_url` (the protected download path) but never the raw `file_content`. The PDF cannot be uploaded via the JSON API; use the web form.
 
@@ -102,7 +99,7 @@ The serializer exposes `document_url` (the protected download path) but never th
 
 ### MCP
 
-- `list_contracts` / `get_contract` / `create_contract` / `update_contract` / `delete_contract` / `approve_contract` / `batch_create_contracts`
+- `list_contracts` / `get_contract` / `create_contract` / `update_contract` / `delete_contract` / `batch_create_contracts`
 - `transition_contract` / `contract_allowed_transitions`
 - Parties and scopes are set via `scope_ids`, `supplier_ids`, `client_ids`. The PDF cannot be uploaded through MCP (binary payloads are out of scope for the JSON transport).
 
@@ -114,7 +111,6 @@ The serializer exposes `document_url` (the protected download path) but never th
 | `assets.contract.create` | Create a contract |
 | `assets.contract.update` | Modify a contract |
 | `assets.contract.delete` | Delete a contract |
-| `assets.contract.approve` | Approve a contract |
 
 ## Future work
 

@@ -1,9 +1,9 @@
 # Lifecycles (standardised)
 
-> Status: **architecture / foundation**. The engine, the event log and the
-> service exist and are tested; entities are migrated onto it incrementally
-> (Suppliers first). The legacy `core/workflow.py` engine still runs the
-> not-yet-migrated entities and the two coexist during the transition.
+> Status: **canonical**. This is the only lifecycle engine: every domain element
+> runs on it, the first-generation `core/workflow.py` engine has been removed, and
+> the separate approval axis (`is_approved`) is gone. Cross-cutting governance
+> rules and surfaces are documented in [`workflow.md`](workflow.md).
 
 Every domain element moves through a **lifecycle**: a declarative *schema* of
 **steps** (étapes) and the **transitions** between them. This is the single,

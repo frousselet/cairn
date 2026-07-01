@@ -33,9 +33,6 @@ Steering indicator (KPI) of the ISMS, manual, fed by API or predefined by Cairn.
 | `linked_objectives` | relation | M2M → Objective | Objectives whose progress the indicator measures (ISO 27001 §6.2 / §9.1) |
 | `linked_requirements` | relation | M2M → Requirement | Requirements whose compliance the indicator measures |
 | `tags` | relation | M2M → Tag | Free-form tags |
-| `is_approved` | boolean | default `false` | Indicator validated by an approver |
-| `approved_by` | relation | FK → User, optional | Approver |
-| `approved_at` | datetime | optional | Approval date |
 | `version` | int | auto-incremented | Bumped on each major modification |
 | `created_by` | relation | FK → User | Creator |
 | `created_at` | datetime | auto | Creation date |
@@ -62,7 +59,7 @@ Steering indicator (KPI) of the ISMS, manual, fed by API or predefined by Cairn.
 | `framework_compliance_rate` | number | `%` | Compliance rate of a specific framework (parameter = `Framework` UUID), same per-requirement calculation as above |
 | `objective_progress` | number | `%` | Average progress of objectives (`Objective.progress_percentage`) |
 | `risk_treatment_rate` | number | `%` | Share of risks whose treatment plan is `completed` |
-| `approved_scopes_rate` | number | `%` | Share of `Scope` records with status `active` AND `is_approved=true` |
+| `approved_scopes_rate` | number | `%` | Share of `Scope` records in a reportable lifecycle state (counting in reports) |
 | `mandatory_roles_coverage` | number | `%` | Share of roles with `is_mandatory=true` that have at least one assigned user |
 
 Internal indicators are recalculated periodically by a background service; see [§ Automated monitoring](README.md#pilotage-et-calculs-automatiques) of the module.
@@ -117,14 +114,13 @@ A critical indicator is displayed with a red border on the dashboard and appears
 - `GET /api/v1/context/indicators/<uuid>/`
 - `PUT/PATCH /api/v1/context/indicators/<uuid>/`
 - `DELETE /api/v1/context/indicators/<uuid>/`
-- `POST /api/v1/context/indicators/<uuid>/approve/`
 - `GET /api/v1/context/indicators/<uuid>/measurements/`: measurement history
 - `POST /api/v1/context/indicators/<uuid>/measurements/`: new measurement
 - `POST /api/v1/context/indicators/batch/`: batch creation
 
 ### MCP
 
-- `list_indicators` / `get_indicator` / `create_indicator` / `update_indicator` / `delete_indicator` / `approve_indicator` / `batch_create_indicators`
+- `list_indicators` / `get_indicator` / `create_indicator` / `update_indicator` / `delete_indicator` / `batch_create_indicators`
 - `list_indicator_measurements` / `create_indicator_measurement` / `batch_create_indicator_measurements`
 
 ## Permissions
@@ -135,7 +131,6 @@ A critical indicator is displayed with a red border on the dashboard and appears
 | `context.indicator.create` | Create an indicator and its measurements |
 | `context.indicator.update` | Modify an indicator |
 | `context.indicator.delete` | Delete an indicator |
-| `context.indicator.approve` | Approve an indicator |
 
 ## Références
 

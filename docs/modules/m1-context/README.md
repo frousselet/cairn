@@ -139,7 +139,6 @@ The module covers seven sub-domains:
 | `PUT` | `/scopes/{id}` | Full update |
 | `PATCH` | `/scopes/{id}` | Partial update |
 | `DELETE` | `/scopes/{id}` | Delete (if not referenced) |
-| `POST` | `/scopes/{id}/approve` | Approve a scope |
 | `POST` | `/scopes/{id}/archive` | Archive a scope |
 | `GET` | `/scopes/{id}/history` | Modification history |
 | `GET` | `/scopes/{id}/export` | Export (PDF, DOCX, JSON) |
@@ -258,9 +257,9 @@ The module is accessible through a main navigation item "Context & Organization"
 
 ### "Scope" view
 
-- **List:** Table with columns (Name, Version, Status, Approval date, Review date) with filters and sorting.
+- **List:** Table with columns (Name, Version, Status, Review date) with filters and sorting.
 - **Detail / Edit:** Form with tabs: General information, Scopes (geographic, organizational, technical), Exclusions, Applicable standards, History.
-- **Actions:** Create, Edit, Approve, Archive, Export.
+- **Actions:** Create, Edit, Archive, Export.
 
 ### "Issues" view
 
@@ -326,7 +325,6 @@ The module relies on a role-based access control (RBAC) model defined at the glo
 |---|---|
 | `context.scope.read` | View scopes |
 | `context.scope.write` | Create/edit scopes |
-| `context.scope.approve` | Approve a scope |
 | `context.scope.delete` | Delete a scope |
 | `context.issue.read` | View issues |
 | `context.issue.write` | Create/edit issues |
@@ -359,7 +357,7 @@ The module relies on a role-based access control (RBAC) model defined at the glo
 | **Administrator** | All permissions |
 | **CISO / DPO** | All except `*.delete` and `config.manage` |
 | **Auditor** | `*.read` + `context.export` + `context.audit_trail.read` |
-| **Contributor** | `*.read` + `*.write` (excluding scope.approve and swot.validate) |
+| **Contributor** | `*.read` + `*.write` (excluding swot.validate) |
 | **Reader** | `*.read` only |
 
 ---
@@ -375,7 +373,7 @@ Each create, update or delete operation generates an audit record containing:
 | `id` | Unique identifier of the entry |
 | `timestamp` | UTC timestamp |
 | `user_id` | User who performed the action |
-| `action` | `create`, `update`, `delete`, `approve`, `validate`, `archive`, `assign`, `unassign` |
+| `action` | `create`, `update`, `delete`, `validate`, `archive`, `assign`, `unassign` |
 | `entity_type` | Type of entity concerned (e.g. `Scope`, `Issue`, `Stakeholder`) |
 | `entity_id` | Identifier of the entity concerned |
 | `changes` | JSON object describing the modified fields (`field`, `old_value`, `new_value`) |
@@ -416,7 +414,6 @@ Audit entries are kept for a configurable period (default: 7 years) in line with
 
 | Événement | Recipients | Channel |
 |---|---|---|
-| Scope pending approval | Approvers | In-app, email |
 | Review date reached (scope, issue, stakeholder, objective, SWOT) | Owner / Creator | In-app, email |
 | Unfilled mandatory role | Administrator, CISO | In-app, email |
 | RACI rule violation | Administrator | In-app |

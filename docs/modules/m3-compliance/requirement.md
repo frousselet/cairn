@@ -34,7 +34,6 @@ Individual requirement extracted from a [Framework](framework.md), the elementar
 | `linked_risks` | reverse M2M | -> Risk via `Risk.linked_requirements` | Associated risks (fed from the Risk side) |
 | `mapped_requirements` | relation | M2M via [`RequirementMapping`](requirement-mapping.md) | Requirements from other frameworks mapped |
 | `status` | enum | required, default `active` | `active`, `deprecated`, `superseded` |
-| `is_approved` / `approved_by` / `approved_at` | bool / FK -> User / datetime | optional | Standard approval workflow |
 | `version` | int | auto-incremented | Bumped on each major change |
 | `tags` | relation | M2M -> Tag | |
 | `created_by` | relation | FK -> User | Creator |

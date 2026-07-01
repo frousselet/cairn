@@ -30,7 +30,6 @@ Action plan aimed at remediating a compliance gap identified during an [assessme
 | `status` | enum | required, default `new` | See "Workflow" below. **Read-only via standard REST/MCP**: use the `action_plan_transition` tool to change the status. |
 | `is_overdue` | boolean | computed, read-only | `true` if `target_date` has passed and `status` is neither `closed` nor `cancelled`. Computed on read, not stored. |
 | `tags` | relation | M2M -> Tag | |
-| `is_approved` / `approved_by` / `approved_at` | bool / FK -> User / datetime | optional | Approval outside the workflow |
 | `version` | int | auto-incremented | |
 | `created_by` | relation | FK -> User | |
 | `created_at` / `updated_at` | datetime | auto | |
@@ -101,14 +100,13 @@ The richer workflow reflects real-world practice: moving an action plan from "de
 - `GET /api/v1/compliance/action-plans/<uuid>/`
 - `PATCH /api/v1/compliance/action-plans/<uuid>/`: modify business fields (except `status`)
 - `DELETE /api/v1/compliance/action-plans/<uuid>/`
-- `POST /api/v1/compliance/action-plans/<uuid>/approve/`
 - `GET /api/v1/compliance/action-plans/<uuid>/allowed-transitions/`: transitions available to the user
 - `POST /api/v1/compliance/action-plans/<uuid>/transition/`: apply a transition (`{"status": "...", "comment": "..."}`)
 - `GET /api/v1/compliance/action-plans/<uuid>/transitions/`: history
 
 ### MCP
 
-- `list_action_plans` / `get_action_plan` / `create_action_plan` / `update_action_plan` (without `status`) / `delete_action_plan` / `approve_action_plan` / `batch_create_action_plans`
+- `list_action_plans` / `get_action_plan` / `create_action_plan` / `update_action_plan` (without `status`) / `delete_action_plan` / `batch_create_action_plans`
 - `action_plan_allowed_transitions(id)`: lists the available transitions
 - `action_plan_transition(id, status, comment=...)`: applies a transition
 - `action_plan_transitions(id)`: chronological history

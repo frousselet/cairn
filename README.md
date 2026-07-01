@@ -16,7 +16,7 @@ Manage your organisation's security posture, track compliance with regulatory fr
 - **Trust Center** : a public, curated page to share your security posture (certifications and compliance level, subprocessors, security measures, downloadable documents), built directly into Cairn and optionally servable on a separate domain - an explicit, opt-in curation layer so internal GRC data never leaks
 - **Ask Cairn (optional)** : natural-language questions in the command palette ("Which decisions were made at the last management review?"), answered by a pluggable LLM provider (Mistral AI by default; OpenAI / any OpenAI-compatible endpoint; Claude; self-hosted Ollama) that cites real records and enforces your permissions, with thumbs up/down feedback that admins can export to improve the assistant. Its name is customisable in the company settings (defaults to "Ask Cairn")
 
-Everything is bilingual (English/French), audit-ready (full change history, versioning, lifecycle workflows with approvals) and access-controlled (role-based permissions, scope-based tenancy, passkey login).
+Everything is bilingual (English/French), audit-ready (full change history, versioning, lifecycle workflows) and access-controlled (role-based permissions, scope-based tenancy, passkey login).
 
 Beyond the web UI, every feature is also available through a [REST API](docs/api.md) and a built-in [MCP server](docs/mcp-server.md), so scripts and AI assistants can work with your GRC data directly.
 

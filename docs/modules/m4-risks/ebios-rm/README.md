@@ -303,7 +303,7 @@ The [`MitreAttackTechnique`](mitre-attack-technique.md) model (catalogue) does n
 
 ## 4. Data model by workshop
 
-All EBIOS entities inherit from `BaseModel` (UUID, timestamps, `created_by`, approval, versioning, tags) or from `ScopedModel` (same + M2M `scopes`) depending on their scope. Unless stated otherwise, EBIOS entities are attached to a [`RiskAssessment`](../risk-assessment.md) and inherit its scope (no `scopes` of their own).
+All EBIOS entities inherit from `BaseModel` (UUID, timestamps, `created_by`, versioning, tags) or from `ScopedModel` (same + M2M `scopes`) depending on their scope. Unless stated otherwise, EBIOS entities are attached to a [`RiskAssessment`](../risk-assessment.md) and inherit its scope (no `scopes` of their own).
 
 The detailed definitions of each entity are published in dedicated files:
 
@@ -387,7 +387,6 @@ Base URL: `/api/v1/risks/ebios/`. All routes inherit the pagination, filtering, 
 | `GET` | `/risk-sources` | List the SR (filters `?assessment_id`, `?category`, `?is_retained`, `?threat_level_min`) |
 | `POST` | `/risk-sources` | Create an SR |
 | `GET` / `PUT` / `PATCH` / `DELETE` | `/risk-sources/{id}` | CRUD |
-| `POST` | `/risk-sources/{id}/approve` | Approve |
 | `GET` | `/risk-sources/catalog` | ANSSI catalogue of SR types |
 | `POST` | `/risk-sources/import-catalog` | Import from catalogue |
 | `GET` | `/targeted-objectives` | List the OV |
@@ -396,7 +395,6 @@ Base URL: `/api/v1/risks/ebios/`. All routes inherit the pagination, filtering, 
 | `GET` | `/sr-ov-pairs` | List the SR/OV pairs (filters) |
 | `POST` | `/sr-ov-pairs` | Create a pair |
 | `GET` / `PUT` / `PATCH` / `DELETE` | `/sr-ov-pairs/{id}` | CRUD |
-| `POST` | `/sr-ov-pairs/{id}/approve` | Approve |
 | `GET` | `/assessments/{id}/sr-ov-matrix` | SR x OV cross matrix with relevance |
 
 ### 6.4 Workshop 3 - Ecosystem and strategic scenarios
@@ -406,13 +404,11 @@ Base URL: `/api/v1/risks/ebios/`. All routes inherit the pagination, filtering, 
 | `GET` | `/ecosystem-stakeholders` | List the ecosystem stakeholders (filters `?assessment_id`, `?threat_zone`) |
 | `POST` | `/ecosystem-stakeholders` | Create a stakeholder |
 | `GET` / `PUT` / `PATCH` / `DELETE` | `/ecosystem-stakeholders/{id}` | CRUD |
-| `POST` | `/ecosystem-stakeholders/{id}/approve` | Approve |
 | `POST` | `/ecosystem-stakeholders/import-suppliers` | Import from Module 2 Suppliers |
 | `GET` | `/assessments/{id}/ecosystem-graph` | Ecosystem graph (nodes + edges + zones) |
 | `GET` | `/strategic-scenarios` | List (filters `?assessment_id`, `?is_retained`, `?risk_level_min`) |
 | `POST` | `/strategic-scenarios` | Create |
 | `GET` / `PUT` / `PATCH` / `DELETE` | `/strategic-scenarios/{id}` | CRUD |
-| `POST` | `/strategic-scenarios/{id}/approve` | Approve |
 | `POST` | `/strategic-scenarios/{id}/consolidate` | Consolidate into a Risk |
 | `GET` | `/strategic-scenarios/{id}/attack-path` | List the steps |
 | `POST` | `/strategic-scenarios/{id}/attack-path` | Add a step |
@@ -426,7 +422,6 @@ Base URL: `/api/v1/risks/ebios/`. All routes inherit the pagination, filtering, 
 | `GET` | `/operational-scenarios` | List (filters `?strategic_scenario_id`, `?likelihood_v`, `?risk_level_min`) |
 | `POST` | `/operational-scenarios` | Create |
 | `GET` / `PUT` / `PATCH` / `DELETE` | `/operational-scenarios/{id}` | CRUD |
-| `POST` | `/operational-scenarios/{id}/approve` | Approve |
 | `POST` | `/operational-scenarios/{id}/consolidate` | Consolidate into a Risk |
 | `GET` | `/operational-scenarios/{id}/techniques` | List the techniques |
 | `POST` | `/operational-scenarios/{id}/techniques` | Add a technique |
@@ -476,7 +471,6 @@ For each of the 15 EBIOS entities (StudyFramework, EbiosWorkshopProgress, Securi
 - `create_{entity}`
 - `update_{entity}`
 - `delete_{entity}`
-- `approve_{entity}` (for approvable entities: SecurityBaseline, RiskSource, RiskSourceObjectivePair, EcosystemStakeholder, StrategicScenario, OperationalScenario, EbiosSummary)
 - `batch_create_{entity}` (M4 keeps this pattern)
 
 Total: around 90 to 100 CRUD tools.
@@ -605,7 +599,7 @@ Two sub-tabs:
 - Stepper: switches to vertical mode on screens < 768px, with horizontal scroll for the pills.
 - Matrices and graphs: switch to a tabular view with an explicit toggle.
 - Multi-select: use of the project's existing `select2-mobile` component.
-- Sticky bars: the primary action (Validate/Approve) sticks to the bottom of the screen on mobile.
+- Sticky bars: the primary action (Validate) sticks to the bottom of the screen on mobile.
 - Formsets: vertical stacking with touch affordances.
 
 ### 8.10 Light/dark themes
@@ -630,27 +624,27 @@ PERMISSION_REGISTRY["risks"].update({
         "label": _("EBIOS RM assessment pilotage"),
     },
     "ebios_baseline": {
-        "actions": ["create", "read", "update", "delete", "approve"],
+        "actions": ["create", "read", "update", "delete"],
         "label": _("EBIOS RM security baseline (workshop 1)"),
     },
     "ebios_risk_source": {
-        "actions": ["create", "read", "update", "delete", "approve"],
+        "actions": ["create", "read", "update", "delete"],
         "label": _("EBIOS RM risk sources and objectives (workshop 2)"),
     },
     "ebios_ecosystem": {
-        "actions": ["create", "read", "update", "delete", "approve"],
+        "actions": ["create", "read", "update", "delete"],
         "label": _("EBIOS RM ecosystem stakeholders (workshop 3)"),
     },
     "ebios_strategic": {
-        "actions": ["create", "read", "update", "delete", "approve"],
+        "actions": ["create", "read", "update", "delete"],
         "label": _("EBIOS RM strategic scenarios (workshop 3)"),
     },
     "ebios_operational": {
-        "actions": ["create", "read", "update", "delete", "approve"],
+        "actions": ["create", "read", "update", "delete"],
         "label": _("EBIOS RM operational scenarios (workshop 4)"),
     },
     "ebios_summary": {
-        "actions": ["create", "read", "update", "delete", "approve"],
+        "actions": ["create", "read", "update", "delete"],
         "label": _("EBIOS RM summary and PACS (workshop 5)"),
     },
 })
@@ -664,9 +658,9 @@ Generated codes: `risks.ebios_assessment.read`, `risks.ebios_baseline.create`, e
 |---|---|
 | Super Admin | all |
 | Admin | all except `*.delete` |
-| CISO / DPO | `*.read`, `*.create`, `*.update`, `*.approve`, `ebios_assessment.validate` |
+| CISO / DPO | `*.read`, `*.create`, `*.update`, `ebios_assessment.validate` |
 | Auditor | `*.read` only |
-| Contributor | `*.read`, `*.create`, `*.update` (excluding `approve` and `validate`) |
+| Contributor | `*.read`, `*.create`, `*.update` (excluding `validate`) |
 | Reader | `*.read` only |
 
 To be added in the data migration `accounts/migrations/00xx_add_ebios_permissions.py`.
