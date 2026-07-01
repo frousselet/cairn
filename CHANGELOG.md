@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **JSON-driven, admin-editable lifecycle framework.** Every lifecycle is now described by a JSON document (steps + transitions) stored in a `core.LifecycleDefinition` row and editable in the Cairn admin (**Administration -> General -> Lifecycles**): a list of all lifecycles plus a per-lifecycle editor with a JSON field, server-side validation (exactly one Draft entry, at least one Archived exit, referential integrity of transitions) and a **live graph preview**. The engine resolves a lifecycle from its DB row (built via `lifecycle_from_json`, cached and invalidated on save) and falls back to the code-declared default when no row exists, so it keeps working on a fresh install and in tests; a `post_migrate` hook seeds / refreshes the built-in definitions from code while leaving admin-customized rows untouched, and "Reset to default" restores a built-in. Editing the JSON re-shapes the stepper, the allowed transitions and the governance flags with no code change.
+- **Lifecycle graphs rendered with dagre (layered / Sugiyama layout).** The stepper graph is now laid out by dagre with routed edge waypoints, so **arrows never overlap a node** whatever the flow's shape, at any screen width (it flips from left-to-right to top-to-bottom on narrow screens so it always fits). d3 and dagre are **vendored locally** (`static/vendor/`) rather than loaded from a CDN, so the diagram works in air-gapped / on-prem deployments.
+
+### Changed
+
+- **Support-asset lifecycle redefined as a clean, explicit JSON flow** (the reference example for the framework): `Draft -> In stock -> Deployed -> Active <-> Under maintenance -> Decommissioned -> Disposed -> Archived`, with every move stated explicitly (no "from any state" archive shortcut) and a single Archived exit. `in_stock` is a proper entry so it is no longer an orphan on the graph.
+
 ### Removed
 
 - **First-generation workflow engine deleted.** `core/workflow.py` (the `Workflow` / `State` / `Transition` state machine, the default workflow, `sync_legacy_status` and the `subsumes_approval` heuristic), every per-app `workflows.py`, the `WorkflowStepperMixin` and the `includes/workflow_stepper.html` partial are gone. Every domain element now runs the standardised `core.lifecycle` engine. The cross-cutting governance helpers (`reportable` / `linkable` / `linkable_or_linked` / `reportable_states` / `linkable_states` / `deletable_states`) and the deletion-guard error moved to `core.lifecycle`; the generic transition endpoint, the DRF `.../transition/` action, the MCP `transition_*` / `*_allowed_transitions` tools and the history timeline are lifecycle-only.

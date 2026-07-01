@@ -42,9 +42,9 @@ class TestActionPlanLifecycleDefinition:
 
     def test_terminal_states(self):
         lifecycle = resolve_lifecycle(ComplianceActionPlan)
-        # The generic Archived exit is the single terminal; the domain's own
-        # closed / cancelled outcomes lead into it.
-        assert {s.code for s in lifecycle.steps if s.is_archived} == {"archived"}
+        # The domain terminal outcomes stay archived-kind (clean detached exits),
+        # alongside the generic Archived exit.
+        assert {s.code for s in lifecycle.steps if s.is_archived} == {"closed", "cancelled", "archived"}
 
     def test_refusals_require_a_comment(self):
         lifecycle = resolve_lifecycle(ComplianceActionPlan)

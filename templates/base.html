@@ -5021,6 +5021,26 @@
        muted). The Archived exit sits detached on its own row below the flow. */
     /* No card chrome : the diagram rests directly on the page background, with
        a little breathing room below so it is not glued to the tags. */
+    /* ── Data-driven lifecycle graph (dagre + d3) ── */
+    .lc-dagre {
+      position: relative;
+      margin: 1.75rem 0 2.75rem;
+      width: 100%;
+    }
+    .lc-dagre__stage { position: relative; width: 100%; }
+    .lc-dagre__svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .lc-dagre__node-label {
+      font: 600 13px "GitLab Sans", system-ui, sans-serif;
+      letter-spacing: normal;
+      pointer-events: none;
+    }
+    .lc-dagre__edge-label {
+      font: 500 10.5px "GitLab Sans", system-ui, sans-serif;
+      fill: var(--text-muted, #94a3b8);
+      pointer-events: none;
+    }
+    .lc-dagre [role="button"]:focus-visible rect { outline: 2px solid var(--accent, #1E3A8A); outline-offset: 2px; }
+
     .lc-graph {
       position: relative;
       margin: 2.25rem 0 3.5rem;     /* breathing room above and below the diagram */
@@ -5643,6 +5663,9 @@
         <a href="{% url 'accounts:company-settings' %}" class="sidebar-link sidebar-sub">{% trans "Company" %}</a>
         {% endif %}
         <a href="{% url 'context:tag-list' %}" class="sidebar-link sidebar-sub">{% trans "Tags" %}</a>
+        {% if can_config %}
+        <a href="{% url 'core:lifecycle-list' %}" class="sidebar-link sidebar-sub">{% trans "Lifecycles" %}</a>
+        {% endif %}
         {% if can_users %}
         <a href="{% url 'accounts:calendar-subscription-list' %}" class="sidebar-link sidebar-sub">{% trans "Calendar subscriptions" %}</a>
         {% endif %}

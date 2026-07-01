@@ -88,11 +88,13 @@ class TestSupportAssetLifecycle:
     def test_disposal_path(self):
         user = UserFactory()
         asset = SupportAssetFactory()  # draft
-        asset.transition_to(SupportAssetStatus.ACTIVE, user)  # leave Draft
+        # Clean procurement-to-disposal flow (explicit transitions).
+        asset.transition_to(SupportAssetStatus.IN_STOCK, user)  # Receive
+        asset.transition_to(SupportAssetStatus.DEPLOYED, user)  # Deploy
+        asset.transition_to(SupportAssetStatus.ACTIVE, user)  # Commission
         asset.transition_to(SupportAssetStatus.UNDER_MAINTENANCE, user)
         asset.transition_to(SupportAssetStatus.ACTIVE, user)
         asset.transition_to(SupportAssetStatus.DECOMMISSIONED, user)
-        # Decommissioned is not terminal: disposal follows.
         asset.transition_to(SupportAssetStatus.DISPOSED, user)
         asset.refresh_from_db()
         assert asset.status == "disposed"

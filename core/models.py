@@ -10,6 +10,97 @@ from django.utils.translation import gettext_lazy as _
 logger = logging.getLogger(__name__)
 
 
+class LifecycleDefinition(models.Model):
+    """The JSON description of one lifecycle, editable in the Cairn admin.
+
+    A lifecycle is a directed graph of **steps** and **transitions** stored as a
+    single JSON document (``definition``). Every lifecycle has one Draft entry
+    and at least one Archived exit; what sits between is entity-specific. The
+    :mod:`core.lifecycle` engine builds its runtime :class:`~core.lifecycle.Lifecycle`
+    from this row (falling back to the code-declared default when no row exists),
+    so editing the JSON here re-shapes the stepper, the allowed transitions and
+    the governance flags without any code change.
+
+    ``definition`` schema::
+
+        {
+          "layout": "graph",
+          "steps": [
+            {"code": "draft", "label": "Draft", "kind": "draft",
+             "counts_in_reports": false, "linkable": false, "deletable": true,
+             "tone": "neutral"},
+            ...
+            {"code": "archived", "label": "Archived", "kind": "archived", ...}
+          ],
+          "transitions": [
+            {"source": "draft", "target": "in_stock", "label": "Receive",
+             "requires_comment": false, "permission_action": ""},
+            ...
+          ]
+        }
+
+    ``source`` may be ``"*"`` for a "from any state" transition.
+    """
+
+    name = models.SlugField(
+        _("Lifecycle name"),
+        max_length=100,
+        unique=True,
+        help_text=_("Technical identifier a model binds to via LIFECYCLE_NAME, e.g. 'support_asset'."),
+    )
+    label = models.CharField(_("Display name"), max_length=200, blank=True)
+    definition = models.JSONField(
+        _("Definition (JSON)"),
+        default=dict,
+        help_text=_("Steps and transitions. Exactly one Draft step and at least one Archived step."),
+    )
+    #: A built-in lifecycle seeded from code (vs. one created in the admin).
+    is_system = models.BooleanField(_("System lifecycle"), default=False)
+    #: Set when edited in the admin, so the code seed no longer overwrites it.
+    is_customized = models.BooleanField(_("Customized"), default=False)
+    created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("Lifecycle definition")
+        verbose_name_plural = _("Lifecycle definitions")
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.label or self.name
+
+    def build(self):
+        """Return the runtime :class:`~core.lifecycle.Lifecycle` (raises if invalid)."""
+        from core.lifecycle import lifecycle_from_json
+
+        return lifecycle_from_json(self.name, self.definition)
+
+    def clean(self):
+        """Reject a definition that is not a valid lifecycle (bad schema, no Draft, ...)."""
+        from django.core.exceptions import ValidationError
+
+        from core.lifecycle import LifecycleError
+
+        try:
+            self.build()
+        except LifecycleError as exc:
+            raise ValidationError({"definition": str(exc)}) from None
+        except (KeyError, TypeError, AttributeError) as exc:
+            raise ValidationError({"definition": _("Malformed definition: %(err)s") % {"err": exc}}) from None
+
+    def save(self, *args, **kwargs):
+        from core.lifecycle import clear_lifecycle_cache
+
+        super().save(*args, **kwargs)
+        clear_lifecycle_cache()
+
+    def delete(self, *args, **kwargs):
+        from core.lifecycle import clear_lifecycle_cache
+
+        super().delete(*args, **kwargs)
+        clear_lifecycle_cache()
+
+
 class LifecycleEvent(models.Model):
     """An immutable record of one performed lifecycle transition.
 

@@ -39,8 +39,8 @@ class TestAssessmentLifecycleDefinition:
 
     def test_terminal_states(self):
         lifecycle = resolve_lifecycle(ComplianceAssessment)
-        # The generic Archived exit is the single terminal.
-        assert {s.code for s in lifecycle.steps if s.is_archived} == {"archived"}
+        # Domain terminals stay archived-kind (detached exits) + the generic one.
+        assert {s.code for s in lifecycle.steps if s.is_archived} == {"closed", "cancelled", "archived"}
 
 
 class TestAssessmentStateSync:
