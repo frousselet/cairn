@@ -5026,9 +5026,14 @@
       position: relative;
       margin: 1.75rem 0 2.75rem;
       width: 100%;
+      overflow-x: auto;               /* a graph wider than the page scrolls, font unchanged */
     }
     .lc-dagre__stage { position: relative; width: 100%; }
-    .lc-dagre__svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .lc-dagre__svg {
+      display: block;
+      margin: 0 auto;                 /* natural size (constant font), centred when it fits */
+      overflow: visible;
+    }
     .lc-dagre__node-label {
       font: 600 13px "GitLab Sans", system-ui, sans-serif;
       letter-spacing: normal;
