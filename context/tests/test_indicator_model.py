@@ -482,8 +482,8 @@ class TestComputeInternalValue:
     def test_objective_progress_with_data(self):
         from context.tests.factories import ObjectiveFactory
 
-        ObjectiveFactory(progress_percentage=80, is_approved=True)
-        ObjectiveFactory(progress_percentage=60, is_approved=True)
+        ObjectiveFactory(progress_percentage=80, workflow_state="validated")
+        ObjectiveFactory(progress_percentage=60, workflow_state="validated")
         ind = _make_indicator(
             is_internal=True,
             indicator_type=IndicatorType.ORGANIZATIONAL,
@@ -526,7 +526,7 @@ class TestComputeInternalValue:
         assert result == "0"
 
     def test_approved_scopes_rate_with_data(self):
-        ScopeFactory(is_approved=True)
+        ScopeFactory(workflow_state="in_force")  # counts in reports
         ScopeFactory()
         ScopeFactory()
         ind = _make_indicator(

@@ -98,18 +98,12 @@ class SecurityBaselineSerializer(serializers.ModelSerializer):
             "dic_summary",
             "baseline_references",
             "status",
-            "is_approved",
-            "approved_by",
-            "approved_at",
             "created_at",
             "updated_at",
         ]
         read_only_fields = [
             "id",
             "reference",
-            "is_approved",
-            "approved_by",
-            "approved_at",
             "created_at",
             "updated_at",
         ]
@@ -202,9 +196,6 @@ class RiskSourceSerializer(serializers.ModelSerializer):
             "is_retained",
             "retention_justification",
             "is_from_catalog",
-            "is_approved",
-            "approved_by",
-            "approved_at",
             "created_at",
             "updated_at",
         ]
@@ -214,9 +205,6 @@ class RiskSourceSerializer(serializers.ModelSerializer):
             "category_label",
             "threat_level",
             "threat_level_label",
-            "is_approved",
-            "approved_by",
-            "approved_at",
             "created_at",
             "updated_at",
         ]
@@ -268,9 +256,6 @@ class RiskSourceObjectivePairSerializer(serializers.ModelSerializer):
             "priority_score",
             "is_retained",
             "retention_justification",
-            "is_approved",
-            "approved_by",
-            "approved_at",
             "created_at",
             "updated_at",
         ]
@@ -279,9 +264,6 @@ class RiskSourceObjectivePairSerializer(serializers.ModelSerializer):
             "reference",
             "relevance_label",
             "priority_score",
-            "is_approved",
-            "approved_by",
-            "approved_at",
             "created_at",
             "updated_at",
         ]
@@ -313,9 +295,6 @@ class EcosystemStakeholderSerializer(serializers.ModelSerializer):
             "accessible_support_assets",
             "is_attack_vector",
             "attack_vector_justification",
-            "is_approved",
-            "approved_by",
-            "approved_at",
             "created_at",
             "updated_at",
         ]
@@ -326,9 +305,6 @@ class EcosystemStakeholderSerializer(serializers.ModelSerializer):
             "threat_level",
             "threat_zone",
             "threat_zone_label",
-            "is_approved",
-            "approved_by",
-            "approved_at",
             "created_at",
             "updated_at",
         ]
@@ -387,9 +363,6 @@ class StrategicScenarioSerializer(serializers.ModelSerializer):
             "retention_justification",
             "consolidated_risk",
             "attack_path_steps",
-            "is_approved",
-            "approved_by",
-            "approved_at",
             "created_at",
             "updated_at",
         ]
@@ -398,9 +371,6 @@ class StrategicScenarioSerializer(serializers.ModelSerializer):
             "reference",
             "risk_level",
             "attack_path_steps",
-            "is_approved",
-            "approved_by",
-            "approved_at",
             "created_at",
             "updated_at",
         ]
@@ -491,9 +461,6 @@ class OperationalScenarioSerializer(serializers.ModelSerializer):
             "consolidated_risk",
             "mitre_version",
             "attack_techniques",
-            "is_approved",
-            "approved_by",
-            "approved_at",
             "created_at",
             "updated_at",
         ]
@@ -503,9 +470,6 @@ class OperationalScenarioSerializer(serializers.ModelSerializer):
             "likelihood_v_label",
             "risk_level",
             "attack_techniques",
-            "is_approved",
-            "approved_by",
-            "approved_at",
             "created_at",
             "updated_at",
         ]

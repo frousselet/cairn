@@ -1,6 +1,5 @@
 import logging
 
-from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import status as http_status
 from rest_framework.decorators import action

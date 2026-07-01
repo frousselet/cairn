@@ -83,7 +83,7 @@ class TestTransitionEndpoint:
         issue.refresh_from_db()
         assert issue.workflow_state == "pending"
 
-    def test_post_validate_stamps_approval(self):
+    def test_post_validate_moves_to_validated(self):
         self.client.force_authenticate(self.superuser)
         issue = IssueFactory()
         issue.transition_to("pending")
@@ -93,8 +93,6 @@ class TestTransitionEndpoint:
         assert response.status_code == 200
         issue.refresh_from_db()
         assert issue.workflow_state == "validated"
-        assert issue.is_approved is True
-        assert issue.approved_by == self.superuser
 
     def test_post_illegal_transition_is_400(self):
         self.client.force_authenticate(self.superuser)
@@ -115,7 +113,7 @@ class TestTransitionEndpoint:
     def test_list_filter_by_workflow_state(self):
         self.client.force_authenticate(self.superuser)
         IssueFactory()  # draft
-        validated = IssueFactory(is_approved=True)
+        validated = IssueFactory(workflow_state="validated")
         response = self.client.get("/api/v1/context/issues/?workflow_state=validated")
         payload = _data(response)
         items = payload["results"] if isinstance(payload, dict) and "results" in payload else payload
@@ -188,7 +186,7 @@ class TestTransitionMCPTools:
         issue.refresh_from_db()
         assert issue.workflow_state == "pending"
 
-    def test_validate_with_permission_stamps(self):
+    def test_validate_with_permission_moves_to_validated(self):
         issue = IssueFactory()
         issue.transition_to("pending")
         result = self._call(
@@ -197,7 +195,6 @@ class TestTransitionMCPTools:
         )
         assert result["workflow_state"] == "validated"
         issue.refresh_from_db()
-        assert issue.is_approved is True
-        assert issue.approved_by == self.superuser
+        assert issue.workflow_state == "validated"
 
 

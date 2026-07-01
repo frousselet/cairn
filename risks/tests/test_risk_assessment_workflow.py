@@ -45,13 +45,6 @@ class TestRiskAssessmentWorkflow:
         with pytest.raises(IllegalTransitionError):
             assessment.transition_to(AssessmentStatus.DRAFT, user)
 
-    def test_approval_stays_independent(self):
-        assessment = RiskAssessmentFactory(is_approved=True)
-        assessment.refresh_from_db()
-        # The approval flag does not move the machine (explicit opt-out).
-        assert assessment.workflow_state == "draft"
-        assert assessment.is_approved is True
-
     def test_only_draft_deletable(self):
         live = RiskAssessmentFactory(status=AssessmentStatus.IN_PROGRESS)
         with pytest.raises(LifecycleProtectedError):

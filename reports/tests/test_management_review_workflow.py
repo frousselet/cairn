@@ -105,13 +105,6 @@ class TestManagementReviewTransitions:
         review.refresh_from_db()
         assert review.workflow_state == "held"
 
-    def test_is_approved_stays_independent(self):
-        user = UserFactory()
-        review = ManagementReviewFactory(is_approved=True)
-        review.transition_to(ManagementReviewStatus.IN_PREPARATION, user)
-        review.refresh_from_db()
-        assert review.is_approved is True
-
 
 class TestManagementReviewGovernance:
     def test_only_planned_deletable(self):

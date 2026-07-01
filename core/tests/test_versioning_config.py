@@ -2,7 +2,6 @@ import pytest
 from django.test import TestCase
 
 from context.models import Scope
-from context.tests.factories import ScopeFactory
 from core.models import VersioningConfig
 
 

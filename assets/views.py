@@ -1,6 +1,5 @@
 from urllib.parse import quote
 
-from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from django.http import Http404, HttpResponse

@@ -29,12 +29,11 @@ class FrameworkSerializer(serializers.ModelSerializer):
             "status", "review_date",
             "logo", "logo_16", "logo_32", "logo_64",
             "version", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
             "compliance_level", "last_assessment_date",
         ]
 
@@ -77,12 +76,11 @@ class RequirementSerializer(serializers.ModelSerializer):
             "owner", "priority", "target_date",
             "linked_assets", "linked_stakeholder_expectations", "linked_risks",
             "status", "version", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
             "last_assessment_date", "last_assessed_by",
         ]
 
@@ -189,12 +187,11 @@ class ComplianceAssessmentSerializer(serializers.ModelSerializer):
             "observation_count", "improvement_opportunity_count",
             "strength_count", "not_assessed_count", "not_applicable_count",
             "status", "version", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
             "overall_compliance_level", "total_requirements",
             "compliant_count", "major_non_conformity_count",
             "minor_non_conformity_count", "observation_count",
@@ -262,12 +259,11 @@ class ComplianceActionPlanSerializer(serializers.ModelSerializer):
             "start_date", "target_date", "completion_date",
             "progress_percentage", "cost_estimate",
             "status", "allowed_transitions", "version", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
             "status",
         ]
 

@@ -59,7 +59,7 @@ class TestRiskCriteriaViewSet:
         assert _data(response)["name"] == "Updated Criteria"
 
     def test_delete(self):
-        rc = RiskCriteriaFactory()
+        rc = RiskCriteriaFactory(workflow_state="draft")  # deletable
         response = self.client.delete(f"/api/v1/risks/criteria/{rc.pk}/")
         assert response.status_code == 204
 

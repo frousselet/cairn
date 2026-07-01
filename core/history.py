@@ -23,12 +23,8 @@ from django.utils.translation import gettext_lazy as _
 
 # --- Field rules ------------------------------------------------------------
 
-#: Approval bookkeeping fields, never shown as ordinary edits.
-APPROVAL_FIELDS = frozenset(
-    {"is_approved", "approved_by", "approved_by_id", "approved_at"}
-)
-#: Fields hidden from ordinary modification diffs (approval + version churn).
-HIDDEN_FIELDS = APPROVAL_FIELDS | {"version"}
+#: Fields hidden from ordinary modification diffs (version churn).
+HIDDEN_FIELDS = frozenset({"version"})
 #: Lifecycle field whose change marks a record as a workflow transition.
 WORKFLOW_FIELD = "workflow_state"
 #: Fields excluded from creation / deletion snapshots.
@@ -60,7 +56,6 @@ class EntryKind(str, Enum):
     CREATE = "create"
     UPDATE = "update"
     DELETE = "delete"
-    APPROVAL = "approval"
     TRANSITION = "transition"
 
 
@@ -88,8 +83,6 @@ class HistoryEntry:
     changes: tuple[FieldChange, ...] = ()
     # CREATE / DELETE
     snapshot: tuple[FieldChange, ...] = ()
-    # APPROVAL
-    approved: bool | None = None
     # TRANSITION
     from_state: str | None = None
     to_state: str | None = None
@@ -127,8 +120,6 @@ class HistoryEntry:
                 {"field": str(c.field), "field_code": c.field_code, "value": _str_or_none(c.new)}
                 for c in self.snapshot
             ]
-        elif self.kind is EntryKind.APPROVAL:
-            data["approved"] = self.approved
         elif self.kind is EntryKind.TRANSITION:
             data.update(
                 from_state=self.from_state,
@@ -225,7 +216,7 @@ def classify_record(record) -> EntryKind:
     """Classify a single historical record into an :class:`EntryKind`.
 
     Precedence on a modification (``~``): transition (the lifecycle field
-    changed) > approval-only (only approval fields changed) > update.
+    changed) > update.
     """
     if record.history_type == "+":
         return EntryKind.CREATE
@@ -240,8 +231,6 @@ def classify_record(record) -> EntryKind:
         return EntryKind.UPDATE
     if WORKFLOW_FIELD in changed:
         return EntryKind.TRANSITION
-    if changed and changed <= HIDDEN_FIELDS and (changed & APPROVAL_FIELDS):
-        return EntryKind.APPROVAL
     return EntryKind.UPDATE
 
 
@@ -276,9 +265,6 @@ def build_entry(record) -> HistoryEntry:
             is_refusal=_is_backward_transition(model, ws.old, ws.new),
             **common,
         )
-
-    if kind is EntryKind.APPROVAL:
-        return HistoryEntry(kind=kind, approved=bool(getattr(record, "is_approved", False)), **common)
 
     changes = tuple(
         FieldChange(resolve_verbose_name(record, c.field), c.field, old=c.old, new=c.new)

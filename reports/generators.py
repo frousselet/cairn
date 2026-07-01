@@ -428,7 +428,6 @@ RISK_REGISTER_COLUMNS = [
     "Priority",
     "Status",
     "Review date",
-    "Approved",
     "Created at",
 ]
 
@@ -485,7 +484,6 @@ def _risk_row(risk):
         risk.get_priority_display(),
         risk.get_status_display(),
         risk.review_date.isoformat() if risk.review_date else "",
-        "yes" if risk.is_approved else "no",
         risk.created_at.replace(tzinfo=None).isoformat(timespec="seconds")
         if risk.created_at
         else "",

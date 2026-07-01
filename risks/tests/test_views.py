@@ -613,25 +613,18 @@ class TestTreatmentPlanDeleteView:
 
 
 class TestRiskBulkActionView:
-    """C4: bulk approve / delete on the risk register."""
+    """C4: bulk delete on the risk register."""
 
-    def test_bulk_approve_marks_all_selected(self):
-        client, user = _superuser_client()
+    def test_bulk_approve_is_unsupported(self):
+        client, _ = _superuser_client()
         r1 = RiskFactory()
-        r2 = RiskFactory()
-        r3 = RiskFactory()
         resp = client.post(
             reverse("risks:risk-bulk-action"),
-            {"action": "approve", "risk_ids": [str(r1.pk), str(r3.pk)]},
+            {"action": "approve", "risk_ids": [str(r1.pk)]},
         )
         assert resp.status_code == 302
-        r1.refresh_from_db()
-        r2.refresh_from_db()
-        r3.refresh_from_db()
-        assert r1.is_approved is True
-        assert r2.is_approved is False
-        assert r3.is_approved is True
-        assert r1.approved_by == user
+        # The approval axis was removed: 'approve' is no longer a bulk action.
+        assert Risk.objects.filter(pk=r1.pk).exists()
 
     def test_bulk_delete_removes_selected(self):
         client, _ = _superuser_client()
@@ -1027,7 +1020,7 @@ class TestRiskCriteriaDetailView:
 class TestRiskCriteriaDeleteView:
     def test_delete_criteria(self):
         client, user = _superuser_client()
-        criteria = RiskCriteriaFactory()
+        criteria = RiskCriteriaFactory(workflow_state="draft")  # deletable
         pk = criteria.pk
         resp = client.post(
             reverse("risks:criteria-delete", args=[pk])

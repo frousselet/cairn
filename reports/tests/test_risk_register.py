@@ -174,8 +174,8 @@ class TestRiskRegisterExportView:
         user = UserFactory(is_superuser=True, is_staff=True)
         client = Client()
         client.force_login(user)
-        RiskFactory(name="StatusA", status="analyzed", is_approved=True)
-        RiskFactory(name="StatusB", status="closed", is_approved=True)
+        RiskFactory(name="StatusA", status="analyzed")
+        RiskFactory(name="StatusB", status="closed")
         resp = client.get(
             reverse("risks:risk-register-export-xlsx") + "?status=closed",
         )

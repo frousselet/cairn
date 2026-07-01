@@ -10,7 +10,7 @@ comment.
 The legacy per-transition Django-permission ``action`` (approve / validate) is
 not carried over: the lifecycle engine gates transitions by role (and the
 API / MCP layers keep their own permission checks), matching the other migrated
-entities. ``is_approved`` stays an independent approval axis.
+entities.
 
 Imported from ``RisksConfig.ready()`` so registration happens at startup.
 """

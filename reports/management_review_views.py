@@ -10,7 +10,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
-from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import (
@@ -325,15 +324,7 @@ class ManagementReviewTransitionView(
         if review.status == ManagementReviewStatus.CLOSED:
             if review.approver_id is None:
                 review.approver = request.user
-                review.approved_at = timezone.now()
-                review.is_approved = True
-                review.approved_by = request.user
-                review.save(
-                    update_fields=[
-                        "approver", "approved_at", "is_approved",
-                        "approved_by", "updated_at",
-                    ],
-                )
+                review.save(update_fields=["approver", "updated_at"])
 
         messages.success(request, _("Status updated."))
         return redirect("reports:management-review-detail", pk=pk)

@@ -40,11 +40,10 @@ class ScopeSerializer(serializers.ModelSerializer):
             "boundaries", "justification_exclusions",
             "geographic_scope", "organizational_scope", "technical_scope",
             "included_sites", "excluded_sites", "managers",
-            "is_approved", "approved_by", "approved_at",
             "effective_date", "review_date", "tags",
             "created_by", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "created_by", "created_at", "updated_at", "is_approved", "approved_by", "approved_at", "version"]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 
 
 class SiteSerializer(serializers.ModelSerializer):
@@ -57,10 +56,9 @@ class SiteSerializer(serializers.ModelSerializer):
         fields = [
             "id", "name", "type", "address", "description",
             "parent_site", "parent_site_name", "workflow_state", "version", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "created_by", "created_at", "updated_at", "is_approved", "approved_by", "approved_at", "version"]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 
 
 class IssueSerializer(serializers.ModelSerializer):
@@ -70,10 +68,9 @@ class IssueSerializer(serializers.ModelSerializer):
             "id", "scopes", "name", "description", "type", "category",
             "impact_level", "trend", "source", "related_stakeholders",
             "review_date", "status", "version", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "created_by", "created_at", "updated_at", "is_approved", "approved_by", "approved_at", "version"]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 
 
 class StakeholderExpectationSerializer(serializers.ModelSerializer):
@@ -96,10 +93,9 @@ class StakeholderSerializer(serializers.ModelSerializer):
             "contact_name", "contact_email", "contact_phone",
             "influence_level", "interest_level", "expectations",
             "status", "review_date", "version", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "created_by", "created_at", "updated_at", "is_approved", "approved_by", "approved_at", "version"]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 
 
 class StakeholderListSerializer(serializers.ModelSerializer):
@@ -125,10 +121,9 @@ class ObjectiveSerializer(serializers.ModelSerializer):
             "owner", "status", "progress_percentage",
             "related_issues", "related_stakeholders", "parent_objective",
             "review_date", "version", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "reference", "created_by", "created_at", "updated_at", "is_approved", "approved_by", "approved_at", "version"]
+        read_only_fields = ["id", "reference", "created_by", "created_at", "updated_at", "version"]
 
 
 class SwotItemSerializer(serializers.ModelSerializer):
@@ -162,10 +157,9 @@ class SwotAnalysisSerializer(serializers.ModelSerializer):
             "id", "scopes", "name", "description", "analysis_date",
             "workflow_state", "validated_by", "validated_at", "items", "strategies",
             "review_date", "version", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "created_by", "created_at", "updated_at", "is_approved", "approved_by", "approved_at", "version"]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 
 
 class SwotAnalysisListSerializer(serializers.ModelSerializer):
@@ -201,10 +195,9 @@ class RoleSerializer(serializers.ModelSerializer):
             "assigned_users", "is_mandatory", "source_standard",
             "status", "responsibilities", "compliance_alert",
             "version", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "created_by", "created_at", "updated_at", "is_approved", "approved_by", "approved_at", "version"]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 
 
 class RoleListSerializer(serializers.ModelSerializer):
@@ -229,10 +222,9 @@ class ActivitySerializer(serializers.ModelSerializer):
             "type", "criticality", "owner", "parent_activity",
             "related_stakeholders", "related_objectives",
             "status", "version", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "reference", "created_by", "created_at", "updated_at", "is_approved", "approved_by", "approved_at", "version"]
+        read_only_fields = ["id", "reference", "created_by", "created_at", "updated_at", "version"]
 
 
 class IndicatorMeasurementSerializer(serializers.ModelSerializer):
@@ -262,12 +254,11 @@ class IndicatorSerializer(serializers.ModelSerializer):
             "owner", "linked_objectives", "linked_requirements",
             "is_critical", "measurements",
             "version", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
             "current_value",
         ]
 
@@ -295,10 +286,8 @@ class StakeholderFeedbackSerializer(serializers.ModelSerializer):
             "subject", "content", "sentiment", "severity", "status", "response",
             "linked_issues", "linked_expectations",
             "scopes", "tags",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at",
         ]

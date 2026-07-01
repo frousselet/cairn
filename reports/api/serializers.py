@@ -147,13 +147,11 @@ class ManagementReviewSerializer(serializers.ModelSerializer):
             "next_review_date", "summary", "agenda", "minutes",
             "scopes", "tags",
             "snapshot_available", "snapshot_taken_at",
-            "is_approved", "approved_by", "approved_at",
             "decisions_count", "isms_changes_count", "participants_count",
             "created_at", "updated_at", "created_by",
         ]
         read_only_fields = [
             "id", "reference", "snapshot_available", "snapshot_taken_at",
-            "is_approved", "approved_by", "approved_at",
             "decisions_count", "isms_changes_count", "participants_count",
             "created_at", "updated_at", "created_by",
         ]

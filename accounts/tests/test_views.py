@@ -1153,17 +1153,12 @@ class TestActionLogListView:
             assert hasattr(entry, "model_label")
             assert hasattr(entry, "object_repr")
 
-    def test_approval_entries_annotated(self, client):
-        """Approval-only changes are still classified and badged correctly
-        (the bespoke ?action=approval filter bar was removed, but the
-        classification logic that drove it is unchanged)."""
+    def test_transition_entries_annotated(self, client):
+        """Lifecycle transitions are classified and badged correctly in the
+        aggregated action log."""
         user = _superuser()
-        scope = ScopeFactory(name="Approval Scope")
-        scope.is_approved = True
-        scope.approved_by = user
-        from django.utils import timezone as tz
-        scope.approved_at = tz.now()
-        scope.save()
+        scope = ScopeFactory(name="Transition Scope")
+        scope.transition_to("definition", user)
         client.force_login(user)
         resp = client.get(reverse("accounts:action-log-list"))
         assert resp.status_code == 200

@@ -8,7 +8,7 @@ from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
-from django.utils import formats, timezone
+from django.utils import formats
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy as _l
 from django.views import View

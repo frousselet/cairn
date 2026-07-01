@@ -53,7 +53,6 @@ class SecurityBaselineFilter(django_filters.FilterSet):
         model = SecurityBaseline
         fields = {
             "workflow_state": ["exact"],
-            "is_approved": ["exact"],
         }
 
 
@@ -94,7 +93,6 @@ class RiskSourceFilter(django_filters.FilterSet):
             "category": ["exact"],
             "is_retained": ["exact"],
             "is_from_catalog": ["exact"],
-            "is_approved": ["exact"],
             "threat_level": ["exact"],
         }
 
@@ -124,7 +122,6 @@ class RiskSourceObjectivePairFilter(django_filters.FilterSet):
         fields = {
             "relevance": ["exact"],
             "is_retained": ["exact"],
-            "is_approved": ["exact"],
             "priority_score": ["exact"],
         }
 
@@ -143,7 +140,6 @@ class EcosystemStakeholderFilter(django_filters.FilterSet):
             "category": ["exact"],
             "threat_zone": ["exact"],
             "is_attack_vector": ["exact"],
-            "is_approved": ["exact"],
         }
 
 
@@ -158,7 +154,6 @@ class StrategicScenarioFilter(django_filters.FilterSet):
         model = StrategicScenario
         fields = {
             "is_retained": ["exact"],
-            "is_approved": ["exact"],
             "risk_level": ["exact"],
             "gravity_level": ["exact", "gte", "lte"],
             "likelihood_level": ["exact", "gte", "lte"],
@@ -206,7 +201,6 @@ class OperationalScenarioFilter(django_filters.FilterSet):
             "likelihood_v": ["exact", "gte"],
             "gravity_level": ["exact", "gte", "lte"],
             "gravity_inherited": ["exact"],
-            "is_approved": ["exact"],
             "risk_level": ["exact"],
         }
 

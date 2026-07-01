@@ -327,7 +327,7 @@ class TestDashboardCompliance:
 
     def test_tracked_requirement_count_follows_rate_basis(self):
         # Validated active framework: its applicable requirements count.
-        tracked = FrameworkFactory(status="active", is_approved=True)
+        tracked = FrameworkFactory(status="active", workflow_state="validated")
         RequirementFactory(framework=tracked)
         RequirementFactory(framework=tracked, is_applicable=False)
         # Draft framework: excluded from the average, so from the caption too.
@@ -344,7 +344,7 @@ class TestDashboardCompliance:
         # A framework with applicable + non-applicable requirements (no
         # assessments): the applicable segments rescale to the total and the rest
         # becomes the not-applicable slice, so the bar sums to 100%.
-        fw = FrameworkFactory(status="active", is_approved=True)
+        fw = FrameworkFactory(status="active", workflow_state="validated")
         RequirementFactory.create_batch(3, framework=fw)      # applicable, not assessed
         RequirementFactory(framework=fw, is_applicable=False)  # not applicable
         client, user = _superuser_client()
@@ -481,7 +481,7 @@ class TestFilterScoped:
 
     def test_scope_count_matches_filter(self):
         """Superuser sees all scopes."""
-        ScopeFactory(is_approved=True)
+        ScopeFactory(workflow_state="validated")
         ScopeFactory()
         ScopeFactory(workflow_state="archived")
         client, user = _superuser_client()
@@ -602,7 +602,7 @@ class TestDashboardOverallCompliance:
 
     def test_frameworks_with_no_requirements(self):
         """A framework with no requirements should show 0% compliance."""
-        FrameworkFactory(status="active", is_approved=True)
+        FrameworkFactory(status="active", workflow_state="validated")
         client, user = _superuser_client()
         resp = client.get(reverse("home"))
         active_fws = resp.context["active_frameworks"]

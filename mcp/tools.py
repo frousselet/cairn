@@ -1617,7 +1617,7 @@ def _register_context_tools(server):
                     "geographic_scope", "organizational_scope", "technical_scope",
                     "included_sites", "excluded_sites", "managers", "manager_names",
                     "effective_date", "review_date",
-                    "version", "is_approved", "created_at"]
+                    "version", "created_at"]
     scope_writable = ["name", "description", "icon",
                       "boundaries", "justification_exclusions",
                       "geographic_scope", "organizational_scope", "technical_scope",
@@ -1665,7 +1665,7 @@ def _register_context_tools(server):
 
     issue_fields = ["id", "reference", "scopes", "name", "description", "type", "category",
                     "impact_level", "trend", "source", "related_stakeholders",
-                    "review_date", "status", "is_approved", "created_at"]
+                    "review_date", "status", "created_at"]
     issue_writable = ["name", "description", "type", "category", "impact_level",
                       "trend", "source", "review_date", "status",
                       "scope_ids", "related_stakeholder_ids"]
@@ -1733,7 +1733,7 @@ def _register_context_tools(server):
     stakeholder_fields = ["id", "reference", "scopes", "name", "description", "type", "category",
                           "contact_name", "contact_email", "contact_phone",
                           "influence_level", "interest_level",
-                          "review_date", "status", "is_approved",
+                          "review_date", "status",
                           "created_at"]
     stakeholder_writable = ["name", "description", "type", "category",
                             "contact_name", "contact_email", "contact_phone",
@@ -1812,7 +1812,7 @@ def _register_context_tools(server):
                         "status", "progress_percentage", "target_date", "owner_id", "owner_name",
                         "related_issues", "related_stakeholders",
                         "parent_objective_id", "review_date",
-                        "is_approved", "created_at"]
+                        "created_at"]
     objective_writable = ["name", "description", "category", "type",
                           "target_value", "current_value", "unit",
                           "measurement_method", "measurement_frequency",
@@ -1888,7 +1888,7 @@ def _register_context_tools(server):
 
     swot_fields = ["id", "reference", "scopes", "name", "description", "analysis_date",
                    "workflow_state", "validated_by_id", "validated_at", "review_date",
-                   "is_approved", "created_at"]
+                   "created_at"]
     swot_writable = ["name", "description", "analysis_date",
                      "review_date", "scope_ids"]
 
@@ -1976,7 +1976,7 @@ def _register_context_tools(server):
 
     role_fields = ["id", "reference", "scopes", "name", "description", "type",
                    "assigned_users", "is_mandatory", "source_standard", "status",
-                   "is_approved", "created_at"]
+                   "created_at"]
     role_writable = ["name", "description", "type", "is_mandatory", "source_standard",
                      "status", "scope_ids", "assigned_user_ids"]
 
@@ -2023,7 +2023,7 @@ def _register_context_tools(server):
     activity_fields = ["id", "reference", "scopes", "name", "description", "type", "criticality",
                        "owner_id", "owner_name", "parent_activity_id",
                        "related_stakeholders", "related_objectives", "essential_assets",
-                       "status", "is_approved", "created_at"]
+                       "status", "created_at"]
     activity_writable = ["name", "description", "type", "criticality", "owner_id",
                          "status", "parent_activity_id", "scope_ids",
                          "related_stakeholder_ids", "related_objective_ids",
@@ -2081,7 +2081,7 @@ def _register_context_tools(server):
                    })
 
     site_fields = ["id", "reference", "scopes", "name", "description", "type", "workflow_state",
-                   "address", "parent_site_id", "is_approved", "created_at"]
+                   "address", "parent_site_id", "created_at"]
     site_writable = ["name", "description", "type", "address",
                      "parent_site_id", "scope_ids"]
 
@@ -2148,7 +2148,7 @@ def _register_context_tools(server):
                         "first_review_date", "status", "is_internal",
                         "internal_source", "internal_source_parameter",
                         "owner_id", "linked_objectives", "linked_requirements",
-                        "is_approved", "created_at"]
+                        "created_at"]
     indicator_writable = ["name", "description", "indicator_type", "collection_method",
                           "format", "unit", "expected_level",
                           "critical_threshold_operator", "critical_threshold_value",
@@ -2311,7 +2311,7 @@ def _register_assets_tools(server):
                  "max_tolerable_downtime", "recovery_time_objective", "recovery_point_objective",
                  "data_classification", "personal_data", "personal_data_categories",
                  "regulatory_constraints", "related_activities", "review_date",
-                 "is_approved", "created_at"]
+                 "created_at"]
     ea_writable = ["name", "description", "type", "category", "status",
                    "confidentiality_level", "integrity_level", "availability_level",
                    "confidentiality_justification", "integrity_justification",
@@ -2412,7 +2412,7 @@ def _register_assets_tools(server):
                  "status",
                  "inherited_confidentiality", "inherited_integrity", "inherited_availability",
                  "review_date",
-                 "is_approved", "created_at"]
+                 "created_at"]
     sa_writable = ["name", "description", "type", "category", "status",
                    "location", "manufacturer", "model_name", "serial_number",
                    "software_version", "operating_system",
@@ -2524,7 +2524,7 @@ def _register_assets_tools(server):
                    })
 
     ag_fields = ["id", "reference", "scopes", "name", "description", "type",
-                 "owner_id", "members", "status", "is_approved", "created_at"]
+                 "owner_id", "members", "status", "created_at"]
     ag_writable = ["name", "description", "type", "status", "owner_id",
                    "scope_ids", "member_ids"]
 
@@ -2563,7 +2563,7 @@ def _register_assets_tools(server):
     contract_fields = ["id", "reference", "label", "status",
                        "start_date", "end_date", "amount", "currency",
                        "scopes", "suppliers", "clients", "parent", "supersedes",
-                       "file_name", "notes", "is_approved", "created_at"]
+                       "file_name", "notes", "created_at"]
     contract_writable = ["label", "status", "start_date", "end_date",
                          "amount", "currency", "notes", "parent_id",
                          "supersedes_id",
@@ -2623,7 +2623,7 @@ def _register_assets_tools(server):
                           "status", "certificate_number", "issuer",
                           "issue_date", "expiry_date", "scope_statement",
                           "scopes", "sites", "supersedes",
-                          "file_name", "notes", "is_approved", "created_at"]
+                          "file_name", "notes", "created_at"]
     certificate_writable = ["label", "status",
                            "certificate_number", "issuer", "issue_date",
                            "expiry_date", "scope_statement", "notes",
@@ -2683,7 +2683,7 @@ def _register_assets_tools(server):
                   "contract_reference", "contract_start_date", "contract_end_date",
                   "is_contract_expired",
                   "logo", "logo_16", "logo_32", "logo_64",
-                  "notes", "owner_id", "owner_name", "is_approved", "created_at"]
+                  "notes", "owner_id", "owner_name", "created_at"]
     sup_writable = ["name", "description", "type", "criticality", "status",
                     "contact_name", "contact_email", "contact_phone",
                     "website", "address", "country", "latitude", "longitude",
@@ -2810,7 +2810,7 @@ def _register_assets_tools(server):
                  "supplier_id", "supplier_name", "dependency_type",
                  "criticality", "description",
                  "is_single_point_of_failure", "redundancy_level",
-                 "is_approved", "created_at"]
+                 "created_at"]
     sd_writable = ["support_asset_id", "supplier_id", "dependency_type",
                    "criticality", "description", "redundancy_level"]
 
@@ -2846,7 +2846,7 @@ def _register_assets_tools(server):
     # Site-asset dependencies (has approve)
     sad_fields = ["id", "reference", "support_asset_id", "site_id", "dependency_type",
                   "criticality", "description", "is_single_point_of_failure",
-                  "redundancy_level", "is_approved", "created_at"]
+                  "redundancy_level", "created_at"]
     sad_writable = ["support_asset_id", "site_id", "dependency_type", "criticality",
                     "description", "redundancy_level"]
 
@@ -2880,7 +2880,7 @@ def _register_assets_tools(server):
     ssd_fields = ["id", "reference", "site_id", "site_name", "supplier_id", "supplier_name",
                   "dependency_type",
                   "criticality", "description", "is_single_point_of_failure",
-                  "redundancy_level", "is_approved", "created_at"]
+                  "redundancy_level", "created_at"]
     ssd_writable = ["site_id", "supplier_id", "dependency_type", "criticality",
                     "description", "redundancy_level"]
 
@@ -3058,7 +3058,7 @@ def _register_compliance_tools(server):
                  "owner_id", "related_stakeholders",
                  "compliance_level", "last_assessment_date",
                  "status", "review_date", "logo_32",
-                 "is_approved", "created_at"]
+                 "created_at"]
     fw_writable = ["name", "short_name", "description", "type", "category",
                    "framework_version",
                    "publication_date", "effective_date", "expiry_date",
@@ -3211,7 +3211,7 @@ def _register_compliance_tools(server):
                   "owner_id", "status",
                   "framework_id", "section_id",
                   "linked_assets", "linked_stakeholder_expectations",
-                  "is_approved", "created_at"]
+                  "created_at"]
     req_writable = ["requirement_number", "name", "description", "guidance", "type",
                     "category", "compliance_status", "compliance_level",
                     "priority", "is_applicable", "applicability_justification",
@@ -3302,7 +3302,7 @@ def _register_compliance_tools(server):
                  "minor_non_conformity_count", "observation_count",
                  "improvement_opportunity_count", "strength_count",
                  "evaluated_count", "not_assessed_count", "not_applicable_count",
-                 "is_approved", "created_at"]
+                 "created_at"]
     ca_writable = ["name", "description", "limitations",
                    "assessment_start_date", "assessment_end_date",
                    "status", "assessor_id"]
@@ -3440,16 +3440,6 @@ def _register_compliance_tools(server):
                 setattr(obj, target, _coerce_field_value(
                     ComplianceAssessment, field_name, arguments[field_name]))
                 changed_fields.add(field_name)
-        if hasattr(obj, "is_approved") and hasattr(obj, "version"):
-            from core.models import VersioningConfig
-            if VersioningConfig.is_approval_enabled(ComplianceAssessment):
-                major_fields = VersioningConfig.get_major_fields(ComplianceAssessment)
-                is_major = major_fields is None or bool(changed_fields & major_fields)
-                if is_major:
-                    obj.is_approved = False
-                    obj.approved_by = None
-                    obj.approved_at = None
-                    obj.version = (obj.version or 0) + 1
         try:
             obj.full_clean()
             obj.save()
@@ -3666,7 +3656,7 @@ def _register_compliance_tools(server):
                  "cost_estimate", "progress_percentage",
                  "owner_id", "assignees", "requirements", "findings", "risks",
                  "originating_review_id",
-                 "is_approved", "created_at"]
+                 "created_at"]
     ap_writable = ["name", "description", "gap_description", "remediation_plan",
                    "priority", "start_date", "target_date", "completion_date",
                    "cost_estimate", "progress_percentage", "owner_id",
@@ -4320,7 +4310,7 @@ def _register_risks_tools(server):
                  "status", "assessment_date", "next_review_date",
                  "risk_criteria_id", "assessor_id",
                  "validated_by_id", "validated_at", "summary",
-                 "is_approved", "created_at"]
+                 "created_at"]
     ra_writable = ["name", "description", "methodology", "status",
                    "assessment_date", "next_review_date",
                    "risk_criteria_id", "assessor_id", "summary",
@@ -4460,7 +4450,7 @@ def _register_risks_tools(server):
                    "affected_essential_assets", "affected_support_assets",
                    "linked_requirements",
                    "assessment_id", "risk_owner_id",
-                   "is_approved", "created_at"]
+                   "created_at"]
     risk_writable = ["name", "description", "status", "priority",
                      "risk_source", "source_entity_id", "source_entity_type",
                      "initial_likelihood", "initial_impact",
@@ -4546,7 +4536,7 @@ def _register_risks_tools(server):
     tp_fields = ["id", "reference", "name", "description", "treatment_type", "status",
                  "expected_residual_likelihood", "expected_residual_impact",
                  "cost_estimate", "start_date", "target_date", "completion_date",
-                 "progress_percentage", "risk_id", "is_approved", "created_at"]
+                 "progress_percentage", "risk_id", "created_at"]
     tp_writable = ["name", "description", "treatment_type", "status",
                    "expected_residual_likelihood", "expected_residual_impact",
                    "cost_estimate", "start_date", "target_date", "completion_date",
@@ -4603,7 +4593,7 @@ def _register_risks_tools(server):
     acc_fields = ["id", "reference", "risk_id", "status", "justification", "conditions",
                   "valid_until", "review_date",
                   "accepted_by_id", "accepted_at", "risk_level_at_acceptance",
-                  "is_approved", "created_at"]
+                  "created_at"]
     acc_writable = ["risk_id", "justification", "conditions", "valid_until",
                     "review_date", "accepted_by_id"]
 
@@ -4760,7 +4750,7 @@ def _register_risks_tools(server):
                   "impact_confidentiality", "impact_integrity",
                   "impact_availability", "max_impact",
                   "risk_level", "existing_controls", "risk_id",
-                  "description", "is_approved", "created_at"]
+                  "description", "created_at"]
     iso_writable = ["assessment_id", "threat_id", "vulnerability_id",
                     "threat_likelihood", "vulnerability_exposure",
                     "impact_confidentiality", "impact_integrity",
@@ -5530,7 +5520,7 @@ def _register_risks_tools(server):
 
     sb_fields = [
         "id", "reference", "assessment_id", "dic_summary", "status",
-        "is_approved", "created_at", "updated_at",
+        "created_at", "updated_at",
     ]
     sb_writable = ["assessment_id", "dic_summary", "status"]
     _register_crud(
@@ -5641,7 +5631,7 @@ def _register_risks_tools(server):
         "id", "reference", "assessment_id", "name", "description", "category",
         "motivation_level", "motivation_description", "resources_level",
         "activity_level", "threat_level", "is_retained",
-        "retention_justification", "is_from_catalog", "is_approved",
+        "retention_justification", "is_from_catalog",
         "created_at", "updated_at",
     ]
     rsrc_writable = [
@@ -5711,7 +5701,7 @@ def _register_risks_tools(server):
         "id", "reference", "assessment_id", "risk_source_id",
         "targeted_objective_id", "relevance", "relevance_justification",
         "priority_score", "is_retained", "retention_justification",
-        "is_approved", "created_at", "updated_at",
+        "created_at", "updated_at",
     ]
     sov_writable = [
         "assessment_id", "risk_source_id", "targeted_objective_id",
@@ -5754,7 +5744,7 @@ def _register_risks_tools(server):
         "id", "reference", "assessment_id", "stakeholder_id", "supplier_id",
         "name", "description", "category", "dependency", "penetration",
         "maturity", "trust", "threat_level", "threat_zone",
-        "is_attack_vector", "attack_vector_justification", "is_approved",
+        "is_attack_vector", "attack_vector_justification",
         "created_at", "updated_at",
     ]
     ecos_writable = [
@@ -5800,7 +5790,7 @@ def _register_risks_tools(server):
     ssc_fields = [
         "id", "reference", "assessment_id", "name", "description",
         "sr_ov_pair_id", "gravity_level", "likelihood_level", "risk_level",
-        "is_retained", "consolidated_risk_id", "is_approved",
+        "is_retained", "consolidated_risk_id",
         "created_at", "updated_at",
     ]
     ssc_writable = [
@@ -5926,7 +5916,7 @@ def _register_risks_tools(server):
         "description", "gravity_level", "gravity_inherited",
         "gravity_override_justification", "likelihood_v",
         "likelihood_justification", "risk_level", "existing_controls",
-        "consolidated_risk_id", "mitre_version", "is_approved",
+        "consolidated_risk_id", "mitre_version",
         "created_at", "updated_at",
     ]
     op_writable = [
@@ -6073,7 +6063,7 @@ def _register_risks_tools(server):
         "id", "reference", "assessment_id", "residual_risk_strategy",
         "monitoring_plan", "pacs_summary", "next_strategic_cycle_date",
         "next_operational_cycle_date", "validated_by_id", "validated_at",
-        "status", "is_approved", "created_at", "updated_at",
+        "status", "created_at", "updated_at",
     ]
     summary_writable = [
         "assessment_id", "residual_risk_strategy", "monitoring_plan",
@@ -6767,19 +6757,6 @@ def _update_supplier_logo_handler(user, arguments):
     supplier.logo_16 = variants[16]
     supplier.logo_32 = variants[32]
     supplier.logo_64 = variants[64]
-
-    # Reset approval on update (respects VersioningConfig)
-    if hasattr(supplier, "is_approved") and hasattr(supplier, "version"):
-        from core.models import VersioningConfig
-        if VersioningConfig.is_approval_enabled(supplier.__class__):
-            major_fields = VersioningConfig.get_major_fields(supplier.__class__)
-            # Logo change: check if "logo" is a major field
-            is_major = major_fields is None or "logo" in major_fields
-            if is_major:
-                supplier.is_approved = False
-                supplier.approved_by = None
-                supplier.approved_at = None
-                supplier.version = (supplier.version or 0) + 1
 
     try:
         supplier.full_clean()
@@ -7476,7 +7453,7 @@ def _register_reports_tools(server):
         "frequency", "period_start", "period_end",
         "planned_date", "held_date", "location", "status",
         "facilitator", "approver", "next_review_date",
-        "summary", "is_approved", "created_at", "updated_at",
+        "summary", "created_at", "updated_at",
     ]
 
     @require_perm("reports.management_review.read")

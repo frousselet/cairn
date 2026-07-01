@@ -985,11 +985,7 @@ class ActionLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
 
             # Classify via the shared core.history classifier.
             kind = classify_record(entry)
-            if kind == EntryKind.APPROVAL:
-                approved = bool(getattr(entry, "is_approved", False))
-                entry.action_label = _("Approval") if approved else _("Approval withdrawn")
-                entry.action_badge = "info" if approved else "dark"
-            elif kind == EntryKind.TRANSITION:
+            if kind == EntryKind.TRANSITION:
                 entry.action_label = _("Transition")
                 entry.action_badge = "info"
             elif kind == EntryKind.CREATE:

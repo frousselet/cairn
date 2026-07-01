@@ -82,7 +82,7 @@ class PublicDocumentSerializer(serializers.Serializer):
 
 # --- Management serializers (internal CRUD) ---------------------------------
 
-_BASE_READ_ONLY = ["id", "reference", "workflow_state", "is_approved", "created_at", "updated_at"]
+_BASE_READ_ONLY = ["id", "reference", "workflow_state", "created_at", "updated_at"]
 
 
 class TrustCenterSettingsSerializer(serializers.ModelSerializer):

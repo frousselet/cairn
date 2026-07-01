@@ -41,7 +41,7 @@ def test_classify_update_regular_field():
     fields = {c.field_code for c in entry.changes}
     assert "name" in fields
     # Hidden fields never surface as ordinary edits.
-    assert not fields & {"version", "is_approved", "approved_by_id"}
+    assert "version" not in fields
 
 
 def test_classify_transition_forward():
@@ -70,26 +70,6 @@ def test_build_entry_transition_refusal_is_backward():
     assert entry.from_state == "pending"
     assert entry.to_state == "draft"
     assert entry.is_refusal is True
-
-
-def test_classify_approval_only_change():
-    """An approval-field-only change (no lifecycle move) is an APPROVAL event."""
-    scope = ScopeFactory()
-    u1, u2 = UserFactory(), UserFactory()
-    # On the standardised engine, approval is independent of the lifecycle step:
-    # flipping is_approved leaves workflow_state untouched.
-    scope.is_approved = True
-    scope.approved_by = u1
-    scope.save()
-    assert scope.workflow_state == "draft"
-    # Now change only the approver, leaving is_approved/workflow_state untouched.
-    scope.approved_by = u2
-    scope.save()
-    record = _latest(scope)
-    assert classify_record(record) is EntryKind.APPROVAL
-    entry = build_entry(record)
-    assert entry.kind is EntryKind.APPROVAL
-    assert entry.approved is True
 
 
 def test_snapshot_renders_foreign_key_as_label_not_uuid():
