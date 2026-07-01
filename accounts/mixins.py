@@ -83,6 +83,9 @@ class LifecycleStepperMixin:
             available = obj.available_transitions(user=self.request.user)
         target_to_label = {t.target: t.label for t in available}
         target_to_requires_comment = {t.target: t.requires_comment for t in available}
+        # (source, target) pairs the caller may perform right now : an edge is
+        # "possible" iff it is one of these (drawn solid; the rest dashed / muted).
+        available_pairs = {(t.source, t.target) for t in available}
         # Explicit step-to-step edges (a wildcard "from any state" is not a flow
         # edge): the inter-step arrow is drawn only where a real transition links
         # two consecutive steps - so the arrows reflect the schema, not the
@@ -260,6 +263,7 @@ class LifecycleStepperMixin:
                     "target": t.target,
                     "kind": kind,
                     "label": str(t.label),
+                    "available": (t.source, t.target) in available_pairs,
                 })
 
             ctx["lc_layout"] = "graph"   # route the template to the new branch

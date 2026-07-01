@@ -73,19 +73,19 @@
     var outEdges = [], dots = [];
     mainEdges.forEach(function (e, i) {
       var de = g.edge(e.source, e.target, "e" + i);
-      outEdges.push({ points: (de && de.points) ? de.points : [pos[e.source], pos[e.target]], kind: e.kind, label: e.label });
+      outEdges.push({ points: (de && de.points) ? de.points : [pos[e.source], pos[e.target]], kind: e.kind, label: e.label, available: e.available });
     });
     // One dot -> target per "any" transition (the dot is the arrow's origin).
     wildcard.forEach(function (e) {
       var t = pos[e.target]; if (!t) { return; }
       var dot = { x: t.x, y: t.y - t.h / 2 - 26 };
-      dots.push({ x: dot.x, y: dot.y, label: e.label });
-      outEdges.push({ points: [dot, { x: t.x, y: t.y - t.h / 2 }], kind: "exit", label: "" });
+      dots.push({ x: dot.x, y: dot.y, label: e.label, available: e.available });
+      outEdges.push({ points: [dot, { x: t.x, y: t.y - t.h / 2 }], kind: "exit", label: "", available: e.available });
     });
     // Edges touching a detached node (e.g. restore archived -> draft) as a curve.
     incident.forEach(function (e) {
       var s = pos[e.source], t = pos[e.target]; if (!s || !t) { return; }
-      outEdges.push({ points: [{ x: s.x, y: s.y }, { x: (s.x + t.x) / 2, y: Math.max(s.y, t.y) + 26 }, { x: t.x, y: t.y }], kind: e.kind || "restore", label: e.label });
+      outEdges.push({ points: [{ x: s.x, y: s.y }, { x: (s.x + t.x) / 2, y: Math.max(s.y, t.y) + 26 }, { x: t.x, y: t.y }], kind: e.kind || "restore", label: e.label, available: e.available });
     });
 
     // Normalize so nothing sits at a negative coordinate.
@@ -104,18 +104,23 @@
   }
 
   function styleNode(n, opts) {
-    var accent = token("--accent", "#1E3A8A"), muted = token("--text-muted", "#64748b");
-    var border = token("--border-color", "#e2e8f0"), surface = token("--surface", "#ffffff");
-    var s = { fill: surface, text: token("--text", "#0f172a"), stroke: border, dash: null, weight: 1 };
-    if (n.kind === "archived") { s.dash = "5 4"; s.stroke = muted; s.text = muted; }
+    // Outline language (both modes): SOLID theme colour = clickable, DASHED grey
+    // = not clickable.
+    var accent = token("--accent", "#1E3A8A"), muted = token("--text-muted", "#94a3b8");
+    var surface = token("--surface", "#ffffff");
+    var s = { fill: surface, text: token("--text", "#0f172a"), stroke: accent, dash: null, weight: 1.4 };
     if (opts.mode === "editor") {
-      if (n.kind === "draft") { s.fill = accent; s.text = "#ffffff"; s.stroke = accent; }
+      // A definition : every step is selectable, so all are solid-outlined.
+      if (n.kind === "draft") { s.fill = accent; s.text = "#ffffff"; }
       if (n.id === opts.selected || n.id === opts.connectFrom) { s.stroke = token("--bs-success", "#16a34a"); s.weight = 2.5; }
+      return s;
+    }
+    if (n.state === "current") {
+      s.fill = accent; s.text = "#ffffff"; s.stroke = accent; s.weight = 2;   // "you are here"
+    } else if (n.actionable) {
+      s.stroke = accent; s.weight = 2; s.text = accent;                        // clickable : solid theme outline
     } else {
-      if (n.state === "done") { s.fill = "color-mix(in srgb, " + accent + " 10%, " + surface + ")"; }
-      if (n.state === "current") { s.fill = accent; s.text = "#ffffff"; s.stroke = accent; s.weight = 2; }
-      if (n.state === "future") { s.text = muted; }
-      if (n.actionable) { s.stroke = token("--bs-success", "#16a34a"); s.weight = 2; }
+      s.stroke = muted; s.text = muted; s.dash = "5 4";                        // not clickable : dashed grey
     }
     return s;
   }
@@ -128,8 +133,12 @@
     var L = layout(nodes, edges, rankdir);
     if (!L) { return; }
     var byId = {}; nodes.forEach(function (n) { byId[n.id] = n; });
+    // Render at natural size (1 user unit = 1 px) so the font is identical on
+    // every graph, whatever its extent. A graph wider than its container scrolls
+    // (or flips to TB on narrow screens) rather than scaling the text down.
     svg.setAttribute("viewBox", "0 0 " + L.width + " " + L.height);
-    svg.setAttribute("width", "100%"); svg.style.height = "auto";
+    svg.setAttribute("width", L.width); svg.setAttribute("height", L.height);
+    svg.style.width = L.width + "px"; svg.style.height = L.height + "px"; svg.style.maxWidth = "none";
 
     var accent = token("--accent", "#1E3A8A"), muted = token("--text-muted", "#94a3b8");
     var uid = "lg" + Math.floor(L.width) + "x" + Math.floor(L.height);
@@ -146,21 +155,25 @@
 
     L.edges.forEach(function (e) {
       if (!e.points || e.points.length < 2) { return; }
-      var loop = e.kind === "loop" || e.kind === "restore";
+      // Line language : SOLID theme colour = transition possible now, DASHED grey
+      // = not possible. In the editor every defined transition is "possible".
+      var possible = (opts.mode === "editor") ? true : !!e.available;
       var path = document.createElementNS(SVGNS, "path");
       path.setAttribute("d", line(e.points)); path.setAttribute("fill", "none");
-      path.setAttribute("stroke", loop ? muted : accent); path.setAttribute("stroke-width", "1.6"); path.setAttribute("opacity", "0.85");
-      if (loop) { path.setAttribute("stroke-dasharray", "5 4"); }
-      path.setAttribute("marker-end", "url(#" + (loop ? uid + "m" : uid + "a") + ")");
+      path.setAttribute("stroke", possible ? accent : muted); path.setAttribute("stroke-width", "1.6");
+      path.setAttribute("opacity", possible ? "1" : "0.7");
+      if (!possible) { path.setAttribute("stroke-dasharray", "5 4"); }
+      path.setAttribute("marker-end", "url(#" + (possible ? uid + "a" : uid + "m") + ")");
       // Transition labels are not drawn (they clutter tight loops); kept as a
       // hover tooltip so the verb is still discoverable.
       if (e.label) { var tt = document.createElementNS(SVGNS, "title"); tt.textContent = e.label; path.appendChild(tt); }
       svg.appendChild(path);
     });
-    // "any state" origin dots (no visible label).
+    // "any state" origin dots (no visible label); colour matches its arrow.
     L.dots.forEach(function (d) {
+      var possible = (opts.mode === "editor") ? true : !!d.available;
       var c = document.createElementNS(SVGNS, "circle");
-      c.setAttribute("cx", d.x); c.setAttribute("cy", d.y); c.setAttribute("r", "4"); c.setAttribute("fill", accent);
+      c.setAttribute("cx", d.x); c.setAttribute("cy", d.y); c.setAttribute("r", "4"); c.setAttribute("fill", possible ? accent : muted);
       if (d.label) { var tt = document.createElementNS(SVGNS, "title"); tt.textContent = d.label; c.appendChild(tt); }
       svg.appendChild(c);
     });
