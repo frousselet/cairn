@@ -152,24 +152,17 @@
       path.setAttribute("stroke", loop ? muted : accent); path.setAttribute("stroke-width", "1.6"); path.setAttribute("opacity", "0.85");
       if (loop) { path.setAttribute("stroke-dasharray", "5 4"); }
       path.setAttribute("marker-end", "url(#" + (loop ? uid + "m" : uid + "a") + ")");
+      // Transition labels are not drawn (they clutter tight loops); kept as a
+      // hover tooltip so the verb is still discoverable.
+      if (e.label) { var tt = document.createElementNS(SVGNS, "title"); tt.textContent = e.label; path.appendChild(tt); }
       svg.appendChild(path);
-      if (e.label) {
-        var mid = e.points[Math.floor(e.points.length / 2)];
-        var t = document.createElementNS(SVGNS, "text");
-        t.setAttribute("x", mid.x); t.setAttribute("y", mid.y - 5); t.setAttribute("text-anchor", "middle");
-        t.setAttribute("font-size", "10.5"); t.setAttribute("fill", muted); t.textContent = e.label;
-        svg.appendChild(t);
-      }
     });
-    // "any state" origin dots.
+    // "any state" origin dots (no visible label).
     L.dots.forEach(function (d) {
       var c = document.createElementNS(SVGNS, "circle");
       c.setAttribute("cx", d.x); c.setAttribute("cy", d.y); c.setAttribute("r", "4"); c.setAttribute("fill", accent);
+      if (d.label) { var tt = document.createElementNS(SVGNS, "title"); tt.textContent = d.label; c.appendChild(tt); }
       svg.appendChild(c);
-      var t = document.createElementNS(SVGNS, "text");
-      t.setAttribute("x", d.x + 9); t.setAttribute("y", d.y + 3); t.setAttribute("font-size", "10.5"); t.setAttribute("fill", muted);
-      t.textContent = d.label || "";
-      svg.appendChild(t);
     });
 
     nodes.forEach(function (n) {
