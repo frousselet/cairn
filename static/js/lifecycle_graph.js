@@ -103,24 +103,37 @@
     return { pos: pos, edges: outEdges, dots: dots, width: w, height: h, detached: detached };
   }
 
+  // A step's colour comes from its tone; the OUTLINE style (solid / dashed) says
+  // whether the step is clickable.
+  function toneColor(tone) {
+    switch (tone) {
+      case "primary": return token("--accent", "#1E3A8A");
+      case "success": return token("--bs-success", "#16a34a");
+      case "warning": return token("--bs-warning", "#f59e0b");
+      case "danger": return token("--bs-danger", "#dc2626");
+      case "info": return token("--bs-info", "#0ea5e9");
+      case "secondary": return token("--bs-secondary", "#64748b");
+      case "dark": return token("--bs-dark", "#334155");
+      default: return token("--text-muted", "#94a3b8"); // neutral / muted / unknown
+    }
+  }
+
   function styleNode(n, opts) {
-    // Outline language (both modes): SOLID theme colour = clickable, DASHED grey
-    // = not clickable.
-    var accent = token("--accent", "#1E3A8A"), muted = token("--text-muted", "#94a3b8");
+    var col = toneColor(n.tone);
+    var muted = token("--text-muted", "#94a3b8");
     var surface = token("--surface", "#ffffff");
-    var s = { fill: surface, text: token("--text", "#0f172a"), stroke: accent, dash: null, weight: 1.4 };
+    var s = { fill: surface, text: token("--text", "#0f172a"), stroke: col, dash: null, weight: 1.6 };
     if (opts.mode === "editor") {
-      // A definition : every step is selectable, so all are solid-outlined.
-      if (n.kind === "draft") { s.fill = accent; s.text = "#ffffff"; }
+      // A definition : every step is editable, so all are solid-outlined in tone.
       if (n.id === opts.selected || n.id === opts.connectFrom) { s.stroke = token("--bs-success", "#16a34a"); s.weight = 2.5; }
       return s;
     }
     if (n.state === "current") {
-      s.fill = accent; s.text = "#ffffff"; s.stroke = accent; s.weight = 2;   // "you are here"
+      s.fill = col; s.text = "#ffffff"; s.stroke = col; s.weight = 2;   // "you are here" : filled in tone
     } else if (n.actionable) {
-      s.stroke = accent; s.weight = 2; s.text = accent;                        // clickable : solid theme outline
+      s.stroke = col; s.weight = 2; s.text = col;                        // clickable : SOLID tone outline
     } else {
-      s.stroke = muted; s.text = muted; s.dash = "5 4";                        // not clickable : dashed grey
+      s.stroke = col; s.dash = "5 4"; s.weight = 1.4; s.text = muted;    // not clickable : DASHED tone outline
     }
     return s;
   }
