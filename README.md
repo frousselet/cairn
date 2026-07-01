@@ -47,7 +47,7 @@ To run the published image without cloning the repository, and for production no
 
 ## Tech stack
 
-Django 5.2 LTS, PostgreSQL 16, Django REST Framework, Django Channels + Redis (real-time), Bootstrap 5.3 + HTMX + Apache ECharts (frontend), Docker. Optional: Mistral AI, OpenAI / OpenAI-compatible endpoints, Claude (Anthropic), or self-hosted Ollama (Ask Cairn assistant).
+Django 5.2 LTS, PostgreSQL 16, Django REST Framework, Django Channels + Redis (real-time and shared cache), Bootstrap 5.3 + HTMX + Apache ECharts (frontend), Docker. Optional: Mistral AI, OpenAI / OpenAI-compatible endpoints, Claude (Anthropic), or self-hosted Ollama (Ask Cairn assistant).
 
 ## Licence
 

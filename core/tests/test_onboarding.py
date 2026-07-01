@@ -21,10 +21,19 @@ PENDING = {"available": True, "up_to_date": False, "applied": 1, "total": 3, "pe
 
 @pytest.fixture(autouse=True)
 def _reset_onboarding_state():
-    """The sticky 'initialised' flag is process-global; reset around each test."""
+    """Reset the cross-test shared state around each test.
+
+    The sticky 'initialised' flag is process-global, and the runner now keeps
+    its progress and lock in the (process-local, in test) cache: clear both so
+    tests do not leak a "running" job or an initialised flag into one another.
+    """
+    from django.core.cache import cache
+
     ob_state.reset_onboarding_state()
+    cache.clear()
     yield
     ob_state.reset_onboarding_state()
+    cache.clear()
 
 
 @pytest.mark.django_db
@@ -310,15 +319,37 @@ class TestComplete:
 
 
 class TestRunner:
-    def test_start_skips_when_already_running(self):
+    def test_start_skips_when_a_job_holds_the_lock(self):
+        """Only one worker may run a migration/seed at a time. The lock lives in
+        the shared cache, so a job started on any worker blocks starts on all of
+        them - this is what stops several workers racing the same DDL."""
         from core.onboarding import runner
 
-        runner._running = True
-        try:
-            assert runner.start_seed() is False
-            assert runner.start_migrations() is False
-        finally:
-            runner._running = False
+        # Simulate a job already running on another worker: it holds the lock.
+        assert runner._store().add(runner._LOCK_KEY, "1", runner._LOCK_TTL) is True
+        assert runner.is_running() is True
+        # No new job is launched (and, crucially, no background thread spawned).
+        assert runner.start_seed() is False
+        assert runner.start_migrations() is False
+
+    def test_is_running_reflects_shared_lock(self):
+        from core.onboarding import runner
+
+        assert runner.is_running() is False
+        runner._store().add(runner._LOCK_KEY, "1", runner._LOCK_TTL)
+        assert runner.is_running() is True
+        runner.reset_runner_state()
+        assert runner.is_running() is False
+
+    def test_progress_is_published_to_the_shared_cache(self):
+        """Progress written by the running worker is visible to every other
+        worker (they render the same bar) because it lives in the shared cache."""
+        from core.onboarding import runner
+
+        runner._set(kind="migrate", status="running", current=5, total=10)
+        snap = runner.progress_snapshot()
+        assert snap["status"] == "running"
+        assert (snap["current"], snap["total"]) == (5, 10)
 
     def test_progress_snapshot_keys(self):
         from core.onboarding.runner import progress_snapshot

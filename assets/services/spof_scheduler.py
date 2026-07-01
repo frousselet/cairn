@@ -10,12 +10,21 @@ SPOF_REFRESH_INTERVAL = int(os.environ.get("SPOF_REFRESH_INTERVAL", 300))  # sec
 # (first-run onboarding: migrations running, no user yet).
 READINESS_POLL_INTERVAL = 5  # seconds
 
+# Fleet-wide single-runner gate. Production runs several uvicorn workers, each
+# with its own scheduler thread; without this every worker would run detection
+# on the same interval, mutating the same rows concurrently. The shared-cache
+# SET-NX (``cache.add``) lets exactly one worker per interval win the run, and
+# the key is left to expire on its own so the next run is one interval later
+# fleet-wide rather than once per worker.
+_RUN_LOCK_KEY = "assets:spof:run-lock"
+
 _started = False
 _lock = threading.Lock()
 
 
 def _run_spof_loop():
     """Background loop: apply SPOF detection every SPOF_REFRESH_INTERVAL seconds."""
+    from django.core.cache import cache
     from django.db import connections
 
     from assets.services.spof_detection import SpofDetector
@@ -32,15 +41,17 @@ def _run_spof_loop():
             connections.close_all()
             time.sleep(READINESS_POLL_INTERVAL)
             continue
-        try:
-            result = SpofDetector().apply()
-            logger.info(
-                "SPOF auto-detection: %d SPOF found, %d changes applied.",
-                result["total_spof"],
-                result["total_changed"],
-            )
-        except Exception:
-            logger.exception("SPOF auto-detection failed")
+        # Exactly one worker runs detection per interval across the fleet.
+        if cache.add(_RUN_LOCK_KEY, "1", SPOF_REFRESH_INTERVAL):
+            try:
+                result = SpofDetector().apply()
+                logger.info(
+                    "SPOF auto-detection: %d SPOF found, %d changes applied.",
+                    result["total_spof"],
+                    result["total_changed"],
+                )
+            except Exception:
+                logger.exception("SPOF auto-detection failed")
         time.sleep(SPOF_REFRESH_INTERVAL)
 
 

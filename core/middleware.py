@@ -35,31 +35,38 @@ class OnboardingMiddleware:
         if self._is_asset(path):
             return self.get_response(request)
 
-        if runner.is_running():
-            # A migration or seed is in flight. Touch nothing in the database
-            # (the background job owns it - on SQLite a stray read would contend
-            # with its write lock and stall the run): serve onboarding paths as-is
-            # and send everything else to the screen.
-            if path.startswith(self._onboarding_prefix):
-                return self.get_response(request)
-            return redirect("onboarding:landing")
+        on_onboarding = path.startswith(self._onboarding_prefix)
 
-        if not schema_ready():
-            # Pending migrations - on a fresh database OR an upgrade of an
-            # already-initialised one. Funnel to the onboarding screen, which
-            # applies them with a live progress bar.
-            if not path.startswith(self._onboarding_prefix):
-                return redirect("onboarding:landing")
-        elif is_first_run():
-            if not path.startswith(self._onboarding_prefix):
-                return redirect("onboarding:landing")
-        else:
+        # Fast path: a fully set-up instance (schema migrated and a user exists).
+        # Both checks are process-sticky once confirmed, so this costs nothing
+        # after the first request and, crucially, avoids a shared-cache round
+        # trip (runner.is_running) on every request once onboarding is over.
+        if schema_ready() and not is_first_run():
             # Initialised: hide the bootstrap screens, but let the post-seed
             # auto-login completion and the progress poll run (the latter covers
             # the brief window where the seed has just created users).
-            if path.startswith(self._onboarding_prefix) and path not in self._always_reachable:
+            if on_onboarding and path not in self._always_reachable:
                 return redirect("/")
+            return self.get_response(request)
 
+        # Un-initialised window: a fresh database (first run) or an upgrade of an
+        # already-initialised one with pending migrations. The runner state is
+        # shared across workers, so every worker agrees on whether a job is in
+        # flight - one worker applies the migrations, the others funnel here and
+        # watch the same progress bar instead of launching a rival migration.
+        if runner.is_running():
+            # A migration or seed is in flight. Touch nothing in the database
+            # (the background job owns it): serve onboarding paths as-is and send
+            # everything else to the screen.
+            if on_onboarding:
+                return self.get_response(request)
+            return redirect("onboarding:landing")
+
+        # No job running yet: funnel to the onboarding screen, which applies any
+        # pending migrations with a live progress bar and then offers the setup
+        # choices.
+        if not on_onboarding:
+            return redirect("onboarding:landing")
         return self.get_response(request)
 
     def _is_asset(self, path):

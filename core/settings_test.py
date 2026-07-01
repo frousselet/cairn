@@ -26,6 +26,14 @@ CHANNEL_LAYERS = {
     },
 }
 
+# Local-memory cache for tests: the suite is single-process, so this behaves
+# like the shared Redis cache used in production without needing a live server.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    },
+}
+
 
 # Bypass migrations entirely: Django builds the schema directly from current
 # model state (CREATE TABLE) instead of replaying the ~150 historical
