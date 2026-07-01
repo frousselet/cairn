@@ -91,6 +91,7 @@
 {{ step_kinds|json_script:"lc-kinds" }}
 {{ tones|json_script:"lc-tones" }}
 
+<script src="{% static 'js/lifecycle_graph.js' %}"></script>
 <script>
 (function () {
   var form = document.getElementById('lc-edit-form');
@@ -223,10 +224,7 @@
     });
   }
 
-  // ---- diagram (dagre) ----
-  var measureCtx = document.createElement('canvas').getContext('2d');
-  function tw(t) { measureCtx.font = '600 13px "GitLab Sans", system-ui, sans-serif'; return measureCtx.measureText(t).width; }
-  var lineGen = null;
+  // ---- diagram (shared dagre renderer) ----
   function classify(t) {
     var archived = {}; model.steps.forEach(function (s) { if (s.kind === 'archived') archived[s.code] = 1; });
     var main = model.steps.filter(function (s) { return s.kind !== 'archived'; }).map(function (s) { return s.code; });
@@ -237,55 +235,12 @@
     return 'forward';
   }
   function renderDiagram() {
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
-    if (!window.d3 || !window.dagre || !model.steps.length) { return; }
-    if (!lineGen) lineGen = d3.line().x(function (p) { return p.x; }).y(function (p) { return p.y; }).curve(d3.curveBasis);
-    var narrow = canvas.clientWidth > 0 && canvas.clientWidth < 640;
-    var g = new dagre.graphlib.Graph({ multigraph: true });
-    g.setGraph({ rankdir: narrow ? 'TB' : 'LR', nodesep: 26, ranksep: 58, edgesep: 18, marginx: 18, marginy: 20, ranker: 'network-simplex' });
-    g.setDefaultEdgeLabel(function () { return {}; });
-    model.steps.forEach(function (s) { g.setNode(s.code, { width: Math.max(72, tw(s.label || s.code) + 36), height: 40 }); });
-    var edges = [];
-    model.transitions.forEach(function (t, i) {
-      var srcs = t.source === '*' ? model.steps.filter(function (s) { return s.kind !== 'archived' && s.code !== t.target; }).map(function (s) { return s.code; }) : [t.source];
-      srcs.forEach(function (sc) {
-        if (g.hasNode(sc) && g.hasNode(t.target) && sc !== t.target) { g.setEdge(sc, t.target, {}, 'e' + i + '_' + sc); edges.push({ s: sc, t: t.target, label: t.label, kind: classify(t), id: 'e' + i + '_' + sc }); }
-      });
-    });
-    try { dagre.layout(g); } catch (e) { return; }
-    var gg = g.graph();
-    svg.setAttribute('viewBox', '0 0 ' + (gg.width || 300) + ' ' + (gg.height || 160));
-    var accent = token('--accent', '#1E3A8A'), muted = token('--text-muted', '#94a3b8');
-    var defs = document.createElementNS(SVGNS, 'defs');
-    [['lcm-a', accent], ['lcm-m', muted]].forEach(function (p) {
-      var m = document.createElementNS(SVGNS, 'marker'); m.setAttribute('id', p[0]); m.setAttribute('viewBox', '0 -5 10 10'); m.setAttribute('refX', '9'); m.setAttribute('refY', '0'); m.setAttribute('markerWidth', '6.5'); m.setAttribute('markerHeight', '6.5'); m.setAttribute('orient', 'auto');
-      var pa = document.createElementNS(SVGNS, 'path'); pa.setAttribute('d', 'M0,-4.5L9,0L0,4.5'); pa.setAttribute('fill', p[1]); m.appendChild(pa); defs.appendChild(m);
-    });
-    svg.appendChild(defs);
-    edges.forEach(function (e) {
-      var de = g.edge(e.s, e.t, e.id); if (!de || !de.points) return;
-      var loop = e.kind === 'loop' || e.kind === 'restore';
-      var path = document.createElementNS(SVGNS, 'path'); path.setAttribute('d', lineGen(de.points)); path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', loop ? muted : accent); path.setAttribute('stroke-width', '1.6'); path.setAttribute('opacity', '0.85');
-      if (loop) path.setAttribute('stroke-dasharray', '5 4');
-      path.setAttribute('marker-end', 'url(#' + (loop ? 'lcm-m' : 'lcm-a') + ')');
-      svg.appendChild(path);
-      if (e.label) { var mid = de.points[Math.floor(de.points.length / 2)]; var tx = document.createElementNS(SVGNS, 'text'); tx.setAttribute('x', mid.x); tx.setAttribute('y', mid.y - 5); tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('font-size', '10.5'); tx.setAttribute('fill', muted); tx.textContent = e.label; svg.appendChild(tx); }
-    });
-    model.steps.forEach(function (s) {
-      var p = g.node(s.code); if (!p) return;
-      var isDraft = s.kind === 'draft', isArch = s.kind === 'archived', isSel = s.code === selected;
-      var grp = document.createElementNS(SVGNS, 'g'); grp.setAttribute('transform', 'translate(' + (p.x - p.width / 2) + ',' + (p.y - p.height / 2) + ')'); grp.style.cursor = 'pointer';
-      var rect = document.createElementNS(SVGNS, 'rect'); rect.setAttribute('width', p.width); rect.setAttribute('height', p.height); rect.setAttribute('rx', 20);
-      rect.setAttribute('fill', isDraft ? accent : token('--surface', '#fff'));
-      rect.setAttribute('stroke', isSel ? token('--bs-success', '#16a34a') : (isArch ? muted : token('--border-color', '#e2e8f0')));
-      rect.setAttribute('stroke-width', isSel || connectFrom === s.code ? 2.5 : 1);
-      if (isArch) rect.setAttribute('stroke-dasharray', '5 4');
-      grp.appendChild(rect);
-      var tx = document.createElementNS(SVGNS, 'text'); tx.setAttribute('x', p.width / 2); tx.setAttribute('y', p.height / 2); tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('dominant-baseline', 'central'); tx.setAttribute('font-size', '13'); tx.setAttribute('font-weight', '600');
-      tx.setAttribute('fill', isDraft ? '#fff' : (isArch ? muted : token('--text', '#0f172a'))); tx.textContent = s.label || s.code; grp.appendChild(tx);
-      grp.addEventListener('click', function () { onNodeClick(s.code); });
-      svg.appendChild(grp);
+    if (!window.CairnLifecycleGraph) { return; }
+    var nodes = model.steps.map(function (s) { return { id: s.code, label: s.label || s.code, kind: s.kind, tone: s.tone }; });
+    var edges = model.transitions.map(function (t) { return { source: t.source, target: t.target, label: t.label, kind: classify(t) }; });
+    window.CairnLifecycleGraph.render(svg, nodes, edges, {
+      mode: 'editor', containerWidth: canvas.clientWidth,
+      selected: selected, connectFrom: connectFrom, onNodeClick: onNodeClick,
     });
   }
 
@@ -316,16 +271,12 @@
   form.addEventListener('submit', function () { sync(); });
 
   function boot() {
-    if (!window.d3 || !window.dagre) { return void setTimeout(boot, 60); }
     renderSteps(); renderTransitions(); renderDiagram(); sync();
     if (window.ResizeObserver) new ResizeObserver(renderDiagram).observe(canvas);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderDiagram);
     new MutationObserver(renderDiagram).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
   }
-  function loadScript(id, src, cb) { if (document.getElementById(id)) return cb(); var s = document.createElement('script'); s.id = id; s.src = src; s.onload = cb; document.head.appendChild(s); }
-  (window.d3 ? function (cb) { cb(); } : function (cb) { loadScript('d3-lib', '{% static "vendor/d3.v7.min.js" %}', cb); })(function () {
-    (window.dagre ? function (cb) { cb(); } : function (cb) { loadScript('dagre-lib', '{% static "vendor/dagre.min.js" %}', cb); })(boot);
-  });
+  window.CairnLifecycleGraph.ensureLibs('{% static "vendor/d3.v7.min.js" %}', '{% static "vendor/dagre.min.js" %}', boot);
 })();
 </script>
 

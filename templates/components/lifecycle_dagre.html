@@ -1,14 +1,10 @@
 {% load i18n static %}
 {% comment %}
-Data-driven lifecycle graph rendered with dagre (layered / Sugiyama layout) and
-d3. The whole diagram is derived from lc_graph_nodes / lc_graph_edges (which come
-straight from the JSON lifecycle definition), so editing the definition reshapes
-the graph with no template change. dagre computes node ranks, positions and
-routed edge waypoints, so arrows follow clean orthogonal-ish splines that never
-cross a node. Draft sits at the entry rank, Archived at the exit rank; the layout
-flips to top-to-bottom on narrow screens so it always fits the width without
-overlapping or clipping. Actionable steps are clickable and submit the shared
-transition form (with the comment modal when required).
+Data-driven lifecycle graph rendered with dagre (layered layout) via the shared
+CairnLifecycleGraph renderer. Everything is derived from lc_graph_nodes /
+lc_graph_edges (from the JSON lifecycle definition), so arrows are routed and
+never overlap a node, at any width. "From any state" (*) transitions are drawn as
+a single dot -> target arrow with the target detached below the flow.
 {% endcomment %}
 <div class="lc-dagre" id="{{ lc_container_id }}" data-transition-url="{{ lc_transition_url }}">
   <form method="post" action="{{ lc_transition_url }}" class="d-none" data-lc-form hx-boost="false">
@@ -24,201 +20,40 @@ transition form (with the comment modal when required).
   </div>
 </div>
 
+<script src="{% static 'js/lifecycle_graph.js' %}"></script>
 <script>
 (function () {
   var root = document.getElementById('{{ lc_container_id }}');
   if (!root || root.dataset.lcInit) { return; }
   root.dataset.lcInit = '1';
-  var SVGNS = 'http://www.w3.org/2000/svg';
   var stage = root.querySelector('[data-lc-stage]');
   var svg = root.querySelector('[data-lc-svg]');
   var form = root.querySelector('[data-lc-form]');
   var targetInput = root.querySelector('[data-lc-target]');
   var commentInput = root.querySelector('[data-lc-comment]');
-
   var nodes, edges;
   try { nodes = JSON.parse(root.querySelector('[data-lc-nodes]').textContent) || []; } catch (e) { nodes = []; }
   try { edges = JSON.parse(root.querySelector('[data-lc-edges]').textContent) || []; } catch (e) { edges = []; }
   if (!nodes.length) { return; }
 
-  var byId = {};
-  nodes.forEach(function (n) { byId[n.id] = n; });
-
-  // A "from any state" (*) edge is expanded into one edge per real source step,
-  // so the layout engine routes each cleanly instead of drawing an impossible
-  // wildcard. Self-edges and edges to a missing node are dropped.
-  var concreteEdges = [];
-  edges.forEach(function (e) {
-    if (!byId[e.target]) { return; }
-    if (e.source === '*' || e.source === 'any') {
-      nodes.forEach(function (n) {
-        if (n.id !== e.target && n.kind !== 'archived') {
-          concreteEdges.push({ source: n.id, target: e.target, label: e.label, kind: e.kind });
-        }
-      });
-    } else if (byId[e.source] && e.source !== e.target) {
-      concreteEdges.push({ source: e.source, target: e.target, label: e.label, kind: e.kind });
-    }
-  });
-
-  function token(name, fallback) {
-    var v = getComputedStyle(document.documentElement).getPropertyValue(name);
-    return (v || '').trim() || fallback;
-  }
-
-  var measureCtx = document.createElement('canvas').getContext('2d');
-  var FONT = '600 13px "GitLab Sans", system-ui, sans-serif';
-  function textWidth(t) { measureCtx.font = FONT; return measureCtx.measureText(t).width; }
-
-  var PAD_X = 18, PILL_H = 40, NUM_W = 20;
-  function pillWidth(n) {
-    var w = textWidth(n.label) + PAD_X * 2;
-    if (n.number) { w += NUM_W; }
-    return Math.max(72, Math.round(w));
-  }
-
-  function build(rankdir) {
-    var g = new dagre.graphlib.Graph({ multigraph: true });
-    g.setGraph({ rankdir: rankdir, nodesep: 26, ranksep: 60, edgesep: 18, marginx: 20, marginy: 24, ranker: 'network-simplex' });
-    g.setDefaultEdgeLabel(function () { return {}; });
-    nodes.forEach(function (n) { g.setNode(n.id, { width: pillWidth(n), height: PILL_H }); });
-    concreteEdges.forEach(function (e, i) { g.setEdge(e.source, e.target, { labelpos: 'c' }, 'e' + i); });
-    dagre.layout(g);
-    concreteEdges.forEach(function (e, i) {
-      var de = g.edge(e.source, e.target, 'e' + i);
-      e.points = (de && de.points) ? de.points : [g.node(e.source), g.node(e.target)];
-    });
-    nodes.forEach(function (n) { var p = g.node(n.id); n.x = p.x; n.y = p.y; n.w = p.width; n.h = p.height; });
-    var gg = g.graph();
-    return { w: gg.width || 400, h: gg.height || 200 };
-  }
-
-  // Built after d3 loads (calling d3.line() at parse time would throw).
-  var line = null;
-
-  // Toning : map a step's state + tone to fill / text / border.
-  function nodeStyle(n) {
-    var accent = token('--accent', '#1E3A8A');
-    var border = token('--border-color', '#e2e8f0');
-    var muted = token('--text-muted', '#64748b');
-    var surface = token('--surface, --bs-body-bg', '#ffffff');
-    var s = { fill: surface, text: token('--text', '#0f172a'), stroke: border, dash: null, weight: 1 };
-    if (n.kind === 'archived') { s.dash = '5 4'; s.stroke = muted; s.text = muted; }
-    if (n.state === 'done') { s.fill = 'color-mix(in srgb, ' + accent + ' 10%, ' + surface + ')'; s.stroke = 'color-mix(in srgb, ' + accent + ' 24%, ' + border + ')'; }
-    if (n.state === 'current') { s.fill = accent; s.text = '#ffffff'; s.stroke = accent; s.weight = 2; }
-    if (n.state === 'future') { s.text = muted; }
-    if (n.actionable) { s.stroke = token('--bs-success', '#16a34a'); s.weight = 2; }
-    return s;
-  }
-
-  function draw(rankdir) {
-    while (svg.firstChild) { svg.removeChild(svg.firstChild); }
-    var box = build(rankdir);
-    svg.setAttribute('viewBox', '0 0 ' + box.w + ' ' + box.h);
-    svg.setAttribute('width', '100%');
-    svg.style.height = 'auto';
-    svg.style.maxHeight = (rankdir === 'TB' ? Math.min(box.h, 3000) : box.h) + 'px';
-
-    var accent = token('--accent', '#1E3A8A');
-    var muted = token('--text-muted', '#94a3b8');
-    var defs = document.createElementNS(SVGNS, 'defs');
-    [['lc-arw-' + '{{ lc_container_id }}', accent], ['lc-arw-m-' + '{{ lc_container_id }}', muted]].forEach(function (p) {
-      var m = document.createElementNS(SVGNS, 'marker');
-      m.setAttribute('id', p[0]); m.setAttribute('viewBox', '0 -5 10 10'); m.setAttribute('refX', '9');
-      m.setAttribute('refY', '0'); m.setAttribute('markerWidth', '6.5'); m.setAttribute('markerHeight', '6.5'); m.setAttribute('orient', 'auto');
-      var pa = document.createElementNS(SVGNS, 'path'); pa.setAttribute('d', 'M0,-4.5L9,0L0,4.5'); pa.setAttribute('fill', p[1]);
-      m.appendChild(pa); defs.appendChild(m);
-    });
-    svg.appendChild(defs);
-
-    // Edges first (under the nodes).
-    concreteEdges.forEach(function (e) {
-      if (!e.points || e.points.length < 2) { return; }
-      var loop = e.kind === 'loop' || e.kind === 'restore';
-      var path = document.createElementNS(SVGNS, 'path');
-      path.setAttribute('d', line(e.points));
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', loop ? muted : accent);
-      path.setAttribute('stroke-width', '1.6');
-      if (loop) { path.setAttribute('stroke-dasharray', '5 4'); }
-      path.setAttribute('marker-end', 'url(#lc-arw-' + (loop ? 'm-' : '') + '{{ lc_container_id }})');
-      path.setAttribute('opacity', '0.85');
-      svg.appendChild(path);
-      if (e.label) {
-        var mid = e.points[Math.floor(e.points.length / 2)];
-        var t = document.createElementNS(SVGNS, 'text');
-        t.setAttribute('x', mid.x); t.setAttribute('y', mid.y - 5); t.setAttribute('text-anchor', 'middle');
-        t.setAttribute('class', 'lc-dagre__edge-label'); t.textContent = e.label;
-        svg.appendChild(t);
-      }
-    });
-
-    // Nodes.
-    nodes.forEach(function (n) {
-      var st = nodeStyle(n);
-      var g = document.createElementNS(SVGNS, 'g');
-      g.setAttribute('transform', 'translate(' + (n.x - n.w / 2) + ',' + (n.y - n.h / 2) + ')');
-      if (n.actionable) {
-        g.style.cursor = 'pointer';
-        g.setAttribute('role', 'button');
-        g.setAttribute('tabindex', '0');
-        g.addEventListener('click', function () { go(n); });
-        g.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(n); } });
-      }
-      var rect = document.createElementNS(SVGNS, 'rect');
-      rect.setAttribute('width', n.w); rect.setAttribute('height', n.h);
-      rect.setAttribute('rx', n.h / 2); rect.setAttribute('fill', st.fill);
-      rect.setAttribute('stroke', st.stroke); rect.setAttribute('stroke-width', st.weight);
-      if (st.dash) { rect.setAttribute('stroke-dasharray', st.dash); }
-      g.appendChild(rect);
-      var label = (n.number ? n.number + '  ' : '') + n.label;
-      var txt = document.createElementNS(SVGNS, 'text');
-      txt.setAttribute('x', n.w / 2); txt.setAttribute('y', n.h / 2);
-      txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('dominant-baseline', 'central');
-      txt.setAttribute('class', 'lc-dagre__node-label'); txt.setAttribute('fill', st.text);
-      txt.textContent = label;
-      g.appendChild(txt);
-      if (n.actionable) {
-        var title = document.createElementNS(SVGNS, 'title');
-        title.textContent = n.action_label || n.label;
-        g.appendChild(title);
-      }
-      svg.appendChild(g);
-    });
-  }
-
-  function go(n) {
-    targetInput.value = n.id;
+  function go(id, n) {
+    targetInput.value = id;
     if (commentInput) { commentInput.value = ''; }
-    var requiresComment = !!n.requires_comment;
-    if (window.cairnLifecycleTransition) {
-      window.cairnLifecycleTransition(form, requiresComment, n.action_label || n.label, commentInput);
-    } else {
-      form.submit();
-    }
+    var requiresComment = !!(n && n.requires_comment);
+    var title = (n && (n.action_label || n.label)) || '';
+    if (window.cairnLifecycleTransition) { window.cairnLifecycleTransition(form, requiresComment, title, commentInput); }
+    else { form.submit(); }
   }
-
   function render() {
-    var narrow = stage.clientWidth > 0 && stage.clientWidth < 640;
-    draw(narrow ? 'TB' : 'LR');
+    window.CairnLifecycleGraph.render(svg, nodes, edges, {
+      mode: 'display', containerWidth: stage.clientWidth, onNodeClick: go,
+    });
   }
-
-  function boot() {
-    if (!window.d3 || !window.dagre) { return void setTimeout(boot, 60); }
-    line = d3.line().x(function (p) { return p.x; }).y(function (p) { return p.y; }).curve(d3.curveBasis);
+  window.CairnLifecycleGraph.ensureLibs('{% static "vendor/d3.v7.min.js" %}', '{% static "vendor/dagre.min.js" %}', function () {
     render();
-    if (window.ResizeObserver) { new ResizeObserver(function () { render(); }).observe(stage); }
-    else { window.addEventListener('resize', render); }
+    if (window.ResizeObserver) { new ResizeObserver(render).observe(stage); } else { window.addEventListener('resize', render); }
     if (document.fonts && document.fonts.ready) { document.fonts.ready.then(render); }
     new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
-  }
-
-  function loadScript(id, src, cb) {
-    if (document.getElementById(id)) { return cb(); }
-    var s = document.createElement('script'); s.id = id; s.src = src; s.onload = cb; document.head.appendChild(s);
-  }
-  var needD3 = window.d3 ? function (cb) { cb(); } : function (cb) { loadScript('d3-lib', '{% static "vendor/d3.v7.min.js" %}', cb); };
-  var needDagre = window.dagre ? function (cb) { cb(); } : function (cb) { loadScript('dagre-lib', '{% static "vendor/dagre.min.js" %}', cb); };
-  needD3(function () { needDagre(boot); });
+  });
 })();
 </script>
