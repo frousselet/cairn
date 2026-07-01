@@ -1,13 +1,7 @@
-from django.urls import path, reverse_lazy
+from django.urls import path
 from django.views.generic import RedirectView
 
 from . import views
-from .models import (
-    ComplianceActionPlan,
-    ComplianceAssessment,
-    Framework,
-    Requirement,
-)
 
 app_name = "compliance"
 

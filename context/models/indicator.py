@@ -337,10 +337,13 @@ class Indicator(ScopedModel):
 
     def _compute_approved_scopes_rate(self):
         from context.models import Scope
+        from core.lifecycle import reportable
         total = Scope.objects.exclude(workflow_state="archived").count()
         if total == 0:
             return "0"
-        approved = Scope.objects.exclude(workflow_state="archived").filter(is_approved=True).count()
+        # "Approved" scopes are now those in their authoritative (in-force /
+        # review) lifecycle step, read off the scope lifecycle's governance.
+        approved = reportable(Scope.objects.exclude(workflow_state="archived")).count()
         return str(round(approved / total * 100, 1))
 
     def _compute_mandatory_roles_coverage(self):

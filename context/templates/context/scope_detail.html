@@ -183,20 +183,12 @@
               <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
               <dd class="mb-3">{{ scope.version }}</dd>
               <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-              <dd class="{% if approval_enabled is not False %}mb-3{% else %}mb-0{% endif %}">{% if scope.created_by %}{% user_badge scope.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-              {% if approval_enabled is not False %}
-              <dt class="text-muted small mb-1">{% trans "Approved by" %}</dt>
-              <dd class="mb-0">{% if scope.approved_by %}{% user_badge scope.approved_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-              {% endif %}
+              <dd class="mb-0">{% if scope.created_by %}{% user_badge scope.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
             </dl>
           </div>
           <div class="col-md-6">
             <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-clock-history me-1"></i>{% trans "Dates" %}</h6>
             <dl class="mb-0">
-              {% if approval_enabled is not False %}
-              <dt class="text-muted small mb-1">{% trans "Approval date" %}</dt>
-              <dd class="mb-3">{{ scope.approved_at|default:"-" }}</dd>
-              {% endif %}
               <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
               <dd class="mb-3">{{ scope.created_at }}</dd>
               <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>

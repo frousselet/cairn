@@ -88,23 +88,13 @@ class BaseModel(ReferenceGeneratorMixin):
         related_name="%(class)s_created",
         verbose_name=_("Created by"),
     )
-    is_approved = models.BooleanField(_("Approved"), default=False)
-    approved_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="%(class)s_approved",
-        verbose_name=_("Approved by"),
-    )
-    approved_at = models.DateTimeField(_("Approval date"), null=True, blank=True)
     version = models.PositiveIntegerField(_("Version"), default=1)
     workflow_state = models.CharField(
         _("Lifecycle state"),
         max_length=32,
         default="draft",
         db_index=True,
-        help_text=_("Current state of the element in its lifecycle workflow."),
+        help_text=_("Current state of the element in its lifecycle."),
     )
     tags = models.ManyToManyField(
         "context.Tag",
@@ -205,11 +195,8 @@ class BaseModel(ReferenceGeneratorMixin):
 
         Returns the matched :class:`core.lifecycle.Transition`. Permission
         enforcement is opt-in here (the view / API / MCP layer is the enforcement
-        point). The default lifecycle keeps the legacy ``is_approved`` flag
-        coupled to the state and notifies owners on submit.
+        point). Submitting a default-lifecycle element notifies its owners.
         """
-        from django.utils import timezone
-
         from core.lifecycle import DEFAULT_LIFECYCLE_NAME
         from core.lifecycle_service import perform_transition
 
@@ -221,26 +208,9 @@ class BaseModel(ReferenceGeneratorMixin):
             comment=comment,
             lifecycle=lifecycle,
             enforce_permission=enforce_permission,
-            save=False,
+            save=save,
         )
-        # The default lifecycle keeps the legacy approval flag coupled to the
-        # state: reaching the authoritative (validated) step stamps approval,
-        # leaving it clears the stamp. Specific lifecycles keep is_approved as an
-        # independent axis and never touch it here. Applied before the single
-        # save so the move and the stamp share one history record.
-        if lifecycle.name == DEFAULT_LIFECYCLE_NAME:
-            approved = lifecycle.step(target).counts_in_reports
-            if approved:
-                self.is_approved = True
-                if user is not None:
-                    self.approved_by = user
-                    self.approved_at = timezone.now()
-            else:
-                self.is_approved = False
-                self.approved_by = None
-                self.approved_at = None
         if save:
-            self.save()
             # Submitting a default-lifecycle element for validation
             # (draft -> pending) notifies its owners (RG-LC-06).
             if user is not None and lifecycle.name == DEFAULT_LIFECYCLE_NAME and target == "pending":
@@ -248,31 +218,6 @@ class BaseModel(ReferenceGeneratorMixin):
 
                 notify_lifecycle_submitted(self, actor=user)
         return transition
-
-    def _sync_lifecycle_with_approval(self, save_kwargs):
-        """Keep ``workflow_state`` coherent with the legacy ``is_approved`` flag.
-
-        During the migration period both the legacy approval flow (which writes
-        ``is_approved``) and the workflow path (which writes ``workflow_state``)
-        are active. Only the **default lifecycle** mirrors the binary flag onto
-        the state (``draft`` <-> ``validated``), without clobbering the richer
-        states (``pending``, ``archived``); a model on a specific lifecycle keeps
-        ``is_approved`` as an independent axis.
-        """
-        from core.lifecycle import DEFAULT_LIFECYCLE_NAME
-
-        lifecycle = self.get_lifecycle()
-        if lifecycle is None or lifecycle.name != DEFAULT_LIFECYCLE_NAME:
-            return
-        before = self.workflow_state
-        if self.is_approved and self.workflow_state in ("", "draft", "pending"):
-            self.workflow_state = "validated"
-        elif not self.is_approved and self.workflow_state == "validated":
-            self.workflow_state = "draft"
-        if self.workflow_state != before:
-            update_fields = save_kwargs.get("update_fields")
-            if update_fields is not None:
-                save_kwargs["update_fields"] = set(update_fields) | {"workflow_state"}
 
     def _ensure_initial_step(self):
         """On creation, snap ``workflow_state`` to the lifecycle's initial step.
@@ -294,7 +239,6 @@ class BaseModel(ReferenceGeneratorMixin):
 
     def save(self, *args, **kwargs):
         self._ensure_initial_step()
-        self._sync_lifecycle_with_approval(kwargs)
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):

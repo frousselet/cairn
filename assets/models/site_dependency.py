@@ -61,16 +61,6 @@ class SiteAssetDependency(ReferenceGeneratorMixin):
     )
     created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
-    is_approved = models.BooleanField(_("Approved"), default=False)
-    approved_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="approved_site_asset_dependencies",
-        verbose_name=_("Approved by"),
-    )
-    approved_at = models.DateTimeField(_("Approval date"), null=True, blank=True)
     version = models.PositiveIntegerField(_("Version"), default=1)
 
     history = HistoricalRecords()
@@ -137,16 +127,6 @@ class SiteSupplierDependency(ReferenceGeneratorMixin):
     )
     created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
-    is_approved = models.BooleanField(_("Approved"), default=False)
-    approved_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="approved_site_supplier_dependencies",
-        verbose_name=_("Approved by"),
-    )
-    approved_at = models.DateTimeField(_("Approval date"), null=True, blank=True)
     version = models.PositiveIntegerField(_("Version"), default=1)
 
     history = HistoricalRecords()

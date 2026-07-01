@@ -38,7 +38,7 @@ class ScopeAdmin(SimpleHistoryAdmin):
 
 @admin.register(Site)
 class SiteAdmin(SimpleHistoryAdmin):
-    list_display = ("name", "type", "workflow_state", "parent_site", "is_approved", "created_at")
+    list_display = ("name", "type", "workflow_state", "parent_site", "created_at")
     list_filter = ("type", "workflow_state")
     search_fields = ("name", "description", "address")
     readonly_fields = ("id", "reference", "created_at", "updated_at")

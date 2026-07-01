@@ -140,25 +140,12 @@
               <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
               <dd class="mb-3">{{ contract.version }}</dd>
               <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-              <dd class="{% if approval_enabled is not False %}mb-3{% else %}mb-0{% endif %}">{% if contract.created_by %}{% user_badge contract.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-              {% if approval_enabled is not False %}
-              <dt class="text-muted small mb-1">{% trans "Approved by" %}</dt>
-              <dd class="mb-0">
-                {% if contract.approved_by %}{% user_badge contract.approved_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}
-                {% if can_approve and not contract.is_approved %}
-                <form method="post" action="{{ approve_url }}" class="d-inline ms-1">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-success">{% trans "Approve" %}</button></form>
-                {% endif %}
-              </dd>
-              {% endif %}
+              <dd class="mb-0">{% if contract.created_by %}{% user_badge contract.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
             </dl>
           </div>
           <div class="col-md-6">
             <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-clock-history me-1"></i>{% trans "Dates" %}</h6>
             <dl class="mb-0">
-              {% if approval_enabled is not False %}
-              <dt class="text-muted small mb-1">{% trans "Approval date" %}</dt>
-              <dd class="mb-3">{{ contract.approved_at|default:"-" }}</dd>
-              {% endif %}
               <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
               <dd class="mb-3">{{ contract.created_at }}</dd>
               <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>

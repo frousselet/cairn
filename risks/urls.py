@@ -1,15 +1,6 @@
-from django.urls import path, reverse_lazy
+from django.urls import path
 
 from . import views, views_ebios
-from .models import (
-    ISO27005Risk,
-    Risk,
-    RiskAcceptance,
-    RiskAssessment,
-    RiskTreatmentPlan,
-    Threat,
-    Vulnerability,
-)
 
 app_name = "risks"
 

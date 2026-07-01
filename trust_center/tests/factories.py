@@ -15,7 +15,6 @@ from trust_center.models import (
 def validate_framework(framework):
     """Move a framework into a reportable (validated) state for gate tests."""
     framework.workflow_state = "validated"
-    framework.is_approved = True
     framework.save()
     return framework
 
@@ -25,7 +24,6 @@ def validate_supplier(supplier):
     # step (here: a completed, compliant review).
     supplier.status = "active"
     supplier.workflow_state = "compliant"
-    supplier.is_approved = True
     supplier.save()
     return supplier
 

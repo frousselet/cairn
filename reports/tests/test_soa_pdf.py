@@ -32,10 +32,10 @@ def _render_template(frameworks_data, user):
 
 class TestBuildSoaFrameworksData:
     def test_returns_one_dict_per_framework(self):
-        fw1 = FrameworkFactory(is_approved=True)
-        fw2 = FrameworkFactory(is_approved=True)
-        RequirementFactory(is_approved=True, framework=fw1, requirement_number="A.1")
-        RequirementFactory(is_approved=True, framework=fw2, requirement_number="A.2")
+        fw1 = FrameworkFactory(workflow_state="validated")
+        fw2 = FrameworkFactory(workflow_state="validated")
+        RequirementFactory(workflow_state="validated", framework=fw1, requirement_number="A.1")
+        RequirementFactory(workflow_state="validated", framework=fw2, requirement_number="A.2")
         data = build_soa_frameworks_data(
             Framework.objects.filter(pk__in=[fw1.pk, fw2.pk])
         )
@@ -44,8 +44,8 @@ class TestBuildSoaFrameworksData:
             assert {"framework", "rows", "linked_risk_count"} <= entry.keys()
 
     def test_row_includes_structured_risks_data(self):
-        fw = FrameworkFactory(is_approved=True)
-        req = RequirementFactory(is_approved=True, framework=fw, requirement_number="A.5.2")
+        fw = FrameworkFactory(workflow_state="validated")
+        req = RequirementFactory(workflow_state="validated", framework=fw, requirement_number="A.5.2")
         risk = RiskFactory(name="Data leak", status="evaluated")
         risk.residual_risk_level = 2
         risk.treatment_decision = "mitigate"
@@ -68,9 +68,9 @@ class TestBuildSoaFrameworksData:
         }]
 
     def test_linked_risk_count_is_deduplicated(self):
-        fw = FrameworkFactory(is_approved=True)
-        r1 = RequirementFactory(is_approved=True, framework=fw, requirement_number="A.5.5")
-        r2 = RequirementFactory(is_approved=True, framework=fw, requirement_number="A.5.6")
+        fw = FrameworkFactory(workflow_state="validated")
+        r1 = RequirementFactory(workflow_state="validated", framework=fw, requirement_number="A.5.5")
+        r2 = RequirementFactory(workflow_state="validated", framework=fw, requirement_number="A.5.6")
         risk_a = RiskFactory(status="evaluated")
         risk_b = RiskFactory(status="evaluated")
         risk_a.linked_requirements.add(r1, r2)
@@ -80,8 +80,8 @@ class TestBuildSoaFrameworksData:
         assert data[0]["linked_risk_count"] == 2
 
     def test_applicable_with_no_plan_uses_risk_justification(self):
-        fw = FrameworkFactory(is_approved=True)
-        req = RequirementFactory(is_approved=True, framework=fw, requirement_number="A.5.7")
+        fw = FrameworkFactory(workflow_state="validated")
+        req = RequirementFactory(workflow_state="validated", framework=fw, requirement_number="A.5.7")
         risk = RiskFactory(status="evaluated")
         risk.linked_requirements.add(req)
 
@@ -91,9 +91,9 @@ class TestBuildSoaFrameworksData:
     def test_non_validated_elements_are_excluded(self):
         """Draft frameworks, requirements and risks never appear in the SoA (RG-LC-01)."""
         draft_fw = FrameworkFactory()
-        fw = FrameworkFactory(is_approved=True)
+        fw = FrameworkFactory(workflow_state="validated")
         RequirementFactory(framework=fw, requirement_number="A.9.1")  # draft
-        req = RequirementFactory(is_approved=True, framework=fw, requirement_number="A.9.2")
+        req = RequirementFactory(workflow_state="validated", framework=fw, requirement_number="A.9.2")
         draft_risk = RiskFactory()
         draft_risk.linked_requirements.add(req)
 
@@ -107,12 +107,12 @@ class TestBuildSoaFrameworksData:
         assert data[0]["linked_risk_count"] == 0
 
     def test_non_applicable_uses_applicability_justification(self):
-        fw = FrameworkFactory(is_approved=True)
+        fw = FrameworkFactory(workflow_state="validated")
         req = RequirementFactory(
             framework=fw,
             requirement_number="A.5.8",
             is_applicable=False,
-            is_approved=True,
+            workflow_state="validated",
             applicability_justification="Out of scope for hosted-only operations.",
         )
         data = build_soa_frameworks_data(Framework.objects.filter(pk=fw.pk))

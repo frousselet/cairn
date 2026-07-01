@@ -65,7 +65,7 @@ class TestStepperContext:
 
     def test_validated_issue_offers_archive_branch(self):
         client = _client(UserFactory(is_superuser=True))
-        issue = IssueFactory(is_approved=True)
+        issue = IssueFactory(workflow_state="validated")
         response = client.get(reverse("context:issue-detail", args=[issue.pk]))
         archived = next(e for e in response.context["lc_exits"] if e["value"] == "archived")
         assert archived["actionable"] is True  # validated can archive
@@ -208,7 +208,7 @@ class TestWorkflowBadgeTag:
     def test_badge_renders_tone_and_label(self):
         from helpers.templatetags.workflow_tags import workflow_badge
 
-        issue = IssueFactory(is_approved=True)
+        issue = IssueFactory(workflow_state="validated")
         ctx = workflow_badge(issue)
         assert ctx["badge_class"] == "success"
         assert str(ctx["label"])  # translated label present

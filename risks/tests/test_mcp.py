@@ -9,13 +9,9 @@ from compliance.tests.factories import ComplianceActionPlanFactory
 from mcp.server import McpServer
 from mcp.tools import register_all_tools
 from risks.models import (
-    ISO27005Risk,
-    RiskAcceptance,
     RiskTreatmentPlan,
-    Threat,
-    Vulnerability,
 )
-from risks.tests.factories import RiskAssessmentFactory, RiskFactory
+from risks.tests.factories import RiskFactory
 
 
 pytestmark = pytest.mark.django_db
@@ -183,8 +179,8 @@ class TestGenerateRiskRegisterMCPFilters:
         self.user = UserFactory(is_superuser=True)
 
     def test_filter_by_status(self):
-        RiskFactory(name="StatusKeep", status="analyzed", is_approved=True)
-        RiskFactory(name="StatusDrop", status="closed", is_approved=True)
+        RiskFactory(name="StatusKeep", status="analyzed")
+        RiskFactory(name="StatusDrop", status="closed")
         result = _call_tool(
             self.srv, self.user, "generate_risk_register",
             {"status": "analyzed"},

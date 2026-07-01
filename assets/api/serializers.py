@@ -44,10 +44,9 @@ class AssetDependencySerializer(serializers.ModelSerializer):
             "dependency_type", "criticality", "description",
             "is_single_point_of_failure", "redundancy_level",
             "version",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "reference", "is_single_point_of_failure", "created_by", "created_at", "updated_at", "is_approved", "approved_by", "approved_at", "version"]
+        read_only_fields = ["id", "reference", "is_single_point_of_failure", "created_by", "created_at", "updated_at", "version"]
 
 
 class EssentialAssetSerializer(serializers.ModelSerializer):
@@ -66,10 +65,9 @@ class EssentialAssetSerializer(serializers.ModelSerializer):
             "personal_data_categories", "regulatory_constraints",
             "related_activities", "status", "review_date", "tags",
             "version",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "reference", "created_by", "created_at", "updated_at", "is_approved", "approved_by", "approved_at", "version"]
+        read_only_fields = ["id", "reference", "created_by", "created_at", "updated_at", "version"]
 
 
 class EssentialAssetListSerializer(serializers.ModelSerializer):
@@ -103,14 +101,12 @@ class SupportAssetSerializer(serializers.ModelSerializer):
             "exposure_level", "environment",
             "parent_asset", "status", "review_date", "tags",
             "version",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
             "inherited_confidentiality", "inherited_integrity",
             "inherited_availability",
-            "is_approved", "approved_by", "approved_at",
             "version",
         ]
 
@@ -143,10 +139,9 @@ class AssetGroupSerializer(serializers.ModelSerializer):
             "id", "scopes", "name", "description", "type",
             "members", "owner", "status", "member_count", "tags",
             "version",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "created_by", "created_at", "updated_at", "is_approved", "approved_by", "approved_at", "version"]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 
 
 class AssetGroupListSerializer(serializers.ModelSerializer):
@@ -212,12 +207,11 @@ class SupplierSerializer(serializers.ModelSerializer):
             "status", "notes", "tags",
             "requirement_count",
             "version",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
         ]
 
 
@@ -253,12 +247,11 @@ class SupplierDependencySerializer(serializers.ModelSerializer):
             "supplier", "supplier_name",
             "dependency_type", "criticality", "description",
             "version",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
         ]
 
 
@@ -276,13 +269,12 @@ class ContractSerializer(serializers.ModelSerializer):
             "parent", "supersedes", "suppliers", "clients", "notes", "tags",
             "file_name", "content_type", "document_url",
             "version",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "file_name", "content_type", "document_url",
             "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
         ]
 
     def get_document_url(self, obj):
@@ -321,14 +313,13 @@ class CertificateSerializer(serializers.ModelSerializer):
             "scope_statement", "sites", "supersedes", "notes", "tags",
             "file_name", "content_type", "document_url",
             "version",
-            "is_approved", "approved_by", "approved_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "framework_label",
             "file_name", "content_type", "document_url",
             "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
         ]
 
     def get_document_url(self, obj):

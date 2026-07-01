@@ -91,12 +91,6 @@ class TestAssessmentTransitions:
         with pytest.raises(ValueError):
             assessment.transition_to(AssessmentStatus.DRAFT)
 
-    def test_is_approved_stays_independent(self):
-        assessment = ComplianceAssessmentFactory(status=AssessmentStatus.DRAFT, is_approved=True)
-        assessment.transition_to(AssessmentStatus.PLANNED)
-        assessment.refresh_from_db()
-        assert assessment.is_approved is True
-
 
 class TestAssessmentGovernance:
     def test_only_draft_deletable(self):

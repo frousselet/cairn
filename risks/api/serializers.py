@@ -43,12 +43,12 @@ class RiskCriteriaSerializer(serializers.ModelSerializer):
             "id", "scopes", "name", "description", "risk_matrix",
             "acceptance_threshold", "is_default", "workflow_state",
             "scale_levels", "risk_levels", "tags",
-            "version", "is_approved", "approved_by", "approved_at",
+            "version",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
         ]
 
 
@@ -71,12 +71,12 @@ class RiskAssessmentSerializer(serializers.ModelSerializer):
             "id", "scopes", "reference", "name", "description", "methodology",
             "assessment_date", "assessor", "assessor_name", "risk_criteria",
             "status", "validated_by", "validated_at", "next_review_date", "summary", "tags",
-            "version", "is_approved", "approved_by", "approved_at",
+            "version",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
         ]
 
 
@@ -111,14 +111,14 @@ class RiskSerializer(serializers.ModelSerializer):
             "treatment_decision", "treatment_justification",
             "risk_owner", "risk_owner_name", "priority", "status", "review_date", "tags",
             "criteria_snapshot",
-            "version", "is_approved", "approved_by", "approved_at",
+            "version",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
             "initial_risk_level", "current_risk_level", "residual_risk_level",
             "criteria_snapshot",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
         ]
 
 
@@ -161,12 +161,12 @@ class RiskTreatmentPlanSerializer(serializers.ModelSerializer):
             "start_date", "target_date", "completion_date",
             "progress_percentage", "status", "actions", "tags",
             "related_action_plans",
-            "version", "is_approved", "approved_by", "approved_at",
+            "version",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
         ]
 
 
@@ -194,12 +194,12 @@ class RiskAcceptanceSerializer(serializers.ModelSerializer):
             "id", "risk", "accepted_by", "accepted_by_name", "accepted_at",
             "risk_level_at_acceptance", "justification", "conditions",
             "valid_until", "review_date", "status", "tags",
-            "version", "is_approved", "approved_by", "approved_at",
+            "version",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
         ]
 
 
@@ -210,12 +210,12 @@ class ThreatSerializer(serializers.ModelSerializer):
             "id", "scopes", "reference", "name", "description",
             "type", "origin", "category", "typical_likelihood",
             "is_from_catalog", "status", "tags",
-            "version", "is_approved", "approved_by", "approved_at",
+            "version",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
         ]
 
 
@@ -238,12 +238,12 @@ class VulnerabilitySerializer(serializers.ModelSerializer):
             "category", "severity", "affected_asset_types",
             "affected_assets", "cve_references", "remediation_guidance",
             "is_from_catalog", "status", "tags",
-            "version", "is_approved", "approved_by", "approved_at",
+            "version",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
         ]
 
 
@@ -273,14 +273,14 @@ class ISO27005RiskSerializer(serializers.ModelSerializer):
             "max_impact", "risk_level", "existing_controls",
             "risk", "description", "tags",
             "criteria_snapshot",
-            "version", "is_approved", "approved_by", "approved_at",
+            "version",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = [
             "id", "created_by", "created_at", "updated_at",
             "combined_likelihood", "max_impact", "risk_level",
             "criteria_snapshot",
-            "is_approved", "approved_by", "approved_at", "version",
+            "version",
         ]
 
 

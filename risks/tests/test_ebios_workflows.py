@@ -81,22 +81,6 @@ class TestWorkshopReviewMachine:
             workshop.transition_to(EbiosWorkshopStatus.IN_PROGRESS, user)
 
 
-class TestApprovalIndependence:
-    def test_approving_summary_does_not_jump_states(self):
-        """approve_* on a draft summary must not silently move the machine."""
-        from django.utils import timezone
-
-        summary = _singleton(EbiosSummary, _ebios_assessment())
-        assert summary.workflow_state == "draft"
-        summary.is_approved = True
-        summary.approved_at = timezone.now()
-        summary.save(update_fields=["is_approved", "approved_at"])
-        summary.refresh_from_db()
-        assert summary.is_approved is True
-        assert summary.workflow_state == "draft"  # machine untouched
-        assert summary.status == "draft"
-
-
 class TestGovernanceFlags:
     def test_only_initial_states_deletable(self):
         assert deletable_states(EbiosWorkshopProgress) == {"not_started"}
@@ -143,5 +127,3 @@ class TestGapAndMeasurePaths:
         framework.transition_to(EbiosStudyFrameworkStatus.VALIDATED, user)
         framework.refresh_from_db()
         assert framework.status == "validated"
-        # Validation through the machine does not flip the independent flag.
-        assert framework.is_approved is False

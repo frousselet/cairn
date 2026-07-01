@@ -31,7 +31,6 @@ def test_certification_dual_gate():
     assert list(qs.published()) == [cert]
     # Un-validating the source auto-hides it (stale-publish protection).
     cert.framework.workflow_state = "draft"
-    cert.framework.is_approved = False
     cert.framework.save()
     assert qs.published().count() == 0
 

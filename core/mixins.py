@@ -550,7 +550,7 @@ class AdvancedFilterMixin:
     advanced_filters = True
     filter_exclude = frozenset(
         {
-            "id", "password", "version", "is_approved", "approved_by", "approved_at",
+            "id", "password", "version",
             "created_by", "created_at", "updated_at", "last_login", "tags",
         }
     )

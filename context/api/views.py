@@ -207,12 +207,7 @@ class SwotAnalysisViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixi
         analysis = self.get_object()
         analysis.validated_by = request.user
         analysis.validated_at = timezone.now()
-        # Legacy alias of the lifecycle validation: on the default workflow
-        # the approval axis drives the state (the save sync promotes
-        # draft -> validated when is_approved is set).
-        analysis.is_approved = True
-        analysis.approved_by = request.user
-        analysis.approved_at = timezone.now()
+        analysis.workflow_state = "validated"
         analysis.save()
         return Response(SwotAnalysisSerializer(analysis).data)
 

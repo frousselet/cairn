@@ -202,9 +202,6 @@ def approved(user):
     """Kwargs marking a default-lifecycle object as validated."""
     return {
         "created_by": user,
-        "is_approved": True,
-        "approved_by": user,
-        "approved_at": NOW,
     }
 
 
@@ -1007,7 +1004,7 @@ with transaction.atomic():
             essential_asset=ea, support_asset=sa, dependency_type=dtype,
             criticality=crit, redundancy_level=redundancy,
             is_single_point_of_failure=spof, description=desc,
-            created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+            created_by=julien,
         )
 
     for sa, sup, dtype, crit, redundancy, spof in [
@@ -1021,7 +1018,7 @@ with transaction.atomic():
             support_asset=sa, supplier=sup, dependency_type=dtype,
             criticality=crit, redundancy_level=redundancy,
             is_single_point_of_failure=spof,
-            created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+            created_by=julien,
         )
 
     for sa, site, dtype, crit, redundancy in [
@@ -1034,7 +1031,7 @@ with transaction.atomic():
         SiteAssetDependency.objects.create(
             support_asset=sa, site=site, dependency_type=dtype,
             criticality=crit, redundancy_level=redundancy,
-            created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+            created_by=julien,
         )
 
     for site, sup, dtype, crit in [
@@ -1044,7 +1041,7 @@ with transaction.atomic():
     ]:
         SiteSupplierDependency.objects.create(
             site=site, supplier=sup, dependency_type=dtype, criticality=crit,
-            created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+            created_by=julien,
         )
 
     grp_ot = AssetGroup.objects.create(
@@ -1451,39 +1448,39 @@ with transaction.atomic():
         description=FINDING_TEXT["A.5.26"],
         recommendation="Plan and run at least one OT incident response exercise per year.",
         evidence="Interviews with the OT team; exercise log empty for the plants.",
-        workflow_state="validated", is_approved=True, approved_by=elise, approved_at=NOW,
+        workflow_state="validated",
     )
     f_major.requirements.set([iso_reqs["A.5.26"], iso_reqs["A.5.29"]])
     f_minor1 = Finding.objects.create(
         assessment=asm_iso, finding_type="minor_nc", assessor=sofia, created_by=sofia,
         description=FINDING_TEXT["A.5.18"],
         recommendation="Retain signed review records for at least three years.",
-        workflow_state="validated", is_approved=True, approved_by=elise, approved_at=NOW,
+        workflow_state="validated",
     )
     f_minor1.requirements.set([iso_reqs["A.5.18"]])
     f_minor2 = Finding.objects.create(
         assessment=asm_iso, finding_type="minor_nc", assessor=sofia, created_by=sofia,
         description=FINDING_TEXT["A.5.20"],
         recommendation="Roll out the contractual security annex at the next renewal.",
-        workflow_state="validated", is_approved=True, approved_by=elise, approved_at=NOW,
+        workflow_state="validated",
     )
     f_minor2.requirements.set([iso_reqs["A.5.20"]])
     f_obs = Finding.objects.create(
         assessment=asm_iso, finding_type="observation", assessor=sofia, created_by=sofia,
         description="Time synchronisation relies on a single external NTP source.",
-        workflow_state="validated", is_approved=True, approved_by=elise, approved_at=NOW,
+        workflow_state="validated",
     )
     f_obs.requirements.set([iso_reqs["A.8.17"]])
     f_improv = Finding.objects.create(
         assessment=asm_iso, finding_type="improvement", assessor=sofia, created_by=sofia,
         description="OT log sources are not yet consolidated on the SIEM.",
-        workflow_state="validated", is_approved=True, approved_by=elise, approved_at=NOW,
+        workflow_state="validated",
     )
     f_improv.requirements.set([iso_reqs["A.8.15"]])
     f_strength = Finding.objects.create(
         assessment=asm_iso, finding_type="strength", assessor=sofia, created_by=sofia,
         description="Mature phishing simulation programme with steadily decreasing click rates.",
-        workflow_state="validated", is_approved=True, approved_by=elise, approved_at=NOW,
+        workflow_state="validated",
     )
     f_strength.requirements.set([iso_reqs["A.6.3"]])
 
@@ -1671,7 +1668,7 @@ with transaction.atomic():
             affected_asset_types=["server", "network_equipment"],
             remediation_guidance="Apply the vendor fix or the documented compensating control.",
             status=status_value, created_by=julien,
-            is_approved=True, approved_by=elise, approved_at=NOW,
+           
         )
         v.scopes.set([scope_group])
         v.affected_assets.set(affected)
@@ -1813,7 +1810,7 @@ with transaction.atomic():
             threat_likelihood=tl, vulnerability_exposure=ve,
             impact_confidentiality=ic, impact_integrity=ii, impact_availability=ia,
             existing_controls=controls, risk=risk_link,
-            created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+            created_by=julien,
         )
         analysis.affected_support_assets.set(list(risk_link.affected_support_assets.all()))
 
@@ -2443,7 +2440,7 @@ with transaction.atomic():
                 criticality=RNG.choice(["low", "medium", "high", "critical"]),
                 redundancy_level="none" if spof else RNG.choice(["partial", "full"]),
                 is_single_point_of_failure=spof,
-                created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+                created_by=julien,
             )
 
     # --- suppliers -------------------------------------------------------
@@ -2480,7 +2477,7 @@ with transaction.atomic():
             dependency_type=RNG.choice(["provides", "hosts", "manages", "maintains", "supports", "licenses"]),
             criticality=RNG.choice(["low", "medium", "high", "critical"]),
             redundancy_level=RNG.choice(["none", "partial", "full"]),
-            created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+            created_by=julien,
         )
 
     # --- threats ---------------------------------------------------------
@@ -2513,7 +2510,7 @@ with transaction.atomic():
             status=RNG.choice(["identified", "confirmed", "confirmed", "mitigated", "accepted"]),
             remediation_guidance="Apply the vendor fix or a documented compensating control.",
             affected_asset_types=["server", "network_equipment"],
-            created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+            created_by=julien,
         )
         vv.scopes.set([scope_group])
         vv.affected_assets.set(RNG.sample(all_support, k=RNG.randint(1, 2)))
@@ -2590,7 +2587,7 @@ with transaction.atomic():
             impact_confidentiality=RNG.randint(1, 5), impact_integrity=RNG.randint(1, 5),
             impact_availability=RNG.randint(1, 5),
             existing_controls="Baseline controls in place; monitored by the SOC.",
-            risk=risk, created_by=julien, is_approved=True, approved_by=elise, approved_at=NOW,
+            risk=risk, created_by=julien,
         )
         an.affected_support_assets.set(list(risk.affected_support_assets.all()))
 
@@ -2675,7 +2672,7 @@ with transaction.atomic():
                 description=res.finding or f"{num} - {res.get_compliance_status_display()} identified during the assessment.",
                 recommendation="Define and track a corrective action to close the gap.",
                 evidence="Audit interviews and document sampling.",
-                workflow_state="validated", is_approved=True, approved_by=elise, approved_at=NOW,
+                workflow_state="validated",
             )
             f.requirements.set([res.requirement])
 

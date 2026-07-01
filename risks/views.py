@@ -562,7 +562,6 @@ class RiskAssessmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scop
     template_name = "risks/assessment_detail.html"
     context_object_name = "assessment"
     permission_required = "risks.assessment.read"
-    approval_module = "risks"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1050,16 +1049,15 @@ class RiskListView(
 
 
 class RiskBulkActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    """Run a bulk action (approve or delete) on a list of risk UUIDs.
+    """Run a bulk action (delete) on a list of risk UUIDs.
 
     Only operates on risks the user can see (scope-filtered). The action
-    must be one of: approve, delete. The destination URL after the action
-    is the risk list; selected_ids are read from the form's
-    `risk_ids` field (multiple).
+    must be ``delete``. The destination URL after the action is the risk
+    list; selected_ids are read from the form's `risk_ids` field (multiple).
     """
 
     permission_required = "risks.risk.read"
-    SUPPORTED_ACTIONS = {"approve", "delete"}
+    SUPPORTED_ACTIONS = {"delete"}
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get("action", "")
@@ -1080,26 +1078,6 @@ class RiskBulkActionView(LoginRequiredMixin, PermissionRequiredMixin, View):
             if scope_ids is not None:
                 qs = qs.filter(assessment__scopes__id__in=scope_ids).distinct()
 
-        if action == "approve":
-            if not user.is_superuser and not user.has_perm("risks.risk.approve"):
-                messages.error(request, _("You do not have permission to approve risks."))
-                return redirect("risks:risk-list")
-            count = 0
-            for risk in qs:
-                if risk.is_approved:
-                    continue
-                risk.is_approved = True
-                risk.approved_by = user
-                risk.approved_at = timezone.now()
-                risk.save(update_fields=["is_approved", "approved_by", "approved_at"])
-                count += 1
-            messages.success(
-                request,
-                _("%(count)d risk(s) approved.") % {"count": count},
-            )
-            return redirect("risks:risk-list")
-
-        # action == "delete"
         if not user.is_superuser and not user.has_perm("risks.risk.delete"):
             messages.error(request, _("You do not have permission to delete risks."))
             return redirect("risks:risk-list")
@@ -1117,7 +1095,6 @@ class RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMix
     template_name = "risks/risk_detail.html"
     context_object_name = "risk"
     permission_required = "risks.risk.read"
-    approval_module = "risks"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1345,7 +1322,6 @@ class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scope
     template_name = "risks/treatment_plan_detail.html"
     context_object_name = "plan"
     permission_required = "risks.treatment.read"
-    approval_module = "risks"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1555,7 +1531,6 @@ class RiskAcceptanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scop
     template_name = "risks/acceptance_detail.html"
     context_object_name = "acceptance"
     permission_required = "risks.acceptance.read"
-    approval_module = "risks"
 
 
 class RiskAcceptanceCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -1679,7 +1654,6 @@ class ThreatDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterM
     template_name = "risks/threat_detail.html"
     context_object_name = "threat"
     permission_required = "risks.threat.read"
-    approval_module = "risks"
 
 
 class ThreatCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -1806,7 +1780,6 @@ class VulnerabilityDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scope
     template_name = "risks/vulnerability_detail.html"
     context_object_name = "vulnerability"
     permission_required = "risks.vulnerability.read"
-    approval_module = "risks"
 
 
 class VulnerabilityCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -1949,7 +1922,6 @@ class ISO27005RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
     template_name = "risks/iso27005_risk_detail.html"
     context_object_name = "analysis"
     permission_required = "risks.iso27005.read"
-    approval_module = "risks"
 
 
 class ISO27005RiskCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):

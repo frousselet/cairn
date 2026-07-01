@@ -1,9 +1,7 @@
-from django.urls import path, reverse_lazy
+from django.urls import path
 from django.views.generic import RedirectView
 
-from context.models import Site
 from . import views
-from .models import AssetDependency, AssetGroup, Certificate, Contract, EssentialAsset, SiteAssetDependency, SiteSupplierDependency, Supplier, SupplierDependency, SupportAsset
 
 app_name = "assets"
 
