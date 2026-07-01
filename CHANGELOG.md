@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Static assets are now re-collected at container start (not only at image build), so newly added JS/CSS reach `STATIC_ROOT` under the compose bind-mount and no-rebuild deploys, fixing `text/html`/`nosniff` errors on files like `lifecycle_graph.js`.
+
 ## [0.33.1] - 2026-07-01
 
 ### Fixed

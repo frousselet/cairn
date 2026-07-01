@@ -60,6 +60,15 @@ fi
 echo "Compiling translation files…"
 python manage.py compilemessages
 
+# Refresh collected static at runtime, not just at image build. The compose
+# bind-mount (.:/app) shadows the image's build-time staticfiles/, and deploys
+# that pull new code without rebuilding never re-run collectstatic. Without this,
+# newly added assets (e.g. js/lifecycle_graph.js) are absent from STATIC_ROOT, so
+# the proxy serves an HTML 404 that nosniff blocks. Keep it non-fatal so a
+# read-only STATIC_ROOT can't stop the app from booting.
+echo "Collecting static files…"
+python manage.py collectstatic --noinput || echo "Warning: collectstatic failed; static assets may be stale."
+
 # Create the initial super-admin if configured and not already present.
 # Requires DJANGO_SUPERUSER_EMAIL and DJANGO_SUPERUSER_PASSWORD in the environment.
 if [ -n "$DJANGO_SUPERUSER_EMAIL" ]; then
