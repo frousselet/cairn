@@ -1,4 +1,4 @@
-{% load i18n static %}
+{% load i18n static ui %}
 {% comment %}
 Data-driven lifecycle graph rendered with dagre (layered layout) via the shared
 CairnLifecycleGraph renderer. Everything is derived from lc_graph_nodes /
@@ -20,7 +20,7 @@ a single dot -> target arrow with the target detached below the flow.
   </div>
 </div>
 
-<script src="{% static 'js/lifecycle_graph.js' %}"></script>
+<script src="{% static_v 'js/lifecycle_graph.js' %}"></script>
 <script>
 (function () {
   var root = document.getElementById('{{ lc_container_id }}');

@@ -23,6 +23,30 @@ from core.navigation import NAV_TREE
 register = template.Library()
 
 
+@register.simple_tag
+def static_v(path):
+    """Like ``{% static %}`` but appends the file's mtime as a ``?v=`` cache-buster.
+
+    The project does not hash static filenames, so an edited JS / CSS asset would
+    otherwise stay cached in the browser. Appending the modification time makes
+    every change take effect on the next load. Falls back to the plain static URL
+    if the file cannot be located.
+    """
+    import os
+
+    from django.contrib.staticfiles import finders
+    from django.templatetags.static import static as static_url
+
+    url = static_url(path)
+    try:
+        found = finders.find(path)
+        if found:
+            url += ("&" if "?" in url else "?") + "v=" + str(int(os.path.getmtime(found)))
+    except Exception:
+        pass
+    return url
+
+
 # ───────────────────────── Module accents ──────────────────────────────────
 #
 # Editorial signal for each business module. Used by {% page_header %}
