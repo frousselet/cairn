@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% block title %}{% trans "Lifecycles" %} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header _("Lifecycles") subtitle=_("Every entity's lifecycle is a JSON graph of steps and transitions. Edit one to re-shape its stepper, allowed moves and governance flags - no code change.") nav="core:lifecycle-list" accent="accounts" %}{% endpage_header %}
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>{% trans "Name" %}</th>
+          <th>{% trans "Label" %}</th>
+          <th class="text-center">{% trans "Steps" %}</th>
+          <th class="text-center">{% trans "Transitions" %}</th>
+          <th>{% trans "State" %}</th>
+          <th class="text-end">{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in definitions %}
+        <tr>
+          <td><code>{{ d.name }}</code></td>
+          <td>{{ d.label|default:d.name }}</td>
+          <td class="text-center">{{ d.step_count }}</td>
+          <td class="text-center">{{ d.transition_count }}</td>
+          <td>
+            {% if d.is_customized %}
+              <span class="badge text-bg-warning-subtle text-warning-emphasis">{% trans "Customized" %}</span>
+            {% elif d.is_system %}
+              <span class="badge text-bg-secondary-subtle text-secondary-emphasis">{% trans "Default" %}</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <a href="{% url 'core:lifecycle-edit' d.name %}" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-pencil me-1"></i>{% trans "Edit" %}
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-muted text-center py-4">{% trans "No lifecycles yet." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

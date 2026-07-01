@@ -331,8 +331,21 @@ class Lifecycle:
 
 
 # --- Registry ---------------------------------------------------------------
+#
+# Two layers back a lifecycle name:
+#   1. ``LIFECYCLE_REGISTRY`` : the code-declared defaults, registered from each
+#      app's ``lifecycles.py`` at startup. This is the fallback / seed source.
+#   2. A ``core.LifecycleDefinition`` DB row : the JSON description, editable in
+#      the Cairn admin. When present it is the single source of truth.
+# ``get_lifecycle`` prefers the DB row (built via :func:`lifecycle_from_json`) and
+# falls back to the registry, so the engine keeps working before the table is
+# seeded (fresh install, tests) and stays fully data-driven once it is.
 
 LIFECYCLE_REGISTRY: dict[str, Lifecycle] = {}
+
+#: name -> built :class:`Lifecycle` from the DB (``None`` = no DB row). Cleared
+#: whenever a ``LifecycleDefinition`` is saved / deleted.
+_DB_LIFECYCLE_CACHE: dict[str, "Lifecycle | None"] = {}
 
 
 def register_lifecycle(lifecycle: Lifecycle) -> Lifecycle:
@@ -346,11 +359,133 @@ def register_lifecycle(lifecycle: Lifecycle) -> Lifecycle:
     return lifecycle
 
 
+def clear_lifecycle_cache() -> None:
+    """Drop the built-from-DB lifecycle cache (call after any definition edit)."""
+    _DB_LIFECYCLE_CACHE.clear()
+
+
+def _db_lifecycle(name: str) -> "Lifecycle | None":
+    """Build the lifecycle from its ``LifecycleDefinition`` row, or ``None``.
+
+    Resilient to the table not existing yet (initial migrate, ``--run-syncdb``)
+    and to an invalid stored JSON : both fall through to the code default.
+    """
+    if name in _DB_LIFECYCLE_CACHE:
+        return _DB_LIFECYCLE_CACHE[name]
+    built = None
+    try:
+        from core.models import LifecycleDefinition
+
+        row = LifecycleDefinition.objects.filter(name=name).first()
+        if row is not None:
+            built = lifecycle_from_json(name, row.definition)
+    except LifecycleError:
+        built = None  # stored JSON is invalid : use the code default
+    except Exception:
+        return None  # table not ready / DB error : do not cache, retry later
+    _DB_LIFECYCLE_CACHE[name] = built
+    return built
+
+
 def get_lifecycle(name: str) -> Lifecycle:
+    """Return the lifecycle for ``name`` : the DB definition, else the code default."""
+    db = _db_lifecycle(name)
+    if db is not None:
+        return db
     try:
         return LIFECYCLE_REGISTRY[name]
     except KeyError:
         raise LifecycleError(f"No lifecycle named '{name}' is registered.") from None
+
+
+# --- JSON (de)serialization : the DB / admin representation -----------------
+
+
+def lifecycle_to_json(lifecycle: Lifecycle) -> dict:
+    """Serialize a :class:`Lifecycle` to the JSON document stored in the DB.
+
+    Lossless for every field a lifecycle actually uses (codes, labels, kind,
+    governance flags, tone, transition source/target/label, ``requires_comment``
+    and ``permission_action``). Role / user / form restrictions are not used by
+    any lifecycle and are intentionally out of the JSON schema.
+    """
+    return {
+        "layout": lifecycle.layout,
+        "steps": [
+            {
+                "code": s.code,
+                "label": str(s.label),
+                "kind": s.kind.value,
+                "counts_in_reports": bool(s.counts_in_reports),
+                "linkable": bool(s.linkable),
+                "deletable": bool(s.deletable),
+                "tone": s.tone,
+            }
+            for s in lifecycle.steps
+        ],
+        "transitions": [
+            {
+                "source": t.source,  # ANY is the literal "*"
+                "target": t.target,
+                "label": str(t.label),
+                "requires_comment": bool(t.requires_comment),
+                "permission_action": t.permission_action or "",
+            }
+            for t in lifecycle.transitions
+        ],
+    }
+
+
+def lifecycle_from_json(name: str, data: dict) -> Lifecycle:
+    """Build a :class:`Lifecycle` from its JSON document (raises on an invalid one).
+
+    Labels are wrapped with lazy ``gettext`` so the built-in step / transition
+    labels (which are message ids in the catalog) stay translated, while custom
+    labels pass through unchanged.
+    """
+    from django.utils.translation import gettext_lazy as _
+
+    def label(value):
+        value = value or ""
+        return _(value) if value else value
+
+    if not isinstance(data, dict):
+        raise LifecycleError(f"Lifecycle '{name}' definition must be a JSON object.")
+    steps = []
+    for raw in data.get("steps", []):
+        try:
+            kind = StepKind(raw.get("kind", "intermediate"))
+        except ValueError:
+            raise LifecycleError(
+                f"Lifecycle '{name}' step '{raw.get('code')}' has an unknown kind "
+                f"'{raw.get('kind')}'."
+            ) from None
+        steps.append(
+            Step(
+                code=raw["code"],
+                label=label(raw.get("label", raw.get("code", ""))),
+                kind=kind,
+                counts_in_reports=bool(raw.get("counts_in_reports", False)),
+                linkable=bool(raw.get("linkable", False)),
+                deletable=bool(raw.get("deletable", False)),
+                tone=raw.get("tone", "neutral"),
+            )
+        )
+    transitions = []
+    for raw in data.get("transitions", []):
+        source = raw.get("source", ANY)
+        if source in (None, "", "any"):
+            source = ANY
+        transitions.append(
+            Transition(
+                target=raw["target"],
+                source=source,
+                label=label(raw.get("label", "")),
+                requires_comment=bool(raw.get("requires_comment", False)),
+                permission_action=raw.get("permission_action", "") or "",
+            )
+        )
+    return Lifecycle(name, steps, transitions, layout=data.get("layout", "graph"))
 
 
 # --- Restriction evaluation -------------------------------------------------
@@ -489,9 +624,12 @@ def lifecycle_from_state_flags(name, state_flags_items, transitions, *, layout="
         steps.append(draft_step())
     initial_codes = []
     for code, label, counts, can_link, can_delete, is_initial, is_terminal, tone in items:
+        # Domain terminal states keep their ARCHIVED kind so they render as clean
+        # detached exits (like the generic Archived), NOT as inline branch targets
+        # that clutter the operational spine and confuse the stage numbering.
         if code == "draft":
             kind = StepKind.DRAFT
-        elif code == "archived":
+        elif code == "archived" or is_terminal:
             kind = StepKind.ARCHIVED
         else:
             kind = StepKind.INTERMEDIATE

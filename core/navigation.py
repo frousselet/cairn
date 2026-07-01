@@ -66,6 +66,8 @@ NAV_TREE = {
     # ── Administration ───────────────────────────────────────────
     "accounts:company-settings": ("Administration", "General", "Company"),
     "context:tag-list": ("Administration", "General", "Tags"),
+    "core:lifecycle-list": ("Administration", "General", "Lifecycles"),
+    "core:lifecycle-edit": ("Administration", "General", "Lifecycles"),
     "accounts:calendar-subscription-list": ("Administration", "General", "Calendar subscriptions"),
     "trust_center_manage:settings": ("Administration", "General", "Trust Center"),
     "trust_center_manage:request-list": ("Administration", "Trust Center", "Document requests"),

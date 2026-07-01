@@ -65,6 +65,7 @@ urlpatterns = [
     path("workflow/", include("core.workflow_urls")),
     path("history/", include("core.history_urls")),
     path("imports/", include("core.imports.urls")),
+    path("config/lifecycles/", include("core.lifecycle_admin_urls")),
 ]
 
 if settings.DEBUG:

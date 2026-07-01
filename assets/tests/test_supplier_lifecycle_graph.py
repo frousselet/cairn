@@ -56,13 +56,12 @@ def test_supplier_detail_emits_schema_driven_graph(client, django_user_model):
 
 
 @pytest.mark.django_db
-def test_supplier_lifecycle_graph_uses_boustrophedon_layout(client, django_user_model):
-    """The rendered graph must keep the snake layout + margin-routed back-edge.
+def test_supplier_lifecycle_graph_uses_dagre_renderer(client, django_user_model):
+    """The lifecycle graph is rendered with the dagre (layered) renderer.
 
-    Guards against regressing to a plain left-to-right flex-wrap (which produces
-    full-width crossing connectors) or to a vertical column / zoom-to-fit. The
-    renderer is client-side JS measured from the DOM, so we assert on the
-    emitted markup rather than on pixel geometry.
+    The whole diagram is derived from the emitted node / edge JSON and laid out
+    by dagre, so arrows are routed and never overlap whatever the flow's shape.
+    Guards against regressing to a hand-rolled flow layout.
     """
     user = django_user_model.objects.create_superuser(email="c@d.co", password="x")
     client.force_login(user)
@@ -70,30 +69,12 @@ def test_supplier_lifecycle_graph_uses_boustrophedon_layout(client, django_user_
     resp = client.get(reverse("assets:supplier-detail", kwargs={"pk": supplier.pk}))
     html = resp.content.decode()
 
-    # Boustrophedon: the spine is packed into rows and alternate rows are
-    # reversed, so the inter-row connector is a short drop, not a full-width lane.
-    assert "row.slice().reverse()" in html
-    assert "rowPitch" in html
-    # Connectors are rounded orthogonal SVG paths drawn over an absolute overlay.
-    assert "orthoPath" in html
-    assert "data-lc-svg" in html
-    # The terminal branch is special-cased: the outcome pills are detected as
-    # branch members and stacked beside their common source.
-    assert "branchMembers" in html
-    assert "branchSourceOf" in html
-    # Multiple loop back-edges are supported (one per branch outcome / tail). Each
-    # is routed as a short arc in the pill-free margin on the side its source exits
-    # toward (over the TOP or under the BOTTOM), spanning only [target .. source]
-    # so loops never cross a pill and never pile up in a shared lane.
-    assert "loopEdges" in html
-    assert "loopGroups" in html
-    assert "loopGroupByTarget" in html
-    assert "junctionX" in html
-    assert "topArcBase" in html
-    assert "botArcBase" in html
-    assert "restoreLane" in html
-    # Edge labels are placed off the path with an explicit anchor.
-    assert "addLabel" in html
+    # The dagre container + the data-driven node / edge payload it lays out.
+    assert "lc-dagre" in html
+    assert "data-lc-nodes" in html
+    assert "data-lc-edges" in html
+    # The layered-layout library is loaded (vendored, no CDN).
+    assert "dagre" in html
 
 
 @pytest.mark.django_db

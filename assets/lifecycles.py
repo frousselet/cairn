@@ -38,6 +38,7 @@ from core.lifecycle import (
     Transition,
     archived_step,
     draft_step,
+    lifecycle_from_json,
     lifecycle_from_state_flags,
     register_lifecycle,
 )
@@ -346,33 +347,47 @@ ESSENTIAL_ASSET_LIFECYCLE = register_lifecycle(
 
 SUPPORT_ASSET_LIFECYCLE_NAME = "support_asset"
 
-_SUPPORT_ASSET_STEPS = [
-    (SupportAssetStatus.ACTIVE.value, SupportAssetStatus.ACTIVE.label, True, True, True, True, False, "success"),
-    (SupportAssetStatus.IN_STOCK.value, SupportAssetStatus.IN_STOCK.label, True, True, True, False, False, "secondary"),
-    (SupportAssetStatus.DEPLOYED.value, SupportAssetStatus.DEPLOYED.label, True, True, False, False, False, "info"),
-    (SupportAssetStatus.UNDER_MAINTENANCE.value, SupportAssetStatus.UNDER_MAINTENANCE.label, True, True, False, False, False, "warning"),
-    (SupportAssetStatus.DECOMMISSIONED.value, SupportAssetStatus.DECOMMISSIONED.label, True, False, False, False, False, "dark"),
-    (SupportAssetStatus.DISPOSED.value, SupportAssetStatus.DISPOSED.label, True, False, False, False, True, "dark"),
-]
-
-_SUPPORT_ASSET_TRANSITIONS = [
-    (SupportAssetStatus.IN_STOCK.value, SupportAssetStatus.DEPLOYED.value, SupportAssetStatus.DEPLOYED.label),
-    (SupportAssetStatus.IN_STOCK.value, SupportAssetStatus.ACTIVE.value, SupportAssetStatus.ACTIVE.label),
-    (SupportAssetStatus.IN_STOCK.value, SupportAssetStatus.DECOMMISSIONED.value, SupportAssetStatus.DECOMMISSIONED.label),
-    (SupportAssetStatus.DEPLOYED.value, SupportAssetStatus.ACTIVE.value, SupportAssetStatus.ACTIVE.label),
-    (SupportAssetStatus.DEPLOYED.value, SupportAssetStatus.DECOMMISSIONED.value, SupportAssetStatus.DECOMMISSIONED.label),
-    (SupportAssetStatus.ACTIVE.value, SupportAssetStatus.UNDER_MAINTENANCE.value, SupportAssetStatus.UNDER_MAINTENANCE.label),
-    (SupportAssetStatus.ACTIVE.value, SupportAssetStatus.DECOMMISSIONED.value, SupportAssetStatus.DECOMMISSIONED.label),
-    (SupportAssetStatus.UNDER_MAINTENANCE.value, SupportAssetStatus.ACTIVE.value, SupportAssetStatus.ACTIVE.label),
-    (SupportAssetStatus.UNDER_MAINTENANCE.value, SupportAssetStatus.DECOMMISSIONED.value, SupportAssetStatus.DECOMMISSIONED.label),
-    (SupportAssetStatus.DECOMMISSIONED.value, SupportAssetStatus.DISPOSED.value, SupportAssetStatus.DISPOSED.label),
-]
+# The support-asset (IT infrastructure) lifecycle, authored as an explicit JSON
+# document : a clean, mostly-linear procurement-to-disposal flow with a single
+# maintenance loop and a single Archived exit. Draft is the entry, Archived the
+# exit; every move between them is stated explicitly (no "from any state"
+# shortcut), e.g. Decommissioned is reachable only from Active / Under
+# maintenance. This is the reference example for the JSON-driven, admin-editable
+# lifecycle framework - edit the ``support_asset`` row in Administration ->
+# Lifecycles to re-shape it without touching code.
+SUPPORT_ASSET_DEFINITION = {
+    "layout": "graph",
+    "steps": [
+        {"code": "draft", "label": "Draft", "kind": "draft",
+         "deletable": True, "tone": "neutral"},
+        {"code": "in_stock", "label": "In stock", "kind": "intermediate",
+         "counts_in_reports": True, "linkable": True, "deletable": True, "tone": "secondary"},
+        {"code": "deployed", "label": "Deployed", "kind": "intermediate",
+         "counts_in_reports": True, "linkable": True, "tone": "info"},
+        {"code": "active", "label": "Active", "kind": "intermediate",
+         "counts_in_reports": True, "linkable": True, "deletable": True, "tone": "success"},
+        {"code": "under_maintenance", "label": "Under maintenance", "kind": "intermediate",
+         "counts_in_reports": True, "linkable": True, "tone": "warning"},
+        {"code": "decommissioned", "label": "Decommissioned", "kind": "intermediate",
+         "counts_in_reports": True, "tone": "dark"},
+        {"code": "disposed", "label": "Disposed", "kind": "intermediate",
+         "counts_in_reports": True, "tone": "dark"},
+        {"code": "archived", "label": "Archived", "kind": "archived", "tone": "muted"},
+    ],
+    "transitions": [
+        {"source": "draft", "target": "in_stock", "label": "Receive"},
+        {"source": "in_stock", "target": "deployed", "label": "Deploy"},
+        {"source": "deployed", "target": "active", "label": "Commission"},
+        {"source": "active", "target": "under_maintenance", "label": "Start maintenance"},
+        {"source": "under_maintenance", "target": "active", "label": "Complete maintenance"},
+        {"source": "active", "target": "decommissioned", "label": "Decommission"},
+        {"source": "under_maintenance", "target": "decommissioned", "label": "Decommission"},
+        {"source": "decommissioned", "target": "disposed", "label": "Dispose"},
+        {"source": "disposed", "target": "archived", "label": "Archive"},
+        {"source": "archived", "target": "draft", "label": "Restore"},
+    ],
+}
 
 SUPPORT_ASSET_LIFECYCLE = register_lifecycle(
-    lifecycle_from_state_flags(
-        SUPPORT_ASSET_LIFECYCLE_NAME,
-        _SUPPORT_ASSET_STEPS,
-        _SUPPORT_ASSET_TRANSITIONS,
-        layout="graph",
-    )
+    lifecycle_from_json(SUPPORT_ASSET_LIFECYCLE_NAME, SUPPORT_ASSET_DEFINITION)
 )
