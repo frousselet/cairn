@@ -11748,3 +11748,12 @@ msgstr "Actifs supports hébergés"
 
 msgid "Hosted assets"
 msgstr "Actifs hébergés"
+
+msgid "Are you sure?"
+msgstr "Êtes-vous sûr ?"
+
+msgid "Add transition"
+msgstr "Ajouter une transition"
+
+msgid "Confirmation on entry (Are you sure?)"
+msgstr "Confirmation à l'entrée (Êtes-vous sûr ?)"

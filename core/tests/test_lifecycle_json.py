@@ -101,6 +101,48 @@ def test_round_trip_preserves_every_registered_lifecycle():
         }
 
 
+def test_triggers_round_trip():
+    """Step triggers (a confirm trigger, with and without a message) survive JSON."""
+    data = {
+        "steps": [
+            {"code": "draft", "kind": "draft"},
+            {"code": "live", "kind": "intermediate",
+             "triggers": [{"type": "confirm", "message": "Sure?"}]},
+            {"code": "archived", "kind": "archived", "triggers": [{"type": "confirm"}]},
+        ],
+        "transitions": [
+            {"source": "draft", "target": "live"},
+            {"source": "*", "target": "archived"},
+        ],
+    }
+    lc = lifecycle_from_json("x", data)
+    assert lc.step("live").confirm_trigger is not None
+    assert lc.step("live").confirm_trigger.config.get("message") == "Sure?"
+    assert lc.step("draft").confirm_trigger is None
+    # Lossless : the message is preserved and empty triggers are omitted.
+    by_code = {s["code"]: s for s in lifecycle_to_json(lc)["steps"]}
+    assert by_code["live"]["triggers"] == [{"type": "confirm", "message": "Sure?"}]
+    assert by_code["archived"]["triggers"] == [{"type": "confirm"}]
+    assert "triggers" not in by_code["draft"]
+
+
+def test_from_json_rejects_malformed_triggers():
+    base = [{"code": "draft", "kind": "draft"}, {"code": "archived", "kind": "archived"}]
+    with pytest.raises(LifecycleError):  # a trigger without a "type"
+        lifecycle_from_json("x", {"steps": base + [
+            {"code": "s", "kind": "intermediate", "triggers": [{"message": "x"}]}], "transitions": []})
+    with pytest.raises(LifecycleError):  # a trigger that is not an object
+        lifecycle_from_json("x", {"steps": base + [
+            {"code": "s2", "kind": "intermediate", "triggers": ["confirm"]}], "transitions": []})
+
+
+def test_support_asset_confirms_decommission():
+    """The reference lifecycle carries a confirm trigger on Decommissioned."""
+    lc = LIFECYCLE_REGISTRY["support_asset"]
+    assert lc.step("decommissioned").confirm_trigger is not None
+    assert lc.step("active").confirm_trigger is None
+
+
 def test_from_json_enforces_draft_and_archived_bookends():
     with pytest.raises(LifecycleError):  # no draft
         lifecycle_from_json("x", {"steps": [

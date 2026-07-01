@@ -28,6 +28,13 @@ Declared in code, assigned per model, governed by flags:
   - `counts_in_reports` - included in reports, KPIs, the calendar and exports;
   - `linkable` - may be targeted by a new link;
   - `deletable` - may be deleted.
+  A step also carries an optional list of **`triggers`** (`type` + `config`),
+  fired when the entity **enters** the step. The first type is `confirm` : a
+  Yes/No confirmation modal shown before the move (optional `config["message"]`,
+  blank ⇒ the default translated *"Are you sure?"*). Several triggers per step
+  are allowed; unknown types round-trip untouched, so new types slot in without a
+  schema change. In the JSON definition : `"triggers": [{"type": "confirm"}]`,
+  toggled per step from the Cairn admin editor's **Confirm** column.
 - **`Transition`** : `target`, `source` (a specific step or `ANY`), translatable
   `label`, `permission_action` (permission action suffix, resolved against the
   entity's `module.feature` namespace) and `requires_comment`.

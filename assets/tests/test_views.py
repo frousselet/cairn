@@ -218,6 +218,17 @@ class TestSupportAssetDetailView:
         response = client.get(url)
         assert "DB Server" in response.content.decode()
 
+    def test_detail_graph_node_carries_confirm_trigger(self, client):
+        """The stepper exposes the "confirm" trigger on the target step's node."""
+        import json
+
+        asset = SupportAssetFactory()
+        url = reverse("assets:support-asset-detail", kwargs={"pk": asset.pk})
+        nodes = json.loads(client.get(url).context["lc_graph_nodes"])
+        by_id = {n["id"]: n for n in nodes}
+        assert by_id["decommissioned"]["confirm"] is True
+        assert by_id["active"]["confirm"] is False
+
 
 class TestSupportAssetCreateView:
     def test_create_get_returns_200(self, client):

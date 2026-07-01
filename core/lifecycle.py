@@ -65,6 +65,30 @@ class StepKind(str, Enum):
 
 
 @dataclass(frozen=True)
+class Trigger:
+    """A behaviour fired when the entity ENTERS a step (a transition targets it).
+
+    ``type`` selects the behaviour; ``config`` carries type-specific options.
+    The first (and currently only) type is ``"confirm"`` : a Yes/No confirmation
+    modal shown before the transition is performed, with an optional custom
+    message (``config["message"]``). A step may carry several triggers, and new
+    types slot in by adding a ``type`` and handling it in the stepper, with no
+    schema change. ``config`` is excluded from equality (only ``type`` identifies
+    a trigger for comparison / hashing).
+    """
+
+    type: str
+    config: dict = field(default_factory=dict, compare=False)
+
+
+# The trigger types the framework knows about (the editor exposes these; unknown
+# types are preserved on round-trip but ignored by the UI, so a newer definition
+# stays forward-compatible on an older build).
+TRIGGER_CONFIRM = "confirm"
+KNOWN_TRIGGER_TYPES = (TRIGGER_CONFIRM,)
+
+
+@dataclass(frozen=True)
 class Step:
     """A single step (étape) in a lifecycle, carrying its governance metadata.
 
@@ -81,6 +105,10 @@ class Step:
     linkable: bool = False
     deletable: bool = False
     tone: str = field(default="neutral", compare=False)
+    # Triggers fired when the entity enters this step (see :class:`Trigger`).
+    # Excluded from equality : triggers are UX/side-effect metadata, not part of
+    # a step's identity.
+    triggers: tuple = field(default=(), compare=False)
 
     @property
     def is_draft(self) -> bool:
@@ -89,6 +117,18 @@ class Step:
     @property
     def is_archived(self) -> bool:
         return self.kind == StepKind.ARCHIVED
+
+    def trigger(self, trigger_type: str):
+        """Return the first trigger of ``trigger_type`` on this step, or ``None``."""
+        for tr in self.triggers:
+            if tr.type == trigger_type:
+                return tr
+        return None
+
+    @property
+    def confirm_trigger(self):
+        """The ``confirm`` trigger (Yes/No modal on entry), or ``None``."""
+        return self.trigger(TRIGGER_CONFIRM)
 
 
 def draft_step(
@@ -405,9 +445,10 @@ def lifecycle_to_json(lifecycle: Lifecycle) -> dict:
     """Serialize a :class:`Lifecycle` to the JSON document stored in the DB.
 
     Lossless for every field a lifecycle actually uses (codes, labels, kind,
-    governance flags, tone, transition source/target/label, ``requires_comment``
-    and ``permission_action``). Role / user / form restrictions are not used by
-    any lifecycle and are intentionally out of the JSON schema.
+    governance flags, tone, step ``triggers``, transition source/target/label,
+    ``requires_comment`` and ``permission_action``). Role / user / form
+    restrictions are not used by any lifecycle and are intentionally out of the
+    JSON schema.
     """
     return {
         "layout": lifecycle.layout,
@@ -420,6 +461,7 @@ def lifecycle_to_json(lifecycle: Lifecycle) -> dict:
                 "linkable": bool(s.linkable),
                 "deletable": bool(s.deletable),
                 "tone": s.tone,
+                **({"triggers": _triggers_to_json(s.triggers)} if s.triggers else {}),
             }
             for s in lifecycle.steps
         ],
@@ -434,6 +476,35 @@ def lifecycle_to_json(lifecycle: Lifecycle) -> dict:
             for t in lifecycle.transitions
         ],
     }
+
+
+def _triggers_to_json(triggers) -> list:
+    """Serialize a step's triggers to a list of flat ``{"type": ..., ...config}`` dicts."""
+    return [{"type": tr.type, **(tr.config or {})} for tr in triggers]
+
+
+def _triggers_from_json(raw_list, *, step_code="", name="") -> tuple:
+    """Parse a step's ``triggers`` JSON list into a tuple of :class:`Trigger`.
+
+    Each entry is ``{"type": "...", ...type-specific config}``; the ``type`` key
+    is required, the rest becomes the trigger's ``config``. Unknown types are
+    kept (forward compatibility) but the UI only acts on known ones.
+    """
+    triggers = []
+    for raw in raw_list or []:
+        if not isinstance(raw, dict):
+            raise LifecycleError(
+                f"Lifecycle '{name}' step '{step_code}' has a malformed trigger "
+                f"(each trigger must be an object)."
+            )
+        ttype = raw.get("type")
+        if not ttype:
+            raise LifecycleError(
+                f"Lifecycle '{name}' step '{step_code}' has a trigger without a 'type'."
+            )
+        config = {k: v for k, v in raw.items() if k != "type"}
+        triggers.append(Trigger(type=ttype, config=config))
+    return tuple(triggers)
 
 
 def lifecycle_from_json(name: str, data: dict) -> Lifecycle:
@@ -469,6 +540,9 @@ def lifecycle_from_json(name: str, data: dict) -> Lifecycle:
                 linkable=bool(raw.get("linkable", False)),
                 deletable=bool(raw.get("deletable", False)),
                 tone=raw.get("tone", "neutral"),
+                triggers=_triggers_from_json(
+                    raw.get("triggers"), step_code=raw.get("code", ""), name=name
+                ),
             )
         )
     transitions = []
