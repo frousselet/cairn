@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-07-03
+
 ### Added
 
 - MCP `create_*` / `batch_create_*` can preserve legacy `created_at` / `updated_at` timestamps for callers holding the new `system.data_import.override_dates` permission (bulk migration); ignored otherwise.
@@ -1242,6 +1244,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.34.0]: https://github.com/frousselet/cairn/compare/v0.33.3...v0.34.0
 [0.33.3]: https://github.com/frousselet/cairn/compare/v0.33.2...v0.33.3
 [0.33.2]: https://github.com/frousselet/cairn/compare/v0.33.1...v0.33.2
 [0.33.1]: https://github.com/frousselet/cairn/compare/v0.33.0...v0.33.1
