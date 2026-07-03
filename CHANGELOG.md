@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- MCP `create_*` / `batch_create_*` can preserve legacy `created_at` / `updated_at` timestamps for callers holding the new `system.data_import.override_dates` permission (bulk migration); ignored otherwise.
+
 ## [0.33.3] - 2026-07-01
 
 ### Fixed

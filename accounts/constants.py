@@ -339,6 +339,10 @@ PERMISSION_REGISTRY = {
             "actions": ["read"],
             "label": _("AI assistant feedback"),
         },
+        "data_import": {
+            "actions": ["override_dates"],
+            "label": _("Bulk data import"),
+        },
         "config": {
             "actions": ["read", "update"],
             "label": _("System configuration"),
@@ -369,6 +373,7 @@ ACTION_LABELS = {
     "update": _("Update"),
     "delete": _("Delete"),
     "access": _("Access"),
+    "override_dates": _("Override creation/modification dates"),
     "approve": _("Approve"),
     "assess": _("Assess"),
     "validate": _("Validate"),

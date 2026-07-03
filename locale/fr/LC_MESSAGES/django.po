@@ -11757,3 +11757,9 @@ msgstr "Ajouter une transition"
 
 msgid "Confirmation on entry (Are you sure?)"
 msgstr "Confirmation à l'entrée (Êtes-vous sûr ?)"
+
+msgid "Bulk data import"
+msgstr "Import de données en masse"
+
+msgid "Override creation/modification dates"
+msgstr "Remplacer les dates de création/modification"
