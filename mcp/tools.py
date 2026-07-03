@@ -248,6 +248,66 @@ def _coerce_field_value(model_class, field_name, value):
     return value
 
 
+TIMESTAMP_OVERRIDE_PERM = "system.data_import.override_dates"
+
+
+def _parse_iso_datetime(value):
+    """Parse a date/date-time string leniently; return a datetime or None.
+
+    Accepts full ISO 8601 (microseconds and a ``Z`` or ``+hh:mm`` offset, as
+    Django/DRF exports emit) then the common ``YYYY-MM-DD[ HH:MM[:SS]]`` forms.
+    """
+    from datetime import datetime
+
+    candidate = str(value).strip()
+    if not candidate:
+        return None
+    iso = candidate[:-1] + "+00:00" if candidate.endswith("Z") else candidate
+    try:
+        return datetime.fromisoformat(iso)
+    except ValueError:
+        pass
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(candidate, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def _apply_timestamp_override(obj, model_class, data, user):
+    """Preserve ``created_at`` / ``updated_at`` from the request when permitted.
+
+    Bulk migration from a legacy tool needs the original timestamps. They are
+    applied via a post-save ``.update()`` (bypassing ``auto_now`` /
+    ``auto_now_add``) only for a user holding ``system.data_import.override_dates``
+    (or a superuser); otherwise the supplied values are ignored so ordinary
+    callers can never rewrite audit timestamps.
+    """
+    if not data:
+        return
+    if not (getattr(user, "is_superuser", False) or user.has_perm(TIMESTAMP_OVERRIDE_PERM)):
+        return
+    from django.conf import settings
+
+    model_fields = {f.name for f in model_class._meta.fields}
+    updates = {}
+    for field_name in ("created_at", "updated_at"):
+        raw = data.get(field_name)
+        if not raw or field_name not in model_fields:
+            continue
+        parsed = _parse_iso_datetime(raw)
+        if parsed is None:
+            continue
+        if settings.USE_TZ and timezone.is_naive(parsed):
+            parsed = timezone.make_aware(parsed)
+        updates[field_name] = parsed
+    if updates:
+        model_class.objects.filter(pk=obj.pk).update(**updates)
+        for field_name, value in updates.items():
+            setattr(obj, field_name, value)
+
+
 def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None):
     """Create a generic create handler."""
     m2m_fields = m2m_fields or {}
@@ -273,6 +333,7 @@ def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_field
             for param_name, ids in m2m_values.items():
                 m2m_attr = m2m_fields[param_name]
                 getattr(obj, m2m_attr).set(ids)
+            _apply_timestamp_override(obj, model_class, arguments, user)
         except (ValidationError, Exception) as e:
             return _error(str(e))
         fields = [f.name for f in model_class._meta.fields]
@@ -318,6 +379,7 @@ def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m
                 for param_name, ids in m2m_values.items():
                     m2m_attr = m2m_fields[param_name]
                     getattr(obj, m2m_attr).set(ids)
+                _apply_timestamp_override(obj, model_class, item_data, user)
                 results.append({
                     "index": idx,
                     "status": "created",
@@ -2773,6 +2835,13 @@ def _register_assets_tools(server):
         "description": "Public URL of an image to use as the supplier logo (PNG, JPG, WebP, etc.). "
                        "The image is downloaded, resized to 128x128, and size variants are generated.",
     }
+    _sup_ts_desc = (
+        "Optional ISO 8601 date-time to preserve from a legacy system on bulk "
+        "import. Requires the 'system.data_import.override_dates' permission; "
+        "ignored without it."
+    )
+    create_sup_props["created_at"] = {"type": "string", "description": _sup_ts_desc}
+    create_sup_props["updated_at"] = {"type": "string", "description": _sup_ts_desc}
     server.register_tool(
         "create_supplier",
         "Create a new supplier. Optionally provide 'image_url' (a public URL pointing to an "
@@ -6677,6 +6746,7 @@ def _create_supplier_handler(model_class, writable_fields):
                 _apply_logo_from_url(obj, image_url)
             obj.full_clean()
             obj.save()
+            _apply_timestamp_override(obj, model_class, arguments, user)
         except (ValueError, ValidationError, Exception) as e:
             return _error(str(e))
         fields = [f.name for f in model_class._meta.fields]
@@ -6816,6 +6886,17 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
     create_props = {}
     for f in writable_fields:
         create_props[f] = overrides.get(f, {"type": "string", "description": f})
+    # Optional legacy timestamps for bulk migration. Applied only for callers
+    # holding "system.data_import.override_dates" (ignored otherwise).
+    _ts_desc = (
+        "Optional ISO 8601 date-time to preserve from a legacy system on bulk "
+        "import (e.g. 2023-05-12T09:00:00Z). Requires the "
+        "'system.data_import.override_dates' permission; ignored without it."
+    )
+    model_field_names = {f.name for f in model_class._meta.fields}
+    for ts in ("created_at", "updated_at"):
+        if ts in model_field_names:
+            create_props.setdefault(ts, {"type": "string", "description": _ts_desc})
     server.register_tool(
         f"create_{entity_name}",
         f"Create a new {display_name}",

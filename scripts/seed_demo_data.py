@@ -15,7 +15,7 @@ from urllib.parse import quote
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import CompanySettings, Group, Notification, User
+from accounts.models import CompanySettings, Group, Notification, Permission, User
 from assets.models import (
     AssetDependency,
     AssetGroup,
@@ -247,9 +247,19 @@ with transaction.atomic():
     sofia = mk_user("sofia.lindqvist@voltara.example", "Sofia", "Lindqvist", "Internal Auditor", "Audit")
 
     Group.objects.get(name="Administrateur").users.add(david)
-    Group.objects.get(name="RSSI / DPO").users.add(elise, amelia)
+    rssi_dpo = Group.objects.get(name="RSSI / DPO")
+    rssi_dpo.users.add(elise, amelia)
     Group.objects.get(name="Contributeur").users.add(marc, thomas, ines, julien)
     Group.objects.get(name="Auditeur").users.add(sofia)
+
+    # Let the RSSI (Elise) preserve legacy created_at/updated_at during MCP bulk
+    # imports. Elise is also a superuser, so this makes the capability explicit
+    # at the role level (and grants it to the other RSSI/DPO members).
+    override_perm = Permission.objects.filter(
+        codename="system.data_import.override_dates"
+    ).first()
+    if override_perm:
+        rssi_dpo.permissions.add(override_perm)
 
     cs = CompanySettings.get()
     cs.name = "Voltara Energy"
