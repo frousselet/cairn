@@ -32,3 +32,7 @@ Represents a user of the Cairn platform.
 | `updated_at` | datetime | auto | Last modification date |
 
 > Note: The `email` field is the unique sign-in identifier. It replaces Django's default `username` field.
+
+## Provisioning by invitation
+
+A user can be provisioned without a password (needed for programmatic imports that must reference an owner / reviewer). The MCP tool `create_user` and the API endpoint `POST /api/v1/users/invite/` (both gated by `system.users.create`) create the account with an **unusable password** and return a single-use `activation_url`. The invitee opens that link (`/accounts/activate/<uidb64>/<token>/`, unauthenticated) to set their first credential; setting it invalidates the token. Roles are assigned by group name at creation. The invitation is recorded in the access log (`user_invited`), and the activation as `account_activated`. No plaintext password ever crosses the API / MCP boundary.

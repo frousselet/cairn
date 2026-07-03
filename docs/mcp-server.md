@@ -20,7 +20,7 @@ Most domain entities expose a standard set of operations generated automatically
 | List | `list_{entity}s` | Paginated list with search, filters, limit/offset |
 | Get | `get_{entity}` | Get a single object by UUID |
 | Create | `create_{entity}` | Create a new object |
-| Batch Create | `batch_create_{entity}s` | Create up to 500 objects with partial success (non-atomic) |
+| Batch Create / Upsert | `batch_create_{entity}s` | Create or upsert up to 500 objects with partial success (non-atomic). Pass `match_on` (a list of field names) to update matching records instead of duplicating, making a re-run idempotent |
 | Update | `update_{entity}` | Update an existing object |
 | Delete | `delete_{entity}` | Delete an object (only allowed from a deletable lifecycle state) |
 | Transition | `transition_{entity}` | Change the object's lifecycle state (draft / pending / validated / archived), validating permissions, mandatory comments and side effects |
@@ -134,7 +134,8 @@ Additional tools:
 | ---- | ----------- |
 | `list_users` | List users with search and active status filter |
 | `get_user` | Get detailed user information |
-| `get_me` | Get the currently authenticated user |
+| `create_user` | Provision a user via the invitation flow (unusable password, returns a single-use `activation_url`) so it can be referenced as an owner / reviewer; assigns roles by name. Requires `system.users.create` |
+| `get_me` | Get the currently authenticated user, including `can_override_import_dates` / `can_create_users` capability flags |
 | `update_me` | Update the current user's profile (first_name, last_name, phone, language, timezone, theme_preference) |
 | `get_dashboard_layout` | Get the current user's dashboard widget layout and the widget catalogue |
 | `update_dashboard_layout` | Replace the current user's dashboard widget layout (ordered {id, size, visible}) |

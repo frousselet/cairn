@@ -232,6 +232,52 @@ class UserViewSet(viewsets.ModelViewSet):
             return UserCreateSerializer
         return UserDetailSerializer
 
+    # Custom actions resolve to the {module}.{feature}.{action} permission via
+    # this map; "invite" provisions a user so it is gated like "create".
+    custom_action_map = {"invite": "create"}
+
+    @action(detail=False, methods=["post"])
+    def invite(self, request):
+        """Provision a user without a password and return an activation link."""
+        from django.core.exceptions import ValidationError
+
+        from accounts.api.serializers import UserInviteSerializer
+        from accounts.invitations import build_activation_url, provision_user
+
+        serializer = UserInviteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        try:
+            user = provision_user(
+                email=data["email"],
+                last_name=data["last_name"],
+                first_name=data.get("first_name", ""),
+                user_type=data.get("user_type") or "human",
+                job_title=data.get("job_title", ""),
+                department=data.get("department", ""),
+                phone=data.get("phone", ""),
+                language=data.get("language") or None,
+                group_names=data.get("groups") or [],
+                created_by=request.user,
+            )
+        except ValidationError as exc:
+            return Response(
+                {"status": "error", "error": {"message": "; ".join(exc.messages)}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(
+            {
+                "status": "success",
+                "data": {
+                    "id": str(user.pk),
+                    "email": user.email,
+                    "display_name": user.display_name,
+                    "activation_url": build_activation_url(user),
+                },
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
     @action(detail=True, methods=["get"])
     def groups(self, request, pk=None):
         user = self.get_object()

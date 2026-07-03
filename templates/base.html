@@ -6069,19 +6069,19 @@
   (function() {
     /* Toolbar tooltips, translated server-side. */
     var RT_L = {
-      bold: '{% trans "Bold" %}',
-      italic: '{% trans "Italic" %}',
-      underline: '{% trans "Underline" %}',
-      strike: '{% trans "Strikethrough" %}',
-      heading: '{% trans "Heading" %}',
-      subheading: '{% trans "Subheading" %}',
-      quote: '{% trans "Quote" %}',
-      ul: '{% trans "Bulleted list" %}',
-      ol: '{% trans "Numbered list" %}',
-      link: '{% trans "Insert link" %}',
-      linkPrompt: '{% trans "Enter the link URL" %}',
-      hr: '{% trans "Divider" %}',
-      clear: '{% trans "Clear formatting" %}'
+      bold: '{% filter escapejs %}{% trans "Bold" %}{% endfilter %}',
+      italic: '{% filter escapejs %}{% trans "Italic" %}{% endfilter %}',
+      underline: '{% filter escapejs %}{% trans "Underline" %}{% endfilter %}',
+      strike: '{% filter escapejs %}{% trans "Strikethrough" %}{% endfilter %}',
+      heading: '{% filter escapejs %}{% trans "Heading" %}{% endfilter %}',
+      subheading: '{% filter escapejs %}{% trans "Subheading" %}{% endfilter %}',
+      quote: '{% filter escapejs %}{% trans "Quote" %}{% endfilter %}',
+      ul: '{% filter escapejs %}{% trans "Bulleted list" %}{% endfilter %}',
+      ol: '{% filter escapejs %}{% trans "Numbered list" %}{% endfilter %}',
+      link: '{% filter escapejs %}{% trans "Insert link" %}{% endfilter %}',
+      linkPrompt: '{% filter escapejs %}{% trans "Enter the link URL" %}{% endfilter %}',
+      hr: '{% filter escapejs %}{% trans "Divider" %}{% endfilter %}',
+      clear: '{% filter escapejs %}{% trans "Clear formatting" %}{% endfilter %}'
     };
 
     /* Strip pell's empty-editor markup back to '' so required-field

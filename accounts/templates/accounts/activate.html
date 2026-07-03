@@ -1,0 +1,174 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% trans "Activate your account - Cairn" %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+        crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        rel="stylesheet">
+  <script>
+  (function(){
+    var root = document.documentElement;
+    var STORAGE_KEY = 'theme-preference';
+    var mql = window.matchMedia('(prefers-color-scheme: dark)');
+    function getPreference(){
+      try { var saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === 'light' || saved === 'dark' || saved === 'system') return saved;
+      } catch(e){}
+      return 'system';
+    }
+    function resolve(pref){
+      if (pref === 'light' || pref === 'dark') return pref;
+      return mql.matches ? 'dark' : 'light';
+    }
+    root.setAttribute('data-bs-theme', resolve(getPreference()));
+  })();
+  </script>
+  <style>
+    @font-face {
+      font-family: 'GitLab Sans';
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: swap;
+      src: url('https://cdn.jsdelivr.net/npm/@gitlab/fonts@1.3.1/gitlab-sans/GitLabSans.woff2') format('woff2');
+    }
+    :root {
+      --accent: #1E3A8A;
+      --accent-hover: #1E2E5E;
+      --accent-soft: #EEF2FF;
+      --accent-glow: rgba(30,58,138,.20);
+      --surface: #FFFFFF;
+      --border-light: rgba(0,0,0,.08);
+      --text-primary: #18181B;
+      --text-secondary: #52525B;
+      --text-muted: #A1A1AA;
+      --radius-lg: 1.125rem;
+      --radius-sm: .5rem;
+      --ease-out-expo: cubic-bezier(.16,1,.3,1);
+    }
+    [data-bs-theme="dark"] {
+      --surface: #16181B;
+      --border-light: rgba(255,255,255,.10);
+      --text-primary: #E4E4E7;
+      --text-secondary: #A1A1AA;
+      --text-muted: #71717A;
+      --accent: #3B5BB8;
+      --accent-soft: rgba(59,91,184,.15);
+      --accent-glow: rgba(59,91,184,.22);
+    }
+    body {
+      font-family: 'GitLab Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: {{ company.accent_color|default:'#1E3A8A' }};
+      padding: 1.5rem;
+    }
+    [data-bs-theme="dark"] body { background: #0F1011; }
+    .login-wrapper {
+      max-width: 420px;
+      width: 100%;
+      margin-bottom: clamp(4rem, 18vh, 10rem);
+      animation: fadeIn .5s var(--ease-out-expo);
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .login-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      box-shadow: 0 24px 64px rgba(0,0,0,.18), 0 8px 24px rgba(0,0,0,.1);
+      padding: 2.5rem 2rem 2rem;
+    }
+    .login-brand {
+      display: flex; align-items: center; justify-content: center;
+      gap: .625rem; margin-bottom: .5rem;
+    }
+    .login-brand-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 2.5rem; height: 2.5rem; border-radius: var(--radius-sm);
+      overflow: hidden; box-shadow: 0 4px 12px var(--accent-glow);
+    }
+    .login-brand-icon svg { width: 100%; height: 100%; }
+    .login-brand-text { font-weight: 810; font-size: 1.3125rem; color: var(--text-primary); letter-spacing: normal; }
+    .login-subtitle { text-align: center; color: var(--text-muted); font-size: .8125rem; margin-bottom: 1.75rem; }
+    .form-label { font-size: .78rem; font-weight: 550; color: var(--text-secondary); margin-bottom: .375rem; }
+    .form-control {
+      border-radius: var(--radius-sm); border: 1px solid var(--border-light);
+      padding: .5625rem .875rem; font-size: .8125rem; color: var(--text-primary);
+      transition: border-color .2s var(--ease-out-expo), box-shadow .2s var(--ease-out-expo);
+    }
+    .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .form-text { font-size: .72rem; color: var(--text-muted); }
+    .btn-login {
+      background: var(--accent); border: none; color: #fff; border-radius: var(--radius-sm);
+      padding: .625rem; font-weight: 600; font-size: .8125rem; width: 100%;
+      transition: all .2s var(--ease-out-expo); box-shadow: 0 1px 3px var(--accent-glow); letter-spacing: .01em;
+    }
+    .btn-login:hover { background: var(--accent-hover); transform: translateY(-1px); color: #fff; }
+    .alert { border-radius: var(--radius-sm); font-size: .8125rem; }
+    a.login-link { color: var(--accent); font-size: .8125rem; text-decoration: none; }
+    a.login-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="login-brand-icon">
+          <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="{% if company.accent_color %}{{ company.accent_color }}{% else %}#1E3A8A{% endif %}"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
+        </span>
+        <span class="login-brand-text">{{ APP_NAME|default:"Cairn" }}</span>
+      </div>
+
+      {% if invalid %}
+      <p class="login-subtitle">{% trans "Activation link" %}</p>
+      <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        {% trans "This activation link is invalid or has already been used." %}
+      </div>
+      <div class="text-center mt-3">
+        <a class="login-link" href="{% url 'accounts:login' %}">{% trans "Go to sign in" %}</a>
+      </div>
+      {% else %}
+      <p class="login-subtitle">{% trans "Set a password to activate your account" %}</p>
+
+      {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
+      {% endfor %}
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="mb-3">
+          <label for="{{ form.new_password1.id_for_label }}" class="form-label">{{ form.new_password1.label }}</label>
+          {{ form.new_password1 }}
+          {% if form.new_password1.help_text %}<div class="form-text mt-1">{{ form.new_password1.help_text }}</div>{% endif %}
+          {% for error in form.new_password1.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="mb-3">
+          <label for="{{ form.new_password2.id_for_label }}" class="form-label">{{ form.new_password2.label }}</label>
+          {{ form.new_password2 }}
+          {% for error in form.new_password2.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="mt-4">
+          <button type="submit" class="btn btn-login">{% trans "Activate account" %}</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

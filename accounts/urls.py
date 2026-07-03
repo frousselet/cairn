@@ -9,6 +9,7 @@ urlpatterns = [
     # Authentication
     path("login/", views.LoginView.as_view(), name="login"),
     path("logout/", views.LogoutView.as_view(), name="logout"),
+    path("activate/<uidb64>/<token>/", views.UserActivateView.as_view(), name="activate"),
 
     # Passkeys
     path("passkeys/register/begin/", views_passkey.PasskeyRegisterBeginView.as_view(), name="passkey-register-begin"),

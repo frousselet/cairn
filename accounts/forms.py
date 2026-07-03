@@ -274,3 +274,40 @@ class PasswordChangeForm(forms.Form):
         self.user.password_changed_at = timezone.now()
         self.user.save()
         return self.user
+
+
+class ActivationSetPasswordForm(forms.Form):
+    """Set a first password for an invited account (no current password)."""
+
+    new_password1 = forms.CharField(
+        label=_("Password"),
+        widget=forms.PasswordInput(attrs={"class": "form-control"}),
+        help_text=password_validation.password_validators_help_texts,
+    )
+    new_password2 = forms.CharField(
+        label=_("Confirm password"),
+        widget=forms.PasswordInput(attrs={"class": "form-control"}),
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_new_password2(self):
+        p1 = self.cleaned_data.get("new_password1")
+        p2 = self.cleaned_data.get("new_password2")
+        if p1 and p2 and p1 != p2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+        if p1:
+            password_validation.validate_password(p1, self.user)
+        return p2
+
+    def save(self):
+        from django.utils import timezone
+
+        self.user.set_password(self.cleaned_data["new_password1"])
+        self.user.password_changed_at = timezone.now()
+        if not self.user.is_active:
+            self.user.is_active = True
+        self.user.save()
+        return self.user

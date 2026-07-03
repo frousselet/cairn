@@ -79,6 +79,28 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return user
 
 
+class UserInviteSerializer(serializers.Serializer):
+    """Provision a user without a password (invitation flow).
+
+    The account is created with an unusable password; the response carries an
+    activation link the invitee follows to set their first credential. Groups
+    are matched by name. No password is ever accepted here.
+    """
+
+    email = serializers.EmailField()
+    last_name = serializers.CharField(max_length=150)
+    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    user_type = serializers.CharField(required=False)
+    job_title = serializers.CharField(required=False, allow_blank=True)
+    department = serializers.CharField(required=False, allow_blank=True)
+    phone = serializers.CharField(required=False, allow_blank=True)
+    language = serializers.CharField(required=False, allow_blank=True)
+    groups = serializers.ListField(
+        child=serializers.CharField(), required=False,
+        help_text="Role / group names to assign (must already exist).",
+    )
+
+
 class GroupSerializer(serializers.ModelSerializer):
     permissions = serializers.SlugRelatedField(
         slug_field="codename",
@@ -132,20 +154,35 @@ class LoginSerializer(serializers.Serializer):
 class MeSerializer(serializers.ModelSerializer):
     display_name = serializers.CharField(read_only=True)
     permissions = serializers.SerializerMethodField()
+    is_superuser = serializers.BooleanField(read_only=True)
+    can_override_import_dates = serializers.SerializerMethodField()
+    can_create_users = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = (
             "id", "email", "first_name", "last_name", "display_name",
             "job_title", "department", "phone", "language", "timezone", "theme_preference",
-            "permissions",
+            "permissions", "is_superuser",
+            "can_override_import_dates", "can_create_users",
         )
-        read_only_fields = ("id", "email", "display_name", "permissions")
+        read_only_fields = (
+            "id", "email", "display_name", "permissions", "is_superuser",
+            "can_override_import_dates", "can_create_users",
+        )
 
     def get_permissions(self, obj):
         return sorted(
             Permission.objects.filter(groups__users=obj).values_list("codename", flat=True).distinct()
         )
+
+    def get_can_override_import_dates(self, obj):
+        # Whether this account may preserve created_at / updated_at on import
+        # (silently ignored otherwise). Superusers always may.
+        return bool(obj.is_superuser or obj.has_perm("system.data_import.override_dates"))
+
+    def get_can_create_users(self, obj):
+        return bool(obj.is_superuser or obj.has_perm("system.users.create"))
 
 
 class NotificationSerializer(serializers.ModelSerializer):

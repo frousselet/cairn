@@ -37,6 +37,8 @@ class AccessEventType(models.TextChoices):
     PASSKEY_DELETED = "passkey_deleted", _("Passkey deleted")
     IMPERSONATION_START = "impersonation_start", _("Impersonation started")
     IMPERSONATION_STOP = "impersonation_stop", _("Impersonation stopped")
+    USER_INVITED = "user_invited", _("User invited")
+    ACCOUNT_ACTIVATED = "account_activated", _("Account activated")
 
 
 class FailureReason(models.TextChoices):
