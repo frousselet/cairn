@@ -11763,3 +11763,49 @@ msgstr "Import de données en masse"
 
 msgid "Override creation/modification dates"
 msgstr "Remplacer les dates de création/modification"
+
+# User invitation / activation flow
+msgid "User invited"
+msgstr "Utilisateur invité"
+
+msgid "Account activated"
+msgstr "Compte activé"
+
+msgid "An email address is required."
+msgstr "Une adresse e-mail est requise."
+
+msgid "A last name is required."
+msgstr "Un nom de famille est requis."
+
+#, python-format
+msgid "Invalid user type \"%(value)s\"."
+msgstr "Type d'utilisateur invalide « %(value)s »."
+
+#, python-format
+msgid "A user with email \"%(email)s\" already exists."
+msgstr "Un utilisateur avec l'e-mail « %(email)s » existe déjà."
+
+#, python-format
+msgid "No role / group named \"%(name)s\"."
+msgstr "Aucun rôle / groupe nommé « %(name)s »."
+
+msgid "Your account is ready. Welcome!"
+msgstr "Votre compte est prêt. Bienvenue !"
+
+msgid "Activate your account - Cairn"
+msgstr "Activez votre compte - Cairn"
+
+msgid "Activation link"
+msgstr "Lien d'activation"
+
+msgid "This activation link is invalid or has already been used."
+msgstr "Ce lien d'activation est invalide ou a déjà été utilisé."
+
+msgid "Go to sign in"
+msgstr "Aller à la connexion"
+
+msgid "Set a password to activate your account"
+msgstr "Définissez un mot de passe pour activer votre compte"
+
+msgid "Activate account"
+msgstr "Activer le compte"

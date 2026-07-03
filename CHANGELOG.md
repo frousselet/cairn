@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- MCP `create_user` tool and DRF `POST /api/v1/users/invite/` endpoint provision users via an invitation flow (unusable password, returned single-use activation link) so imports can reference owners; gated by `system.users.create`.
+- MCP `batch_create_*` accept an optional `match_on` business key for idempotent upsert, so a partially failed import can be replayed without creating duplicates.
+
+### Changed
+
+- MCP `get_me` and DRF `auth/me` report `can_override_import_dates` / `can_create_users` capability flags, and create / batch tools flag when supplied `created_at` / `updated_at` were ignored for lack of permission.
+
+### Fixed
+
+- Translated strings placed in single-quoted JavaScript literals are now escaped with `escapejs`, so a French translation containing an apostrophe (e.g. the rich-text toolbar's "l'URL") no longer breaks the page script.
+
 ## [0.34.0] - 2026-07-03
 
 ### Added

@@ -6,9 +6,11 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import translation
+from django.utils.http import urlsafe_base64_decode
 from django.utils.translation import gettext as _, gettext_lazy as _lazy
 from django.views import View
 from django.views.generic import DetailView, ListView
@@ -25,6 +27,7 @@ from core.mixins import (
     TableBodyPaginatedMixin,
 )
 from accounts.forms import (
+    ActivationSetPasswordForm,
     CompanySettingsForm,
     GroupForm,
     LoginForm,
@@ -99,6 +102,47 @@ class LogoutView(LoginRequiredMixin, View):
     def get(self, request):
         logout(request)
         return redirect("accounts:login")
+
+
+class UserActivateView(View):
+    """Let an invited user claim their account by setting a first password.
+
+    Reached via the signed, single-use link built by
+    ``accounts.invitations.build_activation_url``. No authentication is required
+    (the token is the credential); setting the password invalidates the token.
+    """
+
+    def _get_user(self, uidb64):
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            return User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return None
+
+    def get(self, request, uidb64, token):
+        user = self._get_user(uidb64)
+        if user is None or not default_token_generator.check_token(user, token):
+            return render(request, "accounts/activate.html", {"invalid": True})
+        return render(request, "accounts/activate.html", {"form": ActivationSetPasswordForm(user)})
+
+    def post(self, request, uidb64, token):
+        user = self._get_user(uidb64)
+        if user is None or not default_token_generator.check_token(user, token):
+            return render(request, "accounts/activate.html", {"invalid": True})
+        form = ActivationSetPasswordForm(user, request.POST)
+        if form.is_valid():
+            form.save()
+            AccessLog.objects.create(
+                user=user,
+                event_type=AccessEventType.ACCOUNT_ACTIVATED,
+                email_attempted=user.email,
+                ip_address=request.META.get("REMOTE_ADDR", ""),
+                user_agent=request.META.get("HTTP_USER_AGENT", "")[:500],
+            )
+            login(request, user, backend="accounts.backends.EmailAuthBackend")
+            messages.success(request, _("Your account is ready. Welcome!"))
+            return redirect("/")
+        return render(request, "accounts/activate.html", {"form": form})
 
 
 # ── Profile ─────────────────────────────────────────────────

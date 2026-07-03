@@ -33,8 +33,16 @@ Auth endpoints:
 POST /api/v1/auth/login/     # email + password, returns JWT access/refresh pair
 POST /api/v1/auth/refresh/   # rotate the refresh token
 POST /api/v1/auth/logout/    # invalidate the session/token
-GET  /api/v1/auth/me/        # current user profile
+GET  /api/v1/auth/me/        # current user profile (+ can_override_import_dates / can_create_users flags)
 ```
+
+User provisioning:
+
+```
+POST /api/v1/users/invite/   # provision a user without a password (system.users.create)
+```
+
+Body: `{"email": "...", "last_name": "...", "first_name": "...", "groups": ["Contributeur"]}`. The account is created with an unusable password; the response returns `activation_url`, a single-use link the invitee opens to set their first credential. No password is ever accepted here.
 
 ## Conventions
 
@@ -42,7 +50,7 @@ GET  /api/v1/auth/me/        # current user profile
 - **Filtering**: field filters via query parameters (django-filter), full-text search via `?search=`, ordering via `?ordering=field` / `?ordering=-field`.
 - **Identifiers**: all domain objects use UUID primary keys.
 - **Lifecycle**: state transitions go through dedicated transition endpoints/actions, never by patching a status field. Deletion is only allowed from a deletable lifecycle state.
-- **Batch creation**: list resources accept batch creation (up to 500 objects, non-atomic with partial success reporting).
+- **Batch creation / upsert**: list resources accept batch creation (up to 500 objects, non-atomic with partial success reporting). Via the MCP layer, `batch_create_*` also accepts `match_on` for idempotent upsert (update on match instead of duplicating).
 - **Audit**: every write is recorded in the object's history (django-simple-history) and increments its version.
 
 ## Assistant (Ask Cairn)

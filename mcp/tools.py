@@ -283,20 +283,28 @@ def _apply_timestamp_override(obj, model_class, data, user):
     ``auto_now_add``) only for a user holding ``system.data_import.override_dates``
     (or a superuser); otherwise the supplied values are ignored so ordinary
     callers can never rewrite audit timestamps.
+
+    Returns ``None`` when no timestamp was supplied, or a status string so the
+    caller can tell what happened: ``"applied"`` (dates written) or
+    ``"ignored_no_permission"`` (dates supplied but the caller lacks the
+    permission, so they were dropped).
     """
     if not data:
-        return
+        return None
+    model_fields = {f.name for f in model_class._meta.fields}
+    supplied = [
+        f for f in ("created_at", "updated_at")
+        if data.get(f) and f in model_fields
+    ]
+    if not supplied:
+        return None
     if not (getattr(user, "is_superuser", False) or user.has_perm(TIMESTAMP_OVERRIDE_PERM)):
-        return
+        return "ignored_no_permission"
     from django.conf import settings
 
-    model_fields = {f.name for f in model_class._meta.fields}
     updates = {}
-    for field_name in ("created_at", "updated_at"):
-        raw = data.get(field_name)
-        if not raw or field_name not in model_fields:
-            continue
-        parsed = _parse_iso_datetime(raw)
+    for field_name in supplied:
+        parsed = _parse_iso_datetime(data.get(field_name))
         if parsed is None:
             continue
         if settings.USE_TZ and timezone.is_naive(parsed):
@@ -306,6 +314,8 @@ def _apply_timestamp_override(obj, model_class, data, user):
         model_class.objects.filter(pk=obj.pk).update(**updates)
         for field_name, value in updates.items():
             setattr(obj, field_name, value)
+        return "applied"
+    return None
 
 
 def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None):
@@ -333,17 +343,44 @@ def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_field
             for param_name, ids in m2m_values.items():
                 m2m_attr = m2m_fields[param_name]
                 getattr(obj, m2m_attr).set(ids)
-            _apply_timestamp_override(obj, model_class, arguments, user)
+            ts_status = _apply_timestamp_override(obj, model_class, arguments, user)
         except (ValidationError, Exception) as e:
             return _error(str(e))
         fields = [f.name for f in model_class._meta.fields]
-        return _serialize_obj(obj, fields)
+        result = _serialize_obj(obj, fields)
+        if ts_status == "ignored_no_permission":
+            result["warning"] = (
+                "created_at / updated_at were ignored: this account lacks the "
+                "system.data_import.override_dates permission."
+            )
+        return result
     return handler
 
 
 def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None):
-    """Create a generic batch create handler (non-atomic: partial success)."""
+    """Create a generic batch create/upsert handler (non-atomic: partial success).
+
+    When the caller supplies ``match_on`` (a list of writable field names), each
+    item is first looked up by those fields: an existing match is UPDATED in
+    place (idempotent re-import), otherwise a fresh object is CREATED. Without
+    ``match_on`` every item is created (legacy behaviour). This lets a partially
+    failed import be replayed without producing duplicates.
+    """
     m2m_fields = m2m_fields or {}
+
+    def _split_values(item_data):
+        """Split a raw item into scalar/FK ``kwargs`` and deferred m2m values."""
+        kwargs = {}
+        m2m_values = {}
+        for field_name in writable_fields:
+            if field_name in item_data:
+                if field_name in m2m_fields:
+                    m2m_values[field_name] = item_data[field_name]
+                else:
+                    target = _fk_kwarg_name(model_class, field_name)
+                    kwargs[target] = _coerce_field_value(
+                        model_class, field_name, item_data[field_name])
+        return kwargs, m2m_values
 
     def handler(user, arguments):
         items = arguments.get("items", [])
@@ -352,41 +389,96 @@ def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m
         if len(items) > 500:
             return _error("Batch size limited to 500 items.")
 
+        match_on = arguments.get("match_on") or []
+        if match_on:
+            if not isinstance(match_on, list) or not all(
+                    isinstance(f, str) for f in match_on):
+                return _error("'match_on' must be an array of field names.")
+            unknown = [f for f in match_on if f not in writable_fields]
+            if unknown:
+                return _error(
+                    "match_on fields must be writable fields; unknown: "
+                    + ", ".join(unknown))
+            if any(f in m2m_fields for f in match_on):
+                return _error("match_on does not support many-to-many fields.")
+
         results = []
         created_count = 0
+        updated_count = 0
         error_count = 0
-        fields = [f.name for f in model_class._meta.fields]
+        timestamps_ignored = 0
         for idx, item_data in enumerate(items):
             try:
                 if not isinstance(item_data, dict):
                     raise ValidationError(
                         f"Expected an object, got {type(item_data).__name__}.")
-                kwargs = {}
-                m2m_values = {}
-                for field_name in writable_fields:
-                    if field_name in item_data:
-                        if field_name in m2m_fields:
-                            m2m_values[field_name] = item_data[field_name]
-                        else:
-                            target = _fk_kwarg_name(model_class, field_name)
-                            kwargs[target] = _coerce_field_value(
-                                model_class, field_name, item_data[field_name])
-                if hasattr(model_class, "created_by"):
-                    kwargs["created_by"] = user
-                obj = model_class(**kwargs)
-                obj.full_clean()
-                obj.save()
-                for param_name, ids in m2m_values.items():
-                    m2m_attr = m2m_fields[param_name]
-                    getattr(obj, m2m_attr).set(ids)
-                _apply_timestamp_override(obj, model_class, item_data, user)
-                results.append({
-                    "index": idx,
-                    "status": "created",
-                    "id": str(obj.pk),
-                    "reference": getattr(obj, "reference", None),
-                })
-                created_count += 1
+
+                existing = None
+                if match_on:
+                    missing = [f for f in match_on if item_data.get(f) in (None, "")]
+                    if missing:
+                        raise ValidationError(
+                            "Missing match_on value(s): " + ", ".join(missing))
+                    lookup = {
+                        _fk_kwarg_name(model_class, f): _coerce_field_value(
+                            model_class, f, item_data[f])
+                        for f in match_on
+                    }
+                    matches = list(model_class.objects.filter(**lookup)[:2])
+                    if len(matches) > 1:
+                        raise ValidationError(
+                            "match_on matched multiple existing records; "
+                            "use a more specific key.")
+                    if matches:
+                        existing = matches[0]
+                        if scope_filtered and not _filter_by_scopes(
+                                model_class.objects.filter(pk=existing.pk),
+                                user).exists():
+                            raise ValidationError(
+                                "Matches a record outside your allowed scopes.")
+
+                kwargs, m2m_values = _split_values(item_data)
+
+                if existing is not None:
+                    obj = existing
+                    for target, value in kwargs.items():
+                        setattr(obj, target, value)
+                    obj.full_clean()
+                    obj.save()
+                    for param_name, ids in m2m_values.items():
+                        getattr(obj, m2m_fields[param_name]).set(ids)
+                    ts_status = _apply_timestamp_override(obj, model_class, item_data, user)
+                    entry = {
+                        "index": idx,
+                        "status": "updated",
+                        "id": str(obj.pk),
+                        "reference": getattr(obj, "reference", None),
+                    }
+                    if ts_status == "ignored_no_permission":
+                        entry["timestamps"] = "ignored_no_permission"
+                        timestamps_ignored += 1
+                    results.append(entry)
+                    updated_count += 1
+                else:
+                    if hasattr(model_class, "created_by"):
+                        kwargs["created_by"] = user
+                    obj = model_class(**kwargs)
+                    obj.full_clean()
+                    obj.save()
+                    for param_name, ids in m2m_values.items():
+                        getattr(obj, m2m_fields[param_name]).set(ids)
+                    ts_status = _apply_timestamp_override(obj, model_class, item_data, user)
+                    entry = {
+                        "index": idx,
+                        "status": "created",
+                        "id": str(obj.pk),
+                        "reference": getattr(obj, "reference", None),
+                    }
+                    if ts_status == "ignored_no_permission":
+                        entry["timestamps"] = "ignored_no_permission"
+                        timestamps_ignored += 1
+                    results.append(entry)
+                    created_count += 1
             except (ValidationError, Exception) as e:
                 results.append({
                     "index": idx,
@@ -394,13 +486,22 @@ def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m
                     "errors": str(e),
                 })
                 error_count += 1
-        return {
+        summary = {
             "status": "completed" if error_count == 0 else "completed_with_errors",
             "total": len(items),
             "created": created_count,
+            "updated": updated_count,
             "errors": error_count,
             "results": results,
         }
+        if timestamps_ignored:
+            summary["timestamps_ignored"] = timestamps_ignored
+            summary["warning"] = (
+                f"created_at / updated_at were ignored on {timestamps_ignored} "
+                "item(s): this account lacks the system.data_import.override_dates "
+                "permission."
+            )
+        return summary
     return handler
 
 
@@ -792,7 +893,7 @@ Cairn is a Governance, Risk & Compliance (GRC) platform. This MCP server
 exposes its full API as tools organized by module.
 
 Call `help` with a topic for detailed field-level documentation:
-  context, assets, compliance, risks, batch, workflow, permissions, examples
+  context, assets, compliance, risks, batch, workflow, permissions, examples, users
 
 ## Modules
 
@@ -814,7 +915,7 @@ Every entity follows a consistent CRUD pattern:
 | List | `list_{entity}s` | Paginated list. Params: search, limit (default 50), offset, plus entity-specific filters |
 | Get | `get_{entity}` | Get one by ID. Param: id (UUID) |
 | Create | `create_{entity}` | Create one. Returns the created object with all fields |
-| Batch Create | `batch_create_{entity}s` | Create up to 500 items. Param: items (array). Non-atomic: valid items are created even if others fail |
+| Batch Create / Upsert | `batch_create_{entity}s` | Create or upsert up to 500 items. Params: items (array); optional match_on (field names) to update-on-match instead of duplicating. Non-atomic: valid items are applied even if others fail |
 | Update | `update_{entity}` | Update by ID. Param: id + only the fields to change (partial update) |
 | Delete | `delete_{entity}` | Delete by ID. Param: id |
 | Transition | `transition_{entity}` | Move to a lifecycle step. Params: id, target_state, optional comment |
@@ -1365,19 +1466,39 @@ NON-ATOMIC: each item is processed independently.
 Valid items are created even if others fail.
 Use this for bulk import - do not worry about partial failures.
 
+## Idempotent re-import (upsert)
+Pass `match_on` (a list of writable field names) to make the call idempotent:
+each item whose match_on values already exist is UPDATED in place instead of
+being duplicated; otherwise it is created. This lets you safely REPLAY a batch
+after a partial failure without creating duplicates. Many-to-many fields cannot
+be used as a match key. Example:
+  batch_create_suppliers(items=[{"name": "AWS", ...}], match_on=["name"])
+Re-running the same call updates the existing "AWS" supplier rather than adding
+a second one.
+
+## Preserving legacy timestamps
+Items may include `created_at` / `updated_at` (ISO 8601) to preserve original
+dates from a source system. They are applied ONLY for a caller holding the
+`system.data_import.override_dates` permission; otherwise they are silently
+dropped and the response flags it (see `timestamps_ignored` / `warning` below).
+Call `get_me()` first and check `can_override_import_dates` to know in advance.
+
 ## Request format
-{"items": [{field1: value1, ...}, {field1: value2, ...}, ...]}
+{"items": [{field1: value1, ...}, ...], "match_on": ["name"]}   // match_on optional
 
 ## Response format
 {
   "status": "completed" | "completed_with_errors",
   "total": N,         // total items submitted
-  "created": M,       // successfully created
+  "created": M,       // newly created
+  "updated": U,       // updated via match_on (0 when match_on is omitted)
   "errors": E,        // failed items
+  "timestamps_ignored": K,   // present only if created_at/updated_at were dropped
+  "warning": "...",          // present only if timestamps were dropped
   "results": [
     {"index": 0, "status": "created", "id": "<uuid>", "reference": "REQT-1"},
-    {"index": 1, "status": "error", "errors": "['name': ['This field is required.']]"},
-    {"index": 2, "status": "created", "id": "<uuid>", "reference": "REQT-2"}
+    {"index": 1, "status": "updated", "id": "<uuid>", "reference": "REQT-2"},
+    {"index": 2, "status": "error", "errors": "['name': ['This field is required.']]"}
   ]
 }
 
@@ -1426,7 +1547,14 @@ Step 3 - Create requirements:
     {"name": "OVHcloud", "type": 1, "criticality": "high", "owner_id": "<user-uuid>", "status": "active", "country": "FR"},
     ...
   ])
-  Note: "type" is an integer SupplierType ID. Use list_supplier_types() first to get IDs.
+  Note: "type" is an integer SupplierType ID. Call list_supplier_types() first
+  to get IDs (create the type with create_supplier_type if it does not exist).
+
+## Provisioning owners / reviewers first
+Entities like suppliers require an existing `owner_id`. If the person has no
+account yet, create one with `create_user(email=..., last_name=..., groups=[...])`
+(invitation flow, no password) and use the returned id as `owner_id`. See the
+`users` topic (help(topic="users")).
 """
 
     TOPIC_PERMISSIONS = """\
@@ -1610,6 +1738,37 @@ Use list_permissions() to see all available codenames.
   approve_risk_assessment(id="<ra-uuid>")
 """
 
+    TOPIC_USERS = """\
+# Users, provisioning & self capabilities
+
+## Who am I / what may I do
+get_me() returns the current account plus capability flags:
+- can_override_import_dates : may preserve created_at / updated_at on import
+  (needs system.data_import.override_dates). Check this BEFORE relying on legacy
+  timestamps - without it, supplied dates are silently dropped.
+- can_create_users : may provision users (needs system.users.create).
+
+## Provisioning a user (invitation flow)
+Many entities require an owner_id / reviewer pointing to an existing user. If
+the person has no account yet:
+  create_user(email="jane@corp.example", last_name="Doe", first_name="Jane",
+              groups=["Contributeur"])
+- No password is accepted. The account is created with an unusable password and
+  the response returns an `activation_url` the invitee opens to set their first
+  credential. The account can be referenced as an owner immediately.
+- `groups` are role / group NAMES that must already exist. Call list_groups() to
+  see them (the 6 system roles: Super Administrateur, Administrateur, RSSI / DPO,
+  Auditeur, Contributeur, Lecteur).
+- `user_type` is "human" (default) or "robot" (service account).
+- Requires the system.users.create permission.
+Read users with list_users() / get_user(id).
+
+## Finding a tool by exact name
+Every tool listed by help / this guide is registered under its exact name (e.g.
+list_supplier_types, create_user). If a fuzzy tool search does not surface a
+tool, call it by its exact name directly - the name here is authoritative.
+"""
+
     ALL_TOPICS = {
         "context": TOPIC_CONTEXT,
         "assets": TOPIC_ASSETS,
@@ -1619,6 +1778,7 @@ Use list_permissions() to see all available codenames.
         "workflow": TOPIC_WORKFLOW,
         "permissions": TOPIC_PERMISSIONS,
         "examples": TOPIC_EXAMPLES,
+        "users": TOPIC_USERS,
     }
 
     def help_handler(user, arguments):
@@ -1641,13 +1801,13 @@ Use list_permissions() to see all available codenames.
         "help",
         "Get usage documentation for the Cairn MCP server. "
         "Call without arguments for the full guide, or with a topic for focused help. "
-        "Topics: context, assets, compliance, risks, batch, workflow, permissions, examples",
+        "Topics: context, assets, compliance, risks, batch, workflow, permissions, examples, users",
         {
             "type": "object",
             "properties": {
                 "topic": {
                     "type": "string",
-                    "description": "Optional topic: context, assets, compliance, risks, batch, workflow, permissions, examples",
+                    "description": "Optional topic: context, assets, compliance, risks, batch, workflow, permissions, examples, users",
                 },
             },
         },
@@ -2743,14 +2903,14 @@ def _register_assets_tools(server):
                   "status", "contact_name", "contact_email", "contact_phone",
                   "website", "address", "country", "latitude", "longitude",
                   "contract_reference", "contract_start_date", "contract_end_date",
-                  "is_contract_expired",
+                  "is_contract_expired", "next_review_date", "is_review_due",
                   "logo", "logo_16", "logo_32", "logo_64",
                   "notes", "owner_id", "owner_name", "created_at"]
     sup_writable = ["name", "description", "type", "criticality", "status",
                     "contact_name", "contact_email", "contact_phone",
                     "website", "address", "country", "latitude", "longitude",
                     "contract_reference", "contract_start_date", "contract_end_date",
-                    "notes", "owner_id", "scope_ids"]
+                    "next_review_date", "notes", "owner_id", "scope_ids"]
 
     _sup_field_overrides = {
         "description": _html_field("Description"),
@@ -2769,6 +2929,10 @@ def _register_assets_tools(server):
             "enum": ["active", "under_evaluation", "suspended", "archived"],
         },
         "owner_id": {"type": "string", "description": "UUID of the supplier owner (user)"},
+        "next_review_date": {
+            "type": "string",
+            "description": "Date of the next scheduled supplier review (ISO 8601, YYYY-MM-DD).",
+        },
         "scope_ids": {
             "type": "array",
             "items": {"type": "string"},
@@ -6298,15 +6462,96 @@ def _register_accounts_tools(server):
         ),
     )
 
+    # Create a user (invitation flow: no password crosses the MCP boundary)
+    def create_user(user, arguments):
+        from django.core.exceptions import ValidationError
+
+        from accounts.invitations import build_activation_url, provision_user
+
+        email = (arguments.get("email") or "").strip()
+        last_name = (arguments.get("last_name") or "").strip()
+        if not email or not last_name:
+            return _error("email and last_name are required.")
+        groups = arguments.get("groups") or []
+        if groups and not isinstance(groups, list):
+            return _error("groups must be an array of role/group names.")
+        try:
+            new_user = provision_user(
+                email=email,
+                last_name=last_name,
+                first_name=(arguments.get("first_name") or ""),
+                user_type=(arguments.get("user_type") or "human"),
+                job_title=(arguments.get("job_title") or ""),
+                department=(arguments.get("department") or ""),
+                phone=(arguments.get("phone") or ""),
+                language=(arguments.get("language") or None),
+                group_names=groups,
+                created_by=user,
+            )
+        except ValidationError as exc:
+            return _error("; ".join(exc.messages))
+        return {
+            "id": str(new_user.pk),
+            "email": new_user.email,
+            "display_name": new_user.display_name,
+            "activation_url": build_activation_url(new_user),
+        }
+
+    server.register_tool(
+        "create_user",
+        "Provision a new user via the invitation flow so it can be referenced as "
+        "an owner / reviewer. No password is accepted: the account is created "
+        "with an unusable password and the response returns an 'activation_url' "
+        "the invitee follows to set their first credential. 'groups' are role / "
+        "group names that must already exist (use list_groups). Requires the "
+        "system.users.create permission.",
+        _obj_schema(
+            {
+                "email": {"type": "string", "description": "Email address (login identifier). Must be unique."},
+                "last_name": {"type": "string", "description": "Last name (required)."},
+                "first_name": {"type": "string", "description": "First name."},
+                "user_type": {
+                    "type": "string",
+                    "description": "Account type: 'human' (default) or 'robot' (service account).",
+                    "enum": ["human", "robot"],
+                },
+                "job_title": {"type": "string", "description": "Job title."},
+                "department": {"type": "string", "description": "Department."},
+                "phone": {"type": "string", "description": "Phone number."},
+                "language": {"type": "string", "description": "Preferred UI language code, e.g. 'en' or 'fr'."},
+                "groups": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Role / group names to assign (must already exist).",
+                },
+            },
+            ["email", "last_name"],
+        ),
+        require_perm("system.users.create")(create_user),
+    )
+
     # Get current user info
     def get_me(user, arguments):
-        return _serialize_obj(user, ["id", "email", "first_name", "last_name",
+        data = _serialize_obj(user, ["id", "email", "first_name", "last_name",
                                      "job_title", "department", "language", "timezone",
                                      "theme_preference"])
+        # Surface the caller's own capabilities so a client can tell, before an
+        # import, whether it may override created_at / updated_at (RG: the
+        # timestamp override is silently ignored without this permission).
+        data["is_superuser"] = bool(getattr(user, "is_superuser", False))
+        data["can_override_import_dates"] = bool(
+            data["is_superuser"] or user.has_perm(TIMESTAMP_OVERRIDE_PERM)
+        )
+        data["can_create_users"] = bool(
+            data["is_superuser"] or user.has_perm("system.users.create")
+        )
+        return data
 
     server.register_tool(
         "get_me",
-        "Get information about the currently authenticated user",
+        "Get information about the currently authenticated user, including "
+        "capability flags: 'can_override_import_dates' (may set created_at / "
+        "updated_at on import) and 'can_create_users'.",
         {"type": "object", "properties": {}},
         get_me,
     )
@@ -6746,11 +6991,17 @@ def _create_supplier_handler(model_class, writable_fields):
                 _apply_logo_from_url(obj, image_url)
             obj.full_clean()
             obj.save()
-            _apply_timestamp_override(obj, model_class, arguments, user)
+            ts_status = _apply_timestamp_override(obj, model_class, arguments, user)
         except (ValueError, ValidationError, Exception) as e:
             return _error(str(e))
         fields = [f.name for f in model_class._meta.fields]
-        return _serialize_obj(obj, fields)
+        result = _serialize_obj(obj, fields)
+        if ts_status == "ignored_no_permission":
+            result["warning"] = (
+                "created_at / updated_at were ignored: this account lacks the "
+                "system.data_import.override_dates permission."
+            )
+        return result
     return handler
 
 
@@ -6906,19 +7157,33 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
         ),
     )
 
-    # Batch Create
+    # Batch Create / Upsert
     server.register_tool(
         f"batch_create_{entity_name}s",
-        f"Create multiple {display_name}s in one call (max 500). "
-        f"Non-atomic: valid items are created even if others fail. "
-        f"Returns per-item status with created count and errors.",
+        f"Create or upsert multiple {display_name}s in one call (max 500). "
+        f"Non-atomic: valid items are applied even if others fail. "
+        f"Pass 'match_on' (a list of field names, e.g. [\"name\"]) to make the "
+        f"call idempotent: each item whose match_on values already exist is "
+        f"UPDATED in place instead of duplicated, so a failed import can be "
+        f"safely replayed. Returns per-item status (created / updated / error) "
+        f"with created, updated and error counts.",
         {
             "type": "object",
             "properties": {
                 "items": {
                     "type": "array",
                     "items": _obj_schema(create_props, required_fields),
-                    "description": f"Array of {display_name} objects to create (max 500).",
+                    "description": f"Array of {display_name} objects to create or upsert (max 500).",
+                },
+                "match_on": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": (
+                        "Optional business key: list of writable field names used "
+                        "to find an existing record (e.g. [\"name\"]). When an item "
+                        "matches, it is updated; otherwise it is created. Omit for "
+                        "create-only behaviour. Many-to-many fields are not allowed."
+                    ),
                 },
             },
             "required": ["items"],

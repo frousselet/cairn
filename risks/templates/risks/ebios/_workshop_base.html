@@ -56,7 +56,7 @@
           {% endif %}
           {% if can_validate %}
           <form method="post" action="{% url 'risks:ebios-workshop-validate' assessment_pk=assessment.pk workshop_pk=workshop.pk %}"
-                onsubmit="return confirm('{% trans "Validate this workshop? This action is recorded in the audit trail." %}')">
+                onsubmit="return confirm('{% filter escapejs %}{% trans "Validate this workshop? This action is recorded in the audit trail." %}{% endfilter %}')">
             {% csrf_token %}
             <button type="submit" class="btn btn-success w-100">
               <i class="bi bi-check-circle me-1"></i>{% trans "Validate workshop" %}
