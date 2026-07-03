@@ -5,7 +5,7 @@ offcanvas, and a "Columns" dropdown. Rendered as the first child of the table
 card, above the .table-responsive. `filter_list_url` is forwarded to the
 offcanvas (included alongside this toolbar by the page).
 {% endcomment %}
-<div class="list-toolbar">
+<div class="list-toolbar" data-sort-view-key="{{ sort_view_key }}">
   <div class="list-toolbar__search">
     <i class="bi bi-search" aria-hidden="true"></i>
     <input type="search" class="list-search-input" value="{{ request.GET.q }}" placeholder="{% trans 'Search…' %}" aria-label="{% trans 'Search' %}" autocomplete="off">
