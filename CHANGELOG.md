@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Column-header sorting on list pages works again: the table toolbar lost the `data-sort-view-key` marker the sort script needs, so header clicks were silently ignored.
+- Onboarding no longer returns a 500 on every request when the shared cache (Redis) is unreachable: the runner degrades to a process-local coordination store instead of propagating the connection error.
 
 ## [0.34.1] - 2026-07-03
 

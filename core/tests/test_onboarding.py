@@ -361,3 +361,36 @@ class TestRunner:
 
         # The seed runner derives the progress total from these markers.
         assert SEED_PATH.read_text().count('_phase("') >= 15
+
+    def test_store_degrades_to_local_when_cache_unreachable(self):
+        """A shared-cache outage must never 500 the request path. When the
+        backend raises (Redis down), the store falls back to a process-local
+        map so the onboarding middleware's ``is_running`` read still answers."""
+        from core.onboarding import runner
+
+        class _DeadCache:
+            def get(self, *a, **k):
+                raise ConnectionError("redis down")
+
+            def set(self, *a, **k):
+                raise ConnectionError("redis down")
+
+            def add(self, *a, **k):
+                raise ConnectionError("redis down")
+
+            def delete(self, *a, **k):
+                raise ConnectionError("redis down")
+
+            def touch(self, *a, **k):
+                raise ConnectionError("redis down")
+
+        # Clear any process-local carry-over from a prior degraded test.
+        runner._ResilientStore._local.clear()
+        with patch.object(runner._ResilientStore, "_cache", return_value=_DeadCache()):
+            # No lock yet: reads answer False instead of raising.
+            assert runner.is_running() is False
+            # A start can still acquire the (now local) lock exactly once.
+            assert runner._store().add(runner._LOCK_KEY, "1", runner._LOCK_TTL) is True
+            assert runner._store().add(runner._LOCK_KEY, "1", runner._LOCK_TTL) is False
+            assert runner.is_running() is True
+        runner._ResilientStore._local.clear()
