@@ -23,6 +23,7 @@ Progress is best-effort UI sugar; correctness is decided by real state
 """
 
 import logging
+import threading
 
 from django.conf import settings
 from django.core.cache import caches
@@ -55,8 +56,78 @@ _IDLE = {
 }
 
 
+class _ResilientStore:
+    """Onboarding coordination store that survives a shared-cache outage.
+
+    Every operation is delegated to the shared cache (Redis in production). When
+    that backend is unreachable, the call falls back to a process-local store
+    instead of letting the connection error bubble up. This matters because the
+    onboarding middleware reads the lock on **every** request during the un-
+    initialised window: with Redis down, an unguarded read would turn each of
+    those requests into a 500 (the whole site becomes unreachable), and a fresh
+    single-process install (dev ``runserver`` with no Redis) could never
+    bootstrap at all.
+
+    The fallback is per-process, so it cannot coordinate across several uvicorn
+    workers; that is acceptable because the shared cache being down is already an
+    outage, and single-process coordination is strictly better than a 500 loop.
+    Coordination is best-effort UI sugar anyway: real correctness is decided by
+    the database state (migrations applied, users created), never by these keys.
+    """
+
+    _local = {}
+    _lock = threading.Lock()
+
+    def _cache(self):
+        return caches[_CACHE_ALIAS]
+
+    def _degrade(self, exc):
+        logger.warning("Onboarding shared cache unreachable, using process-local store: %s", exc)
+
+    def get(self, key, default=None):
+        try:
+            return self._cache().get(key, default)
+        except Exception as exc:  # noqa: BLE001 - any backend error degrades to local
+            self._degrade(exc)
+            with self._lock:
+                return self._local.get(key, default)
+
+    def set(self, key, value, timeout=None):
+        try:
+            self._cache().set(key, value, timeout)
+        except Exception as exc:  # noqa: BLE001
+            self._degrade(exc)
+            with self._lock:
+                self._local[key] = value
+
+    def add(self, key, value, timeout=None):
+        try:
+            return self._cache().add(key, value, timeout)
+        except Exception as exc:  # noqa: BLE001
+            self._degrade(exc)
+            with self._lock:
+                if key in self._local:
+                    return False
+                self._local[key] = value
+                return True
+
+    def delete(self, key):
+        try:
+            self._cache().delete(key)
+        except Exception as exc:  # noqa: BLE001
+            self._degrade(exc)
+            with self._lock:
+                self._local.pop(key, None)
+
+    def touch(self, key, timeout=None):
+        try:
+            self._cache().touch(key, timeout)
+        except Exception as exc:  # noqa: BLE001 - a missed heartbeat only shortens the lock TTL
+            self._degrade(exc)
+
+
 def _store():
-    return caches[_CACHE_ALIAS]
+    return _ResilientStore()
 
 
 def is_running():
