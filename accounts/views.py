@@ -450,7 +450,10 @@ class GroupDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
 
         # Build permission matrix as a flat list of rows for easy template rendering
         group_codenames = set(group.permissions.values_list("codename", flat=True))
-        all_actions = ["create", "read", "update", "delete", "access", "approve", "impersonate"]
+        # "validate" was missing, so every *.validate permission already in the
+        # registry (compliance.assessment, compliance.action_plan) existed but
+        # could not be granted or revoked from this matrix.
+        all_actions = ["create", "read", "update", "delete", "access", "approve", "validate", "impersonate"]
         matrix = []
         for module, features in PERMISSION_REGISTRY.items():
             module_label = MODULE_LABELS.get(module, module)

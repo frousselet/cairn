@@ -290,6 +290,32 @@ PERMISSION_REGISTRY = {
             "label": _("Risk audit trail"),
         },
     },
+    "incidents": {
+        "incident": {
+            "actions": ["create", "read", "update", "delete", "validate"],
+            "label": _("Security incidents"),
+        },
+        "event": {
+            "actions": ["create", "read", "update", "delete", "validate"],
+            "label": _("Security events"),
+        },
+        "response_plan": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("Incident response plans"),
+        },
+        "evidence": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("Incident evidence"),
+        },
+        "notification": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("Incident notifications"),
+        },
+        "review": {
+            "actions": ["create", "read", "update", "delete", "validate"],
+            "label": _("Post-incident reviews"),
+        },
+    },
     "reports": {
         "report": {
             "actions": ["create", "read", "delete"],
@@ -401,6 +427,7 @@ MODULE_LABELS = {
     "assets": _("Assets"),
     "risks": _("Risk management"),
     "compliance": _("Compliance"),
+    "incidents": _("Incidents"),
     "reports": _("Reports"),
     "trust_center": _("Trust Center"),
     "system": _("System"),

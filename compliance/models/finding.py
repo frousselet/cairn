@@ -53,6 +53,15 @@ class Finding(BaseModel):
         db_index=True,
         help_text=_("What surfaced this nonconformity."),
     )
+    incident = models.ForeignKey(
+        "incidents.Incident",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="findings",
+        verbose_name=_("Incident"),
+        help_text=_("The security incident that raised this nonconformity."),
+    )
     finding_type = models.CharField(
         _("Finding type"),
         max_length=20,
@@ -122,6 +131,11 @@ class Finding(BaseModel):
     def assessment_name(self):
         """Audit that raised it, if any (for read-only API / assistant output)."""
         return self.assessment.name if self.assessment_id else ""
+
+    @property
+    def incident_reference(self):
+        """Incident that raised it, if any (for read-only API / assistant output)."""
+        return self.incident.reference if self.incident_id else ""
 
     @property
     def assessor_name(self):
