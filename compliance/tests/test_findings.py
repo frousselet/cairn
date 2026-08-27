@@ -2,7 +2,11 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 import pytest
 from django.core.exceptions import ValidationError
+from django.urls import reverse
 from django.utils import timezone
+
+from accounts.tests.factories import UserFactory
+from context.tests.factories import ScopeFactory
 
 from compliance.constants import (
     EffectivenessVerdict,
@@ -167,3 +171,81 @@ class TestNonconformityRegister:
 
         assert assessment.findings.count() == 1
         assert Finding.objects.count() == 2
+
+
+@pytest.fixture
+def superuser(db):
+    return UserFactory(is_superuser=True)
+
+
+@pytest.mark.django_db
+class TestNonconformityRegisterViews:
+    """The register is reachable outside any audit, which is its whole point."""
+
+    def test_register_lists_findings_from_every_source(self, client, superuser):
+        client.force_login(superuser)
+        audit_born = FindingFactory()
+        incident_born = Finding.objects.create(
+            source=FindingSource.INCIDENT,
+            finding_type=FindingType.MAJOR_NON_CONFORMITY,
+            description="Raised by an incident.",
+        )
+
+        html = client.get(reverse("compliance:finding-list")).content.decode()
+
+        assert audit_born.reference in html
+        assert incident_born.reference in html
+
+    def test_a_nonconformity_without_an_audit_has_a_detail_page(self, client, superuser):
+        client.force_login(superuser)
+        finding = Finding.objects.create(
+            source=FindingSource.MONITORING,
+            finding_type=FindingType.OBSERVATION,
+            description="Privileged access review skipped.",
+        )
+
+        response = client.get(reverse("compliance:finding-detail", args=[finding.pk]))
+
+        assert response.status_code == 200
+        assert finding.reference in response.content.decode()
+
+    def test_raising_one_from_the_register_needs_no_assessment(self, client, superuser):
+        client.force_login(superuser)
+
+        response = client.post(
+            reverse("compliance:finding-register-create"),
+            {
+                "source": FindingSource.COMPLAINT,
+                "finding_type": FindingType.MINOR_NON_CONFORMITY,
+                "description": "A customer received another customer's report.",
+                "recommendation": "Add a recipient assertion.",
+                "evidence": "",
+                "effectiveness_verdict": "",
+                "requirements": [],
+            },
+        )
+
+        assert response.status_code in (200, 204, 302)
+        raised = Finding.objects.get(source=FindingSource.COMPLAINT)
+        assert raised.assessment_id is None
+        assert raised.assessor_id == superuser.id
+
+    def test_a_scoped_user_still_sees_nonconformities_that_have_no_audit(self):
+        """The parent join must not drop parentless rows.
+
+        `scope_parent_lookup` alone produces an INNER JOIN, which would hide
+        every incident-born nonconformity from anyone but a superuser. That is
+        why `Finding` sets `scope_parent_optional`.
+        """
+        from core.scoping import filter_queryset_by_scopes
+
+        parentless = Finding.objects.create(
+            source=FindingSource.INCIDENT,
+            finding_type=FindingType.MAJOR_NON_CONFORMITY,
+            description="No audit raised this one.",
+        )
+        scope = ScopeFactory()
+
+        visible = filter_queryset_by_scopes(Finding.objects.all(), [scope.id])
+
+        assert parentless in visible

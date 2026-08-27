@@ -63,6 +63,8 @@ NAV_TREE = {
     "compliance:framework-list": ("Compliance", None, "Frameworks"),
     "compliance:requirement-list": ("Compliance", None, "Requirements"),
     "compliance:assessment-list": ("Compliance", None, "Audits & compliance"),
+    "compliance:finding-list": ("Compliance", None, "Nonconformities"),
+    "compliance:finding-detail": ("Compliance", None, "Nonconformities"),
     "compliance:mapping-list": ("Compliance", None, "Mappings"),
     "compliance:action-plan-list": ("Compliance", None, "Action plans"),
     # ── Administration ───────────────────────────────────────────

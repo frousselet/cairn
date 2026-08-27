@@ -42,6 +42,13 @@ urlpatterns = [
     path("assessments/<uuid:pk>/bulk-toggle-evaluated/", views.BulkToggleEvaluatedView.as_view(), name="assessment-bulk-toggle-evaluated"),
     path("assessments/<uuid:pk>/transition/", views.AssessmentTransitionView.as_view(), name="assessment-transition"),
     path("assessments/<uuid:assessment_pk>/requirements/<uuid:requirement_pk>/toggle/", views.ToggleResultEvaluatedView.as_view(), name="assessment-result-toggle"),
+    # Nonconformity register (standalone : a nonconformity can have no audit)
+    path("findings/", views.FindingListView.as_view(), name="finding-list"),
+    path("findings/create/", views.FindingRegisterCreateView.as_view(), name="finding-register-create"),
+    path("findings/table-body/", views.FindingTableBodyView.as_view(), name="finding-table-body"),
+    path("findings/<uuid:pk>/", views.FindingDetailView.as_view(), name="finding-detail"),
+    path("findings/<uuid:pk>/edit/", views.FindingRegisterUpdateView.as_view(), name="finding-register-update"),
+    path("findings/<uuid:pk>/delete/", views.FindingRegisterDeleteView.as_view(), name="finding-register-delete"),
     # Findings
     path("assessments/<uuid:pk>/findings-table-body/", views.FindingsTableBodyView.as_view(), name="assessment-findings-table-body"),
     path("assessments/<uuid:assessment_pk>/findings/create/", views.FindingCreateView.as_view(), name="finding-create"),

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load table_tags %}
+
+{% block title %}{% trans "Nonconformities" %} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header _("Nonconformities") nav="compliance:finding-list" accent="compliance" %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'compliance:finding-register-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'Raise a nonconformity' %}</button>
+{% endpage_header %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Reference" col="reference" %}
+              {% sortable_th "description" "Finding" col="description" %}
+              {% sortable_th "type" "Type" col="type" %}
+              {% sortable_th "source" "Source" col="source" %}
+              {% sortable_th "origin" "Raised in" col="origin" %}
+              {% sortable_th "effectiveness" "Effectiveness verdict" col="effectiveness" %}
+              {% sortable_th "status" "Status" col="status" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'compliance:finding-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "compliance/finding_register_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

@@ -445,6 +445,69 @@ class FindingUpdateForm(FindingBaseForm):
     """Finding edition modal form."""
 
 
+class FindingRegisterForm(SteppedFormMixin, forms.ModelForm):
+    """Raise or edit a nonconformity from the register, outside any audit.
+
+    Distinct from `FindingBaseForm`, which is the in-audit modal : here the
+    source is chosen rather than implied, the audit link is optional, and the
+    clause 10.2 d) effectiveness review is exposed. Requirements are picked
+    from the whole catalogue, since there is no assessment to narrow them to.
+    """
+
+    steps = [
+        Step(_("Nonconformity"), "exclamation-diamond",
+             [["source", "finding_type"], "description", "requirements"]),
+        Step(_("Treatment"), "lightbulb", ["recommendation", "evidence"]),
+        Step(_("Effectiveness"), "check2-circle",
+             [["effectiveness_verdict", "effectiveness_reviewed_at"],
+              "effectiveness_reviewed_by"]),
+    ]
+
+    class Meta:
+        model = Finding
+        fields = [
+            "source", "finding_type", "description", "requirements",
+            "recommendation", "evidence",
+            "effectiveness_verdict", "effectiveness_reviewed_at",
+            "effectiveness_reviewed_by",
+        ]
+        widgets = {
+            "source": forms.Select(attrs=SELECT_ATTRS),
+            "finding_type": forms.Select(attrs=SELECT_ATTRS),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
+            "recommendation": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "evidence": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+            "requirements": forms.SelectMultiple(attrs={**SELECT_ATTRS, "data-ts-requirements": "true"}),
+            "effectiveness_verdict": forms.Select(attrs=SELECT_ATTRS),
+            "effectiveness_reviewed_at": forms.DateTimeInput(
+                attrs={**FORM_WIDGET_ATTRS, "type": "datetime-local"},
+                format="%Y-%m-%dT%H:%M",
+            ),
+            "effectiveness_reviewed_by": forms.Select(attrs=SELECT_ATTRS),
+        }
+        help_texts = {
+            "source": _("What surfaced this nonconformity."),
+            "finding_type": _("Nature of the nonconformity."),
+            "description": _("What was observed."),
+            "requirements": _("Requirements this nonconformity relates to."),
+            "recommendation": _("Suggested corrective action."),
+            "evidence": _("Evidence supporting the observation."),
+            "effectiveness_verdict": _(
+                "Whether the corrective action worked, once it has been reviewed."
+            ),
+            "effectiveness_reviewed_at": _("When effectiveness was reviewed."),
+            "effectiveness_reviewed_by": _("Who reviewed effectiveness."),
+        }
+
+    def __init__(self, *args, raised_by=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["requirements"].queryset = Requirement.objects.select_related(
+            "framework"
+        ).order_by("framework__name", "requirement_number")
+        if raised_by and self.instance.assessor_id is None:
+            self.instance.assessor = raised_by
+
+
 class RequirementMappingBaseForm(SteppedFormMixin, forms.ModelForm):
     """Shared base for the inter-framework mapping create / edit modals.
 

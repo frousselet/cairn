@@ -31,6 +31,10 @@ class Finding(BaseModel):
     # Declared on the model, not only on the views, so the generic workflow,
     # history and MCP surfaces enforce it too (see core.scoping).
     scope_parent_lookup = "assessment__scopes"
+    # A nonconformity raised outside an audit has no parent to inherit from.
+    # Without this it would be dropped by the INNER JOIN and invisible to
+    # every non-superuser, which for a register is data loss in practice.
+    scope_parent_optional = True
 
     assessment = models.ForeignKey(
         "compliance.ComplianceAssessment",
