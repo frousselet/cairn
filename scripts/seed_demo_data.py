@@ -1530,6 +1530,34 @@ with transaction.atomic():
     )
     f_strength.requirements.set([iso_reqs["A.6.3"]])
 
+    # The register is not audit-only. These two exercise the other sources and
+    # the clause 10.2 d) effectiveness record, which no audit finding shows.
+    f_monitoring = Finding.objects.create(
+        source="monitoring", finding_type="minor_nc", assessor=elise, created_by=elise,
+        description=(
+            "Quarterly privileged-access review was skipped for the Q2 window on "
+            "the SCADA domain."
+        ),
+        recommendation="Re-run the review and add a calendar trigger owned by the OT lead.",
+        effectiveness_reviewed_at=NOW - timedelta(days=21),
+        effectiveness_reviewed_by=sofia,
+        effectiveness_verdict="effective",
+        workflow_state="validated",
+    )
+    f_monitoring.requirements.set([iso_reqs["A.5.18"]])
+    f_complaint = Finding.objects.create(
+        source="complaint", finding_type="observation", assessor=elise, created_by=elise,
+        description=(
+            "A customer reported receiving another customer's monthly consumption "
+            "report; no personal data beyond the meter reference was exposed."
+        ),
+        recommendation="Add a recipient assertion to the report generation job.",
+        effectiveness_reviewed_at=NOW - timedelta(days=7),
+        effectiveness_reviewed_by=sofia,
+        effectiveness_verdict="partially_effective",
+        workflow_state="validated",
+    )
+
     _phase("Action plans...")
     ap_ot_exercise = ComplianceActionPlan.objects.create(
         name="Run OT incident response exercises",

@@ -423,12 +423,18 @@ class FindingBaseForm(SteppedFormMixin, forms.ModelForm):
             "evidence": _("Evidence supporting the finding."),
         }
 
-    def __init__(self, *args, assessment=None, **kwargs):
+    def __init__(self, *args, assessment=None, raised_by=None, **kwargs):
         super().__init__(*args, **kwargs)
         if assessment:
             self.fields["requirements"].queryset = assessment.get_all_requirements().order_by("requirement_number")
+            # Stamped before validation, not after it : `Finding.clean()`
+            # requires both for `source = audit`, and it runs while the form
+            # validates. Setting them in `form_valid()` would be too late.
+            self.instance.assessment = assessment
         else:
             self.fields["requirements"].queryset = Requirement.objects.none()
+        if raised_by and self.instance.assessor_id is None:
+            self.instance.assessor = raised_by
 
 
 class FindingCreateForm(FindingBaseForm):

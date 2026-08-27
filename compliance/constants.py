@@ -230,6 +230,32 @@ class FindingType(models.TextChoices):
     STRENGTH = "strength", pgettext_lazy("finding", "Strength")
 
 
+class FindingSource(models.TextChoices):
+    """What surfaced the nonconformity.
+
+    `AUDIT` is the default so every row that predates the generalisation of
+    this entity keeps its exact original meaning with no data migration.
+    """
+
+    AUDIT = "audit", pgettext_lazy("finding source", "Audit")
+    INCIDENT = "incident", pgettext_lazy("finding source", "Security incident")
+    MANAGEMENT_REVIEW = "management_review", pgettext_lazy("finding source", "Management review")
+    MONITORING = "monitoring", pgettext_lazy("finding source", "Monitoring")
+    COMPLAINT = "complaint", pgettext_lazy("finding source", "Complaint")
+
+
+class EffectivenessVerdict(models.TextChoices):
+    """ISO 27001 clause 10.2 d) : did the corrective action actually work.
+
+    Distinct from an action plan reaching a done step, which only proves the
+    action was implemented.
+    """
+
+    EFFECTIVE = "effective", pgettext_lazy("finding", "Effective")
+    PARTIALLY_EFFECTIVE = "partially_effective", pgettext_lazy("finding", "Partially effective")
+    NOT_EFFECTIVE = "not_effective", pgettext_lazy("finding", "Not effective")
+
+
 FINDING_REFERENCE_PREFIXES = {
     FindingType.MAJOR_NON_CONFORMITY: "NCMAJ",
     FindingType.MINOR_NON_CONFORMITY: "NCMIN",
