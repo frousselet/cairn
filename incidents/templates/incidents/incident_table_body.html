@@ -1,0 +1,50 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% comment %}
+Rows of the incident register, swapped into `#item-table-body` by
+`incidents:incident-table-body`. `overdue_obligation_count` is the filtered
+Count annotation the view adds : never `is_overdue`, which is a property and
+would cost one query per row.
+{% endcomment %}
+{% has_perm "incidents.incident.update" as can_update_incident %}
+{% for inc in incidents %}
+<tr>
+  <td data-col="reference">
+    <a href="{% url 'incidents:incident-detail' inc.pk %}" class="cell-link">{{ inc.reference }}</a>
+  </td>
+  <td data-col="title">
+    <span class="cell-stack">
+      <span class="cell-main">{{ inc.title }}</span>
+      {% comment %}
+      Rendered only when it carries something : an empty `.cell-sub` is still a
+      flex item and would open a blank second line under every plain row.
+      {% endcomment %}
+      {% if inc.is_exercise or inc.summary %}<span class="cell-sub">{% if inc.is_exercise %}<span class="badge text-bg-info">{% trans "Exercise" %}</span>{% if inc.summary %} {% endif %}{% endif %}{% if inc.summary %}{{ inc.summary|striptags|truncatechars:90 }}{% endif %}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="severity">
+    <span class="badge text-bg-{% if inc.severity == 'critical' %}danger{% elif inc.severity == 'high' %}warning{% elif inc.severity == 'medium' %}info{% else %}secondary{% endif %}">{{ inc.get_severity_display }}</span>
+  </td>
+  <td data-col="category">{{ inc.get_category_display|default:"-" }}</td>
+  <td data-col="status">{% workflow_badge inc %}</td>
+  <td data-col="manager">
+    {% if inc.incident_manager %}{% user_badge inc.incident_manager size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td data-col="detected_at" class="text-nowrap">
+    {% if inc.detected_at %}{{ inc.detected_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}<span class="cell-empty">-</span>{% endif %}
+  </td>
+  <td data-col="obligations">
+    {% if inc.overdue_obligation_count %}
+      <span class="badge text-bg-danger"><i class="bi bi-hourglass-bottom me-1" aria-hidden="true"></i>{{ inc.overdue_obligation_count }}<span class="visually-hidden"> {% trans "Overdue obligations" %}</span></span>
+    {% else %}
+      <span class="cell-empty">-</span>
+    {% endif %}
+  </td>
+  <td class="text-end" data-col="actions">
+    {% if can_update_incident %}
+    <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'incidents:incident-update' inc.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No incident recorded yet.") message=_("The register holds every declared information security incident, from detection through containment and recovery to the post-incident review that closes it.") colspan=9 %}
+{% endfor %}

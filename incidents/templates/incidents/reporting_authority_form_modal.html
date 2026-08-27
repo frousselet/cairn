@@ -1,0 +1,8 @@
+{% extends "includes/modal_form.html" %}
+{% load i18n %}
+{% comment %}
+  Create or edit a reporting authority in the drawer. Fields, steps and helpers
+  come from ReportingAuthorityForm (core.modal_forms); the shell auto-renders
+  them. An authority is catalogue configuration : it belongs to no scope.
+{% endcomment %}
+{% block modal_title_icon %}<span class="drawer-title-icon"><i class="bi bi-bank"></i></span>{% endblock %}

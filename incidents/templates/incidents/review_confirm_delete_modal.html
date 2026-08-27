@@ -1,0 +1,24 @@
+{% load i18n %}
+{% comment %}
+  Drawer-served delete confirmation for a post-incident review. Posted via
+  HTMX; the view returns 204 + HX-Trigger=formSaved on success. A review whose
+  incident is still open is refused by the model, as a message.
+{% endcomment %}
+<form method="post" hx-post="{{ request.path }}" hx-target="#drawer-form-content" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']">
+  {% csrf_token %}
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <span class="drawer-title-icon"><i class="bi bi-trash"></i></span>
+      {% trans "Delete post-incident review" %}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+  </div>
+  <div class="modal-body drawer-body">
+    <p class="mb-2">{% blocktrans with reference=object.reference incident=object.incident.reference %}Are you sure you want to delete the review <strong>{{ reference }}</strong> of incident {{ incident }}?{% endblocktrans %}</p>
+    <p class="text-muted small mb-0">{% trans "A review cannot be deleted while its incident is still open : the incident could then never be closed, and never obtain a second review." %}</p>
+  </div>
+  <div class="modal-footer drawer-footer">
+    <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  </div>
+</form>

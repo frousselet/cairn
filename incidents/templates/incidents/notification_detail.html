@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load workflow_tags %}
+{% load accounts_tags %}
+
+{% comment %}
+One regulatory obligation : what is owed, by when, and what discharged it.
+
+The page is built around the clock, because the clock is the only thing on it
+that runs out. The deadline tile sits above the two columns and states the four
+answers in one reading : the anchor the clock counts from, the statutory delay,
+the resolved due date, and whether we are late - and by how much. An obligation
+past its due date with no filing is announced in a red banner *before* the tile,
+so it cannot be missed by someone who scrolls no further than the fold.
+
+The decision (GDPR Art. 33(1) and its siblings) gets its own card with the named
+decider, the timestamp and the written rationale : an omission with no signed
+justification is not a documented omission, and this card is where an inspection
+looks first.
+
+Every state change goes through the lifecycle stepper. There is no decision
+select and no "mark as sent" button here : the decision column mirrors the step
+and is written by the same transition.
+{% endcomment %}
+
+{% block title %}{{ notification.reference }} - {{ notification.get_regime_display }} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "incidents.notification.update" as can_update_notification %}
+{% has_perm "incidents.notification.delete" as can_delete_notification %}
+
+{% url 'incidents:incident-detail' notification.incident_id as incident_url %}
+{% page_header notification.get_regime_display reference=notification.reference nav="incidents:notification-list" accent="incidents" parent_label=notification.incident.reference parent_url=incident_url %}
+  {% include "includes/history_trigger.html" %}
+  {% if can_delete_notification %}
+  <button type="button" class="btn btn-outline-danger" hx-get="{% url 'incidents:notification-delete' notification.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+  {% endif %}
+  {% if can_update_notification %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:notification-update' notification.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if notification.tags.all %}
+<div class="detail-tags d-flex flex-wrap justify-content-center gap-2 mb-4">
+  {% for tag in notification.tags.all %}<span class="badge" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% endfor %}
+</div>
+{% endif %}
+
+{% if notification.incident.is_exercise %}
+<div class="alert alert-info d-flex align-items-start gap-2" role="note">
+  <i class="bi bi-mortarboard-fill flex-shrink-0" aria-hidden="true"></i>
+  <div>{% trans "This obligation hangs off an exercise. RG-INC-17 : a drill never instantiates a regulatory duty, so this row was added by hand and no regulator is waiting on it." %}</div>
+</div>
+{% endif %}
+
+{% comment %}
+── The two unmissable answers ────────────────────────────────────
+A deadline that has passed outranks everything else the page has to say, so it
+is stated before the tile and before the columns. The second banner is the
+frozen verdict : it survives every later correction of the anchor and is the
+sentence a regulator reads.
+{% endcomment %}
+{% if notification.is_overdue %}
+<div class="alert alert-danger" role="alert">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-exclamation-octagon-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "This obligation is past its statutory deadline and nothing has been filed." %}</strong>
+    <span class="badge text-bg-danger ms-auto text-nowrap"><i class="bi bi-hourglass-bottom me-1" aria-hidden="true"></i>{% trans "Overdue" %} : {{ notification.due_at|timesince }}</span>
+  </div>
+  <div class="mt-2 small">{% trans "Due at" %} : {{ notification.due_at|date:"d/m/Y H:i" }}</div>
+</div>
+{% endif %}
+
+{% if notification.was_filed_late %}
+<div class="alert alert-danger" role="alert">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-exclamation-diamond-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "This obligation was filed after its deadline." %}</strong>
+    {% if notification.due_at and notification.sent_at %}
+    <span class="badge text-bg-danger ms-auto text-nowrap">{% trans "Late by" %} : {{ notification.due_at|timesince:notification.sent_at }}</span>
+    {% endif %}
+  </div>
+  <div class="mt-2 small">{% trans "The lateness verdict was frozen at the first filing and is never recomputed." %}</div>
+</div>
+{% endif %}
+
+{% if notification.is_undecided %}
+<div class="alert alert-warning" role="alert">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-question-octagon-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "Nobody has yet decided whether this obligation applies." %}</strong>
+  </div>
+  <div class="mt-2 small">{% trans "An undecided obligation blocks the closure of its incident. Take the decision through the lifecycle above : ruling it out requires a written rationale." %}</div>
+</div>
+{% endif %}
+
+{% comment %}
+── The clock ─────────────────────────────────────────────────────
+Four answers, in the order a duty is read : what starts the clock, how long it
+runs, when it runs out, and where we stand right now.
+{% endcomment %}
+<div class="card mb-4 kpi-tile{% if notification.is_overdue or notification.was_filed_late %} kpi-tile--danger{% elif notification.sent_at %} kpi-tile--success{% elif notification.due_at %} kpi-tile--warning{% else %} kpi-tile--neutral{% endif %}">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+
+      <span class="kpi-tile__icon{% if notification.is_overdue or notification.was_filed_late %} kpi-tile__icon--danger{% elif notification.sent_at %} kpi-tile__icon--success{% elif notification.due_at %} kpi-tile__icon--warning{% else %} kpi-tile__icon--neutral{% endif %}" style="flex:none">
+        {% if notification.is_overdue %}<i class="bi bi-hourglass-bottom" aria-hidden="true"></i>
+        {% elif notification.sent_at %}<i class="bi bi-send-check" aria-hidden="true"></i>
+        {% elif notification.due_at %}<i class="bi bi-alarm" aria-hidden="true"></i>
+        {% else %}<i class="bi bi-hourglass-split" aria-hidden="true"></i>{% endif %}
+      </span>
+
+      <div class="min-w-0" style="flex:1 1 12rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Clock anchor" %}</div>
+        <div class="fw-semibold mt-1">{{ notification.get_clock_anchor_display }}</div>
+        <div class="text-muted small">
+          {% if notification.anchor_at %}
+            {{ notification.anchor_at|date:"d/m/Y H:i" }}
+          {% else %}
+            {% trans "Not resolved yet" %}
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="min-w-0" style="flex:1 1 10rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Statutory delay" %}</div>
+        <div class="fw-semibold mt-1">
+          {% if notification.no_fixed_deadline %}
+            {% trans "Without undue delay" %}
+          {% elif notification.deadline_hours %}
+            {% blocktrans with hours=notification.deadline_hours %}{{ hours }} hours{% endblocktrans %}
+          {% else %}
+            <span class="text-muted">-</span>
+          {% endif %}
+        </div>
+        {% if notification.no_fixed_deadline %}
+        <div class="text-muted small">{% trans "No numeric limit in law" %}</div>
+        {% endif %}
+      </div>
+
+      <div class="min-w-0" style="flex:1 1 12rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Due at" %}</div>
+        <div class="fw-bold" style="font-size:1.2rem;line-height:1.3">
+          {% if notification.due_at %}
+            {{ notification.due_at|date:"d/m/Y H:i" }}
+          {% elif notification.no_fixed_deadline %}
+            {% trans "No statutory deadline" %}
+          {% else %}
+            {% trans "Deadline pending" %}
+          {% endif %}
+        </div>
+        {% if not notification.due_at and not notification.no_fixed_deadline %}
+        {% comment %}
+        Never merged with the line above : one has no deadline in law, the other
+        has one that has simply not started. Merging them is how a real deadline
+        disappears from a page.
+        {% endcomment %}
+        <div class="text-muted small">{% trans "The clock waits on the filing it depends on." %}</div>
+        {% endif %}
+      </div>
+
+      <div class="min-w-0" style="flex:1 1 12rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Where we stand" %}</div>
+        <div class="mt-1">
+          {% comment %}
+          Late, running, or discharged. Ordered so the worst answer is given
+          first, exactly as on the register and on the incident page.
+          {% endcomment %}
+          {% if notification.is_overdue %}
+            <span class="badge text-bg-danger"><i class="bi bi-hourglass-bottom me-1" aria-hidden="true"></i>{% trans "Overdue" %} : {{ notification.due_at|timesince }}</span>
+          {% elif notification.sent_at and notification.late_by %}
+            <span class="badge text-bg-danger"><i class="bi bi-exclamation-diamond me-1" aria-hidden="true"></i>{% trans "Filed late" %}{% if notification.due_at %} : {{ notification.due_at|timesince:notification.sent_at }}{% endif %}</span>
+          {% elif notification.sent_at %}
+            <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{% trans "Filed on time" %}</span>
+          {% elif notification.due_at and not notification.is_terminal_state %}
+            <span class="badge text-bg-warning"><i class="bi bi-alarm me-1" aria-hidden="true"></i>{{ notification.due_at|timeuntil }}</span>
+          {% else %}
+            <span class="text-muted">-</span>
+          {% endif %}
+        </div>
+        {% if notification.first_submitted_at %}
+        <div class="text-muted small mt-1">{% trans "First filed at" %} : {{ notification.first_submitted_at|date:"d/m/Y H:i" }}</div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  {# ══ LEFT COLUMN ══════════════════════════════════════════ #}
+  <div class="col-lg-8">
+
+    {# ── 1. The decision : the most audited card on the page ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-signpost-split me-1" aria-hidden="true"></i>{% trans "Decision" context "incident" %}</span></div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mb-3">
+          <span class="badge text-bg-{% if notification.is_undecided %}warning{% elif notification.decision == 'required' %}primary{% else %}secondary{% endif %} fs-6">{{ notification.get_decision_display }}</span>
+          {% if notification.decided_at %}<span class="text-muted small">{{ notification.decided_at|date:"d/m/Y H:i" }}</span>{% endif %}
+        </div>
+
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Decided by" %}</dt>
+          <dd class="mb-3">
+            {% if notification.decided_by %}{% user_badge notification.decided_by size=28 link=True block=True %}{% else %}<span class="text-muted">{% trans "Nobody has taken this decision yet." %}</span>{% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Decision rationale" %}</dt>
+          <dd class="mb-0">
+            {% if notification.decision_rationale %}
+              {{ notification.decision_rationale|linebreaksbr }}
+            {% elif notification.decision == 'not_required' %}
+              <span class="text-danger fw-semibold">{% trans "An obligation ruled out with no written justification is not a documented omission." %}</span>
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# ── 2. What the law asks for ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-bank me-1" aria-hidden="true"></i>{% trans "What is owed" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Regime" %}</dt>
+          <dd class="mb-3">{{ notification.get_regime_display }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Legal reference" %}</dt>
+          <dd class="mb-3">{% if notification.obligation_reference %}<span class="ref">{{ notification.obligation_reference }}</span>{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Content requirements" %}</dt>
+          <dd class="mb-0">
+            {% if notification.content_requirements %}
+              {{ notification.content_requirements|linebreaksbr }}
+            {% else %}
+              <span class="text-muted">{% trans "The catalogue rule carried no content checklist." %}</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# ── 3. What actually left the organisation ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-envelope-paper me-1" aria-hidden="true"></i>{% trans "What was transmitted" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Channel" %}</dt>
+          <dd class="mb-3">{% if notification.channel %}{{ notification.get_channel_display }}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Sent at" %}</dt>
+          <dd class="mb-3">{{ notification.sent_at|date:"d/m/Y H:i"|default:"-" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Sent by" %}</dt>
+          <dd class="mb-3">{% if notification.sent_by %}{% user_badge notification.sent_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Acknowledgement reference" %}</dt>
+          <dd class="mb-3">
+            {% if notification.acknowledgement_reference %}
+              <span class="ref">{{ notification.acknowledgement_reference }}</span>
+              {% if notification.acknowledged_at %}<span class="text-muted small ms-2">{{ notification.acknowledged_at|date:"d/m/Y H:i" }}</span>{% endif %}
+            {% else %}
+              <span class="text-muted">{% trans "An acknowledgement with no case number is not an acknowledgement." %}</span>
+            {% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Content" %}</dt>
+          <dd class="mb-0">
+            {% if notification.content %}
+              {{ notification.content|linebreaksbr }}
+            {% else %}
+              <span class="text-muted">{% trans "Nothing has been drafted yet." %}</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# ── 4. The filings : the append-only proof, re-rendered over HTMX ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead detail-subhead--action">
+          <span><i class="bi bi-journal-check me-1" aria-hidden="true"></i>{% trans "Filings" %} <span class="badge text-bg-secondary">{{ filings|length }}</span></span>
+        </div>
+        <p class="text-muted small mt-2 mb-0">{% trans "A filing is never rewritten : a correction is a further filing that supersedes the previous one." %}</p>
+        <div id="notification-filings"
+             class="mt-3"
+             hx-get="{% url 'incidents:notification-filings' notification.pk %}"
+             hx-trigger="formSaved from:body"
+             hx-swap="innerHTML">
+          {% include "incidents/_notification_filings.html" %}
+        </div>
+      </div>
+    </div>
+
+    {# ── 5. Record a filing ── #}
+    {% if filing_form %}
+    <details class="card mb-4">
+      <summary class="card-body py-2" style="cursor:pointer;user-select:none">
+        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>{% trans "Record a filing" %}</h6>
+      </summary>
+      <div class="card-body pt-0">
+        <p class="text-muted small">{% trans "Pre-filled from the obligation. What is recorded here is what actually left the organisation, and it can never be edited afterwards." %}</p>
+        {% comment %}
+        The same shape as the custody ledger's inline form : posted over HTMX so
+        a success fires `formSaved` and re-renders the log above, and an invalid
+        submission comes back in the drawer with its errors ; and posted plainly
+        with no JavaScript, in which case the view redirects back here.
+        {% endcomment %}
+        <form method="post"
+              action="{% url 'incidents:filing-create' notification.pk %}"
+              enctype="multipart/form-data"
+              hx-post="{% url 'incidents:filing-create' notification.pk %}"
+              hx-encoding="multipart/form-data"
+              hx-target="#drawer-form-content"
+              hx-swap="innerHTML"
+              hx-disabled-elt="find button[type='submit']">
+          {% csrf_token %}
+          {% if filing_form.non_field_errors %}
+          <div class="alert alert-danger" role="alert">
+            {% for error in filing_form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+          </div>
+          {% endif %}
+          {% for step in filing_form.iter_steps %}
+          <div class="mb-3">
+            <div class="detail-subhead"><span><i class="bi bi-{{ step.icon }} me-1" aria-hidden="true"></i>{{ step.title }}</span></div>
+            <div class="mt-2">
+              {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+          {% for hidden in filing_form.hidden_fields %}{{ hidden }}{% endfor %}
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Record the filing" %}</button>
+        </form>
+      </div>
+    </details>
+    {% endif %}
+
+  </div>
+
+  {# ══ RIGHT COLUMN (sticky sidebar) ═════════════════════════ #}
+  <div class="col-lg-4" style="position:sticky;top:1rem;align-self:flex-start">
+
+    {# ── Status ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
+          <dd class="mb-3">{% workflow_badge notification %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Incident" context "incident" %}</dt>
+          <dd class="mb-3">
+            <a href="{{ incident_url }}" class="cell-link"><span class="ref">{{ notification.incident.reference }}</span></a>
+            <div class="cell-sub">{{ notification.incident.title|truncatechars:70 }}</div>
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Source" %}</dt>
+          <dd class="mb-0">
+            <span class="badge text-bg-secondary">{{ notification.get_source_display }}</span>
+            {% if notification.source == 'auto' %}
+            <div class="cell-sub mt-1">{% trans "Generated at triage. It is answered through a decision, never deleted." %}</div>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# ── Recipient and authority ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-person-badge me-1" aria-hidden="true"></i>{% trans "Recipient" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Recipient" %}</dt>
+          <dd class="mb-3">
+            {{ notification.recipient_display }}
+            <div class="cell-sub">{{ notification.get_recipient_kind_display }}</div>
+          </dd>
+          {% if notification.recipient_stakeholder %}
+          <dt class="text-muted small mb-1">{% trans "Stakeholder" %}</dt>
+          <dd class="mb-3"><a href="{% url 'context:stakeholder-detail' notification.recipient_stakeholder.pk %}" class="cell-link">{{ notification.recipient_stakeholder.name }}</a></dd>
+          {% endif %}
+          {% if notification.recipient_supplier %}
+          <dt class="text-muted small mb-1">{% trans "Supplier" %}</dt>
+          <dd class="mb-3"><a href="{% url 'assets:supplier-detail' notification.recipient_supplier.pk %}" class="cell-link">{{ notification.recipient_supplier.name }}</a></dd>
+          {% endif %}
+        </dl>
+
+        {% if authority %}
+        <div class="detail-subhead"><span><i class="bi bi-building me-1" aria-hidden="true"></i>{% trans "Authority" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Body" %}</dt>
+          <dd class="mb-3">
+            <a href="{% url 'incidents:reporting-authority-detail' authority.pk %}" class="cell-link">{{ authority.name }}</a>
+            <div class="cell-sub">{{ authority.get_authority_type_display }}</div>
+          </dd>
+          {% if authority.portal_url %}
+          <dt class="text-muted small mb-1">{% trans "Portal" %}</dt>
+          <dd class="mb-3"><a href="{{ authority.portal_url }}" class="cell-link" rel="noopener noreferrer" target="_blank">{{ authority.portal_url|truncatechars:44 }}</a></dd>
+          {% endif %}
+          {% if authority.contact_email %}
+          <dt class="text-muted small mb-1">{% trans "Email" %}</dt>
+          <dd class="mb-3">{{ authority.contact_email }}</dd>
+          {% endif %}
+          {% if authority.contact_phone %}
+          <dt class="text-muted small mb-1">{% trans "Telephone" %}</dt>
+          <dd class="mb-0">{{ authority.contact_phone }}</dd>
+          {% endif %}
+        </dl>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── The dependency chain : staged obligations ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>{% trans "Staged obligations" %}</span></div>
+        <div class="mt-2 mb-3">
+          <div class="text-muted small mb-1">{% trans "Clock waits on" %}</div>
+          {% if notification.depends_on %}
+          <a href="{% url 'incidents:notification-detail' notification.depends_on.pk %}" class="party-chip">{{ notification.depends_on.reference }} {{ notification.depends_on.get_regime_display }}</a>
+          {% else %}
+          <span class="text-muted small">{% trans "This obligation's clock starts on the incident itself." %}</span>
+          {% endif %}
+        </div>
+        <div class="mb-0">
+          <div class="text-muted small mb-1">{% trans "Starts the clock of" %}</div>
+          <div class="d-flex flex-wrap gap-1">
+            {% for dependent in notification.dependents.all %}
+            <a href="{% url 'incidents:notification-detail' dependent.pk %}" class="party-chip">{{ dependent.reference }} {{ dependent.get_regime_display }}</a>
+            {% empty %}
+            <span class="text-muted small">{% trans "No later stage waits on this filing." %}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Proof of filing ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-file-earmark-lock me-1" aria-hidden="true"></i>{% trans "Proof of filing" %}</span></div>
+        <div class="mt-2">
+          {% if notification.has_proof %}
+          <a href="{% url 'incidents:notification-proof' notification.pk %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-download me-1" aria-hidden="true"></i>{{ notification.proof_filename_display|default:_("Download the proof") }}
+          </a>
+          {% else %}
+          <p class="text-muted small mb-0">{% trans "No proof document is held for this obligation." %}</p>
+          {% endif %}
+        </div>
+        {% if notification.proof_evidence %}
+        <div class="mt-3">
+          <div class="text-muted small mb-1">{% trans "Registered as evidence" %}</div>
+          <a href="{% url 'incidents:evidence-detail' notification.proof_evidence.pk %}" class="party-chip">{{ notification.proof_evidence.reference }} {{ notification.proof_evidence.title|truncatechars:40 }}</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── Origin of the rule ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-file-earmark-ruled me-1" aria-hidden="true"></i>{% trans "Obligation template" %}</span></div>
+        <div class="mt-2">
+          {% if notification.template %}
+          <a href="{% url 'incidents:obligation-template-detail' notification.template.pk %}" class="cell-link">{{ notification.template.name }}</a>
+          <p class="text-muted small mb-0 mt-1">{% trans "The legal terms above were snapshotted onto this obligation and are never rewritten by a later edit of the rule." %}</p>
+          {% else %}
+          <p class="text-muted small mb-0">{% trans "This obligation was not generated from the catalogue." %}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ── Record ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-folder2-open me-1" aria-hidden="true"></i>{% trans "Record" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
+          <dd class="mb-3">{{ notification.version }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
+          <dd class="mb-3">{% if notification.created_by %}{% user_badge notification.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
+          <dd class="mb-3">{{ notification.created_at|date:"d/m/Y H:i" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>
+          <dd class="mb-0">{{ notification.updated_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

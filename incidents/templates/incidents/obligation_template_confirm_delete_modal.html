@@ -1,0 +1,25 @@
+{% load i18n %}
+{% comment %}
+  Drawer-served delete confirmation for a reporting obligation template. Posted
+  via HTMX; the view returns 204 + HX-Trigger=formSaved on success. The
+  obligation foreign key is PROTECTed, so a template that has already generated
+  an obligation survives.
+{% endcomment %}
+<form method="post" hx-post="{{ request.path }}" hx-target="#drawer-form-content" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']">
+  {% csrf_token %}
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <span class="drawer-title-icon"><i class="bi bi-trash"></i></span>
+      {% trans "Delete obligation template" %}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+  </div>
+  <div class="modal-body drawer-body">
+    <p class="mb-2">{% blocktrans with reference=object.reference name=object.name %}Are you sure you want to delete <strong>{{ reference }}</strong> - {{ name }}?{% endblocktrans %}</p>
+    <p class="text-muted small mb-0">{% trans "A template that has already generated an obligation is part of the record and cannot be deleted : archive it through its lifecycle so it stops generating, while past obligations keep their legal reference." %}</p>
+  </div>
+  <div class="modal-footer drawer-footer">
+    <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  </div>
+</form>

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% comment %}
+  Full-page fallback for the security event form. The usual path is the HTMX
+  drawer (security_event_form_modal.html); this renders when the route is
+  opened directly, which would otherwise raise TemplateDoesNotExist.
+
+  The steps are rendered as stacked cards rather than through
+  includes/form_steps.html : that partial hides every step past the first for
+  the drawer's JS stepper, and there is no stepper here.
+{% endcomment %}
+
+{% block title %}{% if form.instance.pk %}{% trans "Edit security event" %}{% else %}{% trans "Report a security event" %}{% endif %} - Cairn{% endblock %}
+
+{% block content %}
+{% if form.instance.pk %}{% trans "Edit security event" as page_title %}{% else %}{% trans "Report a security event" as page_title %}{% endif %}
+{% page_header page_title nav="incidents:event-list" accent="incidents" %}{% endpage_header %}
+
+<form method="post">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">
+    {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+  </div>
+  {% endif %}
+
+  {% for step in form.iter_steps %}
+  <div class="card mb-4">
+    <div class="card-header"><h6 class="mb-0"><i class="bi bi-{{ step.icon }} me-2" style="color:var(--accent)" aria-hidden="true"></i>{{ step.title }}</h6></div>
+    <div class="card-body">
+      {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+  {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+  <div class="d-flex gap-2 form-actions-sticky">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
+    {% if form.instance.pk %}
+    <a href="{% url 'incidents:event-detail' form.instance.pk %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+    {% else %}
+    <a href="{% url 'incidents:event-list' %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

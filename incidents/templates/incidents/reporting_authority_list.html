@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load table_tags %}
+{% load accounts_tags %}
+{% load help_tags %}
+
+{% comment %}
+The regulatory contact catalogue. Configuration, not operations : nobody edits
+it during a response, which is why it sits beside the response plan and the
+obligation templates rather than in the incident navigation.
+
+No scope facet and no scope column : this register is not scoped, deliberately.
+The supervisory authority is the same body for every perimeter of the ISMS.
+{% endcomment %}
+
+{% block title %}{% trans "Reporting authorities" %} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header _("Reporting authorities") nav="incidents:reporting-authority-list" accent="incidents" %}
+  {% has_perm "incidents.response_plan.create" as can_create_authority %}
+  {% if can_create_authority %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:reporting-authority-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New reporting authority" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% help_modal "incidents.reporting_authority_list" %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "short_name" "Short name" col="short_name" %}
+              {% sortable_th "name" "Name" col="name" %}
+              {% sortable_th "type" "Type" col="type" %}
+              {% sortable_th "regime" "Primary regime" col="regime" %}
+              {% sortable_th "jurisdiction" "Jurisdiction" col="jurisdiction" %}
+              <th data-col="templates" style="white-space:nowrap">{% trans "Templates" %}</th>
+              {% sortable_th "status" "Status" col="status" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'incidents:reporting-authority-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "incidents/reporting_authority_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

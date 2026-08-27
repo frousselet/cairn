@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load table_tags %}
+{% load accounts_tags %}
+{% load help_tags %}
+
+{% comment %}
+The catalogue of legal rules obligations are generated from. Sorted by regime,
+then by `order`, then by name, so the 24-hour early warning is listed above the
+72-hour notification rather than alphabetically.
+
+Configuration, like the reporting authorities beside it : this is edited before
+an incident, never during one. Unscoped by design - a regime applies to the
+whole ISMS, not to one perimeter of it.
+{% endcomment %}
+
+{% block title %}{% trans "Obligation templates" %} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header _("Obligation templates") nav="incidents:obligation-template-list" accent="incidents" %}
+  {% has_perm "incidents.response_plan.create" as can_create_template %}
+  {% if can_create_template %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:obligation-template-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New obligation template" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% help_modal "incidents.obligation_template_list" %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "name" "Name" col="name" %}
+              {% sortable_th "regime" "Regime" col="regime" %}
+              {% sortable_th "recipient_kind" "Recipient" col="recipient_kind" %}
+              {% sortable_th "authority" "Authority" col="authority" %}
+              <th data-col="clock">{% trans "Clock" %}</th>
+              <th data-col="conditions">{% trans "Trigger conditions" %}</th>
+              <th data-col="obligations" style="white-space:nowrap">{% trans "Generated obligations" %}</th>
+              {% sortable_th "status" "Status" col="status" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'incidents:obligation-template-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "incidents/obligation_template_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

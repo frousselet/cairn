@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load workflow_tags %}
+{% load accounts_tags %}
+
+{% comment %}
+One body the organisation may owe a filing to, and - the point of the page -
+how to actually file with it.
+
+The channel strip is rendered first, above the columns, because the person
+reading this page is normally on a 24-hour clock and is looking for the portal,
+the mailbox, the emergency line and the language the filing has to be drafted
+in. Hunting for those in a sidebar is the failure this entity exists to
+prevent, and a filing rejected for language is a filing not made while the
+clock keeps running.
+
+The procedure field earns the entity its place and gets the whole left column :
+which form, which attachments, who signs, what the acknowledgement looks like,
+and what to do when the portal is down.
+
+This catalogue is deliberately instance-wide and carries no scopes : the CNIL
+is the CNIL for every perimeter of the ISMS.
+{% endcomment %}
+
+{% block title %}{{ authority.display_name }} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "incidents.response_plan.update" as can_update_authority %}
+{% has_perm "incidents.response_plan.delete" as can_delete_authority %}
+
+{% page_header authority.display_name reference=authority.reference nav="incidents:reporting-authority-list" accent="incidents" %}
+  {% include "includes/history_trigger.html" %}
+  {% if can_delete_authority %}
+  <button type="button" class="btn btn-outline-danger" hx-get="{% url 'incidents:reporting-authority-delete' authority.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+  {% endif %}
+  {% if can_update_authority %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:reporting-authority-update' authority.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if authority.tags.all %}
+<div class="detail-tags d-flex flex-wrap justify-content-center gap-2 mb-4">
+  {% for tag in authority.tags.all %}<span class="badge" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% endfor %}
+</div>
+{% endif %}
+
+{% comment %}
+Only a validated row is ever cited by a generated obligation. Said in words on
+the page, because a draft contact list reads exactly like a checked one.
+{% endcomment %}
+{% if not authority.counts_in_reports %}
+<div class="alert alert-warning" role="alert">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "This authority is not validated, so no generated obligation cites it." %}</strong>
+  </div>
+  <div class="mt-2 small">{% trans "A portal URL nobody has checked is worse than an empty catalogue, because the dashboard then reads green. Validate the row through the lifecycle above once the channel and the procedure have been verified." %}</div>
+</div>
+{% endif %}
+
+{% if not authority.portal_url and not authority.contact_email and not authority.contact_phone %}
+<div class="alert alert-warning" role="alert">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-plug fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "No filing channel is recorded for this authority." %}</strong>
+  </div>
+  <div class="mt-2 small">{% trans "Preparing the portal, the mailbox and the emergency line is part of A.5.24 planning, not part of the response. Record at least one before an incident needs it." %}</div>
+</div>
+{% endif %}
+
+{% comment %}
+The channel strip : what an operator on a statutory clock came here for.
+{% endcomment %}
+<div class="card mb-4 kpi-tile{% if authority.counts_in_reports %} kpi-tile--info{% else %} kpi-tile--neutral{% endif %}">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+
+      <span class="kpi-tile__icon{% if authority.counts_in_reports %} kpi-tile__icon--info{% else %} kpi-tile__icon--neutral{% endif %}" style="flex:none">
+        <i class="bi bi-bank" aria-hidden="true"></i>
+      </span>
+
+      <div class="min-w-0" style="flex:2 1 16rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Portal URL" %}</div>
+        <div class="mt-1">
+          {% if authority.portal_url %}
+          <a href="{{ authority.portal_url }}" class="btn btn-sm btn-primary" target="_blank" rel="noopener noreferrer">
+            <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>{% trans "Open the notification portal" %}
+          </a>
+          <div class="text-muted small mt-1 text-break">{{ authority.portal_url }}</div>
+          {% else %}
+          <span class="text-muted">{% trans "No portal recorded." %}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="min-w-0" style="flex:1 1 12rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Contact email" %}</div>
+        <div class="fw-semibold mt-1 text-break">
+          {% if authority.contact_email %}
+          <a href="mailto:{{ authority.contact_email }}" class="cell-link">{{ authority.contact_email }}</a>
+          {% else %}
+          <span class="text-muted fw-normal">-</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="min-w-0" style="flex:1 1 10rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Contact phone" %}</div>
+        <div class="fw-semibold mt-1">
+          {% if authority.contact_phone %}
+          <a href="tel:{{ authority.contact_phone }}" class="cell-link">{{ authority.contact_phone }}</a>
+          {% else %}
+          <span class="text-muted fw-normal">-</span>
+          {% endif %}
+        </div>
+        {% if authority.contact_phone %}
+        <div class="text-muted small">{% trans "Several CSIRTs expect a call before the written filing." %}</div>
+        {% endif %}
+      </div>
+
+      <div class="min-w-0" style="flex:1 1 10rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Notification language" %}</div>
+        <div class="fw-semibold mt-1">{{ authority.notification_language|default:"-" }}</div>
+        {% if authority.notification_language %}
+        <div class="text-muted small">{% trans "A filing rejected for language is a filing not made, and the clock does not stop." %}</div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  {# LEFT COLUMN #}
+  <div class="col-lg-8">
+
+    {# 1. The procedure : the field that earns the entity its place #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-list-ol me-1" aria-hidden="true"></i>{% trans "Filing procedure" %}</span></div>
+        <div class="mt-2">
+          {% if authority.procedure %}
+            {{ authority.procedure|linebreaksbr }}
+          {% else %}
+            <p class="text-muted small mb-0">{% trans "No procedure recorded : which form, which attachments, who signs, what the acknowledgement looks like, and what the escalation path is when the portal is down." %}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# 2. The obligation templates filed with this body #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-file-earmark-ruled me-1" aria-hidden="true"></i>{% trans "Obligation templates" %} <span class="badge text-bg-secondary">{{ templates|length }}</span></span></div>
+        <p class="text-muted small mt-2 mb-0">{% trans "The catalogue rules that file with this body, in generation order : the 24-hour early warning above the 72-hour notification rather than alphabetically." %}</p>
+        <div class="table-responsive mt-3">
+          <table class="table table-hover mb-0" style="font-size:.875rem">
+            <thead>
+              <tr>
+                <th>{% trans "Name" %}</th>
+                <th>{% trans "Regime" %}</th>
+                <th>{% trans "Recipient" %}</th>
+                <th>{% trans "Clock" %}</th>
+                <th>{% trans "Status" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for obligation_template in templates %}
+              <tr>
+                <td>
+                  <span class="cell-stack">
+                    <a href="{% url 'incidents:obligation-template-detail' obligation_template.pk %}" class="cell-link">{{ obligation_template.name }}</a>
+                    {% if obligation_template.legal_reference %}<span class="cell-sub">{{ obligation_template.legal_reference }}</span>{% endif %}
+                  </span>
+                </td>
+                <td>{{ obligation_template.get_regime_display }}</td>
+                <td>{{ obligation_template.get_recipient_kind_display }}</td>
+                <td>{{ obligation_template.clock_summary }}</td>
+                <td>{% workflow_badge obligation_template %}</td>
+              </tr>
+              {% empty %}
+              {% empty_state title=_("No obligation template files with this authority yet.") message=_("A template is the legal rule an obligation is generated from : the regime, the clock it runs on and the conditions that make it apply. Without one, nothing is ever filed with this body automatically.") colspan=5 %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {# RIGHT COLUMN (sticky sidebar) #}
+  <div class="col-lg-4" style="position:sticky;top:1rem;align-self:flex-start">
+
+    {# Status #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
+          <dd class="mb-0">
+            {% workflow_badge authority %}
+            {% if authority.counts_in_reports %}
+            <span class="badge text-bg-success ms-1"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{% trans "Citable by generation" %}</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# Identity and jurisdiction #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-building me-1" aria-hidden="true"></i>{% trans "The body" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Name" %}</dt>
+          <dd class="mb-3">{{ authority.name }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Short name" %}</dt>
+          <dd class="mb-3">{% if authority.short_name %}<span class="badge text-bg-secondary">{{ authority.short_name }}</span>{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Authority type" %}</dt>
+          <dd class="mb-3">{{ authority.get_authority_type_display }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Jurisdiction" %}</dt>
+          <dd class="mb-0">
+            {% if authority.jurisdiction_country %}
+              <i class="bi bi-geo me-1" aria-hidden="true"></i>{{ authority.jurisdiction_country }}
+            {% else %}
+              <span class="text-muted">{% trans "Not jurisdiction-specific." %}</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# Regimes covered #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-journals me-1" aria-hidden="true"></i>{% trans "Regimes covered" %}</span></div>
+        <div class="mt-2 mb-3">
+          <div class="text-muted small mb-1">{% trans "Primary regime" %}</div>
+          <span class="badge text-bg-primary">{{ authority.get_primary_regime_display }}</span>
+        </div>
+        <div class="mb-3">
+          <div class="text-muted small mb-1">{% trans "Additional regimes" %}</div>
+          <div class="d-flex flex-wrap gap-1">
+            {% for regime in authority.additional_regimes %}
+            <span class="badge text-bg-secondary">{{ regime }}</span>
+            {% empty %}
+            <span class="text-muted">-</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% comment %}
+        A single body frequently wears two hats : the same authority can be the
+        competent authority and the national CSIRT. Matching keys off each
+        template's own regime, never off these fields.
+        {% endcomment %}
+        <p class="text-muted small mb-0">{% trans "A display and filtering aid only : an obligation is matched on its template's own regime, never on this list." %}</p>
+      </div>
+    </div>
+
+    {# Obligations citing this body #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead detail-subhead--action mt-0 pt-0 border-0">
+          <span><i class="bi bi-send-check me-1" aria-hidden="true"></i>{% trans "Obligations filed with this body" %}<span class="badge text-bg-secondary ms-2">{{ obligation_count }}</span></span>
+          {% if obligation_count %}
+          <a href="{{ obligations_url }}" class="btn btn-sm btn-outline-secondary">{% trans "View all" %}</a>
+          {% endif %}
+        </div>
+        {% if not obligation_count %}
+        <p class="text-muted small mb-0 mt-2">{% trans "No incident has owed a filing to this body yet." %}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Record #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-folder2-open me-1" aria-hidden="true"></i>{% trans "Record" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
+          <dd class="mb-3">{{ authority.version }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
+          <dd class="mb-3">{% if authority.created_by %}{% user_badge authority.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
+          <dd class="mb-3">{{ authority.created_at|date:"d/m/Y H:i" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>
+          <dd class="mb-0">{{ authority.updated_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load table_tags %}
+{% load accounts_tags %}
+{% load help_tags %}
+
+{% comment %}
+The obligations-due register : what the organisation owes, to whom, by when,
+and how late. It is read by an operator on a 24-hour clock, so every one of
+those four answers is on the row itself and none of them costs a click.
+
+Two things are deliberate here :
+
+- The deadline facets are a strip of chips ABOVE the table card, not inside it.
+  `includes/list_toolbar.html` must stay the immediate previous sibling of
+  `.table-responsive`, because that adjacency is what base.html keys the sticky
+  table header and the overflow rule on.
+- There is no create button. An obligation belongs to an incident and is
+  created from it (`incidents:notification-create` takes an `incident_pk`) :
+  a register-level button would have nowhere to attach the row.
+{% endcomment %}
+
+{% block title %}{% trans "Notification obligations" %} - Cairn{% endblock %}
+
+{% block content %}
+{% comment %}
+The title is the sidebar's own label for this register (`core/navigation.py`),
+never a second name for the same page : the breadcrumb leaf is read from that
+map, and a header that disagrees with the crumb above it reads as two pages.
+{% endcomment %}
+{% page_header _("Notification obligations") subtitle=_("What we owe, to whom, and by when.") nav="incidents:notification-list" accent="incidents" %}
+{% endpage_header %}
+{% help_modal "incidents.notification_list" %}
+
+<div class="list-layout">
+  <div class="list-main">
+    {% comment %}
+    The four facets that are not field values : two are windows on a computed
+    clock, and two are the undated buckets the module refuses to merge. They
+    are plain links, so the strip works with JavaScript unavailable; the script
+    at the foot of the page upgrades them to an in-place refresh that keeps the
+    search box, the filters and the page position.
+    {% endcomment %}
+    <div id="deadline-facets" class="deadline-facets d-flex flex-wrap align-items-center gap-2 mb-3" data-deadline="{{ deadline_facet }}">
+      <span class="text-muted text-uppercase" style="font-size:.72rem;letter-spacing:.06em">{% trans "Deadline" %}</span>
+      <a href="{{ request.path }}" data-deadline="" class="btn btn-sm {% if deadline_facet %}btn-outline-secondary{% else %}btn-primary{% endif %}"{% if not deadline_facet %} aria-current="true"{% endif %}>{% trans "Any" %}</a>
+      {% for facet in deadline_facets %}
+      <a href="?deadline={{ facet.value|urlencode }}" data-deadline="{{ facet.value }}" class="btn btn-sm {% if facet.active %}btn-primary{% else %}btn-outline-secondary{% endif %}"{% if facet.active %} aria-current="true"{% endif %}>{{ facet.label }}</a>
+      {% endfor %}
+    </div>
+
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "incident" "Incident" col="incident" %}
+              {% sortable_th "regime" "Regime" col="regime" %}
+              {% sortable_th "recipient" "Recipient" col="recipient" %}
+              {% sortable_th "decision" "Decision" col="decision" %}
+              {% sortable_th "due_at" "Due at" col="due_at" %}
+              <th data-col="countdown" style="white-space:nowrap">{% trans "Time left" %}</th>
+              {% sortable_th "status" "Status" col="status" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'incidents:notification-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "incidents/notification_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+
+<script>
+  /* The deadline facet is a query parameter the shared list refresh knows
+     nothing about : gatherListParams() reads the filter form, and none of these
+     six values is a field on it. Left alone, typing one character in the search
+     box would widen the register from "overdue" back to everything, silently,
+     which on this page is the difference between a duty being seen and missed.
+     The wrapper reads the chosen facet from the DOM at call time, so it stays
+     correct across hx-boost navigations and is installed exactly once. */
+  (function install() {
+    if (!window.gatherListParams) {
+      document.addEventListener('DOMContentLoaded', install);
+      return;
+    }
+    if (!window.gatherListParams.deadlineAware) {
+      var inner = window.gatherListParams;
+      var wrapped = function () {
+        var params = inner();
+        params.delete('deadline');
+        var bar = document.getElementById('deadline-facets');
+        var value = bar ? (bar.dataset.deadline || '') : '';
+        if (value) params.set('deadline', value);
+        return params;
+      };
+      wrapped.deadlineAware = true;
+      window.gatherListParams = wrapped;
+    }
+    if (!document.body.dataset.deadlineFacetsBound) {
+      document.body.dataset.deadlineFacetsBound = 'true';
+      document.body.addEventListener('click', function (event) {
+        var chip = event.target.closest('#deadline-facets a[data-deadline]');
+        if (!chip || !window.refreshList) return;
+        event.preventDefault();
+        var bar = document.getElementById('deadline-facets');
+        var value = chip.dataset.deadline;
+        /* Clicking the active chip clears it : a facet you cannot leave is a
+           filter that hides rows without saying so. */
+        bar.dataset.deadline = value === bar.dataset.deadline ? '' : value;
+        var current = bar.dataset.deadline;
+        bar.querySelectorAll('a[data-deadline]').forEach(function (link) {
+          var active = link.dataset.deadline === current;
+          link.classList.toggle('btn-primary', active);
+          link.classList.toggle('btn-outline-secondary', !active);
+          if (active) { link.setAttribute('aria-current', 'true'); }
+          else { link.removeAttribute('aria-current'); }
+        });
+        window.refreshList();
+      });
+    }
+  })();
+</script>
+{% endblock %}

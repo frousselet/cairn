@@ -241,6 +241,8 @@
       --module-accent-assets-soft:  var(--accent-soft);
       --module-accent-context:      var(--accent);
       --module-accent-context-soft: var(--accent-soft);
+      --module-accent-incidents:    var(--accent);
+      --module-accent-incidents-soft:var(--accent-soft);
       --module-accent-reports:      var(--accent);
       --module-accent-reports-soft: var(--accent-soft);
       --module-accent-accounts:     var(--accent);
@@ -5651,6 +5653,25 @@
       <a href="{% url 'compliance:action-plan-list' %}" class="sidebar-link">
         <i class="bi bi-card-checklist"></i> <span class="sidebar-link-text">{% trans "Action plans" %}</span>
         <span class="sidebar-tooltip">{% trans "Action plans" %}</span>
+      </a>
+
+      {# ── Incidents ───────────────────────────────────── #}
+      <div class="sidebar-section">{% trans "Incidents" %}</div>
+      <a href="{% url 'incidents:incident-list' %}" class="sidebar-link">
+        <i class="bi bi-fire"></i> <span class="sidebar-link-text">{% trans "Incidents" %}</span>
+        <span class="sidebar-tooltip">{% trans "Incidents" %}</span>
+      </a>
+      <a href="{% url 'incidents:event-list' %}" class="sidebar-link">
+        <i class="bi bi-broadcast"></i> <span class="sidebar-link-text">{% trans "Security events" %}</span>
+        <span class="sidebar-tooltip">{% trans "Security events" %}</span>
+      </a>
+      <a href="{% url 'incidents:notification-list' %}" class="sidebar-link">
+        <i class="bi bi-hourglass-split"></i> <span class="sidebar-link-text">{% trans "Notification obligations" %}</span>
+        <span class="sidebar-tooltip">{% trans "Notification obligations" %}</span>
+      </a>
+      <a href="{% url 'incidents:response-plan-list' %}" class="sidebar-link">
+        <i class="bi bi-clipboard-pulse"></i> <span class="sidebar-link-text">{% trans "Response plans" %}</span>
+        <span class="sidebar-tooltip">{% trans "Response plans" %}</span>
       </a>
 
       {# ── Administration ──────────────────────────────── #}
