@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Bounded natural-language question engine.
 
 Pipeline: one constrained planning call turns the question into a short plan

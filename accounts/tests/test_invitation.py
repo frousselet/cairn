@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """User provisioning via the invitation flow: unusable password, single-use
 activation link, and the DRF ``users/invite`` endpoint."""
 

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Model-facing service for the rebuilt lifecycle engine.
 
 :mod:`core.lifecycle` is pure schema/logic with no model imports. This thin

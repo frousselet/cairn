@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Public, unauthenticated Trust Center web views.
 
 These views intentionally omit ``LoginRequiredMixin`` (there is no global

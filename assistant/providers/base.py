@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Provider-neutral contract for the Ask Cairn assistant backend.
 
 The assistant only needs two operations from any LLM backend: a chat

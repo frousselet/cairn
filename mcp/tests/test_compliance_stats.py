@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for MCP compliance tools stats/status propagation.
 
 Verifies that creating/updating/deleting findings and assessment results

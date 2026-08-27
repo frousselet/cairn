@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Shared compliance scoring.
 
 Single source of truth for the framework compliance percentages shown on

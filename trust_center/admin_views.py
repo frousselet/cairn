@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Internal curation UI for the Trust Center.
 
 Lives under ``/trust-center/manage/`` (deliberately NOT under ``/trust/`` so the

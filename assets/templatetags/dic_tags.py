@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 from django import template
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _

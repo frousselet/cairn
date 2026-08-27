@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 from django.urls import path
 
 from mcp.api.views_mcp import McpEndpointView, mcp_metadata_view

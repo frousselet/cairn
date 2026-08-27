@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Querysets implementing the public "published" gate for trust center entities.
 
 ``published()`` returns entries that are individually live (their publication

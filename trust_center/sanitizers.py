@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Allowlist-based SVG sanitization for the public Trust Center.
 
 Logos (framework / supplier / company) are stored as raw SVG markup in

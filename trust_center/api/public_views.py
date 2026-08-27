@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Public, unauthenticated Trust Center API.
 
 All views here are AllowAny + anonymous-throttled and read exclusively from the

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 from trust_center.models.certification import TrustCenterCertification
 from trust_center.models.document import TrustCenterDocument
 from trust_center.models.document_request import DocumentRequest

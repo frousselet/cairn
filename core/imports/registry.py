@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Registry mapping an entity key to its :class:`EntityImporter` subclass."""
 
 _REGISTRY = {}

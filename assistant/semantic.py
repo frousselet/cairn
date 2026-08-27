@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Semantic search helpers: embed-text building and in-Python cosine ranking.
 
 The corpus here (a GRC instance's requirements) is small enough that a

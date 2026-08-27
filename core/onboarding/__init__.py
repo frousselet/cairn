@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """First-run onboarding: bootstrap an un-initialised Cairn instance.
 
 While the instance has no users (a brand-new database), the onboarding flow

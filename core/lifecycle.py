@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Standardised element lifecycles (rebuilt from scratch).
 
 A :class:`Lifecycle` is a declarative *schema* for one item type: an ordered set

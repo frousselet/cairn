@@ -51,4 +51,12 @@ Django 5.2 LTS, PostgreSQL 16, Django REST Framework, Django Channels + Redis (r
 
 ## Licence
 
-MIT
+Cairn is free software, licensed under the **GNU Affero General Public License, version 3 or (at your option) any later version** (`AGPL-3.0-or-later`). The full text is in [LICENSE](LICENSE).
+
+The AGPL is a network copyleft licence : if you run a modified version of Cairn and make it available to users over a network, you must offer those users the corresponding source of your modified version. Distributing a modified version triggers the same obligation.
+
+Every source file carries an `SPDX-License-Identifier: AGPL-3.0-or-later` header. Third-party files under `static/vendor/` keep their own upstream licences and are not covered by this notice.
+
+### Trademarks
+
+The licence covers the source code. It does not grant any right to the **Cairn** name, the logo or the visual identity in `docs/brand/`. A public fork or a hosted derivative must use a different name and its own branding.

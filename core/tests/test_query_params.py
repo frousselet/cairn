@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for the safe request-parameter coercion helpers and the list/detail
 endpoints that use them (issue #154).
 

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Lifecycle notification service: recipient resolution and dispatch.
 
 Creates one in-app :class:`~accounts.models.Notification` row per recipient

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Generic lazy-loaded history panel endpoint for any lifecycle element.
 
 Returns the rendered timeline partial consumed by the off-canvas history panel.

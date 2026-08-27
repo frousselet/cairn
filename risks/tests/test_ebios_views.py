@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for the EBIOS RM GUI views (workshop transitions, detail pages, forms).
 
 Covers:

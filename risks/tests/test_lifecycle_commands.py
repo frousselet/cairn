@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for the management commands that drive the risks lifecycle:
 
 - expire_risk_acceptances : flip ACTIVE acceptances past valid_until to EXPIRED

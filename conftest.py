@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Root pytest configuration.
 
 Test settings disable migrations (`MIGRATION_MODULES = _DisableMigrations()`)

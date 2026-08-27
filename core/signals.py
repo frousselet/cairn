@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Signal handlers that broadcast dashboard refresh events via Channels.
 
 When any domain model is created, updated, or deleted, we notify all

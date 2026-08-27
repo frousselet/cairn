@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Smoke tests for the EBIOS RM REST endpoints (workshops W0 and W1).
 
 These tests verify the URL routing, basic authentication and the standard

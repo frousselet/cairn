@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Risk-driven applicability (Framework.applicability_managed_by_risks).
 
 When a framework manages applicability by risks, a requirement is applicable iff

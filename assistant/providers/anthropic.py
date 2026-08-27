@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Anthropic (Claude) backend for the assistant (native Messages API).
 
 Claude is NOT OpenAI-compatible : it uses ``POST /v1/messages`` with an

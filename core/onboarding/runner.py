@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Run database migrations and the demo seed in the background, with progress.
 
 Both jobs run on a worker thread and publish their progress to the **shared

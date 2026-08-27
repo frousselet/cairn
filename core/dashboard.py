@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Dashboard widget registry - single source of truth for the configurable home dashboard.
 
 The home dashboard is an Apple-style grid of widgets. Each widget is declared

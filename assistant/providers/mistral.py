@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Mistral AI backend for the assistant (third-party, EU-hosted API).
 
 Mistral exposes an OpenAI-compatible chat completions endpoint, so this client

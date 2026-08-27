@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Refresh the MITRE ATT&CK catalogue from a local JSON file.
 
 Usage:

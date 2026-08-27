@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for the first-run onboarding flow.
 
 The onboarding redirect middleware is disabled for the suite at large

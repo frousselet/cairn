@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Central navigation hierarchy, mirroring the main sidebar menu.
 
 Single source of truth used by the ``{% page_header %}`` tag to build the

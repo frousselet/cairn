@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """The "Last modified by <user> on <date>" line in the detail-page header.
 
 Rendered by the shared {% page_header %} tag (core.templatetags.ui) for any

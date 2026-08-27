@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Persistent models for the Ask Cairn assistant.
 
 The only persistent entity is user feedback on an answer. Like ``AccessLog``,

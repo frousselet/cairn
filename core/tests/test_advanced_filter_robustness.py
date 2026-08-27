@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Robustness tests for the shared AdvancedFilterMixin ?rule= builder (#155).
 
 A malformed rule (a non-dict, a non-UUID value for a relation field, an

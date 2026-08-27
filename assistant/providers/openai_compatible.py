@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """OpenAI-compatible chat completions backend for the assistant.
 
 Any provider that implements the OpenAI ``/chat/completions`` and

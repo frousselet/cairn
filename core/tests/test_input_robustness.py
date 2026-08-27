@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Robustness tests for assorted unhandled-exception entry points (#158).
 
 Each endpoint below raised an unhandled exception on crafted GUI input,

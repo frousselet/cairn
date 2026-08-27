@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Generic upload -> preview -> confirm wizard for every registered importer."""
 
 import logging

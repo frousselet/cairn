@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """ASGI config for Cairn project.
 
 Exposes HTTP via Django's standard ASGI handler and WebSocket

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Unit tests specific to the generic OpenAI-compatible provider client.
 
 The shared request/response handling is exercised through the Mistral

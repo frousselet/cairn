@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """``batch_create_*`` supports an idempotent upsert via ``match_on`` so a
 partially failed import can be replayed without creating duplicates."""
 

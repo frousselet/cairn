@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Views for the first-run onboarding flow.
 
 All views re-check :func:`core.onboarding.state.is_first_run` server-side so the

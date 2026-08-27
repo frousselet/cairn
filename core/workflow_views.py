@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Generic UI endpoint performing a lifecycle transition on any element."""
 
 from django.apps import apps

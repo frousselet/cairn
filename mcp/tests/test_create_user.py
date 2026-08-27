@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """The MCP ``create_user`` tool provisions accounts via the invitation flow
 (unusable password, returned activation link) and is gated by
 ``system.users.create``. ``get_me`` surfaces the caller's capabilities."""

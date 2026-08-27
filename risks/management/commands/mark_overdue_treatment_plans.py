@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Flip in-flight treatment plans to OVERDUE once their target_date has passed.
 
 Intended to be run daily by cron alongside expire_risk_acceptances.

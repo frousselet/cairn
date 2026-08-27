@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Guard against a class of i18n bug: a ``{% trans %}`` string dropped straight
 into a single-quoted JavaScript string literal. When the translation contains an
 apostrophe (very common in French, e.g. "l'URL", "d'audit"), the apostrophe

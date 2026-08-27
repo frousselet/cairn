@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Surfacing scope managers (the responsible users) to the assistant.
 
 Regression for feedback: "Qui est responsable du périmètre X ?" found the

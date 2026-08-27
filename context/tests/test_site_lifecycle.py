@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for the site operational lifecycle (standardised core.lifecycle engine).
 
 Covers the registered schema, the governance flags, the model transitions, the

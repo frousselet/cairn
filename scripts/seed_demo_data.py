@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Seed the dev database with fictional demo data for Voltara Energy.
 
 Voltara Energy is an imaginary mid-size European renewable energy operator
