@@ -47,7 +47,7 @@ from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel
-from core.lifecycle import LifecycleError
+from core.lifecycle import DomainRefusalError
 from incidents.constants import (
     BREACH_STATES,
     REFERENCE_PREFIXES,
@@ -544,7 +544,7 @@ class PersonalDataBreach(BaseModel):
                 if not (getattr(self, field) or "").strip()
             ]
             if missing:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Confirming a breach requires the full Art. 33(3)(a) to "
                         "(d) content : nature, DPO contact, likely consequences "
@@ -554,7 +554,7 @@ class PersonalDataBreach(BaseModel):
             # G-02 : `None` is not a verdict. The DPO is made to say yes or no,
             # in writing, because Art. 34(1) turns on it.
             if self.high_risk_to_rights is None:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Confirming a breach requires the Art. 34 determination "
                         "on whether it is likely to result in a high risk to "
@@ -567,7 +567,7 @@ class PersonalDataBreach(BaseModel):
                 self.article_34_exemption != Art34Ground.NONE
                 and not self.article_34_exemption_justification.strip()
             ):
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "An Art. 34(3) exemption must carry its written "
                         "justification."
@@ -580,7 +580,7 @@ class PersonalDataBreach(BaseModel):
         # real incident. Refused for any row the immutable ledger shows has ever
         # been opened. Mirrors the incident's G-07.
         if current == STEP_ARCHIVED and target == STEP_DRAFT and self._has_left_draft():
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "A qualification that was opened cannot be restored to "
                     "draft."

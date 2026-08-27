@@ -48,7 +48,7 @@ from django.utils.translation import pgettext_lazy
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel
-from core.lifecycle import LifecycleError, LifecycleProtectedError
+from core.lifecycle import DomainRefusalError, LifecycleProtectedError
 from incidents.constants import (
     EVIDENCE_STATES,
     REFERENCE_PREFIXES,
@@ -723,18 +723,18 @@ class IncidentEvidence(BaseModel):
         # no stated origin is not an acquisition.
         if target == STEP_COLLECTED:
             if not self.evidence_type or self.collected_at is None:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Registering an acquisition requires an evidence type "
                         "and a collection timestamp."
                     ))
                 )
             if self.collected_by_id is None:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_("Registering an acquisition requires a named acquirer."))
                 )
             if not self.source_support_asset_id and not self.source_description.strip():
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Registering an acquisition requires its origin : a "
                         "registered support asset or a described source."
@@ -744,7 +744,7 @@ class IncidentEvidence(BaseModel):
         # GE-02 (RG-INC-21) : there is no path to `secured` without both.
         if target == STEP_SECURED:
             if not self.content_hash.strip() or not self.collection_method.strip():
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Sealing evidence requires a content hash and a stated "
                         "collection method. An artefact with a perfect hash and "
@@ -754,7 +754,7 @@ class IncidentEvidence(BaseModel):
 
         # GE-03 : releasing an artefact to nobody in particular is not a release.
         if target == STEP_RELEASED and not details["counterparty"]:
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "Releasing evidence requires the named person receiving "
                     "custody of it."
@@ -765,28 +765,28 @@ class IncidentEvidence(BaseModel):
         # never sees the confirmation modal is refused identically.
         if target == STEP_DESTROYED:
             if self.legal_hold:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "This evidence item is under legal hold and cannot be "
                         "destroyed, whatever its retention date."
                     ))
                 )
             if self.retention_until is None:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Destroying evidence requires a retention date, and it "
                         "must have passed."
                     ))
                 )
             if not self.retention_expired:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "The retention period of this evidence item has not "
                         "expired yet."
                     ))
                 )
             if not details["counterparty"]:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Destroying evidence requires the named disposal "
                         "service, witness or person who performed it."
@@ -797,7 +797,7 @@ class IncidentEvidence(BaseModel):
         # A.5.28 row back into the single deletable step. It is refused for any
         # row the immutable ledger shows has ever left `draft`.
         if current == STEP_ARCHIVED and target == STEP_DRAFT and self._has_left_draft():
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "An evidence item that was registered as collected cannot "
                     "be restored to a draft registration."
@@ -1351,7 +1351,7 @@ class EvidenceCustodyEvent(models.Model):
         transition is reachable, so the fallback chain always resolves.
         """
         if actor is None:
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "Recording a custody act requires the acting user : an "
                     "unattributed handling act is not a chain of custody."

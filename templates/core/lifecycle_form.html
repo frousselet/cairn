@@ -130,12 +130,12 @@
     var msgs = [], codes = stepCodes();
     var drafts = model.steps.filter(function (s) { return s.kind === 'draft'; }).length;
     var archived = model.steps.filter(function (s) { return s.kind === 'archived'; }).length;
-    if (drafts !== 1) { msgs.push('{% trans "Exactly one Draft step is required." %}'); }
-    if (archived < 1) { msgs.push('{% trans "At least one Archived step is required." %}'); }
-    if (new Set(codes).size !== codes.length) { msgs.push('{% trans "Step codes must be unique." %}'); }
+    if (drafts !== 1) { msgs.push('{% filter escapejs %}{% trans "Exactly one Draft step is required." %}{% endfilter %}'); }
+    if (archived < 1) { msgs.push('{% filter escapejs %}{% trans "At least one Archived step is required." %}{% endfilter %}'); }
+    if (new Set(codes).size !== codes.length) { msgs.push('{% filter escapejs %}{% trans "Step codes must be unique." %}{% endfilter %}'); }
     model.transitions.forEach(function (t) {
-      if (t.source !== '*' && codes.indexOf(t.source) === -1) { msgs.push('{% trans "Transition from an unknown step." %}'); }
-      if (codes.indexOf(t.target) === -1) { msgs.push('{% trans "Transition to an unknown step." %}'); }
+      if (t.source !== '*' && codes.indexOf(t.source) === -1) { msgs.push('{% filter escapejs %}{% trans "Transition from an unknown step." %}{% endfilter %}'); }
+      if (codes.indexOf(t.target) === -1) { msgs.push('{% filter escapejs %}{% trans "Transition to an unknown step." %}{% endfilter %}'); }
     });
     var uniq = []; msgs.forEach(function (m) { if (uniq.indexOf(m) === -1) uniq.push(m); });
     validEl.innerHTML = uniq.length

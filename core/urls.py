@@ -61,6 +61,7 @@ urlpatterns = [
     path("api/v1/assets/", include("assets.api.urls")),
     path("api/v1/compliance/", include("compliance.api.urls")),
     path("api/v1/risks/", include("risks.api.urls")),
+    path("api/v1/incidents/", include("incidents.api.urls")),
     path("api/v1/reports/", include("reports.api.urls")),
     path("api/v1/trust-center/", include("trust_center.api.urls")),
     path("api/v1/assistant/", include("assistant.api.urls")),
