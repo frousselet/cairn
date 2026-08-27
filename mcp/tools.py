@@ -4396,17 +4396,45 @@ def _register_compliance_tools(server):
     )
 
     Finding = _get_model("compliance", "Finding")
-    fi_fields = ["id", "reference", "assessment_id", "finding_type",
+    fi_fields = ["id", "reference", "assessment_id", "assessment_name", "source",
+                 "finding_type",
                  "description", "recommendation", "evidence",
-                 "assessor_id", "created_at"]
-    fi_writable = ["assessment_id", "finding_type", "description",
-                   "recommendation", "evidence", "assessor_id"]
+                 "assessor_id", "assessor_name",
+                 "effectiveness_reviewed_at", "effectiveness_reviewed_by_id",
+                 "effectiveness_reviewed_by_name", "effectiveness_verdict",
+                 "created_at"]
+    fi_writable = ["assessment_id", "source", "finding_type", "description",
+                   "recommendation", "evidence", "assessor_id",
+                   "effectiveness_reviewed_at", "effectiveness_reviewed_by_id",
+                   "effectiveness_verdict"]
 
     fi_field_overrides = {
         "description": _html_field("Finding description"),
-        "recommendation": _html_field("Auditor recommendation"),
+        "recommendation": _html_field("Recommendation"),
         "evidence": _html_field("Evidence presented"),
-        "assessor_id": {"type": "string", "description": "UUID of the assessor (user)"},
+        "assessor_id": {
+            "type": "string",
+            "description": (
+                "UUID of the user who raised the nonconformity. Required when "
+                "source is 'audit', optional otherwise."
+            ),
+        },
+        "source": {
+            "type": "string",
+            "description": (
+                "What surfaced the nonconformity. 'audit' additionally requires "
+                "assessment_id and assessor_id."
+            ),
+            "enum": ["audit", "incident", "management_review", "monitoring", "complaint"],
+        },
+        "effectiveness_verdict": {
+            "type": "string",
+            "description": (
+                "ISO 27001 clause 10.2 d) : whether the corrective action worked. "
+                "Requires effectiveness_reviewed_at."
+            ),
+            "enum": ["effective", "partially_effective", "not_effective"],
+        },
         "finding_type": {
             "type": "string",
             "description": (
@@ -4425,22 +4453,27 @@ def _register_compliance_tools(server):
     fi_filter_props = {
         "assessment_id": {"type": "string", "description": "Filter by assessment_id"},
         "finding_type": {"type": "string", "description": "Filter by finding_type"},
+        "source": {"type": "string", "description": "Filter by source"},
+        "effectiveness_verdict": {
+            "type": "string", "description": "Filter by effectiveness_verdict"
+        },
     }
     server.register_tool(
         "list_findings",
         "List findings with optional search and filters",
         _list_schema(fi_filter_props),
-        require_perm("compliance.assessment.read")(
+        require_perm("compliance.finding.read")(
             _list_handler(Finding, fi_fields, ["reference", "description"],
-                          ["assessment_id", "finding_type"], scope_filtered=False)
+                          ["assessment_id", "finding_type", "source",
+                           "effectiveness_verdict"], scope_filtered=True)
         ),
     )
     server.register_tool(
         "get_finding",
         "Get a finding by ID",
         _id_schema(),
-        require_perm("compliance.assessment.read")(
-            _get_handler(Finding, fi_fields, scope_filtered=False)
+        require_perm("compliance.finding.read")(
+            _get_handler(Finding, fi_fields, scope_filtered=True)
         ),
     )
     def _delete_finding(user, arguments):
@@ -4460,7 +4493,7 @@ def _register_compliance_tools(server):
         "delete_finding",
         "Delete a finding",
         _id_schema(),
-        require_perm("compliance.assessment.delete")(_delete_finding),
+        require_perm("compliance.finding.delete")(_delete_finding),
     )
 
     # Custom create handler with requirement_ids M2M support
@@ -4521,7 +4554,7 @@ def _register_compliance_tools(server):
         "create_finding",
         "Create a new audit finding",
         _obj_schema(fi_create_props),
-        require_perm("compliance.assessment.create")(_create_finding),
+        require_perm("compliance.finding.create")(_create_finding),
     )
 
     # Custom update handler with requirement_ids M2M support
@@ -4580,7 +4613,7 @@ def _register_compliance_tools(server):
         "update_finding",
         "Update an existing audit finding",
         _obj_schema(fi_update_props, ["id"]),
-        require_perm("compliance.assessment.update")(_update_finding),
+        require_perm("compliance.finding.update")(_update_finding),
     )
 
 

@@ -1367,7 +1367,7 @@ class AssessmentResultsTableBodyView(LoginRequiredMixin, PermissionRequiredMixin
 
 class FindingCreateView(EditableAssessmentGuardMixin, LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = Finding
-    permission_required = "compliance.assessment.create"
+    permission_required = "compliance.finding.create"
     form_class = FindingCreateForm
     template_name = "compliance/finding_form.html"
     modal_template_name = "compliance/finding_form_modal.html"
@@ -1381,6 +1381,7 @@ class FindingCreateView(EditableAssessmentGuardMixin, LoginRequiredMixin, Permis
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["assessment"] = self.get_assessment()
+        kwargs["raised_by"] = self.request.user
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -1389,11 +1390,8 @@ class FindingCreateView(EditableAssessmentGuardMixin, LoginRequiredMixin, Permis
         return ctx
 
     def form_valid(self, form):
-        assessment = self.get_assessment()
-        form.instance.assessment = assessment
-        form.instance.assessor = self.request.user
         response = super().form_valid(form)
-        assessment.apply_findings_to_results()
+        self.get_assessment().apply_findings_to_results()
         return response
 
     def get_success_url(self):
@@ -1405,7 +1403,7 @@ class FindingCreateView(EditableAssessmentGuardMixin, LoginRequiredMixin, Permis
 
 class FindingUpdateView(EditableAssessmentGuardMixin, LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UpdateView):
     model = Finding
-    permission_required = "compliance.assessment.update"
+    permission_required = "compliance.finding.update"
     scope_parent_lookup = "assessment__scopes"
     form_class = FindingUpdateForm
     template_name = "compliance/finding_form.html"
@@ -1441,7 +1439,7 @@ class FindingUpdateView(EditableAssessmentGuardMixin, LoginRequiredMixin, Permis
 
 class FindingDeleteView(EditableAssessmentGuardMixin, LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, DeleteView):
     model = Finding
-    permission_required = "compliance.assessment.delete"
+    permission_required = "compliance.finding.delete"
     scope_parent_lookup = "assessment__scopes"
     template_name = "compliance/confirm_delete.html"
 
@@ -1474,7 +1472,7 @@ class FindingDeleteView(EditableAssessmentGuardMixin, LoginRequiredMixin, Permis
 
 class FindingsTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """Return the findings table body partial for HTMX refresh."""
-    permission_required = "compliance.assessment.read"
+    permission_required = "compliance.finding.read"
 
     def get(self, request, pk):
         from django.template.loader import render_to_string
@@ -1950,7 +1948,7 @@ class RiskPreviewView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
 
 class FindingPreviewView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     """Return a partial HTML preview of a finding for the offcanvas drawer."""
-    permission_required = "compliance.assessment.read"
+    permission_required = "compliance.finding.read"
 
     model = Finding
     template_name = "compliance/_finding_preview.html"

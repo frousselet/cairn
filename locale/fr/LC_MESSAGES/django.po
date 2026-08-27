@@ -11900,3 +11900,75 @@ msgstr "Relation"
 
 msgid "Are you sure you want to remove the sub-processor <strong>%(name)s</strong> from this supplier?"
 msgstr "Voulez-vous vraiment retirer le sous-délégataire <strong>%(name)s</strong> de ce fournisseur ?"
+
+msgid "Nonconformities"
+msgstr "Non-conformités"
+
+msgid "Raised by"
+msgstr "Constatée par"
+
+msgid "Effectiveness reviewed at"
+msgstr "Efficacité revue le"
+
+msgid "Effectiveness reviewed by"
+msgstr "Efficacité revue par"
+
+msgid "Effectiveness verdict"
+msgstr "Verdict d'efficacité"
+
+msgctxt "finding source"
+msgid "Audit"
+msgstr "Audit"
+
+msgctxt "finding source"
+msgid "Security incident"
+msgstr "Incident de sécurité"
+
+msgctxt "finding source"
+msgid "Management review"
+msgstr "Revue de direction"
+
+msgctxt "finding source"
+msgid "Monitoring"
+msgstr "Surveillance"
+
+msgctxt "finding source"
+msgid "Complaint"
+msgstr "Réclamation"
+
+msgctxt "finding"
+msgid "Effective"
+msgstr "Efficace"
+
+msgctxt "finding"
+msgid "Partially effective"
+msgstr "Partiellement efficace"
+
+msgctxt "finding"
+msgid "Not effective"
+msgstr "Inefficace"
+
+msgid "The audit that raised this nonconformity, when one did."
+msgstr "L'audit qui a constaté cette non-conformité, lorsqu'il y en a un."
+
+msgid "What surfaced this nonconformity."
+msgstr "Ce qui a mis au jour cette non-conformité."
+
+msgid "When the corrective action's effectiveness was reviewed."
+msgstr "Date à laquelle l'efficacité de l'action corrective a été revue."
+
+msgid ""
+"Whether the corrective action worked. An action plan reaching a done step "
+"proves it was implemented, never that it was effective."
+msgstr ""
+"Si l'action corrective a fonctionné. Un plan d'action atteignant une étape "
+"terminale prouve sa mise en oeuvre, jamais son efficacité."
+
+msgid "An audit finding must be linked to an assessment."
+msgstr "Un constat d'audit doit être rattaché à un audit."
+
+msgid "An audit finding must name who raised it."
+msgstr "Un constat d'audit doit nommer la personne qui l'a constaté."
+
+msgid "Recording an effectiveness verdict requires the date it was reviewed."
+msgstr "Enregistrer un verdict d'efficacité exige la date de la revue."

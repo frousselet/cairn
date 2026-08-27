@@ -195,6 +195,10 @@ PERMISSION_REGISTRY = {
             "actions": ["create", "read", "update", "delete", "approve", "validate"],
             "label": _("Compliance assessments"),
         },
+        "finding": {
+            "actions": ["create", "read", "update", "delete", "validate"],
+            "label": _("Nonconformities"),
+        },
         "mapping": {
             "actions": ["create", "read", "update", "delete"],
             "label": _("Inter-framework mappings"),

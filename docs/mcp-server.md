@@ -87,7 +87,9 @@ Additional tools:
 | `assessment_result` | No | assessment_id, requirement_id, compliance_status |
 | `requirement_mapping` | No | source_requirement_id, target_requirement_id, mapping_type |
 | `action_plan` | Yes | status, priority |
-| `finding` | No | assessment_id, finding_type |
+| `finding` | No | assessment_id, finding_type, source, effectiveness_verdict |
+
+> **Permission change.** `list_findings`, `get_finding`, `create_finding`, `update_finding` and `delete_finding` are gated by `compliance.finding.*` instead of `compliance.assessment.*`. Findings are now the organisation-wide nonconformity register rather than a child of an audit, so they carry their own feature. The upgrade migration grants `compliance.finding.<action>` to every group already holding `compliance.assessment.<action>`, so existing integrations keep working; a group created afterwards needs the new codenames explicitly. These tools are also scope-filtered now, where they previously returned every row on the instance.
 
 Additional tools:
 

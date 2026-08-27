@@ -298,7 +298,7 @@ class AssessmentResultViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
 class FindingViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     serializer_class = FindingSerializer
     permission_classes = [CompliancePermission]
-    permission_feature = "assessment"
+    permission_feature = "finding"
     scope_parent_lookup = "assessment__scopes"
 
     def get_queryset(self):
