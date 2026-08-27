@@ -13,6 +13,7 @@ from django.views import View
 
 from context.models.base import BaseModel
 from core.lifecycle import LifecycleError
+from core.scoping import object_in_scopes
 from core.transition_messages import transition_error_detail
 
 
@@ -34,14 +35,14 @@ class WorkflowTransitionView(LoginRequiredMixin, View):
             raise Http404
         obj = get_object_or_404(model_class, pk=pk)
 
-        # Scope guard (mirrors ScopeFilterMixin for scoped models).
+        # Scope guard. Resolved through core.scoping so a child row declaring
+        # `scope_parent_lookup` is guarded here too, and not only on the list
+        # and detail surfaces.
         user = request.user
         if not user.is_superuser:
             allowed_scopes = user.get_allowed_scope_ids()
-            if allowed_scopes is not None and hasattr(obj, "scopes"):
-                obj_scopes = set(obj.scopes.values_list("id", flat=True))
-                if obj_scopes and not (obj_scopes & set(allowed_scopes)):
-                    raise Http404
+            if allowed_scopes is not None and not object_in_scopes(obj, allowed_scopes):
+                raise Http404
 
         target = request.POST.get("target_status", "")
         comment = request.POST.get("comment", "").strip() or None

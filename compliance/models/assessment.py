@@ -503,6 +503,11 @@ class ComplianceAssessment(LegacyStatusMixin, ScopedModel):
 
 
 class AssessmentResult(models.Model):
+
+    # Scope is inherited from the parent : this model carries no `scopes` M2M.
+    # Declared on the model, not only on the views, so the generic workflow,
+    # history and MCP surfaces enforce it too (see core.scoping).
+    scope_parent_lookup = "assessment__scopes"
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     assessment = models.ForeignKey(
         ComplianceAssessment,

@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Cairn is now licensed under the GNU Affero General Public License v3 or later (`AGPL-3.0-or-later`) instead of MIT, with an SPDX header on every source file and a trademark notice in `README.md`.
 
+### Security
+
+- Child records that inherit their scopes from a parent (requirements, sections, assessment results, findings, requirement mappings) are no longer readable, transitionable or auditable outside the user's scopes: the generic workflow and history endpoints and the MCP list layer guarded only on a direct `scopes` relation and returned everything else unfiltered.
+
 ### Fixed
 
 - Column-header sorting on list pages works again: the table toolbar lost the `data-sort-view-key` marker the sort script needs, so header clicks were silently ignored.

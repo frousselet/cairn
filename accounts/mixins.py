@@ -3,6 +3,7 @@
 from django.urls import reverse
 
 from context.models import Scope
+from core.scoping import filter_queryset_by_scopes
 
 
 class HistoryUrlMixin:
@@ -305,12 +306,6 @@ class ScopeFilterMixin:
         if scope_ids is None:
             return qs
 
-        model = qs.model
-        if model is Scope or (hasattr(model, "_meta") and model._meta.label == "context.Scope"):
-            return qs.filter(id__in=scope_ids)
-        parent_lookup = getattr(self, "scope_parent_lookup", None)
-        if parent_lookup:
-            return qs.filter(**{f"{parent_lookup}__id__in": scope_ids}).distinct()
-        if any(f.name == "scopes" for f in model._meta.many_to_many):
-            return qs.filter(scopes__id__in=scope_ids).distinct()
-        return qs
+        return filter_queryset_by_scopes(
+            qs, scope_ids, explicit=getattr(self, "scope_parent_lookup", None)
+        )

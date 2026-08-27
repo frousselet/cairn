@@ -19,6 +19,11 @@ class Finding(BaseModel):
     NCMAJ-1, NCMIN-1, OBS-1, OA-1, STR-1, etc.
     """
 
+    # Scope is inherited from the parent : this model carries no `scopes` M2M.
+    # Declared on the model, not only on the views, so the generic workflow,
+    # history and MCP surfaces enforce it too (see core.scoping).
+    scope_parent_lookup = "assessment__scopes"
+
     assessment = models.ForeignKey(
         "compliance.ComplianceAssessment",
         on_delete=models.CASCADE,

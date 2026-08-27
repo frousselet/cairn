@@ -9,6 +9,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from context.models import Scope
+from core.scoping import filter_queryset_by_scopes
 from core.history import (
     DEFAULT_HISTORY_LIMIT,
     MAX_HISTORY_LIMIT,
@@ -151,15 +152,9 @@ class ScopeFilterAPIMixin:
         if scope_ids is None:
             return qs
 
-        model = qs.model
-        if model is Scope or (hasattr(model, "_meta") and model._meta.label == "context.Scope"):
-            return qs.filter(id__in=scope_ids)
-        parent_lookup = getattr(self, "scope_parent_lookup", None)
-        if parent_lookup:
-            return qs.filter(**{f"{parent_lookup}__id__in": scope_ids}).distinct()
-        if any(f.name == "scopes" for f in model._meta.many_to_many):
-            return qs.filter(scopes__id__in=scope_ids).distinct()
-        return qs
+        return filter_queryset_by_scopes(
+            qs, scope_ids, explicit=getattr(self, "scope_parent_lookup", None)
+        )
 
 
 class BatchCreateMixin:

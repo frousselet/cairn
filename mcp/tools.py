@@ -15,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils import timezone
 
+from core.scoping import filter_queryset_by_scopes
 from mcp.server import InvalidParamsError
 
 
@@ -82,20 +83,19 @@ def _get_model(app_label, model_name):
     return apps.get_model(app_label, model_name)
 
 
-def _filter_by_scopes(qs, user, model=None):
-    """Apply scope-based filtering to a queryset."""
+def _filter_by_scopes(qs, user, model=None, parent_lookup=None):
+    """Apply scope-based filtering to a queryset.
+
+    Resolution is delegated to ``core.scoping`` so a model declaring
+    ``scope_parent_lookup`` is filtered here exactly as it is on the web and
+    DRF surfaces. Before that, this returned child rows unfiltered.
+    """
     if user.is_superuser:
         return qs
     scope_ids = user.get_allowed_scope_ids()
     if scope_ids is None:
         return qs
-    model = model or qs.model
-    Scope = _get_model("context", "Scope")
-    if model is Scope or model._meta.label == "context.Scope":
-        return qs.filter(id__in=scope_ids)
-    if any(f.name == "scopes" for f in model._meta.many_to_many):
-        return qs.filter(scopes__id__in=scope_ids).distinct()
-    return qs
+    return filter_queryset_by_scopes(qs, scope_ids, explicit=parent_lookup)
 
 
 def _apply_filters(qs, arguments, allowed_filters):
