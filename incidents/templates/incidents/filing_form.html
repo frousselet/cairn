@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% comment %}
+  Full-page fallback for the filing form. The usual path is the HTMX drawer
+  (filing_form_modal.html); this renders when the route is opened directly,
+  which would otherwise raise TemplateDoesNotExist.
+
+  multipart because the proof document may be uploaded here. The steps are
+  rendered as stacked cards rather than through includes/form_steps.html :
+  that partial hides every step past the first for the drawer's JS stepper.
+{% endcomment %}
+
+{% block title %}{% trans "Record a filing" %} - {{ notification.reference }} - Cairn{% endblock %}
+
+{% block content %}
+{% url 'incidents:notification-detail' notification.pk as notification_url %}
+{% trans "Record a filing" as page_title %}
+{% page_header page_title nav="incidents:notification-list" accent="incidents" parent_label=notification.reference parent_url=notification_url %}{% endpage_header %}
+
+<p class="text-muted small">{% trans "Obligation" %} : <strong>{{ notification.get_regime_display }}</strong> ({{ notification.reference }}){% if incident %} - {{ incident.reference }}{% endif %}</p>
+<p class="text-muted small">{% trans "A filing is never rewritten : a correction is a further filing that supersedes this one." %}</p>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">
+    {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+  </div>
+  {% endif %}
+
+  {% for step in form.iter_steps %}
+  <div class="card mb-4">
+    <div class="card-header"><h6 class="mb-0"><i class="bi bi-{{ step.icon }} me-2" style="color:var(--accent)" aria-hidden="true"></i>{{ step.title }}</h6></div>
+    <div class="card-body">
+      {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+  {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+  <div class="d-flex gap-2 form-actions-sticky">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
+    <a href="{{ notification_url }}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

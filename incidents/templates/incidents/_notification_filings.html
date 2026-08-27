@@ -1,0 +1,167 @@
+{% load i18n ui accounts_tags %}
+{% comment %}
+The filings that discharged one regulatory obligation : the evidence handed to
+an inspector who asks *prove you filed the 72-hour notification*.
+
+Rendered inside the obligation's detail page and swapped into
+`#notification-filings` by `incidents:notification-filings` after a filing, so
+it must stand on its own.
+
+Context : `notification`, `filings` (ordered by `submitted_at` ascending - the
+narrative order, oldest first, which is how a phased provision reads) and
+`filing_outcomes`, the choices the recipient's answer may take.
+
+**Append-only, and the markup says so.** No edit control and no delete control :
+what the organisation told a regulator is never rewritten, and a correction is a
+further filing that names the one it replaces. Exactly three fields may be
+completed after the insert, once each, and the only control offered here is the
+one that records the recipient's answer through that narrow route.
+
+`is_correction` and `supersedes` are made visible on the row rather than folded
+away : a supplementary filing that adds information and a corrective filing that
+retracts an earlier one are different acts, and reading the log without seeing
+which is which is how a phased provision is mistaken for a contradiction.
+{% endcomment %}
+{% has_perm "incidents.notification.update" as can_update_notification %}
+
+<div class="table-responsive">
+  <table class="table table-hover mb-0" style="font-size:.875rem">
+    <thead>
+      <tr>
+        <th>{% trans "Filing" %}</th>
+        <th class="text-nowrap">{% trans "Submitted at" %}</th>
+        <th>{% trans "Channel" %}</th>
+        <th>{% trans "Recipient" %}</th>
+        <th>{% trans "Outcome" %}</th>
+        <th>{% trans "Proof" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for filing in filings %}
+      {# A rejected filing did not discharge anything : that is the one reading an operator must never have to click to find. #}
+      <tr{% if filing.outcome == 'rejected' %} class="table-danger"{% elif filing.was_late %} class="table-warning"{% endif %}>
+        <td>
+          <span class="cell-stack">
+            <span class="cell-main">{{ filing.reference }}</span>
+            <span class="cell-sub d-flex flex-wrap gap-1">
+              {% if filing.is_correction %}
+              <span class="badge text-bg-warning"><i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{% trans "Correction" context "incident" %}</span>
+              {% endif %}
+              {% if filing.was_late %}
+              <span class="badge text-bg-danger"><i class="bi bi-exclamation-diamond me-1" aria-hidden="true"></i>{% trans "Filed late" %}</span>
+              {% endif %}
+              {% if filing.superseded_by.all %}
+              {# Derived from the later filing, never stamped on this row : the log does not write to a row it has closed. #}
+              <span class="badge text-bg-secondary">{% trans "Superseded" context "incident" %}</span>
+              {% endif %}
+            </span>
+            {% if filing.supersedes %}
+            <span class="cell-sub"><i class="bi bi-arrow-return-right me-1" aria-hidden="true"></i>{% trans "Supersedes" %} : {{ filing.supersedes.reference }}</span>
+            {% endif %}
+          </span>
+        </td>
+        <td class="text-nowrap">
+          <span class="cell-stack">
+            <span>{{ filing.submitted_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+            {% if filing.submitted_by %}
+            <span class="cell-sub">{{ filing.submitted_by.display_name }}</span>
+            {% endif %}
+            {# The gap between the transmission and its recording is itself information, and is never hidden. Compared at the minute the reader sees, so a filing typed as it was sent stays quiet. #}
+            {% if filing.submitted_at|date:"SHORT_DATETIME_FORMAT" != filing.created_at|date:"SHORT_DATETIME_FORMAT" %}
+            <span class="cell-sub" title="{% trans 'Recorded at' %} : {{ filing.created_at|date:'SHORT_DATETIME_FORMAT' }}">{% blocktrans with gap=filing.submitted_at|timesince:filing.created_at %}recorded {{ gap }} later{% endblocktrans %}</span>
+            {% endif %}
+          </span>
+        </td>
+        <td>{{ filing.get_channel_display }}</td>
+        <td>{% if filing.recipient_name %}{{ filing.recipient_name }}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+        <td>
+          <span class="cell-stack">
+            {% if filing.outcome == 'acknowledged' %}
+            <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{{ filing.get_outcome_display }}</span>
+            {% elif filing.outcome == 'rejected' %}
+            <span class="badge text-bg-danger"><i class="bi bi-x-octagon me-1" aria-hidden="true"></i>{{ filing.get_outcome_display }}</span>
+            {% elif filing.outcome == 'information_requested' %}
+            <span class="badge text-bg-warning"><i class="bi bi-question-circle me-1" aria-hidden="true"></i>{{ filing.get_outcome_display }}</span>
+            {% else %}
+            <span class="badge text-bg-secondary">{{ filing.get_outcome_display }}</span>
+            {% endif %}
+            {% if filing.acknowledged_at %}
+            <span class="cell-sub">{{ filing.acknowledged_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+            {% endif %}
+            {% if filing.external_reference %}
+            <span class="cell-sub"><i class="bi bi-hash" aria-hidden="true"></i>{{ filing.external_reference }}</span>
+            {% endif %}
+          </span>
+        </td>
+        <td>
+          {% if filing.has_proof %}
+          <a href="{% url 'incidents:filing-proof' filing.pk %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'Download the proof' %}" aria-label="{% trans 'Download the proof' %}">
+            <i class="bi bi-download" aria-hidden="true"></i>
+          </a>
+          {% else %}
+          <span class="cell-empty">-</span>
+          {% endif %}
+        </td>
+      </tr>
+
+      {% if filing.subject or filing.content or filing.outcome == 'sent' and can_update_notification %}
+      <tr>
+        <td colspan="6" class="pt-0">
+          {% if filing.subject or filing.content %}
+          {% comment %}
+          The verbatim content, folded rather than hidden behind a tab : this is
+          the field an inspector reads, and it is never edited.
+          {% endcomment %}
+          <details>
+            <summary class="small text-muted" style="cursor:pointer;user-select:none">
+              <i class="bi bi-file-text me-1" aria-hidden="true"></i>{% trans "What was transmitted" %}
+            </summary>
+            <div class="mt-2">
+              {% if filing.subject %}<div class="fw-semibold small">{{ filing.subject }}</div>{% endif %}
+              {% if filing.content %}<div class="small mt-1" style="white-space:pre-wrap">{{ filing.content }}</div>{% endif %}
+            </div>
+          </details>
+          {% endif %}
+
+          {% if filing.outcome == 'sent' and can_update_notification %}
+          {% comment %}
+          The narrow completion exception, and the only write this log accepts
+          after the insert : what was transmitted never changes because of the
+          answer, so this posts the recipient's response through the model's own
+          `record_outcome()` and never through a form that could reopen the
+          content. Offered only while the outcome is still at its insert value,
+          because each completion field moves once and a second attempt is
+          refused by the model.
+          {% endcomment %}
+          <form method="post" action="{% url 'incidents:filing-outcome' filing.pk %}" class="row g-2 align-items-end mt-1">
+            {% csrf_token %}
+            <div class="col-12 col-sm-4">
+              <label class="form-label small mb-1" for="outcome-{{ filing.pk }}">{% trans "Record the recipient's answer" %}</label>
+              <select class="form-select form-select-sm" id="outcome-{{ filing.pk }}" name="outcome" required>
+                {% for value, label in filing_outcomes %}
+                <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% if not filing.external_reference %}
+            <div class="col-12 col-sm-4">
+              <label class="form-label small mb-1" for="external-reference-{{ filing.pk }}">{% trans "External reference" %}</label>
+              <input type="text" class="form-control form-control-sm" id="external-reference-{{ filing.pk }}" name="external_reference" maxlength="200" autocomplete="off">
+            </div>
+            {% endif %}
+            <div class="col-12 col-sm-auto">
+              <button type="submit" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Record" %}
+              </button>
+            </div>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endif %}
+      {% empty %}
+      {% empty_state title=_("No filing recorded yet.") message=_("A filing is the record that a notification actually left the organisation : when it was sent, through which channel, to whom, and with what content. It is never rewritten ; an amendment is a further filing that names the one it replaces.") colspan=6 %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

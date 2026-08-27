@@ -1,0 +1,24 @@
+{% load i18n %}
+{% comment %}
+  Drawer-served delete confirmation for one response action. Posted via HTMX;
+  the view returns 204 + HX-Trigger=formSaved on success, which closes the
+  drawer and re-renders the incident's response actions card.
+{% endcomment %}
+<form method="post" hx-post="{{ request.path }}" hx-target="#drawer-form-content" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']">
+  {% csrf_token %}
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <span class="drawer-title-icon"><i class="bi bi-trash"></i></span>
+      {% trans "Delete response action" %}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+  </div>
+  <div class="modal-body drawer-body">
+    <p class="mb-2">{% blocktrans with reference=object.reference title=object.title %}Are you sure you want to delete <strong>{{ reference }}</strong> - {{ title }}?{% endblocktrans %}</p>
+    <p class="text-muted small mb-0">{% trans "What was actually done during the incident is read from this list. Delete an action entered in error; record an abandoned one as cancelled instead." %}</p>
+  </div>
+  <div class="modal-footer drawer-footer">
+    <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  </div>
+</form>

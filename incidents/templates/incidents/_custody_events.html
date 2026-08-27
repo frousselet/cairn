@@ -1,0 +1,138 @@
+{% load i18n ui accounts_tags %}
+{% comment %}
+The chain of custody of one evidence item (A.5.28) : one row per handling act,
+in the order the acts happened.
+
+Rendered inside the evidence file and swapped into `#custody-events` by
+`incidents:custody-events` after an append, so it must stand on its own.
+
+Context : `evidence`, `custody_events` (ordered by `occurred_at`, then by the
+recording time to break a tie deterministically) and `custody_form`, which is
+absent for a reader without `incidents.evidence.update`.
+
+**Append-only, and the markup says so.** No edit control and no delete control :
+a ledger that can be rewritten is not a ledger, the model refuses both, and the
+URLconf offers neither route. A mistake is corrected by appending a further row
+whose notes state what the earlier one got wrong ; the earlier row is never
+touched.
+
+The ledger reads oldest first, unlike the chronology : this is a chain, and a
+chain is read from the acquisition forward. `occurred_at` and `recorded_at` are
+both rendered whenever they differ, because the gap between the act and its
+recording is itself information the auditor is entitled to see.
+{% endcomment %}
+{% has_perm "incidents.evidence.update" as can_update_evidence %}
+
+{% if custody_form and can_update_evidence %}
+{% comment %}
+Only the acts Cairn cannot observe are offered here : collection, sealing,
+analysis, release and destruction are appended by the item's own transitions,
+and integrity verification is produced by the measurement, never asserted.
+{% endcomment %}
+<details class="mb-3" style="border:1px solid var(--border-light);border-radius:.5rem">
+  <summary class="px-3 py-2 small fw-semibold" style="cursor:pointer;user-select:none">
+    <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>{% trans "Record a custody act" %}
+  </summary>
+  <div class="px-3 pb-3">
+    <form method="post"
+          action="{% url 'incidents:custody-event-create' evidence.pk %}"
+          hx-post="{% url 'incidents:custody-event-create' evidence.pk %}"
+          hx-target="#drawer-form-content"
+          hx-swap="innerHTML"
+          hx-disabled-elt="find button[type='submit']">
+      {% csrf_token %}
+      {% if custody_form.non_field_errors %}
+      <div class="alert alert-danger" role="alert">
+        {% for error in custody_form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+      </div>
+      {% endif %}
+      {% for step in custody_form.iter_steps %}
+      <div class="detail-subhead"><span><i class="bi bi-{{ step.icon }} me-1" aria-hidden="true"></i>{{ step.title }}</span></div>
+      {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
+      {% endfor %}
+      {% for hidden in custody_form.hidden_fields %}{{ hidden }}{% endfor %}
+      <button type="submit" class="btn btn-sm btn-primary">
+        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Append to the ledger" %}
+      </button>
+    </form>
+  </div>
+</details>
+{% endif %}
+
+<div class="table-responsive">
+  <table class="table table-hover mb-0" style="font-size:.875rem">
+    <thead>
+      <tr>
+        <th class="text-nowrap">{% trans "Occurred at" %}</th>
+        <th>{% trans "Action" %}</th>
+        <th>{% trans "Actor" %}</th>
+        <th>{% trans "Counterparty" %}</th>
+        <th>{% trans "Hash at event" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for event in custody_events %}
+      {# A broken seal is the one reading that outranks everything else on the page. #}
+      <tr{% if event.verification_outcome == 'mismatch' %} class="table-danger"{% elif event.verification_outcome == 'not_verifiable' %} class="table-warning"{% endif %}>
+        <td class="text-nowrap">
+          <span class="cell-stack">
+            <span>{{ event.occurred_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+            {# Compared at the minute the reader sees : an act recorded as it happened stays quiet, one written up on Monday says so. #}
+            {% if event.occurred_at|date:"SHORT_DATETIME_FORMAT" != event.recorded_at|date:"SHORT_DATETIME_FORMAT" %}
+            <span class="cell-sub" title="{% trans 'Recorded at' %} : {{ event.recorded_at|date:'SHORT_DATETIME_FORMAT' }}">{% blocktrans with gap=event.occurred_at|timesince:event.recorded_at %}recorded {{ gap }} later{% endblocktrans %}</span>
+            {% endif %}
+          </span>
+        </td>
+        <td>
+          <span class="cell-stack">
+            <span class="cell-main">
+              {{ event.get_action_display }}
+              {% comment %}
+              Three verdicts and never two : a match, a break, and an artefact
+              that could not be read at all. The last is a claim about the
+              storage, so it is a warning and never a danger.
+              {% endcomment %}
+              {% if event.verification_outcome == 'match' %}
+              <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{% trans "Verified" %}</span>
+              {% elif event.verification_outcome == 'mismatch' %}
+              <span class="badge text-bg-danger"><i class="bi bi-exclamation-octagon me-1" aria-hidden="true"></i>{% trans "Integrity broken" %}</span>
+              {% elif event.verification_outcome == 'not_verifiable' %}
+              <span class="badge text-bg-warning"><i class="bi bi-question-circle me-1" aria-hidden="true"></i>{% trans "Not verifiable" %}</span>
+              {% endif %}
+              {% if event.source != 'manual' %}
+              {# The one distinction the API filters on : a row nobody typed. #}
+              <span class="badge text-bg-secondary"><i class="bi bi-gear-fill me-1" aria-hidden="true"></i>{{ event.get_source_display }}</span>
+              {% endif %}
+            </span>
+            {% if event.location %}
+            <span class="cell-sub"><i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ event.location }}</span>
+            {% endif %}
+            {% if event.notes %}
+            <span class="cell-sub">{{ event.notes|linebreaksbr }}</span>
+            {% endif %}
+          </span>
+        </td>
+        <td>{{ event.actor.display_name }}</td>
+        <td>
+          <span class="cell-stack">
+            <span>{% if event.counterparty %}{{ event.counterparty }}{% else %}<span class="cell-empty">-</span>{% endif %}</span>
+            {% if event.counterparty_organisation %}
+            <span class="cell-sub">{{ event.counterparty_organisation }}</span>
+            {% endif %}
+          </span>
+        </td>
+        <td>
+          {% if event.hash_at_event %}
+          {# The digest measured at this act, never copied from the parent : this is the column that makes the ledger falsifiable. #}
+          <code class="small" title="{{ event.hash_at_event }}" style="word-break:break-all">{{ event.hash_at_event|truncatechars:20 }}</code>
+          {% else %}
+          <span class="cell-empty">-</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      {% empty_state title=_("No custody act recorded yet.") message=_("Every act of handling is appended here : who held the item, who received it, where it went and what digest was measured. A row is never edited or deleted ; a mistake is corrected by a further row saying so.") colspan=5 %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

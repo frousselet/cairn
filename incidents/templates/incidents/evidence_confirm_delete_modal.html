@@ -1,0 +1,27 @@
+{% load i18n %}
+{% comment %}
+  Drawer-served delete confirmation for an evidence item. Posted via HTMX; the
+  view returns 204 + HX-Trigger=formSaved on success. A refusal from the model
+  (anything past `draft`) comes back as a message, not a 500.
+{% endcomment %}
+<form method="post" hx-post="{{ request.path }}" hx-target="#drawer-form-content" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']">
+  {% csrf_token %}
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <span class="drawer-title-icon"><i class="bi bi-trash"></i></span>
+      {% trans "Remove evidence item" %}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+  </div>
+  <div class="modal-body drawer-body">
+    <p class="mb-2">{% blocktrans with reference=object.reference title=object.title %}Are you sure you want to remove <strong>{{ reference }}</strong> - {{ title }} from the evidence register?{% endblocktrans %}</p>
+    {% if not object.is_deletable %}
+    <p class="text-muted small mb-2"><i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% trans "This item is no longer a draft, so the register will refuse to remove it." %}</p>
+    {% endif %}
+    <p class="text-muted small mb-0">{% trans "Only an item registered in error, still a draft, is removed this way. Destroying a real artefact is an approved transition, so the chain of custody survives it." %}</p>
+  </div>
+  <div class="modal-footer drawer-footer">
+    <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Remove" %}</button>
+  </div>
+</form>

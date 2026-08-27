@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load table_tags %}
+{% load accounts_tags %}
+{% load help_tags %}
+
+{% block title %}{% trans "Incidents" context "incident" %} - Cairn{% endblock %}
+
+{% block content %}
+{% trans "Incidents" context "incident" as page_title %}
+{% page_header page_title nav="incidents:incident-list" accent="incidents" %}
+  {% has_perm "incidents.incident.create" as can_create_incident %}
+  {% if can_create_incident %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:incident-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New incident" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% help_modal "incidents.incident_list" %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "title" "Title" col="title" %}
+              {% sortable_th "severity" "Severity" col="severity" %}
+              {% sortable_th "category" "Category" col="category" %}
+              {% sortable_th "status" "Status" col="status" %}
+              {% sortable_th "manager" "Incident manager" col="manager" %}
+              {% sortable_th "detected_at" "Detected at" col="detected_at" %}
+              <th data-col="obligations" style="white-space:nowrap">{% trans "Overdue obligations" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'incidents:incident-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "incidents/incident_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

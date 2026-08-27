@@ -1,0 +1,163 @@
+{% load i18n ui accounts_tags %}
+{% comment %}
+The incident chronology : the single narrative an auditor, a supervisory
+authority or a court reads.
+
+Rendered inline by `IncidentDetailView` on first paint and swapped into
+`#timeline-entries` by `incidents:timeline-entries` after an append, so it must
+stand on its own : it opens no tag it does not close and assumes no wrapper.
+
+Context : `incident`, `timeline_entries` (oldest first, as the view, the model
+ordering and the register export all order them) and `timeline_entry_form`,
+which is absent for a reader without `incidents.incident.update`.
+
+**Append-only, and the markup says so.** No edit control, no delete control, no
+status select : the model refuses every write against an existing row and the
+URLconf offers neither route. A factual error is corrected by appending an
+entry that supersedes the earlier one with a stated reason, and both stay
+visible, linked to each other in both directions.
+
+The list is walked `reversed` rather than re-ordered in the view : the stored
+order is the narrative order the export writes, and re-sorting it here would
+give the same incident two different chronologies on two surfaces. The card
+shows the latest act first because that is what a responder mid-incident reads.
+
+A `lifecycle` row - one the platform appended from a transition, that nobody
+typed - is tinted, carries the accent rule and states its source, so a line the
+organisation wrote is never mistaken for a line the platform wrote.
+{% endcomment %}
+{% has_perm "incidents.incident.update" as can_update_incident %}
+
+{% if timeline_entry_form and can_update_incident %}
+{% comment %}
+The append form, inline : reaching for the drawer costs a round trip in the
+window where delay is the harm, so the form the view already built is offered
+where the chronology is read. It posts to the same create route as the header
+button, and targets the drawer so a rejected entry comes back with its field
+errors rather than replacing the card with a form.
+{% endcomment %}
+<details class="mb-3" style="border:1px solid var(--border-light);border-radius:.5rem">
+  <summary class="px-3 py-2 small fw-semibold" style="cursor:pointer;user-select:none">
+    <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>{% trans "Append an entry" %}
+  </summary>
+  <div class="px-3 pb-3">
+    <form method="post"
+          action="{% url 'incidents:timeline-entry-create' incident.pk %}"
+          hx-post="{% url 'incidents:timeline-entry-create' incident.pk %}"
+          hx-target="#drawer-form-content"
+          hx-swap="innerHTML"
+          hx-disabled-elt="find button[type='submit']">
+      {% csrf_token %}
+      {% if timeline_entry_form.non_field_errors %}
+      <div class="alert alert-danger" role="alert">
+        {% for error in timeline_entry_form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+      </div>
+      {% endif %}
+      {% for step in timeline_entry_form.iter_steps %}
+      <div class="detail-subhead"><span><i class="bi bi-{{ step.icon }} me-1" aria-hidden="true"></i>{{ step.title }}</span></div>
+      {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
+      {% endfor %}
+      {% for hidden in timeline_entry_form.hidden_fields %}{{ hidden }}{% endfor %}
+      <button type="submit" class="btn btn-sm btn-primary">
+        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Append to the chronology" %}
+      </button>
+    </form>
+  </div>
+</details>
+{% endif %}
+
+<div class="d-flex flex-column gap-2">
+{% for entry in timeline_entries reversed %}
+  {% comment %}
+  The anchor is what the two supersession links point at, in both directions :
+  a correction links back to what it restates, and the restated entry links
+  forward to every correction of it.
+  {% endcomment %}
+  <div id="timeline-entry-{{ entry.pk }}"
+       class="ps-3 py-2"
+       style="border-left:2px solid {% if entry.source == 'lifecycle' %}var(--accent){% else %}var(--border-light){% endif %};{% if entry.source == 'lifecycle' %}background:var(--surface-muted);border-radius:0 .375rem .375rem 0{% endif %}">
+
+    <div class="d-flex flex-wrap align-items-baseline gap-2 small">
+      <span class="fw-semibold text-nowrap">{{ entry.occurred_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+
+      {% comment %}
+      Semantic colour on the kind is reserved for the two readings that change
+      what the line means : a correction restates an earlier fact, and a system
+      line was not narrated by a person.
+      {% endcomment %}
+      {% if entry.entry_type == 'correction' %}
+      <span class="badge text-bg-warning">{{ entry.get_entry_type_display }}</span>
+      {% elif entry.entry_type == 'system' %}
+      <span class="badge text-bg-secondary">{{ entry.get_entry_type_display }}</span>
+      {% else %}
+      <span class="badge text-bg-light border">{{ entry.get_entry_type_display }}</span>
+      {% endif %}
+
+      <span class="text-muted text-nowrap"><i class="bi bi-person me-1" aria-hidden="true"></i>{{ entry.author.display_name }}</span>
+
+      {% if entry.source != 'manual' %}
+      {# The one distinction the API filters on : a row nobody typed. #}
+      <span class="badge text-bg-secondary"><i class="bi bi-gear-fill me-1" aria-hidden="true"></i>{{ entry.get_source_display }}</span>
+      {% endif %}
+
+      {% if entry.is_evidence %}
+      <span class="badge" style="background:var(--accent-soft);color:var(--accent)"><i class="bi bi-quote me-1" aria-hidden="true"></i>{% trans "Quoted in filings" %}</span>
+      {% endif %}
+
+      {% if entry.corrections.all %}
+      {# Never hidden and never struck through : the superseded line stays part of the record. #}
+      <span class="badge text-bg-warning"><i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{% trans "Superseded" context "incident" %}</span>
+      {% endif %}
+
+      {% comment %}
+      Both timestamps are compared at the minute the reader sees, so a line
+      typed as it happened stays quiet and a line written up hours later says
+      so. The gap is never hidden : it is evidence of the tempo of the response.
+      {% endcomment %}
+      {% if entry.occurred_at|date:"SHORT_DATETIME_FORMAT" != entry.recorded_at|date:"SHORT_DATETIME_FORMAT" %}
+      <span class="text-muted ms-auto text-nowrap" title="{% trans 'Recorded at' %} : {{ entry.recorded_at|date:'SHORT_DATETIME_FORMAT' }}">
+        <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% blocktrans with gap=entry.occurred_at|timesince:entry.recorded_at %}recorded {{ gap }} later{% endblocktrans %}
+      </span>
+      {% endif %}
+    </div>
+
+    <div class="mt-1">{{ entry.summary }}</div>
+
+    {% if entry.detail %}
+    <div class="small text-muted mt-1">{{ entry.detail|linebreaksbr }}</div>
+    {% endif %}
+
+    {% if entry.related_action_id or entry.related_evidence_id %}
+    <div class="d-flex flex-wrap gap-2 mt-2">
+      {% if entry.related_action %}
+      {# A response action has no page of its own : it is worked on this one. #}
+      <span class="party-chip"><i class="bi bi-list-check me-1" aria-hidden="true"></i>{{ entry.related_action.reference }} - {{ entry.related_action.title|truncatechars:50 }}</span>
+      {% endif %}
+      {% if entry.related_evidence %}
+      <a href="{% url 'incidents:evidence-detail' entry.related_evidence.pk %}" class="party-chip"><i class="bi bi-safe me-1" aria-hidden="true"></i>{{ entry.related_evidence.reference }} - {{ entry.related_evidence.title|truncatechars:50 }}</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if entry.superseded_entry %}
+    <div class="small mt-2">
+      <i class="bi bi-arrow-return-right me-1" aria-hidden="true"></i>{% trans "Supersedes" %} :
+      <a href="#timeline-entry-{{ entry.superseded_entry.pk }}" class="cell-link">{{ entry.superseded_entry.occurred_at|date:"SHORT_DATETIME_FORMAT" }} - {{ entry.superseded_entry.summary|truncatechars:70 }}</a>
+    </div>
+    {% if entry.correction_reason %}
+    {# A correction with no stated reason is a rewrite, so the reason is shown wherever the correction is. #}
+    <div class="small text-muted mt-1">{% trans "Correction reason" %} : {{ entry.correction_reason|linebreaksbr }}</div>
+    {% endif %}
+    {% endif %}
+
+    {% if entry.corrections.all %}
+    <div class="small mt-2">
+      <i class="bi bi-arrow-return-right me-1" aria-hidden="true"></i>{% trans "Corrected by" %} :
+      {% for correction in entry.corrections.all %}<a href="#timeline-entry-{{ correction.pk }}" class="cell-link">{{ correction.occurred_at|date:"SHORT_DATETIME_FORMAT" }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+{% empty %}
+  {% empty_state title=_("No chronology entry yet.") message=_("Every act during the incident is appended here with the time it happened and the person who recorded it. The platform appends a line of its own on each lifecycle transition. An entry is never edited or deleted : it is corrected by a later entry that supersedes it.") %}
+{% endfor %}
+</div>

@@ -61,7 +61,7 @@ def static_v(path):
 
 MODULE_ACCENTS = {
     "risks", "compliance", "assets", "context",
-    "reports", "accounts", "helpers", "dashboard",
+    "incidents", "reports", "accounts", "helpers", "dashboard",
     "trust-center",
 }
 

@@ -1,0 +1,148 @@
+{% load i18n ui accounts_tags %}
+{% comment %}
+The operational steps taken during the incident (A.5.26 / ISO 27035) : isolate
+the host, revoke the token, pull the logs before they rotate.
+
+Rendered inline by `IncidentDetailView` on first paint and swapped into
+`#response-actions` by `incidents:response-actions` after an add or an edit, so
+it must stand on its own.
+
+Context : `incident`, `response_actions` (deadline order, as the view and the
+model ordering give them) and `response_action_form`, which is absent for a
+reader without `incidents.incident.update`.
+
+Unlike its two append-only neighbours in this module, this row is **mutable by
+design** : moving from planned to done while the incident is live is its whole
+purpose. It carries a plain `status` column and no lifecycle, so there is no
+stepper here and none is owed - the row's governance is the incident's
+governance, and the edit and delete controls point at the two routes the
+URLconf actually offers.
+
+An action past its deadline and still expected to be worked tints `table-danger`
+on the row itself : mid-incident, that must never be something an operator has
+to click to find.
+{% endcomment %}
+{% has_perm "incidents.incident.update" as can_update_incident %}
+
+{% if response_action_form and can_update_incident %}
+{% comment %}
+The add form, inline : the view already built it, and a round trip to render an
+empty form is a round trip spent in the window where delay is the harm. It
+posts to the same create route as the card header's button, and targets the
+drawer so a rejected action comes back with its field errors instead of
+replacing the table with a form.
+{% endcomment %}
+<details class="mb-3" style="border:1px solid var(--border-light);border-radius:.5rem">
+  <summary class="px-3 py-2 small fw-semibold" style="cursor:pointer;user-select:none">
+    <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>{% trans "Add a response action" %}
+  </summary>
+  <div class="px-3 pb-3">
+    <form method="post"
+          action="{% url 'incidents:response-action-create' incident.pk %}"
+          hx-post="{% url 'incidents:response-action-create' incident.pk %}"
+          hx-target="#drawer-form-content"
+          hx-swap="innerHTML"
+          hx-disabled-elt="find button[type='submit']">
+      {% csrf_token %}
+      {% if response_action_form.non_field_errors %}
+      <div class="alert alert-danger" role="alert">
+        {% for error in response_action_form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+      </div>
+      {% endif %}
+      {% for step in response_action_form.iter_steps %}
+      <div class="detail-subhead"><span><i class="bi bi-{{ step.icon }} me-1" aria-hidden="true"></i>{{ step.title }}</span></div>
+      {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
+      {% endfor %}
+      {% for hidden in response_action_form.hidden_fields %}{{ hidden }}{% endfor %}
+      <button type="submit" class="btn btn-sm btn-primary">
+        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}
+      </button>
+    </form>
+  </div>
+</details>
+{% endif %}
+
+<div class="table-responsive">
+  <table class="table table-hover mb-0" style="font-size:.875rem">
+    <thead>
+      <tr>
+        <th>{% trans "Response action" %}</th>
+        <th>{% trans "Owner" %}</th>
+        <th class="text-nowrap">{% trans "Due at" %}</th>
+        <th>{% trans "Status" %}</th>
+        <th class="text-end">{% trans "Actions" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for action in response_actions %}
+      <tr{% if action.is_overdue %} class="table-danger"{% endif %}>
+        <td>
+          <span class="cell-stack">
+            <span class="cell-main">{{ action.title }}</span>
+            <span class="cell-sub">{{ action.reference }} · {{ action.get_action_type_display }}</span>
+            {% if action.outcome %}
+            {# A containment step marked done with no stated outcome is not evidence of containment, so the outcome reads on the row. #}
+            <span class="cell-sub" title="{{ action.outcome }}"><i class="bi bi-check2-square me-1" aria-hidden="true"></i>{{ action.outcome|truncatechars:80 }}</span>
+            {% endif %}
+          </span>
+        </td>
+        <td>
+          <span class="cell-stack">
+            <span>{% if action.owner %}{{ action.owner.display_name }}{% else %}<span class="cell-empty">-</span>{% endif %}</span>
+            {% if action.performed_by and action.performed_by_id != action.owner_id %}
+            <span class="cell-sub">{% blocktrans with name=action.performed_by.display_name %}performed by {{ name }}{% endblocktrans %}</span>
+            {% endif %}
+          </span>
+        </td>
+        <td class="text-nowrap">
+          {% comment %}
+          Late, then completed, then still running. Ordered so the worst answer
+          is given first, exactly as the obligations card orders its countdown.
+          {% endcomment %}
+          {% if action.is_overdue %}
+            <span class="badge text-bg-danger"><i class="bi bi-hourglass-bottom me-1" aria-hidden="true"></i>{% trans "Overdue" %} : {{ action.due_at|timesince }}</span>
+          {% elif action.completed_at %}
+            <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{{ action.completed_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+          {% elif action.due_at %}
+            {{ action.due_at|date:"SHORT_DATETIME_FORMAT" }}
+          {% else %}
+            <span class="cell-empty">-</span>
+          {% endif %}
+          {% if action.execution_duration %}
+          <span class="cell-sub d-block">{% blocktrans with duration=action.started_at|timesince:action.completed_at %}Executed in {{ duration }}{% endblocktrans %}</span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="cell-stack">
+            {% if action.status == 'done' %}
+            <span class="badge text-bg-success">{{ action.get_status_display }}</span>
+            {% elif action.status == 'blocked' %}
+            <span class="badge text-bg-danger">{{ action.get_status_display }}</span>
+            {% elif action.status == 'in_progress' %}
+            <span class="badge text-bg-primary">{{ action.get_status_display }}</span>
+            {% elif action.status == 'cancelled' %}
+            <span class="badge text-bg-secondary">{{ action.get_status_display }}</span>
+            {% else %}
+            <span class="badge text-bg-light border">{{ action.get_status_display }}</span>
+            {% endif %}
+            {% if action.effectiveness %}
+            {# Assessed during the post-incident review, and blank until it has been. #}
+            <span class="cell-sub">{{ action.get_effectiveness_display }}</span>
+            {% endif %}
+          </span>
+        </td>
+        <td class="text-end text-nowrap">
+          {% if can_update_incident %}
+          <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'incidents:response-action-update' action.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit response action' %}" aria-label="{% trans 'Edit response action' %}"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+          <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'incidents:response-action-delete' action.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete response action' %}" aria-label="{% trans 'Delete response action' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+          {% else %}
+          <span class="cell-empty">-</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      {% empty_state title=_("No response action recorded yet.") message=_("One row per operational step taken during the incident : contain, eradicate, recover. What was actually done is read from this list during the post-incident review.") colspan=5 %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,25 @@
+{% load i18n %}
+{% comment %}
+  Drawer-served delete confirmation for a notification obligation. Posted via
+  HTMX; the view returns 204 + HX-Trigger=formSaved on success. A generated
+  obligation is refused by the model and the refusal comes back as a message.
+{% endcomment %}
+<form method="post" hx-post="{{ request.path }}" hx-target="#drawer-form-content" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']">
+  {% csrf_token %}
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <span class="drawer-title-icon"><i class="bi bi-trash"></i></span>
+      {% trans "Delete notification obligation" %}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+  </div>
+  <div class="modal-body drawer-body">
+    <p class="mb-2">{% blocktrans with reference=object.reference regime=object.get_regime_display %}Are you sure you want to delete <strong>{{ reference }}</strong> - {{ regime }}?{% endblocktrans %}</p>
+    <p class="text-muted small mb-2">{% trans "Recipient" %} : {{ object.recipient_display|default:"-" }} - {{ object.get_source_display }}</p>
+    <p class="text-muted small mb-0">{% trans "A generated obligation is never deleted : decide that it is not required, with a written rationale, so the register keeps the evidence that the regime was considered." %}</p>
+  </div>
+  <div class="modal-footer drawer-footer">
+    <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  </div>
+</form>

@@ -1,0 +1,72 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% has_perm "incidents.event.update" as can_update_event %}
+{% has_perm "incidents.event.delete" as can_delete_event %}
+{% for e in events %}
+<tr>
+  <td data-col="reference">
+    <a href="{% url 'incidents:event-detail' e.pk %}" class="cell-link">{{ e.reference }}</a>
+  </td>
+  <td data-col="title">
+    <span class="cell-stack">
+      <a href="{% url 'incidents:event-detail' e.pk %}" class="cell-link">{{ e.title }}</a>
+      {% if e.is_anonymous %}
+      <span class="cell-sub"><i class="bi bi-incognito me-1" aria-hidden="true"></i>{% trans "Anonymous report" %}</span>
+      {% elif e.source_reference %}
+      <span class="cell-sub">{{ e.source_reference }}</span>
+      {% endif %}
+    </span>
+  </td>
+  <td data-col="event_class">{{ e.get_event_class_display }}</td>
+  <td data-col="decision">
+    {% comment %}
+    Tone by verdict value (a choices value, not a lifecycle state) : a promotion
+    is the loud outcome, a weakness the intermediate one, and the three closing
+    verdicts stay neutral so semantic colour is not spent on "nothing owed".
+    {% endcomment %}
+    {% if e.triage_decision == "incident" %}
+    <span class="badge text-bg-danger">{{ e.get_triage_decision_display }}</span>
+    {% elif e.triage_decision == "weakness" %}
+    <span class="badge text-bg-warning">{{ e.get_triage_decision_display }}</span>
+    {% elif e.triage_decision %}
+    <span class="badge text-bg-secondary">{{ e.get_triage_decision_display }}</span>
+    {% else %}
+    <span class="badge" style="background:var(--surface-subtle);color:var(--text-muted);border:1px solid var(--border-light)">{% trans "To decide" %}</span>
+    {% endif %}
+  </td>
+  <td data-col="assessed_by">
+    {% if e.assessed_by %}{% user_badge e.assessed_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}
+  </td>
+  <td data-col="outcome">
+    {% if e.incident %}
+    <a href="{% url 'incidents:incident-detail' e.incident.pk %}" class="cell-link"><i class="bi bi-exclamation-octagon me-1" aria-hidden="true"></i>{{ e.incident.reference }}</a>
+    {% elif e.vulnerability %}
+    <a href="{% url 'risks:vulnerability-detail' e.vulnerability.pk %}" class="cell-link"><i class="bi bi-bug me-1" aria-hidden="true"></i>{{ e.vulnerability.reference }}</a>
+    {% elif e.duplicate_of %}
+    <a href="{% url 'incidents:event-detail' e.duplicate_of.pk %}" class="cell-link"><i class="bi bi-files me-1" aria-hidden="true"></i>{{ e.duplicate_of.reference }}</a>
+    {% else %}
+    <span class="text-muted">-</span>
+    {% endif %}
+  </td>
+  <td data-col="status">{% workflow_badge e %}</td>
+  <td data-col="reported_at">{{ e.reported_at|date:"d/m/Y H:i" }}</td>
+  <td data-col="delay">
+    {% if e.detected_at and e.reported_at %}
+    <span class="text-muted">{{ e.detected_at|timesince:e.reported_at }}</span>
+    {% else %}
+    <span class="text-muted">-</span>
+    {% endif %}
+  </td>
+  <td class="text-end" data-col="actions">
+    <div class="d-inline-flex gap-1">
+      {% if can_update_event %}
+      <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'incidents:event-update' e.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></button>
+      {% endif %}
+      {% if can_delete_event %}
+      <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'incidents:event-delete' e.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash"></i></button>
+      {% endif %}
+    </div>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No security event reported yet.") message=_("Every reported occurrence enters this register, and it is not an incident until a named person decides it is.") colspan=10 %}
+{% endfor %}

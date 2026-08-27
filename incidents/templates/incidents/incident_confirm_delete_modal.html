@@ -1,0 +1,36 @@
+{% load i18n %}
+{% comment %}
+  Drawer-served delete confirmation for an incident file. Posted via HTMX; the
+  view returns 204 + HX-Trigger=formSaved on success. Anything past `draft` is
+  refused by the model (RG-LC-05) and the refusal comes back as a message, as
+  does the database PROTECT raised by an attached obligation or evidence item.
+{% endcomment %}
+<form method="post" hx-post="{{ request.path }}" hx-target="#drawer-form-content" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']">
+  {% csrf_token %}
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <span class="drawer-title-icon"><i class="bi bi-trash"></i></span>
+      {% trans "Delete incident" %}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+  </div>
+  <div class="modal-body drawer-body">
+    <p class="mb-2">{% blocktrans with reference=object.reference title=object.title %}Are you sure you want to delete <strong>{{ reference }}</strong> - {{ title }}?{% endblocktrans %}</p>
+    {% if not object.is_deletable %}
+    <p class="text-muted small mb-2"><i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% trans "This incident has been declared, so the register will refuse to delete it." %}</p>
+    {% endif %}
+    {% with obligations=object.notifications.count evidence_items=object.evidence_items.count %}
+    {% if obligations %}
+    <p class="text-muted small mb-1"><i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>{% blocktrans count counter=obligations %}{{ counter }} notification obligation arises from this incident, and an obligation protects the incident it arises from.{% plural %}{{ counter }} notification obligations arise from this incident, and an obligation protects the incident it arises from.{% endblocktrans %}</p>
+    {% endif %}
+    {% if evidence_items %}
+    <p class="text-muted small mb-1"><i class="bi bi-archive me-1" aria-hidden="true"></i>{% blocktrans count counter=evidence_items %}{{ counter }} evidence item belongs to this incident, and evidence protects the incident it belongs to.{% plural %}{{ counter }} evidence items belong to this incident, and evidence protects the incident it belongs to.{% endblocktrans %}</p>
+    {% endif %}
+    {% endwith %}
+    <p class="text-muted small mb-0">{% trans "An incident file is an audit record : only a draft that was never declared is deleted this way. A declared incident that turns out not to be one is reclassified as an event, and a file that has run its course is archived through its lifecycle, so the chronology, the obligations and the evidence survive." %}</p>
+  </div>
+  <div class="modal-footer drawer-footer">
+    <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  </div>
+</form>

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load table_tags %}
+{% load accounts_tags %}
+
+{% comment %}
+The A.6.8 intake register. The point of the page is the reports that were NOT
+promoted : the triage decision is a first-class column, and the rail leads with
+the *Awaiting assessment* backlog (built by the view in `list_kpis`).
+{% endcomment %}
+
+{% block title %}{% trans "Security events" context "incident" %} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "incidents.event.create" as can_create_event %}
+{% trans "Security events" context "incident" as page_title %}
+{% page_header page_title nav="incidents:event-list" accent="incidents" %}
+  {% if can_create_event %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:event-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Report a security event" %}</button>
+  {% endif %}
+{% endpage_header %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "title" "Title" col="title" %}
+              {% sortable_th "event_class" "Class" col="event_class" %}
+              {% trans "Triage decision" context "incident" as th_decision %}
+              {% sortable_th "decision" th_decision col="decision" %}
+              {% sortable_th "assessed_by" "Assessed by" col="assessed_by" %}
+              <th data-col="outcome">{% trans "Promoted to" %}</th>
+              {% sortable_th "status" "Status" col="status" %}
+              {% sortable_th "reported_at" "Reported at" col="reported_at" %}
+              <th data-col="delay">{% trans "Reporting delay" %}</th>
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'incidents:event-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "incidents/security_event_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

@@ -1,0 +1,494 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load workflow_tags %}
+{% load accounts_tags %}
+
+{% comment %}
+The GDPR qualification of one incident, and its Art. 33(5) register entry.
+
+`controller_role` is rendered first and largest, because it alone decides which
+obligations exist at all : a controller owes Art. 33(1) to the supervisory
+authority and may owe Art. 34(1) to the data subjects, while a processor owes
+Art. 33(2) to the controller and nothing else. Burying that under the
+Art. 33(3) prose is how a processor ends up filing a client's breach with a
+regulator on the client's behalf, without the client's decision.
+
+The page then reads in article order : the Art. 33(3)(a) to (d) content every
+filing is drafted from, the Art. 34 high-risk determination with its written
+justification in BOTH directions, and any Art. 34(3) ground relied on with the
+justification the record refuses to exist without.
+
+The verdict is never a button and never a select : every move goes through the
+lifecycle stepper, which is where the approver gate, the mandatory comment and
+the obligation regeneration live.
+{% endcomment %}
+
+{% block title %}{{ breach.reference }} - {{ incident.reference }} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "incidents.notification.update" as can_update_breach %}
+{% has_perm "incidents.notification.delete" as can_delete_breach %}
+
+{% url 'incidents:incident-detail' incident.pk as incident_url %}
+{% trans "Personal data qualification" as breach_page_title %}
+{% page_header breach_page_title reference=breach.reference nav="incidents:incident-list" accent="incidents" parent_label=incident.reference parent_url=incident_url %}
+  {% include "includes/history_trigger.html" %}
+  {% if can_delete_breach %}
+  <button type="button" class="btn btn-outline-danger" hx-get="{% url 'incidents:breach-delete' breach.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+  {% endif %}
+  {% if can_update_breach %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:breach-update' breach.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if breach.tags.all %}
+<div class="detail-tags d-flex flex-wrap justify-content-center gap-2 mb-4">
+  {% for tag in breach.tags.all %}<span class="badge" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% endfor %}
+</div>
+{% endif %}
+
+{% comment %}
+The processor banner is the sharpest sentence on the page and it is given
+first : it is the difference between a compliant response and an unlawful
+disclosure of a client's breach.
+{% endcomment %}
+{% if breach.acts_as_processor %}
+<div class="alert alert-info" role="alert">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-person-badge-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "The affected data was processed as a processor, not as a controller." %}</strong>
+  </div>
+  <div class="mt-2 small">{% trans "Art. 33(2) is owed to the controller, without undue delay. Nothing is owed to the supervisory authority under Art. 33(1) and nothing is owed to the data subjects under Art. 34(1) : filing with the authority here would disclose a client's breach on that client's behalf, without the client's decision, and may pre-empt or contradict the controller's own filing." %}</div>
+</div>
+{% endif %}
+
+{% if not breach.has_article_33_3_content %}
+<div class="alert alert-warning" role="alert">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "The Art. 33(3)(a) to (d) minimum content is not complete." %}</strong>
+  </div>
+  <div class="mt-2 small">{% trans "Nature, DPO contact, likely consequences and measures taken are all required. The qualification cannot be confirmed until they are recorded, and no filing can be drafted from an empty record." %}</div>
+</div>
+{% endif %}
+
+{% if breach.high_risk_to_rights is None %}
+<div class="alert alert-warning" role="alert">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-question-octagon-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "The Art. 34(1) determination has not been made." %}</strong>
+  </div>
+  <div class="mt-2 small">{% trans "Not yet determined is not the same answer as a recorded no. The determination has to be given in writing, in one direction or the other, before the qualification can be confirmed." %}</div>
+</div>
+{% endif %}
+
+{% comment %}
+Three answers in one reading : the capacity, the reporting duty that capacity
+creates, and whether the data subjects have to be informed.
+{% endcomment %}
+<div class="card mb-4 kpi-tile{% if breach.high_risk_to_rights and not breach.acts_as_processor %} kpi-tile--danger{% elif breach.high_risk_to_rights is None %} kpi-tile--warning{% elif breach.acts_as_processor %} kpi-tile--info{% else %} kpi-tile--neutral{% endif %}">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+
+      <span class="kpi-tile__icon{% if breach.high_risk_to_rights and not breach.acts_as_processor %} kpi-tile__icon--danger{% elif breach.high_risk_to_rights is None %} kpi-tile__icon--warning{% elif breach.acts_as_processor %} kpi-tile__icon--info{% else %} kpi-tile__icon--neutral{% endif %}" style="flex:none">
+        <i class="bi bi-person-vcard" aria-hidden="true"></i>
+      </span>
+
+      <div class="min-w-0" style="flex:1 1 12rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Controller role" %}</div>
+        <div class="fw-bold mt-1" style="font-size:1.2rem;line-height:1.3">{{ breach.get_controller_role_display }}</div>
+        <div class="text-muted small">{% trans "The capacity the affected data was processed in, for this incident." %}</div>
+      </div>
+
+      <div class="min-w-0" style="flex:1 1 14rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Reporting duty" %}</div>
+        {% if breach.acts_as_processor %}
+        <div class="fw-semibold mt-1">{% trans "Art. 33(2) : notify the controller" %}</div>
+        <div class="text-muted small">
+          {% if breach.controller_supplier %}
+            <a href="{% url 'assets:supplier-detail' breach.controller_supplier.pk %}" class="cell-link">{{ breach.controller_supplier.name }}</a>
+          {% else %}
+            {% trans "No controller recorded yet." %}
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="fw-semibold mt-1">{% trans "Art. 33(1) : notify the supervisory authority" %}</div>
+        <div class="text-muted small">
+          {% if breach.lead_authority %}
+            <a href="{% url 'incidents:reporting-authority-detail' breach.lead_authority.pk %}" class="cell-link">{{ breach.lead_authority.display_name }}</a>
+          {% else %}
+            {% trans "No lead supervisory authority determined." %}
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="min-w-0" style="flex:1 1 14rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Art. 34 : informing the data subjects" %}</div>
+        <div class="mt-1">
+          {% comment %}
+          A processor owes nothing here, whatever the risk : Art. 34(1) is a
+          controller's duty. Stated as such rather than left to the three-state
+          verdict, which a processor may legitimately never answer.
+          {% endcomment %}
+          {% if breach.acts_as_processor %}
+            <span class="badge text-bg-secondary">{% trans "Not owed by a processor" %}</span>
+          {% elif breach.high_risk_to_rights %}
+            <span class="badge text-bg-danger"><i class="bi bi-megaphone me-1" aria-hidden="true"></i>{% trans "Owed : high risk to rights and freedoms" %}</span>
+          {% elif breach.high_risk_to_rights is False %}
+            <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{% trans "Not owed : no high risk determined" %}</span>
+          {% else %}
+            <span class="badge text-bg-warning"><i class="bi bi-question-circle me-1" aria-hidden="true"></i>{% trans "Determination not made" %}</span>
+          {% endif %}
+        </div>
+        {% if breach.article_34_exemption and breach.article_34_exemption != 'none' %}
+        <div class="text-muted small mt-1">{{ breach.get_article_34_exemption_display }}</div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  {# LEFT COLUMN #}
+  <div class="col-lg-8">
+
+    {# 1. Art. 33(3)(a) : nature, categories and volumes #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>{% trans "Art. 33(3)(a) : nature and scope" %}</span></div>
+
+        <div class="mt-2 mb-3">
+          <div class="text-muted small mb-1">{% trans "Nature" %}</div>
+          <div>
+            {% if breach.nature %}
+              {{ breach.nature|linebreaksbr }}
+            {% else %}
+              <span class="text-muted">{% trans "The nature of the breach has not been described yet." %}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="text-muted small mb-1">{% trans "Data categories" %}</div>
+          <div class="d-flex flex-wrap gap-1">
+            {% for category in breach.data_categories %}
+            <span class="badge text-bg-secondary">{{ category }}</span>
+            {% empty %}
+            <span class="text-muted">-</span>
+            {% endfor %}
+          </div>
+          {% if breach.special_categories %}
+          <div class="mt-2">
+            <span class="badge text-bg-warning"><i class="bi bi-shield-exclamation me-1" aria-hidden="true"></i>{% trans "Special categories" %}</span>
+            <span class="text-muted small ms-1">{% trans "Art. 9 data is involved. A strong pointer towards high risk, never a substitute for the Art. 34 determination below." %}</span>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <div class="text-muted small mb-1">{% trans "Data subject categories" %}</div>
+          <div class="d-flex flex-wrap gap-1">
+            {% for category in breach.data_subject_categories %}
+            <span class="badge text-bg-secondary">{{ category }}</span>
+            {% empty %}
+            <span class="text-muted">-</span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="table-responsive mb-0">
+          <table class="table table-sm mb-0" style="font-size:.875rem">
+            <thead>
+              <tr>
+                <th>{% trans "Approximate data subjects" %}</th>
+                <th>{% trans "Approximate records" %}</th>
+                <th>{% trans "Volumes are estimates" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{% if breach.approximate_data_subjects is not None %}{{ breach.approximate_data_subjects }}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+                <td>{% if breach.approximate_records is not None %}{{ breach.approximate_records }}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+                <td>
+                  {% comment %}
+                  Art. 33(4) allows the information to be provided in phases, so
+                  an estimate is the normal content of a 72-hour filing and is
+                  labelled rather than apologised for.
+                  {% endcomment %}
+                  {% if breach.volume_is_estimate %}
+                  <span class="badge text-bg-secondary">{% trans "Estimate" %}</span>
+                  {% else %}
+                  <span class="badge text-bg-success">{% trans "Established figure" %}</span>
+                  {% endif %}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# 2. Art. 33(3)(b) to (d) : the rest of the minimum content #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-list-check me-1" aria-hidden="true"></i>{% trans "Art. 33(3)(b) to (d) : contact, consequences and measures" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "DPO contact" %}</dt>
+          <dd class="mb-3">
+            {% if breach.dpo_contact %}
+              {{ breach.dpo_contact }}
+            {% else %}
+              <span class="text-muted">{% trans "No contact point recorded. Art. 33(3)(b) requires one." %}</span>
+            {% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Likely consequences" %}</dt>
+          <dd class="mb-3">
+            {% if breach.likely_consequences %}
+              {{ breach.likely_consequences|linebreaksbr }}
+            {% else %}
+              <span class="text-muted">{% trans "No likely consequences recorded. Art. 33(3)(c) requires them." %}</span>
+            {% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Measures taken" %}</dt>
+          <dd class="mb-0">
+            {% if breach.measures_taken %}
+              {{ breach.measures_taken|linebreaksbr }}
+            {% else %}
+              <span class="text-muted">{% trans "No measures recorded. Art. 33(3)(d) requires the measures taken or proposed, including those mitigating possible adverse effects." %}</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# 3. Art. 34 : the high-risk determination and its grounds #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-people me-1" aria-hidden="true"></i>{% trans "Art. 34 : high risk to rights and freedoms" %}</span></div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mb-3">
+          {% if breach.high_risk_to_rights %}
+          <span class="badge text-bg-danger fs-6"><i class="bi bi-exclamation-octagon me-1" aria-hidden="true"></i>{% trans "High risk" %}</span>
+          {% elif breach.high_risk_to_rights is False %}
+          <span class="badge text-bg-success fs-6"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{% trans "No high risk" %}</span>
+          {% else %}
+          <span class="badge text-bg-warning fs-6"><i class="bi bi-question-circle me-1" aria-hidden="true"></i>{% trans "Determination not made" %}</span>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <div class="text-muted small mb-1">{% trans "High risk justification" %}</div>
+          <div>
+            {% if breach.high_risk_justification %}
+              {{ breach.high_risk_justification|linebreaksbr }}
+            {% elif breach.high_risk_to_rights is False %}
+              {% comment %}
+              A recorded no with no reasoning is the weakest sentence in a
+              breach file, and it is the one a supervisory authority reads
+              first when it asks why the data subjects were never informed.
+              {% endcomment %}
+              <span class="text-danger fw-semibold">{% trans "A recorded no-high-risk with no written reasoning is the weakest sentence in a breach file." %}</span>
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="detail-subhead"><span><i class="bi bi-shield-slash me-1" aria-hidden="true"></i>{% trans "Art. 34(3) exemption" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Ground relied on" %}</dt>
+          <dd class="mb-3">
+            {% if breach.article_34_exemption and breach.article_34_exemption != 'none' %}
+              <span class="badge text-bg-secondary">{{ breach.get_article_34_exemption_display }}</span>
+            {% else %}
+              <span class="text-muted">{{ breach.get_article_34_exemption_display }}</span>
+            {% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Article 34 exemption justification" %}</dt>
+          <dd class="mb-0">
+            {% if breach.article_34_exemption_justification %}
+              {{ breach.article_34_exemption_justification|linebreaksbr }}
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </dd>
+        </dl>
+
+        <p class="text-muted small mb-0 mt-3">
+          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>{% trans "An exemption is recorded here and discharged through the obligation's own not-required decision. It never suppresses the obligation : a recorded exemption is audit evidence, a missing row is an absence nobody can review." %}
+        </p>
+      </div>
+    </div>
+
+    {# 4. What this verdict actually produced #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-send-check me-1" aria-hidden="true"></i>{% trans "Obligations on this incident" %} <span class="badge text-bg-secondary">{{ generated_notifications|length }}</span></span></div>
+        <p class="text-muted small mt-2 mb-0">{% trans "Confirming the qualification re-runs obligation generation, because the controller role and the Art. 34 verdict are only settled facts at that point. Confirmation never removes an obligation : one found not to apply is closed through its own decision, with a written rationale." %}</p>
+        <div class="table-responsive mt-3">
+          <table class="table table-hover mb-0" style="font-size:.875rem">
+            <thead>
+              <tr>
+                <th>{% trans "Regime" %}</th>
+                <th>{% trans "Recipient" %}</th>
+                <th>{% trans "Decision" context "incident" %}</th>
+                <th class="text-nowrap">{% trans "Due at" %}</th>
+                <th>{% trans "Status" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for n in generated_notifications %}
+              <tr{% if n.is_overdue %} class="table-danger"{% elif n.is_undecided %} class="table-warning"{% endif %}>
+                <td>
+                  <span class="cell-stack">
+                    <a href="{% url 'incidents:notification-detail' n.pk %}" class="cell-link">{{ n.get_regime_display }}</a>
+                    <span class="cell-sub">{{ n.reference }}{% if n.obligation_reference %} - {{ n.obligation_reference }}{% endif %}</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="cell-stack">
+                    <span>{{ n.recipient_display }}</span>
+                    {% if n.recipient_display != n.get_recipient_kind_display %}<span class="cell-sub">{{ n.get_recipient_kind_display }}</span>{% endif %}
+                  </span>
+                </td>
+                <td><span class="badge text-bg-{% if n.is_undecided %}warning{% elif n.decision == 'required' %}primary{% else %}secondary{% endif %}">{{ n.get_decision_display }}</span></td>
+                <td class="text-nowrap">
+                  {% if n.due_at %}
+                    {{ n.due_at|date:"SHORT_DATETIME_FORMAT" }}
+                  {% elif n.no_fixed_deadline %}
+                    <span class="cell-empty">{% trans "No statutory deadline" %}</span>
+                  {% else %}
+                    <span class="badge text-bg-secondary">{% trans "Deadline pending" %}</span>
+                  {% endif %}
+                </td>
+                <td>{% workflow_badge n %}</td>
+              </tr>
+              {% empty %}
+              {% empty_state title=_("No regulatory obligation on this incident yet.") message=_("Triage instantiates the obligations the catalogue matches, and confirming this qualification re-runs that generation with the controller role and the Art. 34 verdict settled.") colspan=5 %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {# RIGHT COLUMN (sticky sidebar) #}
+  <div class="col-lg-4" style="position:sticky;top:1rem;align-self:flex-start">
+
+    {# Status and the incident it qualifies #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
+          <dd class="mb-3">
+            {% workflow_badge breach %}
+            {% if breach.special_categories %}<span class="badge text-bg-warning ms-1">{% trans "Special categories" %}</span>{% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Incident" context "incident" %}</dt>
+          <dd class="mb-3">
+            <a href="{{ incident_url }}" class="cell-link"><span class="ref">{{ incident.reference }}</span></a>
+            <div class="cell-sub">{{ incident.title|truncatechars:70 }}</div>
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Qualified by" %}</dt>
+          <dd class="mb-3">
+            {% if breach.qualified_by %}{% user_badge breach.qualified_by size=28 link=True block=True %}{% else %}<span class="text-muted">{% trans "The verdict has not been pronounced yet." %}</span>{% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Qualified at" %}</dt>
+          <dd class="mb-0">
+            {{ breach.qualified_at|date:"d/m/Y H:i"|default:"-" }}
+            {% if breach.qualified_at %}
+            <div class="cell-sub">{% trans "Stamped once, at the first verdict. A later reversal is recorded in the lifecycle ledger, never by overwriting this stamp." %}</div>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# The parties #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>{% trans "Parties" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Controller role" %}</dt>
+          <dd class="mb-3">
+            <span class="badge text-bg-secondary">{{ breach.get_controller_role_display }}</span>
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Controller notified" %}</dt>
+          <dd class="mb-3">
+            {% if breach.controller_supplier %}
+              <a href="{% url 'assets:supplier-detail' breach.controller_supplier.pk %}" class="cell-link">{{ breach.controller_supplier.name }}</a>
+            {% elif breach.acts_as_processor %}
+              <span class="text-danger">{% trans "A processor owes Art. 33(2) to a named controller. None is recorded." %}</span>
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Lead supervisory authority" %}</dt>
+          <dd class="mb-3">
+            {% if breach.lead_authority %}
+              <a href="{% url 'incidents:reporting-authority-detail' breach.lead_authority.pk %}" class="cell-link">{{ breach.lead_authority.display_name }}</a>
+              <div class="cell-sub">{% trans "Art. 56 one-stop-shop" %}</div>
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Cross-border processing" %}</dt>
+          <dd class="mb-0">
+            {% if breach.cross_border_eu %}
+            <span class="badge text-bg-info">{% trans "Yes" %}</span>
+            {% else %}
+            <span class="text-muted">{% trans "No" %}</span>
+            {% endif %}
+            <div class="cell-sub">{% trans "Art. 4(23), which is not the incident's operational cross-border impact." %}</div>
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# The Art. 33(5) register entry #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-journal-bookmark me-1" aria-hidden="true"></i>{% trans "Art. 33(5) register entry" %}</span></div>
+        <p class="text-muted small mt-2 mb-3">{% trans "This record is the internal register entry Art. 33(5) requires the controller to keep of every personal data breach, notified or not. Ruling a breach out is a recorded verdict here, never an unticked box." %}</p>
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Register entry reference" %}</dt>
+          <dd class="mb-0">
+            {% if breach.register_entry_reference %}
+              <span class="ref">{{ breach.register_entry_reference }}</span>
+              <div class="cell-sub">{% trans "Pointer to the register kept outside Cairn, so the two stay reconcilable." %}</div>
+            {% else %}
+              <span class="text-muted">{% trans "No external register reference recorded." %}</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# Record #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-folder2-open me-1" aria-hidden="true"></i>{% trans "Record" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
+          <dd class="mb-3">{{ breach.version }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
+          <dd class="mb-3">{% if breach.created_by %}{% user_badge breach.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
+          <dd class="mb-3">{{ breach.created_at|date:"d/m/Y H:i" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>
+          <dd class="mb-0">{{ breach.updated_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

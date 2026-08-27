@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load workflow_tags %}
+{% load accounts_tags %}
+
+{% comment %}
+The A.5.27 learning record, and the bridge to ISO/IEC 27001 clause 10.2.
+
+The review has no title of its own : exactly one exists per incident, so it is
+identified by its reference and by the incident it draws its lessons from.
+
+Two halves, and the page keeps them apart on purpose:
+
+- The **analysis** : the determined root cause *with the method used to
+  determine it* (a cause with no named technique is a plausible guess), the
+  detection gap, and the controls that were in place and did not hold.
+- The **consequences** : the outward links that make an incident change
+  something. Every target is an existing register - the same nonconformity an
+  audit raises, the same action-plan lifecycle, the same risk and vulnerability
+  registers, the same management-review output. Nothing here is a parallel
+  table.
+
+The effectiveness verdict is the clause 10.2 d) / f) record and gets a card of
+its own, because a closed action plan proves the action was implemented and
+never that it worked. Self-verification is legal and is rendered as exactly
+that, side by side with the facilitator.
+{% endcomment %}
+
+{% block title %}{{ review.reference }} - {{ incident.reference }} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "incidents.review.update" as can_update_review %}
+{% has_perm "incidents.review.delete" as can_delete_review %}
+
+{% url 'incidents:incident-detail' incident.pk as incident_url %}
+{% trans "Post-incident review" as review_page_title %}
+{% page_header review_page_title reference=review.reference nav="incidents:incident-list" accent="incidents" parent_label=incident.reference parent_url=incident_url %}
+  {% include "includes/history_trigger.html" %}
+  {% if can_delete_review %}
+  <button type="button" class="btn btn-outline-danger" hx-get="{% url 'incidents:review-delete' review.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+  {% endif %}
+  {% if can_update_review %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:review-update' review.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if review.tags.all %}
+<div class="detail-tags d-flex flex-wrap justify-content-center gap-2 mb-4">
+  {% for tag in review.tags.all %}<span class="badge" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% endfor %}
+</div>
+{% endif %}
+
+{% if review.is_effectiveness_overdue %}
+<div class="alert alert-danger" role="alert">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-calendar-x-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "The clause 10.2 d) effectiveness verification is overdue." %}</strong>
+    <span class="badge text-bg-danger ms-auto text-nowrap">{{ review.effectiveness_review_date }}</span>
+  </div>
+  <div class="mt-2 small">{% trans "The review was approved and the date set for verifying that the corrective actions worked has passed with no verdict recorded." %}</div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+
+  {# ══ LEFT COLUMN ══════════════════════════════════════════ #}
+  <div class="col-lg-8">
+
+    {# ── 1. Root cause, with the method that determined it ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead detail-subhead--action">
+          <span><i class="bi bi-diagram-2 me-1" aria-hidden="true"></i>{% trans "Root cause" %}</span>
+          <span class="badge text-bg-secondary">{{ review.get_root_cause_method_display }}</span>
+        </div>
+        <div class="mt-2 mb-3">
+          {% if review.root_cause %}
+            {{ review.root_cause|linebreaksbr }}
+          {% else %}
+            {% empty_state title=_("No root cause determined yet.") message=_("Clause 10.2 b) : the determined cause, not the symptom and not the remediation. It is required to submit the review.") %}
+          {% endif %}
+        </div>
+
+        <div class="detail-subhead"><span><i class="bi bi-list-nested me-1" aria-hidden="true"></i>{% trans "Contributing factors" %}</span></div>
+        <div class="mt-2">
+          {% if review.contributing_factors %}{{ review.contributing_factors|linebreaksbr }}{% else %}<span class="text-muted">-</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ── 2. Detection gap ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-binoculars me-1" aria-hidden="true"></i>{% trans "Detection gap" %}</span></div>
+        <div class="mt-2">
+          {% if review.detection_gap %}
+            {{ review.detection_gap|linebreaksbr }}
+          {% else %}
+            {% empty_state title=_("No detection gap recorded.") message=_("Why it was not detected earlier. This is what makes the mean-time-to-detect indicator actionable rather than decorative (A.8.16).") %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ── 3. Verdict on the handling, and the two lists ── #}
+    <details class="card mb-4" open>
+      <summary class="card-body py-2" style="cursor:pointer;user-select:none">
+        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-clipboard-pulse me-1" aria-hidden="true"></i>{% trans "Assessment of the response" %}</h6>
+      </summary>
+      <div class="card-body pt-0">
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Containment assessment" %}</dt>
+          <dd class="mb-3">{% if review.containment_assessment %}{{ review.containment_assessment|linebreaksbr }}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "What went well" %}</dt>
+          <dd class="mb-3">{% if review.what_went_well %}{{ review.what_went_well|linebreaksbr }}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "What failed" %}</dt>
+          <dd class="mb-0">{% if review.what_failed %}{{ review.what_failed|linebreaksbr }}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+        </dl>
+      </div>
+    </details>
+
+    {# ── 4. Controls : what broke, and what we are doing about it ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-shield-slash me-1" aria-hidden="true"></i>{% trans "Failed controls" %} <span class="badge text-bg-secondary">{{ review.failed_controls.all|length }}</span></span></div>
+        <div class="mt-2 mb-3">
+          {% for req in review.failed_controls.all %}
+          <div class="d-flex align-items-baseline gap-2 mb-1">
+            <span class="ref flex-shrink-0">{{ req.reference }}</span>
+            <a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.name|truncatechars:70 }}</a>
+          </div>
+          {% empty %}
+          <p class="text-muted small mb-0">{% trans "No control has been recorded as having been in place and failed." %}</p>
+          {% endfor %}
+        </div>
+
+        <div class="detail-subhead"><span><i class="bi bi-shield-plus me-1" aria-hidden="true"></i>{% trans "Controls to strengthen" %} <span class="badge text-bg-secondary">{{ review.controls_to_strengthen.all|length }}</span></span></div>
+        <div class="mt-2">
+          {% for req in review.controls_to_strengthen.all %}
+          <div class="d-flex align-items-baseline gap-2 mb-1">
+            <span class="ref flex-shrink-0">{{ req.reference }}</span>
+            <a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.name|truncatechars:70 }}</a>
+          </div>
+          {% empty %}
+          <p class="text-muted small mb-0">{% trans "No control has been listed for strengthening." %}</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ── 5. The clause 10.2 bridge : the nonconformities and the actions ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-exclamation-diamond me-1" aria-hidden="true"></i>{% trans "Nonconformities raised" %} <span class="badge text-bg-secondary">{{ review.raised_findings.all|length }}</span></span></div>
+        <p class="text-muted small mt-2 mb-2">{% trans "Raised in the one clause 10.2 register, with the incident as their source. No audit is fabricated to hold them." %}</p>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" style="font-size:.875rem">
+            <thead>
+              <tr>
+                <th>{% trans "Reference" %}</th>
+                <th>{% trans "Type" %}</th>
+                <th>{% trans "Finding" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for finding in review.raised_findings.all %}
+              <tr>
+                <td><a href="{% url 'compliance:finding-detail' finding.pk %}" class="cell-link">{{ finding.reference }}</a></td>
+                <td>{{ finding.get_finding_type_display }}</td>
+                <td>{{ finding.description|striptags|truncatechars:90 }}</td>
+              </tr>
+              {% empty %}
+              {% empty_state title=_("No nonconformity raised.") message=_("A review that determines a root cause and raises nothing is a review whose conclusions change nothing.") colspan=3 %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="detail-subhead mt-4"><span><i class="bi bi-list-task me-1" aria-hidden="true"></i>{% trans "Corrective action plans" %} <span class="badge text-bg-secondary">{{ review.corrective_action_plans.all|length }}</span></span></div>
+        <p class="text-muted small mt-2 mb-2">{% trans "Clause 10.2 c) : corrective actions, running on the existing action-plan lifecycle." %}</p>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" style="font-size:.875rem">
+            <thead>
+              <tr>
+                <th>{% trans "Reference" %}</th>
+                <th>{% trans "Action plan" %}</th>
+                <th class="text-nowrap">{% trans "Target date" %}</th>
+                <th class="text-nowrap">{% trans "Progress" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for plan in review.corrective_action_plans.all %}
+              <tr>
+                <td><a href="{% url 'compliance:action-plan-detail' plan.pk %}" class="cell-link">{{ plan.reference }}</a></td>
+                <td>{{ plan.name|truncatechars:70 }}</td>
+                <td class="text-nowrap">{{ plan.target_date|default:"-" }}</td>
+                <td class="text-nowrap">{{ plan.progress_percentage }}&nbsp;%</td>
+              </tr>
+              {% empty %}
+              {% empty_state title=_("No corrective action plan linked.") message=_("Clause 10.2 c) asks what was actually done about the cause, not what was concluded about it.") colspan=4 %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# ── 6. The other outward links ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% trans "Risks to reassess" %}</span></div>
+        <div class="d-flex flex-wrap gap-1 mt-2 mb-3">
+          {% for risk in review.identified_risks.all %}
+          <a href="{% url 'risks:risk-detail' risk.pk %}" class="party-chip">{{ risk.reference }} {{ risk.name|truncatechars:50 }}</a>
+          {% empty %}
+          <span class="text-muted small">{% trans "No registered risk was revealed or invalidated by this incident." %}</span>
+          {% endfor %}
+        </div>
+
+        <div class="detail-subhead"><span><i class="bi bi-bug me-1" aria-hidden="true"></i>{% trans "Vulnerabilities" %}</span></div>
+        <div class="d-flex flex-wrap gap-1 mt-2 mb-3">
+          {% for vuln in review.identified_vulnerabilities.all %}
+          <a href="{% url 'risks:vulnerability-detail' vuln.pk %}" class="party-chip">{{ vuln.reference }} {{ vuln.name|truncatechars:50 }}</a>
+          {% empty %}
+          <span class="text-muted small">{% trans "No weakness was registered from this review." %}</span>
+          {% endfor %}
+        </div>
+
+        <div class="detail-subhead"><span><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{% trans "ISMS changes" %}</span></div>
+        <p class="text-muted small mt-2 mb-2">{% trans "Clause 10.2 e). An ISMS change is an output of a management review : this review links one, it never creates it." %}</p>
+        <div class="d-flex flex-wrap gap-1">
+          {% for change in review.isms_changes.all %}
+          <a href="{% url 'reports:management-review-detail' change.review_id %}" class="party-chip">{{ change.reference }} {{ change.title|truncatechars:50 }}</a>
+          {% empty %}
+          <span class="text-muted small">{% trans "No ISMS change has been tabled from this review." %}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ── 7. Effectiveness : the clause 10.2 d) / f) record ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead detail-subhead--action">
+          <span><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{% trans "Corrective action effectiveness" %}</span>
+          {% if review.effectiveness_verdict %}
+          <span class="badge text-bg-{% if review.effectiveness_verdict == 'effective' %}success{% elif review.effectiveness_verdict == 'partially_effective' %}warning{% else %}danger{% endif %}">{{ review.get_effectiveness_verdict_display }}</span>
+          {% endif %}
+        </div>
+        <p class="text-muted small mt-2 mb-3">{% trans "Clause 10.2 d) and f) : a closed action plan proves the action was implemented, never that it worked. This is the documented result." %}</p>
+
+        {% if review.effectiveness_verdict %}
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Verified at" %}</dt>
+          <dd class="mb-3">{{ review.effectiveness_reviewed_at|date:"d/m/Y H:i"|default:"-" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Verified by" %}</dt>
+          <dd class="mb-3">
+            {% if review.effectiveness_reviewed_by %}{% user_badge review.effectiveness_reviewed_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
+            {% if is_self_verified %}
+            {% comment %}
+            Self-verification is permitted and is stated rather than inferred :
+            the person who ran the review is the person who declared the
+            corrective action effective.
+            {% endcomment %}
+            <div class="mt-2"><span class="badge text-bg-warning"><i class="bi bi-person-exclamation me-1" aria-hidden="true"></i>{% trans "Verified by the facilitator of the review" %}</span></div>
+            {% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Supporting evidence" %}</dt>
+          <dd class="mb-0">
+            {% if review.effectiveness_notes %}
+              {{ review.effectiveness_notes|linebreaksbr }}
+            {% else %}
+              <span class="text-muted">{% trans "A verdict with no measurement, test or observation behind it is an opinion." %}</span>
+            {% endif %}
+          </dd>
+        </dl>
+        {% else %}
+        {% empty_state title=_("Effectiveness has not been verified yet.") message=_("The verdict is recorded through the lifecycle transition that verifies effectiveness, once the corrective actions have had time to work.") %}
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  {# ══ RIGHT COLUMN (sticky sidebar) ═════════════════════════ #}
+  <div class="col-lg-4" style="position:sticky;top:1rem;align-self:flex-start">
+
+    {# ── Status ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
+          <dd class="mb-3">{% workflow_badge review %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Incident" context "incident" %}</dt>
+          <dd class="mb-3">
+            <a href="{{ incident_url }}" class="cell-link"><span class="ref">{{ incident.reference }}</span></a>
+            <div class="cell-sub">{{ incident.title|truncatechars:70 }}</div>
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Response plan" %}</dt>
+          <dd class="mb-0">
+            {% if review.response_plan %}
+            <a href="{% url 'incidents:response-plan-detail' review.response_plan.pk %}" class="cell-link">{{ review.response_plan.name }}</a>
+            {% else %}<span class="text-muted">-</span>{% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# ── People ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-people me-1" aria-hidden="true"></i>{% trans "People" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Facilitator" %}</dt>
+          <dd class="mb-3">{% if review.facilitator %}{% user_badge review.facilitator size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Participants" %}</dt>
+          <dd class="mb-0">
+            {% for participant in review.participants.all %}
+            <div class="mb-1">{% user_badge participant size=24 link=True %}</div>
+            {% empty %}
+            <span class="text-muted">-</span>
+            {% endfor %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# ── Dates ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-calendar3 me-1" aria-hidden="true"></i>{% trans "Dates" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Scheduled date" %}</dt>
+          <dd class="mb-3">{{ review.scheduled_date|default:"-" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Held at" %}</dt>
+          <dd class="mb-3">{{ review.held_at|date:"d/m/Y H:i"|default:"-" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Effectiveness review date" %}</dt>
+          <dd class="mb-0">
+            {% if review.effectiveness_review_date %}
+              {% if review.is_effectiveness_overdue %}
+              <span class="text-danger fw-semibold">{{ review.effectiveness_review_date }}</span>
+              {% else %}
+              {{ review.effectiveness_review_date }}
+              {% endif %}
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# ── Recurrence and consequences ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>{% trans "Recurrence" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Recurrence likelihood" %}</dt>
+          <dd class="mb-3">{% if review.recurrence_likelihood %}{{ review.get_recurrence_likelihood_display }}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Similar incidents checked" %}</dt>
+          <dd class="mb-0">
+            {% if review.similar_incidents_checked %}
+            <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{% trans "Checked" %}</span>
+            {% else %}
+            <span class="badge text-bg-secondary">{% trans "Not checked" %}</span>
+            {% endif %}
+            <div class="cell-sub mt-1">{% trans "Clause 10.2 b) 3) : whether similar nonconformities exist, or could occur." %}</div>
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-signpost-2 me-1" aria-hidden="true"></i>{% trans "Declared consequences" %}</span></div>
+        <div class="d-flex flex-wrap gap-1 mt-2">
+          {% if review.risk_reassessment_required %}<span class="badge text-bg-warning">{% trans "Risk reassessment required" %}</span>{% endif %}
+          {% if review.response_plan_update_required %}<span class="badge text-bg-warning">{% trans "Response plan update required" %}</span>{% endif %}
+          {% if review.training_required %}<span class="badge text-bg-warning">{% trans "Training required" %}</span>{% endif %}
+          {% if not review.risk_reassessment_required and not review.response_plan_update_required and not review.training_required %}
+          <span class="text-muted small">{% trans "No consequence has been declared by this review." %}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ── Scopes ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-bounding-box me-1" aria-hidden="true"></i>{% trans "Scopes" %}</span></div>
+        <div class="d-flex flex-wrap gap-1 mt-2">
+          {% for scope in review.scopes.all %}<span class="badge text-bg-secondary">{{ scope.name }}</span>{% empty %}<span class="text-muted small">-</span>{% endfor %}
+        </div>
+        <p class="text-muted small mb-0 mt-2">{% trans "The review's tenancy is the incident's, and is realigned on every write of the incident." %}</p>
+      </div>
+    </div>
+
+    {# ── Record ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-folder2-open me-1" aria-hidden="true"></i>{% trans "Record" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
+          <dd class="mb-3">{{ review.version }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
+          <dd class="mb-3">{% if review.created_by %}{% user_badge review.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
+          <dd class="mb-3">{{ review.created_at|date:"d/m/Y H:i" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>
+          <dd class="mb-0">{{ review.updated_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

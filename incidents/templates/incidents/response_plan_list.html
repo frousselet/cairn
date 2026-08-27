@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load table_tags %}
+{% load accounts_tags %}
+
+{% comment %}
+The A.5.24 procedures of record. A plan past its review date and a plan more
+than twelve months without an exercise are both nonconformities waiting to be
+written up, so both are flagged on the row rather than left to be computed by
+whoever reads the dates.
+{% endcomment %}
+
+{% block title %}{% trans "Incident response plans" %} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "incidents.response_plan.create" as can_create_plan %}
+{% page_header _("Incident response plans") nav="incidents:response-plan-list" accent="incidents" %}
+  {% if can_create_plan %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:response-plan-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New response plan" %}</button>
+  {% endif %}
+{% endpage_header %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Name" col="name" %}
+              {% sortable_th "owner" "Owner" col="owner" %}
+              {% sortable_th "effective_from" "Effective from" col="effective_from" %}
+              {% sortable_th "review_date" "Review date" col="review_date" %}
+              {% sortable_th "last_exercise_date" "Last exercise date" col="last_exercise_date" %}
+              {% trans "Incidents" context "incident" as th_incidents %}
+              <th data-col="incidents">{{ th_incidents }}</th>
+              {% sortable_th "status" "Status" col="status" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'incidents:response-plan-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "incidents/response_plan_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

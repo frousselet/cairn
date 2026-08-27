@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load workflow_tags %}
+{% load accounts_tags %}
+
+{% comment %}
+The A.5.24 procedure of record. Seven long prose fields would bury everything
+else, so each is a collapsible `<details>` card : the procedure itself is open,
+the rest fold away. The sidebar answers the governance questions - is it in
+force, when is it reviewed, when was it last exercised, and what has been
+handled under it.
+{% endcomment %}
+
+{% block title %}{{ plan.name }} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "incidents.response_plan.update" as can_update_plan %}
+{% has_perm "incidents.response_plan.delete" as can_delete_plan %}
+{% page_header plan.name reference=plan.reference nav="incidents:response-plan-list" accent="incidents" %}
+  {% include "includes/history_trigger.html" %}
+  {% if can_delete_plan %}
+  <button type="button" class="btn btn-outline-danger" hx-get="{% url 'incidents:response-plan-delete' plan.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+  {% endif %}
+  {% if can_update_plan %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:response-plan-update' plan.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if plan.tags.all %}
+<div class="detail-tags d-flex flex-wrap justify-content-center gap-2 mb-4">
+  {% for tag in plan.tags.all %}<span class="badge" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% endfor %}
+</div>
+{% endif %}
+
+{% if plan.is_review_overdue %}
+<div class="alert alert-warning"><i class="bi bi-calendar-x me-2" aria-hidden="true"></i>{% trans "The scheduled review of this procedure has passed." %} ({{ plan.review_date }})</div>
+{% endif %}
+{% if plan.is_exercise_overdue %}
+<div class="alert alert-warning"><i class="bi bi-shield-exclamation me-2" aria-hidden="true"></i>{% trans "This plan has not been exercised in the last twelve months." %}</div>
+{% endif %}
+
+<div class="row g-4">
+
+  {# ── LEFT COLUMN ── #}
+  <div class="col-lg-8">
+
+    {# ── Purpose ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-2"><i class="bi bi-bullseye me-1" aria-hidden="true"></i>{% trans "Purpose" %}</h6>
+        <div>{% if plan.purpose %}{{ plan.purpose|linebreaksbr }}{% else %}<span class="text-muted">-</span>{% endif %}</div>
+      </div>
+    </div>
+
+    {# ── The procedure and its annexes, folded ── #}
+    <details class="card mb-4" open>
+      <summary class="card-body py-2" style="cursor:pointer;user-select:none">
+        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-list-ol me-1" aria-hidden="true"></i>{% trans "Procedure" %}</h6>
+      </summary>
+      <div class="card-body pt-0">
+        {% if plan.procedure %}{{ plan.procedure|linebreaksbr }}{% else %}<span class="text-muted">-</span>{% endif %}
+      </div>
+    </details>
+
+    <details class="card mb-4">
+      <summary class="card-body py-2" style="cursor:pointer;user-select:none">
+        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-bar-chart-steps me-1" aria-hidden="true"></i>{% trans "Classification scale" %}</h6>
+      </summary>
+      <div class="card-body pt-0">
+        {% if plan.classification_scale %}{{ plan.classification_scale|linebreaksbr }}{% else %}<span class="text-muted">-</span>{% endif %}
+      </div>
+    </details>
+
+    <details class="card mb-4">
+      <summary class="card-body py-2" style="cursor:pointer;user-select:none">
+        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-diagram-2 me-1" aria-hidden="true"></i>{% trans "Escalation matrix" %}</h6>
+      </summary>
+      <div class="card-body pt-0">
+        {% if plan.escalation_matrix %}{{ plan.escalation_matrix|linebreaksbr }}{% else %}<span class="text-muted">-</span>{% endif %}
+      </div>
+    </details>
+
+    <details class="card mb-4">
+      <summary class="card-body py-2" style="cursor:pointer;user-select:none">
+        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-megaphone me-1" aria-hidden="true"></i>{% trans "Reporting channels" %}</h6>
+      </summary>
+      <div class="card-body pt-0">
+        {% if plan.reporting_channels %}{{ plan.reporting_channels|linebreaksbr }}{% else %}<span class="text-muted">-</span>{% endif %}
+      </div>
+    </details>
+
+    <details class="card mb-4">
+      <summary class="card-body py-2" style="cursor:pointer;user-select:none">
+        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-archive me-1" aria-hidden="true"></i>{% trans "Evidence procedure" %}</h6>
+      </summary>
+      <div class="card-body pt-0">
+        {% if plan.evidence_procedure %}{{ plan.evidence_procedure|linebreaksbr }}{% else %}<span class="text-muted">-</span>{% endif %}
+      </div>
+    </details>
+
+    <details class="card mb-4">
+      <summary class="card-body py-2" style="cursor:pointer;user-select:none">
+        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-lightbulb me-1" aria-hidden="true"></i>{% trans "Lessons learned procedure" %}</h6>
+      </summary>
+      <div class="card-body pt-0">
+        {% if plan.lessons_learned_procedure %}{{ plan.lessons_learned_procedure|linebreaksbr }}{% else %}<span class="text-muted">-</span>{% endif %}
+      </div>
+    </details>
+
+    {# ── Applicable regimes ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-bank me-1" aria-hidden="true"></i>{% trans "Applicable regimes" %}</h6>
+        {% if plan.applicable_regime_labels %}
+        <div class="d-flex flex-wrap gap-1">
+          {% for label in plan.applicable_regime_labels %}<span class="badge text-bg-secondary">{{ label }}</span>{% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0">{% trans "No applicable regime declared." %}</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  {# ── RIGHT COLUMN (sticky sidebar) ── #}
+  <div class="col-lg-4" style="position:sticky;top:1rem;align-self:flex-start">
+
+    {# ── Status ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
+          <dd class="mb-3">
+            {% workflow_badge plan %}
+            {% if plan.is_in_force %}<span class="badge text-bg-success ms-1"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{% trans "In force" %}</span>{% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Plan testing" %}</dt>
+          <dd class="mb-0">
+            {% comment %}
+            Three states, not two : a plan in force and overdue for a test is a
+            nonconformity, a tested plan carries its date, and a plan not yet in
+            force is simply untested-and-not-yet-due.
+            {% endcomment %}
+            {% if plan.is_exercise_overdue %}
+            <span class="badge text-bg-danger"><i class="bi bi-shield-exclamation me-1" aria-hidden="true"></i>{% trans "Untested" %}</span>
+            {% elif plan.last_exercise_date %}
+            <span class="badge text-bg-success"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>{{ plan.last_exercise_date }}</span>
+            {% else %}
+            <span class="text-muted">-</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# ── People ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1" aria-hidden="true"></i>{% trans "People" %}</h6>
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Owner" %}</dt>
+          <dd class="mb-3">{% if plan.owner %}{% user_badge plan.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Approved by" %}</dt>
+          <dd class="mb-3">{% if plan.approved_by %}{% user_badge plan.approved_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Approved at" %}</dt>
+          <dd class="mb-0">{{ plan.approved_at|default:"-" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    {# ── Dates ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1" aria-hidden="true"></i>{% trans "Dates" %}</h6>
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Effective from" %}</dt>
+          <dd class="mb-3">{{ plan.effective_from|default:"-" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Review date" %}</dt>
+          <dd class="mb-3">
+            {% if plan.review_date %}
+              {% if plan.is_review_overdue %}<span class="text-danger fw-semibold">{{ plan.review_date }}</span>{% else %}{{ plan.review_date }}{% endif %}
+            {% else %}<span class="text-muted">-</span>{% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Last exercise date" %}</dt>
+          <dd class="mb-0">{{ plan.last_exercise_date|default:"-" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    {# ── Responsibilities and coverage ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-link-45deg me-1" aria-hidden="true"></i>{% trans "Coverage" %}</h6>
+        <div class="mb-3">
+          <div class="text-muted small mb-1">{% trans "Responsible roles" %}</div>
+          <div class="d-flex flex-wrap gap-1">
+            {% for role in plan.responsible_roles.all %}
+            <a href="{% url 'context:role-detail' role.pk %}" class="text-decoration-none"><span class="badge text-bg-secondary">{{ role.name }}</span></a>
+            {% empty %}<span class="text-muted">-</span>{% endfor %}
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="text-muted small mb-1">{% trans "Linked requirements" %}</div>
+          {% for req in plan.linked_requirements.all %}
+          <div class="d-flex align-items-baseline gap-2 mb-1">
+            <span class="ref flex-shrink-0">{{ req.reference }}</span>
+            <a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.name|truncatechars:60 }}</a>
+          </div>
+          {% empty %}<span class="text-muted">-</span>{% endfor %}
+        </div>
+        <div class="mb-0">
+          <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
+          <div class="d-flex flex-wrap gap-1">
+            {% for scope in plan.scopes.all %}<span class="badge text-bg-secondary">{{ scope.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Incidents handled under this plan ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead detail-subhead--action mt-0 pt-0 border-0">
+          <span><i class="bi bi-exclamation-octagon me-1" aria-hidden="true"></i>{% trans "Incidents handled under this plan" %}<span class="badge text-bg-secondary ms-2">{{ handled_incident_count }}</span></span>
+          {% if handled_incident_count %}
+          <a href="{{ handled_incidents_url }}" class="btn btn-sm btn-outline-secondary">{% trans "View all" %}</a>
+          {% endif %}
+        </div>
+        {% for incident in handled_incidents %}
+        <div class="d-flex align-items-baseline gap-2 mb-2">
+          <span class="ref flex-shrink-0">{{ incident.reference }}</span>
+          <a href="{% url 'incidents:incident-detail' incident.pk %}" class="cell-link">{{ incident.title|truncatechars:60 }}</a>
+        </div>
+        {% empty %}
+        <p class="text-muted small mb-0">{% trans "No incident has been handled under this plan yet." %}</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# ── Record ── #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-folder2-open me-1" aria-hidden="true"></i>{% trans "Record" %}</h6>
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
+          <dd class="mb-3">{{ plan.version }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
+          <dd class="mb-3">{% if plan.created_by %}{% user_badge plan.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
+          <dd class="mb-3">{{ plan.created_at|date:"d/m/Y H:i" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>
+          <dd class="mb-0">{{ plan.updated_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

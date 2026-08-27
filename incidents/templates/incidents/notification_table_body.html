@@ -1,0 +1,91 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% comment %}
+Rows of the obligations-due register, swapped into `#item-table-body` by
+`incidents:notification-table-body`.
+
+The row itself carries the answer : an obligation past its deadline with no
+filing tints `table-danger`, one nobody has decided on tints `table-warning`.
+Those are the two states an operator on a 24-hour clock must never have to
+click to find. `is_overdue` and `is_undecided` are read per row here, on one
+page of at most PAGE_SIZE rows, and both are pure Python over already-loaded
+fields : no query is issued.
+
+The countdown cell is deliberately identical to the *Regulatory notifications*
+card on the incident page : same order of answers, same badges, same icons, so
+the same fact never reads two ways on two screens. It is server-rendered and
+absolute-dated, so it degrades with JavaScript unavailable.
+{% endcomment %}
+{% has_perm "incidents.notification.update" as can_update_notification %}
+{% for n in notifications %}
+<tr{% if n.is_overdue %} class="table-danger"{% elif n.is_undecided %} class="table-warning"{% endif %}>
+  <td data-col="reference">
+    <a href="{% url 'incidents:notification-detail' n.pk %}" class="cell-link">{{ n.reference }}</a>
+  </td>
+  <td data-col="incident">
+    <span class="cell-stack">
+      <a href="{% url 'incidents:incident-detail' n.incident_id %}" class="cell-link">{{ n.incident.reference }}</a>
+      <span class="cell-sub">
+        {% comment %}
+        RG-INC-17 : a drill never instantiates a regulatory duty, so an
+        obligation hanging off an exercise was added by hand. Saying so on the
+        row is what stops it being answered as if a regulator were waiting.
+        {% endcomment %}
+        {% if n.incident.is_exercise %}<span class="badge text-bg-info">{% trans "Exercise" %}</span> {% endif %}{{ n.incident.title|truncatechars:60 }}
+      </span>
+    </span>
+  </td>
+  <td data-col="regime">
+    <span class="cell-stack">
+      <span class="cell-main">{{ n.get_regime_display }}</span>
+      {% if n.obligation_reference %}<span class="cell-sub">{{ n.obligation_reference }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="recipient">
+    <span class="cell-stack">
+      <span>{{ n.recipient_display }}</span>
+      {% if n.recipient_display != n.get_recipient_kind_display %}<span class="cell-sub">{{ n.get_recipient_kind_display }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="decision">
+    <span class="badge text-bg-{% if n.is_undecided %}warning{% elif n.decision == 'required' %}primary{% else %}secondary{% endif %}">{{ n.get_decision_display }}</span>
+  </td>
+  <td data-col="due_at" class="text-nowrap">
+    {% if n.due_at %}
+      {{ n.due_at|date:"SHORT_DATETIME_FORMAT" }}
+    {% elif n.no_fixed_deadline %}
+      {# A fact about the law : nothing is owed by a date. #}
+      <span class="cell-empty">{% trans "No statutory deadline" %}</span>
+    {% else %}
+      {% comment %}
+      A clock that exists and has not started. Never merged with the line
+      above : that is how a real deadline disappears from a register.
+      {% endcomment %}
+      <span class="badge text-bg-secondary">{% trans "Deadline pending" %}</span>
+    {% endif %}
+  </td>
+  <td data-col="countdown" class="text-nowrap">
+    {% comment %}
+    Late, running, or discharged. Ordered so the worst answer is given first.
+    {% endcomment %}
+    {% if n.is_overdue %}
+      <span class="badge text-bg-danger"><i class="bi bi-hourglass-bottom me-1" aria-hidden="true"></i>{% trans "Overdue" %} : {{ n.due_at|timesince }}</span>
+    {% elif n.sent_at and n.late_by %}
+      <span class="badge text-bg-danger"><i class="bi bi-exclamation-diamond me-1" aria-hidden="true"></i>{% trans "Filed late" %}{% if n.due_at %} : {{ n.due_at|timesince:n.sent_at }}{% endif %}</span>
+    {% elif n.sent_at %}
+      <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{{ n.sent_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+    {% elif n.due_at and not n.is_terminal_state %}
+      <span class="badge text-bg-warning"><i class="bi bi-alarm me-1" aria-hidden="true"></i>{{ n.due_at|timeuntil }}</span>
+    {% else %}
+      <span class="cell-empty">-</span>
+    {% endif %}
+  </td>
+  <td data-col="status">{% workflow_badge n %}</td>
+  <td class="text-end" data-col="actions">
+    {% if can_update_notification %}
+    <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'incidents:notification-update' n.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit notification obligation' %}" aria-label="{% trans 'Edit notification obligation' %}"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No notification obligation to show.") message=_("Obligations are instantiated by incident triage from the regulatory catalogue, and added by hand on an incident when a regime the catalogue does not cover applies.") colspan=9 %}
+{% endfor %}

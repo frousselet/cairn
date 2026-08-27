@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% comment %}
+  Full-page fallback for the evidence item form. The usual path is the HTMX
+  drawer (evidence_form_modal.html); this renders when the route is opened
+  directly, which would otherwise raise TemplateDoesNotExist.
+
+  multipart because the artefact itself may be uploaded here. The steps are
+  rendered as stacked cards rather than through includes/form_steps.html :
+  that partial hides every step past the first for the drawer's JS stepper.
+{% endcomment %}
+
+{% block title %}{% if form.instance.pk %}{% trans "Edit evidence item" %}{% else %}{% trans "Register an evidence item" %}{% endif %} - {{ incident.reference }} - Cairn{% endblock %}
+
+{% block content %}
+{% url 'incidents:incident-detail' incident.pk as incident_url %}
+{% if form.instance.pk %}{% trans "Edit evidence item" as page_title %}{% else %}{% trans "Register an evidence item" as page_title %}{% endif %}
+{% page_header page_title nav="incidents:incident-list" accent="incidents" parent_label=incident.reference parent_url=incident_url %}{% endpage_header %}
+
+<p class="text-muted small">{% trans "Incident" context "incident" %} : <strong>{{ incident.title }}</strong> ({{ incident.reference }})</p>
+
+{% if form.instance.pk and form.instance.is_sealed %}
+<div class="alert alert-secondary" role="alert">
+  <i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% trans "This item is sealed : the acquisition and integrity facts are frozen and can no longer be edited." %}
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">
+    {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+  </div>
+  {% endif %}
+
+  {% for step in form.iter_steps %}
+  <div class="card mb-4">
+    <div class="card-header"><h6 class="mb-0"><i class="bi bi-{{ step.icon }} me-2" style="color:var(--accent)" aria-hidden="true"></i>{{ step.title }}</h6></div>
+    <div class="card-body">
+      {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+  {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+  <div class="d-flex gap-2 form-actions-sticky">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
+    {% if form.instance.pk %}
+    <a href="{% url 'incidents:evidence-detail' form.instance.pk %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+    {% else %}
+    <a href="{{ incident_url }}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

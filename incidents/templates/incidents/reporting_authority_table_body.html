@@ -1,0 +1,56 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% comment %}
+Rows of the reporting-authority catalogue, swapped into `#item-table-body` by
+`incidents:reporting-authority-table-body`.
+
+`template_count` and `obligation_count` are the annotations the view adds : the
+related managers would cost two queries per row on a page of fifty.
+
+The short-name cell links through `display_name` (the acronym when there is
+one, the full name otherwise), so the row's first cell is never an empty link.
+The portal link is rendered inline on the name cell rather than as a column of
+its own : it is the single most used thing on this catalogue at 02:00, and the
+column set is fixed by the view.
+{% endcomment %}
+{% has_perm "incidents.response_plan.update" as can_update_authority %}
+{% for authority in authorities %}
+<tr>
+  <td data-col="short_name">
+    <a href="{% url 'incidents:reporting-authority-detail' authority.pk %}" class="cell-link">{{ authority.display_name }}</a>
+  </td>
+  <td data-col="name">
+    <span class="cell-stack">
+      <span class="cell-main">{{ authority.name }}</span>
+      <span class="cell-sub">
+        {% if authority.portal_url %}
+        <a href="{{ authority.portal_url }}" target="_blank" rel="noopener noreferrer" title="{% trans 'Portal URL' %}"><i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>{% trans "Portal" %}</a>
+        {% endif %}
+        {% if authority.contact_email %}<span class="ms-2"><i class="bi bi-envelope me-1" aria-hidden="true"></i>{{ authority.contact_email }}</span>{% endif %}
+      </span>
+    </span>
+  </td>
+  <td data-col="type">{{ authority.get_authority_type_display }}</td>
+  <td data-col="regime">
+    <span class="cell-stack">
+      <span>{{ authority.get_primary_regime_display }}</span>
+      {% if authority.additional_regimes %}<span class="cell-sub" title="{% trans 'Additional regimes' %}">+{{ authority.additional_regimes|length }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="jurisdiction">{{ authority.jurisdiction_country|default:"-" }}</td>
+  <td data-col="templates">
+    {% if authority.template_count %}
+      <span class="badge text-bg-primary" title="{% trans 'Obligation templates' %}">{{ authority.template_count }}</span>
+    {% else %}
+      <span class="cell-empty">-</span>
+    {% endif %}
+  </td>
+  <td data-col="status">{% workflow_badge authority %}</td>
+  <td class="text-end" data-col="actions">
+    {% if can_update_authority %}
+    <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'incidents:reporting-authority-update' authority.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit reporting authority' %}" aria-label="{% trans 'Edit reporting authority' %}"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No reporting authority in the catalogue yet.") message=_("Register the bodies incidents are notified to : the supervisory authority, the national CSIRT, the sector regulator. Obligation templates cite them, and only a validated authority is ever cited by a generated obligation.") colspan=8 %}
+{% endfor %}

@@ -1,0 +1,58 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% has_perm "incidents.response_plan.update" as can_update_plan %}
+{% has_perm "incidents.response_plan.delete" as can_delete_plan %}
+{% for p in plans %}
+<tr>
+  <td data-col="reference">
+    <a href="{% url 'incidents:response-plan-detail' p.pk %}" class="cell-link">{{ p.reference }}</a>
+  </td>
+  <td data-col="name">
+    <span class="cell-stack">
+      <a href="{% url 'incidents:response-plan-detail' p.pk %}" class="cell-link">{{ p.name }}</a>
+      {% if p.applicable_regime_labels %}
+      <span class="cell-sub">{{ p.applicable_regime_labels|join:", " }}</span>
+      {% endif %}
+    </span>
+  </td>
+  <td data-col="owner">
+    {% if p.owner %}{% user_badge p.owner size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}
+  </td>
+  <td data-col="effective_from">{{ p.effective_from|default:"-" }}</td>
+  <td data-col="review_date">
+    {% if p.review_date %}
+      {% if p.is_review_overdue %}
+      <span class="badge text-bg-warning" title="{% trans 'Review overdue' %}"><i class="bi bi-calendar-x me-1" aria-hidden="true"></i>{{ p.review_date }}</span>
+      {% else %}{{ p.review_date }}{% endif %}
+    {% else %}<span class="text-muted">-</span>{% endif %}
+  </td>
+  <td data-col="last_exercise_date">
+    {% comment %}
+    A.5.24 asks for a *tested* plan : never exercised is the worst case, not an
+    exempt one, so a blank date carries the same warning as a stale one.
+    {% endcomment %}
+    {% if p.is_exercise_overdue %}
+    <span class="badge text-bg-danger" title="{% trans 'Untested' %}"><i class="bi bi-shield-exclamation me-1" aria-hidden="true"></i>{{ p.last_exercise_date|default:_("Untested") }}</span>
+    {% else %}
+    {{ p.last_exercise_date|default:"-" }}
+    {% endif %}
+  </td>
+  <td data-col="incidents">
+    {% if p.incident_count %}
+    <span class="badge text-bg-secondary">{{ p.incident_count }}</span>
+    {% else %}<span class="text-muted">-</span>{% endif %}
+  </td>
+  <td data-col="status">{% workflow_badge p %}</td>
+  <td class="text-end" data-col="actions">
+    <div class="d-inline-flex gap-1">
+      {% if can_update_plan %}
+      <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'incidents:response-plan-update' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></button>
+      {% endif %}
+      {% if can_delete_plan %}
+      <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'incidents:response-plan-delete' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash"></i></button>
+      {% endif %}
+    </div>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No incident response plan yet.") message=_("The response plan is the procedure of record : every incident points at the plan it was handled under, so the file stays readable years later.") colspan=9 %}
+{% endfor %}

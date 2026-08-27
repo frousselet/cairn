@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load workflow_tags %}
+{% load accounts_tags %}
+
+{% comment %}
+The rule that turns incident facts into an owed deliverable : regime,
+authority, stage, clock, trigger conditions and content checklist.
+
+The clock is rendered first as ONE plain-language sentence (`clock_summary`),
+above the raw fields and never instead of them : a table of five columns is
+what a reviewer skips, and the sentence is what they actually check.
+
+The snapshot rule is stated on the page rather than left to the specs, because
+it is the single most misread thing about this entity : the terms below are
+copied onto every obligation at the moment it is generated. Editing this
+template changes what future incidents generate and changes nothing at all
+about a filing already made. Without that, a breach file printed for an
+inspector would cite an article that did not exist when the filing was made.
+
+The trigger conditions are a flat conjunction and are badged with the navy
+identity colour, never a semantic status colour : a trigger condition is not a
+status. No condition set reads "Any" in words, so a deliberate blank is never
+mistaken for a forgotten one.
+{% endcomment %}
+
+{% block title %}{{ template.name }} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "incidents.response_plan.update" as can_update_template %}
+{% has_perm "incidents.response_plan.delete" as can_delete_template %}
+
+{% page_header template.name reference=template.reference nav="incidents:obligation-template-list" accent="incidents" %}
+  {% include "includes/history_trigger.html" %}
+  {% if can_delete_template %}
+  <button type="button" class="btn btn-outline-danger" hx-get="{% url 'incidents:obligation-template-delete' template.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+  {% endif %}
+  {% if can_update_template %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:obligation-template-update' template.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if template.tags.all %}
+<div class="detail-tags d-flex flex-wrap justify-content-center gap-2 mb-4">
+  {% for tag in template.tags.all %}<span class="badge" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% endfor %}
+</div>
+{% endif %}
+
+{% if not template.counts_in_reports %}
+<div class="alert alert-warning" role="alert">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "This template is not validated, so it generates nothing." %}</strong>
+  </div>
+  <div class="mt-2 small">{% trans "A draft template is a work in progress, not a legal position. Validate it through the lifecycle above once the clock, the citation and the conditions have been checked : one careless edit to a delay changes every future deadline in the register." %}</div>
+</div>
+{% endif %}
+
+{% if template.authority and not template.authority.counts_in_reports %}
+<div class="alert alert-warning" role="alert">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-bank fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "The authority this template files with is not validated." %}</strong>
+  </div>
+  <div class="mt-2 small">{% trans "Generation requires both halves to be validated : the rule and the body it cites. Until then, this template fires on nothing." %}</div>
+</div>
+{% endif %}
+
+{% comment %}
+The clock, as one sentence and then as its parts.
+{% endcomment %}
+<div class="card mb-4 kpi-tile{% if template.no_fixed_deadline %} kpi-tile--neutral{% elif template.counts_in_reports %} kpi-tile--info{% else %} kpi-tile--neutral{% endif %}">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+
+      <span class="kpi-tile__icon{% if template.no_fixed_deadline %} kpi-tile__icon--neutral{% else %} kpi-tile__icon--info{% endif %}" style="flex:none">
+        {% if template.no_fixed_deadline %}<i class="bi bi-hourglass-split" aria-hidden="true"></i>{% else %}<i class="bi bi-alarm" aria-hidden="true"></i>{% endif %}
+      </span>
+
+      <div class="min-w-0" style="flex:2 1 16rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Clock" %}</div>
+        <div class="fw-bold mt-1" style="font-size:1.2rem;line-height:1.3">{{ clock_summary }}</div>
+        <div class="text-muted small">{% trans "The sentence a reviewer checks. The raw fields are below and are never replaced by it." %}</div>
+      </div>
+
+      <div class="min-w-0" style="flex:1 1 12rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Clock anchor" %}</div>
+        <div class="fw-semibold mt-1">{{ template.get_clock_anchor_display }}</div>
+        {% if template.depends_on_regime %}
+        <div class="text-muted small">{% trans "Waits on" %} : {{ template.get_depends_on_regime_display }}</div>
+        {% endif %}
+      </div>
+
+      <div class="min-w-0" style="flex:1 1 10rem">
+        <div class="text-muted" style="font-size:.8rem">{% trans "Statutory delay" %}</div>
+        <div class="fw-semibold mt-1">
+          {% if template.no_fixed_deadline %}
+            {% trans "Without undue delay" %}
+          {% elif template.clock_hours %}
+            {% blocktrans with hours=template.clock_hours %}{{ hours }} hours{% endblocktrans %}
+          {% else %}
+            <span class="text-muted">-</span>
+          {% endif %}
+        </div>
+        {% if template.no_fixed_deadline %}
+        {% comment %}
+        Never fabricate a deadline for an obligation that legally has none :
+        the generated rows carry no due date, are never counted late, and
+        appear in their own bucket on the register.
+        {% endcomment %}
+        <div class="text-muted small">{% trans "No numeric limit in law" %}</div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% comment %}
+The snapshot rule, stated plainly and above the terms it governs.
+{% endcomment %}
+<div class="alert alert-info" role="note">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-camera fs-5 flex-shrink-0" aria-hidden="true"></i>
+    <strong>{% trans "Generated obligations snapshot these terms at creation." %}</strong>
+  </div>
+  <div class="mt-2 small">{% trans "The regime, the authority, the legal citation, the clock and the content checklist are copied onto each obligation the moment it is generated, and are never rewritten afterwards. Editing this template changes what future incidents generate, and changes nothing about a filing already made." %}</div>
+</div>
+
+<div class="row g-4">
+
+  {# LEFT COLUMN #}
+  <div class="col-lg-8">
+
+    {# 1. What is owed, and to whom #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-bank me-1" aria-hidden="true"></i>{% trans "What is owed" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Regime" %}</dt>
+          <dd class="mb-3">{{ template.get_regime_display }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Legal reference" %}</dt>
+          <dd class="mb-3">
+            {% if template.legal_reference %}
+              <span class="ref">{{ template.legal_reference }}</span>
+              <div class="cell-sub">{% trans "The string an auditor greps the register for." %}</div>
+            {% else %}
+              <span class="text-muted">{% trans "No article citation recorded." %}</span>
+            {% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Recipient kind" %}</dt>
+          <dd class="mb-3">{{ template.get_recipient_kind_display }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Reporting authority" %}</dt>
+          <dd class="mb-0">
+            {% if template.authority %}
+              <a href="{% url 'incidents:reporting-authority-detail' template.authority.pk %}" class="cell-link">{{ template.authority.display_name }}</a>
+              <div class="cell-sub">{{ template.authority.get_authority_type_display }}</div>
+            {% else %}
+              <span class="text-muted">{% trans "No authority : the filing goes to a recipient that is not one, such as the data subjects, the customers or the public." %}</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# 2. The content checklist #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-list-check me-1" aria-hidden="true"></i>{% trans "Content requirements" %}</span></div>
+        <div class="mt-2">
+          {% if template.content_requirements %}
+            {{ template.content_requirements|linebreaksbr }}
+          {% else %}
+            <p class="text-muted small mb-0">{% trans "No content checklist recorded. It is rendered beside the drafting field on every obligation generated from this rule, so a drafter never leaves the page to find out what the article requires." %}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# 3. The trigger conditions : a flat conjunction, all of them must hold #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-funnel me-1" aria-hidden="true"></i>{% trans "Trigger conditions" %}</span></div>
+        <p class="text-muted small mt-2 mb-3">{% trans "Every condition below must hold for the template to fire. They are matching inputs and are deliberately never snapshotted onto the obligation : once an obligation exists, why it exists is answered by the rule it came from and by the incident's own recorded facts." %}</p>
+
+        {% if template.min_severity or template.requires_significant or template.requires_personal_data or template.requires_high_risk or template.requires_cross_border or template.jurisdiction_country or template.controller_roles or template.applicable_categories %}
+        <div class="d-flex flex-wrap gap-1 mb-3">
+          {% if template.min_severity %}<span class="badge text-bg-primary" title="{% trans 'Minimum severity' context 'incident' %}">&ge; {{ template.get_min_severity_display }}</span>{% endif %}
+          {% if template.requires_significant %}<span class="badge text-bg-primary">{% trans "Significant" %}</span>{% endif %}
+          {% if template.requires_personal_data %}<span class="badge text-bg-primary">{% trans "Personal data" %}</span>{% endif %}
+          {% if template.requires_high_risk %}<span class="badge text-bg-primary">{% trans "High risk" %}</span>{% endif %}
+          {% if template.requires_cross_border %}<span class="badge text-bg-primary">{% trans "Cross-border" %}</span>{% endif %}
+          {% if template.jurisdiction_country %}<span class="badge text-bg-primary"><i class="bi bi-geo me-1" aria-hidden="true"></i>{{ template.jurisdiction_country }}</span>{% endif %}
+        </div>
+        {% else %}
+        <p class="mb-3"><span class="badge text-bg-secondary">{% trans "Any" %}</span> <span class="text-muted small">{% trans "No condition is set : the template fires on every incident of its regime." %}</span></p>
+        {% endif %}
+
+        <div class="table-responsive">
+          <table class="table table-sm mb-0" style="font-size:.875rem">
+            <thead>
+              <tr>
+                <th>{% trans "Condition" %}</th>
+                <th>{% trans "Value" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{% trans "Jurisdiction" %}</td>
+                <td>{% if template.jurisdiction_country %}{{ template.jurisdiction_country }}{% else %}<span class="cell-empty">{% trans "Any" %}</span>{% endif %}</td>
+              </tr>
+              <tr>
+                <td>{% trans "Minimum severity" context "incident" %}</td>
+                <td>{% if template.min_severity %}{{ template.get_min_severity_display }}{% else %}<span class="cell-empty">{% trans "Any" %}</span>{% endif %}</td>
+              </tr>
+              <tr>
+                <td>{% trans "Requires a significant incident" %}</td>
+                <td>
+                  {% comment %}
+                  A null verdict is not a match : an undetermined significance
+                  never silently generates or suppresses a duty.
+                  {% endcomment %}
+                  {% if template.requires_significant %}<span class="badge text-bg-primary">{% trans "Yes" %}</span>{% else %}<span class="cell-empty">{% trans "No" %}</span>{% endif %}
+                </td>
+              </tr>
+              <tr>
+                <td>{% trans "Requires personal data" %}</td>
+                <td>{% if template.requires_personal_data %}<span class="badge text-bg-primary">{% trans "Yes" %}</span>{% else %}<span class="cell-empty">{% trans "No" %}</span>{% endif %}</td>
+              </tr>
+              <tr>
+                <td>{% trans "Requires a high risk to rights" %}</td>
+                <td>{% if template.requires_high_risk %}<span class="badge text-bg-primary">{% trans "Yes" %}</span>{% else %}<span class="cell-empty">{% trans "No" %}</span>{% endif %}</td>
+              </tr>
+              <tr>
+                <td>{% trans "Requires cross-border impact" %}</td>
+                <td>{% if template.requires_cross_border %}<span class="badge text-bg-primary">{% trans "Yes" %}</span>{% else %}<span class="cell-empty">{% trans "No" %}</span>{% endif %}</td>
+              </tr>
+              <tr>
+                <td>
+                  {% trans "Controller roles" %}
+                  <div class="cell-sub">{% trans "What separates a controller's Art. 33(1) duty from a processor's Art. 33(2) duty." %}</div>
+                </td>
+                <td>
+                  {% for role in template.controller_roles %}
+                  <span class="badge text-bg-primary">{{ role }}</span>
+                  {% empty %}
+                  <span class="cell-empty">{% trans "Any" %}</span>
+                  {% endfor %}
+                </td>
+              </tr>
+              <tr>
+                <td>{% trans "Applicable categories" %}</td>
+                <td>
+                  {% for category in template.applicable_categories %}
+                  <span class="badge text-bg-primary">{{ category }}</span>
+                  {% empty %}
+                  <span class="cell-empty">{% trans "Any" %}</span>
+                  {% endfor %}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# 4. What this rule has actually produced #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-send-check me-1" aria-hidden="true"></i>{% trans "Generated obligations" %} <span class="badge text-bg-secondary">{{ obligation_count }}</span></span></div>
+        <p class="text-muted small mt-2 mb-0">{% trans "The ten most recent. Each one carries the terms this rule had at the moment it was generated, which may differ from the terms above." %}</p>
+        <div class="table-responsive mt-3">
+          <table class="table table-hover mb-0" style="font-size:.875rem">
+            <thead>
+              <tr>
+                <th>{% trans "Ref." %}</th>
+                <th>{% trans "Incident" context "incident" %}</th>
+                <th class="text-nowrap">{% trans "Due at" %}</th>
+                <th>{% trans "Status" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for obligation in recent_obligations %}
+              <tr{% if obligation.is_overdue %} class="table-danger"{% elif obligation.is_undecided %} class="table-warning"{% endif %}>
+                <td>
+                  <a href="{% url 'incidents:notification-detail' obligation.pk %}" class="cell-link"><span class="ref">{{ obligation.reference }}</span></a>
+                </td>
+                <td>
+                  <span class="cell-stack">
+                    <a href="{% url 'incidents:incident-detail' obligation.incident_id %}" class="cell-link">{{ obligation.incident.reference }}</a>
+                    <span class="cell-sub">{{ obligation.incident.title|truncatechars:50 }}</span>
+                  </span>
+                </td>
+                <td class="text-nowrap">
+                  {% if obligation.due_at %}
+                    {{ obligation.due_at|date:"SHORT_DATETIME_FORMAT" }}
+                  {% elif obligation.no_fixed_deadline %}
+                    <span class="cell-empty">{% trans "No statutory deadline" %}</span>
+                  {% else %}
+                    <span class="badge text-bg-secondary">{% trans "Deadline pending" %}</span>
+                  {% endif %}
+                </td>
+                <td>{% workflow_badge obligation %}</td>
+              </tr>
+              {% empty %}
+              {% empty_state title=_("This rule has not generated an obligation yet.") message=_("Templates are matched against an incident at triage, on a severity raise and on a breach confirmation. A template that never fires usually has a condition narrower than the incidents the register holds.") colspan=4 %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {# RIGHT COLUMN (sticky sidebar) #}
+  <div class="col-lg-4" style="position:sticky;top:1rem;align-self:flex-start">
+
+    {# Status #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
+          <dd class="mb-0">
+            {% workflow_badge template %}
+            {% if template.counts_in_reports %}
+            <span class="badge text-bg-success ms-1"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{% trans "In force" %}</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# The stage this rule sits at #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>{% trans "Stage" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Regime" %}</dt>
+          <dd class="mb-3"><span class="badge text-bg-primary">{{ template.get_regime_display }}</span></dd>
+          <dt class="text-muted small mb-1">{% trans "Depends on regime" %}</dt>
+          <dd class="mb-3">
+            {% if template.depends_on_regime %}
+              <span class="badge text-bg-secondary">{{ template.get_depends_on_regime_display }}</span>
+              <div class="cell-sub">{% trans "The sibling filing that anchors this one, rather than awareness." %}</div>
+            {% else %}
+              <span class="text-muted">{% trans "This rule's clock starts on the incident itself." %}</span>
+            {% endif %}
+          </dd>
+          <dt class="text-muted small mb-1">{% trans "Order" %}</dt>
+          <dd class="mb-0">
+            {{ template.order }}
+            <div class="cell-sub">{% trans "Display and generation order within the regime, so an early warning is listed above the notification that follows it." %}</div>
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    {# The body it files with #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-building me-1" aria-hidden="true"></i>{% trans "Authority" %}</span></div>
+        <div class="mt-2">
+          {% if template.authority %}
+          <a href="{% url 'incidents:reporting-authority-detail' template.authority.pk %}" class="cell-link">{{ template.authority.name }}</a>
+          <div class="cell-sub">{{ template.authority.get_authority_type_display }}</div>
+          {% if template.authority.portal_url %}
+          <div class="mt-2">
+            <a href="{{ template.authority.portal_url }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer">
+              <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>{% trans "Portal" %}
+            </a>
+          </div>
+          {% endif %}
+          {% else %}
+          <p class="text-muted small mb-0">{% trans "This rule files with a recipient that is not an authority." %}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# Record #}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="detail-subhead"><span><i class="bi bi-folder2-open me-1" aria-hidden="true"></i>{% trans "Record" %}</span></div>
+        <dl class="mb-0 mt-2">
+          <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
+          <dd class="mb-3">{{ template.version }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
+          <dd class="mb-3">{% if template.created_by %}{% user_badge template.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
+          <dd class="mb-3">{{ template.created_at|date:"d/m/Y H:i" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>
+          <dd class="mb-0">{{ template.updated_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

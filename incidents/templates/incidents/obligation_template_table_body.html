@@ -1,0 +1,72 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% comment %}
+Rows of the obligation-template catalogue, swapped into `#item-table-body` by
+`incidents:obligation-template-table-body`.
+
+`obligation_count` is the annotation the view adds, never `t.obligations.count`.
+
+Two rules from the specs are load-bearing on this row :
+
+- The clock is rendered as ONE plain-language sentence (`clock_summary`), which
+  is what a reviewer actually checks. Five raw fields are what they skip.
+- The trigger-condition badges use the navy identity colour (`text-bg-primary`),
+  never a semantic status colour : a trigger condition is not a status. A row
+  with no condition set reads "Any" rather than an empty cell, so a deliberate
+  blank cannot be mistaken for a forgotten one.
+{% endcomment %}
+{% has_perm "incidents.response_plan.update" as can_update_template %}
+{% for t in templates %}
+<tr>
+  <td data-col="name">
+    <span class="cell-stack">
+      <a href="{% url 'incidents:obligation-template-detail' t.pk %}" class="cell-link">{{ t.name }}</a>
+      {% if t.legal_reference %}<span class="cell-sub">{{ t.legal_reference }}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="regime">{{ t.get_regime_display }}</td>
+  <td data-col="recipient_kind">{{ t.get_recipient_kind_display }}</td>
+  <td data-col="authority">
+    {% if t.authority_id %}
+      <a href="{% url 'incidents:reporting-authority-detail' t.authority_id %}" class="cell-link">{{ t.authority.display_name }}</a>
+    {% else %}
+      <span class="cell-empty">-</span>
+    {% endif %}
+  </td>
+  <td data-col="clock">{{ t.clock_summary }}</td>
+  <td data-col="conditions">
+    {% if t.min_severity or t.requires_significant or t.requires_personal_data or t.requires_high_risk or t.requires_cross_border or t.jurisdiction_country or t.controller_roles or t.applicable_categories %}
+      <span class="d-inline-flex flex-wrap gap-1">
+        {% if t.min_severity %}<span class="badge text-bg-primary" title="{% trans 'Minimum severity' context 'incident' %}">&ge; {{ t.get_min_severity_display }}</span>{% endif %}
+        {% if t.requires_significant %}<span class="badge text-bg-primary" title="{% trans 'Requires a significant incident' %}">{% trans "Significant" %}</span>{% endif %}
+        {% if t.requires_personal_data %}<span class="badge text-bg-primary" title="{% trans 'Requires personal data' %}">{% trans "Personal data" %}</span>{% endif %}
+        {% if t.requires_high_risk %}<span class="badge text-bg-primary" title="{% trans 'Requires a high risk to rights' %}">{% trans "High risk" %}</span>{% endif %}
+        {% if t.requires_cross_border %}<span class="badge text-bg-primary" title="{% trans 'Requires cross-border impact' %}">{% trans "Cross-border" %}</span>{% endif %}
+        {% if t.jurisdiction_country %}<span class="badge text-bg-primary" title="{% trans 'Jurisdiction' %}"><i class="bi bi-geo me-1" aria-hidden="true"></i>{{ t.jurisdiction_country }}</span>{% endif %}
+        {% if t.controller_roles %}<span class="badge text-bg-primary" title="{% trans 'Controller roles' %}"><i class="bi bi-person-badge me-1" aria-hidden="true"></i>{{ t.controller_roles|length }}</span>{% endif %}
+        {% if t.applicable_categories %}<span class="badge text-bg-primary" title="{% trans 'Applicable categories' %}"><i class="bi bi-tags me-1" aria-hidden="true"></i>{{ t.applicable_categories|length }}</span>{% endif %}
+      </span>
+    {% else %}
+      {% comment %}
+      No condition set is a deliberate statement : the template fires on every
+      incident of its regime. Said in words, never left blank.
+      {% endcomment %}
+      <span class="cell-empty">{% trans "Any" %}</span>
+    {% endif %}
+  </td>
+  <td data-col="obligations">
+    {% if t.obligation_count %}
+      <span class="badge text-bg-secondary" title="{% trans 'Generated obligations' %}">{{ t.obligation_count }}</span>
+    {% else %}
+      <span class="cell-empty">-</span>
+    {% endif %}
+  </td>
+  <td data-col="status">{% workflow_badge t %}</td>
+  <td class="text-end" data-col="actions">
+    {% if can_update_template %}
+    <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'incidents:obligation-template-update' t.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit obligation template' %}" aria-label="{% trans 'Edit obligation template' %}"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No obligation template in the catalogue yet.") message=_("A template is the legal rule an obligation is generated from : the regime, the body it is filed with, the clock it runs on and the conditions that make it apply. Triage instantiates every template whose conditions the incident meets.") colspan=9 %}
+{% endfor %}

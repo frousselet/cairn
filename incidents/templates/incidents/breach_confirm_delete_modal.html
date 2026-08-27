@@ -1,0 +1,24 @@
+{% load i18n %}
+{% comment %}
+  Drawer-served delete confirmation for the GDPR qualification of an incident.
+  Posted via HTMX; the view returns 204 + HX-Trigger=formSaved on success. A
+  refusal from the lifecycle comes back as a message, not a 500.
+{% endcomment %}
+<form method="post" hx-post="{{ request.path }}" hx-target="#drawer-form-content" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']">
+  {% csrf_token %}
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <span class="drawer-title-icon"><i class="bi bi-trash"></i></span>
+      {% trans "Delete the personal data qualification" %}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+  </div>
+  <div class="modal-body drawer-body">
+    <p class="mb-2">{% blocktrans with reference=object.reference incident=object.incident.reference %}Are you sure you want to delete the qualification <strong>{{ reference }}</strong> of incident {{ incident }}?{% endblocktrans %}</p>
+    <p class="text-muted small mb-0">{% trans "The qualification is the evidence that Art. 33 was considered at all. Delete one opened in error; a qualification that concluded no breach is closed through its lifecycle instead." %}</p>
+  </div>
+  <div class="modal-footer drawer-footer">
+    <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  </div>
+</form>
