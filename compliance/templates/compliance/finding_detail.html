@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% load accounts_tags %}
+
+{% block title %}{{ finding.reference }} - Cairn{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  {% blocktrans asvar page_title with reference=finding.reference %}Nonconformity {{ reference }}{% endblocktrans %}
+{% page_header page_title nav="compliance:finding-list" accent="compliance" %}
+  {% include "includes/history_trigger.html" %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-primary" hx-get="{% url 'compliance:finding-register-update' finding.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">{% trans "Edit" %}</button>
+  </div>
+</div>
+
+{% include "includes/lifecycle_stepper.html" %}
+
+<div class="row">
+  {# ── Left column: main content ── #}
+  <div class="col-lg-8">
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-exclamation-diamond me-1"></i>{% trans "Nonconformity" %}</h6>
+        <div class="mb-3">
+          <div class="text-muted small mb-1">{% trans "Type" %}</div>
+          <div>{{ finding.get_finding_type_display }}</div>
+        </div>
+        <div class="mb-3">
+          <div class="text-muted small mb-1">{% trans "Finding" %}</div>
+          <div>{{ finding.description|default:"-"|safe }}</div>
+        </div>
+        <div class="mb-3">
+          <div class="text-muted small mb-1">{% trans "Recommendation" %}</div>
+          <div>{{ finding.recommendation|default:"-"|safe }}</div>
+        </div>
+        <div class="mb-0">
+          <div class="text-muted small mb-1">{% trans "Evidence presented" %}</div>
+          <div>{{ finding.evidence|default:"-"|safe }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-list-check me-1"></i>{% trans "Related requirements" %} <span class="badge text-bg-secondary">{{ finding.requirements.count }}</span></h6>
+        {% for req in finding.requirements.all %}
+        <div class="mb-2">
+          <a href="{% url 'compliance:requirement-detail' req.pk %}" style="text-decoration:none"><span class="ref">{{ req.reference }}</span> <span style="color:var(--accent);font-weight:500">{{ req.name }}</span></a>
+          <span style="color:var(--text-muted)">({{ req.framework.short_name|default:req.framework.name }})</span>
+        </div>
+        {% empty %}
+        <p class="text-muted small mb-0">{% trans "No requirement linked to this nonconformity." %}</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-check2-circle me-1"></i>{% trans "Corrective action effectiveness" %}</h6>
+        {% if finding.effectiveness_verdict %}
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Effectiveness verdict" %}</dt>
+          <dd class="mb-3">{{ finding.get_effectiveness_verdict_display }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Effectiveness reviewed at" %}</dt>
+          <dd class="mb-3">{{ finding.effectiveness_reviewed_at|date:"d/m/Y H:i"|default:"-" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Effectiveness reviewed by" %}</dt>
+          <dd class="mb-0">{% if finding.effectiveness_reviewed_by %}{% user_badge finding.effectiveness_reviewed_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+        </dl>
+        {% else %}
+        <p class="text-muted small mb-0">{% trans "Effectiveness has not been reviewed yet. A closed action plan proves the action was implemented, not that it worked." %}</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  {# ── Right sidebar ── #}
+  <div class="col-lg-4">
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-signpost-split me-1"></i>{% trans "Origin" %}</h6>
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Source" %}</dt>
+          <dd class="mb-3">{{ finding.get_source_display }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Raised in" %}</dt>
+          <dd class="mb-0">
+            {% if finding.assessment %}
+            <a href="{% url 'compliance:assessment-detail' finding.assessment.pk %}">{{ finding.assessment.name }}</a>
+            {% else %}
+            <span class="text-muted">{% trans "Raised outside any audit." %}</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Raised by" %}</dt>
+          <dd class="mb-3">{% if finding.assessor %}{% user_badge finding.assessor size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
+          <dd class="mb-0">{% if finding.created_by %}{% user_badge finding.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
+        <dl class="mb-0">
+          <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
+          <dd class="mb-3">{{ finding.created_at|date:"d/m/Y H:i" }}</dd>
+          <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>
+          <dd class="mb-0">{{ finding.updated_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

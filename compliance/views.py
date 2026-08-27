@@ -46,6 +46,7 @@ from .forms import (
     ComplianceAssessmentCreateForm,
     ComplianceAssessmentUpdateForm,
     FindingCreateForm,
+    FindingRegisterForm,
     FindingUpdateForm,
     FrameworkCreateForm,
     FrameworkUpdateForm,
@@ -73,6 +74,8 @@ from .constants import (
     AssessmentStatus,
     ComplianceStatus,
     CoverageLevel,
+    EffectivenessVerdict,
+    FindingSource,
     FindingType,
     FrameworkCategory,
     FrameworkStatus,
@@ -1493,6 +1496,125 @@ class FindingsTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return HttpResponse(html)
 
 
+# ── Finding (nonconformity register) ───────────────────────
+
+FINDING_FILTER_GROUPS = [
+    {"param": "type", "field": "finding_type", "label": _l("Type"), "options": FindingType.choices},
+    {"param": "source", "field": "source", "label": _l("Source"), "options": FindingSource.choices},
+    {
+        "param": "effectiveness",
+        "field": "effectiveness_verdict",
+        "label": _l("Effectiveness verdict"),
+        "options": EffectivenessVerdict.choices,
+    },
+]
+FINDING_TEXT_FILTERS = [
+    {"param": "reference", "field": "reference", "label": _l("Reference")},
+]
+FINDING_COLUMNS = [
+    {"key": "reference", "label": _l("Reference"), "always": True},
+    {"key": "description", "label": _l("Finding"), "always": True},
+    {"key": "type", "label": _l("Type")},
+    {"key": "source", "label": _l("Source")},
+    {"key": "origin", "label": _l("Raised in")},
+    {"key": "effectiveness", "label": _l("Effectiveness verdict")},
+    {"key": "status", "label": _l("Status")},
+    {"key": "actions", "label": _l("Actions"), "always": True},
+]
+
+
+class FindingListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
+    """The organisation-wide nonconformity register.
+
+    Deliberately not nested under an assessment : a nonconformity raised by
+    an incident, a management review, monitoring or a complaint has no audit
+    to be nested under, and clause 10.2 asks for one list.
+    """
+
+    model = Finding
+    permission_required = "compliance.finding.read"
+    filter_groups = FINDING_FILTER_GROUPS
+    text_filters = FINDING_TEXT_FILTERS
+    columns = FINDING_COLUMNS
+    scope_parent_lookup = "assessment__scopes"
+    template_name = "compliance/finding_list.html"
+    context_object_name = "findings"
+    paginate_by = 50
+    sortable_fields = {
+        "reference": "reference",
+        "description": "description",
+        "type": "finding_type",
+        "source": "source",
+        "origin": "assessment__name",
+        "effectiveness": "effectiveness_verdict",
+        "status": "workflow_state",
+    }
+    default_sort = "reference"
+    search_fields = ["reference", "description", "recommendation"]
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("assessment", "assessor")
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
+class FindingDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
+):
+    model = Finding
+    permission_required = "compliance.finding.read"
+    scope_parent_lookup = "assessment__scopes"
+    template_name = "compliance/finding_detail.html"
+    context_object_name = "finding"
+
+    def get_queryset(self):
+        return super().get_queryset().select_related(
+            "assessment", "assessor", "effectiveness_reviewed_by"
+        ).prefetch_related("requirements", "action_plans")
+
+
+class FindingRegisterCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
+    """Raise a nonconformity outside any audit."""
+
+    model = Finding
+    permission_required = "compliance.finding.create"
+    form_class = FindingRegisterForm
+    template_name = "compliance/finding_form.html"
+    modal_template_name = "compliance/finding_form_modal.html"
+    modal_title_create = _("Raise a nonconformity")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["raised_by"] = self.request.user
+        return kwargs
+
+    def get_success_url(self):
+        return reverse("compliance:finding-detail", args=[self.object.pk])
+
+
+class FindingRegisterUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UpdateView):
+    model = Finding
+    permission_required = "compliance.finding.update"
+    form_class = FindingRegisterForm
+    scope_parent_lookup = "assessment__scopes"
+    template_name = "compliance/finding_form.html"
+    modal_template_name = "compliance/finding_form_modal.html"
+    modal_title_update = _("Edit nonconformity")
+
+    def get_success_url(self):
+        return reverse("compliance:finding-detail", args=[self.object.pk])
+
+
+class FindingRegisterDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, DeleteView):
+    model = Finding
+    permission_required = "compliance.finding.delete"
+    scope_parent_lookup = "assessment__scopes"
+    template_name = "compliance/finding_confirm_delete_modal.html"
+
+    def get_success_url(self):
+        return reverse("compliance:finding-list")
+
+
 # ── Mapping ────────────────────────────────────────────────
 
 MAPPING_FILTER_GROUPS = [
@@ -1882,6 +2004,25 @@ class AssessmentTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, Table
             .prefetch_related("scopes", "frameworks", "tags")
             .select_related("assessor")
         )
+        qs = self.filter_queryset_predefined(qs)
+        return self.filter_queryset_advanced(qs)
+
+
+class FindingTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin, AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView):
+    model = Finding
+    permission_required = "compliance.finding.read"
+    scope_parent_lookup = "assessment__scopes"
+    template_name = "compliance/finding_register_table_body.html"
+    context_object_name = "findings"
+    paginate_by = 50
+    sortable_fields = FindingListView.sortable_fields
+    default_sort = FindingListView.default_sort
+    search_fields = FindingListView.search_fields
+    filter_groups = FINDING_FILTER_GROUPS
+    text_filters = FINDING_TEXT_FILTERS
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("assessment", "assessor")
         qs = self.filter_queryset_predefined(qs)
         return self.filter_queryset_advanced(qs)
 

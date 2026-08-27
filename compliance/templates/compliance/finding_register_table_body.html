@@ -1,0 +1,38 @@
+{% load i18n ui workflow_tags %}
+{% for f in findings %}
+<tr>
+  <td data-col="reference">
+    <a href="{% url 'compliance:finding-detail' f.pk %}" class="cell-link">{{ f.reference }}</a>
+  </td>
+  <td data-col="description">
+    <span class="cell-stack">
+      <span class="cell-main">{{ f.description|striptags|truncatechars:110 }}</span>
+      {% if f.requirements.exists %}
+      <span class="cell-sub">{% blocktrans count counter=f.requirements.count %}{{ counter }} requirement{% plural %}{{ counter }} requirements{% endblocktrans %}</span>
+      {% endif %}
+    </span>
+  </td>
+  <td data-col="type">{{ f.get_finding_type_display }}</td>
+  <td data-col="source">{{ f.get_source_display }}</td>
+  <td data-col="origin">
+    {% if f.assessment %}
+      <a href="{% url 'compliance:assessment-detail' f.assessment.pk %}" class="cell-link">{{ f.assessment.name|truncatechars:40 }}</a>
+    {% else %}
+      <span class="text-muted">-</span>
+    {% endif %}
+  </td>
+  <td data-col="effectiveness">
+    {% if f.effectiveness_verdict %}
+      {{ f.get_effectiveness_verdict_display }}
+    {% else %}
+      <span class="text-muted">-</span>
+    {% endif %}
+  </td>
+  <td data-col="status">{% workflow_badge f %}</td>
+  <td class="text-end" data-col="actions">
+    <a hx-get="{% url 'compliance:finding-register-update' f.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No nonconformity recorded yet.") message=_("The register holds every departure from a requirement, a control or your own procedure, whether it came from an audit, an incident, a management review, monitoring or a complaint.") colspan=8 %}
+{% endfor %}

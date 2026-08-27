@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Cairn is now licensed under the GNU Affero General Public License v3 or later (`AGPL-3.0-or-later`) instead of MIT, with an SPDX header on every source file and a trademark notice in `README.md`.
-- Findings are now the organisation-wide nonconformity register (ISO 27001 clause 10.1/10.2): they carry a source, survive the deletion of the audit that raised them, record whether the corrective action was effective, and move from `compliance.assessment.*` to their own `compliance.finding.*` permissions, which the migration grants to every group that already held the assessment ones.
+- Findings are now the organisation-wide nonconformity register (ISO 27001 clause 10.1/10.2), with their own list and detail pages under Compliance: they carry a source, survive the deletion of the audit that raised them, record whether the corrective action was effective, and move from `compliance.assessment.*` to their own `compliance.finding.*` permissions, which the migration grants to every group that already held the assessment ones.
 
 ### Security
 

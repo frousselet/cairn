@@ -11972,3 +11972,77 @@ msgstr "Un constat d'audit doit nommer la personne qui l'a constaté."
 
 msgid "Recording an effectiveness verdict requires the date it was reviewed."
 msgstr "Enregistrer un verdict d'efficacité exige la date de la revue."
+
+msgid "Raise a nonconformity"
+msgstr "Constater une non-conformité"
+
+msgid "Edit nonconformity"
+msgstr "Modifier la non-conformité"
+
+msgid "Delete nonconformity"
+msgstr "Supprimer la non-conformité"
+
+msgid "Nonconformity"
+msgstr "Non-conformité"
+
+msgid "nonconformity"
+msgstr "non-conformité"
+
+msgid "Raised in"
+msgstr "Constatée dans"
+
+msgid "Raised outside any audit."
+msgstr "Constatée hors de tout audit."
+
+msgid "Corrective action effectiveness"
+msgstr "Efficacité de l'action corrective"
+
+msgid "Effectiveness"
+msgstr "Efficacité"
+
+msgid ""
+"Effectiveness has not been reviewed yet. A closed action plan proves the "
+"action was implemented, not that it worked."
+msgstr ""
+"L'efficacité n'a pas encore été revue. Un plan d'action clôturé prouve que "
+"l'action a été mise en oeuvre, pas qu'elle a fonctionné."
+
+msgid "No requirement linked to this nonconformity."
+msgstr "Aucune exigence rattachée à cette non-conformité."
+
+msgid "No nonconformity recorded yet."
+msgstr "Aucune non-conformité enregistrée."
+
+msgid ""
+"The register holds every departure from a requirement, a control or your own "
+"procedure, whether it came from an audit, an incident, a management review, "
+"monitoring or a complaint."
+msgstr ""
+"Le registre recense tout écart à une exigence, à une mesure ou à votre propre "
+"procédure, qu'il provienne d'un audit, d'un incident, d'une revue de "
+"direction, de la surveillance ou d'une réclamation."
+
+msgid ""
+"A nonconformity is an audit record. Prefer archiving it through its lifecycle "
+"over deleting it, so the trail survives."
+msgstr ""
+"Une non-conformité est une pièce d'audit. Préférez l'archiver via son cycle "
+"de vie plutôt que la supprimer, afin de conserver la traçabilité."
+
+msgid "Nature of the nonconformity."
+msgstr "Nature de la non-conformité."
+
+msgid "Requirements this nonconformity relates to."
+msgstr "Exigences concernées par cette non-conformité."
+
+msgid "Evidence supporting the observation."
+msgstr "Preuves étayant le constat."
+
+msgid "Whether the corrective action worked, once it has been reviewed."
+msgstr "Si l'action corrective a fonctionné, une fois l'efficacité revue."
+
+msgid "When effectiveness was reviewed."
+msgstr "Date de la revue d'efficacité."
+
+msgid "Who reviewed effectiveness."
+msgstr "Personne ayant revu l'efficacité."

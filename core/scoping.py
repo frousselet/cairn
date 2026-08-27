@@ -16,6 +16,7 @@ honoured by every surface at once, and so a future surface has one function
 to call rather than a pattern to reproduce.
 """
 from django.apps import apps
+from django.db.models import Q
 
 
 def resolve_scope_lookup(model, explicit=None):
@@ -38,13 +39,23 @@ def resolve_scope_lookup(model, explicit=None):
 
 
 def filter_queryset_by_scopes(qs, scope_ids, explicit=None):
-    """Restrict `qs` to rows reachable from `scope_ids`."""
+    """Restrict `qs` to rows reachable from `scope_ids`.
+
+    A model whose parent relation is optional sets `scope_parent_optional`.
+    Without it the join is an INNER JOIN and every row with no parent is
+    dropped, which for a register holding parentless rows means hiding them
+    from everyone but a superuser. With it, parentless rows stay visible,
+    matching `object_in_scopes`.
+    """
     lookup = resolve_scope_lookup(qs.model, explicit)
     if lookup is None:
         return qs
     if lookup == "id":
         return qs.filter(id__in=scope_ids)
-    return qs.filter(**{f"{lookup}__id__in": scope_ids}).distinct()
+    matches = Q(**{f"{lookup}__id__in": scope_ids})
+    if getattr(qs.model, "scope_parent_optional", False):
+        matches |= Q(**{f"{lookup}__isnull": True})
+    return qs.filter(matches).distinct()
 
 
 def object_in_scopes(obj, scope_ids):
