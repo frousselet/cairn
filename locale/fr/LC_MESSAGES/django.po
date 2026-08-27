@@ -11809,3 +11809,91 @@ msgstr "Définissez un mot de passe pour activer votre compte"
 
 msgid "Activate account"
 msgstr "Activer le compte"
+
+# Supplier sub-processors (sous-délégataires) and subsidiaries (filiales)
+msgid "Parent company"
+msgstr "Société mère"
+
+msgid "The parent company this supplier is a subsidiary of."
+msgstr "La société mère dont ce fournisseur est une filiale."
+
+msgid "Parent company this supplier is a subsidiary of."
+msgstr "Société mère dont ce fournisseur est une filiale."
+
+msgid "Sub-processor"
+msgstr "Sous-délégataire"
+
+msgid "Sub-processors"
+msgstr "Sous-délégataires"
+
+msgid "sub-processor"
+msgstr "sous-délégataire"
+
+msgid "Terminated"
+msgstr "Résilié"
+
+msgid "Corporate structure"
+msgstr "Structure du groupe"
+
+msgid "Subsidiaries"
+msgstr "Filiales"
+
+msgid "Subsidiary of"
+msgstr "Filiale de"
+
+msgid "Add sub-processor"
+msgstr "Ajouter un sous-délégataire"
+
+msgid "New sub-processor"
+msgstr "Nouveau sous-délégataire"
+
+msgid "Edit sub-processor"
+msgstr "Modifier le sous-délégataire"
+
+msgid "Remove sub-processor"
+msgstr "Retirer le sous-délégataire"
+
+msgid "Engaged as a sub-processor by"
+msgstr "Missionné comme sous-délégataire par"
+
+msgid "No sub-processor declared for this supplier."
+msgstr "Aucun sous-délégataire déclaré pour ce fournisseur."
+
+msgid "A supplier cannot be its own sub-processor."
+msgstr "Un fournisseur ne peut pas être son propre sous-délégataire."
+
+msgid "The end date cannot be earlier than the start date."
+msgstr "La date de fin ne peut pas être antérieure à la date de début."
+
+msgid "Nature of the service delegated to the sub-processor."
+msgstr "Nature du service délégué au sous-délégataire."
+
+msgid "The supplier (délégataire) that engages the sub-processor."
+msgstr "Le fournisseur (délégataire) qui missionne le sous-délégataire."
+
+msgid "The supplier engaged as a sub-processor."
+msgstr "Le fournisseur missionné comme sous-délégataire."
+
+msgid "Supplier engaged as a sub-processor."
+msgstr "Fournisseur missionné comme sous-délégataire."
+
+msgid "How critical this sub-processing engagement is."
+msgstr "Niveau de criticité de cette sous-traitance."
+
+msgid "State of the sub-processing engagement."
+msgstr "État de la relation de sous-traitance."
+
+msgid "Date the engagement started."
+msgstr "Date de début de la relation."
+
+msgid "Date the engagement ends."
+msgstr "Date de fin de la relation."
+
+msgid "Additional context about the sub-processing."
+msgstr "Contexte complémentaire sur la sous-traitance."
+
+msgid "Engagement"
+msgstr "Relation"
+
+msgid "Are you sure you want to remove the sub-processor <strong>%(name)s</strong> from this supplier?"
+msgstr "Voulez-vous vraiment retirer le sous-délégataire <strong>%(name)s</strong> de ce fournisseur ?"

@@ -65,6 +65,7 @@ from .forms import (
     SupplierCreateForm,
     SupplierUpdateForm,
     SupplierRequirementForm,
+    SupplierSubprocessorForm,
     SupplierRequirementReviewForm,
     SupplierTypeForm,
     SupplierTypeRequirementForm,
@@ -85,6 +86,7 @@ from .models import (
     SupplierDependency,
     SupplierRequirement,
     SupplierRequirementReview,
+    SupplierSubprocessor,
     SupplierType,
     SupplierTypeRequirement,
     SupportAsset,
@@ -880,6 +882,16 @@ class SupplierDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
             self.object.contracts.filter(parent__isnull=True)
             .prefetch_related("suppliers", "amendments")
         )
+        # Corporate structure : subsidiaries (filiales) and parent company.
+        ctx["subsidiaries"] = self.object.subsidiaries.select_related("type").all()
+        # Sub-processing chain (sous-délégataires) : engagements where this
+        # supplier is the délégataire, plus the ones where it is engaged.
+        ctx["subprocessors"] = (
+            self.object.subprocessors.select_related("subprocessor").all()
+        )
+        ctx["engaged_by"] = (
+            self.object.engaged_by.select_related("supplier").all()
+        )
         return ctx
 
 
@@ -971,6 +983,80 @@ class SupplierContactUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Htm
 class SupplierContactDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = SupplierContact
     template_name = "assets/supplier_contact_confirm_delete_modal.html"
+    permission_required = "assets.supplier.update"
+
+    def get_success_url(self):
+        return reverse_lazy("assets:supplier-detail", kwargs={"pk": self.object.supplier.pk})
+
+    def form_valid(self, form):
+        """Delete and, for HTMX, close the drawer + reload the detail page."""
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        self.object.delete()
+        if self.request.headers.get("HX-Request") == "true":
+            return HttpResponse(status=204, headers={"HX-Trigger": "formSaved"})
+        return redirect(success_url)
+
+
+# ── Supplier Sub-processors (sous-délégataires) ───────────
+
+class SupplierSubprocessorCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
+    model = SupplierSubprocessor
+    form_class = SupplierSubprocessorForm
+    template_name = "assets/supplier_subprocessor_form.html"
+    modal_template_name = "assets/supplier_subprocessor_form_modal.html"
+    modal_title_create = _l("New sub-processor")
+    modal_title_update = _l("Edit sub-processor")
+    permission_required = "assets.supplier.update"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.supplier = get_object_or_404(Supplier, pk=kwargs["supplier_pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["supplier"] = self.supplier
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.supplier = self.supplier
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["supplier"] = self.supplier
+        return ctx
+
+    def get_success_url(self):
+        return reverse_lazy("assets:supplier-detail", kwargs={"pk": self.supplier.pk})
+
+
+class SupplierSubprocessorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
+    model = SupplierSubprocessor
+    form_class = SupplierSubprocessorForm
+    template_name = "assets/supplier_subprocessor_form.html"
+    modal_template_name = "assets/supplier_subprocessor_form_modal.html"
+    modal_title_create = _l("New sub-processor")
+    modal_title_update = _l("Edit sub-processor")
+    permission_required = "assets.supplier.update"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["supplier"] = self.object.supplier
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["supplier"] = self.object.supplier
+        return ctx
+
+    def get_success_url(self):
+        return reverse_lazy("assets:supplier-detail", kwargs={"pk": self.object.supplier.pk})
+
+
+class SupplierSubprocessorDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = SupplierSubprocessor
+    template_name = "assets/supplier_subprocessor_confirm_delete_modal.html"
     permission_required = "assets.supplier.update"
 
     def get_success_url(self):

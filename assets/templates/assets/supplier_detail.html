@@ -144,7 +144,88 @@
       </div>
     </div>
 
-    {# ── 3. Conformité ── #}
+    {# ── 3. Corporate structure : parent company + subsidiaries (filiales) ── #}
+    {% if supplier.parent_company or subsidiaries %}
+    <div class="card">
+      <div class="card-body">
+        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-2 me-1"></i>{% trans "Corporate structure" %}</h6>
+        {% if supplier.parent_company %}
+        <div class="ov-row mb-3" role="group" aria-label="{% trans 'Parent company' %}">
+          <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-building-up"></i></span>
+          <div class="ov-row__value">
+            <span class="text-muted small me-1">{% trans "Subsidiary of" %}</span>
+            <a href="{% url 'assets:supplier-detail' supplier.parent_company.pk %}" class="ov-link">{{ supplier.parent_company.name }}</a>
+          </div>
+        </div>
+        {% endif %}
+        {% if subsidiaries %}
+        <div class="detail-subhead"><span><i class="bi bi-building me-1"></i>{% trans "Subsidiaries" %} <span class="badge text-bg-secondary">{{ subsidiaries|length }}</span></span></div>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+          {% for sub in subsidiaries %}
+          <a href="{% url 'assets:supplier-detail' sub.pk %}" class="party-chip">{% if sub.logo %}<img src="{{ sub.logo_16|default:sub.logo }}" alt="">{% endif %}{{ sub.name }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── 4. Sous-délégataires (sub-processing chain) ── #}
+    <div class="card">
+      <div class="card-body">
+        <div class="detail-subhead detail-subhead--action">
+          <span><i class="bi bi-diagram-3 me-1"></i>{% trans "Sub-processors" %} <span class="badge text-bg-secondary">{{ subprocessors|length }}</span></span>
+          <button type="button" class="btn btn-sm btn-outline-secondary" hx-get="{% url 'assets:supplier-subprocessor-create' supplier.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Add sub-processor' %}" aria-label="{% trans 'Add sub-processor' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
+        </div>
+        {% if subprocessors %}
+        <div class="table-responsive mt-2">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>{% trans "Sub-processor" %}</th>
+                <th>{% trans "Purpose" %}</th>
+                <th>{% trans "Criticality" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th class="text-end">{% trans "Actions" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sp in subprocessors %}
+              <tr>
+                <td>
+                  <span class="cell-stack">
+                    <a href="{% url 'assets:supplier-detail' sp.subprocessor.pk %}" class="cell-link">{{ sp.subprocessor.name }}</a>
+                    <span class="cell-sub">{{ sp.subprocessor.reference }}{% if sp.subprocessor.country %} · {{ sp.subprocessor.country }}{% endif %}</span>
+                  </span>
+                </td>
+                <td>{% if sp.purpose %}{{ sp.purpose }}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+                <td><span class="badge text-bg-{% if sp.criticality == 'critical' %}danger{% elif sp.criticality == 'high' %}warning{% else %}secondary{% endif %}">{{ sp.get_criticality_display }}</span></td>
+                <td><span class="badge text-bg-{% if sp.status == 'active' %}success{% elif sp.status == 'suspended' %}warning{% else %}dark{% endif %}">{{ sp.get_status_display }}</span></td>
+                <td class="text-end text-nowrap">
+                  <button type="button" class="btn btn-sm btn-outline-secondary" hx-get="{% url 'assets:supplier-subprocessor-update' sp.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'assets:supplier-subprocessor-delete' sp.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="bi bi-trash"></i></button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0 mt-2">{% trans "No sub-processor declared for this supplier." %}</p>
+        {% endif %}
+
+        {% if engaged_by %}
+        <div class="detail-subhead mt-4"><span><i class="bi bi-arrow-up-right-circle me-1"></i>{% trans "Engaged as a sub-processor by" %} <span class="badge text-bg-secondary">{{ engaged_by|length }}</span></span></div>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+          {% for sp in engaged_by %}
+          <a href="{% url 'assets:supplier-detail' sp.supplier.pk %}" class="party-chip">{% if sp.supplier.logo %}<img src="{{ sp.supplier.logo_16|default:sp.supplier.logo }}" alt="">{% endif %}{{ sp.supplier.name }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── 5. Conformité ── #}
     <div class="card">
       <div class="card-body">
         <div class="d-flex align-items-center mb-3">

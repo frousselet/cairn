@@ -16,6 +16,7 @@ from assets.models import (
     Supplier,
     SupplierContact,
     SupplierDependency,
+    SupplierSubprocessor,
     SupportAsset,
 )
 from .filters import (
@@ -26,6 +27,7 @@ from .filters import (
     EssentialAssetFilter,
     SupplierDependencyFilter,
     SupplierFilter,
+    SupplierSubprocessorFilter,
     SupportAssetFilter,
 )
 from .serializers import (
@@ -44,6 +46,7 @@ from .serializers import (
     SupplierListSerializer,
     SupplierRequirementSerializer,
     SupplierSerializer,
+    SupplierSubprocessorSerializer,
     SupportAssetListSerializer,
     SupportAssetSerializer,
 )
@@ -379,6 +382,25 @@ class SupplierViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixin, 
         serializer.save(supplier=supplier)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=["get", "post"])
+    def subprocessors(self, request, pk=None):
+        """Sub-processing engagements where this supplier is the délégataire."""
+        supplier = self.get_object()
+        if request.method == "GET":
+            sp = supplier.subprocessors.select_related("subprocessor")
+            return Response(SupplierSubprocessorSerializer(sp, many=True).data)
+        serializer = SupplierSubprocessorSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(supplier=supplier, created_by=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["get"])
+    def subsidiaries(self, request, pk=None):
+        """Suppliers that are subsidiaries (filiales) of this supplier."""
+        supplier = self.get_object()
+        subs = supplier.subsidiaries.all()
+        return Response(SupplierListSerializer(subs, many=True).data)
+
     @action(detail=False, methods=["get"])
     def dashboard(self, request):
         qs = self.filter_queryset(self.get_queryset())
@@ -417,6 +439,22 @@ class SupplierDependencyViewSet(BatchCreateMixin, LifecycleAPIMixin, HistoryAPIM
         "supplier__reference", "supplier__name",
     ]
     ordering_fields = ["dependency_type", "criticality", "created_at"]
+
+
+class SupplierSubprocessorViewSet(BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+    queryset = SupplierSubprocessor.objects.select_related(
+        "supplier", "subprocessor"
+    ).all()
+    serializer_class = SupplierSubprocessorSerializer
+    filterset_class = SupplierSubprocessorFilter
+    permission_classes = [ContextPermission]
+    permission_feature = "supplier"
+    search_fields = [
+        "reference", "purpose",
+        "supplier__reference", "supplier__name",
+        "subprocessor__reference", "subprocessor__name",
+    ]
+    ordering_fields = ["criticality", "status", "start_date", "created_at"]
 
 
 class ContractViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):

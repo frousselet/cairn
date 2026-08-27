@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Suppliers gain a supply-chain layer: subsidiaries (filiales) via a `parent_company` self-relation and sub-processors (sous-délégataires) via the `SupplierSubprocessor` link, exposed on the detail page, the REST API and MCP tools.
+
 ### Fixed
 
 - Column-header sorting on list pages works again: the table toolbar lost the `data-sort-view-key` marker the sort script needs, so header clicks were silently ignored.

@@ -12,6 +12,7 @@ from assets.models import (
     SupplierContact,
     SupplierDependency,
     SupplierRequirement,
+    SupplierSubprocessor,
     SupportAsset,
 )
 from assets.models.supplier import SupplierType
@@ -200,7 +201,7 @@ class SupplierSerializer(serializers.ModelSerializer):
         model = Supplier
         fields = [
             "id", "scopes", "reference", "name", "description",
-            "type", "criticality", "owner",
+            "type", "criticality", "owner", "parent_company",
             "contact_name", "contact_email", "contact_phone",
             "website", "address", "country", "latitude", "longitude",
             "contract_reference", "contract_start_date", "contract_end_date",
@@ -253,6 +254,39 @@ class SupplierDependencySerializer(serializers.ModelSerializer):
             "id", "reference", "created_by", "created_at", "updated_at",
             "version",
         ]
+
+
+class SupplierSubprocessorSerializer(serializers.ModelSerializer):
+    supplier_name = serializers.CharField(source="supplier.name", read_only=True)
+    subprocessor_name = serializers.CharField(
+        source="subprocessor.name", read_only=True
+    )
+
+    class Meta:
+        model = SupplierSubprocessor
+        fields = [
+            "id", "reference", "supplier", "supplier_name",
+            "subprocessor", "subprocessor_name",
+            "purpose", "criticality", "status",
+            "start_date", "end_date", "description",
+            "version",
+            "created_by", "created_at", "updated_at",
+        ]
+        read_only_fields = [
+            "id", "reference", "created_by", "created_at", "updated_at",
+            "version",
+        ]
+
+    def validate(self, attrs):
+        supplier = attrs.get("supplier") or getattr(self.instance, "supplier", None)
+        subprocessor = attrs.get("subprocessor") or getattr(
+            self.instance, "subprocessor", None
+        )
+        if supplier and subprocessor and supplier == subprocessor:
+            raise serializers.ValidationError(
+                {"subprocessor": "A supplier cannot be its own sub-processor."}
+            )
+        return attrs
 
 
 class ContractSerializer(serializers.ModelSerializer):
