@@ -541,15 +541,20 @@ class Incident(ScopedModel):
     # --- Loaded-value tracking ---------------------------------------------
 
     @classmethod
-    def from_db(cls, db, field_names, values):
+    def from_db(cls, db, field_names, values, *args, **kwargs):
         """Remember the stored severity and personal-data flag.
 
         Both drive a side effect on the **change** rather than on the value :
         a severity raise re-runs obligation generation, and setting the
         personal-data flag opens the GDPR qualification. Comparing against the
         loaded value is what keeps those from firing on every unrelated save.
+
+        The trailing ``*args`` / ``**kwargs`` are not decoration : Django has
+        added arguments to this hook before (``fetch_mode`` most recently), and
+        a fixed signature turns a routine dependency bump into a TypeError on
+        every single row load. Forward whatever we are handed.
         """
-        instance = super().from_db(db, field_names, values)
+        instance = super().from_db(db, field_names, values, *args, **kwargs)
         instance._loaded_severity = instance.severity
         instance._loaded_personal_data_involved = instance.personal_data_involved
         return instance
