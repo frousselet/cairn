@@ -3068,6 +3068,9 @@
     .about-modal-content .about-logo svg { width: 4rem; height: 4rem; border-radius: var(--radius-sm); }
     .about-modal-content .about-version { font-size: .8125rem; color: var(--text-muted); margin-top: .25rem; }
     .about-modal-content .about-license { font-size: .75rem; color: var(--text-muted); margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--border-light); }
+    .about-modal-content .about-license a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
+    .about-modal-content .about-license a:hover { color: var(--accent); }
+    .about-modal-content .about-source-offer { display: inline-block; margin-top: .35rem; opacity: .85; }
     .about-modal-content .about-github-link {
       display: inline-flex;
       align-items: center;
@@ -5818,8 +5821,9 @@
             </a>
           </div>
           <div class="about-license">
-            {% trans "MIT License" %}<br>
-            &copy; 2026 Fran&ccedil;ois Rousselet
+            <a href="https://github.com/frousselet/cairn/blob/main/LICENSE" target="_blank" rel="noopener">{% trans "GNU AGPL v3.0 or later" %}</a><br>
+            &copy; 2026 Fran&ccedil;ois Rousselet<br>
+            <span class="about-source-offer">{% trans "Source code available on GitHub" %}</span>
           </div>
           <div class="mt-3">
             <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
