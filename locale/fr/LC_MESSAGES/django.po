@@ -16471,3 +16471,112 @@ msgstr "Ce résultat n'a pas pu être consigné : %(error)s"
 
 msgid "The filing outcome has been recorded."
 msgstr "Le résultat du dépôt a été consigné."
+
+# ── Module 6 : REST API and MCP surfaces ───────────────────
+
+msgid ""
+"A JSON object with \"steps\" and \"transitions\". Exactly one step of "
+"kind \"draft\" (the entry) and at least one of kind \"archived\" (the "
+"exit). A transition source may be \"*\" for \"from any state\"."
+msgstr ""
+"Un objet JSON comportant \"steps\" et \"transitions\". Exactement une "
+"étape de type \"draft\" (l'entrée) et au moins une de type \"archived\" "
+"(la sortie). La source d'une transition peut valoir \"*\" pour « depuis "
+"n'importe quel état »."
+
+msgid "Malformed definition: %(err)s"
+msgstr "Définition mal formée : %(err)s"
+
+msgid "Lifecycle \"%(name)s\" reset to its default."
+msgstr ""
+"Le cycle de vie « %(name)s » a été réinitialisé à sa définition par "
+"défaut."
+
+msgid ""
+"The filing log is append-only : only the outcome, the acknowledgement "
+"date and the external reference may be completed after the filing. "
+"Record a correction as a new filing."
+msgstr ""
+"Le journal des dépôts est en ajout seul : seuls le résultat, la date de "
+"l'accusé de réception et la référence externe peuvent être complétés "
+"après le dépôt. Enregistrez une correction comme un nouveau dépôt."
+
+msgid "This element cannot be changed in its current lifecycle state."
+msgstr ""
+"Cet élément ne peut pas être modifié dans l'état actuel de son cycle de "
+"vie."
+
+msgid "This element cannot be deleted in its current lifecycle state."
+msgstr ""
+"Cet élément ne peut pas être supprimé dans l'état actuel de son cycle de "
+"vie."
+
+msgid ""
+"A comment is required : promotion is the assessment verdict, and the "
+"transition records why it was reached."
+msgstr ""
+"Un commentaire est requis : la promotion constitue le verdict de "
+"l'évaluation, et la transition consigne pourquoi il a été rendu."
+
+msgid ""
+"This filing has already been completed. Record a further answer as a new "
+"filing."
+msgstr ""
+"Ce dépôt a déjà été complété. Consignez toute réponse ultérieure comme "
+"un nouveau dépôt."
+
+msgid "Fires only on an incident that declares personal data."
+msgstr ""
+"Ne se déclenche que sur un incident déclarant des données à caractère "
+"personnel."
+
+msgid "Recording a filing requires the channel it was transmitted through."
+msgstr "Enregistrer un dépôt exige le canal par lequel il a été transmis."
+
+msgid "A correction with no stated reason is a rewrite."
+msgstr "Une correction sans motif énoncé est une réécriture."
+
+msgid ""
+"Draft is always the entry, Archived the exit. Edit the steps and "
+"transitions below; the graph updates live."
+msgstr ""
+"« Brouillon » est toujours l'entrée, « Archivé » la sortie. Modifiez les "
+"étapes et les transitions ci-dessous ; le graphe se met à jour en "
+"direct."
+
+msgid "JSON"
+msgstr "JSON"
+
+msgid "Kind"
+msgstr "Type"
+
+msgid "Tone"
+msgstr "Tonalité"
+
+msgid "From"
+msgstr "De"
+
+msgid "To"
+msgstr "Vers"
+
+msgid "Perm."
+msgstr "Perm."
+
+msgid ""
+"Edit the raw definition. Changes sync to the steps, transitions and "
+"graph above when valid."
+msgstr ""
+"Modifiez la définition brute. Les changements sont répercutés sur les "
+"étapes, les transitions et le graphe ci-dessus dès qu'ils sont valides."
+
+msgid "Step codes must be unique."
+msgstr "Les codes d'étape doivent être uniques."
+
+msgid ""
+"Every entity's lifecycle is a JSON graph of steps and transitions. Edit "
+"one to re-shape its stepper, allowed moves and governance flags - no "
+"code change."
+msgstr ""
+"Le cycle de vie de chaque entité est un graphe JSON d'étapes et de "
+"transitions. Modifiez-en un pour remodeler son stepper, ses transitions "
+"autorisées et ses attributs de gouvernance - sans changement de code."

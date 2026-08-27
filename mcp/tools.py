@@ -320,8 +320,17 @@ def _apply_timestamp_override(obj, model_class, data, user):
     return None
 
 
-def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None):
-    """Create a generic create handler."""
+def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None,
+                    pre_clean=None):
+    """Create a generic create handler.
+
+    ``pre_clean`` runs on the unsaved instance just before ``full_clean()``.
+    It exists for models whose ``clean()`` reads a value that ``save()``
+    derives : validating before the derivation makes the rule fail on a field
+    the caller never supplied and cannot supply. The web form and the DRF
+    serializer both close that gap explicitly; without this hook the MCP tool
+    is the only surface that cannot create the row at all.
+    """
     m2m_fields = m2m_fields or {}
 
     def handler(user, arguments):
@@ -339,6 +348,8 @@ def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_field
             kwargs["created_by"] = user
         try:
             obj = model_class(**kwargs)
+            if pre_clean is not None:
+                pre_clean(obj)
             obj.full_clean()
             obj.save()
             # Set M2M fields after save
@@ -359,7 +370,8 @@ def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_field
     return handler
 
 
-def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None):
+def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None,
+                          pre_clean=None):
     """Create a generic batch create/upsert handler (non-atomic: partial success).
 
     When the caller supplies ``match_on`` (a list of writable field names), each
@@ -445,6 +457,8 @@ def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m
                     obj = existing
                     for target, value in kwargs.items():
                         setattr(obj, target, value)
+                    if pre_clean is not None:
+                        pre_clean(obj)
                     obj.full_clean()
                     obj.save()
                     for param_name, ids in m2m_values.items():
@@ -465,6 +479,8 @@ def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m
                     if hasattr(model_class, "created_by"):
                         kwargs["created_by"] = user
                     obj = model_class(**kwargs)
+                    if pre_clean is not None:
+                        pre_clean(obj)
                     obj.full_clean()
                     obj.save()
                     for param_name, ids in m2m_values.items():
@@ -740,6 +756,7 @@ def register_all_tools(server):
     _register_assets_tools(server)
     _register_compliance_tools(server)
     _register_risks_tools(server)
+    _register_incidents_tools(server)
     _register_accounts_tools(server)
     _register_reports_tools(server)
     _register_trust_center_tools(server)
@@ -895,7 +912,7 @@ Cairn is a Governance, Risk & Compliance (GRC) platform. This MCP server
 exposes its full API as tools organized by module.
 
 Call `help` with a topic for detailed field-level documentation:
-  context, assets, compliance, risks, batch, workflow, permissions, examples, users
+  context, assets, compliance, risks, incidents, batch, workflow, permissions, examples, users
 
 ## Modules
 
@@ -905,6 +922,7 @@ Call `help` with a topic for detailed field-level documentation:
 | Assets | assets.* | Asset management: essential assets, support assets, dependencies, groups, suppliers |
 | Compliance | compliance.* | Compliance: frameworks, sections, requirements, assessments, findings, action plans, mappings |
 | Risks | risks.* | Risk management: criteria, assessments, risks, treatment plans, threats, vulnerabilities, ISO 27005 |
+| Incidents | incidents.* | Incident management: security events, incidents, response plans, response actions, chronology, evidence and chain of custody, post-incident reviews, notification obligations and filings, personal data breaches, reporting authorities and obligation templates |
 | Accounts | system.* | Users, groups, permissions, access logs, company settings |
 | Reports | compliance.report.* | SOA and audit report generation |
 
@@ -954,7 +972,14 @@ References are read-only and sequential. Reference prefixes by entity:
   Framework=FRMW, Section=SECT, Requirement=REQT, ComplianceAssessment=CASS,
   Finding=(NCMAJ/NCMIN/OBS/OA/STR per type), ActionPlan=ACTPL,
   RiskCriteria=RCRT, RiskAssessment=RASS, Risk=RISK,
-  RiskTreatmentPlan=RTPL, Threat=THRT, Vulnerability=VULN, ISO27005Risk=I27R
+  RiskTreatmentPlan=RTPL, Threat=THRT, Vulnerability=VULN, ISO27005Risk=I27R,
+  Incident=INCD, SecurityEvent=EVNT, IncidentResponsePlan=IRPL,
+  IncidentResponseAction=IRAC, IncidentEvidence=EVID, PostIncidentReview=PIRV,
+  IncidentNotification=INOT, NotificationFiling=NFIL, ReportingAuthority=RGAU,
+  ReportingObligationTemplate=ROBT, PersonalDataBreach=PDBR
+Read INCD twice: it is one letter-order away from the Indicator prefix, and the
+two are visually confusable in a reference string and in a list column.
+IncidentTimelineEntry and EvidenceCustodyEvent generate no reference at all.
 
 ### HTML Rich Text Fields
 Fields marked "(HTML)" accept HTML rich text content.
@@ -1385,6 +1410,285 @@ Ref prefix: I27R
 - set_risk_requirements(risk_id, requirement_ids) - replace all links
 """
 
+    TOPIC_INCIDENTS = """\
+# Incidents Module - Field Reference
+
+Six permission features govern this module, and there is no seventh:
+incidents.incident, incidents.event, incidents.response_plan,
+incidents.evidence, incidents.notification, incidents.review. Each carries
+create / read / update / delete plus validate (incident, event, review) or
+approve (response_plan, evidence, notification).
+
+Three rules cut across every entity here:
+- Phase timestamps are stamped by lifecycle transitions and are never writable:
+  declared_at, triaged_at, contained_at, eradicated_at, recovered_at, closed_at
+  (incident), assessed_at and triage_decision (security event), sealed_at,
+  last_integrity_check_at / _ok (evidence), decided_at, sent_at,
+  first_submitted_at, late_by (notification), qualified_at (breach),
+  held_at and effectiveness_reviewed_at (review). A decision is a transition,
+  never a field write: use transition_{entity}(id, target_state, comment).
+- Three ledgers are append-only and have no update and no delete tool:
+  incident_timeline_entry, evidence_custody_event, notification_filing.
+- Binary payloads are neither readable nor writable through MCP: the evidence
+  artefact itself and the stored proof-of-filing bytes.
+
+## incident
+Writable: title (required), summary, description, category, severity, detection_source,
+  is_exercise, tlp, confidentiality_impact, integrity_impact, availability_impact,
+  personal_data_involved, occurred_at, detected_at (required), awareness_at,
+  awareness_justification, outage_duration, estimated_cost, no_obligation_justification,
+  is_significant, significance_determined_at, significance_justification,
+  cross_border_impact, cross_border_justification, suspected_malicious,
+  suspected_malicious_justification, response_plan_id, reporter_id,
+  incident_manager_id, parent_incident_id, origin_supplier_id, scope_ids,
+  affected_supplier_ids, affected_essential_asset_ids, affected_support_asset_ids,
+  affected_site_ids, affected_activity_ids, threat_ids,
+  exploited_vulnerability_ids, realised_risk_ids, linked_requirement_ids
+- category: malware | social_engineering | unauthorized_access | denial_of_service | data_breach | physical_attack | espionage | fraud | sabotage | human_error | system_failure | network_failure | power_failure | natural_disaster | fire | water_damage | theft | vandalism | supply_chain | insider_threat | ransomware | apt | other
+- severity: low | medium | high | critical
+- detection_source: internal_monitoring | soc_alert | employee_report | customer_report | supplier_notification | authority_notification | researcher | audit | penetration_test | threat_intel | other
+- tlp: clear | green | amber | amber_strict | red
+- detected_at is the technical clock (mean-time-to-detect); awareness_at is the
+  legal clock (GDPR Art. 33(1), NIS2 Art. 23) and defaults to detected_at. A gap
+  between the two must carry awareness_justification.
+- A cross_border_impact or suspected_malicious verdict must carry its justification.
+Read-only: initial_severity (fixed at triage), the six phase timestamps,
+  awareness_gap, time_to_contain, time_to_recover, severity_raised_since_triage
+Filters: category, severity, detection_source, tlp, is_exercise, personal_data_involved, is_significant, workflow_state, incident_manager_id, response_plan_id, parent_incident_id
+Ref prefix: INCD
+
+## security_event
+The A.6.8 register: what was observed, before anyone decided what it is.
+Writable: title (required), description, event_class, category, detection_source,
+  source_reference, occurred_at, detected_at (required), reported_at (required),
+  is_anonymous, reporter_id, reporter_label, reported_by_supplier_id,
+  duplicate_of_id, assessed_by_id, assessment_notes, scope_ids,
+  affected_support_asset_ids, affected_essential_asset_ids, affected_site_ids
+- event_class: event | weakness | incident (governs which promotion targets are legal)
+- category: same threat taxonomy as incident.category
+- detection_source: same list as incident.detection_source
+- reporter_label carries an external or non-user reporter; is_anonymous marks the
+  anonymous channel A.6.8 requires.
+Read-only: triage_decision, assessed_at, incident_id, vulnerability_id (all set
+  by the triage transitions), reporting_delay_hours
+Special tool: declare_incident_from_event(id, comment, ...) - promotes an event
+  under assessment into a new incident as one atomic act. Never create the
+  incident and update the event separately.
+Filters: event_class, category, detection_source, is_anonymous, triage_decision, workflow_state, incident_id, reported_by_supplier_id
+Ref prefix: EVNT
+
+## incident_response_plan
+Writable: name (required), purpose, procedure (HTML), classification_scale (HTML),
+  escalation_matrix (HTML), reporting_channels (HTML), evidence_procedure (HTML),
+  lessons_learned_procedure (HTML), applicable_regimes, owner_id, approved_by_id,
+  approved_at, effective_from, review_date, scope_ids, responsible_role_ids,
+  linked_requirement_ids
+- applicable_regimes: array of regime codes (see the notification regime list below)
+Read-only: last_exercise_date, is_in_force, is_review_overdue, is_exercise_overdue
+Filters: workflow_state, owner_id, approved_by_id
+Ref prefix: IRPL
+
+## incident_response_action
+Operational step under an incident. Runs no lifecycle, so there is no
+transition_incident_response_action tool: status is a plain column.
+Writable: incident_id (required), action_type (required), title (required),
+  description, status, owner_id, performed_by_id, due_at, started_at,
+  completed_at, outcome, effectiveness
+- action_type: containment | eradication | recovery | evidence_collection | communication | escalation | workaround | other
+- status: planned | in_progress | done | blocked | cancelled
+- effectiveness: effective | partially_effective | not_effective
+Filters: incident_id, action_type, status, owner_id, performed_by_id, effectiveness
+Ref prefix: IRAC
+
+## incident_timeline_entry
+The incident chronology. APPEND-ONLY: create and read tools only, no update and
+no delete. Correct a mistake by appending an entry of type correction that names
+superseded_entry_id and states correction_reason.
+Tools: create_incident_timeline_entry, list_incident_timeline_entries,
+  get_incident_timeline_entry, get_incident_timeline_entry_history
+Writable at create: incident_id (required), occurred_at (required),
+  summary (required, max 500 chars), detail, entry_type, is_evidence,
+  related_action_id, related_evidence_id, superseded_entry_id, correction_reason
+- entry_type: observation | action | decision | communication | escalation | evidence | external_input | correction | system
+- author is always the calling account; source is always manual; recorded_at is
+  stamped on insert. occurred_at may be backdated: the chronology reads in the
+  order things happened.
+Permission: incidents.incident.update to append, incidents.incident.read to list.
+Filters: incident_id, entry_type, source, is_evidence, author_id
+No reference prefix: entries are identified by UUID.
+
+## incident_evidence
+A.5.28 artefact register. Scoped through its incident (incident__scopes).
+Writable: incident_id (required), title (required), evidence_type (required),
+  description, tlp, collected_at, collected_by_id, collection_method,
+  source_support_asset_id, source_description, content_hash, hash_algorithm,
+  original_filename, file_size, storage_location, legal_hold, retention_until,
+  admissibility_notes
+- evidence_type: disk_image | memory_dump | log_extract | network_capture | screenshot | email | document | database_export | malware_sample | physical_device | witness_statement | other
+- hash_algorithm: sha256 | sha512 | sha1 | md5
+- tlp: clear | green | amber | amber_strict | red (defaults to red)
+- The acquisition metadata (content_hash, hash_algorithm, collected_at,
+  collected_by, collection_method and the artefact itself) is FROZEN once the
+  item is sealed: an update naming any of them is refused, field by field.
+- The artefact bytes are never uploaded or downloaded through MCP. An item above
+  the deployment's inline cap is registered by reference: leave the file empty,
+  record storage_location, file_size and content_hash.
+Read-only: sealed_at, last_integrity_check_at, last_integrity_check_ok,
+  destruction_authorised_by, has_file, is_registered_by_reference, is_sealed,
+  retention_expired, is_destroyable
+Special tool: verify_evidence_integrity(id, notes) - measures the artefact and
+  appends the verdict to the custody ledger. Three outcomes, never collapsed:
+  match | mismatch | not_verifiable. Never assert a verdict by writing content_hash.
+Filters: incident_id, evidence_type, hash_algorithm, tlp, legal_hold, workflow_state, collected_by_id
+Ref prefix: EVID
+
+## evidence_custody_event
+The chain of custody. APPEND-ONLY: create and read tools only, no update and no
+delete. Correct a mistake by appending a further act that says what the earlier
+one got wrong.
+Tools: create_evidence_custody_event, list_evidence_custody_events,
+  get_evidence_custody_event, get_evidence_custody_event_history
+Writable at create: evidence_id (required), action (required),
+  occurred_at (required), counterparty, counterparty_organisation, location,
+  hash_at_event, notes
+- action: collected | sealed | transferred | accessed | copied | analysed | integrity_verified | released | returned | destroyed
+- transferred, released, returned and destroyed each require a named
+  counterparty: a handover to an organisation with no named individual is not a
+  handover.
+- actor is always the calling account; source is always manual on an
+  MCP-created row (the lifecycle appends its own rows with source lifecycle).
+Permission: incidents.evidence.update to append, incidents.evidence.read to list.
+Filters: evidence_id, action, source, integrity_ok, actor_id
+No reference prefix: rows are identified by UUID.
+
+## post_incident_review
+Writable: incident_id (required, one review per incident), response_plan_id,
+  scheduled_date, facilitator_id, root_cause_method, root_cause,
+  contributing_factors, detection_gap, containment_assessment, what_went_well,
+  what_failed, recurrence_likelihood, similar_incidents_checked,
+  risk_reassessment_required, response_plan_update_required, training_required,
+  effectiveness_review_date, effectiveness_verdict, effectiveness_reviewed_by_id,
+  effectiveness_notes, participant_ids, raised_finding_ids,
+  corrective_action_plan_ids, failed_control_ids, control_to_strengthen_ids,
+  identified_risk_ids, identified_vulnerability_ids, isms_change_ids
+- root_cause_method: five_whys | ishikawa | fault_tree | timeline_analysis | barrier_analysis | other
+- recurrence_likelihood: low | medium | high | critical
+- effectiveness_verdict: effective | partially_effective | not_effective
+Read-only: held_at, effectiveness_reviewed_at, is_effectiveness_overdue, scopes
+  (kept aligned with the reviewed incident, never set directly)
+Filters: incident_id, root_cause_method, recurrence_likelihood, effectiveness_verdict, workflow_state, facilitator_id
+Ref prefix: PIRV
+
+## incident_notification
+One regulatory or contractual duty owed for one incident. Scoped through its
+incident (incident__scopes).
+Writable: incident_id (required), regime (required), recipient_kind (required),
+  authority_id, recipient_stakeholder_id, recipient_supplier_id, recipient_name,
+  obligation_reference, content_requirements, clock_anchor, deadline_hours,
+  no_fixed_deadline, depends_on_id, channel, content, decision_rationale,
+  acknowledgement_reference, acknowledged_at, proof_evidence_id
+- regime: gdpr_art33_authority | gdpr_art34_data_subject | gdpr_art33_2_controller | nis2_early_warning | nis2_notification | nis2_intermediate | nis2_final | nis2_recipients | dora_initial | dora_intermediate | dora_final | eprivacy | cra | sector_regulator | law_enforcement | cert_csirt | contractual_customer | contractual_supplier | insurer | internal_management | public_communication | other
+- recipient_kind: supervisory_authority | csirt | competent_authority | financial_regulator | law_enforcement | data_subject | customer | controller | supplier | insurer | internal | public
+- clock_anchor: occurred_at | detected_at | awareness_at | significance_determined_at | previous_stage
+- channel: portal | email | postal | phone | api | in_person | public_notice
+- The decision (required / not_required) is a TRANSITION with a mandatory
+  comment, not a field write. decision_rationale carries the reasoning.
+- content and channel are frozen once the obligation has been sent: an amendment
+  is a further filing, never an edit.
+- The clock (anchor_at, due_at) is derived and freezes on the first filing.
+Read-only: decision, decided_by, decided_at, sent_at, sent_by,
+  first_submitted_at, late_by, anchor_at, due_at, source, template_id,
+  recipient_display, deadline_bucket, is_overdue, was_filed_late, has_proof
+Special tool: list_overdue_incident_notifications(...) - every duty past its
+  deadline with no filing, with hours overdue and the incident manager.
+Filters: incident_id, regime, recipient_kind, decision, channel, source, workflow_state, authority_id, template_id, no_fixed_deadline
+Ref prefix: INOT
+
+## notification_filing
+One transmission against one obligation. APPEND-ONLY: create and read tools only,
+no update and no delete. An amendment is a further filing.
+Tools: create_notification_filing, list_notification_filings,
+  get_notification_filing, get_notification_filing_history
+Writable at create: notification_id (required), submitted_at, channel,
+  recipient_name, subject, content, external_reference, is_correction,
+  supersedes_id, comment
+- channel: same list as incident_notification.channel
+- The FIRST filing on an obligation runs through the lifecycle: it stamps
+  sent_at, sent_by, first_submitted_at and late_by on the obligation, moves it
+  to its sent step and narrates the act in the incident chronology. Later
+  filings insert without disturbing any of it.
+- The first filing is never a correction. supersedes_id implies is_correction
+  and must point at a filing on the same obligation.
+- was_late is computed at insert from the obligation's deadline and never again;
+  submitted_by is always the calling account; submitted_at cannot be in the future.
+Permission: incidents.notification.update to record, .read to list.
+Filters: notification_id, channel, outcome, is_correction, was_late, submitted_by_id
+Ref prefix: NFIL
+
+## personal_data_breach
+GDPR qualification of an incident. One per incident, scoped through it.
+Writable: incident_id (required), controller_role, controller_supplier_id,
+  lead_authority_id, cross_border_eu, nature, data_categories,
+  data_subject_categories, approximate_data_subjects, approximate_records,
+  special_categories, volume_is_estimate, dpo_contact, likely_consequences,
+  measures_taken, high_risk_to_rights, high_risk_justification,
+  article_34_exemption, article_34_exemption_justification,
+  register_entry_reference
+- controller_role: controller | joint_controller | processor
+- article_34_exemption: none | encryption | subsequent_measures | disproportionate_effort
+- data_categories and data_subject_categories are free-form arrays of strings.
+Read-only: qualified_by, qualified_at, acts_as_processor, has_article_33_3_content
+Filters: incident_id, controller_role, article_34_exemption, high_risk_to_rights, special_categories, cross_border_eu, workflow_state
+Ref prefix: PDBR
+
+## reporting_authority
+Catalogue of the bodies filings go to. Carries no scopes and no parent: the CNIL
+is the CNIL for every scope of the ISMS, so these rows are visible to every
+holder of the read permission.
+Writable: name (required), primary_regime (required), short_name, authority_type,
+  additional_regimes, jurisdiction_country, portal_url, contact_email,
+  contact_phone, notification_language, procedure
+- authority_type: supervisory_authority | csirt | competent_authority | sector_regulator | financial_regulator | law_enforcement | other
+- primary_regime / additional_regimes: regime codes (see incident_notification)
+Permission: incidents.response_plan.* (the catalogue is part of the procedure).
+Filters: authority_type, primary_regime, jurisdiction_country, workflow_state
+Ref prefix: RGAU
+
+## obligation_template
+Catalogue rule that decides which obligations an incident raises, and on which
+clock. Same tenancy note as reporting_authority.
+Writable: name (required), regime (required), recipient_kind (required),
+  authority_id, legal_reference, content_requirements, clock_anchor, clock_hours,
+  no_fixed_deadline, depends_on_regime, jurisdiction_country, min_severity,
+  requires_significant, requires_personal_data, requires_high_risk,
+  requires_cross_border, controller_roles, applicable_categories, order
+- regime / depends_on_regime / recipient_kind / clock_anchor: see incident_notification
+- min_severity: low | medium | high | critical
+- controller_roles: array of controller | joint_controller | processor
+- applicable_categories: array of threat-taxonomy codes; empty means all
+- no_fixed_deadline says the law imposes none. It is NOT the same as a clock that
+  exists and has simply not started, and merging the two is how a real deadline
+  disappears from a dashboard.
+Permission: incidents.response_plan.*
+Filters: regime, recipient_kind, authority_id, jurisdiction_country, min_severity, no_fixed_deadline, workflow_state
+Ref prefix: ROBT
+
+## Typical flow
+1. create_security_event(title=..., detected_at=..., reported_at=..., scope_ids=[...])
+2. transition_security_event(id=..., target_state="reported")
+   then "under_assessment"
+3. declare_incident_from_event(id="<event-uuid>", comment="Confirmed data exfiltration")
+   -> returns the new incident, already declared, with the event linked to it
+4. create_incident_timeline_entry(incident_id=..., occurred_at=..., summary=...)
+   as the response runs
+5. create_incident_evidence(incident_id=..., title=..., evidence_type="log_extract",
+   content_hash=..., storage_location=...) then transition it to seal it
+6. transition_incident(id=..., target_state=...) through triage, containment,
+   eradication, recovery and closure : each step stamps its own timestamp
+7. list_overdue_incident_notifications() to see what is late, then
+   create_notification_filing(notification_id=..., content=...) to discharge it
+8. create_post_incident_review(incident_id=...) and work it through its lifecycle
+"""
     TOPIC_WORKFLOW = """\
 # Workflow Reference
 
@@ -1786,6 +2090,7 @@ tool, call it by its exact name directly - the name here is authoritative.
         "assets": TOPIC_ASSETS,
         "compliance": TOPIC_COMPLIANCE,
         "risks": TOPIC_RISKS,
+        "incidents": TOPIC_INCIDENTS,
         "batch": TOPIC_BATCH,
         "workflow": TOPIC_WORKFLOW,
         "permissions": TOPIC_PERMISSIONS,
@@ -1813,13 +2118,13 @@ tool, call it by its exact name directly - the name here is authoritative.
         "help",
         "Get usage documentation for the Cairn MCP server. "
         "Call without arguments for the full guide, or with a topic for focused help. "
-        "Topics: context, assets, compliance, risks, batch, workflow, permissions, examples, users",
+        "Topics: context, assets, compliance, risks, incidents, batch, workflow, permissions, examples, users",
         {
             "type": "object",
             "properties": {
                 "topic": {
                     "type": "string",
-                    "description": "Optional topic: context, assets, compliance, risks, batch, workflow, permissions, examples, users",
+                    "description": "Optional topic: context, assets, compliance, risks, incidents, batch, workflow, permissions, examples, users",
                 },
             },
         },
@@ -6516,6 +6821,1592 @@ def _register_risks_tools(server):
     )
 
 
+# ── Incidents Module ──────────────────────────────────────
+
+# Enum values below are copied from `incidents/constants.py` (and, for the three
+# shared taxonomies, from `context`, `risks` and `compliance`). They are spelled
+# out rather than derived so the JSON schema an MCP client caches stays a
+# literal contract; a divergence is caught by the model's own `full_clean()`.
+_INC_TLP = ["clear", "green", "amber", "amber_strict", "red"]
+_INC_CRITICALITY = ["low", "medium", "high", "critical"]
+_INC_DETECTION_SOURCES = [
+    "internal_monitoring", "soc_alert", "employee_report", "customer_report",
+    "supplier_notification", "authority_notification", "researcher", "audit",
+    "penetration_test", "threat_intel", "other",
+]
+_INC_THREAT_CATEGORIES = [
+    "malware", "social_engineering", "unauthorized_access", "denial_of_service",
+    "data_breach", "physical_attack", "espionage", "fraud", "sabotage",
+    "human_error", "system_failure", "network_failure", "power_failure",
+    "natural_disaster", "fire", "water_damage", "theft", "vandalism",
+    "supply_chain", "insider_threat", "ransomware", "apt", "other",
+]
+_INC_EFFECTIVENESS = ["effective", "partially_effective", "not_effective"]
+_INC_REGIMES = [
+    "gdpr_art33_authority", "gdpr_art34_data_subject", "gdpr_art33_2_controller",
+    "nis2_early_warning", "nis2_notification", "nis2_intermediate", "nis2_final",
+    "nis2_recipients", "dora_initial", "dora_intermediate", "dora_final",
+    "eprivacy", "cra", "sector_regulator", "law_enforcement", "cert_csirt",
+    "contractual_customer", "contractual_supplier", "insurer",
+    "internal_management", "public_communication", "other",
+]
+_INC_RECIPIENT_KINDS = [
+    "supervisory_authority", "csirt", "competent_authority",
+    "financial_regulator", "law_enforcement", "data_subject", "customer",
+    "controller", "supplier", "insurer", "internal", "public",
+]
+_INC_CLOCK_ANCHORS = [
+    "occurred_at", "detected_at", "awareness_at", "significance_determined_at",
+    "previous_stage",
+]
+_INC_CHANNELS = ["portal", "email", "postal", "phone", "api", "in_person", "public_notice"]
+_INC_CUSTODY_ACTIONS = [
+    "collected", "sealed", "transferred", "accessed", "copied", "analysed",
+    "integrity_verified", "released", "returned", "destroyed",
+]
+
+
+def _incident_child_parent(parent_field, parent_model, user, arguments):
+    """Resolve and scope-check the parent a child row is being appended to.
+
+    ``_create_handler`` validates the foreign key exists, never that the caller
+    may see what it points at. The three append-only ledgers get their own
+    create handlers, so the check lives here rather than being reproduced in
+    each of them.
+    """
+    pk = arguments.get(f"{parent_field}_id")
+    if not pk:
+        raise InvalidParamsError(f"{parent_field}_id is required.")
+    try:
+        parent = parent_model.objects.get(pk=pk)
+    except (parent_model.DoesNotExist, ValueError, ValidationError):
+        return None, _error(f"{parent_model.__name__} not found.")
+    if not _filter_by_scopes(parent_model.objects.filter(pk=parent.pk), user).exists():
+        return None, _error("Access denied: object is outside your allowed scopes.")
+    return parent, None
+
+
+def _register_append_only_reads(server, entity_name, plural, model_class, perm_prefix,
+                                list_fields, search_fields=None, filters=None):
+    """Register the read half of an append-only ledger: list, get, history.
+
+    Deliberately no ``update_*`` and no ``delete_*``: ``save()`` on an existing
+    row and ``delete()`` both raise ``LifecycleProtectedError`` on these three
+    models, so registering those tools would advertise an operation that can
+    only ever fail. The create half is bespoke (the actor is forced to the
+    caller), so it is registered by ``_register_incidents_tools`` itself.
+    """
+    display_name = entity_name.replace("_", " ")
+    filter_props = {f: {"type": "string", "description": f"Filter by {f}"} for f in (filters or [])}
+    server.register_tool(
+        f"list_{plural}",
+        f"List {display_name}s with optional search and filters. Append-only "
+        f"ledger: there is no update or delete tool for it.",
+        _list_schema(filter_props),
+        require_perm(f"{perm_prefix}.read")(
+            _list_handler(model_class, list_fields, search_fields, filters, True)
+        ),
+    )
+    server.register_tool(
+        f"get_{entity_name}",
+        f"Get a {display_name} by ID",
+        _id_schema(),
+        require_perm(f"{perm_prefix}.read")(_get_handler(model_class, list_fields, True)),
+    )
+    server.register_tool(
+        f"get_{entity_name}_history",
+        f"Return the change history of a {display_name}. On an append-only "
+        f"ledger this is the tamper-detection surface: a row whose trail shows "
+        f"more writes than the design allows has been altered outside the "
+        f"supported paths.",
+        _obj_schema(
+            {
+                "id": {"type": "string", "description": f"UUID of the {display_name}"},
+                "limit": {"type": "integer", "description": "Max entries (default 100, max 500)."},
+                "offset": {"type": "integer", "description": "Entries to skip (pagination)."},
+            },
+            required=["id"],
+        ),
+        require_perm(f"{perm_prefix}.read")(_history_handler(model_class, True)),
+    )
+
+
+def _unjudged_verdict_fields(obj):
+    """Tri-state verdict fields still unanswered on ``obj``.
+
+    ``Incident.is_significant`` / ``.cross_border_impact`` /
+    ``.suspected_malicious`` and ``PersonalDataBreach.high_risk_to_rights`` are
+    ``BooleanField(null=True, default=None)`` **without** ``blank=True``. That
+    is deliberate: each is a judgement with three states, and the third is *not
+    yet judged*. ``BooleanField.formfield()`` forces ``required=False`` and
+    ``ModelForm._get_validation_exclusions()`` drops such a field from
+    ``full_clean()`` while it is unset, which is why the web form happily opens
+    an incident carrying no NIS2 verdict.
+
+    ``_create_handler``, ``_batch_create_handler`` and ``_update_handler`` call
+    ``full_clean()`` with no exclusions. Without this list every
+    ``create_incident`` would be refused with *This field cannot be blank*
+    unless the caller invented all three verdicts on the spot, and every
+    ``update_incident`` on an incident opened from the web UI would be refused
+    for the same reason. Worse, an invented ``cross_border_impact`` immediately
+    forces ``cross_border_justification``: a written justification for a
+    judgement nobody made. The MCP surface therefore validates exactly what the
+    form validates, and the verdicts stay reachable as ordinary writable fields
+    once somebody has actually taken them.
+    """
+    return [
+        f.name
+        for f in obj._meta.fields
+        if f.null and not f.blank and not f.is_relation
+        and getattr(obj, f.attname) is None
+    ]
+
+
+def _verdict_create_handler(model_class, writable_fields, m2m_fields=None):
+    """``_create_handler`` with the unanswered tri-state verdicts left unvalidated."""
+    m2m_fields = m2m_fields or {}
+
+    def handler(user, arguments):
+        kwargs = {}
+        m2m_values = {}
+        for field_name in writable_fields:
+            if field_name in arguments:
+                if field_name in m2m_fields:
+                    m2m_values[field_name] = arguments[field_name]
+                else:
+                    kwargs[_fk_kwarg_name(model_class, field_name)] = _coerce_field_value(
+                        model_class, field_name, arguments[field_name])
+        if hasattr(model_class, "created_by"):
+            kwargs["created_by"] = user
+        try:
+            obj = model_class(**kwargs)
+            obj.full_clean(exclude=_unjudged_verdict_fields(obj))
+            obj.save()
+            for param_name, ids in m2m_values.items():
+                getattr(obj, m2m_fields[param_name]).set(ids)
+            ts_status = _apply_timestamp_override(obj, model_class, arguments, user)
+        except (ValidationError, Exception) as e:
+            return _error(str(e))
+        result = _serialize_obj(obj, [f.name for f in model_class._meta.fields])
+        if ts_status == "ignored_no_permission":
+            result["warning"] = (
+                "created_at / updated_at were ignored: this account lacks the "
+                "system.data_import.override_dates permission."
+            )
+        return result
+    return handler
+
+
+def _verdict_update_handler(model_class, writable_fields, m2m_fields=None):
+    """``_update_handler`` with the unanswered tri-state verdicts left unvalidated."""
+    m2m_fields = m2m_fields or {}
+
+    def handler(user, arguments):
+        pk = arguments.get("id")
+        if not pk:
+            raise InvalidParamsError("id is required.")
+        try:
+            obj = model_class.objects.get(pk=pk)
+        except model_class.DoesNotExist:
+            return _error(f"{model_class.__name__} not found.")
+        if not _filter_by_scopes(model_class.objects.filter(pk=pk), user).exists():
+            return _error("Access denied: object is outside your allowed scopes.")
+        m2m_values = {}
+        for field_name in writable_fields:
+            if field_name in arguments:
+                if field_name in m2m_fields:
+                    m2m_values[field_name] = arguments[field_name]
+                else:
+                    setattr(obj, _fk_kwarg_name(model_class, field_name),
+                            _coerce_field_value(model_class, field_name,
+                                                arguments[field_name]))
+        try:
+            obj.full_clean(exclude=_unjudged_verdict_fields(obj))
+            obj.save()
+            for param_name, ids in m2m_values.items():
+                getattr(obj, m2m_fields[param_name]).set(ids)
+        except (ValidationError, Exception) as e:
+            return _error(str(e))
+        return _serialize_obj(obj, [f.name for f in model_class._meta.fields])
+    return handler
+
+
+def _verdict_batch_create_handler(model_class, writable_fields, m2m_fields=None):
+    """``_batch_create_handler`` built on the two handlers above.
+
+    Same contract: non-atomic, ``match_on`` turns an item into an idempotent
+    upsert, and the summary reports created / updated / error counts.
+    """
+    create = _verdict_create_handler(model_class, writable_fields, m2m_fields)
+    update = _verdict_update_handler(model_class, writable_fields, m2m_fields)
+    m2m_fields = m2m_fields or {}
+
+    def handler(user, arguments):
+        items = arguments.get("items", [])
+        if not isinstance(items, list) or not items:
+            return _error("'items' must be a non-empty array of objects.")
+        if len(items) > 500:
+            return _error("Batch size limited to 500 items.")
+        match_on = arguments.get("match_on") or []
+        if match_on:
+            if not isinstance(match_on, list) or not all(isinstance(f, str) for f in match_on):
+                return _error("'match_on' must be an array of field names.")
+            unknown = [f for f in match_on if f not in writable_fields]
+            if unknown:
+                return _error(
+                    "match_on fields must be writable fields; unknown: " + ", ".join(unknown))
+            if any(f in m2m_fields for f in match_on):
+                return _error("match_on does not support many-to-many fields.")
+
+        results = []
+        counts = {"created": 0, "updated": 0, "errors": 0}
+        for idx, item in enumerate(items):
+            if not isinstance(item, dict):
+                results.append({"index": idx, "status": "error",
+                                "errors": f"Expected an object, got {type(item).__name__}."})
+                counts["errors"] += 1
+                continue
+            existing = None
+            if match_on:
+                missing = [f for f in match_on if item.get(f) in (None, "")]
+                if missing:
+                    results.append({"index": idx, "status": "error",
+                                    "errors": "Missing match_on value(s): " + ", ".join(missing)})
+                    counts["errors"] += 1
+                    continue
+                lookup = {
+                    _fk_kwarg_name(model_class, f): _coerce_field_value(model_class, f, item[f])
+                    for f in match_on
+                }
+                matches = list(_filter_by_scopes(model_class.objects.filter(**lookup), user)[:2])
+                if len(matches) > 1:
+                    results.append({"index": idx, "status": "error",
+                                    "errors": "match_on matched multiple existing records; "
+                                              "use a more specific key."})
+                    counts["errors"] += 1
+                    continue
+                existing = matches[0] if matches else None
+            if existing is not None:
+                outcome = update(user, {**item, "id": str(existing.pk)})
+                status = "updated"
+            else:
+                outcome = create(user, item)
+                status = "created"
+            if isinstance(outcome, dict) and outcome.get("isError"):
+                # `_error()` wraps the message in a JSON envelope; unwrap it so a
+                # per-item error reads the same here as in `_batch_create_handler`.
+                raw = outcome["content"][0]["text"]
+                try:
+                    raw = json.loads(raw).get("error", raw)
+                except (json.JSONDecodeError, AttributeError, TypeError):
+                    pass
+                results.append({"index": idx, "status": "error", "errors": raw})
+                counts["errors"] += 1
+                continue
+            entry = {"index": idx, "status": status, "id": outcome.get("id"),
+                     "reference": outcome.get("reference")}
+            if outcome.get("warning"):
+                entry["timestamps"] = "ignored_no_permission"
+            results.append(entry)
+            counts[status] += 1
+        return {
+            "status": "completed" if counts["errors"] == 0 else "completed_with_errors",
+            "total": len(items),
+            "created": counts["created"],
+            "updated": counts["updated"],
+            "errors": counts["errors"],
+            "results": results,
+        }
+    return handler
+
+
+def _register_verdict_write_tools(server, entity_name, model_class, perm_prefix,
+                                  writable_fields, m2m_fields=None):
+    """Re-register create / batch_create / update over the generic ones.
+
+    Same shape as the supplier tools, which re-register ``create_supplier`` and
+    ``update_supplier`` after ``_register_crud`` to add the logo fetch. Only the
+    handler changes: the schemas ``_register_crud`` published stay in place, so
+    the tool contract an MCP client already cached is untouched.
+    """
+    for suffix, factory, action in (
+        (f"create_{entity_name}", _verdict_create_handler, "create"),
+        (f"batch_create_{entity_name}s", _verdict_batch_create_handler, "create"),
+        (f"update_{entity_name}", _verdict_update_handler, "update"),
+    ):
+        published = server.get_tool(suffix)
+        server.register_tool(
+            suffix, published["description"], published["inputSchema"],
+            require_perm(f"{perm_prefix}.{action}")(
+                factory(model_class, writable_fields, m2m_fields)
+            ),
+        )
+
+
+def _register_incidents_tools(server):
+    """Register the module 6 (incidents) tool family.
+
+    Every entity is registered with ``scope_filtered=True``. The four scoped
+    parents carry their own ``scopes`` M2M; the seven child entities declare
+    ``scope_parent_lookup`` on the model, which ``core.scoping`` resolves for
+    the MCP layer exactly as it does for the web and DRF surfaces. The two
+    catalogue entities (``ReportingAuthority``, ``ReportingObligationTemplate``)
+    declare neither, so the lookup resolves to ``None`` and the flag is a no-op
+    on them: the CNIL is the CNIL for every scope of the ISMS.
+    """
+    Incident = _get_model("incidents", "Incident")
+    SecurityEvent = _get_model("incidents", "SecurityEvent")
+    IncidentResponsePlan = _get_model("incidents", "IncidentResponsePlan")
+    IncidentResponseAction = _get_model("incidents", "IncidentResponseAction")
+    IncidentTimelineEntry = _get_model("incidents", "IncidentTimelineEntry")
+    IncidentEvidence = _get_model("incidents", "IncidentEvidence")
+    EvidenceCustodyEvent = _get_model("incidents", "EvidenceCustodyEvent")
+    PostIncidentReview = _get_model("incidents", "PostIncidentReview")
+    IncidentNotification = _get_model("incidents", "IncidentNotification")
+    NotificationFiling = _get_model("incidents", "NotificationFiling")
+    ReportingAuthority = _get_model("incidents", "ReportingAuthority")
+    ReportingObligationTemplate = _get_model("incidents", "ReportingObligationTemplate")
+    PersonalDataBreach = _get_model("incidents", "PersonalDataBreach")
+
+    # ── Incident ───────────────────────────────────────────
+
+    incident_fields = [
+        "id", "reference", "workflow_state", "scopes", "title", "summary",
+        "description", "category", "severity", "initial_severity",
+        "detection_source", "is_exercise", "tlp",
+        "confidentiality_impact", "integrity_impact", "availability_impact",
+        "personal_data_involved",
+        "occurred_at", "detected_at", "awareness_at", "awareness_justification",
+        "declared_at", "triaged_at", "contained_at", "eradicated_at",
+        "recovered_at", "closed_at",
+        "outage_duration", "estimated_cost", "no_obligation_justification",
+        "is_significant", "significance_determined_at", "significance_justification",
+        "cross_border_impact", "cross_border_justification",
+        "suspected_malicious", "suspected_malicious_justification",
+        "response_plan_id", "response_plan_name",
+        "reporter_id", "reporter_name",
+        "incident_manager_id", "incident_manager_name",
+        "parent_incident_id", "parent_incident_reference",
+        "origin_supplier_id", "origin_supplier_name",
+        "affected_suppliers", "affected_essential_assets", "affected_support_assets",
+        "affected_sites", "affected_activities", "threats",
+        "exploited_vulnerabilities", "realised_risks", "linked_requirements",
+        "awareness_gap", "time_to_contain", "time_to_recover",
+        "severity_raised_since_triage",
+        "created_at",
+    ]
+    incident_writable = [
+        "title", "summary", "description", "category", "severity",
+        "detection_source", "is_exercise", "tlp",
+        "confidentiality_impact", "integrity_impact", "availability_impact",
+        "personal_data_involved",
+        "occurred_at", "detected_at", "awareness_at", "awareness_justification",
+        "outage_duration", "estimated_cost", "no_obligation_justification",
+        "is_significant", "significance_determined_at", "significance_justification",
+        "cross_border_impact", "cross_border_justification",
+        "suspected_malicious", "suspected_malicious_justification",
+        "response_plan_id", "reporter_id", "incident_manager_id",
+        "parent_incident_id", "origin_supplier_id",
+        "scope_ids", "affected_supplier_ids", "affected_essential_asset_ids",
+        "affected_support_asset_ids", "affected_site_ids", "affected_activity_ids",
+        "threat_ids", "exploited_vulnerability_ids", "realised_risk_ids",
+        "linked_requirement_ids",
+    ]
+
+    _register_crud(
+        server, "incident", Incident, "incidents.incident",
+        list_fields=incident_fields,
+        writable_fields=incident_writable,
+        search_fields=["reference", "title", "summary", "description"],
+        filters=["category", "severity", "detection_source", "tlp", "is_exercise",
+                 "personal_data_involved", "is_significant", "workflow_state",
+                 "incident_manager_id", "response_plan_id", "parent_incident_id"],
+        required_fields=["title", "detected_at"],
+        m2m_fields={
+            "scope_ids": "scopes",
+            "affected_supplier_ids": "affected_suppliers",
+            "affected_essential_asset_ids": "affected_essential_assets",
+            "affected_support_asset_ids": "affected_support_assets",
+            "affected_site_ids": "affected_sites",
+            "affected_activity_ids": "affected_activities",
+            "threat_ids": "threats",
+            "exploited_vulnerability_ids": "exploited_vulnerabilities",
+            "realised_risk_ids": "realised_risks",
+            "linked_requirement_ids": "linked_requirements",
+        },
+        field_overrides={
+            "title": {"type": "string", "description": "Short title of the incident."},
+            "summary": {"type": "string", "description": "One-paragraph executive summary, for management review and external communication."},
+            "description": {"type": "string", "description": "Full narrative of the incident."},
+            "category": {
+                "type": "string",
+                "description": "Incident category. Reuses the threat taxonomy: an incident is a threat that materialised.",
+                "enum": _INC_THREAT_CATEGORIES,
+            },
+            "severity": {
+                "type": "string",
+                "description": "Severity, read through the response plan's classification scale.",
+                "enum": _INC_CRITICALITY,
+            },
+            "detection_source": {
+                "type": "string",
+                "description": "How the incident came to light.",
+                "enum": _INC_DETECTION_SOURCES,
+            },
+            "tlp": {
+                "type": "string",
+                "description": "Traffic Light Protocol handling caveat for the incident file and its evidence.",
+                "enum": _INC_TLP,
+            },
+            "is_exercise": {"type": "boolean", "description": "Simulation or tabletop run through the real process. Exercises never generate notification obligations."},
+            "confidentiality_impact": {"type": "boolean", "description": "Confidentiality was impacted."},
+            "integrity_impact": {"type": "boolean", "description": "Integrity was impacted."},
+            "availability_impact": {"type": "boolean", "description": "Availability was impacted."},
+            "personal_data_involved": {"type": "boolean", "description": "Personal data was, or may have been, affected. Setting it forces the GDPR Art. 33 obligation and the breach record."},
+            "occurred_at": {"type": "string", "description": "Best estimate of when the incident began (ISO 8601 date-time)."},
+            "detected_at": {"type": "string", "description": "Technical detection (ISO 8601 date-time). Base of the mean-time-to-detect KPI."},
+            "awareness_at": {"type": "string", "description": "The legal clock anchor (GDPR Art. 33(1), NIS2 Art. 23), ISO 8601. Defaults to the detection time when left empty."},
+            "awareness_justification": {"type": "string", "description": "Why legal awareness postdates technical detection. Mandatory whenever the two differ."},
+            "outage_duration": {"type": "string", "description": "Measured service interruption, as a duration (e.g. '04:30:00' or '1 02:00:00')."},
+            "estimated_cost": {"type": "string", "description": "Estimated cost of the incident (decimal)."},
+            "no_obligation_justification": {"type": "string", "description": "Why nothing is owed to anyone. Mandatory when triage produced no notification obligation."},
+            "is_significant": {"type": "boolean", "description": "NIS2 Art. 23(3) significance verdict. Deliberately separate from severity."},
+            "significance_determined_at": {"type": "string", "description": "When significance was determined (ISO 8601). Usable as a statutory clock anchor in its own right."},
+            "significance_justification": {"type": "string", "description": "Reasoning behind the significance verdict."},
+            "cross_border_impact": {"type": "boolean", "description": "Entities or users in more than one Member State are affected."},
+            "cross_border_justification": {"type": "string", "description": "Reasoning behind the cross-border verdict. Mandatory once the verdict is set."},
+            "suspected_malicious": {"type": "boolean", "description": "NIS2 Art. 23(4)(a): whether the incident is suspected to result from a malicious act."},
+            "suspected_malicious_justification": {"type": "string", "description": "Reasoning behind the malicious-act verdict. Mandatory once the verdict is set."},
+            "response_plan_id": {"type": "string", "description": "UUID of the incident response plan this incident is handled under. Use list_incident_response_plans to get valid IDs."},
+            "reporter_id": {"type": "string", "description": "UUID of the user who reported it. Use list_users to get valid IDs."},
+            "incident_manager_id": {"type": "string", "description": "UUID of the single accountable responder (A.5.24). Use list_users to get valid IDs."},
+            "parent_incident_id": {"type": "string", "description": "UUID of the major incident this one belongs to, or the merge target. Use list_incidents to get valid IDs."},
+            "origin_supplier_id": {"type": "string", "description": "UUID of the third party whose breach or outage caused this. Use list_suppliers to get valid IDs."},
+            "scope_ids": {"type": "array", "items": {"type": "string"}, "description": "Scopes this incident belongs to (RG-01). Every child row inherits its tenancy from here."},
+            "affected_supplier_ids": {"type": "array", "items": {"type": "string"}, "description": "Suppliers impacted or notified downstream (not the cause: that is origin_supplier_id)."},
+            "affected_essential_asset_ids": {"type": "array", "items": {"type": "string"}, "description": "Essential assets affected. Use list_essential_assets."},
+            "affected_support_asset_ids": {"type": "array", "items": {"type": "string"}, "description": "Support assets affected. Use list_support_assets."},
+            "affected_site_ids": {"type": "array", "items": {"type": "string"}, "description": "Sites affected. Use list_sites."},
+            "affected_activity_ids": {"type": "array", "items": {"type": "string"}, "description": "Business activities halted. Use list_activities."},
+            "threat_ids": {"type": "array", "items": {"type": "string"}, "description": "The threats that materialised. Use list_threats."},
+            "exploited_vulnerability_ids": {"type": "array", "items": {"type": "string"}, "description": "Vulnerabilities exploited. Use list_vulnerabilities."},
+            "realised_risk_ids": {"type": "array", "items": {"type": "string"}, "description": "Registered risks that actually materialised. Use list_risks."},
+            "linked_requirement_ids": {"type": "array", "items": {"type": "string"}, "description": "Controls in play. Use list_requirements."},
+        },
+    )
+    # The three NIS2 verdicts are tri-state and start unjudged; see
+    # `_unjudged_verdict_fields` for why the generic handlers cannot open or
+    # edit an incident that has not taken them yet.
+    _register_verdict_write_tools(
+        server, "incident", Incident, "incidents.incident",
+        incident_writable,
+        m2m_fields={
+            "scope_ids": "scopes",
+            "affected_supplier_ids": "affected_suppliers",
+            "affected_essential_asset_ids": "affected_essential_assets",
+            "affected_support_asset_ids": "affected_support_assets",
+            "affected_site_ids": "affected_sites",
+            "affected_activity_ids": "affected_activities",
+            "threat_ids": "threats",
+            "exploited_vulnerability_ids": "exploited_vulnerabilities",
+            "realised_risk_ids": "realised_risks",
+            "linked_requirement_ids": "linked_requirements",
+        },
+    )
+
+    # ── SecurityEvent ──────────────────────────────────────
+
+    event_fields = [
+        "id", "reference", "workflow_state", "scopes", "title", "description",
+        "event_class", "category", "detection_source", "source_reference",
+        "occurred_at", "detected_at", "reported_at",
+        "reporter_id", "reporter_name", "reporter_label", "is_anonymous",
+        "assessed_by_id", "assessed_by_name", "assessed_at", "assessment_notes",
+        "triage_decision",
+        "incident_id", "incident_reference",
+        "vulnerability_id", "vulnerability_reference",
+        "duplicate_of_id", "duplicate_of_reference",
+        "reported_by_supplier_id", "reported_by_supplier_name",
+        "affected_support_assets", "affected_essential_assets", "affected_sites",
+        "reporting_delay_hours",
+        "created_at",
+    ]
+    event_writable = [
+        "title", "description", "event_class", "category", "detection_source",
+        "source_reference", "occurred_at", "detected_at", "reported_at",
+        "is_anonymous", "reporter_id", "reporter_label",
+        "reported_by_supplier_id", "duplicate_of_id",
+        "assessed_by_id", "assessment_notes",
+        "scope_ids", "affected_support_asset_ids", "affected_essential_asset_ids",
+        "affected_site_ids",
+    ]
+
+    _register_crud(
+        server, "security_event", SecurityEvent, "incidents.event",
+        list_fields=event_fields,
+        writable_fields=event_writable,
+        search_fields=["reference", "title", "description", "source_reference"],
+        filters=["event_class", "category", "detection_source", "is_anonymous",
+                 "triage_decision", "workflow_state", "incident_id",
+                 "reported_by_supplier_id"],
+        required_fields=["title", "detected_at", "reported_at"],
+        m2m_fields={
+            "scope_ids": "scopes",
+            "affected_support_asset_ids": "affected_support_assets",
+            "affected_essential_asset_ids": "affected_essential_assets",
+            "affected_site_ids": "affected_sites",
+        },
+        field_overrides={
+            "title": {"type": "string", "description": "Short title of the observation."},
+            "description": {"type": "string", "description": "What was observed, in the reporter's own words. Never rewritten on promotion."},
+            "event_class": {
+                "type": "string",
+                "description": "What kind of occurrence this is. Governs which promotion targets are legal.",
+                "enum": ["event", "weakness", "incident"],
+            },
+            "category": {
+                "type": "string",
+                "description": "Provisional classification, refined on promotion.",
+                "enum": _INC_THREAT_CATEGORIES,
+            },
+            "detection_source": {
+                "type": "string",
+                "description": "How the event came to light.",
+                "enum": _INC_DETECTION_SOURCES,
+            },
+            "source_reference": {"type": "string", "description": "SIEM alert id, ticket number or CERT bulletin reference."},
+            "occurred_at": {"type": "string", "description": "Best estimate of when the occurrence started (ISO 8601)."},
+            "detected_at": {"type": "string", "description": "When it was detected (ISO 8601). Base of the mean-time-to-detect KPI."},
+            "reported_at": {"type": "string", "description": "When it reached the incident response function (ISO 8601)."},
+            "is_anonymous": {"type": "boolean", "description": "Reported through the anonymous channel A.6.8 requires."},
+            "reporter_id": {"type": "string", "description": "UUID of the reporting user. Use list_users to get valid IDs."},
+            "reporter_label": {"type": "string", "description": "Identity of an external or non-user reporter: a customer, a researcher, an anonymous line."},
+            "reported_by_supplier_id": {"type": "string", "description": "UUID of the supplier that notified us (NIS2 supply chain, GDPR Art. 33(2)). Use list_suppliers."},
+            "duplicate_of_id": {"type": "string", "description": "UUID of the earlier security event this one repeats. Use list_security_events."},
+            "assessed_by_id": {"type": "string", "description": "UUID of the user who performed the A.5.25 assessment. Use list_users."},
+            "assessment_notes": {"type": "string", "description": "The reasoning behind the triage decision. An undocumented assessment is not an assessment."},
+            "scope_ids": {"type": "array", "items": {"type": "string"}, "description": "Scopes this event belongs to (RG-01). A promoted incident inherits them."},
+            "affected_support_asset_ids": {"type": "array", "items": {"type": "string"}, "description": "Support assets involved. Use list_support_assets."},
+            "affected_essential_asset_ids": {"type": "array", "items": {"type": "string"}, "description": "Essential assets involved. Use list_essential_assets."},
+            "affected_site_ids": {"type": "array", "items": {"type": "string"}, "description": "Sites involved. Use list_sites."},
+        },
+    )
+
+    # ── IncidentResponsePlan ───────────────────────────────
+
+    plan_fields = [
+        "id", "reference", "workflow_state", "scopes", "name", "purpose",
+        "procedure", "classification_scale", "escalation_matrix",
+        "reporting_channels", "evidence_procedure", "lessons_learned_procedure",
+        "applicable_regimes",
+        "owner_id", "owner_name", "approved_by_id", "approved_by_name",
+        "approved_at", "effective_from", "review_date", "last_exercise_date",
+        "responsible_roles", "linked_requirements",
+        "is_in_force", "is_review_overdue", "is_exercise_overdue",
+        "created_at",
+    ]
+    plan_writable = [
+        "name", "purpose", "procedure", "classification_scale",
+        "escalation_matrix", "reporting_channels", "evidence_procedure",
+        "lessons_learned_procedure", "applicable_regimes",
+        "owner_id", "approved_by_id", "approved_at", "effective_from",
+        "review_date", "scope_ids", "responsible_role_ids", "linked_requirement_ids",
+    ]
+
+    _register_crud(
+        server, "incident_response_plan", IncidentResponsePlan, "incidents.response_plan",
+        list_fields=plan_fields,
+        writable_fields=plan_writable,
+        search_fields=["reference", "name", "purpose", "procedure"],
+        filters=["workflow_state", "owner_id", "approved_by_id"],
+        required_fields=["name"],
+        m2m_fields={
+            "scope_ids": "scopes",
+            "responsible_role_ids": "responsible_roles",
+            "linked_requirement_ids": "linked_requirements",
+        },
+        field_overrides={
+            "name": {"type": "string", "description": "Name of the response plan."},
+            "purpose": {"type": "string", "description": "What the plan is for."},
+            "procedure": _html_field("Response procedure"),
+            "classification_scale": _html_field("What low / medium / high / critical mean in this organisation's terms"),
+            "escalation_matrix": _html_field("Who is escalated to, at which severity, within which delay"),
+            "reporting_channels": _html_field("How events and weaknesses are reported, including the anonymous channel A.6.8 requires"),
+            "evidence_procedure": _html_field("Identification, collection, acquisition and preservation of evidence (A.5.28)"),
+            "lessons_learned_procedure": _html_field("How knowledge gained from incidents strengthens controls (A.5.27)"),
+            "applicable_regimes": {
+                "type": "array",
+                "items": {"type": "string", "enum": _INC_REGIMES},
+                "description": "Regulatory regimes this plan is built to satisfy. Triage instantiates one notification obligation per applicable regime.",
+            },
+            "owner_id": {"type": "string", "description": "UUID of the plan owner. Use list_users to get valid IDs."},
+            "approved_by_id": {"type": "string", "description": "UUID of the approver. Use list_users to get valid IDs."},
+            "approved_at": {"type": "string", "description": "Approval date (ISO 8601 date)."},
+            "effective_from": {"type": "string", "description": "Date the plan takes effect (ISO 8601 date)."},
+            "review_date": {"type": "string", "description": "Next review date (ISO 8601 date)."},
+            "scope_ids": {"type": "array", "items": {"type": "string"}, "description": "Scopes this plan covers (RG-01)."},
+            "responsible_role_ids": {"type": "array", "items": {"type": "string"}, "description": "Roles accountable under this plan. Use list_roles."},
+            "linked_requirement_ids": {"type": "array", "items": {"type": "string"}, "description": "Requirements this plan satisfies. Use list_requirements."},
+        },
+    )
+
+    # ── IncidentResponseAction ─────────────────────────────
+
+    action_fields = [
+        "id", "reference", "incident_id", "incident_reference", "action_type",
+        "title", "description", "status",
+        "owner_id", "owner_name", "performed_by_id", "performed_by_name",
+        "due_at", "started_at", "completed_at", "outcome", "effectiveness",
+        "is_overdue", "execution_duration",
+        "created_at",
+    ]
+    action_writable = [
+        "incident_id", "action_type", "title", "description", "status",
+        "owner_id", "performed_by_id", "due_at", "started_at", "completed_at",
+        "outcome", "effectiveness",
+    ]
+
+    _register_crud(
+        server, "incident_response_action", IncidentResponseAction, "incidents.incident",
+        list_fields=action_fields,
+        writable_fields=action_writable,
+        search_fields=["reference", "title", "description", "outcome"],
+        filters=["incident_id", "action_type", "status", "owner_id",
+                 "performed_by_id", "effectiveness"],
+        has_approve=False,
+        required_fields=["incident_id", "action_type", "title"],
+        field_overrides={
+            "incident_id": {"type": "string", "description": "UUID of the parent incident. Use list_incidents to get valid IDs."},
+            "action_type": {
+                "type": "string",
+                "description": "Which ISO 27035 response step this action belongs to.",
+                "enum": ["containment", "eradication", "recovery", "evidence_collection",
+                         "communication", "escalation", "workaround", "other"],
+            },
+            "title": {"type": "string", "description": "What is being done, in the imperative."},
+            "description": {"type": "string", "description": "The command to run, the runbook section, the person to call."},
+            "status": {
+                "type": "string",
+                "description": "Operational progress. A plain status column, not a lifecycle state.",
+                "enum": ["planned", "in_progress", "done", "blocked", "cancelled"],
+            },
+            "owner_id": {"type": "string", "description": "UUID of the user accountable for the step. Use list_users."},
+            "performed_by_id": {"type": "string", "description": "UUID of the user who actually executed it. Use list_users."},
+            "due_at": {"type": "string", "description": "Due date-time (ISO 8601). Drives the escalation sweep."},
+            "started_at": {"type": "string", "description": "Execution start (ISO 8601)."},
+            "completed_at": {"type": "string", "description": "Execution end (ISO 8601)."},
+            "outcome": {"type": "string", "description": "What the action actually achieved. A containment step marked done with no stated outcome is not evidence of containment."},
+            "effectiveness": {
+                "type": "string",
+                "description": "Whether the step worked, assessed during the post-incident review (A.5.27).",
+                "enum": _INC_EFFECTIVENESS,
+            },
+        },
+    )
+
+    # ── IncidentEvidence ───────────────────────────────────
+
+    evidence_fields = [
+        "id", "reference", "workflow_state",
+        "incident_id", "incident_reference", "incident_name",
+        "title", "description", "evidence_type",
+        "collected_at", "collected_by_id", "collected_by_name",
+        "collection_method",
+        "source_support_asset_id", "source_support_asset_reference",
+        "source_description", "storage_location",
+        "original_filename", "file_size", "content_hash", "hash_algorithm",
+        "sealed_at", "last_integrity_check_at", "last_integrity_check_ok",
+        "tlp", "legal_hold", "retention_until", "admissibility_notes",
+        "destruction_authorised_by_id", "destruction_authorised_by_name",
+        "has_file", "is_registered_by_reference", "is_sealed",
+        "retention_expired", "is_destroyable",
+        "created_at",
+    ]
+    evidence_writable = [
+        "incident_id", "title", "description", "evidence_type", "tlp",
+        "collected_at", "collected_by_id", "collection_method",
+        "source_support_asset_id", "source_description",
+        "content_hash", "hash_algorithm", "original_filename", "file_size",
+        "storage_location", "legal_hold", "retention_until", "admissibility_notes",
+    ]
+
+    _register_crud(
+        server, "incident_evidence", IncidentEvidence, "incidents.evidence",
+        list_fields=evidence_fields,
+        writable_fields=evidence_writable,
+        search_fields=["reference", "title", "description", "storage_location",
+                       "original_filename", "content_hash"],
+        filters=["incident_id", "evidence_type", "hash_algorithm", "tlp",
+                 "legal_hold", "workflow_state", "collected_by_id"],
+        required_fields=["incident_id", "title", "evidence_type"],
+        field_overrides={
+            "incident_id": {"type": "string", "description": "UUID of the parent incident. Use list_incidents to get valid IDs."},
+            "title": {"type": "string", "description": "Name of the artefact."},
+            "description": {"type": "string", "description": "What the artefact is and why it matters."},
+            "evidence_type": {
+                "type": "string",
+                "description": "Kind of artefact.",
+                "enum": ["disk_image", "memory_dump", "log_extract", "network_capture",
+                         "screenshot", "email", "document", "database_export",
+                         "malware_sample", "physical_device", "witness_statement", "other"],
+            },
+            "tlp": {
+                "type": "string",
+                "description": "Traffic Light Protocol handling caveat. Defaults to red.",
+                "enum": _INC_TLP,
+            },
+            "collected_at": {"type": "string", "description": "Acquisition date-time (ISO 8601). Frozen once the item is sealed."},
+            "collected_by_id": {"type": "string", "description": "UUID of the user who acquired it. Frozen once sealed. Use list_users."},
+            "collection_method": {"type": "string", "description": "How it was acquired. Frozen once sealed."},
+            "source_support_asset_id": {"type": "string", "description": "UUID of the support asset the artefact came from. Use list_support_assets."},
+            "source_description": {"type": "string", "description": "Free-text description of the source when no asset is recorded."},
+            "content_hash": {"type": "string", "description": "Hex digest of the artefact. Frozen once sealed. Never assert a verification verdict by writing here: call verify_evidence_integrity."},
+            "hash_algorithm": {
+                "type": "string",
+                "description": "Digest algorithm the content hash was measured with. Frozen once sealed.",
+                "enum": ["sha256", "sha512", "sha1", "md5"],
+            },
+            "original_filename": {"type": "string", "description": "Filename the artefact was acquired under."},
+            "file_size": {"type": "integer", "description": "Size of the artefact in bytes."},
+            "storage_location": {"type": "string", "description": "Where the artefact actually is, for an item registered by reference."},
+            "legal_hold": {"type": "boolean", "description": "Under legal hold: destruction is refused while set."},
+            "retention_until": {"type": "string", "description": "Retention expiry date (ISO 8601 date)."},
+            "admissibility_notes": {"type": "string", "description": "Notes bearing on the artefact's admissibility."},
+        },
+    )
+
+    # ── PostIncidentReview ─────────────────────────────────
+
+    review_fields = [
+        "id", "reference", "workflow_state", "scopes",
+        "incident_id", "incident_reference", "incident_title",
+        "response_plan_id", "response_plan_name",
+        "scheduled_date", "held_at", "facilitator_id", "facilitator_name",
+        "participants", "root_cause_method", "root_cause",
+        "contributing_factors", "detection_gap", "containment_assessment",
+        "what_went_well", "what_failed", "recurrence_likelihood",
+        "similar_incidents_checked", "risk_reassessment_required",
+        "response_plan_update_required", "training_required",
+        "effectiveness_review_date", "effectiveness_reviewed_at",
+        "effectiveness_reviewed_by_id", "effectiveness_reviewed_by_name",
+        "effectiveness_verdict", "effectiveness_notes",
+        "raised_findings", "corrective_action_plans", "failed_controls",
+        "controls_to_strengthen", "identified_risks",
+        "identified_vulnerabilities", "isms_changes",
+        "is_effectiveness_overdue",
+        "created_at",
+    ]
+    review_writable = [
+        "incident_id", "response_plan_id", "scheduled_date", "facilitator_id",
+        "root_cause_method", "root_cause", "contributing_factors",
+        "detection_gap", "containment_assessment", "what_went_well",
+        "what_failed", "recurrence_likelihood", "similar_incidents_checked",
+        "risk_reassessment_required", "response_plan_update_required",
+        "training_required", "effectiveness_review_date",
+        "effectiveness_verdict", "effectiveness_reviewed_by_id",
+        "effectiveness_notes",
+        "participant_ids", "raised_finding_ids", "corrective_action_plan_ids",
+        "failed_control_ids", "control_to_strengthen_ids",
+        "identified_risk_ids", "identified_vulnerability_ids", "isms_change_ids",
+    ]
+
+    _register_crud(
+        server, "post_incident_review", PostIncidentReview, "incidents.review",
+        list_fields=review_fields,
+        writable_fields=review_writable,
+        search_fields=["reference", "root_cause", "what_went_well", "what_failed"],
+        filters=["incident_id", "root_cause_method", "recurrence_likelihood",
+                 "effectiveness_verdict", "workflow_state", "facilitator_id"],
+        required_fields=["incident_id"],
+        m2m_fields={
+            "participant_ids": "participants",
+            "raised_finding_ids": "raised_findings",
+            "corrective_action_plan_ids": "corrective_action_plans",
+            "failed_control_ids": "failed_controls",
+            "control_to_strengthen_ids": "controls_to_strengthen",
+            "identified_risk_ids": "identified_risks",
+            "identified_vulnerability_ids": "identified_vulnerabilities",
+            "isms_change_ids": "isms_changes",
+        },
+        field_overrides={
+            "incident_id": {"type": "string", "description": "UUID of the incident being reviewed (one review per incident). Use list_incidents."},
+            "response_plan_id": {"type": "string", "description": "UUID of the response plan the incident was handled under. Use list_incident_response_plans."},
+            "scheduled_date": {"type": "string", "description": "Date the review is scheduled for (ISO 8601 date)."},
+            "facilitator_id": {"type": "string", "description": "UUID of the user facilitating the review. Use list_users."},
+            "root_cause_method": {
+                "type": "string",
+                "description": "Root cause analysis method used.",
+                "enum": ["five_whys", "ishikawa", "fault_tree", "timeline_analysis",
+                         "barrier_analysis", "other"],
+            },
+            "root_cause": {"type": "string", "description": "The root cause as determined by the analysis."},
+            "contributing_factors": {"type": "string", "description": "Factors that contributed without being the root cause."},
+            "detection_gap": {"type": "string", "description": "Why detection took as long as it did."},
+            "containment_assessment": {"type": "string", "description": "How well containment worked."},
+            "what_went_well": {"type": "string", "description": "What the response got right."},
+            "what_failed": {"type": "string", "description": "What the response got wrong."},
+            "recurrence_likelihood": {
+                "type": "string",
+                "description": "Likelihood the incident recurs.",
+                "enum": _INC_CRITICALITY,
+            },
+            "similar_incidents_checked": {"type": "boolean", "description": "Whether the register was checked for similar incidents (A.5.27)."},
+            "risk_reassessment_required": {"type": "boolean", "description": "A risk reassessment is owed."},
+            "response_plan_update_required": {"type": "boolean", "description": "The response plan needs updating."},
+            "training_required": {"type": "boolean", "description": "Training or awareness action is owed."},
+            "effectiveness_review_date": {"type": "string", "description": "Date the effectiveness of the corrective actions is to be re-checked (ISO 8601 date)."},
+            "effectiveness_verdict": {
+                "type": "string",
+                "description": "ISO 27001 clause 10.2 d): did the corrective action actually work.",
+                "enum": _INC_EFFECTIVENESS,
+            },
+            "effectiveness_reviewed_by_id": {"type": "string", "description": "UUID of the user who assessed effectiveness. Use list_users."},
+            "effectiveness_notes": {"type": "string", "description": "Reasoning behind the effectiveness verdict."},
+            "participant_ids": {"type": "array", "items": {"type": "string"}, "description": "Users who took part in the review. Use list_users."},
+            "raised_finding_ids": {"type": "array", "items": {"type": "string"}, "description": "Findings raised by the review. Use list_findings."},
+            "corrective_action_plan_ids": {"type": "array", "items": {"type": "string"}, "description": "Corrective action plans opened. Use list_action_plans."},
+            "failed_control_ids": {"type": "array", "items": {"type": "string"}, "description": "Requirements whose control failed. Use list_requirements."},
+            "control_to_strengthen_ids": {"type": "array", "items": {"type": "string"}, "description": "Requirements whose control must be strengthened. Use list_requirements."},
+            "identified_risk_ids": {"type": "array", "items": {"type": "string"}, "description": "Risks identified by the review. Use list_risks."},
+            "identified_vulnerability_ids": {"type": "array", "items": {"type": "string"}, "description": "Vulnerabilities identified by the review. Use list_vulnerabilities."},
+            "isms_change_ids": {"type": "array", "items": {"type": "string"}, "description": "ISMS changes triggered by the review."},
+        },
+    )
+
+    # ── ReportingAuthority (catalogue) ─────────────────────
+
+    authority_fields = [
+        "id", "reference", "workflow_state", "name", "short_name", "display_name",
+        "authority_type", "primary_regime", "additional_regimes",
+        "jurisdiction_country", "portal_url", "contact_email", "contact_phone",
+        "notification_language", "procedure", "default_recipient_kind",
+        "created_at",
+    ]
+    authority_writable = [
+        "name", "short_name", "authority_type", "primary_regime",
+        "additional_regimes", "jurisdiction_country", "portal_url",
+        "contact_email", "contact_phone", "notification_language", "procedure",
+    ]
+
+    _register_crud(
+        server, "reporting_authority", ReportingAuthority, "incidents.response_plan",
+        list_fields=authority_fields,
+        writable_fields=authority_writable,
+        search_fields=["reference", "name", "short_name", "jurisdiction_country"],
+        filters=["authority_type", "primary_regime", "jurisdiction_country",
+                 "workflow_state"],
+        required_fields=["name", "primary_regime"],
+        field_overrides={
+            "name": {"type": "string", "description": "Full name of the body."},
+            "short_name": {"type": "string", "description": "Common abbreviation (e.g. CNIL, ANSSI)."},
+            "authority_type": {
+                "type": "string",
+                "description": "Kind of body.",
+                "enum": ["supervisory_authority", "csirt", "competent_authority",
+                         "sector_regulator", "financial_regulator", "law_enforcement",
+                         "other"],
+            },
+            "primary_regime": {
+                "type": "string",
+                "description": "The regime this body is primarily the recipient for.",
+                "enum": _INC_REGIMES,
+            },
+            "additional_regimes": {
+                "type": "array",
+                "items": {"type": "string", "enum": _INC_REGIMES},
+                "description": "Further regimes this body also receives filings under.",
+            },
+            "jurisdiction_country": {"type": "string", "description": "Country whose jurisdiction the body exercises."},
+            "portal_url": {"type": "string", "description": "URL of the online filing portal."},
+            "contact_email": {"type": "string", "description": "Contact email address."},
+            "contact_phone": {"type": "string", "description": "Contact phone number."},
+            "notification_language": {"type": "string", "description": "Language filings must be written in (e.g. fr, en)."},
+            "procedure": {"type": "string", "description": "How a filing is actually made with this body."},
+        },
+    )
+
+    # ── ReportingObligationTemplate (catalogue) ────────────
+
+    template_fields = [
+        "id", "reference", "workflow_state", "name",
+        "authority_id", "authority_name", "regime", "recipient_kind",
+        "legal_reference", "content_requirements",
+        "clock_anchor", "clock_hours", "no_fixed_deadline", "clock_summary",
+        "depends_on_regime", "jurisdiction_country", "min_severity",
+        "requires_significant", "requires_personal_data", "requires_high_risk",
+        "requires_cross_border", "controller_roles", "applicable_categories",
+        "order", "created_at",
+    ]
+    template_writable = [
+        "name", "authority_id", "regime", "recipient_kind", "legal_reference",
+        "content_requirements", "clock_anchor", "clock_hours",
+        "no_fixed_deadline", "depends_on_regime", "jurisdiction_country",
+        "min_severity", "requires_significant", "requires_personal_data",
+        "requires_high_risk", "requires_cross_border", "controller_roles",
+        "applicable_categories", "order",
+    ]
+
+    _register_crud(
+        server, "obligation_template", ReportingObligationTemplate, "incidents.response_plan",
+        list_fields=template_fields,
+        writable_fields=template_writable,
+        search_fields=["reference", "name", "legal_reference", "content_requirements"],
+        filters=["regime", "recipient_kind", "authority_id", "jurisdiction_country",
+                 "min_severity", "no_fixed_deadline", "workflow_state"],
+        required_fields=["name", "regime", "recipient_kind"],
+        field_overrides={
+            "name": {"type": "string", "description": "Name of the catalogue rule."},
+            "authority_id": {"type": "string", "description": "UUID of the body the filing goes to. Use list_reporting_authoritys to get valid IDs."},
+            "regime": {
+                "type": "string",
+                "description": "The regulatory regime this rule instantiates.",
+                "enum": _INC_REGIMES,
+            },
+            "recipient_kind": {
+                "type": "string",
+                "description": "Who the notification is owed to.",
+                "enum": _INC_RECIPIENT_KINDS,
+            },
+            "legal_reference": {"type": "string", "description": "The article the duty comes from (e.g. 'GDPR Art. 33(1)')."},
+            "content_requirements": {"type": "string", "description": "What the law requires the filing to contain."},
+            "clock_anchor": {
+                "type": "string",
+                "description": "Which incident timestamp the statutory clock runs from.",
+                "enum": _INC_CLOCK_ANCHORS,
+            },
+            "clock_hours": {"type": "integer", "description": "Hours from the anchor to the deadline (e.g. 72 for GDPR Art. 33)."},
+            "no_fixed_deadline": {"type": "boolean", "description": "The regime imposes no fixed deadline. Distinct from a clock that has simply not started."},
+            "depends_on_regime": {
+                "type": "string",
+                "description": "The sibling regime whose first filing anchors this staged obligation.",
+                "enum": _INC_REGIMES,
+            },
+            "jurisdiction_country": {"type": "string", "description": "Country this rule applies in."},
+            "min_severity": {
+                "type": "string",
+                "description": "Severity floor below which the obligation is not raised.",
+                "enum": _INC_CRITICALITY,
+            },
+            "requires_significant": {"type": "boolean", "description": "Only raised when the incident is NIS2-significant."},
+            "requires_personal_data": {"type": "boolean", "description": "Only raised when personal data is involved."},
+            "requires_high_risk": {"type": "boolean", "description": "Only raised when the breach is high risk to rights and freedoms."},
+            "requires_cross_border": {"type": "boolean", "description": "Only raised when the incident is cross-border."},
+            "controller_roles": {
+                "type": "array",
+                "items": {"type": "string", "enum": ["controller", "joint_controller", "processor"]},
+                "description": "GDPR controller roles this rule applies to.",
+            },
+            "applicable_categories": {
+                "type": "array",
+                "items": {"type": "string", "enum": _INC_THREAT_CATEGORIES},
+                "description": "Incident categories this rule applies to. Empty means all.",
+            },
+            "order": {"type": "integer", "description": "Display / generation order within the catalogue."},
+        },
+    )
+
+    # ── IncidentNotification ───────────────────────────────
+
+    notification_fields = [
+        "id", "reference", "workflow_state",
+        "incident_id", "incident_reference", "incident_name",
+        "regime", "recipient_kind",
+        "recipient_stakeholder_id", "recipient_supplier_id", "recipient_name",
+        "recipient_display",
+        "authority_id", "authority_name", "template_id", "template_name",
+        "obligation_reference", "content_requirements",
+        "clock_anchor", "deadline_hours", "no_fixed_deadline",
+        "anchor_at", "due_at", "deadline_bucket",
+        "depends_on_id", "depends_on_reference",
+        "decision", "decision_rationale", "decided_by_id", "decided_by_name",
+        "decided_at",
+        "channel", "content", "sent_at", "sent_by_id", "sent_by_name",
+        "first_submitted_at", "late_by", "was_filed_late", "is_overdue",
+        "acknowledgement_reference", "acknowledged_at",
+        "proof_filename", "has_proof", "proof_evidence_id",
+        "source", "created_at",
+    ]
+    notification_writable = [
+        "incident_id", "regime", "recipient_kind", "authority_id",
+        "recipient_stakeholder_id", "recipient_supplier_id", "recipient_name",
+        "obligation_reference", "content_requirements", "clock_anchor",
+        "deadline_hours", "no_fixed_deadline", "depends_on_id",
+        "channel", "content", "decision_rationale",
+        "acknowledgement_reference", "acknowledged_at", "proof_evidence_id",
+    ]
+
+    _register_crud(
+        server, "incident_notification", IncidentNotification, "incidents.notification",
+        list_fields=notification_fields,
+        writable_fields=notification_writable,
+        search_fields=["reference", "recipient_name", "obligation_reference",
+                       "content", "acknowledgement_reference"],
+        filters=["incident_id", "regime", "recipient_kind", "decision", "channel",
+                 "source", "workflow_state", "authority_id", "template_id",
+                 "no_fixed_deadline"],
+        required_fields=["incident_id", "regime", "recipient_kind"],
+        field_overrides={
+            "incident_id": {"type": "string", "description": "UUID of the parent incident. Use list_incidents to get valid IDs."},
+            "regime": {
+                "type": "string",
+                "description": "The regulatory regime this obligation arises under.",
+                "enum": _INC_REGIMES,
+            },
+            "recipient_kind": {
+                "type": "string",
+                "description": "Who the notification is owed to.",
+                "enum": _INC_RECIPIENT_KINDS,
+            },
+            "authority_id": {"type": "string", "description": "UUID of the body the filing goes to. Use list_reporting_authoritys."},
+            "recipient_stakeholder_id": {"type": "string", "description": "UUID of the stakeholder recipient. Use list_stakeholders."},
+            "recipient_supplier_id": {"type": "string", "description": "UUID of the supplier recipient. Use list_suppliers."},
+            "recipient_name": {"type": "string", "description": "Free-text recipient, when it is none of the three modelled kinds."},
+            "obligation_reference": {"type": "string", "description": "The article the duty comes from, snapshotted from the template."},
+            "content_requirements": {"type": "string", "description": "What the law requires this filing to contain, snapshotted from the template."},
+            "clock_anchor": {
+                "type": "string",
+                "description": "Which incident timestamp the statutory clock runs from. Frozen once the obligation has been filed.",
+                "enum": _INC_CLOCK_ANCHORS,
+            },
+            "deadline_hours": {"type": "integer", "description": "Hours from the anchor to the deadline. Frozen once filed."},
+            "no_fixed_deadline": {"type": "boolean", "description": "The regime imposes no fixed deadline."},
+            "depends_on_id": {"type": "string", "description": "UUID of the obligation whose first filing anchors this one's clock. Use list_incident_notifications."},
+            "channel": {
+                "type": "string",
+                "description": "How the notification is transmitted.",
+                "enum": _INC_CHANNELS,
+            },
+            "content": {"type": "string", "description": "The text that is filed. Frozen once the obligation has been sent: an amendment is a further filing."},
+            "decision_rationale": {"type": "string", "description": "Why the obligation is required, or why it is not. The decision itself is a transition, not a field write."},
+            "acknowledgement_reference": {"type": "string", "description": "Reference the recipient returned on acknowledgement."},
+            "acknowledged_at": {"type": "string", "description": "When the recipient acknowledged (ISO 8601)."},
+            "proof_evidence_id": {"type": "string", "description": "UUID of the evidence item holding the proof of filing. Use list_incident_evidences."},
+        },
+        # `IncidentNotification.clean()` reads `due_at`, which `save()` derives
+        # from the anchor. Validating before that derivation fails on a field the
+        # caller never supplies, so every obligation carrying a statutory delay -
+        # the GDPR Art. 33(1) 72-hour case included - was uncreatable through MCP
+        # while the form and the serializer both created it. They each close the
+        # same gap explicitly; this is the same closure for the generic handler.
+        pre_clean=lambda obj: obj._recompute_clock(None),
+    )
+
+    # ── PersonalDataBreach ─────────────────────────────────
+
+    breach_fields = [
+        "id", "reference", "workflow_state",
+        "incident_id", "incident_reference", "incident_title",
+        "controller_role", "controller_supplier_id", "controller_supplier_name",
+        "lead_authority_id", "lead_authority_name", "cross_border_eu",
+        "nature", "data_categories", "special_categories",
+        "data_subject_categories", "approximate_data_subjects",
+        "approximate_records", "volume_is_estimate", "dpo_contact",
+        "likely_consequences", "measures_taken",
+        "high_risk_to_rights", "high_risk_justification",
+        "article_34_exemption", "article_34_exemption_justification",
+        "register_entry_reference", "qualified_by_id", "qualified_by_name",
+        "qualified_at", "acts_as_processor", "has_article_33_3_content",
+        "created_at",
+    ]
+    breach_writable = [
+        "incident_id", "controller_role", "controller_supplier_id",
+        "lead_authority_id", "cross_border_eu", "nature", "data_categories",
+        "data_subject_categories", "approximate_data_subjects",
+        "approximate_records", "special_categories", "volume_is_estimate",
+        "dpo_contact", "likely_consequences", "measures_taken",
+        "high_risk_to_rights", "high_risk_justification",
+        "article_34_exemption", "article_34_exemption_justification",
+        "register_entry_reference",
+    ]
+
+    _register_crud(
+        server, "personal_data_breach", PersonalDataBreach, "incidents.notification",
+        list_fields=breach_fields,
+        writable_fields=breach_writable,
+        search_fields=["reference", "nature", "likely_consequences",
+                       "measures_taken", "register_entry_reference"],
+        filters=["incident_id", "controller_role", "article_34_exemption",
+                 "high_risk_to_rights", "special_categories", "cross_border_eu",
+                 "workflow_state"],
+        required_fields=["incident_id"],
+        field_overrides={
+            "incident_id": {"type": "string", "description": "UUID of the incident this breach record qualifies (one per incident). Use list_incidents."},
+            "controller_role": {
+                "type": "string",
+                "description": "The organisation's GDPR role for this processing.",
+                "enum": ["controller", "joint_controller", "processor"],
+            },
+            "controller_supplier_id": {"type": "string", "description": "UUID of the controller we act as processor for. Use list_suppliers."},
+            "lead_authority_id": {"type": "string", "description": "UUID of the lead supervisory authority. Use list_reporting_authoritys."},
+            "cross_border_eu": {"type": "boolean", "description": "Data subjects in more than one Member State are affected."},
+            "nature": {"type": "string", "description": "Nature of the breach (GDPR Art. 33(3)(a))."},
+            "data_categories": {"type": "array", "items": {"type": "string"}, "description": "Categories of personal data affected (free-form list)."},
+            "special_categories": {"type": "boolean", "description": "Art. 9 special-category data is involved."},
+            "data_subject_categories": {"type": "array", "items": {"type": "string"}, "description": "Categories of data subject affected (free-form list)."},
+            "approximate_data_subjects": {"type": "integer", "description": "Approximate number of data subjects concerned."},
+            "approximate_records": {"type": "integer", "description": "Approximate number of personal data records concerned."},
+            "volume_is_estimate": {"type": "boolean", "description": "The two counts are estimates rather than measured figures."},
+            "dpo_contact": {"type": "string", "description": "Contact point for the DPO (GDPR Art. 33(3)(b))."},
+            "likely_consequences": {"type": "string", "description": "Likely consequences of the breach (GDPR Art. 33(3)(c))."},
+            "measures_taken": {"type": "string", "description": "Measures taken or proposed (GDPR Art. 33(3)(d))."},
+            "high_risk_to_rights": {"type": "boolean", "description": "High risk to the rights and freedoms of natural persons (GDPR Art. 34(1))."},
+            "high_risk_justification": {"type": "string", "description": "Reasoning behind the high-risk verdict."},
+            "article_34_exemption": {
+                "type": "string",
+                "description": "Ground relied on to omit the communication to data subjects (GDPR Art. 34(3)).",
+                "enum": ["none", "encryption", "subsequent_measures", "disproportionate_effort"],
+            },
+            "article_34_exemption_justification": {"type": "string", "description": "Reasoning behind the Art. 34(3) exemption."},
+            "register_entry_reference": {"type": "string", "description": "Reference of the matching entry in the Art. 33(5) internal breach register."},
+        },
+    )
+    # `high_risk_to_rights` is tri-state and starts unjudged: same reason.
+    _register_verdict_write_tools(
+        server, "personal_data_breach", PersonalDataBreach, "incidents.notification",
+        breach_writable,
+    )
+
+    # ── Append-only ledgers: read tools ────────────────────
+    #
+    # These three refuse both `save()` on an existing row and `delete()`, so no
+    # update or delete tool is registered for them. Their create tools are
+    # bespoke: the actor is always the calling account and the row's `source` is
+    # always `manual`, neither of which an agent may assert for itself.
+
+    timeline_fields = [
+        "id", "incident_id", "incident_reference", "occurred_at", "recorded_at",
+        "entry_type", "summary", "detail", "source",
+        "author_id", "author_name",
+        "related_action_id", "related_action_reference",
+        "related_evidence_id", "related_evidence_reference",
+        "superseded_entry_id", "correction_reason", "is_superseded",
+        "is_evidence", "created_at",
+    ]
+    _register_append_only_reads(
+        server, "incident_timeline_entry", "incident_timeline_entries",
+        IncidentTimelineEntry, "incidents.incident",
+        list_fields=timeline_fields,
+        search_fields=["summary", "detail", "correction_reason"],
+        filters=["incident_id", "entry_type", "source", "is_evidence", "author_id"],
+    )
+
+    custody_fields = [
+        "id", "evidence_id", "evidence_reference", "evidence_name",
+        "incident_reference", "action", "occurred_at", "recorded_at",
+        "actor_id", "actor_name", "counterparty", "counterparty_organisation",
+        "location", "hash_at_event", "integrity_ok", "verification_outcome",
+        "notes", "source", "created_at",
+    ]
+    _register_append_only_reads(
+        server, "evidence_custody_event", "evidence_custody_events",
+        EvidenceCustodyEvent, "incidents.evidence",
+        list_fields=custody_fields,
+        search_fields=["counterparty", "counterparty_organisation", "location", "notes"],
+        filters=["evidence_id", "action", "source", "integrity_ok", "actor_id"],
+    )
+
+    filing_fields = [
+        "id", "reference", "notification_id", "notification_reference",
+        "incident_reference", "regime", "submitted_at", "channel",
+        "recipient_name", "external_reference", "subject", "content",
+        "outcome", "acknowledged_at", "is_correction", "was_late",
+        "supersedes_id", "supersedes_reference", "is_superseded",
+        "submitted_by_id", "submitted_by_name",
+        "proof_filename", "has_proof", "created_at",
+    ]
+    _register_append_only_reads(
+        server, "notification_filing", "notification_filings",
+        NotificationFiling, "incidents.notification",
+        list_fields=filing_fields,
+        search_fields=["reference", "recipient_name", "external_reference",
+                       "subject", "content"],
+        filters=["notification_id", "channel", "outcome", "is_correction",
+                 "was_late", "submitted_by_id"],
+    )
+
+    # ── Append-only ledgers: create tools ──────────────────
+
+    def create_incident_timeline_entry(user, arguments):
+        incident, err = _incident_child_parent(
+            "incident", Incident, user, arguments)
+        if err:
+            return err
+        entry = IncidentTimelineEntry(
+            incident=incident,
+            author=user,
+            source="manual",
+        )
+        for field_name in ("occurred_at", "entry_type", "summary", "detail",
+                           "is_evidence", "related_action_id",
+                           "related_evidence_id", "superseded_entry_id",
+                           "correction_reason"):
+            if field_name in arguments:
+                setattr(entry, field_name, _coerce_field_value(
+                    IncidentTimelineEntry, field_name, arguments[field_name]))
+        try:
+            entry.full_clean()
+            entry.save()
+        except (ValidationError, Exception) as e:
+            return _error(str(e))
+        return _serialize_obj(entry, timeline_fields)
+
+    server.register_tool(
+        "create_incident_timeline_entry",
+        "Append one entry to an incident's chronology. The chronology is "
+        "append-only: there is no update and no delete tool. A mistake is "
+        "corrected by appending a further entry of type 'correction' that names "
+        "the entry it supersedes and states why. The author is always the "
+        "calling account and the source is always 'manual'.",
+        _obj_schema(
+            {
+                "incident_id": {"type": "string", "description": "UUID of the incident. Use list_incidents to get valid IDs."},
+                "occurred_at": {"type": "string", "description": "Real-world time of the act being narrated (ISO 8601). May be backdated: the chronology reads in the order things happened."},
+                "summary": {"type": "string", "description": "The one-line entry, exported verbatim (max 500 characters)."},
+                "detail": {"type": "string", "description": "The full account: commands run, output observed, people spoken to."},
+                "entry_type": {
+                    "type": "string",
+                    "description": "Kind of entry.",
+                    "enum": ["observation", "action", "decision", "communication",
+                             "escalation", "evidence", "external_input",
+                             "correction", "system"],
+                },
+                "is_evidence": {"type": "boolean", "description": "Include this entry verbatim in generated regulatory filings and in the incident file."},
+                "related_action_id": {"type": "string", "description": "UUID of the response action this entry narrates. Use list_incident_response_actions."},
+                "related_evidence_id": {"type": "string", "description": "UUID of the evidence item this entry narrates. Use list_incident_evidences."},
+                "superseded_entry_id": {"type": "string", "description": "UUID of the earlier entry this one corrects. Requires entry_type 'correction' and a correction_reason."},
+                "correction_reason": {"type": "string", "description": "Why the earlier entry was wrong. A correction with no stated reason is a rewrite."},
+            },
+            required=["incident_id", "occurred_at", "summary"],
+        ),
+        # Appending to the chronology is a create, not an update : the entry
+        # is a new row and the ledger refuses every post-insert write. The DRF
+        # route and the spec both say `.create`; this was the outlier.
+        require_perm("incidents.incident.create")(create_incident_timeline_entry),
+    )
+
+    def create_evidence_custody_event(user, arguments):
+        evidence, err = _incident_child_parent(
+            "evidence", IncidentEvidence, user, arguments)
+        if err:
+            return err
+        event = EvidenceCustodyEvent(
+            evidence=evidence,
+            actor=user,
+            source="manual",
+        )
+        for field_name in ("action", "occurred_at", "counterparty",
+                           "counterparty_organisation", "location",
+                           "hash_at_event", "notes"):
+            if field_name in arguments:
+                setattr(event, field_name, _coerce_field_value(
+                    EvidenceCustodyEvent, field_name, arguments[field_name]))
+        try:
+            event.full_clean()
+            event.save()
+        except (ValidationError, Exception) as e:
+            return _error(str(e))
+        return _serialize_obj(event, custody_fields)
+
+    server.register_tool(
+        "create_evidence_custody_event",
+        "Record one handling act on an evidence item. The chain of custody is "
+        "append-only: there is no update and no delete tool, and a mistake is "
+        "corrected by appending a further act that states what the earlier one "
+        "got wrong. The actor is always the calling account and the source is "
+        "always 'manual'. Do not use this to assert an integrity verdict: call "
+        "verify_evidence_integrity, which measures the artefact itself.",
+        _obj_schema(
+            {
+                "evidence_id": {"type": "string", "description": "UUID of the evidence item. Use list_incident_evidences to get valid IDs."},
+                "action": {
+                    "type": "string",
+                    "description": "The handling act being attested. transferred, released, returned and destroyed each require a named counterparty.",
+                    "enum": _INC_CUSTODY_ACTIONS,
+                },
+                "occurred_at": {"type": "string", "description": "Real-world time of the act (ISO 8601). This is the ledger's ordering key."},
+                "counterparty": {"type": "string", "description": "Named individual on the other side of the act. A handover to an organisation with no named individual is not a handover."},
+                "counterparty_organisation": {"type": "string", "description": "Organisation the counterparty belongs to."},
+                "location": {"type": "string", "description": "Where the act took place."},
+                "hash_at_event": {"type": "string", "description": "Digest recorded at the time of the act, when one was measured by hand."},
+                "notes": {"type": "string", "description": "Free-text account of the act."},
+            },
+            required=["evidence_id", "action", "occurred_at"],
+        ),
+        require_perm("incidents.evidence.update")(create_evidence_custody_event),
+    )
+
+    def create_notification_filing(user, arguments):
+        notification, err = _incident_child_parent(
+            "notification", IncidentNotification, user, arguments)
+        if err:
+            return err
+        supersedes = None
+        supersedes_id = arguments.get("supersedes_id")
+        if supersedes_id:
+            try:
+                supersedes = NotificationFiling.objects.get(pk=supersedes_id)
+            except (NotificationFiling.DoesNotExist, ValueError, ValidationError):
+                return _error("NotificationFiling not found (supersedes_id).")
+        submitted_at = arguments.get("submitted_at")
+        if submitted_at:
+            submitted_at = _parse_iso_datetime(submitted_at)
+            if submitted_at is None:
+                return _error("submitted_at is not a valid ISO 8601 date-time.")
+            from django.conf import settings
+            if settings.USE_TZ and timezone.is_naive(submitted_at):
+                submitted_at = timezone.make_aware(submitted_at)
+        try:
+            # `record_filing` is the model's own entry point: the first filing
+            # runs through `transition_to()`, which is what stamps sent_at,
+            # sent_by, first_submitted_at and late_by, moves the obligation to
+            # its sent step and narrates the act in the incident chronology.
+            # Every later filing inserts without disturbing those frozen values.
+            filing = notification.record_filing(
+                user,
+                submitted_at=submitted_at,
+                channel=arguments.get("channel"),
+                subject=arguments.get("subject", ""),
+                content=arguments.get("content"),
+                recipient_name=arguments.get("recipient_name", ""),
+                external_reference=arguments.get("external_reference", ""),
+                is_correction=bool(arguments.get("is_correction", False)),
+                supersedes=supersedes,
+                comment=arguments.get("comment") or None,
+            )
+        except (ValidationError, Exception) as e:
+            return _error(str(e))
+        if filing is None:
+            return _error("The filing was not recorded.")
+        return _serialize_obj(filing, filing_fields)
+
+    server.register_tool(
+        "create_notification_filing",
+        "Record that a notification obligation was actually transmitted. The "
+        "filing log is append-only: there is no update and no delete tool, and "
+        "an amendment is a further filing, never a rewrite. The first filing on "
+        "an obligation runs through the lifecycle and freezes its lateness "
+        "verdict; later filings insert without disturbing it. The submitter is "
+        "always the calling account.",
+        _obj_schema(
+            {
+                "notification_id": {"type": "string", "description": "UUID of the obligation being discharged. Use list_incident_notifications to get valid IDs."},
+                "submitted_at": {"type": "string", "description": "When the transmission was made (ISO 8601). Defaults to now. Cannot be in the future."},
+                "channel": {
+                    "type": "string",
+                    "description": "How it was transmitted. Defaults to the obligation's channel, then to 'portal'.",
+                    "enum": _INC_CHANNELS,
+                },
+                "recipient_name": {"type": "string", "description": "Who it was transmitted to. Defaults to the obligation's recipient."},
+                "subject": {"type": "string", "description": "Subject line of the transmission."},
+                "content": {"type": "string", "description": "What was actually transmitted, verbatim."},
+                "external_reference": {"type": "string", "description": "Reference the portal or recipient returned."},
+                "is_correction": {"type": "boolean", "description": "This filing corrects an earlier one. The first filing on an obligation is never a correction."},
+                "supersedes_id": {"type": "string", "description": "UUID of the filing this one replaces, on the same obligation. Implies is_correction."},
+                "comment": {"type": "string", "description": "Comment carried into the lifecycle transition performed by a first filing."},
+            },
+            required=["notification_id"],
+        ),
+        require_perm("incidents.notification.update")(create_notification_filing),
+    )
+
+    # ── Bespoke tools ──────────────────────────────────────
+
+    _PROMOTION_OVERRIDES = (
+        "title", "summary", "description", "category", "severity", "tlp",
+        "is_exercise", "personal_data_involved", "awareness_at",
+        "awareness_justification", "incident_manager_id", "response_plan_id",
+    )
+
+    def declare_incident_from_event(user, arguments):
+        if not user.is_superuser and not user.has_perm("incidents.incident.create"):
+            return _error("Permission denied: incidents.incident.create")
+        pk = arguments.get("id")
+        comment = arguments.get("comment")
+        if not pk:
+            raise InvalidParamsError("id is required.")
+        if not comment or not str(comment).strip():
+            raise InvalidParamsError(
+                "comment is required: promoting an event to an incident is a "
+                "transition that records why the assessment concluded so.")
+        try:
+            event = SecurityEvent.objects.get(pk=pk)
+        except (SecurityEvent.DoesNotExist, ValueError, ValidationError):
+            return _error("SecurityEvent not found.")
+        if not _filter_by_scopes(SecurityEvent.objects.filter(pk=event.pk), user).exists():
+            return _error("Access denied: object is outside your allowed scopes.")
+
+        overrides = {}
+        for field_name in _PROMOTION_OVERRIDES:
+            if field_name in arguments and arguments[field_name] is not None:
+                target = _fk_kwarg_name(Incident, field_name)
+                overrides[target] = _coerce_field_value(
+                    Incident, field_name, arguments[field_name])
+
+        from core.lifecycle import LifecycleError
+
+        previous_state = event.workflow_state
+        try:
+            incident = event.promote_to_incident(
+                user, str(comment), enforce_permission=True, **overrides)
+        except (LifecycleError, ValidationError, Exception) as e:
+            return _error(str(e))
+        return {
+            "event": {
+                "id": str(event.pk),
+                "reference": event.reference,
+                "previous_state": previous_state,
+                "workflow_state": event.workflow_state,
+                "triage_decision": event.triage_decision,
+            },
+            "incident": _serialize_obj(incident, incident_fields),
+        }
+
+    server.register_tool(
+        "declare_incident_from_event",
+        "Promote an assessed security event into an incident, as one atomic "
+        "act. Creates the incident in draft, carries over the event's title, "
+        "description, detection source, timestamps, reporter, scopes and "
+        "affected assets, declares it through its lifecycle, links the event to "
+        "it and moves the event to its confirmed-incident step. Requires both "
+        "incidents.event.validate (via the transition) and "
+        "incidents.incident.create. The event must be under assessment. Optional "
+        "arguments override the values carried across.",
+        _obj_schema(
+            {
+                "id": {"type": "string", "description": "UUID of the security event to promote. Use list_security_events to get valid IDs."},
+                "comment": {"type": "string", "description": "Why the assessment concluded this is an incident. Mandatory: the transition records it."},
+                "title": {"type": "string", "description": "Override the incident title (defaults to the event's)."},
+                "summary": {"type": "string", "description": "Executive summary for the new incident."},
+                "description": {"type": "string", "description": "Override the incident description (defaults to the event's)."},
+                "category": {"type": "string", "description": "Override the incident category.", "enum": _INC_THREAT_CATEGORIES},
+                "severity": {"type": "string", "description": "Severity of the new incident.", "enum": _INC_CRITICALITY},
+                "tlp": {"type": "string", "description": "Handling caveat for the new incident.", "enum": _INC_TLP},
+                "is_exercise": {"type": "boolean", "description": "The new incident is an exercise. Exercises raise no notification obligation."},
+                "personal_data_involved": {"type": "boolean", "description": "Personal data was, or may have been, affected."},
+                "awareness_at": {"type": "string", "description": "Legal awareness anchor for the new incident (ISO 8601)."},
+                "awareness_justification": {"type": "string", "description": "Why legal awareness postdates technical detection. Mandatory whenever the two differ."},
+                "incident_manager_id": {"type": "string", "description": "UUID of the accountable responder. Use list_users."},
+                "response_plan_id": {"type": "string", "description": "UUID of the response plan to handle it under. Use list_incident_response_plans."},
+            },
+            required=["id", "comment"],
+        ),
+        require_perm("incidents.event.validate")(declare_incident_from_event),
+    )
+
+    def verify_evidence_integrity(user, arguments):
+        pk = arguments.get("id")
+        if not pk:
+            raise InvalidParamsError("id is required.")
+        try:
+            item = IncidentEvidence.objects.get(pk=pk)
+        except (IncidentEvidence.DoesNotExist, ValueError, ValidationError):
+            return _error("IncidentEvidence not found.")
+        if not _filter_by_scopes(IncidentEvidence.objects.filter(pk=item.pk), user).exists():
+            return _error("Access denied: object is outside your allowed scopes.")
+        try:
+            outcome = item.verify_integrity(user, notes=arguments.get("notes", "") or "")
+        except (ValidationError, Exception) as e:
+            return _error(str(e))
+        return {
+            "id": str(item.pk),
+            "reference": item.reference,
+            "outcome": outcome,
+            "content_hash": item.content_hash,
+            "hash_algorithm": item.hash_algorithm,
+            "last_integrity_check_at": (
+                item.last_integrity_check_at.isoformat()
+                if item.last_integrity_check_at else None
+            ),
+            "last_integrity_check_ok": item.last_integrity_check_ok,
+        }
+
+    server.register_tool(
+        "verify_evidence_integrity",
+        "Re-measure an evidence artefact and append the result to its chain of "
+        "custody. Returns one of three outcomes, which are never collapsed into "
+        "each other: 'match' (the artefact was read and its digest equals the "
+        "recorded content hash), 'mismatch' (it was read and the digest differs, "
+        "which is a permanent chain-of-custody break) and 'not_verifiable' (the "
+        "item is registered by reference, or the file is missing or unreadable, "
+        "which is a claim about the storage and not about the artefact). The "
+        "digest is measured, never asserted by the caller.",
+        _obj_schema(
+            {
+                "id": {"type": "string", "description": "UUID of the evidence item. Use list_incident_evidences to get valid IDs."},
+                "notes": {"type": "string", "description": "Optional note recorded on the custody row (why the check was run, who asked for it)."},
+            },
+            required=["id"],
+        ),
+        require_perm("incidents.evidence.update")(verify_evidence_integrity),
+    )
+
+    def list_overdue_incident_notifications(user, arguments):
+        qs = IncidentNotification.objects.select_related("incident", "authority")
+        qs = _filter_by_scopes(qs, user)
+        for key in ("incident_id", "regime", "recipient_kind", "authority_id"):
+            value = arguments.get(key)
+            if value is not None:
+                qs = qs.filter(**{key: value})
+        # Narrow in the database on the (due_at, workflow_state) index, then let
+        # the model's own `is_overdue` be the authority: it is the single
+        # definition of the question, and it never hardcodes a step code here.
+        qs = qs.filter(due_at__lt=timezone.now(), sent_at__isnull=True).order_by("due_at")
+        overdue = [obligation for obligation in qs if obligation.is_overdue]
+
+        limit = min(int(arguments.get("limit", 25)), 100)
+        offset = int(arguments.get("offset", 0))
+        now = timezone.now()
+        items = []
+        for obligation in overdue[offset:offset + limit]:
+            incident = obligation.incident
+            items.append({
+                "id": str(obligation.pk),
+                "reference": obligation.reference,
+                "workflow_state": obligation.workflow_state,
+                "regime": obligation.regime,
+                "recipient_kind": obligation.recipient_kind,
+                "recipient": obligation.recipient_display,
+                "authority_name": obligation.authority_name,
+                "due_at": obligation.due_at.isoformat() if obligation.due_at else None,
+                "hours_overdue": round(
+                    (now - obligation.due_at).total_seconds() / 3600, 1
+                ) if obligation.due_at else None,
+                "decision": obligation.decision,
+                "incident_id": str(obligation.incident_id),
+                "incident_reference": obligation.incident_reference,
+                "incident_title": obligation.incident_name,
+                "incident_severity": incident.severity if incident else None,
+                "incident_manager": (
+                    incident.incident_manager_name if incident else ""
+                ),
+            })
+        return {
+            "total": len(overdue),
+            "items": items,
+            "limit": limit,
+            "offset": offset,
+        }
+
+    server.register_tool(
+        "list_overdue_incident_notifications",
+        "List every notification obligation whose statutory deadline has passed "
+        "with no filing recorded: the 'are we late' question answered in one "
+        "call. Returns the obligation, its regime and recipient, the deadline, "
+        "how many hours it is overdue, and the incident it belongs to with its "
+        "manager. Obligations with no deadline, already filed, or in a terminal "
+        "step are excluded.",
+        _obj_schema({
+            "incident_id": {"type": "string", "description": "Restrict to one incident."},
+            "regime": {"type": "string", "description": "Restrict to one regulatory regime.", "enum": _INC_REGIMES},
+            "recipient_kind": {"type": "string", "description": "Restrict to one kind of recipient.", "enum": _INC_RECIPIENT_KINDS},
+            "authority_id": {"type": "string", "description": "Restrict to one reporting authority."},
+            "limit": {"type": "integer", "description": "Max items to return (default 25, max 100)"},
+            "offset": {"type": "integer", "description": "Offset for pagination"},
+        }),
+        require_perm("incidents.notification.read")(list_overdue_incident_notifications),
+    )
+
+
 # ── Accounts Module ────────────────────────────────────────
 
 def _register_accounts_tools(server):
@@ -7189,7 +9080,7 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
                    filters=None, scope_filtered=True, has_approve=True,
                    field_overrides=None, required_fields=None,
                    m2m_fields=None, list_queryset_filter=None,
-                   list_extra_filter_props=None):
+                   list_extra_filter_props=None, pre_clean=None):
     """Register list, get, create, update, delete (and optionally approve) tools for an entity.
 
     ``list_queryset_filter`` / ``list_extra_filter_props`` add a derived list
@@ -7246,7 +9137,8 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
         f"Create a new {display_name}",
         _obj_schema(create_props, required_fields),
         require_perm(f"{perm_prefix}.create")(
-            _create_handler(model_class, writable_fields, scope_filtered, m2m_fields)
+            _create_handler(model_class, writable_fields, scope_filtered, m2m_fields,
+                            pre_clean=pre_clean)
         ),
     )
 
@@ -7282,7 +9174,8 @@ def _register_crud(server, entity_name, model_class, perm_prefix,
             "required": ["items"],
         },
         require_perm(f"{perm_prefix}.create")(
-            _batch_create_handler(model_class, writable_fields, scope_filtered, m2m_fields)
+            _batch_create_handler(model_class, writable_fields, scope_filtered, m2m_fields,
+                                  pre_clean=pre_clean)
         ),
     )
 

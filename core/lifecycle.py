@@ -243,6 +243,25 @@ class CommentRequiredError(LifecycleError):
     """The transition requires a comment but none was provided."""
 
 
+class DomainRefusalError(LifecycleError):
+    """A domain gate refused the transition, with a reason worth showing.
+
+    ``transition_error_detail`` never returns ``str(exc)``, because an
+    exception message can carry internal detail (CodeQL
+    ``py/stack-trace-exposure``). A model that wants its own reason shown
+    raises this instead : ``detail`` is by construction a translated,
+    display-safe sentence, so returning it leaks nothing.
+
+    Without it, a model can write "Leaving the assessment requires written
+    assessment notes." and the operator reads "This transition is not
+    allowed." on both the web stepper and the API.
+    """
+
+    def __init__(self, detail):
+        self.detail = detail
+        super().__init__(str(detail))
+
+
 class StepProtectedError(Exception):
     """Raised when deleting an element whose current step is not deletable."""
 

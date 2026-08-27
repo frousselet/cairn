@@ -63,7 +63,7 @@ from django.utils.translation import pgettext_lazy
 from simple_history.models import HistoricalRecords
 
 from context.models.base import BaseModel, ReferenceGeneratorMixin
-from core.lifecycle import LifecycleError, LifecycleProtectedError
+from core.lifecycle import DomainRefusalError, LifecycleProtectedError
 from incidents.constants import (
     NOTIFICATION_STATES,
     REFERENCE_PREFIXES,
@@ -1248,7 +1248,7 @@ class IncidentNotification(BaseModel):
         if target == STEP_NOT_REQUIRED and not (
             (comment or "").strip() or self.decision_rationale.strip()
         ):
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "Deciding not to notify requires a written rationale : this "
                     "is the Art. 33(1) justification an inspector reads first."
@@ -1259,7 +1259,7 @@ class IncidentNotification(BaseModel):
             # G-02 : a filing with no channel and no content is not a filing.
             channel = staged.get("channel") or self.channel
             if not channel:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Recording a filing requires the channel it was "
                         "transmitted through."
@@ -1269,7 +1269,7 @@ class IncidentNotification(BaseModel):
             if content is None:
                 content = self.content
             if not (content or "").strip():
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Recording a filing requires the content that was "
                         "transmitted, or the filing that carries it."
@@ -1277,7 +1277,7 @@ class IncidentNotification(BaseModel):
                 )
             submitted_at = staged.get("submitted_at") or self.sent_at
             if submitted_at is not None and submitted_at > timezone.now():
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_("A filing cannot be recorded in the future."))
                 )
             self._check_early_warning_content()
@@ -1285,7 +1285,7 @@ class IncidentNotification(BaseModel):
         # G-04 : an acknowledgement with no case number is not an
         # acknowledgement.
         if target == STEP_ACKNOWLEDGED and not self.acknowledgement_reference.strip():
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "Recording an acknowledgement requires the recipient's "
                     "case, ticket or receipt number."
@@ -1296,7 +1296,7 @@ class IncidentNotification(BaseModel):
         # obligation of record back into a deletable step. It is refused for any
         # row the immutable ledger shows has ever been opened.
         if current == STEP_ARCHIVED and target == STEP_DRAFT and self._has_left_draft():
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "An obligation that was opened for decision cannot be "
                     "restored to draft."
@@ -1323,7 +1323,7 @@ class IncidentNotification(BaseModel):
             if getattr(incident, field, None) is None
         ]
         if missing:
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "A NIS2 early warning states whether the incident is "
                     "significant, whether it is suspected to be malicious and "

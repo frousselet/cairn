@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 
 from core.lifecycle import (
     CommentRequiredError,
+    DomainRefusalError,
     IllegalTransitionError,
     TransitionNotAllowedError,
     UnknownStepError,
@@ -36,4 +37,8 @@ def transition_error_detail(exc):
     """
     if isinstance(exc, TransitionNotAllowedError):
         return PERMISSION_DENIED_DETAIL
+    if isinstance(exc, DomainRefusalError):
+        # Safe by construction : `detail` is a translated display string the
+        # model wrote for the operator, never an internal message.
+        return exc.detail
     return _BY_TYPE.get(type(exc), GENERIC_DETAIL)

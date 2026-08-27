@@ -38,7 +38,7 @@ from simple_history.models import HistoricalRecords
 from compliance.constants import EffectivenessVerdict, FindingSource
 from context.constants import Criticality
 from context.models.base import ScopedModel
-from core.lifecycle import LifecycleError, LifecycleProtectedError, reportable
+from core.lifecycle import DomainRefusalError, LifecycleProtectedError, reportable
 from incidents.constants import (
     INCIDENT_STATES,
     REFERENCE_PREFIXES,
@@ -520,7 +520,7 @@ class PostIncidentReview(ScopedModel):
         # a review, it is a status meeting.
         if target == STEP_IN_PROGRESS and current == STEP_SCHEDULED:
             if not self._incident_reached_review_phase():
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "The review cannot be held while the incident has not "
                         "reached its post-incident review phase."
@@ -532,14 +532,14 @@ class PostIncidentReview(ScopedModel):
         # the chronology.
         if target == STEP_SUBMITTED:
             if not self.root_cause.strip():
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Submitting the review requires the determined root "
                         "cause (clause 10.2 b))."
                     ))
                 )
             if not self.similar_incidents_checked:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Submitting the review requires confirming that similar "
                         "incidents were checked for (clause 10.2 b) 3))."
@@ -550,7 +550,7 @@ class PostIncidentReview(ScopedModel):
         # how clause 10.2 d) is missed, so the gate refuses it rather than
         # trusting a reminder.
         if target == STEP_APPROVED and self.effectiveness_review_date is None:
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "Approving the review requires the date on which the "
                     "corrective actions' effectiveness will be verified."
@@ -561,14 +561,14 @@ class PostIncidentReview(ScopedModel):
         # author. Neither half is optional.
         if target == STEP_EFFECTIVENESS_VERIFIED:
             if not self.effectiveness_verdict:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Verifying effectiveness requires a verdict on whether "
                         "the corrective action worked (clause 10.2 f))."
                     ))
                 )
             if self.effectiveness_reviewed_by_id is None:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_("Verifying effectiveness requires naming who verified it."))
                 )
 
@@ -578,7 +578,7 @@ class PostIncidentReview(ScopedModel):
         # on. Refused for any row the immutable ledger shows has ever been
         # opened. Mirrors the incident's G-07.
         if current == STEP_ARCHIVED and target == STEP_DRAFT and self._has_left_draft():
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "A review that was opened cannot be restored to draft."
                 ))
@@ -590,11 +590,11 @@ class PostIncidentReview(ScopedModel):
         # one review per incident, so a cancelled review can never be replaced.
         if target == STEP_CANCELLED:
             if self.is_terminal_state:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_("This review has already reached a terminal state."))
                 )
             if not self._incident_is_terminal():
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "A review can only be cancelled once its incident has "
                         "itself been reclassified or archived."

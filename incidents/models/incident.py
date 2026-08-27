@@ -35,7 +35,7 @@ from simple_history.models import HistoricalRecords
 
 from context.constants import Criticality
 from context.models.base import ScopedModel
-from core.lifecycle import LifecycleError
+from core.lifecycle import DomainRefusalError
 from incidents.constants import (
     BREACH_STATES,
     EVIDENCE_STATES,
@@ -751,11 +751,11 @@ class Incident(ScopedModel):
         # clock can never precede it.
         if target == STEP_DETECTED:
             if self.detected_at is None:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_("Declaring an incident requires its detection timestamp."))
                 )
             if self.awareness_at and self.awareness_at < self.detected_at:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "The legal awareness timestamp cannot precede the "
                         "technical detection."
@@ -766,11 +766,11 @@ class Incident(ScopedModel):
         # classification and the accountable responder are fixed.
         if target == STEP_TRIAGED and current == STEP_DETECTED:
             if not self.severity or not self.category:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_("Triage requires a severity and a category."))
                 )
             if self.incident_manager_id is None:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_("Triage requires a named incident manager."))
                 )
             if (
@@ -779,7 +779,7 @@ class Incident(ScopedModel):
                 and self.awareness_at > self.detected_at
                 and not self.awareness_justification.strip()
             ):
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "A legal awareness postdating the detection must be "
                         "justified before triage can complete."
@@ -795,7 +795,7 @@ class Incident(ScopedModel):
                 .objects.filter(incident=self, sent_at__isnull=False)
                 .exists()
             ):
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "This incident cannot be reclassified : a regulatory "
                         "notification has already been filed."
@@ -811,7 +811,7 @@ class Incident(ScopedModel):
         # incident back into the single deletable step, so it is refused for
         # any row the immutable ledger shows has ever left `draft` (RG-INC-07).
         if current == STEP_ARCHIVED and target == STEP_DRAFT and self._has_left_draft():
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "An incident that was declared cannot be restored to draft."
                 ))
@@ -824,7 +824,7 @@ class Incident(ScopedModel):
             REVIEW_STEP_APPROVED,
             REVIEW_STEP_EFFECTIVENESS_VERIFIED,
         ):
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "Closing an incident requires an approved post-incident "
                     "review (A.5.27)."
@@ -837,7 +837,7 @@ class Incident(ScopedModel):
             )
             .exists()
         ):
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "Closing an incident requires a decision on every "
                     "regulatory notification obligation."
@@ -848,7 +848,7 @@ class Incident(ScopedModel):
             .objects.filter(incident=self, workflow_state=EVIDENCE_STEP_COLLECTED)
             .exists()
         ):
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "Closing an incident requires every collected evidence item "
                     "to have been secured or otherwise disposed of."
@@ -912,7 +912,7 @@ class Incident(ScopedModel):
             return
         if self.no_obligation_justification.strip():
             return
-        raise LifecycleError(
+        raise DomainRefusalError(
             str(_(
                 "This triage produced no notification obligation : record why "
                 "nothing is owed to any authority, controller or counterparty."

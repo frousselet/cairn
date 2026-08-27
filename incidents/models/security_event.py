@@ -22,7 +22,7 @@ from django.utils.translation import pgettext_lazy
 from simple_history.models import HistoricalRecords
 
 from context.models.base import ScopedModel
-from core.lifecycle import LifecycleError
+from core.lifecycle import DomainRefusalError
 from incidents.constants import (
     SECURITY_EVENT_STATES,
     DetectionSource,
@@ -81,7 +81,7 @@ def _domain_entry_step(instance):
         step = lifecycle.step(transition.target)
         if not step.is_archived:
             return transition.target
-    raise LifecycleError(
+    raise DomainRefusalError(
         f"Lifecycle '{lifecycle.name}' has no domain step reachable from "
         f"'{initial}'."
     )
@@ -453,7 +453,7 @@ class SecurityEvent(ScopedModel):
             # G-01 : an undocumented assessment is not an assessment, by any
             # route including MCP.
             if not self.assessment_notes.strip():
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Leaving the assessment requires written assessment "
                         "notes."
@@ -463,7 +463,7 @@ class SecurityEvent(ScopedModel):
             expected = _DECISION_BY_STEP.get(target)
             decided = bool(self.triage_decision)
             if expected and decided and self.triage_decision != expected:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_("This event already carries a triage decision."))
                 )
 
@@ -473,7 +473,7 @@ class SecurityEvent(ScopedModel):
             # original reporting history stays intact and the exploitation's
             # reporting delay is measured from its own detection.
             if self.event_class == SecurityEventClass.WEAKNESS:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "A weakness is never promoted to an incident : report "
                         "the exploitation as a new event."
@@ -481,7 +481,7 @@ class SecurityEvent(ScopedModel):
                 )
             # G-02 : the incident must exist before the event claims it does.
             if self.incident_id is None:
-                raise LifecycleError(
+                raise DomainRefusalError(
                     str(_(
                         "Promotion requires the incident it promotes into. Use "
                         "the promotion action rather than the bare transition."
@@ -490,7 +490,7 @@ class SecurityEvent(ScopedModel):
 
         # G-04 : same shape against the existing vulnerability register.
         if target == STEP_CONFIRMED_WEAKNESS and self.vulnerability_id is None:
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "Recording a weakness requires the vulnerability it is "
                     "recorded as. Use the promotion action rather than the "
@@ -503,7 +503,7 @@ class SecurityEvent(ScopedModel):
         # steps, and an event that ever reached the register must not be able
         # to walk back into one of them.
         if current == STEP_ARCHIVED and target == STEP_DRAFT and self._has_left_draft():
-            raise LifecycleError(
+            raise DomainRefusalError(
                 str(_(
                     "An event that entered the register cannot be restored to "
                     "draft."
