@@ -17,6 +17,7 @@ from django.views import View
 
 from context.models.base import BaseModel
 from core.history import DEFAULT_HISTORY_LIMIT, build_timeline, extra_source_for
+from core.scoping import object_in_scopes
 
 
 class HistoryPartialView(LoginRequiredMixin, View):
@@ -38,12 +39,11 @@ class HistoryPartialView(LoginRequiredMixin, View):
             # Read permission, derived the same way as the workflow layer.
             if not user.has_perm(f"{obj.workflow_perm_namespace}.read"):
                 raise PermissionDenied
-            # Scope guard (mirrors ScopeFilterMixin for scoped models).
+            # Scope guard. Resolved through core.scoping so a child row
+            # declaring `scope_parent_lookup` is guarded here too.
             allowed_scopes = user.get_allowed_scope_ids()
-            if allowed_scopes is not None and hasattr(obj, "scopes"):
-                obj_scopes = set(obj.scopes.values_list("id", flat=True))
-                if obj_scopes and not (obj_scopes & set(allowed_scopes)):
-                    raise Http404
+            if allowed_scopes is not None and not object_in_scopes(obj, allowed_scopes):
+                raise Http404
 
         entries = build_timeline(
             obj, limit=DEFAULT_HISTORY_LIMIT, extra=extra_source_for(obj)

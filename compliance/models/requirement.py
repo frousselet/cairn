@@ -16,6 +16,11 @@ from context.models.base import BaseModel
 
 
 class Requirement(BaseModel):
+
+    # Scope is inherited from the parent : this model carries no `scopes` M2M.
+    # Declared on the model, not only on the views, so the generic workflow,
+    # history and MCP surfaces enforce it too (see core.scoping).
+    scope_parent_lookup = "framework__scopes"
     REFERENCE_PREFIX = "REQT"
 
     framework = models.ForeignKey(
