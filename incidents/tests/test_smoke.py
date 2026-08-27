@@ -65,3 +65,30 @@ def test_every_lifecycle_starts_in_draft(model, name):
 @pytest.mark.parametrize("model", [m for m, _ in EXPECTED])
 def test_the_table_exists_and_is_queryable(model):
     assert model.objects.count() == 0
+
+
+def test_from_db_override_forwards_unknown_arguments():
+    """A fixed signature on this hook breaks on every Django that adds an argument.
+
+    Django added `fetch_mode` to `Model.from_db`, and the override here was
+    written with the three arguments of the day. CI ran a newer Django than
+    the development environment and every single row load raised
+    `TypeError: Incident.from_db() got an unexpected keyword argument
+    'fetch_mode'`. The property to protect is not the argument list, it is
+    that whatever Django hands this hook gets forwarded.
+    """
+    import inspect
+
+    from incidents.models import Incident
+
+    params = inspect.signature(Incident.from_db).parameters.values()
+    kinds = {p.kind for p in params}
+
+    assert inspect.Parameter.VAR_POSITIONAL in kinds, (
+        "Incident.from_db must accept *args so a new positional argument "
+        "does not break every row load"
+    )
+    assert inspect.Parameter.VAR_KEYWORD in kinds, (
+        "Incident.from_db must accept **kwargs so a new keyword argument "
+        "does not break every row load"
+    )
