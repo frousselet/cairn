@@ -31,7 +31,7 @@ Compliance assessment campaign, **multi-framework**, covering one or more [Frame
 | `not_applicable_count` | integer | calculated | Number of `not_applicable` requirements |
 | `status` | enum | required, default `draft` | See "Lifecycle" below |
 | `results` | reverse FK | O2M -> AssessmentResult | Per-requirement results |
-| `findings` | reverse M2M | <- compliance.Finding (`Finding.assessment`) | Attached audit findings |
+| `findings` | reverse FK | <- [Finding](finding.md) (`Finding.assessment`, now optional and `SET_NULL`) | Nonconformities raised by this audit. Because the accessor is the reverse of a nullable FK, it never yields a nonconformity raised by a [security incident](../m6-incidents/incident.md) or a management review : audit-scoped scoring stays audit-only by construction, with no filter to remember. Deleting the assessment no longer deletes them. |
 | `version` | int | auto-incremented | Bumped on each major change |
 | `tags` | relation | M2M -> Tag | |
 | `created_by` | relation | FK -> User | Creator |
@@ -169,4 +169,4 @@ The shared enum guarantees that no mapping is necessary between result and requi
 
 ### Link with the Audits module
 
-The `Finding` records of the Audits module can be attached to an `AssessmentResult` via `Finding.requirements`. The `ComplianceAssessment.apply_findings_to_results()` method then aligns the `compliance_status` of each result with the most severe status among the attached findings (according to `FINDING_SEVERITY_ORDER` in `compliance.constants`). This allows an audit to produce findings whose severity mechanically overrides the status of a result without manual entry.
+The [Finding](finding.md) records of the nonconformity register can be attached to an `AssessmentResult` via `Finding.requirements`. The `ComplianceAssessment.apply_findings_to_results()` method then aligns the `compliance_status` of each result with the most severe status among the attached findings (according to `FINDING_SEVERITY_ORDER` in `compliance.constants`). This allows an audit to produce findings whose severity mechanically overrides the status of a result without manual entry.
