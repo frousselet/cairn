@@ -8178,8 +8178,11 @@ msgstr "Profil"
 msgid "Sign out"
 msgstr "Déconnexion"
 
-msgid "MIT License"
-msgstr "Licence MIT"
+msgid "GNU AGPL v3.0 or later"
+msgstr "GNU AGPL v3.0 ou ultérieure"
+
+msgid "Source code available on GitHub"
+msgstr "Code source disponible sur GitHub"
 
 msgid "Command palette"
 msgstr "Palette de commandes"
