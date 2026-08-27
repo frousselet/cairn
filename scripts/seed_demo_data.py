@@ -29,6 +29,7 @@ from assets.models import (
     SupplierDependency,
     SupplierRequirement,
     SupplierRequirementReview,
+    SupplierSubprocessor,
     SupplierType,
     SupplierTypeRequirement,
     SupportAsset,
@@ -711,10 +712,43 @@ with transaction.atomic():
         contract_start_date=years_ago(5), contract_end_date=days_ago(59),
         owner=david, status="active", **approved(elise),
     )
-    all_suppliers = [sup_cloudnord, sup_sentinel, sup_turbintech, sup_paycore, sup_hrline, sup_facil]
+    # Subsidiary (filiale): the arm of CloudNord that operates the physical
+    # data centers, kept as its own supplier record under its parent company.
+    sup_cloudnord_dc = Supplier.objects.create(
+        name="CloudNord Data Centers", type=st_cloud, criticality="high",
+        parent_company=sup_cloudnord,
+        description="Wholly-owned subsidiary operating CloudNord's Roubaix data centers.",
+        country="France", address="2 Rue Kellermann, 59100 Roubaix, France",
+        latitude=50.6916, longitude=3.2014,
+        owner=marc, status="active", **approved(elise),
+    )
+    all_suppliers = [
+        sup_cloudnord, sup_cloudnord_dc, sup_sentinel, sup_turbintech,
+        sup_paycore, sup_hrline, sup_facil,
+    ]
     for s in all_suppliers:
         s.scopes.set([scope_group])
         s.tags.set([tag_thirdparty])
+
+    # Sub-processing chain (sous-délégataires): supplier -> sub-processor links.
+    SupplierSubprocessor.objects.create(
+        supplier=sup_paycore, subprocessor=sup_cloudnord,
+        purpose="Production hosting of the payment platform",
+        criticality="high", status="active",
+        start_date=months_ago(20), created_by=ines,
+    )
+    SupplierSubprocessor.objects.create(
+        supplier=sup_cloudnord, subprocessor=sup_cloudnord_dc,
+        purpose="Physical data-center operation and hands-on remediation",
+        criticality="high", status="active",
+        start_date=years_ago(3), created_by=marc,
+    )
+    SupplierSubprocessor.objects.create(
+        supplier=sup_hrline, subprocessor=sup_paycore,
+        purpose="Payroll payment execution",
+        criticality="medium", status="active",
+        start_date=months_ago(14), created_by=amelia,
+    )
 
     # ── Contracts (Documents) ────────────────────────────────
     _phase("Contracts...")

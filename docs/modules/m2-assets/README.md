@@ -16,9 +16,10 @@
 - [AssetGroup](./asset-group.md)
 - [AssetValuation](./asset-valuation.md)
 - [Site](./site.md) (geographic / physical location, defined in the context app)
-- [Supplier](./supplier.md) (third-party vendor, with `SupplierType` and `SupplierTypeRequirement` sub-entities)
+- [Supplier](./supplier.md) (third-party vendor, with `SupplierType` and `SupplierTypeRequirement` sub-entities, and a `parent_company` self-relation for subsidiaries / filiales)
 - [SupplierRequirement](./supplier-requirement.md) (security requirement enforced on a supplier, with `SupplierRequirementReview` sub-entity)
 - [SupplierDependency](./supplier-dependency.md) (support-asset to supplier link)
+- [SupplierSubprocessor](./supplier-subprocessor.md) (supplier to sub-processor / sous-délégataire link)
 - [Contract](./contract.md) (Documents area: multi-party contract with parties, amendments and an attached PDF)
 - [Certificate](./certificate.md) (Documents area: company certificate attached to a framework, historised with renewals and an attached PDF)
 

@@ -64,6 +64,10 @@ urlpatterns = [
     path("suppliers/<uuid:supplier_pk>/contacts/create/", views.SupplierContactCreateView.as_view(), name="supplier-contact-create"),
     path("supplier-contacts/<uuid:pk>/edit/", views.SupplierContactUpdateView.as_view(), name="supplier-contact-update"),
     path("supplier-contacts/<uuid:pk>/delete/", views.SupplierContactDeleteView.as_view(), name="supplier-contact-delete"),
+    # Supplier Sub-processors (sous-délégataires)
+    path("suppliers/<uuid:supplier_pk>/subprocessors/create/", views.SupplierSubprocessorCreateView.as_view(), name="supplier-subprocessor-create"),
+    path("supplier-subprocessors/<uuid:pk>/edit/", views.SupplierSubprocessorUpdateView.as_view(), name="supplier-subprocessor-update"),
+    path("supplier-subprocessors/<uuid:pk>/delete/", views.SupplierSubprocessorDeleteView.as_view(), name="supplier-subprocessor-delete"),
     # Supplier Requirements
     path("suppliers/<uuid:supplier_pk>/type-requirements/<int:type_req_pk>/review/", views.InstantiateTypeRequirementReviewView.as_view(), name="instantiate-type-requirement-review"),
     path("suppliers/<uuid:supplier_pk>/requirements/create/", views.SupplierRequirementCreateView.as_view(), name="supplier-requirement-create"),

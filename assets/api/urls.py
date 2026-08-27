@@ -11,6 +11,7 @@ router.register(r"groups", views.AssetGroupViewSet)
 router.register(r"suppliers", views.SupplierViewSet)
 router.register(r"supplier-contacts", views.SupplierContactViewSet)
 router.register(r"supplier-dependencies", views.SupplierDependencyViewSet)
+router.register(r"supplier-subprocessors", views.SupplierSubprocessorViewSet)
 router.register(r"contracts", views.ContractViewSet)
 router.register(r"certificates", views.CertificateViewSet)
 

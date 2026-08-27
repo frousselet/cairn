@@ -16,6 +16,7 @@ from .constants import (
     CERTIFICATE_PDF_MAGIC,
     CONTRACT_MAX_PDF_BYTES,
     CONTRACT_PDF_MAGIC,
+    SupplierStatus,
 )
 from .models import (
     AssetDependency,
@@ -31,6 +32,7 @@ from .models import (
     SupplierDependency,
     SupplierRequirement,
     SupplierRequirementReview,
+    SupplierSubprocessor,
     SupplierType,
     SupplierTypeRequirement,
     SupportAsset,
@@ -317,7 +319,7 @@ class SupplierBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
 
     steps = [
         Step(_("Identity"), "truck",
-             [[("logo", "auto"), "name"], ["type", "criticality"], "owner", "description"]),
+             [[("logo", "auto"), "name"], ["type", "criticality"], ["owner", "parent_company"], "description"]),
         Step(_("Coordinates"), "geo-alt",
              ["website", "country", "address"]),
         Step(_("Scope & status"), "diagram-3", ["scopes", "status", "tags", "notes"]),
@@ -327,7 +329,7 @@ class SupplierBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         model = Supplier
         fields = [
             "scopes", "name", "description",
-            "type", "criticality", "owner",
+            "type", "criticality", "owner", "parent_company",
             "website", "address", "country", "latitude", "longitude",
             "status", "notes", "tags",
         ]
@@ -338,6 +340,7 @@ class SupplierBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "type": forms.Select(attrs=SELECT_ATTRS),
             "criticality": forms.Select(attrs=SELECT_ATTRS),
             "owner": forms.Select(attrs=SELECT_ATTRS),
+            "parent_company": forms.Select(attrs=SELECT_ATTRS),
             "website": forms.URLInput(attrs=FORM_WIDGET_ATTRS),
             "address": forms.TextInput(attrs={
                 **FORM_WIDGET_ATTRS,
@@ -358,6 +361,7 @@ class SupplierBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "type": _("Kind of supplier."),
             "criticality": _("How critical this supplier is."),
             "owner": _("Person accountable for the relationship."),
+            "parent_company": _("Parent company this supplier is a subsidiary of."),
             "description": _("What the supplier provides."),
             "website": _("Supplier website."),
             "country": _("Country where the supplier operates."),
@@ -372,6 +376,11 @@ class SupplierBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.pk and getattr(self.instance, "logo", ""):
             self.fields["logo"].initial = self.instance.logo
+        # A supplier cannot be its own parent company.
+        parent_qs = Supplier.objects.all()
+        if self.instance.pk:
+            parent_qs = parent_qs.exclude(pk=self.instance.pk)
+        self.fields["parent_company"].queryset = parent_qs
 
     def save(self, commit=True):
         supplier = super().save(commit=False)
@@ -426,6 +435,69 @@ class SupplierContactForm(SteppedFormMixin, forms.ModelForm):
             "phone": _("Contact phone number."),
             "role": _("Role in this relationship (e.g. Primary, Billing, Technical)."),
         }
+
+
+class SupplierSubprocessorForm(SteppedFormMixin, forms.ModelForm):
+    """Create / edit a sub-processor (sous-délégataire) engaged by a supplier."""
+
+    steps = [
+        Step(_("Sub-processor"), "diagram-3",
+             ["subprocessor", "purpose"]),
+        Step(_("Engagement"), "shield-check",
+             [["criticality", "status"], ["start_date", "end_date"], "description"]),
+    ]
+
+    class Meta:
+        model = SupplierSubprocessor
+        fields = [
+            "subprocessor", "purpose", "criticality", "status",
+            "start_date", "end_date", "description",
+        ]
+        widgets = {
+            "subprocessor": forms.Select(attrs=SELECT_ATTRS),
+            "purpose": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
+            "criticality": forms.Select(attrs=SELECT_ATTRS),
+            "status": forms.Select(attrs=SELECT_ATTRS),
+            "start_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+            "end_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+            "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
+        }
+        help_texts = {
+            "subprocessor": _("Supplier engaged as a sub-processor."),
+            "purpose": _("Nature of the service delegated to the sub-processor."),
+            "criticality": _("How critical this sub-processing engagement is."),
+            "status": _("State of the sub-processing engagement."),
+            "start_date": _("Date the engagement started."),
+            "end_date": _("Date the engagement ends."),
+            "description": _("Additional context about the sub-processing."),
+        }
+
+    def __init__(self, *args, supplier=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.supplier = supplier or getattr(self.instance, "supplier", None)
+        # A supplier cannot be listed as its own sub-processor.
+        qs = Supplier.objects.exclude(status=SupplierStatus.ARCHIVED)
+        if self.supplier is not None:
+            qs = qs.exclude(pk=self.supplier.pk)
+        self.fields["subprocessor"].queryset = qs
+
+    def clean(self):
+        cleaned = super().clean()
+        subprocessor = cleaned.get("subprocessor")
+        supplier = self.supplier or getattr(self.instance, "supplier", None)
+        if subprocessor and supplier and subprocessor.pk == supplier.pk:
+            self.add_error(
+                "subprocessor",
+                _("A supplier cannot be its own sub-processor."),
+            )
+        start_date = cleaned.get("start_date")
+        end_date = cleaned.get("end_date")
+        if start_date and end_date and end_date < start_date:
+            self.add_error(
+                "end_date",
+                _("The end date cannot be earlier than the start date."),
+            )
+        return cleaned
 
 
 class SupplierTypeForm(forms.ModelForm):

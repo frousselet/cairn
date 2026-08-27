@@ -12,6 +12,7 @@ from .supplier import (
     SupplierDependency,
     SupplierRequirement,
     SupplierRequirementReview,
+    SupplierSubprocessor,
     SupplierType,
     SupplierTypeRequirement,
 )
@@ -31,6 +32,7 @@ __all__ = [
     "SupplierDependency",
     "SupplierRequirement",
     "SupplierRequirementReview",
+    "SupplierSubprocessor",
     "SupplierType",
     "SupplierTypeRequirement",
 ]

@@ -22,6 +22,7 @@ from assets.models.supplier import (
     SupplierDependency,
     SupplierRequirement,
     SupplierRequirementReview,
+    SupplierSubprocessor,
     SupplierType,
 )
 from assets.models.support_asset import SupportAsset
@@ -198,3 +199,13 @@ class SupplierDependencyFactory(factory.django.DjangoModelFactory):
     supplier = factory.SubFactory(SupplierFactory)
     dependency_type = SupplierDependencyType.PROVIDES
     criticality = Criticality.HIGH
+
+
+class SupplierSubprocessorFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = SupplierSubprocessor
+
+    supplier = factory.SubFactory(SupplierFactory)
+    subprocessor = factory.SubFactory(SupplierFactory)
+    purpose = "Sub-contracted hosting"
+    criticality = SupplierCriticality.MEDIUM

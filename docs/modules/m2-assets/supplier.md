@@ -16,6 +16,7 @@ Third-party supplier (software vendor, host, managed service provider, maintaine
 | `logo` | text | optional | Logo data-URI (base64), 128 px |
 | `logo_64` / `logo_32` / `logo_16` | text | optional, read-only | Logo variants generated automatically on update |
 | `type` | relation | FK -> SupplierType, optional | Supplier type (configurable, see sub-entity below) |
+| `parent_company` | relation | FK -> Supplier (self), optional | Parent company this supplier is a subsidiary (filiale) of. Reverse accessor `subsidiaries`. `on_delete=SET_NULL`, so removing the parent keeps the subsidiary. |
 | `criticality` | enum | required, default `medium` | `low`, `medium`, `high`, `critical` |
 | `contact_name` | string | optional, max 255 | Commercial / technical contact |
 | `contact_email` | email | optional | |
@@ -95,6 +96,8 @@ Requirement template attached to a `SupplierType`. When a `Supplier` of this typ
 | RG-SUP-04 | Deleting a `Supplier` referenced by a `SupportAsset.supplier`, by a `SupplierDependency`, or by a `SupplierRequirement` is forbidden. Disable via `status = archived`. |
 | RG-SUP-05 | A past `contract_end_date` and `status=active` triggers the computed property `is_contract_expired`. The status is not changed automatically: it is up to the operator to archive or renew. |
 | RG-SUP-06 | `requirement_compliance_summary` is recomputed on read, not stored. No migration or action is necessary after modifying a `SupplierRequirement`. |
+| RG-SUP-07 | A supplier cannot be its own `parent_company` (enforced by the form, excluding the instance from the choices). The `subsidiaries` reverse accessor lists the child companies. |
+| RG-SUP-08 | Sub-processing (sous-délégataires) is modelled by the `SupplierSubprocessor` link (see [supplier-subprocessor.md](supplier-subprocessor.md)): both the délégataire and the sub-processor are real `Supplier` records. |
 
 ## Endpoints
 
@@ -110,7 +113,7 @@ Requirement template attached to a `SupplierType`. When a `Supplier` of this typ
 
 ### MCP
 
-- `list_suppliers` / `get_supplier` / `create_supplier` / `update_supplier` / `delete_supplier` / `batch_create_suppliers`
+- `list_suppliers` / `get_supplier` / `create_supplier` / `update_supplier` / `delete_supplier` / `batch_create_suppliers` (accept `parent_company_id` to set the subsidiary relation)
 - `update_supplier_logo`: updates the logo (data URI or public URL) and regenerates the 64/32/16 variants
 - `list_supplier_types` / `create_supplier_type` / `delete_supplier_type`
 - `list_supplier_type_requirements` / `create_supplier_type_requirement` / `delete_supplier_type_requirement`
@@ -169,4 +172,5 @@ Bulk creation is also available programmatically via the MCP tool `batch_create_
 - [SupportAsset](support-asset.md): the `supplier` FK attaches a technical asset to its supplier
 - [SupplierRequirement](supplier-requirement.md): requirements imposed on the supplier and compliance reviews
 - [SupplierDependency](supplier-dependency.md): typed asset <-> supplier link
+- [SupplierSubprocessor](supplier-subprocessor.md): supplier <-> sub-processor (sous-délégataire) link and the corporate `parent_company` / `subsidiaries` relation
 - Site dependencies: [Site](site.md) and `SiteSupplierDependency` for suppliers operating on a given site

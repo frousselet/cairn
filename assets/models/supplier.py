@@ -11,6 +11,7 @@ from assets.constants import (
     SupplierDependencyType,
     SupplierRequirementStatus,
     SupplierStatus,
+    SupplierSubprocessorStatus,
 )
 from context.constants import Criticality
 from context.models.base import ReferenceGeneratorMixin, ScopedModel
@@ -79,6 +80,15 @@ class Supplier(ScopedModel):
         verbose_name=_("Type"),
         null=True,
         blank=True,
+    )
+    parent_company = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="subsidiaries",
+        verbose_name=_("Parent company"),
+        help_text=_("The parent company this supplier is a subsidiary of."),
     )
     criticality = models.CharField(
         _("Criticality"),
@@ -151,6 +161,11 @@ class Supplier(ScopedModel):
     def owner_name(self):
         """Display name of the responsible owner (for read-only API / assistant output)."""
         return self.owner.display_name if self.owner_id else ""
+
+    @property
+    def parent_company_name(self):
+        """Name of the parent company, if any (for read-only API / assistant output)."""
+        return self.parent_company.name if self.parent_company_id else ""
 
     @property
     def requirement_compliance_summary(self):
@@ -392,3 +407,95 @@ class SupplierDependency(ReferenceGeneratorMixin):
     def support_asset_name(self):
         """Human-readable support-asset name (for read-only API / assistant output)."""
         return self.support_asset.name if self.support_asset_id else ""
+
+
+class SupplierSubprocessor(ReferenceGeneratorMixin):
+    """A sub-processor (sous-délégataire) engaged by a supplier.
+
+    Records the supply-chain / GDPR Art. 28 sub-processing chain: a supplier
+    (the délégataire) further delegates part of the service it provides to
+    another :class:`Supplier` acting as a sub-processor. Both ends are real
+    supplier records, so a sub-processor carries its own requirements, reviews
+    and criticality, and the chain feeds nth-party risk analysis.
+    """
+
+    REFERENCE_PREFIX = "SSPR"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.CASCADE,
+        related_name="subprocessors",
+        verbose_name=_("Supplier"),
+        help_text=_("The supplier (délégataire) that engages the sub-processor."),
+    )
+    subprocessor = models.ForeignKey(
+        Supplier,
+        on_delete=models.PROTECT,
+        related_name="engaged_by",
+        verbose_name=_("Sub-processor"),
+        help_text=_("The supplier engaged as a sub-processor."),
+    )
+    purpose = models.CharField(
+        _("Purpose"),
+        max_length=500,
+        blank=True,
+        default="",
+        help_text=_("Nature of the service delegated to the sub-processor."),
+    )
+    criticality = models.CharField(
+        _("Criticality"),
+        max_length=20,
+        choices=SupplierCriticality.choices,
+        default=SupplierCriticality.MEDIUM,
+    )
+    status = models.CharField(
+        _("Status"),
+        max_length=20,
+        choices=SupplierSubprocessorStatus.choices,
+        default=SupplierSubprocessorStatus.ACTIVE,
+    )
+    description = models.TextField(_("Description"), blank=True, default="")
+    start_date = models.DateField(_("Start date"), null=True, blank=True)
+    end_date = models.DateField(_("End date"), null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_supplier_subprocessors",
+        verbose_name=_("Created by"),
+    )
+    created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
+    version = models.PositiveIntegerField(_("Version"), default=1)
+
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("Sub-processor")
+        verbose_name_plural = _("Sub-processors")
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["supplier", "subprocessor"],
+                name="unique_supplier_subprocessor",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(supplier=models.F("subprocessor")),
+                name="supplier_subprocessor_not_self",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.supplier.reference} → {self.subprocessor.reference}"
+
+    @property
+    def supplier_name(self):
+        """Human-readable délégataire name (for read-only API / assistant output)."""
+        return self.supplier.name if self.supplier_id else ""
+
+    @property
+    def subprocessor_name(self):
+        """Human-readable sub-processor name (for read-only API / assistant output)."""
+        return self.subprocessor.name if self.subprocessor_id else ""

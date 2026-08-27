@@ -945,7 +945,8 @@ References are read-only and sequential. Reference prefixes by entity:
   Scope=SCOP, Issue=ISSU, Stakeholder=STKH, Objective=OBJT, SwotAnalysis=SWOT,
   Role=ROLE, Activity=ACTV, Site=SITE, Indicator=INDI,
   EssentialAsset=EAST, SupportAsset=SAST, AssetDependency=ADEP, AssetGroup=AGRP,
-  Supplier=SUPP, SupplierType=SPTY, SupplierDependency=SDEP, Contract=CTRT,
+  Supplier=SUPP, SupplierType=SPTY, SupplierDependency=SDEP,
+  SupplierSubprocessor=SSPR, Contract=CTRT,
   Certificate=CERT,
   SiteAssetDependency=SADP, SiteSupplierDependency=SSDP,
   Framework=FRMW, Section=SECT, Requirement=REQT, ComplianceAssessment=CASS,
@@ -1136,10 +1137,11 @@ Filters: type, status, owner_id
 Ref prefix: AGRP
 
 ## supplier
-Writable: name (required), description (HTML), type, criticality, owner_id (required),
+Writable: name (required), description (HTML), type, criticality, parent_company_id, owner_id (required),
   contact_name, contact_email, contact_phone, website, address, country, latitude, longitude,
   contract_reference, contract_start_date, contract_end_date, status, notes (HTML), tags, scopes
 - type: INTEGER (SupplierType ID, NOT a UUID). Use list_supplier_types to get valid IDs.
+- parent_company_id: UUID of another supplier this one is a subsidiary (filiale) of.
 - criticality: low | medium | high | critical
 - status: active | under_evaluation | suspended | archived
 Special tools: update_supplier_logo(id, image_url) - fetches and stores logo from URL
@@ -1159,6 +1161,14 @@ Read-only: is_single_point_of_failure (auto-detected by the SPOF detection servi
 - redundancy_level: none | partial | full
 Filters: support_asset_id, supplier_id, dependency_type, criticality
 Ref prefix: SDEP
+
+## supplier_subprocessor
+Links a supplier (délégataire) to another supplier engaged as its sub-processor (sous-délégataire). Models the supply-chain / GDPR Art. 28 sub-processing chain.
+Writable: supplier_id (required), subprocessor_id (required, must differ from supplier_id), purpose, criticality, status, start_date, end_date, description (HTML)
+- criticality: low | medium | high | critical
+- status: active | suspended | terminated
+Filters: supplier_id, subprocessor_id, criticality, status
+Ref prefix: SSPR
 
 ## site_asset_dependency
 Links a site to a support asset.
@@ -2516,6 +2526,7 @@ def _register_assets_tools(server):
     Certificate = _get_model("assets", "Certificate")
     Supplier = _get_model("assets", "Supplier")
     SupplierDependency = _get_model("assets", "SupplierDependency")
+    SupplierSubprocessor = _get_model("assets", "SupplierSubprocessor")
     SiteAssetDependency = _get_model("assets", "SiteAssetDependency")
     SiteSupplierDependency = _get_model("assets", "SiteSupplierDependency")
     AssetValuation = _get_model("assets", "AssetValuation")
@@ -2899,14 +2910,14 @@ def _register_assets_tools(server):
     # file_name only.
 
     sup_fields = ["id", "reference", "scopes", "name", "description", "type", "type_name",
-                  "criticality",
+                  "criticality", "parent_company_id", "parent_company_name",
                   "status", "contact_name", "contact_email", "contact_phone",
                   "website", "address", "country", "latitude", "longitude",
                   "contract_reference", "contract_start_date", "contract_end_date",
                   "is_contract_expired", "next_review_date", "is_review_due",
                   "logo", "logo_16", "logo_32", "logo_64",
                   "notes", "owner_id", "owner_name", "created_at"]
-    sup_writable = ["name", "description", "type", "criticality", "status",
+    sup_writable = ["name", "description", "type", "criticality", "parent_company_id", "status",
                     "contact_name", "contact_email", "contact_phone",
                     "website", "address", "country", "latitude", "longitude",
                     "contract_reference", "contract_start_date", "contract_end_date",
@@ -2929,6 +2940,11 @@ def _register_assets_tools(server):
             "enum": ["active", "under_evaluation", "suspended", "archived"],
         },
         "owner_id": {"type": "string", "description": "UUID of the supplier owner (user)"},
+        "parent_company_id": {
+            "type": "string",
+            "description": "UUID of the parent company (another supplier) this supplier "
+                           "is a subsidiary of. Use list_suppliers to get valid IDs.",
+        },
         "next_review_date": {
             "type": "string",
             "description": "Date of the next scheduled supplier review (ISO 8601, YYYY-MM-DD).",
@@ -3073,6 +3089,48 @@ def _register_assets_tools(server):
                            "type": "string",
                            "description": "Redundancy level (operator-set).",
                            "enum": ["none", "partial", "full"],
+                       },
+                   })
+
+    # Supplier sub-processors (sous-délégataires): a supplier -> subprocessor link
+    ssp_fields = ["id", "reference", "supplier_id", "supplier_name",
+                  "subprocessor_id", "subprocessor_name",
+                  "purpose", "criticality", "status",
+                  "start_date", "end_date", "description", "created_at"]
+    ssp_writable = ["supplier_id", "subprocessor_id", "purpose",
+                    "criticality", "status", "start_date", "end_date", "description"]
+
+    _register_crud(server, "supplier_subprocessor", SupplierSubprocessor,
+                   "assets.supplier",
+                   list_fields=ssp_fields,
+                   writable_fields=ssp_writable,
+                   search_fields=["reference", "purpose", "supplier__name",
+                                  "subprocessor__name"],
+                   filters=["supplier_id", "subprocessor_id", "criticality", "status"],
+                   scope_filtered=False,
+                   has_approve=False,
+                   required_fields=["supplier_id", "subprocessor_id"],
+                   field_overrides={
+                       "description": _html_field("Description"),
+                       "supplier_id": {
+                           "type": "string",
+                           "description": "UUID of the supplier (délégataire) engaging the "
+                                          "sub-processor. Use list_suppliers to get valid IDs.",
+                       },
+                       "subprocessor_id": {
+                           "type": "string",
+                           "description": "UUID of the supplier engaged as a sub-processor "
+                                          "(must differ from supplier_id).",
+                       },
+                       "criticality": {
+                           "type": "string",
+                           "description": "Criticality of the sub-processing engagement.",
+                           "enum": ["low", "medium", "high", "critical"],
+                       },
+                       "status": {
+                           "type": "string",
+                           "description": "Status of the sub-processing engagement.",
+                           "enum": ["active", "suspended", "terminated"],
                        },
                    })
 

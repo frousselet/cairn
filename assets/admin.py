@@ -10,6 +10,7 @@ from .models import (
     SupplierDependency,
     SupplierRequirement,
     SupplierRequirementReview,
+    SupplierSubprocessor,
     SupplierType,
     SupplierTypeRequirement,
     SupportAsset,
@@ -126,17 +127,41 @@ class SupplierRequirementInline(admin.TabularInline):
     readonly_fields = ("created_at", "updated_at")
 
 
+class SupplierSubprocessorInline(admin.TabularInline):
+    model = SupplierSubprocessor
+    fk_name = "supplier"
+    extra = 0
+    autocomplete_fields = ("subprocessor",)
+    readonly_fields = ("reference", "created_at", "updated_at")
+
+
 @admin.register(Supplier)
 class SupplierAdmin(SimpleHistoryAdmin):
     list_display = (
         "reference", "name", "type", "criticality", "owner",
-        "status", "contract_end_date",
+        "parent_company", "status", "contract_end_date",
     )
     list_filter = ("type", "criticality", "status")
     search_fields = ("reference", "name", "description", "contact_name", "contact_email")
+    autocomplete_fields = ("parent_company",)
     readonly_fields = ("id", "reference", "created_at", "updated_at")
     filter_horizontal = ("tags",)
-    inlines = [SupplierRequirementInline]
+    inlines = [SupplierRequirementInline, SupplierSubprocessorInline]
+
+
+@admin.register(SupplierSubprocessor)
+class SupplierSubprocessorAdmin(SimpleHistoryAdmin):
+    list_display = (
+        "reference", "supplier", "subprocessor", "criticality", "status",
+    )
+    list_filter = ("criticality", "status")
+    search_fields = (
+        "reference", "purpose",
+        "supplier__reference", "supplier__name",
+        "subprocessor__reference", "subprocessor__name",
+    )
+    autocomplete_fields = ("supplier", "subprocessor")
+    readonly_fields = ("id", "reference", "created_at", "updated_at")
 
 
 class SupplierRequirementReviewInline(admin.TabularInline):

@@ -8,6 +8,7 @@ from assets.models import (
     EssentialAsset,
     Supplier,
     SupplierDependency,
+    SupplierSubprocessor,
     SupportAsset,
 )
 
@@ -146,6 +147,7 @@ class AssetGroupFilter(django_filters.FilterSet):
 class SupplierFilter(django_filters.FilterSet):
     scope = django_filters.UUIDFilter(field_name="scope_id")
     owner = django_filters.UUIDFilter(field_name="owner_id")
+    parent_company = django_filters.UUIDFilter(field_name="parent_company_id")
     contract_end_before = django_filters.DateFilter(
         field_name="contract_end_date", lookup_expr="lte"
     )
@@ -154,6 +156,18 @@ class SupplierFilter(django_filters.FilterSet):
         model = Supplier
         fields = {
             "type": ["exact"],
+            "criticality": ["exact"],
+            "status": ["exact"],
+        }
+
+
+class SupplierSubprocessorFilter(django_filters.FilterSet):
+    supplier = django_filters.UUIDFilter(field_name="supplier_id")
+    subprocessor = django_filters.UUIDFilter(field_name="subprocessor_id")
+
+    class Meta:
+        model = SupplierSubprocessor
+        fields = {
             "criticality": ["exact"],
             "status": ["exact"],
         }

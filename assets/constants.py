@@ -260,6 +260,14 @@ class SupplierCriticality(models.TextChoices):
     CRITICAL = "critical", _("Critical")
 
 
+class SupplierSubprocessorStatus(models.TextChoices):
+    """Status of a sub-processing engagement between two suppliers."""
+
+    ACTIVE = "active", _("Active")
+    SUSPENDED = "suspended", _("Suspended")
+    TERMINATED = "terminated", _("Terminated")
+
+
 class ContractStatus(models.TextChoices):
     DRAFT = "draft", _("Draft")
     DRAFTING = "drafting", _("Contract draft")
