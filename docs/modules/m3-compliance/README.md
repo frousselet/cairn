@@ -14,6 +14,7 @@
 - [Section](section.md): `compliance.models.section.Section`
 - [Requirement](requirement.md): `compliance.models.requirement.Requirement`
 - [ComplianceAssessment](compliance-assessment.md): `compliance.models.assessment.ComplianceAssessment` (includes `AssessmentResult`)
+- [Finding](finding.md): `compliance.models.finding.Finding` - the organisation-wide nonconformity register (ISO 27001 clause 10.1 / 10.2), fed by audits, [security incidents](../m6-incidents/incident.md), management reviews, monitoring and complaints
 - [RequirementMapping](requirement-mapping.md): `compliance.models.mapping.RequirementMapping`
 - [ComplianceActionPlan](compliance-action-plan.md): `compliance.models.action_plan.ComplianceActionPlan`
 - [Attachment](attachment.md): `compliance.models.assessment.AssessmentResultAttachment`
