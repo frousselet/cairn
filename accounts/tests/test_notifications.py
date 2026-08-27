@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for the lifecycle notification service (RG-LC-06 / RG-LC-09)."""
 
 import pytest

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """CSV bulk-import configuration for suppliers.
 
 First consumer of the generic import framework (``core/imports``). It declares

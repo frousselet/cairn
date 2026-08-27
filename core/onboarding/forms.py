@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Forms for the first-run onboarding flow."""
 
 from django import forms

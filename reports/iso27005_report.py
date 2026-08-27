@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """ISO 27005 risk assessment DOCX export.
 
 Produces a structured Word document covering the full assessment cycle:

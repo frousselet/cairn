@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for the rebuilt lifecycle engine (core.lifecycle) and its service."""
 
 import pytest

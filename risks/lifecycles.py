@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Standardised lifecycles for the risks module (rebuilt engine).
 
 Ports every legacy risks ``core.workflow`` machine (risk, risk assessment,

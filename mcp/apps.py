@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _
 

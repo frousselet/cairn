@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Management review report generators (PPTX presentation and DOCX minutes).
 
 Sections follow ISO 27001:2022 clause 9.3 management review inputs:

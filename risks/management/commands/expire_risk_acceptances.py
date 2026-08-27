@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Expire risk acceptances past their valid_until date.
 
 Designed to be run daily by cron. The companion `--reminder-days`

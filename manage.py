@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Django's command-line utility for administrative tasks."""
 import os
 import sys

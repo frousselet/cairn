@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Cairn admin screens to view and customize the JSON lifecycle definitions.
 
 Lives under Administration -> Lifecycles. Editing a definition here re-shapes the

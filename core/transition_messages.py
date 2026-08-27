@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Safe, translatable messages for lifecycle transition errors.
 
 Returning ``str(exc)`` from a transition error to an HTTP client leaks internal

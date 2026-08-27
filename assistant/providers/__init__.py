@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Pluggable LLM backends for the Ask Cairn assistant."""
 
 from assistant.providers.base import (

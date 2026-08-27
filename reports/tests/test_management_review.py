@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for the persistent management review workflow (ISO 27001:2022 9.3)."""
 
 from datetime import date, datetime, timedelta

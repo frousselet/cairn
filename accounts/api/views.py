@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 from django.contrib.auth import authenticate
 from django.utils import timezone
 from django.utils.translation import gettext as _

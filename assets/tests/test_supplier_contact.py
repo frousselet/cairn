@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for SupplierContact: model, CRUD views (HTMX drawer), API and display."""
 
 import pytest

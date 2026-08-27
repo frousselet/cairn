@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """The MCP create/batch tools may preserve legacy created_at/updated_at only
 for a caller holding ``system.data_import.override_dates``."""
 

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """System prompts for the assistant.
 
 These prompts are model-facing, never displayed to users, and therefore

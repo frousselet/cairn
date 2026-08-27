@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Canonical history / audit-trail computation.
 
 Single source of truth for turning ``django-simple-history`` records into a

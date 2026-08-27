@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for the generic CSV bulk-import framework (core/imports).
 
 The base behaviour is exercised through the concrete SupplierImporter so the

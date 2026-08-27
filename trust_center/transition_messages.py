@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Backward-compatible re-export.
 
 The canonical helper now lives in :mod:`core.transition_messages` so every app

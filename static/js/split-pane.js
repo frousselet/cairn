@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 François Rousselet
 /* split-pane.js
  *
  * Keyboard navigation + URL sync for split-pane list ↔ detail layouts.

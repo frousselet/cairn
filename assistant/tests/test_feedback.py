@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for Ask Cairn answer feedback: model, web flow, API, admin, MCP."""
 
 import json

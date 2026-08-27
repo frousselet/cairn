@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Standardised lifecycle for the management review (ISO 27001 clause 9.3).
 
 Ports the legacy ``management_review`` workflow to the standardised

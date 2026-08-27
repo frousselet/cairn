@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for supplier sub-processors (sous-délégataires) and subsidiaries (filiales).
 
 Covers the SupplierSubprocessor link model, the parent_company self-FK, their

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Standardised lifecycles for the context module (rebuilt engine).
 
 Defines the **scope** and **site** lifecycles.

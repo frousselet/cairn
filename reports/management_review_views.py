@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Views for the persistent management review workflow (ISO 27001:2022 9.3).
 
 Kept in a dedicated module to avoid bloating reports/views.py.

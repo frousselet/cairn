@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Curated allowlist of read-only MCP tools the assistant may invoke.
 
 The catalog is hard-coded on purpose: even if the MCP registry grows or

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Ask Cairn daily briefing: an LLM-synthesised summary of the day's key metrics.
 
 The widget hands the backend a structured snapshot of the day's GRC metrics; the

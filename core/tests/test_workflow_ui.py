@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for the generic workflow UI surfaces (issue #105, phase 7a).
 
 Covers the stepper context mixin, the shared transition endpoint and the

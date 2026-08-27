@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Reusable declarative step model for modal forms.
 
 A form mixes in :class:`SteppedFormMixin` and declares ``steps`` as an

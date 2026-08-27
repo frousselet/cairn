@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 from accounts.models.user import User
 from accounts.models.group import Group
 from accounts.models.permission import Permission

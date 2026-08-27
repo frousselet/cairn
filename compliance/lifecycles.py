@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Standardised lifecycles for the compliance module (rebuilt engine).
 
 Ports the legacy ``action_plan`` and ``compliance_assessment`` workflows to the

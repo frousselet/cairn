@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Keep the ``LifecycleDefinition`` table in sync with the code-declared lifecycles.
 
 On every ``post_migrate`` we ensure a JSON row exists for each registered

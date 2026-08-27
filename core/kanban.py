@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Unified To do / Doing / Done Kanban board.
 
 Aggregates governance work items from several modules into a single, read-only

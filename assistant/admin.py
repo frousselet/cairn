@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Admin registration for Ask Cairn feedback, with a JSON export action.
 
 The export produces the structured set of selected feedback that can be handed

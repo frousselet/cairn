@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Core building blocks for the generic CSV bulk-import framework.
 
 The framework is declarative: an entity provides an :class:`EntityImporter`

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Standardised lifecycles for the trust center module (rebuilt engine).
 
 Ports the legacy ``trust_center_publication`` and

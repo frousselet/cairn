@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Assistant signals: keep the semantic index in sync with requirements.
 
 A deleted requirement's embedding is pruned immediately - a network-free DB

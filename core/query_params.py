@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Safe coercion helpers for untrusted request parameters.
 
 List and detail views routinely feed a raw ``request.GET`` / ``request.POST``

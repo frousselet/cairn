@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Engine tests with a fake LLM client and real ORM data."""
 
 from datetime import date, timedelta

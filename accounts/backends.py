@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import BaseBackend
 

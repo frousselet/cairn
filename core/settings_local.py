@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Local dev settings - run the whole stack in pure Python, no Docker.
 
 Overrides the Docker-oriented defaults (Postgres + Redis) so the app boots

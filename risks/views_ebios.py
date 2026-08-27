@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Web views for the EBIOS RM module (workshops W0..W5).
 
 Mounted under `/risks/assessments/<assessment_pk>/ebios/...`. The views are

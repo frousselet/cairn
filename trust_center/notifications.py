@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Outbound email to external (non-user) Trust Center requesters.
 
 The requester is not a Cairn user, so these messages bypass the in-app

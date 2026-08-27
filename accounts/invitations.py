@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """User provisioning via invitation (no plaintext password).
 
 A user can be created without a password crossing any boundary: the account is

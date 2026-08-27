@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Shared UI template tags for Cairn.
 
 This module provides the canonical, reusable presentation primitives used

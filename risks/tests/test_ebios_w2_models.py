@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for EBIOS RM workshop W2 models (risk sources, objectives, SR/OV pairs).
 
 Covers:

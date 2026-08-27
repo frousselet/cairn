@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Self-hosted Ollama backend for the assistant (optional, local LLM).
 
 The local LLM is no longer shipped as a docker-compose sidecar, but this

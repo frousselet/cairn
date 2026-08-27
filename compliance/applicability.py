@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Risk-driven applicability for compliance requirements.
 
 When a :class:`~compliance.models.Framework` has

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Backward-compatibility re-exports.
 
 The assistant backend moved to the pluggable ``assistant.providers`` package

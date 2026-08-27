@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Optional dedicated-domain isolation for the public Trust Center.
 
 When ``settings.TRUST_CENTER_HOST`` is set and a request arrives on that host,

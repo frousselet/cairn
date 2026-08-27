@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Robustness tests for unbounded ?q= search input (#156).
 
 A very long ?q= built an equally long SQL LIKE pattern, raising

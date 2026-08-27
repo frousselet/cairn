@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Content catalogues for the demo seed (fictional company: Voltara Energy).
 
 Pure data, no ORM. Imported by seed_demo_data.py.

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 from .study_framework import StudyFramework
 from .workshop_progress import EbiosWorkshopProgress
 from .security_baseline import SecurityBaseline

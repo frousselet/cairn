@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for the lifecycle transition surfaces: DRF endpoint and MCP tools (phase 5).
 
 Exercised through the Issue entity (default workflow, `context.issue` permissions).

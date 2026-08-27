@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for the enriched Statement of Applicability PDF generator.
 
 These tests exercise the data-building logic (`build_soa_frameworks_data`)

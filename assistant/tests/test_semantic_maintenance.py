@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
 """Tests for semantic index maintenance: signal prune, rebuild helpers, view."""
 
 import pytest
