@@ -22,6 +22,8 @@ different criteria are not directly comparable.
 
 ## The register
 
+![The risk register](../screenshots/risk-register.png)
+
 A risk is tracked at **three levels** :
 
 | Level | Meaning |
@@ -29,6 +31,8 @@ A risk is tracked at **three levels** :
 | **Initial** | Before any control |
 | **Current** | With the controls actually in place today |
 | **Residual** | After the planned treatment |
+
+![A risk, tracked at three levels](../screenshots/risk-detail.png)
 
 Each has its own likelihood and impact. The gap between current and residual is
 the value your treatment plan claims to deliver, and the

@@ -5,6 +5,8 @@ compliance level, subprocessors, security measures and downloadable documents.
 It is what you send a prospect's security team instead of filling in their
 questionnaire from scratch.
 
+![The public Trust Center](../screenshots/trust-center.png)
+
 ## It is a curation layer, and that is the whole design
 
 Nothing appears on the Trust Center because it exists in Cairn. It appears

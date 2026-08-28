@@ -4,6 +4,8 @@
 
 ## Frameworks and requirements
 
+![Frameworks](../screenshots/compliance-frameworks.png)
+
 A **framework** is a standard or regulation you measure yourself against : ISO
 27001, GDPR, NIS2, DORA, or your own internal policy set. It contains
 **sections**, which contain **requirements**.
@@ -49,6 +51,8 @@ dashboard. It disappears when none is.
 
 ## Nonconformities
 
+![The nonconformity register](../screenshots/nonconformities.png)
+
 The organisation-wide nonconformity register, ISO 27001 clause 10.1 and 10.2.
 **One register**, fed from five sources : audits, incidents, management reviews,
 monitoring and complaints.
@@ -65,7 +69,11 @@ action with no verification is a closed ticket, not a closed nonconformity.
 
 ## Action plans
 
-![Action plan detail](../screenshots/action-plan-detail.png)
+![Action plans](../screenshots/action-plans.png)
+
+The remediation backlog, and one plan in detail:
+
+![An action plan](../screenshots/action-plan-detail.png)
 
 The remediation work, linked to the requirements it addresses. An action plan
 has an owner, a priority, a target date, a gap description and a remediation

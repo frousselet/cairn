@@ -8,10 +8,14 @@ chronology, its artefacts and its notification decisions may end up in front of
 a regulator, so the design refuses shortcuts that would make any of them
 deniable.
 
+![The incident register](../screenshots/incidents.png)
+
 ## Events come before incidents
 
 Not everything reported is an incident, and treating it as one inflates your
 numbers and your workload.
+
+![The security event intake](../screenshots/security-events.png)
 
 A **security event** (A.6.8) is the intake. Anyone can raise one. It is assessed
 *before* anything escalates : a false positive stays an event and is closed as
@@ -65,6 +69,8 @@ stream through a permission-checked download, so evidence carrying a TLP caveat
 is not one URL guess away from anyone.
 
 ## Statutory notifications
+
+![Notification obligations](../screenshots/notification-obligations.png)
 
 This is the module's most demanding surface, and the one that pays for itself
 the first time a clock is running.

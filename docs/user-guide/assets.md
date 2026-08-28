@@ -4,6 +4,8 @@
 
 ## The two kinds of asset
 
+![Essential assets](../screenshots/essential-assets.png)
+
 Cairn separates what the business depends on from what carries it, and the
 separation is the point rather than a taxonomy exercise.
 
@@ -36,6 +38,8 @@ redundancy. The count is on the dashboard, and the detail names the dependency.
 A SPOF you have accepted is a decision; a SPOF you did not know about is an
 outage waiting for a Tuesday.
 
+![The dependency graph](../screenshots/dependency-graph.png)
+
 The **dependency graph** renders all of it visually, which is usually how
 somebody first notices that three critical processes rest on one virtualisation
 host.
@@ -62,6 +66,8 @@ does" is a question the graph answers.
 
 ## Suppliers
 
+![The supplier register](../screenshots/suppliers.png)
+
 The third-party register, and the part of the module most often driven by a
 regulator rather than by choice.
 
@@ -69,6 +75,8 @@ A supplier carries its contacts, its mapped addresses, its subsidiaries, and its
 **sub-processors** : the parties your supplier in turn relies on. That last one
 is what supply-chain mapping under NIS2 and DORA actually requires, and it is
 why the field exists rather than a free-text note.
+
+![A supplier, evaluated requirement by requirement](../screenshots/supplier-detail.png)
 
 **Supplier types** carry requirements, and a supplier is evaluated
 **per requirement** with an evidence review rather than given a single overall

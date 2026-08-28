@@ -13,6 +13,8 @@ header and on generated reports.
 
 ## Users
 
+![Users](../screenshots/users.png)
+
 Users sign in with their **email address**; there is no username.
 
 **Inviting** is the normal way to add someone. The account is created with no
@@ -48,6 +50,8 @@ Custom groups are the normal case for a real organisation. Start from the
 shipped group closest to the role and adjust.
 
 ## Lifecycles
+
+![The lifecycle editor](../screenshots/lifecycles.png)
 
 Administration -> Lifecycles lets you edit the steps and transitions of any
 lifecycle : rename a step, add one, change what requires a comment, change which

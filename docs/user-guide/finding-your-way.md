@@ -40,6 +40,8 @@ allowed to read.
 
 ## The tasks board
 
+![The tasks board](../screenshots/tasks-board.png)
+
 A single To do / Doing / Done board that aggregates the work items scattered
 across modules : compliance action plans, risk treatment actions, audits, risk
 assessments and incidents. It is the answer to "what is actually on my plate",
@@ -55,6 +57,8 @@ Cancelled and archived items drop off the board entirely rather than piling up
 in a fourth column.
 
 ## The calendar
+
+![The calendar](../screenshots/calendar.png)
 
 Dated obligations, in one place : review dates, audit windows, target dates,
 acceptance expiries, notification deadlines.
