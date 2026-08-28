@@ -70,9 +70,9 @@ things.
 ## Publication to the wiki
 
 On a version tag, the same workflow builds the wiki and pushes it, using a
-`WIKI_TOKEN` secret that has to be a **classic** personal access token with
-the `repo` scope : see
-[release-process.md](release-process.md#what-the-tag-triggers).
+`WIKI_DEPLOY_KEY` secret. A deploy key rather than a personal access token,
+because it is scoped to this repository alone : see
+[release-process.md](release-process.md#why-the-wiki-needs-its-own-credential).
 
 GitHub wikis are a git repository with one hard constraint : **directories have
 no effect on a page's URL**. A page is addressed by its filename alone, so page
