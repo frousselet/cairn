@@ -41,6 +41,6 @@
 - [ ] `README.md` updated (features, MCP tools, tech stack, install) when behaviour changed
 - [ ] `CHANGELOG.md` updated under `## [Unreleased]`
 - [ ] Brand guidelines respected (`docs/brand/brand-guidelines.md`); no em dash characters
-- [ ] Relevant spec under `docs/modules/` updated in the same PR
+- [ ] Relevant spec under `docs/specs/` updated in the same PR
 - [ ] Project / documentation screenshots captured at 2560x1440 (16:9, 1440p)
 - [ ] Audit-grade rigor preserved (approval workflows, versioning, history, permission checks not bypassed)

@@ -198,14 +198,18 @@ ACTION_PLAN_TRANSITION_PERMISSIONS = {
 }
 
 # Statuses from which cancellation is allowed (all except terminal states)
-ACTION_PLAN_CANCELLABLE_STATUSES = {
+# A tuple, not a set: the lifecycle builder iterates it to declare one Cancel
+# transition per source, and a set's iteration order varies between processes,
+# which would make the declared lifecycle (and the generated reference doc)
+# differ from one run to the next.
+ACTION_PLAN_CANCELLABLE_STATUSES = (
     ActionPlanStatus.NEW,
     ActionPlanStatus.TO_DEFINE,
     ActionPlanStatus.TO_VALIDATE,
     ActionPlanStatus.TO_IMPLEMENT,
     ActionPlanStatus.IMPLEMENTATION_TO_VALIDATE,
     ActionPlanStatus.VALIDATED,
-}
+)
 
 # Bootstrap color class per status (for badges and kanban columns)
 ACTION_PLAN_STATUS_COLORS = {

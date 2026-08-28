@@ -38,6 +38,18 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(","
 # original request was HTTPS (required for secure cookies, CSRF, etc.).
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# HTTPS hardening. Every one of these defaults to off so an existing HTTP-only
+# deployment keeps working on upgrade: turning them on before TLS terminates in
+# front of the app would drop every session cookie or loop the redirect. Set
+# them once the deployment is served over HTTPS - the security documentation
+# spells out which ones and in what order.
+SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "False").lower() in ("true", "1", "yes")
+CSRF_COOKIE_SECURE = os.environ.get("CSRF_COOKIE_SECURE", "False").lower() in ("true", "1", "yes")
+SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "False").lower() in ("true", "1", "yes")
+SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.environ.get("SECURE_HSTS_INCLUDE_SUBDOMAINS", "False").lower() in ("true", "1", "yes")
+SECURE_HSTS_PRELOAD = os.environ.get("SECURE_HSTS_PRELOAD", "False").lower() in ("true", "1", "yes")
+
 # Origins allowed to make cross-site requests (needed behind a reverse proxy).
 # Example: CSRF_TRUSTED_ORIGINS=https://grc.example.com,https://grc.rslt.fr
 _trusted = os.environ.get("CSRF_TRUSTED_ORIGINS", "")

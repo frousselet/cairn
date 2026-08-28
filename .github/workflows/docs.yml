@@ -1,0 +1,93 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # The generated reference is rendered from the code's own registries, so a
+      # new permission, lifecycle step, widget, MCP tool or endpoint that has
+      # not been regenerated fails here rather than shipping a stale reference.
+      - name: Reference documentation is up to date
+        run: python manage.py generate_docs --check --settings=core.settings_test
+
+      # The wiki has no directories: a link to one, or to a file that does not
+      # exist, cannot be published. Catching it here rather than on release day
+      # is the whole point of running the builder in dry-run mode.
+      - name: Documentation links resolve
+        run: python scripts/build_wiki.py --check
+
+  publish:
+    name: Publish to the wiki
+    runs-on: ubuntu-latest
+    needs: check
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build the wiki
+        run: python scripts/build_wiki.py --out build/wiki --version "${GITHUB_REF_NAME}"
+
+      # GITHUB_TOKEN cannot always write to a wiki repository; WIKI_TOKEN is a
+      # personal access token with that right. The step reports which one it is
+      # using so a failure here is diagnosable from the log alone.
+      - name: Push to the wiki
+        env:
+          WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "${WIKI_TOKEN}" ]; then
+            echo "Authenticating with WIKI_TOKEN."
+            TOKEN="${WIKI_TOKEN}"
+          else
+            echo "WIKI_TOKEN is not set; falling back to GITHUB_TOKEN."
+            TOKEN="${GITHUB_TOKEN}"
+          fi
+
+          git clone "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki
+
+          # Replace the published set wholesale rather than merging: the wiki is
+          # a rendering of docs/, so a page deleted at the source must disappear
+          # here too instead of lingering for ever.
+          find wiki -mindepth 1 -maxdepth 1 -not -name '.git' -exec rm -rf {} +
+          cp -R build/wiki/. wiki/
+
+          cd wiki
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "The wiki already matches docs/ at ${GITHUB_REF_NAME}; nothing to push."
+            exit 0
+          fi
+          git commit -m "Publish documentation for ${GITHUB_REF_NAME}"
+          git push
+          echo "Published $(find . -name '*.md' -not -path './.git/*' | wc -l) pages."

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Documentation is rebuilt from `docs/` into the GitHub wiki by CI on every version tag, with a user guide, a technical section, an SDK and a code-generated reference (`manage.py generate_docs`), gated on every push by a staleness and link check.
+- HTTPS hardening is configurable from the environment (`SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, `SECURE_SSL_REDIRECT`, `SECURE_HSTS_*`), all defaulting to off so an HTTP-only deployment is unaffected.
+
+### Changed
+
+- `.env.example` documents the 21 environment variables the code reads but the template omitted, among them the email, Redis, WebAuthn and assistant tuning settings.
+- Action plan cancellable statuses are an ordered tuple rather than a set, so the generated lifecycle no longer varies between processes.
+
+### Fixed
+
+- The Docker image declared an `MIT` license label while the project is `AGPL-3.0-or-later`.
+
 ## [0.35.0] - 2026-08-28
 
 ### Added
