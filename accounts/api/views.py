@@ -402,6 +402,22 @@ class CompanySettingsAPIView(APIView):
         return Response({"status": "success", "data": serializer.data})
 
 
+class DependenciesAPIView(APIView):
+    """The third-party components Cairn is built on, with their official repository.
+
+    Same registry as the About modal (``core.dependencies``) : an integrator can
+    read the component inventory of a running instance without scraping the UI.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from core.dependencies import serialize_dependencies
+
+        data = serialize_dependencies()
+        return Response({"status": "success", "count": len(data), "data": data})
+
+
 # ── Helpers ─────────────────────────────────────────────────
 
 def _get_client_ip(request):

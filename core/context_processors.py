@@ -9,6 +9,18 @@ def app_version(request):
     return {"APP_VERSION": settings.APP_VERSION}
 
 
+def third_party_dependencies(request):
+    """Expose the third-party component registry to the About modal.
+
+    Built lazily : the grouping is only computed for the templates that actually
+    render the list (base.html), never for a partial or a JSON response."""
+    from django.utils.functional import SimpleLazyObject
+
+    from core.dependencies import dependencies_by_group
+
+    return {"THIRD_PARTY_DEPENDENCIES": SimpleLazyObject(dependencies_by_group)}
+
+
 def _parse_hex(hex_color):
     """Parse ``#RRGGBB`` to ``(hue, lightness, saturation)`` or ``None``."""
     h = hex_color.lstrip("#")

@@ -388,6 +388,17 @@ Each permission follows the format: `{module}.{feature}.{action}`
 - `?date_from={date}&date_to={date}`
 - `?ip_address={ip}`
 
+### 6.7 Endpoints: Instance information
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/dependencies` | Third-party components the instance is built on |
+
+Read-only, available to any authenticated user : the same inventory the About
+dialog shows. Each item carries `name`, `version`, `url` (the official
+repository), `purpose` and `group` (`backend`, `frontend` or `development`).
+The MCP tool `list_dependencies` answers from the same registry.
+
 ---
 
 ## 7. User interface specifications
@@ -445,6 +456,26 @@ The Django admin access button is displayed **only** if the user holds the `syst
 
 - **List:** Chronological table of authentication events with columns (Date, User, Event type, IP, Result). Filters by user, event type, period, IP.
 - **Statistics:** Charts of logins per day, failure rate, locked accounts over the period.
+
+### 7.8 "About" dialog
+
+Opened from the foot of the sidebar, available to any authenticated user.
+
+- **Identity:** logo, application name, running version, link to the GitHub repository.
+- **Licence:** AGPL-3.0-or-later, copyright, and the source-code offer required by
+  section 13 of the licence (a network user must be told where the corresponding
+  source is).
+- **Open source libraries:** collapsed by default so the dialog stays an identity
+  card. Expanded, it lists every third-party component grouped into backend
+  (Python), frontend (JavaScript, CSS, fonts) and development / testing, each
+  entry naming the component, its version and linking to its official
+  repository. Python versions are read from the installed metadata, so a
+  deployed instance states what it actually runs; front-end versions are the
+  ones pinned in the templates.
+- The registry behind it is `core/dependencies.py`, the single source the dialog,
+  `GET /api/v1/dependencies` and the `list_dependencies` MCP tool all answer from.
+  A library added to `requirements.txt` or pinned in a template without a registry
+  entry fails the test suite.
 
 ---
 

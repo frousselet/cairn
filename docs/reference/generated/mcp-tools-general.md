@@ -4,7 +4,7 @@
 
 # MCP tool parameters : General
 
-Input schemas for the 13 `general` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
+Input schemas for the 14 `general` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
 
 ## `ask_assistant`
 
@@ -59,6 +59,14 @@ Get usage documentation for the Cairn MCP server. Call without arguments for the
 Get the unified To do / Doing / Done board aggregating action plans, treatment actions, audits and risk assessments (read-only)
 
 No parameters.
+
+## `list_dependencies`
+
+List the third-party open source components this Cairn instance is built on : name, resolved version, official repository URL and what each one is used for. Same registry as the About modal. Optionally filtered by group.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `group` | `string` | - | Restrict to one group: 'backend' (Python), 'frontend' (JavaScript, CSS, fonts) or 'development' (test and lint tooling). |
 
 ## `list_notifications`
 

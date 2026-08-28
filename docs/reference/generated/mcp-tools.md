@@ -8,7 +8,7 @@ Cairn's MCP server exposes the whole platform to AI assistants and scripts over 
 
 Transport, authentication and client setup are in [../mcp-server.md](../mcp-server.md).
 
-**734 tools** are registered, across **9 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
+**735 tools** are registered, across **9 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
 
 ## Modules
 
@@ -17,7 +17,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | Assets | 136 | [mcp-tools-assets.md](mcp-tools-assets.md) |
 | Compliance | 64 | [mcp-tools-compliance.md](mcp-tools-compliance.md) |
 | Governance and context | 126 | [mcp-tools-context.md](mcp-tools-context.md) |
-| General | 13 | [mcp-tools-general.md](mcp-tools-general.md) |
+| General | 14 | [mcp-tools-general.md](mcp-tools-general.md) |
 | Incidents | 103 | [mcp-tools-incidents.md](mcp-tools-incidents.md) |
 | Reports and management review | 18 | [mcp-tools-reports.md](mcp-tools-reports.md) |
 | Risks | 222 | [mcp-tools-risks.md](mcp-tools-risks.md) |
@@ -376,6 +376,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `get_me` | - | Get information about the currently authenticated user, including capability flags: 'can_override_import_dates' (may set created_at / updated_at on import) and 'can_create_users'. |
 | `help` | - | Get usage documentation for the Cairn MCP server. Call without arguments for the full guide, or with a topic for focused help. Topics: context, assets, compliance, risks, incidents, batch, workflow, permissions, examples, users |
 | `kanban_board` | - | Get the unified To do / Doing / Done board aggregating action plans, treatment actions, audits and risk assessments (read-only) |
+| `list_dependencies` | - | List the third-party open source components this Cairn instance is built on : name, resolved version, official repository URL and what each one is used for. Same registry as the About modal. Optionally filtered by group. |
 | `list_notifications` | - | List the currently authenticated user's in-app notifications (most recent first), with the unread count. Set unread_only=true to only return unread notifications. |
 | `list_saved_filters` | - | List the current user's saved list filters (own + shared). Optional view_key (e.g. 'context.issue') narrows to one list. |
 | `mark_all_notifications_read` | - | Mark all of the authenticated user's unread notifications as read. |

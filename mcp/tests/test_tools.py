@@ -62,6 +62,20 @@ class TestToolPermissions:
         content = json.loads(result["result"]["content"][0]["text"])
         assert content["email"] == user.email
 
+    def test_list_dependencies_no_special_permission(self):
+        """The component inventory is the same one the About modal shows to any user."""
+        srv, user = self._make_server_and_user()
+        result = srv.handle_request(json.dumps({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {"name": "list_dependencies", "arguments": {"group": "frontend"}},
+        }), user)
+        content = json.loads(result["result"]["content"][0]["text"])
+        assert content["count"] == len(content["items"])
+        assert {item["group"] for item in content["items"]} == {"frontend"}
+        assert all(item["url"].startswith("https://") for item in content["items"])
+
     def test_superuser_bypasses_permissions(self):
         srv = McpServer()
         register_all_tools(srv)

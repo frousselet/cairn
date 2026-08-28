@@ -18570,3 +18570,15 @@ msgid "Request approved, but the download link email could not be sent."
 msgstr ""
 "Demande approuvée, mais l'e-mail contenant le lien de téléchargement n'a pas"
 " pu être envoyé."
+
+msgid "Open source libraries"
+msgstr "Bibliothèques open source"
+
+msgid "Backend (Python)"
+msgstr "Backend (Python)"
+
+msgid "Frontend (JavaScript, CSS, fonts)"
+msgstr "Frontend (JavaScript, CSS, polices)"
+
+msgid "Development and testing"
+msgstr "Développement et tests"
