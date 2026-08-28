@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.35.1] - 2026-08-28
+
 ### Added
 
 - Documentation is rebuilt from `docs/` into the GitHub wiki by CI on every version tag, with a user guide, a technical section, an SDK and a code-generated reference (`manage.py generate_docs`), gated on every push by a staleness and link check.
@@ -21,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `recalculate_compliance` raised `FieldError` on every invocation : it selected the assessment's `framework`, a relation that had become the `frameworks` many-to-many.
 - The Docker image declared an `MIT` license label while the project is `AGPL-3.0-or-later`.
 
 ## [0.35.0] - 2026-08-28
@@ -1296,6 +1299,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.35.1]: https://github.com/frousselet/cairn/compare/v0.35.0...v0.35.1
 [0.35.0]: https://github.com/frousselet/cairn/compare/v0.34.1...v0.35.0
 [0.34.1]: https://github.com/frousselet/cairn/compare/v0.34.0...v0.34.1
 [0.34.0]: https://github.com/frousselet/cairn/compare/v0.33.3...v0.34.0
