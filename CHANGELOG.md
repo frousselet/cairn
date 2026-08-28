@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-08-28
+
 ### Added
 
 - Suppliers gain a supply-chain layer: subsidiaries (filiales) via a `parent_company` self-relation and sub-processors (sous-délégataires) via the `SupplierSubprocessor` link, exposed on the detail page, the REST API and MCP tools.
@@ -1278,6 +1280,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.35.0]: https://github.com/frousselet/cairn/compare/v0.34.1...v0.35.0
 [0.34.1]: https://github.com/frousselet/cairn/compare/v0.34.0...v0.34.1
 [0.34.0]: https://github.com/frousselet/cairn/compare/v0.33.3...v0.34.0
 [0.33.3]: https://github.com/frousselet/cairn/compare/v0.33.2...v0.33.3
