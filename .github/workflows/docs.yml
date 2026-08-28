@@ -55,45 +55,60 @@ jobs:
       - name: Build the wiki
         run: python scripts/build_wiki.py --out build/wiki --version "${GITHUB_REF_NAME}"
 
-      # A wiki lives in its own <repo>.wiki.git repository, and GitHub gates it
+      # A wiki lives in its own <repo>.wiki.git repository, which GitHub gates
       # differently from the code: GITHUB_TOKEN generally cannot write to it,
-      # and fine-grained PATs have no wiki permission at all. WIKI_TOKEN must
-      # therefore be a *classic* PAT carrying the `repo` scope. The step says so
-      # up front and again on failure, so nobody has to work that out from a
-      # bare "Authentication failed" line.
+      # and fine-grained PATs have no wiki permission at all. That leaves two
+      # credentials, and they are not equivalent:
+      #
+      #   - a classic PAT with the `repo` scope, which grants write access to
+      #     EVERY repository the account owns. Stored here, any workflow in this
+      #     repository could read it and use it against all the others;
+      #   - a deploy key, which is attached to this repository alone and cannot
+      #     reach anything else. It does carry write access to the wiki, which
+      #     is exactly the access this job needs and nothing more.
+      #
+      # The deploy key is the one we use. Setting it up is in
+      # docs/technical/release-process.md.
       - name: Push to the wiki
         env:
-          WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WIKI_DEPLOY_KEY: ${{ secrets.WIKI_DEPLOY_KEY }}
         run: |
           set -euo pipefail
 
           remediation() {
-            echo "::error title=Wiki publication failed::Set a WIKI_TOKEN secret."
+            echo "::error title=Wiki publication failed::Set a WIKI_DEPLOY_KEY secret."
             echo ""
-            echo "The wiki is a separate git repository and needs its own credential:"
-            echo "  1. Create a CLASSIC personal access token with the 'repo' scope."
-            echo "     https://github.com/settings/tokens/new?scopes=repo&description=Cairn+wiki+publication"
-            echo "     Fine-grained tokens do not work here: they have no wiki permission."
-            echo "  2. Add it as a repository secret named WIKI_TOKEN."
-            echo "     https://github.com/${GITHUB_REPOSITORY}/settings/secrets/actions/new"
+            echo "The wiki is a separate git repository and needs its own credential."
+            echo "Use a deploy key, which is scoped to this repository alone:"
+            echo ""
+            echo "  ssh-keygen -t ed25519 -N '' -C cairn-wiki -f /tmp/cairn-wiki"
+            echo "  gh repo deploy-key add /tmp/cairn-wiki.pub --title 'Wiki publication' --allow-write"
+            echo "  gh secret set WIKI_DEPLOY_KEY < /tmp/cairn-wiki"
+            echo "  shred -u /tmp/cairn-wiki /tmp/cairn-wiki.pub"
+            echo ""
+            echo "Do NOT use a classic personal access token here: its 'repo' scope"
+            echo "would grant this workflow write access to every repository you own."
             echo ""
             echo "The wiki can also be published by hand meanwhile:"
             echo "  python scripts/build_wiki.py --out build/wiki --version <tag>"
           }
 
-          if [ -n "${WIKI_TOKEN}" ]; then
-            echo "Authenticating with WIKI_TOKEN."
-            TOKEN="${WIKI_TOKEN}"
-          else
-            echo "::warning::WIKI_TOKEN is not set. Trying GITHUB_TOKEN, which usually cannot write to a wiki."
-            TOKEN="${GITHUB_TOKEN}"
+          if [ -z "${WIKI_DEPLOY_KEY}" ]; then
+            remediation
+            exit 1
           fi
 
-          if ! git clone "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki 2>/dev/null; then
+          mkdir -p ~/.ssh
+          printf '%s\n' "${WIKI_DEPLOY_KEY}" > ~/.ssh/wiki_key
+          chmod 600 ~/.ssh/wiki_key
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/wiki_key -o IdentitiesOnly=yes"
+
+          if ! git clone "git@github.com:${GITHUB_REPOSITORY}.wiki.git" wiki; then
             echo "Could not clone ${GITHUB_REPOSITORY}.wiki.git."
-            echo "Either the credential cannot read the wiki, or the wiki has never been initialised"
-            echo "(create its first page once at https://github.com/${GITHUB_REPOSITORY}/wiki)."
+            echo "Either the deploy key is not installed with write access, or the wiki"
+            echo "has never been initialised (create its first page once at"
+            echo "https://github.com/${GITHUB_REPOSITORY}/wiki)."
             remediation
             exit 1
           fi

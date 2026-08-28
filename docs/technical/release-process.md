@@ -34,29 +34,48 @@ of the file.
 | `docs.yml` | Builds the wiki from `docs/` and pushes it to the wiki repository |
 
 Both need repository secrets. The image needs `DOCKERHUB_USERNAME` and
-`DOCKERHUB_TOKEN`. The wiki needs `WIKI_TOKEN`, and that one has a catch worth
-knowing before release day.
+`DOCKERHUB_TOKEN`. The wiki needs `WIKI_DEPLOY_KEY`, and the choice of
+credential there is worth understanding rather than copying.
+
+### Why the wiki needs its own credential
 
 A wiki is a **separate git repository** (`<repo>.wiki.git`) that GitHub gates
-differently from the code:
+differently from the code. `GITHUB_TOKEN`, the credential a workflow gets for
+free, generally cannot write to it, and **fine-grained** personal access tokens
+have no wiki permission at all, so they cannot either, however they are
+configured.
 
-- `GITHUB_TOKEN`, the credential a workflow gets for free, generally cannot
-  write to it;
-- **fine-grained** personal access tokens have no wiki permission at all, so
-  they cannot either, however they are configured.
+That leaves two options, and they are not equivalent:
 
-`WIKI_TOKEN` must therefore be a **classic** personal access token carrying the
-`repo` scope.
+| Credential | Reach |
+| --- | --- |
+| Classic PAT with the `repo` scope | Write access to **every repository the account owns** |
+| Deploy key with write access | This repository alone, wiki included |
 
-1. Create it at
-   [github.com/settings/tokens/new](https://github.com/settings/tokens/new?scopes=repo&description=Cairn+wiki+publication)
-   (the link preselects the scope). Copy the value; GitHub shows it once.
-2. Add it at
-   [the repository's Actions secrets](https://github.com/frousselet/cairn/settings/secrets/actions/new),
-   named exactly `WIKI_TOKEN`.
+A classic PAT stored as a repository secret is a standing grant over your whole
+account, readable by any workflow that runs in this repository. Publishing
+documentation does not warrant that. **Use a deploy key.**
 
-The wiki also has to have been initialised once, by creating any page in the
-web interface, before a workflow can clone it.
+### Installing the deploy key
+
+```bash
+ssh-keygen -t ed25519 -N '' -C cairn-wiki -f /tmp/cairn-wiki
+gh repo deploy-key add /tmp/cairn-wiki.pub --title 'Wiki publication' --allow-write
+gh secret set WIKI_DEPLOY_KEY < /tmp/cairn-wiki
+shred -u /tmp/cairn-wiki /tmp/cairn-wiki.pub
+```
+
+The private key goes into the secret and is then destroyed locally; it is never
+displayed. Through the web interface the same two halves are
+**Settings -> Deploy keys -> Add deploy key** (tick *Allow write access*, paste
+the `.pub`) and **Settings -> Secrets and variables -> Actions** (name it
+`WIKI_DEPLOY_KEY`, paste the private key).
+
+A deploy key has no expiry. Rotate it by deleting the old key and repeating the
+four commands.
+
+The wiki also has to have been initialised once, by creating any page in the web
+interface, before a workflow can clone it.
 
 Without the secret the workflow prints these steps and fails rather than dying
 on an opaque git error, and the documentation can still be published by hand:
