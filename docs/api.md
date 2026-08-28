@@ -11,6 +11,7 @@ Cairn exposes a full REST API under `/api/v1/`, built with Django REST Framework
 | Assets | `/api/v1/assets/` |
 | Compliance | `/api/v1/compliance/` |
 | Risks | `/api/v1/risks/` |
+| Incidents | `/api/v1/incidents/` |
 | Reports | `/api/v1/reports/` |
 | Assistant | `/api/v1/assistant/` |
 | MCP & OAuth | `/api/v1/mcp`, `/api/v1/oauth/` |
@@ -52,6 +53,49 @@ Body: `{"email": "...", "last_name": "...", "first_name": "...", "groups": ["Con
 - **Lifecycle**: state transitions go through dedicated transition endpoints/actions, never by patching a status field. Deletion is only allowed from a deletable lifecycle state.
 - **Batch creation / upsert**: list resources accept batch creation (up to 500 objects, non-atomic with partial success reporting). Via the MCP layer, `batch_create_*` also accepts `match_on` for idempotent upsert (update on match instead of duplicating).
 - **Audit**: every write is recorded in the object's history (django-simple-history) and increments its version.
+
+## Incidents
+
+The thirteen entities of module 6 are registered flat under `/api/v1/incidents/`. Nothing is nested under a parent path : a child is filtered by its parent (`?incident=<uuid>`) rather than addressed through it, so every row keeps one stable URL.
+
+| Resource | Route |
+| -------- | ----- |
+| Incidents | `/api/v1/incidents/incidents/` |
+| Security events | `/api/v1/incidents/security-events/` |
+| Response plans | `/api/v1/incidents/response-plans/` |
+| Response actions | `/api/v1/incidents/response-actions/` |
+| Timeline entries | `/api/v1/incidents/timeline-entries/` |
+| Evidence | `/api/v1/incidents/evidence/` |
+| Custody events | `/api/v1/incidents/custody-events/` |
+| Post-incident reviews | `/api/v1/incidents/post-incident-reviews/` |
+| Reporting authorities | `/api/v1/incidents/reporting-authorities/` |
+| Obligation templates | `/api/v1/incidents/obligation-templates/` |
+| Notification obligations | `/api/v1/incidents/notifications/` |
+| Notification filings | `/api/v1/incidents/notification-filings/` |
+| Personal data breaches | `/api/v1/incidents/personal-data-breaches/` |
+
+### Append-only entities
+
+Three registers are ledgers, and the router publishes no verb that could rewrite one. `PUT`, `PATCH` and `DELETE` are not merely refused, they generate no route at all and answer `405`:
+
+| Ledger | Verbs published | Correcting a mistake |
+| ------ | --------------- | -------------------- |
+| `timeline-entries/` | `GET`, `POST` | Append a further entry of type `correction` naming the entry it supersedes |
+| `custody-events/` | `GET`, `POST` | Append a further handling act whose notes state what the earlier one got wrong |
+| `notification-filings/` | `GET`, `POST`, `PATCH` | File again, superseding the earlier filing |
+
+The one `PATCH` is the narrow completion of a filing : it accepts `outcome`, `acknowledged_at` and `external_reference` and nothing else, and any other key is rejected with a `400` rather than ignored. It runs through the model's own completion path, so a filing that has already been completed answers `409` instead of being overwritten.
+
+`GET /api/v1/incidents/<ledger>/<uuid>/history/` is the tamper-detection surface on these three : a row whose trail shows more writes than the design allows was altered outside the supported paths.
+
+### Conventions specific to the module
+
+- **Permissions.** Six features gate the whole module : `incidents.incident`, `.event`, `.response_plan`, `.evidence`, `.notification` and `.review`. Child entities are gated by their parent's feature, so a timeline entry is `incidents.incident.*` and a custody event `incidents.evidence.*`. Appending to a ledger is an `update` on the parent, never a `create` : recording a handling act maintains the evidence item, and recording a filing discharges an obligation that already exists.
+- **Tenancy.** Only the four scoped parents carry `scopes`. Every child and grandchild inherits the incident's perimeter through a declared scope path, enforced on this API, the generic workflow and history endpoints and the MCP layer alike. `reporting-authorities/` and `obligation-templates/` are shared catalogues and are deliberately not scope filtered.
+- **Lifecycle.** Nine resources expose `POST .../<uuid>/transition/`; the four ledger and status-column entities (response actions, timeline entries, custody events, filings) run no lifecycle and publish no transition route. `workflow_state` is read-only everywhere : the transition endpoint is where the gates, the phase stamps and the immutable lifecycle event live. A governance refusal comes back as `403` (transition not permitted), `400` (a gate refused the move) or `409` (a write-once or append-only field was targeted), never as a `500`.
+- **Derived clocks.** A notification obligation's `anchor_at`, `due_at`, `late_by` and overdue verdict are computed, never writable. `GET /api/v1/incidents/notifications/overdue/` answers "what is late" in one call, honouring every other filter, the search and the ordering; `?overdue=true` on the list route is the same definition, and the two cannot disagree.
+- **Files.** Evidence artefacts and proof-of-filing documents appear in no payload. They are streamed by `GET .../evidence/<uuid>/download/`, `GET .../notifications/<uuid>/proof/` and `GET .../notification-filings/<uuid>/proof/`, each resolved through the scoped queryset and permission-checked, so an artefact carrying a TLP caveat is never one guessable media URL away. An item registered by reference, or one whose artefact is gone, is a `404`.
+- **Bespoke actions.** `POST .../security-events/<uuid>/promote/` (`target`: `incident` or `vulnerability`, plus a mandatory `comment`) creates the target, declares it and moves the event on in one transaction, checking the create permission of the receiving register on top of the event's own transition permission. `POST .../evidence/<uuid>/verify-integrity/` re-measures the artefact, appends a custody row and returns one of three outcomes : `match`, `mismatch` or `not_verifiable`.
 
 ## Assistant (Ask Cairn)
 

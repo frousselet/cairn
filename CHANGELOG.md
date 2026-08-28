@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Suppliers gain a supply-chain layer: subsidiaries (filiales) via a `parent_company` self-relation and sub-processors (sous-délégataires) via the `SupplierSubprocessor` link, exposed on the detail page, the REST API and MCP tools.
+- Security incident register (module 6, ISO 27001 A.5.24 to A.5.28 and A.6.8): security events assessed before promotion, incidents with an append-only chronology, evidence under a chain of custody, statutory notification obligations on their own legal clocks, GDPR breach qualification and post-incident reviews feeding the nonconformity register.
 
 ### Changed
 

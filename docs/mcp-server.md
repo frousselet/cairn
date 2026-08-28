@@ -1,6 +1,6 @@
 # MCP Server (Model Context Protocol)
 
-Cairn ships with a built-in JSON-RPC 2.0 MCP server exposing 545 tools across all modules, so AI assistants and external clients can read and manage GRC data directly. Authentication uses OAuth 2.0. All tools enforce RBAC permissions and scope-based tenancy.
+Cairn ships with a built-in JSON-RPC 2.0 MCP server exposing 734 tools across all modules, so AI assistants and external clients can read and manage GRC data directly. Authentication uses OAuth 2.0. All tools enforce RBAC permissions and scope-based tenancy.
 
 ## Endpoints
 
@@ -129,6 +129,44 @@ Additional tools:
 | `link_risk_requirements` | Link requirements to a risk (additive) |
 | `unlink_risk_requirements` | Remove requirement links from a risk |
 | `set_risk_requirements` | Replace all linked requirements on a risk |
+
+## Incidents module
+
+| CRUD entity | Approve | Filters |
+| ----------- | ------- | ------- |
+| `incident` | Yes | category, severity, detection_source, tlp, is_exercise, personal_data_involved, is_significant, workflow_state, incident_manager_id, response_plan_id, parent_incident_id |
+| `security_event` | Yes | event_class, category, detection_source, is_anonymous, triage_decision, workflow_state, incident_id, reported_by_supplier_id |
+| `incident_response_plan` | Yes | workflow_state, owner_id, approved_by_id |
+| `incident_response_action` | No | incident_id, action_type, status, owner_id, performed_by_id, effectiveness |
+| `incident_evidence` | Yes | incident_id, evidence_type, hash_algorithm, tlp, legal_hold, workflow_state, collected_by_id |
+| `post_incident_review` | Yes | incident_id, root_cause_method, recurrence_likelihood, effectiveness_verdict, workflow_state, facilitator_id |
+| `incident_notification` | Yes | incident_id, regime, recipient_kind, decision, channel, source, workflow_state, authority_id, template_id, no_fixed_deadline |
+| `personal_data_breach` | Yes | incident_id, controller_role, article_34_exemption, high_risk_to_rights, special_categories, cross_border_eu, workflow_state |
+| `reporting_authority` | Yes | authority_type, primary_regime, jurisdiction_country, workflow_state |
+| `obligation_template` | Yes | regime, recipient_kind, authority_id, jurisdiction_country, min_severity, no_fixed_deadline, workflow_state |
+
+The three ledgers below are **append-only**. They publish `list_*`, `get_*` and `get_*_history` and no `update_*` or `delete_*` at all : `save()` on an existing row and `delete()` both refuse on these models, so registering those tools would advertise an operation that can only ever fail. Their create tool is bespoke (see below) because the actor is forced to the calling account. `get_*_history` is the tamper-detection surface here : a row whose trail shows more writes than the design allows was altered outside the supported paths.
+
+| Append-only ledger | Tools | Filters |
+| ------------------ | ----- | ------- |
+| `incident_timeline_entry` | `list_incident_timeline_entries`, `get_*`, `get_*_history` | incident_id, entry_type, source, is_evidence, author_id |
+| `evidence_custody_event` | `list_evidence_custody_events`, `get_*`, `get_*_history` | evidence_id, action, source, integrity_ok, actor_id |
+| `notification_filing` | `list_notification_filings`, `get_*`, `get_*_history` | notification_id, channel, outcome, is_correction, was_late, submitted_by_id |
+
+> **Permissions.** The module is capped at six features : `incidents.incident`, `.event`, `.response_plan`, `.evidence`, `.notification` and `.review`. Child entities are gated by their parent's feature, so timeline and response-action tools consume `incidents.incident.*`, custody tools `incidents.evidence.*` and filing tools `incidents.notification.*`. Appending to a ledger is deliberately an `update` on the parent rather than a `create`. `reporting_authority` and `obligation_template` are the regulatory catalogue and are gated by `incidents.response_plan.*`, since the catalogue is part of the procedure.
+
+> **Tool names are generated, plurals included.** The list and batch tools pluralise by appending `s` to the entity name, so the exact names are `list_incident_evidences`, `list_reporting_authoritys`, `list_personal_data_breachs` and `list_incident_timeline_entries`. Use them verbatim.
+
+Additional tools:
+
+| Tool | Description |
+| ---- | ----------- |
+| `create_incident_timeline_entry` | Append one entry to an incident's chronology. The author is always the calling account and the source always `manual`. A mistake is corrected by appending a further entry of type `correction` naming the one it supersedes |
+| `create_evidence_custody_event` | Record one handling act on an evidence item (collected, sealed, transferred, accessed, copied, analysed, released, returned, destroyed). The actor is always the calling account; a handover requires a named counterparty. The enum also accepts `integrity_verified`, but a verdict belongs to `verify_evidence_integrity`, which measures the artefact instead of taking the caller's word for it |
+| `create_notification_filing` | Record that a notification obligation was actually transmitted. The first filing on an obligation runs through its lifecycle and freezes the lateness verdict; later filings insert without disturbing it. An amendment is a further filing, never a rewrite |
+| `declare_incident_from_event` | Promote an assessed security event into an incident as one atomic act : creates the incident, carries over the event's title, timestamps, detection source, reporter, scopes and affected assets, declares it through its lifecycle, links the event and moves it to its confirmed step. Requires `incidents.event.validate` and `incidents.incident.create`, plus a mandatory rationale |
+| `verify_evidence_integrity` | Re-measure an evidence artefact and append the result to its chain of custody. Returns one of three outcomes, never collapsed : `match`, `mismatch` (a permanent chain-of-custody break) and `not_verifiable` (a claim about the storage, not the artefact). The digest is measured, never asserted by the caller |
+| `list_overdue_incident_notifications` | Every statutory deadline that has passed with no filing recorded : the "are we late" question in one call, with the regime, recipient, deadline, hours overdue and the incident and its manager. Obligations with no deadline, already filed, or in a terminal step are excluded |
 
 ## Accounts module
 
