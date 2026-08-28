@@ -6,7 +6,7 @@
 
 The complete route table under `/api/v1/`. Authentication, pagination, filtering and the error contract are documented in [../rest-api.md](../rest-api.md); the field-level contract of each resource is in its [specification](../../specs/README.md).
 
-**427 routes** are published across **20 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
+**428 routes** are published across **21 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
 
 ## Groups
 
@@ -20,6 +20,7 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | [`compliance`](#compliance) | 36 |
 | [`context`](#context) | 68 |
 | [`dashboard-layout`](#dashboard-layout) | 1 |
+| [`dependencies`](#dependencies) | 1 |
 | [`groups`](#groups) | 4 |
 | [`incidents`](#incidents) | 68 |
 | [`mcp`](#mcp) | 1 |
@@ -259,6 +260,12 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | Path | Methods | View | URL name |
 | --- | --- | --- | --- |
 | `/api/v1/dashboard-layout/` | GET, PUT, OPTIONS | `accounts.api.views.DashboardLayoutAPIView` | `api-dashboard-layout` |
+
+## dependencies
+
+| Path | Methods | View | URL name |
+| --- | --- | --- | --- |
+| `/api/v1/dependencies/` | GET, OPTIONS | `accounts.api.views.DependenciesAPIView` | `api-dependencies` |
 
 ## groups
 

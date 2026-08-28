@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The About dialog lists the open source libraries the instance is built on, each linking to its official repository, also exposed at `GET /api/v1/dependencies` and through the `list_dependencies` MCP tool.
+
 ## [0.35.1] - 2026-08-28
 
 ### Added

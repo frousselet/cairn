@@ -26,6 +26,9 @@ urlpatterns = [
     # Company settings
     path("company-settings/", views.CompanySettingsAPIView.as_view(), name="api-company-settings"),
 
+    # Third-party components the instance is built on
+    path("dependencies/", views.DependenciesAPIView.as_view(), name="api-dependencies"),
+
     # Resource endpoints
     path("", include(router.urls)),
 ]

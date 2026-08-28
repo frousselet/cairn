@@ -104,3 +104,14 @@ account.
 
 Note that the **data** is not translated. A requirement written in French stays
 in French for an English user; only the interface changes.
+
+## About this instance
+
+**About**, at the foot of the sidebar, opens a small dialog stating the version
+you are running, the licence (AGPL-3.0-or-later) and where the source code is.
+
+Expand **Open source libraries** to see the third-party components Cairn is
+built on, grouped into backend, frontend and development tooling. Each one
+carries the version this instance actually runs and links to its official
+repository, which is what an auditor asking for a component inventory usually
+wants.

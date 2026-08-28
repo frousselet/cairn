@@ -76,6 +76,11 @@ built from [`docs/`](docs/README.md).
 Django 5.2 LTS, PostgreSQL 16, Django REST Framework, Channels and Redis,
 Bootstrap 5.3 with HTMX and Apache ECharts. No JavaScript build step.
 
+The full inventory of third-party components lives in
+[`core/dependencies.py`](core/dependencies.py), and a running instance states it
+in the About dialog, at `GET /api/v1/dependencies` and through the
+`list_dependencies` MCP tool.
+
 ## Licence
 
 Cairn is free software under the **GNU Affero General Public License, version 3

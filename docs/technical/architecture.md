@@ -22,7 +22,14 @@ deployable as one container behind one reverse proxy.
 | Auth | Session, JWT, OAuth 2.0, WebAuthn (`fido2`) | Four callers : browser, script, MCP client, passkey |
 | Server | uvicorn (ASGI), WhiteNoise for static | Three workers in the shipped image |
 
-`requirements.txt` is the authoritative list.
+`requirements.txt` is the authoritative list of Python distributions, and the
+front-end libraries are pinned by URL in the templates. `core/dependencies.py`
+describes both in one registry, with the official repository of each component :
+it is what the About dialog, `GET /api/v1/dependencies` and the
+`list_dependencies` MCP tool answer from. Python versions are resolved from the
+installed metadata rather than declared, and `core/tests/test_dependencies.py`
+fails if the registry drifts from `requirements.txt` or from the versions the
+templates actually load.
 
 ## Redis is not optional
 

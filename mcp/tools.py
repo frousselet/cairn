@@ -8543,6 +8543,36 @@ def _register_accounts_tools(server):
         get_me,
     )
 
+    # ── Third-party components ─────────────────────────────
+
+    def list_dependencies(user, arguments):
+        from core.dependencies import serialize_dependencies
+
+        items = serialize_dependencies()
+        group = (arguments.get("group") or "").strip().lower()
+        if group:
+            items = [d for d in items if d["group"] == group]
+        return {"items": items, "count": len(items)}
+
+    server.register_tool(
+        "list_dependencies",
+        "List the third-party open source components this Cairn instance is built on : "
+        "name, resolved version, official repository URL and what each one is used for. "
+        "Same registry as the About modal. Optionally filtered by group.",
+        {
+            "type": "object",
+            "properties": {
+                "group": {
+                    "type": "string",
+                    "description": "Restrict to one group: 'backend' (Python), 'frontend' "
+                                   "(JavaScript, CSS, fonts) or 'development' (test and lint tooling).",
+                    "enum": ["backend", "frontend", "development"],
+                },
+            },
+        },
+        list_dependencies,
+    )
+
     # ── Saved filters (per-user list filters; own + shared) ──
     SavedFilter = _get_model("accounts", "SavedFilter")
     _sf_fields = ["id", "view_key", "name", "query", "is_shared", "owner_id", "created_at", "updated_at"]

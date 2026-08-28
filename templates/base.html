@@ -3084,6 +3084,73 @@
     }
     .about-modal-content .about-github-link:hover { color: var(--accent); }
 
+    .about-modal-content .about-libraries {
+      margin-top: 1rem;
+      padding-top: .75rem;
+      border-top: 1px solid var(--border-light);
+      text-align: left;
+    }
+    .about-libraries-toggle {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      width: 100%;
+      padding: .25rem 0;
+      background: none;
+      border: 0;
+      font-size: .8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: color var(--transition-fast);
+    }
+    .about-libraries-toggle:hover { color: var(--accent); }
+    .about-libraries-toggle .about-libraries-chevron {
+      margin-left: auto;
+      font-size: .75rem;
+      transition: transform var(--transition-fast);
+    }
+    .about-libraries-toggle[aria-expanded="true"] .about-libraries-chevron { transform: rotate(180deg); }
+    .about-lib-group { margin-top: .85rem; }
+    .about-lib-group__title {
+      font-size: .6875rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-muted);
+      margin-bottom: .35rem;
+    }
+    .about-lib-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+      gap: .2rem .75rem;
+    }
+    .about-lib-list li {
+      display: flex;
+      align-items: baseline;
+      gap: .35rem;
+      font-size: .75rem;
+      min-width: 0;
+    }
+    .about-lib-list a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .about-lib-list a:hover { color: var(--accent); text-decoration: underline; }
+    .about-lib-version {
+      color: var(--text-muted);
+      font-size: .6875rem;
+      font-variant-numeric: tabular-nums;
+    }
+    /* One column on phones : two would truncate the longer package names. */
+    @media (max-width: 575.98px) {
+      .about-lib-list { grid-template-columns: 1fr; }
+    }
+
     /* ── Mobile ────────────────────────────────────────── */
     .sidebar-backdrop {
       display: none;
@@ -5828,7 +5895,7 @@
   {% if user.is_authenticated %}
   {# ── About modal ──────────────────────────────────────── #}
   <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-body about-modal-content py-4 px-3">
           <div class="about-logo">
@@ -5850,9 +5917,37 @@
             &copy; 2026 Fran&ccedil;ois Rousselet<br>
             <span class="about-source-offer">{% trans "Source code available on GitHub" %}</span>
           </div>
-          <div class="mt-3">
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+
+          {% comment %}
+            Third-party components, from the curated registry in core/dependencies.py.
+            Versions of the Python distributions are read from the installed metadata.
+          {% endcomment %}
+          <div class="about-libraries">
+            <button type="button" class="about-libraries-toggle" data-bs-toggle="collapse"
+                    data-bs-target="#aboutLibraries" aria-expanded="false" aria-controls="aboutLibraries">
+              <i class="bi bi-boxes" aria-hidden="true"></i>
+              <span>{% trans "Open source libraries" %}</span>
+              <i class="bi bi-chevron-down about-libraries-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="collapse" id="aboutLibraries">
+              {% for group_key, group_label, group_deps in THIRD_PARTY_DEPENDENCIES %}
+              <div class="about-lib-group">
+                <div class="about-lib-group__title">{{ group_label }}</div>
+                <ul class="about-lib-list">
+                  {% for dep in group_deps %}
+                  <li>
+                    <a href="{{ dep.url }}" target="_blank" rel="noopener noreferrer" title="{{ dep.name }}">{{ dep.name }}</a>
+                    {% if dep.version %}<span class="about-lib-version">{{ dep.version }}</span>{% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endfor %}
+            </div>
           </div>
+        </div>
+        <div class="modal-footer justify-content-center border-0 pt-0">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
         </div>
       </div>
     </div>
