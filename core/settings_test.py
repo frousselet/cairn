@@ -50,3 +50,10 @@ class _DisableMigrations:
 
 
 MIGRATION_MODULES = _DisableMigrations()
+
+
+# The suite never reaches the network : the front-end mirror is a deployment
+# concern, exercised by core/tests/test_vendoring.py against a temporary root,
+# and the release check is exercised against a stubbed GitHub.
+VENDOR_ASSETS_AUTO_DOWNLOAD = False
+UPDATE_CHECK_ENABLED = True

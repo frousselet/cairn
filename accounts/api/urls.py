@@ -28,6 +28,7 @@ urlpatterns = [
 
     # Third-party components the instance is built on
     path("dependencies/", views.DependenciesAPIView.as_view(), name="api-dependencies"),
+    path("update-check/", views.UpdateCheckAPIView.as_view(), name="api-update-check"),
 
     # Resource endpoints
     path("", include(router.urls)),

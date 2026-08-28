@@ -253,7 +253,7 @@
     if (document.fonts && document.fonts.ready) { document.fonts.ready.then(renderDiagram); }
     new MutationObserver(renderDiagram).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
   }
-  window.CairnLifecycleGraph.ensureLibs('{% static "vendor/d3.v7.min.js" %}', '{% static "vendor/dagre.min.js" %}', boot);
+  window.CairnLifecycleGraph.ensureLibs('{% static "vendor/d3/d3.min.js" %}', '{% static "vendor/dagre/dagre.min.js" %}', boot);
 })();
 </script>
 

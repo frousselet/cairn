@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Cairn (formerly Fairway) are documented in this file.
+All notable changes to Cairn are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -9,7 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- The About dialog lists the open source libraries the instance is built on, each linking to its official repository, also exposed at `GET /api/v1/dependencies` and through the `list_dependencies` MCP tool.
+- The About dialog lists the open source libraries the instance is built on as `owner / library - version` in two columns, each linking to its official repository, also exposed at `GET /api/v1/dependencies` and through the `list_dependencies` MCP tool.
+- Front-end libraries are served from the instance instead of a CDN : `manage.py vendor_assets` mirrors them into `static/vendor/` from the pins in `core/dependencies.py`, at Docker build time or on a direct install's first launch, verifying each download against its Subresource-Integrity digest.
+- The About dialog reports whether a newer release is published, from the GitHub releases of the project, also exposed at `GET /api/v1/update-check` and through the `check_for_updates` MCP tool (`UPDATE_CHECK_ENABLED=False` to switch it off).
+
+### Changed
+
+- Front-end libraries are upgraded to their current releases : Bootstrap Icons 1.13.1, htmx 2.0.10, Tom Select 2.6.2, DOMPurify 3.4.14, Sortable 1.15.7 and ECharts 5.6.0.
 
 ## [0.35.1] - 2026-08-28
 

@@ -8557,8 +8557,9 @@ def _register_accounts_tools(server):
     server.register_tool(
         "list_dependencies",
         "List the third-party open source components this Cairn instance is built on : "
-        "name, resolved version, official repository URL and what each one is used for. "
-        "Same registry as the About modal. Optionally filtered by group.",
+        "name, owner (the organisation publishing it), resolved version, official repository "
+        "URL and what each one is used for. Same registry as the About modal. "
+        "Optionally filtered by group.",
         {
             "type": "object",
             "properties": {
@@ -8571,6 +8572,21 @@ def _register_accounts_tools(server):
             },
         },
         list_dependencies,
+    )
+
+    def check_for_updates(user, arguments):
+        from core.updates import update_status
+
+        return update_status()
+
+    server.register_tool(
+        "check_for_updates",
+        "Report whether a newer Cairn release is published than the one this instance runs. "
+        "Returns 'state' ('outdated', 'current', 'unknown' when GitHub cannot be reached or the "
+        "build carries no release number, 'disabled' when the check is switched off), the running "
+        "version, the latest published version and the URL of its release notes.",
+        {"type": "object", "properties": {}},
+        check_for_updates,
     )
 
     # ── Saved filters (per-user list filters; own + shared) ──

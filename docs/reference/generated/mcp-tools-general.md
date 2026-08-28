@@ -4,7 +4,7 @@
 
 # MCP tool parameters : General
 
-Input schemas for the 14 `general` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
+Input schemas for the 15 `general` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
 
 ## `ask_assistant`
 
@@ -14,6 +14,12 @@ Ask Cairn's natural-language assistant a read-only question about GRC data (e.g.
 | --- | --- | --- | --- |
 | `question` | `string` | yes | Natural-language question |
 | `language` | `string` | - | ISO language code for the answer (default en) |
+
+## `check_for_updates`
+
+Report whether a newer Cairn release is published than the one this instance runs. Returns 'state' ('outdated', 'current', 'unknown' when GitHub cannot be reached or the build carries no release number, 'disabled' when the check is switched off), the running version, the latest published version and the URL of its release notes.
+
+No parameters.
 
 ## `create_saved_filter`
 
@@ -62,7 +68,7 @@ No parameters.
 
 ## `list_dependencies`
 
-List the third-party open source components this Cairn instance is built on : name, resolved version, official repository URL and what each one is used for. Same registry as the About modal. Optionally filtered by group.
+List the third-party open source components this Cairn instance is built on : name, owner (the organisation publishing it), resolved version, official repository URL and what each one is used for. Same registry as the About modal. Optionally filtered by group.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n ui %}
+{% load i18n ui static %}
 
 {% block title %}{% trans "Dependency graph" %} - Cairn{% endblock %}
 
@@ -157,8 +157,8 @@
     return;
   }
 
-  // d3 (rendering) and dagre (layered layout) are loaded from a CDN. Under
-  // hx-boost navigation the external <script> is injected asynchronously, so
+  // d3 (rendering) and dagre (layered layout) are served from static/vendor/.
+  // Under hx-boost navigation the <script> is injected asynchronously, so
   // the init code below would run before the libs are ready and the graph
   // stays blank until a full page reload. Load both on demand and only build
   // the graph once they are available.
@@ -179,8 +179,8 @@
   }
 
   function withLibs(cb) {
-    var needD3 = window.d3 ? Promise.resolve() : loadScript('d3-cdn', 'https://d3js.org/d3.v7.min.js');
-    var needDagre = window.dagre ? Promise.resolve() : loadScript('dagre-cdn', 'https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js');
+    var needD3 = window.d3 ? Promise.resolve() : loadScript('d3-lib', '{% static "vendor/d3/d3.min.js" %}');
+    var needDagre = window.dagre ? Promise.resolve() : loadScript('dagre-lib', '{% static "vendor/dagre/dagre.min.js" %}');
     Promise.all([needD3, needDagre]).then(cb);
   }
 

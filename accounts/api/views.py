@@ -418,6 +418,23 @@ class DependenciesAPIView(APIView):
         return Response({"status": "success", "count": len(data), "data": data})
 
 
+class UpdateCheckAPIView(APIView):
+    """Whether a newer Cairn release is published, and which one.
+
+    Same answer as the About modal (``core.updates``) : ``state`` is one of
+    ``outdated``, ``current``, ``unknown`` (unreachable, or a build with no
+    release number) or ``disabled`` (the check is switched off on this
+    instance). Lets a fleet operator poll their estate for stale deployments.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from core.updates import update_status
+
+        return Response({"status": "success", "data": update_status()})
+
+
 # ── Helpers ─────────────────────────────────────────────────
 
 def _get_client_ip(request):

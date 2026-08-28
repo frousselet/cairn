@@ -28,6 +28,12 @@ COPY . .
 
 RUN echo "${APP_VERSION}" > /etc/app-version
 
+# Mirror the front-end libraries into static/vendor/ so the running container
+# never contacts a CDN. Unlike the two commands below this one must NOT be
+# tolerated to fail: an image shipped without them renders an unstyled
+# interface, and the build machine is the only place with a mirror to reach.
+RUN python manage.py vendor_assets
+
 RUN python manage.py compilemessages 2>/dev/null || true
 RUN python manage.py collectstatic --noinput 2>/dev/null || true
 

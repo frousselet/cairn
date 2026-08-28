@@ -393,11 +393,20 @@ Each permission follows the format: `{module}.{feature}.{action}`
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/dependencies` | Third-party components the instance is built on |
+| `GET` | `/update-check` | Whether a newer Cairn release is published |
 
-Read-only, available to any authenticated user : the same inventory the About
-dialog shows. Each item carries `name`, `version`, `url` (the official
-repository), `purpose` and `group` (`backend`, `frontend` or `development`).
-The MCP tool `list_dependencies` answers from the same registry.
+Both read-only and available to any authenticated user.
+
+`/dependencies` is the same inventory the About dialog shows. Each item carries
+`name`, `owner` (the organisation publishing it), `version`, `url` (the official
+repository), `purpose` and `group` (`backend`, `frontend` or `development`),
+ordered by owner then name. The MCP tool `list_dependencies` answers from the
+same registry.
+
+`/update-check` reports `state` (`outdated`, `current`, `unknown` when GitHub
+cannot be reached or the build carries no release number, `disabled` when the
+check is switched off), `current_version`, `latest_version` and the `url` of the
+release notes. The MCP tool `check_for_updates` answers the same.
 
 ---
 
@@ -465,17 +474,37 @@ Opened from the foot of the sidebar, available to any authenticated user.
 - **Licence:** AGPL-3.0-or-later, copyright, and the source-code offer required by
   section 13 of the licence (a network user must be told where the corresponding
   source is).
-- **Open source libraries:** collapsed by default so the dialog stays an identity
-  card. Expanded, it lists every third-party component grouped into backend
-  (Python), frontend (JavaScript, CSS, fonts) and development / testing, each
-  entry naming the component, its version and linking to its official
-  repository. Python versions are read from the installed metadata, so a
-  deployed instance states what it actually runs; front-end versions are the
-  ones pinned in the templates.
+- **Layout:** two columns on a desktop viewport, the identity card (logo, name,
+  version, update state, GitHub link, licence) on the left and the component
+  inventory on the right, stacking to one column below 768 px. No collapse to
+  open : the inventory is the point of the dialog, not a footnote to it. Closed
+  by a cross in the corner rather than a footer button.
+- **Update state:** below the version, the dialog says whether a newer release is
+  published, linking to its release notes. Nothing is shown when the answer is
+  unknown (GitHub unreachable, or a development build with no release number to
+  compare) or when the check is disabled : a non-answer would worry the reader
+  without informing them. The check runs when the dialog opens, never on a page
+  load, and its answer is cached for six hours across workers. Governed by
+  `UPDATE_CHECK_ENABLED`.
+- **Open source libraries:** every third-party component, grouped into backend
+  (Python), frontend (JavaScript, CSS, fonts) and development / testing. Each
+  entry reads `owner / name - version` and links to its official repository; the
+  owner is derived from that URL, so the dialog names a provenance rather than
+  just a package. Entries are ordered by owner then name, and laid out in
+  columns read top to bottom. Python versions come from the installed metadata,
+  so a deployed instance states what it actually runs; front-end versions are
+  the pins the libraries are mirrored with.
 - The registry behind it is `core/dependencies.py`, the single source the dialog,
   `GET /api/v1/dependencies` and the `list_dependencies` MCP tool all answer from.
-  A library added to `requirements.txt` or pinned in a template without a registry
-  entry fails the test suite.
+  A library added to `requirements.txt` without a registry entry fails the test
+  suite, as does a front-end library that declares no files to mirror.
+- **Front-end libraries are served by the instance**, never by a CDN. The
+  registry declares the files each one needs and their Subresource-Integrity
+  digests; `manage.py vendor_assets` mirrors them into `static/vendor/` at
+  Docker build time or on a direct install's first launch, refusing any download
+  whose content does not match. Templates load them through `{% static %}` and
+  carry no version, so the stated inventory cannot drift from what a browser
+  receives.
 
 ---
 

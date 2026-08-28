@@ -18574,6 +18574,13 @@ msgstr ""
 msgid "Open source libraries"
 msgstr "Bibliothèques open source"
 
+#, python-format
+msgid "Version %(version)s available"
+msgstr "Version %(version)s disponible"
+
+msgid "Up to date"
+msgstr "À jour"
+
 msgid "Backend (Python)"
 msgstr "Backend (Python)"
 

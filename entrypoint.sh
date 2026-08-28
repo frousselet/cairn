@@ -57,6 +57,13 @@ else
     echo "Fresh database detected: migrations will be applied from the onboarding screen."
 fi
 
+# The image already carries the front-end libraries, but the compose bind-mount
+# (.:/app) shadows them with the host's static/vendor/, which a fresh clone does
+# not have. Idempotent: it downloads only what is missing, and is a no-op in a
+# plain `docker run` of the published image.
+echo "Checking front-end libraries…"
+python manage.py vendor_assets || echo "Warning: front-end libraries could not be mirrored; the interface may render unstyled."
+
 echo "Compiling translation files…"
 python manage.py compilemessages
 

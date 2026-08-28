@@ -55,6 +55,11 @@ cover/
 *.mo
 *.pot
 
+# Front-end libraries, mirrored from the pins in core/dependencies.py by
+# `manage.py vendor_assets` (image build, or first launch of a direct install).
+# Never committed: the registry is the source of truth, not a copy of the files.
+static/vendor/
+
 # Django stuff:
 *.log
 local_settings.py
