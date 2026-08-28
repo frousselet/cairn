@@ -16,7 +16,7 @@ from .views import (
     DashboardIndicatorWidgetPartialView,
     DashboardLayoutSaveView, GeneralDashboardView, GlobalSearchView,
     ICalFeedView, KanbanBoardDataView, KanbanBoardView,
-    SectionCollapseToggleView, StyleGuideView,
+    SectionCollapseToggleView, StyleGuideView, UpdateCheckView,
 )
 
 urlpatterns = [
@@ -35,6 +35,7 @@ urlpatterns = [
     path("dashboard/changelog-dismiss/", ChangelogDismissView.as_view(), name="changelog-dismiss"),
     path("dashboard/section-toggle/", SectionCollapseToggleView.as_view(), name="dashboard-section-toggle"),
     path("dashboard/layout/", DashboardLayoutSaveView.as_view(), name="dashboard-layout-save"),
+    path("update-check/", UpdateCheckView.as_view(), name="update-check"),
     path("calendar/", CalendarView.as_view(), name="calendar"),
     path("kanban/", KanbanBoardView.as_view(), name="kanban"),
     path("api/kanban-board/", KanbanBoardDataView.as_view(), name="kanban-board"),

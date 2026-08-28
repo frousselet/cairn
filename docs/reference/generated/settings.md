@@ -8,7 +8,7 @@ Cairn is configured entirely through the environment. This page lists every vari
 
 The **In template** column says whether `.env.example` mentions it. Copy that file to `.env` to get started; anything absent from it falls back to the default below. Setting them up is covered in [../../technical/configuration.md](../../technical/configuration.md).
 
-**46 variables** are read by the code.
+**48 variables** are read by the code.
 
 ## Variables
 
@@ -57,6 +57,8 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `SPOF_REFRESH_INTERVAL` | `300` | yes | How often (seconds) the background SPOF detector re-scans the dependency graph. |
 | `TRUST_CENTER_DOWNLOAD_TTL` | `604800` | yes | Lifetime (seconds) of a gated-document download link (default 7 days). |
 | `TRUST_CENTER_HOST` | - | yes | Optional - Trust Center on a dedicated public domain. Leave empty to serve it only at /trust/ on the main host. When set, only the public Trust Center is reachable on this host (the app, admin and internal API return 404). Also add the host to ALLOWED_HOSTS and its https origin to CSRF_TRUSTED_ORIGINS. |
+| `UPDATE_CHECK_ENABLED` | `True` | yes | Whether the About modal may ask GitHub whether a newer release exists. It is the only outbound call the interface makes, it fires only when someone opens that modal, and the answer is cached. Set to False where policy forbids the instance calling out. |
+| `VENDOR_ASSETS_AUTO_DOWNLOAD` | `True` | yes | The front-end libraries (Bootstrap, htmx, Leaflet, the interface font...) are served from this instance, never from a CDN. A Docker image mirrors them at build time; a direct install downloads what is missing on its first launch. Set to False for an air-gapped install that puts the files in place itself. |
 | `WEBAUTHN_ORIGIN` | - | yes |  |
 | `WEBAUTHN_RP_ID` | - | yes | Passkeys / WebAuthn. Both are derived from the request when unset, which is correct for a single-domain deployment; set them explicitly behind a proxy that rewrites the host, or the browser refuses the credential. |
 | `WEBAUTHN_RP_NAME` | `Cairn` | yes |  |

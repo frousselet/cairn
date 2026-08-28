@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n scope_tags ui %}
+{% load i18n scope_tags ui static %}
 
 {% block title %}{% trans "Dashboard" %} - Cairn{% endblock %}
 
@@ -620,14 +620,14 @@
     if (msg) msg.classList.toggle('d-none', !!any);
   }
 
-  // Lazy-load SortableJS (CDN), like the echarts loader below.
+  // Lazy-load SortableJS from static/vendor/, like the echarts loader below.
   function withSortable(cb) {
     if (window.Sortable) { cb(); return; }
-    var s = document.getElementById('sortable-cdn');
+    var s = document.getElementById('sortable-lib');
     if (!s) {
       s = document.createElement('script');
-      s.id = 'sortable-cdn';
-      s.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js';
+      s.id = 'sortable-lib';
+      s.src = '{% static "vendor/sortablejs/Sortable.min.js" %}';
       document.head.appendChild(s);
     }
     s.addEventListener('load', cb);
@@ -1341,11 +1341,11 @@
   // on demand and only build the chart once echarts is available.
   function withECharts(cb) {
     if (window.echarts) { cb(); return; }
-    var s = document.getElementById('echarts-cdn');
+    var s = document.getElementById('echarts-lib');
     if (!s) {
       s = document.createElement('script');
-      s.id = 'echarts-cdn';
-      s.src = 'https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js';
+      s.id = 'echarts-lib';
+      s.src = '{% static "vendor/echarts/echarts.min.js" %}';
       document.head.appendChild(s);
     }
     s.addEventListener('load', cb);

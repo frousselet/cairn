@@ -52,32 +52,32 @@
   </script>
   {% endif %}
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%231E3A8A'/%3E%3Cpath d='M 19 38 A 14 14 0 1 1 45 38' stroke='%23FFFFFF' stroke-width='6' stroke-linecap='round' fill='none'/%3E%3Cpath d='M 22 44 L 32 26 L 42 44 Z' fill='%23FFFFFF'/%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
-        crossorigin="anonymous">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-        rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/css/tom-select.bootstrap5.min.css"
-        rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pell@1.0.6/dist/pell.min.css">
+  {% comment %}
+    Every front-end library is served from this instance : mirrored under
+    static/vendor/ by `manage.py vendor_assets` (see core/dependencies.py for
+    the pins). No CDN is contacted at runtime, so an isolated network works and
+    no third party observes who browses the platform.
+  {% endcomment %}
+  <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/tom-select/tom-select.bootstrap5.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/pell/pell.min.css' %}" rel="stylesheet">
   <style>
-    /* GitLab Sans (OFL-1.1) - variable body face, self-hosted via the
-       @gitlab/fonts npm package mirrored on jsDelivr (not on Google Fonts). */
+    /* GitLab Sans (OFL-1.1) - variable body face, self-hosted from
+       static/vendor/ (the @gitlab/fonts package, not a Google Font). */
     @font-face {
       font-family: 'GitLab Sans';
       font-style: normal;
       font-weight: 100 900;
       font-display: swap;
-      src: url('https://cdn.jsdelivr.net/npm/@gitlab/fonts@1.3.1/gitlab-sans/GitLabSans.woff2') format('woff2');
+      src: url('{% static "vendor/gitlab-sans/GitLabSans.woff2" %}') format('woff2');
     }
     @font-face {
       font-family: 'GitLab Sans';
       font-style: italic;
       font-weight: 100 900;
       font-display: swap;
-      src: url('https://cdn.jsdelivr.net/npm/@gitlab/fonts@1.3.1/gitlab-sans/GitLabSans-Italic.woff2') format('woff2');
+      src: url('{% static "vendor/gitlab-sans/GitLabSans-Italic.woff2" %}') format('woff2');
     }
     /* ── Design tokens ────────────────────────────────── */
     /*
@@ -3065,7 +3065,34 @@
     }
 
     /* ── About modal ───────────────────────────────────── */
-    .about-modal-content { text-align: center; }
+    /* Two columns : the identity card on the left, the component inventory on
+       the right. The inventory sets the height, and the identity sits centred
+       against it rather than hanging from the top of a long list. */
+    .about-modal-dialog { --bs-modal-width: 60rem; }
+    .about-modal-content {
+      display: grid;
+      grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+      gap: 1.5rem;
+    }
+    .about-identity {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      padding: 0 1rem;
+    }
+    /* Floats over the body, which is the scrolling box : anchored to the
+       content so it stays in the corner as the inventory scrolls under it. */
+    .about-close {
+      position: absolute;
+      top: .75rem;
+      right: .75rem;
+      z-index: 1;
+    }
+    /* One column on tablets and phones : side by side, neither would breathe. */
+    @media (max-width: 767.98px) {
+      .about-modal-content { grid-template-columns: 1fr; gap: 1rem; }
+    }
     .about-modal-content .about-logo { margin-bottom: .75rem; }
     .about-modal-content .about-logo svg { width: 4rem; height: 4rem; border-radius: var(--radius-sm); }
     .about-modal-content .about-version { font-size: .8125rem; color: var(--text-muted); margin-top: .25rem; }
@@ -3083,33 +3110,57 @@
       transition: color var(--transition-fast);
     }
     .about-modal-content .about-github-link:hover { color: var(--accent); }
+    /* Empty until the check answers, and empty for good when it cannot : the
+       slot collapses rather than reserving a blank line. */
+    .about-update-slot:empty { display: none; }
+    .about-update {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .375rem;
+      margin-top: .5rem;
+      max-width: 100%;
+      font-size: .75rem;
+      text-align: center;
+      text-decoration: none;
+    }
+    .about-update--current { color: var(--text-muted); }
+    .about-update--outdated {
+      padding: .2rem .5rem;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      color: var(--accent);
+      font-weight: 600;
+      transition: background var(--transition-fast);
+    }
+    .about-update--outdated:hover {
+      background: color-mix(in srgb, var(--accent) 20%, transparent);
+      color: var(--accent);
+    }
 
     .about-modal-content .about-libraries {
-      margin-top: 1rem;
-      padding-top: .75rem;
-      border-top: 1px solid var(--border-light);
       text-align: left;
+      border-left: 1px solid var(--border-light);
+      padding-left: 1.5rem;
     }
-    .about-libraries-toggle {
+    /* Stacked, the divider becomes a rule above the list. */
+    @media (max-width: 767.98px) {
+      .about-modal-content .about-libraries {
+        border-left: 0;
+        padding-left: 0;
+        border-top: 1px solid var(--border-light);
+        padding-top: .75rem;
+      }
+    }
+    .about-libraries__title {
       display: flex;
       align-items: center;
       gap: .5rem;
-      width: 100%;
-      padding: .25rem 0;
-      background: none;
-      border: 0;
+      margin: 0;
       font-size: .8125rem;
       font-weight: 600;
       color: var(--text-secondary);
-      transition: color var(--transition-fast);
     }
-    .about-libraries-toggle:hover { color: var(--accent); }
-    .about-libraries-toggle .about-libraries-chevron {
-      margin-left: auto;
-      font-size: .75rem;
-      transition: transform var(--transition-fast);
-    }
-    .about-libraries-toggle[aria-expanded="true"] .about-libraries-chevron { transform: rotate(180deg); }
     .about-lib-group { margin-top: .85rem; }
     .about-lib-group__title {
       font-size: .6875rem;
@@ -3122,33 +3173,37 @@
       list-style: none;
       margin: 0;
       padding: 0;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
-      gap: .2rem .75rem;
+      columns: 2;
+      column-gap: 2rem;
     }
     .about-lib-list li {
       display: flex;
       align-items: baseline;
+      flex-wrap: wrap;
       gap: .35rem;
       font-size: .75rem;
       min-width: 0;
+      /* An entry split across two columns would be unreadable. */
+      break-inside: avoid;
     }
     .about-lib-list a {
       color: var(--text-secondary);
       text-decoration: none;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      overflow-wrap: anywhere;
     }
     .about-lib-list a:hover { color: var(--accent); text-decoration: underline; }
+    /* The owner is the provenance, the name is what the reader looks for :
+       the owner recedes so the eye lands on the library. */
+    .about-lib-owner { color: var(--text-muted); }
     .about-lib-version {
       color: var(--text-muted);
       font-size: .6875rem;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
-    /* One column on phones : two would truncate the longer package names. */
-    @media (max-width: 575.98px) {
-      .about-lib-list { grid-template-columns: 1fr; }
+    /* One column once the modal stacks : two would leave no room per name. */
+    @media (max-width: 767.98px) {
+      .about-lib-list { columns: 1; }
     }
 
     /* ── Mobile ────────────────────────────────────────── */
@@ -5481,8 +5536,8 @@
      * CSS + JS once and invokes every queued callback when the library
      * is ready - a detail page just calls window.ensureLeaflet(init). */
     (function () {
-      var CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      var JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      var CSS = '{% static "vendor/leaflet/leaflet.css" %}';
+      var JS = '{% static "vendor/leaflet/leaflet.js" %}';
       var waiters = [];
       function flush() { var q = waiters.splice(0); q.forEach(function (cb) { try { cb(); } catch (e) {} }); }
       window.ensureLeaflet = function (cb) {
@@ -5895,9 +5950,12 @@
   {% if user.is_authenticated %}
   {# ── About modal ──────────────────────────────────────── #}
   <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog about-modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
+        <button type="button" class="btn-close about-close" data-bs-dismiss="modal"
+                aria-label="{% trans 'Close' %}"></button>
         <div class="modal-body about-modal-content py-4 px-3">
+          <div class="about-identity">
           <div class="about-logo">
             {# Cairn - primary mark in the About modal #}
             <svg class="logo-light" viewBox="0 0 64 64"><rect width="64" height="64" rx="13" fill="#1E3A8A"/><path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/><rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/><rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/></svg>
@@ -5907,6 +5965,10 @@
           <div class="about-version">
             {% if APP_VERSION %}{% trans "Version" %} {{ APP_VERSION }}{% else %}{% trans "Version" %} dev{% endif %}
           </div>
+          <div class="about-update-slot"
+               hx-get="{% url 'update-check' %}"
+               hx-trigger="shown.bs.modal from:#aboutModal once"
+               hx-swap="innerHTML"></div>
           <div class="mt-2">
             <a href="https://github.com/frousselet/cairn" target="_blank" rel="noopener" class="about-github-link">
               <i class="bi bi-github" aria-hidden="true"></i> GitHub
@@ -5917,27 +5979,27 @@
             &copy; 2026 Fran&ccedil;ois Rousselet<br>
             <span class="about-source-offer">{% trans "Source code available on GitHub" %}</span>
           </div>
+          </div>
 
           {% comment %}
             Third-party components, from the curated registry in core/dependencies.py.
-            Versions of the Python distributions are read from the installed metadata.
+            Versions of the Python distributions are read from the installed metadata,
+            front-end ones from the pins the libraries are mirrored with.
           {% endcomment %}
           <div class="about-libraries">
-            <button type="button" class="about-libraries-toggle" data-bs-toggle="collapse"
-                    data-bs-target="#aboutLibraries" aria-expanded="false" aria-controls="aboutLibraries">
+            <h6 class="about-libraries__title">
               <i class="bi bi-boxes" aria-hidden="true"></i>
               <span>{% trans "Open source libraries" %}</span>
-              <i class="bi bi-chevron-down about-libraries-chevron" aria-hidden="true"></i>
-            </button>
-            <div class="collapse" id="aboutLibraries">
+            </h6>
+            <div id="aboutLibraries">
               {% for group_key, group_label, group_deps in THIRD_PARTY_DEPENDENCIES %}
               <div class="about-lib-group">
                 <div class="about-lib-group__title">{{ group_label }}</div>
                 <ul class="about-lib-list">
                   {% for dep in group_deps %}
                   <li>
-                    <a href="{{ dep.url }}" target="_blank" rel="noopener noreferrer" title="{{ dep.name }}">{{ dep.name }}</a>
-                    {% if dep.version %}<span class="about-lib-version">{{ dep.version }}</span>{% endif %}
+                    <a href="{{ dep.url }}" target="_blank" rel="noopener noreferrer" title="{{ dep.owner }} / {{ dep.name }}"><span class="about-lib-owner">{{ dep.owner }}&nbsp;/</span> {{ dep.name }}</a>
+                    {% if dep.version %}<span class="about-lib-version">&bull; {{ dep.version }}</span>{% endif %}
                   </li>
                   {% endfor %}
                 </ul>
@@ -5945,9 +6007,6 @@
               {% endfor %}
             </div>
           </div>
-        </div>
-        <div class="modal-footer justify-content-center border-0 pt-0">
-          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
         </div>
       </div>
     </div>
@@ -6014,12 +6073,8 @@
   </main>
   {% endblock %}
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-          integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-          crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/htmx.org@2.0.4"
-          integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
-          crossorigin="anonymous"></script>
+  <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
   <script>
     /* ── HTMX history handling ───────────────────────────────────────
      *
@@ -6092,7 +6147,7 @@
     window.fwAnnounce = announce;
   })();
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/js/tom-select.complete.min.js"></script>
+  <script src="{% static 'vendor/tom-select/tom-select.complete.min.js' %}"></script>
   <script>
   /* ── Tag input (Tom Select) ──────────────────────── */
   (function() {
@@ -6186,8 +6241,8 @@
     document.body.addEventListener('htmx:afterSettle', initPageHeader);
   })();
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/pell@1.0.6/dist/pell.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
+  <script src="{% static 'vendor/pell/pell.min.js' %}"></script>
+  <script src="{% static 'vendor/dompurify/purify.min.js' %}"></script>
   <script>
   /* ── Global: Rich-text (pell) + TomSelect on all forms ──── */
   (function() {
@@ -7602,11 +7657,11 @@
 
     function withSortable(cb) {
       if (window.Sortable) { cb(); return; }
-      var s = document.getElementById('sortable-cdn');
+      var s = document.getElementById('sortable-lib');
       if (!s) {
         s = document.createElement('script');
-        s.id = 'sortable-cdn';
-        s.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js';
+        s.id = 'sortable-lib';
+        s.src = '{% static "vendor/sortablejs/Sortable.min.js" %}';
         document.head.appendChild(s);
       }
       s.addEventListener('load', cb);

@@ -19,3 +19,4 @@ The ones meant to run on a schedule are covered in [../../technical/operations.m
 | `rebuild_semantic_index` | assistant | Build or refresh the requirement semantic search index. |
 | `recalculate_compliance` | compliance | Recalculate compliance counts for all assessments, then propagate to requirements/sections/frameworks. |
 | `refresh_mitre_attack` | risks | Refresh the MITRE ATT&CK catalogue from a JSON fixture. |
+| `vendor_assets` | core | Download the front-end libraries into static/vendor/ so the instance serves them from its own origin instead of a CDN. |

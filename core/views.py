@@ -28,6 +28,7 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from core.changelog import get_changelog_between
+from core.updates import update_status
 from core.query_params import parse_date_param, parse_uuid
 from core.dashboard import (
     DASHBOARD_WIDGETS,
@@ -713,6 +714,18 @@ class ChangelogDismissView(LoginRequiredMixin, View):
             request.user.last_seen_version = version
             request.user.save(update_fields=["last_seen_version"])
         return JsonResponse({"ok": True})
+
+
+class UpdateCheckView(LoginRequiredMixin, View):
+    """The About modal's "a newer version exists" line.
+
+    Loaded on demand rather than rendered with the page : the check reaches out
+    to GitHub, and that should happen when someone asks what version they are
+    running, not on every page view. See ``core.updates``.
+    """
+
+    def get(self, request, *args, **kwargs):
+        return render(request, "core/update_status.html", {"status": update_status()})
 
 
 class SectionCollapseToggleView(LoginRequiredMixin, View):

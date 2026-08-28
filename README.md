@@ -76,10 +76,18 @@ built from [`docs/`](docs/README.md).
 Django 5.2 LTS, PostgreSQL 16, Django REST Framework, Channels and Redis,
 Bootstrap 5.3 with HTMX and Apache ECharts. No JavaScript build step.
 
-The full inventory of third-party components lives in
-[`core/dependencies.py`](core/dependencies.py), and a running instance states it
-in the About dialog, at `GET /api/v1/dependencies` and through the
-`list_dependencies` MCP tool.
+Every front-end library is served from the instance itself, never from a CDN :
+an isolated deployment works, and no third party is told who browses it. They
+are mirrored into `static/vendor/` from the pins in
+[`core/dependencies.py`](core/dependencies.py) - by the Docker build, or on the
+first launch of a direct install - and each download is checked against a
+Subresource-Integrity digest. `python manage.py vendor_assets` does it by hand.
+
+That same file is the full inventory of third-party components, and a running
+instance states it in the About dialog, at `GET /api/v1/dependencies` and
+through the `list_dependencies` MCP tool. The About dialog also says whether a
+newer release is published (`GET /api/v1/update-check`, `check_for_updates`);
+set `UPDATE_CHECK_ENABLED=False` to keep the instance from asking.
 
 ## Licence
 
@@ -91,8 +99,8 @@ available over a network, and you must offer those users the corresponding
 source. Distributing a modified version triggers the same obligation.
 
 Every source file carries an `SPDX-License-Identifier: AGPL-3.0-or-later`
-header. Third-party files under `static/vendor/` keep their own upstream
-licences and are not covered by this notice.
+header. The third-party files mirrored into `static/vendor/` keep their own
+upstream licences and are not covered by this notice.
 
 ### Trademarks
 

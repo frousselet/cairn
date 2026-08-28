@@ -238,6 +238,23 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# The front-end libraries are served from static/vendor/, never from a CDN. A
+# Docker image mirrors them at build time; a direct install fetches whatever is
+# missing on its first launch. Set to False to manage them yourself (an air-gapped
+# install that copies the files in, or a build step that already ran
+# `manage.py vendor_assets`).
+VENDOR_ASSETS_AUTO_DOWNLOAD = os.environ.get(
+    "VENDOR_ASSETS_AUTO_DOWNLOAD", "True"
+).lower() in ("true", "1", "yes")
+
+# Whether the About modal may ask GitHub for the latest published release. It is
+# the only outbound call the interface makes, it fires only when the modal is
+# opened, and the answer is cached. Set to False for an air-gapped deployment or
+# where policy forbids the instance calling out.
+UPDATE_CHECK_ENABLED = os.environ.get(
+    "UPDATE_CHECK_ENABLED", "True"
+).lower() in ("true", "1", "yes")
+
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 

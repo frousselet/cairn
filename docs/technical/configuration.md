@@ -125,6 +125,28 @@ Provider setup, model guidance and the data-egress detail are in the
 defaults are conservative on purpose, so a slow provider degrades the command
 palette rather than the whole application.
 
+## What the instance calls out to
+
+Two knobs, both defaulting to on, both about traffic leaving the instance.
+
+```bash
+VENDOR_ASSETS_AUTO_DOWNLOAD=True   # mirror the front-end libraries when missing
+UPDATE_CHECK_ENABLED=True          # let the About modal ask GitHub for the latest release
+```
+
+`VENDOR_ASSETS_AUTO_DOWNLOAD` is a **setup-time** call, not a runtime one : the
+front-end libraries are always served from `static/vendor/`, and this only says
+whether a launch that finds them missing may fetch them. A Docker image already
+has them. Set it to `False` when the files are placed by your own build or
+image, and the instance will never reach out.
+
+`UPDATE_CHECK_ENABLED` is the only call the *running* interface can make. It
+fires when someone opens the About modal, never on a page load; it asks GitHub
+for the latest release of the Cairn repository and caches the answer for six
+hours across all workers. Nothing about the instance is sent : it is a plain
+read of a public endpoint. Set it to `False` where policy forbids the
+application originating outbound traffic at all.
+
 ## Superuser bootstrap
 
 `DJANGO_SUPERUSER_EMAIL` and `DJANGO_SUPERUSER_PASSWORD` are read by the

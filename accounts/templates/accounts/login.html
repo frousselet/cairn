@@ -7,12 +7,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% trans "Sign in - Cairn" %}</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='7' fill='url(%23g)'/%3E%3Cpath d='M12.5 5.5L22 5.5A2.5 2.5 0 0124.5 8 2.5 2.5 0 0122 10.5L15 10.5 15 13.5 19.5 13.5A2.5 2.5 0 0122 16 2.5 2.5 0 0119.5 18.5L15 18.5 15 24A2.5 2.5 0 0112.5 26.5 2.5 2.5 0 0110 24L10 8A2.5 2.5 0 0112.5 5.5Z' fill='%23fff' opacity='.95'/%3E%3Ccircle cx='25' cy='8' r='1.8' fill='%23f0abfc' opacity='.85'/%3E%3Ccircle cx='22' cy='16' r='1.8' fill='%23a5b4fc' opacity='.85'/%3E%3C/svg%3E">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
-        crossorigin="anonymous">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-        rel="stylesheet">
+  <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
   <script>
   (function(){
     var root = document.documentElement;
@@ -49,14 +45,14 @@
       font-style: normal;
       font-weight: 100 900;
       font-display: swap;
-      src: url('https://cdn.jsdelivr.net/npm/@gitlab/fonts@1.3.1/gitlab-sans/GitLabSans.woff2') format('woff2');
+      src: url('{% static "vendor/gitlab-sans/GitLabSans.woff2" %}') format('woff2');
     }
     @font-face {
       font-family: 'GitLab Sans';
       font-style: italic;
       font-weight: 100 900;
       font-display: swap;
-      src: url('https://cdn.jsdelivr.net/npm/@gitlab/fonts@1.3.1/gitlab-sans/GitLabSans-Italic.woff2') format('woff2');
+      src: url('{% static "vendor/gitlab-sans/GitLabSans-Italic.woff2" %}') format('woff2');
     }
     :root {
       --accent: #1E3A8A;
@@ -331,9 +327,7 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-          integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-          crossorigin="anonymous"></script>
+  <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
   {% trans "Waiting for passkey..." as tr_waiting %}
   {% trans "Authentication failed." as tr_auth_failed %}
   {% trans "Sign in with a passkey" as tr_signin_passkey %}

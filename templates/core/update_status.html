@@ -1,0 +1,18 @@
+{% load i18n %}
+{% comment %}
+  The About modal's update line, loaded on demand when the modal opens (see
+  core.updates for why the call is not made on every page render).
+  "disabled" and "unknown" render nothing : an instance that cannot or must not
+  ask should say nothing rather than worry the reader with a non-answer.
+{% endcomment %}
+{% if status.state == "outdated" %}
+  <a class="about-update about-update--outdated" href="{{ status.url }}" target="_blank" rel="noopener noreferrer">
+    <i class="bi bi-arrow-up-circle-fill" aria-hidden="true"></i>
+    <span>{% blocktrans with version=status.latest_version %}Version {{ version }} available{% endblocktrans %}</span>
+  </a>
+{% elif status.state == "current" %}
+  <span class="about-update about-update--current">
+    <i class="bi bi-check-circle" aria-hidden="true"></i>
+    <span>{% trans "Up to date" %}</span>
+  </span>
+{% endif %}

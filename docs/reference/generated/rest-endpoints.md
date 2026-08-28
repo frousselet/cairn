@@ -6,7 +6,7 @@
 
 The complete route table under `/api/v1/`. Authentication, pagination, filtering and the error contract are documented in [../rest-api.md](../rest-api.md); the field-level contract of each resource is in its [specification](../../specs/README.md).
 
-**428 routes** are published across **21 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
+**429 routes** are published across **22 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
 
 ## Groups
 
@@ -32,6 +32,7 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | [`root`](#root) | 2 |
 | [`saved-filters`](#saved-filters) | 2 |
 | [`trust-center`](#trust-center) | 14 |
+| [`update-check`](#update-check) | 1 |
 | [`users`](#users) | 5 |
 
 ## access-logs
@@ -556,6 +557,12 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | `/api/v1/trust-center/subprocessors/` | GET, POST | `trust_center.api.views.SubprocessorViewSet` | `trustcentersubprocessor-list` |
 | `/api/v1/trust-center/subprocessors/<pk>/` | DELETE, GET, PATCH, PUT | `trust_center.api.views.SubprocessorViewSet` | `trustcentersubprocessor-detail` |
 | `/api/v1/trust-center/subprocessors/<pk>/transition/` | POST | `trust_center.api.views.SubprocessorViewSet` | `trustcentersubprocessor-transition` |
+
+## update-check
+
+| Path | Methods | View | URL name |
+| --- | --- | --- | --- |
+| `/api/v1/update-check/` | GET, OPTIONS | `accounts.api.views.UpdateCheckAPIView` | `api-update-check` |
 
 ## users
 

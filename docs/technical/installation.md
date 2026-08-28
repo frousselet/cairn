@@ -91,6 +91,10 @@ docker compose exec web python manage.py migrate
 docker compose exec web python manage.py createsuperuser
 ```
 
+The published image already carries the front-end libraries (the build runs
+`manage.py vendor_assets`), so the container needs no outbound network to render
+the interface.
+
 ## Option 3 : run in pure Python for debugging (mise)
 
 For local development and step-by-step debugging, you can run the whole stack in pure Python, with no Docker and no external service. The dev settings module `core.settings_local` replaces PostgreSQL with a file-based SQLite database (`db.sqlite3`) and Redis with an in-memory channel layer, so nothing needs to be installed or started on the side.
@@ -144,6 +148,23 @@ python manage.py runserver 0.0.0.0:8000
 ```
 
 The application is available at [http://localhost:8000](http://localhost:8000). The defaults are dev-friendly (`DEBUG=True`, `SECRET_KEY` and `ALLOWED_HOSTS` fall back to safe local values), so no `.env` is required.
+
+The **first launch downloads the front-end libraries** (Bootstrap, htmx,
+Leaflet, the interface font and the rest, about 3 MB) into `static/vendor/`,
+printing a line per file. They are not committed, because the pins in
+`core/dependencies.py` are the source of truth; every later start finds them in
+place and downloads nothing. To fetch them ahead of time, or after changing a
+pin :
+
+```bash
+python manage.py vendor_assets          # download whatever is missing
+python manage.py vendor_assets --check  # verify every file against its digest
+python manage.py vendor_assets --force  # re-download after a version bump
+```
+
+An install with no route out can put the files there itself and set
+`VENDOR_ASSETS_AUTO_DOWNLOAD=False`. Until they are present the interface
+renders unstyled - the application still starts, and says what is missing.
 
 ### Debugging in VS Code
 

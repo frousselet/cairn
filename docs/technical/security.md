@@ -102,6 +102,19 @@ permission-checked, and gated Trust Center links are signed with a lifetime
 Evidence artefacts are hashed on acquisition and can be re-measured on demand,
 returning `match`, `mismatch` or `not_verifiable`.
 
+## Front-end supply chain
+
+No page loads a script, a stylesheet or a font from a third party. Every
+front-end library is declared in `core/dependencies.py` with its exact files and
+their Subresource-Integrity digests, mirrored into `static/vendor/` and served
+from this instance. A download whose content does not match its digest is
+refused rather than written, so a compromised mirror cannot reach a browser, and
+a test fails the build if any template reintroduces a CDN reference.
+
+For an audit this matters twice over : the code a user's browser executes is
+fixed at build time and verifiable, and no third party receives a request that
+would tell them who consults a compliance platform and when.
+
 ## Public exposure
 
 The Trust Center is the only surface meant to be public, and it is a curation

@@ -60,7 +60,8 @@ class TestSupplierMap:
         html = client.get(reverse("assets:supplier-detail", kwargs={"pk": s.pk})).content.decode()
         assert 'id="supplier-map"' in html
         assert 'data-lat="48.87"' in html and 'data-lon="2.32"' in html
-        assert "leaflet@1.9.4/dist/leaflet.js" in html
+        # Leaflet is served from this instance, not from a CDN.
+        assert "/static/vendor/leaflet/leaflet.js" in html
         urls = re.findall(r'https?://[^\s"\'<>]+', html)
         # Leaflet's {s} subdomain placeholder makes the parsed hostname
         # "{s}.basemaps.cartocdn.com", so accept the CARTO domain or any subdomain.

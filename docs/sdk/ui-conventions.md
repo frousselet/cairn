@@ -18,6 +18,33 @@ one is a change that needs a conversation first.
 `/styleguide/` renders the whole component set in a running instance. Look there
 before inventing a component.
 
+## Never load a library from a CDN
+
+Every front-end library is served from the instance itself. Referencing
+`cdn.jsdelivr.net`, `unpkg.com` or Google Fonts from a template fails the build
+(`core/tests/test_dependencies.py`), because an isolated deployment would then
+render an unstyled page and every visitor would be announced to a third party.
+
+To add one :
+
+1. Declare it in `core/dependencies.py` as a `Dependency` in the `FRONTEND`
+   group, with its `pinned_version` and one `VendorAsset` per file it needs.
+   Keep the sub-directory layout the library expects of itself : a stylesheet
+   that asks for `fonts/…` or `images/…` needs those files at that relative
+   path.
+2. Get the digests with `python manage.py vendor_assets --print-hashes` and
+   paste them into the declaration. The download is refused if they do not
+   match.
+3. Mirror the files locally with `python manage.py vendor_assets`.
+4. Load it in the template with `{% static "vendor/<library>/<file>" %}` - no
+   version in the path, no `integrity` attribute (the file is same-origin and
+   was verified when it was fetched).
+
+Upgrading is the same list : change the version, re-run `--print-hashes`, paste,
+then `vendor_assets --force`. The tests check that the pinned version is the one
+the declared URLs actually fetch, and that every `vendor/…` path a template asks
+for is a file something mirrors.
+
 ## Detail pages : cards, not tabs
 
 Use a **two-column card layout** : the main content on the left, a sticky

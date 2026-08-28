@@ -171,6 +171,28 @@ exclusively. The visual system is specified in
 [brand-guidelines.md](../brand/brand-guidelines.md), and `/styleguide/` renders
 it live in a running instance.
 
+### Every library is served from the instance
+
+No page ever loads a script, a stylesheet or a font from a CDN. Each front-end
+library is declared in `core/dependencies.py` with the exact files it needs and
+their Subresource-Integrity digests, and `manage.py vendor_assets` mirrors those
+files into `static/vendor/`, where `collectstatic` and WhiteNoise pick them up
+like any other static file. Templates reference them through `{% static %}` and
+carry no version of their own, so the registry cannot drift from what a browser
+actually receives.
+
+That buys three things : an instance on an isolated network works; no third
+party learns who browses a compliance platform; and the interface cannot break
+because someone else's infrastructure did. The mirror is never committed - the
+Docker build populates it (`RUN python manage.py vendor_assets`) and a direct
+install fetches whatever is missing on its first launch. A download whose
+content does not match its declared digest is refused rather than served.
+
+The one outbound call the interface can make is the About modal asking GitHub
+whether a newer release exists, and only when someone opens that modal. See
+[configuration.md](configuration.md) for `UPDATE_CHECK_ENABLED` and
+`VENDOR_ASSETS_AUTO_DOWNLOAD`.
+
 ## What is deliberately absent
 
 No JavaScript build step, no SPA, no GraphQL, no per-model Django admin as the
