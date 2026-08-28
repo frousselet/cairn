@@ -57,6 +57,8 @@ minutes.
 
 ## Objectives
 
+![Objectives](../screenshots/objectives.png)
+
 Security and business objectives with measurable targets : a target value, a
 current value, and a progress percentage derived from the two.
 

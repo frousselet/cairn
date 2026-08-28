@@ -335,6 +335,139 @@ def put_in_force(obj, user, comment=None):
     return obj
 
 
+# States the demo dataset ends on, per model. Most rows are created through
+# ``approved()``, which sets ``created_by`` and nothing else, so without this
+# pass every default-lifecycle row stays in ``draft`` : counted in no report,
+# linkable from nothing, invisible on the dashboard. The demo then looks empty
+# exactly where it should look busiest, and the overall compliance rate reads 0%
+# because a draft framework is not a framework anyone is measured against.
+#
+# A register that is entirely validated is as unrealistic as one entirely in
+# draft, so each entry below is a spread rather than a single state. Shares are
+# relative counts within one cycle of the pattern.
+LIFECYCLE_SPREAD = [
+    # A framework, its sections and its requirements are what compliance is
+    # measured against : a draft one would make the whole module read as zero.
+    ("compliance.Framework", [("validated", 1)]),
+    ("compliance.Requirement", [("validated", 1)]),
+    # Context registers : settled, with a live minority still being worked on.
+    ("context.Issue", [("validated", 8), ("pending", 1), ("draft", 1)]),
+    ("context.Stakeholder", [("validated", 8), ("pending", 1), ("draft", 1)]),
+    ("context.Objective", [("validated", 9), ("pending", 1)]),
+    ("context.Role", [("validated", 9), ("draft", 1)]),
+    ("context.Activity", [("validated", 8), ("pending", 1), ("draft", 1)]),
+    ("context.Indicator", [("validated", 9), ("pending", 1)]),
+    ("context.SwotAnalysis", [("validated", 7), ("draft", 2)]),
+    # Catalogues : mostly in force, a few entries awaiting review, which is what
+    # a maintained catalogue actually looks like.
+    ("risks.Threat", [("validated", 8), ("pending", 1), ("draft", 1)]),
+    ("risks.ISO27005Risk", [("validated", 8), ("pending", 1), ("draft", 1)]),
+    ("risks.RiskCriteria", [("validated", 1)]),
+    ("assets.AssetGroup", [("validated", 1)]),
+    # EBIOS RM workshop outputs, validated as each workshop closes.
+    ("risks.FearedEvent", [("validated", 1)]),
+    ("risks.RiskSource", [("validated", 1)]),
+    ("risks.TargetedObjective", [("validated", 1)]),
+    ("risks.RiskSourceObjectivePair", [("validated", 1)]),
+    ("risks.StrategicScenario", [("validated", 1)]),
+    ("risks.AttackPathStep", [("validated", 1)]),
+    ("risks.EcosystemStakeholder", [("validated", 1)]),
+    ("risks.EbiosSummary", [("validated", 1)]),
+    # Suppliers run their own lifecycle: a register in the middle of its
+    # assessment campaign, not one where every third party is already cleared.
+    ("assets.Supplier", [
+        ("compliant", 6), ("evaluation", 3), ("risk_questionnaire", 2),
+        ("integration", 2), ("compensatory_measures", 1), ("non_compliant", 1),
+    ]),
+]
+
+# How many rows per model are walked through their real transitions rather than
+# assigned in bulk. Those carry a `core.LifecycleEvent` trail, so the History tab
+# of a demo record is not empty; the rest are assigned directly because walking
+# seven hundred rows would add minutes to the first-run sample data load.
+WALKED_PER_MODEL = 2
+
+
+def _spread_lifecycle_states(user):
+    """Give every register a realistic spread of lifecycle states.
+
+    Deterministic : rows are ordered by creation and assigned by position in the
+    pattern, never at random, so two runs of the seed produce the same dataset
+    and a documentation screenshot pass is reproducible.
+    """
+    from django.apps import apps
+
+    from core.lifecycle import resolve_lifecycle
+
+    for label, distribution in LIFECYCLE_SPREAD:
+        model = apps.get_model(label)
+
+        # Fail here, naming the model, rather than several hundred rows later
+        # inside an .update() whose traceback says only "has no field named".
+        if not any(f.name == "workflow_state" for f in model._meta.get_fields()):
+            raise RuntimeError(
+                f"{label} runs no lifecycle, so it has no state to spread. "
+                "Remove it from LIFECYCLE_SPREAD."
+            )
+        known = {step.code for step in resolve_lifecycle(model).steps}
+        unknown = [state for state, _ in distribution if state not in known]
+        if unknown:
+            raise RuntimeError(
+                f"{label} has no step {', '.join(repr(u) for u in unknown)} : "
+                f"its lifecycle offers {sorted(known)}."
+            )
+
+        rows = list(model.objects.order_by("created_at", "pk"))
+        if not rows:
+            continue
+
+        # A few rows get the real transition trail an auditor would read.
+        walked = 0
+        for obj in rows[:WALKED_PER_MODEL]:
+            try:
+                put_in_force(obj, user)
+            except Exception:
+                break
+            walked += 1
+
+        pattern = [state for state, share in distribution for _ in range(share)]
+        buckets = {}
+        for index, obj in enumerate(rows[walked:]):
+            buckets.setdefault(pattern[index % len(pattern)], []).append(obj.pk)
+        for state, pks in buckets.items():
+            model.objects.filter(pk__in=pks).update(workflow_state=state)
+
+
+def _refresh_internal_indicators(user):
+    """Re-measure the platform-computed indicators once the states are final.
+
+    An indicator whose ``internal_source`` is set reads the live register
+    (overall compliance, objective progress, ...). They are created early in the
+    seed, while every row is still in draft, so their series would otherwise sit
+    at a flat zero next to a dashboard reporting the real rate : the KPI tile and
+    the widget beside it would contradict each other on the same screen.
+
+    The historical points are rebased on the current value rather than dropped,
+    so the sparkline still shows the gentle climb the seed intends.
+    """
+    from context.models import Indicator, IndicatorMeasurement
+
+    for indicator in (Indicator.objects
+                      .filter(is_internal=True)
+                      .exclude(internal_source="")):
+        value = indicator.compute_internal_value()
+        if value is None:
+            continue
+        value = float(value)
+        indicator.measurements.all().delete()
+        for offset, delta in [(120, -9), (90, -6), (60, -4), (30, -2)]:
+            IndicatorMeasurement.objects.create(
+                indicator=indicator, value=str(round(max(0.0, value + delta), 1)),
+                recorded_at=NOW - timedelta(days=offset), recorded_by=user,
+            )
+        indicator.record_measurement(str(round(value, 1)), recorded_by=user)
+
+
 # Progress reporting. When the onboarding runner exec()s this script it injects a
 # ``SEED_PROGRESS`` callable in the namespace; each phase then both prints (for
 # the CLI/shell path) and reports its label to the live progress bar. Outside the
@@ -5158,6 +5291,11 @@ with transaction.atomic():
         reason="Vendor due diligence for an upcoming contract.",
         nda_accepted=True, nda_accepted_at=NOW,
     )
+
+    # ─────────────────────────────────────────────── lifecycle states
+    _phase("Lifecycle states...")
+    _spread_lifecycle_states(elise)
+    _refresh_internal_indicators(elise)
 
 print("Seed completed.")
 print(f"  Users: {User.objects.count()}  Scopes: {Scope.objects.count()}  Sites: {Site.objects.count()}")

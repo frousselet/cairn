@@ -1,6 +1,6 @@
 # Reports and management review
 
-![Calendar](../screenshots/calendar.png)
+![Management reviews](../screenshots/management-reviews.png)
 
 ## Reports
 
