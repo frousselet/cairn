@@ -3311,7 +3311,11 @@
       .sidebar-collapsed .sidebar-collapse-btn i:first-child { font-size: .9375rem; width: 1.25rem; }
       .sidebar-collapsed .sidebar-collapse-btn i.bi-chevron-down { display: inline; }
       .sidebar-collapsed .sidebar-collapse-btn::after { display: none; }
-      .sidebar-collapsed .sidebar-body .collapse,
+      /* The drawer is never an icon rail, so undo the rail's hiding of the
+         sub-lists - but honour the fold state instead of forcing every group
+         open, which would put the whole tree back on screen. */
+      .sidebar-collapsed .sidebar-body .collapse:not(.show) { display: none !important; }
+      .sidebar-collapsed .sidebar-body .collapse.show,
       .sidebar-collapsed .sidebar-body .collapsing { display: block !important; }
       .sidebar-collapsed .sidebar-sub { display: block; padding-left: 3.125rem; }
       .sidebar-collapsed .sidebar-tooltip { display: none !important; }
@@ -5633,12 +5637,12 @@
 
       {# ── Gouvernance ─────────────────────────────────── #}
       <div class="sidebar-section">{% trans "Governance" %}</div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navGouv" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navGouv" aria-controls="navGouv" aria-expanded="false">
         <i class="bi bi-diagram-3"></i> <span class="sidebar-link-text">{% trans "Organization" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Organization" %}</span>
       </button>
-      <div class="collapse show" id="navGouv">
+      <div class="collapse" id="navGouv" data-bs-parent=".sidebar-body">
         <a href="{% url 'context:scope-list' %}" class="sidebar-link sidebar-sub">{% trans "Scopes" %}</a>
         <a href="{% url 'context:issue-list' %}" class="sidebar-link sidebar-sub">{% trans "Issues" %}</a>
         <a href="{% url 'context:stakeholder-list' %}" class="sidebar-link sidebar-sub">{% trans "Stakeholders" %}</a>
@@ -5653,33 +5657,33 @@
         <i class="bi bi-activity"></i> <span class="sidebar-link-text">{% trans "Activities" %}</span>
         <span class="sidebar-tooltip">{% trans "Activities" %}</span>
       </a>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navIndicateurs" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navIndicateurs" aria-controls="navIndicateurs" aria-expanded="false">
         <i class="bi bi-bar-chart-line"></i> <span class="sidebar-link-text">{% trans "Indicators" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Indicators" %}</span>
       </button>
-      <div class="collapse show" id="navIndicateurs">
+      <div class="collapse" id="navIndicateurs" data-bs-parent=".sidebar-body">
         <a href="{% url 'context:indicator-organizational-list' %}" class="sidebar-link sidebar-sub">{% trans "Organizational" %}</a>
         <a href="{% url 'context:indicator-technical-list' %}" class="sidebar-link sidebar-sub">{% trans "Technical" %}</a>
       </div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navStrategie" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navStrategie" aria-controls="navStrategie" aria-expanded="false">
         <i class="bi bi-compass"></i> <span class="sidebar-link-text">{% trans "Strategy" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Strategy" %}</span>
       </button>
-      <div class="collapse show" id="navStrategie">
+      <div class="collapse" id="navStrategie" data-bs-parent=".sidebar-body">
         <a href="{% url 'reports:report-list' %}" class="sidebar-link sidebar-sub">{% trans "Reports" %}</a>
         <a href="{% url 'reports:management-review-list' %}" class="sidebar-link sidebar-sub">{% trans "Management reviews" %}</a>
       </div>
 
       {# ── Actifs ──────────────────────────────────────── #}
       <div class="sidebar-section">{% trans "Assets" %}</div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navActifs" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navActifs" aria-controls="navActifs" aria-expanded="false">
         <i class="bi bi-box-seam"></i> <span class="sidebar-link-text">{% trans "Goods" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Goods" %}</span>
       </button>
-      <div class="collapse show" id="navActifs">
+      <div class="collapse" id="navActifs" data-bs-parent=".sidebar-body">
         <a href="{% url 'assets:essential-asset-list' %}" class="sidebar-link sidebar-sub">{% trans "Essential assets" %}</a>
         <a href="{% url 'assets:support-asset-list' %}" class="sidebar-link sidebar-sub">{% trans "Support assets" %}</a>
         <a href="{% url 'assets:group-list' %}" class="sidebar-link sidebar-sub">{% trans "Asset groups" %}</a>
@@ -5688,30 +5692,30 @@
         <i class="bi bi-building"></i> <span class="sidebar-link-text">{% trans "Sites" %}</span>
         <span class="sidebar-tooltip">{% trans "Sites" %}</span>
       </a>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navSuppliers" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navSuppliers" aria-controls="navSuppliers" aria-expanded="false">
         <i class="bi bi-truck"></i> <span class="sidebar-link-text">{% trans "Suppliers" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Suppliers" %}</span>
       </button>
-      <div class="collapse show" id="navSuppliers">
+      <div class="collapse" id="navSuppliers" data-bs-parent=".sidebar-body">
         <a href="{% url 'assets:supplier-list' %}" class="sidebar-link sidebar-sub">{% trans "Suppliers" %}</a>
         <a href="{% url 'assets:supplier-type-list' %}" class="sidebar-link sidebar-sub">{% trans "Supplier types" %}</a>
       </div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navDocuments" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navDocuments" aria-controls="navDocuments" aria-expanded="false">
         <i class="bi bi-file-earmark-text"></i> <span class="sidebar-link-text">{% trans "Documents" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Documents" %}</span>
       </button>
-      <div class="collapse show" id="navDocuments">
+      <div class="collapse" id="navDocuments" data-bs-parent=".sidebar-body">
         <a href="{% url 'assets:contract-list' %}" class="sidebar-link sidebar-sub">{% trans "Contracts" %}</a>
         <a href="{% url 'assets:certificate-list' %}" class="sidebar-link sidebar-sub">{% trans "Certificates" %}</a>
       </div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navDeps" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navDeps" aria-controls="navDeps" aria-expanded="false">
         <i class="bi bi-share"></i> <span class="sidebar-link-text">{% trans "Dependencies" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Dependencies" %}</span>
       </button>
-      <div class="collapse show" id="navDeps">
+      <div class="collapse" id="navDeps" data-bs-parent=".sidebar-body">
         <a href="{% url 'assets:dependency-list' %}" class="sidebar-link sidebar-sub">{% trans "Asset dependencies" %}</a>
         <a href="{% url 'assets:supplier-dependency-list' %}" class="sidebar-link sidebar-sub">{% trans "Supplier dependencies" %}</a>
         <a href="{% url 'assets:site-asset-dependency-list' %}" class="sidebar-link sidebar-sub">{% trans "Site–asset dependencies" %}</a>
@@ -5721,31 +5725,31 @@
 
       {# ── Gestion des risques ───────────────────────── #}
       <div class="sidebar-section">{% trans "Risk management" %}</div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navRiskAssess" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navRiskAssess" aria-controls="navRiskAssess" aria-expanded="false">
         <i class="bi bi-clipboard-data"></i> <span class="sidebar-link-text">{% trans "Assessments" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Assessments" %}</span>
       </button>
-      <div class="collapse show" id="navRiskAssess">
+      <div class="collapse" id="navRiskAssess" data-bs-parent=".sidebar-body">
         <a href="{% url 'risks:assessment-list' %}" class="sidebar-link sidebar-sub">{% trans "Assessments" %}</a>
         <a href="{% url 'risks:criteria-list' %}" class="sidebar-link sidebar-sub">{% trans "Criteria" %}</a>
       </div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navRiskReg" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navRiskReg" aria-controls="navRiskReg" aria-expanded="false">
         <i class="bi bi-shield-exclamation"></i> <span class="sidebar-link-text">{% trans "Register" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Register" %}</span>
       </button>
-      <div class="collapse show" id="navRiskReg">
+      <div class="collapse" id="navRiskReg" data-bs-parent=".sidebar-body">
         <a href="{% url 'risks:risk-list' %}" class="sidebar-link sidebar-sub">{% trans "Risks" %}</a>
         <a href="{% url 'risks:treatment-plan-list' %}" class="sidebar-link sidebar-sub">{% trans "Treatment plans" %}</a>
         <a href="{% url 'risks:acceptance-list' %}" class="sidebar-link sidebar-sub">{% trans "Acceptances" %}</a>
       </div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navRiskCatalogs" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navRiskCatalogs" aria-controls="navRiskCatalogs" aria-expanded="false">
         <i class="bi bi-journal-bookmark"></i> <span class="sidebar-link-text">{% trans "Catalogs" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Catalogs" %}</span>
       </button>
-      <div class="collapse show" id="navRiskCatalogs">
+      <div class="collapse" id="navRiskCatalogs" data-bs-parent=".sidebar-body">
         <a href="{% url 'risks:threat-list' %}" class="sidebar-link sidebar-sub">{% trans "Threats" %}</a>
         <a href="{% url 'risks:vulnerability-list' %}" class="sidebar-link sidebar-sub">{% trans "Vulnerabilities" %}</a>
       </div>
@@ -5808,12 +5812,12 @@
       <div class="sidebar-section">{% trans "Administration" %}</div>
 
       {# ── Général ──────────────────────────────── #}
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminGeneral" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminGeneral" aria-controls="navAdminGeneral" aria-expanded="false">
         <i class="bi bi-gear"></i> <span class="sidebar-link-text">{% trans "General" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "General" %}</span>
       </button>
-      <div class="collapse show" id="navAdminGeneral">
+      <div class="collapse" id="navAdminGeneral" data-bs-parent=".sidebar-body">
         {% if can_config %}
         <a href="{% url 'accounts:company-settings' %}" class="sidebar-link sidebar-sub">{% trans "Company" %}</a>
         {% endif %}
@@ -5831,12 +5835,12 @@
 
       {# ── Accès ──────────────────────────────── #}
       {% if can_users or can_groups %}
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminAccess" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminAccess" aria-controls="navAdminAccess" aria-expanded="false">
         <i class="bi bi-shield-lock"></i> <span class="sidebar-link-text">{% trans "Access" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Access" %}</span>
       </button>
-      <div class="collapse show" id="navAdminAccess">
+      <div class="collapse" id="navAdminAccess" data-bs-parent=".sidebar-body">
         {% if can_users %}
         <a href="{% url 'accounts:user-list' %}" class="sidebar-link sidebar-sub">{% trans "Users" %}</a>
         {% endif %}
@@ -5849,12 +5853,12 @@
 
       {# ── Ask Cairn ──────────────────────────────── #}
       {% if can_feedback or AI_ASSISTANT_ENABLED and can_config %}
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminAskCairn" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminAskCairn" aria-controls="navAdminAskCairn" aria-expanded="false">
         <i class="bi bi-stars"></i> <span class="sidebar-link-text">{{ ASSISTANT_NAME }}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{{ ASSISTANT_NAME }}</span>
       </button>
-      <div class="collapse show" id="navAdminAskCairn">
+      <div class="collapse" id="navAdminAskCairn" data-bs-parent=".sidebar-body">
         {% if AI_ASSISTANT_ENABLED and can_config %}
         <a href="{% url 'assistant:semantic-index' %}" class="sidebar-link sidebar-sub">{% trans "Semantic index" %}</a>
         {% endif %}
@@ -5866,12 +5870,12 @@
 
       {# ── Logs ──────────────────────────────── #}
       {% if can_audit %}
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navLogs" aria-expanded="true">
+      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navLogs" aria-controls="navLogs" aria-expanded="false">
         <i class="bi bi-journal-text"></i> <span class="sidebar-link-text">{% trans "Logs" %}</span>
         <i class="bi bi-chevron-down"></i>
         <span class="sidebar-tooltip">{% trans "Logs" %}</span>
       </button>
-      <div class="collapse show" id="navLogs">
+      <div class="collapse" id="navLogs" data-bs-parent=".sidebar-body">
         <a href="{% url 'accounts:access-log-list' %}" class="sidebar-link sidebar-sub">{% trans "Access log" %}</a>
         <a href="{% url 'accounts:action-log-list' %}" class="sidebar-link sidebar-sub">{% trans "Action log" %}</a>
       </div>
@@ -5933,6 +5937,77 @@
     </div>
 
   </aside>
+  <script>
+  /* Sidebar fold state.
+   *
+   * The menu is one accordion: every group ships folded and the group holding
+   * the current page is opened here, so the open group is always derived from
+   * the URL and there is nothing to remember between visits. Opening another
+   * group folds the previous one (data-bs-parent), so the sidebar never grows
+   * back to the whole product tree.
+   *
+   * This runs right after the sidebar markup rather than with the rest of the
+   * page scripts, so the menu is never painted in the wrong state, and re-runs
+   * after every hx-boost swap so the highlight follows the user across the
+   * now-AJAX navigations. */
+  (function() {
+    function open(el) {
+      el.classList.add('show');
+      var btn = document.querySelector('[data-bs-target="#' + el.id + '"]');
+      if (btn) btn.setAttribute('aria-expanded', 'true');
+    }
+
+    function syncActive() {
+      var path = location.pathname;
+      var activeCollapse = null;
+      document.querySelectorAll('.sidebar-link').forEach(function(link) {
+        var href = link.getAttribute('href');
+        if (href === path) {
+          link.classList.add('active');
+          link.setAttribute('aria-current', 'page');
+          var collapse = link.closest('.collapse');
+          if (collapse) activeCollapse = collapse;
+        } else {
+          link.classList.remove('active');
+          link.removeAttribute('aria-current');
+        }
+      });
+      return activeCollapse;
+    }
+
+    /* Bootstrap's accordion only reacts to its own toggles, so a group opened
+     * by hand stays open when a boosted navigation opens the active one. Fold
+     * the rest by hand to keep "one group at a time" true after every swap. */
+    function foldOthers(except) {
+      document.querySelectorAll('.sidebar-body .collapse[data-bs-parent]').forEach(function(el) {
+        if (el === except || !el.classList.contains('show')) return;
+        el.classList.remove('show');
+        var btn = document.querySelector('[data-bs-target="#' + el.id + '"]');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    var activeCollapse = syncActive();
+    if (activeCollapse) open(activeCollapse);
+
+    /* After every boost swap, sync the highlight to the new URL and open the
+     * group containing the new active link.
+     *
+     * htmx:afterSettle covers forward boosted navigation.
+     * htmx:historyRestore covers Back/Forward (popstate-driven swap goes
+     * through loadHistoryFromServer, which does NOT fire the full request
+     * lifecycle, so afterSettle alone leaves the sidebar stuck on the
+     * previously-active link). */
+    function syncActiveAndExpand() {
+      var ac = syncActive();
+      if (!ac) return;
+      foldOthers(ac);
+      if (!ac.classList.contains('show')) open(ac);
+    }
+    document.body.addEventListener('htmx:afterSettle', syncActiveAndExpand);
+    document.body.addEventListener('htmx:historyRestore', syncActiveAndExpand);
+  })();
+  </script>
   <button class="sidebar-collapse-toggle" onclick="toggleSidebarCollapse()" title="{% trans 'Toggle sidebar' %}">
     <i class="bi bi-chevron-left"></i>
   </button>
@@ -6918,70 +6993,6 @@
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeSidebarFlyout();
       });
-    })();
-    /* Highlight the active sidebar link based on the current URL.
-     *
-     * Re-runs after every hx-boost swap so the highlight follows the
-     * user across the now-AJAX navigations. The mobile auto-collapse
-     * runs only on first mount - we don't want to keep snapping sections
-     * shut every time the user clicks something. */
-    (function() {
-      function syncActive() {
-        var path = location.pathname;
-        var activeCollapse = null;
-        document.querySelectorAll('.sidebar-link').forEach(function(link) {
-          var href = link.getAttribute('href');
-          if (href === path) {
-            link.classList.add('active');
-            link.setAttribute('aria-current', 'page');
-            var collapse = link.closest('.collapse');
-            if (collapse) activeCollapse = collapse;
-          } else {
-            link.classList.remove('active');
-            link.removeAttribute('aria-current');
-          }
-        });
-        return activeCollapse;
-      }
-
-      /* First-mount behaviour: highlight + auto-collapse on mobile + expand the active section. */
-      var activeCollapse = syncActive();
-      var isMobile = window.matchMedia('(max-width: 991.98px)').matches;
-      if (isMobile) {
-        document.querySelectorAll('.sidebar-body .collapse.show').forEach(function(el) {
-          if (el !== activeCollapse) {
-            el.classList.remove('show');
-            var btn = document.querySelector('[data-bs-target="#' + el.id + '"]');
-            if (btn) btn.setAttribute('aria-expanded', 'false');
-          }
-        });
-      }
-      if (activeCollapse) {
-        activeCollapse.classList.add('show');
-        var btn = document.querySelector('[data-bs-target="#' + activeCollapse.id + '"]');
-        if (btn) btn.setAttribute('aria-expanded', 'true');
-      }
-
-      /* After every boost swap, sync the highlight to the new URL.
-       * Also expand the section containing the new active link, but
-       * don't touch other sections so the user's open/closed state
-       * is preserved.
-       *
-       * htmx:afterSettle covers forward boosted navigation.
-       * htmx:historyRestore covers Back/Forward (popstate-driven swap
-       * goes through loadHistoryFromServer, which does NOT fire the
-       * full request lifecycle, so afterSettle alone leaves the
-       * sidebar stuck on the previously-active link). */
-      function syncActiveAndExpand() {
-        var ac = syncActive();
-        if (ac && !ac.classList.contains('show')) {
-          ac.classList.add('show');
-          var btn = document.querySelector('[data-bs-target="#' + ac.id + '"]');
-          if (btn) btn.setAttribute('aria-expanded', 'true');
-        }
-      }
-      document.body.addEventListener('htmx:afterSettle', syncActiveAndExpand);
-      document.body.addEventListener('htmx:historyRestore', syncActiveAndExpand);
     })();
   </script>
   <script>

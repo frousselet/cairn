@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The sidebar menu ships folded and keeps a single group open at a time : the one holding the current page.
+
 ## [0.36.0] - 2026-08-28
 
 ### Added
