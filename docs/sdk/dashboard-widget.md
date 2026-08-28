@@ -200,9 +200,12 @@ Wire it with `param_sanitizer=_sanitize_overdue_params`. The sanitiser must
 return a complete dict for `None`, because that is what produces the widget's
 defaults.
 
-Setting `config="overdue"` makes the gear appear in edit mode; the dialog itself
-is added to `home.html` alongside the existing indicator, sort, target and
-section dialogs.
+Setting `config="overdue"` makes the gear appear in edit mode. The dialog itself
+is a partial under `templates/dashboard/`, included from `home.html` next to the
+four that already exist (`indicator_config_modal.html`,
+`section_config_modal.html`, `sort_config_modal.html`,
+`target_config_modal.html`), with the small piece of JavaScript in `home.html`
+that opens it and writes the result back onto the tile's `data-params`.
 
 ## 5. Regenerate the reference
 
