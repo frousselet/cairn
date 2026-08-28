@@ -14,6 +14,12 @@ permissions : an entry you cannot read is absent rather than disabled.
 | **Incidents** | Incidents, security events, notification obligations, response plans, and the configuration (reporting authorities, obligation templates) |
 | **Administration** | General (company, tags, lifecycles, calendar subscriptions, Trust Center), access (users, groups, permissions), Ask Cairn feedback, logs |
 
+Entries that hold a sub-list are **folded by default**, and only one of them is
+open at a time : the one holding the page you are on. Opening another folds the
+previous one, so the menu never grows back to the whole product tree. There is
+nothing to set up and nothing to remember - the open group always follows where
+you are.
+
 Every page carries a breadcrumb built from this same tree, so a detail page
 always tells you where it sits : `Governance > Organization > Stakeholders >
 STKH-1`.
