@@ -69,7 +69,10 @@ things.
 
 ## Publication to the wiki
 
-On a version tag, the same workflow builds the wiki and pushes it.
+On a version tag, the same workflow builds the wiki and pushes it, using a
+`WIKI_TOKEN` secret that has to be a **classic** personal access token with
+the `repo` scope : see
+[release-process.md](release-process.md#what-the-tag-triggers).
 
 GitHub wikis are a git repository with one hard constraint : **directories have
 no effect on a page's URL**. A page is addressed by its filename alone, so page

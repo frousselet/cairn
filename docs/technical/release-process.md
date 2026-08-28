@@ -33,8 +33,37 @@ of the file.
 | `docker-publish.yml` | Builds and pushes `frousselet/cairn` to Docker Hub with semver tags (`0.36.0`, `0.36`, `0`) and `latest`. `APP_VERSION` is baked into `/etc/app-version`, which is what the interface footer shows |
 | `docs.yml` | Builds the wiki from `docs/` and pushes it to the wiki repository |
 
-Both need repository secrets : `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` for the
-image, and a token with wiki write access for the documentation.
+Both need repository secrets. The image needs `DOCKERHUB_USERNAME` and
+`DOCKERHUB_TOKEN`. The wiki needs `WIKI_TOKEN`, and that one has a catch worth
+knowing before release day.
+
+A wiki is a **separate git repository** (`<repo>.wiki.git`) that GitHub gates
+differently from the code:
+
+- `GITHUB_TOKEN`, the credential a workflow gets for free, generally cannot
+  write to it;
+- **fine-grained** personal access tokens have no wiki permission at all, so
+  they cannot either, however they are configured.
+
+`WIKI_TOKEN` must therefore be a **classic** personal access token carrying the
+`repo` scope.
+
+1. Create it at
+   [github.com/settings/tokens/new](https://github.com/settings/tokens/new?scopes=repo&description=Cairn+wiki+publication)
+   (the link preselects the scope). Copy the value; GitHub shows it once.
+2. Add it at
+   [the repository's Actions secrets](https://github.com/frousselet/cairn/settings/secrets/actions/new),
+   named exactly `WIKI_TOKEN`.
+
+The wiki also has to have been initialised once, by creating any page in the
+web interface, before a workflow can clone it.
+
+Without the secret the workflow prints these steps and fails rather than dying
+on an opaque git error, and the documentation can still be published by hand:
+
+```bash
+python scripts/build_wiki.py --out build/wiki --version v0.36.0
+```
 
 ## The GitHub release
 
