@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-08-28
+
 ### Added
 
 - The About dialog lists the open source libraries the instance is built on as `owner / library - version` in two columns, each linking to its official repository, also exposed at `GET /api/v1/dependencies` and through the `list_dependencies` MCP tool.
@@ -1309,6 +1311,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.36.0]: https://github.com/frousselet/cairn/compare/v0.35.1...v0.36.0
 [0.35.1]: https://github.com/frousselet/cairn/compare/v0.35.0...v0.35.1
 [0.35.0]: https://github.com/frousselet/cairn/compare/v0.34.1...v0.35.0
 [0.34.1]: https://github.com/frousselet/cairn/compare/v0.34.0...v0.34.1
