@@ -37,7 +37,7 @@ from assets.models import (
     SupportAsset,
 )
 from assets.services.spof_detection import SpofDetector
-from compliance.constants import COMPLIANCE_LEVEL_DEFAULTS
+from compliance.constants import COMPLIANCE_LEVEL_DEFAULTS, EffectivenessVerdict
 from compliance.models import (
     ActionPlanComment,
     ComplianceActionPlan,
@@ -48,6 +48,7 @@ from compliance.models import (
     RequirementMapping,
     Section,
 )
+from context.constants import Criticality
 from context.models import (
     Activity,
     Indicator,
@@ -65,11 +66,90 @@ from context.models import (
     SwotStrategy,
     Tag,
 )
+from incidents.constants import (
+    Art34Ground,
+    AuthorityType,
+    ClockAnchor,
+    ControllerRole,
+    CustodyAction,
+    DetectionSource,
+    EvidenceType,
+    FilingOutcome,
+    HashAlgorithm,
+    NotificationChannel,
+    NotificationRecipientKind,
+    NotificationRegime,
+    ResponseActionStatus,
+    ResponseActionType,
+    RootCauseMethod,
+    SecurityEventClass,
+    TimelineEntryKind,
+    TrafficLightProtocol,
+)
+from incidents.models import (
+    EvidenceCustodyEvent,
+    Incident,
+    IncidentEvidence,
+    IncidentNotification,
+    IncidentResponseAction,
+    IncidentResponsePlan,
+    IncidentTimelineEntry,
+    NotificationFiling,
+    PersonalDataBreach,
+    PostIncidentReview,
+    ReportingAuthority,
+    ReportingObligationTemplate,
+    SecurityEvent,
+)
+
+# Lifecycle step codes are imported, never spelled out (RG-INC-37) : each of
+# these names is resolved by its own model against `incidents/constants.py` at
+# import time, so a renamed step breaks the seed loudly instead of silently
+# parking a demo row on a step that no longer exists.
+from incidents.models.breach import (
+    STEP_CONFIRMED as BREACH_STEP_CONFIRMED,
+    STEP_DOCUMENTED as BREACH_STEP_DOCUMENTED,
+)
+from incidents.models.evidence import (
+    STEP_ANALYSED as EVIDENCE_STEP_ANALYSED,
+    STEP_COLLECTED as EVIDENCE_STEP_COLLECTED,
+    STEP_RETAINED as EVIDENCE_STEP_RETAINED,
+    STEP_SECURED as EVIDENCE_STEP_SECURED,
+)
+from incidents.models.incident import (
+    STEP_CLOSED as INCIDENT_STEP_CLOSED,
+    STEP_CONTAINED as INCIDENT_STEP_CONTAINED,
+    STEP_ERADICATED as INCIDENT_STEP_ERADICATED,
+    STEP_INVESTIGATING as INCIDENT_STEP_INVESTIGATING,
+    STEP_POST_INCIDENT_REVIEW as INCIDENT_STEP_PIR,
+    STEP_RECOVERED as INCIDENT_STEP_RECOVERED,
+    STEP_TRIAGED as INCIDENT_STEP_TRIAGED,
+)
+from incidents.models.notification import (
+    ObligationSource,
+    STEP_ACKNOWLEDGED as NOTIFICATION_STEP_ACKNOWLEDGED,
+    STEP_ASSESSED as NOTIFICATION_STEP_ASSESSED,
+    STEP_DRAFTED as NOTIFICATION_STEP_DRAFTED,
+    STEP_NOT_REQUIRED as NOTIFICATION_STEP_NOT_REQUIRED,
+    STEP_REQUIRED as NOTIFICATION_STEP_REQUIRED,
+)
+from incidents.models.review import (
+    STEP_APPROVED as REVIEW_STEP_APPROVED,
+    STEP_EFFECTIVENESS_VERIFIED as REVIEW_STEP_VERIFIED,
+    STEP_IN_PROGRESS as REVIEW_STEP_IN_PROGRESS,
+    STEP_SUBMITTED as REVIEW_STEP_SUBMITTED,
+)
+from incidents.models.security_event import (
+    STEP_DISCARDED as EVENT_STEP_DISCARDED,
+    STEP_UNDER_ASSESSMENT as EVENT_STEP_UNDER_ASSESSMENT,
+)
 from reports.models.management_review import (
+    IsmsChange,
     ManagementReview,
     ManagementReviewDecision,
     ManagementReviewParticipant,
 )
+from risks.constants import ThreatCategory
 from risks.models import (
     AttackPathStep,
     BaselineGap,
@@ -101,9 +181,12 @@ from trust_center.models import (
     TrustCenterSubprocessor,
 )
 
+import hashlib
 import json
 import os as _os
 import random as _random
+
+from django.core.files.base import ContentFile
 
 
 # Resolve the auxiliary data files relative to a base dir when one is injected
@@ -206,6 +289,50 @@ def approved(user):
     return {
         "created_by": user,
     }
+
+
+def put_in_force(obj, user, comment=None):
+    """Walk a row to the nearest step of its lifecycle that counts in reports.
+
+    Catalogue entities have to be *in force* to do anything :
+    `ReportingAuthority.usable()` and `ReportingObligationTemplate.in_force()`
+    both read `reportable()`, so a row left in draft generates nothing and is
+    invisible to every report. The route is read off the registered lifecycle
+    rather than named here (no state literal), archived steps are never walked
+    through, and each hop is a real `transition_to()` so the row carries the
+    `core.LifecycleEvent` trail an auditor reads. Assigning `workflow_state`
+    would produce the same column value and no trail at all.
+    """
+    from collections import deque
+
+    lifecycle = obj.get_lifecycle()
+    start = obj.workflow_state or lifecycle.initial_step.code
+    targets = lifecycle.reportable_step_codes
+    queue = deque([(start, [])])
+    seen = {start}
+    path = None
+    while queue and path is None:
+        code, walked = queue.popleft()
+        if walked and code in targets:
+            path = walked
+            break
+        for transition in lifecycle.transitions_from(code):
+            if transition.target in seen or lifecycle.step(transition.target).is_archived:
+                continue
+            seen.add(transition.target)
+            queue.append((transition.target, walked + [transition]))
+    if path is None:
+        raise RuntimeError(
+            f"Lifecycle '{lifecycle.name}' offers no route from '{start}' to a "
+            "step that counts in reports."
+        )
+    for transition in path:
+        obj.transition_to(
+            transition.target, user,
+            comment=comment if transition.requires_comment or comment else None,
+            enforce_permission=False,
+        )
+    return obj
 
 
 # Progress reporting. When the onboarding runner exec()s this script it injects a
@@ -2356,6 +2483,2100 @@ with transaction.atomic():
     ]
     elise.save()
 
+    # ========================================================== incidents (m6)
+    # Module 6 : the A.5.24 procedure of record, the reporting catalogue every
+    # statutory clock is derived from, the A.6.8 register of reported events and
+    # three incident files - one closed, one live, one exercise.
+    #
+    # Every governed row below reaches its step through
+    # `transition_to(..., enforce_permission=False)`, never by assigning
+    # `workflow_state`. A row written straight into a domain step keeps the step
+    # but carries no `core.LifecycleEvent`, so the stepper, the chronology and
+    # every report would read empty on the very dataset the demo exists to show.
+    #
+    # The process clocks the lifecycle owns (`declared_at`, `contained_at`,
+    # `sealed_at`, `held_at`, ...) are pre-filled on the instance *before* the
+    # transition that stamps them : RG-INC-12 stamps them only when they are
+    # blank, so a seeded file keeps a plausible historical chronology instead of
+    # collapsing every phase onto the second the seed ran, while the transition
+    # itself stays a real, recorded one.
+    _phase("Incident response plan and reporting catalogue...")
+
+    irp = IncidentResponsePlan.objects.create(
+        name="Voltara incident response plan",
+        purpose=(
+            "Detect, assess, contain and learn from information security "
+            "incidents affecting corporate IT, industrial operations and "
+            "customer services, and discharge every reporting duty the group "
+            "owes within the statutory delay."
+        ),
+        procedure=(
+            "1. Report : anyone reports an event through the service desk, the "
+            "SOC hotline or the anonymous form.\n"
+            "2. Assess : the duty incident lead performs the A.5.25 assessment "
+            "within four working hours and decides event, weakness or "
+            "incident.\n"
+            "3. Respond : the incident manager runs containment, eradication "
+            "and recovery, and records every step in the incident file.\n"
+            "4. Notify : the DPO and the CISO decide each regulatory "
+            "obligation, file it and keep the receipt.\n"
+            "5. Learn : a post-incident review is held within fifteen days of "
+            "recovery, and its corrective actions are tracked as action plans."
+        ),
+        classification_scale=(
+            "Critical : loss of supervision or of production on a plant, or a "
+            "confirmed breach affecting more than 10 000 data subjects.\n"
+            "High : degraded production, compromise of an internet-facing "
+            "service, or a confirmed personal data breach.\n"
+            "Medium : contained compromise of a workstation or an account, no "
+            "service impact.\n"
+            "Low : single-user event with no data and no service impact."
+        ),
+        escalation_matrix=(
+            "Critical : CISO and Executive Committee within 1 hour, crisis "
+            "cell convened.\n"
+            "High : CISO within 2 hours, CIO within 4 hours, DPO within 4 "
+            "hours whenever personal data is involved.\n"
+            "Medium : incident lead, CISO in the daily brief.\n"
+            "Low : service desk, weekly summary."
+        ),
+        reporting_channels=(
+            "Service desk (extension 4000), SOC hotline 24/7, "
+            "security@voltara.example, and the anonymous reporting form "
+            "published on the intranet, which records no reporter identity "
+            "(A.6.8)."
+        ),
+        evidence_procedure=(
+            "Acquire before you remediate. Images and log extracts are taken "
+            "with a write blocker or a documented read-only export, hashed "
+            "with SHA-256 at acquisition, sealed in Cairn and held in the "
+            "Roubaix evidence safe. Every handover is recorded in the chain of "
+            "custody with the name of the person receiving custody (A.5.28)."
+        ),
+        lessons_learned_procedure=(
+            "Every incident closes on an approved post-incident review. Root "
+            "causes feed the risk register, corrective actions are raised on "
+            "the clause 10.2 register as action plans, and their effectiveness "
+            "is verified on a scheduled date (A.5.27)."
+        ),
+        applicable_regimes=[
+            NotificationRegime.NIS2_EARLY_WARNING,
+            NotificationRegime.NIS2_NOTIFICATION,
+            NotificationRegime.CONTRACTUAL_CUSTOMER,
+        ],
+        owner=elise, approved_by=david,
+        approved_at=months_ago(7), effective_from=months_ago(7),
+        review_date=months_ahead(5),
+        created_by=elise,
+    )
+    irp.scopes.set([scope_group, scope_it, scope_ot, scope_cust])
+    irp.responsible_roles.set([role_ciso, role_dpo, role_soc, role_irl])
+    irp.linked_requirements.set([
+        iso_reqs["A.5.24"], iso_reqs["A.5.25"], iso_reqs["A.5.26"],
+        iso_reqs["A.5.27"], iso_reqs["A.5.28"], iso_reqs["A.6.8"],
+        nis2_reqs["NIS2-21.b"], gdpr_reqs["GDPR-33"],
+    ])
+    irp.put_into_force(
+        elise,
+        comment="Approved by the CIO and issued as the procedure of record.",
+    )
+
+    auth_cnil = ReportingAuthority.objects.create(
+        name="Commission nationale de l'informatique et des libertes",
+        short_name="CNIL",
+        authority_type=AuthorityType.SUPERVISORY_AUTHORITY,
+        primary_regime=NotificationRegime.GDPR_ART33_AUTHORITY,
+        additional_regimes=[
+            NotificationRegime.GDPR_ART34_DATA_SUBJECT,
+            NotificationRegime.EPRIVACY,
+        ],
+        jurisdiction_country="France",
+        portal_url="https://notifications.cnil.fr/",
+        contact_phone="+33 1 53 73 22 22",
+        notification_language="fr",
+        procedure=(
+            "Filed on the online notification portal by the DPO, who holds the "
+            "account. The form asks for the Art. 33(3)(a) to (d) content and "
+            "returns a receipt number immediately; that receipt is registered "
+            "as evidence on the incident. Phased provision under Art. 33(4) is "
+            "filed as a follow-up on the same receipt number. No filing by "
+            "e-mail is accepted."
+        ),
+        created_by=amelia,
+    )
+    put_in_force(
+        auth_cnil, elise,
+        comment="Authority of record for personal data breaches in France.",
+    )
+
+    auth_anssi = ReportingAuthority.objects.create(
+        name="Agence nationale de la securite des systemes d'information",
+        short_name="ANSSI",
+        authority_type=AuthorityType.CSIRT,
+        primary_regime=NotificationRegime.NIS2_EARLY_WARNING,
+        additional_regimes=[
+            NotificationRegime.NIS2_NOTIFICATION,
+            NotificationRegime.NIS2_INTERMEDIATE,
+            NotificationRegime.NIS2_FINAL,
+            NotificationRegime.CERT_CSIRT,
+        ],
+        jurisdiction_country="France",
+        portal_url="https://www.cert.ssi.gouv.fr/",
+        contact_email="cert-fr@ssi.gouv.fr",
+        notification_language="fr",
+        procedure=(
+            "The 24-hour early warning is filed on the portal by the CISO or "
+            "the duty incident lead, who both hold accounts. The 72-hour "
+            "notification updates the same case reference, and the final "
+            "report is due one month after it. Out of hours, the CERT-FR duty "
+            "line is called first and the portal entry is completed afterwards."
+        ),
+        created_by=elise,
+    )
+    put_in_force(
+        auth_anssi, elise,
+        comment="Competent authority and CSIRT of record for NIS2 filings.",
+    )
+
+    # Left in draft on purpose : `ReportingAuthority.usable()` reads
+    # `reportable()`, so this row is visible in the catalogue and cannot yet be
+    # cited by an obligation. A half-checked legal contact must not start a
+    # 24-hour clock.
+    ReportingAuthority.objects.create(
+        name="Commission de regulation de l'energie",
+        short_name="CRE",
+        authority_type=AuthorityType.SECTOR_REGULATOR,
+        primary_regime=NotificationRegime.SECTOR_REGULATOR,
+        jurisdiction_country="France",
+        portal_url="https://www.cre.fr/",
+        procedure=(
+            "Sector reporting channel being confirmed with the regulator "
+            "before the entry is put into force."
+        ),
+        created_by=ines,
+    )
+
+    tpl_gdpr33 = ReportingObligationTemplate.objects.create(
+        name="GDPR Art. 33(1) notification (72h) - CNIL",
+        authority=auth_cnil,
+        regime=NotificationRegime.GDPR_ART33_AUTHORITY,
+        recipient_kind=NotificationRecipientKind.SUPERVISORY_AUTHORITY,
+        legal_reference="GDPR Art. 33(1)",
+        content_requirements=(
+            "Nature of the breach, categories and approximate number of data "
+            "subjects and of records concerned, DPO contact, likely "
+            "consequences, and measures taken or proposed (Art. 33(3)(a) to "
+            "(d)). Where the information cannot be provided at once it may be "
+            "provided in phases under Art. 33(4)."
+        ),
+        clock_anchor=ClockAnchor.AWARENESS_AT, clock_hours=72,
+        jurisdiction_country="France",
+        requires_personal_data=True,
+        order=10, created_by=amelia,
+    )
+    put_in_force(tpl_gdpr33, elise, comment="Reviewed with counsel.")
+
+    tpl_gdpr34 = ReportingObligationTemplate.objects.create(
+        name="GDPR Art. 34 communication to data subjects - high risk",
+        regime=NotificationRegime.GDPR_ART34_DATA_SUBJECT,
+        recipient_kind=NotificationRecipientKind.DATA_SUBJECT,
+        legal_reference="GDPR Art. 34(1)",
+        content_requirements=(
+            "In clear and plain language : the nature of the breach, the DPO "
+            "contact, the likely consequences and the measures taken, together "
+            "with the advice to data subjects on how to protect themselves "
+            "(Art. 34(2))."
+        ),
+        no_fixed_deadline=True,
+        jurisdiction_country="France",
+        requires_personal_data=True, requires_high_risk=True,
+        order=20, created_by=amelia,
+    )
+    put_in_force(
+        tpl_gdpr34, elise,
+        comment=(
+            "Fires only on a recorded high risk to rights and freedoms; an "
+            "undetermined verdict never generates it."
+        ),
+    )
+
+    tpl_nis2_ew = ReportingObligationTemplate.objects.create(
+        name="NIS2 early warning (24h) - ANSSI",
+        authority=auth_anssi,
+        regime=NotificationRegime.NIS2_EARLY_WARNING,
+        recipient_kind=NotificationRecipientKind.CSIRT,
+        legal_reference="NIS2 Art. 23(4)(a)",
+        content_requirements=(
+            "Whether the incident is suspected of being caused by an unlawful "
+            "or malicious act, and whether it may have a cross-border impact."
+        ),
+        clock_anchor=ClockAnchor.AWARENESS_AT, clock_hours=24,
+        jurisdiction_country="France",
+        min_severity=Criticality.HIGH, requires_significant=True,
+        order=1, created_by=elise,
+    )
+    put_in_force(tpl_nis2_ew, elise, comment="Aligned with the ANSSI guidance.")
+
+    tpl_nis2_notif = ReportingObligationTemplate.objects.create(
+        name="NIS2 incident notification (72h) - ANSSI",
+        authority=auth_anssi,
+        regime=NotificationRegime.NIS2_NOTIFICATION,
+        recipient_kind=NotificationRecipientKind.CSIRT,
+        legal_reference="NIS2 Art. 23(4)(b)",
+        content_requirements=(
+            "An initial assessment of the incident, including its severity and "
+            "impact, and the indicators of compromise where they are available."
+        ),
+        clock_anchor=ClockAnchor.AWARENESS_AT, clock_hours=72,
+        jurisdiction_country="France",
+        min_severity=Criticality.HIGH, requires_significant=True,
+        order=2, created_by=elise,
+    )
+    put_in_force(tpl_nis2_notif, elise, comment="Aligned with the ANSSI guidance.")
+
+    tpl_nis2_final = ReportingObligationTemplate.objects.create(
+        name="NIS2 final report (one month) - ANSSI",
+        authority=auth_anssi,
+        regime=NotificationRegime.NIS2_FINAL,
+        recipient_kind=NotificationRecipientKind.CSIRT,
+        legal_reference="NIS2 Art. 23(4)(d)",
+        content_requirements=(
+            "A detailed description of the incident, its severity and impact, "
+            "the type of threat or root cause, the mitigation measures applied "
+            "and their outcome, and any cross-border impact."
+        ),
+        clock_anchor=ClockAnchor.PREVIOUS_STAGE, clock_hours=720,
+        depends_on_regime=NotificationRegime.NIS2_NOTIFICATION,
+        jurisdiction_country="France",
+        min_severity=Criticality.HIGH, requires_significant=True,
+        order=3, created_by=elise,
+    )
+    put_in_force(
+        tpl_nis2_final, elise,
+        comment=(
+            "One month counted from the filing of the 72-hour notification, "
+            "not from awareness."
+        ),
+    )
+
+    # ------------------------------------------------- the A.6.8 register
+    _phase("Security events and incident files...")
+
+    def obligation_for(incident, regime):
+        """The obligation an incident carries under one regime."""
+        return incident.notifications.get(regime=regime)
+
+    # --- INCD : customer portal exposed invoices across accounts ----------
+    # Reported by a customer, promoted through the A.5.25 assessment, run to
+    # closure with its chronology, its evidence, its GDPR qualification and its
+    # notification file. The legal clock runs from awareness, which postdates
+    # the technical detection by the fifteen hours the qualification took, and
+    # the CNIL filing is 24 hours late : a register where nothing is ever late
+    # teaches nothing.
+    inc1_detected = NOW - timedelta(days=6, hours=3)
+    inc1_awareness = inc1_detected + timedelta(hours=15)
+
+    ev_portal = SecurityEvent.report(
+        ines,
+        title="Customer sees another account's invoice in the portal",
+        description=(
+            "A customer called the service desk : after logging in to the "
+            "self-service portal and opening an invoice from the history "
+            "list, the PDF displayed the name, address and consumption of "
+            "another customer. The caller reproduced it twice while on the "
+            "phone."
+        ),
+        event_class=SecurityEventClass.EVENT,
+        category=ThreatCategory.DATA_BREACH,
+        detection_source=DetectionSource.CUSTOMER_REPORT,
+        source_reference="SD-2026-4471",
+        occurred_at=NOW - timedelta(days=13),
+        detected_at=inc1_detected,
+        reported_at=inc1_detected + timedelta(hours=2),
+        reporter_label="Customer, contract 4471-88 (via the service desk)",
+    )
+    ev_portal.scopes.set([scope_group, scope_cust])
+    ev_portal.affected_support_assets.set([sa_portal])
+    ev_portal.affected_essential_assets.set([ea_custdata, ea_billing])
+    ev_portal.affected_sites.set([site_dc])
+    ev_portal.assessed_at = inc1_detected + timedelta(hours=3)
+    ev_portal.assessed_by = elise
+    ev_portal.transition_to(
+        EVENT_STEP_UNDER_ASSESSMENT, elise, enforce_permission=False,
+    )
+    ev_portal.assessment_notes = (
+        "Reproduced on the pre-production copy of release 4.12.1 : the "
+        "invoice download endpoint resolves the document identifier without "
+        "checking that it belongs to the authenticated contract. Personal data "
+        "of other customers is readable, so this is an incident and the DPO "
+        "was engaged the same evening."
+    )
+    ev_portal.save()
+
+    inc_portal = ev_portal.promote_to_incident(
+        elise,
+        "Confirmed as an incident : broken object-level authorisation on the "
+        "invoice endpoint, personal data of other customers readable.",
+        enforce_permission=False,
+        title="Customer portal exposed invoices across accounts",
+        summary=(
+            "Release 4.12.1 of the customer portal shipped an invoice "
+            "download endpoint with no ownership check. Between the release "
+            "and the fix, 1 842 invoices belonging to 1 214 customers could be "
+            "opened by another authenticated customer; the access logs show 15 "
+            "were actually opened, by 3 customers, all of whom reported it. "
+            "The endpoint was disabled and patched within five hours of the "
+            "DPO qualifying the report, the CNIL was notified and the affected "
+            "customers were informed."
+        ),
+        severity=Criticality.HIGH,
+        tlp=TrafficLightProtocol.AMBER,
+        confidentiality_impact=True,
+        personal_data_involved=True,
+        awareness_at=inc1_awareness,
+        awareness_justification=(
+            "The call reached the service desk at 18:40 and was handled as a "
+            "functional defect overnight. The group became aware within the "
+            "meaning of Art. 33(1) the following morning, when the DPO "
+            "qualified the report as a possible personal data breach after the "
+            "defect was reproduced."
+        ),
+        declared_at=inc1_detected + timedelta(hours=3, minutes=10),
+        estimated_cost=Decimal("48000.00"),
+        response_plan=irp,
+        incident_manager=marc,
+    )
+    inc_portal.is_significant = False
+    inc_portal.significance_determined_at = inc1_awareness + timedelta(hours=2)
+    inc_portal.significance_justification = (
+        "No effect on the continuity of an essential service : the exposure "
+        "was confined to the customer self-service portal, production, "
+        "dispatch and metering were unaffected, and none of the thresholds of "
+        "the NIS2 implementing act is met."
+    )
+    inc_portal.cross_border_impact = False
+    inc_portal.cross_border_justification = (
+        "Every affected customer holds a French supply contract billed by the "
+        "French entity; no user or entity in another Member State is affected."
+    )
+    inc_portal.suspected_malicious = False
+    inc_portal.suspected_malicious_justification = (
+        "The exposure was caused by a defective authorisation check introduced "
+        "in release 4.12.1. No credential abuse, no enumeration pattern and "
+        "no bulk download appears in the access logs."
+    )
+    inc_portal.triaged_at = inc1_awareness + timedelta(minutes=30)
+    inc_portal.save()
+    inc_portal.affected_suppliers.set([sup_cloudnord])
+    inc_portal.affected_activities.set([act_billing])
+    inc_portal.threats.set([threat_objs["Accidental misconfiguration"]])
+    inc_portal.realised_risks.set([r_breach])
+    inc_portal.linked_requirements.set([
+        iso_reqs["A.5.26"], gdpr_reqs["GDPR-32"], gdpr_reqs["GDPR-33"],
+    ])
+    # Triage : fixes the classification and the accountable responder, opens
+    # the GDPR qualification and instantiates the notification obligations.
+    inc_portal.transition_to(
+        INCIDENT_STEP_TRIAGED, elise, enforce_permission=False,
+    )
+    inc_portal.transition_to(
+        INCIDENT_STEP_INVESTIGATING, marc, enforce_permission=False,
+    )
+
+    # The duplicate : a second customer noticed the same defect independently.
+    # Recorded as its own report and linked, never merged : the A.6.8 register
+    # counts reports, not defects.
+    ev_portal_dup = SecurityEvent.report(
+        ines,
+        title="Second customer reports another account's invoice in the portal",
+        description=(
+            "A second customer reported the same behaviour on the invoice "
+            "history page, with a screenshot of the PDF header."
+        ),
+        event_class=SecurityEventClass.EVENT,
+        category=ThreatCategory.DATA_BREACH,
+        detection_source=DetectionSource.CUSTOMER_REPORT,
+        source_reference="SD-2026-4478",
+        detected_at=inc1_detected + timedelta(hours=16),
+        reported_at=inc1_detected + timedelta(hours=16, minutes=30),
+        reporter_label="Customer, contract 5120-03 (via the portal contact form)",
+        duplicate_of=ev_portal,
+    )
+    ev_portal_dup.scopes.set([scope_group, scope_cust])
+    ev_portal_dup.affected_support_assets.set([sa_portal])
+    ev_portal_dup.assessed_at = inc1_detected + timedelta(hours=17)
+    ev_portal_dup.assessed_by = ines
+    ev_portal_dup.transition_to(
+        EVENT_STEP_UNDER_ASSESSMENT, ines, enforce_permission=False,
+    )
+    ev_portal_dup.transition_to(
+        EVENT_STEP_DISCARDED, ines, enforce_permission=False,
+        comment=(
+            f"Same defect as {ev_portal.reference}, already promoted and being "
+            f"handled as {inc_portal.reference}. Linked as a duplicate rather "
+            "than merged, so the second report keeps its own reporting delay. "
+            "The customer was called back the same morning."
+        ),
+    )
+
+    # --- INCD : vendor remote maintenance path compromised ---------------
+    # Notified by the turbine vendor, significant within the meaning of NIS2,
+    # still being investigated. This is the file that carries the live
+    # statutory clocks and the staged final report.
+    inc2_detected = NOW - timedelta(days=2, hours=14)
+
+    ev_vendor = SecurityEvent.report(
+        elise,
+        title="TurbinTech notifies a compromise of its remote maintenance platform",
+        description=(
+            "TurbinTech's CSIRT notified all customers that an attacker held "
+            "valid operator credentials on its remote maintenance platform for "
+            "at least nine days, and that sessions towards customer sites were "
+            "opened from an address the vendor does not recognise. Voltara is "
+            "named among the sites reached."
+        ),
+        event_class=SecurityEventClass.EVENT,
+        category=ThreatCategory.SUPPLY_CHAIN,
+        detection_source=DetectionSource.SUPPLIER_NOTIFICATION,
+        source_reference="TT-CSIRT-2026-0092",
+        occurred_at=NOW - timedelta(days=11, hours=6),
+        detected_at=inc2_detected,
+        reported_at=inc2_detected + timedelta(minutes=25),
+        reporter_label="TurbinTech CSIRT",
+        reported_by_supplier=sup_turbintech,
+    )
+    ev_vendor.scopes.set([scope_group, scope_ot])
+    ev_vendor.affected_support_assets.set([sa_vpn, sa_scada, sa_plc])
+    ev_vendor.affected_essential_assets.set([ea_control, ea_telemetry])
+    ev_vendor.affected_sites.set([site_wind])
+    ev_vendor.assessed_at = inc2_detected + timedelta(minutes=40)
+    ev_vendor.assessed_by = thomas
+    ev_vendor.transition_to(
+        EVENT_STEP_UNDER_ASSESSMENT, thomas, enforce_permission=False,
+    )
+    ev_vendor.assessment_notes = (
+        "The vendor's indicators of compromise match two maintenance sessions "
+        "towards the Normandy control room, outside any scheduled maintenance "
+        "window. The sessions used a contractor account with no MFA. Treated "
+        "as an incident on the supervision perimeter until proven otherwise."
+    )
+    ev_vendor.save()
+
+    inc_vendor = ev_vendor.promote_to_incident(
+        elise,
+        "Confirmed as an incident : two unscheduled vendor sessions reached "
+        "the Normandy control room network with a contractor account.",
+        enforce_permission=False,
+        title="Vendor remote maintenance path into the wind farm SCADA compromised",
+        summary=(
+            "The turbine vendor's remote maintenance platform was compromised "
+            "and used to open two unscheduled sessions towards the Normandy "
+            "control room. The tunnel was closed and the vendor VLAN isolated "
+            "within two hours, which cost nine hours of remote supervision. "
+            "The investigation into what was reached on the OT segment is "
+            "ongoing."
+        ),
+        severity=Criticality.CRITICAL,
+        tlp=TrafficLightProtocol.AMBER_STRICT,
+        confidentiality_impact=True,
+        integrity_impact=True,
+        availability_impact=True,
+        declared_at=inc2_detected + timedelta(minutes=45),
+        outage_duration=timedelta(hours=9, minutes=20),
+        estimated_cost=Decimal("125000.00"),
+        response_plan=irp,
+        incident_manager=thomas,
+        origin_supplier=sup_turbintech,
+    )
+    inc_vendor.is_significant = True
+    inc_vendor.significance_determined_at = inc2_detected + timedelta(hours=1)
+    inc_vendor.significance_justification = (
+        "Unauthorised access to the supervision network of a 48-turbine farm "
+        "connected to the transmission grid, with a nine-hour loss of remote "
+        "supervision. Significant under NIS2 Art. 23(3) : the incident is "
+        "capable of causing severe operational disruption of an essential "
+        "service."
+    )
+    inc_vendor.cross_border_impact = True
+    inc_vendor.cross_border_justification = (
+        "TurbinTech operates the same maintenance platform for wind farms in "
+        "Germany and Denmark and has notified those customers, so entities in "
+        "more than one Member State are affected by the same compromise."
+    )
+    inc_vendor.suspected_malicious = True
+    inc_vendor.suspected_malicious_justification = (
+        "Valid vendor credentials used outside every scheduled maintenance "
+        "window, from an address the vendor does not recognise, followed by "
+        "port scanning of the control room subnet."
+    )
+    inc_vendor.triaged_at = inc2_detected + timedelta(hours=1, minutes=30)
+    inc_vendor.save()
+    inc_vendor.affected_suppliers.set([sup_turbintech, sup_sentinel])
+    inc_vendor.affected_activities.set([act_generation, act_maintenance])
+    inc_vendor.threats.set([
+        threat_objs["Supply chain compromise"],
+        threat_objs["Compromise of remote access"],
+    ])
+    inc_vendor.exploited_vulnerabilities.set([
+        vuln_objs["Missing MFA on contractor accounts"],
+    ])
+    inc_vendor.realised_risks.set([r_scada])
+    inc_vendor.linked_requirements.set([
+        iso_reqs["A.5.26"], iso_reqs["A.8.22"],
+        nis2_reqs["NIS2-21.d"], nis2_reqs["NIS2-23.1"],
+    ])
+    inc_vendor.transition_to(
+        INCIDENT_STEP_TRIAGED, elise, enforce_permission=False,
+    )
+    inc_vendor.transition_to(
+        INCIDENT_STEP_INVESTIGATING, thomas, enforce_permission=False,
+    )
+
+    # --- INCD : the annual exercise --------------------------------------
+    # Identical lifecycle, identical gates, excluded from every KPI, and it
+    # generates no notification obligation at all (RG-INC-17). Closing it is
+    # what writes the A.5.24 plan-testing evidence onto the response plan.
+    inc3_start = NOW - timedelta(days=24, hours=9)
+    inc_exercise = Incident.declare(
+        elise,
+        title="Tabletop exercise : ransomware on the corporate file estate",
+        summary=(
+            "Annual exercise required by the incident response plan. A "
+            "simulated ransomware detonation on the corporate file server, run "
+            "through the real process, the real stepper and the real "
+            "chronology, with the IT, OT, legal and communication teams around "
+            "the table."
+        ),
+        description=(
+            "Scenario : at 09:00 the EDR reports mass encryption on the file "
+            "server, and the backup console shows the last successful job 26 "
+            "hours earlier. The teams were asked to declare, triage, contain, "
+            "eradicate, recover and communicate, using the real runbooks and "
+            "the real escalation matrix."
+        ),
+        category=ThreatCategory.RANSOMWARE,
+        severity=Criticality.HIGH,
+        detection_source=DetectionSource.OTHER,
+        tlp=TrafficLightProtocol.GREEN,
+        is_exercise=True,
+        availability_impact=True,
+        integrity_impact=True,
+        occurred_at=inc3_start,
+        detected_at=inc3_start,
+        declared_at=inc3_start + timedelta(minutes=10),
+        triaged_at=inc3_start + timedelta(minutes=45),
+        contained_at=inc3_start + timedelta(hours=2),
+        eradicated_at=inc3_start + timedelta(hours=3, minutes=30),
+        recovered_at=inc3_start + timedelta(hours=5),
+        closed_at=inc3_start + timedelta(days=1, hours=2),
+        response_plan=irp,
+        incident_manager=marc,
+        reporter=elise,
+    )
+    inc_exercise.scopes.set([scope_group, scope_it])
+    inc_exercise.affected_support_assets.set([sa_backup, sa_laptops, sa_ad])
+    inc_exercise.affected_essential_assets.set([ea_billing])
+    inc_exercise.affected_sites.set([site_hq])
+    inc_exercise.affected_activities.set([act_itsm])
+    inc_exercise.threats.set([threat_objs["Ransomware attack"]])
+    inc_exercise.realised_risks.set([r_ransomware])
+    inc_exercise.linked_requirements.set([
+        iso_reqs["A.5.24"], iso_reqs["A.5.26"], iso_reqs["A.5.29"],
+    ])
+    for step, actor in [
+        (INCIDENT_STEP_TRIAGED, elise),
+        (INCIDENT_STEP_INVESTIGATING, marc),
+        (INCIDENT_STEP_CONTAINED, marc),
+        (INCIDENT_STEP_ERADICATED, marc),
+        (INCIDENT_STEP_RECOVERED, marc),
+        (INCIDENT_STEP_PIR, elise),
+    ]:
+        inc_exercise.transition_to(step, actor, enforce_permission=False)
+
+    # --- the events that were assessed and NOT promoted ------------------
+    # The single most audit-relevant rows in the module : A.5.25 asks to see
+    # the events that were decided not to be incidents, and who decided.
+    ev_mail = SecurityEvent.report(
+        thomas,
+        title="Suspicious maintenance e-mail received by a plant technician",
+        description=(
+            "A technician at the Normandy farm forwarded an e-mail announcing "
+            "an emergency firmware update and carrying a link to a download "
+            "portal. He did not click it and reported it through the service "
+            "desk."
+        ),
+        event_class=SecurityEventClass.EVENT,
+        category=ThreatCategory.SOCIAL_ENGINEERING,
+        detection_source=DetectionSource.EMPLOYEE_REPORT,
+        source_reference="SD-2026-4402",
+        detected_at=NOW - timedelta(days=9, hours=2),
+        reported_at=NOW - timedelta(days=9, hours=1, minutes=40),
+        reporter=thomas,
+    )
+    ev_mail.scopes.set([scope_group, scope_ot])
+    ev_mail.affected_sites.set([site_wind])
+    ev_mail.assessed_at = NOW - timedelta(days=8, hours=20)
+    ev_mail.assessed_by = elise
+    ev_mail.transition_to(
+        EVENT_STEP_UNDER_ASSESSMENT, elise, enforce_permission=False,
+    )
+    ev_mail.transition_to(
+        EVENT_STEP_DISCARDED, elise, enforce_permission=False,
+        comment=(
+            "Assessed with the SOC : the message is a genuine TurbinTech "
+            "maintenance notice. The sending domain, the DKIM signature and "
+            "the contact named in the contract all match, and the link "
+            "resolves to the vendor's documented portal. Confirmed by "
+            "telephone with the vendor's account team the same morning. No "
+            "action required. Recorded so the decision, and the person who "
+            "took it, are evidenced (A.5.25)."
+        ),
+    )
+
+    ev_weakness = SecurityEvent.report(
+        julien,
+        title="Default administrative credentials on the legacy metering gateway",
+        description=(
+            "The annual penetration test found the vendor's default "
+            "administrative account still enabled on the metering gateway at "
+            "the hydro station, reachable from the plant network. Not "
+            "exploited beyond proving the login works."
+        ),
+        event_class=SecurityEventClass.WEAKNESS,
+        category=ThreatCategory.UNAUTHORIZED_ACCESS,
+        detection_source=DetectionSource.PENETRATION_TEST,
+        source_reference="PT-2026-02, finding 4",
+        detected_at=NOW - timedelta(days=17, hours=5),
+        reported_at=NOW - timedelta(days=17, hours=4),
+        reporter=julien,
+    )
+    ev_weakness.scopes.set([scope_group, scope_ot])
+    ev_weakness.affected_support_assets.set([sa_metering])
+    ev_weakness.affected_sites.set([site_hydro])
+    ev_weakness.assessed_at = NOW - timedelta(days=16, hours=6)
+    ev_weakness.assessed_by = julien
+    ev_weakness.transition_to(
+        EVENT_STEP_UNDER_ASSESSMENT, julien, enforce_permission=False,
+    )
+    ev_weakness.assessment_notes = (
+        "Reproduced by the OT team on the gateway itself. Nothing was "
+        "exploited, no session other than the tester's appears in the device "
+        "log, so this is a weakness and not an incident : it belongs in the "
+        "vulnerability register, where the replacement project already tracks "
+        "the device."
+    )
+    ev_weakness.save()
+    ev_weakness.promote_to_vulnerability(
+        julien,
+        "Recorded as a weakness : default credentials still enabled, not "
+        "exploited. Tracked in the vulnerability register against the metering "
+        "gateway replacement.",
+        enforce_permission=False,
+        category="weak_authentication",
+        severity="high",
+        remediation_guidance=(
+            "Disable the vendor default account, set a unique credential from "
+            "the vault, and restrict the management interface to the "
+            "engineering VLAN until the gateway is replaced."
+        ),
+    )
+
+    # The anonymous channel A.6.8 requires : no reporter, no reporter label,
+    # enforced by a database constraint. Still under assessment, so the triage
+    # queue on the dashboard is not empty.
+    ev_anon = SecurityEvent.report(
+        elise,
+        title="Shared administrator password circulating in a team chat",
+        description=(
+            "Anonymous report : an administrator password for a production "
+            "server is said to be pasted in a team chat channel that several "
+            "contractors can read."
+        ),
+        event_class=SecurityEventClass.WEAKNESS,
+        category=ThreatCategory.UNAUTHORIZED_ACCESS,
+        detection_source=DetectionSource.EMPLOYEE_REPORT,
+        detected_at=NOW - timedelta(days=2, hours=6),
+        reported_at=NOW - timedelta(days=2, hours=5),
+        is_anonymous=True,
+    )
+    ev_anon.scopes.set([scope_group, scope_it])
+    ev_anon.affected_support_assets.set([sa_collab, sa_ad])
+    ev_anon.assessed_at = NOW - timedelta(days=1, hours=20)
+    ev_anon.assessed_by = marc
+    ev_anon.transition_to(
+        EVENT_STEP_UNDER_ASSESSMENT, marc, enforce_permission=False,
+    )
+    ev_anon.assessment_notes = (
+        "The named account exists and its password age matches the report. "
+        "The channel history is being retrieved with the works council "
+        "informed, so no verdict yet."
+    )
+    ev_anon.save()
+
+    # ------------------------------------- response, evidence, obligations
+    _phase("Response actions, evidence and regulatory obligations...")
+
+    # --- response actions -------------------------------------------------
+    act_disable = IncidentResponseAction.objects.create(
+        incident=inc_portal, action_type=ResponseActionType.CONTAINMENT,
+        title="Disable the invoice download endpoint",
+        description=(
+            "Switch the feature flag off at the CDN so no invoice can be "
+            "downloaded while the fix is prepared."
+        ),
+        owner=marc, due_at=inc1_awareness + timedelta(hours=1),
+        started_at=inc1_awareness + timedelta(minutes=20),
+    )
+    act_disable.mark_done(
+        marc,
+        outcome=(
+            "Endpoint returning 503 from 09:12. Verified from two customer "
+            "accounts that no invoice can be downloaded."
+        ),
+        completed_at=inc1_awareness + timedelta(minutes=45),
+    )
+    act_logs = IncidentResponseAction.objects.create(
+        incident=inc_portal, action_type=ResponseActionType.EVIDENCE_COLLECTION,
+        title="Extract the portal access logs before they rotate",
+        description=(
+            "Fourteen days of application access logs, exported read-only from "
+            "the log platform, hashed at acquisition."
+        ),
+        owner=marc, performed_by=marc,
+        due_at=inc1_awareness + timedelta(hours=3),
+        started_at=inc1_awareness + timedelta(hours=1),
+    )
+    act_logs.mark_done(
+        marc,
+        outcome=(
+            "14 days exported and sealed. The extract is what established that "
+            "15 invoices were opened across accounts, by 3 customers."
+        ),
+        completed_at=inc1_awareness + timedelta(hours=2, minutes=10),
+    )
+    act_patch = IncidentResponseAction.objects.create(
+        incident=inc_portal, action_type=ResponseActionType.ERADICATION,
+        title="Deploy the ownership check on the invoice endpoint",
+        description=(
+            "Restore the contract ownership assertion removed in 4.12.1 and "
+            "ship it as 4.12.2."
+        ),
+        owner=marc, due_at=inc1_awareness + timedelta(hours=8),
+        started_at=inc1_awareness + timedelta(hours=2),
+    )
+    act_patch.mark_done(
+        marc,
+        outcome=(
+            "4.12.2 deployed at 14:05 and the endpoint re-enabled after the "
+            "authorisation test suite passed on production data."
+        ),
+        completed_at=inc1_awareness + timedelta(hours=5),
+    )
+    act_notice = IncidentResponseAction.objects.create(
+        incident=inc_portal, action_type=ResponseActionType.COMMUNICATION,
+        title="Write and send the customer notice",
+        description=(
+            "Art. 34 communication to the 1 214 customers whose invoices were "
+            "exposed, plus a call to the 3 who reported it."
+        ),
+        owner=ines, due_at=inc1_awareness + timedelta(days=1, hours=12),
+        started_at=inc1_awareness + timedelta(hours=6),
+    )
+    act_notice.mark_done(
+        ines,
+        outcome=(
+            "E-mail sent to 1 214 customers and a notice published in the "
+            "portal. 37 replies handled by the support team, 2 escalated to "
+            "the DPO."
+        ),
+        completed_at=inc1_awareness + timedelta(days=1, hours=4),
+    )
+    IncidentResponseAction.objects.create(
+        incident=inc_portal, action_type=ResponseActionType.ERADICATION,
+        title="Rotate the invoicing service API keys",
+        description="Precautionary rotation of the service-to-service keys.",
+        status=ResponseActionStatus.CANCELLED,
+        owner=marc, due_at=inc1_awareness + timedelta(days=1),
+        outcome=(
+            "Cancelled at the review : the defect was a missing authorisation "
+            "check, no credential was exposed and rotation would have added an "
+            "outage for nothing."
+        ),
+    )
+
+    act_tunnel = IncidentResponseAction.objects.create(
+        incident=inc_vendor, action_type=ResponseActionType.CONTAINMENT,
+        title="Close the vendor maintenance tunnel at the perimeter",
+        owner=marc, due_at=inc2_detected + timedelta(hours=1),
+        started_at=inc2_detected + timedelta(minutes=50),
+    )
+    act_tunnel.mark_done(
+        marc,
+        outcome=(
+            "Tunnel down at 21:40 and the contractor account disabled. The "
+            "vendor was told by telephone before the cut."
+        ),
+        completed_at=inc2_detected + timedelta(hours=1, minutes=10),
+    )
+    act_isolate = IncidentResponseAction.objects.create(
+        incident=inc_vendor, action_type=ResponseActionType.CONTAINMENT,
+        title="Isolate the vendor VLAN from the control room network",
+        owner=thomas, due_at=inc2_detected + timedelta(hours=2),
+        started_at=inc2_detected + timedelta(hours=1, minutes=15),
+    )
+    act_isolate.mark_done(
+        thomas,
+        outcome=(
+            "VLAN 412 isolated at the plant firewall. Remote supervision lost "
+            "for nine hours and twenty minutes, local control kept throughout."
+        ),
+        completed_at=inc2_detected + timedelta(hours=2),
+    )
+    act_image = IncidentResponseAction.objects.create(
+        incident=inc_vendor, action_type=ResponseActionType.EVIDENCE_COLLECTION,
+        title="Image the jump host memory before rebooting it",
+        owner=marc, performed_by=marc,
+        due_at=inc2_detected + timedelta(hours=4),
+        started_at=inc2_detected + timedelta(hours=2, minutes=30),
+    )
+    act_image.mark_done(
+        marc,
+        outcome=(
+            "Memory image acquired with the SOC's acquisition tool, hashed and "
+            "sealed before the host was rebooted."
+        ),
+        completed_at=inc2_detected + timedelta(hours=3, minutes=20),
+    )
+    IncidentResponseAction.objects.create(
+        incident=inc_vendor, action_type=ResponseActionType.ESCALATION,
+        title="Get the vendor's session logs for the two unscheduled sessions",
+        description=(
+            "Formal request to TurbinTech for the full session recordings and "
+            "the source addresses."
+        ),
+        status=ResponseActionStatus.BLOCKED,
+        owner=elise, due_at=NOW - timedelta(hours=10),
+        started_at=inc2_detected + timedelta(hours=6),
+        outcome="",
+    )
+    IncidentResponseAction.objects.create(
+        incident=inc_vendor, action_type=ResponseActionType.RECOVERY,
+        title="Reopen vendor maintenance through the jump host with MFA",
+        description=(
+            "No vendor session is reopened until the account is enrolled in "
+            "MFA and every session is recorded."
+        ),
+        status=ResponseActionStatus.PLANNED,
+        owner=thomas, due_at=NOW + timedelta(days=2),
+    )
+
+    ex_isolate = IncidentResponseAction.objects.create(
+        incident=inc_exercise, action_type=ResponseActionType.CONTAINMENT,
+        title="Isolate the simulated infected file server",
+        owner=marc, due_at=inc3_start + timedelta(hours=1),
+        started_at=inc3_start + timedelta(minutes=20),
+    )
+    ex_isolate.mark_done(
+        marc,
+        outcome=(
+            "Isolation walked through on the real console up to the last "
+            "confirmation, which was not sent. Took 22 minutes against the 15 "
+            "assumed by the runbook."
+        ),
+        completed_at=inc3_start + timedelta(hours=1, minutes=52),
+    )
+    ex_restore = IncidentResponseAction.objects.create(
+        incident=inc_exercise, action_type=ResponseActionType.RECOVERY,
+        title="Restore the file share from the immutable vault",
+        owner=marc, due_at=inc3_start + timedelta(hours=4),
+        started_at=inc3_start + timedelta(hours=2, minutes=30),
+    )
+    ex_restore.mark_done(
+        marc,
+        outcome=(
+            "Restore procedure walked through on paper. Nobody in the room "
+            "could state the recovery time objective of the file share, and "
+            "the runbook does not carry it. Raised as a finding."
+        ),
+        completed_at=inc3_start + timedelta(hours=4, minutes=10),
+    )
+    ex_comms = IncidentResponseAction.objects.create(
+        incident=inc_exercise, action_type=ResponseActionType.COMMUNICATION,
+        title="Run the crisis communication drill with the Executive Committee",
+        owner=elise, performed_by=ines,
+        due_at=inc3_start + timedelta(hours=5),
+        started_at=inc3_start + timedelta(hours=4, minutes=15),
+    )
+    ex_comms.mark_done(
+        ines,
+        outcome=(
+            "Holding statement drafted in 25 minutes and approved by the CIO. "
+            "The customer-facing wording had to be rewritten twice for want of "
+            "a pre-approved template."
+        ),
+        completed_at=inc3_start + timedelta(hours=5, minutes=10),
+    )
+
+    # --- evidence and its chain of custody --------------------------------
+    # One item Cairn holds inline, hashed and verified for real, and three
+    # registered by reference : the platform holds the fingerprint, not the
+    # artefact, which is how a disk image or a physical device is registered.
+    # The exposure window : from the faulty release to the fix. Everything the
+    # file says about dates is derived from it, so the dataset never goes stale.
+    exposure_from = inc_portal.occurred_at
+    exposure_to = inc1_awareness + timedelta(hours=5)
+    portal_log_index = f"portal-app-{exposure_from:%Y-%m}"
+    portal_log_name = (
+        f"portal-app-access-{exposure_from:%Y-%m-%d}_{exposure_to:%Y-%m-%d}.log"
+    )
+    portal_log_bytes = (
+        "# Voltara customer portal - application access log extract\n"
+        f"# window {exposure_from:%Y-%m-%dT00:00:00Z} .. "
+        f"{exposure_to:%Y-%m-%dT00:00:00Z} (UTC)\n"
+        "# exported read-only from the log platform, job 88214\n"
+        f"{exposure_from + timedelta(days=7):%Y-%m-%d}T08:41:07Z contract=4471-88 "
+        "GET /api/invoices/INV-118342.pdf owner=5120-03 status=200\n"
+        f"{exposure_from + timedelta(days=7):%Y-%m-%d}T08:44:52Z contract=4471-88 "
+        "GET /api/invoices/INV-118345.pdf owner=5120-03 status=200\n"
+        f"{exposure_from + timedelta(days=8):%Y-%m-%d}T19:02:11Z contract=5120-03 "
+        "GET /api/invoices/INV-117902.pdf owner=4471-88 status=200\n"
+        f"{exposure_from + timedelta(days=12):%Y-%m-%d}T11:27:40Z contract=6633-21 "
+        "GET /api/invoices/INV-118990.pdf owner=4471-88 status=200\n"
+        "# 15 cross-account reads in total, 3 distinct contracts, no bulk pattern\n"
+    ).encode("utf-8")
+    portal_log_digest = hashlib.sha256(portal_log_bytes).hexdigest()
+
+    evid_logs = IncidentEvidence(
+        incident=inc_portal,
+        title="Customer portal access logs, 14-day window",
+        description=(
+            "The extract that establishes which invoices were opened across "
+            "accounts, by whom and when. Quoted in the CNIL notification."
+        ),
+        evidence_type=EvidenceType.LOG_EXTRACT,
+        collected_at=inc1_awareness + timedelta(hours=2),
+        collected_by=marc,
+        collection_method=(
+            "Read-only export from the log platform (job 88214) against the "
+            "immutable index, run by the platform owner with the incident "
+            "manager watching. SHA-256 computed on the exported file before it "
+            "left the platform and compared after transfer."
+        ),
+        source_support_asset=sa_portal,
+        source_description=f"Log platform, index {portal_log_index}",
+        storage_location="Cairn evidence store, copy in the Roubaix evidence safe",
+        original_filename=portal_log_name,
+        file_size=len(portal_log_bytes),
+        content_hash=portal_log_digest,
+        hash_algorithm=HashAlgorithm.SHA256,
+        tlp=TrafficLightProtocol.AMBER,
+        legal_hold=True,
+        retention_until=years_ahead(5),
+        admissibility_notes=(
+            "Counsel advised holding the extract for five years : two "
+            "customers have raised the possibility of a claim. Chain of "
+            "custody form CC-2026-018 countersigned by the forensics provider."
+        ),
+        created_by=marc,
+    )
+    evid_logs.file = ContentFile(portal_log_bytes, name=portal_log_name)
+    evid_logs.sealed_at = inc1_awareness + timedelta(hours=2, minutes=30)
+    evid_logs.save()
+    evid_logs.transition_to(
+        EVIDENCE_STEP_COLLECTED, marc, enforce_permission=False,
+    )
+    evid_logs.transition_to(
+        EVIDENCE_STEP_SECURED, marc, enforce_permission=False,
+        comment="Hash recomputed after transfer and matched. Item sealed.",
+    )
+    # Handed to the forensics provider and returned. A bailiff, a laboratory or
+    # a data subject's counsel is not a supplier, which is why the counterparty
+    # is recorded as free text rather than as a supplier row.
+    EvidenceCustodyEvent.objects.create(
+        evidence=evid_logs, action=CustodyAction.TRANSFERRED,
+        occurred_at=timezone.now(), actor=marc,
+        counterparty="Nina Kaufmann",
+        counterparty_organisation="Helvetia Digital Forensics",
+        location="Roubaix evidence safe, sealed bag EB-2026-0041",
+        hash_at_event=portal_log_digest,
+        notes=(
+            "Handed over for independent analysis of the cross-account reads. "
+            "Bag sealed and signed by both parties; the receiving analyst "
+            "recomputed the digest before signing."
+        ),
+    )
+    EvidenceCustodyEvent.objects.create(
+        evidence=evid_logs, action=CustodyAction.RETURNED,
+        occurred_at=timezone.now(), actor=marc,
+        counterparty="Nina Kaufmann",
+        counterparty_organisation="Helvetia Digital Forensics",
+        location="Roubaix evidence safe, sealed bag EB-2026-0041",
+        hash_at_event=portal_log_digest,
+        notes=(
+            "Returned with the analysis report, seal intact, digest matched at "
+            "the handover."
+        ),
+    )
+    evid_logs.transition_to(
+        EVIDENCE_STEP_ANALYSED, marc, enforce_permission=False,
+        comment=(
+            "Provider report received : 15 cross-account reads, 3 distinct "
+            "contracts, no enumeration and no bulk download."
+        ),
+    )
+    # A real re-measurement of the stored artefact, which appends its own
+    # ledger row and stamps the verification verdict.
+    evid_logs.verify_integrity(
+        elise,
+        notes="Verification run at the close of the incident file.",
+    )
+    evid_logs.transition_to(
+        EVIDENCE_STEP_RETAINED, elise, enforce_permission=False,
+    )
+
+    evid_records_name = f"affected-invoice-records-{exposure_to:%Y-%m-%d}.csv"
+    evid_records_digest = hashlib.sha256(
+        f"voltara/incident/portal/{evid_records_name}".encode("utf-8")
+    ).hexdigest()
+    evid_records = IncidentEvidence(
+        incident=inc_portal,
+        title="Export of the 1 842 exposed invoice records",
+        description=(
+            "The list of invoices reachable across accounts, used to build the "
+            "notification perimeter."
+        ),
+        evidence_type=EvidenceType.DATABASE_EXPORT,
+        collected_at=inc1_awareness + timedelta(hours=6),
+        collected_by=ines,
+        collection_method=(
+            "SELECT run by the DBA on the read replica with the query text "
+            "recorded, exported to CSV and hashed on the jump host. The "
+            "platform holds the fingerprint; the file itself stays in the "
+            "restricted share because it carries customer data."
+        ),
+        source_description="Billing database, read replica bill-ro-02",
+        storage_location=(
+            "Restricted share \\\\voltara\\ir\\INCD-portal\\, retention folder"
+        ),
+        original_filename=evid_records_name,
+        file_size=412_889,
+        content_hash=evid_records_digest,
+        hash_algorithm=HashAlgorithm.SHA256,
+        tlp=TrafficLightProtocol.RED,
+        retention_until=years_ahead(3),
+        admissibility_notes=(
+            "Holds personal data : access limited to the DPO, the incident "
+            "manager and counsel."
+        ),
+        created_by=ines,
+    )
+    evid_records.sealed_at = inc1_awareness + timedelta(hours=6, minutes=20)
+    evid_records.save()
+    evid_records.transition_to(
+        EVIDENCE_STEP_COLLECTED, ines, enforce_permission=False,
+    )
+    evid_records.transition_to(
+        EVIDENCE_STEP_SECURED, ines, enforce_permission=False,
+    )
+    evid_records.transition_to(
+        EVIDENCE_STEP_RETAINED, amelia, enforce_permission=False,
+    )
+
+    evid_receipt_digest = hashlib.sha256(
+        b"voltara/incident/portal/cnil-notification-receipt-NOT-2026-118342.pdf"
+    ).hexdigest()
+    evid_receipt = IncidentEvidence(
+        incident=inc_portal,
+        title="CNIL notification receipt",
+        description=(
+            "The receipt returned by the CNIL portal, kept as the proof that "
+            "the Art. 33(1) filing was made and when."
+        ),
+        evidence_type=EvidenceType.DOCUMENT,
+        collected_at=inc1_awareness + timedelta(hours=96, minutes=15),
+        collected_by=amelia,
+        collection_method=(
+            "PDF downloaded from the CNIL portal immediately after submission "
+            "and hashed on the DPO's workstation."
+        ),
+        source_description="CNIL online notification portal",
+        storage_location="Cairn evidence store, DPO records folder",
+        original_filename="cnil-receipt-NOT-2026-118342.pdf",
+        file_size=88_431,
+        content_hash=evid_receipt_digest,
+        hash_algorithm=HashAlgorithm.SHA256,
+        tlp=TrafficLightProtocol.AMBER,
+        retention_until=years_ahead(5),
+        created_by=amelia,
+    )
+    evid_receipt.sealed_at = inc1_awareness + timedelta(hours=96, minutes=30)
+    evid_receipt.save()
+    evid_receipt.transition_to(
+        EVIDENCE_STEP_COLLECTED, amelia, enforce_permission=False,
+    )
+    evid_receipt.transition_to(
+        EVIDENCE_STEP_SECURED, amelia, enforce_permission=False,
+    )
+    evid_receipt.transition_to(
+        EVIDENCE_STEP_RETAINED, amelia, enforce_permission=False,
+    )
+
+    evid_memory_digest = hashlib.sha256(
+        b"voltara/incident/vendor/jump-host-ot-01-memory-2026.mem"
+    ).hexdigest()
+    evid_memory = IncidentEvidence(
+        incident=inc_vendor,
+        title="Memory image of the OT jump host",
+        description=(
+            "Acquired before the reboot, because the vendor sessions left no "
+            "artefact on disk."
+        ),
+        evidence_type=EvidenceType.MEMORY_DUMP,
+        collected_at=inc2_detected + timedelta(hours=3),
+        collected_by=marc,
+        collection_method=(
+            "Live acquisition with the SOC's acquisition tool over a "
+            "write-blocked USB device, host left powered until the image was "
+            "hashed. Witnessed by the OT manager."
+        ),
+        source_support_asset=sa_vpn,
+        source_description="Jump host OT-JMP-01, Normandy control room",
+        storage_location=(
+            "SentinelWatch forensic vault, case SW-IR-2026-118, plus a copy in "
+            "the Roubaix evidence safe"
+        ),
+        original_filename="ot-jmp-01-memory.mem",
+        file_size=17_179_869_184,
+        content_hash=evid_memory_digest,
+        hash_algorithm=HashAlgorithm.SHA512,
+        tlp=TrafficLightProtocol.RED,
+        legal_hold=True,
+        admissibility_notes=(
+            "A complaint to the public prosecutor is being prepared, so the "
+            "image is under legal hold and carries no retention date : nothing "
+            "is destroyed while the hold stands."
+        ),
+        created_by=marc,
+    )
+    evid_memory.sealed_at = inc2_detected + timedelta(hours=3, minutes=40)
+    evid_memory.save()
+    evid_memory.transition_to(
+        EVIDENCE_STEP_COLLECTED, marc, enforce_permission=False,
+    )
+    evid_memory.transition_to(
+        EVIDENCE_STEP_SECURED, marc, enforce_permission=False,
+        comment="Digest recorded on the acquisition form and in the SOC case.",
+    )
+    EvidenceCustodyEvent.objects.create(
+        evidence=evid_memory, action=CustodyAction.COPIED,
+        occurred_at=timezone.now(), actor=marc,
+        location="SentinelWatch forensic vault, case SW-IR-2026-118",
+        hash_at_event=evid_memory_digest,
+        notes=(
+            "Working copy taken for analysis; the sealed original stays in the "
+            "safe."
+        ),
+    )
+    evid_memory.transition_to(
+        EVIDENCE_STEP_ANALYSED, marc, enforce_permission=False,
+        comment=(
+            "Analysis under way at the SOC : the two vendor sessions are being "
+            "reconstructed from the network stack."
+        ),
+    )
+
+    # --- the GDPR qualification -------------------------------------------
+    # Opened by the triage transition because the personal-data flag is set;
+    # it is never closed by clearing that flag, only by a named person taking
+    # a decision on the record.
+    breach = inc_portal.personal_data_breach
+    breach.controller_role = ControllerRole.CONTROLLER
+    breach.lead_authority = auth_cnil
+    breach.cross_border_eu = False
+    breach.nature = (
+        "Unauthorised disclosure of invoices between customer accounts through "
+        "a missing ownership check on the portal's invoice download endpoint. "
+        "A confidentiality breach only : no data was altered and none was lost."
+    )
+    breach.data_categories = ["identity", "contact", "billing", "consumption"]
+    breach.special_categories = False
+    breach.data_subject_categories = ["Residential customers", "Small business customers"]
+    breach.approximate_data_subjects = 1214
+    breach.approximate_records = 1842
+    breach.volume_is_estimate = False
+    breach.dpo_contact = "Amelia Rossi, Data Protection Officer, dpo@voltara.example"
+    breach.likely_consequences = (
+        "The exposed invoices carry name, postal address, contract reference "
+        "and monthly consumption. The realistic harm is targeted fraud using a "
+        "plausible energy invoice, and inference about occupancy from the "
+        "consumption curve. No payment data, no credentials and no special "
+        "category data is involved."
+    )
+    breach.measures_taken = (
+        "Endpoint disabled within 45 minutes of qualification and patched "
+        "within 5 hours; access logs preserved and analysed to bound the "
+        "exposure to 15 actual reads; the 1 214 customers whose invoices were "
+        "reachable were informed individually; authorisation tests added to "
+        "the release pipeline as a corrective action."
+    )
+    breach.high_risk_to_rights = True
+    breach.high_risk_justification = (
+        "The DPO concluded a high risk under Art. 34(1) : the combination of "
+        "identity, address and consumption supports convincing fraud against "
+        "residential customers, and the exposure was open to any authenticated "
+        "customer for fourteen days."
+    )
+    breach.article_34_exemption = Art34Ground.NONE
+    breach.register_entry_reference = f"REG-VIOL-{TODAY.year}-03"
+    breach.qualified_by = amelia
+    breach.qualified_at = inc1_awareness + timedelta(hours=3)
+    breach.save()
+    breach.transition_to(
+        BREACH_STEP_CONFIRMED, amelia, enforce_permission=False,
+        comment=(
+            "Confirmed as a personal data breach : unauthorised disclosure of "
+            "customer invoices, 1 214 data subjects, high risk to rights and "
+            "freedoms recorded, no Art. 34(3) exemption relied on."
+        ),
+    )
+    breach.transition_to(
+        BREACH_STEP_DOCUMENTED, amelia, enforce_permission=False,
+    )
+
+    # --- the obligation register ------------------------------------------
+    # Four obligations were instantiated at triage from the plan and the
+    # catalogue, and confirming the breach added the Art. 34 duty. Two are
+    # filed, one late, and two are decided not required with a named decider
+    # and a written rationale.
+    o_cnil = obligation_for(inc_portal, NotificationRegime.GDPR_ART33_AUTHORITY)
+    o_cnil.decided_by = amelia
+    o_cnil.decided_at = inc1_awareness + timedelta(hours=3, minutes=30)
+    o_cnil.transition_to(
+        NOTIFICATION_STEP_REQUIRED, amelia, enforce_permission=False,
+        comment=(
+            "Required : a confirmed breach of personal data affecting 1 214 "
+            "data subjects, with no ground to consider it unlikely to result "
+            "in a risk."
+        ),
+    )
+    o_cnil.recipient_name = "CNIL, service des violations de donnees"
+    o_cnil.channel = NotificationChannel.PORTAL
+    o_cnil.content = (
+        "Notification under Art. 33(1).\n\n"
+        "Nature : unauthorised disclosure of customer invoices between "
+        "accounts, caused by a missing ownership check on the portal's invoice "
+        "download endpoint shipped in release 4.12.1.\n"
+        "Categories of data : identity, postal address, contract reference, "
+        "monthly consumption. No payment data, no credentials, no special "
+        "category data.\n"
+        "Scale : 1 842 invoices belonging to 1 214 data subjects were "
+        "reachable; the access logs show 15 were actually opened, by 3 "
+        "customers, all of whom reported it.\n"
+        "DPO contact : Amelia Rossi, dpo@voltara.example.\n"
+        "Likely consequences : targeted fraud using a plausible energy "
+        "invoice, and inference about occupancy from the consumption curve.\n"
+        "Measures : endpoint disabled 45 minutes after qualification, fix "
+        "deployed within 5 hours, logs preserved and analysed, affected "
+        "customers informed individually under Art. 34, authorisation tests "
+        "added to the release pipeline.\n"
+        "The notification is filed 24 hours beyond the 72-hour limit : the "
+        "log analysis needed to state the scale was completed on the evening "
+        "of the third day and the filing was made the following morning. The "
+        "delay is stated to the authority in these terms."
+    )
+    o_cnil.proof_filename = "cnil-receipt-NOT-2026-118342.pdf"
+    o_cnil.proof_file_content = (
+        b"%PDF-1.4\n% CNIL notification receipt NOT-2026-118342 (demo).\n%%EOF\n"
+    )
+    o_cnil.proof_evidence = evid_receipt
+    o_cnil.save()
+    o_cnil.transition_to(
+        NOTIFICATION_STEP_DRAFTED, amelia, enforce_permission=False,
+    )
+    filing_cnil = o_cnil.record_filing(
+        amelia,
+        submitted_at=inc1_awareness + timedelta(hours=96),
+        channel=NotificationChannel.PORTAL,
+        subject="Notification de violation de donnees a caractere personnel",
+        content=o_cnil.content,
+        recipient_name="CNIL, service des violations de donnees",
+        external_reference="NOT-2026-118342",
+        proof_file_content=o_cnil.proof_file_content,
+        proof_filename=o_cnil.proof_filename,
+        comment=(
+            "Filed on the portal 24 hours past the limit; the reason for the "
+            "delay is stated in the notification itself."
+        ),
+    )
+    filing_cnil.record_outcome(
+        outcome=FilingOutcome.ACKNOWLEDGED,
+        acknowledged_at=inc1_awareness + timedelta(hours=97),
+        external_reference="NOT-2026-118342",
+    )
+    o_cnil.acknowledgement_reference = "NOT-2026-118342"
+    o_cnil.acknowledged_at = inc1_awareness + timedelta(hours=97)
+    o_cnil.save()
+    o_cnil.transition_to(
+        NOTIFICATION_STEP_ACKNOWLEDGED, amelia, enforce_permission=False,
+    )
+    # Art. 33(4) phased provision : an amendment is a further filing, never a
+    # rewrite of what was already sent.
+    o_cnil.record_filing(
+        amelia,
+        submitted_at=NOW - timedelta(days=1, hours=2),
+        channel=NotificationChannel.PORTAL,
+        subject="Complement Art. 33(4) - resultat de l'analyse des journaux",
+        content=(
+            "Complement filed under Art. 33(4). The forensic analysis of the "
+            "access logs is complete : 15 cross-account reads, 3 distinct "
+            "contracts, no enumeration and no bulk download. The perimeter "
+            "notified on the initial filing is unchanged."
+        ),
+        recipient_name="CNIL, service des violations de donnees",
+        external_reference="NOT-2026-118342",
+        is_correction=True,
+        supersedes=filing_cnil,
+    )
+
+    o_subjects = obligation_for(
+        inc_portal, NotificationRegime.GDPR_ART34_DATA_SUBJECT
+    )
+    o_subjects.decided_by = amelia
+    o_subjects.decided_at = inc1_awareness + timedelta(hours=4)
+    o_subjects.transition_to(
+        NOTIFICATION_STEP_REQUIRED, amelia, enforce_permission=False,
+        comment=(
+            "Required : a high risk to the rights and freedoms of the data "
+            "subjects is recorded, and no Art. 34(3) exemption is relied on. "
+            "The data was not encrypted at rest for the reader, the risk has "
+            "not ceased, and 1 214 individual e-mails are not a "
+            "disproportionate effort."
+        ),
+    )
+    o_subjects.recipient_name = "1 214 affected customers"
+    o_subjects.recipient_stakeholder = sh_customers
+    o_subjects.channel = NotificationChannel.EMAIL
+    o_subjects.content = (
+        "Dear customer,\n\n"
+        f"Between {exposure_from:%d %B} and {exposure_to:%d %B}, a defect in "
+        "our customer portal made it "
+        "possible for a signed-in customer to open an invoice belonging to "
+        "another customer. One or more of your invoices was reachable in this "
+        "way. The invoice carries your name, your postal address, your "
+        "contract reference and your monthly consumption. It carries no bank "
+        "details, no payment card and no password.\n\n"
+        f"The defect was corrected on {exposure_to:%d %B}. Our analysis of the "
+        "access logs "
+        "shows that fifteen invoices were actually opened; we are contacting "
+        "the customers concerned individually.\n\n"
+        "We advise you to treat with caution any message referring to your "
+        "energy invoices and asking for a payment or a bank detail. Voltara "
+        "will never ask for your bank details by e-mail.\n\n"
+        "Our Data Protection Officer is reachable at dpo@voltara.example. You "
+        "may also lodge a complaint with the CNIL."
+    )
+    o_subjects.save()
+    o_subjects.transition_to(
+        NOTIFICATION_STEP_DRAFTED, ines, enforce_permission=False,
+    )
+    o_subjects.record_filing(
+        ines,
+        submitted_at=inc1_awareness + timedelta(days=1, hours=4),
+        channel=NotificationChannel.EMAIL,
+        subject="Information importante concernant vos factures",
+        content=o_subjects.content,
+        recipient_name="1 214 affected customers",
+        external_reference=f"CAMP-{exposure_to:%Y-%m%d}",
+        comment=(
+            "Sent to 1 214 addresses, 6 hard bounces handled by post, and a "
+            "notice published in the portal for signed-in customers."
+        ),
+    )
+
+    o_ew = obligation_for(inc_portal, NotificationRegime.NIS2_EARLY_WARNING)
+    o_ew.decided_by = elise
+    o_ew.decided_at = inc1_awareness + timedelta(hours=3)
+    o_ew.transition_to(
+        NOTIFICATION_STEP_NOT_REQUIRED, elise, enforce_permission=False,
+        comment=(
+            "Not required : the incident is not significant within the meaning "
+            "of NIS2 Art. 23(3). It affected the customer self-service portal "
+            "only, with no effect on the supply, the dispatch or the metering "
+            "of energy, and none of the thresholds of the implementing act is "
+            "met. The significance determination is recorded on the incident, "
+            "with its reasoning, and the CISO took this decision on the same "
+            "morning."
+        ),
+    )
+    o_notif = obligation_for(inc_portal, NotificationRegime.NIS2_NOTIFICATION)
+    o_notif.decided_by = elise
+    o_notif.decided_at = inc1_awareness + timedelta(hours=3)
+    o_notif.transition_to(
+        NOTIFICATION_STEP_NOT_REQUIRED, elise, enforce_permission=False,
+        comment=(
+            "Not required, for the same reason as the early warning : no "
+            "significant incident, so no NIS2 notification duty arises. The "
+            "obligation is kept in the register with its decision rather than "
+            "deleted, because deleting it would destroy the evidence that the "
+            "regime was considered at all."
+        ),
+    )
+    o_customers = obligation_for(
+        inc_portal, NotificationRegime.CONTRACTUAL_CUSTOMER
+    )
+    o_customers.decided_by = ines
+    o_customers.decided_at = inc1_awareness + timedelta(hours=5)
+    o_customers.transition_to(
+        NOTIFICATION_STEP_REQUIRED, ines, enforce_permission=False,
+        comment=(
+            "Required : the framework agreements with the twelve business "
+            "customers carry a 72-hour security incident clause, and four of "
+            "them hold contracts whose invoices were in the exposed set."
+        ),
+    )
+    o_customers.recipient_name = "Business customers under a framework agreement"
+    o_customers.recipient_stakeholder = sh_customers
+    o_customers.channel = NotificationChannel.EMAIL
+    o_customers.content = (
+        "Contractual notice sent to the four business customers whose "
+        "invoices were in the exposed set, describing the defect, the exposure "
+        "window, the corrective action and the notification made to the CNIL, "
+        "as required by the security incident clause of the framework "
+        "agreement."
+    )
+    o_customers.save()
+    o_customers.transition_to(
+        NOTIFICATION_STEP_DRAFTED, ines, enforce_permission=False,
+    )
+    o_customers.record_filing(
+        ines,
+        submitted_at=inc1_awareness + timedelta(days=1, hours=6),
+        channel=NotificationChannel.EMAIL,
+        subject="Notification contractuelle d'incident de securite",
+        content=o_customers.content,
+        recipient_name="Business customers under a framework agreement",
+        external_reference="CTR-NOTIF-2026-014",
+    )
+
+    # The live NIS2 file : the 24-hour early warning is filed and acknowledged,
+    # the 72-hour notification is filed and has drawn a request for further
+    # information, and the one-month final report's clock only started when the
+    # notification was filed.
+    o2_ew = obligation_for(inc_vendor, NotificationRegime.NIS2_EARLY_WARNING)
+    o2_ew.decided_by = elise
+    o2_ew.decided_at = inc2_detected + timedelta(hours=1, minutes=45)
+    o2_ew.transition_to(
+        NOTIFICATION_STEP_REQUIRED, elise, enforce_permission=False,
+        comment=(
+            "Required : significant incident, unauthorised access to the "
+            "supervision network of a grid-connected farm."
+        ),
+    )
+    o2_ew.channel = NotificationChannel.PORTAL
+    o2_ew.content = (
+        "Early warning under NIS2 Art. 23(4)(a).\n\n"
+        "The incident is suspected of being caused by an unlawful or malicious "
+        "act : valid credentials of our turbine vendor's remote maintenance "
+        "platform were used outside every scheduled maintenance window, from "
+        "an address the vendor does not recognise, followed by scanning of the "
+        "control room subnet.\n\n"
+        "It may have a cross-border impact : the vendor operates the same "
+        "platform for wind farms in Germany and Denmark and has notified those "
+        "customers."
+    )
+    o2_ew.save()
+    o2_ew.transition_to(
+        NOTIFICATION_STEP_DRAFTED, elise, enforce_permission=False,
+    )
+    filing_ew = o2_ew.record_filing(
+        elise,
+        submitted_at=inc2_detected + timedelta(hours=18),
+        channel=NotificationChannel.PORTAL,
+        subject="Alerte precoce NIS2 - acces non autorise sur le reseau de supervision",
+        content=o2_ew.content,
+        recipient_name="ANSSI, guichet unique NIS2",
+    )
+    filing_ew.record_outcome(
+        outcome=FilingOutcome.ACKNOWLEDGED,
+        acknowledged_at=inc2_detected + timedelta(hours=20),
+        external_reference="ANSSI-INC-2026-0412",
+    )
+    o2_ew.acknowledgement_reference = "ANSSI-INC-2026-0412"
+    o2_ew.acknowledged_at = inc2_detected + timedelta(hours=20)
+    o2_ew.save()
+    o2_ew.transition_to(
+        NOTIFICATION_STEP_ACKNOWLEDGED, elise, enforce_permission=False,
+    )
+
+    o2_notif = obligation_for(inc_vendor, NotificationRegime.NIS2_NOTIFICATION)
+    o2_notif.decided_by = elise
+    o2_notif.decided_at = inc2_detected + timedelta(hours=20)
+    o2_notif.transition_to(
+        NOTIFICATION_STEP_REQUIRED, elise, enforce_permission=False,
+        comment="Required : follows the early warning on the same case.",
+    )
+    o2_notif.channel = NotificationChannel.PORTAL
+    o2_notif.content = (
+        "Notification under NIS2 Art. 23(4)(b), case ANSSI-INC-2026-0412.\n\n"
+        "Initial assessment : two unscheduled sessions opened from the "
+        "vendor's compromised maintenance platform towards the Normandy "
+        "control room, using a contractor account without multi-factor "
+        "authentication. The tunnel was closed and the vendor VLAN isolated "
+        "within two hours, at the cost of nine hours and twenty minutes of "
+        "remote supervision. Local control was never lost and no setpoint was "
+        "modified.\n\n"
+        "Severity : critical for the supervision perimeter, no effect on "
+        "energy supply.\n\n"
+        "Indicators of compromise : source address and session identifiers "
+        "communicated by the vendor's CSIRT, attached to the case."
+    )
+    o2_notif.save()
+    o2_notif.transition_to(
+        NOTIFICATION_STEP_DRAFTED, elise, enforce_permission=False,
+    )
+    filing_notif = o2_notif.record_filing(
+        elise,
+        submitted_at=inc2_detected + timedelta(hours=60),
+        channel=NotificationChannel.PORTAL,
+        subject="Notification NIS2 a 72 heures - dossier ANSSI-INC-2026-0412",
+        content=o2_notif.content,
+        recipient_name="ANSSI, guichet unique NIS2",
+        external_reference="ANSSI-INC-2026-0412",
+    )
+    filing_notif.record_outcome(
+        outcome=FilingOutcome.INFORMATION_REQUESTED,
+        acknowledged_at=inc2_detected + timedelta(hours=62),
+    )
+
+    # Its clock started at the filing above, not at awareness : that is what
+    # the `previous filing` anchor is for.
+    o2_final = obligation_for(inc_vendor, NotificationRegime.NIS2_FINAL)
+    o2_final.decided_by = elise
+    o2_final.decided_at = inc2_detected + timedelta(hours=61)
+    o2_final.transition_to(
+        NOTIFICATION_STEP_REQUIRED, elise, enforce_permission=False,
+        comment=(
+            "Required : the final report is due one month after the 72-hour "
+            "notification, and the investigation must produce the root cause "
+            "and the outcome of the mitigation before then."
+        ),
+    )
+
+    # Added by hand rather than generated : a contractual duty towards the
+    # vendor that no template covers.
+    o2_vendor = IncidentNotification(
+        incident=inc_vendor,
+        regime=NotificationRegime.CONTRACTUAL_SUPPLIER,
+        recipient_kind=NotificationRecipientKind.SUPPLIER,
+        recipient_supplier=sup_turbintech,
+        obligation_reference="CTR-2022-018, security incident clause 14.3",
+        content_requirements=(
+            "Written statement of what was reached on our network through the "
+            "vendor's platform, and the conditions for reopening the "
+            "maintenance path."
+        ),
+        no_fixed_deadline=True,
+        source=ObligationSource.MANUAL,
+        created_by=elise,
+    )
+    o2_vendor.save()
+    o2_vendor.transition_to(
+        NOTIFICATION_STEP_ASSESSED, elise, enforce_permission=False,
+    )
+    o2_vendor.decided_by = elise
+    o2_vendor.decided_at = inc2_detected + timedelta(hours=22)
+    o2_vendor.transition_to(
+        NOTIFICATION_STEP_REQUIRED, elise, enforce_permission=False,
+        comment=(
+            "Required by clause 14.3 of the maintenance contract, and needed "
+            "in any case to agree the conditions for reopening the path."
+        ),
+    )
+    o2_vendor.channel = NotificationChannel.EMAIL
+    o2_vendor.content = (
+        "Formal notice to TurbinTech under clause 14.3 : the two unscheduled "
+        "sessions reached the Normandy control room network from the vendor's "
+        "maintenance platform. The maintenance path stays closed until the "
+        "operator accounts are enrolled in multi-factor authentication and "
+        "every session is recorded and made available to us."
+    )
+    o2_vendor.save()
+    o2_vendor.transition_to(
+        NOTIFICATION_STEP_DRAFTED, elise, enforce_permission=False,
+    )
+    o2_vendor.record_filing(
+        elise,
+        submitted_at=inc2_detected + timedelta(hours=26),
+        channel=NotificationChannel.EMAIL,
+        subject="Formal notice - clause 14.3, CTR-2022-018",
+        content=o2_vendor.content,
+        recipient_name="TurbinTech GmbH, account team and CSIRT",
+        external_reference="LTR-2026-0033",
+    )
+    # The contractual customer obligation on this incident is deliberately left
+    # undecided : a live file has open questions, and an unanswered obligation
+    # must be visible rather than absent.
+
+    # --- the chronology ---------------------------------------------------
+    # Hand-written entries sit beside the ones the platform appended from each
+    # transition. They are backdated to the real-world time of the act, which
+    # is what the chronology is read in.
+    tl_call = IncidentTimelineEntry.objects.create(
+        incident=inc_portal, occurred_at=inc1_detected,
+        entry_type=TimelineEntryKind.EXTERNAL_INPUT,
+        summary="Customer calls the service desk about another account's invoice",
+        detail=(
+            "Call taken at 18:40. The customer reproduced the behaviour twice "
+            "while on the line and sent a screenshot of the PDF header."
+        ),
+        author=ines, is_evidence=True,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_portal, occurred_at=inc1_detected + timedelta(hours=2),
+        entry_type=TimelineEntryKind.OBSERVATION,
+        summary="Reproduced on pre-production against release 4.12.1",
+        detail=(
+            "The invoice download endpoint resolves the document identifier "
+            "without checking that it belongs to the authenticated contract."
+        ),
+        author=marc,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_portal, occurred_at=inc1_awareness,
+        entry_type=TimelineEntryKind.DECISION,
+        summary="DPO qualifies the report as a possible personal data breach",
+        detail=(
+            "Legal awareness within the meaning of Art. 33(1) is set here, and "
+            "the 72-hour clock runs from this point. The gap with the "
+            "technical detection is recorded on the incident."
+        ),
+        author=amelia, is_evidence=True,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_portal, occurred_at=inc1_awareness + timedelta(minutes=45),
+        entry_type=TimelineEntryKind.ACTION,
+        summary="Invoice download endpoint disabled at the CDN",
+        detail="Verified from two customer accounts that no invoice downloads.",
+        author=marc, related_action=act_disable,
+    )
+    tl_scale = IncidentTimelineEntry.objects.create(
+        incident=inc_portal,
+        occurred_at=inc1_awareness + timedelta(hours=2, minutes=10),
+        entry_type=TimelineEntryKind.EVIDENCE,
+        summary="Access logs extracted and sealed; first count of the exposure",
+        detail=(
+            "First read of the extract suggests around 20 cross-account reads."
+        ),
+        author=marc, related_action=act_logs, related_evidence=evid_logs,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_portal, occurred_at=inc1_awareness + timedelta(hours=5),
+        entry_type=TimelineEntryKind.ACTION,
+        summary="Release 4.12.2 deployed and the endpoint re-enabled",
+        detail=(
+            "Authorisation test suite run against production data before "
+            "re-enabling."
+        ),
+        author=marc, related_action=act_patch,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_portal, occurred_at=inc1_awareness + timedelta(hours=6),
+        entry_type=TimelineEntryKind.ESCALATION,
+        summary="Executive Committee briefed on the customer notification plan",
+        author=elise,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_portal,
+        occurred_at=inc1_awareness + timedelta(hours=2, minutes=10),
+        entry_type=TimelineEntryKind.CORRECTION,
+        summary="Correction : 15 cross-account reads, not around 20",
+        detail=(
+            "The forensic analysis of the sealed extract counts 15 reads "
+            "across 3 contracts. The earlier figure was a first count taken "
+            "before duplicate requests were collapsed."
+        ),
+        correction_reason=(
+            "The first count was taken from a raw line count, which double "
+            "counted retried downloads. The corrected figure is the one "
+            "notified to the CNIL."
+        ),
+        superseded_entry=tl_scale,
+        author=marc, related_evidence=evid_logs, is_evidence=True,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_portal,
+        occurred_at=inc1_awareness + timedelta(days=1, hours=4),
+        entry_type=TimelineEntryKind.COMMUNICATION,
+        summary="Customer notice sent to 1 214 customers and published in the portal",
+        author=ines, related_action=act_notice,
+    )
+
+    IncidentTimelineEntry.objects.create(
+        incident=inc_vendor, occurred_at=inc2_detected,
+        entry_type=TimelineEntryKind.EXTERNAL_INPUT,
+        summary="TurbinTech CSIRT notifies the compromise of its maintenance platform",
+        detail=(
+            "Notification received at 20:15 with a list of indicators of "
+            "compromise and the sites reached. Voltara is named."
+        ),
+        author=elise, is_evidence=True,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_vendor, occurred_at=inc2_detected + timedelta(minutes=50),
+        entry_type=TimelineEntryKind.OBSERVATION,
+        summary="Two unscheduled vendor sessions found in the firewall logs",
+        detail=(
+            "Both outside any maintenance window, both from the address the "
+            "vendor flagged."
+        ),
+        author=marc,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_vendor, occurred_at=inc2_detected + timedelta(hours=1, minutes=10),
+        entry_type=TimelineEntryKind.ACTION,
+        summary="Vendor maintenance tunnel closed at the perimeter",
+        author=marc, related_action=act_tunnel,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_vendor, occurred_at=inc2_detected + timedelta(hours=2),
+        entry_type=TimelineEntryKind.DECISION,
+        summary="Crisis cell decides to isolate the vendor VLAN despite the supervision loss",
+        detail=(
+            "Local control is unaffected and the plant can run blind for a "
+            "shift; keeping the path open while an attacker holds vendor "
+            "credentials was judged the larger risk."
+        ),
+        author=thomas, related_action=act_isolate, is_evidence=True,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_vendor, occurred_at=inc2_detected + timedelta(hours=3, minutes=20),
+        entry_type=TimelineEntryKind.EVIDENCE,
+        summary="Memory image of the OT jump host acquired and sealed",
+        author=marc, related_action=act_image, related_evidence=evid_memory,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_vendor, occurred_at=inc2_detected + timedelta(hours=18),
+        entry_type=TimelineEntryKind.COMMUNICATION,
+        summary="NIS2 early warning filed with the ANSSI",
+        author=elise,
+    )
+
+    IncidentTimelineEntry.objects.create(
+        incident=inc_exercise, occurred_at=inc3_start,
+        entry_type=TimelineEntryKind.OBSERVATION,
+        summary="Exercise starts : simulated mass encryption on the file server",
+        detail="Injects handed to the room in sealed envelopes, one per hour.",
+        author=elise,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_exercise, occurred_at=inc3_start + timedelta(hours=1, minutes=52),
+        entry_type=TimelineEntryKind.ACTION,
+        summary="File server isolation walked through on the real console",
+        detail=(
+            "22 minutes against the 15 assumed by the runbook, because the "
+            "console credentials were in a vault nobody in the room could open."
+        ),
+        author=marc, related_action=ex_isolate, is_evidence=True,
+    )
+    IncidentTimelineEntry.objects.create(
+        incident=inc_exercise, occurred_at=inc3_start + timedelta(hours=4, minutes=10),
+        entry_type=TimelineEntryKind.DECISION,
+        summary="Nobody could state the recovery time objective of the file share",
+        detail=(
+            "The runbook does not carry it and the asset record was not "
+            "consulted. Logged as the exercise's main finding."
+        ),
+        author=elise, related_action=ex_restore, is_evidence=True,
+    )
+
+    # --- the A.5.27 reviews -----------------------------------------------
+    _phase("Post-incident reviews and lessons learned...")
+
+    # The remaining phase clocks, pre-filled so the file reads as the four-day
+    # incident it was rather than as one whose every phase landed on the second
+    # the seed ran. The transitions below are real and stamp only what is blank.
+    inc_portal.contained_at = inc1_awareness + timedelta(minutes=45)
+    inc_portal.eradicated_at = inc1_awareness + timedelta(hours=5)
+    inc_portal.recovered_at = inc1_awareness + timedelta(hours=7)
+    inc_portal.closed_at = NOW - timedelta(hours=8)
+    inc_portal.save()
+    inc_portal.transition_to(
+        INCIDENT_STEP_CONTAINED, marc, enforce_permission=False,
+    )
+    inc_portal.transition_to(
+        INCIDENT_STEP_ERADICATED, marc, enforce_permission=False,
+    )
+    inc_portal.transition_to(
+        INCIDENT_STEP_RECOVERED, marc, enforce_permission=False,
+    )
+    inc_portal.transition_to(
+        INCIDENT_STEP_PIR, elise, enforce_permission=False,
+    )
+
+    ap_portal_authz = ComplianceActionPlan.objects.create(
+        name="Add cross-account authorisation tests to the portal pipeline",
+        description=(
+            "Corrective action from the post-incident review of the portal "
+            "invoice exposure."
+        ),
+        gap_description=(
+            "No automated test asserts that a document belongs to the "
+            "authenticated contract, so an authorisation regression ships "
+            "unnoticed."
+        ),
+        remediation_plan=(
+            "Write the cross-account assertion suite, run it in the release "
+            "pipeline as a blocking gate, and extend it to every endpoint that "
+            "resolves a document identifier."
+        ),
+        priority="high", owner=marc, created_by=elise,
+        start_date=days_ago(4), target_date=days_ahead(38),
+        progress_percentage=30, status="to_implement",
+    )
+    ap_portal_authz.scopes.set([scope_cust, scope_it])
+    ap_portal_authz.requirements.set([gdpr_reqs["GDPR-32"], iso_reqs["A.8.7"]])
+    ap_portal_authz.assignees.set([marc])
+
+    f_portal = Finding.objects.create(
+        finding_type="major_nc", assessor=elise, created_by=elise,
+        description=(
+            "An authorisation regression reached production and exposed "
+            "personal data for fourteen days : the release pipeline carries no "
+            "test asserting document ownership, and the portal's access logs "
+            "were not monitored for cross-account reads."
+        ),
+        recommendation=(
+            "Make the cross-account assertion suite a blocking gate and add a "
+            "detection rule on cross-account document reads."
+        ),
+        evidence=(
+            "Sealed access log extract and the release diff of 4.12.1."
+        ),
+    )
+    f_portal.requirements.set([gdpr_reqs["GDPR-32"], iso_reqs["A.8.16"]])
+    ap_portal_authz.findings.set([f_portal])
+
+    pir_portal = inc_portal.post_incident_review
+    pir_portal.response_plan = irp
+    pir_portal.scheduled_date = days_ago(2)
+    pir_portal.held_at = NOW - timedelta(days=1, hours=6)
+    pir_portal.facilitator = elise
+    pir_portal.root_cause_method = RootCauseMethod.FIVE_WHYS
+    pir_portal.root_cause = (
+        "The ownership assertion on the invoice endpoint was removed during a "
+        "refactor because it duplicated a check the new document service was "
+        "expected to perform, and that expectation was never verified. Nothing "
+        "in the pipeline tests authorisation across accounts, so the "
+        "regression shipped and stayed invisible until a customer noticed it."
+    )
+    pir_portal.contributing_factors = (
+        "The refactor was reviewed by one developer under release pressure; "
+        "the portal's access logs are collected but no rule looks for "
+        "cross-account reads; the defect only shows with two accounts, which "
+        "no test fixture provides."
+    )
+    pir_portal.detection_gap = (
+        "Fourteen days between the release and the first report, and the "
+        "report came from a customer rather than from a control. Any of three "
+        "controls could have caught it earlier : an authorisation test, a "
+        "detection rule on cross-account reads, or the code review."
+    )
+    pir_portal.containment_assessment = (
+        "Containment was fast once the defect was qualified : 45 minutes to "
+        "disable the endpoint and five hours to ship the fix. The fifteen "
+        "hours between the customer call and the qualification is the part "
+        "worth fixing, and it is also what made the CNIL filing late."
+    )
+    pir_portal.what_went_well = (
+        "The service desk kept the customer's screenshot and the call notes; "
+        "the log extract was sealed before rotation, which is what allowed the "
+        "exposure to be bounded exactly; the DPO drafted the customer notice "
+        "the same day."
+    )
+    pir_portal.what_failed = (
+        "The out-of-hours path : a call describing a possible data exposure "
+        "was handled as a functional defect overnight. The 72-hour clock was "
+        "then already running against a team that did not know it."
+    )
+    pir_portal.recurrence_likelihood = Criticality.MEDIUM
+    pir_portal.similar_incidents_checked = True
+    pir_portal.risk_reassessment_required = True
+    pir_portal.response_plan_update_required = True
+    pir_portal.training_required = True
+    pir_portal.effectiveness_review_date = days_ahead(45)
+    pir_portal.save()
+    pir_portal.participants.set([elise, amelia, marc, ines, david])
+    pir_portal.raised_findings.set([f_portal])
+    pir_portal.corrective_action_plans.set([ap_portal_authz])
+    pir_portal.failed_controls.set([gdpr_reqs["GDPR-32"], iso_reqs["A.8.16"]])
+    pir_portal.controls_to_strengthen.set([iso_reqs["A.6.8"], iso_reqs["A.8.15"]])
+    pir_portal.identified_risks.set([r_breach])
+    pir_portal.identified_vulnerabilities.set([
+        vuln_objs["Outdated TLS configuration on customer portal"],
+    ])
+    pir_portal.transition_to(
+        REVIEW_STEP_IN_PROGRESS, elise, enforce_permission=False,
+    )
+    pir_portal.transition_to(
+        REVIEW_STEP_SUBMITTED, elise, enforce_permission=False,
+    )
+    pir_portal.transition_to(
+        REVIEW_STEP_APPROVED, david, enforce_permission=False,
+        comment=(
+            "Approved. The out-of-hours qualification path is the change that "
+            "matters : it is what made the notification late, and it is "
+            "carried into the response plan revision."
+        ),
+    )
+
+    # The review's verdict on the steps actually taken (A.5.27), recorded once
+    # the review is approved.
+    act_disable.effectiveness = EffectivenessVerdict.EFFECTIVE
+    act_disable.save()
+    act_logs.effectiveness = EffectivenessVerdict.EFFECTIVE
+    act_logs.save()
+    act_notice.effectiveness = EffectivenessVerdict.PARTIALLY_EFFECTIVE
+    act_notice.save()
+
+    inc_portal.transition_to(
+        INCIDENT_STEP_CLOSED, elise, enforce_permission=False,
+        comment=(
+            "Closed : the review is approved, every notification obligation "
+            "carries a decision, and every evidence item is sealed and in "
+            "retention. The corrective action and the effectiveness "
+            "verification stay open on their own registers."
+        ),
+    )
+
+    # The exercise's review, taken all the way to the clause 10.2 f)
+    # effectiveness verification.
+    isms_change_ir = IsmsChange.objects.create(
+        review=mr_closed, change_type="process",
+        title="Name a deputy incident manager and publish the vault break-glass",
+        description=(
+            "The annual exercise showed the response depends on one person "
+            "holding both the decision and the console credentials."
+        ),
+        impact_analysis=(
+            "Touches the incident response plan, the on-call roster and the "
+            "credential vault procedure."
+        ),
+        owner=marc, status="approved",
+        target_date=days_ahead(30),
+    )
+    isms_change_ir.affected_scopes.set([scope_group, scope_it])
+    isms_change_ir.affected_frameworks.set([fw_iso])
+
+    f_exercise = Finding.objects.create(
+        finding_type="minor_nc", assessor=elise, created_by=elise,
+        description=(
+            "The incident response plan names one incident manager and no "
+            "deputy, and the console credentials needed for containment are in "
+            "a vault the on-call team cannot open. The exercise lost 40 "
+            "minutes to both."
+        ),
+        recommendation=(
+            "Name a deputy in the plan, add a break-glass procedure to the "
+            "vault and re-run the containment step of the exercise."
+        ),
+        evidence="Exercise chronology and the timing recorded on each step.",
+    )
+    f_exercise.requirements.set([iso_reqs["A.5.24"], iso_reqs["A.5.26"]])
+    ap_ot_exercise.findings.add(f_exercise)
+
+    pir_exercise = inc_exercise.post_incident_review
+    pir_exercise.response_plan = irp
+    pir_exercise.scheduled_date = (inc3_start + timedelta(days=1)).date()
+    pir_exercise.held_at = inc3_start + timedelta(days=1)
+    pir_exercise.facilitator = elise
+    pir_exercise.root_cause_method = RootCauseMethod.TIMELINE_ANALYSIS
+    pir_exercise.root_cause = (
+        "The plan concentrates the response on a single named incident manager "
+        "and assumes the console credentials are reachable by whoever is "
+        "on call. Neither assumption held during the exercise."
+    )
+    pir_exercise.contributing_factors = (
+        "No deputy in the escalation matrix; no break-glass procedure on the "
+        "credential vault; recovery objectives absent from the runbooks."
+    )
+    pir_exercise.detection_gap = (
+        "Not applicable : the detection was injected by the scenario. The "
+        "exercise deliberately did not test detection."
+    )
+    pir_exercise.containment_assessment = (
+        "Containment was reached in 1h52 against the 1h the plan assumes, and "
+        "the gap is entirely credential access."
+    )
+    pir_exercise.what_went_well = (
+        "The escalation matrix was followed to the letter, the crisis cell "
+        "convened in eleven minutes and the legal and communication teams "
+        "worked from the same chronology as the technical team."
+    )
+    pir_exercise.what_failed = (
+        "Single point of accountability on the incident manager, credential "
+        "access under time pressure, and no pre-approved customer wording."
+    )
+    pir_exercise.recurrence_likelihood = Criticality.HIGH
+    pir_exercise.similar_incidents_checked = True
+    pir_exercise.response_plan_update_required = True
+    pir_exercise.training_required = True
+    pir_exercise.effectiveness_review_date = days_ago(3)
+    pir_exercise.effectiveness_reviewed_at = NOW - timedelta(days=3)
+    pir_exercise.effectiveness_reviewed_by = sofia
+    pir_exercise.effectiveness_verdict = EffectivenessVerdict.PARTIALLY_EFFECTIVE
+    pir_exercise.effectiveness_notes = (
+        "Verified by the internal auditor : the deputy incident manager is "
+        "named in the on-call roster and the break-glass procedure is "
+        "published and was tested once. The recovery objectives are still "
+        "missing from two of the four runbooks, so the action is only "
+        "partially effective and stays open."
+    )
+    pir_exercise.save()
+    pir_exercise.participants.set([elise, marc, thomas, ines, david, sofia])
+    pir_exercise.raised_findings.set([f_exercise])
+    pir_exercise.corrective_action_plans.set([ap_ot_exercise])
+    pir_exercise.failed_controls.set([iso_reqs["A.5.24"]])
+    pir_exercise.controls_to_strengthen.set([iso_reqs["A.5.26"], iso_reqs["A.5.29"]])
+    pir_exercise.identified_risks.set([r_ransomware])
+    pir_exercise.isms_changes.set([isms_change_ir])
+    pir_exercise.transition_to(
+        REVIEW_STEP_IN_PROGRESS, elise, enforce_permission=False,
+    )
+    pir_exercise.transition_to(
+        REVIEW_STEP_SUBMITTED, elise, enforce_permission=False,
+    )
+    pir_exercise.transition_to(
+        REVIEW_STEP_APPROVED, david, enforce_permission=False,
+        comment=(
+            "Approved. The exercise did what it was for : it found a single "
+            "point of failure in the response before a real incident did."
+        ),
+    )
+    pir_exercise.transition_to(
+        REVIEW_STEP_VERIFIED, sofia, enforce_permission=False,
+        comment=(
+            "Effectiveness verified three weeks after approval : the deputy is "
+            "named and the break-glass procedure works, the runbook recovery "
+            "objectives are not yet complete."
+        ),
+    )
+    ex_isolate.effectiveness = EffectivenessVerdict.PARTIALLY_EFFECTIVE
+    ex_isolate.save()
+    ex_comms.effectiveness = EffectivenessVerdict.EFFECTIVE
+    ex_comms.save()
+
+    # Closing the exercise is what writes the A.5.24 plan-testing evidence onto
+    # the response plan : `last_exercise_date` has no other writer, and a
+    # hand-typed one would be worth nothing.
+    inc_exercise.transition_to(
+        INCIDENT_STEP_CLOSED, elise, enforce_permission=False,
+        comment=(
+            "Exercise closed. Two findings raised on the clause 10.2 register, "
+            "the response plan revision is scheduled, and the plan's testing "
+            "evidence is stamped from this closure."
+        ),
+    )
+
     # ============================================================ bulk volume
     # Generate 50+ items per category (where it makes sense) on top of the
     # curated narrative, wiring foreign keys to the objects created above so the
@@ -2944,6 +5165,16 @@ print(f"  Essential assets: {EssentialAsset.objects.count()}  Support assets: {S
 print(f"  Frameworks: {Framework.objects.count()}  Requirements: {Requirement.objects.count()}")
 print(f"  Risks: {Risk.objects.count()}  Treatment plans: {RiskTreatmentPlan.objects.count()}")
 print(f"  Action plans: {ComplianceActionPlan.objects.count()}  Indicators: {Indicator.objects.count()}")
+print(
+    f"  Incidents: {Incident.objects.count()}  Security events: {SecurityEvent.objects.count()}  "
+    f"Obligations: {IncidentNotification.objects.count()} ({NotificationFiling.objects.count()} filings)"
+)
+print(
+    f"  Evidence: {IncidentEvidence.objects.count()} items, "
+    f"{EvidenceCustodyEvent.objects.count()} custody events  "
+    f"Reviews: {PostIncidentReview.objects.count()}  "
+    f"Breaches: {PersonalDataBreach.objects.count()}"
+)
 print(
     f"  Trust Center: {TrustCenterCertification.objects.count()} certifications, "
     f"{TrustCenterSubprocessor.objects.count()} subprocessors, "

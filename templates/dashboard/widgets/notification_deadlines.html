@@ -1,0 +1,111 @@
+{% load i18n %}
+{% comment %}
+Widget: notification deadlines (module 6). The statutory clock, not a count of
+incidents: every notification obligation still owed, late ones first, with the
+incidents left open behind them as context. Hidden via has_data when there is
+neither a clock running nor an open incident.
+
+Expects `notification_deadlines` (rows of {obligation, incident, is_overdue,
+remaining, tone}), `notification_deadline_count`, `notification_overdue_count`,
+`notification_running_count` and `open_incident_count`, all set by
+GeneralDashboardView and already scope-filtered and permission-gated.
+{% endcomment %}
+<div class="card h-100">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+      <h5 class="card-title mb-0"><i class="bi bi-hourglass-split me-1" style="color:var(--accent)"></i> {% trans "Notification deadlines" %}</h5>
+      <a href="{% url 'incidents:notification-list' %}" class="upcoming-toggle">{% trans "Register" %}</a>
+    </div>
+
+    <div class="ndl-stats mb-3">
+      <span class="ndl-stat ndl-stat--late">
+        <span class="ndl-stat__value">{{ notification_overdue_count }}</span>
+        <span class="ndl-stat__label">{% trans "Late" %}</span>
+      </span>
+      <span class="ndl-stat ndl-stat--running">
+        <span class="ndl-stat__value">{{ notification_running_count }}</span>
+        <span class="ndl-stat__label">{% trans "Running" %}</span>
+      </span>
+      <a class="ndl-stat ndl-stat--open" href="{% url 'incidents:incident-list' %}">
+        <span class="ndl-stat__value">{{ open_incident_count }}</span>
+        <span class="ndl-stat__label">{% trans "Open incidents" %}</span>
+      </a>
+    </div>
+
+    {% if notification_deadlines %}
+    <ul class="ndl-list">
+      {% for row in notification_deadlines %}
+      <li>
+        <a href="{% url 'incidents:notification-detail' row.obligation.pk %}" class="ndl-item ndl-item--{{ row.tone }}">
+          <span class="ndl-item__head">
+            <span class="ndl-item__name" title="{{ row.obligation.recipient_display }}">{{ row.obligation.get_regime_display }} · {{ row.obligation.recipient_display }}</span>
+            <span class="badge ndl-item__badge ndl-item__badge--{{ row.tone }}">
+              {% if row.is_overdue %}{% blocktrans with delay=row.remaining %}Late by {{ delay }}{% endblocktrans %}{% else %}{% blocktrans with delay=row.remaining %}Due in {{ delay }}{% endblocktrans %}{% endif %}
+            </span>
+          </span>
+          <span class="ndl-item__meta">
+            <span class="ref">{{ row.obligation.reference }}</span>
+            <span class="ndl-item__due" title="{% trans 'Deadline' %}"><i class="bi bi-clock"></i> {{ row.obligation.due_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+          </span>
+          {% if row.incident %}
+          <span class="ndl-item__incident" title="{{ row.incident.title }}">
+            <i class="bi bi-fire"></i>
+            <span class="ndl-item__incident-name">{{ row.incident.reference }} · {{ row.incident.title }}</span>
+          </span>
+          {% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% if notification_deadline_count > notification_deadlines|length %}
+    <p class="ndl-more mb-0">
+      <a href="{% url 'incidents:notification-list' %}">{% blocktrans with shown=notification_deadlines|length total=notification_deadline_count %}Showing {{ shown }} of {{ total }} obligations{% endblocktrans %}</a>
+    </p>
+    {% endif %}
+    {% else %}
+    <p class="text-muted small mb-0">{% trans "No notification deadline running." %}</p>
+    {% endif %}
+  </div>
+</div>
+<style>
+  /* Responsive columns: one per row when narrow, several when the tile is wide. */
+  .ndl-stats { display:flex; flex-wrap:wrap; gap:.5rem; }
+  .ndl-stat {
+    display:flex; align-items:baseline; gap:.375rem; padding:.375rem .625rem;
+    border-radius:var(--radius-sm); background:var(--surface-subtle);
+    border:1px solid var(--border-light); text-decoration:none; color:inherit;
+    transition:border-color .15s var(--ease-out), background-color .15s var(--ease-out);
+  }
+  a.ndl-stat:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; }
+  .ndl-stat__value { font-size:1.125rem; font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-primary); line-height:1; }
+  .ndl-stat__label { font-size:.6875rem; color:var(--text-muted); }
+  .ndl-stat--late .ndl-stat__value { color:var(--danger); }
+  .ndl-stat--running .ndl-stat__value { color:var(--warning); }
+  .ndl-list { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(18rem, 1fr)); gap:.75rem; }
+  .ndl-item {
+    display:flex; flex-direction:column; gap:.5rem; padding:.875rem 1rem;
+    border-radius:var(--radius-sm); background:var(--surface-raised);
+    border:1px solid var(--border-light); border-left:3px solid var(--border-light);
+    text-decoration:none; color:inherit;
+    transition:border-color .2s var(--ease-out), background-color .2s var(--ease-out), transform .2s var(--ease-out);
+  }
+  .ndl-item--danger { border-left-color:var(--danger); }
+  .ndl-item--warning { border-left-color:var(--warning); }
+  .ndl-item:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; transform:translateY(-1px); }
+  .ndl-item__head { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; }
+  .ndl-item__name { font-size:.875rem; font-weight:600; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .ndl-item__badge { flex-shrink:0; font-size:.625rem; font-weight:600; padding:.125rem .4375rem; white-space:nowrap; }
+  .ndl-item__badge--danger { background:var(--danger-soft); color:var(--danger); }
+  .ndl-item__badge--warning { background:var(--warning-soft); color:var(--warning); }
+  .ndl-item__badge--secondary { background:var(--surface-subtle); color:var(--text-secondary); }
+  .ndl-item__meta { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; font-size:.6875rem; color:var(--text-muted); }
+  .ndl-item__due { display:inline-flex; align-items:center; gap:.1875rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .ndl-item__incident { display:flex; align-items:center; gap:.375rem; min-width:0; font-size:.75rem; color:var(--text-secondary); }
+  .ndl-item__incident-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ndl-more { margin-top:.75rem; font-size:.75rem; }
+  .ndl-more a { color:var(--accent); text-decoration:none; }
+  .ndl-more a:hover { text-decoration:underline; }
+  @media (max-width: 575.98px) {
+    .ndl-item__head { flex-direction:column; align-items:flex-start; }
+  }
+</style>

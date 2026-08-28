@@ -57,6 +57,7 @@ from compliance.models import (
 )
 from context.models import Activity, Indicator, Issue, Objective, Role, Scope, Site, Stakeholder, SwotAnalysis
 from context.views import build_indicator_slot, get_dashboard_indicator_slots
+from incidents.models import Incident, SecurityEvent
 from risks.models import (
     Risk,
     RiskAcceptance,
@@ -341,6 +342,63 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         ).count()
         ctx["mapping_count"] = RequirementMapping.objects.count()
 
+        # ── Incidents : the notification clock ───────────
+        # Not a count of incidents : the count nobody is judged on. What an
+        # operator on a legal clock needs is the list of filings that are late
+        # or still running, so that is what the widget gets, with the incidents
+        # left open behind them as context.
+        #
+        # Gated on the read permission, unlike the aggregate counts above : this
+        # block names individual obligations and their incidents, and a user
+        # without `incidents.notification.read` must not read them off the
+        # dashboard. Scope tenancy is applied on top by `_filter_scoped`, which
+        # resolves the obligation's `scope_parent_lookup` back to its incident.
+        user = self.request.user
+        deadline_rows = []
+        overdue_count = 0
+        if user.is_superuser or user.has_perm("incidents.notification.read"):
+            now = timezone.now()
+            obligations = _filter_scoped(
+                live_notification_obligations()
+                .filter(due_at__isnull=False)
+                .select_related("incident", "authority"),
+                user,
+            ).order_by("due_at")
+            for obligation in obligations:
+                # `is_overdue` is the model's own derived answer (never a stored
+                # flag), so the widget and the register can never disagree.
+                is_overdue = obligation.is_overdue
+                hours = abs(obligation.due_at - now).total_seconds() / 3600
+                if hours < 48:
+                    remaining = _("%(hours)d h") % {"hours": round(hours)}
+                else:
+                    remaining = _("%(days)d d") % {"days": round(hours / 24)}
+                if is_overdue:
+                    overdue_count += 1
+                    tone = "danger"
+                elif hours <= 24:
+                    tone = "warning"
+                else:
+                    tone = "secondary"
+                deadline_rows.append({
+                    "obligation": obligation,
+                    "incident": obligation.incident,
+                    "is_overdue": is_overdue,
+                    "remaining": remaining,
+                    "tone": tone,
+                })
+            # Late first (the most overdue at the top), then the tightest clock.
+            deadline_rows.sort(key=lambda r: (not r["is_overdue"], r["obligation"].due_at))
+        ctx["notification_deadlines"] = deadline_rows[:8]
+        ctx["notification_deadline_count"] = len(deadline_rows)
+        ctx["notification_overdue_count"] = overdue_count
+        ctx["notification_running_count"] = len(deadline_rows) - overdue_count
+        ctx["open_incident_count"] = (
+            _filter_scoped(open_incidents(), user).count()
+            if user.is_superuser or user.has_perm("incidents.incident.read")
+            else 0
+        )
+
         # ── Today's actions ───────────────────────────
         # Presented as a prioritized to-do list rather than alarms: each
         # entry carries an action verb, a count and a link to the page
@@ -508,6 +566,11 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
             "upcoming_deadlines": bool(calendar_items),
             "priority_risks": bool(ctx["priority_risks"]),
             "ongoing_audits": bool(ctx["ongoing_audits"]),
+            # Shown while there is a clock running or an incident still open :
+            # "no deadline, but three incidents open" is itself worth reading.
+            "notification_deadlines": bool(
+                ctx["notification_deadlines"] or ctx["open_incident_count"]
+            ),
             "risk_treatment_flow": bool(ctx.get("risk_treatment_flow")),
             "risk_matrix_current": bool(ctx.get("matrix_current")),
             "risk_matrix_residual": bool(ctx.get("matrix_residual")),
@@ -899,23 +962,58 @@ def _safe_reverse(url_name, pk):
         return ""
 
 
+def _is_datetime_field(model, name):
+    """Whether ``model.name`` stores a date-time rather than a plain date."""
+    try:
+        return model._meta.get_field(name).get_internal_type() == "DateTimeField"
+    except Exception:
+        return False
+
+
 def _filter_scoped(qs, user):
+    """Restrict a queryset to what ``user`` may see, through the one resolver.
+
+    ``core.scoping`` knows the three ways a model reaches ``context.Scope``
+    (its own ``scopes`` M2M, a ``scope_parent_lookup`` inherited from a parent
+    row, or nothing). Calling it means a child entity such as an incident's
+    notification obligation or an evidence item is filtered here exactly as it
+    is in the register views, the API and the MCP layer, instead of falling
+    through to "no filtering" the way a local copy of the M2M test does.
+    """
     if user.is_superuser:
         return qs
     scope_ids = user.get_allowed_scope_ids()
     if scope_ids is None:
         return qs
-    model = qs.model
-    if any(f.name == "scopes" for f in model._meta.many_to_many):
-        return qs.filter(scopes__id__in=scope_ids).distinct()
-    return qs
+    from core.scoping import filter_queryset_by_scopes
+
+    return filter_queryset_by_scopes(qs, scope_ids)
 
 
 ALL_CATEGORIES = [
     "risk_assessment", "compliance_assessment", "action_plan",
     "treatment_plan", "scope", "objective", "framework", "swot",
     "acceptance", "supplier_review",
+    "notification_deadline", "post_incident_review", "evidence_retention",
 ]
+
+# Category label, shared by the upcoming-deadlines list and the iCal feed so a
+# category is named the same wherever it surfaces.
+CATEGORY_LABELS = {
+    "risk_assessment": gettext_lazy("Risk assessments"),
+    "compliance_assessment": gettext_lazy("Compliance assessments"),
+    "action_plan": gettext_lazy("Action plans"),
+    "treatment_plan": gettext_lazy("Treatment plans"),
+    "scope": gettext_lazy("Scopes"),
+    "objective": gettext_lazy("Objectives"),
+    "framework": gettext_lazy("Frameworks"),
+    "swot": gettext_lazy("SWOT analyses"),
+    "acceptance": gettext_lazy("Risk acceptances"),
+    "supplier_review": gettext_lazy("Supplier reviews"),
+    "notification_deadline": gettext_lazy("Notification deadlines"),
+    "post_incident_review": gettext_lazy("Post-incident reviews"),
+    "evidence_retention": gettext_lazy("Evidence retention"),
+}
 
 
 def get_calendar_events(user, start=None, end=None, categories=None):
@@ -953,18 +1051,30 @@ def get_calendar_events(user, start=None, end=None, categories=None):
 
     def add(queryset, date_field, category, color, url_name, label_prefix="", deadline=False, done=None, kind="", responsible=""):
         queryset = reportable(queryset)
+        # A statutory clock is a date-time (72 hours, not 3 days), but every
+        # consumer of this feed - the month grid, the upcoming list, the iCal
+        # export - works in whole days. So a date-time field is filtered and
+        # emitted on its *local* calendar day: the day the deadline falls on in
+        # the reader's timezone, never the UTC one, and always the plain
+        # ``YYYY-MM-DD`` the consumers already parse. The exact hour stays where
+        # it is acted on, on the obligation itself.
+        is_datetime = _is_datetime_field(queryset.model, date_field)
+        day_lookup = f"{date_field}__date" if is_datetime else date_field
         filters = {f"{date_field}__isnull": False}
         if start:
-            filters[f"{date_field}__gte"] = start
+            filters[f"{day_lookup}__gte"] = start
         if end:
-            filters[f"{date_field}__lte"] = end
+            filters[f"{day_lookup}__lte"] = end
         for obj in queryset.filter(**filters):
             plain_title = str(obj)
             title = f"{label_prefix}{plain_title}" if label_prefix else plain_title
+            value = getattr(obj, date_field)
             events.append({
                 "title": title,
                 "plain_title": plain_title,
-                "start": getattr(obj, date_field).isoformat(),
+                "start": (
+                    timezone.localdate(value) if is_datetime else value
+                ).isoformat(),
                 "color": color,
                 "category": category,
                 "url": _safe_reverse(url_name, obj.pk),
@@ -1131,7 +1241,116 @@ def get_calendar_events(user, start=None, end=None, categories=None):
                 "kind": _("Review"),
             })
 
+    # ── Incidents (module 6) ─────────────────────────────
+    # Only the dates a diary is actually kept for. An incident's own stamps
+    # (occurred / detected / contained / closed) are a chronology, read on the
+    # incident itself, and a response action's `due_at` is an intra-incident
+    # task measured in hours : neither is something anyone plans a month
+    # around, and both would bury the three dates below.
+
+    if "notification_deadline" in categories:
+        # The statutory clock, and the reason this module has a calendar at all.
+        # `reportable()` already drops the obligations nobody has registered
+        # yet; `done` then greys out the ones nothing is owed on any more (the
+        # filing is recorded, or the decision was that none was required).
+        from incidents.models import IncidentNotification
+
+        qs = _filter_scoped(
+            IncidentNotification.objects.select_related("incident", "authority"),
+            user,
+        )
+        add(qs, "due_at", "notification_deadline", "#b91c1c",
+            "incidents:notification-detail", _("Deadline: "), deadline=True,
+            done=lambda o: o.sent_at is not None or o.is_terminal_state,
+            kind=_("Notification deadline"))
+
+    if "post_incident_review" in categories:
+        from incidents.models import PostIncidentReview
+
+        qs = _filter_scoped(
+            PostIncidentReview.objects.select_related("incident", "facilitator"),
+            user,
+        )
+        add(qs, "scheduled_date", "post_incident_review", "#8b5cf6",
+            "incidents:review-detail", deadline=True,
+            done=lambda o: o.is_terminal_state,
+            kind=_("Scheduled date"), responsible="facilitator")
+        # ISO 27001 clause 10.2 d) : the date the corrective actions are to be
+        # verified. Held to the same standard as any other commitment, which is
+        # to say it belongs on the calendar rather than in someone's memory.
+        add(qs, "effectiveness_review_date", "post_incident_review", "#c4b5fd",
+            "incidents:review-detail", _("Effectiveness: "), deadline=True,
+            done=lambda o: (
+                o.effectiveness_reviewed_at is not None or o.is_terminal_state
+            ),
+            kind=_("Effectiveness review date"), responsible="facilitator")
+
+    if "evidence_retention" in categories:
+        # A permission to destroy, never an instruction : the date is on the
+        # calendar so custody is reviewed, not so anything is deleted. An
+        # artefact under legal hold is `done` : the hold suspends the question.
+        from incidents.models import IncidentEvidence
+
+        qs = _filter_scoped(
+            IncidentEvidence.objects.select_related("incident", "collected_by"),
+            user,
+        )
+        add(qs, "retention_until", "evidence_retention", "#78716c",
+            "incidents:evidence-detail", _("Retention: "), deadline=True,
+            done=lambda o: o.legal_hold or o.is_terminal_state,
+            kind=_("Retention until"), responsible="collected_by")
+
     return events
+
+
+def open_incidents():
+    """Incidents still being handled, whatever step they are on.
+
+    "Open" is read off the incident lifecycle rather than a status list : a step
+    counts while it counts in reports (so a draft nobody has declared does not)
+    and is not an exit (so a closed or reclassified incident does not either).
+    Adding a step to the lifecycle therefore changes what is open with no change
+    here.
+
+    Shared by the Kanban board and the notification-deadline widget. Unscoped on
+    purpose : each caller applies its own tenancy filter.
+    """
+    from core.lifecycle import resolve_lifecycle
+    from incidents.models import Incident
+
+    open_codes = [
+        step.code
+        for step in resolve_lifecycle(Incident).steps
+        if step.counts_in_reports and not step.is_archived
+    ]
+    return Incident.objects.filter(workflow_state__in=open_codes)
+
+
+def live_notification_obligations():
+    """Notification obligations still owed : the register's open clock.
+
+    "Owed" is read off the notification lifecycle, never a status list : a step
+    counts while it counts in reports (so a draft nobody has registered does
+    not) and is not an exit (so a "not required" decision, a closed question,
+    does not either). A recorded filing (``sent_at``) settles the obligation,
+    whatever step it has since reached.
+
+    Shared by the Kanban board (which dates an incident card by the nearest
+    deadline still owed on it) and the notification-deadline dashboard widget,
+    so both answer "what is still owed" identically. Unscoped on purpose : each
+    caller applies its own tenancy filter.
+    """
+    from core.lifecycle import resolve_lifecycle
+    from incidents.models import IncidentNotification
+
+    live_codes = [
+        step.code
+        for step in resolve_lifecycle(IncidentNotification).steps
+        if step.counts_in_reports and not step.is_archived
+    ]
+    return IncidentNotification.objects.filter(
+        workflow_state__in=live_codes, sent_at__isnull=True,
+    )
 
 
 def build_upcoming_deadlines(user, today, categories=None):
@@ -1144,18 +1363,7 @@ def build_upcoming_deadlines(user, today, categories=None):
     deadline). Shared by the dashboard's Today's actions card and the
     calendar page's Upcoming events card so both lists agree.
     """
-    category_labels = {
-        "risk_assessment": _("Risk assessments"),
-        "compliance_assessment": _("Compliance assessments"),
-        "action_plan": _("Action plans"),
-        "treatment_plan": _("Treatment plans"),
-        "scope": _("Scopes"),
-        "objective": _("Objectives"),
-        "framework": _("Frameworks"),
-        "swot": _("SWOT analyses"),
-        "acceptance": _("Risk acceptances"),
-        "supplier_review": _("Supplier reviews"),
-    }
+    category_labels = CATEGORY_LABELS
     raw_events = get_calendar_events(
         user,
         start=today - timedelta(days=90),
@@ -1193,7 +1401,9 @@ def build_upcoming_deadlines(user, today, categories=None):
             "title": ev.get("plain_title") or ev["title"],
             "url": ev.get("url"),
             "color": ev["color"],
-            "category_label": category_labels.get(ev["category"], ev["category"]),
+            # ``str()`` : the labels are lazy (module-level), and this list is
+            # serialised straight to JSON by the calendar's upcoming endpoint.
+            "category_label": str(category_labels.get(ev["category"], ev["category"])),
             "kind": kind,
             "due": due,
             "overdue": overdue,
@@ -1413,18 +1623,7 @@ class ICalFeedView(View):
         cal.add("method", "PUBLISH")
         cal.add("x-wr-calname", "Cairn")
 
-        CAT_LABELS = {
-            "risk_assessment": _("Risk assessments"),
-            "compliance_assessment": _("Compliance assessments"),
-            "action_plan": _("Action plans"),
-            "treatment_plan": _("Treatment plans"),
-            "scope": _("Scopes"),
-            "objective": _("Objectives"),
-            "framework": _("Frameworks"),
-            "swot": _("SWOT analyses"),
-            "acceptance": _("Risk acceptances"),
-            "supplier_review": _("Supplier reviews"),
-        }
+        CAT_LABELS = CATEGORY_LABELS
 
         for ev in events:
             vevent = ICalEvent()
@@ -1533,13 +1732,21 @@ class GlobalSearchView(LoginRequiredMixin, View):
         return user.get_allowed_scope_ids()
 
     def _filter_scoped(self, qs):
+        """Restrict a searched queryset to the user's perimeters.
+
+        Through ``core.scoping`` so a child entity that inherits its tenancy
+        from a parent row (``scope_parent_lookup``) is filtered here exactly as
+        it is in its own register. The palette reaches straight into the
+        database and returns titles and references : a local copy of the
+        "has a scopes M2M" test would silently expose every such entity to
+        every perimeter.
+        """
         scope_ids = self._scope_ids()
         if scope_ids is None:
             return qs
-        model = qs.model
-        if any(f.name == "scopes" for f in model._meta.many_to_many):
-            return qs.filter(scopes__id__in=scope_ids).distinct()
-        return qs
+        from core.scoping import filter_queryset_by_scopes
+
+        return filter_queryset_by_scopes(qs, scope_ids)
 
     def _search_model(self, model, fields, q, url_name, icon):
         """Search a model on the given fields and return result dicts."""
@@ -1581,6 +1788,9 @@ class GlobalSearchView(LoginRequiredMixin, View):
         ("risks:assessment-list", gettext_lazy("Risk assessments"), "bi-shield-exclamation", None),
         ("risks:risk-list", gettext_lazy("Risk register"), "bi-exclamation-triangle", None),
         ("risks:treatment-plan-list", gettext_lazy("Treatment plans"), "bi-bandaid", None),
+        ("incidents:incident-list", gettext_lazy("Incidents"), "bi-fire", None),
+        ("incidents:event-list", gettext_lazy("Security events"), "bi-broadcast", None),
+        ("incidents:notification-list", gettext_lazy("Notification obligations"), "bi-hourglass-split", None),
         ("calendar", gettext_lazy("Calendar"), "bi-calendar3", None),
         ("kanban", gettext_lazy("Tasks"), "bi-kanban", None),
     ]
@@ -1593,6 +1803,8 @@ class GlobalSearchView(LoginRequiredMixin, View):
         ("compliance:action-plan-create", gettext_lazy("Create an action plan"), "bi-plus-circle", "compliance.action_plan.create"),
         ("assets:essential-asset-create", gettext_lazy("Create an essential asset"), "bi-plus-circle", "assets.essential_asset.create"),
         ("context:objective-create", gettext_lazy("Create an objective"), "bi-plus-circle", "context.objective.create"),
+        ("incidents:incident-create", gettext_lazy("Declare an incident"), "bi-plus-circle", "incidents.incident.create"),
+        ("incidents:event-create", gettext_lazy("Report a security event"), "bi-plus-circle", "incidents.event.create"),
         ("styleguide", gettext_lazy("Open styleguide"), "bi-palette", None),
     ]
 
@@ -1783,6 +1995,24 @@ class GlobalSearchView(LoginRequiredMixin, View):
                 "fields": ["name", "reference", "description"],
                 "url": "risks:treatment-plan-detail",
                 "icon": "bi-bandaid",
+            },
+            # Module 6. An incident is looked up mid-response, by whatever the
+            # responder has to hand : the reference off a bridge call, or a few
+            # words of the title. Both are searched, plus the summary, which is
+            # where the one sentence anyone remembers usually lives.
+            {
+                "label": _("Incidents"),
+                "model": Incident,
+                "fields": ["reference", "title", "summary"],
+                "url": "incidents:incident-detail",
+                "icon": "bi-fire",
+            },
+            {
+                "label": _("Security events"),
+                "model": SecurityEvent,
+                "fields": ["reference", "title", "description"],
+                "url": "incidents:event-detail",
+                "icon": "bi-broadcast",
             },
         ]
 

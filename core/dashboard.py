@@ -165,6 +165,7 @@ CATEGORY_COMPLIANCE = _("Compliance")
 CATEGORY_RISKS = _("Risks")
 CATEGORY_GOVERNANCE = _("Governance")
 CATEGORY_ACTIVITY = _("Activity")
+CATEGORY_INCIDENTS = _("Incidents")
 CATEGORY_LAYOUT = _("Layout")
 
 
@@ -359,6 +360,20 @@ DASHBOARD_WIDGETS: list[DashboardWidget] = [
         default_order=60,
         default_zone=ZONE_RAIL_TOP,
         description=_("Top untreated risks by residual level. Designed for the right rail."),
+    ),
+    DashboardWidget(
+        id="notification_deadlines",
+        title=_("Notification deadlines"),
+        icon="hourglass-split",
+        template="dashboard/widgets/notification_deadlines.html",
+        category=CATEGORY_INCIDENTS,
+        sizes=("2x2", "2x3", "3x2", "4x2"),
+        default_size="2x2",
+        default_order=65,
+        description=_(
+            "Statutory notification obligations that are late or still running,"
+            " with the incidents left open behind them."
+        ),
     ),
     DashboardWidget(
         id="risk_treatment_flow",

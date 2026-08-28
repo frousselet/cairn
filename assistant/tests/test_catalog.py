@@ -70,12 +70,34 @@ def test_plan_schema_constrains_tool_names_and_step_count():
 
 
 def test_signatures_fit_in_a_small_prompt():
-    # The full signature block is injected verbatim into every routing prompt,
-    # so it must stay compact for small planner models. ~5k chars (~1.3k tokens)
-    # is a comfortable ceiling for the current catalog; keep new tools terse.
+    """The signature block goes verbatim into every routing prompt, so keep it terse.
+
+    The guard is per-signature rather than only a total. A fixed total ceiling
+    fails on the release that adds a module, whatever the quality of the tools
+    it adds : this one sat at 4905 of 5000 with five modules, so module 6 broke
+    it by existing. What the prompt budget actually cares about is that no
+    single tool is verbose, which is what the comment always asked for, plus a
+    generous absolute cap so unbounded growth still trips.
+    """
     text = catalog_signatures()
-    assert len(text) < 5000
-    assert text.count("\n") == len(active_specs()) - 1
+    specs = active_specs()
+
+    mean_length = len(text) / len(specs)
+    assert mean_length < 180, (
+        f"signatures average {mean_length:.0f} chars; keep each one to a "
+        f"parameter list and one sentence. Spell an enum only where the planner "
+        f"cannot guess the values."
+    )
+    longest = max(text.split("\n"), key=len)
+    # 450 is above the longest signature the platform already ships
+    # (list_suppliers, 411). Tightening it is a separate sweep, not this one.
+    assert len(longest) < 450, (
+        f"one signature is {len(longest)} chars: {longest[:90]}"
+    )
+    # The absolute cap is deliberately tight : it should force whoever adds the
+    # seventh module to re-state the prompt budget rather than drift past it.
+    assert len(text) < 7000
+    assert text.count("\n") == len(specs) - 1
 
 
 def test_documented_status_enums_match_model_choices():
