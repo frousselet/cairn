@@ -55,24 +55,48 @@ jobs:
       - name: Build the wiki
         run: python scripts/build_wiki.py --out build/wiki --version "${GITHUB_REF_NAME}"
 
-      # GITHUB_TOKEN cannot always write to a wiki repository; WIKI_TOKEN is a
-      # personal access token with that right. The step reports which one it is
-      # using so a failure here is diagnosable from the log alone.
+      # A wiki lives in its own <repo>.wiki.git repository, and GitHub gates it
+      # differently from the code: GITHUB_TOKEN generally cannot write to it,
+      # and fine-grained PATs have no wiki permission at all. WIKI_TOKEN must
+      # therefore be a *classic* PAT carrying the `repo` scope. The step says so
+      # up front and again on failure, so nobody has to work that out from a
+      # bare "Authentication failed" line.
       - name: Push to the wiki
         env:
           WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+
+          remediation() {
+            echo "::error title=Wiki publication failed::Set a WIKI_TOKEN secret."
+            echo ""
+            echo "The wiki is a separate git repository and needs its own credential:"
+            echo "  1. Create a CLASSIC personal access token with the 'repo' scope."
+            echo "     https://github.com/settings/tokens/new?scopes=repo&description=Cairn+wiki+publication"
+            echo "     Fine-grained tokens do not work here: they have no wiki permission."
+            echo "  2. Add it as a repository secret named WIKI_TOKEN."
+            echo "     https://github.com/${GITHUB_REPOSITORY}/settings/secrets/actions/new"
+            echo ""
+            echo "The wiki can also be published by hand meanwhile:"
+            echo "  python scripts/build_wiki.py --out build/wiki --version <tag>"
+          }
+
           if [ -n "${WIKI_TOKEN}" ]; then
             echo "Authenticating with WIKI_TOKEN."
             TOKEN="${WIKI_TOKEN}"
           else
-            echo "WIKI_TOKEN is not set; falling back to GITHUB_TOKEN."
+            echo "::warning::WIKI_TOKEN is not set. Trying GITHUB_TOKEN, which usually cannot write to a wiki."
             TOKEN="${GITHUB_TOKEN}"
           fi
 
-          git clone "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki
+          if ! git clone "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki 2>/dev/null; then
+            echo "Could not clone ${GITHUB_REPOSITORY}.wiki.git."
+            echo "Either the credential cannot read the wiki, or the wiki has never been initialised"
+            echo "(create its first page once at https://github.com/${GITHUB_REPOSITORY}/wiki)."
+            remediation
+            exit 1
+          fi
 
           # Replace the published set wholesale rather than merging: the wiki is
           # a rendering of docs/, so a page deleted at the source must disappear
@@ -89,5 +113,8 @@ jobs:
             exit 0
           fi
           git commit -m "Publish documentation for ${GITHUB_REF_NAME}"
-          git push
-          echo "Published $(find . -name '*.md' -not -path './.git/*' | wc -l) pages."
+          if ! git push; then
+            remediation
+            exit 1
+          fi
+          echo "Published $(find . -name '*.md' -not -path './.git/*' | wc -l) pages to the wiki."

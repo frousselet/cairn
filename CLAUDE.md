@@ -101,7 +101,7 @@ GitHub Actions (`.github/workflows/`) is the CI:
 
 - `tests.yml` (Tests) - on every push to `main` and on pull requests: installs dependencies, runs `ruff check`, compiles `.po` translations, then runs `pytest -x -v --cov`.
 - `docker-publish.yml` (Docker) - on version tags (`v*`): builds and pushes the Docker image to Docker Hub (`frousselet/cairn`) with semver + `latest` tags. Requires the `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` repository secrets.
-- `docs.yml` (Documentation) - on every push to `main`, on pull requests and on version tags: verifies the generated reference is current (`manage.py generate_docs --check`) and that every internal documentation link resolves (`scripts/build_wiki.py --check`); on a tag it also builds the wiki and pushes it to the wiki repository. Wiki push needs a `WIKI_TOKEN` repository secret (a PAT with wiki write access); it falls back to `GITHUB_TOKEN`, which cannot always write to a wiki.
+- `docs.yml` (Documentation) - on every push to `main`, on pull requests and on version tags: verifies the generated reference is current (`manage.py generate_docs --check`) and that every internal documentation link resolves (`scripts/build_wiki.py --check`); on a tag it also builds the wiki and pushes it to the wiki repository. Wiki push needs a `WIKI_TOKEN` repository secret : a **classic** PAT with the `repo` scope, because `GITHUB_TOKEN` generally cannot write to a wiki and fine-grained PATs have no wiki permission at all. Without it the job prints the setup steps and fails rather than dying on an opaque git error.
 - CodeQL scanning runs on pushes to `main` and on a schedule.
 
 Ruff config lives in `pyproject.toml`.
