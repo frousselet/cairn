@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `README.md` is a short overview again : the encyclopaedic module descriptions move to the user guide, leaving a scannable feature table and four points on what the platform actually does differently.
 - `.env.example` documents the 21 environment variables the code reads but the template omitted, among them the email, Redis, WebAuthn and assistant tuning settings.
 - Action plan cancellable statuses are an ordered tuple rather than a set, so the generated lifecycle no longer varies between processes.
 

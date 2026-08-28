@@ -1,65 +1,97 @@
 # Cairn
 
-Open-source **Governance, Risk and Compliance** (GRC) platform.
+**Governance, Risk and Compliance, self-hosted.**
 
-Manage your organisation's security posture, track compliance with regulatory frameworks (ISO 27001, GDPR, NIS2, ...), and run structured risk assessments (ISO 27005, EBIOS RM) - all from a single, self-hosted application.
+Track your compliance with ISO 27001, GDPR, NIS2 and the rest, run structured
+risk assessments, and handle security incidents with the evidence trail a
+regulator will ask for. One application, one container, your own infrastructure.
+
+[![Tests](https://github.com/frousselet/cairn/actions/workflows/tests.yml/badge.svg)](https://github.com/frousselet/cairn/actions/workflows/tests.yml)
+[![Docker](https://img.shields.io/docker/v/frousselet/cairn?label=docker&sort=semver)](https://hub.docker.com/r/frousselet/cairn)
+[![Licence](https://img.shields.io/badge/licence-AGPL--3.0--or--later-blue)](LICENSE)
 
 ![Cairn dashboard](docs/screenshots/dashboard.png)
 
-## What you get
-
-- **Governance** : organisational scopes (with a Draft -> Definition -> Validation -> In force -> Review perimeter lifecycle), sites (with a Draft -> Commissioning -> Operational -> Review operational lifecycle, plus Decommissioned / Archived), strategic issues, stakeholders, objectives, SWOT, roles and activities
-- **Assets** : essential and support assets with CIA valuation, dependencies, SPOF detection and a supplier registry (contacts, mapped addresses, subsidiaries and sub-processors / sous-délégataires for supply-chain mapping, a risk lifecycle and per-requirement compliance evaluation) with CSV bulk import, plus a **Documents** area with **contracts** (multi-party - suppliers and customer stakeholders, amendments, an attached PDF stored securely and a Draft -> Active -> Expired/Terminated lifecycle) and **certificates** (the company's own ISO/HDS/SOC 2 certificates, each attached to the framework it attests, with certification body, validity dates, covered sites, renewal history and an attached PDF)
-- **Risks** : ISO 27005 and EBIOS RM (ANSSI v1.5, workshops 0 to 5) assessments, threat and vulnerability catalogs, treatment plans and formal risk acceptance
-- **Incidents** : ISO 27001 A.5.24 to A.5.28 incident management - a security event intake (A.6.8) assessed before anything is escalated, so a false positive stays an event and a confirmed one is *promoted* into an incident or a vulnerability in a single recorded act; incidents with a Detected -> Triaged -> Investigating -> Contained -> Eradicated -> Recovered -> Post-incident review -> Closed lifecycle, an append-only chronology written by the transitions themselves, response actions and an evidence register (A.5.28) whose artefacts are hashed on acquisition, sealed as a state rather than a checkbox, re-measured on demand with a three-way verdict and moved through an append-only chain of custody in which release and destruction are permissioned transitions and never a `DELETE`; statutory **notification obligations** generated at triage from a catalogue of reporting authorities and obligation templates (GDPR Art. 33 / 34, NIS2, DORA, ePrivacy, CRA, sector, contractual), each running its own legal clock from the incident's awareness anchor, discharged through an append-only filing log that keeps the proof of what was actually transmitted - and where deciding **not** to notify is itself a named, timestamped, approved decision carrying a written rationale, never a blank row; plus GDPR personal data breach qualification (the Art. 33(5) record, with its own confirm / rule-out verdict) and post-incident reviews (A.5.27) that feed the nonconformity register, the risk register and the ISMS change log, and whose corrective actions get an effectiveness verification
-- **Compliance** : frameworks, requirements, assessments, an organisation-wide **nonconformity register** (ISO 27001 clause 10.1/10.2 : one register fed by audits, incidents, management reviews, monitoring and complaints, with a corrective-action effectiveness verdict), action plans and inter-framework mappings, with Excel import and an optional **risk-driven applicability** mode (a framework derives each requirement's applicability automatically from its linked risks)
-- **Steering** : a real-time, **configurable widget dashboard** (Apple-style edit mode with drag-to-reorder, two-dimensional `WxH` tile sizing with each tile's content auto-fitted to its size - no scroll, no empty space - reusable widgets (the same widget, e.g. a single-KPI **Indicator**, can be placed multiple times, each with its own settings), and an add/remove gallery, persisted per user) covering overall compliance, individual KPI indicators, an **Ask Cairn** LLM-synthesised daily briefing (a metrics snapshot summarised by the configured model, fetched asynchronously and cached), compliance by framework, active objectives, priority risks, upcoming deadlines, a conditional **ongoing audits** widget (shown only while an audit is running), the current-to-residual risk treatment flow chart and the current and residual risk matrices (each its own widget), plus **Section** headings (a bare, full-width title rendered straight on the page background) to group widgets into labelled sections; a unified To do / Doing / Done "Tasks" board aggregating action plans, treatment actions, audits and risk assessments; ISO 27001 management reviews; and PDF/DOCX/PPTX report generation (SoA, audit report, risk register, meeting minutes)
-- **Trust Center** : a public, curated page to share your security posture (certifications and compliance level, subprocessors, security measures, downloadable documents), built directly into Cairn and optionally servable on a separate domain - an explicit, opt-in curation layer so internal GRC data never leaks
-- **Ask Cairn (optional)** : natural-language questions in the command palette ("Which decisions were made at the last management review?"), answered by a pluggable LLM provider (Mistral AI by default; OpenAI / any OpenAI-compatible endpoint; Claude; self-hosted Ollama) that cites real records and enforces your permissions, with thumbs up/down feedback that admins can export to improve the assistant. Its name is customisable in the company settings (defaults to "Ask Cairn")
-
-Everything is bilingual (English/French), audit-ready (full change history, versioning, lifecycle workflows) and access-controlled (role-based permissions, scope-based tenancy, passkey login).
-
-Beyond the web UI, every feature is also available through a [REST API](docs/reference/rest-api.md) and a built-in [MCP server](docs/reference/mcp-server.md), so scripts and AI assistants can work with your GRC data directly.
-
 ## Quick start
-
-With [Docker](https://docs.docker.com/get-docker/) installed:
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-Then open [http://localhost:8000](http://localhost:8000). On a fresh database a **first-run onboarding screen** greets you: it shows the database migration state and lets you either **start from scratch** (a two-step wizard: configure your company, then create the first administrator account - everything is sent in a single request, so nothing is written to the database until the admin exists) or **start with sample data** (load the demo dataset behind a live progress bar, then sign you in automatically). See [first-run onboarding](docs/specs/m0-accounts/onboarding.md). You can still create an admin from the CLI instead (`docker compose exec web python manage.py createsuperuser`).
+Open [localhost:8000](http://localhost:8000). A first-run screen offers to set
+up your company, or to load the **Voltara Energy** demo dataset so you can look
+around a populated instance straight away.
 
-Prefer pure Python for debugging? Cairn also runs with no Docker and no external service using [mise](https://mise.jdx.dev/) (SQLite + in-memory channels), with ready-to-use VS Code launch configurations - see [running in pure Python for debugging](docs/technical/installation.md#option-3--run-in-pure-python-for-debugging-mise).
+No Docker? Cairn also runs on pure Python with SQLite for debugging. See the
+[installation guide](docs/technical/installation.md).
 
-To run the published image without cloning the repository, and for production notes (scheduled commands), see the [installation guide](docs/technical/installation.md).
+## What it covers
+
+| Module | What you do with it |
+| --- | --- |
+| **Governance** | Scopes, strategic issues, stakeholders, objectives, SWOT, roles and activities : the ISO 27001 clause 4 context |
+| **Assets** | Essential and support assets with CIA valuation, dependency mapping, SPOF detection, suppliers, contracts and certificates |
+| **Risks** | ISO 27005 and EBIOS RM (ANSSI v1.5, workshops 0 to 5), a three-level register, treatment plans and formal acceptance |
+| **Compliance** | Frameworks and requirements, audits, an organisation-wide nonconformity register, action plans and inter-framework mappings |
+| **Incidents** | Event intake, incident handling, sealed evidence under chain of custody, and statutory notification clocks (GDPR, NIS2, DORA) |
+| **Trust Center** | A public, curated page for your security posture, optionally on its own domain |
+| **Steering** | A configurable widget dashboard, a unified tasks board, management reviews, and PDF / DOCX / PPTX / XLSX reports |
+
+## What makes it different
+
+**Governance is enforced, not suggested.** Every record runs a lifecycle whose
+step decides whether it counts in reports, whether anything may link to it, and
+whether it can be deleted at all. There is no status dropdown : a state change
+is a permissioned transition that leaves a trail.
+
+**Everything is an API.** Every feature is reachable through the
+[REST API](docs/reference/rest-api.md) and a built-in
+[MCP server](docs/reference/mcp-server.md), so scripts and AI assistants work
+with your GRC data directly, under the caller's own permissions.
+
+**Built for the audit.** Full change history on every record, versioning,
+scope-based tenancy, role-based permissions and passkey login. Bilingual
+throughout, English and French.
+
+**Optional AI, off by default.** [Ask Cairn](docs/user-guide/ask-cairn.md)
+answers questions in plain language and cites real records. Point it at Mistral,
+OpenAI, Claude, or your own Ollama so nothing leaves your infrastructure.
 
 ## Documentation
 
-The full documentation is published in the **[wiki](https://github.com/frousselet/cairn/wiki)**, and its source lives in [`docs/`](docs/README.md).
+The full documentation lives in the **[wiki](https://github.com/frousselet/cairn/wiki)**,
+built from [`docs/`](docs/README.md).
 
-| Section | Contents |
-| -------- | -------- |
-| [User guide](docs/user-guide/README.md) | Using the platform, module by module, with screenshots |
-| [Technical documentation](docs/technical/README.md) | Installation, configuration, security, operations, testing, contributing |
-| [SDK](docs/sdk/README.md) | Extending Cairn : dashboard widgets, entities, lifecycles, endpoints, MCP tools |
-| [Reference](docs/reference/README.md) | REST endpoints, MCP tools, permissions, lifecycles, settings. Generated from the code |
-| [Module specifications](docs/specs/README.md) | Business rules and per-entity contracts |
+| | |
+| --- | --- |
+| [User guide](docs/user-guide/README.md) | Using the platform, module by module |
+| [Technical](docs/technical/README.md) | Install, configure, secure, operate |
+| [SDK](docs/sdk/README.md) | Extend it : widgets, entities, endpoints, tools |
+| [Reference](docs/reference/README.md) | Endpoints, MCP tools, permissions, settings |
+| [Specifications](docs/specs/README.md) | The contract each module is held to |
 
 ## Tech stack
 
-Django 5.2 LTS, PostgreSQL 16, Django REST Framework, Django Channels + Redis (real-time and shared cache), Bootstrap 5.3 + HTMX + Apache ECharts (frontend), Docker. Optional: Mistral AI, OpenAI / OpenAI-compatible endpoints, Claude (Anthropic), or self-hosted Ollama (Ask Cairn assistant).
+Django 5.2 LTS, PostgreSQL 16, Django REST Framework, Channels and Redis,
+Bootstrap 5.3 with HTMX and Apache ECharts. No JavaScript build step.
 
 ## Licence
 
-Cairn is free software, licensed under the **GNU Affero General Public License, version 3 or (at your option) any later version** (`AGPL-3.0-or-later`). The full text is in [LICENSE](LICENSE).
+Cairn is free software under the **GNU Affero General Public License, version 3
+or later** ([`AGPL-3.0-or-later`](LICENSE)).
 
-The AGPL is a network copyleft licence : if you run a modified version of Cairn and make it available to users over a network, you must offer those users the corresponding source of your modified version. Distributing a modified version triggers the same obligation.
+The AGPL is a network copyleft licence : run a modified version and make it
+available over a network, and you must offer those users the corresponding
+source. Distributing a modified version triggers the same obligation.
 
-Every source file carries an `SPDX-License-Identifier: AGPL-3.0-or-later` header. Third-party files under `static/vendor/` keep their own upstream licences and are not covered by this notice.
+Every source file carries an `SPDX-License-Identifier: AGPL-3.0-or-later`
+header. Third-party files under `static/vendor/` keep their own upstream
+licences and are not covered by this notice.
 
 ### Trademarks
 
-The licence covers the source code. It does not grant any right to the **Cairn** name, the logo or the visual identity in `docs/brand/`. A public fork or a hosted derivative must use a different name and its own branding.
+The licence covers the source code. It grants no right to the **Cairn** name,
+the logo or the visual identity in [`docs/brand/`](docs/brand/brand-guidelines.md).
+A public fork or a hosted derivative must use a different name and its own
+branding.

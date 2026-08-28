@@ -41,13 +41,18 @@ allowed to read.
 ## The tasks board
 
 A single To do / Doing / Done board that aggregates the work items scattered
-across modules : compliance action plans, risk treatment actions, audits and
-risk assessments. It is the answer to "what is actually on my plate", which no
-single module can give you because the work is spread across four of them.
+across modules : compliance action plans, risk treatment actions, audits, risk
+assessments and incidents. It is the answer to "what is actually on my plate",
+which no single module can give you because the work is spread across five of
+them.
 
-Cards move between columns by dragging, and moving a card performs the
-underlying transition on the real record rather than setting a board-only
-status.
+The board is deliberately **read-only**. There is no drag-and-drop, because a
+card's column is derived from the real record's status or lifecycle step, and
+moving work is a governed transition that belongs on the record's own page where
+the permission gate and the comment requirement live. Click a card to go there.
+
+Cancelled and archived items drop off the board entirely rather than piling up
+in a fourth column.
 
 ## The calendar
 

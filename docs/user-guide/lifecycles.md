@@ -15,8 +15,17 @@ differ : one counts what is in force, the other shows what exists.
 
 ## The stepper
 
-Every detail page carries the same control, at the top : a row of pills showing
-where the record has been, where it is, and where it can go.
+Every detail page carries the same control, at the top, showing where the record
+has been, where it is, and where it can go.
+
+It comes in two shapes, and which one you see depends on the record's lifecycle
+rather than on the page. A **linear** lifecycle, such as the default one, draws
+a connected row of pills. A **graph** lifecycle, such as an incident's, draws
+the steps as a network, because the route is genuinely not a line : an incident
+under investigation can be contained, reclassified as an event, or archived, and
+a row of pills would misrepresent that as an order.
+
+In both shapes the same rules apply.
 
 - **Done steps** are behind you.
 - **The current step** is highlighted.
