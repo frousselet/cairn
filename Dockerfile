@@ -2,7 +2,7 @@ FROM python:slim
 
 LABEL org.opencontainers.image.source="https://github.com/frousselet/cairn"
 LABEL org.opencontainers.image.description="Cairn - Governance, Risk & Compliance platform"
-LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.licenses="AGPL-3.0-or-later"
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1

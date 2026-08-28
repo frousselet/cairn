@@ -9,7 +9,10 @@ class Command(BaseCommand):
     help = "Recalculate compliance counts for all assessments, then propagate to requirements/sections/frameworks."
 
     def handle(self, *args, **options):
-        assessments = ComplianceAssessment.objects.select_related("framework").all()
+        # ``frameworks`` is a many-to-many: prefetch it rather than
+        # select_related, which only walks a forward single-valued relation and
+        # raises FieldError here.
+        assessments = ComplianceAssessment.objects.prefetch_related("frameworks").all()
         count = assessments.count()
         for i, assessment in enumerate(assessments, 1):
             assessment.recalculate_counts()
