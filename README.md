@@ -19,7 +19,7 @@ Manage your organisation's security posture, track compliance with regulatory fr
 
 Everything is bilingual (English/French), audit-ready (full change history, versioning, lifecycle workflows) and access-controlled (role-based permissions, scope-based tenancy, passkey login).
 
-Beyond the web UI, every feature is also available through a [REST API](docs/api.md) and a built-in [MCP server](docs/mcp-server.md), so scripts and AI assistants can work with your GRC data directly.
+Beyond the web UI, every feature is also available through a [REST API](docs/reference/rest-api.md) and a built-in [MCP server](docs/reference/mcp-server.md), so scripts and AI assistants can work with your GRC data directly.
 
 ## Quick start
 
@@ -30,21 +30,23 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Then open [http://localhost:8000](http://localhost:8000). On a fresh database a **first-run onboarding screen** greets you: it shows the database migration state and lets you either **start from scratch** (a two-step wizard: configure your company, then create the first administrator account - everything is sent in a single request, so nothing is written to the database until the admin exists) or **start with sample data** (load the demo dataset behind a live progress bar, then sign you in automatically). See [first-run onboarding](docs/modules/m0-accounts/onboarding.md). You can still create an admin from the CLI instead (`docker compose exec web python manage.py createsuperuser`).
+Then open [http://localhost:8000](http://localhost:8000). On a fresh database a **first-run onboarding screen** greets you: it shows the database migration state and lets you either **start from scratch** (a two-step wizard: configure your company, then create the first administrator account - everything is sent in a single request, so nothing is written to the database until the admin exists) or **start with sample data** (load the demo dataset behind a live progress bar, then sign you in automatically). See [first-run onboarding](docs/specs/m0-accounts/onboarding.md). You can still create an admin from the CLI instead (`docker compose exec web python manage.py createsuperuser`).
 
-Prefer pure Python for debugging? Cairn also runs with no Docker and no external service using [mise](https://mise.jdx.dev/) (SQLite + in-memory channels), with ready-to-use VS Code launch configurations - see [running in pure Python for debugging](docs/installation.md#option-3--run-in-pure-python-for-debugging-mise).
+Prefer pure Python for debugging? Cairn also runs with no Docker and no external service using [mise](https://mise.jdx.dev/) (SQLite + in-memory channels), with ready-to-use VS Code launch configurations - see [running in pure Python for debugging](docs/technical/installation.md#option-3--run-in-pure-python-for-debugging-mise).
 
-To run the published image without cloning the repository, and for production notes (scheduled commands), see the [installation guide](docs/installation.md).
+To run the published image without cloning the repository, and for production notes (scheduled commands), see the [installation guide](docs/technical/installation.md).
 
 ## Documentation
 
-| Document | Contents |
+The full documentation is published in the **[wiki](https://github.com/frousselet/cairn/wiki)**, and its source lives in [`docs/`](docs/README.md).
+
+| Section | Contents |
 | -------- | -------- |
-| [Installation guide](docs/installation.md) | Docker setup (from source or published image), pure-Python debugging with mise, scheduled commands |
-| [Features](docs/features.md) | Detailed feature reference for every module |
-| [REST API](docs/api.md) | Base paths, authentication, conventions |
-| [MCP server](docs/mcp-server.md) | Endpoints, OAuth 2.0, full tool reference |
-| [Module specifications](docs/modules/README.md) | Business rules and per-entity contracts |
+| [User guide](docs/user-guide/README.md) | Using the platform, module by module, with screenshots |
+| [Technical documentation](docs/technical/README.md) | Installation, configuration, security, operations, testing, contributing |
+| [SDK](docs/sdk/README.md) | Extending Cairn : dashboard widgets, entities, lifecycles, endpoints, MCP tools |
+| [Reference](docs/reference/README.md) | REST endpoints, MCP tools, permissions, lifecycles, settings. Generated from the code |
+| [Module specifications](docs/specs/README.md) | Business rules and per-entity contracts |
 
 ## Tech stack
 

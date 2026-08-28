@@ -63,6 +63,14 @@ class McpServer:
             "handler": handler,
         }
 
+    def iter_tools(self):
+        """Yield the registered tool definitions, in registration order.
+
+        Public accessor used by the reference-documentation generator
+        (``manage.py generate_docs``) so it never reads the private registry.
+        """
+        return tuple(self._tools.values())
+
     def get_tool(self, name):
         """Return a registered tool definition dict, or None.
 

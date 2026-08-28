@@ -81,7 +81,7 @@ class SupportAssetType(models.TextChoices):
     PAPER = "paper", _("Paper")
     # `site` was previously a SupportAsset type; physical locations now live
     # in their own `context.Site` entity, linked back through SiteAssetDependency.
-    # See docs/modules/m2-assets/site.md.
+    # See docs/specs/m2-assets/site.md.
 
 
 class SupportAssetCategory(models.TextChoices):

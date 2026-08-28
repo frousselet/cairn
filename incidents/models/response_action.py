@@ -60,7 +60,7 @@ class IncidentResponseAction(ReferenceGeneratorMixin):
     and ``deletable_states()`` answer nothing about this model, a status change
     leaves a ``HistoricalRecords`` row and no ``LifecycleEvent``, and the row is
     deletable at any status (gated by permission alone). See
-    ``docs/modules/m6-incidents/incident-response-action.md``.
+    ``docs/specs/m6-incidents/incident-response-action.md``.
 
     The row is **mutable by design** : moving from planned to done while the
     incident is live is its whole purpose. No append-only claim is made for it,
