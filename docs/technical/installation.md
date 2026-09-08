@@ -101,6 +101,28 @@ For local development and step-by-step debugging, you can run the whole stack in
 
 Python is managed by [mise](https://mise.jdx.dev/), pinned in [`mise.toml`](../../mise.toml) (`python = "latest"`).
 
+### One command, on a throwaway sandbox
+
+On a fresh Debian or Ubuntu machine (a devcontainer, a Codespace, a cloud sandbox : anywhere Docker itself is unavailable), [`scripts/bootstrap_dev.sh`](../../scripts/bootstrap_dev.sh) installs everything the Docker image carries :
+
+```bash
+scripts/bootstrap_dev.sh                  # system libraries, venv, .env, Redis
+scripts/bootstrap_dev.sh --with-postgres  # ... plus a PostgreSQL server
+scripts/bootstrap_dev.sh --with-chrome    # ... plus headless Chrome for the screenshot script
+```
+
+It installs the `apt` packages the [`Dockerfile`](../../Dockerfile) lists (`gettext`, `libpq-dev`, and the Pango / Cairo stack WeasyPrint loads at runtime : without it every PDF report dies on a missing `libgobject`), creates `.venv` and installs `requirements.txt`, writes a `.env` with a random `SECRET_KEY` (an existing one is never touched), starts Redis, mirrors the front-end libraries, compiles the translation catalogs, and ends on a check that WeasyPrint, the Office writers, Redis and, with `--with-postgres`, the database server all answer.
+
+It provisions an **environment and nothing else** : no migration is applied and no data is written. Start the application and the first-run screen applies the migrations and offers to create your company or to load the demo dataset, exactly as on a fresh Docker install. Every step is idempotent, so re-running it on a half-provisioned sandbox only fills in what is missing; `--skip-apt` runs it without touching a single system package.
+
+> Outside Docker, nothing reads `.env` : Compose injects it as an `env_file`, while `manage.py` sees only the process environment. Load it into your shell before running Django by hand, otherwise the cache and the database fall back to the Compose host names `redis` and `db` :
+>
+> ```bash
+> set -a && source .env && set +a
+> ```
+
+The rest of this section describes the same setup done by hand.
+
 ### Prerequisites
 
 - [mise](https://mise.jdx.dev/getting-started.html)

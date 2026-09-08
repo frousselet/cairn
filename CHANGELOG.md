@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `scripts/bootstrap_dev.sh` provisions a Docker-less Debian/Ubuntu development sandbox with every system and Python dependency the image carries.
+
 ### Changed
 
 - The sidebar menu ships folded and keeps a single group open at a time : the one holding the current page.
