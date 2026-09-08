@@ -23,8 +23,9 @@ Open [localhost:8000](http://localhost:8000). A first-run screen offers to set
 up your company, or to load the **Voltara Energy** demo dataset so you can look
 around a populated instance straight away.
 
-No Docker? Cairn also runs on pure Python with SQLite for debugging. See the
-[installation guide](docs/technical/installation.md).
+No Docker? Cairn also runs on pure Python with SQLite for debugging, and
+`scripts/bootstrap_dev.sh` provisions a Debian or Ubuntu sandbox with everything
+the image carries. See the [installation guide](docs/technical/installation.md).
 
 ## What it covers
 
