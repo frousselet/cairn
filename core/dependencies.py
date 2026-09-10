@@ -17,7 +17,7 @@ reference those files through ``{% static %}`` and carry no version of their
 own, which is why the pin below cannot drift from what the browser gets.
 
 Adding, removing or upgrading a library : update this registry in the same
-commit, then re-run ``manage.py vendor_assets --upgrade`` to refresh the local
+commit, then re-run ``manage.py vendor_assets --force`` to refresh the local
 copies and their integrity digests (``--print-hashes`` prints the new ones).
 """
 from dataclasses import dataclass
@@ -238,10 +238,10 @@ DEPENDENCIES = (
                )),
     Dependency("DOMPurify", "https://github.com/cure53/DOMPurify",
                "Sanitises rich text before it is rendered.",
-               FRONTEND, pinned_version="3.4.14", assets=(
-                   VendorAsset(f"{NPM}dompurify@3.4.14/dist/purify.min.js",
+               FRONTEND, pinned_version="3.4.15", assets=(
+                   VendorAsset(f"{NPM}dompurify@3.4.15/dist/purify.min.js",
                                "dompurify/purify.min.js",
-                               "sha384-46dPGH1XlTmj7bc50bqLjTdORXs/3EP2QpA/6EWbelYWOY9VGp+87RT61S3Mcslb"),
+                               "sha384-uUMu9JDY09vBzRf9SPcK2VgUj+W/70J6Soc+Dded5P474ElQ63iv9j5N3DE7Kp3N"),
                )),
     Dependency("Sortable", "https://github.com/SortableJS/Sortable",
                "Drag and drop for the dashboard grid and kanban boards.",
@@ -252,10 +252,10 @@ DEPENDENCIES = (
                )),
     Dependency("ECharts", "https://github.com/apache/echarts",
                "Dashboard and report charts.",
-               FRONTEND, pinned_version="5.6.0", assets=(
-                   VendorAsset(f"{NPM}echarts@5.6.0/dist/echarts.min.js",
+               FRONTEND, pinned_version="6.1.0", assets=(
+                   VendorAsset(f"{NPM}echarts@6.1.0/dist/echarts.min.js",
                                "echarts/echarts.min.js",
-                               "sha384-pPi0zxBAoDu6+JXW/C68UZLvBUUtU+7zonhif43rqj7pxsGyqyqzcian2Rj37Rss"),
+                               "sha384-C2iskrW/uPW46KzOjrvJIQo4YkV8lkD+QS0CrDN18IIPIpT/g2USu8bTP3nvmIAD"),
                )),
     Dependency("D3", "https://github.com/d3/d3",
                "Rendering of the lifecycle graph.",
