@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The sidebar menu ships folded and keeps a single group open at a time : the one holding the current page.
+- Front-end libraries move to their current releases : DOMPurify 3.4.15 and ECharts 6.1.0.
+
+### Security
+
+- The ECharts upgrade clears GHSA-fgmj-fm8m-jvvx, an XSS in the `lines` series tooltip that Cairn's charts never exercised.
 
 ## [0.36.0] - 2026-08-28
 
