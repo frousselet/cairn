@@ -80,7 +80,7 @@
 {{ step_kinds|json_script:"lc-kinds" }}
 {{ tones|json_script:"lc-tones" }}
 
-<script src="{% static_v 'js/lifecycle_graph.js' %}"></script>
+{% include "components/lifecycle_graph_lib.html" %}
 <script>
 (function () {
   var form = document.getElementById('lc-edit-form');
@@ -253,7 +253,9 @@
     if (document.fonts && document.fonts.ready) { document.fonts.ready.then(renderDiagram); }
     new MutationObserver(renderDiagram).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
   }
-  window.CairnLifecycleGraph.ensureLibs('{% static "vendor/d3/d3.min.js" %}', '{% static "vendor/dagre/dagre.min.js" %}', boot);
+  window.cairnWithLifecycleGraph(function () {
+    window.CairnLifecycleGraph.ensureLibs('{% static "vendor/d3/d3.min.js" %}', '{% static "vendor/dagre/dagre.min.js" %}', boot);
+  });
 })();
 </script>
 
