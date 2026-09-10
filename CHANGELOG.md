@@ -7,9 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `scripts/bootstrap_dev.sh` provisions a Docker-less Debian/Ubuntu development sandbox with every system and Python dependency the image carries.
+
 ### Changed
 
 - The sidebar menu ships folded and keeps a single group open at a time : the one holding the current page.
+- Front-end libraries move to their current releases : DOMPurify 3.4.15 and ECharts 6.1.0.
+
+### Fixed
+
+- Lifecycle graphs stayed blank until a manual reload when their page was reached by in-app navigation, on detail pages as well as in the lifecycle editor.
+
+### Security
+
+- The ECharts upgrade clears GHSA-fgmj-fm8m-jvvx, an XSS in the `lines` series tooltip that Cairn's charts never exercised.
 
 ## [0.36.0] - 2026-08-28
 

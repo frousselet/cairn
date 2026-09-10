@@ -1335,10 +1335,10 @@
   var dataEl = document.getElementById('risk-flow-data');
   if (!el || !dataEl) return;
 
-  // echarts is loaded from a CDN. Under hx-boost navigation the external
-  // <script> is injected asynchronously, so this code would run before echarts
-  // is ready and the chart stays blank until a full page reload. Load echarts
-  // on demand and only build the chart once echarts is available.
+  // echarts is an external <script>, served from static/vendor/. Under hx-boost
+  // navigation it is injected asynchronously, so this code would run before
+  // echarts is ready and the chart stays blank until a full page reload. Load
+  // echarts on demand and only build the chart once it is available.
   function withECharts(cb) {
     if (window.echarts) { cb(); return; }
     var s = document.getElementById('echarts-lib');
