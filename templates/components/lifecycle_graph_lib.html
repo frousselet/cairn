@@ -1,0 +1,25 @@
+{% load ui %}
+{% comment %}
+Loads static/js/lifecycle_graph.js and calls back once CairnLifecycleGraph is
+defined. Include this, then wrap any use of the renderer in
+window.cairnWithLifecycleGraph(...).
+
+A plain <script src> followed by an inline script only works on a full page
+load, where the parser blocks on the external file. Under an hx-boost swap htmx
+appends the external script asynchronously and runs the inline one immediately
+after, so the inline code reached an undefined CairnLifecycleGraph and the
+lifecycle graph stayed blank until the page was reloaded by hand.
+{% endcomment %}
+<script>
+window.cairnWithLifecycleGraph = window.cairnWithLifecycleGraph || function (cb) {
+  if (window.CairnLifecycleGraph) { cb(); return; }
+  var s = document.getElementById('cairn-lifecycle-graph-lib');
+  if (!s) {
+    s = document.createElement('script');
+    s.id = 'cairn-lifecycle-graph-lib';
+    s.src = '{% static_v "js/lifecycle_graph.js" %}';
+    document.head.appendChild(s);
+  }
+  s.addEventListener('load', function () { cb(); });
+};
+</script>

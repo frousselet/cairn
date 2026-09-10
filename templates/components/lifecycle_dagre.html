@@ -20,7 +20,7 @@ a single dot -> target arrow with the target detached below the flow.
   </div>
 </div>
 
-<script src="{% static_v 'js/lifecycle_graph.js' %}"></script>
+{% include "components/lifecycle_graph_lib.html" %}
 <script>
 (function () {
   var root = document.getElementById('{{ lc_container_id }}');
@@ -55,11 +55,13 @@ a single dot -> target arrow with the target detached below the flow.
       mode: 'display', containerWidth: stage.clientWidth, onNodeClick: go,
     });
   }
-  window.CairnLifecycleGraph.ensureLibs('{% static "vendor/d3/d3.min.js" %}', '{% static "vendor/dagre/dagre.min.js" %}', function () {
-    render();
-    if (window.ResizeObserver) { new ResizeObserver(render).observe(stage); } else { window.addEventListener('resize', render); }
-    if (document.fonts && document.fonts.ready) { document.fonts.ready.then(render); }
-    new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+  window.cairnWithLifecycleGraph(function () {
+    window.CairnLifecycleGraph.ensureLibs('{% static "vendor/d3/d3.min.js" %}', '{% static "vendor/dagre/dagre.min.js" %}', function () {
+      render();
+      if (window.ResizeObserver) { new ResizeObserver(render).observe(stage); } else { window.addEventListener('resize', render); }
+      if (document.fonts && document.fonts.ready) { document.fonts.ready.then(render); }
+      new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+    });
   });
 })();
 </script>
