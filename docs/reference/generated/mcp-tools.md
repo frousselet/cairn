@@ -8,7 +8,7 @@ Cairn's MCP server exposes the whole platform to AI assistants and scripts over 
 
 Transport, authentication and client setup are in [../mcp-server.md](../mcp-server.md).
 
-**736 tools** are registered, across **9 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
+**772 tools** are registered, across **10 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
 
 ## Modules
 
@@ -17,7 +17,8 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | Assets | 136 | [mcp-tools-assets.md](mcp-tools-assets.md) |
 | Compliance | 64 | [mcp-tools-compliance.md](mcp-tools-compliance.md) |
 | Governance and context | 126 | [mcp-tools-context.md](mcp-tools-context.md) |
-| General | 15 | [mcp-tools-general.md](mcp-tools-general.md) |
+| Documents | 33 | [mcp-tools-documents.md](mcp-tools-documents.md) |
+| General | 18 | [mcp-tools-general.md](mcp-tools-general.md) |
 | Incidents | 103 | [mcp-tools-incidents.md](mcp-tools-incidents.md) |
 | Reports and management review | 18 | [mcp-tools-reports.md](mcp-tools-reports.md) |
 | Risks | 222 | [mcp-tools-risks.md](mcp-tools-risks.md) |
@@ -365,20 +366,61 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `update_swot_item` | `context.swot.update` | Update an existing swot item |
 | `update_swot_strategy` | `context.swot.update` | Update an existing swot strategy |
 
+## Documents
+
+| Tool | Permission | Description |
+| --- | --- | --- |
+| `acknowledgement_campaign_allowed_transitions` | `documents.acknowledgement.read` | List the lifecycle transitions the caller may perform on a acknowledgement campaign from its current state. |
+| `add_campaign_newcomers` | `documents.acknowledgement.update` | Re-resolve the audience of a running acknowledgement campaign (RG-DOC-15): creates a pending row, and sends the request, to every user, group member or role assignee who has no row yet. Existing rows are never touched. Recorded in the campaign history. |
+| `batch_create_acknowledgement_campaigns` | `documents.acknowledgement.create` | Create or upsert several draft acknowledgement campaigns in one call (max 500). Every policy_version_id must be within the caller's scopes, or nothing is created. |
+| `batch_create_policy_versions` | `documents.policy.create` | Create or upsert several draft document versions in one call (max 500). Every policy_id must be a document within the caller's scopes, or nothing is created. Pass 'match_on' (e.g. ["policy_id", "version_label"]) to update matching drafts instead of duplicating them; a submitted version refuses any content change. |
+| `batch_create_policys` | `documents.policy.create` | Create or upsert multiple policys in one call (max 500). Non-atomic: valid items are applied even if others fail. Pass 'match_on' (a list of field names, e.g. ["name"]) to make the call idempotent: each item whose match_on values already exist is UPDATED in place instead of duplicated, so a failed import can be safely replayed. Returns per-item status (created / updated / error) with created, updated and error counts. |
+| `create_acknowledgement_campaign` | `documents.acknowledgement.create` | Create a draft acknowledgement campaign asking an audience (users, groups, roles) to confirm they have read one version of a document. Nothing is sent until the campaign is launched with transition_acknowledgement_campaign(target_state='running'), which requires the version to be in force and resolves the audience once into one row per person. |
+| `create_policy` | `documents.policy.create` | Create a new policy |
+| `create_policy_version` | `documents.policy.create` | Create a draft version of a document. Prefer new_policy_version, which proposes the next label and copies the content of the version in force. The PDF is attached through the web form only. |
+| `delete_acknowledgement_campaign` | `documents.acknowledgement.delete` | Delete a acknowledgement campaign |
+| `delete_policy` | `documents.policy.delete` | Delete a policy |
+| `delete_policy_version` | `documents.policy.delete` | Delete a policy version |
+| `excuse_policy_acknowledgement` | `documents.acknowledgement.update` | Excuse a pending acknowledgement row (a leaver, a long absence) with a mandatory reason (RG-DOC-19). The row leaves the completion rate's denominator and keeps its history; it can never be changed again. |
+| `get_acknowledgement_campaign` | `documents.acknowledgement.read` | Get a acknowledgement campaign by ID |
+| `get_acknowledgement_campaign_history` | `documents.acknowledgement.read` | Return the change history of a acknowledgement campaign: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
+| `get_campaign_progress` | `documents.acknowledgement.read` | Read the progress of an acknowledgement campaign: rows by status (pending, acknowledged, excused, expired, total) and the completion rate, an integer percentage computed as acknowledged / (all rows - excused rows) (RG-DOC-19), frozen once the campaign closes. |
+| `get_policy` | `documents.policy.read` | Get a policy by ID |
+| `get_policy_history` | `documents.policy.read` | Return the change history of a policy: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
+| `get_policy_in_force` | `documents.policy.read` | Read the version of a document that is currently in force: its full content, label, approval (who approved it and when), effective date and PDF integrity hash, plus the document's next review date. 'version_in_force' is null when the document has none (never approved, withdrawn or retired). |
+| `get_policy_version` | `documents.policy.read` | Get one document version by ID with its full rich-text content, change summary, approval (who, when, effective from), supersession, and the SHA-256 and download URL of its PDF when one is attached. The PDF bytes themselves are not returned. |
+| `get_policy_version_history` | `documents.policy.read` | Return the change history of a policy version: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
+| `list_acknowledgement_campaigns` | `documents.acknowledgement.read` | List acknowledgement campaigns with optional search and filters |
+| `list_policy_versions` | `documents.policy.read` | List policy versions with optional search and filters |
+| `list_policys` | `documents.policy.read` | List policys with optional search and filters |
+| `new_policy_version` | `documents.policy.update` | Draft the next version of a document from its version in force (RG-DOC-05): proposes the next label (minor: 1.2 -> 1.3, major: 1.2 -> 2.0), copies the in-force content and PDF into a new draft, and leaves the change summary empty (write it before submitting). On a document with no version yet it drafts 1.0. Then edit it with update_policy_version and submit it with transition_policy_version(target_state='in_review'). |
+| `policy_allowed_transitions` | `documents.policy.read` | List the lifecycle transitions the caller may perform on a policy from its current state. |
+| `policy_version_allowed_transitions` | `documents.policy.read` | List the lifecycle transitions the caller may perform on a policy version from its current state. |
+| `record_policy_review` | `documents.policy.approve` | Record that an active document was reviewed and needs no change (RG-DOC-13): stamps the review date and reviewer, recomputes the next review date from today, and records the comment in the document history. Closes a review cycle without issuing a new version. |
+| `transition_acknowledgement_campaign` | `documents.acknowledgement.read` | Change the lifecycle state of a acknowledgement campaign (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping). |
+| `transition_policy` | `documents.policy.read` | Change the lifecycle state of a policy (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping). |
+| `transition_policy_version` | `documents.policy.read` | Change the lifecycle state of a policy version (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping). |
+| `update_acknowledgement_campaign` | `documents.acknowledgement.update` | Update an acknowledgement campaign. Everything is editable in draft; once launched, the target version, the statement and the audience are fixed (RG-DOC-15) and only the name, message, due date and scopes may change. |
+| `update_policy` | `documents.policy.update` | Update an existing policy |
+| `update_policy_version` | `documents.policy.update` | Update a document version. While the version is a draft, its label, content, change summary and effective date are editable. From 'in_review' onward the content, label and change summary are frozen (RG-DOC-02) and any change to them is refused. The document a version belongs to never changes. |
+
 ## General
 
 | Tool | Permission | Description |
 | --- | --- | --- |
+| `acknowledge_policy_version` | - | Acknowledge, as the authenticated user, a document version one has been asked to read (RG-DOC-16 / RG-DOC-17). Records the time, the confirmed statement and the 'mcp' channel on a write-once row. Only the addressee can acknowledge their own row: nobody, an administrator included, can acknowledge on someone else's behalf. Only act on the user's explicit confirmation that they have read the document. |
 | `ask_assistant` | - | Ask Cairn's natural-language assistant a read-only question about GRC data (e.g. 'Which decisions were made at the last management review?'). Requires the optional AI assistant to be enabled (AI_ASSISTANT_ENABLED). The answer cites real records; data access enforces the caller's permissions. |
 | `check_for_updates` | - | Report whether a newer Cairn release is published than the one this instance runs. Returns 'state' ('outdated', 'current', 'unknown' when GitHub cannot be reached or the build carries no release number, 'disabled' when the check is switched off), the running version, the latest published version and the URL of its release notes. |
 | `create_saved_filter` | - | Save a named list filter for the current user. `query` is the list's filter query string; `view_key` is the list key (e.g. context.issue). |
 | `delete_saved_filter` | - | Delete one of the current user's saved list filters by id. |
 | `get_dashboard_layout` | - | Get the currently authenticated user's home-dashboard widget layout (ordered list of {key, id, size, visible, zone, params}) and the catalogue of available widgets with their allowed sizes. `id` is the widget type and `key` is the per-instance id. A size is a 'WxH' tile token: width W in 1..4 quarter-columns (1=1/4 .. 4=full width) by height H in 1..4 fixed row units, e.g. '2x1' or '4x2'. A widget with `multiple: true` (e.g. 'indicator') can appear several times, each instance carrying its own `params` (the indicator widget takes `{indicator: <id>, show_chart: bool}`). |
 | `get_me` | - | Get information about the currently authenticated user, including capability flags: 'can_override_import_dates' (may set created_at / updated_at on import) and 'can_create_users'. |
-| `help` | - | Get usage documentation for the Cairn MCP server. Call without arguments for the full guide, or with a topic for focused help. Topics: context, assets, compliance, risks, incidents, batch, workflow, permissions, examples, users |
+| `help` | - | Get usage documentation for the Cairn MCP server. Call without arguments for the full guide, or with a topic for focused help. Topics: context, assets, compliance, risks, incidents, documents, batch, workflow, permissions, examples, users |
 | `kanban_board` | - | Get the unified To do / Doing / Done board aggregating action plans, treatment actions, audits and risk assessments (read-only) |
 | `list_dependencies` | - | List the third-party open source components this Cairn instance is built on : name, owner (the organisation publishing it), resolved version, official repository URL and what each one is used for. Same registry as the About modal. Optionally filtered by group. |
+| `list_my_pending_acknowledgements` | - | List the documents the authenticated user has been asked to acknowledge and has not yet, soonest deadline first: the campaign, the document and version, the due date, and the exact statement to confirm. Needs no permission: every user sees their own requests. Read the text with get_policy_version(policy_version_id) before acknowledging. |
 | `list_notifications` | - | List the currently authenticated user's in-app notifications (most recent first), with the unread count. Set unread_only=true to only return unread notifications. |
+| `list_policy_acknowledgements` | - | List acknowledgement rows (one per addressee and campaign): the caller's own rows, plus the rows of the campaigns within their scopes when they hold documents.acknowledgement.read. Rows are write-once evidence and have no update or delete tool. |
 | `list_saved_filters` | - | List the current user's saved list filters (own + shared). Optional view_key (e.g. 'context.issue') narrows to one list. |
 | `mark_all_notifications_read` | - | Mark all of the authenticated user's unread notifications as read. |
 | `mark_notification_read` | - | Mark one of the authenticated user's notifications as read. |
@@ -508,7 +550,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `generate_management_review_pptx` | `reports.report.create` | Generate a management review presentation (PowerPoint) covering ISO 27001 clause 9.3 inputs: action plans, issues, stakeholders, security performance, risks, and improvement opportunities |
 | `generate_soa_report` | `reports.report.create` | Generate a Statement of Applicability (SoA) PDF report for one or more frameworks |
 | `get_management_review` | `reports.management_review.read` | Get a management review by ID. |
-| `list_isms_changes` | `reports.management_review.read` | List ISMS changes decided during management reviews (ISO 27001:2022 clause 9.3.3). |
+| `list_isms_changes` | `reports.management_review.read` | List ISMS changes decided during management reviews (ISO 27001:2022 clause 9.3.3), with affected_document_ids : the governed documents (documents.Policy) each change requires to revise. |
 | `list_management_review_decisions` | `reports.management_review.read` | List decisions (ISO 27001:2022 clause 9.3.3 outputs). Filter by review or status. |
 | `list_management_reviews` | `reports.management_review.read` | List management reviews (ISO 27001:2022 clause 9.3). Filter by status or scope. |
 | `list_reports` | `reports.report.read` | List generated reports, optionally filtered by report_type |

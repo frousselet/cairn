@@ -6,7 +6,7 @@
 
 The complete route table under `/api/v1/`. Authentication, pagination, filtering and the error contract are documented in [../rest-api.md](../rest-api.md); the field-level contract of each resource is in its [specification](../../specs/README.md).
 
-**429 routes** are published across **22 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
+**453 routes** are published across **23 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
 
 ## Groups
 
@@ -21,6 +21,7 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | [`context`](#context) | 68 |
 | [`dashboard-layout`](#dashboard-layout) | 1 |
 | [`dependencies`](#dependencies) | 1 |
+| [`documents`](#documents) | 24 |
 | [`groups`](#groups) | 4 |
 | [`incidents`](#incidents) | 68 |
 | [`mcp`](#mcp) | 1 |
@@ -267,6 +268,35 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | Path | Methods | View | URL name |
 | --- | --- | --- | --- |
 | `/api/v1/dependencies/` | GET, OPTIONS | `accounts.api.views.DependenciesAPIView` | `api-dependencies` |
+
+## documents
+
+| Path | Methods | View | URL name |
+| --- | --- | --- | --- |
+| `/api/v1/documents/` | GET, OPTIONS | `rest_framework.routers.APIRootView` | `api-root` |
+| `/api/v1/documents/acknowledgement-campaigns/` | GET, POST | `documents.api.views.AcknowledgementCampaignViewSet` | `acknowledgementcampaign-list` |
+| `/api/v1/documents/acknowledgement-campaigns/<pk>/` | DELETE, GET, PATCH, PUT | `documents.api.views.AcknowledgementCampaignViewSet` | `acknowledgementcampaign-detail` |
+| `/api/v1/documents/acknowledgement-campaigns/<pk>/add-newcomers/` | POST | `documents.api.views.AcknowledgementCampaignViewSet` | `acknowledgementcampaign-add-newcomers` |
+| `/api/v1/documents/acknowledgement-campaigns/<pk>/history/` | GET | `documents.api.views.AcknowledgementCampaignViewSet` | `acknowledgementcampaign-history` |
+| `/api/v1/documents/acknowledgement-campaigns/<pk>/transition/` | GET, POST | `documents.api.views.AcknowledgementCampaignViewSet` | `acknowledgementcampaign-transition` |
+| `/api/v1/documents/acknowledgement-campaigns/batch/` | POST | `documents.api.views.AcknowledgementCampaignViewSet` | `acknowledgementcampaign-batch-create` |
+| `/api/v1/documents/acknowledgements/` | GET | `documents.api.views.PolicyAcknowledgementViewSet` | `policyacknowledgement-list` |
+| `/api/v1/documents/acknowledgements/<pk>/` | GET | `documents.api.views.PolicyAcknowledgementViewSet` | `policyacknowledgement-detail` |
+| `/api/v1/documents/acknowledgements/<pk>/acknowledge/` | POST | `documents.api.views.PolicyAcknowledgementViewSet` | `policyacknowledgement-acknowledge` |
+| `/api/v1/documents/acknowledgements/<pk>/excuse/` | POST | `documents.api.views.PolicyAcknowledgementViewSet` | `policyacknowledgement-excuse` |
+| `/api/v1/documents/acknowledgements/mine/` | GET | `documents.api.views.PolicyAcknowledgementViewSet` | `policyacknowledgement-mine` |
+| `/api/v1/documents/policies/` | GET, POST | `documents.api.views.PolicyViewSet` | `policy-list` |
+| `/api/v1/documents/policies/<pk>/` | DELETE, GET, PATCH, PUT | `documents.api.views.PolicyViewSet` | `policy-detail` |
+| `/api/v1/documents/policies/<pk>/history/` | GET | `documents.api.views.PolicyViewSet` | `policy-history` |
+| `/api/v1/documents/policies/<pk>/new-version/` | POST | `documents.api.views.PolicyViewSet` | `policy-new-version` |
+| `/api/v1/documents/policies/<pk>/record-review/` | POST | `documents.api.views.PolicyViewSet` | `policy-record-review` |
+| `/api/v1/documents/policies/<pk>/transition/` | GET, POST | `documents.api.views.PolicyViewSet` | `policy-transition` |
+| `/api/v1/documents/policies/batch/` | POST | `documents.api.views.PolicyViewSet` | `policy-batch-create` |
+| `/api/v1/documents/policy-versions/` | GET, POST | `documents.api.views.PolicyVersionViewSet` | `policyversion-list` |
+| `/api/v1/documents/policy-versions/<pk>/` | DELETE, GET, PATCH, PUT | `documents.api.views.PolicyVersionViewSet` | `policyversion-detail` |
+| `/api/v1/documents/policy-versions/<pk>/history/` | GET | `documents.api.views.PolicyVersionViewSet` | `policyversion-history` |
+| `/api/v1/documents/policy-versions/<pk>/transition/` | GET, POST | `documents.api.views.PolicyVersionViewSet` | `policyversion-transition` |
+| `/api/v1/documents/policy-versions/batch/` | POST | `documents.api.views.PolicyVersionViewSet` | `policyversion-batch-create` |
 
 ## groups
 

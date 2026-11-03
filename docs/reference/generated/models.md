@@ -8,7 +8,7 @@ Every persisted model in the project, with the platform-wide behaviours it inher
 
 The field-by-field contract of each entity lives in its [specification](../../specs/README.md); this page is the inventory.
 
-**114 models** are registered.
+**118 models** are registered.
 
 ## Inventory
 
@@ -71,6 +71,10 @@ The field-by-field contract of each entity lives in its [specification](../../sp
 | context | `Tag` | `context_tag` | - | - | - | - | 4 |
 | core | `LifecycleDefinition` | `core_lifecycledefinition` | - | - | - | - | 8 |
 | core | `LifecycleEvent` | `core_lifecycleevent` | - | - | - | - | 10 |
+| documents | `AcknowledgementCampaign` | `documents_acknowledgementcampaign` | `ACKC` | `acknowledgement_campaign` | yes | yes | 14 |
+| documents | `PolicyAcknowledgement` | `documents_policyacknowledgement` | - | - | - | yes | 12 |
+| documents | `PolicyVersion` | `documents_policyversion` | `PLVR` | `policy_version` | - | yes | 19 |
+| documents | `Policy` | `documents_policy` | `PLCY` | `policy` | yes | yes | 19 |
 | helpers | `HelpContent` | `helpers_helpcontent` | - | - | - | - | 6 |
 | incidents | `EvidenceCustodyEvent` | `incidents_evidencecustodyevent` | - | - | - | yes | 16 |
 | incidents | `IncidentEvidence` | `incidents_incidentevidence` | `EVID` | `incident_evidence` | - | yes | 30 |
@@ -124,7 +128,7 @@ The field-by-field contract of each entity lives in its [specification](../../sp
 | risks | `Vulnerability` | `risks_vulnerability` | `VULN` | `vulnerability` | yes | yes | 15 |
 | trust_center | `DocumentRequest` | `trust_center_documentrequest` | `DREQ` | `trust_center_document_request` | - | yes | 22 |
 | trust_center | `TrustCenterCertification` | `trust_center_trustcentercertification` | `TCCE` | `trust_center_publication` | - | yes | 12 |
-| trust_center | `TrustCenterDocument` | `trust_center_trustcenterdocument` | `TCDO` | `trust_center_publication` | - | yes | 16 |
+| trust_center | `TrustCenterDocument` | `trust_center_trustcenterdocument` | `TCDO` | `trust_center_publication` | - | yes | 17 |
 | trust_center | `TrustCenterMeasure` | `trust_center_trustcentermeasure` | `TCME` | `trust_center_publication` | - | yes | 12 |
 | trust_center | `TrustCenterSettings` | `trust_center_trustcentersettings` | - | - | - | - | 10 |
 | trust_center | `TrustCenterSubprocessor` | `trust_center_trustcentersubprocessor` | `TCSP` | `trust_center_publication` | - | yes | 13 |

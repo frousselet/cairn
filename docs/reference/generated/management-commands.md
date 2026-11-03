@@ -13,6 +13,7 @@ The ones meant to run on a schedule are covered in [../../technical/operations.m
 | Command | App | Purpose |
 | --- | --- | --- |
 | `detect_spof` | assets | Detect Single Points of Failure (SPOF) in the dependency graph |
+| `documents_sweep` | documents | Send the document review reminders (due within 30 days, overdue) and the acknowledgement reminders (7 days before a campaign's due date and the day after it). Run daily. |
 | `expire_risk_acceptances` | risks | Set RiskAcceptance.status to EXPIRED for any active acceptance whose valid_until date has passed; print upcoming expirations within --reminder-days (default 30). |
 | `generate_docs` | core | Generate the code-derived reference pages under docs/reference/generated/. |
 | `mark_overdue_treatment_plans` | risks | Set RiskTreatmentPlan.status to OVERDUE when target_date is past and the plan is not already completed, cancelled or overdue. |

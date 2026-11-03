@@ -20,7 +20,7 @@ The engine is specified in [governance/lifecycle.md](../../specs/governance/life
 
 | Lifecycle | Steps | Transitions | Layout | Models |
 | --- | --- | --- | --- | --- |
-| [`acknowledgement_campaign`](#acknowledgement-campaign) | 4 | 4 | graph | - |
+| [`acknowledgement_campaign`](#acknowledgement-campaign) | 4 | 4 | graph | `documents.AcknowledgementCampaign` |
 | [`action_plan`](#action-plan) | 10 | 17 | graph | `compliance.ComplianceActionPlan` |
 | [`certificate`](#certificate) | 7 | 7 | graph | `assets.Certificate` |
 | [`compliance_assessment`](#compliance-assessment) | 7 | 8 | graph | `compliance.ComplianceAssessment` |
@@ -38,8 +38,8 @@ The engine is specified in [governance/lifecycle.md](../../specs/governance/life
 | [`incident_notification`](#incident-notification) | 8 | 9 | graph | `incidents.IncidentNotification` |
 | [`management_review`](#management-review) | 7 | 9 | graph | `reports.ManagementReview` |
 | [`personal_data_breach`](#personal-data-breach) | 6 | 9 | graph | `incidents.PersonalDataBreach` |
-| [`policy`](#policy) | 3 | 3 | graph | - |
-| [`policy_version`](#policy-version) | 4 | 4 | graph | - |
+| [`policy`](#policy) | 3 | 3 | graph | `documents.Policy` |
+| [`policy_version`](#policy-version) | 4 | 4 | graph | `documents.PolicyVersion` |
 | [`post_incident_review`](#post-incident-review) | 8 | 10 | graph | `incidents.PostIncidentReview` |
 | [`risk`](#risk) | 11 | 16 | graph | `risks.Risk` |
 | [`risk_acceptance`](#risk-acceptance) | 6 | 10 | graph | `risks.RiskAcceptance` |
@@ -55,6 +55,8 @@ The engine is specified in [governance/lifecycle.md](../../specs/governance/life
 | [`vulnerability`](#vulnerability) | 7 | 9 | graph | `risks.Vulnerability` |
 
 ## acknowledgement_campaign
+
+Run by `documents.AcknowledgementCampaign`.
 
 ### Steps
 
@@ -571,6 +573,8 @@ Run by `incidents.PersonalDataBreach`.
 
 ## policy
 
+Run by `documents.Policy`.
+
 ### Steps
 
 | Code | Label | Kind | In reports | Linkable | Deletable |
@@ -588,6 +592,8 @@ Run by `incidents.PersonalDataBreach`.
 | `draft` | `archived` | Retire | yes | `update` | - |
 
 ## policy_version
+
+Run by `documents.PolicyVersion`.
 
 ### Steps
 

@@ -760,6 +760,7 @@ def register_all_tools(server):
     _register_compliance_tools(server)
     _register_risks_tools(server)
     _register_incidents_tools(server)
+    _register_documents_tools(server)
     _register_accounts_tools(server)
     _register_reports_tools(server)
     _register_trust_center_tools(server)
@@ -915,7 +916,7 @@ Cairn is a Governance, Risk & Compliance (GRC) platform. This MCP server
 exposes its full API as tools organized by module.
 
 Call `help` with a topic for detailed field-level documentation:
-  context, assets, compliance, risks, incidents, batch, workflow, permissions, examples, users
+  context, assets, compliance, risks, incidents, documents, batch, workflow, permissions, examples, users
 
 ## Modules
 
@@ -926,6 +927,7 @@ Call `help` with a topic for detailed field-level documentation:
 | Compliance | compliance.* | Compliance: frameworks, sections, requirements, assessments, findings, action plans, mappings |
 | Risks | risks.* | Risk management: criteria, assessments, risks, treatment plans, threats, vulnerabilities, ISO 27005 |
 | Incidents | incidents.* | Incident management: security events, incidents, response plans, response actions, chronology, evidence and chain of custody, post-incident reviews, notification obligations and filings, personal data breaches, reporting authorities and obligation templates |
+| Documents | documents.* | Documented information (ISO 27001 clause 7.5): policies, procedures and charters, their approved versions, review cycle, acknowledgement campaigns and each person's acknowledgement |
 | Accounts | system.* | Users, groups, permissions, access logs, company settings |
 | Reports | compliance.report.* | SOA and audit report generation |
 
@@ -979,10 +981,12 @@ References are read-only and sequential. Reference prefixes by entity:
   Incident=INCD, SecurityEvent=EVNT, IncidentResponsePlan=IRPL,
   IncidentResponseAction=IRAC, IncidentEvidence=EVID, PostIncidentReview=PIRV,
   IncidentNotification=INOT, NotificationFiling=NFIL, ReportingAuthority=RGAU,
-  ReportingObligationTemplate=ROBT, PersonalDataBreach=PDBR
+  ReportingObligationTemplate=ROBT, PersonalDataBreach=PDBR,
+  Policy=PLCY, PolicyVersion=PLVR, AcknowledgementCampaign=ACKC
 Read INCD twice: it is one letter-order away from the Indicator prefix, and the
 two are visually confusable in a reference string and in a list column.
-IncidentTimelineEntry and EvidenceCustodyEvent generate no reference at all.
+IncidentTimelineEntry, EvidenceCustodyEvent and PolicyAcknowledgement generate no
+reference at all.
 
 ### HTML Rich Text Fields
 Fields marked "(HTML)" accept HTML rich text content.
@@ -1692,6 +1696,109 @@ Ref prefix: ROBT
    create_notification_filing(notification_id=..., content=...) to discharge it
 8. create_post_incident_review(incident_id=...) and work it through its lifecycle
 """
+    TOPIC_DOCUMENTS = """\
+# Documents Module - Field Reference
+
+The register of documented information (ISO/IEC 27001:2022 clause 7.5, A.5.1):
+which version of each policy is in force, who approved it and when, when it is
+next reviewed, and who has acknowledged it.
+
+Two permission features: documents.policy (documents and their versions) and
+documents.acknowledgement (campaigns and their rows), each with create / read /
+update / delete / approve. Acknowledging one's own row needs no permission.
+
+Rules that cut across the module:
+- A state change is a transition, never a field write: transition_{entity}(id,
+  target_state, comment). Approval (approved_by, approved_at), supersession
+  (superseded_at, superseded_by), next_review_date, last_reviewed_*,
+  launched_at and closed_at are stamped by the domain and are read-only.
+- A version's content, label and change summary are frozen from in_review on
+  (RG-DOC-02): update_policy_version refuses any change to them. The content
+  only changes through a new version.
+- At most one version of a document is in force (RG-DOC-01): approving a new
+  one supersedes the previous one in the same transaction.
+- The PDF bytes are neither readable nor writable through MCP (upload is web
+  only). has_pdf, pdf_sha256 and document_url (the permission-checked download
+  view) are returned instead.
+- Versions and acknowledgement rows inherit the scopes of their document.
+
+## policy
+Writable: title (required), document_type, summary, classification, parent_id,
+  owner_id, approver_id, review_frequency_months (1-60, default 12),
+  next_review_override, scope_ids, linked_requirement_ids, applies_to_role_ids
+- document_type: policy | procedure | standard | guideline | charter | plan
+- classification: public | internal | confidential | restricted | secret
+Read-only: next_review_date (derived: effective date of the version in force,
+  or the last review, plus review_frequency_months, unless next_review_override),
+  last_reviewed_at, last_reviewed_by_id, is_review_overdue, version_in_force
+Lifecycle (policy): draft -> active (approve; only by putting a first version
+  in force) -> archived "Retired" (approve, comment required; supersedes the
+  version in force and closes its campaigns). draft -> archived (update, comment).
+Filters: document_type, classification, workflow_state, owner_id, parent_id
+Ref prefix: PLCY
+Actions:
+- new_policy_version(policy_id, bump="minor"|"major") - draft the next version
+  from the one in force (1.2 -> 1.3 or 2.0), content and PDF copied
+- record_policy_review(policy_id, comment) - "reviewed, no change" (approve)
+- get_policy_in_force(policy_id) - the version in force with content and approval
+
+## policy_version
+Writable: policy_id (required, create only), version_label (required, unique
+  per document), content (HTML), change_summary, effective_from
+Read-only: approved_by_id, approved_at, superseded_at, superseded_by_id,
+  has_pdf, file_name, file_sha256, is_frozen
+Lifecycle (policy_version, permissions of documents.policy):
+  draft -> in_review "Submit for review" (update; needs content, and a
+    change_summary from the second version on)
+  in_review -> draft "Send back to draft" (approve, comment required)
+  in_review -> in_force "Approve and put in force" (approve; stamps the
+    approval, supersedes the previous version, activates a draft document)
+  in_force -> archived "Withdraw" / "Superseded" (approve, comment required)
+Filters: policy_id, workflow_state, version_label
+Ref prefix: PLVR
+
+## acknowledgement_campaign
+Writable: name (required), policy_version_id (required), due_date (required),
+  message, statement ({title} and {label} are filled in), scope_ids (default:
+  the document's), audience_user_ids, audience_group_ids, audience_role_ids
+Once launched, policy_version_id, statement and the audience are fixed.
+Read-only: launched_at, closed_at, counts, completion_rate, is_overdue
+Lifecycle (acknowledgement_campaign):
+  draft -> running "Launch" (approve; the version must be in force; resolves
+    the audience once into one pending row per active person and notifies them)
+  running -> closed "Close" (update; pending rows become expired)
+  closed -> archived, draft -> archived (approve, comment required)
+  A campaign closes by itself when its version is superseded (RG-DOC-18).
+Filters: workflow_state, policy_version_id
+Ref prefix: ACKC
+Actions:
+- get_campaign_progress(campaign_id) - counts by status and completion rate
+  (acknowledged / (all rows - excused rows))
+- add_campaign_newcomers(campaign_id) - add rows for people who joined the
+  audience since the launch (update)
+
+## acknowledgements (write-once rows, no reference)
+- list_my_pending_acknowledgements() - what the caller has to acknowledge
+- acknowledge_policy_version(acknowledgement_id) - the caller acknowledges
+  their own row (channel mcp). Nobody can acknowledge on someone else's behalf.
+- list_policy_acknowledgements(campaign_id, policy_id, user_id, status) - own
+  rows, plus campaign rows with documents.acknowledgement.read
+- excuse_policy_acknowledgement(acknowledgement_id, reason) - excuse a
+  pending row, reason mandatory (documents.acknowledgement.update)
+Row status: pending | acknowledged | excused | expired
+
+## Typical flow
+1. create_policy(title="Access control policy", owner_id="<uuid>", scope_ids=["<scope>"])
+2. new_policy_version(policy_id="<uuid>") -> draft 1.0
+3. update_policy_version(id="<version>", content="<p>...</p>")
+4. transition_policy_version(id="<version>", target_state="in_review")
+5. transition_policy_version(id="<version>", target_state="in_force")
+6. create_acknowledgement_campaign(name="...", policy_version_id="<version>",
+   due_date="2026-12-31", audience_group_ids=["<group>"])
+7. transition_acknowledgement_campaign(id="<campaign>", target_state="running")
+8. get_campaign_progress(campaign_id="<campaign>")
+"""
+
     TOPIC_WORKFLOW = """\
 # Workflow Reference
 
@@ -2094,6 +2201,7 @@ tool, call it by its exact name directly - the name here is authoritative.
         "compliance": TOPIC_COMPLIANCE,
         "risks": TOPIC_RISKS,
         "incidents": TOPIC_INCIDENTS,
+        "documents": TOPIC_DOCUMENTS,
         "batch": TOPIC_BATCH,
         "workflow": TOPIC_WORKFLOW,
         "permissions": TOPIC_PERMISSIONS,
@@ -2121,13 +2229,13 @@ tool, call it by its exact name directly - the name here is authoritative.
         "help",
         "Get usage documentation for the Cairn MCP server. "
         "Call without arguments for the full guide, or with a topic for focused help. "
-        "Topics: context, assets, compliance, risks, incidents, batch, workflow, permissions, examples, users",
+        "Topics: context, assets, compliance, risks, incidents, documents, batch, workflow, permissions, examples, users",
         {
             "type": "object",
             "properties": {
                 "topic": {
                     "type": "string",
-                    "description": "Optional topic: context, assets, compliance, risks, incidents, batch, workflow, permissions, examples, users",
+                    "description": "Optional topic: context, assets, compliance, risks, incidents, documents, batch, workflow, permissions, examples, users",
                 },
             },
         },
@@ -2774,6 +2882,7 @@ def _register_context_tools(server):
                                "global_compliance_rate", "framework_compliance_rate",
                                "objective_progress", "risk_treatment_rate",
                                "approved_scopes_rate", "mandatory_roles_coverage",
+                               "policies_overdue_review", "acknowledgement_rate",
                            ],
                        },
                    })
@@ -8410,6 +8519,748 @@ def _register_incidents_tools(server):
     )
 
 
+# ── Documents Module ───────────────────────────────────────
+
+#: RG-DOC-02 : the version fields MCP can write that freeze on submission.
+_DOC_VERSION_FROZEN_ARGS = {"content": "content", "version_label": "version_label", "change_summary": "change_summary"}
+
+#: RG-DOC-15 : what a launched campaign keeps from its launch.
+_DOC_CAMPAIGN_FROZEN_ARGS = {
+    "policy_version_id": "policy_version_id",
+    "statement": "statement",
+    "audience_user_ids": "audience_users",
+    "audience_group_ids": "audience_groups",
+    "audience_role_ids": "audience_roles",
+}
+
+_DOC_TYPES = ["policy", "procedure", "standard", "guideline", "charter", "plan"]
+_DOC_CLASSIFICATIONS = ["public", "internal", "confidential", "restricted", "secret"]
+_DOC_ACK_STATUSES = ["pending", "acknowledged", "excused", "expired"]
+
+
+def _doc_messages(exc):
+    """A display-safe reason for a refused documents write."""
+    from core.lifecycle import LifecycleError
+    from core.transition_messages import transition_error_detail
+
+    if isinstance(exc, LifecycleError):
+        return str(transition_error_detail(exc))
+    if isinstance(exc, ValidationError):
+        return "; ".join(str(m) for m in exc.messages)
+    return str(exc)
+
+
+def _doc_scoped_get(model_class, pk, user, label):
+    """Fetch ``pk`` and check the caller's scopes; returns ``(obj, error)``."""
+    if not pk:
+        raise InvalidParamsError(f"{label} is required.")
+    try:
+        obj = model_class.objects.get(pk=pk)
+    except (model_class.DoesNotExist, ValueError, ValidationError):
+        return None, _error(f"{model_class.__name__} not found.")
+    if not _filter_by_scopes(model_class.objects.filter(pk=obj.pk), user).exists():
+        return None, _error("Access denied: object is outside your allowed scopes.")
+    return obj, None
+
+
+def _doc_version_payload(version):
+    """A version as MCP returns it : content, approval, integrity, never the bytes."""
+    from django.urls import reverse
+
+    return {
+        "id": str(version.pk),
+        "reference": version.reference,
+        "workflow_state": version.workflow_state,
+        "policy_id": str(version.policy_id),
+        "policy_reference": version.policy.reference,
+        "policy_title": version.policy.title,
+        "version_label": version.version_label,
+        "content": version.content,
+        "change_summary": version.change_summary,
+        "has_pdf": version.has_pdf,
+        "file_name": version.file_name,
+        "pdf_sha256": version.file_sha256,
+        "document_url": (
+            reverse("documents:policyversion-pdf", kwargs={"pk": version.pk}) if version.has_pdf else None
+        ),
+        "approved_by_id": str(version.approved_by_id) if version.approved_by_id else None,
+        "approved_by_name": version.approved_by.display_name if version.approved_by_id else "",
+        "approved_at": version.approved_at.isoformat() if version.approved_at else None,
+        "effective_from": version.effective_from.isoformat() if version.effective_from else None,
+        "superseded_at": version.superseded_at.isoformat() if version.superseded_at else None,
+        "superseded_by_id": str(version.superseded_by_id) if version.superseded_by_id else None,
+        "is_frozen": version.is_frozen,
+        "created_at": version.created_at.isoformat() if version.created_at else None,
+    }
+
+
+def _doc_ack_payload(row):
+    campaign = row.campaign
+    version = campaign.policy_version
+    return {
+        "id": str(row.pk),
+        "status": row.status,
+        "user_id": str(row.user_id),
+        "user_name": row.user.display_name,
+        "campaign_id": str(campaign.pk),
+        "campaign_reference": campaign.reference,
+        "campaign_name": campaign.name,
+        "campaign_state": campaign.workflow_state,
+        "message": campaign.message,
+        "due_date": campaign.due_date.isoformat() if campaign.due_date else None,
+        "is_overdue": campaign.is_overdue,
+        "policy_id": str(version.policy_id),
+        "policy_reference": version.policy.reference,
+        "policy_title": version.policy.title,
+        "policy_version_id": str(version.pk),
+        "version_label": version.version_label,
+        "statement_to_confirm": campaign.statement_for() if row.is_pending else None,
+        "requested_at": row.requested_at.isoformat() if row.requested_at else None,
+        "acknowledged_at": row.acknowledged_at.isoformat() if row.acknowledged_at else None,
+        "statement": row.statement,
+        "channel": row.channel,
+        "excused_at": row.excused_at.isoformat() if row.excused_at else None,
+        "excuse_reason": row.excuse_reason,
+    }
+
+
+def _doc_ack_readable(user, qs):
+    """Acknowledgement rows the caller may read : their own, plus, with
+    ``documents.acknowledgement.read``, those of the campaigns in their scopes."""
+    if user.is_superuser:
+        return qs
+    own = Q(user=user)
+    if not user.has_perm("documents.acknowledgement.read"):
+        return qs.filter(own)
+    readable = _filter_by_scopes(qs.model.objects.all(), user).values("pk")
+    return qs.filter(Q(pk__in=readable) | own)
+
+
+def _register_documents_tools(server):
+    """Register the module 7 (documents) tool family (README §6).
+
+    ``Policy`` and ``AcknowledgementCampaign`` carry their own ``scopes``;
+    ``PolicyVersion`` and ``PolicyAcknowledgement`` inherit theirs through the
+    model's ``scope_parent_lookup`` (RG-DOC-22), which ``_filter_by_scopes``
+    resolves exactly as the web and REST surfaces do. Every state change goes
+    through the model's ``transition_to()`` (supersession, approval stamps,
+    campaign launch and closure live there). The PDF bytes are neither
+    readable nor writable through MCP : ``has_pdf``, ``pdf_sha256`` and the
+    permission-checked ``document_url`` are.
+    """
+    from documents.constants import (
+        CAMPAIGN_DRAFT,
+        POLICY_RETIRED,
+        AcknowledgementChannel,
+        AcknowledgementStatus,
+    )
+
+    Policy = _get_model("documents", "Policy")
+    PolicyVersion = _get_model("documents", "PolicyVersion")
+    AcknowledgementCampaign = _get_model("documents", "AcknowledgementCampaign")
+    PolicyAcknowledgement = _get_model("documents", "PolicyAcknowledgement")
+
+    # ── Policy (the document) ──────────────────────────────
+
+    policy_fields = [
+        "id", "reference", "workflow_state", "scopes", "title", "document_type", "summary",
+        "classification", "parent_id", "owner_id", "approver_id", "review_frequency_months",
+        "next_review_override", "next_review_date", "last_reviewed_at", "last_reviewed_by_id",
+        "is_review_overdue", "version_in_force", "linked_requirements", "applies_to_roles",
+        "created_at", "updated_at",
+    ]
+    policy_writable = [
+        "title", "document_type", "summary", "classification", "parent_id", "owner_id",
+        "approver_id", "review_frequency_months", "next_review_override",
+        "scope_ids", "linked_requirement_ids", "applies_to_role_ids",
+    ]
+    _register_crud(
+        server, "policy", Policy, "documents.policy",
+        list_fields=policy_fields,
+        writable_fields=policy_writable,
+        search_fields=["reference", "title", "summary"],
+        filters=["document_type", "classification", "workflow_state", "owner_id", "parent_id"],
+        required_fields=["title"],
+        m2m_fields={
+            "scope_ids": "scopes",
+            "linked_requirement_ids": "linked_requirements",
+            "applies_to_role_ids": "applies_to_roles",
+        },
+        field_overrides={
+            "title": {"type": "string", "description": "Document title, e.g. 'Access control policy'."},
+            "document_type": {
+                "type": "string", "enum": _DOC_TYPES,
+                "description": "Kind of governing document (default 'policy').",
+            },
+            "summary": {"type": "string", "description": "One-paragraph purpose, shown in lists and on the Trust Center."},
+            "classification": {
+                "type": "string", "enum": _DOC_CLASSIFICATIONS,
+                "description": "Data classification of the document (default 'internal'). A Trust Center publication requires 'public'.",
+            },
+            "parent_id": {"type": "string", "description": "UUID of the document this one implements (a procedure under a policy). No cycle allowed. Use list_policys."},
+            "owner_id": {"type": "string", "description": "UUID of the accountable owner, who receives the review reminders. Use list_users."},
+            "approver_id": {"type": "string", "description": "UUID of the expected approver of new versions (informative: the approval is whoever performs the approve transition). Use list_users."},
+            "review_frequency_months": {"type": "integer", "description": "Review cycle in months, 1 to 60 (default 12)."},
+            "next_review_override": {"type": "string", "description": "Explicit next review date (ISO 8601 date), overriding the date derived from the version in force."},
+            "scope_ids": {"type": "array", "items": {"type": "string"}, "description": "Scopes the document governs. Its versions and acknowledgement rows inherit them."},
+            "linked_requirement_ids": {"type": "array", "items": {"type": "string"}, "description": "Requirements the document answers (A.5.1, clause 5.2, ...). Use list_requirements."},
+            "applies_to_role_ids": {"type": "array", "items": {"type": "string"}, "description": "Roles the document is addressed to (also the default audience of a campaign). Use list_roles."},
+        },
+    )
+
+    # ── PolicyVersion ──────────────────────────────────────
+
+    version_fields = [
+        "id", "reference", "workflow_state", "policy_id", "version_label", "change_summary",
+        "has_pdf", "file_name", "file_sha256", "approved_by_id", "approved_at", "effective_from",
+        "superseded_at", "superseded_by_id", "is_frozen", "created_at", "updated_at",
+    ]
+    version_writable = ["policy_id", "version_label", "content", "change_summary", "effective_from"]
+    _register_crud(
+        server, "policy_version", PolicyVersion, "documents.policy",
+        list_fields=version_fields,
+        writable_fields=version_writable,
+        search_fields=["reference", "version_label", "change_summary"],
+        filters=["policy_id", "workflow_state", "version_label"],
+        required_fields=["policy_id", "version_label"],
+        field_overrides={
+            "policy_id": {"type": "string", "description": "UUID of the document this version belongs to. Cannot be changed afterwards. Use list_policys."},
+            "version_label": {"type": "string", "description": "Published label, unique per document, e.g. '1.0' or '2.3'. Frozen once submitted."},
+            "content": _html_field("The policy text. Frozen once the version is submitted for review"),
+            "change_summary": {"type": "string", "description": "What changed since the previous version and why. Required to submit from the second version on. Frozen once submitted."},
+            "effective_from": {"type": "string", "description": "Date the version enters into force (ISO 8601 date). Defaults to the approval date; never in the future."},
+        },
+    )
+
+    def get_policy_version(user, arguments):
+        version, error = _doc_scoped_get(PolicyVersion, arguments.get("id"), user, "id")
+        if error:
+            return error
+        return _doc_version_payload(version)
+
+    server.register_tool(
+        "get_policy_version",
+        "Get one document version by ID with its full rich-text content, change summary, "
+        "approval (who, when, effective from), supersession, and the SHA-256 and download "
+        "URL of its PDF when one is attached. The PDF bytes themselves are not returned.",
+        _id_schema(),
+        require_perm("documents.policy.read")(get_policy_version),
+    )
+
+    def create_policy_version(user, arguments):
+        """The generic create, after checking the caller may see the document."""
+        _policy, error = _doc_scoped_get(Policy, arguments.get("policy_id"), user, "policy_id")
+        if error:
+            return error
+        return _create_handler(PolicyVersion, version_writable)(user, arguments)
+
+    server.register_tool(
+        "create_policy_version",
+        "Create a draft version of a document. Prefer new_policy_version, which proposes the "
+        "next label and copies the content of the version in force. The PDF is attached "
+        "through the web form only.",
+        _obj_schema(
+            {
+                "policy_id": {"type": "string", "description": "UUID of the document. Use list_policys."},
+                "version_label": {"type": "string", "description": "Label, unique per document, e.g. '1.0'."},
+                "content": _html_field("The policy text"),
+                "change_summary": {"type": "string", "description": "What changed since the previous version and why (required to submit from the second version on)."},
+                "effective_from": {"type": "string", "description": "Effective date (ISO 8601 date), never in the future. Defaults to the approval date."},
+            },
+            required=["policy_id", "version_label"],
+        ),
+        require_perm("documents.policy.create")(create_policy_version),
+    )
+
+    def batch_create_policy_versions(user, arguments):
+        items = arguments.get("items")
+        if isinstance(items, list):
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                _policy, error = _doc_scoped_get(Policy, item.get("policy_id"), user, "policy_id")
+                if error:
+                    return error
+        return _batch_create_handler(PolicyVersion, version_writable)(user, arguments)
+
+    server.register_tool(
+        "batch_create_policy_versions",
+        "Create or upsert several draft document versions in one call (max 500). Every "
+        "policy_id must be a document within the caller's scopes, or nothing is created. "
+        "Pass 'match_on' (e.g. [\"policy_id\", \"version_label\"]) to update matching drafts "
+        "instead of duplicating them; a submitted version refuses any content change.",
+        {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "description": "Version objects: policy_id, version_label (required), content (HTML), change_summary, effective_from.",
+                    "items": {"type": "object"},
+                },
+                "match_on": {"type": "array", "items": {"type": "string"}, "description": "Optional business key (writable field names) used to find an existing version to update."},
+            },
+            "required": ["items"],
+        },
+        require_perm("documents.policy.create")(batch_create_policy_versions),
+    )
+
+    def update_policy_version(user, arguments):
+        """RG-DOC-02 : a submitted version's content is frozen; the document is fixed."""
+        version, error = _doc_scoped_get(PolicyVersion, arguments.get("id"), user, "id")
+        if error:
+            return error
+        if "policy_id" in arguments and str(arguments["policy_id"]) != str(version.policy_id):
+            return _error("A version cannot be moved to another document.")
+        if version.is_frozen:
+            changed = [
+                arg for arg, attr in _DOC_VERSION_FROZEN_ARGS.items()
+                if arg in arguments and arguments[arg] != getattr(version, attr)
+            ]
+            if changed:
+                return _error(
+                    "RG-DOC-02: a submitted version is frozen, its content can no longer be "
+                    f"changed (refused: {', '.join(changed)}). Draft a new version with "
+                    "new_policy_version, or send this one back to draft."
+                )
+        writable = [f for f in version_writable if f != "policy_id"]
+        return _update_handler(PolicyVersion, writable)(user, arguments)
+
+    server.register_tool(
+        "update_policy_version",
+        "Update a document version. While the version is a draft, its label, content, change "
+        "summary and effective date are editable. From 'in_review' onward the content, label "
+        "and change summary are frozen (RG-DOC-02) and any change to them is refused. The "
+        "document a version belongs to never changes.",
+        _obj_schema(
+            {
+                "id": {"type": "string", "description": "UUID of the version to update."},
+                "version_label": {"type": "string", "description": "Label, unique per document (draft only)."},
+                "content": _html_field("The policy text (draft only)"),
+                "change_summary": {"type": "string", "description": "What changed and why (draft only)."},
+                "effective_from": {"type": "string", "description": "Effective date (ISO 8601 date), never in the future."},
+            },
+            required=["id"],
+        ),
+        require_perm("documents.policy.update")(update_policy_version),
+    )
+
+    # ── AcknowledgementCampaign ────────────────────────────
+
+    campaign_fields = [
+        "id", "reference", "workflow_state", "scopes", "name", "policy_version_id", "message",
+        "statement", "due_date", "launched_at", "closed_at", "audience_users", "audience_groups",
+        "audience_roles", "counts", "completion_rate", "is_overdue", "created_at", "updated_at",
+    ]
+    campaign_writable = [
+        "name", "policy_version_id", "message", "statement", "due_date",
+        "scope_ids", "audience_user_ids", "audience_group_ids", "audience_role_ids",
+    ]
+    campaign_m2m = {
+        "scope_ids": "scopes",
+        "audience_user_ids": "audience_users",
+        "audience_group_ids": "audience_groups",
+        "audience_role_ids": "audience_roles",
+    }
+    campaign_overrides = {
+        "name": {"type": "string", "description": "Campaign name, e.g. 'Acceptable use charter 2.0 : all staff'."},
+        "policy_version_id": {"type": "string", "description": "UUID of the version to acknowledge. It must be in force when the campaign is launched. Use get_policy_in_force or list_policy_versions."},
+        "message": {"type": "string", "description": "Message shown to each addressee above the content."},
+        "statement": {"type": "string", "description": "Sentence each addressee confirms (max 500). {title} and {label} are replaced by the document title and version label. Defaults to the standard statement."},
+        "due_date": {"type": "string", "description": "Acknowledgement deadline (ISO 8601 date). Drives reminders and the calendar."},
+        "scope_ids": {"type": "array", "items": {"type": "string"}, "description": "Scopes of the campaign. Defaults to the document's scopes when omitted."},
+        "audience_user_ids": {"type": "array", "items": {"type": "string"}, "description": "Named addressees (user UUIDs). Use list_users."},
+        "audience_group_ids": {"type": "array", "items": {"type": "string"}, "description": "Groups whose active members are addressed at launch. Use list_groups."},
+        "audience_role_ids": {"type": "array", "items": {"type": "string"}, "description": "Roles whose assigned users are addressed at launch. Use list_roles."},
+    }
+    _register_crud(
+        server, "acknowledgement_campaign", AcknowledgementCampaign, "documents.acknowledgement",
+        list_fields=campaign_fields,
+        writable_fields=campaign_writable,
+        search_fields=["reference", "name"],
+        filters=["workflow_state", "policy_version_id"],
+        required_fields=["name", "policy_version_id", "due_date"],
+        m2m_fields=campaign_m2m,
+        field_overrides=campaign_overrides,
+    )
+
+    def create_acknowledgement_campaign(user, arguments):
+        """The generic create, scope-checking the version and defaulting the scopes."""
+        version, error = _doc_scoped_get(PolicyVersion, arguments.get("policy_version_id"), user, "policy_version_id")
+        if error:
+            return error
+        result = _create_handler(AcknowledgementCampaign, campaign_writable, m2m_fields=campaign_m2m)(user, arguments)
+        if isinstance(result, dict) and result.get("id") and not arguments.get("scope_ids"):
+            campaign = AcknowledgementCampaign.objects.get(pk=result["id"])
+            campaign.scopes.set(version.policy.scopes.all())
+            result["scopes"] = [str(pk) for pk in campaign.scopes.values_list("pk", flat=True)]
+        return result
+
+    create_props = {f: campaign_overrides[f] for f in campaign_writable}
+    server.register_tool(
+        "create_acknowledgement_campaign",
+        "Create a draft acknowledgement campaign asking an audience (users, groups, roles) to "
+        "confirm they have read one version of a document. Nothing is sent until the campaign "
+        "is launched with transition_acknowledgement_campaign(target_state='running'), which "
+        "requires the version to be in force and resolves the audience once into one row per person.",
+        _obj_schema(create_props, ["name", "policy_version_id", "due_date"]),
+        require_perm("documents.acknowledgement.create")(create_acknowledgement_campaign),
+    )
+
+    def batch_create_acknowledgement_campaigns(user, arguments):
+        items = arguments.get("items")
+        if isinstance(items, list):
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                _version, error = _doc_scoped_get(
+                    PolicyVersion, item.get("policy_version_id"), user, "policy_version_id",
+                )
+                if error:
+                    return error
+        return _batch_create_handler(
+            AcknowledgementCampaign, campaign_writable, m2m_fields=campaign_m2m,
+        )(user, arguments)
+
+    server.register_tool(
+        "batch_create_acknowledgement_campaigns",
+        "Create or upsert several draft acknowledgement campaigns in one call (max 500). Every "
+        "policy_version_id must be within the caller's scopes, or nothing is created.",
+        {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "description": "Campaign objects: name, policy_version_id, due_date (required), message, statement, scope_ids, audience_user_ids, audience_group_ids, audience_role_ids.",
+                    "items": _obj_schema(create_props, ["name", "policy_version_id", "due_date"]),
+                },
+                "match_on": {"type": "array", "items": {"type": "string"}, "description": "Optional business key (writable field names) used to find an existing campaign to update."},
+            },
+            "required": ["items"],
+        },
+        require_perm("documents.acknowledgement.create")(batch_create_acknowledgement_campaigns),
+    )
+
+    def update_acknowledgement_campaign(user, arguments):
+        """RG-DOC-15 : a launched campaign keeps its version, statement and audience."""
+        campaign, error = _doc_scoped_get(AcknowledgementCampaign, arguments.get("id"), user, "id")
+        if error:
+            return error
+        if campaign.workflow_state != CAMPAIGN_DRAFT:
+            changed = []
+            for arg, attr in _DOC_CAMPAIGN_FROZEN_ARGS.items():
+                if arg not in arguments:
+                    continue
+                current = getattr(campaign, attr)
+                if hasattr(current, "all"):
+                    if {str(pk) for pk in current.values_list("pk", flat=True)} != {str(v) for v in arguments[arg] or []}:
+                        changed.append(arg)
+                elif str(arguments[arg]) != str(current):
+                    changed.append(arg)
+            if changed:
+                return _error(
+                    "A launched campaign keeps the version, statement and audience it was "
+                    f"launched with (refused: {', '.join(changed)}). Use add_campaign_newcomers "
+                    "to address people who joined the audience since the launch."
+                )
+        return _update_handler(AcknowledgementCampaign, campaign_writable, m2m_fields=campaign_m2m)(user, arguments)
+
+    update_props = {"id": {"type": "string", "description": "UUID of the campaign to update."}}
+    update_props.update(create_props)
+    server.register_tool(
+        "update_acknowledgement_campaign",
+        "Update an acknowledgement campaign. Everything is editable in draft; once launched, the "
+        "target version, the statement and the audience are fixed (RG-DOC-15) and only the name, "
+        "message, due date and scopes may change.",
+        _obj_schema(update_props, ["id"]),
+        require_perm("documents.acknowledgement.update")(update_acknowledgement_campaign),
+    )
+
+    # ── Document actions ───────────────────────────────────
+
+    def new_policy_version(user, arguments):
+        policy, error = _doc_scoped_get(Policy, arguments.get("policy_id"), user, "policy_id")
+        if error:
+            return error
+        bump = (arguments.get("bump") or "minor").strip()
+        if bump not in ("minor", "major"):
+            return _error("bump must be 'minor' or 'major'.")
+        if policy.workflow_state == POLICY_RETIRED:
+            return _error("A retired document is a closed record: re-issue it as a new document.")
+        try:
+            version = policy.new_version(user, bump=bump)
+        except Exception as exc:  # noqa: BLE001 - every refusal is reported to the caller
+            return _error(_doc_messages(exc))
+        return _doc_version_payload(version)
+
+    server.register_tool(
+        "new_policy_version",
+        "Draft the next version of a document from its version in force (RG-DOC-05): proposes the "
+        "next label (minor: 1.2 -> 1.3, major: 1.2 -> 2.0), copies the in-force content and PDF "
+        "into a new draft, and leaves the change summary empty (write it before submitting). On a "
+        "document with no version yet it drafts 1.0. Then edit it with update_policy_version and "
+        "submit it with transition_policy_version(target_state='in_review').",
+        _obj_schema(
+            {
+                "policy_id": {"type": "string", "description": "UUID of the document. Use list_policys."},
+                "bump": {"type": "string", "enum": ["minor", "major"], "description": "Label increment (default 'minor')."},
+            },
+            required=["policy_id"],
+        ),
+        require_perm("documents.policy.update")(new_policy_version),
+    )
+
+    def record_policy_review(user, arguments):
+        policy, error = _doc_scoped_get(Policy, arguments.get("policy_id"), user, "policy_id")
+        if error:
+            return error
+        try:
+            policy.record_review(user, (arguments.get("comment") or "").strip())
+        except Exception as exc:  # noqa: BLE001 - every refusal is reported to the caller
+            return _error(_doc_messages(exc))
+        policy.refresh_from_db()
+        return {
+            "id": str(policy.pk),
+            "reference": policy.reference,
+            "last_reviewed_at": policy.last_reviewed_at.isoformat() if policy.last_reviewed_at else None,
+            "last_reviewed_by_id": str(policy.last_reviewed_by_id) if policy.last_reviewed_by_id else None,
+            "next_review_date": policy.next_review_date.isoformat() if policy.next_review_date else None,
+            "is_review_overdue": policy.is_review_overdue,
+        }
+
+    server.register_tool(
+        "record_policy_review",
+        "Record that an active document was reviewed and needs no change (RG-DOC-13): stamps the "
+        "review date and reviewer, recomputes the next review date from today, and records the "
+        "comment in the document history. Closes a review cycle without issuing a new version.",
+        _obj_schema(
+            {
+                "policy_id": {"type": "string", "description": "UUID of the active document. Use list_policys."},
+                "comment": {"type": "string", "description": "What was reviewed and why nothing changes (kept in the history)."},
+            },
+            required=["policy_id"],
+        ),
+        require_perm("documents.policy.approve")(record_policy_review),
+    )
+
+    def get_policy_in_force(user, arguments):
+        policy, error = _doc_scoped_get(Policy, arguments.get("policy_id"), user, "policy_id")
+        if error:
+            return error
+        version = policy.version_in_force
+        return {
+            "id": str(policy.pk),
+            "policy_id": str(policy.pk),
+            "policy_reference": policy.reference,
+            "policy_title": policy.title,
+            "policy_state": policy.workflow_state,
+            "document_type": policy.document_type,
+            "next_review_date": policy.next_review_date.isoformat() if policy.next_review_date else None,
+            "is_review_overdue": policy.is_review_overdue,
+            "version_in_force": _doc_version_payload(version) if version is not None else None,
+        }
+
+    server.register_tool(
+        "get_policy_in_force",
+        "Read the version of a document that is currently in force: its full content, label, "
+        "approval (who approved it and when), effective date and PDF integrity hash, plus the "
+        "document's next review date. 'version_in_force' is null when the document has none "
+        "(never approved, withdrawn or retired).",
+        _obj_schema(
+            {"policy_id": {"type": "string", "description": "UUID of the document. Use list_policys."}},
+            required=["policy_id"],
+        ),
+        require_perm("documents.policy.read")(get_policy_in_force),
+    )
+
+    # ── Acknowledgements ───────────────────────────────────
+
+    ack_qs = PolicyAcknowledgement.objects.select_related("campaign__policy_version__policy", "user")
+
+    def list_my_pending_acknowledgements(user, arguments):
+        qs = ack_qs.filter(user=user, status=AcknowledgementStatus.PENDING).order_by(
+            "campaign__due_date", "requested_at",
+        )
+        limit = min(int(arguments.get("limit", 25)), 100)
+        offset = int(arguments.get("offset", 0))
+        total = qs.count()
+        return {
+            "total": total,
+            "items": [_doc_ack_payload(row) for row in qs[offset:offset + limit]],
+            "limit": limit,
+            "offset": offset,
+        }
+
+    server.register_tool(
+        "list_my_pending_acknowledgements",
+        "List the documents the authenticated user has been asked to acknowledge and has not yet, "
+        "soonest deadline first: the campaign, the document and version, the due date, and the "
+        "exact statement to confirm. Needs no permission: every user sees their own requests. "
+        "Read the text with get_policy_version(policy_version_id) before acknowledging.",
+        _obj_schema({
+            "limit": {"type": "integer", "description": "Max items to return (default 25, max 100)"},
+            "offset": {"type": "integer", "description": "Offset for pagination"},
+        }),
+        list_my_pending_acknowledgements,
+    )
+
+    def acknowledge_policy_version(user, arguments):
+        pk = arguments.get("acknowledgement_id")
+        if not pk:
+            raise InvalidParamsError("acknowledgement_id is required.")
+        try:
+            row = _doc_ack_readable(user, ack_qs).get(pk=pk)
+        except (PolicyAcknowledgement.DoesNotExist, ValueError, ValidationError):
+            return _error("Acknowledgement not found.")
+        try:
+            row.acknowledge(user, channel=AcknowledgementChannel.MCP)
+        except Exception as exc:  # noqa: BLE001 - every refusal is reported to the caller
+            return _error(_doc_messages(exc))
+        row.refresh_from_db()
+        return _doc_ack_payload(row)
+
+    server.register_tool(
+        "acknowledge_policy_version",
+        "Acknowledge, as the authenticated user, a document version one has been asked to read "
+        "(RG-DOC-16 / RG-DOC-17). Records the time, the confirmed statement and the 'mcp' channel "
+        "on a write-once row. Only the addressee can acknowledge their own row: nobody, an "
+        "administrator included, can acknowledge on someone else's behalf. Only act on the "
+        "user's explicit confirmation that they have read the document.",
+        _obj_schema(
+            {"acknowledgement_id": {"type": "string", "description": "UUID of the caller's own pending row, from list_my_pending_acknowledgements."}},
+            required=["acknowledgement_id"],
+        ),
+        acknowledge_policy_version,
+    )
+
+    def list_policy_acknowledgements(user, arguments):
+        qs = _doc_ack_readable(user, ack_qs)
+        for arg, lookup in (
+            ("campaign_id", "campaign_id"), ("status", "status"), ("user_id", "user_id"),
+            ("policy_id", "campaign__policy_version__policy_id"),
+        ):
+            value = arguments.get(arg)
+            if value not in (None, ""):
+                qs = qs.filter(**{lookup: value})
+        limit = min(int(arguments.get("limit", 25)), 100)
+        offset = int(arguments.get("offset", 0))
+        total = qs.count()
+        return {
+            "total": total,
+            "items": [_doc_ack_payload(row) for row in qs[offset:offset + limit]],
+            "limit": limit,
+            "offset": offset,
+        }
+
+    server.register_tool(
+        "list_policy_acknowledgements",
+        "List acknowledgement rows (one per addressee and campaign): the caller's own rows, plus "
+        "the rows of the campaigns within their scopes when they hold "
+        "documents.acknowledgement.read. Rows are write-once evidence and have no update or "
+        "delete tool.",
+        _obj_schema({
+            "campaign_id": {"type": "string", "description": "Restrict to one campaign."},
+            "policy_id": {"type": "string", "description": "Restrict to the campaigns of one document."},
+            "user_id": {"type": "string", "description": "Restrict to one addressee."},
+            "status": {"type": "string", "enum": _DOC_ACK_STATUSES, "description": "Restrict to one row status."},
+            "limit": {"type": "integer", "description": "Max items to return (default 25, max 100)"},
+            "offset": {"type": "integer", "description": "Offset for pagination"},
+        }),
+        list_policy_acknowledgements,
+    )
+
+    def excuse_policy_acknowledgement(user, arguments):
+        pk = arguments.get("acknowledgement_id")
+        if not pk:
+            raise InvalidParamsError("acknowledgement_id is required.")
+        row, error = _doc_scoped_get(PolicyAcknowledgement, pk, user, "acknowledgement_id")
+        if error:
+            return error
+        try:
+            row.excuse(user, arguments.get("reason") or "")
+        except Exception as exc:  # noqa: BLE001 - every refusal is reported to the caller
+            return _error(_doc_messages(exc))
+        row.refresh_from_db()
+        return _doc_ack_payload(row)
+
+    server.register_tool(
+        "excuse_policy_acknowledgement",
+        "Excuse a pending acknowledgement row (a leaver, a long absence) with a mandatory reason "
+        "(RG-DOC-19). The row leaves the completion rate's denominator and keeps its history; it "
+        "can never be changed again.",
+        _obj_schema(
+            {
+                "acknowledgement_id": {"type": "string", "description": "UUID of the pending row. Use list_policy_acknowledgements."},
+                "reason": {"type": "string", "description": "Why this person is excused (mandatory)."},
+            },
+            required=["acknowledgement_id", "reason"],
+        ),
+        require_perm("documents.acknowledgement.update")(excuse_policy_acknowledgement),
+    )
+
+    def add_campaign_newcomers(user, arguments):
+        campaign, error = _doc_scoped_get(AcknowledgementCampaign, arguments.get("campaign_id"), user, "campaign_id")
+        if error:
+            return error
+        try:
+            rows = campaign.add_newcomers(user)
+        except Exception as exc:  # noqa: BLE001 - every refusal is reported to the caller
+            return _error(_doc_messages(exc))
+        return {
+            "campaign_id": str(campaign.pk),
+            "added": len(rows),
+            "added_user_ids": [str(row.user_id) for row in rows],
+            "counts": campaign.counts,
+        }
+
+    server.register_tool(
+        "add_campaign_newcomers",
+        "Re-resolve the audience of a running acknowledgement campaign (RG-DOC-15): creates a "
+        "pending row, and sends the request, to every user, group member or role assignee who has "
+        "no row yet. Existing rows are never touched. Recorded in the campaign history.",
+        _obj_schema(
+            {"campaign_id": {"type": "string", "description": "UUID of the running campaign. Use list_acknowledgement_campaigns."}},
+            required=["campaign_id"],
+        ),
+        require_perm("documents.acknowledgement.update")(add_campaign_newcomers),
+    )
+
+    def get_campaign_progress(user, arguments):
+        campaign, error = _doc_scoped_get(AcknowledgementCampaign, arguments.get("campaign_id"), user, "campaign_id")
+        if error:
+            return error
+        version = campaign.policy_version
+        return {
+            "id": str(campaign.pk),
+            "campaign_id": str(campaign.pk),
+            "reference": campaign.reference,
+            "name": campaign.name,
+            "workflow_state": campaign.workflow_state,
+            "policy_id": str(version.policy_id),
+            "policy_reference": version.policy.reference,
+            "policy_title": version.policy.title,
+            "policy_version_id": str(version.pk),
+            "version_label": version.version_label,
+            "due_date": campaign.due_date.isoformat() if campaign.due_date else None,
+            "launched_at": campaign.launched_at.isoformat() if campaign.launched_at else None,
+            "closed_at": campaign.closed_at.isoformat() if campaign.closed_at else None,
+            "is_overdue": campaign.is_overdue,
+            "counts": campaign.counts,
+            "completion_rate": campaign.completion_rate,
+        }
+
+    server.register_tool(
+        "get_campaign_progress",
+        "Read the progress of an acknowledgement campaign: rows by status (pending, acknowledged, "
+        "excused, expired, total) and the completion rate, an integer percentage computed as "
+        "acknowledged / (all rows - excused rows) (RG-DOC-19), frozen once the campaign closes.",
+        _obj_schema(
+            {"campaign_id": {"type": "string", "description": "UUID of the campaign. Use list_acknowledgement_campaigns."}},
+            required=["campaign_id"],
+        ),
+        require_perm("documents.acknowledgement.read")(get_campaign_progress),
+    )
+
+
 # ── Accounts Module ────────────────────────────────────────
 
 def _register_accounts_tools(server):
@@ -10176,6 +11027,12 @@ def _register_reports_tools(server):
         "created_at", "updated_at",
     ]
 
+    def _isms_change_payload(change):
+        data = _serialize_obj(change, ISMS_CHANGE_FIELDS)
+        data["affected_policies"] = change.affected_policies
+        data["affected_document_ids"] = [str(pk) for pk in change.affected_documents.values_list("pk", flat=True)]
+        return data
+
     @require_perm("reports.management_review.read")
     def list_isms_changes(user, arguments):
         C = _get_model("reports", "IsmsChange")
@@ -10183,13 +11040,15 @@ def _register_reports_tools(server):
         review_id = arguments.get("review_id")
         if review_id:
             qs = qs.filter(review_id=review_id)
-        return _serialize_qs(qs, fields=ISMS_CHANGE_FIELDS,
-                             limit=int(arguments.get("limit", 50)),
-                             offset=int(arguments.get("offset", 0)))
+        offset = int(arguments.get("offset", 0))
+        limit = int(arguments.get("limit", 50))
+        qs = qs.prefetch_related("affected_documents")[offset:offset + limit]
+        return [_isms_change_payload(change) for change in qs]
 
     server.register_tool(
         "list_isms_changes",
-        "List ISMS changes decided during management reviews (ISO 27001:2022 clause 9.3.3).",
+        "List ISMS changes decided during management reviews (ISO 27001:2022 clause 9.3.3), "
+        "with affected_document_ids : the governed documents (documents.Policy) each change requires to revise.",
         {
             "type": "object",
             "properties": {
@@ -10215,18 +11074,35 @@ def _register_reports_tools(server):
             owner = User.objects.get(pk=owner_id)
         except (MR.DoesNotExist, User.DoesNotExist):
             return _error("review or owner not found")
-        change = C.objects.create(
-            review=review,
-            change_type=arguments.get("change_type", "other"),
-            title=arguments.get("title", ""),
-            description=arguments.get("description", ""),
-            impact_analysis=arguments.get("impact_analysis", ""),
-            affected_policies=arguments.get("affected_policies", ""),
-            owner=owner,
-            status=arguments.get("status", "proposed"),
-            target_date=arguments.get("target_date") or None,
-        )
-        return _serialize_obj(change, ISMS_CHANGE_FIELDS)
+        # RG-DOC-20 : a change links active (linkable) documents only, and only
+        # documents the caller can see.
+        document_ids = arguments.get("affected_document_ids") or []
+        documents = []
+        if document_ids:
+            from core.lifecycle import linkable
+
+            Policy = _get_model("documents", "Policy")
+            visible = _filter_by_scopes(linkable(Policy.objects.all()), user)
+            documents = list(visible.filter(pk__in=document_ids))
+            if len(documents) != len(set(map(str, document_ids))):
+                return _error("affected_document_ids : every id must be an active document you can read")
+        from django.db import transaction
+
+        with transaction.atomic():
+            change = C.objects.create(
+                review=review,
+                change_type=arguments.get("change_type", "other"),
+                title=arguments.get("title", ""),
+                description=arguments.get("description", ""),
+                impact_analysis=arguments.get("impact_analysis", ""),
+                affected_policies=arguments.get("affected_policies", ""),
+                owner=owner,
+                status=arguments.get("status", "proposed"),
+                target_date=arguments.get("target_date") or None,
+            )
+            if documents:
+                change.affected_documents.set(documents)
+        return _isms_change_payload(change)
 
     server.register_tool(
         "create_isms_change",
@@ -10239,7 +11115,15 @@ def _register_reports_tools(server):
                 "title": {"type": "string"},
                 "description": {"type": "string"},
                 "impact_analysis": {"type": "string"},
-                "affected_policies": {"type": "string"},
+                "affected_policies": {
+                    "type": "string",
+                    "description": "Free-text list of policies to revise, kept for changes recorded before the documents register. Prefer affected_document_ids.",
+                },
+                "affected_document_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "UUIDs of the governed documents (documents.Policy, active) this change requires to revise.",
+                },
                 "owner_id": {"type": "string"},
                 "status": {"type": "string"},
                 "target_date": {"type": "string"},
@@ -10595,10 +11479,10 @@ def _register_trust_center_tools(server):
         "trust_center.document",
         list_fields=[
             "id", "reference", "title", "description", "access", "requires_nda",
-            "report", "file_name", "display_order", "workflow_state",
+            "report", "policy", "file_name", "display_order", "workflow_state",
         ],
         writable_fields=[
-            "title", "description", "access", "requires_nda", "report", "display_order",
+            "title", "description", "access", "requires_nda", "report", "policy", "display_order",
         ],
         search_fields=["title", "description"],
         required_fields=["title"],
@@ -10606,7 +11490,8 @@ def _register_trust_center_tools(server):
         field_overrides={
             "access": {"type": "string", "description": "Access level: 'public' (direct download) or 'gated' (request + approval)."},
             "requires_nda": {"type": "boolean", "description": "Whether a gated document requires NDA acceptance."},
-            "report": {"type": "string", "description": "UUID of the source generated report (required when creating via the API/MCP)."},
+            "report": {"type": "string", "description": "UUID of the source generated report. Give exactly one of report or policy when creating via the API/MCP."},
+            "policy": {"type": "string", "description": "UUID of the source document (documents.Policy, classified public and active). The entry always serves that document's version in force and leaves the public page when it has none."},
             "display_order": {"type": "integer", "description": "Ascending sort order."},
         },
     )
