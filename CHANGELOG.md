@@ -31,12 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Choosing another assessment on a new risk now reloads its likelihood and impact scales, in the dialog as on the page (it only ever worked on a fully reloaded page).
 - Opening a drawer-only delete link directly (incidents, nonconformities, supplier contacts and sub-processors) rendered a bare dialog fragment instead of a confirmation page.
 - The Trust Center hub and the semantic index pages showed a loose eyebrow (the hub's even read "Strategy") instead of their menu breadcrumb.
+- Lifecycle governance helpers given an `app.Model` label (rather than the model) silently used the default lifecycle.
 
 ### Security
 
 - Saving a group's permission matrix silently revoked the permissions it did not display (assess, implement, close, cancel, override dates); they now have a column, and permissions outside the registry are never touched.
 - Tag colours are validated before reaching a style attribute, and Cancel / Back links no longer echo an unchecked Referer header.
 - The risk scale endpoint no longer answers with the criteria of an assessment outside the user's scopes.
+- The relation pickers of every list's advanced filter listed related records unscoped, printing the names of records outside the reader's scopes into the page.
+
 
 
 ## [0.36.1] - 2026-11-03

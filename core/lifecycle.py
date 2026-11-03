@@ -812,6 +812,15 @@ def lifecycle_name_for(model_or_label) -> str:
     default lifecycle. Mirrors the historical ``core.workflow.workflow_name_for``
     so callers never branch on assignment logic.
     """
+    if isinstance(model_or_label, str) and "." in model_or_label:
+        # An "app_label.Model" label resolves to its model, so it reaches the
+        # model's own lifecycle instead of silently falling back to the default.
+        from django.apps import apps
+
+        try:
+            model_or_label = apps.get_model(model_or_label)
+        except (LookupError, ValueError):
+            pass
     name = getattr(model_or_label, "LIFECYCLE_NAME", None)
     if name and name in LIFECYCLE_REGISTRY:
         return name

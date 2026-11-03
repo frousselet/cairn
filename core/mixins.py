@@ -661,6 +661,24 @@ class AdvancedFilterMixin:
             elif getattr(field, "concrete", False) and not field.auto_created:
                 yield field
 
+    def _scoped_options(self, model):
+        """The picker options of a relation, restricted to the user's scopes.
+
+        The options are rendered into the page, so an unscoped list would
+        print the names of records outside the reader's perimeter. A model
+        with no scope lookup (users, tags) is listed as is.
+        """
+        from core.scoping import filter_queryset_by_scopes, resolve_scope_lookup
+
+        qs = model._default_manager.all()
+        user = getattr(getattr(self, "request", None), "user", None)
+        if user is None or user.is_superuser or resolve_scope_lookup(model) is None:
+            return qs
+        scope_ids = user.get_allowed_scope_ids()
+        if scope_ids is None:
+            return qs
+        return filter_queryset_by_scopes(qs, scope_ids)
+
     def get_filter_fields(self):
         """Return the registry: ordered list of field definitions (plain dicts)."""
         fields = []
@@ -682,7 +700,7 @@ class AdvancedFilterMixin:
                 rel = field.related_model
                 definition["options"] = [
                     {"value": str(o.pk), "label": str(o)}
-                    for o in rel._default_manager.all()[: self.filter_max_options]
+                    for o in self._scoped_options(rel)[: self.filter_max_options]
                 ]
                 # Remember the related PK type so a rule's values can be
                 # validated against it (a UUID PK rejects a non-UUID value, an
