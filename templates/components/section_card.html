@@ -1,5 +1,5 @@
 {% comment %}{% section_card %} : a titled content card. See docs/sdk/ui-components.md.{% endcomment %}
-<section class="card section-card{% if flush %} section-card--flush{% endif %}"{% if card_id %} id="{{ card_id }}"{% endif %}>
+<section class="card section-card{% if flush %} section-card--flush{% endif %}{% if classes %} {{ classes }}{% endif %}"{% if card_id %} id="{{ card_id }}"{% endif %}>
   {% if collapsible %}
   <details class="section-card__details"{% if open %} open{% endif %}>
     <summary class="section-card__head">

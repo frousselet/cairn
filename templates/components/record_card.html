@@ -3,8 +3,8 @@
 {% section_card _("Traceability") icon="shield-check" %}
   {% meta_list cols=2 %}
     {% if obj.reference %}{% meta_item _("Reference") %}<span class="ref">{{ obj.reference }}</span>{% endmeta_item %}{% endif %}
-    {% meta_item _("Version") obj.version %}
-    {% meta_item _("Created by") %}{% if obj.created_by %}{% user_badge obj.created_by size=24 link=True %}{% endif %}{% endmeta_item %}
+    {% if has_version %}{% meta_item _("Version") obj.version %}{% endif %}
+    {% if has_author %}{% meta_item _("Created by") %}{% if obj.created_by %}{% user_badge obj.created_by size=24 link=True %}{% endif %}{% endmeta_item %}{% endif %}
     {% meta_item _("Created on") %}{% if obj.created_at %}<time datetime="{{ obj.created_at|date:'c' }}">{{ obj.created_at|date:"DATETIME_FORMAT" }}</time>{% endif %}{% endmeta_item %}
     {% meta_item _("Modified on") %}{% if obj.updated_at %}<time datetime="{{ obj.updated_at|date:'c' }}">{{ obj.updated_at|date:"DATETIME_FORMAT" }}</time>{% endif %}{% endmeta_item %}
   {% endmeta_list %}

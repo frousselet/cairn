@@ -1,0 +1,13 @@
+{% comment %}
+  The field loop of a form without declarative steps : non-field errors as
+  one alert, then every visible field through includes/form_field.html, then
+  the hidden fields. A stepped form uses includes/form_steps.html instead.
+  Usage, in a modal : {% block modal_form_fields %}{% include "includes/form_fields.html" %}{% endblock %}
+{% endcomment %}
+{% if form.non_field_errors %}
+<div class="alert alert-danger" role="alert">
+  {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+</div>
+{% endif %}
+{% for field in form.visible_fields %}{% include "includes/form_field.html" %}{% endfor %}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}

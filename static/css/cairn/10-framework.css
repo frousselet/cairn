@@ -165,3 +165,29 @@ a.ref-link__label:hover { text-decoration: underline; }
 
 /* ── TomSelect option row (form multi-selects) ─────── */
 .ts-dropdown .ts-opt { padding: 6px 10px; font-size: .8125rem; }
+
+/* ── Compact empty state (inside a card) ───────────── */
+.empty-state.empty-state--compact { padding: .75rem 0; align-items: flex-start; text-align: left; }
+.empty-state--compact .empty-state__message { margin: 0; font-size: .8125rem; }
+
+/* ── Calm icon button anywhere (the table treatment) ── */
+.btn.btn-icon {
+  --btn-bg: transparent;
+  --btn-bg-hover: var(--surface-subtle);
+  --btn-border: transparent;
+  --btn-border-hover: transparent;
+  --btn-fg: var(--text-muted);
+  --btn-fg-hover: var(--text-primary);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  padding: .25rem .4rem;
+  line-height: 1;
+}
+.btn.btn-icon.btn-icon--danger { --btn-fg: var(--danger); --btn-fg-hover: var(--danger); --btn-bg-hover: var(--danger-soft); }
+
+/* ── Entity logo thumbnail ─────────────────────────── */
+.entity-logo { width: 24px; height: 24px; flex-shrink: 0; object-fit: cover; border-radius: var(--radius-xs); }
+.entity-logo--sm { width: 16px; height: 16px; }
+.entity-logo--lg { width: 32px; height: 32px; }
+.entity-logo--fallback { display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); font-size: .75rem; font-weight: 700; }

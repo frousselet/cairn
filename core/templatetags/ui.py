@@ -276,6 +276,33 @@ BADGE_REGISTRY: dict[str, dict[str, tuple[str, str, object]]] = {
         "integrity": ("accent", "check2-square", _("Integrity")),
         "availability": ("accent", "lightning", _("Availability")),
     },
+    # Audit findings (compliance.FindingType) and corrective action
+    # effectiveness (ISO 27001 clause 10.2 d).
+    "finding": {
+        "major_nc": ("danger", "exclamation-octagon", _("Major non-conformity")),
+        "minor_nc": ("danger", "exclamation-circle", _("Minor non-conformity")),
+        "observation": ("warning", "eye", pgettext_lazy("finding", "Observation")),
+        "improvement": ("info", "lightbulb", _("Improvement opportunity")),
+        "strength": ("success", "star", pgettext_lazy("finding", "Strength")),
+    },
+    "effectiveness": {
+        "effective": ("success", "check-circle", pgettext_lazy("finding", "Effective")),
+        "partially_effective": ("warning", "circle-half", pgettext_lazy("finding", "Partially effective")),
+        "not_effective": ("danger", "x-circle", pgettext_lazy("finding", "Not effective")),
+    },
+    "issue_status": {
+        "identified": ("secondary", "circle", _("Identified")),
+        "active": ("warning", "activity", _("Active")),
+        "monitored": ("info", "eye", _("Monitored")),
+        "closed": ("success", "lock", _("Closed")),
+    },
+    "objective_status": {
+        "draft": ("secondary", "pencil", _("Draft")),
+        "active": ("info", "play-circle", _("Active")),
+        "achieved": ("success", "check-circle", _("Achieved")),
+        "not_achieved": ("danger", "x-circle", _("Not achieved")),
+        "cancelled": ("secondary", "x-octagon", _("Cancelled")),
+    },
     "status": {
         # Generic workflow statuses that show up across the app
         "draft": ("secondary", "pencil", _("Draft")),
@@ -297,6 +324,14 @@ BADGE_REGISTRY: dict[str, dict[str, tuple[str, str, object]]] = {
         "archived": ("secondary", "archive", _("Archived")),
         "inactive": ("secondary", "pause-circle", _("Inactive")),
         "not_started": ("secondary", "circle", _("Not started")),
+        "identified": ("info", "search", _("Identified")),
+        "under_evaluation": ("info", "hourglass-split", _("Under evaluation")),
+        "suspended": ("warning", "pause-circle", _("Suspended")),
+        "expired": ("warning", "calendar-x", _("Expired")),
+        "terminated": ("secondary", "x-circle", _("Terminated")),
+        "decommissioned": ("secondary", "power", _("Decommissioned")),
+        "deprecated": ("secondary", "archive", _("Deprecated")),
+        "superseded": ("secondary", "arrow-repeat", _("Superseded")),
     },
 }
 
@@ -374,7 +409,7 @@ def progress_bar(pct, *, scheme="progress", variant=None, title=None, count=None
 
 
 @register.inclusion_tag("components/empty_state.html")
-def empty_state(*, icon=None, illustration=None, title=None, message=None, cta_url=None, cta_label=None, colspan=None):
+def empty_state(*, icon=None, illustration=None, title=None, message=None, cta_url=None, cta_label=None, colspan=None, compact=False):
     """Render a standardized empty state.
 
     Use inside a ``<tbody>`` by setting ``colspan`` to the number of
@@ -398,6 +433,7 @@ def empty_state(*, icon=None, illustration=None, title=None, message=None, cta_u
         "cta_url": cta_url,
         "cta_label": cta_label,
         "colspan": colspan,
+        "compact": bool(compact),
     }
 
 
@@ -986,6 +1022,7 @@ class SectionCardNode(_ComponentNode):
             "collapsible": bool(kwargs.get("collapsible")),
             "open": kwargs.get("open", True),
             "flush": bool(kwargs.get("flush")),
+            "classes": kwargs.get("classes") or "",
             "body_html": mark_safe(body),
             "actions_html": mark_safe(slots.get("actions", "")),
             "footer_html": mark_safe(slots.get("footer", "")),
@@ -1014,9 +1051,9 @@ def do_section_card(parser, token):
 
 
 @register.inclusion_tag("components/subhead.html")
-def subhead(label, *, icon=None):
-    """A divider title inside a card: ``{% subhead _("Certified scope") icon="diagram-3" %}``."""
-    return {"label": label, "icon": icon}
+def subhead(label, *, icon=None, count=None):
+    """A divider title inside a card: ``{% subhead _("Certified scope") icon="diagram-3" count=n %}``."""
+    return {"label": label, "icon": icon, "count": count}
 
 
 # ───────────────────────── Overview rows ───────────────────────────────────
@@ -1137,7 +1174,15 @@ def record_card(context, obj):
     Reference, version, author and the creation / last-change dates of a
     ``BaseModel``: the audit metadata, always in the same place and order.
     """
-    return {"obj": obj, "request": context.get("request")}
+    fields = {f.name for f in obj._meta.get_fields()} if hasattr(obj, "_meta") else set()
+    return {
+        "obj": obj,
+        "request": context.get("request"),
+        # A model that is not a BaseModel omits the rows it has no field for,
+        # rather than showing a dash that would read "not set".
+        "has_version": "version" in fields,
+        "has_author": "created_by" in fields,
+    }
 
 
 # ───────────────────────── References & tags ───────────────────────────────
@@ -1212,6 +1257,8 @@ CHOICE_BADGE_TYPES = {
     "threat_zone": "threat_zone",
     "methodology": "methodology",
     "dic_criterion": "dic",
+    "finding_type": "finding",
+    "effectiveness_verdict": "effectiveness",
 }
 
 
@@ -1265,3 +1312,17 @@ def badge_variant(value, type_):
     """
     variant = _resolve_badge(value, type_)[0]
     return {"secondary": "neutral", "dark": "neutral"}.get(variant, variant)
+
+
+@register.filter
+def score_tone(pct):
+    """The tone of a compliance score, as ``progress_bar scheme="score"`` colours it.
+
+    ``{% kpi_tile _("Compliance") pct suffix="%" tone=pct|score_tone %}``:
+    success from 80, warning from 50, danger below, neutral without a value.
+    """
+    try:
+        value = float(pct)
+    except (TypeError, ValueError):
+        return "neutral"
+    return "success" if value >= 80 else "warning" if value >= 50 else "danger"
