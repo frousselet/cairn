@@ -2,7 +2,7 @@
 
 `assets.models.contract.Contract`
 
-A contract is an autonomous, potentially multi-party document inside the **Documents** area of the Assets module. It is the first document type implemented; further types (standards, policies, procedures) will follow as sibling entities under the same area. A contract links one or more **parties** (supplier parties and client parties), carries a single attached **PDF**, and can host **amendments** (avenants) as child contracts. A future capability will extract the PDF content automatically via Ask Cairn.
+A contract is an autonomous, potentially multi-party document inside the **Documents** area of the Assets module. Contracts and certificates stay here; the ISMS's own governing documents (policies, procedures, standards, charters) live in the dedicated [Documents module](../m7-documents/README.md). A contract links one or more **parties** (supplier parties and client parties), carries a single attached **PDF**, and can host **amendments** (avenants) as child contracts. A future capability will extract the PDF content automatically via Ask Cairn.
 
 ## Fields
 
