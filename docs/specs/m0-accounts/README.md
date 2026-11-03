@@ -437,7 +437,7 @@ The Django admin access button is displayed **only** if the user holds the `syst
 ### 7.4 "Users" view
 
 - **List:** Table with columns (Name, Email, Job title, Department, Groups, Status, Last sign-in). Filters on status (active/inactive), group, department. Text search.
-- **Detail / Editing:** Form with tabs:
+- **Detail / Editing:** the detail page follows the [detail anatomy](../../sdk/ui-components.md), with stacked (some collapsible) section cards rather than tabs:
   - *Information:* identity, contact details, job title, department.
   - *Groups:* list of groups with the ability to add/remove.
   - *Effective permissions:* consolidated view (union of groups) organized by module, read-only.
@@ -449,7 +449,7 @@ The Django admin access button is displayed **only** if the user holds the `syst
 ### 7.5 "Groups" view
 
 - **List:** Table with columns (Name, Description, System, Number of users, Number of permissions). "System" badge for non-editable groups.
-- **Detail / Editing:** Form with tabs:
+- **Detail / Editing:** the detail page follows the [detail anatomy](../../sdk/ui-components.md), with stacked (some collapsible) section cards rather than tabs:
   - *Information:* name, description.
   - *Permissions:* interactive matrix organized by module → feature → action (create/read/update/delete). Each cell is a checkbox. Ability to check/uncheck by row (feature) or by column (action). For system groups, the matrix is read-only.
   - *Users:* list of members with the ability to add/remove.

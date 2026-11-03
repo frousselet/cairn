@@ -541,7 +541,7 @@ Reproduces the pattern of `compliance/templates/compliance/assessment_detail.htm
 
 ### 8.5 View W2 - Risk sources and targeted objectives
 
-Three sub-tabs:
+Three stacked section cards:
 
 1. **Risk sources**: table with columns Reference, Name, Category, Motivation, Resources, Activity, Threat level (V1-V4 badge), Retained. Filters. Add form in a modal. "Import ANSSI catalogue" button.
 2. **Targeted objectives**: grouped by SR (accordion). For each SR, a table of OV with targeted essential assets and feared events.
@@ -549,7 +549,7 @@ Three sub-tabs:
 
 ### 8.6 View W3 - Ecosystem and strategic scenarios
 
-Two sub-tabs:
+Two stacked section cards:
 
 1. **Ecosystem mapping**:
    - Interactive graph (vis.js or D3.js) with 3 visual zones (green/orange/red).
@@ -566,7 +566,7 @@ Two sub-tabs:
 
 ### 8.7 View W4 - Operational scenarios
 
-Two sub-tabs:
+Two stacked section cards:
 
 1. **Operational scenarios**:
    - List grouped by parent strategic scenario (accordion).

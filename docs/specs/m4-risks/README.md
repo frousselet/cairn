@@ -310,7 +310,7 @@ The module is accessible via a main navigation item "Risk Management" breaking d
 - **List:** Table with columns (Reference, Name, Source, Impacted assets, C/I/A, Likelihood, Impact, Initial level, Current level, Residual level, Treatment, Owner, Status). Color coding by risk level. Advanced filters.
 - **Risk matrix:** Matrix view likelihood × impact positioning each risk as a bubble (size proportional to the number of impacted assets). Toggle between initial / current / residual risk.
 - **Comparison view:** Overlay of the initial and residual positions to visualize the effect of the treatment.
-- **Detail / Edit:** Form with tabs (Identification, Analysis, Treatment, Acceptance, History, Relationships).
+- **Detail / Edit:** the detail page follows the [detail anatomy](../../sdk/ui-components.md) : stacked section cards (Identification, Analysis, Treatment, Acceptance, Relationships) under the lifecycle stepper, a key-figures rail, the traceability card last, and the history panel; editing opens the modal form.
 
 ### 7.5 ISO 27005 views
 
