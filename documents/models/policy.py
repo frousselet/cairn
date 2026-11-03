@@ -152,8 +152,11 @@ class Policy(ScopedModel):
 
     def new_version(self, user, bump="minor"):
         """RG-DOC-05 : draft the next version from the one in force."""
+        from core.lifecycle import DomainRefusalError
         from documents.models.policy_version import PolicyVersion, next_version_label
 
+        if self.workflow_state == POLICY_RETIRED:
+            raise DomainRefusalError(_("A retired document cannot have a new version."))
         source = self.version_in_force or self.latest_version
         label = next_version_label(source.version_label if source else None, bump)
         while self.versions.filter(version_label=label).exists():

@@ -169,6 +169,10 @@ class PolicyVersion(BaseModel):
                 ]
                 if changed:
                     raise ValidationError(_("A submitted version is frozen : its content can no longer be changed."))
+            if stored and stored["workflow_state"] in (VERSION_IN_FORCE, VERSION_SUPERSEDED):
+                effective = type(self).objects.filter(pk=self.pk).values_list("effective_from", flat=True).first()
+                if effective != self.effective_from:
+                    raise ValidationError(_("The effective date of an approved version cannot be changed."))
         if self.workflow_state in (VERSION_DRAFT, "", None):
             self.content = clean_html(self.content or "")
         super().save(*args, **kwargs)

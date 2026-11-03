@@ -12,6 +12,7 @@ Cairn exposes a full REST API under `/api/v1/`, built with Django REST Framework
 | Compliance | `/api/v1/compliance/` |
 | Risks | `/api/v1/risks/` |
 | Incidents | `/api/v1/incidents/` |
+| Documents | `/api/v1/documents/` |
 | Reports | `/api/v1/reports/` |
 | Assistant | `/api/v1/assistant/` |
 | MCP & OAuth | `/api/v1/mcp`, `/api/v1/oauth/` |
@@ -96,6 +97,23 @@ The one `PATCH` is the narrow completion of a filing : it accepts `outcome`, `ac
 - **Derived clocks.** A notification obligation's `anchor_at`, `due_at`, `late_by` and overdue verdict are computed, never writable. `GET /api/v1/incidents/notifications/overdue/` answers "what is late" in one call, honouring every other filter, the search and the ordering; `?overdue=true` on the list route is the same definition, and the two cannot disagree.
 - **Files.** Evidence artefacts and proof-of-filing documents appear in no payload. They are streamed by `GET .../evidence/<uuid>/download/`, `GET .../notifications/<uuid>/proof/` and `GET .../notification-filings/<uuid>/proof/`, each resolved through the scoped queryset and permission-checked, so an artefact carrying a TLP caveat is never one guessable media URL away. An item registered by reference, or one whose artefact is gone, is a `404`.
 - **Bespoke actions.** `POST .../security-events/<uuid>/promote/` (`target`: `incident` or `vulnerability`, plus a mandatory `comment`) creates the target, declares it and moves the event on in one transaction, checking the create permission of the receiving register on top of the event's own transition permission. `POST .../evidence/<uuid>/verify-integrity/` re-measures the artefact, appends a custody row and returns one of three outcomes : `match`, `mismatch` or `not_verifiable`.
+
+## Documents
+
+The four entities of module 7 are registered flat under `/api/v1/documents/` : a version is filtered by its document (`?policy_id=<uuid>`) and an acknowledgement row by its campaign (`?campaign_id=<uuid>`). The contract is [docs/specs/m7-documents/](../specs/m7-documents/README.md).
+
+| Resource | Route | Verbs |
+| -------- | ----- | ----- |
+| Documents (policies, procedures, charters...) | `/api/v1/documents/policies/` | CRUD, `transition/`, `history/`, `batch/`, `record-review/`, `new-version/` |
+| Versions | `/api/v1/documents/policy-versions/` | CRUD, `transition/`, `history/`, `batch/` |
+| Acknowledgement campaigns | `/api/v1/documents/acknowledgement-campaigns/` | CRUD, `transition/`, `history/`, `batch/`, `add-newcomers/` |
+| Acknowledgements | `/api/v1/documents/acknowledgements/` | `GET` only, `mine/`, `acknowledge/`, `excuse/` |
+
+- **Permissions.** Two features : `documents.policy` governs documents and their versions, `documents.acknowledgement` governs campaigns and the reading of their rows. `record-review/` needs `documents.policy.approve`, `new-version/` needs `documents.policy.update`, `add-newcomers/` and `excuse/` need `documents.acknowledgement.update`. Acknowledging needs no permission : `POST .../acknowledgements/<uuid>/acknowledge/` succeeds for the addressee only (channel `api`), and anyone else, an administrator included, gets a `400`.
+- **Tenancy.** Documents and campaigns carry `scopes`; versions and acknowledgement rows inherit their document's. `acknowledgements/` lists the caller's own rows plus, with `documents.acknowledgement.read`, the rows of the campaigns in their scopes; `acknowledgements/mine/` lists the caller's own rows, pending first.
+- **Frozen content.** From `in_review` onward a version's `content`, `version_label` and `change_summary` are frozen : a `PUT` / `PATCH` that changes one of them is answered `400` naming the field. A launched campaign likewise keeps its `policy_version`, `statement` and audience. A version never moves to another document.
+- **Lifecycle.** `status` is the read-only `workflow_state`. Approving a version (`in_review -> in_force`) stamps `approved_by` / `approved_at`, supersedes the previous version in force and activates a draft document, in one transaction; a gate refusal (no content, no change summary on a later version, a campaign on a version not in force) comes back as `400` with its reason, a missing permission as `403`, a delete outside the draft step as `409`.
+- **Files.** The PDF is uploaded through the web form only and its bytes appear in no payload : a version exposes `has_pdf`, `pdf_sha256` (to check a downloaded copy against the approved one) and `document_url`, the permission-checked download view.
 
 ## Assistant (Ask Cairn)
 

@@ -84,7 +84,10 @@ class AcknowledgementCampaign(ScopedModel):
 
         existing = set(self.acknowledgements.values_list("user_id", flat=True))
         rows = [PolicyAcknowledgement(campaign=self, user=u) for u in users if u.pk not in existing]
-        PolicyAcknowledgement.objects.bulk_create(rows)
+        # With history, so each row's creation is in its own audit trail.
+        from simple_history.utils import bulk_create_with_history
+
+        bulk_create_with_history(rows, PolicyAcknowledgement)
         return rows
 
     def add_newcomers(self, user):
