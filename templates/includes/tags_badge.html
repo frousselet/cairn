@@ -1,3 +1,1 @@
-{% for tag in tags %}
-<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff;font-size:.6875rem;font-weight:550">{{ tag.name }}</span>
-{% endfor %}
+{% load ui %}{% comment %}Legacy include, kept for its callers: renders the tags as safe pills. New markup calls {% tag_list obj.tags.all %} directly.{% endcomment %}{% tag_list tags %}

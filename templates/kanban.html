@@ -44,7 +44,7 @@
     transition:border-color .15s var(--ease-out), box-shadow .15s var(--ease-out);
   }
   .kanban-card:hover { border-color:var(--accent); box-shadow:var(--shadow-sm); }
-  .kanban-card.is-overdue, .kanban-card.is-overdue:hover { border-color:var(--bs-danger); }
+  .kanban-card.is-overdue, .kanban-card.is-overdue:hover { border-color:var(--danger); }
   .kanban-card-head {
     display:flex; align-items:center; justify-content:space-between; gap:.5rem;
     font-size:.7rem;
@@ -64,7 +64,7 @@
     font-size:.72rem; color:var(--text-secondary);
   }
   .kanban-card-owner, .kanban-card-due { display:inline-flex; align-items:center; gap:.25rem; }
-  .kanban-card-due.is-overdue { color:var(--bs-danger); font-weight:600; }
+  .kanban-card-due.is-overdue { color:var(--danger); font-weight:600; }
   .kanban-empty {
     color:var(--text-secondary); font-size:.8rem; text-align:center;
     padding:1.5rem .5rem; margin:0;
@@ -73,7 +73,7 @@
 {% endblock %}
 
 {% block content %}
-{% page_header _("Tasks") icon="bi-kanban" %}
+{% page_header _("Tasks") icon="kanban" %}
 {% endpage_header %}
 
 <div class="kanban-board" id="kanbanBoard">

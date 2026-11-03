@@ -75,6 +75,15 @@ from risks.views import (
 )
 
 
+# Keep a Changelog category -> badge tone of the "What's new" popup.
+_CHANGELOG_BADGE_VARIANTS = {
+    "Added": "success",
+    "Changed": "accent",
+    "Fixed": "warning",
+    "Removed": "danger",
+}
+
+
 class GeneralDashboardView(LoginRequiredMixin, TemplateView):
     template_name = "home.html"
 
@@ -329,7 +338,7 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
                 "audit": a,
                 "time_progress": _audit_progress(a),
                 "days_left": (a.assessment_end_date - today).days,
-                "status_tone": _audit_status_tone.get(a.status, "muted"),
+                "status_tone": _audit_status_tone.get(a.status, "secondary"),
             }
             for a in _ongoing_audits
         ]
@@ -552,7 +561,19 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         if app_version and app_version != "dev" and user.last_seen_version != app_version:
             changelog_entries = get_changelog_between(user.last_seen_version, app_version)
             if changelog_entries:
-                ctx["changelog_entries"] = changelog_entries
+                # Each Keep a Changelog category carries its badge tone, so
+                # the template renders {% badge %} without a colour chain.
+                ctx["changelog_entries"] = [
+                    (version, [
+                        {
+                            "category": category,
+                            "variant": _CHANGELOG_BADGE_VARIANTS.get(category, "secondary"),
+                            "items": items,
+                        }
+                        for category, items in sections.items()
+                    ])
+                    for version, sections in changelog_entries
+                ]
                 ctx["changelog_new_version"] = app_version
 
         # ── Configurable widget grid ─────────────────────

@@ -57,13 +57,13 @@
     {# ── Database migration state ───────────────────────────────────── #}
     <div class="ob-mig">
       {% if migration.available %}
-        <i class="bi bi-check-circle-fill ok"></i>
+        <i class="bi bi-check-circle-fill ok" aria-hidden="true"></i>
         <div>
           <div class="ob-mig-title">{% trans "Database is up to date" %}</div>
           <div class="ob-mig-detail">{% blocktrans with applied=migration.applied total=migration.total %}{{ applied }} of {{ total }} migrations applied.{% endblocktrans %}</div>
         </div>
       {% else %}
-        <i class="bi bi-question-circle muted"></i>
+        <i class="bi bi-question-circle muted" aria-hidden="true"></i>
         <div>
           <div class="ob-mig-title">{% trans "Database" %}</div>
           <div class="ob-mig-detail">{% trans "Migration status is unavailable. The database may be unreachable." %}</div>
@@ -74,7 +74,7 @@
     {# ── Initialisation choices ─────────────────────────────────────── #}
     <div class="ob-choices">
       <div class="ob-tile{% if not can_initialise %} disabled{% endif %}">
-        <i class="bi bi-rocket-takeoff ob-tile-icon"></i>
+        <i class="bi bi-rocket-takeoff ob-tile-icon" aria-hidden="true"></i>
         <div class="ob-tile-title">{% trans "Start from scratch" %}</div>
         <div class="ob-tile-desc">{% trans "Configure your company, create your administrator account, and begin with an empty instance." %}</div>
         {% if can_initialise %}
@@ -85,7 +85,7 @@
       </div>
 
       <div class="ob-tile{% if not can_initialise %} disabled{% endif %}">
-        <i class="bi bi-database-fill-down ob-tile-icon"></i>
+        <i class="bi bi-database-fill-down ob-tile-icon" aria-hidden="true"></i>
         <div class="ob-tile-title">{% trans "Start with sample data" %}</div>
         <div class="ob-tile-desc">{% trans "Load the Voltara Energy demo dataset to explore every module right away." %}</div>
         <form method="post" action="{% url 'onboarding:seed' %}">

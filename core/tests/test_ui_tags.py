@@ -27,7 +27,14 @@ class TestBadgeTag:
         assert "badge-dot" in out
         assert "success" in out
         assert "Approved" in out
-        assert "bi-check-circle" in out
+        assert "bi-" not in out  # the dot, not the registry icon
+
+    def test_explicit_icon_replaces_the_dot(self):
+        out = render('{% badge variant="success" icon="check" label="Signed" %}')
+        assert "bi-check" in out
+
+    def test_no_icon_without_type(self):
+        assert "bi-" not in render('{% badge variant="info" label="Org." %}')
 
     def test_registry_lookup_severity(self):
         out = render('{% badge "critical" type="severity" %}')
@@ -49,7 +56,7 @@ class TestBadgeTag:
         assert "secondary" in out
 
     def test_aria_hidden_on_icon(self):
-        out = render('{% badge "approved" type="approval" %}')
+        out = render('{% badge "approved" type="approval" icon="check-circle" %}')
         assert 'aria-hidden="true"' in out
 
 

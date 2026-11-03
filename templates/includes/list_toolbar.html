@@ -21,7 +21,7 @@ offcanvas (included alongside this toolbar by the page).
         {% for sf in saved_filters %}
         <div class="saved-filter-item" data-id="{{ sf.id }}" data-query="{{ sf.query }}" data-owned="{% if sf.owned %}1{% endif %}">
           <button type="button" class="saved-filter-apply">{{ sf.name }}{% if sf.is_shared and not sf.owned %} <span class="text-muted small">({% trans "shared" %})</span>{% endif %}</button>
-          {% if sf.owned %}<button type="button" class="saved-filter-del" title="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>{% endif %}
+          {% if sf.owned %}<button type="button" class="saved-filter-del" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>{% endif %}
         </div>
         {% empty %}
         <div class="saved-filter-empty">{% trans "No saved filter yet." %}</div>
@@ -47,7 +47,7 @@ offcanvas (included alongside this toolbar by the page).
     <i class="bi bi-funnel{% if list_filters_active %}-fill{% endif %} me-1" aria-hidden="true"></i>{% trans "Filters" %}
     <span class="list-toolbar__btn-badge list-filter-count"{% if not list_filters_active %} hidden{% endif %} title="{% trans 'Active filters' %}">{{ list_filters_count }}</span>
   </button>
-  <button type="button" class="btn btn-sm btn-outline-secondary list-filter-reset" title="{% trans 'Reset filters' %}"{% if not list_filters_active %} hidden{% endif %}>
+  <button type="button" class="btn btn-sm btn-outline-secondary list-filter-reset" title="{% trans 'Reset filters' %}" aria-label="{% trans 'Reset filters' %}"{% if not list_filters_active %} hidden{% endif %}>
     <i class="bi bi-x-lg" aria-hidden="true"></i>
   </button>
   {% endif %}

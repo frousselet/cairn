@@ -217,6 +217,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en"
 
+# Day-first numeric dates in English as well (core/formats/en/formats.py).
+FORMAT_MODULE_PATH = ["core.formats"]
+
 LANGUAGES = [
     ("en", "English"),
     ("fr", "Français"),

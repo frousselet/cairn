@@ -17,6 +17,7 @@
   .calendar-filter:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
   .calendar-filter.active { color:#fff; border-color:transparent; box-shadow:0 2px 8px rgba(0,0,0,.1); }
   .calendar-filter .dot { width:.5rem; height:.5rem; border-radius:50%; display:inline-block; }
+  .calendar-filter.active .dot { background:#fff; }
 
   /* ── View toggle ──────────────────────────────────── */
   /* Segmented view switch sized to match the standard .btn so it lines up
@@ -177,23 +178,23 @@
 
 {% block content %}
 {% page_header _("Calendar") %}
-  <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#subscribeModal"
+  <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#subscribeModal"
           hx-get="{% url 'calendar-subscribe' %}" hx-target="#subscribeModalContent">
-    <i class="bi bi-rss me-1"></i>{% trans "Subscribe" %}
+    <i class="bi bi-rss me-1" aria-hidden="true"></i>{% trans "Subscribe" %}
   </button>
   <div class="view-toggle" id="viewToggle">
-    <button data-view="month" class="active"><i class="bi bi-calendar-month me-1"></i>{% trans "Month" %}</button>
-    <button data-view="year"><i class="bi bi-calendar4 me-1"></i>{% trans "Year" %}</button>
-    <button data-view="timeline"><i class="bi bi-list-ul me-1"></i>{% trans "Timeline" %}</button>
+    <button data-view="month" class="active"><i class="bi bi-calendar-month me-1" aria-hidden="true"></i>{% trans "Month" %}</button>
+    <button data-view="year"><i class="bi bi-calendar4 me-1" aria-hidden="true"></i>{% trans "Year" %}</button>
+    <button data-view="timeline"><i class="bi bi-list-ul me-1" aria-hidden="true"></i>{% trans "Timeline" %}</button>
   </div>
 {% endpage_header %}
 
 <!-- Subscribe modal -->
-<div class="modal fade" id="subscribeModal" tabindex="-1">
+<div class="modal fade" id="subscribeModal" tabindex="-1" aria-label="{% trans "Calendar subscription" %}">
   <div class="modal-dialog">
     <div class="modal-content" id="subscribeModalContent">
       <div class="modal-body text-center py-5">
-        <div class="spinner-border spinner-border-sm text-muted"></div>
+        <div class="spinner-border spinner-border-sm text-muted" role="status"><span class="visually-hidden">{% trans "Loading..." %}</span></div>
       </div>
     </div>
   </div>
@@ -207,35 +208,35 @@
 <div class="card">
   <div class="card-body">
     <div class="calendar-filters" id="calendarFilters">
-      <button type="button" class="calendar-filter active" data-category="risk_assessment" style="background:#ef4444;border-color:#ef4444;" data-color="#ef4444">
-        <span class="dot" style="background:#fff;"></span> {% trans "Risk assessments" %}
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="risk_assessment" style="background:#ef4444;border-color:#ef4444;" data-color="#ef4444">
+        <span class="dot" aria-hidden="true"></span> {% trans "Risk assessments" %}
       </button>
-      <button type="button" class="calendar-filter active" data-category="compliance_assessment" style="background:#1E3A8A;border-color:#1E3A8A;" data-color="#1E3A8A">
-        <span class="dot" style="background:#fff;"></span> {% trans "Compliance assessments" %}
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="compliance_assessment" style="background:#1E3A8A;border-color:#1E3A8A;" data-color="#1E3A8A">
+        <span class="dot" aria-hidden="true"></span> {% trans "Compliance assessments" %}
       </button>
-      <button type="button" class="calendar-filter active" data-category="action_plan" style="background:#f59e0b;border-color:#f59e0b;" data-color="#f59e0b">
-        <span class="dot" style="background:#fff;"></span> {% trans "Action plans" %}
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="action_plan" style="background:#f59e0b;border-color:#f59e0b;" data-color="#f59e0b">
+        <span class="dot" aria-hidden="true"></span> {% trans "Action plans" %}
       </button>
-      <button type="button" class="calendar-filter active" data-category="treatment_plan" style="background:#475569;border-color:#475569;" data-color="#475569">
-        <span class="dot" style="background:#fff;"></span> {% trans "Treatment plans" %}
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="treatment_plan" style="background:#475569;border-color:#475569;" data-color="#475569">
+        <span class="dot" aria-hidden="true"></span> {% trans "Treatment plans" %}
       </button>
-      <button type="button" class="calendar-filter active" data-category="scope" style="background:#06b6d4;border-color:#06b6d4;" data-color="#06b6d4">
-        <span class="dot" style="background:#fff;"></span> {% trans "Scopes" %}
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="scope" style="background:#06b6d4;border-color:#06b6d4;" data-color="#06b6d4">
+        <span class="dot" aria-hidden="true"></span> {% trans "Scopes" %}
       </button>
-      <button type="button" class="calendar-filter active" data-category="objective" style="background:#14b8a6;border-color:#14b8a6;" data-color="#14b8a6">
-        <span class="dot" style="background:#fff;"></span> {% trans "Objectives" %}
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="objective" style="background:#14b8a6;border-color:#14b8a6;" data-color="#14b8a6">
+        <span class="dot" aria-hidden="true"></span> {% trans "Objectives" %}
       </button>
-      <button type="button" class="calendar-filter active" data-category="framework" style="background:#3b82f6;border-color:#3b82f6;" data-color="#3b82f6">
-        <span class="dot" style="background:#fff;"></span> {% trans "Frameworks" %}
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="framework" style="background:#3b82f6;border-color:#3b82f6;" data-color="#3b82f6">
+        <span class="dot" aria-hidden="true"></span> {% trans "Frameworks" %}
       </button>
-      <button type="button" class="calendar-filter active" data-category="swot" style="background:#ec4899;border-color:#ec4899;" data-color="#ec4899">
-        <span class="dot" style="background:#fff;"></span> {% trans "SWOT analyses" %}
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="swot" style="background:#ec4899;border-color:#ec4899;" data-color="#ec4899">
+        <span class="dot" aria-hidden="true"></span> {% trans "SWOT analyses" %}
       </button>
-      <button type="button" class="calendar-filter active" data-category="acceptance" style="background:#f97316;border-color:#f97316;" data-color="#f97316">
-        <span class="dot" style="background:#fff;"></span> {% trans "Risk acceptances" %}
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="acceptance" style="background:#f97316;border-color:#f97316;" data-color="#f97316">
+        <span class="dot" aria-hidden="true"></span> {% trans "Risk acceptances" %}
       </button>
-      <button type="button" class="calendar-filter active" data-category="supplier_review" style="background:#d946ef;border-color:#d946ef;" data-color="#d946ef">
-        <span class="dot" style="background:#fff;"></span> {% trans "Supplier reviews" %}
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="supplier_review" style="background:#d946ef;border-color:#d946ef;" data-color="#d946ef">
+        <span class="dot" aria-hidden="true"></span> {% trans "Supplier reviews" %}
       </button>
     </div>
     <div id="calendarView"></div>
@@ -296,6 +297,8 @@
   function todayISO() { return iso(new Date()); }
   function esc(s) { var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
   function pad(n) { return n<10?'0'+n:''+n; }
+  // Short date in the active locale (matches Django's SHORT_DATE_FORMAT).
+  function shortDate(d) { return d.toLocaleDateString(document.documentElement.lang||undefined,{day:'2-digit',month:'2-digit',year:'numeric'}); }
 
   function getActiveCats() {
     var c=[]; document.querySelectorAll('.calendar-filter.active').forEach(function(b){ c.push(b.dataset.category); }); return c;
@@ -567,7 +570,7 @@
         h+='<div class="tl-month-group"><div class="tl-month-label">'+MONTHS[g.month]+' '+g.year+'</div>';
         g.events.forEach(function(ev) {
           var d=new Date(ev.start+'T00:00:00');
-          var ds=pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();
+          var ds=shortDate(d);
           var cat=CAT[ev.category]||ev.category;
           var href=ev.url?' href="'+esc(ev.url)+'"':'';
           h+='<a class="tl-event"'+href+'><span class="tl-event-dot" style="background:'+(ev.color||'#1E3A8A')+'"></span>'
@@ -609,7 +612,7 @@
 
         var h='<div class="upcoming-header">'
           +'<h6><i class="bi bi-clock-history me-1"></i>'+TXT_UPCOMING
-          +' <span class="badge bg-secondary">'+count+' &mdash; '+TXT_NEXT30+'</span></h6>';
+          +' <span class="badge-dot secondary">'+count+' - '+TXT_NEXT30+'</span></h6>';
         if(count>collapsed){
           h+='<button class="upcoming-toggle" id="upcomingToggle">'
             +(upcomingExpanded?'&#9650;':'&#9660; '+TXT_SHOWALL+' ('+count+')')
@@ -629,7 +632,7 @@
             else dayLabel=TXT_INDAYS.replace('%(days)s',ev.days_left);
 
             var d=new Date(ev.due+'T00:00:00');
-            var ds=pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();
+            var ds=shortDate(d);
             var href=ev.url?' href="'+esc(ev.url)+'"':'';
             h+='<a class="upcoming-item"'+href+'>'
               +'<span class="upcoming-item-dot" style="background:'+ev.color+'"></span>'
@@ -675,11 +678,11 @@
     btn.addEventListener('click',function(){
       var color=btn.dataset.color;
       if(btn.classList.contains('active')){
-        btn.classList.remove('active');
+        btn.classList.remove('active'); btn.setAttribute('aria-pressed','false');
         btn.style.background='var(--surface)'; btn.style.borderColor='var(--border-light)'; btn.style.color='var(--text-secondary)';
         btn.querySelector('.dot').style.background=color;
       } else {
-        btn.classList.add('active');
+        btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
         btn.style.background=color; btn.style.borderColor=color; btn.style.color='#fff';
         btn.querySelector('.dot').style.background='#fff';
       }

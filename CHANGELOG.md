@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The design system stylesheet moves out of `base.html` into ordered, browser-cached files under `static/css/cairn/`.
 - Status, level and lifecycle badges render as the same dot pill in tables, cards and headers alike.
 - Multi-select fields in forms become searchable pickers with removable chips instead of native list boxes.
+- Every screen is rebuilt on the component framework : one detail page anatomy, one section title, one empty-value marker, one badge and tag pill, and form footers with a neutral Cancel on the left.
+- Dates follow the active locale everywhere, and short numeric dates put the day first in English as in French.
+- The lifecycle editor shows its steps, transitions and JSON as stacked cards instead of tabs.
 
 ## [0.36.1] - 2026-11-03
 

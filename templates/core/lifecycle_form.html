@@ -5,13 +5,18 @@
 {% block content %}
 {% page_header object.label|default:object.name subtitle=_("Draft is always the entry, Archived the exit. Edit the steps and transitions below; the graph updates live.") nav="core:lifecycle-list" accent="accounts" %}
   {% if object.is_system %}
-  <button type="submit" form="reset-form" class="btn btn-outline-secondary">{% trans "Reset to default" %}</button>
+  <button type="submit" form="reset-form" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>{% trans "Reset to default" %}</button>
   {% endif %}
-  <button type="submit" form="lc-edit-form" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{% trans "Save" %}</button>
+  <button type="submit" form="lc-edit-form" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
 {% endpage_header %}
 
-{% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
-{% for e in form.definition_text.errors %}<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-1"></i>{{ e }}</div>{% endfor %}
+{% if form.non_field_errors or form.definition_text.errors %}
+<div class="alert alert-danger" role="alert">
+  <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+  {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}
+  {% for e in form.definition_text.errors %}<div>{{ e }}</div>{% endfor %}
+</div>
+{% endif %}
 
 {# Live preview, on the page background like a real detail page. #}
 <div class="lc-dagre" data-lc-canvas>
@@ -26,51 +31,42 @@
   <input type="hidden" name="definition_text" id="id_definition_text">
   <input type="hidden" name="label" value="{{ object.label|default:object.name }}">
 
-  <ul class="nav nav-tabs" role="tablist">
-    <li class="nav-item"><button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#lc-tab-steps">{% trans "Steps" %}</button></li>
-    <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#lc-tab-transitions">{% trans "Transitions" %}</button></li>
-    <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#lc-tab-json" data-lc-json-tab>{% trans "JSON" %}</button></li>
-  </ul>
-  <div class="tab-content pt-3">
-    <div class="tab-pane fade show active" id="lc-tab-steps" role="tabpanel">
-      <div class="d-flex justify-content-end mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-lc-add-step><i class="bi bi-plus-lg me-1"></i>{% trans "Add step" %}</button>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-sm align-middle mb-0 lc-steps-table">
-          <thead><tr>
-            <th>{% trans "Code" %}</th><th>{% trans "Label" %}</th><th>{% trans "Kind" %}</th>
-            <th class="text-center" title="{% trans 'Counts in reports' %}"><i class="bi bi-bar-chart"></i></th>
-            <th class="text-center" title="{% trans 'Linkable' %}"><i class="bi bi-link-45deg"></i></th>
-            <th class="text-center" title="{% trans 'Deletable' %}"><i class="bi bi-trash"></i></th>
-            <th>{% trans "Tone" %}</th>
-            <th class="text-center" title="{% trans 'Confirmation on entry (Are you sure?)' %}"><i class="bi bi-patch-question"></i></th>
-            <th></th>
-          </tr></thead>
-          <tbody data-lc-steps></tbody>
-        </table>
-      </div>
+  {% section_card _("Steps") icon="signpost-split" flush=True %}
+    {% slot actions %}<button type="button" class="btn btn-sm btn-secondary" data-lc-add-step><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add step" %}</button>{% endslot %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0 lc-steps-table">
+        <thead><tr>
+          <th>{% trans "Code" %}</th><th>{% trans "Label" %}</th><th>{% trans "Kind" %}</th>
+          <th class="text-center" title="{% trans 'Counts in reports' %}"><i class="bi bi-bar-chart" aria-hidden="true"></i><span class="visually-hidden">{% trans "Counts in reports" %}</span></th>
+          <th class="text-center" title="{% trans 'Linkable' %}"><i class="bi bi-link-45deg" aria-hidden="true"></i><span class="visually-hidden">{% trans "Linkable" %}</span></th>
+          <th class="text-center" title="{% trans 'Deletable' %}"><i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">{% trans "Deletable" %}</span></th>
+          <th>{% trans "Tone" %}</th>
+          <th class="text-center" title="{% trans 'Confirmation on entry (Are you sure?)' %}"><i class="bi bi-patch-question" aria-hidden="true"></i><span class="visually-hidden">{% trans "Confirmation on entry (Are you sure?)" %}</span></th>
+          <th><span class="visually-hidden">{% trans "Actions" %}</span></th>
+        </tr></thead>
+        <tbody data-lc-steps></tbody>
+      </table>
     </div>
-    <div class="tab-pane fade" id="lc-tab-transitions" role="tabpanel">
-      <div class="d-flex justify-content-end mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-lc-add-transition><i class="bi bi-plus-lg me-1"></i>{% trans "Add transition" %}</button>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-sm align-middle mb-0 lc-trans-table">
-          <thead><tr>
-            <th>{% trans "From" %}</th><th>{% trans "To" %}</th><th>{% trans "Label" %}</th>
-            <th class="text-center" title="{% trans 'Requires comment' %}"><i class="bi bi-chat-left-text"></i></th>
-            <th title="{% trans 'Permission action' %}">{% trans "Perm." %}</th><th></th>
-          </tr></thead>
-          <tbody data-lc-transitions></tbody>
-        </table>
-      </div>
+  {% endsection_card %}
+
+  {% section_card _("Transitions") icon="arrow-left-right" flush=True %}
+    {% slot actions %}<button type="button" class="btn btn-sm btn-secondary" data-lc-add-transition><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add transition" %}</button>{% endslot %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0 lc-trans-table">
+        <thead><tr>
+          <th>{% trans "From" %}</th><th>{% trans "To" %}</th><th>{% trans "Label" %}</th>
+          <th class="text-center" title="{% trans 'Requires comment' %}"><i class="bi bi-chat-left-text" aria-hidden="true"></i><span class="visually-hidden">{% trans "Requires comment" %}</span></th>
+          <th title="{% trans 'Permission action' %}">{% trans "Perm." %}</th><th><span class="visually-hidden">{% trans "Actions" %}</span></th>
+        </tr></thead>
+        <tbody data-lc-transitions></tbody>
+      </table>
     </div>
-    <div class="tab-pane fade" id="lc-tab-json" role="tabpanel">
-      <textarea class="form-control font-monospace no-richtext" rows="20" spellcheck="false" data-lc-json></textarea>
-      <div class="form-text">{% trans "Edit the raw definition. Changes sync to the steps, transitions and graph above when valid." %}</div>
-    </div>
-  </div>
+  {% endsection_card %}
+
+  {% section_card _("JSON") icon="braces" id="lc-json" collapsible=True open=False %}
+    <textarea class="form-control font-monospace no-richtext" rows="20" spellcheck="false" data-lc-json aria-label="{% trans 'JSON' %}"></textarea>
+    <div class="form-text">{% trans "Edit the raw definition. Changes sync to the steps, transitions and graph above when valid." %}</div>
+  {% endsection_card %}
 </form>
 {% if object.is_system %}
 <form id="reset-form" method="post" action="{% url 'core:lifecycle-reset' object.name %}" class="d-none">{% csrf_token %}</form>
@@ -95,6 +91,7 @@
   var jsonArea = form.querySelector('[data-lc-json]');
   var KINDS = JSON.parse(document.getElementById('lc-kinds').textContent);
   var TONES = JSON.parse(document.getElementById('lc-tones').textContent);
+  var DELETE_LABEL = '{{ _("Delete")|escapejs }}';
 
   var model;
   try { model = JSON.parse(document.getElementById('lc-model').textContent); } catch (e) { model = {}; }
@@ -169,7 +166,7 @@
       toneS.addEventListener('change', function () { s.tone = toneS.value; renderDiagram(); sync(); });
       var confirmC = el('input', { type: 'checkbox', class: 'form-check-input' }); confirmC.checked = hasConfirm(s);
       confirmC.addEventListener('change', function () { setConfirm(s, confirmC.checked); sync(); });
-      var del = el('button', { type: 'button', class: 'btn btn-sm btn-outline-danger' }); del.innerHTML = '<i class="bi bi-trash"></i>';
+      var del = el('button', { type: 'button', class: 'btn btn-sm btn-danger', title: DELETE_LABEL, 'aria-label': DELETE_LABEL }); del.innerHTML = '<i class="bi bi-trash" aria-hidden="true"></i>';
       del.addEventListener('click', function () {
         model.transitions = model.transitions.filter(function (t) { return t.source !== s.code && t.target !== s.code; });
         model.steps.splice(i, 1); renderSteps(); renderTransitions(); renderDiagram(); sync();
@@ -199,7 +196,7 @@
       rc.addEventListener('change', function () { t.requires_comment = rc.checked; sync(); });
       var perm = el('input', { type: 'text', value: t.permission_action || '', class: 'form-control form-control-sm', placeholder: '-', style: 'max-width:90px' });
       perm.addEventListener('input', function () { t.permission_action = perm.value; sync(); });
-      var del = el('button', { type: 'button', class: 'btn btn-sm btn-outline-danger' }); del.innerHTML = '<i class="bi bi-trash"></i>';
+      var del = el('button', { type: 'button', class: 'btn btn-sm btn-danger', title: DELETE_LABEL, 'aria-label': DELETE_LABEL }); del.innerHTML = '<i class="bi bi-trash" aria-hidden="true"></i>';
       del.addEventListener('click', function () { model.transitions.splice(i, 1); renderTransitions(); renderDiagram(); sync(); });
       transBody.appendChild(el('tr', {}, [
         el('td', {}, [src]), el('td', {}, [tgt]), el('td', {}, [lab]),
@@ -235,7 +232,7 @@
     renderTransitions(); renderDiagram(); sync();
   });
 
-  // JSON tab : edits sync back to the model (and thus the tables + graph) when valid.
+  // JSON card : edits sync back to the model (and thus the tables + graph) when valid.
   jsonArea.addEventListener('input', function () {
     var data; try { data = JSON.parse(jsonArea.value); } catch (e) { validEl.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>{% trans "Invalid JSON." %}</span>'; return; }
     if (!data || !Array.isArray(data.steps) || !Array.isArray(data.transitions)) { return; }
@@ -243,8 +240,9 @@
     renderSteps(); renderTransitions(); renderDiagram();
     hidden.value = JSON.stringify(model); validate();
   });
-  var jsonTab = form.querySelector('[data-lc-json-tab]');
-  if (jsonTab) { jsonTab.addEventListener('shown.bs.tab', function () { jsonArea.value = JSON.stringify(model, null, 2); }); }
+  // Refresh the raw definition whenever its card is unfolded.
+  var jsonCard = document.querySelector('#lc-json details');
+  if (jsonCard) { jsonCard.addEventListener('toggle', function () { if (jsonCard.open) { jsonArea.value = JSON.stringify(model, null, 2); } }); }
   form.addEventListener('submit', function () { hidden.value = JSON.stringify(model); });
 
   function boot() {

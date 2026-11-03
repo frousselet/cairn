@@ -91,6 +91,11 @@ _LIFECYCLE_TONE_CLASSES = {
     "dark": "dark",
 }
 
+# Bootstrap tone -> ``.badge-dot`` variant used by the card template. The board
+# keeps the Bootstrap names in ``status_tone`` (serialised by the MCP tool), and
+# the card renders the framework badge, where the theme colour is ``accent``.
+_BADGE_DOT_VARIANTS = {"primary": "accent"}
+
 # ── Status → (column, badge tone) maps ─────────────────────
 # Statuses absent from a map (cancelled, archived) are excluded from the board.
 
@@ -190,6 +195,7 @@ def _make_card(*, column, type_key, reference, title, url, owner, due_date,
         "is_overdue": is_overdue,
         "status_label": str(status_label),
         "status_tone": status_tone,
+        "badge_variant": _BADGE_DOT_VARIANTS.get(status_tone, status_tone),
     }
 
 
@@ -438,5 +444,6 @@ def build_kanban_columns(user):
 def serialize_card(card):
     """Return a JSON-serialisable copy of a card (date -> ISO string)."""
     data = dict(card)
+    data.pop("badge_variant", None)  # presentation only, not part of the API
     data["due_date"] = card["due_date"].isoformat() if card["due_date"] else None
     return data
