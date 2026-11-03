@@ -1085,6 +1085,19 @@
       }
     };
 
+    var tsFormMultiConfig = {
+      plugins: ['remove_button'],
+      maxOptions: 500,
+      searchField: ['text'],
+      dropdownParent: 'body',
+      hidePlaceholder: true,
+      render: {
+        option: function(data, escape) {
+          return '<div class="ts-opt">' + escape(data.text) + '</div>';
+        }
+      }
+    };
+
     function initGlobalWidgets() {
       /* Rich-text on all textarea.form-control not inside a formset-table */
       document.querySelectorAll('textarea.form-control:not([data-rt-ready]):not(.no-richtext):not(.no-jodit)').forEach(initRichText);
@@ -1097,6 +1110,16 @@
       /* TomSelect on multi-selects with data-ts-* attributes */
       document.querySelectorAll('select[data-ts-risks]:not(.tomselected), select[data-ts-assets]:not(.tomselected), select[data-ts-expectations]:not(.tomselected), select[data-ts-requirements]:not(.tomselected), select[data-ts-filter]:not(.tomselected)').forEach(function(el) {
         new TomSelect(el, tsMultiConfig);
+      });
+
+      /* Every other multi-select of a create / edit form (modal or page):
+         removable chips plus search, instead of the native list box that
+         hides what is selected and is unusable on a phone. The full label is
+         kept (no " : " split: French labels use that separator). Opt out
+         with data-native. */
+      document.querySelectorAll('form[method="post"] select.form-select[multiple]:not(.tomselected):not([name="tags"]):not([data-native])').forEach(function(el) {
+        if (Array.prototype.some.call(el.attributes, function(a) { return a.name.indexOf('data-ts-') === 0; })) return;
+        new TomSelect(el, tsFormMultiConfig);
       });
     }
 

@@ -162,3 +162,6 @@ a.ref-link__label:hover { text-decoration: underline; }
 .page-form__step > legend { display: flex; float: none; width: 100%; margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--border-light); }
 .page-form__actions { margin-top: .5rem; }
 #itemDrawer .drawer-title-icon--danger { background: var(--danger-soft); color: var(--danger); }
+
+/* ── TomSelect option row (form multi-selects) ─────── */
+.ts-dropdown .ts-opt { padding: 6px 10px; font-size: .8125rem; }
