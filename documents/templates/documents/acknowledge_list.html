@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load i18n ui help_tags %}
+
+{% comment %}
+The current user's own acknowledgement requests (RG-DOC-17) : what is waiting
+for them, soonest due first, and the record of what they already acknowledged.
+Visible to every signed-in user, whatever their permissions and scopes.
+{% endcomment %}
+
+{% block title %}{% trans "To acknowledge" %} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header _("To acknowledge") nav="documents:acknowledge-list" accent="documents" %}{% endpage_header %}
+{% help_modal "documents.acknowledge_list" %}
+
+{% detail_layout rail_label=_("Key figures") %}
+  {% slot rail %}
+    {% kpi_tile _("To acknowledge") pending|length icon="hourglass-split" tone="warning" size="lg" %}
+    {% kpi_tile _("Past due date") overdue_count icon="calendar-x" tone="danger" size="lg" %}
+    {% kpi_tile _("Next due date") next_due icon="calendar-event" tone="neutral" %}
+    {% kpi_tile _("Acknowledged") acknowledged_count icon="check-circle" tone="success" size="lg" %}
+  {% endslot %}
+
+  {% section_card _("Waiting for you") icon="hourglass-split" count=pending|length flush=True %}
+    {% if pending %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Document" %}</th>
+            <th>{% trans "Due date" %}</th>
+            <th class="text-end">{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in pending %}
+          {% with version=row.campaign.policy_version %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'documents:acknowledge' row.pk %}" class="cell-link">{{ version.policy.title }}</a>
+                <span class="cell-sub">{% blocktrans with ref=version.policy.reference label=version.version_label %}{{ ref }}, version {{ label }}{% endblocktrans %}</span>
+              </span>
+            </td>
+            <td>{% if row.campaign.due_date < today %}{% badge variant="danger" icon="calendar-x" label=row.campaign.due_date|date %}{% else %}{{ row.campaign.due_date }}{% endif %}</td>
+            <td class="text-end"><a href="{% url 'documents:acknowledge' row.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-book me-1" aria-hidden="true"></i>{% trans "Read and acknowledge" %}</a></td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body">{% empty_state compact=True icon="check2-circle" title=_("Nothing to acknowledge.") message=_("When a policy is sent to you for acknowledgement, it appears here.") %}</div>
+    {% endif %}
+  {% endsection_card %}
+
+  {% section_card _("History") icon="clock-history" count=history|length flush=True collapsible=True %}
+    {% if history %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Document" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Acknowledged at" context "document" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in history %}
+          {% with version=row.campaign.policy_version %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'documents:acknowledge' row.pk %}" class="cell-link">{{ version.policy.title }}</a>
+                <span class="cell-sub">{% blocktrans with ref=version.policy.reference label=version.version_label %}{{ ref }}, version {{ label }}{% endblocktrans %}</span>
+              </span>
+            </td>
+            <td>{% choice_badge row "status" type="acknowledgement_status" %}</td>
+            <td>{{ row.acknowledged_at|or_dash }}</td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body">{% empty_state compact=True message=_("You have not acknowledged any document yet.") %}</div>
+    {% endif %}
+  {% endsection_card %}
+{% enddetail_layout %}
+{% endblock %}

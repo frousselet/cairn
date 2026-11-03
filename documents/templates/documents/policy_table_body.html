@@ -1,0 +1,49 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% has_perm "documents.policy.update" as can_update_policy %}
+{% has_perm "documents.policy.delete" as can_delete_policy %}
+{% for p in policies %}
+<tr>
+  <td data-col="reference" class="text-nowrap">
+    <a href="{% url 'documents:policy-detail' p.pk %}" class="cell-link">{{ p.reference }}</a>
+  </td>
+  <td data-col="title">
+    <span class="cell-stack">
+      <a href="{% url 'documents:policy-detail' p.pk %}" class="cell-link">{{ p.title }}</a>
+      {% if p.parent %}<span class="cell-sub">{% blocktrans with ref=p.parent.reference %}Under {{ ref }}{% endblocktrans %}</span>{% endif %}
+    </span>
+  </td>
+  <td data-col="type" class="text-nowrap">{{ p.get_document_type_display }}</td>
+  <td data-col="owner">
+    {% if p.owner %}{% user_badge p.owner size=24 link=True %}{% else %}{% dash %}{% endif %}
+  </td>
+  <td data-col="version">
+    {% if p.in_force_pk %}
+    <span class="cell-stack">
+      <a href="{% url 'documents:policyversion-detail' p.in_force_pk %}" class="cell-link tabular-nums">{{ p.in_force_label }}</a>
+      {% if p.in_force_effective %}<span class="cell-sub text-nowrap">{% blocktrans with date=p.in_force_effective|date %}since {{ date }}{% endblocktrans %}</span>{% endif %}
+    </span>
+    {% else %}{% dash %}{% endif %}
+  </td>
+  <td data-col="next_review" class="text-nowrap">
+    {% if p.next_review_date %}
+      {% if p.is_review_overdue %}
+      <span title="{% trans 'Review overdue' %}">{% badge variant="danger" icon="calendar-x" label=p.next_review_date|date %}</span>
+      {% else %}{{ p.next_review_date }}{% endif %}
+    {% else %}{% dash %}{% endif %}
+  </td>
+  <td data-col="ack_rate">{% if p.ack_rate is not None %}{% progress_bar p.ack_rate %}{% else %}{% dash %}{% endif %}</td>
+  <td data-col="status">{% workflow_badge p %}</td>
+  <td class="text-end" data-col="actions">
+    <div class="d-inline-flex gap-1">
+      {% if can_update_policy and not p.is_terminal_state %}
+      <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'documents:policy-update' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+      {% endif %}
+      {% if can_delete_policy and p.is_deletable %}
+      <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'documents:policy-delete' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+      {% endif %}
+    </div>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No document yet.") message=_("Register the information security policy first, then the topic-specific policies and the procedures that implement them.") colspan=9 %}
+{% endfor %}

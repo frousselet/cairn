@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% load i18n ui help_tags workflow_tags accounts_tags documents_tags %}
+
+{% comment %}
+One governing document : its identity, the version in force (the text that
+applies, its approval and its SHA-256), every earlier version kept on record
+(clause 7.5.3), its place in the document tree, what it answers, who was asked
+to acknowledge it, and its review cycle. The content changes only through a new
+version; the state only through the stepper.
+{% endcomment %}
+
+{% block title %}{{ policy.title }} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "documents.policy.update" as can_update_policy %}
+{% has_perm "documents.policy.delete" as can_delete_policy %}
+{% has_perm "documents.policy.approve" as can_approve_policy %}
+{% has_perm "documents.acknowledgement.create" as can_create_campaign %}
+{% page_header policy.title reference=policy.reference nav="documents:policy-list" accent="documents" %}
+  {% include "includes/history_trigger.html" %}
+  {% if version_in_force %}
+  <a href="{% url 'documents:policyversion-pdf' version_in_force.pk %}" class="btn btn-secondary" hx-boost="false"><i class="bi bi-file-earmark-arrow-down me-1" aria-hidden="true"></i>{% trans "Download PDF" %}</a>
+  {% endif %}
+  {% if can_delete_policy and policy.is_deletable %}
+  <button type="button" class="btn btn-danger" hx-get="{% url 'documents:policy-delete' policy.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  {% endif %}
+  {% if can_update_policy and not policy.is_terminal_state %}
+  <a href="{% url 'documents:policy-update' policy.pk %}" class="btn btn-primary" hx-get="{% url 'documents:policy-update' policy.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+{% help_modal "documents.policy_detail" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if policy.is_review_overdue %}
+<div class="alert alert-warning"><i class="bi bi-calendar-x me-2" aria-hidden="true"></i>{% blocktrans with date=policy.next_review_date|date %}The review of this document was due on {{ date }}. Issue a new version or record that it was reviewed with no change.{% endblocktrans %}</div>
+{% endif %}
+{% if is_active and not version_in_force %}
+<div class="alert alert-warning"><i class="bi bi-file-earmark-x me-2" aria-hidden="true"></i>{% trans "This document is active but has no version in force : its last version was withdrawn without a successor." %}</div>
+{% endif %}
+{% if parent_retired %}
+<div class="alert alert-warning"><i class="bi bi-diagram-2 me-2" aria-hidden="true"></i>{% blocktrans with ref=policy.parent.reference %}The parent document {{ ref }} is retired : this document may need a new parent or to be retired too.{% endblocktrans %}</div>
+{% endif %}
+{% if policy.is_terminal_state and children_living %}
+<div class="alert alert-warning"><i class="bi bi-diagram-2 me-2" aria-hidden="true"></i>{% blocktrans count counter=children_living|length %}This document is retired, but {{ counter }} document under it is still in use.{% plural %}This document is retired, but {{ counter }} documents under it are still in use.{% endblocktrans %}</div>
+{% endif %}
+
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") policy.lifecycle_label icon="signpost-split" %}
+    {% if version_in_force %}
+    {% url 'documents:policyversion-detail' version_in_force.pk as in_force_url %}
+    {% kpi_tile _("Version in force") version_in_force.version_label icon="file-earmark-check" tone="success" href=in_force_url size="sm" %}
+    {% else %}
+    {% kpi_tile _("Version in force") None icon="file-earmark-x" tone="neutral" %}
+    {% endif %}
+    {% if policy.is_review_overdue %}
+    {% kpi_tile _("Next review") policy.next_review_date icon="calendar-x" tone="danger" %}
+    {% else %}
+    {% kpi_tile _("Next review") policy.next_review_date icon="calendar-event" tone="neutral" %}
+    {% endif %}
+    {% if latest_campaign %}
+    {% url 'documents:acknowledgementcampaign-detail' latest_campaign.pk as campaign_url %}
+    {% kpi_tile _("Acknowledgement rate") latest_campaign.rate suffix="%" icon="patch-check" tone="info" href=campaign_url %}
+    {% else %}
+    {% kpi_tile _("Acknowledgement rate") None icon="patch-check" tone="neutral" %}
+    {% endif %}
+  {% endslot %}
+
+  {# ── Identity ── #}
+  {% section_card _("Overview") icon="file-earmark-text" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Summary") wide=True hide_empty=True %}{% if policy.summary %}{{ policy.summary|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Document type") policy.get_document_type_display %}
+      {% meta_item _("Classification") policy.get_classification_display %}
+      {% meta_item _("Owner") %}{% if policy.owner %}{% user_badge policy.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Approver") %}{% if policy.approver %}{% user_badge policy.approver size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Addressed to roles") %}{% if policy.applies_to_roles.all %}<div class="ref-links">{% for role in policy.applies_to_roles.all %}{% url 'context:role-detail' role.pk as role_url %}{% ref_link role url=role_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if policy.scopes.all %}<div class="d-flex flex-wrap gap-1">{% for scope in policy.scopes.all %}{% badge variant="secondary" label=scope.name %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") wide=True hide_empty=True %}{% tag_list policy.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── The text that applies ── #}
+  {% section_card _("Version in force") icon="file-earmark-check" collapsible=True %}
+    {% slot actions %}
+    {% if version_in_force %}
+    <a href="{% url 'documents:policyversion-detail' version_in_force.pk %}" class="btn btn-sm btn-secondary">{% trans "Open the version" %}</a>
+    {% endif %}
+    {% endslot %}
+    {% if version_in_force %}
+    <p class="text-meta mb-2">
+      <i class="bi bi-patch-check me-1" aria-hidden="true"></i>{% if version_in_force.approved_by %}{% blocktrans with label=version_in_force.version_label name=version_in_force.approved_by.display_name date=version_in_force.approved_at|date effective=version_in_force.effective_from|date %}Version {{ label }}, approved by {{ name }} on {{ date }}, effective from {{ effective }}.{% endblocktrans %}{% else %}{% blocktrans with label=version_in_force.version_label effective=version_in_force.effective_from|date %}Version {{ label }}, effective from {{ effective }}.{% endblocktrans %}{% endif %}
+    </p>
+    {% if version_in_force.has_pdf %}
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <a href="{% url 'documents:policyversion-pdf' version_in_force.pk %}" class="btn btn-sm btn-secondary" hx-boost="false"><i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>{{ version_in_force.file_name|default:_("PDF document") }}</a>
+      <span class="text-meta text-break"><span class="visually-hidden">{% trans "SHA-256" %} : </span><abbr title="{% trans 'SHA-256 of the approved PDF' %}">SHA-256</abbr> <code class="text-break">{{ version_in_force.file_sha256 }}</code></span>
+    </div>
+    {% endif %}
+    {% if version_in_force.content %}
+    <div class="ov-rich">{{ version_in_force.content|clean_rich }}</div>
+    {% elif not version_in_force.has_pdf %}
+    {% dash %}
+    {% endif %}
+    {% else %}
+    {% empty_state compact=True message=_("No version is in force. Draft a version, submit it for review and approve it to put it in force.") %}
+    {% endif %}
+  {% endsection_card %}
+
+  {# ── Every version on record (clause 7.5.3) ── #}
+  {% section_card _("Versions") icon="layers" count=versions|length flush=True %}
+    {% slot actions %}
+    {% if can_update_policy and not policy.is_terminal_state %}
+    <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'documents:policy-new-version' policy.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New version" %}</button>
+    {% endif %}
+    {% endslot %}
+    {% if versions %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Version" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Approval" %}</th>
+            <th>{% trans "Effective from" %}</th>
+            <th>{% trans "Change summary" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in versions %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'documents:policyversion-detail' v.pk %}" class="cell-link tabular-nums">{{ v.version_label }}</a>
+                <span class="cell-sub">{{ v.reference }}</span>
+              </span>
+            </td>
+            <td>{% workflow_badge v %}</td>
+            <td>
+              {% if v.approved_at %}
+              <span class="cell-stack">
+                <span>{{ v.approved_at|date }}</span>
+                {% if v.approved_by %}<span class="cell-sub">{{ v.approved_by.display_name }}</span>{% endif %}
+              </span>
+              {% else %}{% dash %}{% endif %}
+            </td>
+            <td>{{ v.effective_from|or_dash }}</td>
+            <td class="text-meta">{{ v.change_summary|truncatechars:120|or_dash }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body">{% empty_state compact=True message=_("No version yet.") %}</div>
+    {% endif %}
+  {% endsection_card %}
+
+  {# ── Review cycle (RG-DOC-11 to RG-DOC-13) ── #}
+  {% section_card _("Review") icon="calendar-check" %}
+    {% slot actions %}
+    {% if can_approve_policy and is_active %}
+    <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'documents:policy-record-review' policy.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{% trans "Reviewed, no change" %}</button>
+    {% endif %}
+    {% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Review frequency") %}{% blocktrans count counter=policy.review_frequency_months %}Every month{% plural %}Every {{ counter }} months{% endblocktrans %}{% endmeta_item %}
+      {% meta_item _("Next review") %}{% if policy.next_review_date %}{% if policy.is_review_overdue %}<span class="text-danger fw-semibold">{{ policy.next_review_date }}</span>{% else %}{{ policy.next_review_date }}{% endif %}{% if policy.next_review_override %} <span class="text-meta">({% trans "explicit date" %})</span>{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Last reviewed at") policy.last_reviewed_at %}
+      {% meta_item _("Last reviewed by") %}{% if policy.last_reviewed_by %}{% user_badge policy.last_reviewed_by size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── Document tree (RG-DOC-10) ── #}
+  {% section_card _("Structure") icon="diagram-2" hide_empty=True %}
+    {% if policy.parent or children %}
+    {% meta_list %}
+      {% if policy.parent %}{% meta_item _("Parent document") %}<div class="ref-links">{% url 'documents:policy-detail' policy.parent.pk as parent_url %}{% ref_link policy.parent url=parent_url label=policy.parent.title %}</div>{% endmeta_item %}{% endif %}
+      {% if children %}{% meta_item _("Documents under it") %}<div class="ref-links">{% for child in children %}{% url 'documents:policy-detail' child.pk as child_url %}{% ref_link child url=child_url label=child.title %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+    {% endif %}
+  {% endsection_card %}
+
+  {% section_card _("Requirements") icon="list-check" count=policy.linked_requirements.count hide_empty=True %}
+    {% if policy.linked_requirements.all %}
+    <div class="ref-links">
+      {% for req in policy.linked_requirements.all %}{% url 'compliance:requirement-detail' req.pk as req_url %}{% ref_link req url=req_url label=req.name|truncatechars:80 %}{% endfor %}
+    </div>
+    {% endif %}
+  {% endsection_card %}
+
+  {# ── Who was asked to acknowledge it ── #}
+  {% section_card _("Acknowledgement campaigns") icon="patch-check" count=campaigns|length flush=True %}
+    {% slot actions %}
+    {% if can_create_campaign and version_in_force %}
+    <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'documents:campaign-create' %}?version={{ version_in_force.pk }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New campaign" %}</button>
+    {% endif %}
+    {% endslot %}
+    {% if campaigns %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Campaign" %}</th>
+            <th>{% trans "Version" %}</th>
+            <th>{% trans "Due date" %}</th>
+            <th>{% trans "Completion rate" %}</th>
+            <th>{% trans "Status" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in campaigns %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'documents:acknowledgementcampaign-detail' c.pk %}" class="cell-link">{{ c.name }}</a>
+                <span class="cell-sub">{{ c.reference }}</span>
+              </span>
+            </td>
+            <td class="tabular-nums">{{ c.policy_version.version_label }}</td>
+            <td>{% if c.is_overdue %}{% badge variant="danger" icon="calendar-x" label=c.due_date|date %}{% else %}{{ c.due_date }}{% endif %}</td>
+            <td>{% if c.rate is not None %}{% progress_bar c.rate %}{% else %}{% dash %}{% endif %}</td>
+            <td>{% workflow_badge c %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body">{% empty_state compact=True message=_("No campaign yet. Once a version is in force, a campaign asks its audience to acknowledge it.") %}</div>
+    {% endif %}
+  {% endsection_card %}
+
+  {% record_card policy %}
+{% enddetail_layout %}
+{% endblock %}

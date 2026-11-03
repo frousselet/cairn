@@ -67,6 +67,10 @@ NAV_TREE = {
     "compliance:finding-detail": ("Compliance", None, "Nonconformities"),
     "compliance:mapping-list": ("Compliance", None, "Mappings"),
     "compliance:action-plan-list": ("Compliance", None, "Action plans"),
+    # ── Documents ────────────────────────────────────────────────
+    "documents:policy-list": ("Documents", None, "Policies"),
+    "documents:campaign-list": ("Documents", None, "Acknowledgement campaigns"),
+    "documents:acknowledge-list": ("Documents", None, "To acknowledge"),
     # ── Incidents ────────────────────────────────────────────────
     "incidents:incident-list": ("Incidents", None, "Incidents"),
     "incidents:incident-detail": ("Incidents", None, "Incidents"),

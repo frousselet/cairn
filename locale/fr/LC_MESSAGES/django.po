@@ -18676,3 +18676,1018 @@ msgstr ""
 
 msgid "Other actions"
 msgstr "Autres actions"
+
+#, python-format
+msgid "%(counter)s document sits under this one : move it first."
+msgid_plural "%(counter)s documents sit under this one : move them first."
+msgstr[0] "%(counter)s document est rattaché à celui-ci : déplacez-le d'abord."
+msgstr[1] ""
+"%(counter)s documents sont rattachés à celui-ci : déplacez-les d'abord."
+
+#, python-format
+msgid "%(counter)s document to acknowledge"
+msgid_plural "%(counter)s documents to acknowledge"
+msgstr[0] "%(counter)s document à confirmer"
+msgstr[1] "%(counter)s documents à confirmer"
+
+#, python-format
+msgid "%(n)d newcomer added to the campaign."
+msgid_plural "%(n)d newcomers added to the campaign."
+msgstr[0] "%(n)d nouvel arrivant ajouté à la campagne."
+msgstr[1] "%(n)d nouveaux arrivants ajoutés à la campagne."
+
+#, python-format
+msgid "%(name)s was excused."
+msgstr "%(name)s a été dispensé(e)."
+
+#, python-format
+msgid ""
+"%(name)s will no longer be expected to acknowledge %(ref)s, and is left out "
+"of its completion rate."
+msgstr ""
+"%(name)s ne sera plus sollicité(e) pour %(ref)s et sort du calcul de son taux"
+" de complétion."
+
+#, python-format
+msgid "%(ref)s, version %(label)s"
+msgstr "%(ref)s, version %(label)s"
+
+#, python-format
+msgid "%(title)s, version %(label)s"
+msgstr "%(title)s, version %(label)s"
+
+msgid ""
+"A launched campaign can no longer be edited : its audience was resolved at "
+"launch."
+msgstr ""
+"Une campagne lancée ne peut plus être modifiée : son audience a été "
+"déterminée au lancement."
+
+msgid "A retired document cannot receive a new version."
+msgstr "Un document retiré ne peut pas recevoir de nouvelle version."
+
+msgid "A retired document is a closed record and can no longer be edited."
+msgstr ""
+"Un document retiré est un enregistrement clos et ne peut plus être modifié."
+
+msgid "A submitted version is frozen : its content can no longer be changed."
+msgstr "Une version soumise est figée : son contenu ne peut plus être modifié."
+
+msgid "Acknowledge"
+msgstr "Confirmer la prise de connaissance"
+
+msgid "Acknowledged"
+msgstr "Confirmé"
+
+msgctxt "document"
+msgid "Acknowledged at"
+msgstr "Confirmé le"
+
+msgid "Acknowledgement"
+msgstr "Prise de connaissance"
+
+msgid "Acknowledgement campaigns"
+msgstr "Campagnes de prise de connaissance"
+
+msgid "Acknowledgement rate"
+msgstr "Taux de prise de connaissance"
+
+msgid "Active documents"
+msgstr "Documents actifs"
+
+msgid "Add newcomers"
+msgstr "Ajouter les nouveaux arrivants"
+
+msgid "Addressed to roles"
+msgstr "Rôles destinataires"
+
+#, python-format
+msgid "Approved by %(name)s on %(date)s."
+msgstr "Approuvé par %(name)s le %(date)s."
+
+#, python-format
+msgid "Approved on %(date)s."
+msgstr "Approuvé le %(date)s."
+
+#, python-format
+msgid ""
+"Are you sure you want to delete <strong>%(reference)s</strong> - %(title)s "
+"version %(label)s?"
+msgstr ""
+"Voulez-vous vraiment supprimer <strong>%(reference)s</strong> - %(title)s "
+"version %(label)s ?"
+
+msgid "Attach or replace the PDF (25 MB max). Its SHA-256 is recorded."
+msgstr ""
+"Joignez ou remplacez le PDF (25 Mo max). Son empreinte SHA-256 est "
+"enregistrée."
+
+msgid "Audience"
+msgstr "Audience"
+
+msgid "Audience definition"
+msgstr "Définition de l'audience"
+
+msgid "Average acknowledgement rate"
+msgstr "Taux moyen de prise de connaissance"
+
+msgid "Average completion rate"
+msgstr "Taux moyen de complétion"
+
+#, python-format
+msgid "By %(name)s on %(date)s"
+msgstr "Par %(name)s le %(date)s"
+
+msgid "Campaign"
+msgstr "Campagne"
+
+msgid "Change and approval"
+msgstr "Modification et approbation"
+
+msgid "Change and effect"
+msgstr "Modification et prise d'effet"
+
+msgid "Change summary"
+msgstr "Résumé des modifications"
+
+msgid "Completion rate"
+msgstr "Taux de complétion"
+
+msgid ""
+"Compute the SHA-256 of a downloaded copy and compare it with this value to "
+"check it is the approved document."
+msgstr ""
+"Calculez l'empreinte SHA-256 d'une copie téléchargée et comparez-la à cette "
+"valeur pour vérifier qu'il s'agit du document approuvé."
+
+msgid "Delete campaign"
+msgstr "Supprimer la campagne"
+
+msgid "Delete document"
+msgstr "Supprimer le document"
+
+msgid "Delete version"
+msgstr "Supprimer la version"
+
+msgid "Document type"
+msgstr "Type de document"
+
+msgid "Documents under it"
+msgstr "Documents rattachés"
+
+msgid "Edit acknowledgement campaign"
+msgstr "Modifier la campagne de prise de connaissance"
+
+msgid "Edit document"
+msgstr "Modifier le document"
+
+msgid "Edit version"
+msgstr "Modifier la version"
+
+#, python-format
+msgid "Effective from %(date)s."
+msgstr "En vigueur à compter du %(date)s."
+
+msgid "Every active member at launch."
+msgstr "Chaque membre actif au lancement."
+
+msgid "Every month"
+msgid_plural "Every %(counter)s months"
+msgstr[0] "Chaque mois"
+msgstr[1] "Tous les %(counter)s mois"
+
+msgid "Every person assigned to the role at launch."
+msgstr "Chaque personne affectée au rôle au lancement."
+
+msgid "Excuse"
+msgstr "Dispenser"
+
+msgid "Excuse from the campaign"
+msgstr "Dispenser de la campagne"
+
+msgid "Excuse reason"
+msgstr "Motif de dispense"
+
+msgid "Filter the audience by status"
+msgstr "Filtrer l'audience par statut"
+
+msgid "First version"
+msgstr "Première version"
+
+#, python-format
+msgid "Its %(counter)s draft version is deleted with it."
+msgid_plural "Its %(counter)s draft versions are deleted with it."
+msgstr[0] "Sa %(counter)s version brouillon est supprimée avec lui."
+msgstr[1] "Ses %(counter)s versions brouillon sont supprimées avec lui."
+
+msgid "Last reviewed at"
+msgstr "Dernière revue le"
+
+msgid "Last reviewed by"
+msgstr "Dernière revue par"
+
+msgid "Launched at"
+msgstr "Lancée le"
+
+msgid ""
+"Leave empty to take the approval date. It can be earlier, never in the "
+"future."
+msgstr ""
+"Laissez vide pour reprendre la date d'approbation. Elle peut être antérieure,"
+" jamais future."
+
+msgid "Leave empty to take the scopes of the document."
+msgstr "Laissez vide pour reprendre les périmètres du document."
+
+msgid "Maintains the document and receives the review reminders."
+msgstr "Tient le document à jour et reçoit les rappels de revue."
+
+#, python-format
+msgid "Major revision : %(label)s"
+msgstr "Révision majeure : %(label)s"
+
+#, python-format
+msgid "Minor revision : %(label)s"
+msgstr "Révision mineure : %(label)s"
+
+msgid "Named people."
+msgstr "Personnes désignées."
+
+msgid "New acknowledgement campaign"
+msgstr "Nouvelle campagne de prise de connaissance"
+
+msgid "New campaign"
+msgstr "Nouvelle campagne"
+
+msgid "New document"
+msgstr "Nouveau document"
+
+msgid "New version"
+msgstr "Nouvelle version"
+
+msgid "Next due date"
+msgstr "Prochaine échéance"
+
+msgid "No PDF is attached : the download renders the text above as a PDF."
+msgstr ""
+"Aucun PDF n'est joint : le téléchargement produit un PDF à partir du texte "
+"ci-dessus."
+
+msgid "No acknowledgement campaign yet."
+msgstr "Aucune campagne de prise de connaissance pour l'instant."
+
+msgid "No campaign targets this version."
+msgstr "Aucune campagne ne porte sur cette version."
+
+msgid ""
+"No campaign yet. Once a version is in force, a campaign asks its audience to "
+"acknowledge it."
+msgstr ""
+"Aucune campagne pour l'instant. Une fois une version en vigueur, une campagne"
+" demande à son audience d'en prendre connaissance."
+
+msgid "No document yet."
+msgstr "Aucun document pour l'instant."
+
+msgid "No newcomer : everyone in the audience already has a row."
+msgstr ""
+"Aucun nouvel arrivant : chaque membre de l'audience est déjà sollicité."
+
+msgid "No text : the attached PDF is the content of this version."
+msgstr "Aucun texte : le PDF joint constitue le contenu de cette version."
+
+msgid ""
+"No version is in force. Draft a version, submit it for review and approve it "
+"to put it in force."
+msgstr ""
+"Aucune version n'est en vigueur. Rédigez une version, soumettez-la en revue "
+"puis approuvez-la pour la mettre en vigueur."
+
+msgid "No version yet."
+msgstr "Aucune version pour l'instant."
+
+msgid "Nobody in the audience has this status."
+msgstr "Personne dans l'audience n'a ce statut."
+
+msgid "Not approved : this version is not in force."
+msgstr "Non approuvée : cette version n'est pas en vigueur."
+
+msgid "Not overdue"
+msgstr "Dans les temps"
+
+msgid "Nothing to acknowledge."
+msgstr "Rien à confirmer."
+
+msgid ""
+"Once a version is in force, a campaign asks its audience to confirm they have"
+" read it, and keeps the evidence."
+msgstr ""
+"Une fois une version en vigueur, une campagne demande à son audience de "
+"confirmer l'avoir lue, et en conserve la preuve."
+
+msgid "One paragraph on what the document is for, shown in lists."
+msgstr "Un paragraphe sur l'objet du document, affiché dans les listes."
+
+msgid "Open the version"
+msgstr "Ouvrir la version"
+
+msgid "Ownership and review"
+msgstr "Responsabilité et revue"
+
+msgid "Parent document"
+msgstr "Document parent"
+
+msgid "Past due date"
+msgstr "Échéance dépassée"
+
+msgid "Pending acknowledgements"
+msgstr "Prises de connaissance en attente"
+
+msgid "Policies"
+msgstr "Politiques"
+
+msgid "Read and acknowledge"
+msgstr "Lire et confirmer"
+
+msgid ""
+"Register the information security policy first, then the topic-specific "
+"policies and the procedures that implement them."
+msgstr ""
+"Enregistrez d'abord la politique de sécurité de l'information, puis les "
+"politiques thématiques et les procédures qui les mettent en œuvre."
+
+msgid "Remove the attached PDF"
+msgstr "Retirer le PDF joint"
+
+msgid "Review note"
+msgstr "Note de revue"
+
+msgid "Reviewed, no change"
+msgstr "Revu, sans modification"
+
+msgid "Reviews overdue"
+msgstr "Revues en retard"
+
+msgid "Running campaigns"
+msgstr "Campagnes en cours"
+
+msgid "SHA-256"
+msgstr "SHA-256"
+
+msgid "SHA-256 of the approved PDF"
+msgstr "Empreinte SHA-256 du PDF approuvé"
+
+msgid "Scope and filing"
+msgstr "Périmètre et classement"
+
+msgid "Set a date only to override the computed next review."
+msgstr ""
+"Renseignez une date uniquement pour remplacer la prochaine revue calculée."
+
+msgid "Shown to each person above the document."
+msgstr "Affiché à chaque personne au-dessus du document."
+
+msgid "Statement"
+msgstr "Déclaration"
+
+msgid "Statement confirmed"
+msgstr "Déclaration confirmée"
+
+msgid "Superseded at"
+msgstr "Remplacée le"
+
+msgid "Superseded by"
+msgstr "Remplacée par"
+
+#, python-format
+msgid "Superseded by <a href=\"%(url)s\">%(ref)s</a> on %(date)s."
+msgstr "Remplacée par <a href=\"%(url)s\">%(ref)s</a> le %(date)s."
+
+#, python-format
+msgid ""
+"Thank you : your acknowledgement of %(title)s version %(label)s is recorded."
+msgstr ""
+"Merci : votre prise de connaissance de %(title)s version %(label)s est "
+"enregistrée."
+
+msgid ""
+"The PDF could not be generated on this server. The text of the version stays "
+"readable on its page."
+msgstr ""
+"Le PDF n'a pas pu être généré sur ce serveur. Le texte de la version reste "
+"consultable sur sa page."
+
+msgid "The PDF must not exceed 25 MB."
+msgstr "Le PDF ne doit pas dépasser 25 Mo."
+
+msgid "The acknowledgement deadline. Reminders go out before and after it."
+msgstr ""
+"La date limite de prise de connaissance. Des rappels sont envoyés avant et "
+"après."
+
+msgid ""
+"The audience is resolved at launch : one row per person, each acknowledged by"
+" that person only."
+msgstr ""
+"L'audience est déterminée au lancement : une ligne par personne, que seule "
+"cette personne peut confirmer."
+
+msgid ""
+"The audience is resolved once, at launch : a later change to a group or a "
+"role does not change who was asked. Add newcomers re-resolves it on demand."
+msgstr ""
+"L'audience est déterminée une seule fois, au lancement : une modification "
+"ultérieure d'un groupe ou d'un rôle ne change pas les personnes sollicitées. "
+"Ajouter les nouveaux arrivants la recalcule à la demande."
+
+msgid "The document this one implements, e.g. the policy above a procedure."
+msgstr ""
+"Le document que celui-ci met en œuvre, par exemple la politique dont relève "
+"une procédure."
+
+msgid "The document title, e.g. Access control policy."
+msgstr "Le titre du document, par exemple Politique de contrôle d'accès."
+
+#, python-format
+msgid ""
+"The due date (%(date)s) has passed and %(counter)s person has not "
+"acknowledged yet."
+msgid_plural ""
+"The due date (%(date)s) has passed and %(counter)s people have not "
+"acknowledged yet."
+msgstr[0] ""
+"L'échéance (%(date)s) est dépassée et %(counter)s personne n'a pas encore "
+"confirmé."
+msgstr[1] ""
+"L'échéance (%(date)s) est dépassée et %(counter)s personnes n'ont pas encore "
+"confirmé."
+
+msgid "The due date is already past."
+msgstr "L'échéance est déjà dépassée."
+
+msgid "The first version of this document starts empty."
+msgstr "La première version de ce document part d'un contenu vide."
+
+msgid "The label of the first version, e.g. 1.0."
+msgstr "Le libellé de la première version, par exemple 1.0."
+
+#, python-format
+msgid "The new draft starts from the content and the PDF of version %(label)s."
+msgstr ""
+"Le nouveau brouillon reprend le contenu et le PDF de la version %(label)s."
+
+msgid ""
+"The next review is due this many months after the version in force took "
+"effect."
+msgstr ""
+"La prochaine revue est due ce nombre de mois après l'entrée en vigueur de la "
+"version."
+
+#, python-format
+msgid ""
+"The parent document %(ref)s is retired : this document may need a new parent "
+"or to be retired too."
+msgstr ""
+"Le document parent %(ref)s est retiré : ce document doit peut-être changer de"
+" parent ou être retiré à son tour."
+
+msgid "The parts of the organisation this document governs."
+msgstr "Les parties de l'organisation régies par ce document."
+
+msgid "The requirements this document answers (clause 5.2, A.5.1...)."
+msgstr "Les exigences auxquelles répond ce document (clause 5.2, A.5.1...)."
+
+#, python-format
+msgid ""
+"The review of this document was due on %(date)s. Issue a new version or "
+"record that it was reviewed with no change."
+msgstr ""
+"La revue de ce document était due le %(date)s. Publiez une nouvelle version "
+"ou enregistrez une revue sans modification."
+
+#, python-format
+msgid "The review was recorded. Next review : %(date)s."
+msgstr "La revue est enregistrée. Prochaine revue : %(date)s."
+
+msgid ""
+"The roles the document is addressed to, also the default audience of a "
+"campaign."
+msgstr ""
+"Les rôles auxquels le document s'adresse, également l'audience par défaut "
+"d'une campagne."
+
+msgid ""
+"The sentence each person confirms. {title} and {label} are replaced by the "
+"document title and the version label."
+msgstr ""
+"La phrase que chaque personne confirme. {title} et {label} sont remplacés par"
+" le titre du document et le libellé de la version."
+
+msgid "The signed or published copy, as a PDF file (25 MB max)."
+msgstr "La copie signée ou publiée, au format PDF (25 Mo max)."
+
+msgid "The text of the document. It is frozen once the version is submitted."
+msgstr "Le texte du document. Il est figé dès que la version est soumise."
+
+msgid "The text of the document. You can also attach a PDF, or both."
+msgstr "Le texte du document. Vous pouvez aussi joindre un PDF, ou les deux."
+
+#, python-format
+msgid "The version in force is <a href=\"%(url)s\">%(label)s</a>."
+msgstr "La version en vigueur est la <a href=\"%(url)s\">%(label)s</a>."
+
+msgid "The version to acknowledge. Only a version in force can be launched."
+msgstr ""
+"La version à confirmer. Seule une version en vigueur peut faire l'objet d'un "
+"lancement."
+
+#, python-format
+msgid "This acknowledgement was due on %(date)s."
+msgstr "Cette prise de connaissance était due le %(date)s."
+
+msgid ""
+"This campaign was launched : its acknowledgements are evidence. Close it, "
+"then archive it."
+msgstr ""
+"Cette campagne a été lancée : ses prises de connaissance font preuve. "
+"Clôturez-la, puis archivez-la."
+
+msgid ""
+"This document is active but has no version in force : its last version was "
+"withdrawn without a successor."
+msgstr ""
+"Ce document est actif mais n'a aucune version en vigueur : sa dernière "
+"version a été retirée sans successeur."
+
+msgid ""
+"This document is no longer a draft : retire it through its lifecycle instead."
+msgstr ""
+"Ce document n'est plus un brouillon : retirez-le plutôt via son cycle de vie."
+
+msgid ""
+"This document is published as a PDF. Download it and read it before "
+"acknowledging."
+msgstr ""
+"Ce document est publié au format PDF. Téléchargez-le et lisez-le avant de "
+"confirmer."
+
+#, python-format
+msgid ""
+"This document is retired, but %(counter)s document under it is still in use."
+msgid_plural ""
+"This document is retired, but %(counter)s documents under it are still in "
+"use."
+msgstr[0] ""
+"Ce document est retiré, mais %(counter)s document rattaché est toujours en "
+"usage."
+msgstr[1] ""
+"Ce document est retiré, mais %(counter)s documents rattachés sont toujours en"
+" usage."
+
+msgid "This element is still referenced and cannot be deleted."
+msgstr "Cet élément est encore référencé et ne peut pas être supprimé."
+
+msgid ""
+"This version is in review : its content is frozen. Send it back to draft to "
+"change it."
+msgstr ""
+"Cette version est en revue : son contenu est figé. Renvoyez-la en brouillon "
+"pour la modifier."
+
+msgid "This version was submitted : it stays on record and cannot be deleted."
+msgstr ""
+"Cette version a été soumise : elle est conservée et ne peut pas être "
+"supprimée."
+
+msgid "To acknowledge"
+msgstr "À confirmer"
+
+#, python-format
+msgid "Under %(ref)s"
+msgstr "Sous %(ref)s"
+
+msgid "Unique for the document, e.g. 1.3 or 2.0."
+msgstr "Unique pour le document, par exemple 1.3 ou 2.0."
+
+#, python-format
+msgid "Version %(label)s was drafted."
+msgstr "La version %(label)s a été créée en brouillon."
+
+#, python-format
+msgid ""
+"Version %(label)s, approved by %(name)s on %(date)s, effective from "
+"%(effective)s."
+msgstr ""
+"Version %(label)s, approuvée par %(name)s le %(date)s, en vigueur à compter "
+"du %(effective)s."
+
+#, python-format
+msgid "Version %(label)s, effective from %(effective)s."
+msgstr "Version %(label)s, en vigueur à compter du %(effective)s."
+
+msgid "Version in force"
+msgstr "Version en vigueur"
+
+msgid "Version label"
+msgstr "Libellé de version"
+
+msgid "Version number"
+msgstr "Numéro de version"
+
+msgid "Versions"
+msgstr "Versions"
+
+msgid "Waiting for you"
+msgstr "En attente de votre confirmation"
+
+msgid ""
+"What changed since the previous version, and why. Required from the second "
+"version."
+msgstr ""
+"Ce qui a changé depuis la version précédente, et pourquoi. Obligatoire à "
+"partir de la deuxième version."
+
+msgid ""
+"What was checked and why no new version is needed. Recorded in the history."
+msgstr ""
+"Ce qui a été vérifié et pourquoi aucune nouvelle version n'est nécessaire. "
+"Enregistré dans l'historique."
+
+msgid "When a policy is sent to you for acknowledgement, it appears here."
+msgstr ""
+"Lorsqu'une politique vous est envoyée pour prise de connaissance, elle "
+"apparaît ici."
+
+msgid ""
+"Who is expected to approve new versions. The approval itself is recorded by "
+"the transition."
+msgstr ""
+"La personne censée approuver les nouvelles versions. L'approbation elle-même "
+"est enregistrée par la transition."
+
+#, python-format
+msgid "Withdrawn on %(date)s."
+msgstr "Retirée le %(date)s."
+
+msgid "Without a version in force"
+msgstr "Sans version en vigueur"
+
+msgid "You have not acknowledged any document yet."
+msgstr "Vous n'avez encore confirmé aucun document."
+
+msgid "e.g. Acceptable use charter 2.0 : all staff."
+msgstr "par exemple Charte d'utilisation 2.0 : tout le personnel."
+
+msgid "e.g. left the organisation, long absence. The row keeps its history."
+msgstr ""
+"par exemple départ de l'organisation, absence longue. La ligne conserve son "
+"historique."
+
+msgid "explicit date"
+msgstr "date explicite"
+
+#, python-format
+msgid "since %(date)s"
+msgstr "depuis le %(date)s"
+
+msgid ""
+"A launched campaign keeps the version, statement and audience it was launched"
+" with."
+msgstr ""
+"Une campagne lancée conserve la version, la déclaration et l'audience avec "
+"lesquelles elle a été lancée."
+
+msgid "Choose 'minor' or 'major'."
+msgstr "Choisissez « minor » ou « major »."
+
+msgid "A retired document is a closed record : re-issue it as a new document."
+msgstr ""
+"Un document retiré est un enregistrement clos : rééditez-le sous la forme "
+"d'un nouveau document."
+
+msgid "This acknowledgement is outside your scopes."
+msgstr "Cette prise de connaissance est hors de vos périmètres."
+
+msgid "Affected documents"
+msgstr "Documents concernés"
+
+msgid ""
+"Free text, kept for changes recorded before the documents register. Link "
+"governed documents above."
+msgstr ""
+"Texte libre, conservé pour les changements enregistrés avant le registre "
+"documentaire. Liez les documents gouvernés ci-dessus."
+
+#, python-format
+msgid ""
+"These documents cannot be linked in their current lifecycle step : %(refs)s"
+msgstr ""
+"Ces documents ne peuvent pas être liés à leur étape actuelle du cycle de vie "
+": %(refs)s"
+
+msgid "Source document"
+msgstr "Document source"
+
+msgid "A public document of the register : its version in force is served."
+msgstr "Un document public du registre : sa version en vigueur est diffusée."
+
+msgid "Choose a single source : a report, an uploaded file or a document."
+msgstr ""
+"Choisissez une seule source : un rapport, un fichier téléversé ou un "
+"document."
+
+msgid "Provide a source : a report, an uploaded file or a document."
+msgstr "Indiquez une source : un rapport, un fichier téléversé ou un document."
+
+msgid ""
+"Only a document classified as public can be published on the Trust Center."
+msgstr "Seul un document classé public peut être publié sur le Trust Center."
+
+msgid "This document cannot be linked in its current lifecycle step."
+msgstr "Ce document ne peut pas être lié à son étape actuelle du cycle de vie."
+
+#, python-format
+msgid "%(document)s (no version in force)"
+msgstr "%(document)s (aucune version en vigueur)"
+
+#, python-format
+msgid "%(document)s, version %(label)s"
+msgstr "%(document)s, version %(label)s"
+
+msgid "Documents overdue for review"
+msgstr "Documents en retard de revue"
+
+msgid "Document acknowledgement rate"
+msgstr "Taux de prise de connaissance des documents"
+
+msgid "Document versions"
+msgstr "Versions de documents"
+
+msgid "Create a document"
+msgstr "Créer un document"
+
+msgid "Acknowledgement: "
+msgstr "Prise de connaissance : "
+
+msgid ""
+"Document reviews overdue, documents without a version in force, and the "
+"acknowledgement campaigns running with their completion rate."
+msgstr ""
+"Revues de documents en retard, documents sans version en vigueur et campagnes"
+" de prise de connaissance en cours avec leur taux de complétion."
+
+msgctxt "kanban"
+msgid "Acknowledgement"
+msgstr "Prise de connaissance"
+
+msgid "Documents due for review"
+msgstr "Documents à revoir"
+
+msgid "No document is due for review in this period."
+msgstr "Aucun document n'est à revoir sur cette période."
+
+msgid "Campaigns running"
+msgstr "Campagnes en cours"
+
+#, python-format
+msgid "Late by %(days)s day"
+msgid_plural "Late by %(days)s days"
+msgstr[0] "En retard de %(days)s jour"
+msgstr[1] "En retard de %(days)s jours"
+
+msgid "No version in force"
+msgstr "Aucune version en vigueur"
+
+msgid "No document review overdue and no campaign running."
+msgstr "Aucune revue de document en retard et aucune campagne en cours."
+
+msgid "Document review due"
+msgstr "Revue de document à échéance"
+
+msgid "Document review overdue"
+msgstr "Revue de document en retard"
+
+msgid "New document version in force"
+msgstr "Nouvelle version de document en vigueur"
+
+msgid "Document to acknowledge"
+msgstr "Document à confirmer"
+
+msgid "Acknowledgement reminder"
+msgstr "Rappel de prise de connaissance"
+
+msgid "Policy"
+msgstr "Politique"
+
+msgid "Guideline"
+msgstr "Ligne directrice"
+
+msgid "Charter"
+msgstr "Charte"
+
+msgid "Plan"
+msgstr "Plan"
+
+msgid "Excused"
+msgstr "Dispensé"
+
+msgid "Web"
+msgstr "Web"
+
+msgid "MCP"
+msgstr "MCP"
+
+msgid "Retired"
+msgstr "Retiré"
+
+msgid "Retire"
+msgstr "Retirer"
+
+msgid "In review"
+msgstr "En revue"
+
+msgid "Approve and put in force"
+msgstr "Approuver et mettre en vigueur"
+
+msgid "Withdraw"
+msgstr "Retirer de la vigueur"
+
+msgid "Launch"
+msgstr "Lancer"
+
+msgid "Requested at"
+msgstr "Demandé le"
+
+msgid "Excused at"
+msgstr "Dispensé le"
+
+msgid "Excused by"
+msgstr "Dispensé par"
+
+msgid "Last reminded at"
+msgstr "Dernier rappel le"
+
+msgid "Acknowledgements"
+msgstr "Prises de connaissance"
+
+msgid ""
+"An acknowledgement that has been given, excused or expired cannot change."
+msgstr ""
+"Une prise de connaissance confirmée, dispensée ou expirée ne peut plus être "
+"modifiée."
+
+msgid "Acknowledgements are kept as evidence and cannot be deleted."
+msgstr ""
+"Les prises de connaissance sont conservées comme preuves et ne peuvent pas "
+"être supprimées."
+
+msgid "Only the addressee can acknowledge this document."
+msgstr ""
+"Seul le destinataire peut confirmer la prise de connaissance de ce document."
+
+msgid "This acknowledgement is no longer pending."
+msgstr "Cette prise de connaissance n'est plus en attente."
+
+msgid "This campaign is closed."
+msgstr "Cette campagne est close."
+
+msgid "Give the reason for excusing this person."
+msgstr "Indiquez le motif de la dispense."
+
+msgid ""
+"I have read and understood {title} version {label}, and I will comply with "
+"it."
+msgstr ""
+"J'ai lu et compris {title} version {label}, et je m'engage à le respecter."
+
+msgid "Version to acknowledge"
+msgstr "Version à confirmer"
+
+msgid "Acknowledgement campaign"
+msgstr "Campagne de prise de connaissance"
+
+msgid "Newcomers can only be added to a running campaign."
+msgstr ""
+"Les nouveaux arrivants ne peuvent être ajoutés qu'à une campagne en cours."
+
+#, python-format
+msgid "%(n)d newcomers added"
+msgstr "%(n)d nouveaux arrivants ajoutés"
+
+msgid "Only a version in force can be submitted for acknowledgement."
+msgstr ""
+"Seule une version en vigueur peut être soumise à prise de connaissance."
+
+msgid "The audience is empty : add users, groups or roles."
+msgstr ""
+"Le public est vide : ajoutez des utilisateurs, des groupes ou des rôles."
+
+msgid "Review frequency (months)"
+msgstr "Périodicité de revue (mois)"
+
+msgid "Next review (explicit date)"
+msgstr "Prochaine revue (date imposée)"
+
+msgid "Only an active document can be recorded as reviewed."
+msgstr "Seul un document actif peut être déclaré revu."
+
+msgid "A retired document cannot have a new version."
+msgstr "Un document retiré ne peut pas avoir de nouvelle version."
+
+msgid "A document cannot be placed under itself or one of its own children."
+msgstr ""
+"Un document ne peut pas être rattaché à lui-même ni à l'un de ses enfants."
+
+msgid "A document is activated by putting its first version in force."
+msgstr "Un document s'active en mettant sa première version en vigueur."
+
+#, python-format
+msgid "Document %(ref)s retired"
+msgstr "Document %(ref)s retiré"
+
+msgid "The document must be a PDF file."
+msgstr "Le document doit être un fichier PDF."
+
+msgid "The file is not a valid PDF."
+msgstr "Le fichier n'est pas un PDF valide."
+
+msgid "Document version"
+msgstr "Version de document"
+
+msgid "The effective date cannot be in the future."
+msgstr "La date d'entrée en vigueur ne peut pas être dans le futur."
+
+msgid "This document already has a version with this label."
+msgstr "Ce document a déjà une version portant ce libellé."
+
+msgid "The effective date of an approved version cannot be changed."
+msgstr ""
+"La date d'entrée en vigueur d'une version approuvée ne peut pas être "
+"modifiée."
+
+msgid "A version needs a content : write the text or attach a PDF."
+msgstr ""
+"Une version doit avoir un contenu : rédigez le texte ou joignez un PDF."
+
+msgid "Describe what changed since the previous version before submitting."
+msgstr ""
+"Décrivez ce qui a changé depuis la version précédente avant de soumettre."
+
+msgid "A retired document cannot have a version put in force."
+msgstr "Un document retiré ne peut pas avoir de version mise en vigueur."
+
+#, python-format
+msgid "Superseded by %(ref)s"
+msgstr "Remplacée par %(ref)s"
+
+#, python-format
+msgid "Version %(ref)s superseded"
+msgstr "Version %(ref)s remplacée"
+
+#, python-format
+msgid "To acknowledge : %(title)s"
+msgstr "À confirmer : %(title)s"
+
+#, python-format
+msgid "Please read and acknowledge %(title)s version %(label)s before %(due)s."
+msgstr ""
+"Merci de lire %(title)s version %(label)s et d'en confirmer la prise de "
+"connaissance avant le %(due)s."
+
+#, python-format
+msgid "Reminder : %(title)s to acknowledge"
+msgstr "Rappel : %(title)s à confirmer"
+
+#, python-format
+msgid ""
+"%(title)s version %(label)s is waiting for your acknowledgement (due "
+"%(due)s)."
+msgstr ""
+"%(title)s version %(label)s attend votre prise de connaissance (échéance "
+"%(due)s)."
+
+#, python-format
+msgid "%(title)s : version %(label)s in force"
+msgstr "%(title)s : version %(label)s en vigueur"
+
+#, python-format
+msgid "Version %(label)s of %(title)s was approved and is now in force."
+msgstr ""
+"La version %(label)s de %(title)s a été approuvée et est désormais en "
+"vigueur."
+
+#, python-format
+msgid "Review overdue : %(title)s"
+msgstr "Revue en retard : %(title)s"
+
+#, python-format
+msgid "%(title)s was due for review on %(date)s."
+msgstr "La revue de %(title)s était due le %(date)s."
+
+#, python-format
+msgid "Review due : %(title)s"
+msgstr "Revue à échéance : %(title)s"
+
+#, python-format
+msgid "%(title)s is due for review on %(date)s."
+msgstr "La revue de %(title)s est due le %(date)s."

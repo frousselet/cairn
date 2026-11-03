@@ -1,0 +1,2 @@
+{% comment %}The reason a record opens read-only (a submitted version, a launched campaign, a retired document).{% endcomment %}
+{% if form.frozen_note %}<div class="alert alert-info" role="status"><i class="bi bi-lock me-2" aria-hidden="true"></i>{{ form.frozen_note }}</div>{% endif %}

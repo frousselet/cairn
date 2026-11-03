@@ -1,0 +1,5 @@
+{% extends "includes/modal_form.html" %}
+{% load i18n %}
+{% comment %}RG-DOC-19 : excuse a pending addressee with a reason. Fields from ExcuseForm.{% endcomment %}
+{% block modal_title_icon %}<span class="drawer-title-icon"><i class="bi bi-person-dash"></i></span>{% endblock %}
+{% block modal_form_fields %}<p class="text-meta">{% blocktrans with name=acknowledgement.user.display_name ref=acknowledgement.campaign.reference %}{{ name }} will no longer be expected to acknowledge {{ ref }}, and is left out of its completion rate.{% endblocktrans %}</p>{{ block.super }}{% endblock %}

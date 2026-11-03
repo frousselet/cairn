@@ -1,0 +1,86 @@
+{% load i18n %}<!DOCTYPE html>
+{% comment %}
+  A document version rendered to PDF (WeasyPrint) when no PDF is attached :
+  the Trust Center download and the version export (documents/rendering.py).
+  `content` is the version's rich text, already sanitized by clean_html.
+  Title, reference, version label and approval line on the first page; the
+  reference, version and page numbers on every page.
+{% endcomment %}
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+<meta charset="utf-8">
+<title>{{ policy.title }} {{ version.version_label }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 22mm 18mm 22mm 18mm;
+    @top-right {
+      content: string(running-ref);
+      font-size: 8pt;
+      color: #6b7280;
+    }
+    @bottom-center {
+      content: counter(page) " / " counter(pages);
+      font-size: 8pt;
+      color: #6b7280;
+    }
+  }
+  .running-ref { string-set: running-ref content(); font-size: 0; line-height: 0; margin: 0; height: 0; overflow: hidden; }
+  body {
+    font-family: "GitLab Sans", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    color: #1f2937;
+  }
+  .eyebrow {
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #1E3A8A;
+    margin: 0 0 2mm;
+  }
+  h1.doc-title {
+    font-size: 20pt;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 3mm;
+  }
+  .meta {
+    border-top: 2px solid #1E3A8A;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 3mm 0;
+    margin-bottom: 8mm;
+    font-size: 9pt;
+    color: #374151;
+  }
+  .meta p { margin: 0 0 1mm; }
+  .content h1, .content h2, .content h3 { color: #111827; page-break-after: avoid; }
+  .content h1 { font-size: 15pt; }
+  .content h2 { font-size: 13pt; }
+  .content h3 { font-size: 11pt; }
+  .content table { width: 100%; border-collapse: collapse; margin: 3mm 0; }
+  .content th, .content td { border: 0.5pt solid #d1d5db; padding: 1.5mm 2mm; text-align: left; vertical-align: top; }
+  .content th { background: #f3f4f6; }
+  .content img { max-width: 100%; }
+  .content blockquote { border-left: 2pt solid #1E3A8A; margin: 3mm 0; padding-left: 4mm; color: #374151; }
+</style>
+</head>
+<body>
+  <p class="running-ref">{{ policy.reference }} &middot; {% trans "Version" %} {{ version.version_label }}</p>
+  <p class="eyebrow">{{ policy.get_document_type_display }} &middot; {{ policy.reference }}</p>
+  <h1 class="doc-title">{{ policy.title }}</h1>
+  <div class="meta">
+    <p><strong>{% trans "Version" %} {{ version.version_label }}</strong> ({{ version.reference }}) &middot; {{ version.lifecycle_label }}</p>
+    {% if version.approved_at %}
+    <p>{% if version.approved_by %}{% blocktrans with name=version.approved_by.display_name date=version.approved_at|date %}Approved by {{ name }} on {{ date }}.{% endblocktrans %}{% else %}{% blocktrans with date=version.approved_at|date %}Approved on {{ date }}.{% endblocktrans %}{% endif %}
+    {% if version.effective_from %}{% blocktrans with date=version.effective_from|date %}Effective from {{ date }}.{% endblocktrans %}{% endif %}</p>
+    {% else %}
+    <p>{% trans "Not approved : this version is not in force." %}</p>
+    {% endif %}
+    <p>{% trans "Classification" %} : {{ policy.get_classification_display }}</p>
+  </div>
+  <div class="content">{{ content|safe }}</div>
+</body>
+</html>

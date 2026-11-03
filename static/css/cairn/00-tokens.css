@@ -165,6 +165,8 @@
   --module-accent-context-soft: var(--accent-soft);
   --module-accent-incidents:    var(--accent);
   --module-accent-incidents-soft:var(--accent-soft);
+  --module-accent-documents:    var(--accent);
+  --module-accent-documents-soft:var(--accent-soft);
   --module-accent-reports:      var(--accent);
   --module-accent-reports-soft: var(--accent-soft);
   --module-accent-accounts:     var(--accent);
@@ -247,6 +249,8 @@
   --module-accent-assets-soft:  var(--accent-soft);
   --module-accent-context:      var(--accent);
   --module-accent-context-soft: var(--accent-soft);
+  --module-accent-documents:    var(--accent);
+  --module-accent-documents-soft:var(--accent-soft);
   --module-accent-reports:      var(--accent);
   --module-accent-reports-soft: var(--accent-soft);
   --module-accent-accounts:     var(--accent);

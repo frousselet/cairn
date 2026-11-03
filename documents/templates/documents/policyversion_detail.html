@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load i18n ui workflow_tags accounts_tags documents_tags %}
+
+{% comment %}
+One version of a document : the text and the PDF exactly as submitted (frozen
+from in_review, RG-DOC-02), what changed, and the approval stamped by the
+transition (RG-DOC-07). A superseded version stays readable as a record of
+what applied, with a pointer to the version in force (clause 7.5.3).
+{% endcomment %}
+
+{% block title %}{{ policy.title }} {{ version.version_label }} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "documents.policy.update" as can_update_policy %}
+{% has_perm "documents.policy.delete" as can_delete_policy %}
+{% has_perm "documents.acknowledgement.create" as can_create_campaign %}
+{% url 'documents:policy-detail' policy.pk as policy_url %}
+{% blocktrans asvar version_title with title=policy.title label=version.version_label %}{{ title }}, version {{ label }}{% endblocktrans %}
+{% page_header version_title reference=version.reference nav="documents:policy-list" parent_label=policy.reference parent_url=policy_url accent="documents" %}
+  {% include "includes/history_trigger.html" %}
+  <a href="{% url 'documents:policyversion-pdf' version.pk %}" class="btn btn-secondary" hx-boost="false"><i class="bi bi-file-earmark-arrow-down me-1" aria-hidden="true"></i>{% trans "Download PDF" %}</a>
+  {% if can_delete_policy and version.is_deletable %}
+  <button type="button" class="btn btn-danger" hx-get="{% url 'documents:policyversion-delete' version.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  {% endif %}
+  {% if can_update_policy and not version.is_frozen %}
+  <a href="{% url 'documents:policyversion-update' version.pk %}" class="btn btn-primary" hx-get="{% url 'documents:policyversion-update' version.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if version.superseded_at %}
+<div class="alert alert-secondary">
+  <i class="bi bi-archive me-2" aria-hidden="true"></i>{% if version.superseded_by %}{% url 'documents:policyversion-detail' version.superseded_by.pk as successor_url %}{% blocktrans with ref=version.superseded_by.reference url=successor_url date=version.superseded_at|date %}Superseded by <a href="{{ url }}">{{ ref }}</a> on {{ date }}.{% endblocktrans %}{% else %}{% blocktrans with date=version.superseded_at|date %}Withdrawn on {{ date }}.{% endblocktrans %}{% endif %}
+  {% if current_in_force and current_in_force.pk != version.superseded_by_id %}{% url 'documents:policyversion-detail' current_in_force.pk as in_force_url %}{% blocktrans with label=current_in_force.version_label url=in_force_url %}The version in force is <a href="{{ url }}">{{ label }}</a>.{% endblocktrans %}{% endif %}
+</div>
+{% elif version.is_frozen and not is_in_force %}
+<div class="alert alert-info"><i class="bi bi-lock me-2" aria-hidden="true"></i>{% trans "This version is in review : its content is frozen. Send it back to draft to change it." %}</div>
+{% endif %}
+
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") version.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Version") version.version_label icon="layers" tone="neutral" size="sm" %}
+    {% kpi_tile _("Effective from") version.effective_from icon="calendar-check" tone="neutral" %}
+    {% kpi_tile _("Approved at") version.approved_at|date icon="patch-check" tone="neutral" %}
+  {% endslot %}
+
+  {% section_card _("Content") icon="file-earmark-text" collapsible=True %}
+    {% if version.content %}
+    <div class="ov-rich">{{ version.content|clean_rich }}</div>
+    {% else %}
+    {% empty_state compact=True message=_("No text : the attached PDF is the content of this version.") %}
+    {% endif %}
+  {% endsection_card %}
+
+  {% section_card _("PDF document") icon="file-earmark-pdf" %}
+    {% if version.has_pdf %}
+    {% meta_list %}
+      {% meta_item _("File name") %}<a href="{% url 'documents:policyversion-pdf' version.pk %}" hx-boost="false">{{ version.file_name|default:_("PDF document") }}</a>{% endmeta_item %}
+      {% meta_item _("SHA-256") %}<code class="text-break">{{ version.file_sha256 }}</code>{% endmeta_item %}
+    {% endmeta_list %}
+    <p class="text-meta mt-2 mb-0">{% trans "Compute the SHA-256 of a downloaded copy and compare it with this value to check it is the approved document." %}</p>
+    {% else %}
+    <p class="text-meta mb-0">{% trans "No PDF is attached : the download renders the text above as a PDF." %}</p>
+    {% endif %}
+  {% endsection_card %}
+
+  {% section_card _("Change and approval") icon="journal-check" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Change summary") wide=True %}{% if version.change_summary %}{{ version.change_summary|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Approved by") %}{% if version.approved_by %}{% user_badge version.approved_by size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Approved at") version.approved_at %}
+      {% meta_item _("Effective from") version.effective_from %}
+      {% meta_item _("Document") %}<div class="ref-links">{% ref_link policy url=policy_url label=policy.title %}</div>{% endmeta_item %}
+      {% if version.superseded_at %}
+      {% meta_item _("Superseded at") version.superseded_at %}
+      {% meta_item _("Superseded by") %}{% if version.superseded_by %}<div class="ref-links">{% url 'documents:policyversion-detail' version.superseded_by.pk as successor_url %}{% ref_link version.superseded_by url=successor_url label=version.superseded_by.version_label %}</div>{% endif %}{% endmeta_item %}
+      {% endif %}
+      {% meta_item _("Tags") wide=True hide_empty=True %}{% tag_list version.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Acknowledgement campaigns") icon="patch-check" count=campaigns|length flush=True %}
+    {% slot actions %}
+    {% if can_create_campaign and is_in_force %}
+    <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'documents:campaign-create' %}?version={{ version.pk }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New campaign" %}</button>
+    {% endif %}
+    {% endslot %}
+    {% if campaigns %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Campaign" %}</th>
+            <th>{% trans "Due date" %}</th>
+            <th>{% trans "Completion rate" %}</th>
+            <th>{% trans "Status" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in campaigns %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'documents:acknowledgementcampaign-detail' c.pk %}" class="cell-link">{{ c.name }}</a>
+                <span class="cell-sub">{{ c.reference }}</span>
+              </span>
+            </td>
+            <td>{{ c.due_date }}</td>
+            <td>{% if c.rate is not None %}{% progress_bar c.rate %}{% else %}{% dash %}{% endif %}</td>
+            <td>{% workflow_badge c %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body">{% empty_state compact=True message=_("No campaign targets this version.") %}</div>
+    {% endif %}
+  {% endsection_card %}
+
+  {% record_card version %}
+{% enddetail_layout %}
+{% endblock %}

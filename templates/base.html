@@ -1,5 +1,6 @@
 {% load static ui %}
 {% load accounts_tags %}
+{% load documents_tags %}
 {% load i18n %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}"{% if user.is_authenticated %} data-theme-preference="{{ user.theme_preference|default:'system' }}"{% endif %}>
@@ -405,6 +406,25 @@
         <span class="sidebar-tooltip">{% trans "Action plans" %}</span>
       </a>
 
+      {# ── Documents ───────────────────────────────────── #}
+      {% has_perm "documents.policy.read" as can_read_policies %}
+      {% has_perm "documents.acknowledgement.read" as can_read_campaigns %}
+      {% if can_read_policies or can_read_campaigns %}
+      <div class="sidebar-section">{% trans "Documents" %}</div>
+      {% if can_read_policies %}
+      <a href="{% url 'documents:policy-list' %}" class="sidebar-link">
+        <i class="bi bi-file-earmark-text"></i> <span class="sidebar-link-text">{% trans "Policies" %}</span>
+        <span class="sidebar-tooltip">{% trans "Policies" %}</span>
+      </a>
+      {% endif %}
+      {% if can_read_campaigns %}
+      <a href="{% url 'documents:campaign-list' %}" class="sidebar-link">
+        <i class="bi bi-patch-check"></i> <span class="sidebar-link-text">{% trans "Acknowledgement campaigns" %}</span>
+        <span class="sidebar-tooltip">{% trans "Acknowledgement campaigns" %}</span>
+      </a>
+      {% endif %}
+      {% endif %}
+
       {# ── Incidents ───────────────────────────────────── #}
       <div class="sidebar-section">{% trans "Incidents" %}</div>
       <a href="{% url 'incidents:incident-list' %}" class="sidebar-link">
@@ -513,6 +533,11 @@
             <a href="{% url 'accounts:profile' %}" class="sidebar-link">
               <i class="bi bi-person"></i> <span class="sidebar-link-text">{% trans "Profile" %}</span>
               <span class="sidebar-tooltip">{% trans "Profile" %}</span>
+            </a>
+            {% pending_acknowledgement_count as pending_ack_count %}
+            <a href="{% url 'documents:acknowledge-list' %}" class="sidebar-link">
+              <i class="bi bi-pen"></i> <span class="sidebar-link-text">{% trans "To acknowledge" %}{% if pending_ack_count %} <span class="section-card__count tabular-nums ms-1" aria-label="{% blocktrans count counter=pending_ack_count %}{{ counter }} document to acknowledge{% plural %}{{ counter }} documents to acknowledge{% endblocktrans %}">{{ pending_ack_count }}</span>{% endif %}</span>
+              <span class="sidebar-tooltip">{% trans "To acknowledge" %}</span>
             </a>
             <button type="button" class="sidebar-link" data-bs-toggle="modal" data-bs-target="#aboutModal">
               <i class="bi bi-info-circle"></i> <span class="sidebar-link-text">{% trans "About" %}</span>

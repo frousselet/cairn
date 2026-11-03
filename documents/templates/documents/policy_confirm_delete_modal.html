@@ -1,0 +1,21 @@
+{% extends delete_shell|default:"includes/confirm_delete_modal.html" %}
+{% load i18n %}
+{% comment %}
+  Delete a document. Only a draft document is deletable (the policy
+  lifecycle's single deletable step); its draft versions go with it. A
+  document that ever had a version in force is retired, never deleted.
+{% endcomment %}
+{% block delete_title %}{% trans "Delete document" %}{% endblock %}
+{% block delete_message %}{% blocktrans with reference=object.reference title=object.title %}Are you sure you want to delete <strong>{{ reference }}</strong> - {{ title }}?{% endblocktrans %}{% endblock %}
+{% block delete_details %}
+  {% if not object.is_deletable %}
+  <p class="text-muted small mb-2"><i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% trans "This document is no longer a draft : retire it through its lifecycle instead." %}</p>
+  {% endif %}
+  {% with n=object.versions.count %}{% if n %}
+  <p class="text-muted small mb-2"><i class="bi bi-layers me-1" aria-hidden="true"></i>{% blocktrans count counter=n %}Its {{ counter }} draft version is deleted with it.{% plural %}Its {{ counter }} draft versions are deleted with it.{% endblocktrans %}</p>
+  {% endif %}{% endwith %}
+  {% with n=object.children.count %}{% if n %}
+  <p class="text-muted small mb-2"><i class="bi bi-diagram-2 me-1" aria-hidden="true"></i>{% blocktrans count counter=n %}{{ counter }} document sits under this one : move it first.{% plural %}{{ counter }} documents sit under this one : move them first.{% endblocktrans %}</p>
+  {% endif %}{% endwith %}
+{% endblock %}
+{% block delete_button_attrs %}{% if not object.is_deletable %} disabled{% endif %}{% endblock %}

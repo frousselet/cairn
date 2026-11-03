@@ -1,0 +1,8 @@
+{% extends "includes/modal_form.html" %}
+{% comment %}
+  Create or edit a draft acknowledgement campaign in the drawer. Fields and
+  steps come from AcknowledgementCampaignForm. A launched campaign opens
+  frozen : its audience was resolved at launch (RG-DOC-15).
+{% endcomment %}
+{% block modal_title_icon %}<span class="drawer-title-icon"><i class="bi bi-patch-check"></i></span>{% endblock %}
+{% block modal_form_fields %}{% include "documents/_frozen_note.html" %}{{ block.super }}{% endblock %}

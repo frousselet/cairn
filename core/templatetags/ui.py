@@ -62,7 +62,7 @@ def static_v(path):
 
 MODULE_ACCENTS = {
     "risks", "compliance", "assets", "context",
-    "incidents", "reports", "accounts", "helpers", "dashboard",
+    "incidents", "documents", "reports", "accounts", "helpers", "dashboard",
     "trust-center",
 }
 
@@ -341,6 +341,13 @@ BADGE_REGISTRY: dict[str, dict[str, tuple[str, str, object]]] = {
         "information_requested": ("warning", "question-circle", None),
         "rejected": ("danger", "x-octagon", None),
         "superseded": ("secondary", "arrow-repeat", None),
+    },
+    # Documents : one addressee of an acknowledgement campaign (labels from the choices).
+    "acknowledgement_status": {
+        "pending": ("warning", "hourglass-split", None),
+        "acknowledged": ("success", "check-circle", None),
+        "excused": ("secondary", "person-dash", None),
+        "expired": ("danger", "x-circle", None),
     },
     "issue_status": {
         "identified": ("secondary", "circle", _("Identified")),
