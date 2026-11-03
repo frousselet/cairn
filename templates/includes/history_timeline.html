@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n ui %}
 {% comment %}
   Lazy-loaded history timeline partial. Consumes `history_records`: a list of
   core.history.HistoryEntry objects (field diffs, approvals and lifecycle
@@ -11,28 +11,28 @@
 <div class="history-event">
   <div class="history-meta">
     {% if entry.kind == "create" %}
-      <span class="badge text-bg-success"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Creation" %}</span>
+      {% badge variant="success" icon="plus-lg" label=_("Creation") %}
     {% elif entry.kind == "delete" %}
-      <span class="badge text-bg-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Deletion" %}</span>
+      {% badge variant="danger" icon="trash" label=_("Deletion") %}
     {% elif entry.kind == "approval" %}
       {% if entry.approved %}
-      <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{% trans "Approval" %}</span>
+      {% badge variant="success" icon="check-circle" label=_("Approval") %}
       {% else %}
-      <span class="badge text-bg-dark"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>{% trans "Approval withdrawn" %}</span>
+      {% badge variant="dark" icon="x-circle" label=_("Approval withdrawn") %}
       {% endif %}
     {% elif entry.kind == "transition" %}
       {% if entry.is_refusal %}
-      <span class="badge text-bg-warning"><i class="bi bi-arrow-return-left me-1" aria-hidden="true"></i>{% trans "Refusal" %}</span>
+      {% badge variant="warning" icon="arrow-return-left" label=_("Refusal") %}
       {% else %}
-      <span class="badge text-bg-info"><i class="bi bi-arrow-right me-1" aria-hidden="true"></i>{% trans "Transition" %}</span>
+      {% badge variant="info" icon="arrow-right" label=_("Transition") %}
       {% endif %}
     {% else %}
-      <span class="badge text-bg-secondary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Modification" %}</span>
+      {% badge variant="secondary" icon="pencil" label=_("Modification") %}
     {% endif %}
-    {% if entry.entity_label %}<span class="badge text-bg-light border">{{ entry.entity_label }}</span>{% endif %}
-    {% if entry.version %}<span class="badge" style="background:var(--accent-soft);color:var(--accent)">v{{ entry.version }}</span>{% endif %}
-    <span>{{ entry.history_date|date:"d/m/Y H:i:s" }}</span>
-    <span class="history-actor">· {{ entry.user|default:"System" }}</span>
+    {% if entry.entity_label %}{% badge variant="secondary" label=entry.entity_label %}{% endif %}
+    {% if entry.version %}<span class="badge-dot accent tabular-nums">v{{ entry.version }}</span>{% endif %}
+    <time datetime="{{ entry.history_date|date:'c' }}" class="tabular-nums">{{ entry.history_date|date:"SHORT_DATE_FORMAT" }} {{ entry.history_date|time:"H:i:s" }}</time>
+    <span class="history-actor">· {% if entry.user %}{{ entry.user }}{% else %}{% trans "System" %}{% endif %}</span>
   </div>
 
   {% if entry.kind == "create" %}

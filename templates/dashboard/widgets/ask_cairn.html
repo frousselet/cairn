@@ -2,7 +2,7 @@
 {# Widget: Summary ("Résumé") - the day's metrics synthesised by the LLM (Mistral). The widget posts `data-facts` (a metrics snapshot) to the briefing endpoint, renders the model's synthesis, lists the key items it draws on as references, and shows an honest "powered by" attribution. The point count is a deterministic fallback (assistant off, loading or unavailable). When it sits in the full-width stacked rail it reflows into a banner: summary on the left third, references filling two columns on the right. #}
 <div class="card ask-cairn h-100" data-ai-enabled="{% if AI_ASSISTANT_ENABLED %}1{% else %}0{% endif %}" data-facts="{{ ask_cairn_data_json }}">
   <div class="card-body ask-cairn__body">
-    <h5 class="card-title ask-cairn__title"><i class="bi bi-stars me-1" style="color:var(--accent)"></i> {% trans "Summary" context "dashboard widget title" %}</h5>
+    <h5 class="card-title ask-cairn__title"><i class="bi bi-stars me-1 text-accent" aria-hidden="true"></i> {% trans "Summary" context "dashboard widget title" %}</h5>
     <div class="ask-cairn__content">
       <div class="ask-cairn__main">
         {% if ask_cairn_data %}

@@ -1,13 +1,13 @@
 {% load i18n %}
 <div class="table-toolbar" data-sort-view-key="{{ sort_view_key }}">
   <div class="table-toolbar-search">
-    <i class="bi bi-search table-toolbar-icon"></i>
+    <i class="bi bi-search table-toolbar-icon" aria-hidden="true"></i>
     <input type="search" class="table-toolbar-input"
            placeholder="{% trans 'Search…' %}"
            aria-label="{% trans 'Search' %}"
            autocomplete="off">
-    <a href="#" class="table-toolbar-clear" title="{% trans 'Clear' %}" style="display:none">
-      <i class="bi bi-x-circle-fill"></i>
+    <a href="#" class="table-toolbar-clear" title="{% trans 'Clear' %}" aria-label="{% trans 'Clear' %}" style="display:none">
+      <i class="bi bi-x-circle-fill" aria-hidden="true"></i>
     </a>
   </div>
 </div>

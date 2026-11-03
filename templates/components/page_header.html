@@ -18,9 +18,9 @@
     {% if modified_by %}
     <span>{% trans "Last modified by" %}</span>
     {% user_badge modified_by size=20 chip=True %}
-    <span>{% blocktrans with d=modified_at|date:"d/m/Y H:i" %}on {{ d }}{% endblocktrans %}</span>
+    <span>{% blocktrans with d=modified_at|date:"SHORT_DATETIME_FORMAT" %}on {{ d }}{% endblocktrans %}</span>
     {% else %}
-    <span>{% blocktrans with d=modified_at|date:"d/m/Y H:i" %}Last modified on {{ d }}{% endblocktrans %}</span>
+    <span>{% blocktrans with d=modified_at|date:"SHORT_DATETIME_FORMAT" %}Last modified on {{ d }}{% endblocktrans %}</span>
     {% endif %}
   </div>
   {% endif %}

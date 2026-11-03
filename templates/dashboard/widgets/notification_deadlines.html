@@ -13,7 +13,7 @@ GeneralDashboardView and already scope-filtered and permission-gated.
 <div class="card h-100">
   <div class="card-body">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-      <h5 class="card-title mb-0"><i class="bi bi-hourglass-split me-1" style="color:var(--accent)"></i> {% trans "Notification deadlines" %}</h5>
+      <h5 class="card-title mb-0"><i class="bi bi-hourglass-split me-1 text-accent" aria-hidden="true"></i> {% trans "Notification deadlines" %}</h5>
       <a href="{% url 'incidents:notification-list' %}" class="upcoming-toggle">{% trans "Register" %}</a>
     </div>
 
@@ -39,13 +39,13 @@ GeneralDashboardView and already scope-filtered and permission-gated.
         <a href="{% url 'incidents:notification-detail' row.obligation.pk %}" class="ndl-item ndl-item--{{ row.tone }}">
           <span class="ndl-item__head">
             <span class="ndl-item__name" title="{{ row.obligation.recipient_display }}">{{ row.obligation.get_regime_display }} · {{ row.obligation.recipient_display }}</span>
-            <span class="badge ndl-item__badge ndl-item__badge--{{ row.tone }}">
+            <span class="badge-dot {{ row.tone }} flex-shrink-0 text-nowrap">
               {% if row.is_overdue %}{% blocktrans with delay=row.remaining %}Late by {{ delay }}{% endblocktrans %}{% else %}{% blocktrans with delay=row.remaining %}Due in {{ delay }}{% endblocktrans %}{% endif %}
             </span>
           </span>
           <span class="ndl-item__meta">
             <span class="ref">{{ row.obligation.reference }}</span>
-            <span class="ndl-item__due" title="{% trans 'Deadline' %}"><i class="bi bi-clock"></i> {{ row.obligation.due_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+            <span class="ndl-item__due" title="{% trans 'Deadline' %}"><i class="bi bi-clock" aria-hidden="true"></i> {{ row.obligation.due_at|date:"SHORT_DATETIME_FORMAT" }}</span>
           </span>
           {% if row.incident %}
           <span class="ndl-item__incident" title="{{ row.incident.title }}">
@@ -94,10 +94,6 @@ GeneralDashboardView and already scope-filtered and permission-gated.
   .ndl-item:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; transform:translateY(-1px); }
   .ndl-item__head { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; }
   .ndl-item__name { font-size:.875rem; font-weight:600; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
-  .ndl-item__badge { flex-shrink:0; font-size:.625rem; font-weight:600; padding:.125rem .4375rem; white-space:nowrap; }
-  .ndl-item__badge--danger { background:var(--danger-soft); color:var(--danger); }
-  .ndl-item__badge--warning { background:var(--warning-soft); color:var(--warning); }
-  .ndl-item__badge--secondary { background:var(--surface-subtle); color:var(--text-secondary); }
   .ndl-item__meta { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; font-size:.6875rem; color:var(--text-muted); }
   .ndl-item__due { display:inline-flex; align-items:center; gap:.1875rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
   .ndl-item__incident { display:flex; align-items:center; gap:.375rem; min-width:0; font-size:.75rem; color:var(--text-secondary); }

@@ -1,9 +1,9 @@
-{% load i18n accounts_tags %}
+{% load i18n accounts_tags ui %}
 {# Widget: priority risks - top untreated critical/high risks. Designed for the rail; items flow into a responsive grid (1 column when narrow, several when wide). Expects `priority_risks`. #}
 <div class="card h-100">
   <div class="card-body">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-      <h5 class="card-title mb-0"><i class="bi bi-fire me-1" style="color:var(--accent)"></i> {% trans "Priority risks" %}</h5>
+      <h5 class="card-title mb-0"><i class="bi bi-fire me-1 text-accent" aria-hidden="true"></i> {% trans "Priority risks" %}</h5>
       <a href="{% url 'risks:risk-list' %}" class="upcoming-toggle">{% trans "Register" %}</a>
     </div>
     {% if priority_risks %}
@@ -13,11 +13,11 @@
         <a href="{% url 'risks:risk-detail' r.pk %}" class="priority-risks__item priority-risks__item--{{ r.priority }}">
           <span class="priority-risks__head">
             <span class="priority-risks__name" title="{{ r.name }}">{{ r.name }}</span>
-            <span class="badge priority-risks__badge priority-risks__badge--{{ r.priority }}">{{ r.get_priority_display }}</span>
+            {% choice_badge r "priority" classes="flex-shrink-0" %}
           </span>
           <span class="priority-risks__meta">
             <span class="ref">{{ r.reference }}</span>
-            {% if r.residual_risk_level %}<span class="priority-risks__level" title="{% trans 'Residual level' %}"><i class="bi bi-speedometer2"></i> {{ r.residual_risk_level }}</span>{% endif %}
+            {% if r.residual_risk_level %}<span class="priority-risks__level" title="{% trans 'Residual level' %}"><i class="bi bi-speedometer2" aria-hidden="true"></i> {{ r.residual_risk_level }}</span>{% endif %}
           </span>
           {% if r.risk_owner %}
           <span class="priority-risks__person">
@@ -52,9 +52,6 @@
   .priority-risks__item:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; transform:translateY(-1px); }
   .priority-risks__head { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; }
   .priority-risks__name { font-size:.875rem; font-weight:600; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
-  .priority-risks__badge { flex-shrink:0; font-size:.625rem; font-weight:600; padding:.125rem .4375rem; }
-  .priority-risks__badge--critical { background:var(--danger-soft); color:var(--danger); }
-  .priority-risks__badge--high { background:var(--warning-soft); color:var(--warning); }
   .priority-risks__meta { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; font-size:.6875rem; color:var(--text-muted); }
   .priority-risks__level { display:inline-flex; align-items:center; gap:.1875rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
   .priority-risks__person { display:flex; align-items:center; gap:.5rem; min-width:0; }

@@ -1,13 +1,13 @@
 {% load i18n %}
 <div class="modal-header">
-  <h5 class="modal-title"><i class="bi bi-rss me-2"></i>{% trans "Calendar subscription" %}</h5>
-  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  <h5 class="modal-title"><i class="bi bi-rss me-2" aria-hidden="true"></i>{% trans "Calendar subscription" %}</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
 </div>
 <div class="modal-body">
 
 {% if new_token %}
   <div class="alert alert-success small py-2 mb-3">
-    <i class="bi bi-check-circle me-1"></i>
+    <i class="bi bi-check-circle me-1" aria-hidden="true"></i>
     <strong>{{ new_token.name }}</strong> - {% trans "Token created. Copy the password now, it will not be shown again." %}
   </div>
 
@@ -17,9 +17,9 @@
       <input type="text" class="form-control font-monospace" readonly
              id="icalUrl"
              value="{{ request.scheme }}://{{ request.get_host }}{% url 'calendar-ical' %}">
-      <button class="btn btn-outline-secondary" type="button"
+      <button class="btn btn-secondary" type="button" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"
               onclick="navigator.clipboard.writeText(document.getElementById('icalUrl').value);this.innerHTML='<i class=\'bi bi-check\'></i>';setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i>',1500)">
-        <i class="bi bi-clipboard"></i>
+        <i class="bi bi-clipboard" aria-hidden="true"></i>
       </button>
     </div>
   </div>
@@ -30,9 +30,9 @@
       <input type="text" class="form-control font-monospace" readonly
              id="icalUser"
              value="{{ request.user.email }}">
-      <button class="btn btn-outline-secondary" type="button"
+      <button class="btn btn-secondary" type="button" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"
               onclick="navigator.clipboard.writeText(document.getElementById('icalUser').value);this.innerHTML='<i class=\'bi bi-check\'></i>';setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i>',1500)">
-        <i class="bi bi-clipboard"></i>
+        <i class="bi bi-clipboard" aria-hidden="true"></i>
       </button>
     </div>
   </div>
@@ -43,15 +43,15 @@
       <input type="text" class="form-control font-monospace" readonly
              id="icalToken"
              value="{{ new_token.token }}">
-      <button class="btn btn-outline-secondary" type="button"
+      <button class="btn btn-secondary" type="button" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"
               onclick="navigator.clipboard.writeText(document.getElementById('icalToken').value);this.innerHTML='<i class=\'bi bi-check\'></i>';setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i>',1500)">
-        <i class="bi bi-clipboard"></i>
+        <i class="bi bi-clipboard" aria-hidden="true"></i>
       </button>
     </div>
   </div>
 
   <div class="alert alert-light border small mb-0 py-2">
-    <i class="bi bi-info-circle me-1"></i>
+    <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
     <strong>Apple Calendar :</strong> {% trans "File > New Calendar Subscription, paste the URL, then enter the username and password." %}
   </div>
 {% else %}
@@ -62,13 +62,13 @@
     {% for t in tokens %}
     <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
       <div style="min-width:0">
-        <div style="font-weight:550;font-size:.875rem">
-          <i class="bi bi-key me-1" style="color:var(--accent)"></i>{{ t.name }}
+        <div class="fw-semibold text-sm">
+          <i class="bi bi-key me-1 text-accent" aria-hidden="true"></i>{{ t.name }}
         </div>
-        <div style="font-size:.75rem;color:var(--text-muted)">
-          {% trans "Created" %} {{ t.created_at|date:"d/m/Y" }}
+        <div class="text-meta">
+          {% trans "Created" %} {{ t.created_at|date:"SHORT_DATE_FORMAT" }}
           {% if t.last_used_at %}
-            - {% trans "Last used" %} {{ t.last_used_at|date:"d/m/Y H:i" }}
+            - {% trans "Last used" %} {{ t.last_used_at|date:"SHORT_DATETIME_FORMAT" }}
             {% if t.client_display %}({{ t.client_display }}){% endif %}
           {% endif %}
           - <span class="font-monospace">...{{ t.token_hint }}</span>
@@ -78,8 +78,8 @@
         {% csrf_token %}
         <input type="hidden" name="action" value="revoke">
         <input type="hidden" name="token_id" value="{{ t.pk }}">
-        <button type="submit" class="btn btn-sm btn-outline-danger" title="{% trans 'Revoke' %}">
-          <i class="bi bi-trash"></i>
+        <button type="submit" class="btn btn-sm btn-danger" title="{% trans 'Revoke' %}" aria-label="{% trans 'Revoke' %}">
+          <i class="bi bi-trash" aria-hidden="true"></i>
         </button>
       </form>
     </li>
@@ -97,7 +97,7 @@
     <div class="input-group input-group-sm">
       <input type="text" name="name" class="form-control" placeholder="{% trans 'Subscription name (e.g. MacBook, iPhone)' %}" required>
       <button type="submit" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i>{% trans "Create" %}
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Create" %}
       </button>
     </div>
   </form>

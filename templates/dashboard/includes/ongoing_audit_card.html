@@ -2,10 +2,10 @@
 {# One ongoing-audit card. Expects `item` = {audit, time_progress, days_left, status_tone}. Shared by the Ongoing audits widget and the Summary widget; styles in ongoing_audit_styles.html. #}
 <li>
   <a href="{% url 'compliance:assessment-detail' item.audit.pk %}" class="ongoing-audits__item"
-     title="{{ item.audit.assessment_start_date|date:'d M Y' }} → {{ item.audit.assessment_end_date|date:'d M Y' }}">
+     title="{{ item.audit.assessment_start_date|date:'SHORT_DATE_FORMAT' }} → {{ item.audit.assessment_end_date|date:'SHORT_DATE_FORMAT' }}">
     <span class="ongoing-audits__head">
       <span class="ongoing-audits__name">{{ item.audit.name }}</span>
-      <span class="badge ongoing-audits__status ongoing-audits__status--{{ item.status_tone }}">{{ item.audit.get_status_display }}</span>
+      <span class="badge-dot {{ item.status_tone }} flex-shrink-0">{{ item.audit.get_status_display }}</span>
     </span>
     <span class="ongoing-audits__meta">
       <span class="ref">{{ item.audit.reference }}</span>

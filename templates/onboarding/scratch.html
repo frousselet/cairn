@@ -57,8 +57,8 @@
             <div class="ob-logo-row">
               <div class="position-relative" style="flex-shrink:0">
                 <img id="ob-logo-prev" class="ob-logo-prev" alt="" style="display:none">
-                <div id="ob-logo-ph" class="ob-logo-ph"><i class="bi bi-building"></i></div>
-                <label for="{{ company_form.logo_file.id_for_label }}" class="ob-logo-cam" title="{% trans 'Add a logo' %}"><i class="bi bi-camera-fill"></i></label>
+                <div id="ob-logo-ph" class="ob-logo-ph"><i class="bi bi-building" aria-hidden="true"></i></div>
+                <label for="{{ company_form.logo_file.id_for_label }}" class="ob-logo-cam" title="{% trans 'Add a logo' %}" aria-label="{% trans 'Add a logo' %}"><i class="bi bi-camera-fill" aria-hidden="true"></i></label>
                 <div class="d-none">{{ company_form.logo_file }}</div>
               </div>
               <div class="form-check form-switch m-0">
@@ -142,13 +142,13 @@
           <div class="ob-actions">
             {# Step 1 actions #}
             <div class="ob-act" data-act="1">
-              <button type="button" class="btn-accent" onclick="obGo(2)">{% trans "Continue" %}<i class="bi bi-arrow-right ms-1"></i></button>
+              <button type="button" class="btn-accent" onclick="obGo(2)">{% trans "Continue" %}<i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
               <a href="{% url 'onboarding:landing' %}" class="ob-btn-ghost d-block">{% trans "Back to setup" %}</a>
             </div>
             {# Step 2 actions #}
             <div class="ob-act" data-act="2" style="display:none">
               <button type="submit" class="btn-accent">{% trans "Create and sign in" %}</button>
-              <button type="button" class="ob-btn-ghost" onclick="obGo(1)"><i class="bi bi-arrow-left me-1"></i>{% trans "Back" %}</button>
+              <button type="button" class="ob-btn-ghost" onclick="obGo(1)"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{% trans "Back" %}</button>
             </div>
           </div>
         </aside>

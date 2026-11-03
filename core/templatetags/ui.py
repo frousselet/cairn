@@ -294,9 +294,11 @@ def badge(value=None, *, type=None, variant=None, icon=None, label=None, classes
     registry lookup. ``label`` defaults to the registry label (translated)
     when omitted; pass ``label=value`` to fall back to the raw value.
     """
-    reg_variant, reg_icon, reg_label = _resolve_badge(value, type)
+    reg_variant, _reg_icon, reg_label = _resolve_badge(value, type)
     final_variant = variant or reg_variant
-    final_icon = icon or reg_icon
+    # Every badge is a dot pill; an icon replaces the dot only when the caller
+    # asks for one, so the same value reads the same wherever it appears.
+    final_icon = icon or None
     final_label = label if label is not None else (reg_label if reg_label is not None else value)
     return {
         "variant": final_variant,

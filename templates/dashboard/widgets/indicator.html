@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n ui %}
 {# Widget: a single configurable indicator (KPI card). Expects `placed.slot` (a slot dict from build_indicator_slot) or None when the widget is not configured yet. #}
 {% with slot=placed.slot %}
 {% if slot %}
@@ -8,48 +8,48 @@
       <div class="d-flex justify-content-between align-items-start mb-1">
         <small class="text-muted text-truncate me-2" style="max-width:70%" title="{{ slot.indicator.name }}">{{ slot.indicator.name }}</small>
         {% if slot.indicator.indicator_type == "organizational" %}
-        <span class="badge text-bg-primary" style="font-size:.6rem">{% trans "Org." %}</span>
+        {% badge variant="accent" label=_("Org.") %}
         {% else %}
-        <span class="badge text-bg-secondary" style="font-size:.6rem">{% trans "Tech." %}</span>
+        {% badge variant="secondary" label=_("Tech.") %}
         {% endif %}
       </div>
       <div class="d-flex align-items-baseline gap-2">
-        <span class="stat-card-value mb-0" style="{% if slot.indicator.is_critical %}color:var(--bs-danger){% endif %}">
+        <span class="stat-card-value mb-0" style="{% if slot.indicator.is_critical %}color:var(--danger){% endif %}">
           {% if slot.indicator.format == "boolean" %}
             {% if slot.indicator.current_value == "true" or slot.indicator.current_value == "1" or slot.indicator.current_value == "yes" %}
               <i class="bi bi-check-circle-fill text-success"></i>
             {% elif slot.indicator.current_value %}
               <i class="bi bi-x-circle-fill text-danger"></i>
             {% else %}
-              <span class="cell-empty">-</span>
+              {% dash %}
             {% endif %}
           {% else %}
-            {{ slot.formatted_value|default:slot.indicator.current_value|default:"-" }}
+            {{ slot.formatted_value|default:slot.indicator.current_value|or_dash }}
           {% endif %}
         </span>
         {% if slot.indicator.unit and slot.indicator.format != "boolean" %}
         <small class="text-muted">{{ slot.indicator.unit }}</small>
         {% endif %}
         {% if slot.trend == "up" %}
-          <span class="ms-auto" title="{% trans 'Trend' %}: +{{ slot.trend_value|floatformat:1 }}"><i class="bi bi-arrow-up-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--bs-danger){% else %}var(--success){% endif %}"></i></span>
+          <span class="ms-auto" title="{% trans 'Trend' %}: +{{ slot.trend_value|floatformat:1 }}"><i class="bi bi-arrow-up-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger){% else %}var(--success){% endif %}"></i></span>
         {% elif slot.trend == "down" %}
-          <span class="ms-auto" title="{% trans 'Trend' %}: {{ slot.trend_value|floatformat:1 }}"><i class="bi bi-arrow-down-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--bs-danger){% else %}var(--danger){% endif %}"></i></span>
+          <span class="ms-auto" title="{% trans 'Trend' %}: {{ slot.trend_value|floatformat:1 }}"><i class="bi bi-arrow-down-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger){% else %}var(--danger){% endif %}"></i></span>
         {% elif slot.trend == "stable" %}
           <span class="ms-auto" title="{% trans 'Stable' %}"><i class="bi bi-dash fs-5" style="color:var(--text-muted)"></i></span>
         {% elif slot.trend == "changed" %}
-          <span class="ms-auto" title="{% trans 'Changed' %}"><i class="bi bi-arrow-left-right fs-5" style="color:{% if slot.indicator.is_critical %}var(--bs-danger){% else %}var(--warning){% endif %}"></i></span>
+          <span class="ms-auto" title="{% trans 'Changed' %}"><i class="bi bi-arrow-left-right fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger){% else %}var(--warning){% endif %}"></i></span>
         {% endif %}
       </div>
       {% if slot.current_measurement %}
       <small class="text-muted" style="font-size:.72rem">
-        <i class="bi bi-calendar3 me-1"></i>{{ slot.current_measurement.recorded_at|date:"d/m/Y" }}
-        {% if slot.delta_display %} · <i class="bi bi-plus-slash-minus me-1"></i><span style="color:{% if slot.indicator.is_critical %}var(--bs-danger){% elif slot.trend == 'up' %}var(--success){% elif slot.trend == 'down' %}var(--danger){% else %}var(--text-muted){% endif %}">{{ slot.delta_display }}{% if slot.indicator.unit %} {{ slot.indicator.unit }}{% endif %}</span>{% endif %}
+        <i class="bi bi-calendar3 me-1" aria-hidden="true"></i>{{ slot.current_measurement.recorded_at|date:"SHORT_DATE_FORMAT" }}
+        {% if slot.delta_display %} · <i class="bi bi-plus-slash-minus me-1" aria-hidden="true"></i><span style="color:{% if slot.indicator.is_critical %}var(--danger){% elif slot.trend == 'up' %}var(--success){% elif slot.trend == 'down' %}var(--danger){% else %}var(--text-muted){% endif %}">{{ slot.delta_display }}{% if slot.indicator.unit %} {{ slot.indicator.unit }}{% endif %}</span>{% endif %}
       </small>
       {% else %}
       <small class="text-muted" style="font-size:.72rem">{% trans "No measurement" %}</small>
       {% endif %}
       {% if slot.indicator.is_critical %}
-      <div class="mt-1"><span class="badge text-bg-danger" style="font-size:.65rem">{% trans "Critical" %}</span></div>
+      <div class="mt-1">{% badge variant="danger" label=_("Critical") %}</div>
       {% endif %}
     </div>
     {% if slot.show_chart and slot.sparkline_data %}

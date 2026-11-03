@@ -1,7 +1,7 @@
 {% load i18n %}
 {% if help_content and not dismissed %}
-<div class="help-banner alert border d-flex align-items-start mb-3" role="alert" data-helper-key="{{ helper_key }}" style="background:var(--accent-soft);border-color:rgba(99,102,241,.1) !important;border-radius:var(--radius-md)">
-  <i class="bi bi-lightbulb me-3 mt-1" style="font-size:.9375rem;color:var(--accent)"></i>
+<div class="help-banner alert border d-flex align-items-start mb-3" role="alert" data-helper-key="{{ helper_key }}" style="background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 12%,transparent) !important;border-radius:var(--radius-md)">
+  <i class="bi bi-lightbulb me-3 mt-1 text-accent" style="font-size:.9375rem" aria-hidden="true"></i>
   <div class="flex-grow-1">
     <strong style="color:var(--text-primary);font-size:.8125rem">{{ help_content.title }}</strong>
     <div class="mt-1" style="color:var(--text-secondary);font-size:.78rem;line-height:1.55">{{ help_content.body }}</div>

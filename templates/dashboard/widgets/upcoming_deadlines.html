@@ -1,13 +1,13 @@
-{% load i18n %}
+{% load i18n ui %}
 {# Widget: upcoming deadlines & events (next 30 days). Designed for the rail; items flow into a responsive grid (1 column when narrow, several when wide). Expects `calendar_items` (each item may carry a `responsible` user). #}
 <div class="card h-100">
   <div class="card-body">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-      <h5 class="card-title mb-0"><i class="bi bi-calendar-event me-1" style="color:var(--accent)"></i> {% trans "Upcoming deadlines" %}</h5>
+      <h5 class="card-title mb-0"><i class="bi bi-calendar-event me-1 text-accent" aria-hidden="true"></i> {% trans "Upcoming deadlines" %}</h5>
       <a href="{% url 'calendar' %}" class="upcoming-toggle">{% trans "Calendar" %}</a>
     </div>
     <div class="today-actions__deadlines-title mb-2">
-      <span class="badge bg-secondary">{% trans "in the next 30 days" %}</span>
+      {% badge variant="secondary" label=_("in the next 30 days") %}
     </div>
     {% if calendar_items %}
     <div class="upcoming-list">
