@@ -88,12 +88,12 @@
     <span class="btn btn-sm btn-outline-secondary disabled" title="{% trans 'Status determined by findings' %}" aria-label="{% trans 'Status determined by findings' %}">
       <i class="bi bi-lock" aria-hidden="true"></i>
     </span>
-    {% elif assessment.status == 'in_progress' and entry.result and entry.result.compliance_status == 'not_assessed' %}
+    {% elif assessment.is_fieldwork_phase and entry.result and entry.result.compliance_status == 'not_assessed' %}
     {# IN_PROGRESS: NOT_ASSESSED is frozen #}
     <span class="btn btn-sm btn-outline-secondary disabled" title="{% trans 'Not planned for evaluation' %}" aria-label="{% trans 'Not planned for evaluation' %}">
       <i class="bi bi-circle" aria-hidden="true"></i>
     </span>
-    {% elif assessment.status == 'in_progress' %}
+    {% elif assessment.is_fieldwork_phase %}
     {# IN_PROGRESS: toggle EVALUATED ↔ COMPLIANT #}
     <button type="button" class="btn btn-sm {% if entry.result and entry.result.compliance_status == 'compliant' %}btn-success{% else %}btn-outline-primary{% endif %}"
             hx-post="{% url 'compliance:assessment-result-toggle' assessment.pk entry.requirement.pk %}"
