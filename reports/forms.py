@@ -8,6 +8,7 @@ from compliance.constants import AssessmentStatus
 from compliance.models import ComplianceAssessment, Framework
 from context.models import Scope
 from core.lifecycle import linkable_or_linked, reportable
+from documents.models import Policy
 from reports.constants import (
     DecisionPriority,
 )
@@ -249,7 +250,8 @@ class IsmsChangeForm(forms.ModelForm):
         model = IsmsChange
         fields = [
             "change_type", "title", "description", "impact_analysis",
-            "affected_scopes", "affected_frameworks", "affected_policies",
+            "affected_scopes", "affected_frameworks", "affected_documents",
+            "affected_policies",
             "owner", "status", "target_date", "implemented_at",
         ]
         widgets = {
@@ -259,6 +261,7 @@ class IsmsChangeForm(forms.ModelForm):
             "impact_analysis": forms.Textarea(attrs={**_FORM_CONTROL, "rows": 3}),
             "affected_scopes": forms.SelectMultiple(attrs={**_FORM_SELECT, "size": 4}),
             "affected_frameworks": forms.SelectMultiple(attrs={**_FORM_SELECT, "size": 4}),
+            "affected_documents": forms.SelectMultiple(attrs={**_FORM_SELECT, "size": 4}),
             "affected_policies": forms.Textarea(attrs={**_FORM_CONTROL, "rows": 2}),
             "owner": forms.Select(attrs=_FORM_SELECT),
             "status": forms.Select(attrs=_FORM_SELECT),
@@ -277,6 +280,15 @@ class IsmsChangeForm(forms.ModelForm):
         ).order_by("name")
         self.fields["affected_frameworks"].queryset = Framework.objects.order_by(
             "short_name", "name",
+        )
+        # RG-DOC-20 : new links target active documents; a link to a document
+        # retired since is kept rather than silently dropped on save.
+        self.fields["affected_documents"].queryset = linkable_or_linked(
+            Policy.objects.all(), self.instance.affected_documents.all() if editing else None,
+        ).order_by("reference")
+        self.fields["affected_policies"].help_text = _(
+            "Free text, kept for changes recorded before the documents register. "
+            "Link governed documents above."
         )
 
 

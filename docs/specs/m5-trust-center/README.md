@@ -37,7 +37,7 @@ The module covers:
 2. Public **certifications** : a curated view of internal compliance frameworks, optionally showing a rounded compliance percentage.
 3. Public **subprocessors** : a curated view of internal suppliers acting as data subprocessors (GDPR Art. 28 transparency).
 4. Public **measures** : free-form curator copy describing organizational, technical and physical security measures.
-5. Public **documents** : downloadable artifacts sourced either from a generated internal report or from an inline uploaded file, served either openly (public) or behind a request-and-approval flow (gated).
+5. Public **documents** : downloadable artifacts sourced from a generated internal report, an inline uploaded file or a governed document of the [documents register](../m7-documents/README.md) (its version in force), served either openly (public) or behind a request-and-approval flow (gated).
 6. **Document requests** : the request, approval and time-limited download workflow for gated documents.
 
 ### 1.3 Dependencies on other modules
@@ -74,7 +74,7 @@ Going live is governed by **two independent conditions plus a global switch**. T
 | ID | Rule |
 |---|---|
 | RG-TC-07 | **Per-item state.** Each curation entity runs the `trust_center_publication` workflow : `draft` (initial) -> `published` <-> `unpublished` -> `archived` (terminal branch). Only the `published` state has `counts_in_reports = True`, which here means "live on the public page". See [governance/workflow.md](../governance/workflow.md) and §2.3 below. |
-| RG-TC-08 | **Source validity (the second gate).** Beyond being `published`, the entry is only shown when its **source object is still valid** : the framework must be in a reportable lifecycle state; the supplier must be in a reportable lifecycle state AND have `status = active`; a report-backed document's report must be `completed` (an inline-file document has no report, so this clause is satisfied); a policy-backed document's policy must be `active` with a version in force (RG-DOC-21, proposed for v0.37.0). Implemented in `trust_center/managers.py` via the `published()` queryset, which the public views and serializers use exclusively. |
+| RG-TC-08 | **Source validity (the second gate).** Beyond being `published`, the entry is only shown when its **source object is still valid** : the framework must be in a reportable lifecycle state; the supplier must be in a reportable lifecycle state AND have `status = active`; a report-backed document's report must be `completed` (an inline-file document has no report, so this clause is satisfied); a policy-backed document's policy must be `active`, still classified `public`, and hold a version in force (RG-DOC-21). Implemented in `trust_center/managers.py` via the `published()` queryset, which the public views and serializers use exclusively. |
 | RG-TC-09 | Because of RG-TC-08, **un-validating, archiving or deactivating a source object automatically removes the corresponding entry from the public page** without any edit to the Trust Center entity. Re-validating the source restores it (the entry's own state is unchanged). |
 | RG-TC-10 | **Global kill switch.** `TrustCenterSettings.is_published` is the master switch. When it is `False`, the entire public surface (the page, every public API endpoint, every public document download) returns **HTTP 404** for everyone. This is enforced at the view / serializer layer (`require_published()`), separately from the per-entity dual gate, so the managers stay pure and testable. |
 | RG-TC-11 | Publishing or unpublishing an entry (the `draft -> published`, `published -> unpublished`, `unpublished -> published`, `published -> archived` transitions) requires the **`approve`** permission action : only roles allowed to publish (RSSI/DPO, Admin, Super Admin) can make an item live or take it down. Archiving an entry that is still a draft / unpublished is a plain **`update`**. |
@@ -132,7 +132,7 @@ Notes:
 
 | ID | Rule |
 |---|---|
-| RG-TC-18 | A document's source is **exactly one** of : a linked `reports.Report`, inline bytes (`file_content` + `file_name` + `content_type`), or (proposed for v0.37.0) a [`documents.Policy`](../m7-documents/policy.md) of `public` classification, served as its version in force. Providing several or none is rejected in `clean()`. |
+| RG-TC-18 | A document's source is **exactly one** of : a linked `reports.Report`, inline bytes (`file_content` + `file_name` + `content_type`), or a [`documents.Policy`](../m7-documents/policy.md) of `public` classification, served as its version in force (a new link needs an `active` policy; an existing one survives the policy leaving that step, RG-DOC-20). Providing several or none is rejected in `clean()`. |
 | RG-TC-19 | `access` is `public` or `gated`. A **public** document downloads directly through a streaming view. A **gated** document is not downloadable directly; it requires a [document request](document-request.md) and curator approval. |
 | RG-TC-20 | Files are never exposed under `/media/`. Bytes are streamed through `TrustCenterPublicDocumentDownloadView` (public docs) or, for gated docs, through a signed, time-limited link issued after approval and served by `TrustCenterGatedDownloadView`. `file_content` is excluded from the history records and is never serialized. |
 | RG-TC-21 | A report-backed document is shown publicly only when its report is `completed` (RG-TC-08). `requires_nda` only has meaning for gated documents. |
@@ -194,7 +194,7 @@ Conventions:
 
 - List endpoints support search (`?search=`) and ordering (`?ordering=`) on the documented fields, and lifecycle filtering via `?workflow_state=a,b` (see [governance/workflow.md](../governance/workflow.md)).
 - The `transition` action delegates to `BaseModel.transition_to(..., enforce_permission=True)` : a forbidden transition returns **403**, an invalid one **400**.
-- Creating a document via the management API requires a **source report** : inline file upload is a UI-only path, so `DocumentSerializer.validate()` rejects an API create without `report` (it still honours the model's one-of invariant).
+- Creating a document via the management API requires a **source report or a source policy** (exactly one) : inline file upload is a UI-only path, so `DocumentSerializer.validate()` rejects an API create with neither, and applies the model's policy rules (public classification, linkable when newly linked).
 - The management serializers never expose `file_content`.
 
 ---

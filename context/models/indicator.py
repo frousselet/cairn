@@ -293,6 +293,10 @@ class Indicator(ScopedModel):
             return self._compute_approved_scopes_rate()
         elif source == PredefinedIndicatorSource.MANDATORY_ROLES_COVERAGE:
             return self._compute_mandatory_roles_coverage()
+        elif source == PredefinedIndicatorSource.POLICIES_OVERDUE_REVIEW:
+            return self._compute_policies_overdue_review()
+        elif source == PredefinedIndicatorSource.ACKNOWLEDGEMENT_RATE:
+            return self._compute_acknowledgement_rate()
         return None
 
     def _compute_global_compliance_rate(self):
@@ -359,6 +363,35 @@ class Indicator(ScopedModel):
             user_count=Count("assigned_users")
         ).filter(user_count__gt=0).count()
         return str(round(covered / total * 100, 1))
+
+    def _compute_policies_overdue_review(self):
+        # RG-DOC-12 : overdue is derived (an active document whose next review
+        # date has passed), never a stored flag. "Active" is read off the
+        # document lifecycle's reportable steps.
+        from django.utils import timezone
+
+        from core.lifecycle import reportable
+        from documents.models import Policy
+
+        overdue = reportable(Policy.objects.filter(
+            next_review_date__isnull=False, next_review_date__lt=timezone.localdate(),
+        ))
+        return str(overdue.count())
+
+    def _compute_acknowledgement_rate(self):
+        # RG-DOC-19 over every campaign that counts in reports (running and
+        # closed) : acknowledged rows / (all rows - excused rows).
+        from core.lifecycle import reportable
+        from documents.constants import AcknowledgementStatus
+        from documents.models import AcknowledgementCampaign, PolicyAcknowledgement
+
+        campaigns = reportable(AcknowledgementCampaign.objects.all())
+        rows = PolicyAcknowledgement.objects.filter(campaign__in=campaigns.values("pk"))
+        denominator = rows.exclude(status=AcknowledgementStatus.EXCUSED).count()
+        if denominator == 0:
+            return "0"
+        acknowledged = rows.filter(status=AcknowledgementStatus.ACKNOWLEDGED).count()
+        return str(round(acknowledged / denominator * 100, 1))
 
     def record_measurement(self, value, recorded_by=None, notes=""):
         """Record a new measurement for this indicator."""

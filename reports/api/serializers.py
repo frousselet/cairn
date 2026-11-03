@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 François Rousselet
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
+from core.lifecycle import linkable_states
+from documents.models import Policy
 from reports.models import (
     IsmsChange,
     ManagementReview,
@@ -100,17 +103,39 @@ class ManagementReviewDecisionSerializer(serializers.ModelSerializer):
 
 
 class IsmsChangeSerializer(serializers.ModelSerializer):
+    # The governed documents this change requires to revise (RG-DOC-20).
+    affected_document_ids = serializers.PrimaryKeyRelatedField(
+        source="affected_documents", many=True, required=False,
+        queryset=Policy.objects.all(),
+    )
+
     class Meta:
         model = IsmsChange
         fields = [
             "id", "reference", "review", "change_type", "title",
             "description", "impact_analysis",
-            "affected_scopes", "affected_frameworks", "affected_policies",
+            "affected_scopes", "affected_frameworks", "affected_document_ids",
+            "affected_policies",
             "owner", "status", "target_date", "implemented_at",
             "created_at", "updated_at",
         ]
         read_only_fields = ["id", "reference", "created_at", "updated_at"]
         extra_kwargs = {"review": {"required": False}}
+
+    def validate_affected_document_ids(self, documents):
+        """A new link targets a linkable (active) document; a link the change
+        already carries survives the document leaving that step."""
+        allowed = set(linkable_states(Policy))
+        existing = set()
+        if self.instance is not None:
+            existing = set(self.instance.affected_documents.values_list("pk", flat=True))
+        refused = [d.reference for d in documents if d.pk not in existing and d.workflow_state not in allowed]
+        if refused:
+            raise serializers.ValidationError(
+                _("These documents cannot be linked in their current lifecycle step : %(refs)s")
+                % {"refs": ", ".join(refused)}
+            )
+        return documents
 
 
 class ManagementReviewCommentSerializer(serializers.ModelSerializer):

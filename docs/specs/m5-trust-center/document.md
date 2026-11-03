@@ -2,7 +2,7 @@
 
 `trust_center.models.document.TrustCenterDocument`
 
-A document published on the public Trust Center : a policy, a certificate, an audit report or any other shareable artifact. Its source is **exactly one** of a generated internal `reports.Report` or an inline uploaded file (stored as bytes, mirroring the Report storage so the same streaming download view serves both). The `access` level decides whether the document downloads directly (public) or behind a request-and-approval flow (gated).
+A document published on the public Trust Center : a policy, a certificate, an audit report or any other shareable artifact. Its source is **exactly one** of a generated internal `reports.Report`, an inline uploaded file (stored as bytes, mirroring the Report storage so the same streaming download view serves both) or a governed [`documents.Policy`](../m7-documents/policy.md), which always serves its version in force. The `access` level decides whether the document downloads directly (public) or behind a request-and-approval flow (gated).
 
 File: `trust_center/models/document.py`
 
@@ -20,7 +20,7 @@ File: `trust_center/models/document.py`
 | `requires_nda` | boolean | required, default `True` | Whether an NDA acceptance is required. **Only meaningful for gated documents.** |
 | `report` | relation | FK -> `reports.Report`, `PROTECT`, nullable, blank | Source report. `related_name="trust_center_documents"`. Mutually exclusive with the inline file (enforced in `clean()`). |
 | `file_content` | binary | nullable, blank, `editable=False` | Inline file bytes (UI-only upload path). Mutually exclusive with `report` and `policy`. Never serialized; excluded from history. |
-| `policy` | relation | FK -> [`documents.Policy`](../m7-documents/policy.md), `PROTECT`, nullable, blank | **Proposed for v0.37.0.** Source policy : the document always serves the policy's version in force (its PDF, or its rich text rendered to PDF). Only a `public`-classified policy can be chosen. Mutually exclusive with `report` and the inline file. |
+| `policy` | relation | FK -> [`documents.Policy`](../m7-documents/policy.md), `PROTECT`, nullable, blank, `related_name="trust_center_documents"` | Source policy : the document always serves the policy's version in force (its PDF, or its rich text rendered to PDF). Only a `public`-classified policy can be chosen. Mutually exclusive with `report` and the inline file. |
 | `file_name` | string | optional, max 255, blank default | Inline file name |
 | `content_type` | string | optional, max 100, blank default | Inline MIME type (used as the download `Content-Type`) |
 | `display_order` | int | `PositiveIntegerField`, default `0` | Render order within the Documents section |
@@ -42,17 +42,21 @@ File: `trust_center/models/document.py`
 
 ## Validation (`clean()`)
 
-The source must be **exactly one** of report or inline content:
+The source must be **exactly one** of report, inline content or policy:
 
-- both set -> `ValidationError` ("Provide either a source report or an uploaded file, not both.")
-- neither set -> `ValidationError` ("Provide a source report or upload a file.")
+- several set -> `ValidationError` ("Choose a single source : a report, an uploaded file or a document.")
+- none set -> `ValidationError` ("Provide a source : a report, an uploaded file or a document.")
+- a policy not classified `public` -> `ValidationError` on `policy`
+- a policy **newly** linked (different from the stored one) that is not in a linkable step (`active`) -> `ValidationError` on `policy`; an existing link survives the policy being retired (RG-DOC-20), the public gate then hides the entry
 
 This one-of invariant (RG-TC-18) is enforced at the model level so it holds regardless of the entry point.
 
 ## Computed properties and helpers
 
 - `is_gated` : `access == gated`.
-- `effective_file_name` : the report's file name when report-backed, else `file_name`.
+- `effective_file_name` : the report's file name when report-backed; when policy-backed, the version in force's PDF file name, else `<PLCY-n>-v<label>.pdf` (empty when there is no version in force); else `file_name`.
+- `effective_content_type` : `application/pdf` when policy-backed, else `content_type` (defaulting to `application/octet-stream`). Both download views use it.
+- `policy_version` : the source policy's version in force, or `None`.
 - `get_file_bytes()` : returns the bytes from the linked report's `file_content` when report-backed, the policy's version in force rendered as PDF when policy-backed, else the inline `file_content`, else `None`.
 - `workflow_perm_namespace` : `"trust_center.document"`.
 
@@ -65,9 +69,10 @@ Runs the shared `trust_center_publication` workflow (see [README.md §2.3](READM
 `DocumentQuerySet.published()` returns an entry only when **both**:
 
 1. its `workflow_state` is `published`, AND
-2. either it has no report (inline-file document) OR its `report.status` is `completed`.
+2. either it has no report (inline-file document) OR its `report.status` is `completed`, AND
+3. either it has no policy OR its policy is in a reportable step (`active`), is still classified `public`, and has a version in a reportable step (`in_force`). The steps are read off the two lifecycles (`reportable_states()`), never spelled out.
 
-So a document backed by a report that is not yet completed (or was reverted) drops out of the public list automatically (RG-TC-08 / RG-TC-21). The global `is_published` switch is enforced separately at the view layer.
+So a document backed by a report that is not yet completed (or was reverted), or by a policy that was retired, reclassified or whose version was withdrawn, drops out of the public list automatically (RG-TC-08 / RG-TC-21 / RG-DOC-21). The global `is_published` switch is enforced separately at the view layer.
 
 ## Download
 
@@ -89,23 +94,29 @@ So a document backed by a report that is not yet completed (or was reverted) dro
 ### REST (management, authenticated, `/api/v1/trust-center/`)
 
 - `GET /documents/` : list (search on `title`, `description`; ordering on `display_order`, `title`, `created_at`; `?workflow_state=` filter).
-- `POST /documents/` : create. **A source `report` is required via the API** : the inline-upload path is UI-only, so `DocumentSerializer.validate()` rejects an API create without `report` (the model's one-of invariant still holds).
+- `POST /documents/` : create. **A source `report` or `policy` (exactly one) is required via the API** : the inline-upload path is UI-only, so `DocumentSerializer.validate()` rejects an API create with neither or both, and applies the model's policy rules.
 - `GET /documents/{id}/`
 - `PUT/PATCH /documents/{id}/`
 - `DELETE /documents/{id}/`
 - `POST /documents/{id}/transition/`
 
-The management serializer exposes `title`, `description`, `access`, `requires_nda`, `report`, `file_name`, `display_order` (+ the read-only base fields). It never exposes `file_content`.
+The management serializer exposes `title`, `description`, `access`, `requires_nda`, `report`, `policy`, `file_name`, `display_order` (+ the read-only base fields). It never exposes `file_content`.
 
 ### REST (public, `/trust/api/`)
 
-- `GET /trust/api/documents/` : published documents via `PublicDocumentSerializer` (fields: `id`, `title`, `description`, `access`, `requires_nda`). The `id` is the download handle; bytes are fetched via the download endpoint, not this list. Also included in the aggregate `GET /trust/api/`.
+- `GET /trust/api/documents/` : published documents via `PublicDocumentSerializer` (fields: `id`, `title`, `description`, `access`, `requires_nda`; nothing of a source policy, its owner, requirements or history, is exposed). The `id` is the download handle; bytes are fetched via the download endpoint, not this list. Also included in the aggregate `GET /trust/api/`.
 - `GET /trust/documents/<uuid>/download/` : public document byte stream (see Download above).
 
 ### MCP
 
 - `list_trust_center_document` / `get_trust_center_document` / `create_trust_center_document` / `update_trust_center_document` / `delete_trust_center_document`
 - `transition_trust_center_document` / `trust_center_document_allowed_transitions`
+
+The create / update tools accept `report` or `policy` (a UUID) as the source; `full_clean()` applies the one-of invariant and the policy rules.
+
+### Management form
+
+`DocumentForm` offers three sources : the report picker, the file upload and the `policy` picker. The policy picker lists `linkable_or_linked()` policies classified `public` (an existing link is kept); choosing a report or a policy on an inline-file entry clears the stale bytes.
 
 ## Permissions
 

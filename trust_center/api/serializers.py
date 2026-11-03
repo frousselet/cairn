@@ -157,6 +157,7 @@ class DocumentSerializer(serializers.ModelSerializer):
             "access",
             "requires_nda",
             "report",
+            "policy",
             "file_name",
             "display_order",
         ]
@@ -164,12 +165,29 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # The inline-upload source is UI-only; via the API a document must
-        # reference a generated report (mirrors the model's clean() invariant).
+        # reference a generated report or a governed document, exactly one of
+        # them (mirrors the model's clean() invariant, RG-TC-18).
         report = attrs.get("report", getattr(self.instance, "report", None))
-        if report is None:
+        policy = attrs.get("policy", getattr(self.instance, "policy", None))
+        if report is None and policy is None:
             raise serializers.ValidationError(
-                {"report": "A source report is required when creating a document via the API."}
+                {"report": "A source report or a source document is required when creating a document via the API."}
             )
+        if report is not None and policy is not None:
+            raise serializers.ValidationError(
+                {"policy": "Choose a single source : a report or a document, not both."}
+            )
+        if policy is not None:
+            # RG-DOC-20 / RG-DOC-21 : the model's rules on the document source
+            # (public classification, linkable when newly linked).
+            from django.core.exceptions import ValidationError as DjangoValidationError
+
+            probe = self.instance or TrustCenterDocument()
+            probe.policy = policy
+            try:
+                probe._clean_policy_source()
+            except DjangoValidationError as exc:
+                raise serializers.ValidationError(exc.message_dict) from exc
         return attrs
 
 

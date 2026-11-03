@@ -149,7 +149,7 @@ class DocumentForm(_BootstrapModelForm):
     upload = forms.FileField(
         required=False,
         label=_("Upload a file"),
-        help_text=_("Provide either a source report or an uploaded file (not both)."),
+        help_text=_("Choose a single source : a report, an uploaded file or a document."),
     )
 
     class Meta:
@@ -160,22 +160,47 @@ class DocumentForm(_BootstrapModelForm):
             "access",
             "requires_nda",
             "report",
+            "policy",
             "display_order",
         ]
         widgets = {"description": forms.Textarea(attrs={"rows": 3})}
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # RG-DOC-20 : a new link targets an active (linkable) document
+        # classified public; an existing link is kept even if the document has
+        # since left that step, so editing the entry never silently drops it.
+        from assets.constants import DataClassification
+        from core.lifecycle import linkable_or_linked
+        from documents.models import Policy
+
+        current = (
+            Policy.objects.filter(pk=self.instance.policy_id)
+            if self.instance.pk and self.instance.policy_id
+            else None
+        )
+        self.fields["policy"].queryset = linkable_or_linked(
+            Policy.objects.filter(classification=DataClassification.PUBLIC), current,
+        ).order_by("reference")
+
     def clean(self):
         cleaned = super().clean()
-        if cleaned.get("report") and cleaned.get("upload"):
+        chosen = [
+            bool(cleaned.get("report")),
+            bool(cleaned.get("upload")),
+            bool(cleaned.get("policy")),
+        ]
+        if sum(chosen) > 1:
             raise forms.ValidationError(
-                _("Provide either a source report or an uploaded file, not both.")
+                _("Choose a single source : a report, an uploaded file or a document.")
             )
         return cleaned
 
     def _post_clean(self):
         # Apply the upload to the instance before model validation so the
         # model's clean() sees the inline source it requires.
-        upload = self.cleaned_data.get("upload") if hasattr(self, "cleaned_data") else None
+        cleaned = self.cleaned_data if hasattr(self, "cleaned_data") else {}
+        upload = cleaned.get("upload")
         if upload:
             self.instance.file_content = upload.read()
             self.instance.file_name = upload.name
@@ -183,4 +208,11 @@ class DocumentForm(_BootstrapModelForm):
                 getattr(upload, "content_type", "") or "application/octet-stream"
             )
             self.instance.report = None
+            self.instance.policy = None
+        elif cleaned.get("report") or cleaned.get("policy"):
+            # Switching an inline-file entry to a report or a document : the
+            # stale bytes would otherwise trip the one-source invariant.
+            self.instance.file_content = None
+            self.instance.file_name = ""
+            self.instance.content_type = ""
         super()._post_clean()

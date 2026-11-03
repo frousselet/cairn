@@ -399,8 +399,16 @@ class IsmsChange(models.Model):
         related_name="affected_by_isms_changes",
         verbose_name=_("Affected frameworks"),
     )
+    # Free text kept for the changes recorded before the documents register;
+    # new changes link the governed documents through `affected_documents`.
     affected_policies = models.TextField(
         _("Affected policies"), blank=True, default="",
+    )
+    affected_documents = models.ManyToManyField(
+        "documents.Policy",
+        blank=True,
+        related_name="isms_changes",
+        verbose_name=_("Affected documents"),
     )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,

@@ -57,13 +57,37 @@ class MeasureQuerySet(PublicationQuerySet):
 
 class DocumentQuerySet(PublicationQuerySet):
     def published(self):
+        """Second gate (RG-TC-08 / RG-TC-21 / RG-DOC-21).
+
+        A report-backed entry needs a completed report. A policy-backed entry
+        needs its document in a reportable step (active), still classified
+        public, and holding a version in a reportable step (in force) : retiring
+        the document, withdrawing its version or reclassifying it takes the
+        entry off the public page with no action on the Trust Center side. The
+        steps are read off the two lifecycles, never spelled out.
+        """
+        from assets.constants import DataClassification
+        from core.lifecycle import reportable_states
+        from documents.models import Policy, PolicyVersion
         from reports.constants import ReportStatus
 
+        version_in_force = PolicyVersion.objects.filter(
+            policy_id=models.OuterRef("policy_id"),
+            workflow_state__in=list(reportable_states(PolicyVersion)),
+        )
         return (
             super()
             .published()
             .filter(
                 models.Q(report__isnull=True)
                 | models.Q(report__status=ReportStatus.COMPLETED)
+            )
+            .filter(
+                models.Q(policy__isnull=True)
+                | models.Q(
+                    models.Exists(version_in_force),
+                    policy__workflow_state__in=list(reportable_states(Policy)),
+                    policy__classification=DataClassification.PUBLIC,
+                )
             )
         )

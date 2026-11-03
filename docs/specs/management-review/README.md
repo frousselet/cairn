@@ -146,10 +146,11 @@ File : `reports/urls.py`
 9. **9.3.2.f Risks and treatment plan** : summary + critical risks.
 10. **9.3.2.g Opportunities for improvement** : findings of type `IMPROVEMENT_OPPORTUNITY` + free-text field `summary`.
 11. **Decisions (output 9.3.3)** : editable table, inline "Promote to action plan" actions.
-12. **ISMS changes (output 9.3.3)** : list of `IsmsChange`.
-13. **Summary and next review** : `summary`, `next_review_date`.
-14. **Comments** : thread (`ManagementReviewComment`).
-15. **History** : `HistoricalRecords` of the review and its decisions.
+12. **ISMS changes (output 9.3.3)** : list of `IsmsChange`, each with the governed documents it affects (`affected_documents`, linking to the document pages).
+13. **Documents due for review** (module 7) : active documents (`reportable()`) whose `next_review_date` falls in the review period, or is already past at the review date (held, else planned), flagged *Overdue*. Narrowed to the review's scopes and their sub-scopes (a document with no scope stays in), filtered by the reader's perimeter, and shown only to holders of `documents.policy.read`. Computed live, also on a closed review.
+14. **Summary and next review** : `summary`, `next_review_date`.
+15. **Comments** : thread (`ManagementReviewComment`).
+16. **History** : `HistoricalRecords` of the review and its decisions.
 
 ### 3.3 Forms
 
@@ -286,8 +287,8 @@ File : `mcp/tools.py`. Follow the existing convention (detailed docstring, `@req
 | `list_management_review_decisions` | `reports.management_review.read` | Lists the decisions of a review. |
 | `create_management_review_decision` | `reports.management_review.update` | Adds a decision. |
 | `promote_decision_to_action_plan` | `reports.management_review.update` + `compliance.action_plan.create` | Generates an action plan. |
-| `list_isms_changes` | `reports.management_review.read` | Lists the ISMS changes. |
-| `create_isms_change` | `reports.management_review.update` | Adds an ISMS change. |
+| `list_isms_changes` | `reports.management_review.read` | Lists the ISMS changes, with `affected_document_ids`. |
+| `create_isms_change` | `reports.management_review.update` | Adds an ISMS change; `affected_document_ids` links active documents the caller can read. |
 | `list_stakeholder_feedback` | `context.stakeholder_feedback.read` | Lists the feedback. |
 | `create_stakeholder_feedback` | `context.stakeholder_feedback.create` | Adds feedback. |
 
@@ -458,7 +459,7 @@ The feature is considered delivered when **all** the following criteria are met 
 ## 14. Out of scope (for a v+1)
 
 - Qualified electronic signatures (eIDAS) integrated : remain manual in the DOCX.
-- Formalised `Policy` model (currently `IsmsChange.affected_policies` = free text).
+- ~~Formalised `Policy` model~~ : delivered by the [documents module](../m7-documents/README.md) as `IsmsChange.affected_documents`; `affected_policies` stays as free text for the changes recorded before it.
 - Automatic email reminders to participants before the review.
 - Pre-configured review templates by industry/certification.
 - PDF export (possibly reusing the `reportlab` pipeline).

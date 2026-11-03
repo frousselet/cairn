@@ -105,3 +105,45 @@ def notify_review(policy, overdue, recipients):
         )
 
     return _send(recipients, kind, policy, url, render)
+
+
+# --- Daily sweep helpers (documents_sweep) ---------------------------------
+
+
+def review_overdue_recipients(policy):
+    """RG-DOC-12 / README §7 : the owner, plus the holders of
+    ``documents.policy.approve`` whose perimeter reaches the document.
+
+    A holder restricted to scopes the document is not filed under is left
+    out : they could not open the document the notification points to.
+    """
+    from django.contrib.auth import get_user_model
+
+    from accounts.models import Group
+
+    User = get_user_model()
+    recipients = [policy.owner] if policy.owner_id else []
+    holders = User.objects.filter(
+        pk__in=Group.objects.filter(permissions__codename="documents.policy.approve").values("users"),
+        is_active=True,
+    ).distinct()
+    policy_scope_ids = set(policy.scopes.values_list("pk", flat=True))
+    for holder in holders:
+        allowed = None if holder.is_superuser else holder.get_allowed_scope_ids()
+        if allowed is None or not policy_scope_ids or policy_scope_ids & set(allowed):
+            recipients.append(holder)
+    return recipients
+
+
+def already_notified(target, notification_type, since):
+    """Whether a ``notification_type`` notification about ``target`` was
+    created on or after the date ``since`` : the once-per-cycle guard of the
+    review reminders, which have no stamp of their own on the document."""
+    from django.contrib.contenttypes.models import ContentType
+
+    return Notification.objects.filter(
+        notification_type=notification_type,
+        target_content_type=ContentType.objects.get_for_model(type(target)),
+        target_object_id=str(target.pk),
+        created_at__date__gte=since,
+    ).exists()

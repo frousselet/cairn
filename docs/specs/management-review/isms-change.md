@@ -18,7 +18,7 @@ Clause 9.3.3 requirement : "any need for changes to the ISMS". Formalisation of 
 | `affected_scopes` | M2M → Scope | optional | Affected scopes |
 | `affected_frameworks` | M2M → Framework | optional | Affected frameworks |
 | `affected_policies` | text | optional | Free-text list of policies to revise. Kept for the changes recorded before the documents register; new changes use `affected_documents`. |
-| `affected_documents` | relation | M2M -> [`documents.Policy`](../m7-documents/policy.md), optional | The governed documents this change requires to revise (proposed for v0.37.0). The picker offers `linkable()` documents and keeps existing links (RG-DOC-20). |
+| `affected_documents` | relation | M2M -> [`documents.Policy`](../m7-documents/policy.md), optional, `related_name="isms_changes"` | The governed documents this change requires to revise. The form picker offers `linkable_or_linked()` documents (active, plus the ones already linked); the REST serializer (`affected_document_ids`) and the MCP `create_isms_change` tool refuse a new link to a document that is not active (RG-DOC-20). |
 | `status` | enum | required | `proposed`, `approved`, `in_progress`, `implemented`, `rejected` |
 | `owner` | FK → User | required | Person responsible for implementation |
 | `target_date` | date | optional | Target date |
