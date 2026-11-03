@@ -18,7 +18,7 @@
 {% block content %}
 {% page_header _("Confirm deletion") %}{% endpage_header %}
 
-<form method="post" class="card page-form page-form--danger">
+<form method="post" class="card page-form page-form--danger" hx-boost="false">
   {% csrf_token %}
   <div class="card-body">
     <h2 class="h4 mb-3"><i class="bi bi-exclamation-triangle text-danger me-2" aria-hidden="true"></i>{% block delete_title %}{% trans "Confirm deletion" %}{% endblock %}</h2>

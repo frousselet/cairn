@@ -49,6 +49,40 @@ def nav_name_for(url: str):
     return match.view_name if match.view_name in NAV_TREE else None
 
 
+def is_drawer_request(request) -> bool:
+    """True for an HTMX request that targets the drawer (``#drawer-form-content``).
+
+    A boosted navigation also sends ``HX-Request: true``, but with
+    ``HX-Boosted: true`` and the page shell as its target: it wants a page.
+    """
+    if request.headers.get("HX-Request") != "true":
+        return False
+    if request.headers.get("HX-Boosted") == "true":
+        return False
+    return request.headers.get("HX-Target") == "drawer-form-content"
+
+
+class ConfirmDeleteShellMixin:
+    """Serve a drawer delete confirmation as a page on a direct visit.
+
+    The entity template extends ``delete_shell``
+    (``{% extends delete_shell|default:"includes/confirm_delete_modal.html" %}``):
+    the modal shell in the drawer, ``includes/confirm_delete_page.html`` when
+    the ``/delete/`` URL is opened directly, so a bookmarked or shared link
+    renders a full page instead of a bare fragment. Both shells read the same
+    blocks.
+    """
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["delete_shell"] = (
+            "includes/confirm_delete_modal.html"
+            if is_drawer_request(self.request)
+            else "includes/confirm_delete_page.html"
+        )
+        return ctx
+
+
 class HtmxFormMixin:
     """Mixin for CreateView/UpdateView to serve modal forms via HTMX.
 
@@ -67,19 +101,9 @@ class HtmxFormMixin:
     modal_title_update = ""
 
     def _is_htmx(self):
-        # The drawer flow uses hx-target="#drawer-form-content"; HTMX puts
-        # the target id into the HX-Target header. The body carries
-        # `hx-boost="true"` for soft-nav, which also sends HX-Request=true
-        # but with HX-Boosted=true and HX-Target=page-shell. Distinguishing
-        # the two prevents the modal partial (designed to be swapped into
-        # the drawer container) from being mistakenly returned for a
-        # boosted full-page navigation, which would otherwise render the
-        # bare drawer markup full-bleed without the page chrome.
-        if self.request.headers.get("HX-Request") != "true":
-            return False
-        if self.request.headers.get("HX-Boosted") == "true":
-            return False
-        return self.request.headers.get("HX-Target") == "drawer-form-content"
+        # The drawer flow targets #drawer-form-content; a boosted navigation
+        # (HX-Boosted, target page-shell) wants the full page instead.
+        return is_drawer_request(self.request)
 
     def get_template_names(self):
         if self._is_htmx() and self.modal_template_name:

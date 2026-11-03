@@ -1,4 +1,4 @@
-{% extends "includes/confirm_delete_modal.html" %}
+{% extends delete_shell|default:"includes/confirm_delete_modal.html" %}
 {% load i18n %}
 {% comment %}
   Drawer-served delete confirmation for an evidence item. Posted via HTMX; the
