@@ -17,14 +17,14 @@
       <span class="cell-avatar-fallback">{{ obj.owner.display_name|initials }}</span>
       {% endif %}
       <span class="cell-stack">
-        <span style="font-weight:600">{{ obj.owner.display_name }}</span>
+        <span class="fw-semibold">{{ obj.owner.display_name }}</span>
         {% if obj.owner.job_title %}<span class="cell-sub">{{ obj.owner.job_title }}</span>{% endif %}
       </span>
     </span>
-    {% else %}<span class="cell-empty">-</span>{% endif %}
+    {% else %}{% dash %}{% endif %}
   </td>
   <td data-col="progress">
-    {% if obj.progress_percentage is not None %}{% progress_bar obj.progress_percentage scheme="progress" %}{% else %}<span class="cell-empty">-</span>{% endif %}
+    {% if obj.progress_percentage is not None %}{% progress_bar obj.progress_percentage scheme="progress" %}{% else %}{% dash %}{% endif %}
   </td>
   <td data-col="status">{% workflow_badge obj %}</td>
   <td data-col="target_date">
@@ -36,14 +36,14 @@
     {% elif obj.review_date %}
     <span class="cell-sub" title="{% trans 'Next review date' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ obj.review_date }}</span>
     {% else %}
-    <span class="cell-empty">-</span>
+    {% dash %}
     {% endif %}
   </td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=obj.tags.all %}</td>
+  <td data-col="tags">{% tag_list obj.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
+    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"
             hx-get="{% url 'context:objective-update' obj.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
-      <i class="bi bi-pencil"></i>
+      <i class="bi bi-pencil" aria-hidden="true"></i>
     </button>
   </td>
 </tr>

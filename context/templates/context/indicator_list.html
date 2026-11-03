@@ -13,7 +13,7 @@
 {% page_header page_title nav=nav_key accent="context" %}
   {% if indicator_type == "organizational" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'context:indicator-organizational-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New indicator' %}</button>
-  <button type="button" class="btn btn-outline-secondary" hx-get="{% url 'context:indicator-predefined-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-list-check me-1" aria-hidden="true"></i>{% trans 'New predefined indicator' %}</button>
+  <button type="button" class="btn btn-secondary" hx-get="{% url 'context:indicator-predefined-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-list-check me-1" aria-hidden="true"></i>{% trans 'New predefined indicator' %}</button>
   {% else %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'context:indicator-technical-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New indicator' %}</button>
   {% endif %}

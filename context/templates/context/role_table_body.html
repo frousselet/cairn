@@ -17,19 +17,19 @@
   <td data-col="users">{% user_avatars role.assigned_users.all size=24 %}</td>
   <td data-col="responsibilities">
     <div class="d-flex gap-1 flex-nowrap">
-      {% if role.responsible_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent-soft);color:var(--accent)" title="{% trans 'Responsible (R)' %}">R {{ role.responsible_count }}</span>{% endif %}
-      {% if role.accountable_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent-soft);color:var(--accent)" title="{% trans 'Accountable (A)' %}">A {{ role.accountable_count }}</span>{% endif %}
-      {% if role.consulted_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent-soft);color:var(--accent)" title="{% trans 'Consulted (C)' %}">C {{ role.consulted_count }}</span>{% endif %}
-      {% if role.informed_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent-soft);color:var(--accent)" title="{% trans 'Informed (I)' %}">I {{ role.informed_count }}</span>{% endif %}
-      {% if not role.responsible_count and not role.accountable_count and not role.consulted_count and not role.informed_count %}<span class="cell-empty" style="font-size:.75rem">-</span>{% endif %}
+      {% if role.responsible_count %}{% with n=role.responsible_count|stringformat:"s" %}<span title="{% trans 'Responsible (R)' %}">{% badge variant="accent" label="R "|add:n %}</span>{% endwith %}{% endif %}
+      {% if role.accountable_count %}{% with n=role.accountable_count|stringformat:"s" %}<span title="{% trans 'Accountable (A)' %}">{% badge variant="accent" label="A "|add:n %}</span>{% endwith %}{% endif %}
+      {% if role.consulted_count %}{% with n=role.consulted_count|stringformat:"s" %}<span title="{% trans 'Consulted (C)' %}">{% badge variant="accent" label="C "|add:n %}</span>{% endwith %}{% endif %}
+      {% if role.informed_count %}{% with n=role.informed_count|stringformat:"s" %}<span title="{% trans 'Informed (I)' %}">{% badge variant="accent" label="I "|add:n %}</span>{% endwith %}{% endif %}
+      {% if not role.responsible_count and not role.accountable_count and not role.consulted_count and not role.informed_count %}{% dash %}{% endif %}
     </div>
   </td>
   <td data-col="status">{% workflow_badge role %}</td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=role.tags.all %}</td>
+  <td data-col="tags">{% tag_list role.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
+    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"
             hx-get="{% url 'context:role-update' role.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
-      <i class="bi bi-pencil"></i>
+      <i class="bi bi-pencil" aria-hidden="true"></i>
     </button>
   </td>
 </tr>

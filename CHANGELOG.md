@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Creating or editing a management review, and editing an ISMS change, failed with a server error; their scope pickers now offer the linkable scopes.
 - Opening an assessment result's edit page directly failed with a server error, and so did the preview of a finding recorded without an audit.
+- Global search results for sites had no link, and the SWOT item and strategy dialogs could not be closed or cancelled.
 
 ## [0.36.1] - 2026-11-03
 

@@ -8,248 +8,131 @@
 {% block content %}
 {% page_header scope.name reference=scope.reference nav="context:scope-list" breadcrumb=scope_breadcrumb accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:scope-update' scope.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  <a href="{% url 'context:scope-update' scope.pk %}" class="btn btn-primary" hx-get="{% url 'context:scope-update' scope.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.scope_detail" %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
-{% if scope.tags.all %}
-<div class="detail-tags d-flex flex-wrap justify-content-center gap-2 mb-4">
-  {% for tag in scope.tags.all %}<span class="badge" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% endfor %}
-</div>
-{% endif %}
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") scope.lifecycle_label icon="signpost-split" %}
+    {% if kpi_compliance_rate is None %}
+    {% kpi_tile _("Compliance rate") None icon="clipboard-check" %}
+    {% else %}
+    {% kpi_tile _("Compliance rate") kpi_compliance_rate suffix="%" icon="clipboard-check" size="lg" %}
+    {% endif %}
+    {% kpi_tile _("Objectives") kpi_objectives icon="bullseye" tone="info" %}
+    {% kpi_tile _("Essential assets") kpi_essential_assets icon="gem" tone="success" %}
+  {% endslot %}
 
-<div class="detail-layout">
-  {# ── Main content ── #}
-  <div class="detail-main">
-
-    {% comment %} 1. Overview : perimeter info overlaid on a hero map of its sites.
-       Reuses the shared entity-hero pattern (piloted on suppliers): the included
-       sites are geocoded client-side and plotted, so the overview shows the
-       perimeter's geographic footprint. {% endcomment %}
-    <div class="card supplier-card{% if not has_site_map %} supplier-card--nomap{% endif %}">
-      {% if has_site_map %}
-      <div class="supplier-card__map" aria-hidden="true">
-        <div id="scope-map" class="entity-map" data-sites="{{ scope_sites_json }}"></div>
+  {% comment %} 1. Overview : perimeter info overlaid on a hero map of its sites.
+     Reuses the shared entity-hero pattern (piloted on suppliers): the included
+     sites are geocoded client-side and plotted, so the overview shows the
+     perimeter's geographic footprint. {% endcomment %}
+  {% if has_site_map or scope.description or scope.parent_scope or scope.geographic_scope or scope.organizational_scope or scope.technical_scope or scope.effective_date or scope.review_date or scope.tags.exists %}
+  <div class="card supplier-card{% if not has_site_map %} supplier-card--nomap{% endif %}">
+    {% if has_site_map %}
+    <div class="supplier-card__map" aria-hidden="true">
+      <div id="scope-map" class="entity-map" data-sites="{{ scope_sites_json }}"></div>
+    </div>
+    {% endif %}
+    <div class="card-body">
+      <div class="supplier-overview{% if not has_site_map %} supplier-overview--nomap{% endif %}">
+        <div class="supplier-overview__info">
+          {% with scope_icon=scope.icon|cut:"bi-"|default:"card-text" %}
+          {% ov_row scope_icon _("Description") lead=True rich=True %}{% if scope.description %}{{ scope.description|safe }}{% endif %}{% endov_row %}
+          {% endwith %}
+          {% ov_row "diagram-2" _("Parent scope") %}{% if scope.parent_scope %}<a href="{% url 'context:scope-detail' scope.parent_scope.pk %}" class="ov-link">{{ scope.parent_scope.name }}</a>{% endif %}{% endov_row %}
+          {% ov_row "globe" _("Geographic scope") %}{% if scope.geographic_scope %}{{ scope.geographic_scope|safe }}{% endif %}{% endov_row %}
+          {% ov_row "building" _("Organizational scope") %}{% if scope.organizational_scope %}{{ scope.organizational_scope|safe }}{% endif %}{% endov_row %}
+          {% ov_row "cpu" _("Technical scope") %}{% if scope.technical_scope %}{{ scope.technical_scope|safe }}{% endif %}{% endov_row %}
+          {% if scope.effective_date %}
+          {% ov_row "calendar-check" _("Effective date") %}{% trans "In force since" %} {{ scope.effective_date }}{% if scope.review_date %} · <span class="text-muted">{% trans "next review" %} {{ scope.review_date }}</span>{% endif %}{% endov_row %}
+          {% elif scope.review_date %}
+          {% ov_row "arrow-repeat" _("Next review") %}{% trans "Next review" %} {{ scope.review_date }}{% endov_row %}
+          {% endif %}
+          {% ov_row "tags" _("Tags") %}{% tag_list scope.tags.all %}{% endov_row %}
+        </div>
       </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Sites ── #}
+  {% with included=scope.included_sites.all excluded=scope.excluded_sites.all %}
+  {% section_card _("Sites") icon="geo-alt" count=included|length %}
+    {% if included or excluded %}
+    {% meta_list %}
+      {% if included %}
+      {% meta_item _("Included sites") %}<div class="d-flex flex-wrap gap-1">{% for site in included %}<a href="{% url 'assets:site-detail' site.pk %}" class="link-inherit">{% badge variant="success" label=site.full_path %}</a>{% endfor %}</div>{% endmeta_item %}
       {% endif %}
-      <div class="card-body">
-        <div class="supplier-overview{% if not has_site_map %} supplier-overview--nomap{% endif %}">
-          <div class="supplier-overview__info">
-            {% if scope.description %}
-            <div class="ov-row ov-row--rich ov-row--lead" role="group" aria-label="{% trans 'Description' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi {% if scope.icon %}{{ scope.icon }}{% else %}bi-card-text{% endif %}"></i></span>
-              <div class="ov-row__value ov-rich">{{ scope.description|safe }}</div>
-            </div>
-            {% endif %}
-            {% if scope.parent_scope %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Parent scope' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-diagram-2"></i></span>
-              <div class="ov-row__value"><a href="{% url 'context:scope-detail' scope.parent_scope.pk %}" class="ov-link">{{ scope.parent_scope.name }}</a></div>
-            </div>
-            {% endif %}
-            {% if scope.geographic_scope %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Geographic scope' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-globe"></i></span>
-              <div class="ov-row__value">{{ scope.geographic_scope|safe }}</div>
-            </div>
-            {% endif %}
-            {% if scope.organizational_scope %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Organizational scope' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-building"></i></span>
-              <div class="ov-row__value">{{ scope.organizational_scope|safe }}</div>
-            </div>
-            {% endif %}
-            {% if scope.technical_scope %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Technical scope' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-cpu"></i></span>
-              <div class="ov-row__value">{{ scope.technical_scope|safe }}</div>
-            </div>
-            {% endif %}
-            {% if scope.effective_date %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Effective date' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-calendar-check"></i></span>
-              <div class="ov-row__value">{% trans "In force since" %} {{ scope.effective_date }}{% if scope.review_date %} · <span class="text-muted">{% trans "next review" %} {{ scope.review_date }}</span>{% endif %}</div>
-            </div>
-            {% elif scope.review_date %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Next review' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-arrow-repeat"></i></span>
-              <div class="ov-row__value">{% trans "Next review" %} {{ scope.review_date }}</div>
-            </div>
-            {% endif %}
-          </div>
-        </div>
-
-        {# ── Sites ── #}
-        {% if scope.included_sites.all or scope.excluded_sites.all %}
-        <div class="detail-subhead"><span><i class="bi bi-geo-alt me-1"></i>{% trans "Sites" %}</span></div>
-        {% if scope.included_sites.all %}
-        <div class="mb-2">
-          <div class="text-muted small mb-1">{% trans "Included sites" %}</div>
-          <div class="d-flex flex-wrap gap-1">
-            {% for site in scope.included_sites.all %}
-            <a href="{% url 'assets:site-detail' site.pk %}"><span class="badge text-bg-success">{{ site.full_path }}</span></a>
-            {% endfor %}
-          </div>
-        </div>
-        {% endif %}
-        {% if scope.excluded_sites.all %}
-        <div>
-          <div class="text-muted small mb-1">{% trans "Excluded sites" %}</div>
-          <div class="d-flex flex-wrap gap-1">
-            {% for site in scope.excluded_sites.all %}
-            <a href="{% url 'assets:site-detail' site.pk %}"><span class="badge text-bg-danger">{{ site.full_path }}</span></a>
-            {% endfor %}
-          </div>
-        </div>
-        {% endif %}
-        {% endif %}
-
-        {# ── Managers ── #}
-        <div class="detail-subhead"><span><i class="bi bi-people me-1"></i>{% trans "Managers" %}</span></div>
-        {% if scope.managers.all %}
-        <div class="contact-grid">
-          {% for manager in scope.managers.all %}
-          <div class="contact-card">
-            <div class="contact-card__head">
-              <span class="contact-card__avatar" aria-hidden="true">{{ manager.display_name.0|upper }}</span>
-              <div class="min-w-0">
-                <div class="contact-card__name">{{ manager.display_name }}</div>
-                {% if manager.email %}<div class="contact-card__title">{{ manager.email }}</div>{% endif %}
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-muted small mb-0">{% trans "No manager assigned yet." %}</p>
-        {% endif %}
-      </div>
-    </div>
-
-    {# ── 2. Sub-scopes ── #}
-    {% if children %}
-    <div class="card">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Sub-scopes" %} <span class="badge text-bg-secondary">{{ children|length }}</span></h6>
-        <div class="contract-grid">
-          {% for child in children %}
-          <div class="contract-card">
-            <div class="contract-card__top">
-              <a href="{% url 'context:scope-detail' child.pk %}" class="contract-card__title cell-link text-truncate">{% if child.icon %}<i class="bi {{ child.icon }} me-1" aria-hidden="true"></i>{% endif %}{{ child.name }}</a>
-              {% workflow_badge child %}
-            </div>
-            <div class="contract-card__meta">
-              <span><i class="bi bi-geo-alt" aria-hidden="true"></i>{% blocktrans count n=child.included_sites.count %}{{ n }} site{% plural %}{{ n }} sites{% endblocktrans %}</span>
-              {% if child.managers.all %}<span><i class="bi bi-people" aria-hidden="true"></i>{{ child.managers.count }}</span>{% endif %}
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
+      {% if excluded %}
+      {% meta_item _("Excluded sites") %}<div class="d-flex flex-wrap gap-1">{% for site in excluded %}<a href="{% url 'assets:site-detail' site.pk %}" class="link-inherit">{% badge variant="danger" label=site.full_path %}</a>{% endfor %}</div>{% endmeta_item %}
+      {% endif %}
+    {% endmeta_list %}
+    {% else %}
+    {% empty_state icon="geo-alt" message=_("No site declared yet.") %}
     {% endif %}
+  {% endsection_card %}
+  {% endwith %}
 
-    {# ── 3. Boundaries and exclusions ── #}
-    {% if scope.boundaries or scope.justification_exclusions %}
-    <div class="card">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-bounding-box me-1"></i>{% trans "Boundaries and exclusions" %}</h6>
-        {% if scope.boundaries %}
-        <div class="{% if scope.justification_exclusions %}mb-3{% endif %}">
-          <div class="text-muted small mb-1">{% trans "Boundaries" %}</div>
-          <div>{{ scope.boundaries|safe }}</div>
+  {# ── Managers ── #}
+  {% with managers=scope.managers.all %}
+  {% section_card _("Managers") icon="people" count=managers|length %}
+    {% if managers %}
+    <div class="contact-grid">
+      {% for manager in managers %}
+      <div class="contact-card">
+        <div class="contact-card__head">
+          <span class="contact-card__avatar" aria-hidden="true">{{ manager.display_name.0|upper }}</span>
+          <div class="min-w-0">
+            <div class="contact-card__name">{{ manager.display_name }}</div>
+            {% if manager.email %}<div class="contact-card__title">{{ manager.email }}</div>{% endif %}
+          </div>
         </div>
-        {% endif %}
-        {% if scope.justification_exclusions %}
-        <div>
-          <div class="text-muted small mb-1">{% trans "Justification" %}</div>
-          <div>{{ scope.justification_exclusions|safe }}</div>
-        </div>
-        {% endif %}
       </div>
+      {% endfor %}
     </div>
+    {% else %}
+    {% empty_state icon="people" message=_("No manager assigned yet.") %}
     {% endif %}
+  {% endsection_card %}
+  {% endwith %}
 
-    {# ── 4. Record (audit metadata) ── #}
-    <div class="card">
-      <div class="card-body">
-        <div class="row g-4">
-          <div class="col-md-6">
-            <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "Governance" %}</h6>
-            <dl class="mb-0">
-              <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
-              <dd class="mb-3">{{ scope.version }}</dd>
-              <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-              <dd class="mb-0">{% if scope.created_by %}{% user_badge scope.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-            </dl>
-          </div>
-          <div class="col-md-6">
-            <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-clock-history me-1"></i>{% trans "Dates" %}</h6>
-            <dl class="mb-0">
-              <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
-              <dd class="mb-3">{{ scope.created_at }}</dd>
-              <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>
-              <dd class="mb-0">{{ scope.updated_at }}</dd>
-            </dl>
-          </div>
+  {# ── 2. Sub-scopes ── #}
+  {% if children %}
+  {% section_card _("Sub-scopes") icon="diagram-3" count=children|length %}
+    <div class="contract-grid">
+      {% for child in children %}
+      <div class="contract-card">
+        <div class="contract-card__top">
+          <a href="{% url 'context:scope-detail' child.pk %}" class="contract-card__title cell-link text-truncate">{% if child.icon %}<i class="bi {{ child.icon }} me-1" aria-hidden="true"></i>{% endif %}{{ child.name }}</a>
+          {% workflow_badge child %}
+        </div>
+        <div class="contract-card__meta">
+          <span><i class="bi bi-geo-alt" aria-hidden="true"></i>{% blocktrans count n=child.included_sites.count %}{{ n }} site{% plural %}{{ n }} sites{% endblocktrans %}</span>
+          {% if child.managers.all %}<span><i class="bi bi-people" aria-hidden="true"></i>{{ child.managers.count }}</span>{% endif %}
         </div>
       </div>
+      {% endfor %}
     </div>
+  {% endsection_card %}
+  {% endif %}
 
-  </div>
+  {# ── 3. Boundaries and exclusions ── #}
+  {% if scope.boundaries or scope.justification_exclusions %}
+  {% section_card _("Boundaries and exclusions") icon="bounding-box" %}
+    {% meta_list %}
+      {% if scope.boundaries %}{% meta_item _("Boundaries") %}<div class="ov-rich">{{ scope.boundaries|safe }}</div>{% endmeta_item %}{% endif %}
+      {% if scope.justification_exclusions %}{% meta_item _("Justification") %}<div class="ov-rich">{{ scope.justification_exclusions|safe }}</div>{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
+  {% endif %}
 
-  {# ── Rail : strategic KPI tiles (the perimeter's compliance / coverage) ── #}
-  <div class="detail-rail">
-
-    {# Widget 1 : compliance posture (the headline governance number) #}
-    <div class="card kpi-tile kpi-tile--accent">
-      <div class="card-body d-flex align-items-center gap-3">
-        <span class="kpi-tile__icon"><i class="bi bi-clipboard-check" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Compliance rate" %}</div>
-          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{% if kpi_compliance_rate is None %}<span class="text-muted">-</span>{% else %}{{ kpi_compliance_rate }}%{% endif %}</div>
-        </div>
-      </div>
-    </div>
-
-    {# Widget 2 : security objectives #}
-    <div class="card kpi-tile kpi-tile--info">
-      <div class="card-body d-flex align-items-center gap-3">
-        <span class="kpi-tile__icon kpi-tile__icon--info"><i class="bi bi-bullseye" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Objectives" %}</div>
-          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ kpi_objectives }}</div>
-        </div>
-      </div>
-    </div>
-
-    {# Widget 3 : essential assets protected (value at stake) #}
-    <div class="card kpi-tile kpi-tile--success">
-      <div class="card-body d-flex align-items-center gap-3">
-        <span class="kpi-tile__icon kpi-tile__icon--success"><i class="bi bi-gem" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Essential assets" %}</div>
-          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ kpi_essential_assets }}</div>
-        </div>
-      </div>
-    </div>
-
-    {# Widget 4 : geographic footprint #}
-    <div class="card kpi-tile kpi-tile--warning">
-      <div class="card-body d-flex align-items-center gap-3">
-        <span class="kpi-tile__icon kpi-tile__icon--warning"><i class="bi bi-geo-alt" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Sites" %}</div>
-          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ scope.included_sites.count }}</div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
+  {% record_card scope %}
+{% enddetail_layout %}
 {% endblock %}
 
 {% block extra_js %}

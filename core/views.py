@@ -1887,7 +1887,7 @@ class GlobalSearchView(LoginRequiredMixin, View):
                 "label": _("Sites"),
                 "model": Site,
                 "fields": ["name", "reference"],
-                "url": "context:site-detail",
+                "url": "assets:site-detail",
                 "icon": "bi-geo-alt",
             },
             {

@@ -7,33 +7,36 @@
 {% block content %}
 {% page_header issue.name reference=issue.reference nav="context:issue-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:issue-update' issue.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'context:issue-update' issue.pk %}" class="btn btn-primary" hx-get="{% url 'context:issue-update' issue.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.issue_detail" %}
 {% include "includes/lifecycle_stepper.html" %}
 
-<div class="card">
-  <div class="card-body">
-    <dl class="row mb-0">
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges issue.scopes.all %}{% if not issue.scopes.all %}<span style="color:var(--text-muted)">-</span>{% endif %}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt><dd class="col-sm-9">{{ issue.get_type_display }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Category" %}</dt><dd class="col-sm-9">{{ issue.get_category_display }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Impact level" %}</dt>
-          <dd class="col-sm-9">
-            <span class="badge text-bg-{% if issue.impact_level == 'critical' %}danger{% elif issue.impact_level == 'high' %}warning{% elif issue.impact_level == 'medium' %}info{% else %}secondary{% endif %}">
-              {{ issue.get_impact_level_display }}
-            </span>
-          </dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Trend" %}</dt><dd class="col-sm-9">{{ issue.get_trend_display|default:"-" }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Source" %}</dt><dd class="col-sm-9">{{ issue.source|default:"-" }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt><dd class="col-sm-9">{{ issue.get_status_display }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ issue.description|default:"-"|safe }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Next review" %}</dt><dd class="col-sm-9">{{ issue.review_date|default:"-" }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
-          <dd class="col-sm-9">{% for tag in issue.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Created on" %}</dt><dd class="col-sm-9">{{ issue.created_at }}</dd>
-    </dl>
-  </div>
-</div>
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") issue.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Impact level") issue.get_impact_level_display icon="exclamation-diamond" tone=issue.impact_level|badge_variant:"level" %}
+    {% kpi_tile _("Trend") issue.get_trend_display icon="graph-up-arrow" tone="neutral" %}
+    {% kpi_tile _("Next review") issue.review_date icon="calendar-event" tone="neutral" %}
+  {% endslot %}
+
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if issue.description %}<div class="ov-rich">{{ issue.description|safe }}</div>{% endif %}{% endsection_card %}
+
+  {% section_card _("Classification") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Type") issue.get_type_display %}
+      {% meta_item _("Category") issue.get_category_display %}
+      {% meta_item _("Impact level") %}{% choice_badge issue "impact_level" %}{% endmeta_item %}
+      {% meta_item _("Trend") issue.get_trend_display %}
+      {% meta_item _("Source") issue.source %}
+      {% meta_item _("Status") %}{% choice_badge issue "status" type="issue_status" %}{% endmeta_item %}
+      {% meta_item _("Next review") issue.review_date %}
+      {% meta_item _("Tags") %}{% tag_list issue.tags.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") wide=True %}{% grouped_scope_badges issue.scopes.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% record_card issue %}
+{% enddetail_layout %}
 {% endblock %}

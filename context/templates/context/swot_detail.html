@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n scope_tags ui workflow_tags %}
+{% load i18n scope_tags ui %}
 {% load help_tags %}
 
 {% block title %}{{ analysis.name }} - Cairn{% endblock %}
@@ -7,260 +7,131 @@
 {% block content %}
 {% page_header analysis.name reference=analysis.reference nav="context:swot-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:swot-update' analysis.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'context:swot-update' analysis.pk %}" class="btn btn-primary" hx-get="{% url 'context:swot-update' analysis.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.swot_detail" %}
 {% include "includes/lifecycle_stepper.html" %}
 
-{# ── Summary stat cards ── #}
-<div class="row g-3 mb-4">
-  {% with s_count=strengths|length w_count=weaknesses|length o_count=opportunities|length t_count=threats|length %}
-  <div class="col-6 col-md-3">
-    <div class="stat-card" style="border-left:3px solid var(--success)">
-      <div class="d-flex align-items-center gap-2 mb-1">
-        <i class="bi bi-shield-check" style="font-size:1.1rem;color:var(--success)"></i>
-        <span style="font-size:.8125rem;color:var(--text-muted);font-weight:500">{% trans "Strengths" %}</span>
-      </div>
-      <div class="stat-card-value">{{ s_count }}</div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="stat-card" style="border-left:3px solid var(--danger)">
-      <div class="d-flex align-items-center gap-2 mb-1">
-        <i class="bi bi-exclamation-triangle" style="font-size:1.1rem;color:var(--danger)"></i>
-        <span style="font-size:.8125rem;color:var(--text-muted);font-weight:500">{% trans "Weaknesses" %}</span>
-      </div>
-      <div class="stat-card-value">{{ w_count }}</div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="stat-card" style="border-left:3px solid var(--accent)">
-      <div class="d-flex align-items-center gap-2 mb-1">
-        <i class="bi bi-rocket-takeoff" style="font-size:1.1rem;color:var(--accent)"></i>
-        <span style="font-size:.8125rem;color:var(--text-muted);font-weight:500">{% trans "Opportunities" %}</span>
-      </div>
-      <div class="stat-card-value">{{ o_count }}</div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="stat-card" style="border-left:3px solid var(--warning)">
-      <div class="d-flex align-items-center gap-2 mb-1">
-        <i class="bi bi-lightning" style="font-size:1.1rem;color:var(--warning)"></i>
-        <span style="font-size:.8125rem;color:var(--text-muted);font-weight:500">{% trans "Threats" %}</span>
-      </div>
-      <div class="stat-card-value">{{ t_count }}</div>
-    </div>
-  </div>
-  {% endwith %}
-</div>
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") analysis.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Analysis date") analysis.analysis_date icon="calendar-event" tone="neutral" %}
+    {% kpi_tile _("Items") items|length icon="grid-1x2" tone="info" %}
+    {% kpi_tile _("Strategies") strategy_count icon="signpost-2" tone="info" %}
+  {% endslot %}
 
-<ul class="nav nav-tabs mb-3" role="tablist">
-  <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#analysis">{% trans "Analysis" %}</a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#matrix">{% trans "Strategies" %}</a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#details">{% trans "Details" %}</a></li>
-</ul>
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if analysis.description %}<div>{{ analysis.description|linebreaksbr }}</div>{% endif %}{% endsection_card %}
 
-<div class="tab-content">
-  {# ══════ Analysis tab ══════ #}
-  <div class="tab-pane fade show active" id="analysis">
-    {# ── SWOT quadrant grid ── #}
-    <div id="swot-items"
-         hx-get="{% url 'context:swot-detail' analysis.pk %}"
-         hx-select="#swot-items"
-         hx-target="#swot-items"
-         hx-swap="outerHTML"
-         hx-trigger="refreshItems from:body">
+  {% section_card _("Details") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Analysis date") analysis.analysis_date %}
+      {% meta_item _("Next review date") analysis.review_date %}
+      {% meta_item _("Tags") %}{% tag_list analysis.tags.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% grouped_scope_badges analysis.scopes.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-      {# Internal factors header #}
-      <div class="d-flex align-items-center gap-2 mb-2 mt-2">
-        <span style="font-size:.75rem;font-weight:500;color:var(--text-muted)">{% trans "Internal factors" %}</span>
-        <hr class="flex-grow-1 m-0" style="border-color:var(--border-light)">
-      </div>
-      <div class="row g-3 mb-4">
-        {% for quadrant_value, quadrant_label, quadrant_color, quadrant_icon in quadrants %}
-        {% if quadrant_value == "strength" or quadrant_value == "weakness" %}
-        <div class="col-md-6">
-          <div class="card h-100" style="border-left:3px solid var(--{% if quadrant_color == 'success' %}success{% elif quadrant_color == 'danger' %}danger{% elif quadrant_color == 'primary' %}accent{% else %}warning{% endif %})">
-            <div class="card-body pb-2">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="d-flex align-items-center gap-2">
-                  <span class="d-inline-flex align-items-center justify-content-center" style="width:2rem;height:2rem;border-radius:var(--radius-sm);background:var(--{% if quadrant_color == 'success' %}success{% elif quadrant_color == 'danger' %}danger{% elif quadrant_color == 'primary' %}accent{% else %}warning{% endif %});color:#fff;font-size:.9rem">
-                    <i class="bi {{ quadrant_icon }}"></i>
-                  </span>
-                  <span class="fw-semibold" style="font-size:.95rem">{{ quadrant_label }}</span>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0" title="{% trans 'Add' %}"
-                        hx-get="{% url 'context:swot-item-create' analysis.pk %}?quadrant={{ quadrant_value }}"
-                        hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
-                  <i class="bi bi-plus-lg" style="font-size:.75rem"></i>
-                </button>
-              </div>
-              {% for item in items %}{% if item.quadrant == quadrant_value %}
-              <div class="d-flex justify-content-between align-items-start py-2" style="border-bottom:1px solid var(--border-subtle)">
-                <div class="d-flex align-items-start gap-2">
-                  <span class="badge rounded-pill mt-1" style="font-size:.65rem;min-width:3.2rem;{% if item.impact_level == 'critical' %}background:var(--danger);color:#fff{% elif item.impact_level == 'high' %}background:var(--warning);color:#000{% elif item.impact_level == 'medium' %}background:var(--info);color:#fff{% else %}background:var(--surface-subtle);color:var(--text-secondary){% endif %}">{{ item.get_impact_level_display }}</span>
-                  <span style="font-size:.88rem;color:var(--text-primary)">{{ item.description }}</span>
-                </div>
-                <div class="d-flex gap-1 ms-2 flex-shrink-0">
-                  <button type="button" class="btn btn-sm border-0 p-0" style="color:var(--text-muted);font-size:.82rem" title="{% trans 'Edit' %}"
-                          hx-get="{% url 'context:swot-item-update' analysis.pk item.pk %}"
-                          hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button type="button" class="btn btn-sm border-0 p-0" style="color:var(--text-muted);font-size:.82rem" title="{% trans 'Delete' %}"
-                          hx-post="{% url 'context:swot-item-delete' analysis.pk item.pk %}"
-                          hx-confirm="{% trans 'Are you sure you want to delete this item?' %}"
-                          hx-disabled-elt="this">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </div>
-              {% endif %}{% endfor %}
-              {% if quadrant_value == "strength" and not strengths %}
-              <div class="text-center py-3" style="color:var(--text-muted);font-size:.82rem;font-style:italic">{% trans "No strengths identified yet" %}</div>
-              {% elif quadrant_value == "weakness" and not weaknesses %}
-              <div class="text-center py-3" style="color:var(--text-muted);font-size:.82rem;font-style:italic">{% trans "No weaknesses identified yet" %}</div>
-              {% endif %}
-            </div>
-          </div>
+  {# ── SWOT quadrants, re-fetched in place when an item changes ── #}
+  <div id="swot-items"
+       hx-get="{% url 'context:swot-detail' analysis.pk %}"
+       hx-select="#swot-items"
+       hx-target="#swot-items"
+       hx-swap="outerHTML"
+       hx-trigger="refreshItems from:body">
+    {% section_card _("Analysis") icon="grid-1x2" count=items|length %}
+      {% for q in quadrants %}
+      {% if forloop.first %}{% subhead _("Internal factors") %}<div class="row g-4">{% elif forloop.counter == 3 %}</div>{% subhead _("External factors") %}<div class="row g-4">{% endif %}
+      <div class="col-md-6">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="kpi-tile__icon{% if q.variant != 'accent' %} kpi-tile__icon--{{ q.variant }}{% endif %}" aria-hidden="true"><i class="bi bi-{{ q.icon }}"></i></span>
+          <h3 class="h6 fw-semibold mb-0">{{ q.label }}</h3>
+          <span class="section-card__count tabular-nums">{{ q.items|length }}</span>
+          <button type="button" class="btn btn-sm btn-secondary ms-auto" aria-label="{% trans 'Add' %} : {{ q.label }}" title="{% trans 'Add' %}"
+                  hx-get="{% url 'context:swot-item-create' analysis.pk %}?quadrant={{ q.value }}"
+                  hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+          </button>
         </div>
-        {% endif %}
-        {% endfor %}
-      </div>
-
-      {# External factors header #}
-      <div class="d-flex align-items-center gap-2 mb-2">
-        <span style="font-size:.75rem;font-weight:500;color:var(--text-muted)">{% trans "External factors" %}</span>
-        <hr class="flex-grow-1 m-0" style="border-color:var(--border-light)">
-      </div>
-      <div class="row g-3">
-        {% for quadrant_value, quadrant_label, quadrant_color, quadrant_icon in quadrants %}
-        {% if quadrant_value == "opportunity" or quadrant_value == "threat" %}
-        <div class="col-md-6">
-          <div class="card h-100" style="border-left:3px solid var(--{% if quadrant_color == 'primary' %}accent{% else %}warning{% endif %})">
-            <div class="card-body pb-2">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="d-flex align-items-center gap-2">
-                  <span class="d-inline-flex align-items-center justify-content-center" style="width:2rem;height:2rem;border-radius:var(--radius-sm);background:var(--{% if quadrant_color == 'primary' %}accent{% else %}warning{% endif %});color:#fff;font-size:.9rem">
-                    <i class="bi {{ quadrant_icon }}"></i>
-                  </span>
-                  <span class="fw-semibold" style="font-size:.95rem">{{ quadrant_label }}</span>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0" title="{% trans 'Add' %}"
-                        hx-get="{% url 'context:swot-item-create' analysis.pk %}?quadrant={{ quadrant_value }}"
-                        hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
-                  <i class="bi bi-plus-lg" style="font-size:.75rem"></i>
-                </button>
-              </div>
-              {% for item in items %}{% if item.quadrant == quadrant_value %}
-              <div class="d-flex justify-content-between align-items-start py-2" style="border-bottom:1px solid var(--border-subtle)">
-                <div class="d-flex align-items-start gap-2">
-                  <span class="badge rounded-pill mt-1" style="font-size:.65rem;min-width:3.2rem;{% if item.impact_level == 'critical' %}background:var(--danger);color:#fff{% elif item.impact_level == 'high' %}background:var(--warning);color:#000{% elif item.impact_level == 'medium' %}background:var(--info);color:#fff{% else %}background:var(--surface-subtle);color:var(--text-secondary){% endif %}">{{ item.get_impact_level_display }}</span>
-                  <span style="font-size:.88rem;color:var(--text-primary)">{{ item.description }}</span>
-                </div>
-                <div class="d-flex gap-1 ms-2 flex-shrink-0">
-                  <button type="button" class="btn btn-sm border-0 p-0" style="color:var(--text-muted);font-size:.82rem" title="{% trans 'Edit' %}"
-                          hx-get="{% url 'context:swot-item-update' analysis.pk item.pk %}"
-                          hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button type="button" class="btn btn-sm border-0 p-0" style="color:var(--text-muted);font-size:.82rem" title="{% trans 'Delete' %}"
-                          hx-post="{% url 'context:swot-item-delete' analysis.pk item.pk %}"
-                          hx-confirm="{% trans 'Are you sure you want to delete this item?' %}"
-                          hx-disabled-elt="this">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </div>
-              {% endif %}{% endfor %}
-              {% if quadrant_value == "opportunity" and not opportunities %}
-              <div class="text-center py-3" style="color:var(--text-muted);font-size:.82rem;font-style:italic">{% trans "No opportunities identified yet" %}</div>
-              {% elif quadrant_value == "threat" and not threats %}
-              <div class="text-center py-3" style="color:var(--text-muted);font-size:.82rem;font-style:italic">{% trans "No threats identified yet" %}</div>
-              {% endif %}
+        {% if q.items %}
+        <ul class="list-group list-group-flush">
+          {% for item in q.items %}
+          <li class="list-group-item px-0 row g-2 mx-0 align-items-start">
+            <div class="col-12 col-sm d-flex align-items-start gap-2 min-w-0 ps-0">
+              {% with n=forloop.counter|stringformat:"s" %}{% badge variant=q.variant label=q.letter|add:n %}{% endwith %}
+              <span class="text-sm">{{ item.description }}</span>
             </div>
-          </div>
-        </div>
+            <div class="col-12 col-sm-auto d-flex align-items-center justify-content-end gap-1 pe-0">
+              {% choice_badge item "impact_level" %}
+              <button type="button" class="btn btn-sm btn-link px-1" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"
+                      hx-get="{% url 'context:swot-item-update' analysis.pk item.pk %}"
+                      hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
+                <i class="bi bi-pencil" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="btn btn-sm btn-link link-danger px-1" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"
+                      hx-post="{% url 'context:swot-item-delete' analysis.pk item.pk %}"
+                      hx-confirm="{% trans 'Are you sure you want to delete this item?' %}"
+                      hx-disabled-elt="this">
+                <i class="bi bi-trash" aria-hidden="true"></i>
+              </button>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-meta text-center fst-italic py-3 mb-0">{{ q.empty_msg }}</p>
         {% endif %}
-        {% endfor %}
       </div>
-    </div>
+      {% if forloop.last %}</div>{% endif %}
+      {% endfor %}
+    {% endsection_card %}
   </div>
 
-  {# ══════ Strategies tab ══════ #}
-  <div class="tab-pane fade" id="matrix"
+  {# ── Strategies (TOWS matrix), re-fetched in place when a strategy changes ── #}
+  <div id="matrix"
        hx-get="{% url 'context:swot-detail' analysis.pk %}"
        hx-select="#matrix"
        hx-target="#matrix"
        hx-swap="outerHTML"
        hx-trigger="refreshItems from:body">
+    {% section_card _("Strategies") icon="signpost-2" count=strategy_count %}
+      {# Column headers #}
+      <div class="row g-0 mb-2 d-none d-md-flex">
+        <div class="col-md-2"></div>
+        <div class="col-md-5 text-center">{% badge variant="accent" icon="rocket-takeoff" label=_("Opportunities") %}</div>
+        <div class="col-md-5 text-center">{% badge variant="warning" icon="lightning" label=_("Threats") %}</div>
+      </div>
 
-    {# Column headers #}
-    <div class="row g-0 mb-2 d-none d-md-flex">
-      <div class="col-md-2"></div>
-      <div class="col-md-5 text-center">
-        <span class="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill" style="background:var(--accent);color:#fff;font-size:.78rem;font-weight:600">
-          <i class="bi bi-rocket-takeoff"></i> {% trans "Opportunities" %}
-        </span>
+      {# Row: Strengths x (Opportunities, Threats) #}
+      <div class="row g-3 mb-3">
+        <div class="col-md-2 d-flex align-items-center justify-content-center">
+          {% badge variant="success" icon="shield-check" label=_("Strengths") %}
+        </div>
+        <div class="col-md-5">
+          {% include "context/_swot_strategy_cell.html" with cell_label="SO" cell_subtitle=_("Leverage") cell_icon="arrow-up-right-circle" strategies=strategies_so row_items=strengths col_items=opportunities row_letter="S" col_letter="O" row_variant="success" col_variant="accent" empty_msg=_("How can strengths exploit opportunities?") quadrant_code="so" %}
+        </div>
+        <div class="col-md-5">
+          {% include "context/_swot_strategy_cell.html" with cell_label="ST" cell_subtitle=_("Confront") cell_icon="shield-exclamation" strategies=strategies_st row_items=strengths col_items=threats row_letter="S" col_letter="T" row_variant="success" col_variant="warning" empty_msg=_("How can strengths counter threats?") quadrant_code="st" %}
+        </div>
       </div>
-      <div class="col-md-5 text-center">
-        <span class="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill" style="background:var(--warning);color:#000;font-size:.78rem;font-weight:600">
-          <i class="bi bi-lightning"></i> {% trans "Threats" %}
-        </span>
-      </div>
-    </div>
 
-    {# Row: Strengths × (Opportunities, Threats) #}
-    <div class="row g-3 mb-3">
-      <div class="col-md-2 d-flex align-items-center justify-content-center">
-        <span class="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill" style="background:var(--success);color:#fff;font-size:.78rem;font-weight:600;writing-mode:horizontal-tb">
-          <i class="bi bi-shield-check"></i> {% trans "Strengths" %}
-        </span>
+      {# Row: Weaknesses x (Opportunities, Threats) #}
+      <div class="row g-3">
+        <div class="col-md-2 d-flex align-items-center justify-content-center">
+          {% badge variant="danger" icon="exclamation-triangle" label=_("Weaknesses") %}
+        </div>
+        <div class="col-md-5">
+          {% include "context/_swot_strategy_cell.html" with cell_label="WO" cell_subtitle=_("Improve") cell_icon="arrow-repeat" strategies=strategies_wo row_items=weaknesses col_items=opportunities row_letter="W" col_letter="O" row_variant="danger" col_variant="accent" empty_msg=_("How can opportunities overcome weaknesses?") quadrant_code="wo" %}
+        </div>
+        <div class="col-md-5">
+          {% include "context/_swot_strategy_cell.html" with cell_label="WT" cell_subtitle=_("Avoid") cell_icon="sign-stop" strategies=strategies_wt row_items=weaknesses col_items=threats row_letter="W" col_letter="T" row_variant="danger" col_variant="warning" empty_msg=_("How to minimize weaknesses and avoid threats?") quadrant_code="wt" %}
+        </div>
       </div>
-      <div class="col-md-5">
-        {% include "context/_swot_strategy_cell.html" with cell_label="SO" cell_subtitle=_("Leverage") cell_color="success" cell_icon="bi-arrow-up-right-circle" strategies=strategies_so row_items=strengths col_items=opportunities row_letter="S" col_letter="O" row_color="success" col_color="primary" empty_msg=_("How can strengths exploit opportunities?") quadrant_code="so" %}
-      </div>
-      <div class="col-md-5">
-        {% include "context/_swot_strategy_cell.html" with cell_label="ST" cell_subtitle=_("Confront") cell_color="info" cell_icon="bi-shield-exclamation" strategies=strategies_st row_items=strengths col_items=threats row_letter="S" col_letter="T" row_color="success" col_color="warning" empty_msg=_("How can strengths counter threats?") quadrant_code="st" %}
-      </div>
-    </div>
-
-    {# Row: Weaknesses × (Opportunities, Threats) #}
-    <div class="row g-3">
-      <div class="col-md-2 d-flex align-items-center justify-content-center">
-        <span class="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill" style="background:var(--danger);color:#fff;font-size:.78rem;font-weight:600;writing-mode:horizontal-tb">
-          <i class="bi bi-exclamation-triangle"></i> {% trans "Weaknesses" %}
-        </span>
-      </div>
-      <div class="col-md-5">
-        {% include "context/_swot_strategy_cell.html" with cell_label="WO" cell_subtitle=_("Improve") cell_color="primary" cell_icon="bi-arrow-repeat" strategies=strategies_wo row_items=weaknesses col_items=opportunities row_letter="W" col_letter="O" row_color="danger" col_color="primary" empty_msg=_("How can opportunities overcome weaknesses?") quadrant_code="wo" %}
-      </div>
-      <div class="col-md-5">
-        {% include "context/_swot_strategy_cell.html" with cell_label="WT" cell_subtitle=_("Avoid") cell_color="warning" cell_icon="bi-sign-stop" strategies=strategies_wt row_items=weaknesses col_items=threats row_letter="W" col_letter="T" row_color="danger" col_color="warning" empty_msg=_("How to minimize weaknesses and avoid threats?") quadrant_code="wt" %}
-      </div>
-    </div>
+    {% endsection_card %}
   </div>
 
-  {# ══════ Details tab ══════ #}
-  <div class="tab-pane fade" id="details">
-    <div class="card">
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges analysis.scopes.all %}{% if not analysis.scopes.all %}<span style="color:var(--text-muted)">-</span>{% endif %}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Analysis date" %}</dt><dd class="col-sm-9">{{ analysis.analysis_date }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>
-          <dd class="col-sm-9">
-            {% workflow_badge analysis %}
-          </dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ analysis.description|default:"-"|linebreaksbr }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
-          <dd class="col-sm-9">{% for tag in analysis.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
-        </dl>
-      </div>
-    </div>
-  </div>
-</div>
+  {% record_card analysis %}
+{% enddetail_layout %}
 {% endblock %}
 
 {% block extra_js %}

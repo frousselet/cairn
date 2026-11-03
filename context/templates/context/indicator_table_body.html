@@ -4,7 +4,7 @@
   <td data-col="reference"><a href="{% url 'context:indicator-detail' indicator.pk %}" class="ref">{{ indicator.reference }}</a></td>
   <td data-col="name">
     <span class="cell-stack">
-      <span><a href="{% url 'context:indicator-detail' indicator.pk %}" class="cell-link" style="font-weight:600">{{ indicator.name }}</a>{% if indicator.is_internal %} <span class="badge text-bg-info" style="font-size:.65rem">{% trans "Predefined" %}</span>{% endif %}</span>
+      <span><a href="{% url 'context:indicator-detail' indicator.pk %}" class="cell-link fw-semibold">{{ indicator.name }}</a>{% if indicator.is_internal %} {% badge variant="info" label=_("Predefined") %}{% endif %}</span>
       <span class="cell-sub">{{ indicator.get_format_display }}</span>
     </span>
   </td>
@@ -16,12 +16,12 @@
     </span>
     {% elif indicator.expected_level %}
     <span class="cell-sub" title="{% trans 'Expected level' %}"><i class="bi bi-bullseye me-1" aria-hidden="true"></i>{{ indicator.expected_level }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}</span>
-    {% else %}<span class="cell-empty">-</span>{% endif %}
+    {% else %}{% dash %}{% endif %}
   </td>
   <td data-col="trend">
     {% if indicator.sparkline_data %}
     <div class="sparkline-slot" data-sparkline="{{ indicator.sparkline_data|join:',' }}" data-trend="{{ indicator.spark_trend }}" data-critical="{% if indicator.is_critical %}1{% endif %}" style="width:90px;height:28px"></div>
-    {% else %}<span class="cell-empty">-</span>{% endif %}
+    {% else %}{% dash %}{% endif %}
   </td>
   <td data-col="collection">
     <span class="cell-stack">
@@ -30,11 +30,11 @@
     </span>
   </td>
   <td data-col="status">{% workflow_badge indicator %}</td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=indicator.tags.all %}</td>
+  <td data-col="tags">{% tag_list indicator.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
+    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"
             hx-get="{% url 'context:indicator-update' indicator.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
-      <i class="bi bi-pencil"></i>
+      <i class="bi bi-pencil" aria-hidden="true"></i>
     </button>
   </td>
 </tr>

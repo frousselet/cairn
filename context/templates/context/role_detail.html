@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 {% load i18n scope_tags ui %}
 {% load help_tags %}
+{% load accounts_tags %}
 
 {% block title %}{{ role.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header role.name reference=role.reference nav="context:role-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:role-update' role.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  <a href="{% url 'context:role-update' role.pk %}" class="btn btn-primary" hx-get="{% url 'context:role-update' role.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.role_detail" %}
@@ -17,124 +18,103 @@
 <div class="alert alert-danger" role="alert">{{ role.compliance_alert }}</div>
 {% endif %}
 
-<div class="row g-4">
-  <div class="col-lg-8">
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>{% trans "Information" %}</h6>
-        <dl class="row mb-0">
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt>
-          <dd class="col-sm-9">{{ role.get_type_display }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Mandatory" %}</dt>
-          <dd class="col-sm-9">{% if role.is_mandatory %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Source standard" %}</dt>
-          <dd class="col-sm-9">{{ role.source_standard|default:"-" }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt>
-          <dd class="col-sm-9 mb-0">{{ role.description|default:"-"|safe }}</dd>
-        </dl>
-      </div>
-    </div>
+{% with responsibilities=role.responsibilities.all assigned_users=role.assigned_users.all %}
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") role.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Type") role.get_type_display icon="diagram-2" tone="neutral" %}
+    {% kpi_tile _("Responsibilities") responsibilities|length icon="list-check" tone="info" %}
+    {% kpi_tile _("Users") assigned_users|length icon="people" tone="neutral" %}
+  {% endslot %}
 
-    <details id="responsibilities-section" class="card mb-4" open
-             hx-get="{% url 'context:role-detail' role.pk %}"
-             hx-select="#responsibilities-section"
-             hx-target="#responsibilities-section"
-             hx-swap="outerHTML"
-             hx-trigger="refreshItems from:body">
-      <summary class="card-body py-2 d-flex justify-content-between align-items-center" style="cursor:pointer;user-select:none">
-        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-list-check me-1" aria-hidden="true"></i>{% trans "Responsibilities" %}<span class="badge bg-secondary ms-2 tabular-nums">{{ role.responsibilities.count }}</span></h6>
-        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0" title="{% trans 'Add' %}"
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if role.description %}<div class="ov-rich">{{ role.description|safe }}</div>{% endif %}{% endsection_card %}
+
+  {% section_card _("Information") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Type") role.get_type_display %}
+      {% meta_item _("Mandatory") %}{% if role.is_mandatory %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Source standard") role.source_standard %}
+      {% meta_item _("Status") %}{% choice_badge role "status" type="status" %}{% endmeta_item %}
+      {% meta_item _("Tags") %}{% tag_list role.tags.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% grouped_scope_badges role.scopes.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# Re-fetched in place (hx-select on its own id) when a responsibility is added, edited or deleted. #}
+  <div id="responsibilities-section"
+       hx-get="{% url 'context:role-detail' role.pk %}"
+       hx-select="#responsibilities-section"
+       hx-target="#responsibilities-section"
+       hx-swap="outerHTML"
+       hx-trigger="refreshItems from:body">
+    {% section_card _("Responsibilities") icon="list-check" count=responsibilities|length collapsible=True flush=responsibilities %}
+      {% slot actions %}
+        <button type="button" class="btn btn-sm btn-secondary" aria-label="{% trans 'New responsibility' %}" title="{% trans 'New responsibility' %}"
                 hx-get="{% url 'context:responsibility-create' role.pk %}"
                 hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset"
                 onclick="event.preventDefault();">
-          <i class="bi bi-plus-lg" style="font-size:.75rem"></i>
+          <i class="bi bi-plus-lg" aria-hidden="true"></i>
         </button>
-      </summary>
-      <div class="card-body pt-0">
-        {% if role.responsibilities.all %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead>
-              <tr>
-                <th>{% trans "Description" %}</th>
-                <th>{% trans "RACI type" %}</th>
-                <th class="text-end"><span class="visually-hidden">{% trans "Actions" %}</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for resp in role.responsibilities.all %}
-              <tr>
-                <td>
-                  <span class="cell-stack">
-                    <span>{{ resp.description }}</span>
-                    {% if resp.related_activity %}<span class="cell-sub"><i class="bi bi-diagram-2 me-1" aria-hidden="true"></i>{{ resp.related_activity }}</span>{% endif %}
-                  </span>
-                </td>
-                <td>{% badge resp.raci_type variant="accent" label=resp.get_raci_type_display %}</td>
-                <td class="text-end">
-                  <div class="d-inline-flex gap-1">
-                    <button type="button" class="btn btn-sm border-0 p-0 px-1" style="color:var(--text-muted)" title="{% trans 'Edit' %}"
-                            hx-get="{% url 'context:responsibility-update' role.pk resp.pk %}"
-                            hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
-                      <i class="bi bi-pencil"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm border-0 p-0 px-1" style="color:var(--text-muted)" title="{% trans 'Delete' %}"
-                            hx-post="{% url 'context:responsibility-delete' role.pk resp.pk %}"
-                            hx-confirm="{% trans 'Are you sure you want to delete this responsibility?' %}"
-                            hx-disabled-elt="this">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        {% empty_state icon="list-check" message=_("No responsibility defined.") %}
-        {% endif %}
+      {% endslot %}
+      {% if responsibilities %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>{% trans "Description" %}</th>
+              <th>{% trans "RACI type" %}</th>
+              <th class="text-end"><span class="visually-hidden">{% trans "Actions" %}</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for resp in responsibilities %}
+            <tr>
+              <td>
+                <span class="cell-stack">
+                  <span>{{ resp.description }}</span>
+                  {% if resp.related_activity %}<span class="cell-sub"><i class="bi bi-diagram-2 me-1" aria-hidden="true"></i>{{ resp.related_activity }}</span>{% endif %}
+                </span>
+              </td>
+              <td>{% badge resp.raci_type variant="accent" label=resp.get_raci_type_display %}</td>
+              <td class="text-end">
+                <div class="d-inline-flex gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"
+                          hx-get="{% url 'context:responsibility-update' role.pk resp.pk %}"
+                          hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"
+                          hx-post="{% url 'context:responsibility-delete' role.pk resp.pk %}"
+                          hx-confirm="{% trans 'Are you sure you want to delete this responsibility?' %}"
+                          hx-disabled-elt="this">
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-    </details>
-
-    <details class="card mb-4">
-      <summary class="card-body py-2" style="cursor:pointer;user-select:none">
-        <h6 class="text-muted small fw-semibold mb-0 d-inline-flex align-items-center"><i class="bi bi-people me-1" aria-hidden="true"></i>{% trans "Users" %}<span class="badge bg-secondary ms-2 tabular-nums">{{ role.assigned_users.count }}</span></h6>
-      </summary>
-      <div class="card-body pt-0">
-        {% if role.assigned_users.all %}
-        <ul class="list-group">
-          {% for user in role.assigned_users.all %}
-          <li class="list-group-item">{{ user.get_full_name|default:user.email }}</li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        {% empty_state icon="person" message=_("No assigned user.") %}
-        {% endif %}
-      </div>
-    </details>
+      {% else %}
+      {% empty_state icon="list-check" message=_("No responsibility defined.") %}
+      {% endif %}
+    {% endsection_card %}
   </div>
 
-  <div class="col-lg-4">
-    {% sidebar_card _("Status") icon="info-circle" %}
-      <div class="mb-2 small text-muted">{% trans "Status" %}</div>
-      <div class="mb-3">{% badge role.status type="status" label=role.get_status_display %}</div>
-      <div class="mb-2 small text-muted">{% trans "Scopes" %}</div>
-      <div>
-        {% grouped_scope_badges role.scopes.all %}
-        {% if not role.scopes.all %}<span class="text-muted">-</span>{% endif %}
-      </div>
-    {% endsidebar_card %}
+  {% section_card _("Users") icon="people" count=assigned_users|length collapsible=True open=False %}
+    {% if assigned_users %}
+    <div class="d-flex flex-column gap-2">
+      {% for user in assigned_users %}{% user_badge user size=28 link=True block=True %}{% endfor %}
+    </div>
+    {% else %}
+    {% empty_state icon="person" message=_("No assigned user.") %}
+    {% endif %}
+  {% endsection_card %}
 
-    {% sidebar_card _("Tags") icon="tags" %}
-      {% for tag in role.tags.all %}
-        <span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>
-      {% empty %}
-        <span class="text-muted">-</span>
-      {% endfor %}
-    {% endsidebar_card %}
-  </div>
-</div>
+  {% record_card role %}
+{% enddetail_layout %}
+{% endwith %}
 {% endblock %}
 
 {% block extra_js %}

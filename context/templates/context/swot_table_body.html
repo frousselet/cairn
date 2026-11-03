@@ -5,11 +5,11 @@
   <td data-col="name"><a href="{% url 'context:swot-detail' analysis.pk %}" class="cell-link">{{ analysis.name }}</a></td>
   <td data-col="items">
     <div class="d-flex gap-1 flex-nowrap">
-      {% if analysis.strength_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--success);color:#fff" title="{% trans 'Strengths' %}">S {{ analysis.strength_count }}</span>{% endif %}
-      {% if analysis.weakness_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--danger);color:#fff" title="{% trans 'Weaknesses' %}">W {{ analysis.weakness_count }}</span>{% endif %}
-      {% if analysis.opportunity_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--accent);color:var(--accent-contrast)" title="{% trans 'Opportunities' %}">O {{ analysis.opportunity_count }}</span>{% endif %}
-      {% if analysis.threat_count %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--warning);color:#000" title="{% trans 'Threats' %}">T {{ analysis.threat_count }}</span>{% endif %}
-      {% if not analysis.strength_count and not analysis.weakness_count and not analysis.opportunity_count and not analysis.threat_count %}<span style="color:var(--text-muted);font-size:.75rem">-</span>{% endif %}
+      {% if analysis.strength_count %}{% with n=analysis.strength_count|stringformat:"s" %}<span title="{% trans 'Strengths' %}">{% badge variant="success" label="S "|add:n %}</span>{% endwith %}{% endif %}
+      {% if analysis.weakness_count %}{% with n=analysis.weakness_count|stringformat:"s" %}<span title="{% trans 'Weaknesses' %}">{% badge variant="danger" label="W "|add:n %}</span>{% endwith %}{% endif %}
+      {% if analysis.opportunity_count %}{% with n=analysis.opportunity_count|stringformat:"s" %}<span title="{% trans 'Opportunities' %}">{% badge variant="accent" label="O "|add:n %}</span>{% endwith %}{% endif %}
+      {% if analysis.threat_count %}{% with n=analysis.threat_count|stringformat:"s" %}<span title="{% trans 'Threats' %}">{% badge variant="warning" label="T "|add:n %}</span>{% endwith %}{% endif %}
+      {% if not analysis.strength_count and not analysis.weakness_count and not analysis.opportunity_count and not analysis.threat_count %}{% dash %}{% endif %}
     </div>
   </td>
   <td data-col="date">
@@ -21,11 +21,11 @@
   <td data-col="status">
     {% workflow_badge analysis %}
   </td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=analysis.tags.all %}</td>
+  <td data-col="tags">{% tag_list analysis.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
+    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"
             hx-get="{% url 'context:swot-update' analysis.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
-      <i class="bi bi-pencil"></i>
+      <i class="bi bi-pencil" aria-hidden="true"></i>
     </button>
   </td>
 </tr>
