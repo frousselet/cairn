@@ -1,25 +1,42 @@
 {% extends "base.html" %}
-{% load i18n ui %}
-{% load help_tags %}
-{% load accounts_tags %}
+{% load i18n ui help_tags accounts_tags %}
 
 {% block title %}{{ assessment.name }} - Cairn{% endblock %}
 
 {% block extra_css %}
 <style>
-  /* ── Finding breakdown rows (design system: count chip + full-width track) ── */
+  /* Result breakdown rows : count chip + full-width track. The tone comes
+     from the row modifier, the fill width is computed per row. */
   .finding-breakdown { display: flex; flex-direction: column; gap: .5rem; }
-  .finding-row { display: flex; align-items: center; gap: .75rem; }
+  .finding-row { --row-tone: var(--text-secondary); display: flex; align-items: center; gap: .75rem; }
+  .finding-row--success { --row-tone: var(--success); }
+  .finding-row--warning { --row-tone: var(--warning); }
+  .finding-row--danger { --row-tone: var(--danger); }
+  .finding-row--accent { --row-tone: var(--accent); }
+  .finding-row--neutral { --row-tone: var(--color-charcoal-500); }
   .finding-count {
     min-width: 1.5rem; height: 1.5rem; padding: 0 .35rem; flex-shrink: 0;
-    border-radius: var(--radius-xs); color: #fff; font-size: .75rem; font-weight: 700;
+    border-radius: var(--radius-xs); background: var(--row-tone); color: var(--color-neutral-0);
+    font-size: .75rem; font-weight: 700;
     display: inline-flex; align-items: center; justify-content: center;
     font-variant-numeric: tabular-nums;
   }
   .finding-label { font-size: .8125rem; color: var(--text-secondary); flex: 0 0 auto; width: 190px; }
   .finding-track { flex: 1; height: 4px; background: var(--surface-subtle); border-radius: 2px; overflow: hidden; }
-  .finding-fill { display: block; height: 100%; border-radius: 2px; }
+  .finding-fill { display: block; height: 100%; border-radius: 2px; background: var(--row-tone); }
   @media (max-width: 575.98px) { .finding-label { width: 120px; } }
+  /* Results grid (assessment_results_table_body.html) : framework and section group rows. */
+  .table .results-framework-row > td { background: var(--surface-subtle); border-left: 12px solid var(--accent); padding: .6rem .75rem; font-size: .92rem; font-weight: 700; }
+  .table .results-section-row > td { background: var(--surface-subtle); border-left: 3px solid var(--accent); font-size: .88rem; font-weight: 600; }
+  .table .results-section-row--nested > td { padding-left: 1.5rem; }
+  .results-section-bar { width: 80px; height: 6px; }
+  .results-section-bar .is-soft { opacity: .7; }
+  .results-section-bar .is-faint { opacity: .4; }
+  .results-section-bar .is-accent { background-color: var(--accent); }
+  .results-name { max-width: 250px; }
+  /* Findings grid (findings_table_body.html) : two-line description clamp. */
+  .finding-desc-cell { max-width: 300px; }
+  .finding-desc { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 </style>
 {% endblock %}
 
@@ -27,232 +44,187 @@
 {% page_header assessment.name reference=assessment.reference nav="compliance:assessment-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
   {% if not is_locked %}
-  <a href="{% url 'compliance:assessment-update' assessment.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans 'Edit' %}</a>
+  <a href="{% url 'compliance:assessment-update' assessment.pk %}" class="btn btn-primary" hx-get="{% url 'compliance:assessment-update' assessment.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
   {% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
-
-{# ── Metadata line ── #}
-<div class="d-flex flex-wrap align-items-center gap-3 mb-3" style="font-size:.85rem;color:var(--text-muted)">
-  <span>
-    <i class="bi bi-journal-bookmark me-1"></i>
-    {% for fw in assessment.frameworks.all %}
-      <a href="{% url 'compliance:framework-detail' fw.pk %}" class="cell-link">{{ fw.short_name|default:fw.name }}</a>{% if not forloop.last %}, {% endif %}
-    {% empty %}
-      -
-    {% endfor %}
-  </span>
-  <span>
-    <i class="bi bi-calendar-event me-1"></i>
-    {{ assessment.assessment_start_date|default:"-" }} → {{ assessment.assessment_end_date|default:"-" }}
-  </span>
-  <span>
-    {% if assessment.assessor %}{% user_badge assessment.assessor size=24 %}{% else %}-{% endif %}
-  </span>
-</div>
-
-{% include "includes/lifecycle_stepper.html" %}
 {% help_modal "compliance.assessment_detail" %}
 
+{% include "includes/lifecycle_stepper.html" %}
 
-<ul class="nav nav-tabs mb-3" role="tablist">
-  <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#planning">{% trans "Planning" %}</a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#findings_tab">{% trans "Findings" %} {% if findings_count %}<span class="badge text-bg-secondary ms-1">{{ findings_count }}</span>{% endif %}</a></li>
-</ul>
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") assessment.lifecycle_label icon="signpost-split" %}
+    {% if compliance_pct >= 80 %}{% kpi_tile _("Compliance") compliance_pct suffix="%" icon="clipboard-check" tone="success" %}
+    {% elif compliance_pct >= 50 %}{% kpi_tile _("Compliance") compliance_pct suffix="%" icon="clipboard-check" tone="warning" %}
+    {% else %}{% kpi_tile _("Compliance") compliance_pct suffix="%" icon="clipboard-check" tone="danger" %}{% endif %}
+    {% kpi_tile _("Coverage") coverage_pct suffix="%" icon="pie-chart" tone="info" %}
+    {% kpi_tile _("Findings") findings_count icon="file-earmark-text" tone="neutral" %}
+  {% endslot %}
 
-<div class="tab-content">
-  <div class="tab-pane fade show active" id="planning">
-    {# ── Stats card (full width) ── #}
-    <div class="card mb-3">
-      <div class="card-body">
-        <div class="row align-items-center">
-          {# ── Gauges ── #}
-          <div class="col-md-5 col-lg-4">
-            <div class="d-flex justify-content-evenly">
-              {# ── Compliance gauge ── #}
-              <div class="text-center">
-                <div style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:88px;height:88px">
-                  <svg viewBox="0 0 36 36" style="width:100%;height:100%;transform:rotate(-90deg)">
-                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--border-light)" stroke-width="2.5"/>
-                    <circle cx="18" cy="18" r="15.9" fill="none"
-                            stroke="{% if compliance_pct >= 80 %}var(--success){% elif compliance_pct >= 50 %}var(--warning){% else %}var(--danger){% endif %}"
-                            stroke-width="2.5"
-                            stroke-dasharray="{{ compliance_pct }} 100"
-                            stroke-linecap="round"/>
-                  </svg>
-                  <span style="position:absolute;font-family:var(--font-display);font-variant-numeric:tabular-nums;font-size:1.1rem;font-weight:700;{% if compliance_pct >= 80 %}color:var(--success){% elif compliance_pct >= 50 %}color:var(--warning){% else %}color:var(--danger){% endif %}">
-                    {{ compliance_pct }}%
-                  </span>
-                </div>
-                <div style="font-size:.75rem;color:var(--text-muted);margin-top:.4rem;max-width:120px;line-height:1.3">{% trans "Compliance" %}</div>
-              </div>
-              {# ── Coverage gauge ── #}
-              <div class="text-center">
-                <div style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:88px;height:88px">
-                  <svg viewBox="0 0 36 36" style="width:100%;height:100%;transform:rotate(-90deg)">
-                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--border-light)" stroke-width="2.5"/>
-                    <circle cx="18" cy="18" r="15.9" fill="none"
-                            stroke="var(--info)"
-                            stroke-width="2.5"
-                            stroke-dasharray="{{ coverage_pct }} 100"
-                            stroke-linecap="round"/>
-                  </svg>
-                  <span style="position:absolute;font-family:var(--font-display);font-variant-numeric:tabular-nums;font-size:1.1rem;font-weight:700;color:var(--info)">
-                    {{ coverage_pct }}%
-                  </span>
-                </div>
-                <div style="font-size:.78rem;color:var(--text-muted);margin-top:.25rem">{% trans "Coverage" %}</div>
-                <div style="font-size:.7rem;color:var(--text-muted)">{{ results_total }}/{{ fw_req_count }}</div>
-              </div>
+  {% section_card _("Overview") icon="info-circle" %}
+    {% overview %}
+      {% ov_row "journal-bookmark" _("Frameworks") %}{% for fw in assessment.frameworks.all %}<a href="{% url 'compliance:framework-detail' fw.pk %}" class="ov-link">{{ fw.short_name|default:fw.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}{% endov_row %}
+      {% ov_row "calendar-event" _("Dates") %}{{ assessment.assessment_start_date|or_dash }} <i class="bi bi-arrow-right mx-1" aria-hidden="true"></i> {{ assessment.assessment_end_date|or_dash }}{% endov_row %}
+      {% ov_row "person" _("Assessor") %}{% if assessment.assessor %}{% user_badge assessment.assessor size=24 link=True %}{% endif %}{% endov_row %}
+      {% ov_row "tags" _("Tags") %}{% tag_list assessment.tags.all %}{% endov_row %}
+    {% endoverview %}
+  {% endsection_card %}
+
+  {% section_card _("Context and objectives") icon="text-left" collapsible=True open=False hide_empty=True %}{% if assessment.description %}<div class="ov-rich">{{ assessment.description|safe }}</div>{% endif %}{% endsection_card %}
+
+  {% section_card _("Limitations") icon="exclamation-circle" collapsible=True open=False hide_empty=True %}{% if assessment.limitations %}<div class="ov-rich">{{ assessment.limitations|safe }}</div>{% endif %}{% endsection_card %}
+
+  {# Planning and Findings are two working modes of the assessment : the evaluation grid, and the findings register of this audit. #}
+  <div>
+    <ul class="nav nav-tabs mb-3" role="tablist">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#planning">{% trans "Planning" %}</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#findings_tab">{% trans "Findings" %}{% if findings_count %} <span class="section-card__count tabular-nums ms-1">{{ findings_count }}</span>{% endif %}</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="planning">
+        <div class="d-flex flex-column gap-4">
+        {% section_card _("Assessment results") icon="bar-chart-steps" %}
+          {% slot actions %}<span class="text-meta tabular-nums" title="{% trans 'Coverage' %}">{{ results_total }}/{{ fw_req_count }}</span>{% endslot %}
+          <div class="finding-breakdown">
+            {% if assessment.strength_count %}
+            <div class="finding-row finding-row--success">
+              <span class="finding-count">{{ assessment.strength_count }}</span>
+              <span class="finding-label">{% trans "Strength" context "compliance" %}</span>
+              <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.strength_count assessment.total_requirements 100 %}%"></span></span>
             </div>
-          </div>
-          {# ── Status breakdown ── #}
-          <div class="col-md-7 col-lg-8">
-            <div class="finding-breakdown">
-              {% if assessment.strength_count %}
-              <div class="finding-row">
-                <span class="finding-count" style="background:var(--success)">{{ assessment.strength_count }}</span>
-                <span class="finding-label">{% trans "Strength" context "compliance" %}</span>
-                <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.strength_count assessment.total_requirements 100 %}%;background:var(--success)"></span></span>
-              </div>
-              {% endif %}
-              {% if assessment.compliant_count %}
-              <div class="finding-row">
-                <span class="finding-count" style="background:var(--success)">{{ assessment.compliant_count }}</span>
-                <span class="finding-label">{% trans "Compliant" %}</span>
-                <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.compliant_count assessment.total_requirements 100 %}%;background:var(--success)"></span></span>
-              </div>
-              {% endif %}
-              {% if assessment.improvement_opportunity_count %}
-              <div class="finding-row">
-                <span class="finding-count" style="background:var(--warning)">{{ assessment.improvement_opportunity_count }}</span>
-                <span class="finding-label">{% trans "Improvement opportunity" %}</span>
-                <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.improvement_opportunity_count assessment.total_requirements 100 %}%;background:var(--warning)"></span></span>
-              </div>
-              {% endif %}
-              {% if assessment.observation_count %}
-              <div class="finding-row">
-                <span class="finding-count" style="background:var(--warning)">{{ assessment.observation_count }}</span>
-                <span class="finding-label">{% trans "Observation" context "compliance" %}</span>
-                <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.observation_count assessment.total_requirements 100 %}%;background:var(--warning)"></span></span>
-              </div>
-              {% endif %}
-              {% if assessment.minor_non_conformity_count %}
-              <div class="finding-row">
-                <span class="finding-count" style="background:var(--danger)">{{ assessment.minor_non_conformity_count }}</span>
-                <span class="finding-label">{% trans "Minor non-conformity" %}</span>
-                <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.minor_non_conformity_count assessment.total_requirements 100 %}%;background:var(--danger)"></span></span>
-              </div>
-              {% endif %}
-              {% if assessment.major_non_conformity_count %}
-              <div class="finding-row">
-                <span class="finding-count" style="background:var(--danger)">{{ assessment.major_non_conformity_count }}</span>
-                <span class="finding-label">{% trans "Major non-conformity" %}</span>
-                <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.major_non_conformity_count assessment.total_requirements 100 %}%;background:var(--danger)"></span></span>
-              </div>
-              {% endif %}
-              {% if assessment.evaluated_count %}
-              <div class="finding-row">
-                <span class="finding-count" style="background:var(--accent)">{{ assessment.evaluated_count }}</span>
-                <span class="finding-label">{% trans "Evaluation planned" %}</span>
-                <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.evaluated_count assessment.total_requirements 100 %}%;background:var(--accent)"></span></span>
-              </div>
-              {% endif %}
-              {% if assessment.not_applicable_count %}
-              <div class="finding-row">
-                <span class="finding-count" style="background:var(--text-primary)">{{ assessment.not_applicable_count }}</span>
-                <span class="finding-label">{% trans "Not applicable" %}</span>
-                <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.not_applicable_count assessment.total_requirements 100 %}%;background:var(--text-primary)"></span></span>
-              </div>
-              {% endif %}
+            {% endif %}
+            {% if assessment.compliant_count %}
+            <div class="finding-row finding-row--success">
+              <span class="finding-count">{{ assessment.compliant_count }}</span>
+              <span class="finding-label">{% trans "Compliant" %}</span>
+              <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.compliant_count assessment.total_requirements 100 %}%"></span></span>
             </div>
+            {% endif %}
+            {% if assessment.improvement_opportunity_count %}
+            <div class="finding-row finding-row--warning">
+              <span class="finding-count">{{ assessment.improvement_opportunity_count }}</span>
+              <span class="finding-label">{% trans "Improvement opportunity" %}</span>
+              <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.improvement_opportunity_count assessment.total_requirements 100 %}%"></span></span>
+            </div>
+            {% endif %}
+            {% if assessment.observation_count %}
+            <div class="finding-row finding-row--warning">
+              <span class="finding-count">{{ assessment.observation_count }}</span>
+              <span class="finding-label">{% trans "Observation" context "compliance" %}</span>
+              <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.observation_count assessment.total_requirements 100 %}%"></span></span>
+            </div>
+            {% endif %}
+            {% if assessment.minor_non_conformity_count %}
+            <div class="finding-row finding-row--danger">
+              <span class="finding-count">{{ assessment.minor_non_conformity_count }}</span>
+              <span class="finding-label">{% trans "Minor non-conformity" %}</span>
+              <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.minor_non_conformity_count assessment.total_requirements 100 %}%"></span></span>
+            </div>
+            {% endif %}
+            {% if assessment.major_non_conformity_count %}
+            <div class="finding-row finding-row--danger">
+              <span class="finding-count">{{ assessment.major_non_conformity_count }}</span>
+              <span class="finding-label">{% trans "Major non-conformity" %}</span>
+              <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.major_non_conformity_count assessment.total_requirements 100 %}%"></span></span>
+            </div>
+            {% endif %}
+            {% if assessment.evaluated_count %}
+            <div class="finding-row finding-row--accent">
+              <span class="finding-count">{{ assessment.evaluated_count }}</span>
+              <span class="finding-label">{% trans "Evaluation planned" %}</span>
+              <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.evaluated_count assessment.total_requirements 100 %}%"></span></span>
+            </div>
+            {% endif %}
+            {% if assessment.not_applicable_count %}
+            <div class="finding-row finding-row--neutral">
+              <span class="finding-count">{{ assessment.not_applicable_count }}</span>
+              <span class="finding-label">{% trans "Not applicable" %}</span>
+              <span class="finding-track"><span class="finding-fill" style="width:{% widthratio assessment.not_applicable_count assessment.total_requirements 100 %}%"></span></span>
+            </div>
+            {% endif %}
           </div>
+        {% endsection_card %}
+
+        {% section_card _("Requirements") icon="list-check" flush=True %}
+          {% slot actions %}{% if is_toggleable %}
+          <button type="button" class="btn btn-sm btn-secondary"
+                  hx-post="{% url 'compliance:assessment-bulk-toggle-evaluated' assessment.pk %}"
+                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                  hx-swap="none"
+                  hx-disabled-elt="this"
+                  hx-on::after-request="htmx.trigger(document.getElementById('item-table-body'), 'refreshTable')"
+                  title="{% trans 'Select all / Deselect all for evaluation' %}"
+                  aria-label="{% trans 'Select all / Deselect all for evaluation' %}">
+            <i class="bi bi-ui-checks" aria-hidden="true"></i>
+          </button>
+          {% endif %}{% endslot %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>{% trans "Ref." %}</th>
+                  <th>{% trans "Requirement" %}</th>
+                  <th>{% trans "Status" %}</th>
+                  <th>{% trans "Level" %}</th>
+                  <th class="text-end"><span class="visually-hidden">{% trans "Actions" %}</span></th>
+                </tr>
+              </thead>
+              <tbody id="item-table-body"
+                     hx-get="{% url 'compliance:assessment-results-table-body' assessment.pk %}"
+                     hx-trigger="refreshTable"
+                     hx-swap="innerHTML">
+                {% include "compliance/assessment_results_table_body.html" %}
+              </tbody>
+            </table>
+          </div>
+        {% endsection_card %}
         </div>
       </div>
-    </div>
 
-    {# ── Results table ── #}
-    <div class="card">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead>
-            <tr>
-              <th style="width:10%">{% trans "Ref." %}</th>
-              <th style="width:35%">{% trans "Requirement" %}</th>
-              <th style="width:25%">{% trans "Status" %}</th>
-              <th style="width:20%">{% trans "Level" %}</th>
-              <th style="width:5%" class="text-end">
-                {% if is_toggleable %}
-                <button class="btn btn-sm btn-outline-secondary" style="font-size:.72rem;padding:2px 6px"
-                        hx-post="{% url 'compliance:assessment-bulk-toggle-evaluated' assessment.pk %}"
-                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                        hx-swap="none"
-                        hx-disabled-elt="this"
-                        hx-on::after-request="htmx.trigger(document.getElementById('item-table-body'), 'refreshTable')"
-                        title="{% trans 'Select all / Deselect all for evaluation' %}">
-                  <i class="bi bi-ui-checks"></i>
-                </button>
-                {% endif %}
-              </th>
-            </tr>
-          </thead>
-          <tbody id="item-table-body"
-                 hx-get="{% url 'compliance:assessment-results-table-body' assessment.pk %}"
-                 hx-trigger="refreshTable"
-                 hx-swap="innerHTML">
-            {% include "compliance/assessment_results_table_body.html" %}
-          </tbody>
-        </table>
+      <div class="tab-pane fade" id="findings_tab">
+        {% section_card _("Findings") icon="file-earmark-text" count=findings_count flush=True %}
+          {% slot actions %}{% if not is_frozen %}
+          <button type="button" class="btn btn-secondary btn-sm"
+                  hx-get="{% url 'compliance:finding-create' assessment.pk %}"
+                  hx-target="#drawer-form-content"
+                  hx-swap="innerHTML">
+            <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add finding" %}
+          </button>
+          {% endif %}{% endslot %}
+          {% if finding_type_counts %}
+          <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2 border-bottom">
+            {% for ft_key, ft_data in finding_type_counts.items %}
+            {% with n=ft_data.count|stringformat:"s" %}{% badge ft_key type="finding" label=ft_data.prefix|add:": "|add:n %}{% endwith %}
+            {% endfor %}
+          </div>
+          {% endif %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>{% trans "Ref." %}</th>
+                  <th>{% trans "Type" %}</th>
+                  <th>{% trans "Finding" %}</th>
+                  <th>{% trans "Requirements" %}</th>
+                  <th>{% trans "Assessor" %}</th>
+                  <th class="text-end"><span class="visually-hidden">{% trans "Actions" %}</span></th>
+                </tr>
+              </thead>
+              <tbody id="findings-table-body"
+                     hx-get="{% url 'compliance:assessment-findings-table-body' assessment.pk %}"
+                     hx-trigger="refreshTable from:body"
+                     hx-swap="innerHTML">
+                {% include "compliance/findings_table_body.html" %}
+              </tbody>
+            </table>
+          </div>
+        {% endsection_card %}
       </div>
     </div>
   </div>
 
-  <div class="tab-pane fade" id="findings_tab">
-    {# ── Finding type summary badges + action button ── #}
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
-      <div class="d-flex align-items-center gap-2 flex-wrap">
-        {% for ft_key, ft_data in finding_type_counts.items %}
-        <span class="badge text-bg-{% if ft_key == 'major_nc' or ft_key == 'minor_nc' %}danger{% elif ft_key == 'observation' %}warning{% elif ft_key == 'improvement' %}info{% else %}success{% endif %}" style="font-size:.78rem">
-          {{ ft_data.prefix }}: {{ ft_data.count }}
-        </span>
-        {% endfor %}
-        {% if not finding_type_counts %}
-        <span style="font-size:.82rem;color:var(--text-muted)">{% trans "No findings recorded yet." %}</span>
-        {% endif %}
-      </div>
-      {% if not is_frozen %}
-      <button class="btn btn-primary btn-sm"
-              hx-get="{% url 'compliance:finding-create' assessment.pk %}"
-              hx-target="#drawer-form-content"
-              hx-swap="innerHTML">
-        <i class="bi bi-plus-lg me-1"></i>{% trans "Add finding" %}
-      </button>
-      {% endif %}
-    </div>
-
-    {# ── Findings table with HTMX refresh ── #}
-    <div class="card">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead>
-            <tr>
-              <th style="width:10%">{% trans "Ref." %}</th>
-              <th style="width:12%">{% trans "Type" %}</th>
-              <th style="width:32%">{% trans "Finding" %}</th>
-              <th style="width:18%">{% trans "Requirements" %}</th>
-              <th style="width:12%">{% trans "Assessor" %}</th>
-              <th style="width:8%"></th>
-            </tr>
-          </thead>
-          <tbody id="findings-table-body"
-                 hx-get="{% url 'compliance:assessment-findings-table-body' assessment.pk %}"
-                 hx-trigger="refreshTable from:body"
-                 hx-swap="innerHTML">
-            {% include "compliance/findings_table_body.html" %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
+  {% record_card assessment %}
+{% enddetail_layout %}
 {% endblock %}

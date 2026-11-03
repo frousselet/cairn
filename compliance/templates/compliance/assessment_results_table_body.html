@@ -2,39 +2,39 @@
 {% for fw_group in sections_with_results %}
 {% if multi_framework %}
 {# ── Framework header row ── #}
-<tr>
-  <td colspan="5" class="fw-bold" style="font-size:.92rem;background:var(--surface-subtle);border-left:12px solid var(--accent);padding:.6rem .75rem">
-    <i class="bi bi-journal-bookmark me-1" style="color:var(--accent)"></i>
+<tr class="results-framework-row">
+  <td colspan="5">
+    <i class="bi bi-journal-bookmark me-1 text-accent" aria-hidden="true"></i>
     {{ fw_group.framework.name }}
   </td>
 </tr>
 {% endif %}
 {% for group in fw_group.sections %}
 {# ── Section header row ── #}
-<tr>
-  <td colspan="5" class="fw-semibold" style="font-size:.88rem;background:var(--surface-subtle);border-left:3px solid var(--accent){% if multi_framework %};padding-left:1.5rem{% endif %}">
+<tr class="results-section-row{% if multi_framework %} results-section-row--nested{% endif %}">
+  <td colspan="5">
     <div class="d-flex align-items-center justify-content-between">
       <div>
-        <i class="bi bi-folder2 me-1" style="color:var(--text-muted)"></i>
+        <i class="bi bi-folder2 me-1 text-muted" aria-hidden="true"></i>
         {% if group.section %}
           {{ group.section.reference }} - {{ group.section.name }}
         {% else %}
           {% trans "Uncategorized" %}
         {% endif %}
       </div>
-      <div class="d-flex align-items-center gap-2" style="font-size:.78rem;font-weight:400;color:var(--text-muted)">
-        <span>{{ group.evaluated }}/{{ group.total }}</span>
+      <div class="d-flex align-items-center gap-2 text-meta fw-normal">
+        <span class="tabular-nums">{{ group.evaluated }}/{{ group.total }}</span>
         {% with sc=group.status_counts tot=group.total %}
-        <div class="progress" style="width:80px;height:6px">
+        <div class="progress results-section-bar" role="img" aria-label="{{ group.evaluated }}/{{ group.total }}">
           {% if tot > 0 %}
           {% if sc.compliant %}<div class="progress-bar bg-success" style="width:{% widthratio sc.compliant tot 100 %}%"></div>{% endif %}
-          {% if sc.strength %}<div class="progress-bar bg-success" style="width:{% widthratio sc.strength tot 100 %}%;opacity:.7"></div>{% endif %}
-          {% if sc.evaluated %}<div class="progress-bar" style="width:{% widthratio sc.evaluated tot 100 %}%;background-color:var(--accent)"></div>{% endif %}
+          {% if sc.strength %}<div class="progress-bar bg-success is-soft" style="width:{% widthratio sc.strength tot 100 %}%"></div>{% endif %}
+          {% if sc.evaluated %}<div class="progress-bar is-accent" style="width:{% widthratio sc.evaluated tot 100 %}%"></div>{% endif %}
           {% if sc.improvement %}<div class="progress-bar bg-info" style="width:{% widthratio sc.improvement tot 100 %}%"></div>{% endif %}
           {% if sc.observation %}<div class="progress-bar bg-warning" style="width:{% widthratio sc.observation tot 100 %}%"></div>{% endif %}
-          {% if sc.minor_nc %}<div class="progress-bar bg-danger" style="width:{% widthratio sc.minor_nc tot 100 %}%;opacity:.7"></div>{% endif %}
+          {% if sc.minor_nc %}<div class="progress-bar bg-danger is-soft" style="width:{% widthratio sc.minor_nc tot 100 %}%"></div>{% endif %}
           {% if sc.major_nc %}<div class="progress-bar bg-danger" style="width:{% widthratio sc.major_nc tot 100 %}%"></div>{% endif %}
-          {% if sc.not_assessed %}<div class="progress-bar bg-secondary" style="width:{% widthratio sc.not_assessed tot 100 %}%;opacity:.4"></div>{% endif %}
+          {% if sc.not_assessed %}<div class="progress-bar bg-secondary is-faint" style="width:{% widthratio sc.not_assessed tot 100 %}%"></div>{% endif %}
           {% endif %}
         </div>
         {% endwith %}
@@ -46,88 +46,72 @@
 {% for entry in group.requirements %}
 <tr>
   <td>
-    <a href="{% url 'compliance:requirement-detail' entry.requirement.pk %}" class="cell-link" style="font-size:.85rem">
+    <a href="{% url 'compliance:requirement-detail' entry.requirement.pk %}" class="cell-link text-sm">
       {{ entry.requirement.requirement_number|default:entry.requirement.reference }}
     </a>
   </td>
-  <td style="font-size:.85rem;max-width:250px" class="text-truncate">{{ entry.requirement.name }}</td>
+  <td class="text-sm text-truncate results-name">{{ entry.requirement.name }}</td>
   <td>
     {% if not entry.requirement.is_applicable %}
-      <span class="badge text-bg-dark">{% trans "Not applicable" %}</span>
+      {% badge "not_applicable" type="compliance" %}
     {% elif entry.has_findings %}
       <div class="d-flex flex-wrap gap-1">
-        {% for ft, count in entry.finding_counts.items %}
-        <span class="badge {% if ft == 'major_nc' or ft == 'minor_nc' %}text-bg-danger{% elif ft == 'observation' %}text-bg-warning{% elif ft == 'improvement' %}text-bg-info{% else %}text-bg-success{% endif %}" style="font-size:.72rem">
-          {% if ft == 'major_nc' %}NCMAJ{% elif ft == 'minor_nc' %}NCMIN{% elif ft == 'observation' %}OBS{% elif ft == 'improvement' %}OA{% else %}STR{% endif %}: {{ count }}
-        </span>
-        {% endfor %}
+        {% for ft, count in entry.finding_counts.items %}{% with n=count|stringformat:"s" %}
+        {% if ft == 'major_nc' %}{% badge ft type="finding" label="NCMAJ: "|add:n %}{% elif ft == 'minor_nc' %}{% badge ft type="finding" label="NCMIN: "|add:n %}{% elif ft == 'observation' %}{% badge ft type="finding" label="OBS: "|add:n %}{% elif ft == 'improvement' %}{% badge ft type="finding" label="OA: "|add:n %}{% else %}{% badge ft type="finding" label="STR: "|add:n %}{% endif %}
+        {% endwith %}{% endfor %}
       </div>
-    {% elif entry.result and entry.result.compliance_status == 'compliant' %}
-      <span class="badge text-bg-success">{% trans "Compliant" %}</span>
-    {% elif entry.result and entry.result.compliance_status == 'strength' %}
-      <span class="badge text-bg-success">{% trans "Strength" context "compliance" %}</span>
-    {% elif entry.result and entry.result.compliance_status == 'evaluated' %}
-      <span class="badge" style="background-color:var(--accent);color:var(--accent-contrast)">{% trans "Evaluation planned" %}</span>
-    {% elif entry.result and entry.result.compliance_status == 'not_applicable' %}
-      <span class="badge text-bg-dark">{{ entry.result.get_compliance_status_display }}</span>
     {% elif entry.result and entry.result.compliance_status != 'not_assessed' %}
-      <span class="badge text-bg-{% if entry.result.compliance_status == 'observation' or entry.result.compliance_status == 'improvement_opportunity' or entry.result.compliance_status == 'partially_compliant' %}warning{% elif entry.result.compliance_status == 'major_non_conformity' or entry.result.compliance_status == 'minor_non_conformity' or entry.result.compliance_status == 'non_compliant' %}danger{% else %}secondary{% endif %}">
-        {{ entry.result.get_compliance_status_display }}
-      </span>
+      {% choice_badge entry.result "compliance_status" %}
     {% else %}
-      <span class="badge text-bg-secondary">{% trans "Not assessed" %}</span>
+      {% badge "not_assessed" type="compliance" %}
     {% endif %}
   </td>
-  <td style="font-size:.85rem">
+  <td>
     {% if not entry.requirement.is_applicable %}
-      <span style="color:var(--text-muted)">-</span>
+      {% dash %}
     {% elif entry.has_findings and entry.result %}
-      <div class="progress" style="width:60px;height:5px">
-        <div class="progress-bar" style="width:{{ entry.result.compliance_level }}%;background-color:var(--accent)"></div>
-      </div>
+      {% progress_bar entry.result.compliance_level scheme="score" %}
     {% elif entry.result and entry.result.compliance_status != 'not_assessed' and entry.result.compliance_status != 'evaluated' %}
-      <div class="progress" style="width:60px;height:5px">
-        <div class="progress-bar" style="width:{{ entry.result.compliance_level }}%;background-color:var(--accent)"></div>
-      </div>
+      {% progress_bar entry.result.compliance_level scheme="score" %}
     {% else %}
-      <span style="color:var(--text-muted)">-</span>
+      {% dash %}
     {% endif %}
   </td>
   <td class="text-end">
     {% if not is_toggleable %}
     {# COMPLETED / CLOSED: no action buttons #}
     {% elif not entry.requirement.is_applicable %}
-    <span class="btn btn-sm btn-outline-secondary disabled" title="{% trans 'Non-applicable requirement' %}">
-      <i class="bi bi-lock"></i>
+    <span class="btn btn-sm btn-outline-secondary disabled" title="{% trans 'Non-applicable requirement' %}" aria-label="{% trans 'Non-applicable requirement' %}">
+      <i class="bi bi-lock" aria-hidden="true"></i>
     </span>
     {% elif entry.has_findings %}
-    <span class="btn btn-sm btn-outline-secondary disabled" title="{% trans 'Status determined by findings' %}">
-      <i class="bi bi-lock"></i>
+    <span class="btn btn-sm btn-outline-secondary disabled" title="{% trans 'Status determined by findings' %}" aria-label="{% trans 'Status determined by findings' %}">
+      <i class="bi bi-lock" aria-hidden="true"></i>
     </span>
     {% elif assessment.status == 'in_progress' and entry.result and entry.result.compliance_status == 'not_assessed' %}
     {# IN_PROGRESS: NOT_ASSESSED is frozen #}
-    <span class="btn btn-sm btn-outline-secondary disabled" title="{% trans 'Not planned for evaluation' %}">
-      <i class="bi bi-circle"></i>
+    <span class="btn btn-sm btn-outline-secondary disabled" title="{% trans 'Not planned for evaluation' %}" aria-label="{% trans 'Not planned for evaluation' %}">
+      <i class="bi bi-circle" aria-hidden="true"></i>
     </span>
     {% elif assessment.status == 'in_progress' %}
     {# IN_PROGRESS: toggle EVALUATED ↔ COMPLIANT #}
-    <button class="btn btn-sm {% if entry.result and entry.result.compliance_status == 'compliant' %}btn-success{% else %}btn-outline-primary{% endif %}"
+    <button type="button" class="btn btn-sm {% if entry.result and entry.result.compliance_status == 'compliant' %}btn-success{% else %}btn-outline-primary{% endif %}"
             hx-post="{% url 'compliance:assessment-result-toggle' assessment.pk entry.requirement.pk %}"
             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
             hx-swap="none"
             hx-disabled-elt="this"
-            title="{% if entry.result and entry.result.compliance_status == 'compliant' %}{% trans 'Mark as evaluation planned' %}{% else %}{% trans 'Mark as compliant' %}{% endif %}">
-      <i class="bi {% if entry.result and entry.result.compliance_status == 'compliant' %}bi-check-circle-fill{% else %}bi-circle-half{% endif %}"></i>
+            {% if entry.result and entry.result.compliance_status == 'compliant' %}title="{% trans 'Mark as evaluation planned' %}" aria-label="{% trans 'Mark as evaluation planned' %}"{% else %}title="{% trans 'Mark as compliant' %}" aria-label="{% trans 'Mark as compliant' %}"{% endif %}>
+      <i class="bi {% if entry.result and entry.result.compliance_status == 'compliant' %}bi-check-circle-fill{% else %}bi-circle-half{% endif %}" aria-hidden="true"></i>
     </button>
     {% else %}
     {# DRAFT / PLANNED: toggle NOT_ASSESSED ↔ EVALUATED #}
-    <button class="btn btn-sm {% if entry.result and entry.result.compliance_status == 'evaluated' %}btn-outline-primary{% else %}btn-outline-secondary{% endif %}"
+    <button type="button" class="btn btn-sm {% if entry.result and entry.result.compliance_status == 'evaluated' %}btn-outline-primary{% else %}btn-outline-secondary{% endif %}"
             hx-post="{% url 'compliance:assessment-result-toggle' assessment.pk entry.requirement.pk %}"
             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
             hx-swap="none"
             hx-disabled-elt="this"
-            title="{% if entry.result and entry.result.compliance_status == 'evaluated' %}{% trans 'Remove from evaluation plan' %}{% else %}{% trans 'Mark as evaluation planned' %}{% endif %}">
-      <i class="bi {% if entry.result and entry.result.compliance_status == 'evaluated' %}bi-circle-half{% else %}bi-circle{% endif %}"></i>
+            {% if entry.result and entry.result.compliance_status == 'evaluated' %}title="{% trans 'Remove from evaluation plan' %}" aria-label="{% trans 'Remove from evaluation plan' %}"{% else %}title="{% trans 'Mark as evaluation planned' %}" aria-label="{% trans 'Mark as evaluation planned' %}"{% endif %}>
+      <i class="bi {% if entry.result and entry.result.compliance_status == 'evaluated' %}bi-circle-half{% else %}bi-circle{% endif %}" aria-hidden="true"></i>
     </button>
     {% endif %}
   </td>

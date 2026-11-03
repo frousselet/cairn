@@ -1,93 +1,46 @@
 {% extends "base.html" %}
-{% load i18n ui %}
-{% load help_tags %}
-{% load accounts_tags %}
+{% load i18n ui help_tags %}
 
 {% block title %}{{ mapping }} - Cairn{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  {% blocktrans asvar page_title with mapping=mapping %}Mapping: {{ mapping }}{% endblocktrans %}
+{% blocktrans asvar page_title with mapping=mapping %}Mapping: {{ mapping }}{% endblocktrans %}
 {% page_header page_title nav="compliance:mapping-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
+  <a href="{% url 'compliance:mapping-update' mapping.pk %}" class="btn btn-primary" hx-get="{% url 'compliance:mapping-update' mapping.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
-  <div class="d-flex gap-2">
-    <a href="{% url 'compliance:mapping-update' mapping.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  </div>
-</div>
 {% help_modal "compliance.mapping_detail" %}
 
-<div class="row">
-  {# ── Left column: main content ── #}
-  <div class="col-lg-8">
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Mapping type") mapping.get_mapping_type_display icon="arrow-left-right" %}
+    {% kpi_tile _("Coverage level") mapping.get_coverage_level_display icon="pie-chart" tone="info" %}
+  {% endslot %}
 
-    {# General info #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Source requirement" %}</div>
-          <div>
-            <a href="{% url 'compliance:requirement-detail' mapping.source_requirement.pk %}" style="text-decoration:none"><span class="ref">{{ mapping.source_requirement.reference }}</span> <span style="color:var(--accent);font-weight:500">{{ mapping.source_requirement.name }}</span></a>
-            <span style="color:var(--text-muted)">({{ mapping.source_requirement.framework.short_name|default:mapping.source_requirement.framework.name }})</span>
-          </div>
+  {% section_card _("General") icon="info-circle" %}
+    {% meta_list %}
+      {% meta_item _("Source requirement") %}
+        <div class="d-flex flex-wrap align-items-baseline column-gap-2">
+          {% url 'compliance:requirement-detail' mapping.source_requirement.pk as source_url %}{% ref_link mapping.source_requirement url=source_url %}
+          <span class="text-meta">({{ mapping.source_requirement.framework.short_name|default:mapping.source_requirement.framework.name }})</span>
         </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Target requirement" %}</div>
-          <div>
-            <a href="{% url 'compliance:requirement-detail' mapping.target_requirement.pk %}" style="text-decoration:none"><span class="ref">{{ mapping.target_requirement.reference }}</span> <span style="color:var(--accent);font-weight:500">{{ mapping.target_requirement.name }}</span></a>
-            <span style="color:var(--text-muted)">({{ mapping.target_requirement.framework.short_name|default:mapping.target_requirement.framework.name }})</span>
-          </div>
+      {% endmeta_item %}
+      {% meta_item _("Target requirement") %}
+        <div class="d-flex flex-wrap align-items-baseline column-gap-2">
+          {% url 'compliance:requirement-detail' mapping.target_requirement.pk as target_url %}{% ref_link mapping.target_requirement url=target_url %}
+          <span class="text-meta">({{ mapping.target_requirement.framework.short_name|default:mapping.target_requirement.framework.name }})</span>
         </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Mapping type" %}</div>
-          <div>{{ mapping.get_mapping_type_display }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Coverage level" %}</div>
-          <div>{{ mapping.get_coverage_level_display|default:"-" }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ mapping.description|default:"-"|safe }}</div>
-        </div>
-        <div class="mb-0">
-          <div class="text-muted small mb-1">{% trans "Justification" %}</div>
-          <div>{{ mapping.justification|default:"-"|safe }}</div>
-        </div>
-      </div>
-    </div>
+      {% endmeta_item %}
+      {% meta_item _("Mapping type") mapping.get_mapping_type_display %}
+      {% meta_item _("Coverage level") mapping.get_coverage_level_display %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-  </div>
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if mapping.description %}<div class="ov-rich">{{ mapping.description|safe }}</div>{% endif %}{% endsection_card %}
 
-  {# ── Right sidebar ── #}
-  <div class="col-lg-4">
+  {% section_card _("Justification") icon="journal-text" hide_empty=True %}{% if mapping.justification %}<div class="ov-rich">{{ mapping.justification|safe }}</div>{% endif %}{% endsection_card %}
 
-    {# People #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-          <dd class="mb-0">{% if mapping.created_by %}{% user_badge mapping.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-        </dl>
-      </div>
-    </div>
-
-    {# Dates #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
-          <dd class="mb-3">{{ mapping.created_at|date:"d/m/Y H:i" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>
-          <dd class="mb-0">{{ mapping.updated_at|date:"d/m/Y H:i" }}</dd>
-        </dl>
-      </div>
-    </div>
-
-  </div>
-</div>
+  {% record_card mapping %}
+{% enddetail_layout %}
 {% endblock %}

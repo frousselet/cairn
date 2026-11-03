@@ -6,9 +6,17 @@
 
 {% load help_tags %}
 
+{% block extra_css %}
+<style>
+  /* Framework logo thumbnail of the list rows (framework_table_body.html). */
+  .fw-logo { width: 32px; height: 32px; flex-shrink: 0; object-fit: cover; border-radius: var(--radius-xs); background: var(--color-neutral-0); border: 1px solid var(--border-light); }
+  .fw-logo--placeholder { display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); border: 0; }
+</style>
+{% endblock %}
+
 {% block content %}
 {% page_header _("Frameworks") nav="compliance:framework-list" accent="compliance" %}
-  <button type="button" class="btn btn-outline-secondary" hx-get="{% url 'compliance:framework-import' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-upload me-1" aria-hidden="true"></i>{% trans 'Import' %}</button>
+  <button type="button" class="btn btn-secondary" hx-get="{% url 'compliance:framework-import' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-upload me-1" aria-hidden="true"></i>{% trans 'Import' %}</button>
   <button type="button" class="btn btn-primary" hx-get="{% url 'compliance:framework-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New framework' %}</button>
 {% endpage_header %}
 {% help_modal "compliance.framework_list" %}

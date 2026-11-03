@@ -4,31 +4,23 @@
   <td data-col="reference"><a href="{% url 'compliance:requirement-detail' req.pk %}" class="ref">{{ req.reference }}</a></td>
   <td data-col="name">
     <span class="cell-stack">
-      <span><a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link" style="font-weight:600" title="{{ req.name }}">{{ req.name }}</a>{% if not req.is_applicable %} <span class="badge text-bg-secondary" style="font-size:.65rem">{% trans "Not applicable" %}</span>{% endif %}</span>
+      <span><a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link fw-semibold" title="{{ req.name }}">{{ req.name }}</a>{% if not req.is_applicable %} {% badge "not_applicable" type="compliance" %}{% endif %}</span>
       <span class="cell-sub">{% if req.requirement_number %}{{ req.requirement_number }} • {% endif %}{{ req.framework.short_name|default:req.framework.name }}</span>
     </span>
   </td>
   <td data-col="compliance">
     <span class="cell-stack">
-      <span>
-        {% if req.compliance_status == 'evaluated' %}
-        <span class="badge" style="background-color:var(--accent);color:var(--accent-contrast)">{{ req.get_compliance_status_display }}</span>
-        {% else %}
-        <span class="badge text-bg-{% if req.compliance_status == 'compliant' or req.compliance_status == 'strength' %}success{% elif req.compliance_status == 'observation' or req.compliance_status == 'improvement_opportunity' or req.compliance_status == 'partially_compliant' %}warning{% elif req.compliance_status == 'major_non_conformity' or req.compliance_status == 'minor_non_conformity' or req.compliance_status == 'non_compliant' %}danger{% elif req.compliance_status == 'not_applicable' %}dark{% else %}secondary{% endif %}">
-          {{ req.get_compliance_status_display }}
-        </span>
-        {% endif %}
-      </span>
-      <span class="cell-sub">{{ req.compliance_level }}%</span>
+      <span>{% choice_badge req "compliance_status" %}</span>
+      <span class="cell-sub tabular-nums">{{ req.compliance_level }}%</span>
     </span>
   </td>
   <td data-col="risks">
-    {% if req.risk_count %}<a href="{% url 'risks:risk-list' %}?linked_requirement={{ req.pk }}" class="badge text-bg-secondary text-decoration-none" title="{% trans 'Linked risks' %}">{{ req.risk_count }}</a>{% else %}<span class="cell-empty">-</span>{% endif %}
+    {% if req.risk_count %}<a href="{% url 'risks:risk-list' %}?linked_requirement={{ req.pk }}" class="link-inherit" title="{% trans 'Linked risks' %}" aria-label="{% trans 'Linked risks' %}">{% badge variant="secondary" icon="shield-exclamation" label=req.risk_count %}</a>{% else %}{% dash %}{% endif %}
   </td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=req.tags.all %}</td>
+  <td data-col="tags">{% tag_list req.tags.all %}</td>
   <td data-col="status">{% workflow_badge req %}</td>
   <td class="text-end" data-col="actions">
-    <a href="{% url 'compliance:requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    <a href="{% url 'compliance:requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}

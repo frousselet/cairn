@@ -6,11 +6,11 @@
 {% load help_tags %}
 
 {% block content %}
-{% page_header _("Import a framework") %}{% endpage_header %}
+{% page_header _("Import a framework") nav="compliance:framework-list" accent="compliance" %}{% endpage_header %}
 {% help_modal "compliance.framework_import" %}
 
 {% if form.non_field_errors %}
-<div class="alert alert-danger">
+<div class="alert alert-danger" role="alert">
   <strong>{% trans "Validation errors:" %}</strong>
   <ul class="mb-0 mt-1">
     {% for error in form.non_field_errors %}
@@ -20,54 +20,38 @@
 </div>
 {% endif %}
 
-<div class="row">
+{% url 'compliance:framework-list' as list_url %}
+<div class="row g-4">
   <div class="col-lg-8">
-    <div class="card">
-      <div class="card-body">
-        <form method="post" enctype="multipart/form-data">
-          {% csrf_token %}
-          {% for field in form %}
-          <div class="mb-3">
-            <label for="{{ field.id_for_label }}" class="form-label">
-              {{ field.label }}{% if field.field.required %} *{% endif %}
-            </label>
-            {{ field }}
-            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-            {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-          </div>
-          {% endfor %}
-          <div class="d-flex gap-2 mt-4 pt-3" style="border-top:1px solid var(--border-light)">
-            <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i>{% trans "Analyze" %}</button>
-            <a href="{% url 'compliance:framework-list' %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
-          </div>
-        </form>
+  <form method="post" enctype="multipart/form-data" class="card page-form">
+    {% csrf_token %}
+    <div class="card-body">
+      {% for field in form %}{% include "includes/form_field.html" %}{% endfor %}
+      <div class="page-form__actions d-flex gap-2">
+        <a href="{% back_url list_url %}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1" aria-hidden="true"></i>{% trans "Analyze" %}</button>
       </div>
     </div>
+  </form>
   </div>
-  <div class="col-lg-4">
-    <div class="card mb-3">
-      <div class="card-header"><i class="bi bi-info-circle me-1"></i>{% trans "Accepted formats" %}</div>
-      <div class="card-body">
-        <h6>JSON</h6>
-        <p class="small text-muted">{% trans "Tree structure with <code>framework</code>, <code>sections</code> (nested) and <code>requirements</code> in each section." %}</p>
-        <h6>Excel (.xlsx)</h6>
-        <p class="small text-muted mb-0">{% trans "A single sheet with columns: <code>type</code>, <code>reference</code>, <code>name</code>, <code>description</code>, <code>guidance</code>, <code>req_type</code>, <code>req_category</code>. Hierarchy is inferred from reference prefixes." %}</p>
+  <div class="col-lg-4 d-flex flex-column gap-4">
+    {% section_card _("Accepted formats") icon="info-circle" %}
+      {% subhead "JSON" %}
+      <p class="text-meta">{% trans "Tree structure with <code>framework</code>, <code>sections</code> (nested) and <code>requirements</code> in each section." %}</p>
+      {% subhead "Excel (.xlsx)" %}
+      <p class="text-meta mb-0">{% trans "A single sheet with columns: <code>type</code>, <code>reference</code>, <code>name</code>, <code>description</code>, <code>guidance</code>, <code>req_type</code>, <code>req_category</code>. Hierarchy is inferred from reference prefixes." %}</p>
+    {% endsection_card %}
+    {% section_card _("Sample templates") icon="download" %}
+      <p class="text-meta">{% trans "Download a pre-filled sample file to help you prepare your import." %}</p>
+      <div class="d-grid gap-2">
+        <a href="{% url 'compliance:framework-import-sample' %}?format=json" hx-boost="false" download class="btn btn-secondary btn-sm">
+          <i class="bi bi-filetype-json me-1" aria-hidden="true"></i>{% trans "JSON sample" %}
+        </a>
+        <a href="{% url 'compliance:framework-import-sample' %}?format=xlsx" hx-boost="false" download class="btn btn-secondary btn-sm">
+          <i class="bi bi-file-earmark-spreadsheet me-1" aria-hidden="true"></i>{% trans "Excel sample" %}
+        </a>
       </div>
-    </div>
-    <div class="card">
-      <div class="card-header"><i class="bi bi-download me-1"></i>{% trans "Sample templates" %}</div>
-      <div class="card-body">
-        <p class="small text-muted">{% trans "Download a pre-filled sample file to help you prepare your import." %}</p>
-        <div class="d-grid gap-2">
-          <a href="{% url 'compliance:framework-import-sample' %}?format=json" hx-boost="false" download class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-filetype-json me-1"></i>{% trans "JSON sample" %}
-          </a>
-          <a href="{% url 'compliance:framework-import-sample' %}?format=xlsx" hx-boost="false" download class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i>{% trans "Excel sample" %}
-          </a>
-        </div>
-      </div>
-    </div>
+    {% endsection_card %}
   </div>
 </div>
 {% endblock %}

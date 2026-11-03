@@ -1,106 +1,87 @@
-{% load i18n %}
+{% load i18n ui accounts_tags %}
 <div id="comments-section">
   {# ── New comment form ── #}
-  <div class="card mb-3">
-    <div class="card-body">
-      <form hx-post="{% url 'compliance:action-plan-comments' action_plan.pk %}"
-            hx-target="#comments-section" hx-swap="outerHTML">
-        {% csrf_token %}
-        <div class="mb-2">
-          <textarea name="content" class="form-control" rows="2"
-                    placeholder="{% trans 'Write a comment...' %}" required></textarea>
-        </div>
-        <button type="submit" class="btn btn-sm btn-primary">
-          <i class="bi bi-send me-1"></i>{% trans "Add a comment" %}
-        </button>
-      </form>
+  <form hx-post="{% url 'compliance:action-plan-comments' action_plan.pk %}"
+        hx-target="#comments-section" hx-swap="outerHTML" class="mb-3">
+    {% csrf_token %}
+    <div class="mb-2">
+      <textarea name="content" class="form-control" rows="2"
+                placeholder="{% trans 'Write a comment...' %}" aria-label="{% trans 'Add a comment' %}" required></textarea>
     </div>
-  </div>
+    <div class="d-flex justify-content-end">
+      <button type="submit" class="btn btn-sm btn-primary">
+        <i class="bi bi-send me-1" aria-hidden="true"></i>{% trans "Add a comment" %}
+      </button>
+    </div>
+  </form>
 
   {# ── Comment list ── #}
-  {% for comment in comments %}
-  <div class="card mb-2">
-    <div class="card-body py-2 px-3">
-      <div class="d-flex align-items-start gap-2">
-        {% if comment.author.avatar_32 %}
-        <img src="{{ comment.author.avatar_32 }}" alt="{{ comment.author.display_name }}"
-             class="rounded-circle flex-shrink-0" style="width:32px;height:32px;object-fit:cover">
-        {% else %}
-        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-             style="width:32px;height:32px;background:var(--accent);color:#fff;font-size:.75rem;font-weight:600">
-          {{ comment.author.first_name|default:comment.author.email|make_list|first|upper }}{{ comment.author.last_name|make_list|first|upper|default:"" }}
-        </div>
-        {% endif %}
-        <div class="flex-grow-1" style="min-width:0">
-          <div class="d-flex justify-content-between align-items-center">
-            <strong style="font-size:.8125rem">{{ comment.author.display_name }}</strong>
-            <small class="text-muted" style="font-size:.75rem">{{ comment.created_at|timesince }} {% trans "ago" %}</small>
+  {% if comments %}
+  <ul class="list-unstyled mb-0">
+    {% for comment in comments %}
+    <li class="border-top pt-3 mt-3">
+      <div class="d-flex justify-content-between align-items-center gap-2">
+        {% user_badge comment.author size=32 %}
+        <time class="text-meta" datetime="{{ comment.created_at|date:'c' }}" title="{{ comment.created_at|date:'DATETIME_FORMAT' }}">{{ comment.created_at|timesince }} {% trans "ago" %}</time>
+      </div>
+      <div class="ov-rich mt-2">{{ comment.content|safe }}</div>
+      <button type="button" class="btn btn-link btn-sm p-0 mt-1 text-sm toggle-reply-form"
+              data-target="reply-form-{{ comment.pk }}" aria-controls="reply-form-{{ comment.pk }}" aria-expanded="false">
+        <i class="bi bi-reply me-1" aria-hidden="true"></i>{% trans "Reply" %}
+      </button>
+      {# Reply form (hidden by default) #}
+      <div id="reply-form-{{ comment.pk }}" class="mt-2" hidden>
+        <form hx-post="{% url 'compliance:action-plan-comments' action_plan.pk %}"
+              hx-target="#comments-section" hx-swap="outerHTML">
+          {% csrf_token %}
+          <input type="hidden" name="parent" value="{{ comment.pk }}">
+          <div class="mb-2">
+            <textarea name="content" class="form-control form-control-sm" rows="2"
+                      placeholder="{% trans 'Write a reply...' %}" aria-label="{% trans 'Reply' %}" required></textarea>
           </div>
-          <div style="font-size:.875rem" class="mt-1">{{ comment.content|safe }}</div>
-          <button type="button" class="btn btn-link btn-sm p-0 mt-1 toggle-reply-form" style="font-size:.75rem"
-                  data-target="reply-form-{{ comment.pk }}">
-            <i class="bi bi-reply me-1"></i>{% trans "Reply" %}
-          </button>
-          {# Reply form (hidden by default) #}
-          <div id="reply-form-{{ comment.pk }}" class="mt-2" style="display:none">
-            <form hx-post="{% url 'compliance:action-plan-comments' action_plan.pk %}"
-                  hx-target="#comments-section" hx-swap="outerHTML">
-              {% csrf_token %}
-              <input type="hidden" name="parent" value="{{ comment.pk }}">
-              <div class="mb-2">
-                <textarea name="content" class="form-control form-control-sm" rows="2"
-                          placeholder="{% trans 'Write a reply...' %}" required></textarea>
-              </div>
-              <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-sm btn-primary">
-                  <i class="bi bi-send me-1"></i>{% trans "Reply" %}
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-danger cancel-reply"
-                        data-target="reply-form-{{ comment.pk }}">{% trans "Cancel" %}</button>
-              </div>
-            </form>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-secondary me-auto cancel-reply"
+                    data-target="reply-form-{{ comment.pk }}">{% trans "Cancel" %}</button>
+            <button type="submit" class="btn btn-sm btn-primary">
+              <i class="bi bi-send me-1" aria-hidden="true"></i>{% trans "Reply" %}
+            </button>
           </div>
-        </div>
+        </form>
       </div>
 
       {# ── Replies ── #}
-      {% for reply in comment.replies.all %}
-      <div class="d-flex align-items-start gap-2 mt-2 ms-4 pt-2 border-top">
-        {% if reply.author.avatar_32 %}
-        <img src="{{ reply.author.avatar_32 }}" alt="{{ reply.author.display_name }}"
-             class="rounded-circle flex-shrink-0" style="width:28px;height:28px;object-fit:cover">
-        {% else %}
-        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-             style="width:28px;height:28px;background:var(--accent);color:#fff;font-size:.7rem;font-weight:600;opacity:.85">
-          {{ reply.author.first_name|default:reply.author.email|make_list|first|upper }}{{ reply.author.last_name|make_list|first|upper|default:"" }}
-        </div>
-        {% endif %}
-        <div class="flex-grow-1" style="min-width:0">
-          <div class="d-flex justify-content-between align-items-center">
-            <strong style="font-size:.8125rem">{{ reply.author.display_name }}</strong>
-            <small class="text-muted" style="font-size:.75rem">{{ reply.created_at|timesince }} {% trans "ago" %}</small>
+      {% if comment.replies.all %}
+      <ul class="list-unstyled mb-0 mt-2 ms-4 ps-3 border-start">
+        {% for reply in comment.replies.all %}
+        <li class="pt-2{% if not forloop.first %} mt-2 border-top{% endif %}">
+          <div class="d-flex justify-content-between align-items-center gap-2">
+            {% user_badge reply.author size=28 %}
+            <time class="text-meta" datetime="{{ reply.created_at|date:'c' }}" title="{{ reply.created_at|date:'DATETIME_FORMAT' }}">{{ reply.created_at|timesince }} {% trans "ago" %}</time>
           </div>
-          <div style="font-size:.875rem" class="mt-1">{{ reply.content|safe }}</div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% empty %}
-  <p class="text-muted">{% trans "No comments yet." %}</p>
-  {% endfor %}
+          <div class="ov-rich mt-1">{{ reply.content|safe }}</div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  {% empty_state message=_("No comments yet.") %}
+  {% endif %}
 </div>
 
 <script>
-document.querySelectorAll('.toggle-reply-form').forEach(function(btn) {
+document.querySelectorAll('#comments-section .toggle-reply-form').forEach(function(btn) {
   btn.addEventListener('click', function() {
     var target = document.getElementById(this.dataset.target);
-    target.style.display = target.style.display === 'none' ? 'block' : 'none';
+    target.hidden = !target.hidden;
+    this.setAttribute('aria-expanded', String(!target.hidden));
   });
 });
-document.querySelectorAll('.cancel-reply').forEach(function(btn) {
+document.querySelectorAll('#comments-section .cancel-reply').forEach(function(btn) {
   btn.addEventListener('click', function() {
-    document.getElementById(this.dataset.target).style.display = 'none';
+    document.getElementById(this.dataset.target).hidden = true;
   });
 });
 </script>

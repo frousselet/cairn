@@ -4,59 +4,44 @@
 {% block title %}{% trans "Import preview" %} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header _("Import preview") %}{% endpage_header %}
+{% page_header _("Import preview") nav="compliance:framework-list" accent="compliance" %}{% endpage_header %}
 
+<div class="d-flex flex-column gap-4">
 {% if existing_framework %}
-<div class="alert alert-info">
-  <i class="bi bi-info-circle me-1"></i>
+<div class="alert alert-info mb-0">
+  <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
   {% blocktrans with ref=existing_framework.reference name=existing_framework.name new_name=framework.name %}Import into existing framework <strong>{{ ref }} - {{ name }}</strong>. The name will be replaced by <strong>{{ new_name }}</strong>.{% endblocktrans %}
 </div>
 {% endif %}
 
 {# ── Metadata card ────────────────────────────────────── #}
-<div class="card mb-3">
-  <div class="card-header" style="font-weight:600;font-size:.85rem;background:var(--surface-muted);border-bottom:1px solid var(--border-light)">{% if existing_framework %}{% trans "Imported data" %}{% else %}{% trans "Framework metadata" %}{% endif %}</div>
-  <div class="card-body">
-    <dl class="row mb-0">
-      <dt class="col-sm-3">{% trans "Reference" %}</dt>
-      <dd class="col-sm-9">{{ framework.reference }}</dd>
-      <dt class="col-sm-3">{% trans "Name" %}</dt>
-      <dd class="col-sm-9">{{ framework.name }}</dd>
-      {% if framework.short_name %}
-      <dt class="col-sm-3">{% trans "Abbreviation" %}</dt>
-      <dd class="col-sm-9">{{ framework.short_name }}</dd>
-      {% endif %}
-      {% if framework.type %}
-      <dt class="col-sm-3">{% trans "Type" %}</dt>
-      <dd class="col-sm-9">{{ framework.type }}</dd>
-      {% endif %}
-      {% if framework.category %}
-      <dt class="col-sm-3">{% trans "Category" %}</dt>
-      <dd class="col-sm-9">{{ framework.category }}</dd>
-      {% endif %}
-      {% if framework.issuing_body %}
-      <dt class="col-sm-3">{% trans "Issuing body" %}</dt>
-      <dd class="col-sm-9">{{ framework.issuing_body }}</dd>
-      {% endif %}
-      {% if framework.description %}
-      <dt class="col-sm-3">{% trans "Description" %}</dt>
-      <dd class="col-sm-9">{{ framework.description }}</dd>
-      {% endif %}
-    </dl>
-  </div>
-</div>
+{% if existing_framework %}{% trans "Imported data" as metadata_title %}{% else %}{% trans "Framework metadata" as metadata_title %}{% endif %}
+{% section_card metadata_title icon="journal-bookmark" %}
+  {% meta_list cols=2 %}
+    {% meta_item _("Reference") framework.reference %}
+    {% meta_item _("Name") framework.name %}
+    {% if framework.short_name %}{% meta_item _("Abbreviation") framework.short_name %}{% endif %}
+    {% if framework.type %}{% meta_item _("Type") framework.type %}{% endif %}
+    {% if framework.category %}{% meta_item _("Category") framework.category %}{% endif %}
+    {% if framework.issuing_body %}{% meta_item _("Issuing body") framework.issuing_body %}{% endif %}
+    {% if framework.description %}{% meta_item _("Description") framework.description wide=True %}{% endif %}
+  {% endmeta_list %}
+{% endsection_card %}
 
 {# ── Stats badges ─────────────────────────────────────── #}
-<div class="d-flex gap-2 mb-3">
-  <span class="badge" style="background:var(--accent-soft);color:var(--accent);font-size:.8125rem;padding:.4em .8em"><i class="bi bi-folder me-1"></i>{% blocktrans count count=stats.section_count %}{{ count }} section{% plural %}{{ count }} sections{% endblocktrans %}</span>
-  <span class="badge" style="background:var(--info-soft);color:var(--info);font-size:.8125rem;padding:.4em .8em"><i class="bi bi-list-check me-1"></i>{% blocktrans count count=stats.requirement_count %}{{ count }} requirement{% plural %}{{ count }} requirements{% endblocktrans %}</span>
-  <span class="badge" style="background:var(--surface-muted);color:var(--text-secondary);font-size:.8125rem;padding:.4em .8em"><i class="bi bi-diagram-3 me-1"></i>{% blocktrans with depth=stats.max_depth %}Max depth: {{ depth }}{% endblocktrans %}</span>
+<div class="d-flex flex-wrap gap-2">
+  {% blocktrans asvar section_label count count=stats.section_count %}{{ count }} section{% plural %}{{ count }} sections{% endblocktrans %}
+  {% blocktrans asvar requirement_label count count=stats.requirement_count %}{{ count }} requirement{% plural %}{{ count }} requirements{% endblocktrans %}
+  {% blocktrans asvar depth_label with depth=stats.max_depth %}Max depth: {{ depth }}{% endblocktrans %}
+  {% badge variant="accent" icon="folder" label=section_label %}
+  {% badge variant="info" icon="list-check" label=requirement_label %}
+  {% badge variant="secondary" icon="diagram-3" label=depth_label %}
 </div>
 
 {# ── Warnings ─────────────────────────────────────────── #}
 {% if warnings %}
-<div class="alert alert-warning">
-  <strong><i class="bi bi-exclamation-triangle me-1"></i>{% trans "Warnings:" %}</strong>
+<div class="alert alert-warning mb-0">
+  <strong><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% trans "Warnings:" %}</strong>
   <ul class="mb-0 mt-1">
     {% for w in warnings %}
     <li>{{ w }}</li>
@@ -66,22 +51,20 @@
 {% endif %}
 
 {# ── Tree view ────────────────────────────────────────── #}
-<div class="card mb-3">
-  <div class="card-header">{% trans "Tree view" %}</div>
-  <div class="card-body p-2">
+{% section_card _("Tree view") icon="diagram-3" %}
     <ul class="list-unstyled mb-0">
       {% for section in sections %}
       {% if not section.is_virtual %}
       <li style="padding-left: {{ section.depth|add:"-1"|floatformat:"0" }}rem;" class="py-1">
-        <i class="bi bi-folder text-warning me-1"></i>
+        <i class="bi bi-folder text-warning me-1" aria-hidden="true"></i>
         <strong>{{ section.reference }}</strong> - {{ section.name }}
         {% if section.requirements %}
         <ul class="list-unstyled ms-3 mt-1">
           {% for req in section.requirements %}
           <li class="py-1 text-muted">
-            <i class="bi bi-check-square me-1"></i>
+            <i class="bi bi-check-square me-1" aria-hidden="true"></i>
             <span class="ref">{{ req.reference }}</span> {{ req.name }}
-            {% if req.type %}<span class="badge text-bg-light">{{ req.type }}</span>{% endif %}
+            {% if req.type %}{% badge variant="secondary" label=req.type %}{% endif %}
           </li>
           {% endfor %}
         </ul>
@@ -90,12 +73,12 @@
       {% else %}
       {# Virtual section: orphan requirements #}
       <li class="py-1">
-        <i class="bi bi-exclamation-triangle text-warning me-1"></i>
+        <i class="bi bi-exclamation-triangle text-warning me-1" aria-hidden="true"></i>
         <em>{% trans "Requirements without section:" %}</em>
         <ul class="list-unstyled ms-3 mt-1">
           {% for req in section.requirements %}
           <li class="py-1 text-muted">
-            <i class="bi bi-check-square me-1"></i>
+            <i class="bi bi-check-square me-1" aria-hidden="true"></i>
             <span class="ref">{{ req.reference }}</span> {{ req.name }}
           </li>
           {% endfor %}
@@ -104,19 +87,17 @@
       {% endif %}
       {% endfor %}
     </ul>
-  </div>
-</div>
+{% endsection_card %}
 
 {# ── Actions ──────────────────────────────────────────── #}
-<div class="card">
+<form method="post" class="card page-form">
+  {% csrf_token %}
   <div class="card-body">
-    <form method="post" class="mt-0">
-      {% csrf_token %}
-      <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{% if existing_framework %}{% trans "Confirm addition" %}{% else %}{% trans "Confirm import" %}{% endif %}</button>
-        <a href="{% url 'compliance:framework-import' %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
-      </div>
-    </form>
+    <div class="page-form__actions d-flex gap-2">
+      <a href="{% url 'compliance:framework-import' %}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% if existing_framework %}{% trans "Confirm addition" %}{% else %}{% trans "Confirm import" %}{% endif %}</button>
+    </div>
   </div>
+</form>
 </div>
 {% endblock %}
