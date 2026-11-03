@@ -765,7 +765,7 @@ class RiskCriteriaListView(
         return self.filter_queryset_advanced(qs)
 
 
-class RiskCriteriaDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, DetailView):
+class RiskCriteriaDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
     model = RiskCriteria
     template_name = "risks/criteria_detail.html"
     context_object_name = "criteria"
