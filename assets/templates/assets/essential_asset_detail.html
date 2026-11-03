@@ -1,229 +1,122 @@
 {% extends "base.html" %}
-{% load i18n scope_tags ui %}
-{% load help_tags %}
-{% load accounts_tags %}
-{% load dic_tags i18n %}
+{% load i18n scope_tags ui help_tags accounts_tags dic_tags %}
 
 {% block title %}{{ asset.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header asset.name reference=asset.reference nav="assets:essential-asset-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'assets:essential-asset-update' asset.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'assets:essential-asset-update' asset.pk %}" class="btn btn-primary" hx-get="{% url 'assets:essential-asset-update' asset.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.essential_asset_detail" %}
+
 {% include "includes/lifecycle_stepper.html" %}
 
-<div class="row">
-  {# ── Left column : main content ── #}
-  <div class="col-lg-8">
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") asset.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Classification") asset.get_data_classification_display icon="lock" tone="neutral" %}
+    {% kpi_tile _("Associated support assets") dependencies|length icon="diagram-3" tone="neutral" %}
+  {% endslot %}
 
-    {# General #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
-          <div>{% grouped_scope_badges asset.scopes.all %}{% if not asset.scopes.all %}<span class="text-muted">-</span>{% endif %}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Type" %}</div>
-          <div>{{ asset.get_type_display }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Category" %}</div>
-          <div>{{ asset.get_category_display }}</div>
-        </div>
-        <div class="mb-0">
-          <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ asset.description|default:"-"|safe }}</div>
-        </div>
-      </div>
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if asset.description %}<div class="ov-rich">{{ asset.description|safe }}</div>{% endif %}{% endsection_card %}
+
+  {% section_card _("General") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Type") asset.get_type_display %}
+      {% meta_item _("Category") asset.get_category_display %}
+      {% meta_item _("Tags") %}{% tag_list asset.tags.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if asset.scopes.all %}{% grouped_scope_badges asset.scopes.all %}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("CIA valuation") icon="shield-check" %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Confidentiality") %}{{ asset.confidentiality_level|dic_badge }}{% if asset.confidentiality_justification %}<div class="text-meta mt-1">{{ asset.confidentiality_justification }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Integrity") %}{{ asset.integrity_level|dic_badge }}{% if asset.integrity_justification %}<div class="text-meta mt-1">{{ asset.integrity_justification }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Availability") %}{{ asset.availability_level|dic_badge }}{% if asset.availability_justification %}<div class="text-meta mt-1">{{ asset.availability_justification }}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+    {% subhead _("Business continuity") icon="clock-history" %}
+    {% meta_list cols=3 %}
+      {% meta_item _("MTD / Max tolerable downtime") asset.max_tolerable_downtime %}
+      {% meta_item _("RTO") asset.recovery_time_objective %}
+      {% meta_item _("RPO") asset.recovery_point_objective %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Classification") icon="lock" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Classification") asset.get_data_classification_display %}
+      {% meta_item _("Personal data") %}{% if asset.personal_data %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
+      {% if asset.personal_data and asset.personal_data_categories %}{% meta_item _("GDPR categories") asset.personal_data_categories wide=True %}{% endif %}
+      {% meta_item _("Regulatory constraints") wide=True %}{% if asset.regulatory_constraints %}<div class="ov-rich">{{ asset.regulatory_constraints|safe }}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Associated support assets") icon="diagram-3" count=dependencies|length flush=dependencies %}
+    {% if dependencies %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Support asset" %}</th><th>{% trans "Criticality" %}</th></tr></thead>
+        <tbody>
+          {% for dep in dependencies %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" class="cell-link">{{ dep.support_asset }}</a>
+                <span class="cell-sub">{{ dep.get_dependency_type_display }}</span>
+              </span>
+            </td>
+            <td>
+              <span class="cell-stack">
+                <span>{% choice_badge dep "criticality" %}</span>
+                {% if dep.is_single_point_of_failure %}<span class="cell-sub text-danger"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>{% trans "SPOF" %}</span>{% endif %}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    <div class="alert alert-warning mb-0">{% trans "No associated support asset (unsupported essential asset)." %}</div>
+    {% endif %}
+  {% endsection_card %}
 
-    {# CIA Valuation #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "CIA valuation" %}</h6>
-        <div class="row g-3 mb-3">
-          <div class="col-md-4">
-            <div class="card">
-              <div class="card-body text-center">
-                <h6>{% trans "Confidentiality" %}</h6>
-                <p class="display-6">{{ asset.confidentiality_level|dic_badge }}</p>
-                <small style="color:var(--text-muted)">{{ asset.confidentiality_justification|default:"-" }}</small>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card">
-              <div class="card-body text-center">
-                <h6>{% trans "Integrity" %}</h6>
-                <p class="display-6">{{ asset.integrity_level|dic_badge }}</p>
-                <small style="color:var(--text-muted)">{{ asset.integrity_justification|default:"-" }}</small>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card">
-              <div class="card-body text-center">
-                <h6>{% trans "Availability" %}</h6>
-                <p class="display-6">{{ asset.availability_level|dic_badge }}</p>
-                <small style="color:var(--text-muted)">{{ asset.availability_justification|default:"-" }}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <dl class="row mb-0">
-          <dt class="col-sm-4" style="color:var(--text-muted);font-size:.82rem">{% trans "MTD / Max tolerable downtime" %}</dt><dd class="col-sm-8">{{ asset.max_tolerable_downtime|default:"-" }}</dd>
-          <dt class="col-sm-4" style="color:var(--text-muted);font-size:.82rem">{% trans "RTO" %}</dt><dd class="col-sm-8">{{ asset.recovery_time_objective|default:"-" }}</dd>
-          <dt class="col-sm-4" style="color:var(--text-muted);font-size:.82rem">{% trans "RPO" %}</dt><dd class="col-sm-8">{{ asset.recovery_point_objective|default:"-" }}</dd>
-        </dl>
-      </div>
+  {% section_card _("CIA valuation history") icon="graph-up" count=valuations|length flush=valuations collapsible=True open=False %}
+    {% if valuations %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Date" %}</th><th>{% trans "C / I / A" %}</th><th>{% trans "Evaluator" %}</th><th>{% trans "Context" %}</th></tr></thead>
+        <tbody>
+          {% for val in valuations %}
+          <tr>
+            <td>{{ val.evaluation_date }}</td>
+            <td>
+              <span class="d-inline-flex gap-1 align-items-center text-nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
+                {{ val.confidentiality_level|dic_badge }}{{ val.integrity_level|dic_badge }}{{ val.availability_level|dic_badge }}
+              </span>
+            </td>
+            <td>{% if val.evaluated_by %}{% user_badge val.evaluated_by size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+            <td>{{ val.context|or_dash }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    {% empty_state message=_("No valuation recorded.") %}
+    {% endif %}
+  {% endsection_card %}
 
-    {# Classification #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-lock me-1"></i>{% trans "Classification" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Classification" %}</div>
-          <div>{{ asset.get_data_classification_display|default:"-" }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Personal data" %}</div>
-          <div>{% if asset.personal_data %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</div>
-        </div>
-        {% if asset.personal_data and asset.personal_data_categories %}
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "GDPR categories" %}</div>
-          <div>{{ asset.personal_data_categories }}</div>
-        </div>
-        {% endif %}
-        <div class="mb-0">
-          <div class="text-muted small mb-1">{% trans "Regulatory constraints" %}</div>
-          <div>{{ asset.regulatory_constraints|default:"-"|safe }}</div>
-        </div>
-      </div>
-    </div>
+  {% section_card _("People") icon="people" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Owner") %}{% if asset.owner %}{% user_badge asset.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Custodian") %}{% if asset.custodian %}{% user_badge asset.custodian size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-    {# Relations : associated support assets #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Associated support assets" %}</h6>
-        {% if dependencies %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Support asset" %}</th><th>{% trans "Criticality" %}</th></tr></thead>
-            <tbody>
-              {% for dep in dependencies %}
-              <tr>
-                <td>
-                  <span class="cell-stack">
-                    <a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" class="cell-link">{{ dep.support_asset }}</a>
-                    <span class="cell-sub">{{ dep.get_dependency_type_display }}</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="cell-stack">
-                    <span>{{ dep.get_criticality_display }}</span>
-                    {% if dep.is_single_point_of_failure %}<span class="cell-sub" style="color:var(--danger)"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>SPOF</span>{% endif %}
-                  </span>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <div class="alert alert-warning mb-0">{% trans "No associated support asset (unsupported essential asset)." %}</div>
-        {% endif %}
-      </div>
-    </div>
-
-    {# Valuations history #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-graph-up me-1"></i>{% trans "CIA valuation history" %}</h6>
-        {% if valuations %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Date" %}</th><th>C / I / A</th><th>{% trans "Evaluator" %}</th><th>{% trans "Context" %}</th></tr></thead>
-            <tbody>
-              {% for val in valuations %}
-              <tr>
-                <td>{{ val.evaluation_date }}</td>
-                <td>
-                  <span class="d-inline-flex gap-1 align-items-center" style="white-space:nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
-                    {{ val.confidentiality_level|dic_badge }}{{ val.integrity_level|dic_badge }}{{ val.availability_level|dic_badge }}
-                  </span>
-                </td>
-                <td>{% if val.evaluated_by %}{% user_badge val.evaluated_by size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
-                <td>{{ val.context|default:"-" }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p class="mb-0" style="color:var(--text-muted);font-size:.85rem">{% trans "No valuation recorded." %}</p>
-        {% endif %}
-      </div>
-    </div>
-
-  </div>
-
-  {# ── Right sidebar : metadata ── #}
-  <div class="col-lg-4">
-
-    {# Status #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
-          <dd class="mb-3">
-            <span class="badge text-bg-{% if asset.status == 'active' %}success{% elif asset.status == 'identified' %}info{% else %}secondary{% endif %}">
-              {{ asset.get_status_display }}
-            </span>
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
-          <dd class="mb-3">{{ asset.version|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in asset.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
-        </dl>
-      </div>
-    </div>
-
-    {# People #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Owner" %}</dt>
-          <dd class="mb-3">{% if asset.owner %}{% user_badge asset.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-          <dt class="text-muted small mb-1">{% trans "Custodian" %}</dt>
-          <dd class="mb-3">{% if asset.custodian %}{% user_badge asset.custodian size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-          <dd class="mb-0">{% if asset.created_by %}{% user_badge asset.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-        </dl>
-      </div>
-    </div>
-
-    {# Dates #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
-          <dd class="mb-3">{{ asset.created_at }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>
-          <dd class="mb-0">{{ asset.updated_at }}</dd>
-        </dl>
-      </div>
-    </div>
-
-  </div>
-</div>
+  {% record_card asset %}
+{% enddetail_layout %}
 {% endblock %}

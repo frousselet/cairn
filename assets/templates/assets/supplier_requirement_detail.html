@@ -1,96 +1,59 @@
 {% extends "base.html" %}
-{% load i18n ui %}
-{% load help_tags %}
-{% load accounts_tags %}
+{% load i18n ui help_tags accounts_tags %}
 
 {% block title %}{{ req.title }} - {{ supplier.name }} - Cairn{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb mb-0" style="font-size:.85rem">
-    <li class="breadcrumb-item"><a href="{% url 'assets:supplier-list' %}" style="color:var(--accent);text-decoration:none">{% trans "Suppliers" %}</a></li>
-    <li class="breadcrumb-item"><a href="{% url 'assets:supplier-detail' supplier.pk %}" style="color:var(--accent);text-decoration:none">{{ supplier.name }}</a></li>
-    <li class="breadcrumb-item active">{{ req.title|truncatewords:8 }}</li>
-  </ol>
-</nav>
-
 {% url 'assets:supplier-detail' supplier.pk as ph_parent_url %}
 {% page_header req.title nav="assets:supplier-list" parent_label=supplier.name parent_url=ph_parent_url accent="assets" %}
-  <a href="{% url 'assets:supplier-requirement-update' req.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'assets:supplier-requirement-update' req.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% help_modal "assets.supplier_requirement_detail" %}
 
-<div class="card mb-4">
-  <div class="card-body">
-    <dl class="row mb-0">
-      {% if req.requirement %}
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Linked requirement" %}</dt>
-      <dd class="col-sm-9"><span class="ref">{{ req.requirement.reference }}</span> {{ req.requirement.name }}</dd>
-      {% endif %}
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt>
-      <dd class="col-sm-9">{{ req.description|default:"-"|safe }}</dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Compliance status" %}</dt>
-      <dd class="col-sm-9">
-        <span class="badge text-bg-{% if req.compliance_status == 'compliant' %}success{% elif req.compliance_status == 'non_compliant' %}danger{% elif req.compliance_status == 'partially_compliant' %}warning{% else %}secondary{% endif %}">
-          {{ req.get_compliance_status_display }}
-        </span>
-      </dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Due date" %}</dt>
-      <dd class="col-sm-9">{{ req.due_date|default:"-" }}</dd>
-      {% if req.verified_by %}
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Last verified" %}</dt>
-      <dd class="col-sm-9">{{ req.verified_at|date:"d/m/Y H:i" }} {% trans "by" %} {% user_badge req.verified_by size=24 %}</dd>
-      {% endif %}
-    </dl>
-  </div>
-</div>
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Compliance status") req.get_compliance_status_display icon="list-check" tone=req.compliance_status|badge_variant:"compliance" %}
+    {% kpi_tile _("Due date") req.due_date icon="calendar-event" tone="neutral" %}
+    {% kpi_tile _("Reviews") reviews|length icon="clipboard-check" tone="neutral" %}
+  {% endslot %}
 
-<div class="d-flex align-items-center mb-3">
-  <h4 class="mb-0">{% trans "Review history" %}</h4>
-  <a href="{% url 'assets:supplier-requirement-review-create' req.pk %}" class="btn btn-sm btn-primary ms-auto">{% trans "Add review" %}</a>
-</div>
+  {% section_card _("Requirement") icon="list-check" %}
+    {% meta_list cols=2 %}
+      {% if req.requirement %}{% meta_item _("Linked requirement") wide=True %}<div class="ref-links">{% url 'compliance:requirement-detail' req.requirement.pk as linked_url %}{% ref_link req.requirement url=linked_url %}</div>{% endmeta_item %}{% endif %}
+      {% meta_item _("Description") wide=True %}{% if req.description %}<div class="ov-rich">{{ req.description|safe }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Compliance status") %}{% choice_badge req "compliance_status" %}{% endmeta_item %}
+      {% meta_item _("Due date") req.due_date %}
+      {% if req.verified_by %}{% meta_item _("Last verified") wide=True %}<span class="d-inline-flex flex-wrap align-items-center gap-2"><time datetime="{{ req.verified_at|date:'c' }}">{{ req.verified_at|date:"DATETIME_FORMAT" }}</time> {% trans "by" %} {% user_badge req.verified_by size=24 %}</span>{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-{% for review in reviews %}
-<div class="card mb-3">
-  <div class="card-body">
-    <div class="d-flex justify-content-between align-items-start mb-2">
-      <div>
-        <span class="badge text-bg-{% if review.result == 'compliant' %}success{% elif review.result == 'non_compliant' %}danger{% elif review.result == 'partially_compliant' %}warning{% else %}secondary{% endif %} me-2">
-          {{ review.get_result_display }}
-        </span>
-        <strong>{{ review.review_date|date:"d/m/Y" }}</strong>
-        {% if review.reviewer %}
-        <span style="color:var(--text-muted);font-size:.85rem">- {{ review.reviewer }}</span>
-        {% endif %}
+  {% section_card _("Review history") icon="clock-history" count=reviews|length %}
+    {% slot actions %}<a href="{% url 'assets:supplier-requirement-review-create' req.pk %}" class="btn btn-sm btn-secondary" hx-get="{% url 'assets:supplier-requirement-review-create' req.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add review" %}</a>{% endslot %}
+    {% for review in reviews %}
+    <div class="review-entry">
+      <div class="review-entry__head">
+        {% choice_badge review "result" type="compliance" %}
+        <strong>{{ review.review_date }}</strong>
+        {% if review.reviewer %}<span class="review-entry__by">{% user_badge review.reviewer size=22 %}</span>{% endif %}
+        <a href="{% url 'assets:supplier-requirement-review-delete' review.pk %}" class="btn btn-sm btn-outline-danger ms-auto" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}" onclick="return confirm('{% trans "Delete this review?" %}')"><i class="bi bi-trash" aria-hidden="true"></i></a>
       </div>
-      <a href="{% url 'assets:supplier-requirement-review-delete' review.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" onclick="return confirm('{% trans "Delete this review?" %}')"><i class="bi bi-trash"></i></a>
+      {% if review.comment %}
+      {% subhead _("Justification") %}
+      <div class="review-entry__body ov-rich">{{ review.comment|safe }}</div>
+      {% endif %}
+      {% if review.evidence_file %}
+      {% subhead _("Supporting evidence") %}
+      <div class="review-entry__file">
+        <a href="{{ review.evidence_file }}" download="{{ review.evidence_filename }}"><i class="bi bi-file-earmark-arrow-down me-1" aria-hidden="true"></i>{{ review.evidence_filename }}</a>
+      </div>
+      {% endif %}
+      <div class="text-meta mt-2">{% trans "Created" %} <time datetime="{{ review.created_at|date:'c' }}">{{ review.created_at|date:"DATETIME_FORMAT" }}</time></div>
     </div>
-    {% if review.comment %}
-    <div class="mb-2">
-      <strong style="font-size:.82rem;color:var(--text-muted)">{% trans "Justification" %}</strong>
-      <p class="mb-0 mt-1">{{ review.comment|safe }}</p>
-    </div>
-    {% endif %}
-    {% if review.evidence_file %}
-    <div>
-      <strong style="font-size:.82rem;color:var(--text-muted)">{% trans "Supporting evidence" %}</strong>
-      <p class="mb-0 mt-1">
-        <a href="{{ review.evidence_file }}" download="{{ review.evidence_filename }}" style="color:var(--accent);text-decoration:none">
-          <i class="bi bi-file-earmark-arrow-down"></i> {{ review.evidence_filename }}
-        </a>
-      </p>
-    </div>
-    {% endif %}
-  </div>
-  <div class="card-footer" style="font-size:.78rem;color:var(--text-muted)">
-    {% trans "Created" %} {{ review.created_at|date:"d/m/Y H:i" }}
-  </div>
-</div>
-{% empty %}
-<div class="card">
-  <div class="card-body text-center py-4" style="color:var(--text-muted)">
-    {% trans "No reviews yet. Add the first review to justify the compliance status." %}
-  </div>
-</div>
-{% endfor %}
+    {% empty %}
+    {% empty_state message=_("No reviews yet. Add the first review to justify the compliance status.") %}
+    {% endfor %}
+  {% endsection_card %}
+
+  {% record_card req %}
+{% enddetail_layout %}
 {% endblock %}

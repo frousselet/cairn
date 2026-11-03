@@ -8,11 +8,11 @@
       {% if st.description %}<span class="cell-sub" title="{{ st.description }}">{{ st.description }}</span>{% endif %}
     </span>
   </td>
-  <td data-col="requirements"><span class="badge text-bg-secondary">{{ st.req_count }}</span></td>
+  <td data-col="requirements">{% badge variant="secondary" label=st.req_count %}</td>
   <td data-col="suppliers">{% supplier_avatars st.suppliers.all %}</td>
   <td class="text-end" data-col="actions">
-    <a href="{% url 'assets:supplier-type-update' st.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-    <a href="{% url 'assets:supplier-type-delete' st.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+    <a href="{% url 'assets:supplier-type-update' st.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+    <a href="{% url 'assets:supplier-type-delete' st.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}

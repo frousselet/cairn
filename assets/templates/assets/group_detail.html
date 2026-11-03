@@ -1,116 +1,69 @@
 {% extends "base.html" %}
-{% load i18n scope_tags ui %}
-{% load help_tags %}
-{% load accounts_tags %}
+{% load i18n scope_tags ui help_tags accounts_tags workflow_tags %}
 
 {% block title %}{{ group.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header group.name reference=group.reference nav="assets:group-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'assets:group-update' group.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'assets:group-update' group.pk %}" class="btn btn-primary" hx-get="{% url 'assets:group-update' group.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.group_detail" %}
 {% include "includes/lifecycle_stepper.html" %}
 
-<div class="row">
-  {# ── Left column : main content ── #}
-  <div class="col-lg-8">
+{% with members=group.members.all %}
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") group.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Status") group.get_status_display icon="flag" tone=group.status|badge_variant:"status" %}
+    {% kpi_tile _("Members") members|length icon="collection" tone="neutral" %}
+  {% endslot %}
 
-    {# General #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
-          <div>{% grouped_scope_badges group.scopes.all %}{% if not group.scopes.all %}<span class="text-muted">-</span>{% endif %}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Type" %}</div>
-          <div>{{ group.get_type_display }}</div>
-        </div>
-        <div class="mb-0">
-          <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ group.description|default:"-"|safe }}</div>
-        </div>
-      </div>
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if group.description %}<div class="ov-rich">{{ group.description|safe }}</div>{% endif %}{% endsection_card %}
+
+  {% section_card _("General") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Type") group.get_type_display %}
+      {% meta_item _("Status") %}{% choice_badge group "status" type="status" %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if group.scopes.all %}{% grouped_scope_badges group.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") %}{% tag_list group.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Members") icon="collection" count=members|length flush=members %}
+    {% if members %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Ref." %}</th><th>{% trans "Name" %}</th><th>{% trans "Status" %}</th></tr></thead>
+        <tbody>
+          {% for member in members %}
+          <tr>
+            <td><a href="{% url 'assets:support-asset-detail' member.pk %}" class="ref">{{ member.reference }}</a></td>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'assets:support-asset-detail' member.pk %}" class="cell-link">{{ member.name }}</a>
+                <span class="cell-sub">{{ member.get_category_display }} • {{ member.get_type_display }}</span>
+              </span>
+            </td>
+            <td>{% workflow_badge member %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    {% empty_state message=_("No members in this group.") %}
+    {% endif %}
+  {% endsection_card %}
 
-    {# Members #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-collection me-1"></i>{% trans "Members" %} ({{ group.members.count }})</h6>
-        {% if group.members.all %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Ref." %}</th><th>{% trans "Name" %}</th><th>{% trans "Status" %}</th></tr></thead>
-            <tbody>
-              {% for member in group.members.all %}
-              <tr>
-                <td><a href="{% url 'assets:support-asset-detail' member.pk %}" class="ref">{{ member.reference }}</a></td>
-                <td>
-                  <span class="cell-stack">
-                    <a href="{% url 'assets:support-asset-detail' member.pk %}" class="cell-link">{{ member.name }}</a>
-                    <span class="cell-sub">{{ member.get_category_display }} • {{ member.get_type_display }}</span>
-                  </span>
-                </td>
-                <td>{{ member.get_status_display }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p class="mb-0" style="color:var(--text-muted);font-size:.85rem">{% trans "No members in this group." %}</p>
-        {% endif %}
-      </div>
-    </div>
+  {% section_card _("People") icon="people" %}
+    {% meta_list %}
+      {% meta_item _("Owner") %}{% if group.owner %}{% user_badge group.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-  </div>
-
-  {# ── Right sidebar : metadata ── #}
-  <div class="col-lg-4">
-
-    {# Status #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
-          <dd class="mb-3">{{ group.get_status_display }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in group.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
-        </dl>
-      </div>
-    </div>
-
-    {# People #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Owner" %}</dt>
-          <dd class="mb-3">{% if group.owner %}{% user_badge group.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-          <dd class="mb-0">{% if group.created_by %}{% user_badge group.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-        </dl>
-      </div>
-    </div>
-
-    {# Dates #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
-          <dd class="mb-3">{{ group.created_at }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>
-          <dd class="mb-0">{{ group.updated_at }}</dd>
-        </dl>
-      </div>
-    </div>
-
-  </div>
-</div>
+  {% record_card group %}
+{% enddetail_layout %}
+{% endwith %}
 {% endblock %}

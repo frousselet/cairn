@@ -1,15 +1,12 @@
 {% extends "base.html" %}
-{% load i18n scope_tags ui %}
-{% load help_tags %}
-{% load accounts_tags %}
-{% load dic_tags i18n %}
+{% load i18n scope_tags ui help_tags accounts_tags dic_tags %}
 
 {% block title %}{{ asset.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header asset.name reference=asset.reference nav="assets:support-asset-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'assets:support-asset-update' asset.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'assets:support-asset-update' asset.pk %}" class="btn btn-primary" hx-get="{% url 'assets:support-asset-update' asset.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.support_asset_detail" %}
@@ -20,223 +17,98 @@
 <div class="alert alert-danger">{% trans "This support asset has exceeded its end of life date" %} ({{ asset.end_of_life_date }}).</div>
 {% endif %}
 
-<div class="row">
-  {# ── Left column : main content ── #}
-  <div class="col-lg-8">
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") asset.lifecycle_label icon="signpost-split" %}
+    {% if asset.is_end_of_life %}
+    {% kpi_tile _("End of life") asset.end_of_life_date icon="calendar-x" tone="danger" %}
+    {% else %}
+    {% kpi_tile _("End of life") asset.end_of_life_date icon="calendar-x" tone="neutral" %}
+    {% endif %}
+    {% kpi_tile _("Environment") asset.get_environment_display icon="hdd-network" tone="neutral" %}
+    {% kpi_tile _("Essential assets") dependencies|length icon="gem" tone="neutral" %}
+  {% endslot %}
 
-    {# General #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
-          <div>{% grouped_scope_badges asset.scopes.all %}{% if not asset.scopes.all %}<span class="text-muted">-</span>{% endif %}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Type" %}</div>
-          <div>{{ asset.get_type_display }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Category" %}</div>
-          <div>{{ asset.get_category_display }}</div>
-        </div>
-        <div class="mb-0">
-          <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ asset.description|default:"-"|safe }}</div>
-        </div>
-      </div>
-    </div>
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if asset.description %}<div class="ov-rich">{{ asset.description|safe }}</div>{% endif %}{% endsection_card %}
 
-    {# Technical specifications #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-cpu me-1"></i>{% trans "Technical specifications" %}</h6>
-        <div class="row">
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "Location" %}</div>
-            <div>{{ asset.location|default:"-" }}</div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "Manufacturer / vendor" %}</div>
-            <div>{{ asset.manufacturer|default:"-" }}</div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "Model / version" %}</div>
-            <div>{{ asset.model_name|default:"-" }}</div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "Serial number" %}</div>
-            <div>{{ asset.serial_number|default:"-" }}</div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "Software version" %}</div>
-            <div>{{ asset.software_version|default:"-" }}</div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "IP address" %}</div>
-            <div>{{ asset.ip_address|default:"-" }}</div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "Hostname" %}</div>
-            <div>{{ asset.hostname|default:"-" }}</div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "OS" %}</div>
-            <div>{{ asset.operating_system|default:"-" }}</div>
-          </div>
-          <div class="col-sm-6 mb-3">
-            <div class="text-muted small mb-1">{% trans "Exposure" %}</div>
-            <div>{{ asset.get_exposure_level_display|default:"-" }}</div>
-          </div>
-          <div class="col-sm-6 mb-0">
-            <div class="text-muted small mb-1">{% trans "Environment" %}</div>
-            <div>{{ asset.get_environment_display|default:"-" }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
+  {% section_card _("General") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Type") asset.get_type_display %}
+      {% meta_item _("Category") asset.get_category_display %}
+      {% meta_item _("Scopes") %}{% if asset.scopes.all %}{% grouped_scope_badges asset.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") %}{% tag_list asset.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-    {# Inherited CIA #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "Inherited CIA" %}</h6>
-        <div class="row g-3 mb-3">
-          <div class="col-md-4">
-            <div class="card">
-              <div class="card-body text-center">
-                <h6>{% trans "Inherited confidentiality" %}</h6>
-                <p class="display-6">{{ asset.inherited_confidentiality|dic_badge }}</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card">
-              <div class="card-body text-center">
-                <h6>{% trans "Inherited integrity" %}</h6>
-                <p class="display-6">{{ asset.inherited_integrity|dic_badge }}</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card">
-              <div class="card-body text-center">
-                <h6>{% trans "Inherited availability" %}</h6>
-                <p class="display-6">{{ asset.inherited_availability|dic_badge }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <h6 class="mt-2">{% trans "Source (contributing essential assets)" %}</h6>
-        {% if dependencies %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Essential asset" %}</th><th>C / I / A</th></tr></thead>
-            <tbody>
-              {% for dep in dependencies %}
-              <tr>
-                <td><a href="{% url 'assets:essential-asset-detail' dep.essential_asset.pk %}" class="cell-link">{{ dep.essential_asset }}</a></td>
-                <td>
-                  <span class="d-inline-flex gap-1 align-items-center" style="white-space:nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
-                    {{ dep.essential_asset.confidentiality_level|dic_badge }}{{ dep.essential_asset.integrity_level|dic_badge }}{{ dep.essential_asset.availability_level|dic_badge }}
-                  </span>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p class="mb-0" style="color:var(--text-muted);font-size:.85rem">{% trans "No associated essential asset (orphan support asset)." %}</p>
-        {% endif %}
-      </div>
-    </div>
+  {% section_card _("Technical specifications") icon="cpu" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Location") asset.location %}
+      {% meta_item _("Manufacturer / vendor") asset.manufacturer %}
+      {% meta_item _("Model / version") asset.model_name %}
+      {% meta_item _("Serial number") asset.serial_number %}
+      {% meta_item _("Software version") asset.software_version %}
+      {% meta_item _("IP address") asset.ip_address %}
+      {% meta_item _("Hostname") asset.hostname %}
+      {% meta_item _("OS") asset.operating_system %}
+      {% meta_item _("Exposure") asset.get_exposure_level_display %}
+      {% meta_item _("Environment") asset.get_environment_display %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-    {# Relations #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Relations" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Parent support asset" %}</div>
-          <div>
-            {% if asset.parent_asset %}
-            <a href="{% url 'assets:support-asset-detail' asset.parent_asset.pk %}" class="cell-link">{{ asset.parent_asset }}</a>
-            {% else %}-{% endif %}
-          </div>
-        </div>
-        {% if children %}
-        <div class="text-muted small mb-1">{% trans "Child support assets" %}</div>
-        <ul class="list-group">
-          {% for child in children %}
-          <li class="list-group-item">
-            <a href="{% url 'assets:support-asset-detail' child.pk %}" style="text-decoration:none"><span class="ref">{{ child.reference }}</span> <span style="color:var(--accent);font-weight:500">{{ child.name }}</span></a>
-          </li>
+  {% section_card _("Inherited CIA") icon="shield-check" %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Inherited confidentiality") %}{{ asset.inherited_confidentiality|dic_badge }}{% endmeta_item %}
+      {% meta_item _("Inherited integrity") %}{{ asset.inherited_integrity|dic_badge }}{% endmeta_item %}
+      {% meta_item _("Inherited availability") %}{{ asset.inherited_availability|dic_badge }}{% endmeta_item %}
+    {% endmeta_list %}
+    {% subhead _("Source (contributing essential assets)") icon="gem" %}
+    {% if dependencies %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Essential asset" %}</th><th>{% trans "C / I / A" %}</th></tr></thead>
+        <tbody>
+          {% for dep in dependencies %}
+          <tr>
+            <td><a href="{% url 'assets:essential-asset-detail' dep.essential_asset.pk %}" class="cell-link">{{ dep.essential_asset }}</a></td>
+            <td>
+              <span class="d-inline-flex gap-1 align-items-center text-nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
+                {{ dep.essential_asset.confidentiality_level|dic_badge }}{{ dep.essential_asset.integrity_level|dic_badge }}{{ dep.essential_asset.availability_level|dic_badge }}
+              </span>
+            </td>
+          </tr>
           {% endfor %}
-        </ul>
-        {% endif %}
-      </div>
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    <p class="text-meta mb-0">{% trans "No associated essential asset (orphan support asset)." %}</p>
+    {% endif %}
+  {% endsection_card %}
 
-  </div>
+  {% section_card _("Relations") icon="diagram-3" %}
+    {% meta_list %}
+      {% meta_item _("Parent support asset") %}{% if asset.parent_asset %}<div class="ref-links">{% url 'assets:support-asset-detail' asset.parent_asset.pk as parent_url %}{% ref_link asset.parent_asset url=parent_url %}</div>{% endif %}{% endmeta_item %}
+      {% if children %}{% meta_item _("Child support assets") %}<div class="ref-links">{% for child in children %}{% url 'assets:support-asset-detail' child.pk as child_url %}{% ref_link child url=child_url %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-  {# ── Right sidebar : metadata ── #}
-  <div class="col-lg-4">
+  {% section_card _("People") icon="people" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Owner") %}{% if asset.owner %}{% user_badge asset.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Custodian") %}{% if asset.custodian %}{% user_badge asset.custodian size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-    {# Status #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
-          <dd class="mb-3">{{ asset.get_status_display }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
-          <dd class="mb-3">{{ asset.version|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in asset.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
-        </dl>
-      </div>
-    </div>
+  {% section_card _("Dates") icon="calendar3" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Acquisition date") asset.acquisition_date %}
+      {% meta_item _("End of life") %}{% if asset.end_of_life_date %}{{ asset.end_of_life_date }}{% if asset.is_end_of_life %} {% badge variant="danger" label=_("Exceeded") %}{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Warranty expiry") asset.warranty_expiry_date %}
+      {% meta_item _("Contract reference") asset.contract_reference %}
+      {% meta_item _("Next review date") asset.review_date %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-    {# People #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Owner" %}</dt>
-          <dd class="mb-3">{% if asset.owner %}{% user_badge asset.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-          <dt class="text-muted small mb-1">{% trans "Custodian" %}</dt>
-          <dd class="mb-3">{% if asset.custodian %}{% user_badge asset.custodian size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-          <dd class="mb-0">{% if asset.created_by %}{% user_badge asset.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-        </dl>
-      </div>
-    </div>
-
-    {# Dates #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Acquisition date" %}</dt>
-          <dd class="mb-3">{{ asset.acquisition_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "End of life" %}</dt>
-          <dd class="mb-3">
-            {{ asset.end_of_life_date|default:"-" }}
-            {% if asset.is_end_of_life %}<span class="badge text-bg-danger">{% trans "Exceeded" %}</span>{% endif %}
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Warranty expiry" %}</dt>
-          <dd class="mb-3">{{ asset.warranty_expiry_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Contract reference" %}</dt>
-          <dd class="mb-3">{{ asset.contract_reference|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Next review date" %}</dt>
-          <dd class="mb-3">{{ asset.review_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
-          <dd class="mb-3">{{ asset.created_at }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>
-          <dd class="mb-0">{{ asset.updated_at }}</dd>
-        </dl>
-      </div>
-    </div>
-
-  </div>
-</div>
+  {% record_card asset %}
+{% enddetail_layout %}
 {% endblock %}

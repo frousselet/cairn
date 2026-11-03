@@ -7,7 +7,7 @@
       {% if certificate.label %}{{ certificate.label }}{% else %}<span class="cell-empty">{% trans "Untitled" %}</span>{% endif %}
     </a>
     {% if certificate.has_document %}<i class="bi bi-file-earmark-pdf-fill ms-1 text-danger" title="{% trans 'PDF attached' %}" aria-hidden="true"></i>{% endif %}
-    {% if certificate.is_superseded %}<span class="badge text-bg-secondary ms-1" title="{% trans 'Renewed and replaced' %}">{% trans "Replaced" %}</span>{% elif certificate.supersedes_id %}<span class="badge text-bg-light border ms-1" title="{% trans 'Renews and replaces another certificate' %}"><i class="bi bi-arrow-repeat" aria-hidden="true"></i></span>{% endif %}
+    {% if certificate.is_superseded %}<span class="ms-1" title="{% trans 'Renewed and replaced' %}">{% badge variant="secondary" label=_("Replaced") %}</span>{% elif certificate.supersedes_id %}<span class="ms-1" title="{% trans 'Renews and replaces another certificate' %}" aria-label="{% trans 'Renews and replaces another certificate' %}">{% badge variant="secondary" icon="arrow-repeat" label="" %}</span>{% endif %}
   </td>
   <td data-col="framework">{% if certificate.framework %}<a href="{% url 'compliance:framework-detail' certificate.framework.pk %}" class="cell-link">{{ certificate.framework_label }}</a>{% else %}<span class="cell-empty">-</span>{% endif %}</td>
   <td data-col="issuer">{% if certificate.issuer %}{{ certificate.issuer }}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
@@ -15,9 +15,9 @@
     {% if certificate.expiry_date %}<span{% if certificate.is_expired %} class="text-danger fw-semibold"{% endif %}>{{ certificate.expiry_date }}</span>{% else %}<span class="cell-empty">-</span>{% endif %}
   </td>
   <td data-col="status"><span>{% workflow_badge certificate %}</span></td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=certificate.tags.all %}</td>
+  <td data-col="tags">{% tag_list certificate.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <a hx-get="{% url 'assets:certificate-update' certificate.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    <a hx-get="{% url 'assets:certificate-update' certificate.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}

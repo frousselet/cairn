@@ -125,6 +125,25 @@ ESSENTIAL_ASSET_COLUMNS = [
 ]
 
 
+class ParentPageFormMixin:
+    """Full-page form fallback whose Cancel and breadcrumb lead to the parent page.
+
+    For forms of a nested element (a supplier contact, a type requirement...),
+    whose success URL is the parent's detail page rather than a list:
+    ``core.mixins.HtmxFormMixin`` cannot infer it, so Cancel returns there and
+    the breadcrumb follows ``parent_nav``. Modal rendering is unaffected.
+    """
+
+    parent_nav = None
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        if not ctx.get("is_modal"):
+            ctx["cancel_url"] = str(self.get_success_url())
+            ctx["form_nav"] = self.parent_nav
+        return ctx
+
+
 class EssentialAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin, PredefinedFilterMixin, AdvancedFilterMixin, SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView):
     model = EssentialAsset
     template_name = "assets/essential_asset_list.html"
@@ -676,7 +695,9 @@ class DependencyListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummar
         return self.filter_queryset_advanced(qs)
 
 
-class DependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreatedByMixin, CreateView):
+class DependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
+    modal_title_create = _l("New dependency")
+    modal_title_update = _l("Edit dependency")
     model = AssetDependency
     form_class = AssetDependencyForm
     template_name = "assets/dependency_form.html"
@@ -684,7 +705,9 @@ class DependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreatedB
     success_url = reverse_lazy("assets:dependency-list")
 
 
-class DependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class DependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
+    modal_title_create = _l("New dependency")
+    modal_title_update = _l("Edit dependency")
     model = AssetDependency
     form_class = AssetDependencyForm
     template_name = "assets/dependency_form.html"
@@ -938,13 +961,14 @@ class SupplierDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView
 
 # ── Supplier Contacts ─────────────────────────────────────
 
-class SupplierContactCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreateView):
+class SupplierContactCreateView(LoginRequiredMixin, PermissionRequiredMixin, ParentPageFormMixin, HtmxFormMixin, CreateView):
     model = SupplierContact
     form_class = SupplierContactForm
     template_name = "assets/supplier_contact_form.html"
     modal_template_name = "assets/supplier_contact_form_modal.html"
     modal_title_create = _l("New contact")
     modal_title_update = _l("Edit contact")
+    parent_nav = "assets:supplier-list"
     permission_required = "assets.supplier.update"
 
     def dispatch(self, request, *args, **kwargs):
@@ -964,13 +988,14 @@ class SupplierContactCreateView(LoginRequiredMixin, PermissionRequiredMixin, Htm
         return reverse_lazy("assets:supplier-detail", kwargs={"pk": self.supplier.pk})
 
 
-class SupplierContactUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
+class SupplierContactUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ParentPageFormMixin, HtmxFormMixin, UpdateView):
     model = SupplierContact
     form_class = SupplierContactForm
     template_name = "assets/supplier_contact_form.html"
     modal_template_name = "assets/supplier_contact_form_modal.html"
     modal_title_create = _l("New contact")
     modal_title_update = _l("Edit contact")
+    parent_nav = "assets:supplier-list"
     permission_required = "assets.supplier.update"
 
     def get_context_data(self, **kwargs):
@@ -1002,13 +1027,14 @@ class SupplierContactDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Del
 
 # ── Supplier Sub-processors (sous-délégataires) ───────────
 
-class SupplierSubprocessorCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
+class SupplierSubprocessorCreateView(LoginRequiredMixin, PermissionRequiredMixin, ParentPageFormMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = SupplierSubprocessor
     form_class = SupplierSubprocessorForm
     template_name = "assets/supplier_subprocessor_form.html"
     modal_template_name = "assets/supplier_subprocessor_form_modal.html"
     modal_title_create = _l("New sub-processor")
     modal_title_update = _l("Edit sub-processor")
+    parent_nav = "assets:supplier-list"
     permission_required = "assets.supplier.update"
 
     def dispatch(self, request, *args, **kwargs):
@@ -1033,13 +1059,14 @@ class SupplierSubprocessorCreateView(LoginRequiredMixin, PermissionRequiredMixin
         return reverse_lazy("assets:supplier-detail", kwargs={"pk": self.supplier.pk})
 
 
-class SupplierSubprocessorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
+class SupplierSubprocessorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ParentPageFormMixin, HtmxFormMixin, UpdateView):
     model = SupplierSubprocessor
     form_class = SupplierSubprocessorForm
     template_name = "assets/supplier_subprocessor_form.html"
     modal_template_name = "assets/supplier_subprocessor_form_modal.html"
     modal_title_create = _l("New sub-processor")
     modal_title_update = _l("Edit sub-processor")
+    parent_nav = "assets:supplier-list"
     permission_required = "assets.supplier.update"
 
     def get_form_kwargs(self):
@@ -1177,7 +1204,10 @@ class SupplierTypeDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delete
 
 # ── Supplier Type Requirements ───────────────────────────
 
-class SupplierTypeRequirementCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class SupplierTypeRequirementCreateView(LoginRequiredMixin, PermissionRequiredMixin, ParentPageFormMixin, HtmxFormMixin, CreateView):
+    modal_title_create = _l("Add requirement")
+    modal_title_update = _l("Edit requirement")
+    parent_nav = "assets:supplier-type-list"
     model = SupplierTypeRequirement
     form_class = SupplierTypeRequirementForm
     template_name = "assets/supplier_type_requirement_form.html"
@@ -1200,7 +1230,10 @@ class SupplierTypeRequirementCreateView(LoginRequiredMixin, PermissionRequiredMi
         return reverse_lazy("assets:supplier-type-detail", kwargs={"pk": self.supplier_type.pk})
 
 
-class SupplierTypeRequirementUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class SupplierTypeRequirementUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ParentPageFormMixin, HtmxFormMixin, UpdateView):
+    modal_title_create = _l("Add requirement")
+    modal_title_update = _l("Edit requirement")
+    parent_nav = "assets:supplier-type-list"
     model = SupplierTypeRequirement
     form_class = SupplierTypeRequirementForm
     template_name = "assets/supplier_type_requirement_form.html"
@@ -1226,7 +1259,10 @@ class SupplierTypeRequirementDeleteView(LoginRequiredMixin, PermissionRequiredMi
 
 # ── Supplier Requirements ─────────────────────────────────
 
-class SupplierRequirementCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class SupplierRequirementCreateView(LoginRequiredMixin, PermissionRequiredMixin, ParentPageFormMixin, HtmxFormMixin, CreateView):
+    modal_title_create = _l("Add requirement")
+    modal_title_update = _l("Edit requirement")
+    parent_nav = "assets:supplier-list"
     model = SupplierRequirement
     form_class = SupplierRequirementForm
     template_name = "assets/supplier_requirement_form.html"
@@ -1249,7 +1285,10 @@ class SupplierRequirementCreateView(LoginRequiredMixin, PermissionRequiredMixin,
         return reverse_lazy("assets:supplier-detail", kwargs={"pk": self.supplier.pk})
 
 
-class SupplierRequirementUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class SupplierRequirementUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ParentPageFormMixin, HtmxFormMixin, UpdateView):
+    modal_title_create = _l("Add requirement")
+    modal_title_update = _l("Edit requirement")
+    parent_nav = "assets:supplier-list"
     model = SupplierRequirement
     form_class = SupplierRequirementForm
     template_name = "assets/supplier_requirement_form.html"
@@ -1288,7 +1327,7 @@ class SupplierRequirementDetailView(LoginRequiredMixin, PermissionRequiredMixin,
 
 # ── Supplier Requirement Reviews ──────────────────────────
 
-class _RequirementReviewModalBase(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreateView):
+class _RequirementReviewModalBase(LoginRequiredMixin, PermissionRequiredMixin, ParentPageFormMixin, HtmxFormMixin, CreateView):
     """Shared base : evaluate a requirement in the HTMX drawer modal.
 
     Subclasses resolve the target ``SupplierRequirement`` (an existing one, or
@@ -1303,6 +1342,7 @@ class _RequirementReviewModalBase(LoginRequiredMixin, PermissionRequiredMixin, H
     modal_template_name = "assets/supplier_requirement_review_form_modal.html"
     modal_title_create = _l("Evaluate requirement")
     modal_title_update = _l("Evaluate requirement")
+    parent_nav = "assets:supplier-list"
     permission_required = "assets.supplier.create"
 
     def get_requirement(self):
@@ -1435,7 +1475,9 @@ class SupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, Li
         return self.filter_queryset_advanced(qs)
 
 
-class SupplierDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreatedByMixin, CreateView):
+class SupplierDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
+    modal_title_create = _l("New supplier dependency")
+    modal_title_update = _l("Edit supplier dependency")
     model = SupplierDependency
     form_class = SupplierDependencyForm
     template_name = "assets/supplier_dependency_form.html"
@@ -1443,7 +1485,9 @@ class SupplierDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, 
     success_url = reverse_lazy("assets:supplier-dependency-list")
 
 
-class SupplierDependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class SupplierDependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
+    modal_title_create = _l("New supplier dependency")
+    modal_title_update = _l("Edit supplier dependency")
     model = SupplierDependency
     form_class = SupplierDependencyForm
     template_name = "assets/supplier_dependency_form.html"
@@ -1627,7 +1671,9 @@ class SiteAssetDependencyListView(LoginRequiredMixin, PermissionRequiredMixin, L
         return self.filter_queryset_advanced(qs)
 
 
-class SiteAssetDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreatedByMixin, CreateView):
+class SiteAssetDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
+    modal_title_create = _l("New site–asset dependency")
+    modal_title_update = _l("Edit site–asset dependency")
     model = SiteAssetDependency
     form_class = SiteAssetDependencyForm
     template_name = "assets/site_asset_dependency_form.html"
@@ -1635,7 +1681,9 @@ class SiteAssetDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin,
     success_url = reverse_lazy("assets:site-asset-dependency-list")
 
 
-class SiteAssetDependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class SiteAssetDependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
+    modal_title_create = _l("New site–asset dependency")
+    modal_title_update = _l("Edit site–asset dependency")
     model = SiteAssetDependency
     form_class = SiteAssetDependencyForm
     permission_required = "assets.dependency.update"
@@ -1695,7 +1743,9 @@ class SiteSupplierDependencyListView(LoginRequiredMixin, PermissionRequiredMixin
         return self.filter_queryset_advanced(qs)
 
 
-class SiteSupplierDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreatedByMixin, CreateView):
+class SiteSupplierDependencyCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
+    modal_title_create = _l("New site–supplier dependency")
+    modal_title_update = _l("Edit site–supplier dependency")
     model = SiteSupplierDependency
     form_class = SiteSupplierDependencyForm
     template_name = "assets/site_supplier_dependency_form.html"
@@ -1703,7 +1753,9 @@ class SiteSupplierDependencyCreateView(LoginRequiredMixin, PermissionRequiredMix
     success_url = reverse_lazy("assets:site-supplier-dependency-list")
 
 
-class SiteSupplierDependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class SiteSupplierDependencyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
+    modal_title_create = _l("New site–supplier dependency")
+    modal_title_update = _l("Edit site–supplier dependency")
     model = SiteSupplierDependency
     form_class = SiteSupplierDependencyForm
     template_name = "assets/site_supplier_dependency_form.html"

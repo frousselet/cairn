@@ -18647,3 +18647,9 @@ msgstr "Le contenu secondaire se replie dans un élément details natif."
 #, python-format
 msgid "Delete <strong>%(object)s</strong>?"
 msgstr "Supprimer <strong>%(object)s</strong> ?"
+
+msgid "C / I / A"
+msgstr "C / I / D"
+
+msgid "EOL"
+msgstr "Fin de vie"

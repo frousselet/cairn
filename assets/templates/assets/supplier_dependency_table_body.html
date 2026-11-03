@@ -8,7 +8,7 @@
       <span class="cell-sub d-inline-flex align-items-center">
         <i class="bi bi-arrow-return-right me-1" aria-hidden="true"></i>
         {% if dep.supplier.logo %}<img src="{{ dep.supplier.logo_16|default:dep.supplier.logo }}" alt="" style="width:16px;height:16px;object-fit:cover;border-radius:3px;flex-shrink:0" class="me-1">{% endif %}
-        <a href="{% url 'assets:supplier-detail' dep.supplier.pk %}" style="color:inherit;text-decoration:none">{{ dep.supplier.name }}</a>
+        <a href="{% url 'assets:supplier-detail' dep.supplier.pk %}" class="link-inherit">{{ dep.supplier.name }}</a>
       </span>
     </span>
   </td>
@@ -20,14 +20,14 @@
   </td>
   <td data-col="criticality">
     <span class="cell-stack">
-      <span><span class="badge text-bg-{% if dep.criticality == 'critical' %}danger{% elif dep.criticality == 'high' %}warning{% elif dep.criticality == 'medium' %}info{% else %}secondary{% endif %}">{{ dep.get_criticality_display }}</span></span>
-      {% if dep.is_single_point_of_failure %}<span class="cell-sub" style="color:var(--danger)"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>SPOF</span>{% endif %}
+      <span>{% choice_badge dep "criticality" %}</span>
+      {% if dep.is_single_point_of_failure %}<span class="cell-sub text-danger"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>{% trans "SPOF" %}</span>{% endif %}
     </span>
   </td>
   <td data-col="status">{% workflow_badge dep %}</td>
   <td class="text-end" data-col="actions">
-    <a href="{% url 'assets:supplier-dependency-update' dep.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-    <a href="{% url 'assets:supplier-dependency-delete' dep.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+    <a href="{% url 'assets:supplier-dependency-update' dep.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+    <a href="{% url 'assets:supplier-dependency-delete' dep.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}
