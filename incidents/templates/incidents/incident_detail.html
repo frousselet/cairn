@@ -6,7 +6,10 @@
 {% load help_tags %}
 
 {% comment %}
-The incident file : a strict 2-column card layout, no nav-tabs.
+The incident file : the detail anatomy (`detail_layout`), every section an open
+card, no nav-tabs. An incident file is an audit record : the chronology, the
+obligations, the evidence and its custody must all stay one scroll away, never
+behind a tab.
 
 Everything the page needs is assembled by `IncidentDetailView.get_context_data`
 in one query budget, so nothing here walks a relation that was not prefetched.
@@ -18,9 +21,9 @@ the response actions. Their container carries the `hx-get` and listens for the
 the matching partial views render on their own.
 
 Deadlines are the point of this page. An obligation past its due date is
-surfaced three times : in the banner above the fold, on its own row with a
-`table-danger` highlight, and as a red countdown badge. Semantic colour is
-reserved for that status reading, never for identity.
+surfaced four times : in the banner above the fold, in the rail, on its own row
+with a `table-danger` highlight, and as a red countdown badge. Semantic colour
+is reserved for that status reading, never for identity.
 {% endcomment %}
 
 {% block title %}{{ incident.reference }} - {{ incident.title }} - Cairn{% endblock %}
@@ -34,7 +37,7 @@ reserved for that status reading, never for identity.
 {% page_header incident.title reference=incident.reference nav="incidents:incident-list" accent="incidents" %}
   {% include "includes/history_trigger.html" %}
   {% if can_update_incident %}
-  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:incident-update' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</button>
+  <a href="{% url 'incidents:incident-update' incident.pk %}" class="btn btn-primary" hx-get="{% url 'incidents:incident-update' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
   {% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
@@ -51,7 +54,7 @@ reserved for that status reading, never for identity.
 
 {% comment %}
 ── The deadline board ────────────────────────────────────────────
-Above the fold and above the two columns, because a statutory deadline that has
+Above the fold and above the cards, because a statutory deadline that has
 passed outranks everything else the page has to say.
 {% endcomment %}
 {% if overdue_notifications %}
@@ -59,7 +62,7 @@ passed outranks everything else the page has to say.
   <div class="d-flex align-items-center gap-2 mb-2">
     <i class="bi bi-exclamation-octagon-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
     <strong>{% trans "Overdue obligations" %}</strong>
-    <span class="badge text-bg-danger">{{ overdue_notifications|length }}</span>
+    {% badge variant="danger" label=overdue_notifications|length %}
   </div>
   <div class="d-flex flex-column gap-2">
     {% for n in overdue_notifications %}
@@ -67,7 +70,7 @@ passed outranks everything else the page has to say.
       <a href="{% url 'incidents:notification-detail' n.pk %}" class="fw-semibold text-reset">{{ n.reference }}</a>
       <span>{{ n.get_regime_display }}</span>
       <span class="opacity-75">{{ n.recipient_display }}</span>
-      <span class="badge text-bg-danger ms-auto text-nowrap"><i class="bi bi-hourglass-bottom me-1" aria-hidden="true"></i>{% trans "Overdue" %} : {{ n.due_at|timesince }}</span>
+      <span class="ms-auto text-nowrap">{% with since=n.due_at|timesince %}{% trans "Overdue" as overdue_label %}{% badge variant="danger" icon="hourglass-bottom" label=overdue_label|add:" : "|add:since %}{% endwith %}</span>
     </div>
     {% endfor %}
   </div>
@@ -79,7 +82,7 @@ passed outranks everything else the page has to say.
   <div class="d-flex align-items-center gap-2 mb-2">
     <i class="bi bi-question-octagon-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
     <strong>{% trans "To decide" %}</strong>
-    <span class="badge text-bg-warning">{{ undecided_notifications|length }}</span>
+    {% badge variant="warning" label=undecided_notifications|length %}
   </div>
   <div class="d-flex flex-column gap-2">
     {% for n in undecided_notifications %}
@@ -93,607 +96,426 @@ passed outranks everything else the page has to say.
       `timeuntil` on a past instant reads "0 minutes", which is a countdown that
       lies. Lateness is the banner above's job.
       {% endcomment %}
-      {% if n.due_at %}
-        <span class="badge text-bg-warning ms-auto text-nowrap" title="{% trans 'Due at' %}"><i class="bi bi-alarm me-1" aria-hidden="true"></i>{{ n.due_at|date:"SHORT_DATETIME_FORMAT" }}</span>
-      {% elif n.no_fixed_deadline %}
-        <span class="badge text-bg-secondary ms-auto text-nowrap">{% trans "No statutory deadline" %}</span>
-      {% else %}
-        <span class="badge text-bg-secondary ms-auto text-nowrap">{% trans "Deadline pending" %}</span>
-      {% endif %}
+      <span class="ms-auto text-nowrap" title="{% trans 'Due at' %}">
+        {% if n.due_at %}
+          {% badge variant="warning" icon="alarm" label=n.due_at|date:"SHORT_DATETIME_FORMAT" %}
+        {% elif n.no_fixed_deadline %}
+          {% badge variant="secondary" label=_("No statutory deadline") %}
+        {% else %}
+          {% badge variant="secondary" label=_("Deadline pending") %}
+        {% endif %}
+      </span>
     </div>
     {% endfor %}
   </div>
 </div>
 {% endif %}
 
-<div class="row g-4">
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") incident.lifecycle_label icon="signpost-split" %}
+    {% trans "Severity" context "incident" as severity_label %}
+    {% kpi_tile severity_label incident.get_severity_display icon="exclamation-diamond" tone=incident.severity|badge_variant:"level" %}
+    {% if overdue_notifications %}
+    {% kpi_tile _("Overdue obligations") overdue_notifications|length icon="hourglass-bottom" tone="danger" %}
+    {% else %}
+    {% kpi_tile _("Overdue obligations") 0 icon="hourglass-bottom" tone="neutral" %}
+    {% endif %}
+    {% kpi_tile _("TLP") incident.get_tlp_display icon="eye-slash" tone=incident.tlp|badge_variant:"tlp" %}
+  {% endslot %}
 
-  {# ══ LEFT COLUMN ══════════════════════════════════════════ #}
-  <div class="col-lg-8">
-
-    {# ── 1. Summary and impact ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-file-text me-1" aria-hidden="true"></i>{% trans "Summary" %}</h6>
-        {% if incident.summary %}
-        <p class="mb-3">{{ incident.summary }}</p>
-        {% endif %}
-        {% if incident.description %}
-        <div class="mb-3" style="font-size:.875rem">{{ incident.description|linebreaks }}</div>
-        {% endif %}
-        {% if not incident.summary and not incident.description %}
-        <p class="text-muted mb-3">{% trans "No summary recorded yet." %}</p>
-        {% endif %}
-
-        <div class="detail-subhead"><span><i class="bi bi-activity me-1" aria-hidden="true"></i>{% trans "Impact" %}</span></div>
-        <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
-          {% comment %}
-          The three dimensions are always all three, impacted or not : a missing
-          badge reads as "not assessed", and the flags are booleans with no such
-          state. The tick or dash carries the answer, so no sentence fragment is
-          glued onto a translated word.
-          {% endcomment %}
-          <span class="badge text-bg-{% if incident.confidentiality_impact %}danger{% else %}secondary{% endif %}"><i class="bi bi-{% if incident.confidentiality_impact %}check-lg{% else %}dash{% endif %} me-1" aria-hidden="true"></i>{% trans "Confidentiality" %}</span>
-          <span class="badge text-bg-{% if incident.integrity_impact %}danger{% else %}secondary{% endif %}"><i class="bi bi-{% if incident.integrity_impact %}check-lg{% else %}dash{% endif %} me-1" aria-hidden="true"></i>{% trans "Integrity" %}</span>
-          <span class="badge text-bg-{% if incident.availability_impact %}danger{% else %}secondary{% endif %}"><i class="bi bi-{% if incident.availability_impact %}check-lg{% else %}dash{% endif %} me-1" aria-hidden="true"></i>{% trans "Availability" %}</span>
-          {% if incident.personal_data_involved %}<span class="badge text-bg-warning"><i class="bi bi-person-vcard me-1" aria-hidden="true"></i>{% trans "Personal data involved" %}</span>{% endif %}
-        </div>
-
-        <dl class="row mb-0" style="font-size:.875rem">
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Category" %}</dt>
-          <dd class="col-sm-8">{{ incident.get_category_display|default:"-" }}</dd>
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Detection source" context "incident" %}</dt>
-          <dd class="col-sm-8">{{ incident.get_detection_source_display|default:"-" }}</dd>
-          {% if incident.outage_duration %}
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Outage duration" %}</dt>
-          <dd class="col-sm-8">{{ incident.outage_duration }}</dd>
-          {% endif %}
-          {% if incident.estimated_cost is not None %}
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Estimated cost" %}</dt>
-          <dd class="col-sm-8">{{ incident.estimated_cost|floatformat:2 }} €</dd>
-          {% endif %}
-          {% if incident.is_significant is not None %}
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Significant incident" %}</dt>
-          <dd class="col-sm-8">{% if incident.is_significant %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if incident.significance_justification %}<div class="text-muted">{{ incident.significance_justification }}</div>{% endif %}</dd>
-          {% endif %}
-          {% if incident.suspected_malicious is not None %}
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Suspected malicious act" %}</dt>
-          <dd class="col-sm-8">{% if incident.suspected_malicious %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
-          {% endif %}
-          {% if incident.cross_border_impact is not None %}
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Cross-border impact" %}</dt>
-          <dd class="col-sm-8">{% if incident.cross_border_impact %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
-          {% endif %}
-        </dl>
-      </div>
-    </div>
-
-    {# ── 2. Affected perimeter ── #}
-    {% if incident.affected_essential_assets.all or incident.affected_support_assets.all or incident.affected_suppliers.all or incident.affected_sites.all or incident.affected_activities.all %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>{% trans "Affected assets" %}</h6>
-
-        {% if incident.affected_essential_assets.all %}
-        <div class="detail-subhead"><span><i class="bi bi-gem me-1" aria-hidden="true"></i>{% trans "Essential assets" %}</span></div>
-        {% comment %}
-        The declared recovery objectives are printed verbatim beside the measured
-        outage. No comparison and no breach claim is made : RTO and MTD are free
-        text here, and only the person reading the two can say whether one was
-        missed.
-        {% endcomment %}
-        <div class="table-responsive mt-2 mb-3">
-          <table class="table table-sm table-hover mb-0" style="font-size:.85rem">
-            <thead>
-              <tr>
-                <th>{% trans "Essential assets" %}</th>
-                <th>{% trans "RTO" %}</th>
-                <th>{% trans "MTD / Max tolerable downtime" %}</th>
-                <th>{% trans "Outage duration" %}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for asset in incident.affected_essential_assets.all %}
-              <tr>
-                <td>
-                  <span class="cell-stack">
-                    <a href="{% url 'assets:essential-asset-detail' asset.pk %}" class="cell-link">{{ asset.name }}</a>
-                    <span class="cell-sub">{{ asset.reference }}</span>
-                  </span>
-                </td>
-                <td>{{ asset.recovery_time_objective|default:"-" }}</td>
-                <td>{{ asset.max_tolerable_downtime|default:"-" }}</td>
-                <td>{% if incident.outage_duration %}{{ incident.outage_duration }}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% endif %}
-
-        {% if incident.affected_support_assets.all %}
-        <div class="detail-subhead"><span><i class="bi bi-hdd-network me-1" aria-hidden="true"></i>{% trans "Support assets" %}</span></div>
-        <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
-          {% for asset in incident.affected_support_assets.all %}
-          <a href="{% url 'assets:support-asset-detail' asset.pk %}" class="party-chip">{{ asset.name }}</a>
-          {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if incident.affected_suppliers.all %}
-        <div class="detail-subhead"><span><i class="bi bi-truck me-1" aria-hidden="true"></i>{% trans "Suppliers" %}</span></div>
-        <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
-          {% for supplier in incident.affected_suppliers.all %}
-          <a href="{% url 'assets:supplier-detail' supplier.pk %}" class="party-chip">{{ supplier.name }}</a>
-          {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if incident.affected_sites.all %}
-        <div class="detail-subhead"><span><i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{% trans "Sites" %}</span></div>
-        <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
-          {% for site in incident.affected_sites.all %}
-          <a href="{% url 'assets:site-detail' site.pk %}" class="party-chip">{{ site.name }}</a>
-          {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if incident.affected_activities.all %}
-        <div class="detail-subhead"><span><i class="bi bi-briefcase me-1" aria-hidden="true"></i>{% trans "Activities" %}</span></div>
-        <div class="d-flex flex-wrap gap-2 mt-2">
-          {% for activity in incident.affected_activities.all %}
-          <a href="{% url 'context:activity-detail' activity.pk %}" class="party-chip">{{ activity.name }}</a>
-          {% endfor %}
-        </div>
-        {% endif %}
-      </div>
-    </div>
+  {# ── Summary and impact ── #}
+  {% section_card _("Summary") icon="file-text" %}
+    {% if incident.summary %}<p class="mb-3">{{ incident.summary }}</p>{% endif %}
+    {% if incident.description %}<div class="mb-3 text-sm">{{ incident.description|linebreaks }}</div>{% endif %}
+    {% if not incident.summary and not incident.description %}
+    {% empty_state message=_("No summary recorded yet.") %}
     {% endif %}
 
-    {# ── 3. Chronology : append-only, re-rendered over HTMX ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead detail-subhead--action">
-          <span><i class="bi bi-clock-history me-1" aria-hidden="true"></i>{% trans "Chronology" %} <span class="badge text-bg-secondary">{{ timeline_entries|length }}</span></span>
-          {% if can_update_incident %}
-          <button type="button" class="btn btn-sm btn-outline-secondary" hx-get="{% url 'incidents:timeline-entry-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Add a chronology entry' %}" aria-label="{% trans 'Add a chronology entry' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
-          {% endif %}
-        </div>
-        <div id="timeline-entries"
-             class="mt-3"
-             hx-get="{% url 'incidents:timeline-entries' incident.pk %}"
-             hx-trigger="formSaved from:body"
-             hx-swap="innerHTML">
-          {% include "incidents/_timeline_entries.html" %}
-        </div>
-      </div>
+    {% subhead _("Impact") icon="activity" %}
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      {% comment %}
+      The three dimensions are always all three, impacted or not : a missing
+      badge reads as "not assessed", and the flags are booleans with no such
+      state. The tick or dash carries the answer, so no sentence fragment is
+      glued onto a translated word.
+      {% endcomment %}
+      {% if incident.confidentiality_impact %}{% badge variant="danger" icon="check-lg" label=_("Confidentiality") %}{% else %}{% badge variant="secondary" icon="dash" label=_("Confidentiality") %}{% endif %}
+      {% if incident.integrity_impact %}{% badge variant="danger" icon="check-lg" label=_("Integrity") %}{% else %}{% badge variant="secondary" icon="dash" label=_("Integrity") %}{% endif %}
+      {% if incident.availability_impact %}{% badge variant="danger" icon="check-lg" label=_("Availability") %}{% else %}{% badge variant="secondary" icon="dash" label=_("Availability") %}{% endif %}
+      {% if incident.personal_data_involved %}{% badge variant="warning" icon="person-vcard" label=_("Personal data involved") %}{% endif %}
     </div>
 
-    {# ── 4. Response actions ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead detail-subhead--action">
-          <span><i class="bi bi-list-check me-1" aria-hidden="true"></i>{% trans "Response actions" %} <span class="badge text-bg-secondary">{{ response_actions|length }}</span></span>
-          {% if can_update_incident %}
-          <button type="button" class="btn btn-sm btn-outline-secondary" hx-get="{% url 'incidents:response-action-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Add a response action' %}" aria-label="{% trans 'Add a response action' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
-          {% endif %}
-        </div>
-        <div id="response-actions"
-             class="mt-3"
-             hx-get="{% url 'incidents:response-actions' incident.pk %}"
-             hx-trigger="formSaved from:body"
-             hx-swap="innerHTML">
-          {% include "incidents/_response_actions.html" %}
-        </div>
-      </div>
-    </div>
-
-    {# ── 5. Evidence register (A.5.28) ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead detail-subhead--action">
-          <span><i class="bi bi-safe me-1" aria-hidden="true"></i>{% trans "Evidence" %} <span class="badge text-bg-secondary">{{ evidence_items|length }}</span></span>
-          {% if can_create_evidence %}
-          <button type="button" class="btn btn-sm btn-outline-secondary" hx-get="{% url 'incidents:evidence-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Register an evidence item' %}" aria-label="{% trans 'Register an evidence item' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
-          {% endif %}
-        </div>
-        {% if evidence_items %}
-        <div class="table-responsive mt-2">
-          <table class="table table-hover mb-0" style="font-size:.875rem">
-            <thead>
-              <tr>
-                <th>{% trans "Evidence" %}</th>
-                <th>{% trans "Type" %}</th>
-                <th>{% trans "Integrity" %}</th>
-                <th class="text-nowrap">{% trans "Handling" %}</th>
-                <th>{% trans "Status" %}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for e in evidence_items %}
-              <tr{% if e.last_integrity_check_ok is not None and not e.last_integrity_check_ok %} class="table-danger"{% endif %}>
-                <td>
-                  <span class="cell-stack">
-                    <a href="{% url 'incidents:evidence-detail' e.pk %}" class="cell-link">{{ e.title }}</a>
-                    <span class="cell-sub">{{ e.reference }}{% if e.collected_at %} · {{ e.collected_at|date:"SHORT_DATETIME_FORMAT" }}{% endif %}</span>
-                  </span>
-                </td>
-                <td>{{ e.get_evidence_type_display }}</td>
-                <td>
-                  {% comment %}
-                  Three states and never two : a match, a break, and an artefact
-                  that could not be read at all. The last is a claim about the
-                  storage, so it is a warning and never a danger.
-                  {% endcomment %}
-                  {% if e.last_integrity_check_ok %}
-                    <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{% trans "Verified" %}</span>
-                  {% elif e.last_integrity_check_ok is not None %}
-                    <span class="badge text-bg-danger"><i class="bi bi-exclamation-octagon me-1" aria-hidden="true"></i>{% trans "Integrity broken" %}</span>
-                  {% elif e.last_integrity_check_at %}
-                    <span class="badge text-bg-warning"><i class="bi bi-question-circle me-1" aria-hidden="true"></i>{% trans "Not verifiable" %}</span>
-                  {% else %}
-                    <span class="cell-empty">-</span>
-                  {% endif %}
-                </td>
-                <td class="text-nowrap">
-                  <span class="badge text-bg-{% if e.tlp == 'red' %}danger{% elif e.tlp == 'amber' or e.tlp == 'amber_strict' %}warning{% elif e.tlp == 'green' %}success{% else %}secondary{% endif %}">{{ e.get_tlp_display }}</span>
-                  {% if e.legal_hold %}<span class="badge text-bg-dark" title="{% trans 'Legal hold' %}"><i class="bi bi-lock-fill" aria-hidden="true"></i><span class="visually-hidden">{% trans "Legal hold" %}</span></span>{% endif %}
-                  {% if e.retention_until %}<span class="cell-sub d-block">{% trans "Retention until" %} {{ e.retention_until }}</span>{% endif %}
-                </td>
-                <td>{% workflow_badge e %}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p class="text-muted small mb-0 mt-2">{% trans "No evidence item registered for this incident." %}</p>
-        {% endif %}
-      </div>
-    </div>
-
-    {# ── 6. Regulatory obligations : the deadline register ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead detail-subhead--action">
-          <span><i class="bi bi-send-check me-1" aria-hidden="true"></i>{% trans "Regulatory obligations" %} <span class="badge text-bg-secondary">{{ notifications|length }}</span></span>
-          {% if can_create_notification %}
-          <button type="button" class="btn btn-sm btn-outline-secondary" hx-get="{% url 'incidents:notification-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Add a notification obligation' %}" aria-label="{% trans 'Add a notification obligation' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
-          {% endif %}
-        </div>
-        {% if notifications %}
-        <div class="table-responsive mt-2">
-          <table class="table table-hover mb-0" style="font-size:.875rem">
-            <thead>
-              <tr>
-                <th>{% trans "Regime" %}</th>
-                <th>{% trans "Recipient" %}</th>
-                <th>{% trans "Decision" context "incident" %}</th>
-                <th class="text-nowrap">{% trans "Due at" %}</th>
-                <th class="text-nowrap">{% trans "Time left" %}</th>
-                <th>{% trans "Status" %}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for n in notifications %}
-              <tr{% if n.is_overdue %} class="table-danger"{% elif n.is_undecided %} class="table-warning"{% endif %}>
-                <td>
-                  <span class="cell-stack">
-                    <a href="{% url 'incidents:notification-detail' n.pk %}" class="cell-link">{{ n.get_regime_display }}</a>
-                    <span class="cell-sub">{{ n.reference }}{% if n.obligation_reference %} · {{ n.obligation_reference }}{% endif %}</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="cell-stack">
-                    <span>{{ n.recipient_display }}</span>
-                    {% if n.recipient_display != n.get_recipient_kind_display %}<span class="cell-sub">{{ n.get_recipient_kind_display }}</span>{% endif %}
-                  </span>
-                </td>
-                <td>
-                  <span class="badge text-bg-{% if n.is_undecided %}warning{% elif n.decision == 'required' %}primary{% else %}secondary{% endif %}">{{ n.get_decision_display }}</span>
-                </td>
-                <td class="text-nowrap">
-                  {% if n.due_at %}
-                    {{ n.due_at|date:"SHORT_DATETIME_FORMAT" }}
-                  {% elif n.no_fixed_deadline %}
-                    {# A fact about the law : nothing is owed by a date. #}
-                    <span class="cell-empty">{% trans "No statutory deadline" %}</span>
-                  {% else %}
-                    {# A clock that exists and has not started. Never merged
-                       with the line above : that is how a real deadline
-                       disappears from a page. #}
-                    <span class="badge text-bg-secondary">{% trans "Deadline pending" %}</span>
-                  {% endif %}
-                </td>
-                <td class="text-nowrap">
-                  {% comment %}
-                  The one reading the page is here for : late, running, or
-                  discharged. Ordered so the worst answer is given first.
-                  {% endcomment %}
-                  {% if n.is_overdue %}
-                    <span class="badge text-bg-danger"><i class="bi bi-hourglass-bottom me-1" aria-hidden="true"></i>{% trans "Overdue" %} : {{ n.due_at|timesince }}</span>
-                  {% elif n.sent_at and n.late_by %}
-                    <span class="badge text-bg-danger"><i class="bi bi-exclamation-diamond me-1" aria-hidden="true"></i>{% trans "Filed late" %}{% if n.due_at %} : {{ n.due_at|timesince:n.sent_at }}{% endif %}</span>
-                  {% elif n.sent_at %}
-                    <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{{ n.sent_at|date:"SHORT_DATETIME_FORMAT" }}</span>
-                  {% elif n.due_at and not n.is_terminal_state %}
-                    <span class="badge text-bg-warning"><i class="bi bi-alarm me-1" aria-hidden="true"></i>{{ n.due_at|timeuntil }}</span>
-                  {% else %}
-                    <span class="cell-empty">-</span>
-                  {% endif %}
-                </td>
-                <td>{% workflow_badge n %}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p class="text-muted small mb-0 mt-2">{% trans "No notification obligation instantiated yet. Triage instantiates the obligations the catalogue matches." %}</p>
-        {% endif %}
-        {% if incident.no_obligation_justification %}
-        <div class="mt-3 p-3" style="border:1px solid var(--border-light);border-radius:12px;background:var(--surface-subtle)">
-          <div class="text-muted small fw-semibold mb-1">{% trans "No-obligation justification" %}</div>
-          <div style="font-size:.875rem">{{ incident.no_obligation_justification|linebreaks }}</div>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-
-    {# ── 7. Personal data qualification (GDPR) ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead detail-subhead--action">
-          <span><i class="bi bi-person-vcard me-1" aria-hidden="true"></i>{% trans "Personal data qualification" %}</span>
-          {% if breach %}
-          <a href="{% url 'incidents:breach-detail' breach.pk %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'Open the personal data qualification' %}" aria-label="{% trans 'Open the personal data qualification' %}"><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-          {% elif can_create_notification %}
-          <button type="button" class="btn btn-sm btn-outline-secondary" hx-get="{% url 'incidents:breach-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Open the personal data qualification' %}" aria-label="{% trans 'Open the personal data qualification' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
-          {% endif %}
-        </div>
-        {% if breach %}
-        <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
-          {% workflow_badge breach %}
-          <span class="badge text-bg-secondary">{{ breach.get_controller_role_display }}</span>
-          {% if breach.high_risk_to_rights %}<span class="badge text-bg-danger">{% trans "High risk to rights and freedoms" %}</span>{% endif %}
-          {% if breach.special_categories %}<span class="badge text-bg-warning">{% trans "Special categories" %}</span>{% endif %}
-          {% if breach.cross_border_eu %}<span class="badge text-bg-info">{% trans "Cross-border processing" %}</span>{% endif %}
-        </div>
-        <dl class="row mb-0" style="font-size:.875rem">
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Lead supervisory authority" %}</dt>
-          <dd class="col-sm-8">{{ breach.lead_authority_name|default:"-" }}</dd>
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Data subjects" %}</dt>
-          <dd class="col-sm-8">{% if breach.approximate_data_subjects is not None %}{{ breach.approximate_data_subjects }}{% if breach.volume_is_estimate %} <span class="badge text-bg-secondary">{% trans "Estimate" %}</span>{% endif %}{% else %}-{% endif %}</dd>
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Qualified by" %}</dt>
-          <dd class="col-sm-8">{% if breach.qualified_by %}{% user_badge breach.qualified_by size=24 %}{% if breach.qualified_at %} <span class="text-muted">{{ breach.qualified_at|date:"SHORT_DATETIME_FORMAT" }}</span>{% endif %}{% else %}-{% endif %}</dd>
-        </dl>
-        {% if not breach.has_article_33_3_content %}
-        <p class="text-muted small mb-0 mt-3"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% trans "The Art. 33(3) minimum content is not complete yet." %}</p>
-        {% endif %}
-        {% elif incident.personal_data_involved %}
-        <p class="text-muted small mb-0 mt-2"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% trans "Personal data is flagged as involved and no qualification has been opened yet." %}</p>
-        {% else %}
-        <p class="text-muted small mb-0 mt-2">{% trans "No personal data qualification opened for this incident." %}</p>
-        {% endif %}
-      </div>
-    </div>
-
-    {# ── 8. Post-incident review (A.5.27) ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead detail-subhead--action">
-          <span><i class="bi bi-lightbulb me-1" aria-hidden="true"></i>{% trans "Post-incident review" %}</span>
-          {% if review %}
-          <a href="{% url 'incidents:review-detail' review.pk %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'Open the post-incident review' %}" aria-label="{% trans 'Open the post-incident review' %}"><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-          {% elif can_create_review %}
-          <button type="button" class="btn btn-sm btn-outline-secondary" hx-get="{% url 'incidents:review-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Open the post-incident review' %}" aria-label="{% trans 'Open the post-incident review' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
-          {% endif %}
-        </div>
-        {% if review %}
-        <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
-          {% workflow_badge review %}
-          {% if review.is_effectiveness_overdue %}<span class="badge text-bg-danger"><i class="bi bi-calendar-x me-1" aria-hidden="true"></i>{% trans "Review overdue" %}</span>{% endif %}
-        </div>
-        <dl class="row mb-0" style="font-size:.875rem">
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Facilitator" %}</dt>
-          <dd class="col-sm-8">{% if review.facilitator %}{% user_badge review.facilitator size=24 %}{% else %}-{% endif %}</dd>
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Scheduled date" %}</dt>
-          <dd class="col-sm-8">{{ review.scheduled_date|default:"-" }}</dd>
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Held at" %}</dt>
-          <dd class="col-sm-8">{% if review.held_at %}{{ review.held_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}-{% endif %}</dd>
-          {% if review.root_cause %}
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Root cause" %}</dt>
-          <dd class="col-sm-8">{{ review.root_cause|truncatechars:220 }}</dd>
-          {% endif %}
-          {% if review.effectiveness_verdict %}
-          <dt class="col-sm-4 text-muted fw-normal">{% trans "Effectiveness verdict" %}</dt>
-          <dd class="col-sm-8">{{ review.get_effectiveness_verdict_display }}</dd>
-          {% endif %}
-        </dl>
-        {% if review.raised_findings.all or review.corrective_action_plans.all %}
-        <div class="d-flex flex-wrap gap-2 mt-3">
-          {% for finding in review.raised_findings.all %}
-          <a href="{% url 'compliance:finding-detail' finding.pk %}" class="party-chip">{{ finding.reference }}</a>
-          {% endfor %}
-          {% for plan in review.corrective_action_plans.all %}
-          <a href="{% url 'compliance:action-plan-detail' plan.pk %}" class="party-chip">{{ plan.reference }}</a>
-          {% endfor %}
-        </div>
-        {% endif %}
-        {% else %}
-        <p class="text-muted small mb-0 mt-2">{% trans "No post-incident review opened yet. It is the mandatory gate before closure." %}</p>
-        {% endif %}
-      </div>
-    </div>
-
-    {# ── 9. Linked registers, collapsed by default ── #}
-    {% if incident.threats.all or incident.exploited_vulnerabilities.all or incident.realised_risks.all or incident.linked_requirements.all or incident.source_events.all or incident.child_incidents.all %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <details>
-          <summary class="text-muted small fw-semibold" style="cursor:pointer">
-            <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>{% trans "Linked registers" %}
-          </summary>
-          <div class="mt-3">
-            {% if incident.threats.all %}
-            <div class="detail-subhead"><span><i class="bi bi-bug me-1" aria-hidden="true"></i>{% trans "Threats" %}</span></div>
-            <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
-              {% for threat in incident.threats.all %}<a href="{% url 'risks:threat-detail' threat.pk %}" class="party-chip">{{ threat.name }}</a>{% endfor %}
-            </div>
-            {% endif %}
-            {% if incident.exploited_vulnerabilities.all %}
-            <div class="detail-subhead"><span><i class="bi bi-shield-exclamation me-1" aria-hidden="true"></i>{% trans "Vulnerabilities" %}</span></div>
-            <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
-              {% for vuln in incident.exploited_vulnerabilities.all %}<a href="{% url 'risks:vulnerability-detail' vuln.pk %}" class="party-chip">{{ vuln.name }}</a>{% endfor %}
-            </div>
-            {% endif %}
-            {% if incident.realised_risks.all %}
-            <div class="detail-subhead"><span><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% trans "Risks" %}</span></div>
-            <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
-              {% for risk in incident.realised_risks.all %}<a href="{% url 'risks:risk-detail' risk.pk %}" class="party-chip">{{ risk.reference }} {{ risk.name|truncatechars:50 }}</a>{% endfor %}
-            </div>
-            {% endif %}
-            {% if incident.linked_requirements.all %}
-            <div class="detail-subhead"><span><i class="bi bi-clipboard-check me-1" aria-hidden="true"></i>{% trans "Requirements" %}</span></div>
-            <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
-              {% for req in incident.linked_requirements.all %}<a href="{% url 'compliance:requirement-detail' req.pk %}" class="party-chip">{{ req.reference }}</a>{% endfor %}
-            </div>
-            {% endif %}
-            {% if incident.source_events.all %}
-            <div class="detail-subhead"><span><i class="bi bi-broadcast me-1" aria-hidden="true"></i>{% trans "Source security events" %}</span></div>
-            <div class="d-flex flex-wrap gap-2 mt-2 mb-3">
-              {% for event in incident.source_events.all %}<a href="{% url 'incidents:event-detail' event.pk %}" class="party-chip">{{ event.reference }} {{ event.title|truncatechars:50 }}</a>{% endfor %}
-            </div>
-            {% endif %}
-            {% if incident.child_incidents.all %}
-            <div class="detail-subhead"><span><i class="bi bi-diagram-2 me-1" aria-hidden="true"></i>{% trans "Child incidents" %}</span></div>
-            <div class="d-flex flex-wrap gap-2 mt-2">
-              {% for child in incident.child_incidents.all %}<a href="{% url 'incidents:incident-detail' child.pk %}" class="party-chip">{{ child.reference }} {{ child.title|truncatechars:50 }}</a>{% endfor %}
-            </div>
-            {% endif %}
-          </div>
-        </details>
-      </div>
-    </div>
-    {% endif %}
-
-  </div>
-
-  {# ══ RIGHT COLUMN : sticky metadata sidebar ═══════════════ #}
-  <div class="col-lg-4">
-    <div class="position-sticky" style="top:1rem">
-
-      {# ── Status ── #}
-      <div class="card mb-4">
-        <div class="card-body">
-          <dl class="mb-0">
-            <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
-            <dd class="mb-3">{% workflow_badge incident %}</dd>
-            <dt class="text-muted small mb-1">{% trans "Severity" context "incident" %}</dt>
-            <dd class="mb-3">
-              <span class="badge text-bg-{% if incident.severity == 'critical' %}danger{% elif incident.severity == 'high' %}warning{% elif incident.severity == 'medium' %}info{% else %}secondary{% endif %}">{{ incident.get_severity_display }}</span>
-              {% if incident.initial_severity and incident.initial_severity != incident.severity %}
-              <span class="cell-sub d-block mt-1">
-                {% trans "At triage" %} : {{ incident.get_initial_severity_display }}
-                {% if incident.severity_raised_since_triage %}<i class="bi bi-arrow-up-right text-danger ms-1" aria-hidden="true"></i>{% endif %}
-              </span>
-              {% endif %}
-            </dd>
-            <dt class="text-muted small mb-1">{% trans "TLP" %}</dt>
-            <dd class="mb-3">
-              <span class="badge text-bg-{% if incident.tlp == 'red' %}danger{% elif incident.tlp == 'amber' or incident.tlp == 'amber_strict' %}warning{% elif incident.tlp == 'green' %}success{% else %}secondary{% endif %}">{{ incident.get_tlp_display }}</span>
-            </dd>
-            <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-            <dd class="mb-0">{% for tag in incident.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}</dd>
-          </dl>
-        </div>
-      </div>
-
-      {# ── People ── #}
-      <div class="card mb-4">
-        <div class="card-body">
-          <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1" aria-hidden="true"></i>{% trans "People" %}</h6>
-          <div class="mb-3">
-            <div class="text-muted small mb-1">{% trans "Incident manager" %}</div>
-            {% if incident.incident_manager %}{% user_badge incident.incident_manager size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
-          </div>
-          <div>
-            <div class="text-muted small mb-1">{% trans "Reporter" %}</div>
-            {% if incident.reporter %}{% user_badge incident.reporter size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
-          </div>
-        </div>
-      </div>
-
-      {# ── Handling context ── #}
-      {% if incident.response_plan or incident.parent_incident or incident.origin_supplier %}
-      <div class="card mb-4">
-        <div class="card-body">
-          <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-journal-text me-1" aria-hidden="true"></i>{% trans "Handling" %}</h6>
-          <dl class="mb-0" style="font-size:.875rem">
-            {% if incident.response_plan %}
-            <dt class="text-muted small mb-1">{% trans "Response plan" %}</dt>
-            <dd class="mb-3"><a href="{% url 'incidents:response-plan-detail' incident.response_plan.pk %}" class="cell-link">{{ incident.response_plan.name }}</a></dd>
-            {% endif %}
-            {% if incident.parent_incident %}
-            <dt class="text-muted small mb-1">{% trans "Parent incident" %}</dt>
-            <dd class="mb-3"><a href="{% url 'incidents:incident-detail' incident.parent_incident.pk %}" class="cell-link">{{ incident.parent_incident.reference }}</a></dd>
-            {% endif %}
-            {% if incident.origin_supplier %}
-            <dt class="text-muted small mb-1">{% trans "Origin supplier" %}</dt>
-            <dd class="mb-0"><a href="{% url 'assets:supplier-detail' incident.origin_supplier.pk %}" class="cell-link">{{ incident.origin_supplier.name }}</a></dd>
-            {% endif %}
-          </dl>
-        </div>
-      </div>
+    {% trans "Detection source" context "incident" as detection_source_label %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Category") incident.get_category_display %}
+      {% meta_item detection_source_label incident.get_detection_source_display %}
+      {% if incident.outage_duration %}{% meta_item _("Outage duration") incident.outage_duration %}{% endif %}
+      {% if incident.estimated_cost is not None %}{% meta_item _("Estimated cost") %}{{ incident.estimated_cost|floatformat:2 }} €{% endmeta_item %}{% endif %}
+      {% if incident.is_significant is not None %}
+      {% meta_item _("Significant incident") %}{% if incident.is_significant %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if incident.significance_justification %}<div class="text-meta">{{ incident.significance_justification }}</div>{% endif %}{% endmeta_item %}
       {% endif %}
+      {% if incident.suspected_malicious is not None %}
+      {% meta_item _("Suspected malicious act") %}{% if incident.suspected_malicious %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
+      {% endif %}
+      {% if incident.cross_border_impact is not None %}
+      {% meta_item _("Cross-border impact") %}{% if incident.cross_border_impact %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
+      {% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-      {# ── The two clocks, and the phase stamps ── #}
-      <div class="card mb-4">
-        <div class="card-body">
-          <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-clock me-1" aria-hidden="true"></i>{% trans "Timeline" %}</h6>
-          <dl class="mb-0" style="font-size:.85rem">
-            <dt class="text-muted small mb-1">{% trans "Occurred at" %}</dt>
-            <dd class="mb-2">{% if incident.occurred_at %}{{ incident.occurred_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-            <dt class="text-muted small mb-1">{% trans "Detected at" %}</dt>
-            <dd class="mb-2">{{ incident.detected_at|date:"SHORT_DATETIME_FORMAT" }}</dd>
-            <dt class="text-muted small mb-1">{% trans "Awareness at" %}</dt>
-            <dd class="mb-2">
-              {% if incident.awareness_at %}{{ incident.awareness_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}<span class="text-muted">-</span>{% endif %}
-              {% if incident.awareness_gap %}<span class="cell-sub d-block">{% trans "Gap after detection" %} : {{ incident.awareness_gap }}</span>{% endif %}
-            </dd>
-            <dt class="text-muted small mb-1">{% trans "Declared at" %}</dt>
-            <dd class="mb-2">{% if incident.declared_at %}{{ incident.declared_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-            <dt class="text-muted small mb-1">{% trans "Triaged at" %}</dt>
-            <dd class="mb-2">{% if incident.triaged_at %}{{ incident.triaged_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-            <dt class="text-muted small mb-1">{% trans "Contained at" %}</dt>
-            <dd class="mb-2">
-              {% if incident.contained_at %}{{ incident.contained_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}<span class="text-muted">-</span>{% endif %}
-              {% if incident.time_to_contain %}<span class="cell-sub d-block">{% trans "Time to contain" %} : {{ incident.time_to_contain }}</span>{% endif %}
-            </dd>
-            <dt class="text-muted small mb-1">{% trans "Eradicated at" %}</dt>
-            <dd class="mb-2">{% if incident.eradicated_at %}{{ incident.eradicated_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-            <dt class="text-muted small mb-1">{% trans "Recovered at" %}</dt>
-            <dd class="mb-2">
-              {% if incident.recovered_at %}{{ incident.recovered_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}<span class="text-muted">-</span>{% endif %}
-              {% if incident.time_to_recover %}<span class="cell-sub d-block">{% trans "Time to recover" %} : {{ incident.time_to_recover }}</span>{% endif %}
-            </dd>
-            <dt class="text-muted small mb-1">{% trans "Closed at" %}</dt>
-            <dd class="mb-0">{% if incident.closed_at %}{{ incident.closed_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-          </dl>
+  {# ── People and handling context ── #}
+  {% section_card _("Handling") icon="journal-text" %}
+    {% meta_list cols=2 %}
+      {% meta_item severity_label %}
+        {% choice_badge incident "severity" %}
+        {% if incident.initial_severity and incident.initial_severity != incident.severity %}
+        <div class="text-meta mt-1">
+          {% trans "At triage" %} : {{ incident.get_initial_severity_display }}
+          {% if incident.severity_raised_since_triage %}<i class="bi bi-arrow-up-right text-danger ms-1" aria-hidden="true"></i>{% endif %}
         </div>
-      </div>
+        {% endif %}
+      {% endmeta_item %}
+      {% meta_item _("TLP") %}{% choice_badge incident "tlp" type="tlp" %}{% endmeta_item %}
+      {% meta_item _("Incident manager") %}{% if incident.incident_manager %}{% user_badge incident.incident_manager size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Reporter") %}{% if incident.reporter %}{% user_badge incident.reporter size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% if incident.response_plan %}
+      {% meta_item _("Response plan") %}<div class="ref-links">{% url 'incidents:response-plan-detail' incident.response_plan.pk as plan_url %}{% ref_link incident.response_plan url=plan_url %}</div>{% endmeta_item %}
+      {% endif %}
+      {% if incident.parent_incident %}
+      {% meta_item _("Parent incident") %}<div class="ref-links">{% url 'incidents:incident-detail' incident.parent_incident.pk as parent_url %}{% ref_link incident.parent_incident url=parent_url label=incident.parent_incident.title|truncatechars:60 %}</div>{% endmeta_item %}
+      {% endif %}
+      {% if incident.origin_supplier %}
+      {% meta_item _("Origin supplier") %}<div class="ref-links">{% url 'assets:supplier-detail' incident.origin_supplier.pk as supplier_url %}{% ref_link incident.origin_supplier url=supplier_url %}</div>{% endmeta_item %}
+      {% endif %}
+      {% meta_item _("Tags") %}{% tag_list incident.tags.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") wide=True %}{% if incident.scopes.all %}{% grouped_scope_badges incident.scopes.all %}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-      {# ── Scopes ── #}
-      <div class="card mb-4">
-        <div class="card-body">
-          <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-bounding-box me-1" aria-hidden="true"></i>{% trans "Scopes" %}</h6>
-          {% grouped_scope_badges incident.scopes.all %}
-          {% if not incident.scopes.all %}<span class="text-muted">-</span>{% endif %}
-        </div>
-      </div>
+  {# ── The two clocks, and the phase stamps ── #}
+  {% section_card _("Timeline") icon="clock" %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Occurred at") incident.occurred_at|date:"SHORT_DATETIME_FORMAT" %}
+      {% meta_item _("Detected at") incident.detected_at|date:"SHORT_DATETIME_FORMAT" %}
+      {% meta_item _("Awareness at") %}{% if incident.awareness_at %}{{ incident.awareness_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}{% dash %}{% endif %}{% if incident.awareness_gap %}<div class="text-meta">{% trans "Gap after detection" %} : {{ incident.awareness_gap }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Declared at") incident.declared_at|date:"SHORT_DATETIME_FORMAT" %}
+      {% meta_item _("Triaged at") incident.triaged_at|date:"SHORT_DATETIME_FORMAT" %}
+      {% meta_item _("Contained at") %}{% if incident.contained_at %}{{ incident.contained_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}{% dash %}{% endif %}{% if incident.time_to_contain %}<div class="text-meta">{% trans "Time to contain" %} : {{ incident.time_to_contain }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Eradicated at") incident.eradicated_at|date:"SHORT_DATETIME_FORMAT" %}
+      {% meta_item _("Recovered at") %}{% if incident.recovered_at %}{{ incident.recovered_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}{% dash %}{% endif %}{% if incident.time_to_recover %}<div class="text-meta">{% trans "Time to recover" %} : {{ incident.time_to_recover }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Closed at") incident.closed_at|date:"SHORT_DATETIME_FORMAT" %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
+  {# ── Affected perimeter ── #}
+  {% if incident.affected_essential_assets.all or incident.affected_support_assets.all or incident.affected_suppliers.all or incident.affected_sites.all or incident.affected_activities.all %}
+  {% section_card _("Affected assets") icon="diagram-3" %}
+    {% if incident.affected_essential_assets.all %}
+    {% subhead _("Essential assets") icon="gem" %}
+    {% comment %}
+    The declared recovery objectives are printed verbatim beside the measured
+    outage. No comparison and no breach claim is made : RTO and MTD are free
+    text here, and only the person reading the two can say whether one was
+    missed.
+    {% endcomment %}
+    <div class="table-responsive mb-3">
+      <table class="table table-sm table-hover mb-0 text-sm">
+        <thead>
+          <tr>
+            <th>{% trans "Essential assets" %}</th>
+            <th>{% trans "RTO" %}</th>
+            <th>{% trans "MTD / Max tolerable downtime" %}</th>
+            <th>{% trans "Outage duration" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for asset in incident.affected_essential_assets.all %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'assets:essential-asset-detail' asset.pk %}" class="cell-link">{{ asset.name }}</a>
+                <span class="cell-sub">{{ asset.reference }}</span>
+              </span>
+            </td>
+            <td>{{ asset.recovery_time_objective|or_dash }}</td>
+            <td>{{ asset.max_tolerable_downtime|or_dash }}</td>
+            <td>{{ incident.outage_duration|or_dash }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-  </div>
-</div>
+    {% endif %}
+    {% meta_list cols=2 %}
+      {% if incident.affected_support_assets.all %}
+      {% meta_item _("Support assets") %}<div class="ref-links">{% for asset in incident.affected_support_assets.all %}{% url 'assets:support-asset-detail' asset.pk as asset_url %}{% ref_link asset url=asset_url %}{% endfor %}</div>{% endmeta_item %}
+      {% endif %}
+      {% if incident.affected_suppliers.all %}
+      {% meta_item _("Suppliers") %}<div class="ref-links">{% for supplier in incident.affected_suppliers.all %}{% url 'assets:supplier-detail' supplier.pk as supplier_url %}{% ref_link supplier url=supplier_url %}{% endfor %}</div>{% endmeta_item %}
+      {% endif %}
+      {% if incident.affected_sites.all %}
+      {% meta_item _("Sites") %}<div class="ref-links">{% for site in incident.affected_sites.all %}{% url 'assets:site-detail' site.pk as site_url %}{% ref_link site url=site_url %}{% endfor %}</div>{% endmeta_item %}
+      {% endif %}
+      {% if incident.affected_activities.all %}
+      {% meta_item _("Activities") %}<div class="ref-links">{% for activity in incident.affected_activities.all %}{% url 'context:activity-detail' activity.pk as activity_url %}{% ref_link activity url=activity_url %}{% endfor %}</div>{% endmeta_item %}
+      {% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
+  {% endif %}
 
+  {# ── Chronology : append-only, re-rendered over HTMX ── #}
+  {% section_card _("Chronology") icon="clock-history" count=timeline_entries|length %}
+    {% slot actions %}
+    {% if can_update_incident %}
+    <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'incidents:timeline-entry-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Add a chronology entry' %}" aria-label="{% trans 'Add a chronology entry' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
+    {% endif %}
+    {% endslot %}
+    <div id="timeline-entries"
+         hx-get="{% url 'incidents:timeline-entries' incident.pk %}"
+         hx-trigger="formSaved from:body"
+         hx-swap="innerHTML">
+      {% include "incidents/_timeline_entries.html" %}
+    </div>
+  {% endsection_card %}
+
+  {# ── Response actions ── #}
+  {% section_card _("Response actions") icon="list-check" count=response_actions|length %}
+    {% slot actions %}
+    {% if can_update_incident %}
+    <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'incidents:response-action-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Add a response action' %}" aria-label="{% trans 'Add a response action' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
+    {% endif %}
+    {% endslot %}
+    <div id="response-actions"
+         hx-get="{% url 'incidents:response-actions' incident.pk %}"
+         hx-trigger="formSaved from:body"
+         hx-swap="innerHTML">
+      {% include "incidents/_response_actions.html" %}
+    </div>
+  {% endsection_card %}
+
+  {# ── Evidence register (A.5.28) ── #}
+  {% section_card _("Evidence") icon="safe" count=evidence_items|length %}
+    {% slot actions %}
+    {% if can_create_evidence %}
+    <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'incidents:evidence-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Register an evidence item' %}" aria-label="{% trans 'Register an evidence item' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
+    {% endif %}
+    {% endslot %}
+    {% if evidence_items %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 text-sm">
+        <thead>
+          <tr>
+            <th>{% trans "Evidence" %}</th>
+            <th>{% trans "Type" %}</th>
+            <th>{% trans "Integrity" %}</th>
+            <th class="text-nowrap">{% trans "Handling" %}</th>
+            <th>{% trans "Status" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in evidence_items %}
+          <tr{% if e.last_integrity_check_ok is not None and not e.last_integrity_check_ok %} class="table-danger"{% endif %}>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'incidents:evidence-detail' e.pk %}" class="cell-link">{{ e.title }}</a>
+                <span class="cell-sub">{{ e.reference }}{% if e.collected_at %} · {{ e.collected_at|date:"SHORT_DATETIME_FORMAT" }}{% endif %}</span>
+              </span>
+            </td>
+            <td>{{ e.get_evidence_type_display }}</td>
+            <td>
+              {% comment %}
+              Three states and never two : a match, a break, and an artefact
+              that could not be read at all. The last is a claim about the
+              storage, so it is a warning and never a danger.
+              {% endcomment %}
+              {% if e.last_integrity_check_ok %}
+                {% badge variant="success" icon="check-circle" label=_("Verified") %}
+              {% elif e.last_integrity_check_ok is not None %}
+                {% badge variant="danger" icon="exclamation-octagon" label=_("Integrity broken") %}
+              {% elif e.last_integrity_check_at %}
+                {% badge variant="warning" icon="question-circle" label=_("Not verifiable") %}
+              {% else %}
+                {% dash %}
+              {% endif %}
+            </td>
+            <td class="text-nowrap">
+              {% choice_badge e "tlp" type="tlp" %}
+              {% if e.legal_hold %}<span title="{% trans 'Legal hold' %}">{% badge variant="dark" icon="lock-fill" label=_("Legal hold") %}</span>{% endif %}
+              {% if e.retention_until %}<span class="cell-sub d-block">{% trans "Retention until" %} {{ e.retention_until }}</span>{% endif %}
+            </td>
+            <td>{% workflow_badge e %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% empty_state message=_("No evidence item registered for this incident.") %}
+    {% endif %}
+  {% endsection_card %}
+
+  {# ── Regulatory obligations : the deadline register ── #}
+  {% section_card _("Regulatory obligations") icon="send-check" count=notifications|length %}
+    {% slot actions %}
+    {% if can_create_notification %}
+    <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'incidents:notification-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Add a notification obligation' %}" aria-label="{% trans 'Add a notification obligation' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
+    {% endif %}
+    {% endslot %}
+    {% if notifications %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 text-sm">
+        <thead>
+          <tr>
+            <th>{% trans "Regime" %}</th>
+            <th>{% trans "Recipient" %}</th>
+            <th>{% trans "Decision" context "incident" %}</th>
+            <th class="text-nowrap">{% trans "Due at" %}</th>
+            <th class="text-nowrap">{% trans "Time left" %}</th>
+            <th>{% trans "Status" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for n in notifications %}
+          <tr{% if n.is_overdue %} class="table-danger"{% elif n.is_undecided %} class="table-warning"{% endif %}>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'incidents:notification-detail' n.pk %}" class="cell-link">{{ n.get_regime_display }}</a>
+                <span class="cell-sub">{{ n.reference }}{% if n.obligation_reference %} · {{ n.obligation_reference }}{% endif %}</span>
+              </span>
+            </td>
+            <td>
+              <span class="cell-stack">
+                <span>{{ n.recipient_display }}</span>
+                {% if n.recipient_display != n.get_recipient_kind_display %}<span class="cell-sub">{{ n.get_recipient_kind_display }}</span>{% endif %}
+              </span>
+            </td>
+            <td>{% choice_badge n "decision" type="notification_decision" %}</td>
+            <td class="text-nowrap">
+              {% if n.due_at %}
+                {{ n.due_at|date:"SHORT_DATETIME_FORMAT" }}
+              {% elif n.no_fixed_deadline %}
+                {# A fact about the law : nothing is owed by a date. #}
+                <span class="cell-empty">{% trans "No statutory deadline" %}</span>
+              {% else %}
+                {# A clock that exists and has not started. Never merged
+                   with the line above : that is how a real deadline
+                   disappears from a page. #}
+                {% badge variant="secondary" label=_("Deadline pending") %}
+              {% endif %}
+            </td>
+            <td class="text-nowrap">
+              {% comment %}
+              The one reading the page is here for : late, running, or
+              discharged. Ordered so the worst answer is given first.
+              {% endcomment %}
+              {% include "incidents/_notification_countdown.html" %}
+            </td>
+            <td>{% workflow_badge n %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% empty_state message=_("No notification obligation instantiated yet. Triage instantiates the obligations the catalogue matches.") %}
+    {% endif %}
+    {% if incident.no_obligation_justification %}
+    {% subhead _("No-obligation justification") %}
+    <div class="text-sm">{{ incident.no_obligation_justification|linebreaks }}</div>
+    {% endif %}
+  {% endsection_card %}
+
+  {# ── Personal data qualification (GDPR) ── #}
+  {% section_card _("Personal data qualification") icon="person-vcard" %}
+    {% slot actions %}
+    {% if breach %}
+    <a href="{% url 'incidents:breach-detail' breach.pk %}" class="btn btn-sm btn-secondary" title="{% trans 'Open the personal data qualification' %}" aria-label="{% trans 'Open the personal data qualification' %}"><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+    {% elif can_create_notification %}
+    <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'incidents:breach-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Open the personal data qualification' %}" aria-label="{% trans 'Open the personal data qualification' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
+    {% endif %}
+    {% endslot %}
+    {% if breach %}
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      {% workflow_badge breach %}
+      {% choice_badge breach "controller_role" %}
+      {% if breach.high_risk_to_rights %}{% badge variant="danger" label=_("High risk to rights and freedoms") %}{% endif %}
+      {% if breach.special_categories %}{% badge variant="warning" label=_("Special categories") %}{% endif %}
+      {% if breach.cross_border_eu %}{% badge variant="info" label=_("Cross-border processing") %}{% endif %}
+    </div>
+    {% meta_list cols=3 %}
+      {% meta_item _("Lead supervisory authority") breach.lead_authority_name %}
+      {% meta_item _("Data subjects") %}{% if breach.approximate_data_subjects is not None %}{{ breach.approximate_data_subjects }}{% if breach.volume_is_estimate %} {% badge variant="secondary" label=_("Estimate") %}{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Qualified by") %}{% if breach.qualified_by %}{% user_badge breach.qualified_by size=24 %}{% if breach.qualified_at %} <span class="text-meta">{{ breach.qualified_at|date:"SHORT_DATETIME_FORMAT" }}</span>{% endif %}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+    {% if not breach.has_article_33_3_content %}
+    <p class="text-meta mb-0 mt-3"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% trans "The Art. 33(3) minimum content is not complete yet." %}</p>
+    {% endif %}
+    {% elif incident.personal_data_involved %}
+    <p class="text-meta mb-0"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% trans "Personal data is flagged as involved and no qualification has been opened yet." %}</p>
+    {% else %}
+    {% empty_state message=_("No personal data qualification opened for this incident.") %}
+    {% endif %}
+  {% endsection_card %}
+
+  {# ── Post-incident review (A.5.27) ── #}
+  {% section_card _("Post-incident review") icon="lightbulb" %}
+    {% slot actions %}
+    {% if review %}
+    <a href="{% url 'incidents:review-detail' review.pk %}" class="btn btn-sm btn-secondary" title="{% trans 'Open the post-incident review' %}" aria-label="{% trans 'Open the post-incident review' %}"><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+    {% elif can_create_review %}
+    <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'incidents:review-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Open the post-incident review' %}" aria-label="{% trans 'Open the post-incident review' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
+    {% endif %}
+    {% endslot %}
+    {% if review %}
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      {% workflow_badge review %}
+      {% if review.is_effectiveness_overdue %}{% badge variant="danger" icon="calendar-x" label=_("Review overdue") %}{% endif %}
+    </div>
+    {% meta_list cols=3 %}
+      {% meta_item _("Facilitator") %}{% if review.facilitator %}{% user_badge review.facilitator size=24 %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Scheduled date") review.scheduled_date %}
+      {% meta_item _("Held at") review.held_at|date:"SHORT_DATETIME_FORMAT" %}
+      {% if review.root_cause %}{% meta_item _("Root cause") review.root_cause|truncatechars:220 wide=True %}{% endif %}
+      {% if review.effectiveness_verdict %}{% meta_item _("Effectiveness verdict") review.get_effectiveness_verdict_display %}{% endif %}
+    {% endmeta_list %}
+    {% if review.raised_findings.all or review.corrective_action_plans.all %}
+    <div class="ref-links mt-3">
+      {% for finding in review.raised_findings.all %}{% url 'compliance:finding-detail' finding.pk as finding_url %}{% ref_link finding url=finding_url label=finding.description|striptags|truncatechars:80 %}{% endfor %}
+      {% for plan in review.corrective_action_plans.all %}{% url 'compliance:action-plan-detail' plan.pk as plan_url %}{% ref_link plan url=plan_url %}{% endfor %}
+    </div>
+    {% endif %}
+    {% else %}
+    {% empty_state message=_("No post-incident review opened yet. It is the mandatory gate before closure.") %}
+    {% endif %}
+  {% endsection_card %}
+
+  {# ── Linked registers, collapsed by default ── #}
+  {% if incident.threats.all or incident.exploited_vulnerabilities.all or incident.realised_risks.all or incident.linked_requirements.all or incident.source_events.all or incident.child_incidents.all %}
+  {% section_card _("Linked registers") icon="link-45deg" collapsible=True open=False %}
+    {% meta_list cols=2 %}
+      {% if incident.threats.all %}
+      {% meta_item _("Threats") %}<div class="ref-links">{% for threat in incident.threats.all %}{% url 'risks:threat-detail' threat.pk as threat_url %}{% ref_link threat url=threat_url %}{% endfor %}</div>{% endmeta_item %}
+      {% endif %}
+      {% if incident.exploited_vulnerabilities.all %}
+      {% meta_item _("Vulnerabilities") %}<div class="ref-links">{% for vuln in incident.exploited_vulnerabilities.all %}{% url 'risks:vulnerability-detail' vuln.pk as vuln_url %}{% ref_link vuln url=vuln_url %}{% endfor %}</div>{% endmeta_item %}
+      {% endif %}
+      {% if incident.realised_risks.all %}
+      {% meta_item _("Risks") %}<div class="ref-links">{% for risk in incident.realised_risks.all %}{% url 'risks:risk-detail' risk.pk as risk_url %}{% ref_link risk url=risk_url label=risk.name|truncatechars:50 %}{% endfor %}</div>{% endmeta_item %}
+      {% endif %}
+      {% if incident.linked_requirements.all %}
+      {% meta_item _("Requirements") %}<div class="ref-links">{% for req in incident.linked_requirements.all %}{% url 'compliance:requirement-detail' req.pk as req_url %}{% ref_link req url=req_url label=req.name|truncatechars:80 %}{% endfor %}</div>{% endmeta_item %}
+      {% endif %}
+      {% if incident.source_events.all %}
+      {% meta_item _("Source security events") %}<div class="ref-links">{% for event in incident.source_events.all %}{% url 'incidents:event-detail' event.pk as event_url %}{% ref_link event url=event_url label=event.title|truncatechars:50 %}{% endfor %}</div>{% endmeta_item %}
+      {% endif %}
+      {% if incident.child_incidents.all %}
+      {% meta_item _("Child incidents") %}<div class="ref-links">{% for child in incident.child_incidents.all %}{% url 'incidents:incident-detail' child.pk as child_url %}{% ref_link child url=child_url label=child.title|truncatechars:50 %}{% endfor %}</div>{% endmeta_item %}
+      {% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
+  {% endif %}
+
+  {% record_card incident %}
+{% enddetail_layout %}
 {% endblock %}

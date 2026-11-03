@@ -33,7 +33,7 @@ drawer so a rejected action comes back with its field errors instead of
 replacing the table with a form.
 {% endcomment %}
 <details class="mb-3" style="border:1px solid var(--border-light);border-radius:.5rem">
-  <summary class="px-3 py-2 small fw-semibold" style="cursor:pointer;user-select:none">
+  <summary class="px-3 py-2 small fw-semibold cursor-pointer user-select-none">
     <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>{% trans "Add a response action" %}
   </summary>
   <div class="px-3 pb-3">
@@ -50,7 +50,7 @@ replacing the table with a form.
       </div>
       {% endif %}
       {% for step in response_action_form.iter_steps %}
-      <div class="detail-subhead"><span><i class="bi bi-{{ step.icon }} me-1" aria-hidden="true"></i>{{ step.title }}</span></div>
+      {% subhead step.title icon=step.icon %}
       {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
       {% endfor %}
       {% for hidden in response_action_form.hidden_fields %}{{ hidden }}{% endfor %}
@@ -63,7 +63,7 @@ replacing the table with a form.
 {% endif %}
 
 <div class="table-responsive">
-  <table class="table table-hover mb-0" style="font-size:.875rem">
+  <table class="table table-hover mb-0 text-sm">
     <thead>
       <tr>
         <th>{% trans "Response action" %}</th>
@@ -88,7 +88,7 @@ replacing the table with a form.
         </td>
         <td>
           <span class="cell-stack">
-            <span>{% if action.owner %}{{ action.owner.display_name }}{% else %}<span class="cell-empty">-</span>{% endif %}</span>
+            <span>{% if action.owner %}{{ action.owner.display_name }}{% else %}{% dash %}{% endif %}</span>
             {% if action.performed_by and action.performed_by_id != action.owner_id %}
             <span class="cell-sub">{% blocktrans with name=action.performed_by.display_name %}performed by {{ name }}{% endblocktrans %}</span>
             {% endif %}
@@ -100,13 +100,13 @@ replacing the table with a form.
           is given first, exactly as the obligations card orders its countdown.
           {% endcomment %}
           {% if action.is_overdue %}
-            <span class="badge text-bg-danger"><i class="bi bi-hourglass-bottom me-1" aria-hidden="true"></i>{% trans "Overdue" %} : {{ action.due_at|timesince }}</span>
+            {% with since=action.due_at|timesince %}{% trans "Overdue" as overdue_label %}{% badge variant="danger" icon="hourglass-bottom" label=overdue_label|add:" : "|add:since %}{% endwith %}
           {% elif action.completed_at %}
-            <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{{ action.completed_at|date:"SHORT_DATETIME_FORMAT" }}</span>
+            {% badge variant="success" icon="check-circle" label=action.completed_at|date:"SHORT_DATETIME_FORMAT" %}
           {% elif action.due_at %}
             {{ action.due_at|date:"SHORT_DATETIME_FORMAT" }}
           {% else %}
-            <span class="cell-empty">-</span>
+            {% dash %}
           {% endif %}
           {% if action.execution_duration %}
           <span class="cell-sub d-block">{% blocktrans with duration=action.started_at|timesince:action.completed_at %}Executed in {{ duration }}{% endblocktrans %}</span>
@@ -114,17 +114,7 @@ replacing the table with a form.
         </td>
         <td>
           <span class="cell-stack">
-            {% if action.status == 'done' %}
-            <span class="badge text-bg-success">{{ action.get_status_display }}</span>
-            {% elif action.status == 'blocked' %}
-            <span class="badge text-bg-danger">{{ action.get_status_display }}</span>
-            {% elif action.status == 'in_progress' %}
-            <span class="badge text-bg-primary">{{ action.get_status_display }}</span>
-            {% elif action.status == 'cancelled' %}
-            <span class="badge text-bg-secondary">{{ action.get_status_display }}</span>
-            {% else %}
-            <span class="badge text-bg-light border">{{ action.get_status_display }}</span>
-            {% endif %}
+            <span>{% choice_badge action "status" type="response_action_status" %}</span>
             {% if action.effectiveness %}
             {# Assessed during the post-incident review, and blank until it has been. #}
             <span class="cell-sub">{{ action.get_effectiveness_display }}</span>
@@ -136,7 +126,7 @@ replacing the table with a form.
           <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'incidents:response-action-update' action.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit response action' %}" aria-label="{% trans 'Edit response action' %}"><i class="bi bi-pencil" aria-hidden="true"></i></button>
           <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'incidents:response-action-delete' action.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete response action' %}" aria-label="{% trans 'Delete response action' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
           {% else %}
-          <span class="cell-empty">-</span>
+          {% dash %}
           {% endif %}
         </td>
       </tr>

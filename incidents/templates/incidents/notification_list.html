@@ -42,7 +42,7 @@ map, and a header that disagrees with the crumb above it reads as two pages.
     search box, the filters and the page position.
     {% endcomment %}
     <div id="deadline-facets" class="deadline-facets d-flex flex-wrap align-items-center gap-2 mb-3" data-deadline="{{ deadline_facet }}">
-      <span class="text-muted text-uppercase" style="font-size:.72rem;letter-spacing:.06em">{% trans "Deadline" %}</span>
+      <span class="text-meta text-uppercase fw-semibold">{% trans "Deadline" %}</span>
       <a href="{{ request.path }}" data-deadline="" class="btn btn-sm {% if deadline_facet %}btn-outline-secondary{% else %}btn-primary{% endif %}"{% if not deadline_facet %} aria-current="true"{% endif %}>{% trans "Any" %}</a>
       {% for facet in deadline_facets %}
       <a href="?deadline={{ facet.value|urlencode }}" data-deadline="{{ facet.value }}" class="btn btn-sm {% if facet.active %}btn-primary{% else %}btn-outline-secondary{% endif %}"{% if facet.active %} aria-current="true"{% endif %}>{{ facet.label }}</a>
@@ -61,7 +61,7 @@ map, and a header that disagrees with the crumb above it reads as two pages.
               {% sortable_th "recipient" "Recipient" col="recipient" %}
               {% sortable_th "decision" "Decision" col="decision" %}
               {% sortable_th "due_at" "Due at" col="due_at" %}
-              <th data-col="countdown" style="white-space:nowrap">{% trans "Time left" %}</th>
+              <th data-col="countdown" class="text-nowrap">{% trans "Time left" %}</th>
               {% sortable_th "status" "Status" col="status" %}
               <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
             </tr>

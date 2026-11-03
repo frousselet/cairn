@@ -25,7 +25,7 @@ which is which is how a phased provision is mistaken for a contradiction.
 {% has_perm "incidents.notification.update" as can_update_notification %}
 
 <div class="table-responsive">
-  <table class="table table-hover mb-0" style="font-size:.875rem">
+  <table class="table table-hover mb-0 text-sm">
     <thead>
       <tr>
         <th>{% trans "Filing" %}</th>
@@ -45,14 +45,14 @@ which is which is how a phased provision is mistaken for a contradiction.
             <span class="cell-main">{{ filing.reference }}</span>
             <span class="cell-sub d-flex flex-wrap gap-1">
               {% if filing.is_correction %}
-              <span class="badge text-bg-warning"><i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{% trans "Correction" context "incident" %}</span>
+              {% trans "Correction" context "incident" as correction_label %}{% badge variant="warning" icon="pencil-square" label=correction_label %}
               {% endif %}
               {% if filing.was_late %}
-              <span class="badge text-bg-danger"><i class="bi bi-exclamation-diamond me-1" aria-hidden="true"></i>{% trans "Filed late" %}</span>
+              {% badge variant="danger" icon="exclamation-diamond" label=_("Filed late") %}
               {% endif %}
               {% if filing.superseded_by.all %}
               {# Derived from the later filing, never stamped on this row : the log does not write to a row it has closed. #}
-              <span class="badge text-bg-secondary">{% trans "Superseded" context "incident" %}</span>
+              {% trans "Superseded" context "incident" as superseded_label %}{% badge variant="secondary" label=superseded_label %}
               {% endif %}
             </span>
             {% if filing.supersedes %}
@@ -73,18 +73,10 @@ which is which is how a phased provision is mistaken for a contradiction.
           </span>
         </td>
         <td>{{ filing.get_channel_display }}</td>
-        <td>{% if filing.recipient_name %}{{ filing.recipient_name }}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+        <td>{{ filing.recipient_name|or_dash }}</td>
         <td>
           <span class="cell-stack">
-            {% if filing.outcome == 'acknowledged' %}
-            <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{{ filing.get_outcome_display }}</span>
-            {% elif filing.outcome == 'rejected' %}
-            <span class="badge text-bg-danger"><i class="bi bi-x-octagon me-1" aria-hidden="true"></i>{{ filing.get_outcome_display }}</span>
-            {% elif filing.outcome == 'information_requested' %}
-            <span class="badge text-bg-warning"><i class="bi bi-question-circle me-1" aria-hidden="true"></i>{{ filing.get_outcome_display }}</span>
-            {% else %}
-            <span class="badge text-bg-secondary">{{ filing.get_outcome_display }}</span>
-            {% endif %}
+            <span>{% choice_badge filing "outcome" type="filing_outcome" %}</span>
             {% if filing.acknowledged_at %}
             <span class="cell-sub">{{ filing.acknowledged_at|date:"SHORT_DATETIME_FORMAT" }}</span>
             {% endif %}
@@ -99,7 +91,7 @@ which is which is how a phased provision is mistaken for a contradiction.
             <i class="bi bi-download" aria-hidden="true"></i>
           </a>
           {% else %}
-          <span class="cell-empty">-</span>
+          {% dash %}
           {% endif %}
         </td>
       </tr>
@@ -113,7 +105,7 @@ which is which is how a phased provision is mistaken for a contradiction.
           the field an inspector reads, and it is never edited.
           {% endcomment %}
           <details>
-            <summary class="small text-muted" style="cursor:pointer;user-select:none">
+            <summary class="small text-muted cursor-pointer user-select-none">
               <i class="bi bi-file-text me-1" aria-hidden="true"></i>{% trans "What was transmitted" %}
             </summary>
             <div class="mt-2">

@@ -1,0 +1,24 @@
+{% load i18n ui %}
+{% comment %}
+The countdown of one obligation `n` : late, filed late, filed, running, or
+nothing. Ordered so the worst answer is given first. Shared by the incident
+file, the obligations register and the obligation page, so the same fact never
+reads two ways on two screens. Server-rendered and absolute-dated, so it
+degrades with JavaScript unavailable.
+{% endcomment %}
+{% if n.is_overdue %}
+  {% with since=n.due_at|timesince %}{% trans "Overdue" as overdue_label %}{% badge variant="danger" icon="hourglass-bottom" label=overdue_label|add:" : "|add:since %}{% endwith %}
+{% elif n.sent_at and n.late_by %}
+  {% trans "Filed late" as late_label %}
+  {% if n.due_at %}
+    {% with since=n.due_at|timesince:n.sent_at %}{% badge variant="danger" icon="exclamation-diamond" label=late_label|add:" : "|add:since %}{% endwith %}
+  {% else %}
+    {% badge variant="danger" icon="exclamation-diamond" label=late_label %}
+  {% endif %}
+{% elif n.sent_at %}
+  {% badge variant="success" icon="check-circle" label=n.sent_at|date:"SHORT_DATETIME_FORMAT" %}
+{% elif n.due_at and not n.is_terminal_state %}
+  {% badge variant="warning" icon="alarm" label=n.due_at|timeuntil %}
+{% else %}
+  {% dash %}
+{% endif %}

@@ -23,18 +23,14 @@
     is the loud outcome, a weakness the intermediate one, and the three closing
     verdicts stay neutral so semantic colour is not spent on "nothing owed".
     {% endcomment %}
-    {% if e.triage_decision == "incident" %}
-    <span class="badge text-bg-danger">{{ e.get_triage_decision_display }}</span>
-    {% elif e.triage_decision == "weakness" %}
-    <span class="badge text-bg-warning">{{ e.get_triage_decision_display }}</span>
-    {% elif e.triage_decision %}
-    <span class="badge text-bg-secondary">{{ e.get_triage_decision_display }}</span>
+    {% if e.triage_decision %}
+    {% choice_badge e "triage_decision" type="triage_decision" %}
     {% else %}
-    <span class="badge" style="background:var(--surface-subtle);color:var(--text-muted);border:1px solid var(--border-light)">{% trans "To decide" %}</span>
+    {% badge variant="secondary" label=_("To decide") %}
     {% endif %}
   </td>
   <td data-col="assessed_by">
-    {% if e.assessed_by %}{% user_badge e.assessed_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}
+    {% if e.assessed_by %}{% user_badge e.assessed_by size=24 link=True %}{% else %}{% dash %}{% endif %}
   </td>
   <td data-col="outcome">
     {% if e.incident %}
@@ -44,25 +40,25 @@
     {% elif e.duplicate_of %}
     <a href="{% url 'incidents:event-detail' e.duplicate_of.pk %}" class="cell-link"><i class="bi bi-files me-1" aria-hidden="true"></i>{{ e.duplicate_of.reference }}</a>
     {% else %}
-    <span class="text-muted">-</span>
+    {% dash %}
     {% endif %}
   </td>
   <td data-col="status">{% workflow_badge e %}</td>
-  <td data-col="reported_at">{{ e.reported_at|date:"d/m/Y H:i" }}</td>
+  <td data-col="reported_at" class="text-nowrap">{{ e.reported_at|date:"SHORT_DATETIME_FORMAT" }}</td>
   <td data-col="delay">
     {% if e.detected_at and e.reported_at %}
     <span class="text-muted">{{ e.detected_at|timesince:e.reported_at }}</span>
     {% else %}
-    <span class="text-muted">-</span>
+    {% dash %}
     {% endif %}
   </td>
   <td class="text-end" data-col="actions">
     <div class="d-inline-flex gap-1">
       {% if can_update_event %}
-      <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'incidents:event-update' e.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></button>
+      <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'incidents:event-update' e.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></button>
       {% endif %}
       {% if can_delete_event %}
-      <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'incidents:event-delete' e.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash"></i></button>
+      <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'incidents:event-delete' e.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
       {% endif %}
     </div>
   </td>
