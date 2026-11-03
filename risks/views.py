@@ -33,6 +33,7 @@ from core.mixins import (
     TableBodyPaginatedMixin,
 )
 from core.query_params import parse_date_param, parse_uuid
+from core.scoping import filter_queryset_by_scopes
 from .constants import (
     AcceptanceStatus,
     AssessmentStatus,
@@ -1857,13 +1858,15 @@ def scale_choices_api(request):
     assessment_id = parse_uuid(request.GET.get("assessment"))
     criteria = None
     if assessment_id:
-        try:
-            assessment = RiskAssessment.objects.select_related(
-                "risk_criteria"
-            ).get(pk=assessment_id)
+        # Only an assessment the user may see: anything else answers with the
+        # default scales, as for an unknown id.
+        qs = RiskAssessment.objects.select_related("risk_criteria")
+        scope_ids = None if request.user.is_superuser else request.user.get_allowed_scope_ids()
+        if scope_ids is not None:
+            qs = filter_queryset_by_scopes(qs, scope_ids)
+        assessment = qs.filter(pk=assessment_id).first()
+        if assessment is not None:
             criteria = assessment.risk_criteria
-        except RiskAssessment.DoesNotExist:
-            pass
     l_choices = get_scale_choices("likelihood", criteria)
     i_choices = get_scale_choices("impact", criteria)
     return JsonResponse({
