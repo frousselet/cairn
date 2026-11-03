@@ -6,7 +6,7 @@ A governing document of the ISMS : the information security policy (ISO/IEC 2700
 
 File: `documents/models/policy.py`
 
-`ScopedModel` subclass : UUID PK, sequential `reference` (prefix **`PLCY`**, e.g. `PLCY-1`), `scopes` M2M, `tags`, `version`, `created_by`, `django-simple-history` audit trail. `LIFECYCLE_NAME = "policy"` (see [README §3.1](README.md#31-policy-the-document)). `workflow_perm_namespace = "documents.policy"`.
+`ScopedModel` subclass : UUID PK, sequential `reference` (prefix **`PLCY`**, e.g. `PLCY-1`), `scopes` M2M, `tags`, `version`, `created_by`, `django-simple-history` audit trail. `LIFECYCLE_NAME = "policy"` (see [README §3.1](README.md#31-policy-the-document)); its exit step `archived` is labelled *Retired*. `workflow_perm_namespace = "documents.policy"`.
 
 ## Fields
 

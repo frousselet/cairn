@@ -67,7 +67,7 @@ This module makes the policy set a governed register :
 
 | ID | Rule |
 | --- | --- |
-| RG-DOC-01 | A [Policy](policy.md) has **at most one** [PolicyVersion](policy-version.md) in the `in_force` step. Putting a version in force moves the previous in-force version of the same document to `superseded` in the **same transaction**, through a recorded lifecycle transition (a `core.LifecycleEvent` with the acting user and the comment "Superseded by PLVR-n"), never by writing `workflow_state`. |
+| RG-DOC-01 | A [Policy](policy.md) has **at most one** [PolicyVersion](policy-version.md) in the `in_force` step. Putting a version in force moves the previous in-force version of the same document to its exit step (`archived`, labelled *Superseded*) in the **same transaction**, through a recorded lifecycle transition (a `core.LifecycleEvent` with the acting user and the comment "Superseded by PLVR-n"), never by writing `workflow_state`. |
 | RG-DOC-02 | A version's content (`content`, the PDF, `version_label`, `change_summary`) is **editable only in `draft`**. From `in_review` onward it is frozen : the update form, the REST `PUT` / `PATCH` and the MCP `update_policy_version` refuse any change to these fields. Sending a version back to draft re-opens it. |
 | RG-DOC-03 | A version has a content : rich text, a PDF, or both. Submitting a version with neither is refused. |
 | RG-DOC-04 | The attached PDF follows the contract rules (RG-CTR-02) : `.pdf` extension, `%PDF-` magic bytes, at most 25 MB, stored inline (`file_content`), served only through the permission-checked, scope-filtered download view, excluded from history and never serialized. A SHA-256 of the bytes is stored with it, so a downloaded copy can be checked against the approved one. |
@@ -75,7 +75,7 @@ This module makes the policy set a governed register :
 | RG-DOC-06 | From the second version of a document, `change_summary` is required to submit : a reviewer must know what changed. |
 | RG-DOC-07 | Approval stamps `approved_by` and `approved_at` from the transition itself (the acting user, now). Neither field is editable on any surface. `effective_from` defaults to the approval date; it can be set earlier (retroactive formalisation of a practice) but never in the future in v0.37.0 (see §11). |
 | RG-DOC-08 | A document's identity (title, type, owner, scopes, requirement links, review cycle) stays editable while it is `active`; those edits are history-tracked and do not create a version. The **content** only changes through a new version. |
-| RG-DOC-09 | A document can be put `active` only when it has a version in force, and is `retired` (archived) only with a comment. Retiring a document supersedes its in-force version in the same transaction (RG-DOC-01 mechanics) and closes its open campaigns. |
+| RG-DOC-09 | A document can be put `active` only when it has a version in force, and is retired (the `archived` step) only with a comment. Retiring a document supersedes its in-force version in the same transaction (RG-DOC-01 mechanics) and closes its open campaigns. |
 | RG-DOC-10 | `parent` builds the document tree (a policy and the procedures implementing it). A document cannot be its own ancestor; the depth is not limited. Retiring a parent does not retire its children, but the parent's detail page and the children's pages flag the situation. |
 
 ### 2.2 Review cycle
@@ -117,15 +117,17 @@ Each lifecycle is generated from its transition constants in `documents/constant
 | --- | --- | --- | --- | --- | --- | --- |
 | `draft` | Draft | DRAFT | no | no | **yes** | neutral |
 | `active` | Active | INTERMEDIATE | **yes** | **yes** | no | success |
-| `retired` | Retired | ARCHIVED | no | no | no | muted |
+| `archived` | Retired | ARCHIVED | no | no | no | muted |
 
 | Verb | Transition | `permission_action` | `requires_comment` | Gate |
 | --- | --- | --- | --- | --- |
 | Activate | `draft -> active` | `approve` | no | a version in force (RG-DOC-09) |
-| Retire | `active -> retired` | `approve` | **yes** | supersedes the version in force, closes open campaigns |
-| Retire | `draft -> retired` | `update` | **yes** | |
+| Retire | `active -> archived` | `approve` | **yes** | supersedes the version in force, closes open campaigns |
+| Retire | `draft -> archived` | `update` | **yes** | |
 
 No restore edge : a retired document is a closed record. Re-issuing it is a new document.
+
+The exit step of each lifecycle keeps the platform code `archived` (with the domain label *Retired*, *Superseded*, *Archived*) : `lifecycle_from_state_flags()` appends a generic `archived` step with **unguarded** edges whenever a table does not declare one, so naming the exit anything else would open an archive / restore path with no permission check.
 
 ### 3.2 `policy_version`
 
@@ -134,16 +136,16 @@ No restore edge : a retired document is a closed record. Re-issuing it is a new 
 | `draft` | Draft | DRAFT | no | no | **yes** | neutral |
 | `in_review` | In review | INTERMEDIATE | no | no | no | info |
 | `in_force` | In force | INTERMEDIATE | **yes** | **yes** | no | success |
-| `superseded` | Superseded | ARCHIVED | no | no | no | muted |
+| `archived` | Superseded | ARCHIVED | no | no | no | muted |
 
 | Verb | Transition | `permission_action` | `requires_comment` | Side effect |
 | --- | --- | --- | --- | --- |
 | Submit for review | `draft -> in_review` | `update` | no | RG-DOC-03 / RG-DOC-06 gates; `notify_lifecycle_submitted` |
 | Send back to draft | `in_review -> draft` | `approve` | **yes** | |
 | Approve and put in force | `in_review -> in_force` | **`approve`** | no | stamps approval (RG-DOC-07); supersedes the previous version (RG-DOC-01); recomputes the review date (RG-DOC-11); activates a `draft` document whose first version this is |
-| Supersede | `in_force -> superseded` | `approve` | **yes** | only as the system side effect of RG-DOC-01 / RG-DOC-09, or explicitly to withdraw a version without a successor (the document then has no version in force and is flagged) |
+| Withdraw / supersede | `in_force -> archived` | `approve` | **yes** | only as the system side effect of RG-DOC-01 / RG-DOC-09, or explicitly to withdraw a version without a successor (the document then has no version in force and is flagged) |
 
-The side effects need the bespoke transition endpoint `documents:policy-version-transition` (`lifecycle_transition_url_name`), which wraps `transition_to()` in one `transaction.atomic()` block.
+The gates and side effects live in `PolicyVersion.transition_to()`, which runs them in one `transaction.atomic()` block after locking the document row; every surface (the generic `workflow:transition` stepper endpoint, the REST transition action, the MCP transition tool) goes through it, so no bespoke endpoint is needed. The same holds for `Policy` and `AcknowledgementCampaign`.
 
 ### 3.3 `acknowledgement_campaign`
 
@@ -235,11 +237,11 @@ New `NotificationType` values with `notify_*` helpers in `accounts/notifications
 | --- | --- | --- |
 | `POLICY_REVIEW_DUE` : daily sweep, `next_review_date` within 30 days | The document owner | In-app, email |
 | `POLICY_REVIEW_OVERDUE` : same sweep, review date passed | The owner, holders of `documents.policy.approve` in scope | In-app, email |
-| `POLICY_VERSION_IN_FORCE` : a version is put in force | The owner, and the members of the audience of the previous version's campaigns | In-app |
+| `POLICY_VERSION_IN_FORCE` : a version is put in force | The document owner (a campaign is how the audience is told) | In-app |
 | `ACKNOWLEDGEMENT_REQUESTED` : campaign launch, or a newcomer added | The addressee | In-app, email |
 | `ACKNOWLEDGEMENT_REMINDER` : daily sweep, 7 days before `due_date` and on the day after it | Addressees with a pending row | In-app, email |
 
-Submission for review uses the existing `LIFECYCLE_SUBMITTED` notification (RG-LC-06), with no module-specific code.
+Submission for review sends the existing `LIFECYCLE_SUBMITTED` notification about the document (RG-LC-06) from `PolicyVersion.transition_to()`.
 
 ---
 
@@ -250,7 +252,7 @@ All pages follow the [UI components](../../sdk/ui-components.md) anatomies.
 - **Sidebar** : a new **Documents** section between Compliance and Incidents, with *Policies* and *Acknowledgement campaigns*. Everyone sees *To acknowledge* (their own pending rows) in the user menu, with a count badge.
 - **Policy list** (`/documents/policies/`) : columns reference, title, type, owner, version in force, effective from, next review (red when overdue), acknowledgement rate of the latest campaign, state. Rail : active documents, overdue reviews, documents without a version in force, average acknowledgement rate. Filters on type, owner, scope, state, overdue.
 - **Policy detail** : stepper (`policy`), rail (lifecycle stage, version in force, next review, acknowledgement rate). Cards : *Version in force* (rendered rich text, PDF download with its SHA-256, approval line "Approved by X on D, effective from D"), *Versions* (flush table of every version with label, state, approval, change summary; "New version" action), *Structure* (parent and children), *Requirements*, *Campaigns*, *Review* ("Reviewed, no change" action, last review), traceability card.
-- **Version detail** : stepper (`policy_version`, through the bespoke endpoint), the content, the PDF, the change summary, the approval, a banner on a superseded version ("Superseded by PLVR-n on D") linking to the version in force.
+- **Version detail** : stepper (`policy_version`), the content, the PDF, the change summary, the approval, a banner on a superseded version ("Superseded by PLVR-n on D") linking to the version in force.
 - **Campaign detail** : stepper, rail (audience, acknowledged, pending, rate), the audience table (person, status, acknowledged at, excuse reason) with filters, "Add newcomers" and "Excuse" actions.
 - **To acknowledge** (`/documents/acknowledge/`) : the user's pending rows; opening one shows the version content and the statement *"I have read and understood {title} version {label}"* with a single **Acknowledge** button. The same page lists the user's past acknowledgements.
 - Forms are the drawer modals, with their one-line page fallbacks; delete confirmations use the shared shells.

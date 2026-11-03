@@ -54,6 +54,7 @@ urlpatterns = [
     path("compliance/", include("compliance.urls")),
     path("risks/", include("risks.urls")),
     path("incidents/", include("incidents.urls")),
+    path("documents/", include("documents.urls")),
     path("reports/", include("reports.urls")),
     path("trust/", include("trust_center.urls")),
     path("trust-center/manage/", include("trust_center.admin_urls")),
