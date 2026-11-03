@@ -68,6 +68,9 @@ SHOTS: dict[str, tuple[str, float]] = {
     "incidents": ("/incidents/", 4),
     "security-events": ("/incidents/events/", 4),
     "notification-obligations": ("/incidents/notifications/", 4),
+    "documents": ("/documents/policies/", 4),
+    "acknowledgement-campaigns": ("/documents/campaigns/", 4),
+    "to-acknowledge": ("/documents/acknowledge/", 4),
     "management-reviews": ("/reports/management-reviews/", 4),
     "trust-center": ("/trust/", 5),
     "groups": ("/accounts/groups/", 4),
@@ -80,6 +83,7 @@ SHOTS: dict[str, tuple[str, float]] = {
 DETAIL_SHOTS: dict[str, tuple[str, str, float]] = {
     "action-plan-detail": ("/compliance/action-plans/", "table tbody tr td a", 5),
     "incident-detail": ("/incidents/", "table tbody tr td a", 5),
+    "document-detail": ("/documents/policies/", "table tbody tr td a", 5),
     "risk-detail": ("/risks/register/", "table tbody tr td a", 5),
     "supplier-detail": ("/assets/suppliers/", "table tbody tr td a", 5),
 }

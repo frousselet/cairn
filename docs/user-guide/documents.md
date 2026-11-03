@@ -45,6 +45,8 @@ everywhere in Cairn. See [How records move](lifecycles.md).
 
 ## The document page
 
+![A document page](../screenshots/document-detail.png)
+
 The rail shows the lifecycle stage, the version in force, the next review date
 (red when it has passed) and the completion of the latest acknowledgement
 campaign. Below it :
@@ -88,6 +90,8 @@ Two things close a review cycle :
 
 ## The register
 
+![The documents register](../screenshots/documents.png)
+
 The *Policies* list shows, for each document, its type, owner, the version in
 force and since when, the next review date and the completion rate of its
 latest campaign. The rail counts the active documents, the overdue reviews, the
@@ -95,6 +99,8 @@ documents without a version in force and the average acknowledgement rate. The
 filters cover the state, the type, the owner, the scope and the review status.
 
 ## Acknowledgement campaigns
+
+![Acknowledgement campaigns](../screenshots/acknowledgement-campaigns.png)
 
 A campaign asks a defined audience to confirm they have read **one version in
 force** : the A.5.1 evidence that a policy was communicated to and acknowledged
@@ -130,6 +136,8 @@ The completion rate is the acknowledged rows divided by all rows less the
 excused ones.
 
 ## To acknowledge
+
+![The documents to acknowledge](../screenshots/to-acknowledge.png)
 
 Every user, whatever their permissions, finds **To acknowledge** in the user
 menu at the bottom of the sidebar, with the number of documents waiting for
