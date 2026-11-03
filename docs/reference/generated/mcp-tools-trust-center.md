@@ -88,7 +88,8 @@ Requires `trust_center.document.create`.
 | `description` | `string` | - | description |
 | `access` | `string` | - | Access level: 'public' (direct download) or 'gated' (request + approval). |
 | `requires_nda` | `boolean` | - | Whether a gated document requires NDA acceptance. |
-| `report` | `string` | - | UUID of the source generated report (required when creating via the API/MCP). |
+| `report` | `string` | - | UUID of the source generated report. Give exactly one of report or policy when creating via the API/MCP. |
+| `policy` | `string` | - | UUID of the source document (documents.Policy, classified public and active). The entry always serves that document's version in force and leaves the public page when it has none. |
 | `display_order` | `integer` | - | Ascending sort order. |
 | `created_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 | `updated_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
@@ -460,7 +461,8 @@ Requires `trust_center.document.update`.
 | `description` | `string` | - | description |
 | `access` | `string` | - | Access level: 'public' (direct download) or 'gated' (request + approval). |
 | `requires_nda` | `boolean` | - | Whether a gated document requires NDA acceptance. |
-| `report` | `string` | - | UUID of the source generated report (required when creating via the API/MCP). |
+| `report` | `string` | - | UUID of the source generated report. Give exactly one of report or policy when creating via the API/MCP. |
+| `policy` | `string` | - | UUID of the source document (documents.Policy, classified public and active). The entry always serves that document's version in force and leaves the public page when it has none. |
 | `display_order` | `integer` | - | Ascending sort order. |
 
 ## `update_trust_center_measure`

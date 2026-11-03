@@ -100,6 +100,7 @@ discovers it by failing.
 | [Compliance](generated/mcp-tools-compliance.md) | Frameworks, requirements, assessments, findings, action plans, mappings |
 | [Risks](generated/mcp-tools-risks.md) | Risk assessments, risks, threats, vulnerabilities, EBIOS RM, treatment, acceptance |
 | [Incidents](generated/mcp-tools-incidents.md) | Events, incidents, evidence, custody, notifications, filings, breaches, reviews |
+| [Documents](generated/mcp-tools-documents.md) | Policies and procedures, versions in force, review cycle, acknowledgement campaigns, personal acknowledgements |
 | [Reports](generated/mcp-tools-reports.md) | Report generation and the management review |
 | [Trust Center](generated/mcp-tools-trust-center.md) | Certifications, subprocessors, measures, documents, requests |
 | [System](generated/mcp-tools-system.md) | Users, groups, permissions, company settings |

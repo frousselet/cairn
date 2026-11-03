@@ -19,7 +19,8 @@ Requires `reports.management_review.update`.
 | `title` | `string` | yes |  |
 | `description` | `string` | yes |  |
 | `impact_analysis` | `string` | - |  |
-| `affected_policies` | `string` | - |  |
+| `affected_policies` | `string` | - | Free-text list of policies to revise, kept for changes recorded before the documents register. Prefer affected_document_ids. |
+| `affected_document_ids` | `array` | - | UUIDs of the governed documents (documents.Policy, active) this change requires to revise. |
 | `owner_id` | `string` | yes |  |
 | `status` | `string` | - |  |
 | `target_date` | `string` | - |  |
@@ -148,7 +149,7 @@ Requires `reports.management_review.read`.
 
 ## `list_isms_changes`
 
-List ISMS changes decided during management reviews (ISO 27001:2022 clause 9.3.3).
+List ISMS changes decided during management reviews (ISO 27001:2022 clause 9.3.3), with affected_document_ids : the governed documents (documents.Policy) each change requires to revise.
 
 Requires `reports.management_review.read`.
 

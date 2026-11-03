@@ -4,7 +4,15 @@
 
 # MCP tool parameters : General
 
-Input schemas for the 15 `general` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
+Input schemas for the 18 `general` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
+
+## `acknowledge_policy_version`
+
+Acknowledge, as the authenticated user, a document version one has been asked to read (RG-DOC-16 / RG-DOC-17). Records the time, the confirmed statement and the 'mcp' channel on a write-once row. Only the addressee can acknowledge their own row: nobody, an administrator included, can acknowledge on someone else's behalf. Only act on the user's explicit confirmation that they have read the document.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `acknowledgement_id` | `string` | yes | UUID of the caller's own pending row, from list_my_pending_acknowledgements. |
 
 ## `ask_assistant`
 
@@ -54,11 +62,11 @@ No parameters.
 
 ## `help`
 
-Get usage documentation for the Cairn MCP server. Call without arguments for the full guide, or with a topic for focused help. Topics: context, assets, compliance, risks, incidents, batch, workflow, permissions, examples, users
+Get usage documentation for the Cairn MCP server. Call without arguments for the full guide, or with a topic for focused help. Topics: context, assets, compliance, risks, incidents, documents, batch, workflow, permissions, examples, users
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `topic` | `string` | - | Optional topic: context, assets, compliance, risks, incidents, batch, workflow, permissions, examples, users |
+| `topic` | `string` | - | Optional topic: context, assets, compliance, risks, incidents, documents, batch, workflow, permissions, examples, users |
 
 ## `kanban_board`
 
@@ -74,6 +82,15 @@ List the third-party open source components this Cairn instance is built on : na
 | --- | --- | --- | --- |
 | `group` | `string` | - | Restrict to one group: 'backend' (Python), 'frontend' (JavaScript, CSS, fonts) or 'development' (test and lint tooling). |
 
+## `list_my_pending_acknowledgements`
+
+List the documents the authenticated user has been asked to acknowledge and has not yet, soonest deadline first: the campaign, the document and version, the due date, and the exact statement to confirm. Needs no permission: every user sees their own requests. Read the text with get_policy_version(policy_version_id) before acknowledging.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `limit` | `integer` | - | Max items to return (default 25, max 100) |
+| `offset` | `integer` | - | Offset for pagination |
+
 ## `list_notifications`
 
 List the currently authenticated user's in-app notifications (most recent first), with the unread count. Set unread_only=true to only return unread notifications.
@@ -82,6 +99,19 @@ List the currently authenticated user's in-app notifications (most recent first)
 | --- | --- | --- | --- |
 | `unread_only` | `boolean` | - | Only unread notifications. |
 | `limit` | `integer` | - | Max results (default 20, max 100). |
+
+## `list_policy_acknowledgements`
+
+List acknowledgement rows (one per addressee and campaign): the caller's own rows, plus the rows of the campaigns within their scopes when they hold documents.acknowledgement.read. Rows are write-once evidence and have no update or delete tool.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `campaign_id` | `string` | - | Restrict to one campaign. |
+| `policy_id` | `string` | - | Restrict to the campaigns of one document. |
+| `user_id` | `string` | - | Restrict to one addressee. |
+| `status` | `string` | - | Restrict to one row status. |
+| `limit` | `integer` | - | Max items to return (default 25, max 100) |
+| `offset` | `integer` | - | Offset for pagination |
 
 ## `list_saved_filters`
 

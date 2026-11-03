@@ -10,7 +10,7 @@ Sizes are `WxH` tokens : width in quarter-columns (1..4) and height in row units
 
 To add one, follow [sdk/dashboard-widget.md](../../sdk/dashboard-widget.md).
 
-**13 widgets** ship with the platform.
+**14 widgets** ship with the platform.
 
 ## Catalogue
 
@@ -25,6 +25,7 @@ To add one, follow [sdk/dashboard-widget.md](../../sdk/dashboard-widget.md).
 | `active_objectives` | Objectives | Governance | `1x2` `2x2` `2x3` `3x2` | `2x2` | `main` | - | `sort` | Progress of objectives in play. |
 | `priority_risks` | Priority risks | Risks | `1x2` `1x3` `2x2` | `1x2` | `rail_top` | - | - | Top untreated risks by residual level. Designed for the right rail. |
 | `notification_deadlines` | Notification deadlines | Incidents | `2x2` `2x3` `3x2` `4x2` | `2x2` | `main` | - | - | Statutory notification obligations that are late or still running, with the incidents left open behind them. |
+| `documents` | Documents | Documents | `2x2` `2x3` `3x2` `4x2` | `2x2` | `main` | - | - | Document reviews overdue, documents without a version in force, and the acknowledgement campaigns running with their completion rate. |
 | `risk_treatment_flow` | Risk treatment flow | Risks | `2x2` `3x2` `4x2` `4x3` | `4x2` | `main` | - | - | How treatment moves risks from their current to their residual level. |
 | `risk_matrix_current` | Current risks | Risks | `2x2` `2x3` | `2x2` | `main` | - | - | Probability x impact heatmap, before treatment. |
 | `risk_matrix_residual` | Residual risks | Risks | `2x2` `2x3` | `2x2` | `main` | - | - | Probability x impact heatmap, after treatment. |
@@ -43,6 +44,7 @@ To add one, follow [sdk/dashboard-widget.md](../../sdk/dashboard-widget.md).
 | `active_objectives` | `dashboard/widgets/active_objectives.html` | `bi-trophy` | 50 | yes | - |
 | `priority_risks` | `dashboard/widgets/priority_risks.html` | `bi-fire` | 60 | yes | - |
 | `notification_deadlines` | `dashboard/widgets/notification_deadlines.html` | `bi-hourglass-split` | 65 | yes | - |
+| `documents` | `dashboard/widgets/documents.html` | `bi-file-earmark-text` | 67 | yes | - |
 | `risk_treatment_flow` | `dashboard/widgets/risk_treatment_flow.html` | `bi-diagram-3` | 70 | yes | - |
 | `risk_matrix_current` | `dashboard/widgets/risk_matrix_current.html` | `bi-grid-3x3` | 80 | yes | - |
 | `risk_matrix_residual` | `dashboard/widgets/risk_matrix_residual.html` | `bi-grid-3x3` | 81 | yes | - |
