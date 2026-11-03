@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load i18n ui documents_tags %}
+
+{% comment %}
+Read one version and acknowledge it. Only the addressee reaches this page
+(RG-DOC-17); the statement they confirm is snapshotted on their row, with the
+time and the channel, and the row can never change again (RG-DOC-16).
+{% endcomment %}
+
+{% block title %}{{ policy.title }} - Cairn{% endblock %}
+
+{% block content %}
+{% blocktrans asvar subtitle with ref=policy.reference label=version.version_label %}{{ ref }}, version {{ label }}{% endblocktrans %}
+{% page_header policy.title subtitle=subtitle nav="documents:acknowledge-list" accent="documents" %}
+  <a href="{% url 'documents:policyversion-pdf' version.pk %}" class="btn btn-secondary" hx-boost="false"><i class="bi bi-file-earmark-arrow-down me-1" aria-hidden="true"></i>{% trans "Download PDF" %}</a>
+{% endpage_header %}
+
+{% if is_overdue %}
+<div class="alert alert-warning"><i class="bi bi-calendar-x me-2" aria-hidden="true"></i>{% blocktrans with date=campaign.due_date|date %}This acknowledgement was due on {{ date }}.{% endblocktrans %}</div>
+{% endif %}
+{% if campaign.message %}
+<div class="alert alert-info"><i class="bi bi-chat-left-text me-2" aria-hidden="true"></i>{{ campaign.message|linebreaksbr }}</div>
+{% endif %}
+
+{% detail_layout rail_label=_("Key figures") %}
+  {% slot rail %}
+    {% if acknowledgement.is_pending %}
+    {% kpi_tile _("Status") acknowledgement.get_status_display icon="hourglass-split" tone="warning" size="sm" %}
+    {% else %}
+    {% kpi_tile _("Status") acknowledgement.get_status_display icon="patch-check" tone="neutral" size="sm" %}
+    {% endif %}
+    {% kpi_tile _("Due date") campaign.due_date icon="calendar-event" tone="neutral" %}
+    {% kpi_tile _("Effective from") version.effective_from icon="calendar-check" tone="neutral" %}
+  {% endslot %}
+
+  {% section_card _("Document") icon="file-earmark-text" %}
+    {% if version.content %}
+    <div class="ov-rich">{{ version.content|clean_rich }}</div>
+    {% else %}
+    <p class="mb-0">{% trans "This document is published as a PDF. Download it and read it before acknowledging." %}</p>
+    {% endif %}
+    {% if version.has_pdf %}
+    <div class="d-flex flex-wrap align-items-center gap-2 mt-3 pt-3 border-top">
+      <a href="{% url 'documents:policyversion-pdf' version.pk %}" class="btn btn-sm btn-secondary" hx-boost="false"><i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>{{ version.file_name|default:_("PDF document") }}</a>
+      <span class="text-meta text-break">SHA-256 <code class="text-break">{{ version.file_sha256 }}</code></span>
+    </div>
+    {% endif %}
+  {% endsection_card %}
+
+  {% section_card _("Acknowledgement") icon="pen" %}
+    {% if can_acknowledge %}
+    <form method="post" action="{% url 'documents:acknowledge' acknowledgement.pk %}">
+      {% csrf_token %}
+      <blockquote class="border-start border-3 ps-3 mb-3"><p class="mb-0">{{ statement_text }}</p></blockquote>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{% trans "Acknowledge" %}</button>
+    </form>
+    {% else %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Status") %}{% choice_badge acknowledgement "status" type="acknowledgement_status" %}{% endmeta_item %}
+      {% trans "Acknowledged at" context "document" as acknowledged_at_label %}
+      {% meta_item acknowledged_at_label acknowledgement.acknowledged_at %}
+      {% if acknowledgement.statement %}{% meta_item _("Statement confirmed") wide=True %}<q>{{ acknowledgement.statement }}</q>{% endmeta_item %}{% endif %}
+      {% if acknowledgement.excuse_reason %}{% meta_item _("Excuse reason") wide=True %}{{ acknowledgement.excuse_reason|linebreaksbr }}{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+    {% endif %}
+  {% endsection_card %}
+{% enddetail_layout %}
+{% endblock %}

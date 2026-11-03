@@ -1,0 +1,9 @@
+{% extends "includes/modal_form.html" %}
+{% comment %}
+  Edit a draft version in the drawer. Fields and steps come from
+  PolicyVersionForm; the PDF is sent as multipart and stored through
+  PolicyVersion.set_pdf() (RG-DOC-04). A submitted version opens frozen.
+{% endcomment %}
+{% block form_enctype %}enctype="multipart/form-data" hx-encoding="multipart/form-data"{% endblock %}
+{% block modal_title_icon %}<span class="drawer-title-icon"><i class="bi bi-file-earmark-text"></i></span>{% endblock %}
+{% block modal_form_fields %}{% include "documents/_frozen_note.html" %}{{ block.super }}{% endblock %}

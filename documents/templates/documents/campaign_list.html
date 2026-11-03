@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load i18n ui help_tags table_tags accounts_tags %}
+
+{% comment %}
+The acknowledgement campaigns (A.5.1, clause 7.3) : which version each one asks
+its audience to confirm, by when, and how far it got.
+{% endcomment %}
+
+{% block title %}{% trans "Acknowledgement campaigns" %} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "documents.acknowledgement.create" as can_create_campaign %}
+{% page_header _("Acknowledgement campaigns") nav="documents:campaign-list" accent="documents" %}
+  {% if can_create_campaign %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'documents:campaign-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New campaign" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% help_modal "documents.campaign_list" %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Name" col="name" %}
+              {% sortable_th "document" "Document" col="document" %}
+              {% sortable_th "due_date" "Due date" col="due_date" %}
+              <th data-col="audience">{% trans "Audience" %}</th>
+              <th data-col="rate">{% trans "Completion rate" %}</th>
+              {% sortable_th "status" "Status" col="status" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'documents:campaign-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "documents/campaign_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

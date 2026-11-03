@@ -26,6 +26,7 @@ exact rules an entity is held to, that is the
 | [Organisational context](organisational-context.md) | Scopes, issues, stakeholders, objectives, SWOT, roles, activities, indicators |
 | [Assets and suppliers](assets.md) | Essential and support assets, CIA valuation, dependencies, SPOF, suppliers, contracts, certificates |
 | [Compliance](compliance.md) | Frameworks, requirements, assessments, findings, nonconformities, action plans |
+| [Documents](documents.md) | Policies and procedures, versions in force, review cycle, acknowledgement campaigns |
 | [Risks](risks.md) | ISO 27005 and EBIOS RM assessments, the register, treatment, acceptance |
 | [Incidents](incidents.md) | Events, incidents, evidence, statutory notifications, breaches, post-incident reviews |
 | [Trust Center](trust-center.md) | Publishing your security posture, and handling document requests |

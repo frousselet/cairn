@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load i18n ui help_tags workflow_tags accounts_tags %}
+
+{% comment %}
+One acknowledgement campaign : the version it asks its audience to confirm,
+the audience as resolved at launch (one write-once row per person, RG-DOC-15 /
+RG-DOC-16) and the completion rate (RG-DOC-19). Launch, closure and archiving
+go through the stepper; adding newcomers and excusing a person are the two acts
+an owner may perform on a running campaign.
+{% endcomment %}
+
+{% block title %}{{ campaign.name }} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "documents.acknowledgement.update" as can_update_campaign %}
+{% has_perm "documents.acknowledgement.delete" as can_delete_campaign %}
+{% has_perm "documents.policy.read" as can_read_policies %}
+{% with version=campaign.policy_version policy=campaign.policy_version.policy %}
+{% page_header campaign.name reference=campaign.reference nav="documents:campaign-list" accent="documents" %}
+  {% include "includes/history_trigger.html" %}
+  {% if can_delete_campaign and is_draft %}
+  <button type="button" class="btn btn-danger" hx-get="{% url 'documents:campaign-delete' campaign.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  {% endif %}
+  {% if can_update_campaign and is_draft %}
+  <a href="{% url 'documents:campaign-update' campaign.pk %}" class="btn btn-primary" hx-get="{% url 'documents:campaign-update' campaign.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+{% help_modal "documents.campaign_detail" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if campaign.is_overdue %}
+<div class="alert alert-warning"><i class="bi bi-calendar-x me-2" aria-hidden="true"></i>{% blocktrans with date=campaign.due_date|date count counter=counts.pending %}The due date ({{ date }}) has passed and {{ counter }} person has not acknowledged yet.{% plural %}The due date ({{ date }}) has passed and {{ counter }} people have not acknowledged yet.{% endblocktrans %}</div>
+{% endif %}
+
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") campaign.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Acknowledged") counts.acknowledged icon="check-circle" tone="success" %}
+    {% kpi_tile _("Pending") counts.pending icon="hourglass-split" tone="warning" %}
+    {% if rate is not None %}
+    {% kpi_tile _("Completion rate") rate suffix="%" icon="patch-check" tone="info" %}
+    {% else %}
+    {% kpi_tile _("Completion rate") None icon="patch-check" tone="neutral" %}
+    {% endif %}
+  {% endslot %}
+
+  {% section_card _("Overview") icon="patch-check" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Document") wide=True %}{% if can_read_policies %}<div class="ref-links">{% url 'documents:policyversion-detail' version.pk as version_url %}{% blocktrans asvar version_label with title=policy.title label=version.version_label %}{{ title }}, version {{ label }}{% endblocktrans %}{% ref_link version url=version_url label=version_label %}</div>{% else %}{{ policy.title }} {{ version.version_label }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Due date") %}{% if campaign.is_overdue %}<span class="text-danger fw-semibold">{{ campaign.due_date }}</span>{% else %}{{ campaign.due_date }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Launched at") campaign.launched_at %}
+      {% meta_item _("Closed at") campaign.closed_at %}
+      {% meta_item _("Scopes") %}{% if campaign.scopes.all %}<div class="d-flex flex-wrap gap-1">{% for scope in campaign.scopes.all %}{% badge variant="secondary" label=scope.name %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Message") wide=True hide_empty=True %}{% if campaign.message %}{{ campaign.message|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Statement") wide=True %}<q>{{ statement_preview }}</q>{% endmeta_item %}
+      {% meta_item _("Tags") wide=True hide_empty=True %}{% tag_list campaign.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Audience definition") icon="people" collapsible=True open=is_draft %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Users") %}{% for u in campaign.audience_users.all %}<div class="mb-2">{% user_badge u size=24 link=True block=True %}</div>{% endfor %}{% endmeta_item %}
+      {% meta_item _("Groups") %}{% if campaign.audience_groups.all %}<div class="d-flex flex-wrap gap-1">{% for g in campaign.audience_groups.all %}{% badge variant="secondary" icon="people" label=g.name %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Roles") %}{% if campaign.audience_roles.all %}<div class="ref-links">{% for role in campaign.audience_roles.all %}{% url 'context:role-detail' role.pk as role_url %}{% ref_link role url=role_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+    <p class="text-meta mt-3 mb-0">{% trans "The audience is resolved once, at launch : a later change to a group or a role does not change who was asked. Add newcomers re-resolves it on demand." %}</p>
+  {% endsection_card %}
+
+  {% section_card _("Audience") icon="person-check" count=counts.total flush=True id="audience" %}
+    {% slot actions %}
+    {% if can_update_campaign and is_running %}
+    <form method="post" action="{% url 'documents:campaign-add-newcomers' campaign.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-secondary"><i class="bi bi-person-plus me-1" aria-hidden="true"></i>{% trans "Add newcomers" %}</button>
+    </form>
+    {% endif %}
+    {% endslot %}
+    {% if counts.total %}
+    <div class="d-flex flex-wrap gap-2 px-3 pt-3 pb-2" role="group" aria-label="{% trans 'Filter the audience by status' %}">
+      {% for f in audience_filters %}{% if f.value %}{% filter_chip label=f.label param="ack_status" value=f.value count=f.count %}{% endif %}{% endfor %}
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Person" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Acknowledged at" context "document" %}</th>
+            <th>{% trans "Excuse reason" %}</th>
+            <th class="text-end">{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in audience_rows %}
+          <tr>
+            <td>{% user_badge row.user size=24 link=True %}</td>
+            <td>{% choice_badge row "status" type="acknowledgement_status" %}</td>
+            <td>
+              {% if row.acknowledged_at %}
+              <span class="cell-stack">
+                <span>{{ row.acknowledged_at }}</span>
+                <span class="cell-sub">{{ row.get_channel_display }}</span>
+              </span>
+              {% else %}{% dash %}{% endif %}
+            </td>
+            <td class="text-meta">{% if row.excuse_reason %}{{ row.excuse_reason|truncatechars:120 }}{% if row.excused_by %}<span class="d-block">{% blocktrans with name=row.excused_by.display_name date=row.excused_at|date %}By {{ name }} on {{ date }}{% endblocktrans %}</span>{% endif %}{% else %}{% dash %}{% endif %}</td>
+            <td class="text-end">
+              {% if can_update_campaign and is_running and row.is_pending %}
+              <button type="button" class="btn btn-sm btn-outline-secondary" hx-get="{% url 'documents:acknowledgement-excuse' row.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-person-dash me-1" aria-hidden="true"></i>{% trans "Excuse" %}</button>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          {% empty_state message=_("Nobody in the audience has this status.") colspan=5 %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body">{% empty_state compact=True message=_("The audience is resolved at launch : one row per person, each acknowledged by that person only.") %}</div>
+    {% endif %}
+  {% endsection_card %}
+
+  {% record_card campaign %}
+{% enddetail_layout %}
+{% endwith %}
+{% endblock %}

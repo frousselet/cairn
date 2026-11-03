@@ -1,0 +1,37 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% has_perm "documents.acknowledgement.update" as can_update_campaign %}
+{% has_perm "documents.acknowledgement.delete" as can_delete_campaign %}
+{% for c in campaigns %}
+<tr>
+  <td data-col="reference" class="text-nowrap">
+    <a href="{% url 'documents:acknowledgementcampaign-detail' c.pk %}" class="cell-link">{{ c.reference }}</a>
+  </td>
+  <td data-col="name">
+    <a href="{% url 'documents:acknowledgementcampaign-detail' c.pk %}" class="cell-link">{{ c.name }}</a>
+  </td>
+  <td data-col="document">
+    <span class="cell-stack">
+      <span>{{ c.policy_version.policy.title }}</span>
+      <span class="cell-sub">{% blocktrans with ref=c.policy_version.policy.reference label=c.policy_version.version_label %}{{ ref }}, version {{ label }}{% endblocktrans %}</span>
+    </span>
+  </td>
+  <td data-col="due_date" class="text-nowrap">
+    {% if c.is_overdue %}<span title="{% trans 'Past due date' %}">{% badge variant="danger" icon="calendar-x" label=c.due_date|date %}</span>{% else %}{{ c.due_date }}{% endif %}
+  </td>
+  <td data-col="audience" class="tabular-nums">{% if c.audience_count %}{{ c.audience_count }}{% else %}{% dash %}{% endif %}</td>
+  <td data-col="rate">{% if c.rate is not None %}{% progress_bar c.rate %}{% else %}{% dash %}{% endif %}</td>
+  <td data-col="status">{% workflow_badge c %}</td>
+  <td class="text-end" data-col="actions">
+    <div class="d-inline-flex gap-1">
+      {% if can_update_campaign and c.is_deletable %}
+      <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'documents:campaign-update' c.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+      {% endif %}
+      {% if can_delete_campaign and c.is_deletable %}
+      <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'documents:campaign-delete' c.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+      {% endif %}
+    </div>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No acknowledgement campaign yet.") message=_("Once a version is in force, a campaign asks its audience to confirm they have read it, and keeps the evidence.") colspan=8 %}
+{% endfor %}

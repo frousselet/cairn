@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load i18n ui help_tags table_tags accounts_tags %}
+
+{% comment %}
+The register of documented information (ISO/IEC 27001 clause 7.5). Each row
+answers the four questions an auditor asks of a governing document : which
+version is in force, since when, when it is next reviewed (red when overdue),
+and how far its latest acknowledgement campaign got.
+{% endcomment %}
+
+{% block title %}{% trans "Policies" %} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "documents.policy.create" as can_create_policy %}
+{% page_header _("Policies") nav="documents:policy-list" accent="documents" %}
+  {% if can_create_policy %}
+  <button type="button" class="btn btn-primary" hx-get="{% url 'documents:policy-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New document" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% help_modal "documents.policy_list" %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "title" "Title" col="title" %}
+              {% sortable_th "type" "Type" col="type" %}
+              {% sortable_th "owner" "Owner" col="owner" %}
+              <th data-col="version">{% trans "Version in force" %}</th>
+              {% sortable_th "next_review" "Next review" col="next_review" %}
+              <th data-col="ack_rate">{% trans "Acknowledged" %}</th>
+              {% sortable_th "status" "Status" col="status" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{% url 'documents:policy-table-body' %}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "documents/policy_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

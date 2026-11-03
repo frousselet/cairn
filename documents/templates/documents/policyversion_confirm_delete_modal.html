@@ -1,0 +1,11 @@
+{% extends delete_shell|default:"includes/confirm_delete_modal.html" %}
+{% load i18n %}
+{% comment %}Delete a draft version. A version that was ever submitted stays on record.{% endcomment %}
+{% block delete_title %}{% trans "Delete version" %}{% endblock %}
+{% block delete_message %}{% blocktrans with reference=object.reference label=object.version_label title=object.policy.title %}Are you sure you want to delete <strong>{{ reference }}</strong> - {{ title }} version {{ label }}?{% endblocktrans %}{% endblock %}
+{% block delete_details %}
+  {% if not object.is_deletable %}
+  <p class="text-muted small mb-2"><i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% trans "This version was submitted : it stays on record and cannot be deleted." %}</p>
+  {% endif %}
+{% endblock %}
+{% block delete_button_attrs %}{% if not object.is_deletable %} disabled{% endif %}{% endblock %}
