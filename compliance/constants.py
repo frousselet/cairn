@@ -127,6 +127,17 @@ ASSESSMENT_TOGGLEABLE_STATUSES = {
     AssessmentStatus.IN_PROGRESS,
 }
 
+# Within the toggleable steps : planning decides what will be evaluated
+# (not assessed <-> evaluated), fieldwork records the verdict
+# (evaluated <-> compliant). See ComplianceAssessment.is_planning_phase.
+ASSESSMENT_PLANNING_STATUSES = {
+    AssessmentStatus.DRAFT,
+    AssessmentStatus.PLANNED,
+}
+ASSESSMENT_FIELDWORK_STATUSES = {
+    AssessmentStatus.IN_PROGRESS,
+}
+
 # Statuses that allow full editing of findings and result details
 ASSESSMENT_EDITABLE_STATUSES = {
     AssessmentStatus.IN_PROGRESS,

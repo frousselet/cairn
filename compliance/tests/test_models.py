@@ -230,3 +230,19 @@ class TestRequirementSignalRecalculation:
         bad.delete()
         fw.refresh_from_db()
         assert fw.compliance_level == 100
+
+
+@pytest.mark.django_db
+class TestAssessmentPhases:
+    """The result toggles read the phase from the model, not a status literal."""
+
+    @pytest.mark.parametrize("state,planning,fieldwork", [
+        ("draft", True, False), ("planned", True, False), ("in_progress", False, True),
+        ("completed", False, False), ("closed", False, False),
+    ])
+    def test_phase(self, state, planning, fieldwork):
+        from compliance.tests.factories import ComplianceAssessmentFactory
+
+        assessment = ComplianceAssessmentFactory(status=state)
+        assert assessment.is_planning_phase is planning
+        assert assessment.is_fieldwork_phase is fieldwork

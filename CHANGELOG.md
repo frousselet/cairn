@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every screen is rebuilt on the component framework : one detail page anatomy, one section title, one empty-value marker, one badge and tag pill, and form footers with a neutral Cancel on the left.
 - Dates follow the active locale everywhere, and short numeric dates put the day first in English as in French.
 - The lifecycle editor shows its steps, transitions and JSON as stacked cards instead of tabs.
+- The assessment result toggles read the planning / fieldwork phase from the assessment instead of comparing a status string in the template.
 
 ### Fixed
 

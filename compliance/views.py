@@ -1187,10 +1187,7 @@ class ToggleResultEvaluatedView(LoginRequiredMixin, PermissionRequiredMixin, Vie
         if assessment.findings.filter(requirements=requirement).exists():
             return HttpResponse(status=409)
 
-        is_planning = assessment.status in (
-            AssessmentStatus.DRAFT,
-            AssessmentStatus.PLANNED,
-        )
+        is_planning = assessment.is_planning_phase
         now = timezone.now()
 
         result, created = AssessmentResult.objects.get_or_create(

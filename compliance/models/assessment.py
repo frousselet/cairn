@@ -9,6 +9,8 @@ from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from compliance.constants import (
+    ASSESSMENT_FIELDWORK_STATUSES,
+    ASSESSMENT_PLANNING_STATUSES,
     AssessmentStatus,
     ComplianceStatus,
     FINDING_SEVERITY_ORDER,
@@ -136,6 +138,16 @@ class ComplianceAssessment(LegacyStatusMixin, ScopedModel):
     @property
     def workflow_perm_namespace(self):
         return "compliance.assessment"
+
+    @property
+    def is_planning_phase(self):
+        """Planning: choosing what will be evaluated (not assessed <-> evaluated)."""
+        return self.status in ASSESSMENT_PLANNING_STATUSES
+
+    @property
+    def is_fieldwork_phase(self):
+        """Fieldwork: recording verdicts (evaluated <-> compliant)."""
+        return self.status in ASSESSMENT_FIELDWORK_STATUSES
 
 
     def transition_to(self, target, user=None, comment=None, *, enforce_permission=False, save=True):
