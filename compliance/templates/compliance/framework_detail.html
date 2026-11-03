@@ -1,249 +1,149 @@
 {% extends "base.html" %}
-{% load i18n scope_tags ui %}
-{% load help_tags %}
-{% load accounts_tags %}
+{% load i18n scope_tags ui workflow_tags help_tags accounts_tags %}
 
 {% block title %}{{ framework.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header framework.name reference=framework.reference nav="compliance:framework-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'compliance:framework-update' framework.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'compliance:framework-update' framework.pk %}" class="btn btn-primary" hx-get="{% url 'compliance:framework-update' framework.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "compliance.framework_detail" %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
-<div class="row">
-  {# ── Left column: main content ── #}
-  <div class="col-lg-8">
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") framework.lifecycle_label icon="signpost-split" %}
+    {% if framework.compliance_level >= 80 %}{% kpi_tile _("Overall compliance level") framework.compliance_level|floatformat:0 suffix="%" icon="clipboard-check" tone="success" size="lg" %}
+    {% elif framework.compliance_level >= 50 %}{% kpi_tile _("Overall compliance level") framework.compliance_level|floatformat:0 suffix="%" icon="clipboard-check" tone="warning" size="lg" %}
+    {% else %}{% kpi_tile _("Overall compliance level") framework.compliance_level|floatformat:0 suffix="%" icon="clipboard-check" tone="danger" size="lg" %}{% endif %}
+    {% kpi_tile _("Requirements") requirements|length icon="list-check" tone="info" %}
+    {% kpi_tile _("Next review date") framework.review_date icon="calendar-event" tone="neutral" %}
+  {% endslot %}
 
-    {# General info #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
-          <div>
-            {% grouped_scope_badges framework.scopes.all %}
-            {% if not framework.scopes.all %}-{% endif %}
-          </div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Abbreviation" %}</div>
-          <div>{{ framework.short_name|default:"-" }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Type" %}</div>
-          <div>{{ framework.get_type_display }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Category" %}</div>
-          <div>{{ framework.get_category_display }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Issuing body" %}</div>
-          <div>{{ framework.issuing_body|default:"-" }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Jurisdiction" %}</div>
-          <div>{{ framework.jurisdiction|default:"-" }}</div>
-        </div>
-        <div class="mb-0">
-          <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ framework.description|default:"-"|safe }}</div>
-        </div>
-      </div>
-    </div>
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if framework.description %}<div class="ov-rich">{{ framework.description|safe }}</div>{% endif %}{% endsection_card %}
 
-    {# Compliance overview #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-clipboard-check me-1"></i>{% trans "Compliance" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Overall compliance level" %}</div>
-          <div class="display-6 fw-bold">{{ framework.compliance_level|floatformat:0 }}%</div>
-        </div>
-      </div>
-    </div>
+  {% section_card _("General") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Abbreviation") framework.short_name %}
+      {% meta_item _("Version") framework.framework_version %}
+      {% meta_item _("Type") framework.get_type_display %}
+      {% meta_item _("Category") framework.get_category_display %}
+      {% meta_item _("Issuing body") framework.issuing_body %}
+      {% meta_item _("Jurisdiction") framework.jurisdiction %}
+      {% meta_item _("Status") %}{% choice_badge framework "status" type="status" %}{% endmeta_item %}
+      {% meta_item _("Owner") %}{% if framework.owner %}{% user_badge framework.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Scopes") wide=True %}{% if framework.scopes.all %}{% grouped_scope_badges framework.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") wide=True %}{% tag_list framework.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-    {# Sections / Structure #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Structure" %}</h6>
-        {% if sections %}
-        <ul class="list-group list-group-flush">
+  {% section_card _("Applicability") icon="check2-circle" %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Mandatory") %}{% if framework.is_mandatory %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Applicable") %}{% if framework.is_applicable %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Risk-driven applicability") %}{% if framework.applicability_managed_by_risks %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Dates") icon="calendar3" %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Publication date") framework.publication_date %}
+      {% meta_item _("Effective date") framework.effective_date %}
+      {% meta_item _("Expiry date") framework.expiry_date %}
+      {% meta_item _("Next review date") framework.review_date %}
+      {% meta_item _("Last assessment") framework.last_assessment_date %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Structure") icon="diagram-3" count=sections|length flush=sections|length collapsible=True %}
+    {% if sections %}
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead><tr><th>{% trans "Section" %}</th><th class="w-25">{% trans "Compliance" %}</th></tr></thead>
+        <tbody>
           {% for section in sections %}
-          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-            <div><span class="ref">{{ section.reference }}</span> {{ section.name }}</div>
-            <span class="badge text-bg-{% if section.compliance_level >= 80 %}success{% elif section.compliance_level >= 50 %}warning{% else %}danger{% endif %}">{{ section.compliance_level|floatformat:0 }}%</span>
-          </li>
+          <tr>
+            <td><span class="ref">{{ section.reference }}</span> {{ section.name }}</td>
+            <td>{% progress_bar section.compliance_level scheme="score" %}</td>
+          </tr>
           {% endfor %}
-        </ul>
-        {% else %}
-        <p style="color:var(--text-muted);font-size:.85rem" class="mb-0">{% trans "No section defined." %}</p>
-        {% endif %}
-      </div>
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    {% empty_state message=_("No section defined.") %}
+    {% endif %}
+  {% endsection_card %}
 
-    {# Requirements table #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="text-muted small fw-semibold mb-0">
-            <i class="bi bi-list-check me-1"></i>{% trans "Requirements" %}
-            <span class="badge" style="background:var(--accent-soft);color:var(--accent);font-size:.82rem;padding:.4em .8em">{{ requirements|length }}</span>
-          </h6>
-          <a href="{% url 'compliance:requirement-create' %}?framework={{ framework.pk }}" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-lg me-1"></i>{% trans "Add" %}
-          </a>
-        </div>
-        {% if requirements %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead>
-              <tr>
-                <th>{% trans "Title" %}</th>
-                <th>{% trans "Type" %}</th>
-                <th>{% trans "Status" %}</th>
-                <th style="min-width:120px">{% trans "Compliance" %}</th>
-                <th>{% trans "Priority" %}</th>
-                <th>{% trans "Owner" %}</th>
-                <th class="text-end">{% trans "Actions" %}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for req in requirements %}
-              <tr>
-                <td>
-                  <span class="cell-stack">
-                    <a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.name }}</a>
-                    <span class="cell-sub">{{ req.requirement_number|default:req.reference }}{% if req.section %} • {{ req.section.reference }}{% endif %}</span>
-                  </span>
-                </td>
-                <td>{{ req.get_type_display }}</td>
-                <td>
-                  {% if req.compliance_status == 'evaluated' %}
-                  <span class="badge" style="background-color:var(--accent);color:var(--accent-contrast)">{{ req.get_compliance_status_display }}</span>
-                  {% else %}
-                  <span class="badge text-bg-{% if req.compliance_status == 'compliant' or req.compliance_status == 'strength' %}success{% elif req.compliance_status == 'observation' or req.compliance_status == 'improvement_opportunity' or req.compliance_status == 'partially_compliant' %}warning{% elif req.compliance_status == 'major_non_conformity' or req.compliance_status == 'minor_non_conformity' or req.compliance_status == 'non_compliant' %}danger{% elif req.compliance_status == 'not_applicable' %}dark{% else %}secondary{% endif %}">
-                    {{ req.get_compliance_status_display }}
-                  </span>
-                  {% endif %}
-                </td>
-                <td>{% progress_bar req.compliance_level scheme="score" %}</td>
-                <td>
-                  {% if req.priority %}
-                  <span class="badge text-bg-{% if req.priority == 'critical' %}danger{% elif req.priority == 'high' %}warning{% elif req.priority == 'medium' %}info{% else %}secondary{% endif %}">
-                    {{ req.get_priority_display }}
-                  </span>
-                  {% else %}-{% endif %}
-                </td>
-                <td>{% if req.owner %}{% user_badge req.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
-                <td class="text-end">
-                  <a href="{% url 'compliance:requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p style="color:var(--text-muted);font-size:.85rem" class="mb-0">{% trans "No requirement defined for this framework." %}</p>
-        {% endif %}
-      </div>
+  {% section_card _("Requirements") icon="list-check" count=requirements|length flush=requirements|length %}
+    {% slot actions %}<a href="{% url 'compliance:requirement-create' %}?framework={{ framework.pk }}" class="btn btn-secondary btn-sm"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add" %}</a>{% endslot %}
+    {% if requirements %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Title" %}</th>
+            <th>{% trans "Type" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th class="w-25">{% trans "Compliance" %}</th>
+            <th>{% trans "Priority" %}</th>
+            <th>{% trans "Owner" %}</th>
+            <th class="text-end">{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in requirements %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.name }}</a>
+                <span class="cell-sub">{{ req.requirement_number|default:req.reference }}{% if req.section %} • {{ req.section.reference }}{% endif %}</span>
+              </span>
+            </td>
+            <td>{{ req.get_type_display|or_dash }}</td>
+            <td>{% choice_badge req "compliance_status" %}</td>
+            <td>{% progress_bar req.compliance_level scheme="score" %}</td>
+            <td>{% choice_badge req "priority" %}</td>
+            <td>{% if req.owner %}{% user_badge req.owner size=24 %}{% else %}{% dash %}{% endif %}</td>
+            <td class="text-end">
+              <a href="{% url 'compliance:requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    {% empty_state message=_("No requirement defined for this framework.") %}
+    {% endif %}
+  {% endsection_card %}
 
-    {# Assessments table #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-journal-check me-1"></i>{% trans "Assessments" %}</h6>
-        {% if assessments %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Name" %}</th><th>{% trans "Date" %}</th><th>{% trans "Assessor" %}</th><th>{% trans "Compliance" %}</th><th>{% trans "Status" %}</th></tr></thead>
-            <tbody>
-              {% for a in assessments %}
-              <tr>
-                <td><a href="{% url 'compliance:assessment-detail' a.pk %}" class="cell-link">{{ a.name }}</a></td>
-                <td>{{ a.assessment_start_date }}</td>
-                <td>{% if a.assessor %}{% user_badge a.assessor size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
-                <td>{% progress_bar a.overall_compliance_level scheme="score" %}</td>
-                <td>{{ a.get_status_display }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p style="color:var(--text-muted);font-size:.85rem" class="mb-0">{% trans "No assessment performed." %}</p>
-        {% endif %}
-      </div>
+  {% section_card _("Assessments") icon="journal-check" count=assessments|length flush=assessments|length %}
+    {% if assessments %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Name" %}</th><th>{% trans "Date" %}</th><th>{% trans "Assessor" %}</th><th class="w-25">{% trans "Compliance" %}</th><th>{% trans "Status" %}</th></tr></thead>
+        <tbody>
+          {% for a in assessments %}
+          <tr>
+            <td><a href="{% url 'compliance:assessment-detail' a.pk %}" class="cell-link">{{ a.name }}</a></td>
+            <td>{{ a.assessment_start_date|or_dash }}</td>
+            <td>{% if a.assessor %}{% user_badge a.assessor size=24 %}{% else %}{% dash %}{% endif %}</td>
+            <td>{% progress_bar a.overall_compliance_level scheme="score" %}</td>
+            <td>{% workflow_badge a %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    {% empty_state message=_("No assessment performed.") %}
+    {% endif %}
+  {% endsection_card %}
 
-  </div>
-
-  {# ── Right sidebar ── #}
-  <div class="col-lg-4">
-
-    {# Status #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
-          <dd class="mb-3">{{ framework.get_status_display }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
-          <dd class="mb-3">{{ framework.framework_version|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Mandatory" %}</dt>
-          <dd class="mb-3">{% if framework.is_mandatory %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
-          <dt class="text-muted small mb-1">{% trans "Applicable" %}</dt>
-          <dd class="mb-3">{% if framework.is_applicable %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
-          <dt class="text-muted small mb-1">{% trans "Risk-driven applicability" %}</dt>
-          <dd class="mb-3">{% if framework.applicability_managed_by_risks %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
-          <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in framework.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
-        </dl>
-      </div>
-    </div>
-
-    {# People #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Owner" %}</dt>
-          <dd class="mb-3">{% if framework.owner %}{% user_badge framework.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-          <dd class="mb-0">{% if framework.created_by %}{% user_badge framework.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-        </dl>
-      </div>
-    </div>
-
-    {# Dates #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
-          <dd class="mb-3">{{ framework.created_at|date:"d/m/Y H:i" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>
-          <dd class="mb-3">{{ framework.updated_at|date:"d/m/Y H:i" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Publication date" %}</dt>
-          <dd class="mb-3">{{ framework.publication_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Effective date" %}</dt>
-          <dd class="mb-3">{{ framework.effective_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Expiry date" %}</dt>
-          <dd class="mb-3">{{ framework.expiry_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Next review date" %}</dt>
-          <dd class="mb-3">{{ framework.review_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Last assessment" %}</dt>
-          <dd class="mb-0">{{ framework.last_assessment_date|default:"-" }}</dd>
-        </dl>
-      </div>
-    </div>
-
-  </div>
-</div>
+  {% record_card framework %}
+{% enddetail_layout %}
 {% endblock %}

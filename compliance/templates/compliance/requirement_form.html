@@ -1,200 +1,92 @@
 {% extends "base.html" %}
 {% load i18n ui %}
+{% comment %}
+  Requirement create / edit page. RequirementForm is not a stepped form and
+  has no drawer variant, so this page keeps its own two-column grouping; every
+  field still goes through includes/form_field.html and the footer follows the
+  page form anatomy (Cancel on the left, Save on the right).
+{% endcomment %}
 
-{% block title %}{% if form.instance.pk %}{% trans "Edit" %}{% else %}{% trans "New" %}{% endif %} {% trans "requirement" %} - Cairn{% endblock %}
+{% block title %}{% if object %}{% trans "Edit requirement" %}{% else %}{% trans "New requirement" %}{% endif %} - Cairn{% endblock %}
 
 {% block content %}
-{% if form.instance.pk %}{% trans "Edit requirement" as page_title %}{% else %}{% trans "New requirement" as page_title %}{% endif %}
-{% page_header page_title %}
-{% endpage_header %}
+{% if object %}{% trans "Edit requirement" as page_title %}{% else %}{% trans "New requirement" as page_title %}{% endif %}
+{% page_header page_title nav="compliance:requirement-list" accent="compliance" %}{% endpage_header %}
 
 <form method="post">
   {% csrf_token %}
 
-    {% if form.non_field_errors %}
-    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-    {% endif %}
-  <div class="row">
-    {# ── Colonne gauche : champs principaux ──────────── #}
-    <div class="col-lg-8">
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">
+    {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+  </div>
+  {% endif %}
 
-      {# ── Identité ──────────────────────────────────── #}
-      <div class="card mb-4">
-        <div class="card-header"><h6 class="mb-0"><i class="bi bi-card-text me-2" style="color:var(--accent)"></i>{% trans "Identity" %}</h6></div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-sm-4">
-              <div class="mb-3">
-                <label for="{{ form.requirement_number.id_for_label }}" class="form-label">{{ form.requirement_number.label }}</label>
-                {{ form.requirement_number }}
-                {% for error in form.requirement_number.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-              </div>
-            </div>
-            <div class="col-sm-8">
-              <div class="mb-3">
-                <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }} *</label>
-                {{ form.name }}
-                {% for error in form.name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-sm-6">
-              <div class="mb-3">
-                <label for="{{ form.framework.id_for_label }}" class="form-label">{{ form.framework.label }} *</label>
-                {{ form.framework }}
-                {% for error in form.framework.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-              </div>
-            </div>
-            <div class="col-sm-6">
-              <div class="mb-3">
-                <label for="{{ form.section.id_for_label }}" class="form-label">{{ form.section.label }}</label>
-                {{ form.section }}
-                {% for error in form.section.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-sm-6">
-              <div class="mb-3">
-                <label for="{{ form.type.id_for_label }}" class="form-label">{{ form.type.label }}</label>
-                {{ form.type }}
-                {% for error in form.type.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-              </div>
-            </div>
-            <div class="col-sm-6">
-              <div class="mb-3">
-                <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
-                {{ form.category }}
-                {% for error in form.category.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="row g-4">
+    <div class="col-lg-8 d-flex flex-column gap-4">
 
-      {# ── Contenu ───────────────────────────────────── #}
-      <div class="card mb-4">
-        <div class="card-header"><h6 class="mb-0"><i class="bi bi-text-paragraph me-2" style="color:var(--accent)"></i>{% trans "Content" %}</h6></div>
-        <div class="card-body">
-          <div class="mb-3">
-            <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
-            {{ form.description }}
-            {% if form.description.help_text %}<div class="form-text">{{ form.description.help_text }}</div>{% endif %}
-            {% for error in form.description.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-          </div>
-          <div class="mb-0">
-            <label for="{{ form.guidance.id_for_label }}" class="form-label">{{ form.guidance.label }}</label>
-            {{ form.guidance }}
-            {% if form.guidance.help_text %}<div class="form-text">{{ form.guidance.help_text }}</div>{% endif %}
-            {% for error in form.guidance.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-          </div>
+      {% section_card _("Identity") icon="card-text" %}
+        <div class="row g-2">
+          <div class="col-sm-4">{% include "includes/form_field.html" with field=form.requirement_number %}</div>
+          <div class="col-sm-8">{% include "includes/form_field.html" with field=form.name %}</div>
         </div>
-      </div>
+        <div class="row g-2">
+          <div class="col-sm-6">{% include "includes/form_field.html" with field=form.framework %}</div>
+          <div class="col-sm-6">{% include "includes/form_field.html" with field=form.section %}</div>
+        </div>
+        <div class="row g-2">
+          <div class="col-sm-6">{% include "includes/form_field.html" with field=form.type %}</div>
+          <div class="col-sm-6">{% include "includes/form_field.html" with field=form.category %}</div>
+        </div>
+      {% endsection_card %}
 
-      {# ── Applicabilité ─────────────────────────────── #}
-      <div class="card mb-4">
-        <div class="card-header"><h6 class="mb-0"><i class="bi bi-check2-circle me-2" style="color:var(--accent)"></i>{% trans "Applicability" %}</h6></div>
-        <div class="card-body">
-          {% if form.applicability_is_managed %}
-          <div class="alert alert-info d-flex align-items-start gap-2 py-2 px-3 mb-3" role="alert">
-            <i class="bi bi-shield-check mt-1"></i>
-            <div class="small">{% trans "This framework derives applicability from risks. A requirement is applicable when at least one active risk is linked to it; these fields are read-only." %}</div>
-          </div>
-          {% endif %}
-          <div class="mb-3">
-            <div class="form-check">
-              {{ form.is_applicable }}
-              <label for="{{ form.is_applicable.id_for_label }}" class="form-check-label">{{ form.is_applicable.label }}</label>
-              {% for error in form.is_applicable.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-            </div>
-          </div>
-          <div class="mb-0">
-            <label for="{{ form.applicability_justification.id_for_label }}" class="form-label">{{ form.applicability_justification.label }}</label>
-            {{ form.applicability_justification }}
-            {% for error in form.applicability_justification.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-          </div>
-        </div>
-      </div>
+      {% section_card _("Content") icon="text-paragraph" %}
+        {% include "includes/form_field.html" with field=form.description %}
+        {% include "includes/form_field.html" with field=form.guidance %}
+      {% endsection_card %}
 
-      {# ── Relations ─────────────────────────────────── #}
-      <div class="card mb-4">
-        <div class="card-header"><h6 class="mb-0"><i class="bi bi-diagram-3 me-2" style="color:var(--accent)"></i>{% trans "Relationships" %}</h6></div>
-        <div class="card-body">
-          <div class="mb-3">
-            <label for="{{ form.linked_risks.id_for_label }}" class="form-label">{{ form.linked_risks.label }}</label>
-            {{ form.linked_risks }}
-            {% if form.linked_risks.help_text %}<div class="form-text">{{ form.linked_risks.help_text }}</div>{% endif %}
-            {% for error in form.linked_risks.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-          </div>
-          <div class="mb-3">
-            <label for="{{ form.linked_assets.id_for_label }}" class="form-label">{{ form.linked_assets.label }}</label>
-            {{ form.linked_assets }}
-            {% for error in form.linked_assets.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-          </div>
-          <div class="mb-0">
-            <label for="{{ form.linked_stakeholder_expectations.id_for_label }}" class="form-label">{{ form.linked_stakeholder_expectations.label }}</label>
-            {{ form.linked_stakeholder_expectations }}
-            {% for error in form.linked_stakeholder_expectations.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-          </div>
+      {% section_card _("Applicability") icon="check2-circle" %}
+        {% if form.applicability_is_managed %}
+        <div class="alert alert-info d-flex align-items-start gap-2 py-2 px-3 mb-3" role="alert">
+          <i class="bi bi-shield-check mt-1" aria-hidden="true"></i>
+          <div class="small">{% trans "This framework derives applicability from risks. A requirement is applicable when at least one active risk is linked to it; these fields are read-only." %}</div>
         </div>
-      </div>
+        {% endif %}
+        {% include "includes/form_field.html" with field=form.is_applicable %}
+        {% include "includes/form_field.html" with field=form.applicability_justification %}
+      {% endsection_card %}
+
+      {% section_card _("Relationships") icon="diagram-3" %}
+        {% include "includes/form_field.html" with field=form.linked_risks %}
+        {% include "includes/form_field.html" with field=form.linked_assets %}
+        {% include "includes/form_field.html" with field=form.linked_stakeholder_expectations %}
+      {% endsection_card %}
 
     </div>
 
-    {# ── Colonne droite : statut, responsabilité, tags ── #}
-    <div class="col-lg-4">
+    <div class="col-lg-4 d-flex flex-column gap-4">
 
-      {# ── Statut ────────────────────────────────────── #}
-      <div class="card mb-4">
-        <div class="card-header"><h6 class="mb-0"><i class="bi bi-info-circle me-2" style="color:var(--accent)"></i>{% trans "Status" %}</h6></div>
-        <div class="card-body">
-          <div class="mb-3">
-            <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }} *</label>
-            {{ form.status }}
-            {% for error in form.status.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-          </div>
-          <div class="mb-0">
-            <label for="{{ form.priority.id_for_label }}" class="form-label">{{ form.priority.label }}</label>
-            {{ form.priority }}
-            {% for error in form.priority.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-          </div>
-        </div>
-      </div>
+      {% section_card _("Status") icon="info-circle" %}
+        {% include "includes/form_field.html" with field=form.status %}
+        {% include "includes/form_field.html" with field=form.priority %}
+      {% endsection_card %}
 
-      {# ── Responsabilité ────────────────────────────── #}
-      <div class="card mb-4">
-        <div class="card-header"><h6 class="mb-0"><i class="bi bi-person me-2" style="color:var(--accent)"></i>{% trans "Ownership" %}</h6></div>
-        <div class="card-body">
-          <div class="mb-3">
-            <label for="{{ form.owner.id_for_label }}" class="form-label">{{ form.owner.label }}</label>
-            {{ form.owner }}
-            {% for error in form.owner.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-          </div>
-          <div class="mb-0">
-            <label for="{{ form.target_date.id_for_label }}" class="form-label">{{ form.target_date.label }}</label>
-            {{ form.target_date }}
-            {% for error in form.target_date.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-          </div>
-        </div>
-      </div>
+      {% section_card _("Ownership") icon="person" %}
+        {% include "includes/form_field.html" with field=form.owner %}
+        {% include "includes/form_field.html" with field=form.target_date %}
+      {% endsection_card %}
 
-      {# ── Étiquettes ────────────────────────────────── #}
-      <div class="card mb-4">
-        <div class="card-header"><h6 class="mb-0"><i class="bi bi-tags me-2" style="color:var(--accent)"></i>{% trans "Tags" %}</h6></div>
-        <div class="card-body">
-          {{ form.tags }}
-          {% for error in form.tags.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-        </div>
-      </div>
+      {% section_card _("Tags") icon="tags" %}
+        {% include "includes/form_field.html" with field=form.tags %}
+      {% endsection_card %}
 
     </div>
   </div>
 
-  {# ── Actions ───────────────────────────────────── #}
-  <div class="d-flex gap-2 form-actions-sticky">
-    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{% trans "Save" %}</button>
-    <a href="{% url 'compliance:requirement-list' %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+  {% url 'compliance:requirement-list' as list_url %}
+  <div class="page-form__actions form-actions-sticky d-flex gap-2 mt-4">
+    <a href="{% back_url list_url %}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
   </div>
 </form>
 {% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% comment %}
+  Full-page fallback of the evaluation form (a direct visit to its URL). The
+  drawer form is assessment_result_form_modal.html; both render the same
+  fields from _assessment_result_fields.html. Bespoke rather than
+  includes/page_form.html because the attachments input is not a form field
+  (the page must post multipart) and the requirement is pre-set.
+{% endcomment %}
+
+{% block title %}{{ form_title }} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header form_title nav="compliance:assessment-list" %}{% endpage_header %}
+
+<form method="post" enctype="multipart/form-data" class="card page-form">
+  {% csrf_token %}
+  <div class="card-body">
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">
+      {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+    </div>
+    {% endif %}
+    {% include "compliance/_assessment_result_fields.html" %}
+    <div class="page-form__actions form-actions-sticky d-flex gap-2">
+      <a href="{% url 'compliance:assessment-detail' assessment.pk %}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

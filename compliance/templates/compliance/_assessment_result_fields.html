@@ -1,0 +1,154 @@
+{% load i18n %}
+{% comment %}
+  The evaluation fields of an assessment result, shared by the drawer form
+  (assessment_result_form_modal.html) and its full-page fallback
+  (assessment_result_form.html). Context : form, assessment, requirement_obj,
+  and on an update result_pk + existing_attachments.
+{% endcomment %}
+{# ── Requirement context (read-only guidance) ── #}
+{% if requirement_obj %}
+<div class="drawer-section bg-body-tertiary rounded-3 px-3 py-2 mb-3">
+  <div class="text-meta fw-medium mb-1">{% trans "Requirement" %}</div>
+  <div class="fw-semibold">
+    {% if requirement_obj.requirement_number %}{{ requirement_obj.requirement_number }} - {% endif %}{{ requirement_obj.name }}
+  </div>
+  {% if requirement_obj.description %}
+  <div class="text-meta ov-rich mt-1 overflow-auto" style="max-height:6rem">{{ requirement_obj.description|safe }}</div>
+  {% endif %}
+  {% if requirement_obj.section %}
+  <div class="text-meta mt-1"><i class="bi bi-folder2 me-1" aria-hidden="true"></i>{{ requirement_obj.section }}</div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# Hidden field for requirement when pre-set #}
+{% if requirement_obj %}
+  <input type="hidden" name="requirement" value="{{ requirement_obj.pk }}">
+  <div class="d-none">{{ form.requirement }}</div>
+{% else %}
+<div class="drawer-section">
+  {% include "includes/form_field.html" with field=form.requirement %}
+</div>
+{% endif %}
+
+{# ── Non-applicable banner ── #}
+{% if requirement_obj and not requirement_obj.is_applicable %}
+<div class="alert alert-secondary text-sm mb-3">
+  <i class="bi bi-lock me-1" aria-hidden="true"></i>{% trans "This requirement is non-applicable. Its compliance status cannot be modified." %}
+  {% if requirement_obj.applicability_justification %}
+  <div class="text-meta mt-1">{{ requirement_obj.applicability_justification|safe }}</div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ── Evaluation ── #}
+<div class="drawer-meta">
+  <div>
+    <label for="{{ form.compliance_status.id_for_label }}" class="form-label">{{ form.compliance_status.label }} <span class="form-required" aria-hidden="true">*</span></label>
+    {{ form.compliance_status }}
+    {% if requirement_obj and not requirement_obj.is_applicable %}
+      <input type="hidden" name="compliance_status" value="not_applicable">
+    {% endif %}
+    {% for error in form.compliance_status.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </div>
+  <div>
+    <label for="{{ form.compliance_level.id_for_label }}" class="form-label">{{ form.compliance_level.label }}</label>
+    <div class="input-group">
+      {{ form.compliance_level }}
+      {% if requirement_obj and not requirement_obj.is_applicable %}
+        <input type="hidden" name="compliance_level" value="100">
+      {% endif %}
+      <span class="input-group-text">%</span>
+    </div>
+    {% for error in form.compliance_level.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </div>
+</div>
+
+{# ── Finding, Recommendations & Evidence ── #}
+<div class="drawer-section" id="finding-section">
+  <div class="drawer-section-title"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> {% trans "Finding & Evidence" %}</div>
+  <div class="mb-3" id="finding-field-wrapper">
+    <label for="{{ form.finding.id_for_label }}" class="form-label" id="finding-label">{{ form.finding.label }} *</label>
+    {{ form.finding }}
+    {% for error in form.finding.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </div>
+  <div id="recommendations-field-wrapper">
+    {% include "includes/form_field.html" with field=form.auditor_recommendations %}
+  </div>
+  <div id="evidence-field-wrapper">
+    {% include "includes/form_field.html" with field=form.evidence %}
+  </div>
+</div>
+
+{# ── Analyzed documents (attachments) ── #}
+<div class="drawer-section">
+  <div class="drawer-section-title"><i class="bi bi-paperclip" aria-hidden="true"></i> {% trans "Analyzed documents" %}</div>
+  {% if existing_attachments %}
+  <div class="mb-2 text-sm">
+    {% for att in existing_attachments %}
+    <div class="d-flex align-items-center justify-content-between mb-1 px-2 py-1 bg-body-tertiary rounded-2">
+      <span><i class="bi bi-file-earmark me-1" aria-hidden="true"></i>{{ att.original_filename }}</span>
+      <button type="button" class="btn btn-sm btn-outline-danger border-0 p-0 px-1"
+              hx-delete="{% url 'compliance:assessment-result-attachment-delete' assessment_pk=assessment.pk result_pk=result_pk attachment_pk=att.pk %}"
+              hx-confirm="{% trans 'Delete this attachment?' %}"
+              hx-target="closest div.d-flex"
+              hx-swap="outerHTML"
+              title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div>
+    <input type="file" name="attachments" class="form-control form-control-sm" multiple
+           accept=".pdf,.doc,.docx,.xls,.xlsx,.jpeg,.jpg,.png" aria-label="{% trans 'Analyzed documents' %}">
+    <div class="form-text">{% trans "Accepted formats: PDF, DOC/DOCX, XLS/XLSX, JPEG/JPG, PNG" %}</div>
+  </div>
+</div>
+
+{# ── Auto-fill compliance_level from status + conditional fields ── #}
+<script>
+(function() {
+  var statusSel = document.getElementById('{{ form.compliance_status.id_for_label }}');
+  var levelInput = document.getElementById('{{ form.compliance_level.id_for_label }}');
+  if (!statusSel || !levelInput) return;
+  var defaults = JSON.parse(statusSel.getAttribute('data-compliance-level-defaults') || '{}');
+
+  // Statuses where finding is relevant
+  var findingStatuses = ['non_compliant', 'partially_compliant', 'major_non_conformity', 'minor_non_conformity', 'observation', 'improvement_opportunity'];
+  // Statuses where finding is not expected (positive or N/A)
+  var noFindingStatuses = ['not_assessed', 'evaluated', 'compliant', 'strength', 'not_applicable'];
+
+  var findingWrapper = document.getElementById('finding-field-wrapper');
+  var findingLabel = document.getElementById('finding-label');
+
+  function updateFieldsVisibility() {
+    var status = statusSel.value;
+    var showFinding = findingStatuses.indexOf(status) !== -1;
+    var isNoFinding = noFindingStatuses.indexOf(status) !== -1;
+
+    // Show/hide finding field based on status
+    if (findingWrapper) {
+      findingWrapper.hidden = isNoFinding;
+    }
+    // Update required indicator on finding label
+    if (findingLabel) {
+      findingLabel.textContent = showFinding
+        ? '{{ form.finding.label|escapejs }} *'
+        : '{{ form.finding.label|escapejs }}';
+    }
+  }
+
+  statusSel.addEventListener('change', function() {
+    var val = defaults[this.value];
+    if (val !== undefined) {
+      levelInput.value = val;
+    }
+    updateFieldsVisibility();
+  });
+
+  // Initialize visibility on load
+  updateFieldsVisibility();
+})();
+</script>

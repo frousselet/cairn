@@ -2,7 +2,7 @@
 {% for f in findings %}
 <tr>
   <td data-col="reference">
-    <a href="{% url 'compliance:finding-detail' f.pk %}" class="cell-link">{{ f.reference }}</a>
+    <a href="{% url 'compliance:finding-detail' f.pk %}" class="ref">{{ f.reference }}</a>
   </td>
   <td data-col="description">
     <span class="cell-stack">
@@ -12,25 +12,21 @@
       {% endif %}
     </span>
   </td>
-  <td data-col="type">{{ f.get_finding_type_display }}</td>
+  <td data-col="type">{% choice_badge f "finding_type" type="finding" %}</td>
   <td data-col="source">{{ f.get_source_display }}</td>
   <td data-col="origin">
     {% if f.assessment %}
       <a href="{% url 'compliance:assessment-detail' f.assessment.pk %}" class="cell-link">{{ f.assessment.name|truncatechars:40 }}</a>
     {% else %}
-      <span class="text-muted">-</span>
+      {% dash %}
     {% endif %}
   </td>
   <td data-col="effectiveness">
-    {% if f.effectiveness_verdict %}
-      {{ f.get_effectiveness_verdict_display }}
-    {% else %}
-      <span class="text-muted">-</span>
-    {% endif %}
+{% choice_badge f "effectiveness_verdict" type="effectiveness" %}
   </td>
   <td data-col="status">{% workflow_badge f %}</td>
   <td class="text-end" data-col="actions">
-    <a hx-get="{% url 'compliance:finding-register-update' f.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    <a href="{% url 'compliance:finding-register-update' f.pk %}" hx-get="{% url 'compliance:finding-register-update' f.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}
