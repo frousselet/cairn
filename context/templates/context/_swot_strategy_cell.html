@@ -1,52 +1,58 @@
-{% load i18n %}
+{% load i18n ui %}
+{% comment %}
+  One cell of the TOWS strategy matrix (SO / ST / WO / WT). Context :
+  cell_label, cell_subtitle, cell_icon (Bootstrap icon name, no "bi-"),
+  strategies, row_items / col_items with row_letter / col_letter and
+  row_variant / col_variant (badge variants), empty_msg, quadrant_code.
+{% endcomment %}
 <div class="card h-100">
   <div class="card-body">
     {# Cell header with label and add button #}
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <div class="d-flex align-items-center gap-2">
-        <span class="d-inline-flex align-items-center justify-content-center" style="width:1.6rem;height:1.6rem;border-radius:var(--radius-xs);background:var(--surface-subtle);color:var(--text-secondary);font-size:.75rem">
-          <i class="bi {{ cell_icon }}"></i>
-        </span>
-        <span class="fw-semibold" style="font-size:.85rem">{{ cell_label }}</span>
-        <span style="font-size:.75rem;color:var(--text-muted)">{{ cell_subtitle }}</span>
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+      <div class="d-flex align-items-center gap-2 min-w-0">
+        <i class="bi bi-{{ cell_icon }} text-muted" aria-hidden="true"></i>
+        <span class="fw-semibold">{{ cell_label }}</span>
+        <span class="text-meta">{{ cell_subtitle }}</span>
       </div>
-      <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0" title="{% trans 'Add strategy' %}"
+      <button type="button" class="btn btn-sm btn-secondary" title="{% trans 'Add strategy' %}" aria-label="{% trans 'Add strategy' %}"
               hx-get="{% url 'context:swot-strategy-create' analysis.pk %}?quadrant={{ quadrant_code }}"
               hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
-        <i class="bi bi-plus-lg" style="font-size:.7rem"></i>
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
       </button>
     </div>
 
     {# Context badges: related SWOT items #}
     {% if row_items or col_items %}
     <div class="d-flex flex-wrap gap-1 mb-2">
-      {% for i in row_items %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--{% if row_color == 'success' %}success{% elif row_color == 'danger' %}danger{% elif row_color == 'primary' %}accent{% else %}warning{% endif %});color:#fff">{{ row_letter }}{{ forloop.counter }}</span>{% endfor %}
-      {% for i in col_items %}<span class="badge rounded-pill" style="font-size:.62rem;background:var(--{% if col_color == 'success' %}success{% elif col_color == 'danger' %}danger{% elif col_color == 'primary' %}accent{% else %}warning{% endif %});color:#fff">{{ col_letter }}{{ forloop.counter }}</span>{% endfor %}
+      {% for i in row_items %}{% with n=forloop.counter|stringformat:"s" %}{% badge variant=row_variant label=row_letter|add:n %}{% endwith %}{% endfor %}
+      {% for i in col_items %}{% with n=forloop.counter|stringformat:"s" %}{% badge variant=col_variant label=col_letter|add:n %}{% endwith %}{% endfor %}
     </div>
     {% endif %}
 
     {# Strategies list #}
-    {% for s in strategies %}
-    <div class="d-flex justify-content-between align-items-start py-2" style="border-bottom:1px solid var(--border-subtle)">
-      <span style="font-size:.84rem;color:var(--text-primary)">{{ s.description }}</span>
-      <span class="d-flex gap-1 ms-2 flex-shrink-0">
-        <button type="button" class="btn btn-sm border-0 p-0" style="color:var(--text-muted);font-size:.78rem" title="{% trans 'Edit' %}"
-                hx-get="{% url 'context:swot-strategy-update' analysis.pk s.pk %}"
-                hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
-          <i class="bi bi-pencil"></i>
-        </button>
-        <button type="button" class="btn btn-sm border-0 p-0" style="color:var(--text-muted);font-size:.78rem" title="{% trans 'Delete' %}"
-                hx-post="{% url 'context:swot-strategy-delete' analysis.pk s.pk %}"
-                hx-confirm="{% trans 'Are you sure you want to delete this strategy?' %}"
-                hx-disabled-elt="this">
-          <i class="bi bi-trash"></i>
-        </button>
-      </span>
-    </div>
-    {% empty %}
-    <div class="text-center py-3" style="color:var(--text-muted);font-size:.8rem;font-style:italic">
-      {{ empty_msg }}
-    </div>
-    {% endfor %}
+    {% if strategies %}
+    <ul class="list-group list-group-flush">
+      {% for s in strategies %}
+      <li class="list-group-item px-0 d-flex justify-content-between align-items-start gap-2">
+        <span class="text-sm">{{ s.description }}</span>
+        <span class="d-flex gap-1 flex-shrink-0">
+          <button type="button" class="btn btn-sm btn-link px-1" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"
+                  hx-get="{% url 'context:swot-strategy-update' analysis.pk s.pk %}"
+                  hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
+            <i class="bi bi-pencil" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="btn btn-sm btn-link link-danger px-1" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"
+                  hx-post="{% url 'context:swot-strategy-delete' analysis.pk s.pk %}"
+                  hx-confirm="{% trans 'Are you sure you want to delete this strategy?' %}"
+                  hx-disabled-elt="this">
+            <i class="bi bi-trash" aria-hidden="true"></i>
+          </button>
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-meta text-center fst-italic py-3 mb-0">{{ empty_msg }}</p>
+    {% endif %}
   </div>
 </div>

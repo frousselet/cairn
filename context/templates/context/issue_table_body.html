@@ -17,16 +17,16 @@
   </td>
   <td data-col="impact">
     <span class="cell-stack">
-      <span><span class="badge text-bg-{% if issue.impact_level == 'critical' %}danger{% elif issue.impact_level == 'high' %}warning{% elif issue.impact_level == 'medium' %}info{% else %}secondary{% endif %}">{{ issue.get_impact_level_display }}</span></span>
+      <span>{% choice_badge issue "impact_level" %}</span>
       {% if issue.trend %}<span class="cell-sub"><i class="bi bi-arrow-{% if issue.trend == 'improving' %}up{% elif issue.trend == 'degrading' %}down{% else %}right{% endif %} me-1" aria-hidden="true"></i>{{ issue.get_trend_display }}</span>{% endif %}
     </span>
   </td>
   <td data-col="status">{% workflow_badge issue %}</td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=issue.tags.all %}</td>
+  <td data-col="tags">{% tag_list issue.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
+    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"
             hx-get="{% url 'context:issue-update' issue.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
-      <i class="bi bi-pencil"></i>
+      <i class="bi bi-pencil" aria-hidden="true"></i>
     </button>
   </td>
 </tr>

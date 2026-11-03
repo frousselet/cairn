@@ -400,6 +400,18 @@ class TestICalFeedView:
 
 
 class TestGlobalSearchView:
+    def test_site_results_link_to_the_site_page(self):
+        """Sites are served by the assets app; the search used to reverse a
+        context route that does not exist, so every site result had no link."""
+        from context.tests.factories import SiteFactory
+
+        client, user = _superuser_client()
+        site = SiteFactory(name="Zanzibar substation")
+        data = json.loads(client.get(reverse("global-search"), {"q": "Zanzibar"}).content)
+        items = [i for g in data["results"] for i in g.get("items", g.get("results", []))]
+        urls = [i["url"] for i in items if i.get("title", "").endswith("Zanzibar substation")]
+        assert urls == [reverse("assets:site-detail", kwargs={"pk": site.pk})]
+
     def test_returns_json(self):
         client, user = _superuser_client()
         resp = client.get(reverse("global-search"), {"q": "test"})

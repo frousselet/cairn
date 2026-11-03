@@ -768,21 +768,33 @@ class SwotDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMix
         ctx = super().get_context_data(**kwargs)
         items = list(self.object.items.all())
         ctx["items"] = items
-        ctx["quadrants"] = [
-            ("strength", _("Strengths"), "success", "bi-shield-check"),
-            ("weakness", _("Weaknesses"), "danger", "bi-exclamation-triangle"),
-            ("opportunity", _("Opportunities"), "primary", "bi-rocket-takeoff"),
-            ("threat", _("Threats"), "warning", "bi-lightning"),
-        ]
         ctx["strengths"] = [i for i in items if i.quadrant == "strength"]
         ctx["weaknesses"] = [i for i in items if i.quadrant == "weakness"]
         ctx["opportunities"] = [i for i in items if i.quadrant == "opportunity"]
         ctx["threats"] = [i for i in items if i.quadrant == "threat"]
+        # One entry per quadrant, in SWOT order (internal factors first): its
+        # items, the badge variant and letter that identify it (S1, W2...,
+        # the same numbering as the strategy matrix) and its empty message.
+        ctx["quadrants"] = [
+            {"value": value, "label": label, "variant": variant, "icon": icon,
+             "letter": letter, "items": ctx[key], "empty_msg": empty_msg}
+            for value, label, variant, icon, letter, key, empty_msg in (
+                ("strength", _("Strengths"), "success", "shield-check", "S", "strengths",
+                 _("No strengths identified yet")),
+                ("weakness", _("Weaknesses"), "danger", "exclamation-triangle", "W", "weaknesses",
+                 _("No weaknesses identified yet")),
+                ("opportunity", _("Opportunities"), "accent", "rocket-takeoff", "O", "opportunities",
+                 _("No opportunities identified yet")),
+                ("threat", _("Threats"), "warning", "lightning", "T", "threats",
+                 _("No threats identified yet")),
+            )
+        ]
         strategies = list(self.object.strategies.all())
         ctx["strategies_so"] = [s for s in strategies if s.quadrant == "so"]
         ctx["strategies_st"] = [s for s in strategies if s.quadrant == "st"]
         ctx["strategies_wo"] = [s for s in strategies if s.quadrant == "wo"]
         ctx["strategies_wt"] = [s for s in strategies if s.quadrant == "wt"]
+        ctx["strategy_count"] = len(strategies)
         return ctx
 
 
@@ -1405,13 +1417,16 @@ class TagListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
                         usage.append((str(model_name), count))
             tag.usage = usage
             tag.usage_total = sum(c for _, c in usage)
+            tag.as_list = [tag]  # for {% tag_list %}, which renders a sequence
         return tags
 
 
-class TagUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class TagUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
     model = Tag
     permission_required = "context.scope.update"
     template_name = "context/tag_form.html"
+    modal_title_create = _l("Edit tag")
+    modal_title_update = _l("Edit tag")
     success_url = reverse_lazy("context:tag-list")
 
     def get_form_class(self):
@@ -1644,6 +1659,13 @@ class IndicatorDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilt
         return ctx
 
 
+def _indicator_list_url_name(indicator_type):
+    """The list (and sidebar entry) of an indicator type."""
+    if str(indicator_type) == IndicatorType.TECHNICAL:
+        return "context:indicator-technical-list"
+    return "context:indicator-organizational-list"
+
+
 class IndicatorCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = Indicator
     permission_required = "context.indicator.create"
@@ -1665,6 +1687,11 @@ class IndicatorCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["indicator_type"] = self.indicator_type
+        if not self._is_htmx():
+            # Full-page fallback: Cancel and the breadcrumb lead to the list
+            # of this indicator type (success_url is the new detail page).
+            ctx["form_nav"] = _indicator_list_url_name(self.indicator_type)
+            ctx["cancel_url"] = reverse(ctx["form_nav"])
         return ctx
 
     def form_valid(self, form):
@@ -1688,6 +1715,14 @@ class PredefinedIndicatorCreateView(LoginRequiredMixin, PermissionRequiredMixin,
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        if not self._is_htmx():
+            # Predefined indicators are organizational (see form_valid).
+            ctx["form_nav"] = _indicator_list_url_name(IndicatorType.ORGANIZATIONAL)
+            ctx["cancel_url"] = reverse(ctx["form_nav"])
+        return ctx
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -1744,6 +1779,11 @@ class IndicatorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormM
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["indicator_type"] = self.object.indicator_type
+        if not self._is_htmx():
+            # Full-page fallback: Cancel returns to the indicator, the
+            # breadcrumb to the list of its type.
+            ctx["form_nav"] = _indicator_list_url_name(self.object.indicator_type)
+            ctx["cancel_url"] = reverse("context:indicator-detail", kwargs={"pk": self.object.pk})
         return ctx
 
 

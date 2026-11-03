@@ -8,91 +8,49 @@
 {% block content %}
 {% page_header activity.name reference=activity.reference nav="context:activity-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:activity-update' activity.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'context:activity-update' activity.pk %}" class="btn btn-primary" hx-get="{% url 'context:activity-update' activity.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.activity_detail" %}
 {% include "includes/lifecycle_stepper.html" %}
 
-<div class="row g-4">
-  {# ── Left column ── #}
-  <div class="col-lg-8">
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Scopes" %}</div>
-          {% grouped_scope_badges activity.scopes.all %}{% if not activity.scopes.all %}<span class="text-muted">-</span>{% endif %}
-        </div>
-        {% if activity.parent_activity %}
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Parent activity" %}</div>
-          <a href="{% url 'context:activity-detail' activity.parent_activity.pk %}" class="cell-link">{{ activity.parent_activity }}</a>
-        </div>
-        {% endif %}
-        <div>
-          <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ activity.description|default:"-"|safe }}</div>
-        </div>
-      </div>
-    </div>
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") activity.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Criticality") activity.get_criticality_display icon="exclamation-diamond" tone=activity.criticality|badge_variant:"level" %}
+    {% kpi_tile _("Type") activity.get_type_display icon="diagram-2" tone="neutral" %}
+    {% kpi_tile _("Sub-activities") activity.children.count icon="diagram-3" tone="info" %}
+  {% endslot %}
 
-    {% if activity.children.exists %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Sub-activities" %}</h6>
-        <ul class="list-group list-group-flush">
-          {% for child in activity.children.all %}
-          <li class="list-group-item px-0 d-flex justify-content-between align-items-center{% if forloop.first %} pt-0{% endif %}{% if forloop.last %} pb-0{% endif %}">
-            <a href="{% url 'context:activity-detail' child.pk %}" style="text-decoration:none"><span class="ref">{{ child.reference }}</span> <span style="color:var(--accent);font-weight:500">{{ child.name }}</span></a>
-            <span class="badge text-bg-{% if child.criticality == 'critical' %}danger{% elif child.criticality == 'high' %}warning{% else %}secondary{% endif %}">{{ child.get_criticality_display }}</span>
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-    {% endif %}
-  </div>
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if activity.description %}<div class="ov-rich">{{ activity.description|safe }}</div>{% endif %}{% endsection_card %}
 
-  {# ── Right column ── #}
-  <div class="col-lg-4">
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
-          <dd class="mb-3">{{ activity.get_status_display }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Type" %}</dt>
-          <dd class="mb-3">{{ activity.get_type_display }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Criticality" %}</dt>
-          <dd class="mb-3">
-            <span class="badge text-bg-{% if activity.criticality == 'critical' %}danger{% elif activity.criticality == 'high' %}warning{% elif activity.criticality == 'medium' %}info{% else %}secondary{% endif %}">{{ activity.get_criticality_display }}</span>
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in activity.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}</dd>
-        </dl>
-      </div>
-    </div>
+  {% section_card _("General") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Type") activity.get_type_display %}
+      {% meta_item _("Criticality") %}{% choice_badge activity "criticality" %}{% endmeta_item %}
+      {% meta_item _("Status") %}{% choice_badge activity "status" type="status" %}{% endmeta_item %}
+      {% meta_item _("Owner") %}{% if activity.owner %}{% user_badge activity.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% if activity.parent_activity %}{% meta_item _("Parent activity") %}<div class="ref-links">{% url 'context:activity-detail' activity.parent_activity.pk as parent_url %}{% ref_link activity.parent_activity url=parent_url %}</div>{% endmeta_item %}{% endif %}
+      {% meta_item _("Tags") %}{% tag_list activity.tags.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") wide=True %}{% grouped_scope_badges activity.scopes.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
-        <div>
-          <div class="text-muted small mb-1">{% trans "Owner" %}</div>
-          {% if activity.owner %}{% user_badge activity.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
-        </div>
+  {% with children=activity.children.all %}
+  {% if children %}
+  {% section_card _("Sub-activities") icon="diagram-3" count=children|length %}
+    <div class="ref-links">
+      {% for child in children %}
+      <div class="d-flex justify-content-between align-items-center gap-2">
+        {% url 'context:activity-detail' child.pk as child_url %}{% ref_link child url=child_url %}
+        {% choice_badge child "criticality" %}
       </div>
+      {% endfor %}
     </div>
+  {% endsection_card %}
+  {% endif %}
+  {% endwith %}
 
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
-          <dd class="mb-0">{{ activity.created_at }}</dd>
-        </dl>
-      </div>
-    </div>
-  </div>
-</div>
+  {% record_card activity %}
+{% enddetail_layout %}
 {% endblock %}

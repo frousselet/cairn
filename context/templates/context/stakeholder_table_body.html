@@ -23,11 +23,11 @@
     </span>
   </td>
   <td data-col="status">{% workflow_badge sh %}</td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=sh.tags.all %}</td>
+  <td data-col="tags">{% tag_list sh.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
+    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"
             hx-get="{% url 'context:stakeholder-update' sh.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
-      <i class="bi bi-pencil"></i>
+      <i class="bi bi-pencil" aria-hidden="true"></i>
     </button>
   </td>
 </tr>

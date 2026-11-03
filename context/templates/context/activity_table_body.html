@@ -10,7 +10,7 @@
   </td>
   <td data-col="criticality">
     <span class="cell-stack">
-      <span><span class="badge text-bg-{% if activity.criticality == 'critical' %}danger{% elif activity.criticality == 'high' %}warning{% elif activity.criticality == 'medium' %}info{% else %}secondary{% endif %}">{{ activity.get_criticality_display }}</span></span>
+      <span>{% choice_badge activity "criticality" %}</span>
       <span class="cell-sub">{{ activity.get_type_display }}</span>
     </span>
   </td>
@@ -23,18 +23,18 @@
       <span class="cell-avatar-fallback">{{ activity.owner.display_name|initials }}</span>
       {% endif %}
       <span class="cell-stack">
-        <span style="font-weight:600">{{ activity.owner.display_name }}</span>
+        <span class="fw-semibold">{{ activity.owner.display_name }}</span>
         {% if activity.owner.job_title %}<span class="cell-sub">{{ activity.owner.job_title }}</span>{% endif %}
       </span>
     </span>
-    {% else %}<span class="cell-empty">-</span>{% endif %}
+    {% else %}{% dash %}{% endif %}
   </td>
   <td data-col="status">{% workflow_badge activity %}</td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=activity.tags.all %}</td>
+  <td data-col="tags">{% tag_list activity.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
+    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"
             hx-get="{% url 'context:activity-update' activity.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
-      <i class="bi bi-pencil"></i>
+      <i class="bi bi-pencil" aria-hidden="true"></i>
     </button>
   </td>
 </tr>

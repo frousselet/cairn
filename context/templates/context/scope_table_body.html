@@ -5,7 +5,7 @@
   <td data-col="name">
     <div style="padding-left: {{ scope.tree_indent }}px;">
       {% if scope.tree_level > 0 %}<span class="text-muted me-1">└</span>{% endif %}
-      {% if scope.icon %}<i class="bi {{ scope.icon }} me-1" aria-hidden="true" style="color:var(--accent)"></i>{% endif %}
+      {% if scope.icon %}<i class="bi {{ scope.icon }} me-1 text-accent" aria-hidden="true"></i>{% endif %}
       <a href="{% url 'context:scope-detail' scope.pk %}" class="cell-link">{{ scope.name }}</a>
     </div>
   </td>
@@ -21,17 +21,17 @@
     {% elif scope.review_date %}
     <span class="cell-sub" title="{% trans 'Next review date' %}"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>{{ scope.review_date }}</span>
     {% else %}
-    <span class="cell-empty">-</span>
+    {% dash %}
     {% endif %}
   </td>
   <td data-col="responsible">{% user_avatars scope.managers.all %}</td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=scope.tags.all %}</td>
+  <td data-col="tags">{% tag_list scope.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"
+    <button type="button" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"
             hx-get="{% url 'context:scope-update' scope.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
-      <i class="bi bi-pencil"></i>
+      <i class="bi bi-pencil" aria-hidden="true"></i>
     </button>
-    <a href="{% url 'context:scope-delete' scope.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+    <a href="{% url 'context:scope-delete' scope.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}

@@ -7,169 +7,118 @@
 {% block content %}
 {% page_header indicator.name reference=indicator.reference nav=nav_key accent="context" %}
   {% include "includes/history_trigger.html" %}
-  {% if indicator.is_internal %}<span class="badge text-bg-info">{% trans "Predefined Cairn" %}</span>{% endif %}
-  <a href="{% url 'context:indicator-update' indicator.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  <a href="{% url 'context:indicator-delete' indicator.pk %}" class="btn btn-outline-danger">{% trans "Delete" %}</a>
+  {% if indicator.is_internal %}{% badge variant="info" icon="cpu" label=_("Predefined Cairn") %}{% endif %}
+  <a href="{% url 'context:indicator-delete' indicator.pk %}" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</a>
+  <a href="{% url 'context:indicator-update' indicator.pk %}" class="btn btn-primary" hx-get="{% url 'context:indicator-update' indicator.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.indicator_detail" %}
 {% include "includes/lifecycle_stepper.html" %}
 
-<ul class="nav nav-tabs mb-3" role="tablist">
-  <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#general">{% trans "General" %}</a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#thresholds">{% trans "Thresholds" %}</a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#measurements">{% trans "Measurements" %}<span class="badge text-bg-secondary ms-1">{{ measurements|length }}</span></a></li>
-</ul>
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") indicator.lifecycle_label icon="signpost-split" %}
+    {% if indicator.current_value %}
+    {% kpi_tile _("Current value") indicator.current_value suffix=indicator.unit icon="speedometer2" tone=indicator.is_critical|yesno:"danger,info" %}
+    {% else %}
+    {% kpi_tile _("Current value") None icon="speedometer2" tone="info" %}
+    {% endif %}
+    {% if indicator.expected_level %}
+    {% kpi_tile _("Expected level") indicator.expected_level suffix=indicator.unit icon="bullseye" tone="neutral" %}
+    {% else %}
+    {% kpi_tile _("Expected level") None icon="bullseye" tone="neutral" %}
+    {% endif %}
+    {% kpi_tile _("Measurements") measurements|length icon="clock-history" tone="neutral" %}
+  {% endslot %}
 
-<div class="tab-content">
-  {# ── General ──────────────────────────────────── #}
-  <div class="tab-pane fade show active" id="general">
-    <div class="card">
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt>
-          <dd class="col-sm-9">{% grouped_scope_badges indicator.scopes.all %}{% if not indicator.scopes.all %}<span style="color:var(--text-muted)">-</span>{% endif %}</dd>
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if indicator.description %}<div class="ov-rich">{{ indicator.description|safe }}</div>{% endif %}{% endsection_card %}
 
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Indicator type" %}</dt>
-          <dd class="col-sm-9">{{ indicator.get_indicator_type_display }}</dd>
+  {% section_card _("General") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Indicator type") indicator.get_indicator_type_display %}
+      {% meta_item _("Collection method") indicator.get_collection_method_display %}
+      {% meta_item _("Format") %}{{ indicator.get_format_display }}{% if indicator.unit %} ({{ indicator.unit }}){% endif %}{% endmeta_item %}
+      {% meta_item _("Status") %}{% choice_badge indicator "status" type="status" %}{% endmeta_item %}
+      {% meta_item _("Review frequency") indicator.get_review_frequency_display %}
+      {% meta_item _("First review date") indicator.first_review_date %}
+      {% if indicator.is_internal %}
+      {% meta_item _("Predefined data source") %}{{ indicator.get_internal_source_display }}{% if indicator.internal_source_parameter %} ({{ indicator.internal_source_parameter }}){% endif %}{% endmeta_item %}
+      {% endif %}
+      {% meta_item _("Tags") %}{% tag_list indicator.tags.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") wide=True %}{% grouped_scope_badges indicator.scopes.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Collection method" %}</dt>
-          <dd class="col-sm-9">{{ indicator.get_collection_method_display }}</dd>
+  {% section_card _("Thresholds") icon="sliders" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Current value") %}{% if indicator.current_value %}<span class="{% if indicator.is_critical %}text-danger fw-bold{% endif %}">{{ indicator.current_value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}</span>{% if indicator.is_critical %} {% badge "critical" type="level" %}{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Expected level") %}{% if indicator.expected_level %}{{ indicator.expected_level }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Critical threshold") %}{% if indicator.critical_threshold_operator %}{{ indicator.get_critical_threshold_operator_display }}{% if indicator.critical_threshold_value %} {{ indicator.critical_threshold_value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}{% endif %}{% endif %}{% endmeta_item %}
+      {% if indicator.format == "number" %}
+      {% meta_item _("Minimum threshold") %}{% if indicator.critical_threshold_min != None %}{{ indicator.critical_threshold_min }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Maximum threshold") %}{% if indicator.critical_threshold_max != None %}{{ indicator.critical_threshold_max }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}{% endif %}{% endmeta_item %}
+      {% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Format" %}</dt>
-          <dd class="col-sm-9">{{ indicator.get_format_display }}{% if indicator.unit %} ({{ indicator.unit }}){% endif %}</dd>
-
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt>
-          <dd class="col-sm-9">{{ indicator.description|default:"-"|safe }}</dd>
-
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>
-          <dd class="col-sm-9">
-            <span class="badge text-bg-{% if indicator.status == 'active' %}success{% elif indicator.status == 'draft' %}secondary{% else %}warning{% endif %}">
-              {{ indicator.get_status_display }}
-            </span>
-          </dd>
-
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Review frequency" %}</dt>
-          <dd class="col-sm-9">{{ indicator.get_review_frequency_display }}</dd>
-
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "First review date" %}</dt>
-          <dd class="col-sm-9">{{ indicator.first_review_date }}</dd>
-
-          {% if indicator.is_internal %}
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Predefined data source" %}</dt>
-          <dd class="col-sm-9">{{ indicator.get_internal_source_display }}{% if indicator.internal_source_parameter %} ({{ indicator.internal_source_parameter }}){% endif %}</dd>
-          {% endif %}
-
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
-          <dd class="col-sm-9">{% for tag in indicator.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
-        </dl>
-      </div>
-    </div>
-  </div>
-
-  {# ── Thresholds ───────────────────────────────── #}
-  <div class="tab-pane fade" id="thresholds">
-    <div class="card">
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Current value" %}</dt>
-          <dd class="col-sm-9">
-            {% if indicator.current_value %}
-              <span class="{% if indicator.is_critical %}text-danger fw-bold{% endif %}">
-                {{ indicator.current_value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}
-              </span>
-              {% if indicator.is_critical %}<span class="badge text-bg-danger ms-1">{% trans "Critical" %}</span>{% endif %}
-            {% else %}-{% endif %}
-          </dd>
-
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Expected level" %}</dt>
-          <dd class="col-sm-9">{{ indicator.expected_level|default:"-" }}{% if indicator.unit and indicator.expected_level %} {{ indicator.unit }}{% endif %}</dd>
-
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Critical threshold" %}</dt>
-          <dd class="col-sm-9">
-            {% if indicator.critical_threshold_operator %}
-              {{ indicator.get_critical_threshold_operator_display }}
-              {% if indicator.critical_threshold_value %} {{ indicator.critical_threshold_value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}{% endif %}
-            {% else %}-{% endif %}
-          </dd>
-
-          {% if indicator.format == "number" %}
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Minimum threshold" %}</dt>
-          <dd class="col-sm-9">
-            {% if indicator.critical_threshold_min != None %}
-              {{ indicator.critical_threshold_min }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}
-            {% else %}-{% endif %}
-          </dd>
-
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Maximum threshold" %}</dt>
-          <dd class="col-sm-9">
-            {% if indicator.critical_threshold_max != None %}
-              {{ indicator.critical_threshold_max }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}
-            {% else %}-{% endif %}
-          </dd>
-          {% endif %}
-        </dl>
-      </div>
-    </div>
-  </div>
-
-  {# ── Measurements ──────────────────────────────── #}
-  <div class="tab-pane fade" id="measurements">
+  {% section_card _("Measurements") icon="clock-history" count=measurements|length id="measurements" %}
     {# Record a new measurement #}
     {% if not indicator.is_internal or indicator.collection_method == "manual" %}
     <div class="inline-form-bar mb-3">
-      <form method="post" action="{% url 'context:indicator-record' indicator.pk %}" class="d-flex align-items-center gap-3 flex-wrap">
+      <form method="post" action="{% url 'context:indicator-record' indicator.pk %}" class="row g-2 align-items-center mb-0">
         {% csrf_token %}
-        <span class="inline-form-label"><i class="bi bi-plus-circle me-1"></i>{% trans "Record" %}</span>
-        <div style="min-width:8rem;max-width:14rem;flex:1">
+        <div class="col-12 col-md-auto"><span class="inline-form-label"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>{% trans "Record" %}</span></div>
+        <div class="col-12 col-md-3">
+          <label for="{{ measurement_form.value.id_for_label }}" class="visually-hidden">{{ measurement_form.value.label }}</label>
           {{ measurement_form.value }}
         </div>
-        <div style="min-width:10rem;flex:2">
+        <div class="col-12 col-md">
+          <label for="{{ measurement_form.notes.id_for_label }}" class="visually-hidden">{{ measurement_form.notes.label }}</label>
           {{ measurement_form.notes }}
         </div>
-        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg me-1"></i>{% trans "Save" %}</button>
+        <div class="col-12 col-md-auto"><button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button></div>
       </form>
     </div>
     {% endif %}
 
     {% if indicator.is_internal %}
     <div class="inline-form-bar mb-3">
-      <form method="post" action="{% url 'context:indicator-refresh' indicator.pk %}" class="d-flex align-items-center gap-3">
+      <form method="post" action="{% url 'context:indicator-refresh' indicator.pk %}" class="d-flex align-items-center gap-3 flex-wrap mb-0">
         {% csrf_token %}
-        <span class="inline-form-label"><i class="bi bi-arrow-clockwise me-1"></i>{% trans "Predefined" %}</span>
-        <span style="font-size:.8125rem;color:var(--text-secondary);flex:1">{% trans "Refresh the value from Cairn data." %}</span>
-        <button type="submit" class="btn btn-outline-primary btn-sm">{% trans "Refresh" %}</button>
+        <span class="inline-form-label"><i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>{% trans "Predefined" %}</span>
+        <span class="text-sm text-secondary flex-grow-1">{% trans "Refresh the value from Cairn data." %}</span>
+        <button type="submit" class="btn btn-secondary btn-sm">{% trans "Refresh" %}</button>
       </form>
     </div>
     {% endif %}
 
     {# Measurement history #}
-    <div class="card">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead>
-            <tr>
-              <th>{% trans "Date" %}</th>
-              <th>{% trans "Value" %}</th>
-              <th>{% trans "Recorded by" %}</th>
-              <th>{% trans "Notes" %}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for m in measurements %}
-            <tr>
-              <td>{{ m.recorded_at|date:"Y-m-d H:i" }}</td>
-              <td>{{ m.value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}</td>
-              <td>{{ m.recorded_by|default:"-" }}</td>
-              <td>{{ m.notes|default:"-" }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="4" class="text-center py-4" style="color:var(--text-muted)">{% trans "No measurement recorded." %}</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Date" %}</th>
+            <th>{% trans "Value" %}</th>
+            <th>{% trans "Recorded by" %}</th>
+            <th>{% trans "Notes" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in measurements %}
+          <tr>
+            <td><time datetime="{{ m.recorded_at|date:'c' }}">{{ m.recorded_at|date:"SHORT_DATETIME_FORMAT" }}</time></td>
+            <td class="tabular-nums">{{ m.value }}{% if indicator.unit %} {{ indicator.unit }}{% endif %}</td>
+            <td>{{ m.recorded_by|or_dash }}</td>
+            <td>{{ m.notes|or_dash }}</td>
+          </tr>
+          {% empty %}
+          {% empty_state icon="clock-history" message=_("No measurement recorded.") colspan=4 %}
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-  </div>
-</div>
+  {% endsection_card %}
+
+  {% record_card indicator %}
+{% enddetail_layout %}
 {% endblock %}
