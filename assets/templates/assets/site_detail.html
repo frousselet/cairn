@@ -1,14 +1,12 @@
 {% extends "base.html" %}
-{% load i18n ui workflow_tags %}
-{% load help_tags %}
-{% load accounts_tags %}
+{% load i18n ui workflow_tags help_tags accounts_tags %}
 
 {% block title %}{{ site.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header site.name reference=site.reference nav="assets:site-list" breadcrumb=site_breadcrumb accent="assets" %}
   {% include "includes/history_trigger.html" %}
-  <button type="button" class="btn btn-primary" hx-get="{% url 'assets:site-update' site.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</button>
+  <a href="{% url 'assets:site-update' site.pk %}" class="btn btn-primary" hx-get="{% url 'assets:site-update' site.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.site_detail" %}
@@ -16,213 +14,113 @@
 {% include "includes/lifecycle_stepper.html" %}
 
 {% if site.tags.all %}
-<div class="detail-tags d-flex flex-wrap justify-content-center gap-2 mb-4">
-  {% for tag in site.tags.all %}<span class="badge" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% endfor %}
-</div>
+<div class="detail-tags d-flex justify-content-center mb-4">{% tag_list site.tags.all %}</div>
 {% endif %}
 
-<div class="detail-layout">
-  {# ── Main content ── #}
-  <div class="detail-main">
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") site.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Sub-sites") children|length icon="diagram-3" tone="neutral" %}
+    {% kpi_tile _("Hosted assets") asset_dependencies|length icon="hdd-stack" tone="neutral" %}
+    {% kpi_tile _("Supplier dependencies") supplier_dependencies|length icon="truck" tone="neutral" %}
+  {% endslot %}
 
-    {# ── 1. Overview : site info overlaid on a hero map of its location ── #}
-    <div class="card supplier-card{% if not site.address %} supplier-card--nomap{% endif %}">
-      {% if site.address %}
-      <div class="supplier-card__map" aria-hidden="true">
-        <div id="site-map" class="entity-map" data-address="{{ site.address|striptags }}"></div>
-      </div>
-      {% endif %}
-      <div class="card-body">
-        <div class="supplier-overview{% if not site.address %} supplier-overview--nomap{% endif %}">
-          <div class="supplier-overview__info">
-            {% if site.description %}
-            <div class="ov-row ov-row--rich ov-row--lead" role="group" aria-label="{% trans 'Description' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-card-text"></i></span>
-              <div class="ov-row__value ov-rich">{{ site.description|safe }}</div>
-            </div>
-            {% endif %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Type' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-building"></i></span>
-              <div class="ov-row__value">{{ site.get_type_display }}</div>
-            </div>
-            {% if site.parent_site %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Parent site' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-diagram-2"></i></span>
-              <div class="ov-row__value"><a href="{% url 'assets:site-detail' site.parent_site.pk %}" class="ov-link">{{ site.parent_site.name }}</a></div>
-            </div>
-            {% endif %}
-            {% if site.address %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Address' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-geo-alt"></i></span>
-              <div class="ov-row__value">{{ site.address|striptags }}</div>
-            </div>
-            {% endif %}
-          </div>
+  {# Overview : site info overlaid on a hero map of its location (#site-map is read by the init JS below). #}
+  <div class="card supplier-card{% if not site.address %} supplier-card--nomap{% endif %}">
+    {% if site.address %}
+    <div class="supplier-card__map" aria-hidden="true">
+      <div id="site-map" class="entity-map" data-address="{{ site.address|striptags }}"></div>
+    </div>
+    {% endif %}
+    <div class="card-body">
+      <div class="supplier-overview{% if not site.address %} supplier-overview--nomap{% endif %}">
+        <div class="supplier-overview__info">
+          {% if site.description %}{% ov_row "card-text" _("Description") lead=True rich=True %}{{ site.description|safe }}{% endov_row %}{% endif %}
+          {% ov_row "building" _("Type") %}{{ site.get_type_display }}{% endov_row %}
+          {% if site.parent_site %}{% ov_row "diagram-2" _("Parent site") %}<a href="{% url 'assets:site-detail' site.parent_site.pk %}" class="ov-link">{{ site.parent_site.name }}</a>{% endov_row %}{% endif %}
+          {% if site.address %}{% ov_row "geo-alt" _("Address") %}{{ site.address|striptags }}{% endov_row %}{% endif %}
         </div>
       </div>
     </div>
+  </div>
 
-    {# ── 2. Sub-sites ── #}
-    {% if children %}
-    <div class="card">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3 me-1"></i>{% trans "Sub-sites" %} <span class="badge text-bg-secondary">{{ children|length }}</span></h6>
-        <div class="contract-grid">
-          {% for child in children %}
-          <div class="contract-card">
-            <div class="contract-card__top">
-              <a href="{% url 'assets:site-detail' child.pk %}" class="contract-card__title cell-link text-truncate">{{ child.name }}</a>
-              {% workflow_badge child %}
-            </div>
-            <div class="contract-card__meta">
-              <span><i class="bi bi-building" aria-hidden="true"></i>{{ child.get_type_display }}</span>
-              {% if child.address %}<span class="text-truncate"><i class="bi bi-geo-alt" aria-hidden="true"></i>{{ child.address|striptags }}</span>{% endif %}
-            </div>
-          </div>
+  {% if children %}
+  {% section_card _("Sub-sites") icon="diagram-3" count=children|length %}
+    <div class="contract-grid">
+      {% for child in children %}
+      <div class="contract-card">
+        <div class="contract-card__top">
+          <a href="{% url 'assets:site-detail' child.pk %}" class="contract-card__title cell-link text-truncate">{{ child.name }}</a>
+          <span class="flex-shrink-0 text-nowrap">{% workflow_badge child %}</span>
+        </div>
+        <div class="contract-card__meta">
+          <span><i class="bi bi-building" aria-hidden="true"></i>{{ child.get_type_display }}</span>
+          {% if child.address %}<span class="text-truncate"><i class="bi bi-geo-alt" aria-hidden="true"></i>{{ child.address|striptags }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% endsection_card %}
+  {% endif %}
+
+  {% if asset_dependencies or supplier_dependencies %}
+  {% section_card _("Dependencies") icon="diagram-3-fill" %}
+    {% if asset_dependencies %}
+    {% subhead _("Hosted support assets") icon="hdd-stack" %}
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Asset" %}</th>
+            <th>{% trans "Dependency type" %}</th>
+            <th>{% trans "Criticality" %}</th>
+            <th>{% trans "SPOF" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dep in asset_dependencies %}
+          <tr>
+            <td><a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" class="cell-link">{{ dep.support_asset.name }}</a></td>
+            <td>{{ dep.get_dependency_type_display }}</td>
+            <td>{% choice_badge dep "criticality" %}</td>
+            <td>{% if dep.is_single_point_of_failure %}{% badge variant="danger" icon="exclamation-triangle-fill" label=_("SPOF") %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+          </tr>
           {% endfor %}
-        </div>
-      </div>
+        </tbody>
+      </table>
     </div>
     {% endif %}
 
-    {# ── 3. Dependencies : assets hosted here and suppliers the site relies on ── #}
-    {% if asset_dependencies or supplier_dependencies %}
-    <div class="card">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-3-fill me-1"></i>{% trans "Dependencies" %}</h6>
-
-        {% if asset_dependencies %}
-        <div class="detail-subhead"><span><i class="bi bi-hdd-stack me-1"></i>{% trans "Hosted support assets" %}</span></div>
-        <div class="table-responsive">
-          <table class="table table-hover table-sm mb-0">
-            <thead>
-              <tr>
-                <th>{% trans "Asset" %}</th>
-                <th>{% trans "Dependency type" %}</th>
-                <th>{% trans "Criticality" %}</th>
-                <th>{% trans "SPOF" %}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for dep in asset_dependencies %}
-              <tr>
-                <td><a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" class="cell-link">{{ dep.support_asset.name }}</a></td>
-                <td>{{ dep.get_dependency_type_display }}</td>
-                <td>{{ dep.get_criticality_display }}</td>
-                <td>{% if dep.is_single_point_of_failure %}<span class="badge text-bg-danger">{% trans "SPOF" %}</span>{% else %}<span class="cell-empty">-</span>{% endif %}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% endif %}
-
-        {% if supplier_dependencies %}
-        <div class="detail-subhead"><span><i class="bi bi-truck me-1"></i>{% trans "Supplier dependencies" %}</span></div>
-        <div class="table-responsive">
-          <table class="table table-hover table-sm mb-0">
-            <thead>
-              <tr>
-                <th>{% trans "Supplier" %}</th>
-                <th>{% trans "Dependency type" %}</th>
-                <th>{% trans "Criticality" %}</th>
-                <th>{% trans "SPOF" %}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for dep in supplier_dependencies %}
-              <tr>
-                <td><a href="{% url 'assets:supplier-detail' dep.supplier.pk %}" class="cell-link">{{ dep.supplier.name }}</a></td>
-                <td>{{ dep.get_dependency_type_display }}</td>
-                <td>{{ dep.get_criticality_display }}</td>
-                <td>{% if dep.is_single_point_of_failure %}<span class="badge text-bg-danger">{% trans "SPOF" %}</span>{% else %}<span class="cell-empty">-</span>{% endif %}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% endif %}
-      </div>
+    {% if supplier_dependencies %}
+    {% subhead _("Supplier dependencies") icon="truck" %}
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Supplier" %}</th>
+            <th>{% trans "Dependency type" %}</th>
+            <th>{% trans "Criticality" %}</th>
+            <th>{% trans "SPOF" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dep in supplier_dependencies %}
+          <tr>
+            <td><a href="{% url 'assets:supplier-detail' dep.supplier.pk %}" class="cell-link">{{ dep.supplier.name }}</a></td>
+            <td>{{ dep.get_dependency_type_display }}</td>
+            <td>{% choice_badge dep "criticality" %}</td>
+            <td>{% if dep.is_single_point_of_failure %}{% badge variant="danger" icon="exclamation-triangle-fill" label=_("SPOF") %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
     {% endif %}
+  {% endsection_card %}
+  {% endif %}
 
-    {# ── 4. Record (audit metadata) ── #}
-    <div class="card">
-      <div class="card-body">
-        <div class="row g-4">
-          <div class="col-md-6">
-            <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "Governance" %}</h6>
-            <dl class="mb-0">
-              <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
-              <dd class="mb-3">{{ site.version }}</dd>
-              <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-              <dd class="mb-0">{% if site.created_by %}{% user_badge site.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-            </dl>
-          </div>
-          <div class="col-md-6">
-            <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-clock-history me-1"></i>{% trans "Dates" %}</h6>
-            <dl class="mb-0">
-              <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
-              <dd class="mb-3">{{ site.created_at }}</dd>
-              <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>
-              <dd class="mb-0">{{ site.updated_at }}</dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  {# ── Rail : the site's lifecycle stage and operational footprint ── #}
-  <div class="detail-rail">
-
-    {# Widget 1 : lifecycle stage #}
-    <div class="card kpi-tile kpi-tile--accent">
-      <div class="card-body d-flex align-items-center gap-3">
-        <span class="kpi-tile__icon"><i class="bi bi-signpost-split" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Lifecycle stage" %}</div>
-          <div class="fw-bold text-truncate" style="font-size:1.05rem;line-height:1.2">{{ site.lifecycle_label }}</div>
-        </div>
-      </div>
-    </div>
-
-    {# Widget 2 : sub-sites #}
-    <div class="card kpi-tile kpi-tile--info">
-      <div class="card-body d-flex align-items-center gap-3">
-        <span class="kpi-tile__icon kpi-tile__icon--info"><i class="bi bi-diagram-3" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Sub-sites" %}</div>
-          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ children|length }}</div>
-        </div>
-      </div>
-    </div>
-
-    {# Widget 3 : hosted support assets #}
-    <div class="card kpi-tile kpi-tile--success">
-      <div class="card-body d-flex align-items-center gap-3">
-        <span class="kpi-tile__icon kpi-tile__icon--success"><i class="bi bi-hdd-stack" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Hosted assets" %}</div>
-          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ asset_dependencies|length }}</div>
-        </div>
-      </div>
-    </div>
-
-    {# Widget 4 : supplier dependencies #}
-    <div class="card kpi-tile kpi-tile--warning">
-      <div class="card-body d-flex align-items-center gap-3">
-        <span class="kpi-tile__icon kpi-tile__icon--warning"><i class="bi bi-truck" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Supplier dependencies" %}</div>
-          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ supplier_dependencies|length }}</div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
+  {% record_card site %}
+{% enddetail_layout %}
 {% endblock %}
 
 {% block extra_js %}

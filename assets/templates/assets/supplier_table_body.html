@@ -16,9 +16,7 @@
     </a>
   </td>
   <td data-col="criticality">
-    <span class="badge text-bg-{% if supplier.criticality == 'critical' %}danger{% elif supplier.criticality == 'high' %}warning{% elif supplier.criticality == 'medium' %}info{% else %}secondary{% endif %}">
-      {{ supplier.get_criticality_display }}
-    </span>
+    {% choice_badge supplier "criticality" %}
   </td>
   <td data-col="owner">
     {% if supplier.owner %}
@@ -29,7 +27,7 @@
       <span class="cell-avatar-fallback">{{ supplier.owner.display_name|initials }}</span>
       {% endif %}
       <span class="cell-stack">
-        <span style="font-weight:600">{{ supplier.owner.display_name }}</span>
+        <span class="fw-semibold">{{ supplier.owner.display_name }}</span>
         {% if supplier.owner.job_title %}<span class="cell-sub">{{ supplier.owner.job_title }}</span>{% endif %}
       </span>
     </span>
@@ -38,16 +36,16 @@
   <td data-col="status">
     <span class="cell-stack">
       {% if supplier.is_contract_expired %}
-      <span><span class="badge text-bg-danger">{% trans "Expired" %}</span></span>
+      <span>{% badge variant="danger" label=_("Expired") %}</span>
       {% else %}
       <span>{% workflow_badge supplier %}</span>
       {% endif %}
       {% if supplier.contract_end_date %}<span class="cell-sub" title="{% trans 'Contract end' %}"><i class="bi bi-calendar-event me-1" aria-hidden="true"></i>{{ supplier.contract_end_date }}</span>{% endif %}
     </span>
   </td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=supplier.tags.all %}</td>
+  <td data-col="tags">{% tag_list supplier.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <a hx-get="{% url 'assets:supplier-update' supplier.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    <a hx-get="{% url 'assets:supplier-update' supplier.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}

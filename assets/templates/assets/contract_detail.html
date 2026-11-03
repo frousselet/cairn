@@ -1,21 +1,19 @@
 {% extends "base.html" %}
-{% load i18n ui workflow_tags accounts_tags %}
+{% load i18n scope_tags ui workflow_tags accounts_tags %}
 
 {% block title %}{{ contract.label|default:contract.reference }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header contract.label|default:contract.reference reference=contract.reference nav="assets:contract-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
-  <button type="button" class="btn btn-primary" hx-get="{% url 'assets:contract-update' contract.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</button>
+  <a href="{% url 'assets:contract-update' contract.pk %}" class="btn btn-primary" hx-get="{% url 'assets:contract-update' contract.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
 {% if contract.tags.all %}
-<div class="detail-tags d-flex flex-wrap justify-content-center gap-2 mb-4">
-  {% for tag in contract.tags.all %}<span class="badge" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% endfor %}
-</div>
+<div class="detail-tags d-flex justify-content-center mb-4">{% tag_list contract.tags.all %}</div>
 {% endif %}
 
 {% if contract.notes %}
@@ -26,185 +24,68 @@
 <div class="alert alert-warning">{% trans "This contract has been cancelled and replaced" %}{% for newer in superseded_by %} ({{ newer.reference }}){% if not forloop.last %},{% endif %}{% endfor %}.</div>
 {% endif %}
 
-<div class="detail-layout">
-  {# ── Main content ── #}
-  <div class="detail-main">
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") contract.lifecycle_label icon="signpost-split" %}
+    {% if contract.amount %}
+    {% kpi_tile _("Amount") contract.amount|floatformat:0 icon="cash-coin" tone="neutral" suffix=contract.currency size="lg" %}
+    {% else %}
+    {% kpi_tile _("Amount") None icon="cash-coin" tone="neutral" %}
+    {% endif %}
+    {% kpi_tile _("Parties") party_count icon="people" tone="neutral" %}
+    {% kpi_tile _("Amendments") amendments|length icon="file-earmark-plus" tone="neutral" %}
+  {% endslot %}
 
-    {# ── 1. Overview ── #}
-    <div class="card supplier-card supplier-card--nomap">
-      <div class="card-body">
-        <div class="supplier-overview supplier-overview--nomap">
-          <div class="supplier-overview__info">
-            {% if contract.is_amendment %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Amends contract' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-file-earmark-plus"></i></span>
-              <div class="ov-row__value">{% trans "Amends contract" %} <a href="{% url 'assets:contract-detail' contract.parent.pk %}" class="ov-link">{{ contract.parent.reference }}</a></div>
-            </div>
-            {% endif %}
-            {% if contract.supersedes_id %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Cancels and replaces' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-arrow-repeat"></i></span>
-              <div class="ov-row__value">{% trans "Cancels and replaces" %} <a href="{% url 'assets:contract-detail' contract.supersedes.pk %}" class="ov-link">{{ contract.supersedes.reference }}</a> {{ contract.supersedes.label }}</div>
-            </div>
-            {% endif %}
-            {% if superseded_by %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Cancelled and replaced by' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-slash-circle"></i></span>
-              <div class="ov-row__value">{% trans "Cancelled and replaced by" %} {% for newer in superseded_by %}<a href="{% url 'assets:contract-detail' newer.pk %}" class="ov-link">{{ newer.reference }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</div>
-            </div>
-            {% endif %}
-            {% if contract.start_date or contract.end_date %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Term' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-calendar-range"></i></span>
-              <div class="ov-row__value">{{ contract.start_date|default:"…" }} → <span{% if contract.is_expired %} class="text-danger fw-semibold"{% endif %}>{{ contract.end_date|default:"…" }}</span></div>
-            </div>
-            {% endif %}
-            {% if contract.amount %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Amount' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-cash-coin"></i></span>
-              <div class="ov-row__value">{{ contract.amount|floatformat:2 }} {{ contract.currency }}</div>
-            </div>
-            {% endif %}
-            {% if contract.scopes.all %}
-            <div class="ov-row" role="group" aria-label="{% trans 'Scopes' %}">
-              <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-diagram-3"></i></span>
-              <div class="ov-row__value">{% for scope in contract.scopes.all %}<span class="badge text-bg-secondary me-1">{{ scope.name }}</span>{% endfor %}</div>
-            </div>
-            {% endif %}
-          </div>
-        </div>
+  {% section_card _("Overview") icon="info-circle" %}
+    {% overview %}
+      {% if contract.is_amendment %}{% ov_row "file-earmark-plus" _("Amends contract") %}{% trans "Amends contract" %} <a href="{% url 'assets:contract-detail' contract.parent.pk %}" class="ov-link">{{ contract.parent.reference }}</a>{% endov_row %}{% endif %}
+      {% if contract.supersedes_id %}{% ov_row "arrow-repeat" _("Cancels and replaces") %}{% trans "Cancels and replaces" %} <a href="{% url 'assets:contract-detail' contract.supersedes.pk %}" class="ov-link">{{ contract.supersedes.reference }}</a> {{ contract.supersedes.label }}{% endov_row %}{% endif %}
+      {% if superseded_by %}{% ov_row "slash-circle" _("Cancelled and replaced by") %}{% trans "Cancelled and replaced by" %} {% for newer in superseded_by %}<a href="{% url 'assets:contract-detail' newer.pk %}" class="ov-link">{{ newer.reference }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}{% endov_row %}{% endif %}
+      {% if contract.start_date or contract.end_date %}{% ov_row "calendar-range" _("Term") %}{{ contract.start_date|default:"…" }} → <span{% if contract.is_expired %} class="text-danger fw-semibold"{% endif %}>{{ contract.end_date|default:"…" }}</span>{% endov_row %}{% endif %}
+      {% if contract.amount %}{% ov_row "cash-coin" _("Amount") %}{{ contract.amount|floatformat:2 }} {{ contract.currency }}{% endov_row %}{% endif %}
+      {% if contract.scopes.all %}{% ov_row "diagram-3" _("Scopes") %}{% grouped_scope_badges contract.scopes.all %}{% endov_row %}{% endif %}
+    {% endoverview %}
 
-        {# ── Parties ── #}
-        <div class="detail-subhead"><span><i class="bi bi-people me-1"></i>{% trans "Parties" %}</span></div>
-        {% if suppliers %}
-        <div class="mb-2">
-          <div class="text-muted small mb-1">{% trans "Suppliers" %}</div>
-          <div class="d-flex flex-wrap gap-1">
-            {% for s in suppliers %}<a href="{% url 'assets:supplier-detail' s.pk %}" class="text-decoration-none"><span class="badge text-bg-secondary"><i class="bi bi-truck me-1" aria-hidden="true"></i>{{ s.name }}</span></a>{% endfor %}
-          </div>
-        </div>
-        {% endif %}
-        {% if clients %}
-        <div class="{% if not suppliers %}mt-0{% endif %}">
-          <div class="text-muted small mb-1">{% trans "Clients" %}</div>
-          <div class="d-flex flex-wrap gap-1">
-            {% for c in clients %}<a href="{% url 'context:stakeholder-detail' c.pk %}" class="text-decoration-none"><span class="badge text-bg-secondary"><i class="bi bi-person-badge me-1" aria-hidden="true"></i>{{ c.name }}</span></a>{% endfor %}
-          </div>
-        </div>
-        {% endif %}
-        {% if not suppliers and not clients %}<p class="text-muted small mb-0">{% trans "No party linked yet." %}</p>{% endif %}
-
-        {# ── Document ── #}
-        <div class="detail-subhead"><span><i class="bi bi-file-earmark-pdf me-1"></i>{% trans "Document" %}</span></div>
-        {% if contract.has_document %}
-        <a href="{% url 'assets:contract-document' contract.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download me-1" aria-hidden="true"></i>{{ contract.file_name|default:_("Download PDF") }}</a>
-        {% comment %} Future : automatic content extraction via Ask Cairn will index this PDF. {% endcomment %}
-        {% else %}
-        <p class="text-muted small mb-0">{% trans "No document attached. Edit the contract to upload a PDF." %}</p>
-        {% endif %}
-      </div>
-    </div>
-
-    {# ── 2. Amendments ── #}
-    {% if amendments %}
-    <div class="card">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-file-earmark-plus me-1"></i>{% trans "Amendments" %} <span class="badge text-bg-secondary">{{ amendments|length }}</span></h6>
-        <div class="contract-grid">
-          {% for a in amendments %}
-          <div class="contract-card">
-            <div class="contract-card__top">
-              <a href="{% url 'assets:contract-detail' a.pk %}" class="contract-card__title cell-link text-truncate">{{ a.label|default:a.reference }}</a>
-              {% workflow_badge a %}
-            </div>
-            <div class="contract-card__meta">
-              <span><i class="bi bi-hash" aria-hidden="true"></i>{{ a.reference }}</span>
-              {% if a.start_date or a.end_date %}<span><i class="bi bi-calendar-range" aria-hidden="true"></i>{{ a.start_date|default:"…" }} → {{ a.end_date|default:"…" }}</span>{% endif %}
-              {% if a.amount %}<span><i class="bi bi-cash-coin" aria-hidden="true"></i>{{ a.amount|floatformat:2 }} {{ a.currency }}</span>{% endif %}
-              {% if a.has_document %}<span><i class="bi bi-file-earmark-pdf-fill text-danger" aria-hidden="true"></i>{% trans "PDF" %}</span>{% endif %}
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
+    {% subhead _("Parties") icon="people" %}
+    {% if suppliers or clients %}
+    {% meta_list cols=2 %}
+      {% if suppliers %}{% meta_item _("Suppliers") %}<div class="ref-links">{% for s in suppliers %}{% url 'assets:supplier-detail' s.pk as s_url %}{% ref_link s url=s_url %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+      {% if clients %}{% meta_item _("Clients") %}<div class="ref-links">{% for c in clients %}{% url 'context:stakeholder-detail' c.pk as c_url %}{% ref_link c url=c_url %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+    {% else %}
+    <p class="text-meta mb-0">{% trans "No party linked yet." %}</p>
     {% endif %}
 
-    {# ── 3. Record (audit metadata) ── #}
-    <div class="card">
-      <div class="card-body">
-        <div class="row g-4">
-          <div class="col-md-6">
-            <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "Governance" %}</h6>
-            <dl class="mb-0">
-              <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
-              <dd class="mb-3">{{ contract.version }}</dd>
-              <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-              <dd class="mb-0">{% if contract.created_by %}{% user_badge contract.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-            </dl>
-          </div>
-          <div class="col-md-6">
-            <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-clock-history me-1"></i>{% trans "Dates" %}</h6>
-            <dl class="mb-0">
-              <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
-              <dd class="mb-3">{{ contract.created_at }}</dd>
-              <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>
-              <dd class="mb-0">{{ contract.updated_at }}</dd>
-            </dl>
-          </div>
+    {% subhead _("Document") icon="file-earmark-pdf" %}
+    {% if contract.has_document %}
+    <a href="{% url 'assets:contract-document' contract.pk %}" class="btn btn-sm btn-secondary"><i class="bi bi-download me-1" aria-hidden="true"></i>{{ contract.file_name|default:_("Download PDF") }}</a>
+    {% comment %} Future : automatic content extraction via Ask Cairn will index this PDF. {% endcomment %}
+    {% else %}
+    <p class="text-meta mb-0">{% trans "No document attached. Edit the contract to upload a PDF." %}</p>
+    {% endif %}
+  {% endsection_card %}
+
+  {% if amendments %}
+  {% section_card _("Amendments") icon="file-earmark-plus" count=amendments|length %}
+    <div class="contract-grid">
+      {% for a in amendments %}
+      <div class="contract-card">
+        <div class="contract-card__top">
+          <a href="{% url 'assets:contract-detail' a.pk %}" class="contract-card__title cell-link text-truncate">{{ a.label|default:a.reference }}</a>
+          <span class="flex-shrink-0 text-nowrap">{% workflow_badge a %}</span>
+        </div>
+        <div class="contract-card__meta">
+          <span><i class="bi bi-hash" aria-hidden="true"></i>{{ a.reference }}</span>
+          {% if a.start_date or a.end_date %}<span><i class="bi bi-calendar-range" aria-hidden="true"></i>{{ a.start_date|default:"…" }} → {{ a.end_date|default:"…" }}</span>{% endif %}
+          {% if a.amount %}<span><i class="bi bi-cash-coin" aria-hidden="true"></i>{{ a.amount|floatformat:2 }} {{ a.currency }}</span>{% endif %}
+          {% if a.has_document %}<span><i class="bi bi-file-earmark-pdf-fill text-danger" aria-hidden="true"></i>{% trans "PDF" %}</span>{% endif %}
         </div>
       </div>
+      {% endfor %}
     </div>
+  {% endsection_card %}
+  {% endif %}
 
-  </div>
-
-  {# ── Rail : key contract figures ── #}
-  <div class="detail-rail">
-
-    {# Widget 1 : lifecycle stage #}
-    <div class="card kpi-tile kpi-tile--accent">
-      <div class="card-body d-flex align-items-center gap-3">
-        <span class="kpi-tile__icon"><i class="bi bi-signpost-split" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Lifecycle stage" %}</div>
-          <div class="fw-bold text-truncate" style="font-size:1.05rem;line-height:1.2">{{ contract.lifecycle_label }}</div>
-        </div>
-      </div>
-    </div>
-
-    {# Widget 2 : contract value #}
-    <div class="card kpi-tile kpi-tile--success">
-      <div class="card-body d-flex align-items-center gap-3">
-        <span class="kpi-tile__icon kpi-tile__icon--success"><i class="bi bi-cash-coin" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Amount" %}</div>
-          <div class="fw-bold text-truncate" style="font-size:1.3rem;line-height:1.1">{% if contract.amount %}{{ contract.amount|floatformat:0 }} {{ contract.currency }}{% else %}<span class="text-muted">-</span>{% endif %}</div>
-        </div>
-      </div>
-    </div>
-
-    {# Widget 3 : parties #}
-    <div class="card kpi-tile kpi-tile--info">
-      <div class="card-body d-flex align-items-center gap-3">
-        <span class="kpi-tile__icon kpi-tile__icon--info"><i class="bi bi-people" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Parties" %}</div>
-          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ party_count }}</div>
-        </div>
-      </div>
-    </div>
-
-    {# Widget 4 : amendments #}
-    <div class="card kpi-tile kpi-tile--neutral">
-      <div class="card-body d-flex align-items-center gap-3">
-        <span class="kpi-tile__icon kpi-tile__icon--neutral"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i></span>
-        <div class="min-w-0">
-          <div class="text-muted text-truncate" style="font-size:.8rem">{% trans "Amendments" %}</div>
-          <div class="fw-bold" style="font-size:1.5rem;line-height:1.1">{{ amendments|length }}</div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
+  {% record_card contract %}
+{% enddetail_layout %}
 {% endblock %}

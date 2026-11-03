@@ -9,7 +9,7 @@
         {% if contract.label %}{{ contract.label }}{% else %}<span class="cell-empty">{% trans "Untitled" %}</span>{% endif %}
       </a>
       {% if contract.has_document %}<i class="bi bi-file-earmark-pdf-fill ms-1 text-danger" title="{% trans 'PDF attached' %}" aria-hidden="true"></i>{% endif %}
-      {% if contract.is_superseded %}<span class="badge text-bg-secondary ms-1" title="{% trans 'Cancelled and replaced' %}">{% trans "Replaced" %}</span>{% elif contract.supersedes_id %}<span class="badge text-bg-light border ms-1" title="{% trans 'Cancels and replaces another contract' %}"><i class="bi bi-arrow-repeat" aria-hidden="true"></i></span>{% endif %}
+      {% if contract.is_superseded %}<span class="ms-1" title="{% trans 'Cancelled and replaced' %}">{% badge variant="secondary" label=_("Replaced") %}</span>{% elif contract.supersedes_id %}<span class="ms-1" title="{% trans 'Cancels and replaces another contract' %}" aria-label="{% trans 'Cancels and replaces another contract' %}">{% badge variant="secondary" icon="arrow-repeat" label="" %}</span>{% endif %}
     </div>
   </td>
   <td data-col="parties">
@@ -23,9 +23,9 @@
     {% if contract.end_date %}<span{% if contract.is_expired %} class="text-danger fw-semibold"{% endif %}>{{ contract.end_date }}</span>{% else %}<span class="cell-empty">-</span>{% endif %}
   </td>
   <td data-col="status"><span>{% workflow_badge contract %}</span></td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=contract.tags.all %}</td>
+  <td data-col="tags">{% tag_list contract.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <a hx-get="{% url 'assets:contract-update' contract.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    <a hx-get="{% url 'assets:contract-update' contract.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}

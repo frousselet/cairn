@@ -13,10 +13,10 @@
   </td>
   <td data-col="type">{{ site.get_type_display }}</td>
   <td data-col="status">{% workflow_badge site %}</td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=site.tags.all %}</td>
+  <td data-col="tags">{% tag_list site.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <a hx-get="{% url 'assets:site-update' site.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-    <a href="{% url 'assets:site-delete' site.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+    <a hx-get="{% url 'assets:site-update' site.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+    <a href="{% url 'assets:site-delete' site.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}
