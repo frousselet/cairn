@@ -30,6 +30,7 @@ from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
+    ConfirmDeleteShellMixin,
     HtmxFormMixin,
     ListSummaryMixin,
     PredefinedFilterMixin,
@@ -1602,7 +1603,7 @@ class FindingRegisterUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Sco
         return reverse("compliance:finding-detail", args=[self.object.pk])
 
 
-class FindingRegisterDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, DeleteView):
+class FindingRegisterDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, ScopeFilterMixin, DeleteView):
     model = Finding
     permission_required = "compliance.finding.delete"
     scope_parent_lookup = "assessment__scopes"

@@ -61,6 +61,7 @@ from core.lifecycle import DEFAULT_LIFECYCLE, LifecycleProtectedError, StepKind,
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
+    ConfirmDeleteShellMixin,
     HtmxFormMixin,
     ListSummaryMixin,
     PredefinedFilterMixin,
@@ -676,7 +677,7 @@ class IncidentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
         return reverse("incidents:incident-detail", args=[self.object.pk])
 
 
-class IncidentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ProtectedDeleteMixin, DeleteView):
+class IncidentDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, ScopeFilterMixin, ProtectedDeleteMixin, DeleteView):
     model = Incident
     permission_required = "incidents.incident.delete"
     template_name = "incidents/incident_confirm_delete_modal.html"
@@ -901,7 +902,7 @@ class SecurityEventUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Scope
         return reverse("incidents:event-detail", args=[self.object.pk])
 
 
-class SecurityEventDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ProtectedDeleteMixin, DeleteView):
+class SecurityEventDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, ScopeFilterMixin, ProtectedDeleteMixin, DeleteView):
     model = SecurityEvent
     permission_required = "incidents.event.delete"
     template_name = "incidents/security_event_confirm_delete_modal.html"
@@ -1102,7 +1103,7 @@ class ResponsePlanUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
         return reverse("incidents:response-plan-detail", args=[self.object.pk])
 
 
-class ResponsePlanDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ProtectedDeleteMixin, DeleteView):
+class ResponsePlanDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, ScopeFilterMixin, ProtectedDeleteMixin, DeleteView):
     model = IncidentResponsePlan
     permission_required = "incidents.response_plan.delete"
     template_name = "incidents/response_plan_confirm_delete_modal.html"
@@ -1418,7 +1419,7 @@ class NotificationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
         return reverse("incidents:notification-detail", args=[self.object.pk])
 
 
-class NotificationDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, ProtectedDeleteMixin, DeleteView):
+class NotificationDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, ProtectedDeleteMixin, DeleteView):
     """Delete a hand-added obligation.
 
     A generated one refuses deletion from the model layer : it is answered
@@ -1546,7 +1547,7 @@ class ResponseActionUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Scop
     modal_title_update = _l("Edit response action")
 
 
-class ResponseActionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, ProtectedDeleteMixin, DeleteView):
+class ResponseActionDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, ProtectedDeleteMixin, DeleteView):
     model = IncidentResponseAction
     permission_required = "incidents.incident.update"
     scope_parent_lookup = "incident__scopes"
@@ -1651,7 +1652,7 @@ class EvidenceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
         return reverse("incidents:evidence-detail", args=[self.object.pk])
 
 
-class EvidenceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, ProtectedDeleteMixin, DeleteView):
+class EvidenceDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, ProtectedDeleteMixin, DeleteView):
     """Remove an item registered in error, while it is still a draft.
 
     Destruction of a real artefact is a gated transition with a confirmation and
@@ -2060,7 +2061,7 @@ class PostIncidentReviewUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
         return reverse("incidents:review-detail", args=[self.object.pk])
 
 
-class PostIncidentReviewDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, ProtectedDeleteMixin, DeleteView):
+class PostIncidentReviewDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, ScopeFilterMixin, ProtectedDeleteMixin, DeleteView):
     """Remove a review opened in error, while its incident is already over.
 
     The model refuses to delete a review whose incident is still open : the
@@ -2149,7 +2150,7 @@ class PersonalDataBreachUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
         return reverse("incidents:breach-detail", args=[self.object.pk])
 
 
-class PersonalDataBreachDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, ProtectedDeleteMixin, DeleteView):
+class PersonalDataBreachDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, ProtectedDeleteMixin, DeleteView):
     model = PersonalDataBreach
     permission_required = "incidents.notification.delete"
     scope_parent_lookup = "incident__scopes"
@@ -2285,7 +2286,7 @@ class ReportingAuthorityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
         return reverse("incidents:reporting-authority-detail", args=[self.object.pk])
 
 
-class ReportingAuthorityDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ProtectedDeleteMixin, DeleteView):
+class ReportingAuthorityDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, ProtectedDeleteMixin, DeleteView):
     model = ReportingAuthority
     permission_required = "incidents.response_plan.delete"
     template_name = "incidents/reporting_authority_confirm_delete_modal.html"
@@ -2428,7 +2429,7 @@ class ObligationTemplateUpdateView(LoginRequiredMixin, PermissionRequiredMixin, 
         return reverse("incidents:obligation-template-detail", args=[self.object.pk])
 
 
-class ObligationTemplateDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ProtectedDeleteMixin, DeleteView):
+class ObligationTemplateDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, ProtectedDeleteMixin, DeleteView):
     model = ReportingObligationTemplate
     permission_required = "incidents.response_plan.delete"
     template_name = "incidents/obligation_template_confirm_delete_modal.html"

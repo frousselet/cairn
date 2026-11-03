@@ -121,6 +121,11 @@ the hidden fields), which is also what a non-stepped modal puts in its
 {% block delete_details %}<p class="text-muted small">{% trans "The 4 linked actions will become orphaned." %}</p>{% endblock %}
 ```
 
+A drawer-served confirmation that can also be opened directly extends
+`delete_shell` instead (`{% extends delete_shell|default:"includes/confirm_delete_modal.html" %}`)
+and its view mixes in `core.mixins.ConfirmDeleteShellMixin`: the same blocks
+then render in the modal from the drawer and as a full page on a direct visit.
+
 `delete_button_attrs` adds attributes to the Delete button, for example
 `disabled` while a protection rule forbids the deletion (say why in
 `delete_details`).

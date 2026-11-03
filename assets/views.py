@@ -25,6 +25,7 @@ from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
+    ConfirmDeleteShellMixin,
     HtmxFormMixin,
     ListSummaryMixin,
     PredefinedFilterMixin,
@@ -1007,7 +1008,7 @@ class SupplierContactUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Par
         return reverse_lazy("assets:supplier-detail", kwargs={"pk": self.object.supplier.pk})
 
 
-class SupplierContactDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class SupplierContactDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, DeleteView):
     model = SupplierContact
     template_name = "assets/supplier_contact_confirm_delete_modal.html"
     permission_required = "assets.supplier.update"
@@ -1083,7 +1084,7 @@ class SupplierSubprocessorUpdateView(LoginRequiredMixin, PermissionRequiredMixin
         return reverse_lazy("assets:supplier-detail", kwargs={"pk": self.object.supplier.pk})
 
 
-class SupplierSubprocessorDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class SupplierSubprocessorDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, DeleteView):
     model = SupplierSubprocessor
     template_name = "assets/supplier_subprocessor_confirm_delete_modal.html"
     permission_required = "assets.supplier.update"
