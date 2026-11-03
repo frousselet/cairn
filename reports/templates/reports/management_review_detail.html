@@ -131,7 +131,16 @@
         {% for c in isms_changes %}
         <tr>
           <td><span class="ref">{{ c.reference }}</span></td>
-          <td>{{ c.title }}</td>
+          <td>
+            {% with docs=c.affected_documents.all %}
+            {% if docs %}
+            <span class="cell-stack">
+              <span>{{ c.title }}</span>
+              <span class="ref-links" aria-label="{% trans 'Affected documents' %}">{% for d in docs %}{% url 'documents:policy-detail' d.pk as doc_url %}{% ref_link d url=doc_url label=d.title %}{% endfor %}</span>
+            </span>
+            {% else %}{{ c.title }}{% endif %}
+            {% endwith %}
+          </td>
           <td>{{ c.get_change_type_display }}</td>
           <td>{{ c.owner|or_dash }}</td>
           <td class="tabular-nums">{{ c.target_date|date:"SHORT_DATE_FORMAT"|or_dash }}</td>
@@ -150,6 +159,43 @@
     {% empty_state message=_("No ISMS changes recorded yet.") compact=True %}
     {% endif %}
   {% endsection_card %}
+
+  {# Documents due for review (module 7) : the review is where an overdue
+     policy review is supposed to surface (ISO 27001 clause 5.2 / 9.3). #}
+  {% if documents_due_for_review is not None %}
+  {% section_card _("Documents due for review") icon="file-earmark-text" count=documents_due_for_review|length flush=documents_due_for_review|length %}
+    {% if documents_due_for_review %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr>
+          <th>{% trans "Ref." %}</th><th>{% trans "Title" %}</th>
+          <th>{% trans "Owner" %}</th><th>{% trans "Next review" %}</th>
+        </tr></thead>
+        <tbody>
+        {% for row in documents_due_for_review %}
+        <tr>
+          <td><a href="{% url 'documents:policy-detail' row.policy.pk %}" class="ref">{{ row.policy.reference }}</a></td>
+          <td>
+            <span class="cell-stack">
+              <a href="{% url 'documents:policy-detail' row.policy.pk %}" class="cell-link">{{ row.policy.title }}</a>
+              <span class="cell-sub">{{ row.policy.get_document_type_display }}</span>
+            </span>
+          </td>
+          <td>{{ row.policy.owner|or_dash }}</td>
+          <td class="tabular-nums text-nowrap">
+            {{ row.policy.next_review_date|date:"SHORT_DATE_FORMAT" }}
+            {% if row.overdue_at_review %}{% badge variant="danger" label=_("Overdue") %}{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% empty_state message=_("No document is due for review in this period.") compact=True %}
+    {% endif %}
+  {% endsection_card %}
+  {% endif %}
 
   {# Executive summary #}
   {% section_card _("Executive summary") icon="file-text" %}

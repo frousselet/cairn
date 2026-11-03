@@ -139,6 +139,56 @@ class ManagementReviewTableBodyView(
         return self.filter_queryset_advanced(qs)
 
 
+# ─── Documents due for review (module 7, README §1.3) ─────────────────
+
+def documents_due_for_review(review, user):
+    """Active documents whose review falls in the review period, or is
+    already overdue at the review date (held, else planned).
+
+    ``None`` when the reader may not read documents, so the card is not
+    rendered at all. "Active" is read off the document lifecycle
+    (``reportable()``), overdue is derived from the date (RG-DOC-12). The
+    review's own scopes narrow the register when it has any; the reader's
+    perimeter always applies on top.
+    """
+    if not (user.is_superuser or user.has_perm("documents.policy.read")):
+        return None
+    from django.db.models import Q
+
+    from core.lifecycle import reportable
+    from core.scoping import filter_queryset_by_scopes
+    from documents.models import Policy
+
+    review_date = review.held_date or review.planned_date
+    due = Q()
+    if review.period_start and review.period_end:
+        due |= Q(next_review_date__gte=review.period_start, next_review_date__lte=review.period_end)
+    if review_date:
+        due |= Q(next_review_date__lt=review_date)
+    if not due:
+        return []
+    qs = reportable(Policy.objects.filter(next_review_date__isnull=False)).filter(due)
+    # The review's perimeter : its scopes and their sub-scopes. A document
+    # filed under no scope is organisation-wide, so it stays in.
+    review_scope_ids = set()
+    for scope in review.scopes.all():
+        review_scope_ids.add(scope.pk)
+        review_scope_ids.update(child.pk for child in scope.get_descendants())
+    if review_scope_ids:
+        qs = qs.filter(Q(scopes__in=review_scope_ids) | Q(scopes__isnull=True)).distinct()
+    if not user.is_superuser:
+        allowed = user.get_allowed_scope_ids()
+        if allowed is not None:
+            qs = filter_queryset_by_scopes(qs, allowed)
+    rows = []
+    for policy in qs.select_related("owner").distinct().order_by("next_review_date", "reference"):
+        rows.append({
+            "policy": policy,
+            "overdue_at_review": bool(review_date and policy.next_review_date < review_date),
+        })
+    return rows
+
+
 # ─── Detail with stepper and all sections ─────────────────────────────
 
 class ManagementReviewDetailView(
@@ -190,8 +240,9 @@ class ManagementReviewDetailView(
             review.decisions.select_related("owner").all()
         )
         ctx["isms_changes"] = list(
-            review.isms_changes.select_related("owner").all()
+            review.isms_changes.select_related("owner").prefetch_related("affected_documents").all()
         )
+        ctx["documents_due_for_review"] = documents_due_for_review(review, user)
         ctx["comments"] = list(
             review.comments.select_related("author").order_by("-created_at")[:50]
         )

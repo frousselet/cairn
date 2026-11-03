@@ -66,6 +66,24 @@ from context.models import (
     SwotStrategy,
     Tag,
 )
+from documents.constants import (
+    CAMPAIGN_CLOSED,
+    CAMPAIGN_RUNNING,
+    POLICY_ACTIVE,
+    POLICY_DRAFT,
+    VERSION_IN_FORCE,
+    VERSION_IN_REVIEW,
+    VERSION_SUPERSEDED,
+    AcknowledgementChannel,
+    AcknowledgementStatus,
+    DocumentType,
+)
+from documents.models import (
+    AcknowledgementCampaign,
+    Policy,
+    PolicyAcknowledgement,
+    PolicyVersion,
+)
 from incidents.constants import (
     Art34Ground,
     AuthorityType,
@@ -4710,6 +4728,331 @@ with transaction.atomic():
         ),
     )
 
+    # ============================================================ documents
+    # Module 7 : the governed policy set (ISO/IEC 27001:2022 clauses 5.2, 7.5,
+    # A.5.1). Every document and version reaches its step through
+    # `transition_to(..., enforce_permission=False)` and every acknowledgement
+    # through `acknowledge()`, never by assigning `workflow_state` : the
+    # supersession of a version (RG-DOC-01), the closure of its campaign
+    # (RG-DOC-18) and the approval stamps (RG-DOC-07) are the side effects of
+    # those calls, so the demo carries the trail an auditor reads.
+    #
+    # The register pre-dates the platform, so once the trail exists the dates it
+    # stamped "now" are replayed onto the historical calendar (approval,
+    # supersession, launch, acknowledgement, and the matching lifecycle events).
+    # Only timestamps move; no step is ever written.
+    _phase("Documents register, versions and acknowledgement campaigns...")
+    from django.contrib.contenttypes.models import ContentType as _CT
+
+    from core.models import LifecycleEvent
+
+    def mini_pdf(title, lines):
+        """A small, valid one-page PDF (correct xref offsets), for the signed copy."""
+        def esc(text):
+            return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+        stream = ["BT", "/F1 18 Tf", "72 760 Td", f"({esc(title)}) Tj", "/F1 11 Tf"]
+        for line in lines:
+            stream += ["0 -22 Td", f"({esc(line)}) Tj"]
+        stream.append("ET")
+        content = "\n".join(stream).encode("latin-1")
+        objects = [
+            b"<< /Type /Catalog /Pages 2 0 R >>",
+            b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+            b"/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+            b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+            b"<< /Length " + str(len(content)).encode() + b" >>\nstream\n" + content + b"\nendstream",
+        ]
+        out = bytearray(b"%PDF-1.4\n")
+        offsets = []
+        for number, body in enumerate(objects, 1):
+            offsets.append(len(out))
+            out += f"{number} 0 obj\n".encode() + body + b"\nendobj\n"
+        xref = len(out)
+        out += f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n".encode()
+        for offset in offsets:
+            out += f"{offset:010d} 00000 n \n".encode()
+        out += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode()
+        return bytes(out)
+
+    def at(day, hour=10):
+        """A timezone-aware moment on a demo calendar day."""
+        from datetime import datetime as _datetime, time as _time
+
+        return timezone.make_aware(_datetime.combine(day, _time(hour=hour)))
+
+    def replay_event(obj, to_step, when):
+        LifecycleEvent.objects.filter(
+            content_type=_CT.objects.get_for_model(type(obj)), object_id=str(obj.pk), to_step=to_step,
+        ).update(created_at=when)
+
+    def mk_version(policy, label, content, *, effective, summary="", pdf=None):
+        version = PolicyVersion(
+            policy=policy, version_label=label, content=content, change_summary=summary,
+            effective_from=effective, created_by=policy.owner,
+        )
+        if pdf is not None:
+            version.set_pdf(pdf, f"{policy.reference.lower()}-v{label}.pdf")
+        version.full_clean()
+        version.save()
+        return version
+
+    def approve_version(version, approver, approved_on, comment=None):
+        """Submit and approve a draft version, then replay its approval date."""
+        callers_policy = version.policy
+        version.transition_to(VERSION_IN_REVIEW, version.policy.owner, enforce_permission=False)
+        version.transition_to(VERSION_IN_FORCE, approver, comment=comment, enforce_permission=False)
+        when = at(approved_on)
+        PolicyVersion.objects.filter(pk=version.pk).update(approved_at=when)
+        replay_event(version, VERSION_IN_REVIEW, when - timedelta(days=6))
+        replay_event(version, VERSION_IN_FORCE, when)
+        # The version it superseded left `in_force` in the same transaction.
+        previous = PolicyVersion.objects.filter(superseded_by=version).first()
+        if previous is not None:
+            PolicyVersion.objects.filter(pk=previous.pk).update(superseded_at=when)
+            replay_event(previous, VERSION_SUPERSEDED, when)
+        policy = Policy.objects.get(pk=version.policy_id)
+        if previous is None:
+            # The first version in force activated the document (RG-DOC-09).
+            replay_event(policy, POLICY_ACTIVE, when)
+        Policy.objects.filter(pk=policy.pk).update(last_reviewed_at=when)
+        policy.refresh_from_db()
+        policy.refresh_review_date()
+        version.refresh_from_db()
+        # The caller's own document instance follows (activation, review dates).
+        callers_policy.refresh_from_db()
+        return version
+
+    def mk_policy(title, doc_type, owner, *, summary, reqs=(), roles=(), parent=None,
+                  classification="internal", frequency=12, override=None, tags=()):
+        policy = Policy(
+            title=title, document_type=doc_type, summary=summary, owner=owner, approver=david,
+            classification=classification, parent=parent, review_frequency_months=frequency,
+            next_review_override=override, created_by=owner,
+        )
+        policy.full_clean()
+        policy.save()
+        policy.scopes.set([scope_group])
+        policy.linked_requirements.set([iso_reqs[r] for r in reqs if r in iso_reqs])
+        policy.applies_to_roles.set(list(roles))
+        policy.tags.set(list(tags))
+        return policy
+
+    # --- The information security policy : three versions -----------------
+    pol_isms = mk_policy(
+        "Information security policy", DocumentType.POLICY, elise,
+        summary=(
+            "Top-level policy of the Voltara ISMS : objectives, commitment of "
+            "the executive committee, roles and the framework of topic-specific policies."
+        ),
+        reqs=["A.5.1", "A.5.2", "A.5.4"], roles=[role_ciso], classification="public",
+        tags=[tag_nis2, tag_critical],
+    )
+    isms_text_v1 = (
+        "<h2>1. Purpose</h2><p>Voltara Energy protects the confidentiality, integrity and "
+        "availability of the information that supports the production and distribution of "
+        "renewable energy.</p><h2>2. Scope</h2><p>All entities, sites, employees and "
+        "contractors of the Voltara group.</p><h2>3. Commitments</h2><ul><li>Comply with "
+        "legal, regulatory and contractual requirements.</li><li>Manage information "
+        "security risks.</li><li>Continually improve the ISMS.</li></ul>"
+    )
+    isms_v1 = mk_version(pol_isms, "1.0", isms_text_v1, effective=years_ago(3))
+    approve_version(isms_v1, david, years_ago(3))
+    isms_v2 = pol_isms.new_version(elise, bump="major")
+    isms_v2.content = isms_text_v1 + (
+        "<h2>4. Industrial systems</h2><p>Operational technology (SCADA, plant control) is "
+        "covered by this policy and by the OT security standard.</p>"
+    )
+    isms_v2.change_summary = "Extends the scope to operational technology and aligns with ISO/IEC 27001:2022."
+    isms_v2.effective_from = years_ago(1)
+    isms_v2.save()
+    approve_version(isms_v2, david, years_ago(1))
+
+    # Campaign on 2.0 : it closes by itself when 2.1 is put in force (RG-DOC-18).
+    contributors = Group.objects.get(name="Contributeur")
+    camp_isms = AcknowledgementCampaign.objects.create(
+        name="Information security policy 2.0 : annual acknowledgement",
+        policy_version=isms_v2, created_by=elise,
+        message="Please read the updated information security policy, now covering our industrial systems.",
+        due_date=days_ahead(10),
+    )
+    camp_isms.scopes.set([scope_group])
+    camp_isms.audience_groups.set([contributors])
+    camp_isms.audience_users.set([amelia, sofia])
+    camp_isms.transition_to(CAMPAIGN_RUNNING, elise, enforce_permission=False)
+    for person, channel in [(marc, AcknowledgementChannel.WEB), (thomas, AcknowledgementChannel.WEB),
+                            (amelia, AcknowledgementChannel.API), (ines, AcknowledgementChannel.MCP)]:
+        camp_isms.acknowledgements.get(user=person).acknowledge(person, channel=channel)
+
+    isms_v3 = pol_isms.new_version(elise, bump="minor")
+    isms_v3.content = isms_v2.content.replace(
+        "<li>Continually improve the ISMS.</li>",
+        "<li>Continually improve the ISMS.</li><li>Report every security event without delay.</li>",
+    )
+    isms_v3.change_summary = "Adds the duty to report security events (NIS2 article 23) and the signed copy."
+    isms_v3.effective_from = months_ago(3)
+    isms_v3.clear_pdf()
+    isms_v3.set_pdf(mini_pdf("Voltara Energy - Information security policy 2.1", [
+        "Approved by the executive committee.",
+        "Signed copy of record. The text in Cairn is the reference.",
+    ]), "voltara-information-security-policy-2.1.pdf")
+    isms_v3.save()
+    approve_version(isms_v3, david, months_ago(3), comment="Approved at the executive committee.")
+    # Replay the closed campaign onto its own calendar.
+    camp_isms.refresh_from_db()
+    AcknowledgementCampaign.objects.filter(pk=camp_isms.pk).update(
+        launched_at=at(years_ago(1) + timedelta(days=7)),
+        due_date=years_ago(1) + timedelta(days=37),
+        closed_at=at(months_ago(3)),
+    )
+    replay_event(camp_isms, CAMPAIGN_RUNNING, at(years_ago(1) + timedelta(days=7)))
+    replay_event(camp_isms, CAMPAIGN_CLOSED, at(months_ago(3)))
+    for offset, row in enumerate(camp_isms.acknowledgements.filter(status=AcknowledgementStatus.ACKNOWLEDGED)):
+        PolicyAcknowledgement.objects.filter(pk=row.pk).update(
+            acknowledged_at=at(years_ago(1) + timedelta(days=9 + offset * 3)),
+        )
+    PolicyAcknowledgement.objects.filter(campaign=camp_isms).update(
+        requested_at=at(years_ago(1) + timedelta(days=7)),
+    )
+
+    # --- Topic-specific policies, a charter and procedures -----------------
+    pol_access = mk_policy(
+        "Access control policy", DocumentType.POLICY, marc,
+        summary="Rules for granting, reviewing and revoking access to Voltara information systems.",
+        reqs=["A.5.15", "A.5.16", "A.5.18", "A.8.2"], parent=pol_isms,
+        override=days_ahead(21), tags=[tag_cloud],
+    )
+    access_v1 = mk_version(pol_access, "1.0", (
+        "<h2>Principles</h2><ul><li>Least privilege and need to know.</li><li>Named accounts "
+        "only; shared accounts are forbidden.</li><li>Quarterly review of privileged access.</li>"
+        "</ul><h2>Joiners, movers, leavers</h2><p>HR triggers every change; IT applies it within "
+        "one business day.</p>"
+    ), effective=months_ago(10))
+    approve_version(access_v1, elise, months_ago(10))
+
+    charter = mk_policy(
+        "Acceptable use charter", DocumentType.CHARTER, ines,
+        summary="What every employee and contractor commits to when using Voltara information systems.",
+        reqs=["A.5.10", "A.6.3"], parent=pol_isms, roles=[role_irl],
+    )
+    charter_v1 = mk_version(charter, "1.0", (
+        "<p>I use Voltara equipment and accounts for professional purposes, protect my "
+        "credentials, lock my session, report any suspicious event to the SOC and never "
+        "install unapproved software.</p>"
+    ), effective=months_ago(2))
+    approve_version(charter_v1, elise, months_ago(2))
+
+    pol_ops = mk_policy(
+        "IT operations security policy", DocumentType.POLICY, marc,
+        summary="Operating rules for the corporate and industrial information systems.",
+        reqs=["A.5.37", "A.8.9"], parent=pol_isms,
+    )
+    ops_v1 = mk_version(pol_ops, "1.0", (
+        "<p>Operations follow documented procedures, changes go through the change advisory "
+        "board, and every production system is backed up and monitored.</p>"
+    ), effective=months_ago(14))
+    approve_version(ops_v1, elise, months_ago(14))
+    # Reviewed a year on, kept unchanged (RG-DOC-13).
+    pol_ops.record_review(elise, "Annual review : still accurate, no change required.")
+    Policy.objects.filter(pk=pol_ops.pk).update(last_reviewed_at=at(months_ago(2)))
+    pol_ops.refresh_from_db()
+    pol_ops.refresh_review_date()
+
+    # Overdue : a six-month review cycle that nobody closed (RG-DOC-12).
+    proc_backup = mk_policy(
+        "Backup and restore procedure", DocumentType.PROCEDURE, thomas,
+        summary="How production and plant data is backed up, protected and restored.",
+        reqs=["A.8.13"], parent=pol_ops, frequency=6,
+    )
+    backup_v1 = mk_version(proc_backup, "1.0", (
+        "<ol><li>Daily incremental and weekly full backups of every production system.</li>"
+        "<li>One immutable, offline copy per week (ransomware protection).</li>"
+        "<li>Quarterly restore test, recorded in the operations log.</li></ol>"
+    ), effective=months_ago(8))
+    approve_version(backup_v1, marc, months_ago(8))
+
+    proc_ir = mk_policy(
+        "Incident response procedure", DocumentType.PROCEDURE, marc,
+        summary="Detection, triage, containment, notification and lessons learned (A.5.24 to A.5.28).",
+        reqs=["A.5.24", "A.5.25", "A.5.26"], parent=pol_isms, roles=[role_irl, role_soc],
+    )
+    ir_v1 = mk_version(proc_ir, "1.0", (
+        "<p>Any security event is reported to the SOC. The incident manager qualifies it, "
+        "opens an incident file and drives the response until closure.</p>"
+    ), effective=months_ago(11))
+    approve_version(ir_v1, elise, months_ago(11))
+    # The revision the exercise called for, submitted and awaiting approval.
+    ir_v2 = proc_ir.new_version(marc, bump="minor")
+    ir_v2.content = ir_v1.content + "<p>A deputy incident manager is named for every on-call week.</p>"
+    ir_v2.change_summary = "Names a deputy incident manager and publishes the vault break-glass procedure."
+    ir_v2.save()
+    ir_v2.transition_to(VERSION_IN_REVIEW, marc, enforce_permission=False)
+
+    # A document still being written : draft, no version in force.
+    std_crypto = mk_policy(
+        "Cryptography standard", DocumentType.STANDARD, julien,
+        summary="Approved algorithms, key lengths and key management rules.",
+        reqs=["A.8.24"], parent=pol_isms,
+    )
+    mk_version(std_crypto, "0.1", (
+        "<p>Draft : TLS 1.2 minimum, AES-256 for data at rest, keys held in the HSM.</p>"
+    ), effective=None)
+    assert std_crypto.workflow_state == POLICY_DRAFT
+
+    # --- The running campaign : the acceptable use charter -----------------
+    camp_charter = AcknowledgementCampaign.objects.create(
+        name="Acceptable use charter : all staff",
+        policy_version=charter_v1, created_by=ines,
+        message="Every employee confirms the acceptable use charter once a year.",
+        statement="I have read {title} version {label} and I will apply it in my daily work.",
+        due_date=days_ahead(5),
+    )
+    camp_charter.scopes.set([scope_group])
+    camp_charter.audience_users.set([elise, david, amelia, sofia])
+    camp_charter.audience_groups.set([contributors])
+    camp_charter.audience_roles.set([role_irl])
+    camp_charter.transition_to(CAMPAIGN_RUNNING, elise, enforce_permission=False)
+    for person, channel in [(david, AcknowledgementChannel.WEB), (marc, AcknowledgementChannel.WEB),
+                            (thomas, AcknowledgementChannel.API)]:
+        camp_charter.acknowledgements.get(user=person).acknowledge(person, channel=channel)
+    camp_charter.acknowledgements.get(user=sofia).excuse(
+        ines, "On parental leave until next quarter; will acknowledge on return.",
+    )
+    # A reminder already went out to Julien (the one field a pending row may change).
+    reminded = camp_charter.acknowledgements.get(user=julien)
+    reminded.last_reminded_at = NOW - timedelta(days=1)
+    reminded.save()
+    assert camp_charter.acknowledgements.get(user=elise).is_pending
+
+    # --- Management review : ISMS changes linked to the documents ----------
+    isms_change_ir.affected_documents.set([proc_ir])
+    isms_change_access = IsmsChange.objects.create(
+        review=mr_next, change_type="policy",
+        title="Tighten privileged access reviews",
+        description="Move privileged access reviews from quarterly to monthly for OT administrators.",
+        impact_analysis="Touches the access control policy and the OT administration procedure.",
+        affected_policies="Access control policy (section Principles)",
+        owner=marc, status="proposed", target_date=days_ahead(45),
+    )
+    isms_change_access.affected_scopes.set([scope_group])
+    isms_change_access.affected_frameworks.set([fw_iso])
+    isms_change_access.affected_documents.set([pol_access])
+
+    # --- Predefined indicators fed by the register -------------------------
+    for name, source in [
+        ("Documents overdue for review", "policies_overdue_review"),
+        ("Document acknowledgement rate", "acknowledgement_rate"),
+    ]:
+        fmt, unit = ("number", "") if source == "policies_overdue_review" else ("number", "%")
+        ind = Indicator.objects.create(
+            name=name, indicator_type="organizational", collection_method="internal",
+            format=fmt, unit=unit, is_internal=True, internal_source=source,
+            review_frequency="monthly", first_review_date=TODAY + timedelta(days=19),
+            status="active", owner=elise, **approved(elise),
+        )
+        ind.scopes.set([scope_group])
+        ind.record_measurement(ind.compute_internal_value(), recorded_by=elise)
+
     # ============================================================ bulk volume
     # Generate 50+ items per category (where it makes sense) on top of the
     # curated narrative, wiring foreign keys to the objects created above so the
@@ -5284,6 +5627,17 @@ with transaction.atomic():
         content_type="application/pdf", display_order=4, **tc_pub(),
     )
 
+    # The information security policy, served from its version in force
+    # (RG-DOC-21) : publishing 2.2 later replaces the download with no edit here.
+    tc_policy_doc = TrustCenterDocument(
+        title="Information security policy", access=DocumentAccess.PUBLIC,
+        description="<p>Our top-level information security policy, always in its current version.</p>",
+        policy=pol_isms, display_order=5, created_by=elise,
+    )
+    tc_policy_doc.full_clean()
+    tc_policy_doc.save()
+    put_in_force(tc_policy_doc, elise)
+
     # One pending access request so the curation inbox is not empty.
     DocumentRequest.objects.create(
         document=doc_soc2, email="jordan.blake@acme-corp.example",
@@ -5312,6 +5666,11 @@ print(
     f"{EvidenceCustodyEvent.objects.count()} custody events  "
     f"Reviews: {PostIncidentReview.objects.count()}  "
     f"Breaches: {PersonalDataBreach.objects.count()}"
+)
+print(
+    f"  Documents: {Policy.objects.count()} documents, {PolicyVersion.objects.count()} versions, "
+    f"{AcknowledgementCampaign.objects.count()} campaigns, "
+    f"{PolicyAcknowledgement.objects.count()} acknowledgement rows"
 )
 print(
     f"  Trust Center: {TrustCenterCertification.objects.count()} certifications, "

@@ -229,7 +229,7 @@ Other backends are configured the same way: `openai` for OpenAI (ChatGPT) or any
 
 ## Scheduled lifecycle commands
 
-Two management commands keep the risk register in sync with time and are intended to be run **once a day** by a cron job (host or container side):
+Three management commands keep the risk register and the documents register in sync with time and are intended to be run **once a day** by a cron job (host or container side):
 
 ```bash
 # Set RiskAcceptance.status = EXPIRED for any active acceptance past its
@@ -240,14 +240,20 @@ docker compose exec web python manage.py expire_risk_acceptances
 # Set RiskTreatmentPlan.status = OVERDUE for any in-flight plan whose
 # target_date has passed (skips COMPLETED, CANCELLED and already-OVERDUE).
 docker compose exec web python manage.py mark_overdue_treatment_plans
+
+# Remind document owners of reviews due within 30 days or overdue, and the
+# addressees of pending acknowledgements 7 days before a campaign's due date
+# and the day after it. Each reminder is sent once.
+docker compose exec web python manage.py documents_sweep
 ```
 
-Both accept `--dry-run` to preview changes. A typical host cron entry:
+All three accept `--dry-run` to preview changes. A typical host cron entry:
 
 ```cron
 # /etc/cron.d/cairn-lifecycle
 15 2 * * * cd /opt/cairn && docker compose exec -T web python manage.py expire_risk_acceptances
 20 2 * * * cd /opt/cairn && docker compose exec -T web python manage.py mark_overdue_treatment_plans
+22 2 * * * cd /opt/cairn && docker compose exec -T web python manage.py documents_sweep
 ```
 
 If the **semantic search** of the Ask Cairn assistant is enabled (`AI_ASSISTANT_SEMANTIC_ENABLED`), schedule the index refresh the same way. The command is idempotent (it only re-embeds changed requirements and prunes deleted ones), so a daily run is cheap. The index is also refreshed automatically when the app starts, a deleted requirement is pruned immediately, and an administrator can force a refresh from the **Administration -> Semantic index** page; the daily cron is the reliable, self-healing backstop.

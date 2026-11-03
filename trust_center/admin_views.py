@@ -49,6 +49,21 @@ from trust_center.models import (
 from trust_center.notifications import send_gated_link_email
 from trust_center.transition_messages import transition_error_detail
 
+def _document_source_label(doc):
+    """What a Trust Center document serves : its report, its document (and the
+    version in force it currently resolves to) or its uploaded file."""
+    if doc.report_id:
+        return str(doc.report)
+    if doc.policy_id:
+        version = doc.policy_version
+        if version is None:
+            return _("%(document)s (no version in force)") % {"document": doc.policy}
+        return _("%(document)s, version %(label)s") % {
+            "document": doc.policy, "label": version.version_label,
+        }
+    return doc.file_name or "-"
+
+
 ENTITY_CONFIG = {
     "certification": {
         "model": TrustCenterCertification,
@@ -106,16 +121,13 @@ ENTITY_CONFIG = {
         "label": _("Document"),
         "label_plural": _("Documents"),
         "icon": "bi-file-earmark-text",
-        "select_related": ["report"],
+        "select_related": ["report", "policy"],
         "detail_fields": lambda o: [
             (_("Title"), o.title),
             (_("Description"), o.description),
             (_("Access"), o.get_access_display()),
             (_("Requires NDA"), o.requires_nda),
-            (
-                _("Source"),
-                str(o.report) if o.report_id else (o.file_name or "-"),
-            ),
+            (_("Source"), _document_source_label(o)),
             (_("Display order"), o.display_order),
         ],
     },

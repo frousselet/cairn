@@ -103,9 +103,7 @@ class TrustCenterPublicDocumentDownloadView(View):
         data = doc.get_file_bytes()
         if not data:
             raise Http404()
-        resp = HttpResponse(
-            data, content_type=doc.content_type or "application/octet-stream"
-        )
+        resp = HttpResponse(data, content_type=doc.effective_content_type)
         resp["Content-Disposition"] = _attachment_disposition(doc.effective_file_name)
         return resp
 
@@ -228,8 +226,6 @@ class TrustCenterGatedDownloadView(View):
         DocumentRequest.objects.filter(pk=req.pk).update(
             download_count=F("download_count") + 1
         )
-        resp = HttpResponse(
-            data, content_type=req.document.content_type or "application/octet-stream"
-        )
+        resp = HttpResponse(data, content_type=req.document.effective_content_type)
         resp["Content-Disposition"] = _attachment_disposition(req.document.effective_file_name)
         return resp

@@ -58,6 +58,7 @@ from compliance.models import (
 )
 from context.models import Activity, Indicator, Issue, Objective, Role, Scope, Site, Stakeholder, SwotAnalysis
 from context.views import build_indicator_slot, get_dashboard_indicator_slots
+from documents.models import Policy, PolicyVersion
 from incidents.models import Incident, SecurityEvent
 from risks.models import (
     Risk,
@@ -409,6 +410,9 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
             else 0
         )
 
+        # ── Documents (module 7) ─────────────────────────
+        ctx.update(documents_dashboard_context(user, today))
+
         # ── Today's actions ───────────────────────────
         # Presented as a prioritized to-do list rather than alarms: each
         # entry carries an action verb, a count and a link to the page
@@ -592,6 +596,13 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
             # "no deadline, but three incidents open" is itself worth reading.
             "notification_deadlines": bool(
                 ctx["notification_deadlines"] or ctx["open_incident_count"]
+            ),
+            # Shown while there is something to act on : a review overdue, a
+            # document left without a version in force, or a campaign running.
+            "documents": bool(
+                ctx["documents_overdue_count"]
+                or ctx["documents_without_version_count"]
+                or ctx["documents_running_campaigns"]
             ),
             "risk_treatment_flow": bool(ctx.get("risk_treatment_flow")),
             "risk_matrix_current": bool(ctx.get("matrix_current")),
@@ -1029,6 +1040,7 @@ ALL_CATEGORIES = [
     "treatment_plan", "scope", "objective", "framework", "swot",
     "acceptance", "supplier_review",
     "notification_deadline", "post_incident_review", "evidence_retention",
+    "documents",
 ]
 
 # Category label, shared by the upcoming-deadlines list and the iCal feed so a
@@ -1047,6 +1059,7 @@ CATEGORY_LABELS = {
     "notification_deadline": gettext_lazy("Notification deadlines"),
     "post_incident_review": gettext_lazy("Post-incident reviews"),
     "evidence_retention": gettext_lazy("Evidence retention"),
+    "documents": gettext_lazy("Documents"),
 }
 
 
@@ -1334,7 +1347,79 @@ def get_calendar_events(user, start=None, end=None, categories=None):
             done=lambda o: o.legal_hold or o.is_terminal_state,
             kind=_("Retention until"), responsible="collected_by")
 
+    # ── Documents (module 7) ─────────────────────────────
+    if "documents" in categories:
+        from documents.constants import CAMPAIGN_RUNNING
+        from documents.models import AcknowledgementCampaign
+
+        # The review date of every active document (`reportable()` drops the
+        # drafts and the retired ones), and the due date of the campaigns that
+        # count in reports : running ones are live, closed ones are done.
+        add(_filter_scoped(Policy.objects.select_related("owner"), user),
+            "next_review_date", "documents", "#4f46e5", "documents:policy-detail",
+            _("Review: "), deadline=True, kind=_("Review"), responsible="owner")
+        add(_filter_scoped(AcknowledgementCampaign.objects.select_related("policy_version__policy"), user),
+            "due_date", "documents", "#a5b4fc", "documents:acknowledgementcampaign-detail",
+            _("Acknowledgement: "), deadline=True,
+            done=lambda o: o.workflow_state != CAMPAIGN_RUNNING,
+            kind=_("Due date"), responsible="created_by")
+
     return events
+
+
+def documents_dashboard_context(user, today):
+    """Context of the *Documents* dashboard widget (module 7, README §8).
+
+    Each block is gated on its own read permission, because the widget names
+    individual documents and campaigns, and scope-filtered through
+    ``core.scoping``. "Active" and "in force" are read off the lifecycles
+    (``reportable()``), "overdue" is derived from the date (RG-DOC-12), never
+    a stored flag.
+    """
+    from core.lifecycle import reportable
+    from documents.constants import CAMPAIGN_RUNNING, AcknowledgementStatus
+    from documents.models import AcknowledgementCampaign
+
+    ctx = {
+        "documents_overdue": [],
+        "documents_overdue_count": 0,
+        "documents_without_version": [],
+        "documents_without_version_count": 0,
+        "documents_running_campaigns": [],
+        "documents_running_campaign_count": 0,
+    }
+    if user.is_superuser or user.has_perm("documents.policy.read"):
+        active = _filter_scoped(reportable(Policy.objects.select_related("owner")), user)
+        overdue = active.filter(next_review_date__isnull=False, next_review_date__lt=today).order_by(
+            "next_review_date", "reference",
+        )
+        ctx["documents_overdue_count"] = overdue.count()
+        ctx["documents_overdue"] = [
+            {"policy": p, "days_late": (today - p.next_review_date).days} for p in overdue[:5]
+        ]
+        in_force = reportable(PolicyVersion.objects.all()).values("policy_id")
+        without = active.exclude(pk__in=in_force).order_by("reference")
+        ctx["documents_without_version_count"] = without.count()
+        ctx["documents_without_version"] = list(without[:5])
+    if user.is_superuser or user.has_perm("documents.acknowledgement.read"):
+        running = _filter_scoped(
+            AcknowledgementCampaign.objects.filter(workflow_state=CAMPAIGN_RUNNING)
+            .select_related("policy_version__policy"),
+            user,
+        ).order_by("due_date", "reference")
+        ctx["documents_running_campaign_count"] = running.count()
+        rows = []
+        for campaign in running[:5]:
+            counts = campaign.counts
+            rows.append({
+                "campaign": campaign,
+                "rate": campaign.completion_rate,
+                "acknowledged": counts[AcknowledgementStatus.ACKNOWLEDGED],
+                "pending": counts[AcknowledgementStatus.PENDING],
+                "is_overdue": campaign.is_overdue,
+            })
+        ctx["documents_running_campaigns"] = rows
+    return ctx
 
 
 def open_incidents():
@@ -1825,6 +1910,9 @@ class GlobalSearchView(LoginRequiredMixin, View):
         ("incidents:incident-list", gettext_lazy("Incidents"), "bi-fire", None),
         ("incidents:event-list", gettext_lazy("Security events"), "bi-broadcast", None),
         ("incidents:notification-list", gettext_lazy("Notification obligations"), "bi-hourglass-split", None),
+        ("documents:policy-list", gettext_lazy("Policies"), "bi-file-earmark-text", None),
+        ("documents:campaign-list", gettext_lazy("Acknowledgement campaigns"), "bi-patch-check", None),
+        ("documents:acknowledge-list", gettext_lazy("To acknowledge"), "bi-pen", None),
         ("calendar", gettext_lazy("Calendar"), "bi-calendar3", None),
         ("kanban", gettext_lazy("Tasks"), "bi-kanban", None),
     ]
@@ -1839,6 +1927,7 @@ class GlobalSearchView(LoginRequiredMixin, View):
         ("context:objective-create", gettext_lazy("Create an objective"), "bi-plus-circle", "context.objective.create"),
         ("incidents:incident-create", gettext_lazy("Declare an incident"), "bi-plus-circle", "incidents.incident.create"),
         ("incidents:event-create", gettext_lazy("Report a security event"), "bi-plus-circle", "incidents.event.create"),
+        ("documents:policy-create", gettext_lazy("Create a document"), "bi-plus-circle", "documents.policy.create"),
         ("styleguide", gettext_lazy("Open styleguide"), "bi-palette", None),
     ]
 
@@ -2048,10 +2137,33 @@ class GlobalSearchView(LoginRequiredMixin, View):
                 "url": "incidents:event-detail",
                 "icon": "bi-broadcast",
             },
+            # Module 7. A policy is looked up by its reference or its title; a
+            # version by its own reference, its label or what it changed. Both
+            # are gated on the read permission : the palette returns titles.
+            {
+                "label": _("Documents"),
+                "model": Policy,
+                "fields": ["reference", "title", "summary"],
+                "url": "documents:policy-detail",
+                "icon": "bi-file-earmark-text",
+                "perm": "documents.policy.read",
+            },
+            {
+                "label": _("Document versions"),
+                "model": PolicyVersion,
+                "fields": ["reference", "version_label", "change_summary", "policy__title"],
+                "url": "documents:policyversion-detail",
+                "icon": "bi-files",
+                "perm": "documents.policy.read",
+            },
         ]
 
+        user = request.user
         grouped = []
         for cat in categories:
+            perm = cat.get("perm")
+            if perm and not (user.is_superuser or user.has_perm(perm)):
+                continue
             items = self._search_model(
                 cat["model"], cat["fields"], q, cat["url"], cat["icon"],
             )

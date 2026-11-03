@@ -166,6 +166,7 @@ CATEGORY_RISKS = _("Risks")
 CATEGORY_GOVERNANCE = _("Governance")
 CATEGORY_ACTIVITY = _("Activity")
 CATEGORY_INCIDENTS = _("Incidents")
+CATEGORY_DOCUMENTS = _("Documents")
 CATEGORY_LAYOUT = _("Layout")
 
 
@@ -373,6 +374,20 @@ DASHBOARD_WIDGETS: list[DashboardWidget] = [
         description=_(
             "Statutory notification obligations that are late or still running,"
             " with the incidents left open behind them."
+        ),
+    ),
+    DashboardWidget(
+        id="documents",
+        title=_("Documents"),
+        icon="file-earmark-text",
+        template="dashboard/widgets/documents.html",
+        category=CATEGORY_DOCUMENTS,
+        sizes=("2x2", "2x3", "3x2", "4x2"),
+        default_size="2x2",
+        default_order=67,
+        description=_(
+            "Document reviews overdue, documents without a version in force,"
+            " and the acknowledgement campaigns running with their completion rate."
         ),
     ),
     DashboardWidget(

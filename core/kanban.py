@@ -11,6 +11,7 @@ types:
 - Audits (``compliance.ComplianceAssessment``)
 - Risk assessments (``risks.RiskAssessment``)
 - Incidents (``incidents.Incident``)
+- The current user's pending acknowledgements (``documents.PolicyAcknowledgement``)
 
 The board is intentionally read-only (no drag-and-drop) and omits the terminal
 "removed from tracking" states (cancelled / archived): a card disappears from the
@@ -48,13 +49,15 @@ COLUMN_LABELS = {
 # ── Entity type metadata ───────────────────────────────────
 
 # Read permission gating each entity type. A user only sees the types they are
-# allowed to read.
+# allowed to read. ``None`` means no permission is needed : the type is
+# personal (the user's own acknowledgements, RG-DOC-17).
 ENTITY_PERMS = {
     "action_plan": "compliance.action_plan.read",
     "treatment_action": "risks.treatment.read",
     "audit": "compliance.assessment.read",
     "risk_assessment": "risks.assessment.read",
     "incident": "incidents.incident.read",
+    "acknowledgement": None,
 }
 
 # Bootstrap Icons identifying each type (brand: neutral type marker, icon only,
@@ -65,6 +68,7 @@ TYPE_ICONS = {
     "audit": "bi-clipboard-check",
     "risk_assessment": "bi-shield-exclamation",
     "incident": "bi-fire",
+    "acknowledgement": "bi-pen",
 }
 
 TYPE_LABELS = {
@@ -73,6 +77,7 @@ TYPE_LABELS = {
     "audit": pgettext_lazy("kanban", "Audit"),
     "risk_assessment": pgettext_lazy("kanban", "Risk assessment"),
     "incident": pgettext_lazy("kanban", "Incident"),
+    "acknowledgement": pgettext_lazy("kanban", "Acknowledgement"),
 }
 
 # Lifecycle ``Step.tone`` -> Bootstrap badge context, for the entities whose
@@ -398,12 +403,57 @@ def _build_incidents(scope_ids):
     return cards
 
 
+def _build_acknowledgements(scope_ids, user=None):
+    """The current user's pending acknowledgements, in To do.
+
+    Personal by construction : only the addressee may acknowledge a row
+    (RG-DOC-17), so the card is the user's own and is shown regardless of
+    their scopes (RG-DOC-22), with no permission required. Only rows of a
+    running campaign are actionable; a closed campaign has already expired
+    its pending rows. The card opens the acknowledgement page of that row.
+    """
+    if user is None or not user.is_authenticated:
+        return []
+    from documents.constants import CAMPAIGN_RUNNING, AcknowledgementStatus
+    from documents.models import PolicyAcknowledgement
+
+    rows = (
+        PolicyAcknowledgement.objects.filter(
+            user=user,
+            status=AcknowledgementStatus.PENDING,
+            campaign__workflow_state=CAMPAIGN_RUNNING,
+        )
+        .select_related("campaign__policy_version__policy__owner")
+    )
+    labels = dict(AcknowledgementStatus.choices)
+    cards = []
+    for row in rows:
+        version = row.campaign.policy_version
+        policy = version.policy
+        cards.append(_make_card(
+            column=TODO,
+            type_key="acknowledgement",
+            reference=version.reference,
+            title=f"{policy.title} v{version.version_label}",
+            url=reverse("documents:acknowledge", kwargs={"pk": row.pk}),
+            owner=policy.owner.display_name if policy.owner_id else "",
+            due_date=row.campaign.due_date,
+            status_label=labels[AcknowledgementStatus.PENDING],
+            status_tone="warning",
+        ))
+    return cards
+
+
+# Builders whose cards depend on the user themselves, not only on their scopes.
+_PERSONAL_BUILDERS = {"acknowledgement"}
+
 _BUILDERS = {
     "action_plan": _build_action_plans,
     "treatment_action": _build_treatment_actions,
     "audit": _build_audits,
     "risk_assessment": _build_risk_assessments,
     "incident": _build_incidents,
+    "acknowledgement": _build_acknowledgements,
 }
 
 
@@ -414,7 +464,12 @@ def build_kanban_cards(user):
     scope_ids = _resolve_scope_ids(user)
     cards = []
     for type_key, builder in _BUILDERS.items():
-        if user.is_superuser or user.has_perm(ENTITY_PERMS[type_key]):
+        perm = ENTITY_PERMS[type_key]
+        if perm is not None and not (user.is_superuser or user.has_perm(perm)):
+            continue
+        if type_key in _PERSONAL_BUILDERS:
+            cards.extend(builder(scope_ids, user))
+        else:
             cards.extend(builder(scope_ids))
     return cards
 

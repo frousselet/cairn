@@ -14,10 +14,12 @@ from trust_center.lifecycles import PUBLICATION_LIFECYCLE_NAME as PUBLICATION_WO
 class TrustCenterDocument(BaseModel):
     """A document published on the public Trust Center.
 
-    The source is exactly one of a generated :class:`reports.Report` or an
+    The source is exactly one of a generated :class:`reports.Report`, an
     inline uploaded file (stored as bytes, mirroring the Report storage so the
-    same streaming download view serves both). ``access`` decides whether the
-    document downloads directly (PUBLIC) or behind a request + approval (GATED).
+    same streaming download view serves both) or a governed
+    :class:`documents.Policy`, which always serves its version in force
+    (RG-DOC-21). ``access`` decides whether the document downloads directly
+    (PUBLIC) or behind a request + approval (GATED).
     """
 
     REFERENCE_PREFIX = "TCDO"
@@ -36,7 +38,8 @@ class TrustCenterDocument(BaseModel):
         default=True,
         help_text=_("Only applies to gated documents."),
     )
-    # Source: exactly one of a linked report or inline content (enforced in clean()).
+    # Source: exactly one of a linked report, inline content or a governed
+    # document (enforced in clean(), RG-TC-18).
     report = models.ForeignKey(
         "reports.Report",
         on_delete=models.PROTECT,
@@ -53,6 +56,15 @@ class TrustCenterDocument(BaseModel):
     )
     content_type = models.CharField(
         _("Content type"), max_length=100, blank=True, default=""
+    )
+    policy = models.ForeignKey(
+        "documents.Policy",
+        on_delete=models.PROTECT,
+        related_name="trust_center_documents",
+        null=True,
+        blank=True,
+        verbose_name=_("Source document"),
+        help_text=_("A public document of the register : its version in force is served."),
     )
     display_order = models.PositiveIntegerField(_("Display order"), default=0)
 
@@ -74,24 +86,71 @@ class TrustCenterDocument(BaseModel):
 
     def clean(self):
         super().clean()
-        has_report = self.report_id is not None
-        has_inline = bool(self.file_content)
-        if has_report and has_inline:
+        sources = [
+            self.report_id is not None,
+            bool(self.file_content),
+            self.policy_id is not None,
+        ]
+        if sum(sources) > 1:
             raise ValidationError(
-                _("Provide either a source report or an uploaded file, not both.")
+                _("Choose a single source : a report, an uploaded file or a document.")
             )
-        if not has_report and not has_inline:
-            raise ValidationError(_("Provide a source report or upload a file."))
+        if not any(sources):
+            raise ValidationError(
+                _("Provide a source : a report, an uploaded file or a document.")
+            )
+        if self.policy_id is not None:
+            self._clean_policy_source()
+
+    def _clean_policy_source(self):
+        """RG-DOC-20 / RG-DOC-21 : only a public document, and a new link only
+        to a linkable one (an existing link survives the document leaving it)."""
+        from assets.constants import DataClassification
+        from core.lifecycle import linkable_states
+
+        policy = self.policy
+        if policy.classification != DataClassification.PUBLIC:
+            raise ValidationError(
+                {"policy": _("Only a document classified as public can be published on the Trust Center.")}
+            )
+        stored = None
+        if self.pk:
+            stored = type(self).objects.filter(pk=self.pk).values_list("policy_id", flat=True).first()
+        if stored != policy.pk and policy.workflow_state not in linkable_states(type(policy)):
+            raise ValidationError(
+                {"policy": _("This document cannot be linked in its current lifecycle step.")}
+            )
 
     @property
     def is_gated(self):
         return self.access == DocumentAccess.GATED
 
     @property
+    def policy_version(self):
+        """The version in force of the source document, or ``None``."""
+        if not self.policy_id:
+            return None
+        return self.policy.version_in_force
+
+    @property
     def effective_file_name(self):
         if self.report_id:
             return self.report.file_name
+        if self.policy_id:
+            version = self.policy_version
+            if version is None:
+                return ""
+            if version.file_name:
+                return version.file_name
+            return f"{self.policy.reference}-v{version.version_label}.pdf"
         return self.file_name
+
+    @property
+    def effective_content_type(self):
+        """The download ``Content-Type`` : a policy always serves a PDF."""
+        if self.policy_id:
+            return "application/pdf"
+        return self.content_type or "application/octet-stream"
 
     @property
     def file_extension(self):
@@ -104,9 +163,13 @@ class TrustCenterDocument(BaseModel):
         return FILE_TYPE_ICONS.get(self.file_extension, DEFAULT_FILE_ICON)
 
     def get_file_bytes(self):
-        """Return the document bytes from the linked report or inline content."""
+        """Return the document bytes from the linked report, the source
+        document's version in force (RG-DOC-21) or the inline content."""
         if self.report_id and self.report.file_content:
             return bytes(self.report.file_content)
+        if self.policy_id:
+            version = self.policy_version
+            return version.render_pdf() if version is not None else None
         if self.file_content:
             return bytes(self.file_content)
         return None

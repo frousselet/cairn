@@ -1,0 +1,122 @@
+{% load i18n ui %}
+{% comment %}
+Widget: documents (module 7). What the document register needs from someone
+today : reviews that are overdue, active documents left without a version in
+force, and the acknowledgement campaigns running with their completion rate.
+Hidden via has_data when none of the three has anything to show.
+
+Expects `documents_overdue` (rows of {policy, days_late}),
+`documents_overdue_count`, `documents_without_version`,
+`documents_without_version_count`, `documents_running_campaigns` (rows of
+{campaign, rate, acknowledged, pending, is_overdue}) and
+`documents_running_campaign_count`, all set by GeneralDashboardView through
+`documents_dashboard_context()`, already scope-filtered and permission-gated.
+{% endcomment %}
+<div class="card h-100">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+      <h5 class="card-title mb-0"><i class="bi bi-file-earmark-text me-1 text-accent" aria-hidden="true"></i> {% trans "Documents" %}</h5>
+      <a href="{% url 'documents:policy-list' %}" class="upcoming-toggle">{% trans "Register" %}</a>
+    </div>
+
+    <div class="docw-stats mb-3">
+      <a class="docw-stat{% if documents_overdue_count %} docw-stat--late{% endif %}" href="{% url 'documents:policy-list' %}?review=overdue">
+        <span class="docw-stat__value">{{ documents_overdue_count }}</span>
+        <span class="docw-stat__label">{% trans "Reviews overdue" %}</span>
+      </a>
+      <a class="docw-stat{% if documents_without_version_count %} docw-stat--gap{% endif %}" href="{% url 'documents:policy-list' %}">
+        <span class="docw-stat__value">{{ documents_without_version_count }}</span>
+        <span class="docw-stat__label">{% trans "Without a version in force" %}</span>
+      </a>
+      <a class="docw-stat" href="{% url 'documents:campaign-list' %}">
+        <span class="docw-stat__value">{{ documents_running_campaign_count }}</span>
+        <span class="docw-stat__label">{% trans "Campaigns running" %}</span>
+      </a>
+    </div>
+
+    {% if documents_overdue or documents_without_version %}
+    <ul class="docw-list mb-3">
+      {% for row in documents_overdue %}
+      <li>
+        <a href="{% url 'documents:policy-detail' row.policy.pk %}" class="docw-item docw-item--danger">
+          <span class="docw-item__head">
+            <span class="docw-item__name" title="{{ row.policy.title }}">{{ row.policy.title }}</span>
+            <span class="badge-dot danger flex-shrink-0 text-nowrap">{% blocktrans count days=row.days_late %}Late by {{ days }} day{% plural %}Late by {{ days }} days{% endblocktrans %}</span>
+          </span>
+          <span class="docw-item__meta">
+            <span class="ref">{{ row.policy.reference }}</span>
+            <span class="text-nowrap" title="{% trans 'Next review' %}"><i class="bi bi-calendar-event" aria-hidden="true"></i> {{ row.policy.next_review_date|date:"SHORT_DATE_FORMAT" }}</span>
+            {% if row.policy.owner %}<span class="docw-item__owner">{{ row.policy.owner.display_name }}</span>{% endif %}
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+      {% for policy in documents_without_version %}
+      <li>
+        <a href="{% url 'documents:policy-detail' policy.pk %}" class="docw-item docw-item--warning">
+          <span class="docw-item__head">
+            <span class="docw-item__name" title="{{ policy.title }}">{{ policy.title }}</span>
+            <span class="badge-dot warning flex-shrink-0 text-nowrap">{% trans "No version in force" %}</span>
+          </span>
+          <span class="docw-item__meta"><span class="ref">{{ policy.reference }}</span></span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if documents_running_campaigns %}
+    <ul class="docw-campaigns">
+      {% for row in documents_running_campaigns %}
+      <li>
+        <a href="{% url 'documents:acknowledgementcampaign-detail' row.campaign.pk %}" class="docw-campaign">
+          <span class="docw-item__head">
+            <span class="docw-item__name" title="{{ row.campaign.name }}">{{ row.campaign.name }}</span>
+            <span class="docw-item__due text-nowrap{% if row.is_overdue %} text-danger{% endif %}" title="{% trans 'Due date' %}"><i class="bi bi-clock" aria-hidden="true"></i> {{ row.campaign.due_date|date:"SHORT_DATE_FORMAT" }}</span>
+          </span>
+          {% progress_bar row.rate scheme="score" count=row.acknowledged total=row.acknowledged|add:row.pending %}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% elif not documents_overdue and not documents_without_version %}
+    <p class="text-muted small mb-0">{% trans "No document review overdue and no campaign running." %}</p>
+    {% endif %}
+  </div>
+</div>
+<style>
+  .docw-stats { display:flex; flex-wrap:wrap; gap:.5rem; }
+  .docw-stat {
+    display:flex; align-items:baseline; gap:.375rem; padding:.375rem .625rem;
+    border-radius:var(--radius-sm); background:var(--surface-subtle);
+    border:1px solid var(--border-light); text-decoration:none; color:inherit;
+    transition:border-color .15s var(--ease-out), background-color .15s var(--ease-out);
+  }
+  .docw-stat:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; }
+  .docw-stat__value { font-size:1.125rem; font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-primary); line-height:1; }
+  .docw-stat__label { font-size:.6875rem; color:var(--text-muted); }
+  .docw-stat--late .docw-stat__value { color:var(--danger); }
+  .docw-stat--gap .docw-stat__value { color:var(--warning); }
+  .docw-list, .docw-campaigns { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(16rem, 1fr)); gap:.5rem; }
+  .docw-item, .docw-campaign {
+    display:flex; flex-direction:column; gap:.375rem; padding:.625rem .875rem;
+    border-radius:var(--radius-sm); background:var(--surface-raised);
+    border:1px solid var(--border-light); text-decoration:none; color:inherit;
+    transition:border-color .2s var(--ease-out), background-color .2s var(--ease-out);
+  }
+  .docw-item { border-left:3px solid var(--border-light); }
+  .docw-item--danger { border-left-color:var(--danger); }
+  .docw-item--warning { border-left-color:var(--warning); }
+  .docw-item:hover, .docw-campaign:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; }
+  .docw-item__head { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; min-width:0; }
+  .docw-item__name { font-size:.875rem; font-weight:600; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .docw-item__meta { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; font-size:.6875rem; color:var(--text-muted); }
+  .docw-item__owner { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .docw-item__due { font-size:.6875rem; color:var(--text-muted); font-variant-numeric:tabular-nums; }
+  @media (prefers-reduced-motion: reduce) {
+    .docw-stat, .docw-item, .docw-campaign { transition:none; }
+  }
+  @media (max-width: 575.98px) {
+    .docw-item__head { flex-direction:column; align-items:flex-start; }
+  }
+</style>

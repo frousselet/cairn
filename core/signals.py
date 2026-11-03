@@ -54,6 +54,12 @@ def _get_dashboard_models():
         Stakeholder,
         SwotAnalysis,
     )
+    from documents.models import (
+        AcknowledgementCampaign,
+        Policy,
+        PolicyAcknowledgement,
+        PolicyVersion,
+    )
     from risks.models import (
         Risk,
         RiskAcceptance,
@@ -77,6 +83,8 @@ def _get_dashboard_models():
         # Compliance
         Framework, Requirement, ComplianceAssessment,
         ComplianceActionPlan, RequirementMapping,
+        # Documents (the dashboard widget and the kanban acknowledgements)
+        Policy, PolicyVersion, AcknowledgementCampaign, PolicyAcknowledgement,
     }
     return _DASHBOARD_MODELS
 
