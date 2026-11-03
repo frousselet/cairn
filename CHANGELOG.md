@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Risk criteria pages had no lifecycle stepper, so a criteria set could not be submitted or validated from the interface.
 - Choosing another assessment on a new risk now reloads its likelihood and impact scales, in the dialog as on the page (it only ever worked on a fully reloaded page).
 - Opening a drawer-only delete link directly (incidents, nonconformities, supplier contacts and sub-processors) rendered a bare dialog fragment instead of a confirmation page.
+- The Trust Center hub and the semantic index pages showed a loose eyebrow (the hub's even read "Strategy") instead of their menu breadcrumb.
 
 ### Security
 

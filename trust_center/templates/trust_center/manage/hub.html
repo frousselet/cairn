@@ -4,7 +4,7 @@
 {% block title %}{% trans "Trust Center" %} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header _("Trust Center") eyebrow=_("Strategy") accent="trust-center" %}
+{% page_header _("Trust Center") nav="trust_center_manage:hub" accent="trust-center" %}
   <a href="{% url 'trust_center_manage:settings' %}" class="btn btn-secondary">
     <i class="bi bi-gear me-1" aria-hidden="true"></i>{% trans "Settings" %}
   </a>

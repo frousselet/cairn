@@ -4,7 +4,7 @@
 {% block title %}{% trans "Semantic index - Cairn" %}{% endblock %}
 
 {% block content %}
-{% page_header _("Semantic index") eyebrow=_("Administration") accent="accounts" %}{% endpage_header %}
+{% page_header _("Semantic index") nav="assistant:semantic-index" accent="accounts" %}{% endpage_header %}
 
 {% detail_layout %}
   {% slot rail %}{% if semantic.enabled and semantic.embeddings_supported %}
