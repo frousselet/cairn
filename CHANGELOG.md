@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The design system stylesheet moves out of `base.html` into ordered, browser-cached files under `static/css/cairn/`.
 - Status, level and lifecycle badges render as the same dot pill in tables, cards and headers alike.
+- Multi-select fields in forms become searchable pickers with removable chips instead of native list boxes.
 
 ## [0.36.1] - 2026-11-03
 
