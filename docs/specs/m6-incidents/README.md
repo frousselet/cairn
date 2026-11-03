@@ -413,7 +413,7 @@ List pages use the full house stack : `LoginRequiredMixin`, `PermissionRequiredM
 - **Kanban** : an `incident` entity added to `ENTITY_PERMS`, `TYPE_ICONS` and `TYPE_LABELS`, an `_INCIDENT_BUCKETS` step-to-(column, tone) map, a `_build_incidents` builder and its `_BUILDERS` registration.
 - **Calendar** : an `incident` category in `ALL_CATEGORIES` with entries for notification `due_at` (as a deadline), review `scheduled_date` and `effectiveness_review_date`, evidence `retention_until` and plan `review_date`, plus the label in `build_upcoming_deadlines`. Exercises are excluded from every feed.
 - **Global search** : a `NAVIGATION_ENTRIES` row, an `ACTION_ENTRIES` quick-create gated on `incidents.incident.create`, and category entries for `Incident` and `SecurityEvent` (both scope-filtered automatically, since both carry `scopes`).
-- **Accent and navigation** : `MODULE_ACCENTS` gains `"incidents"` (matching the app label; the map stores `trust-center` hyphenated, which is the exception, not the rule), with `--module-accent-incidents` and `--module-accent-incidents-soft` defined in **both** the light and dark token blocks of `base.html`. An unregistered accent is silently dropped. The sidebar section sits between Risk management and Compliance.
+- **Accent and navigation** : `MODULE_ACCENTS` gains `"incidents"` (matching the app label; the map stores `trust-center` hyphenated, which is the exception, not the rule), with `--module-accent-incidents` and `--module-accent-incidents-soft` defined in **both** the light and dark token blocks of `static/css/cairn/00-tokens.css`. An unregistered accent is silently dropped. The sidebar section sits between Risk management and Compliance.
 
 ### 9.4 Visual checks that are not optional
 
@@ -583,7 +583,7 @@ A new Django app touches a fixed set of global registration points, and the coun
 
 - [ ] `core/navigation.py` `NAV_TREE` gains the module's sections and pages.
 - [ ] `core/templatetags/ui.py` `MODULE_ACCENTS` gains `"incidents"`.
-- [ ] `base.html` defines `--module-accent-incidents` and `--module-accent-incidents-soft` in **both** the light and the dark token block. An unregistered accent is silently dropped.
+- [ ] `static/css/cairn/00-tokens.css` defines `--module-accent-incidents` and `--module-accent-incidents-soft` in **both** the light and the dark token block of `static/css/cairn/00-tokens.css`. An unregistered accent is silently dropped.
 - [ ] The sidebar gains its section between Risk management and Compliance.
 
 **Cross-cutting surfaces**

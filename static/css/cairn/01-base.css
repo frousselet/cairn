@@ -1,0 +1,50 @@
+/* Cairn design system - Base : logo theme toggle, global element defaults, typography ladder.
+   Loaded by templates/base.html in file-name order; the order is the cascade. */
+
+/* ── Logo light/dark toggle ───────────────────────── */
+.logo-dark { display: none; }
+.logo-light { display: inline; }
+[data-bs-theme="dark"] .logo-dark { display: inline; }
+[data-bs-theme="dark"] .logo-light { display: none; }
+
+/* ── Global ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { font-size: 16px; scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: .9375rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  /* Instrument Serif ships a single weight (400); disable faux-bold so
+     display titles render at their true weight instead of synthesized. */
+  font-synthesis: none;
+}
+::selection { background: var(--accent-soft); color: var(--accent); }
+
+/* ── Typography ladder - Space Grotesk titles, Inter body ───── */
+h1 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; letter-spacing: normal; color: var(--text-primary); line-height: 1.2; }
+h2 { font-family: var(--font-display); font-size: 1.375rem; font-weight: 700; letter-spacing: normal; color: var(--text-primary); line-height: 1.25; }
+h3 { font-size: 1.125rem; font-weight: 600; letter-spacing: normal; color: var(--text-primary); line-height: 1.35; }
+h4 { font-size: 1rem; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
+h5 { font-size: .9375rem; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
+h6 { font-size: .8125rem; font-weight: 600; color: var(--text-muted); line-height: 1.4; }
+.display-4 { font-family: var(--font-display); font-size: 2.25rem; font-weight: 700; letter-spacing: normal; line-height: 1.1; }
+.display-6 { font-family: var(--font-display); font-size: 1.625rem; font-weight: 700; letter-spacing: normal; line-height: 1.15; }
+small, .small { font-size: .8125rem; }
+.text-xs { font-size: .75rem; }
+.text-display {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: normal;
+  line-height: 1.05;
+}
+@media (max-width: 991.98px) {
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+}

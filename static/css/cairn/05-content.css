@@ -1,0 +1,864 @@
+/* Cairn design system - Content primitives : hero, section header, reference codes, table links, avatars, filter chips, sortable headers, table toolbar, TomSelect and pell, sticky form bar, focus ring, notifications, modals, About dialog.
+   Loaded by templates/base.html in file-name order; the order is the cascade. */
+
+/* ── Hero section - Brutalist painted slab ────────── */
+.hero-section {
+  background: var(--accent);
+  color: #fff;
+  border: 2px solid var(--border-light);
+  border-radius: 1.75rem;
+  padding: 2rem 2.25rem;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 50%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+[data-bs-theme="dark"] .hero-section {
+  background: var(--accent);
+  box-shadow: var(--shadow-md);
+}
+.hero-section .progress {
+  background: rgba(255,255,255,.15);
+  height: 1.25rem;
+}
+.hero-section .progress-bar { font-size: .75rem; }
+.hero-section .progress { height: 1.125rem; border-radius: 100px; }
+
+/* ── Section header ───────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  margin-bottom: 1.25rem;
+}
+.section-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  font-size: .875rem;
+}
+.section-header h2 { margin-bottom: 0; }
+
+/* ── Reference codes ──────────────────────────────── */
+/*
+ * Reference IDs (RISK-1, ASST-42, ...) used to be a faint mono
+ * italic that vanished into the page. They are the audit-grade
+ * primary key the user actually quotes, so they deserve to look
+ * like one. Pill: subtle surface, uppercase mono, tight tracking.
+ */
+.ref {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'SFMono-Regular', 'Menlo', 'Consolas', 'Liberation Mono', monospace;
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  padding: .2em .625em;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+a.ref { text-decoration: none; transition: background-color var(--transition-fast), color var(--transition-fast); }
+a.ref:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); }
+
+/* ── Table cell links ──────────────────────────────── */
+/*
+ * Canonical link inside a list-table cell (primary Name column and
+ * any cross-reference to another record). Replaces the inline
+ * `color:var(--accent);text-decoration:none;font-weight:500` that
+ * used to be copy-pasted across every list template.
+ */
+.cell-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+.cell-link:hover { color: var(--accent-hover); text-decoration: underline; }
+
+/* Muted placeholder for an empty cell (use instead of a bare dash). */
+.cell-empty { color: var(--text-muted); }
+
+/* Two-line table cell: a primary line over a muted secondary line.
+   Groups related fields (name + email, job title + department, …) so a
+   row stays scannable without extra columns. See docs/brand/table-standard.md. */
+.cell-stack { display: flex; flex-direction: column; gap: .15rem; line-height: 1.25; min-width: 0; max-width: 24rem; }
+/* Primary line never wraps: a single line, truncated with an ellipsis. */
+.cell-stack > :not(.cell-sub) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.cell-sub { color: var(--text-muted); font-size: .8125rem; }
+/* Secondary line: at most two lines, then truncated. (Horizontal flex
+   sub-lines - icon + logo + link - keep their layout and stay short.) */
+.cell-stack > .cell-sub:not(.d-inline-flex) {
+  display: -webkit-box; -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+.cell-stack > .cell-link { font-weight: 600; }
+
+/* Origin badge : differentiates a requirement inherited from the supplier
+   type from one attached directly to the supplier. */
+.ov-origin {
+  font-weight: 600; font-size: .72rem; letter-spacing: .01em;
+  padding: .25rem .55rem; border-radius: 999px; white-space: nowrap;
+}
+.ov-origin--inherited { background: var(--accent-soft); color: var(--accent); }
+.ov-origin--specific {
+  background: var(--surface-muted); color: var(--text-muted);
+  border: 1px solid var(--border-light);
+}
+/* Rich-text (pell HTML) shown compactly inside a table sub-cell. */
+.cell-rich p { display: inline; margin: 0; }
+.cell-rich ul, .cell-rich ol { margin: .1rem 0; padding-left: 1.1rem; }
+
+/* Evaluation-history timeline (drawer modal). */
+.review-entry { padding-left: 1.1rem; border-left: 2px solid var(--border-light); margin: 0 0 1.1rem .15rem; }
+.review-entry:last-child { margin-bottom: 0; }
+.review-entry__head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .35rem; }
+.review-entry__body { font-size: .9rem; color: var(--text-secondary); line-height: 1.5; }
+.review-entry__body > :first-child { margin-top: 0; }
+.review-entry__body > :last-child { margin-bottom: 0; }
+.review-entry__file { margin-top: .45rem; font-size: .85rem; }
+.review-entry__file a { color: var(--accent); text-decoration: none; }
+.review-entry__file a:hover { text-decoration: underline; }
+
+/* People cell: avatar + two-line identity (used in the users admin table).
+   Block-level flex so the td's vertical-align:middle centres it
+   deterministically and the primary lines line up across columns. */
+.cell-people { display: flex; align-items: center; gap: .625rem; text-decoration: none; }
+.cell-avatar,
+.cell-avatar-fallback {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+}
+.cell-avatar { object-fit: cover; border: 2px solid var(--border-light); }
+.cell-avatar-fallback {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--accent-soft), color-mix(in srgb, var(--accent) 18%, transparent));
+  color: var(--accent); font-size: .9375rem; font-weight: 600; letter-spacing: .02em;
+}
+/* Denser variant for a secondary people column (e.g. an owner). */
+.cell-people--sm { gap: .5rem; }
+.cell-people--sm .cell-avatar,
+.cell-people--sm .cell-avatar-fallback { width: 32px; height: 32px; }
+.cell-people--sm .cell-avatar-fallback { font-size: .75rem; }
+
+/*
+ * Right-aligned action cells (Edit / Delete buttons) must stay on a single
+ * row: a narrow column would otherwise wrap the buttons onto two lines.
+ * Adjacent buttons get a consistent gap instead of relying on whitespace.
+ */
+.table td.text-end { white-space: nowrap; }
+.table td.text-end .btn + .btn { margin-left: .25rem; }
+
+/* ── Avatar stack ──────────────────────────────────── */
+/*
+ * Compact, overlapping row of round user avatars with no names, rendered
+ * by the user_avatars template tag. Each avatar wears a 2px ring in the
+ * surface colour so they read as separate discs when overlapping; a
+ * trailing +N chip absorbs overflow. Diameter is driven by --avatar-size.
+ */
+.avatar-stack { --avatar-size: 24px; }
+.avatar-stack-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--surface-muted);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--border-light);
+  color: var(--accent);
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  transition: transform var(--transition-fast);
+}
+.avatar-stack-item:not(:first-child) { margin-left: calc(var(--avatar-size) / -3.5); }
+.avatar-stack-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar-stack-initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  letter-spacing: .02em;
+  background: linear-gradient(135deg, var(--accent-soft), color-mix(in srgb, var(--accent) 18%, transparent));
+}
+.avatar-stack-more {
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+}
+a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-index: 2; }
+
+/* ── Filter chips - Refined editorial ──────────────── */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: .375rem .9375rem;
+  font-size: .8125rem;
+  font-weight: 600;
+  border-radius: 100px;
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  background: var(--surface);
+  text-decoration: none;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  gap: .4375rem;
+}
+.filter-chip:hover {
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--text-primary) 18%, transparent);
+}
+.filter-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+.filter-chip.active:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--accent-contrast);
+}
+.filter-chip.active-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.filter-chip.active-warning {
+  background: var(--warning);
+  border-color: var(--warning);
+  color: #fff;
+}
+.filter-chip-divider {
+  display: inline-block;
+  width: 1px;
+  height: 1.5rem;
+  background: var(--border-light);
+  align-self: center;
+  margin: 0 .125rem;
+}
+
+/* ── Header action buttons ─────────────────────────── */
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  margin-left: .75rem;
+  flex-wrap: wrap;
+}
+
+/* ── Sortable table headers ──────────────────────── */
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+}
+.sortable-th:hover {
+  color: var(--text-primary) !important;
+  background: var(--surface-muted) !important;
+}
+.sortable-th:hover .sort-icon { opacity: 1 !important; color: var(--accent) !important; }
+
+/* Sort icons */
+.sort-icon { transition: opacity var(--transition-fast), color var(--transition-fast); }
+.sort-icon-active { font-size: .85rem; opacity: 1; color: var(--accent); font-weight: 700; }
+.sort-icon-idle { font-size: .8rem; opacity: 1; color: var(--text-secondary); }
+
+[data-bs-theme="dark"] .sort-icon-active { color: var(--accent-hover); }
+[data-bs-theme="dark"] .sort-icon-idle { color: var(--text-secondary); }
+
+/* ── Table toolbar (integrated search) ────────────── */
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .625rem 1rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--border-light);
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.table-toolbar + .card {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.table-toolbar-search {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+.table-toolbar-icon {
+  position: absolute;
+  left: .625rem;
+  font-size: .8rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+.table-toolbar-input {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: .375rem .625rem .375rem 2rem;
+  font-size: .8125rem;
+  background: var(--surface);
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+.table-toolbar-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.table-toolbar-input::placeholder {
+  color: var(--text-muted);
+}
+.table-toolbar-input::-webkit-search-cancel-button { display: none; }
+.table-toolbar-clear {
+  position: absolute;
+  right: .5rem;
+  color: var(--text-muted);
+  font-size: .85rem;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+.table-toolbar-clear:hover { color: var(--danger); }
+.table-toolbar-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .625rem;
+  font-size: .7rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+/* ── Filter pills ─────────────────────────────────── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+  padding: .75rem 1rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--border-light);
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-wrap: wrap;
+}
+.filter-bar + .card {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.filter-bar-group {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  flex-wrap: wrap;
+}
+.filter-bar-sep {
+  width: 1px;
+  height: 1.25rem;
+  background: var(--border-light);
+  margin: 0 .25rem;
+  flex-shrink: 0;
+}
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  padding: .3125rem .75rem;
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 100px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.filter-pill:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+.filter-pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+}
+.filter-pill.active:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.filter-pill i { font-size: .6875rem; }
+.filter-bar-label {
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.filter-bar .form-control {
+  border-radius: 100px;
+  font-size: .75rem;
+  padding: .3125rem .75rem;
+  width: auto;
+  max-width: 8.5rem;
+}
+.filter-bar .table-toolbar-input {
+  font-size: .75rem;
+  padding: .3125rem .625rem .3125rem 1.75rem;
+  border-radius: 100px;
+  border: 1px solid var(--border-light);
+}
+.filter-bar .table-toolbar-icon {
+  left: .5rem;
+  font-size: .7rem;
+}
+
+/* ── Tom Select overrides ─────────────────────────── */
+.ts-wrapper.multi .ts-control > .item {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: none;
+  border-radius: var(--radius-xs);
+  font-size: .78rem;
+  padding: .125rem .5rem;
+}
+.ts-wrapper .ts-control {
+  background: var(--field-bg);
+  border-color: var(--field-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  font-size: .8125rem;
+  padding: .375rem .625rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+.ts-wrapper:hover:not(.focus) .ts-control {
+  background: var(--field-bg-hover);
+  border-color: var(--field-border-hover);
+}
+.ts-wrapper.focus .ts-control {
+  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.ts-dropdown {
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: var(--border-light);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  margin-top: .25rem;
+  /* Dropdown is appended to <body> (dropdownParent), so it must stack
+     above the Bootstrap modal (z-index 1055) when opened from a drawer. */
+  z-index: 1060;
+}
+.ts-dropdown .active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.ts-dropdown .option {
+  padding: .4375rem .75rem;
+  border-radius: var(--radius-xs);
+  font-size: .8125rem;
+}
+.ts-dropdown .create {
+  color: var(--accent);
+}
+[data-bs-theme="dark"] .ts-wrapper .ts-control {
+  background: var(--field-bg);
+  color: var(--text-primary);
+  border-color: var(--field-border);
+}
+[data-bs-theme="dark"] .ts-dropdown {
+  background: var(--surface-glass);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+[data-bs-theme="dark"] .ts-dropdown .option {
+  color: var(--text-primary);
+}
+
+/* ── TomSelect: single-line truncation ────────────── */
+.ts-control .item { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.ts-control { flex-wrap: nowrap !important; overflow: hidden; }
+@media (max-width: 991.98px) {
+  .ts-control { flex-wrap: wrap !important; max-height: 6.5rem; overflow-y: auto !important; }
+  .ts-control .item { max-width: 45%; font-size: .78rem; }
+}
+
+/* ── Rich text (pell) - floating glass field (both themes) ───
+ * pell ships an unstyled contenteditable + a button row. We dress it
+ * in the form-field language : a glass card that surfaces on focus, a
+ * transparent toolbar of frosted icon buttons, and a fading hairline
+ * between toolbar and canvas. Bootstrap-Icons toolbar, brand-aligned. */
+.pell {
+  position: relative;
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+.pell:hover:not(:focus-within) { border-color: var(--field-border-hover); }
+.pell:focus-within {
+  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.pell-actionbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .125rem;
+  padding: .3125rem .4375rem;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(to right, transparent, var(--border-subtle) 12%, var(--border-subtle) 88%, transparent) 1;
+}
+.pell-button {
+  width: 1.875rem;
+  height: 1.875rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  font-size: .95rem;
+  line-height: 1;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+.pell-button:hover { background: var(--surface-muted); color: var(--text-primary); }
+.pell-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+.pell-button-selected { background: var(--accent-soft); color: var(--accent); }
+.pell-content {
+  height: auto;
+  min-height: 9rem;
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: .625rem .875rem;
+  font-size: .9rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  background: transparent;
+  outline: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) transparent;
+}
+.pell-content::-webkit-scrollbar { width: 5px; }
+.pell-content::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+.pell-content:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.pell-content:focus { outline: none; }
+.pell-content > :first-child { margin-top: 0; }
+.pell-content > :last-child { margin-bottom: 0; }
+.pell-content a { color: var(--accent); text-decoration: underline; }
+.pell-content h2 { font-size: 1.05rem; font-weight: 700; margin: .6rem 0 .35rem; }
+.pell-content h3 { font-size: .95rem; font-weight: 700; margin: .55rem 0 .3rem; }
+.pell-content ul, .pell-content ol { padding-left: 1.35rem; margin: .35rem 0; }
+.pell-content blockquote {
+  margin: .5rem 0;
+  padding: .1rem 0 .1rem .75rem;
+  border-left: 3px solid var(--border-light);
+  color: var(--text-secondary);
+}
+.pell-content hr { border: 0; border-top: 1px solid var(--border-light); margin: .75rem 0; }
+
+/* ── Sticky form action bar ───────────────────────── */
+.form-actions-sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 1020;
+  background: linear-gradient(to bottom, transparent, var(--bg-page, #f0f2f5) 35%);
+  padding: 2.5rem 1rem .75rem 1rem;
+}
+@media (max-width: 991.98px) {
+  .form-actions-sticky {
+    position: sticky;
+    bottom: 0;
+    margin: 0 -1.125rem -.5rem;
+    padding: 1.25rem 1.125rem .75rem;
+    background: linear-gradient(to bottom, transparent 0%, var(--bg-page, #f0f2f5) 25%);
+  }
+}
+
+/* ── Focus ring for accessibility ─────────────────────
+ * Neutral (not the brand accent) so it never reads as a coloured "liseré"
+ * - the default navy accent otherwise drew a blue ring on every control.
+ * Only shown for keyboard focus; a mouse :focus draws nothing. */
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--text-primary) 45%, transparent);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/*
+ * z-index discipline (low to high):
+ *   100   page-sticky bulk-actions-bar
+ *   1020  sticky sub-headers
+ *   1040  Bootstrap modals
+ *   1080  toast stack (always wins for transient feedback)
+ *  10000  impersonation banner (security signal)
+ */
+/* ── Notifications bell ───────────────────────────── */
+.notif-badge {
+  position: absolute;
+  top: -.125rem;
+  right: -.125rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 .25rem;
+  border-radius: .5rem;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: .625rem;
+  font-weight: 600;
+  line-height: 1rem;
+  text-align: center;
+}
+.notif-mark-all {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: .75rem;
+  cursor: pointer;
+}
+.notif-mark-all:hover { text-decoration: underline; }
+.notif-list { max-height: 22rem; overflow-y: auto; }
+.notif-item {
+  display: block;
+  padding: .5rem .875rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: background .15s var(--ease-out, ease-out);
+}
+.notif-item:last-child { border-bottom: 0; }
+.notif-item:hover { background: var(--surface-subtle); }
+.notif-item--unread { background: rgba(30, 58, 138, .05); }
+[data-bs-theme="dark"] .notif-item--unread { background: rgba(91, 124, 207, .12); }
+.notif-item .notif-title { font-size: .8125rem; font-weight: 600; }
+.notif-item .notif-message {
+  font-size: .75rem;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.notif-item .notif-time { font-size: .6875rem; color: var(--text-secondary); }
+.notif-empty {
+  padding: 1.25rem .875rem;
+  font-size: .8125rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+/* ── Modals - theme-aware ─────────────────────────── */
+.modal-content {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+/* Hairlines fading at both ends, like the sidebar demarcation */
+.modal-header {
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(to right, transparent, var(--border-light) 12%, var(--border-light) 88%, transparent) 1;
+}
+.modal-footer {
+  border-top: 1px solid transparent;
+  border-image: linear-gradient(to right, transparent, var(--border-light) 12%, var(--border-light) 88%, transparent) 1;
+}
+/* Frosted backdrop, identical to the command palette / search overlay :
+   a page-tinted translucent veil (not a dark dim) with a soft blur. */
+.modal-backdrop,
+.modal-backdrop.show {
+  background-color: color-mix(in srgb, var(--bg-page) 82%, transparent);
+}
+.modal-backdrop.show {
+  opacity: 1;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* ── About modal ───────────────────────────────────── */
+/* Two columns : the identity card on the left, the component inventory on
+   the right. The inventory sets the height, and the identity sits centred
+   against it rather than hanging from the top of a long list. */
+.about-modal-dialog { --bs-modal-width: 60rem; }
+.about-modal-content {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+  gap: 1.5rem;
+}
+.about-identity {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  padding: 0 1rem;
+}
+/* Floats over the body, which is the scrolling box : anchored to the
+   content so it stays in the corner as the inventory scrolls under it. */
+.about-close {
+  position: absolute;
+  top: .75rem;
+  right: .75rem;
+  z-index: 1;
+}
+/* One column on tablets and phones : side by side, neither would breathe. */
+@media (max-width: 767.98px) {
+  .about-modal-content { grid-template-columns: 1fr; gap: 1rem; }
+}
+.about-modal-content .about-logo { margin-bottom: .75rem; }
+.about-modal-content .about-logo svg { width: 4rem; height: 4rem; border-radius: var(--radius-sm); }
+.about-modal-content .about-version { font-size: .8125rem; color: var(--text-muted); margin-top: .25rem; }
+.about-modal-content .about-license { font-size: .75rem; color: var(--text-muted); margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--border-light); }
+.about-modal-content .about-license a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
+.about-modal-content .about-license a:hover { color: var(--accent); }
+.about-modal-content .about-source-offer { display: inline-block; margin-top: .35rem; opacity: .85; }
+.about-modal-content .about-github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  font-size: .8125rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+.about-modal-content .about-github-link:hover { color: var(--accent); }
+/* Empty until the check answers, and empty for good when it cannot : the
+   slot collapses rather than reserving a blank line. */
+.about-update-slot:empty { display: none; }
+.about-update {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .375rem;
+  margin-top: .5rem;
+  max-width: 100%;
+  font-size: .75rem;
+  text-align: center;
+  text-decoration: none;
+}
+.about-update--current { color: var(--text-muted); }
+.about-update--outdated {
+  padding: .2rem .5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+  transition: background var(--transition-fast);
+}
+.about-update--outdated:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--accent);
+}
+
+.about-modal-content .about-libraries {
+  text-align: left;
+  border-left: 1px solid var(--border-light);
+  padding-left: 1.5rem;
+}
+/* Stacked, the divider becomes a rule above the list. */
+@media (max-width: 767.98px) {
+  .about-modal-content .about-libraries {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border-light);
+    padding-top: .75rem;
+  }
+}
+.about-libraries__title {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: 0;
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.about-lib-group { margin-top: .85rem; }
+.about-lib-group__title {
+  font-size: .6875rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+  margin-bottom: .35rem;
+}
+.about-lib-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  columns: 2;
+  column-gap: 2rem;
+}
+.about-lib-list li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: .35rem;
+  font-size: .75rem;
+  min-width: 0;
+  /* An entry split across two columns would be unreadable. */
+  break-inside: avoid;
+}
+.about-lib-list a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.about-lib-list a:hover { color: var(--accent); text-decoration: underline; }
+/* The owner is the provenance, the name is what the reader looks for :
+   the owner recedes so the eye lands on the library. */
+.about-lib-owner { color: var(--text-muted); }
+.about-lib-version {
+  color: var(--text-muted);
+  font-size: .6875rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* One column once the modal stacks : two would leave no room per name. */
+@media (max-width: 767.98px) {
+  .about-lib-list { columns: 1; }
+}

@@ -57,7 +57,7 @@ def static_v(path):
 #
 # The values are validated identifiers; the actual colours live in CSS
 # variables (--module-accent-* / --module-accent-*-soft) defined in
-# templates/base.html so light + dark mode can each tune the hue.
+# static/css/cairn/00-tokens.css so light + dark mode can each tune the hue.
 
 MODULE_ACCENTS = {
     "risks", "compliance", "assets", "context",

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The design system stylesheet moves out of `base.html` into ten ordered, browser-cached files under `static/css/cairn/`.
+
 ## [0.36.1] - 2026-11-03
 
 ### Added
