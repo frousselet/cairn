@@ -15,15 +15,15 @@
     </span>
   </td>
   <td data-col="owner">
-    {% if p.owner %}{% user_badge p.owner size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}
+    {% if p.owner %}{% user_badge p.owner size=24 link=True %}{% else %}{% dash %}{% endif %}
   </td>
-  <td data-col="effective_from">{{ p.effective_from|default:"-" }}</td>
+  <td data-col="effective_from">{{ p.effective_from|or_dash }}</td>
   <td data-col="review_date">
     {% if p.review_date %}
       {% if p.is_review_overdue %}
-      <span class="badge text-bg-warning" title="{% trans 'Review overdue' %}"><i class="bi bi-calendar-x me-1" aria-hidden="true"></i>{{ p.review_date }}</span>
+      <span title="{% trans 'Review overdue' %}">{% badge variant="warning" icon="calendar-x" label=p.review_date|date %}</span>
       {% else %}{{ p.review_date }}{% endif %}
-    {% else %}<span class="text-muted">-</span>{% endif %}
+    {% else %}{% dash %}{% endif %}
   </td>
   <td data-col="last_exercise_date">
     {% comment %}
@@ -31,24 +31,24 @@
     exempt one, so a blank date carries the same warning as a stale one.
     {% endcomment %}
     {% if p.is_exercise_overdue %}
-    <span class="badge text-bg-danger" title="{% trans 'Untested' %}"><i class="bi bi-shield-exclamation me-1" aria-hidden="true"></i>{{ p.last_exercise_date|default:_("Untested") }}</span>
+    <span title="{% trans 'Untested' %}">{% if p.last_exercise_date %}{% badge variant="danger" icon="shield-exclamation" label=p.last_exercise_date|date %}{% else %}{% badge variant="danger" icon="shield-exclamation" label=_("Untested") %}{% endif %}</span>
     {% else %}
-    {{ p.last_exercise_date|default:"-" }}
+    {{ p.last_exercise_date|or_dash }}
     {% endif %}
   </td>
   <td data-col="incidents">
     {% if p.incident_count %}
-    <span class="badge text-bg-secondary">{{ p.incident_count }}</span>
-    {% else %}<span class="text-muted">-</span>{% endif %}
+    {% badge variant="secondary" label=p.incident_count %}
+    {% else %}{% dash %}{% endif %}
   </td>
   <td data-col="status">{% workflow_badge p %}</td>
   <td class="text-end" data-col="actions">
     <div class="d-inline-flex gap-1">
       {% if can_update_plan %}
-      <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'incidents:response-plan-update' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></button>
+      <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'incidents:response-plan-update' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></button>
       {% endif %}
       {% if can_delete_plan %}
-      <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'incidents:response-plan-delete' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash"></i></button>
+      <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'incidents:response-plan-delete' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
       {% endif %}
     </div>
   </td>

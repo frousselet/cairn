@@ -30,7 +30,7 @@ absolute-dated, so it degrades with JavaScript unavailable.
         obligation hanging off an exercise was added by hand. Saying so on the
         row is what stops it being answered as if a regulator were waiting.
         {% endcomment %}
-        {% if n.incident.is_exercise %}<span class="badge text-bg-info">{% trans "Exercise" %}</span> {% endif %}{{ n.incident.title|truncatechars:60 }}
+        {% if n.incident.is_exercise %}{% badge variant="info" label=_("Exercise") %} {% endif %}{{ n.incident.title|truncatechars:60 }}
       </span>
     </span>
   </td>
@@ -47,7 +47,7 @@ absolute-dated, so it degrades with JavaScript unavailable.
     </span>
   </td>
   <td data-col="decision">
-    <span class="badge text-bg-{% if n.is_undecided %}warning{% elif n.decision == 'required' %}primary{% else %}secondary{% endif %}">{{ n.get_decision_display }}</span>
+    {% choice_badge n "decision" type="notification_decision" %}
   </td>
   <td data-col="due_at" class="text-nowrap">
     {% if n.due_at %}
@@ -60,24 +60,14 @@ absolute-dated, so it degrades with JavaScript unavailable.
       A clock that exists and has not started. Never merged with the line
       above : that is how a real deadline disappears from a register.
       {% endcomment %}
-      <span class="badge text-bg-secondary">{% trans "Deadline pending" %}</span>
+      {% badge variant="secondary" label=_("Deadline pending") %}
     {% endif %}
   </td>
   <td data-col="countdown" class="text-nowrap">
     {% comment %}
     Late, running, or discharged. Ordered so the worst answer is given first.
     {% endcomment %}
-    {% if n.is_overdue %}
-      <span class="badge text-bg-danger"><i class="bi bi-hourglass-bottom me-1" aria-hidden="true"></i>{% trans "Overdue" %} : {{ n.due_at|timesince }}</span>
-    {% elif n.sent_at and n.late_by %}
-      <span class="badge text-bg-danger"><i class="bi bi-exclamation-diamond me-1" aria-hidden="true"></i>{% trans "Filed late" %}{% if n.due_at %} : {{ n.due_at|timesince:n.sent_at }}{% endif %}</span>
-    {% elif n.sent_at %}
-      <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{{ n.sent_at|date:"SHORT_DATETIME_FORMAT" }}</span>
-    {% elif n.due_at and not n.is_terminal_state %}
-      <span class="badge text-bg-warning"><i class="bi bi-alarm me-1" aria-hidden="true"></i>{{ n.due_at|timeuntil }}</span>
-    {% else %}
-      <span class="cell-empty">-</span>
-    {% endif %}
+    {% include "incidents/_notification_countdown.html" %}
   </td>
   <td data-col="status">{% workflow_badge n %}</td>
   <td class="text-end" data-col="actions">

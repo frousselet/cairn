@@ -37,7 +37,7 @@ button, and targets the drawer so a rejected entry comes back with its field
 errors rather than replacing the card with a form.
 {% endcomment %}
 <details class="mb-3" style="border:1px solid var(--border-light);border-radius:.5rem">
-  <summary class="px-3 py-2 small fw-semibold" style="cursor:pointer;user-select:none">
+  <summary class="px-3 py-2 small fw-semibold cursor-pointer user-select-none">
     <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>{% trans "Append an entry" %}
   </summary>
   <div class="px-3 pb-3">
@@ -54,7 +54,7 @@ errors rather than replacing the card with a form.
       </div>
       {% endif %}
       {% for step in timeline_entry_form.iter_steps %}
-      <div class="detail-subhead"><span><i class="bi bi-{{ step.icon }} me-1" aria-hidden="true"></i>{{ step.title }}</span></div>
+      {% subhead step.title icon=step.icon %}
       {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
       {% endfor %}
       {% for hidden in timeline_entry_form.hidden_fields %}{{ hidden }}{% endfor %}
@@ -85,28 +85,22 @@ errors rather than replacing the card with a form.
       what the line means : a correction restates an earlier fact, and a system
       line was not narrated by a person.
       {% endcomment %}
-      {% if entry.entry_type == 'correction' %}
-      <span class="badge text-bg-warning">{{ entry.get_entry_type_display }}</span>
-      {% elif entry.entry_type == 'system' %}
-      <span class="badge text-bg-secondary">{{ entry.get_entry_type_display }}</span>
-      {% else %}
-      <span class="badge text-bg-light border">{{ entry.get_entry_type_display }}</span>
-      {% endif %}
+      {% choice_badge entry "entry_type" type="timeline_entry_type" %}
 
       <span class="text-muted text-nowrap"><i class="bi bi-person me-1" aria-hidden="true"></i>{{ entry.author.display_name }}</span>
 
       {% if entry.source != 'manual' %}
       {# The one distinction the API filters on : a row nobody typed. #}
-      <span class="badge text-bg-secondary"><i class="bi bi-gear-fill me-1" aria-hidden="true"></i>{{ entry.get_source_display }}</span>
+      {% badge variant="secondary" icon="gear-fill" label=entry.get_source_display %}
       {% endif %}
 
       {% if entry.is_evidence %}
-      <span class="badge" style="background:var(--accent-soft);color:var(--accent)"><i class="bi bi-quote me-1" aria-hidden="true"></i>{% trans "Quoted in filings" %}</span>
+      {% badge variant="accent" icon="quote" label=_("Quoted in filings") %}
       {% endif %}
 
       {% if entry.corrections.all %}
       {# Never hidden and never struck through : the superseded line stays part of the record. #}
-      <span class="badge text-bg-warning"><i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{% trans "Superseded" context "incident" %}</span>
+      {% trans "Superseded" context "incident" as superseded_label %}{% badge variant="warning" icon="pencil-square" label=superseded_label %}
       {% endif %}
 
       {% comment %}

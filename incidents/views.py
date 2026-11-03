@@ -284,6 +284,41 @@ class ProtectedDeleteMixin:
         return redirect(success_url)
 
 
+class PageFormNavMixin:
+    """Cancel target and breadcrumb of the full-page form fallback.
+
+    ``HtmxFormMixin`` derives both from a static ``success_url``, which no form
+    view in this module has : each returns to a computed detail page. Cancel
+    leads where Save would, the row's own page on an edit and the parent's page
+    on the create of a child row, and the register on the create of a top-level
+    row (whose success URL needs the saved object). ``page_form_nav`` names the
+    register the breadcrumb is built from. The drawer is untouched.
+    """
+
+    page_form_nav = "incidents:incident-list"
+    page_form_returns_to_parent = False
+
+    def get_page_form_cancel_url(self):
+        obj = getattr(self, "object", None)
+        if (obj is not None and obj.pk) or self.page_form_returns_to_parent:
+            return self.get_success_url()
+        return reverse(self.page_form_nav)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        if not ctx.get("is_modal"):
+            ctx["cancel_url"] = self.get_page_form_cancel_url()
+            ctx["form_nav"] = self.page_form_nav
+            ctx["form_accent"] = "incidents"
+            # Child rows expose their parent as ``self.incident`` (set on the
+            # view, since the child mixins fill the context after this one).
+            incident = getattr(self, "incident", None)
+            if isinstance(incident, Incident) and incident.pk:
+                ctx["form_parent_label"] = incident.reference
+                ctx["form_parent_url"] = reverse("incidents:incident-detail", args=[incident.pk])
+        return ctx
+
+
 class IncidentChildMixin:
     """Resolve the parent incident of a child row created from its detail page.
 
@@ -295,6 +330,7 @@ class IncidentChildMixin:
     """
 
     incident_url_kwarg = "incident_pk"
+    page_form_returns_to_parent = True
 
     @cached_property
     def incident(self):
@@ -607,7 +643,7 @@ class IncidentDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
         return ctx
 
 
-class IncidentCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
+class IncidentCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     """Open an incident file.
 
     The row is created in ``draft`` and declared through the stepper : writing
@@ -627,7 +663,7 @@ class IncidentCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMi
         return reverse("incidents:incident-detail", args=[self.object.pk])
 
 
-class IncidentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
+class IncidentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
     model = Incident
     permission_required = "incidents.incident.update"
     form_class = IncidentForm
@@ -837,12 +873,13 @@ class SecurityEventDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scope
         return ctx
 
 
-class SecurityEventCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
+class SecurityEventCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     model = SecurityEvent
     permission_required = "incidents.event.create"
     form_class = SecurityEventForm
     template_name = "incidents/security_event_form.html"
     modal_template_name = "incidents/security_event_form_modal.html"
+    page_form_nav = "incidents:event-list"
     modal_title_create = _l("Report a security event")
     modal_title_update = _l("Edit security event")
 
@@ -850,12 +887,13 @@ class SecurityEventCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxF
         return reverse("incidents:event-detail", args=[self.object.pk])
 
 
-class SecurityEventUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
+class SecurityEventUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
     model = SecurityEvent
     permission_required = "incidents.event.update"
     form_class = SecurityEventForm
     template_name = "incidents/security_event_form.html"
     modal_template_name = "incidents/security_event_form_modal.html"
+    page_form_nav = "incidents:event-list"
     modal_title_create = _l("Report a security event")
     modal_title_update = _l("Edit security event")
 
@@ -1036,12 +1074,13 @@ class ResponsePlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
         return ctx
 
 
-class ResponsePlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
+class ResponsePlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     model = IncidentResponsePlan
     permission_required = "incidents.response_plan.create"
     form_class = IncidentResponsePlanForm
     template_name = "incidents/response_plan_form.html"
     modal_template_name = "incidents/response_plan_form_modal.html"
+    page_form_nav = "incidents:response-plan-list"
     modal_title_create = _l("New response plan")
     modal_title_update = _l("Edit response plan")
 
@@ -1049,12 +1088,13 @@ class ResponsePlanCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFo
         return reverse("incidents:response-plan-detail", args=[self.object.pk])
 
 
-class ResponsePlanUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
+class ResponsePlanUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
     model = IncidentResponsePlan
     permission_required = "incidents.response_plan.update"
     form_class = IncidentResponsePlanForm
     template_name = "incidents/response_plan_form.html"
     modal_template_name = "incidents/response_plan_form_modal.html"
+    page_form_nav = "incidents:response-plan-list"
     modal_title_create = _l("New response plan")
     modal_title_update = _l("Edit response plan")
 
@@ -1341,7 +1381,7 @@ class NotificationDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
         return ctx
 
 
-class NotificationCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
+class NotificationCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     """Add an obligation by hand to an incident.
 
     Only ever produces a ``manual`` row : a generated obligation is created by
@@ -1353,6 +1393,7 @@ class NotificationCreateView(LoginRequiredMixin, PermissionRequiredMixin, Incide
     form_class = IncidentNotificationForm
     template_name = "incidents/notification_form.html"
     modal_template_name = "incidents/notification_form_modal.html"
+    page_form_nav = "incidents:notification-list"
     modal_title_create = _l("Add a notification obligation")
     modal_title_update = _l("Edit notification obligation")
 
@@ -1362,13 +1403,14 @@ class NotificationCreateView(LoginRequiredMixin, PermissionRequiredMixin, Incide
         return kwargs
 
 
-class NotificationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
+class NotificationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
     model = IncidentNotification
     permission_required = "incidents.notification.update"
     scope_parent_lookup = "incident__scopes"
     form_class = IncidentNotificationForm
     template_name = "incidents/notification_form.html"
     modal_template_name = "incidents/notification_form_modal.html"
+    page_form_nav = "incidents:notification-list"
     modal_title_create = _l("Add a notification obligation")
     modal_title_update = _l("Edit notification obligation")
 
@@ -1427,7 +1469,7 @@ def _timeline_entries(incident):
     )
 
 
-class TimelineEntryCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, HtmxFormMixin, UserFormKwargsMixin, CreateView):
+class TimelineEntryCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreateView):
     model = IncidentTimelineEntry
     permission_required = "incidents.incident.update"
     form_class = IncidentTimelineEntryForm
@@ -1478,7 +1520,7 @@ def _response_actions(incident):
     )
 
 
-class ResponseActionCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, HtmxFormMixin, UserFormKwargsMixin, CreateView):
+class ResponseActionCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreateView):
     model = IncidentResponseAction
     permission_required = "incidents.incident.update"
     form_class = IncidentResponseActionForm
@@ -1493,7 +1535,7 @@ class ResponseActionCreateView(LoginRequiredMixin, PermissionRequiredMixin, Inci
         return kwargs
 
 
-class ResponseActionUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
+class ResponseActionUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
     model = IncidentResponseAction
     permission_required = "incidents.incident.update"
     scope_parent_lookup = "incident__scopes"
@@ -1572,7 +1614,7 @@ class EvidenceDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilte
         return ctx
 
 
-class EvidenceCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
+class EvidenceCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     model = IncidentEvidence
     permission_required = "incidents.evidence.create"
     form_class = IncidentEvidenceForm
@@ -1588,7 +1630,7 @@ class EvidenceCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentCh
         return kwargs
 
 
-class EvidenceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
+class EvidenceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
     """Edit an evidence item.
 
     Once the item is sealed the form disables the six acquisition fields itself,
@@ -1708,7 +1750,7 @@ def _custody_events(evidence):
     )
 
 
-class CustodyEventCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UserFormKwargsMixin, CreateView):
+class CustodyEventCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreateView):
     """Record one handling act on an evidence item.
 
     Create only : the ledger is append-only and its model has neither an update
@@ -1721,6 +1763,7 @@ class CustodyEventCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFo
     form_class = EvidenceCustodyEventForm
     template_name = "incidents/custody_event_form.html"
     modal_template_name = "incidents/custody_event_form_modal.html"
+    page_form_returns_to_parent = True
     modal_title_create = _l("Record a custody act")
 
     @cached_property
@@ -1786,7 +1829,7 @@ def _notification_filings(notification):
     )
 
 
-class FilingCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UserFormKwargsMixin, CreateView):
+class FilingCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreateView):
     """Record that a notification actually left the organisation.
 
     Needs ``update`` and not ``approve`` (RG-INC-26) : the governed decision is
@@ -1799,6 +1842,8 @@ class FilingCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixi
     form_class = NotificationFilingForm
     template_name = "incidents/filing_form.html"
     modal_template_name = "incidents/filing_form_modal.html"
+    page_form_nav = "incidents:notification-list"
+    page_form_returns_to_parent = True
     modal_title_create = _l("Record a filing")
 
     @cached_property
@@ -1966,7 +2011,7 @@ class PostIncidentReviewDetailView(LoginRequiredMixin, PermissionRequiredMixin, 
         return ctx
 
 
-class PostIncidentReviewCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
+class PostIncidentReviewCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     """Open the A.5.27 review by hand.
 
     The incident's own ``post_incident_review`` transition creates one
@@ -1997,7 +2042,7 @@ class PostIncidentReviewCreateView(LoginRequiredMixin, PermissionRequiredMixin, 
         return response
 
 
-class PostIncidentReviewUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
+class PostIncidentReviewUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
     model = PostIncidentReview
     permission_required = "incidents.review.update"
     form_class = PostIncidentReviewForm
@@ -2068,7 +2113,7 @@ class PersonalDataBreachDetailView(LoginRequiredMixin, PermissionRequiredMixin, 
         return ctx
 
 
-class PersonalDataBreachCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
+class PersonalDataBreachCreateView(LoginRequiredMixin, PermissionRequiredMixin, IncidentChildMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     """Open the GDPR qualification by hand.
 
     Triage opens one automatically as soon as the incident declares personal
@@ -2090,7 +2135,7 @@ class PersonalDataBreachCreateView(LoginRequiredMixin, PermissionRequiredMixin, 
         return kwargs
 
 
-class PersonalDataBreachUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
+class PersonalDataBreachUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, IncidentChildEditMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
     model = PersonalDataBreach
     permission_required = "incidents.notification.update"
     scope_parent_lookup = "incident__scopes"
@@ -2212,12 +2257,13 @@ class ReportingAuthorityDetailView(LoginRequiredMixin, PermissionRequiredMixin, 
         return ctx
 
 
-class ReportingAuthorityCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
+class ReportingAuthorityCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     model = ReportingAuthority
     permission_required = "incidents.response_plan.create"
     form_class = ReportingAuthorityForm
     template_name = "incidents/reporting_authority_form.html"
     modal_template_name = "incidents/reporting_authority_form_modal.html"
+    page_form_nav = "incidents:reporting-authority-list"
     modal_title_create = _l("New reporting authority")
     modal_title_update = _l("Edit reporting authority")
 
@@ -2225,12 +2271,13 @@ class ReportingAuthorityCreateView(LoginRequiredMixin, PermissionRequiredMixin, 
         return reverse("incidents:reporting-authority-detail", args=[self.object.pk])
 
 
-class ReportingAuthorityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
+class ReportingAuthorityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
     model = ReportingAuthority
     permission_required = "incidents.response_plan.update"
     form_class = ReportingAuthorityForm
     template_name = "incidents/reporting_authority_form.html"
     modal_template_name = "incidents/reporting_authority_form_modal.html"
+    page_form_nav = "incidents:reporting-authority-list"
     modal_title_create = _l("New reporting authority")
     modal_title_update = _l("Edit reporting authority")
 
@@ -2353,12 +2400,13 @@ class ObligationTemplateDetailView(LoginRequiredMixin, PermissionRequiredMixin, 
         return ctx
 
 
-class ObligationTemplateCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
+class ObligationTemplateCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, CreatedByMixin, CreateView):
     model = ReportingObligationTemplate
     permission_required = "incidents.response_plan.create"
     form_class = ReportingObligationTemplateForm
     template_name = "incidents/obligation_template_form.html"
     modal_template_name = "incidents/obligation_template_form_modal.html"
+    page_form_nav = "incidents:obligation-template-list"
     modal_title_create = _l("New obligation template")
     modal_title_update = _l("Edit obligation template")
 
@@ -2366,12 +2414,13 @@ class ObligationTemplateCreateView(LoginRequiredMixin, PermissionRequiredMixin, 
         return reverse("incidents:obligation-template-detail", args=[self.object.pk])
 
 
-class ObligationTemplateUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
+class ObligationTemplateUpdateView(LoginRequiredMixin, PermissionRequiredMixin, PageFormNavMixin, HtmxFormMixin, UserFormKwargsMixin, UpdateView):
     model = ReportingObligationTemplate
     permission_required = "incidents.response_plan.update"
     form_class = ReportingObligationTemplateForm
     template_name = "incidents/obligation_template_form.html"
     modal_template_name = "incidents/obligation_template_form_modal.html"
+    page_form_nav = "incidents:obligation-template-list"
     modal_title_create = _l("New obligation template")
     modal_title_update = _l("Edit obligation template")
 

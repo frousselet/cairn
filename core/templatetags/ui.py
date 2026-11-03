@@ -290,6 +290,43 @@ BADGE_REGISTRY: dict[str, dict[str, tuple[str, str, object]]] = {
         "partially_effective": ("warning", "circle-half", pgettext_lazy("finding", "Partially effective")),
         "not_effective": ("danger", "x-circle", pgettext_lazy("finding", "Not effective")),
     },
+    # Incident response (the labels come from the choices: choice_badge).
+    "tlp": {
+        "clear": ("secondary", "eye", None),
+        "green": ("success", "eye", None),
+        "amber": ("warning", "eye-slash", None),
+        "amber_strict": ("warning", "eye-slash", None),
+        "red": ("danger", "eye-slash", None),
+    },
+    "notification_decision": {
+        "undecided": ("warning", "question-octagon", None),
+        "required": ("accent", "check2-square", None),
+        "not_required": ("secondary", "slash-circle", None),
+    },
+    "triage_decision": {
+        "incident": ("danger", "arrow-up-right-circle", None),
+        "weakness": ("warning", "bug", None),
+        "duplicate": ("secondary", "files", None),
+        "false_positive": ("secondary", "slash-circle", None),
+        "no_action": ("secondary", "dash-circle", None),
+    },
+    "response_action_status": {
+        "planned": ("secondary", "calendar", None),
+        "in_progress": ("accent", "play-circle", None),
+        "done": ("success", "check-circle", None),
+        "blocked": ("danger", "x-octagon", None),
+        "cancelled": ("secondary", "x-circle", None),
+    },
+    "timeline_entry_type": {
+        "correction": ("warning", "pencil-square", None),
+    },
+    "filing_outcome": {
+        "sent": ("secondary", "send", None),
+        "acknowledged": ("success", "check-circle", None),
+        "information_requested": ("warning", "question-circle", None),
+        "rejected": ("danger", "x-octagon", None),
+        "superseded": ("secondary", "arrow-repeat", None),
+    },
     "issue_status": {
         "identified": ("secondary", "circle", _("Identified")),
         "active": ("warning", "activity", _("Active")),
@@ -1259,6 +1296,9 @@ CHOICE_BADGE_TYPES = {
     "dic_criterion": "dic",
     "finding_type": "finding",
     "effectiveness_verdict": "effectiveness",
+    "tlp": "tlp",
+    "notification_decision": "notification_decision",
+    "triage_decision": "triage_decision",
 }
 
 

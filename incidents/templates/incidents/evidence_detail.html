@@ -21,8 +21,8 @@ Three things this page is careful about:
 
 3. **Destruction is a transition.** The lifecycle stepper owns it, gated by the
    legal hold and the retention date. There is no destroy button on this page,
-   and the two conditions are stated in the sidebar so the refusal is never a
-   surprise.
+   and the two conditions are stated in the retention card so the refusal is
+   never a surprise.
 {% endcomment %}
 
 {% block title %}{{ evidence.reference }} - {{ evidence.title }} - Cairn{% endblock %}
@@ -35,21 +35,15 @@ Three things this page is careful about:
 {% page_header evidence.title reference=evidence.reference nav="incidents:incident-list" accent="incidents" parent_label=evidence.incident.reference parent_url=incident_url %}
   {% include "includes/history_trigger.html" %}
   {% if can_delete_evidence %}
-  <button type="button" class="btn btn-outline-danger" hx-get="{% url 'incidents:evidence-delete' evidence.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+  <button type="button" class="btn btn-danger" hx-get="{% url 'incidents:evidence-delete' evidence.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
   {% endif %}
   {% if can_update_evidence %}
-  <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:evidence-update' evidence.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</button>
+  <a href="{% url 'incidents:evidence-update' evidence.pk %}" class="btn btn-primary" hx-get="{% url 'incidents:evidence-update' evidence.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
   {% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 
 {% include "includes/lifecycle_stepper.html" %}
-
-{% if evidence.tags.all %}
-<div class="detail-tags d-flex flex-wrap justify-content-center gap-2 mb-4">
-  {% for tag in evidence.tags.all %}<span class="badge" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% endfor %}
-</div>
-{% endif %}
 
 {% comment %}
 A broken chain of custody is permanent and outranks everything else on the page.
@@ -61,7 +55,7 @@ storage is unavailable, not that the evidence changed.
   <div class="d-flex flex-wrap align-items-center gap-2">
     <i class="bi bi-exclamation-octagon-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
     <strong>{% trans "The artefact no longer matches its recorded digest." %}</strong>
-    {% if evidence.last_integrity_check_at %}<span class="ms-auto small text-nowrap">{{ evidence.last_integrity_check_at|date:"d/m/Y H:i" }}</span>{% endif %}
+    {% if evidence.last_integrity_check_at %}<span class="ms-auto small text-nowrap">{{ evidence.last_integrity_check_at|date:"SHORT_DATETIME_FORMAT" }}</span>{% endif %}
   </div>
   <div class="mt-2 small">{% trans "This is a chain-of-custody break. It is permanent and it is recorded in the ledger below." %}</div>
 </div>
@@ -70,7 +64,7 @@ storage is unavailable, not that the evidence changed.
   <div class="d-flex flex-wrap align-items-center gap-2">
     <i class="bi bi-question-octagon-fill fs-5 flex-shrink-0" aria-hidden="true"></i>
     <strong>{% trans "The last verification could not read the artefact." %}</strong>
-    <span class="ms-auto small text-nowrap">{{ evidence.last_integrity_check_at|date:"d/m/Y H:i" }}</span>
+    <span class="ms-auto small text-nowrap">{{ evidence.last_integrity_check_at|date:"SHORT_DATETIME_FORMAT" }}</span>
   </div>
   <div class="mt-2 small">{% trans "This is a claim about the storage, never about the evidence : no verdict was recorded and nothing here says the item changed. Check its storage location." %}</div>
 </div>
@@ -83,323 +77,215 @@ storage is unavailable, not that the evidence changed.
 </div>
 {% endif %}
 
-{% comment %}
-── The integrity tile ────────────────────────────────────────────
-The digest, its algorithm, the seal and the last verdict, read together : a
-green verdict against no digest, or against an item Cairn does not hold, means
-something quite different from a green verdict against a stored artefact.
-{% endcomment %}
-<div class="card mb-4 kpi-tile{% if evidence.last_integrity_check_ok %} kpi-tile--success{% elif evidence.last_integrity_check_ok is not None %} kpi-tile--danger{% elif evidence.last_integrity_check_at %} kpi-tile--warning{% else %} kpi-tile--neutral{% endif %}">
-  <div class="card-body">
-    <div class="d-flex flex-wrap align-items-center gap-3">
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") evidence.lifecycle_label icon="signpost-split" %}
+    {% comment %}
+    The integrity tile : the last verdict, in three states and never two. The
+    digest, its algorithm and the seal it is read against are in the
+    Acquisition and Integrity verification cards below.
+    {% endcomment %}
+    {% if evidence.last_integrity_check_ok %}
+    {% kpi_tile _("Integrity") _("Verified") icon="shield-check" tone="success" %}
+    {% elif evidence.last_integrity_check_ok is not None %}
+    {% kpi_tile _("Integrity") _("Integrity broken") icon="shield-exclamation" tone="danger" %}
+    {% elif evidence.last_integrity_check_at %}
+    {% kpi_tile _("Integrity") _("Not verifiable") icon="shield-slash" tone="warning" %}
+    {% else %}
+    {% kpi_tile _("Integrity") _("Never verified") icon="shield" tone="neutral" %}
+    {% endif %}
+    {% if evidence.is_sealed %}
+    {% kpi_tile _("Seal") _("Sealed") icon="lock-fill" tone="neutral" %}
+    {% else %}
+    {% kpi_tile _("Seal") _("Not sealed") icon="unlock" tone="neutral" %}
+    {% endif %}
+    {% kpi_tile _("Handling caveat") evidence.get_tlp_display icon="eye-slash" tone=evidence.tlp|badge_variant:"tlp" %}
+  {% endslot %}
 
-      <span class="kpi-tile__icon{% if evidence.last_integrity_check_ok %} kpi-tile__icon--success{% elif evidence.last_integrity_check_ok is not None %} kpi-tile__icon--danger{% elif evidence.last_integrity_check_at %} kpi-tile__icon--warning{% else %} kpi-tile__icon--neutral{% endif %}" style="flex:none">
-        {% if evidence.last_integrity_check_ok %}<i class="bi bi-shield-check" aria-hidden="true"></i>
-        {% elif evidence.last_integrity_check_ok is not None %}<i class="bi bi-shield-exclamation" aria-hidden="true"></i>
-        {% elif evidence.last_integrity_check_at %}<i class="bi bi-shield-slash" aria-hidden="true"></i>
-        {% else %}<i class="bi bi-shield" aria-hidden="true"></i>{% endif %}
-      </span>
+  {# ── What the item is ── #}
+  {% section_card _("Evidence item") icon="safe" %}
+    {% trans "Incident" context "incident" as incident_label %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Evidence type") evidence.get_evidence_type_display %}
+      {% meta_item incident_label %}<div class="ref-links">{% ref_link evidence.incident url=incident_url label=evidence.incident.title|truncatechars:70 %}</div>{% endmeta_item %}
+      {% meta_item _("Description") wide=True %}{% if evidence.description %}{{ evidence.description|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") wide=True %}{% tag_list evidence.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-      <div class="min-w-0" style="flex:1 1 14rem">
-        <div class="text-muted" style="font-size:.8rem">{% trans "Integrity" %}</div>
-        <div class="fw-bold" style="font-size:1.2rem;line-height:1.3">
-          {% if evidence.last_integrity_check_ok %}
-            {% trans "Verified" %}
-          {% elif evidence.last_integrity_check_ok is not None %}
-            {% trans "Integrity broken" %}
-          {% elif evidence.last_integrity_check_at %}
-            {% trans "Not verifiable" %}
-          {% else %}
-            {% trans "Never verified" %}
-          {% endif %}
+  {# ── Acquisition : the write-once half of the record ── #}
+  {% section_card _("Acquisition") icon="box-arrow-in-down" %}
+    {% slot actions %}
+    {% if evidence.is_sealed %}{% badge variant="dark" icon="lock-fill" label=_("Frozen by the seal") %}{% endif %}
+    {% endslot %}
+    {% if evidence.is_sealed %}
+    <p class="text-meta mb-3">
+      {% blocktrans with sealed_at=evidence.sealed_at|date:"SHORT_DATETIME_FORMAT" %}Sealed on {{ sealed_at }}. Every field in this card is write-once from that instant : the artefact cannot be replaced, and destruction is a transition rather than an edit.{% endblocktrans %}
+    </p>
+    {% else %}
+    <p class="text-meta mb-3">{% trans "These six fields are frozen the moment the item is sealed. Correct them now if they are wrong." %}</p>
+    {% endif %}
+    {% trans "Collected at" as collected_at_label %}{% trans "Collected by" as collected_by_label %}{% trans "Collection method" as method_label %}{% trans "Content hash" as hash_label %}{% trans "File" as file_label %}
+    {% meta_list cols=2 %}
+      {% meta_item collected_at_label %}{% if evidence.is_sealed %}<i class="bi bi-lock-fill me-1 text-meta" aria-hidden="true"></i>{% endif %}{{ evidence.collected_at|date:"SHORT_DATETIME_FORMAT"|or_dash }}{% endmeta_item %}
+      {% meta_item collected_by_label %}{% if evidence.is_sealed %}<i class="bi bi-lock-fill me-1 text-meta" aria-hidden="true"></i>{% endif %}{% if evidence.collected_by %}{% user_badge evidence.collected_by size=28 link=True %}{% else %}{% dash %}{% endif %}{% endmeta_item %}
+      {% meta_item method_label wide=True %}
+        {% if evidence.is_sealed %}<i class="bi bi-lock-fill me-1 text-meta" aria-hidden="true"></i>{% endif %}
+        {% if evidence.collection_method %}
+          {{ evidence.collection_method|linebreaksbr }}
+        {% else %}
+          <span class="text-meta">{% trans "An artefact with a perfect hash and no stated method is a file, not evidence." %}</span>
+        {% endif %}
+      {% endmeta_item %}
+      {% meta_item hash_label wide=True %}
+        {% if evidence.is_sealed %}<i class="bi bi-lock-fill me-1 text-meta" aria-hidden="true"></i>{% endif %}
+        {% if evidence.content_hash %}<span class="text-break font-monospace text-sm">{{ evidence.content_hash }}</span>{% else %}<span class="text-meta">{% trans "No fingerprint recorded." %}</span>{% endif %}
+        <div class="mt-1">{% badge variant="secondary" label=evidence.get_hash_algorithm_display %}</div>
+      {% endmeta_item %}
+      {% meta_item file_label wide=True %}
+        {% if evidence.is_sealed %}<i class="bi bi-lock-fill me-1 text-meta" aria-hidden="true"></i>{% endif %}
+        {% if evidence.has_file %}
+        <a href="{% url 'incidents:evidence-file' evidence.pk %}" class="btn btn-sm btn-secondary">
+          <i class="bi bi-download me-1" aria-hidden="true"></i>{{ evidence.original_filename|default:_("Download the artefact") }}
+        </a>
+        <div class="cell-sub mt-1">{% trans "Held in Cairn" %}{% if evidence.file_size %} · {{ evidence.file_size|filesizeformat }}{% endif %}</div>
+        {% else %}
+        {% badge variant="secondary" label=_("Registered by reference") %}
+        <div class="cell-sub mt-1">
+          {% trans "Cairn holds the fingerprint, not the item." %}
+          {% if evidence.original_filename %} {{ evidence.original_filename }}{% endif %}
+          {% if evidence.file_size %} · {{ evidence.file_size|filesizeformat }}{% endif %}
         </div>
-        <div class="text-muted small">
-          {% if evidence.last_integrity_check_at %}
-            {% trans "Last attempt" %} : {{ evidence.last_integrity_check_at|date:"d/m/Y H:i" }}
-          {% else %}
-            {% trans "No verification has been attempted." %}
-          {% endif %}
-        </div>
-      </div>
+        {% endif %}
+      {% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-      <div class="min-w-0" style="flex:2 1 20rem">
-        <div class="text-muted" style="font-size:.8rem">{% trans "Content hash" %} <span class="badge text-bg-secondary ms-1">{{ evidence.get_hash_algorithm_display }}</span></div>
-        <div class="mt-1 text-break font-monospace" style="font-size:.8rem">
-          {% if evidence.content_hash %}{{ evidence.content_hash }}{% else %}<span class="text-muted">{% trans "No fingerprint recorded." %}</span>{% endif %}
-        </div>
-      </div>
+  {# ── Where it came from and where it lives ── #}
+  {% section_card _("Source and location") icon="hdd-network" %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Source asset") %}{% if evidence.source_support_asset %}<div class="ref-links">{% url 'assets:support-asset-detail' evidence.source_support_asset.pk as asset_url %}{% ref_link evidence.source_support_asset url=asset_url %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Source") evidence.source_description %}
+      {% meta_item _("Location") evidence.storage_location %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-      <div class="min-w-0" style="flex:1 1 10rem">
-        <div class="text-muted" style="font-size:.8rem">{% trans "Seal" %}</div>
-        <div class="mt-1">
-          {% if evidence.is_sealed %}
-          <span class="badge text-bg-dark"><i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% trans "Sealed" %}</span>
-          <div class="text-muted small mt-1">{{ evidence.sealed_at|date:"d/m/Y H:i" }}</div>
-          {% else %}
-          <span class="badge text-bg-secondary"><i class="bi bi-unlock me-1" aria-hidden="true"></i>{% trans "Not sealed" %}</span>
-          <div class="text-muted small mt-1">{% trans "Acquisition metadata can still be corrected." %}</div>
-          {% endif %}
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<div class="row g-4">
-
-  {# ══ LEFT COLUMN ══════════════════════════════════════════ #}
-  <div class="col-lg-8">
-
-    {# ── 1. What the item is ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead"><span><i class="bi bi-safe me-1" aria-hidden="true"></i>{% trans "Evidence item" %}</span></div>
-        <dl class="mb-0 mt-2">
-          <dt class="text-muted small mb-1">{% trans "Evidence type" %}</dt>
-          <dd class="mb-3">{{ evidence.get_evidence_type_display }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Description" %}</dt>
-          <dd class="mb-0">{% if evidence.description %}{{ evidence.description|linebreaksbr }}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-        </dl>
-      </div>
-    </div>
-
-    {# ── 2. Acquisition : the write-once half of the record ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead detail-subhead--action">
-          <span><i class="bi bi-box-arrow-in-down me-1" aria-hidden="true"></i>{% trans "Acquisition" %}</span>
-          {% if evidence.is_sealed %}
-          <span class="badge text-bg-dark"><i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% trans "Frozen by the seal" %}</span>
-          {% endif %}
-        </div>
+  {# ── Integrity verification : its own route, never a transition ── #}
+  {% section_card _("Integrity verification") icon="shield-check" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Integrity") %}
+        {% if evidence.last_integrity_check_ok %}
+          {% badge variant="success" icon="check-circle" label=_("Verified") %}
+        {% elif evidence.last_integrity_check_ok is not None %}
+          {% badge variant="danger" icon="exclamation-octagon" label=_("Integrity broken") %}
+        {% elif evidence.last_integrity_check_at %}
+          {% badge variant="warning" icon="question-circle" label=_("Not verifiable") %}
+        {% else %}
+          {% badge variant="secondary" icon="shield" label=_("Never verified") %}
+        {% endif %}
+      {% endmeta_item %}
+      {% meta_item _("Last attempt") %}{% if evidence.last_integrity_check_at %}{{ evidence.last_integrity_check_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}<span class="text-meta">{% trans "No verification has been attempted." %}</span>{% endif %}{% endmeta_item %}
+      {% meta_item _("Seal") %}
         {% if evidence.is_sealed %}
-        <p class="text-muted small mt-2 mb-0">
-          {% blocktrans with sealed_at=evidence.sealed_at|date:"d/m/Y H:i" %}Sealed on {{ sealed_at }}. Every field in this card is write-once from that instant : the artefact cannot be replaced, and destruction is a transition rather than an edit.{% endblocktrans %}
-        </p>
+        {% badge variant="dark" icon="lock-fill" label=_("Sealed") %}
+        <div class="text-meta mt-1">{{ evidence.sealed_at|date:"SHORT_DATETIME_FORMAT" }}</div>
         {% else %}
-        <p class="text-muted small mt-2 mb-0">{% trans "These six fields are frozen the moment the item is sealed. Correct them now if they are wrong." %}</p>
+        {% badge variant="secondary" icon="unlock" label=_("Not sealed") %}
+        <div class="text-meta mt-1">{% trans "Acquisition metadata can still be corrected." %}</div>
         {% endif %}
-        <dl class="mb-0 mt-3">
-          <dt class="text-muted small mb-1">{% if evidence.is_sealed %}<i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% endif %}{% trans "Collected at" %}</dt>
-          <dd class="mb-3">{{ evidence.collected_at|date:"d/m/Y H:i"|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% if evidence.is_sealed %}<i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% endif %}{% trans "Collected by" %}</dt>
-          <dd class="mb-3">{% if evidence.collected_by %}{% user_badge evidence.collected_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-          <dt class="text-muted small mb-1">{% if evidence.is_sealed %}<i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% endif %}{% trans "Collection method" %}</dt>
-          <dd class="mb-3">
-            {% if evidence.collection_method %}
-              {{ evidence.collection_method|linebreaksbr }}
-            {% else %}
-              <span class="text-muted">{% trans "An artefact with a perfect hash and no stated method is a file, not evidence." %}</span>
-            {% endif %}
-          </dd>
-          <dt class="text-muted small mb-1">{% if evidence.is_sealed %}<i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% endif %}{% trans "Content hash" %}</dt>
-          <dd class="mb-3">
-            <span class="text-break font-monospace" style="font-size:.8rem">{% if evidence.content_hash %}{{ evidence.content_hash }}{% else %}-{% endif %}</span>
-            <div class="cell-sub">{{ evidence.get_hash_algorithm_display }}</div>
-          </dd>
-          <dt class="text-muted small mb-1">{% if evidence.is_sealed %}<i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% endif %}{% trans "File" %}</dt>
-          <dd class="mb-0">
-            {% if evidence.has_file %}
-            <a href="{% url 'incidents:evidence-file' evidence.pk %}" class="btn btn-sm btn-outline-secondary">
-              <i class="bi bi-download me-1" aria-hidden="true"></i>{{ evidence.original_filename|default:_("Download the artefact") }}
-            </a>
-            <div class="cell-sub mt-1">{% trans "Held in Cairn" %}{% if evidence.file_size %} · {{ evidence.file_size|filesizeformat }}{% endif %}</div>
-            {% else %}
-            <span class="badge text-bg-secondary">{% trans "Registered by reference" %}</span>
-            <div class="cell-sub mt-1">
-              {% trans "Cairn holds the fingerprint, not the item." %}
-              {% if evidence.original_filename %} {{ evidence.original_filename }}{% endif %}
-              {% if evidence.file_size %} · {{ evidence.file_size|filesizeformat }}{% endif %}
-            </div>
-            {% endif %}
-          </dd>
-        </dl>
+      {% endmeta_item %}
+    {% endmeta_list %}
+    <p class="text-meta mt-3 mb-3">{% trans "Verification re-measures the artefact and appends a row to the ledger. It does not move the item : an outcome that could not read the artefact leaves the last verdict untouched, because that is a statement about the storage and not about the evidence." %}</p>
+    {% if can_update_evidence %}
+    <form method="post" action="{% url 'incidents:evidence-verify' evidence.pk %}">
+      {% csrf_token %}
+      <div class="mb-2">
+        <label for="verify-notes" class="form-label">{% trans "Notes" %}</label>
+        <textarea class="form-control" id="verify-notes" name="notes" rows="2" placeholder="{% trans 'What was checked, and where.' %}"></textarea>
       </div>
-    </div>
+      <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>{% trans "Verify integrity" %}</button>
+      {% if evidence.is_registered_by_reference %}
+      <div class="form-text">{% trans "This item is registered by reference : Cairn cannot re-measure it and will record the attempt as not verifiable." %}</div>
+      {% endif %}
+    </form>
+    {% else %}
+    <p class="text-meta mb-0">{% trans "Verifying integrity requires the evidence update permission." %}</p>
+    {% endif %}
+  {% endsection_card %}
 
-    {# ── 3. Where it came from and where it lives ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead"><span><i class="bi bi-hdd-network me-1" aria-hidden="true"></i>{% trans "Source and location" %}</span></div>
-        <dl class="mb-0 mt-2">
-          <dt class="text-muted small mb-1">{% trans "Source asset" %}</dt>
-          <dd class="mb-3">
-            {% if evidence.source_support_asset %}
-            <a href="{% url 'assets:support-asset-detail' evidence.source_support_asset.pk %}" class="cell-link"><span class="ref">{{ evidence.source_support_asset.reference }}</span> {{ evidence.source_support_asset.name }}</a>
-            {% else %}<span class="text-muted">-</span>{% endif %}
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Source" %}</dt>
-          <dd class="mb-3">{{ evidence.source_description|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Location" %}</dt>
-          <dd class="mb-0">
-            {% if evidence.storage_location %}
-              {{ evidence.storage_location }}
-            {% else %}
-              <span class="text-muted">-</span>
-            {% endif %}
-          </dd>
-        </dl>
-      </div>
+  {# ── The chain of custody : append-only, re-rendered over HTMX ── #}
+  {% comment %}
+  No create control in the card header : the ledger partial carries its own
+  inline "Record a custody act" form, so a second affordance here would be a
+  button that opens the same form twice.
+  {% endcomment %}
+  {% section_card _("Chain of custody") icon="link-45deg" count=custody_events|length %}
+    <p class="text-meta mb-3">{% trans "The ledger is append-only : a custody act is never edited and never deleted." %}</p>
+    <div id="custody-events"
+         hx-get="{% url 'incidents:custody-events' evidence.pk %}"
+         hx-trigger="formSaved from:body"
+         hx-swap="innerHTML">
+      {% include "incidents/_custody_events.html" %}
     </div>
+  {% endsection_card %}
 
-    {# ── 4. Integrity verification : its own route, never a transition ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead"><span><i class="bi bi-shield-check me-1" aria-hidden="true"></i>{% trans "Integrity verification" %}</span></div>
-        <p class="text-muted small mt-2 mb-3">{% trans "Verification re-measures the artefact and appends a row to the ledger. It does not move the item : an outcome that could not read the artefact leaves the last verdict untouched, because that is a statement about the storage and not about the evidence." %}</p>
-        {% if can_update_evidence %}
-        <form method="post" action="{% url 'incidents:evidence-verify' evidence.pk %}">
-          {% csrf_token %}
-          <div class="mb-2">
-            <label for="verify-notes" class="form-label text-muted small">{% trans "Notes" %}</label>
-            <textarea class="form-control" id="verify-notes" name="notes" rows="2" placeholder="{% trans 'What was checked, and where.' %}"></textarea>
-          </div>
-          <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>{% trans "Verify integrity" %}</button>
-          {% if evidence.is_registered_by_reference %}
-          <div class="form-text">{% trans "This item is registered by reference : Cairn cannot re-measure it and will record the attempt as not verifiable." %}</div>
-          {% endif %}
-        </form>
+  {# ── Handling caveat ── #}
+  {% section_card _("Handling caveat") icon="eye-slash" %}
+    {% choice_badge evidence "tlp" type="tlp" %}
+    <p class="text-meta mb-0 mt-2">{% trans "An artefact usually holds more than the incident summary does, so its caveat defaults stricter than the incident's. Loosen it deliberately." %}</p>
+  {% endsection_card %}
+
+  {# ── Retention and disposal ── #}
+  {% section_card _("Retention and disposal") icon="calendar-x" %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Legal hold") %}
+        {% if evidence.legal_hold %}
+        {% badge variant="dark" icon="lock-fill" label=_("Under legal hold") %}
         {% else %}
-        <p class="text-muted small mb-0">{% trans "Verifying integrity requires the evidence update permission." %}</p>
+        {% badge variant="secondary" label=_("No legal hold") %}
         {% endif %}
-      </div>
-    </div>
-
-    {# ── 5. The chain of custody : append-only, re-rendered over HTMX ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        {% comment %}
-        No create control here : the ledger partial carries its own inline
-        "Record a custody act" form, so a second affordance in this header would
-        be a button that opens the same form twice.
-        {% endcomment %}
-        <div class="detail-subhead">
-          <span><i class="bi bi-link-45deg me-1" aria-hidden="true"></i>{% trans "Chain of custody" %} <span class="badge text-bg-secondary">{{ custody_events|length }}</span></span>
-        </div>
-        <p class="text-muted small mt-2 mb-0">{% trans "The ledger is append-only : a custody act is never edited and never deleted." %}</p>
-        <div id="custody-events"
-             class="mt-3"
-             hx-get="{% url 'incidents:custody-events' evidence.pk %}"
-             hx-trigger="formSaved from:body"
-             hx-swap="innerHTML">
-          {% include "incidents/_custody_events.html" %}
-        </div>
-      </div>
-    </div>
-
-    {# ── 6. Admissibility ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead"><span><i class="bi bi-bank me-1" aria-hidden="true"></i>{% trans "Admissibility notes" %}</span></div>
-        <div class="mt-2">
-          {% if evidence.admissibility_notes %}
-            {{ evidence.admissibility_notes|linebreaksbr }}
+      {% endmeta_item %}
+      {% meta_item _("Retention until") %}
+        {% if evidence.retention_until %}
+          {% if evidence.retention_expired %}
+          <span class="text-warning fw-semibold">{{ evidence.retention_until }}</span>
+          <div class="cell-sub">{% trans "The retention period has expired. That permits destruction, it never instructs it." %}</div>
           {% else %}
-            {% empty_state title=_("No admissibility note recorded.") message=_("Which court or authority the item may be produced to, which chain-of-custody form was countersigned, which counsel was consulted.") %}
+          {{ evidence.retention_until }}
           {% endif %}
-        </div>
-      </div>
-    </div>
+        {% endif %}
+      {% endmeta_item %}
+      {% meta_item _("Destruction") %}
+        {% comment %}
+        A mirror of the server-side gate and never its replacement : the
+        transition itself is what refuses, identically for an API or MCP
+        caller that never sees this card.
+        {% endcomment %}
+        {% if evidence.destruction_authorised_by %}
+          <div class="text-meta mb-1">{% trans "Authorised by" %}</div>
+          {% user_badge evidence.destruction_authorised_by size=24 link=True %}
+        {% elif evidence.is_destroyable %}
+          {% badge variant="warning" label=_("Destruction permitted") %}
+          <div class="cell-sub mt-1">{% trans "Destruction is a gated transition on the lifecycle above, never a delete." %}</div>
+        {% else %}
+          {% badge variant="secondary" label=_("Destruction blocked") %}
+          <div class="cell-sub mt-1">
+            {% if evidence.legal_hold %}{% trans "A legal hold is in force." %}{% else %}{% trans "The retention date has not passed." %}{% endif %}
+          </div>
+        {% endif %}
+      {% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-  </div>
+  {# ── Admissibility ── #}
+  {% section_card _("Admissibility notes") icon="bank" %}
+    {% if evidence.admissibility_notes %}
+      {{ evidence.admissibility_notes|linebreaksbr }}
+    {% else %}
+      {% empty_state title=_("No admissibility note recorded.") message=_("Which court or authority the item may be produced to, which chain-of-custody form was countersigned, which counsel was consulted.") %}
+    {% endif %}
+  {% endsection_card %}
 
-  {# ══ RIGHT COLUMN (sticky sidebar) ═════════════════════════ #}
-  <div class="col-lg-4" style="position:sticky;top:1rem;align-self:flex-start">
-
-    {# ── Status ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
-          <dd class="mb-3">{% workflow_badge evidence %}</dd>
-          <dt class="text-muted small mb-1">{% trans "Incident" context "incident" %}</dt>
-          <dd class="mb-0">
-            <a href="{{ incident_url }}" class="cell-link"><span class="ref">{{ evidence.incident.reference }}</span></a>
-            <div class="cell-sub">{{ evidence.incident.title|truncatechars:70 }}</div>
-          </dd>
-        </dl>
-      </div>
-    </div>
-
-    {# ── Handling caveat ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead"><span><i class="bi bi-eye-slash me-1" aria-hidden="true"></i>{% trans "Handling caveat" %}</span></div>
-        <div class="mt-2">
-          <span class="badge text-bg-{% if evidence.tlp == 'red' %}danger{% elif evidence.tlp == 'amber' or evidence.tlp == 'amber_strict' %}warning{% elif evidence.tlp == 'green' %}success{% else %}secondary{% endif %} fs-6">{{ evidence.get_tlp_display }}</span>
-          <p class="text-muted small mb-0 mt-2">{% trans "An artefact usually holds more than the incident summary does, so its caveat defaults stricter than the incident's. Loosen it deliberately." %}</p>
-        </div>
-      </div>
-    </div>
-
-    {# ── Retention and disposal ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead"><span><i class="bi bi-calendar-x me-1" aria-hidden="true"></i>{% trans "Retention and disposal" %}</span></div>
-        <dl class="mb-0 mt-2">
-          <dt class="text-muted small mb-1">{% trans "Legal hold" %}</dt>
-          <dd class="mb-3">
-            {% if evidence.legal_hold %}
-            <span class="badge text-bg-dark"><i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% trans "Under legal hold" %}</span>
-            {% else %}
-            <span class="badge text-bg-secondary">{% trans "No legal hold" %}</span>
-            {% endif %}
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Retention until" %}</dt>
-          <dd class="mb-3">
-            {% if evidence.retention_until %}
-              {% if evidence.retention_expired %}
-              <span class="text-warning fw-semibold">{{ evidence.retention_until }}</span>
-              <div class="cell-sub">{% trans "The retention period has expired. That permits destruction, it never instructs it." %}</div>
-              {% else %}
-              {{ evidence.retention_until }}
-              {% endif %}
-            {% else %}
-              <span class="text-muted">-</span>
-            {% endif %}
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Destruction" %}</dt>
-          <dd class="mb-0">
-            {% comment %}
-            A mirror of the server-side gate and never its replacement : the
-            transition itself is what refuses, identically for an API or MCP
-            caller that never sees this card.
-            {% endcomment %}
-            {% if evidence.destruction_authorised_by %}
-              <div class="text-muted small mb-1">{% trans "Authorised by" %}</div>
-              {% user_badge evidence.destruction_authorised_by size=24 link=True %}
-            {% elif evidence.is_destroyable %}
-              <span class="badge text-bg-warning">{% trans "Destruction permitted" %}</span>
-              <div class="cell-sub mt-1">{% trans "Destruction is a gated transition on the lifecycle above, never a delete." %}</div>
-            {% else %}
-              <span class="badge text-bg-secondary">{% trans "Destruction blocked" %}</span>
-              <div class="cell-sub mt-1">
-                {% if evidence.legal_hold %}{% trans "A legal hold is in force." %}{% else %}{% trans "The retention date has not passed." %}{% endif %}
-              </div>
-            {% endif %}
-          </dd>
-        </dl>
-      </div>
-    </div>
-
-    {# ── Record ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="detail-subhead"><span><i class="bi bi-folder2-open me-1" aria-hidden="true"></i>{% trans "Record" %}</span></div>
-        <dl class="mb-0 mt-2">
-          <dt class="text-muted small mb-1">{% trans "Version" %}</dt>
-          <dd class="mb-3">{{ evidence.version }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Created by" %}</dt>
-          <dd class="mb-3">{% if evidence.created_by %}{% user_badge evidence.created_by size=24 link=True %}{% else %}<span class="text-muted">-</span>{% endif %}</dd>
-          <dt class="text-muted small mb-1">{% trans "Created on" %}</dt>
-          <dd class="mb-3">{{ evidence.created_at|date:"d/m/Y H:i" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Modified on" %}</dt>
-          <dd class="mb-0">{{ evidence.updated_at|date:"d/m/Y H:i" }}</dd>
-        </dl>
-      </div>
-    </div>
-
-  </div>
-</div>
+  {% record_card evidence %}
+{% enddetail_layout %}
 {% endblock %}

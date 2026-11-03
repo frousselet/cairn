@@ -9,7 +9,8 @@
 
   An entity template is one line : {% extends "includes/page_form.html" %}.
   Context (set by core.mixins.HtmxFormMixin) : form_title, cancel_url,
-  form_nav (breadcrumb). Blocks : page_form_fields (custom field markup),
+  form_nav (breadcrumb); optionally form_parent_label / form_parent_url (a
+  parent crumb, for a child row) and form_accent (the module accent). Blocks : page_form_fields (custom field markup),
   page_form_actions (custom footer), page_form_extra (after the card).
 
   A multi-step form shows every step at once, each as a titled group : on a
@@ -20,9 +21,9 @@
 
 {% block content %}
 {% if form_nav %}
-{% page_header form_title nav=form_nav %}{% endpage_header %}
+{% page_header form_title nav=form_nav parent_label=form_parent_label parent_url=form_parent_url accent=form_accent %}{% endpage_header %}
 {% else %}
-{% page_header form_title %}{% endpage_header %}
+{% page_header form_title accent=form_accent %}{% endpage_header %}
 {% endif %}
 
 <form method="post" class="card page-form"{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>

@@ -36,12 +36,12 @@ column set is fixed by the view.
       {% if authority.additional_regimes %}<span class="cell-sub" title="{% trans 'Additional regimes' %}">+{{ authority.additional_regimes|length }}</span>{% endif %}
     </span>
   </td>
-  <td data-col="jurisdiction">{{ authority.jurisdiction_country|default:"-" }}</td>
+  <td data-col="jurisdiction">{{ authority.jurisdiction_country|or_dash }}</td>
   <td data-col="templates">
     {% if authority.template_count %}
-      <span class="badge text-bg-primary" title="{% trans 'Obligation templates' %}">{{ authority.template_count }}</span>
+      <span title="{% trans 'Obligation templates' %}">{% badge variant="accent" label=authority.template_count %}</span>
     {% else %}
-      <span class="cell-empty">-</span>
+      {% dash %}
     {% endif %}
   </td>
   <td data-col="status">{% workflow_badge authority %}</td>

@@ -319,6 +319,7 @@ come from `BADGE_REGISTRY` in `core/templatetags/ui.py` :
 
 - `level` : priority, criticality, severity and impact share one ordinal scale.
 - `finding` and `effectiveness` : audit findings and corrective action effectiveness.
+- `tlp`, `notification_decision`, `triage_decision`, `response_action_status`, `timeline_entry_type`, `filing_outcome` : incident response.
 - `issue_status` and `objective_status` : the context module's own status fields.
 - `compliance` : requirement and assessment results.
 - `treatment_decision`, `threat_zone` and `ebios_scale` (the EBIOS RM 1 to 4 scales).

@@ -30,7 +30,7 @@ analysis, release and destruction are appended by the item's own transitions,
 and integrity verification is produced by the measurement, never asserted.
 {% endcomment %}
 <details class="mb-3" style="border:1px solid var(--border-light);border-radius:.5rem">
-  <summary class="px-3 py-2 small fw-semibold" style="cursor:pointer;user-select:none">
+  <summary class="px-3 py-2 small fw-semibold cursor-pointer user-select-none">
     <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>{% trans "Record a custody act" %}
   </summary>
   <div class="px-3 pb-3">
@@ -47,7 +47,7 @@ and integrity verification is produced by the measurement, never asserted.
       </div>
       {% endif %}
       {% for step in custody_form.iter_steps %}
-      <div class="detail-subhead"><span><i class="bi bi-{{ step.icon }} me-1" aria-hidden="true"></i>{{ step.title }}</span></div>
+      {% subhead step.title icon=step.icon %}
       {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
       {% endfor %}
       {% for hidden in custody_form.hidden_fields %}{{ hidden }}{% endfor %}
@@ -60,7 +60,7 @@ and integrity verification is produced by the measurement, never asserted.
 {% endif %}
 
 <div class="table-responsive">
-  <table class="table table-hover mb-0" style="font-size:.875rem">
+  <table class="table table-hover mb-0 text-sm">
     <thead>
       <tr>
         <th class="text-nowrap">{% trans "Occurred at" %}</th>
@@ -93,15 +93,15 @@ and integrity verification is produced by the measurement, never asserted.
               storage, so it is a warning and never a danger.
               {% endcomment %}
               {% if event.verification_outcome == 'match' %}
-              <span class="badge text-bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>{% trans "Verified" %}</span>
+              {% badge variant="success" icon="check-circle" label=_("Verified") %}
               {% elif event.verification_outcome == 'mismatch' %}
-              <span class="badge text-bg-danger"><i class="bi bi-exclamation-octagon me-1" aria-hidden="true"></i>{% trans "Integrity broken" %}</span>
+              {% badge variant="danger" icon="exclamation-octagon" label=_("Integrity broken") %}
               {% elif event.verification_outcome == 'not_verifiable' %}
-              <span class="badge text-bg-warning"><i class="bi bi-question-circle me-1" aria-hidden="true"></i>{% trans "Not verifiable" %}</span>
+              {% badge variant="warning" icon="question-circle" label=_("Not verifiable") %}
               {% endif %}
               {% if event.source != 'manual' %}
               {# The one distinction the API filters on : a row nobody typed. #}
-              <span class="badge text-bg-secondary"><i class="bi bi-gear-fill me-1" aria-hidden="true"></i>{{ event.get_source_display }}</span>
+              {% badge variant="secondary" icon="gear-fill" label=event.get_source_display %}
               {% endif %}
             </span>
             {% if event.location %}
@@ -115,7 +115,7 @@ and integrity verification is produced by the measurement, never asserted.
         <td>{{ event.actor.display_name }}</td>
         <td>
           <span class="cell-stack">
-            <span>{% if event.counterparty %}{{ event.counterparty }}{% else %}<span class="cell-empty">-</span>{% endif %}</span>
+            <span>{{ event.counterparty|or_dash }}</span>
             {% if event.counterparty_organisation %}
             <span class="cell-sub">{{ event.counterparty_organisation }}</span>
             {% endif %}
@@ -124,9 +124,9 @@ and integrity verification is produced by the measurement, never asserted.
         <td>
           {% if event.hash_at_event %}
           {# The digest measured at this act, never copied from the parent : this is the column that makes the ledger falsifiable. #}
-          <code class="small" title="{{ event.hash_at_event }}" style="word-break:break-all">{{ event.hash_at_event|truncatechars:20 }}</code>
+          <code class="small text-break" title="{{ event.hash_at_event }}">{{ event.hash_at_event|truncatechars:20 }}</code>
           {% else %}
-          <span class="cell-empty">-</span>
+          {% dash %}
           {% endif %}
         </td>
       </tr>
