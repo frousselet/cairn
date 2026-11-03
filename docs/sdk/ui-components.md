@@ -121,6 +121,10 @@ the hidden fields), which is also what a non-stepped modal puts in its
 {% block delete_details %}<p class="text-muted small">{% trans "The 4 linked actions will become orphaned." %}</p>{% endblock %}
 ```
 
+`delete_button_attrs` adds attributes to the Delete button, for example
+`disabled` while a protection rule forbids the deletion (say why in
+`delete_details`).
+
 Both shells name the object, state that the action cannot be undone, put Cancel
 on the left and the red **Delete** on the right. Fill `delete_details` with the
 consequences (linked records, protection rules). An inline delete button with
@@ -321,6 +325,7 @@ come from `BADGE_REGISTRY` in `core/templatetags/ui.py` :
 - `finding` and `effectiveness` : audit findings and corrective action effectiveness.
 - `tlp`, `notification_decision`, `triage_decision`, `response_action_status`, `timeline_entry_type`, `filing_outcome` : incident response.
 - `issue_status` and `objective_status` : the context module's own status fields.
+- `access_event` and `feedback_rating` : the access log and assistant feedback.
 - `compliance` : requirement and assessment results.
 - `treatment_decision`, `threat_zone` and `ebios_scale` (the EBIOS RM 1 to 4 scales).
 - `methodology` and `dic` : categories, so they keep the identity colour.
@@ -364,6 +369,8 @@ A short list of utility classes replaces the inline styles that recurred most :
 | `.link-inherit` | `style="color:inherit;text-decoration:none"` |
 | `.cursor-pointer` | `style="cursor:pointer"` |
 | `.sticky-rail` | `style="position:sticky;top:1rem;align-self:flex-start"` |
+| `.min-w-0` | `style="min-width:0"` (lets a flex child truncate) |
+| `.scroll-box` | a bounded list that scrolls (`max-height: 20rem`) |
 | `.tabular-nums` | numbers that must align |
 | `.btn-icon` (`.btn-icon--danger`) | a calm icon-only button outside a table (always with an `aria-label`) |
 | `.entity-logo` (`--sm`, `--lg`, `--fallback`) | a logo thumbnail with inline `width` / `height` / `object-fit` |

@@ -290,6 +290,21 @@ BADGE_REGISTRY: dict[str, dict[str, tuple[str, str, object]]] = {
         "partially_effective": ("warning", "circle-half", pgettext_lazy("finding", "Partially effective")),
         "not_effective": ("danger", "x-circle", pgettext_lazy("finding", "Not effective")),
     },
+    # Access log events and assistant feedback (labels from the choices).
+    "access_event": {
+        "login_success": ("success", "box-arrow-in-right", None),
+        "passkey_login_success": ("success", "fingerprint", None),
+        "login_failed": ("danger", "x-circle", None),
+        "passkey_login_failed": ("danger", "x-circle", None),
+        "account_locked": ("warning", "lock", None),
+        "account_unlocked": ("info", "unlock", None),
+        "impersonation_start": ("warning", "eye", None),
+        "impersonation_stop": ("secondary", "eye-slash", None),
+    },
+    "feedback_rating": {
+        "up": ("success", "hand-thumbs-up", None),
+        "down": ("danger", "hand-thumbs-down", None),
+    },
     # Incident response (the labels come from the choices: choice_badge).
     "tlp": {
         "clear": ("secondary", "eye", None),
@@ -369,6 +384,11 @@ BADGE_REGISTRY: dict[str, dict[str, tuple[str, str, object]]] = {
         "decommissioned": ("secondary", "power", _("Decommissioned")),
         "deprecated": ("secondary", "archive", _("Deprecated")),
         "superseded": ("secondary", "arrow-repeat", _("Superseded")),
+        "pending": ("secondary", "clock", None),
+        "proposed": ("info", "lightbulb", None),
+        "implemented": ("success", "check-circle", None),
+        "generating": ("info", "hourglass-split", None),
+        "failed": ("danger", "x-octagon", None),
     },
 }
 

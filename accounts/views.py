@@ -11,13 +11,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import translation
 from django.utils.http import urlsafe_base64_decode
 from django.utils.translation import gettext as _, gettext_lazy as _lazy
 from django.views import View
 from django.views.generic import DetailView, ListView
 
-from accounts.constants import PERMISSION_REGISTRY, MODULE_LABELS, AccessEventType, PermissionAction, UserType
+from accounts.constants import ACTION_LABELS, PERMISSION_REGISTRY, MODULE_LABELS, AccessEventType, PermissionAction, UserType
 from core.history import EntryKind, classify_record
 from core.mixins import (
     AdvancedFilterMixin,
@@ -198,9 +199,14 @@ class ResetHelpersView(LoginRequiredMixin, View):
 
 
 class PasswordChangeView(LoginRequiredMixin, View):
+    @staticmethod
+    def _context(form):
+        # includes/page_form.html context: title and Cancel target.
+        return {"form": form, "form_title": _("Change password"), "cancel_url": reverse("accounts:profile")}
+
     def get(self, request):
         form = PasswordChangeForm(request.user)
-        return render(request, "accounts/password_change.html", {"form": form})
+        return render(request, "accounts/password_change.html", self._context(form))
 
     def post(self, request):
         form = PasswordChangeForm(request.user, request.POST)
@@ -209,7 +215,7 @@ class PasswordChangeView(LoginRequiredMixin, View):
             update_session_auth_hash(request, request.user)
             messages.success(request, _("Password changed successfully."))
             return redirect("accounts:profile")
-        return render(request, "accounts/password_change.html", {"form": form})
+        return render(request, "accounts/password_change.html", self._context(form))
 
 
 # ── Company Settings ────────────────────────────────────────
@@ -336,12 +342,30 @@ class UserDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
         return ctx
 
 
+def _page_form_context(form, title, list_url_name, obj=None):
+    """Context of includes/page_form.html for the plain account form views.
+
+    ``title`` is kept for any caller still reading it; ``form_nav`` builds
+    the breadcrumb and ``cancel_url`` the Cancel target (the list).
+    """
+    ctx = {
+        "form": form,
+        "title": title,
+        "form_title": title,
+        "form_nav": list_url_name,
+        "cancel_url": reverse(list_url_name),
+    }
+    if obj is not None:
+        ctx["object"] = obj
+    return ctx
+
+
 class UserCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
     permission_required = "system.users.create"
 
     def get(self, request):
         form = UserCreateForm()
-        return render(request, "accounts/user_form.html", {"form": form, "title": _("Create a user")})
+        return render(request, "accounts/user_form.html", _page_form_context(form, _("Create a user"), "accounts:user-list"))
 
     def post(self, request):
         form = UserCreateForm(request.POST, request.FILES)
@@ -351,7 +375,7 @@ class UserCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
             user.save()
             messages.success(request, _("User %(name)s created.") % {"name": user.display_name})
             return redirect("accounts:user-detail", pk=user.pk)
-        return render(request, "accounts/user_form.html", {"form": form, "title": _("Create a user")})
+        return render(request, "accounts/user_form.html", _page_form_context(form, _("Create a user"), "accounts:user-list"))
 
 
 class UserUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -360,7 +384,7 @@ class UserUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def get(self, request, pk):
         user = get_object_or_404(User, pk=pk)
         form = UserUpdateForm(instance=user)
-        return render(request, "accounts/user_form.html", {"form": form, "title": _("Edit %(name)s") % {"name": user.display_name}, "object": user})
+        return render(request, "accounts/user_form.html", _page_form_context(form, _("Edit %(name)s") % {"name": user.display_name}, "accounts:user-list", obj=user))
 
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
@@ -369,7 +393,7 @@ class UserUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
             form.save()
             messages.success(request, _("User updated."))
             return redirect("accounts:user-detail", pk=user.pk)
-        return render(request, "accounts/user_form.html", {"form": form, "title": _("Edit %(name)s") % {"name": user.display_name}, "object": user})
+        return render(request, "accounts/user_form.html", _page_form_context(form, _("Edit %(name)s") % {"name": user.display_name}, "accounts:user-list", obj=user))
 
 
 # ── Groups ──────────────────────────────────────────────────
@@ -467,12 +491,26 @@ class GroupDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
                         "has_action": has_action,
                         "checked": codename in group_codenames,
                     })
+                # Actions without a column of their own (assess, implement,
+                # close, cancel, override_dates) are listed in the row's
+                # "Other actions" cell, so every registered permission can be
+                # granted and revoked here.
+                extra_cells = [
+                    {
+                        "codename": f"{module}.{feature}.{action}",
+                        "label": ACTION_LABELS.get(action, action),
+                        "checked": f"{module}.{feature}.{action}" in group_codenames,
+                    }
+                    for action in info["actions"]
+                    if action not in all_actions
+                ]
                 matrix.append({
                     "module": module,
                     "module_label": module_label,
                     "feature": feature,
                     "feature_label": info["label"],
                     "cells": cells,
+                    "extra_cells": extra_cells,
                 })
         ctx["permission_matrix"] = matrix
         ctx["all_actions"] = all_actions
@@ -487,7 +525,7 @@ class GroupCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def get(self, request):
         form = GroupForm()
-        return render(request, "accounts/group_form.html", {"form": form, "title": _("Create a group")})
+        return render(request, "accounts/group_form.html", _page_form_context(form, _("Create a group"), "accounts:group-list"))
 
     def post(self, request):
         form = GroupForm(request.POST)
@@ -497,7 +535,7 @@ class GroupCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
             group.save()
             messages.success(request, _("Group '%(name)s' created.") % {"name": group.name})
             return redirect("accounts:group-detail", pk=group.pk)
-        return render(request, "accounts/group_form.html", {"form": form, "title": _("Create a group")})
+        return render(request, "accounts/group_form.html", _page_form_context(form, _("Create a group"), "accounts:group-list"))
 
 
 class GroupUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -506,7 +544,7 @@ class GroupUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def get(self, request, pk):
         group = get_object_or_404(Group, pk=pk)
         form = GroupForm(instance=group)
-        return render(request, "accounts/group_form.html", {"form": form, "title": _("Edit '%(name)s'") % {"name": group.name}, "object": group})
+        return render(request, "accounts/group_form.html", _page_form_context(form, _("Edit '%(name)s'") % {"name": group.name}, "accounts:group-list", obj=group))
 
     def post(self, request, pk):
         group = get_object_or_404(Group, pk=pk)
@@ -515,7 +553,17 @@ class GroupUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
             form.save()
             messages.success(request, _("Group updated."))
             return redirect("accounts:group-detail", pk=group.pk)
-        return render(request, "accounts/group_form.html", {"form": form, "title": _("Edit '%(name)s'") % {"name": group.name}, "object": group})
+        return render(request, "accounts/group_form.html", _page_form_context(form, _("Edit '%(name)s'") % {"name": group.name}, "accounts:group-list", obj=group))
+
+
+def registry_codenames() -> set:
+    """Every permission codename the registry declares (the matrix's scope)."""
+    return {
+        f"{module}.{feature}.{action}"
+        for module, features in PERMISSION_REGISTRY.items()
+        for feature, info in features.items()
+        for action in info["actions"]
+    }
 
 
 class GroupPermissionsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -526,10 +574,15 @@ class GroupPermissionsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Vi
     def post(self, request, pk):
         group = get_object_or_404(Group, pk=pk)
 
-        # Collect selected permission codenames from POST
-        selected = request.POST.getlist("permissions")
-        perms = Permission.objects.filter(codename__in=selected)
-        group.permissions.set(perms)
+        # The matrix only manages the permissions of the registry: replace
+        # those with the submitted selection, and keep any other permission
+        # the group holds, so that saving the matrix can never silently revoke
+        # a right it does not display.
+        selected = set(request.POST.getlist("permissions"))
+        managed = registry_codenames()
+        kept = group.permissions.exclude(codename__in=managed)
+        granted = Permission.objects.filter(codename__in=selected & managed)
+        group.permissions.set(list(kept) + list(granted))
         messages.success(request, _("Permissions updated."))
         return redirect("accounts:group-detail", pk=group.pk)
 
@@ -599,6 +652,7 @@ class GroupDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return render(request, "accounts/group_confirm_delete.html", {
             "object": group,
             "user_count": user_count,
+            "cancel_url": reverse("accounts:group-detail", args=[group.pk]),
         })
 
     def post(self, request, pk):

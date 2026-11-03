@@ -1,66 +1,24 @@
-{% extends "base.html" %}
-{% load i18n ui %}
-
-{% block title %}{% trans "Promote decision to action plan" %} - Cairn{% endblock %}
-
-{% block content %}
-{% page_header _("Promote decision to action plan") %}
-{% endpage_header %}
-
+{% extends "includes/page_form.html" %}
+{% load i18n %}
+{% block page_form_fields %}
 <div class="alert alert-info py-2 px-3 mb-3">
-  <strong>{{ decision.reference }}</strong> - {{ decision.title }}
+  <span class="ref me-1">{{ decision.reference }}</span> {{ decision.title }}
 </div>
-
-<div class="card"><div class="card-body">
-  <form method="post" novalidate>
-    {% csrf_token %}
-
-    {% if form.non_field_errors %}
-    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-    {% endif %}
-
-    <div class="mb-3">
-      <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }} *</label>
-      {{ form.name }}
-      {% for error in form.name.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-    </div>
-
-    <div class="row">
-      <div class="col-md-4 mb-3">
-        <label for="{{ form.priority.id_for_label }}" class="form-label">{{ form.priority.label }} *</label>
-        {{ form.priority }}
-        {% for error in form.priority.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-      </div>
-      <div class="col-md-4 mb-3">
-        <label for="{{ form.target_date.id_for_label }}" class="form-label">{{ form.target_date.label }} *</label>
-        {{ form.target_date }}
-        {% for error in form.target_date.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-      </div>
-      <div class="col-md-4 mb-3">
-        <label for="{{ form.owner.id_for_label }}" class="form-label">{{ form.owner.label }} *</label>
-        {{ form.owner }}
-        {% for error in form.owner.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-      </div>
-    </div>
-
-    <div class="mb-3">
-      <label for="{{ form.gap_description.id_for_label }}" class="form-label">{{ form.gap_description.label }} *</label>
-      {{ form.gap_description }}
-      {% for error in form.gap_description.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-    </div>
-
-    <div class="mb-3">
-      <label for="{{ form.remediation_plan.id_for_label }}" class="form-label">{{ form.remediation_plan.label }} *</label>
-      {{ form.remediation_plan }}
-      {% for error in form.remediation_plan.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-    </div>
-
-    <div class="d-flex gap-2 form-actions-sticky">
-      <button type="submit" class="btn btn-primary">
-        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Create action plan" %}
-      </button>
-      <a href="{% url 'reports:management-review-detail' decision.review.pk %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
-    </div>
-  </form>
-</div></div>
+{% if form.non_field_errors %}
+<div class="alert alert-danger" role="alert">
+  {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+</div>
+{% endif %}
+{% include "includes/form_field.html" with field=form.name %}
+<div class="row">
+  <div class="col-md-4">{% include "includes/form_field.html" with field=form.priority %}</div>
+  <div class="col-md-4">{% include "includes/form_field.html" with field=form.target_date %}</div>
+  <div class="col-md-4">{% include "includes/form_field.html" with field=form.owner %}</div>
+</div>
+{% include "includes/form_field.html" with field=form.gap_description %}
+{% include "includes/form_field.html" with field=form.remediation_plan %}
+{% endblock %}
+{% block page_form_actions %}
+<a href="{{ cancel_url }}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+<button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Create action plan" %}</button>
 {% endblock %}

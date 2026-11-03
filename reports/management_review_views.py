@@ -11,7 +11,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import (
@@ -205,6 +205,15 @@ class ManagementReviewDetailView(
 
 # ─── Create / Update / Delete ─────────────────────────────────────────
 
+def _page_form_context(title, review):
+    """Context of includes/page_form.html for a form opened from a review."""
+    return {
+        "form_title": title,
+        "cancel_url": reverse("reports:management-review-detail", args=[review.pk]),
+        "form_nav": "reports:management-review-list",
+    }
+
+
 class ManagementReviewCreateView(
     LoginRequiredMixin, PermissionRequiredMixin, CreateView,
 ):
@@ -274,6 +283,11 @@ class ManagementReviewDeleteView(
     model = ManagementReview
     success_url = reverse_lazy("reports:management-review-list")
     template_name = "reports/management_review_confirm_delete.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["cancel_url"] = reverse("reports:management-review-detail", args=[self.object.pk])
+        return ctx
 
 
 # ─── Transitions ──────────────────────────────────────────────────────
@@ -433,6 +447,7 @@ class DecisionCreateView(
         form = ManagementReviewDecisionForm()
         return render(request, "reports/decision_form.html", {
             "review": review, "form": form, "action": "create",
+            **_page_form_context(_("New decision"), review),
         })
 
     def post(self, request, pk):
@@ -446,6 +461,7 @@ class DecisionCreateView(
             return redirect("reports:management-review-detail", pk=review.pk)
         return render(request, "reports/decision_form.html", {
             "review": review, "form": form, "action": "create",
+            **_page_form_context(_("New decision"), review),
         })
 
 
@@ -461,6 +477,7 @@ class DecisionUpdateView(
         ctx = super().get_context_data(**kwargs)
         ctx["review"] = self.object.review
         ctx["action"] = "update"
+        ctx.update(_page_form_context(_("Edit decision"), self.object.review))
         return ctx
 
     def get_success_url(self):
@@ -473,6 +490,11 @@ class DecisionDeleteView(
     permission_required = "reports.management_review.update"
     model = ManagementReviewDecision
     template_name = "reports/decision_confirm_delete.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["cancel_url"] = reverse("reports:management-review-detail", args=[self.object.review_id])
+        return ctx
 
     def get_success_url(self):
         return f"/reports/management-reviews/{self.object.review_id}/"
@@ -501,6 +523,7 @@ class DecisionPromoteView(
         })
         return render(request, "reports/decision_promote_form.html", {
             "decision": decision, "form": form,
+            **_page_form_context(_("Promote decision to action plan"), decision.review),
         })
 
     def post(self, request, pk):
@@ -512,6 +535,7 @@ class DecisionPromoteView(
         if not form.is_valid():
             return render(request, "reports/decision_promote_form.html", {
                 "decision": decision, "form": form,
+                **_page_form_context(_("Promote decision to action plan"), decision.review),
             })
 
         cd = form.cleaned_data
@@ -560,6 +584,7 @@ class IsmsChangeCreateView(
         form = IsmsChangeForm()
         return render(request, "reports/isms_change_form.html", {
             "review": review, "form": form, "action": "create",
+            **_page_form_context(_("New ISMS change"), review),
         })
 
     def post(self, request, pk):
@@ -574,6 +599,7 @@ class IsmsChangeCreateView(
             return redirect("reports:management-review-detail", pk=review.pk)
         return render(request, "reports/isms_change_form.html", {
             "review": review, "form": form, "action": "create",
+            **_page_form_context(_("New ISMS change"), review),
         })
 
 
@@ -589,6 +615,7 @@ class IsmsChangeUpdateView(
         ctx = super().get_context_data(**kwargs)
         ctx["review"] = self.object.review
         ctx["action"] = "update"
+        ctx.update(_page_form_context(_("Edit ISMS change"), self.object.review))
         return ctx
 
     def get_success_url(self):
@@ -601,6 +628,11 @@ class IsmsChangeDeleteView(
     permission_required = "reports.management_review.update"
     model = IsmsChange
     template_name = "reports/isms_change_confirm_delete.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["cancel_url"] = reverse("reports:management-review-detail", args=[self.object.review_id])
+        return ctx
 
     def get_success_url(self):
         return f"/reports/management-reviews/{self.object.review_id}/"

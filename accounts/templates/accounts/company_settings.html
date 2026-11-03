@@ -1,136 +1,105 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n ui %}
 {% block title %}{% trans "Company settings - Cairn" %}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h2>{% trans "Company settings" %}</h2>
-</div>
+{% page_header _("Company settings") nav="accounts:company-settings" accent="accounts" %}{% endpage_header %}
 
-<form method="post" enctype="multipart/form-data">
+{% detail_layout %}
+<form method="post" enctype="multipart/form-data" class="d-flex flex-column gap-4">
   {% csrf_token %}
   {{ form.remove_logo }}
   {{ form.logo_resized }}
-  <div class="row">
-    <div class="col-lg-8">
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger mb-0" role="alert">{% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>
+  {% endif %}
 
-      {# ── Logo ──────────────────────────────────────── #}
-      <div class="card mb-4">
-        <div class="card-header"><h6 class="mb-0"><i class="bi bi-image me-2" style="color:var(--accent)"></i>{% trans "Logo" %}</h6></div>
-        <div class="card-body">
-          <div class="d-flex align-items-center gap-4">
-            <div class="position-relative" style="flex-shrink:0">
-              {% if company.logo %}
-              <img id="logo-preview" src="{{ company.logo_128|default:company.logo }}" alt=""
-                   style="width:80px;height:80px;border-radius:12px;object-fit:contain;border:2px solid var(--border-light);background:var(--card-bg);padding:4px">
-              {% else %}
-              <div id="logo-preview"
-                   style="width:80px;height:80px;border-radius:12px;background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--accent) 18%,transparent));color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:600;border:2px solid var(--border-light)">
-                <i class="bi bi-building"></i>
-              </div>
-              {% endif %}
-              {% if can_edit %}
-              <label for="{{ form.logo_file.id_for_label }}" class="position-absolute d-flex align-items-center justify-content-center"
-                     style="bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-contrast);cursor:pointer;font-size:.7rem;border:2px solid var(--card-bg);transition:transform .15s"
-                     title="{% trans 'Change logo' %}">
-                <i class="bi bi-camera-fill"></i>
-              </label>
-              <div style="display:none">{{ form.logo_file }}</div>
-              {% endif %}
-            </div>
-            <div>
-              <div style="font-weight:600;font-size:1.0625rem">{{ company.name|default:_("No company name set") }}</div>
-              {% if company.logo and can_edit %}
-              <button type="button" id="remove-logo-btn" class="btn btn-link btn-sm p-0 mt-1" style="font-size:.75rem;color:var(--text-muted);text-decoration:none"
-                      onclick="removeLogo()">
-                <i class="bi bi-x me-1"></i>{% trans "Remove logo" %}
-              </button>
-              {% endif %}
-            </div>
-          </div>
-
-          {# ── Use the company logo as the application brand ──────── #}
-          <div class="form-check form-switch mt-4 pt-3" style="border-top:1px solid var(--border-light)">
-            {% if can_edit %}{{ form.use_logo_as_app_brand }}{% else %}<input class="form-check-input" type="checkbox" role="switch" disabled{% if company.use_logo_as_app_brand %} checked{% endif %}>{% endif %}
-            <label class="form-check-label" for="{{ form.use_logo_as_app_brand.id_for_label }}">{{ form.use_logo_as_app_brand.label }}</label>
-          </div>
-          <div class="form-text">{{ form.use_logo_as_app_brand.help_text }}</div>
+  {# Logo #}
+  {% section_card _("Logo") icon="image" %}
+    <div class="d-flex align-items-center gap-4">
+      <div class="position-relative flex-shrink-0">
+        {% if company.logo %}
+        <img id="logo-preview" src="{{ company.logo_128|default:company.logo }}" alt=""
+             style="width:80px;height:80px;border-radius:12px;object-fit:contain;border:2px solid var(--border-light);background:var(--card-bg);padding:4px">
+        {% else %}
+        <div id="logo-preview"
+             style="width:80px;height:80px;border-radius:12px;background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--accent) 18%,transparent));color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:600;border:2px solid var(--border-light)">
+          <i class="bi bi-building" aria-hidden="true"></i>
         </div>
+        {% endif %}
+        {% if can_edit %}
+        <label for="{{ form.logo_file.id_for_label }}" class="position-absolute d-flex align-items-center justify-content-center cursor-pointer"
+               style="bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-contrast);font-size:.7rem;border:2px solid var(--card-bg);transition:transform .15s"
+               title="{% trans 'Change logo' %}" aria-label="{% trans 'Change logo' %}">
+          <i class="bi bi-camera-fill" aria-hidden="true"></i>
+        </label>
+        <div class="d-none">{{ form.logo_file }}</div>
+        {% endif %}
       </div>
-
-      {# ── Company information ──────────────────────── #}
-      <div class="card mb-4">
-        <div class="card-header"><h6 class="mb-0"><i class="bi bi-building me-2" style="color:var(--accent)"></i>{% trans "Company information" %}</h6></div>
-        <div class="card-body">
-          <div class="mb-3">
-            <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
-            {% if can_edit %}
-            {{ form.name }}
-            {% else %}
-            <div class="form-control-plaintext">{{ company.name|default:"-" }}</div>
-            {% endif %}
-            {% if form.name.errors %}<div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="mb-3">
-            <label for="{{ form.app_name.id_for_label }}" class="form-label">{{ form.app_name.label }}</label>
-            {% if can_edit %}
-            {{ form.app_name }}
-            <div class="form-text">{{ form.app_name.help_text }}</div>
-            {% else %}
-            <div class="form-control-plaintext">{{ company.app_name|default:"Cairn" }}</div>
-            {% endif %}
-            {% if form.app_name.errors %}<div class="invalid-feedback d-block">{{ form.app_name.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="mb-3">
-            <label for="{{ form.assistant_name.id_for_label }}" class="form-label">{{ form.assistant_name.label }}</label>
-            {% if can_edit %}
-            {{ form.assistant_name }}
-            <div class="form-text">{{ form.assistant_name.help_text }}</div>
-            {% else %}
-            <div class="form-control-plaintext">{{ company.assistant_name|default:"Ask Cairn" }}</div>
-            {% endif %}
-            {% if form.assistant_name.errors %}<div class="invalid-feedback d-block">{{ form.assistant_name.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="mb-3">
-            <label for="{{ form.accent_color.id_for_label }}" class="form-label">{{ form.accent_color.label }}</label>
-            {% if can_edit %}
-            <div class="d-flex align-items-center gap-2">
-              <input type="color" id="accent-color-picker" value="{{ company.accent_color|default:'#1E3A8A' }}"
-                     style="width:2.75rem;height:2.375rem;padding:.125rem;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer"
-                     aria-label="{% trans 'Pick accent colour' %}">
-              <div style="max-width:11rem">{{ form.accent_color }}</div>
-              <button type="button" class="btn btn-link btn-sm p-0" style="font-size:.8125rem;text-decoration:none" onclick="resetAccentColor()">{% trans "Reset to default" %}</button>
-            </div>
-            <div class="form-text">{{ form.accent_color.help_text }}</div>
-            {% else %}
-            <div class="d-flex align-items-center gap-2">
-              <span style="display:inline-block;width:1rem;height:1rem;border-radius:4px;border:1px solid var(--border-light);background:{{ company.accent_color|default:'#1E3A8A' }}"></span>
-              <span class="form-control-plaintext">{{ company.accent_color|default:_("Default (Cairn navy)") }}</span>
-            </div>
-            {% endif %}
-            {% if form.accent_color.errors %}<div class="invalid-feedback d-block">{{ form.accent_color.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="mb-0">
-            <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }}</label>
-            {% if can_edit %}
-            {{ form.address }}
-            {% else %}
-            <div class="form-control-plaintext" style="white-space:pre-line">{{ company.address|default:"-" }}</div>
-            {% endif %}
-            {% if form.address.errors %}<div class="invalid-feedback d-block">{{ form.address.errors.0 }}</div>{% endif %}
-          </div>
-        </div>
+      <div style="min-width:0">
+        <div class="fw-semibold">{{ company.name|default:_("No company name set") }}</div>
+        {% if company.logo and can_edit %}
+        <button type="button" id="remove-logo-btn" class="btn btn-link btn-sm p-0 mt-1 text-meta link-inherit"
+                onclick="removeLogo()">
+          <i class="bi bi-x me-1" aria-hidden="true"></i>{% trans "Remove logo" %}
+        </button>
+        {% endif %}
+        {% for error in form.logo_file.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
       </div>
-
-      {# ── Actions ─────────────────────────────────── #}
-      {% if can_edit %}
-      <div class="d-flex gap-2 mb-4">
-        <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
-      </div>
-      {% endif %}
     </div>
+
+    {# Use the company logo as the application brand #}
+    <div class="border-top mt-4 pt-3">
+      <div class="form-check form-switch">
+        {% if can_edit %}{{ form.use_logo_as_app_brand }}{% else %}<input class="form-check-input" type="checkbox" role="switch" id="{{ form.use_logo_as_app_brand.id_for_label }}" disabled{% if company.use_logo_as_app_brand %} checked{% endif %}>{% endif %}
+        <label class="form-check-label" for="{{ form.use_logo_as_app_brand.id_for_label }}">{{ form.use_logo_as_app_brand.label }}</label>
+      </div>
+      <div class="form-text">{{ form.use_logo_as_app_brand.help_text }}</div>
+    </div>
+  {% endsection_card %}
+
+  {# Company information #}
+  {% section_card _("Company information") icon="building" %}
+    {% if can_edit %}
+    {% include "includes/form_field.html" with field=form.name %}
+    {% include "includes/form_field.html" with field=form.app_name %}
+    {% include "includes/form_field.html" with field=form.assistant_name %}
+    <div class="mb-3">
+      <label for="{{ form.accent_color.id_for_label }}" class="form-label">{{ form.accent_color.label }}</label>
+      <div class="d-flex align-items-center flex-wrap gap-2">
+        <input type="color" id="accent-color-picker" value="{{ company.accent_color|default:'#1E3A8A' }}"
+               class="form-control form-control-color cursor-pointer"
+               aria-label="{% trans 'Pick accent colour' %}">
+        <div style="max-width:11rem">{{ form.accent_color }}</div>
+        <button type="button" class="btn btn-link btn-sm p-0 text-sm" onclick="resetAccentColor()">{% trans "Reset to default" %}</button>
+      </div>
+      <div class="form-text">{{ form.accent_color.help_text }}</div>
+      {% for error in form.accent_color.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+    </div>
+    {% include "includes/form_field.html" with field=form.address %}
+    {% else %}
+    {% meta_list %}
+      {% meta_item form.name.label company.name %}
+      {% meta_item form.app_name.label %}{{ company.app_name|default:"Cairn" }}{% endmeta_item %}
+      {% meta_item form.assistant_name.label %}{{ company.assistant_name|default:_("Ask Cairn") }}{% endmeta_item %}
+      {% meta_item form.accent_color.label %}
+        <span class="d-inline-flex align-items-center gap-2">
+          <span class="d-inline-block border rounded-1" style="width:1rem;height:1rem;background:var(--accent)" aria-hidden="true"></span>
+          {{ company.accent_color|default:_("Default (Cairn navy)") }}
+        </span>
+      {% endmeta_item %}
+      {% meta_item form.address.label %}{% if company.address %}<span style="white-space:pre-line">{{ company.address }}</span>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+    {% endif %}
+  {% endsection_card %}
+
+  {% if can_edit %}
+  <div class="d-flex justify-content-end">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
   </div>
+  {% endif %}
 </form>
+{% enddetail_layout %}
 {% endblock %}
 
 {% block extra_js %}

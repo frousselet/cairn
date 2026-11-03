@@ -3,7 +3,7 @@
   Drawer-served delete confirmation, swapped into #drawer-form-content and
   posted through HTMX (the view answers 204 + HX-Trigger=formSaved). Same
   blocks as includes/confirm_delete_page.html : delete_title, delete_message,
-  delete_details, delete_button.
+  delete_details, delete_button, delete_button_attrs (e.g. disabled).
 {% endcomment %}
 <form method="post" hx-post="{{ request.path }}" hx-target="#drawer-form-content" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']">
   {% csrf_token %}
@@ -21,6 +21,6 @@
   </div>
   <div class="modal-footer drawer-footer">
     <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
-    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% block delete_button %}{% trans "Delete" %}{% endblock %}</button>
+    <button type="submit" class="btn btn-danger"{% block delete_button_attrs %}{% endblock %}><i class="bi bi-trash me-1" aria-hidden="true"></i>{% block delete_button %}{% trans "Delete" %}{% endblock %}</button>
   </div>
 </form>

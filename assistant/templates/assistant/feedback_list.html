@@ -17,9 +17,10 @@
 <div class="filter-bar" data-sort-view-key="{{ sort_view_key }}">
   <div class="filter-bar-group flex-grow-1" style="min-width:160px;max-width:18rem">
     <div class="table-toolbar-search w-100">
-      <i class="bi bi-search table-toolbar-icon"></i>
+      <i class="bi bi-search table-toolbar-icon" aria-hidden="true"></i>
       <input type="search" name="q" form="filterForm" class="table-toolbar-input"
              placeholder="{% trans 'Question or comment…' %}"
+             aria-label="{% trans 'Question or comment…' %}"
              value="{{ request.GET.q|default:'' }}"
              autocomplete="off"
              onchange="this.form.submit()">
@@ -36,21 +37,21 @@
   <div class="filter-bar-group">
     <span class="filter-bar-label">{% trans "Rating" %}</span>
     <a href="#" class="filter-pill{% if not request.GET.rating %} active{% endif %}" onclick="setPill('rating','');return false">{% trans "All" %}</a>
-    <a href="#" class="filter-pill{% if request.GET.rating == 'up' %} active{% endif %}" onclick="setPill('rating','up');return false"><i class="bi bi-hand-thumbs-up"></i> {% trans "Thumbs up" %}</a>
-    <a href="#" class="filter-pill{% if request.GET.rating == 'down' %} active{% endif %}" onclick="setPill('rating','down');return false"><i class="bi bi-hand-thumbs-down"></i> {% trans "Thumbs down" %}</a>
+    <a href="#" class="filter-pill{% if request.GET.rating == 'up' %} active{% endif %}" onclick="setPill('rating','up');return false"><i class="bi bi-hand-thumbs-up" aria-hidden="true"></i> {% trans "Thumbs up" %}</a>
+    <a href="#" class="filter-pill{% if request.GET.rating == 'down' %} active{% endif %}" onclick="setPill('rating','down');return false"><i class="bi bi-hand-thumbs-down" aria-hidden="true"></i> {% trans "Thumbs down" %}</a>
   </div>
   <div class="filter-bar-sep"></div>
   <div class="filter-bar-group">
     <span class="filter-bar-label">{% trans "Period" %}</span>
-    <input type="date" name="date_from" form="filterForm" class="form-control" value="{{ request.GET.date_from|default:'' }}" onchange="this.form.submit()">
-    <input type="date" name="date_to" form="filterForm" class="form-control" value="{{ request.GET.date_to|default:'' }}" onchange="this.form.submit()">
+    <input type="date" name="date_from" form="filterForm" class="form-control" value="{{ request.GET.date_from|default:'' }}" onchange="this.form.submit()" aria-label="{% trans 'From' %}">
+    <input type="date" name="date_to" form="filterForm" class="form-control" value="{{ request.GET.date_to|default:'' }}" onchange="this.form.submit()" aria-label="{% trans 'To' %}">
   </div>
   {% if request.GET.q or request.GET.rating or request.GET.date_from or request.GET.date_to or request.GET.status and request.GET.status != 'open' %}
-  <a href="{% url 'assistant:feedback-list' %}" class="filter-pill" title="{% trans 'Clear' %}"><i class="bi bi-x-lg"></i> {% trans "Clear" %}</a>
+  <a href="{% url 'assistant:feedback-list' %}" class="filter-pill" title="{% trans 'Clear' %}"><i class="bi bi-x-lg" aria-hidden="true"></i> {% trans "Clear" %}</a>
   {% endif %}
   <div class="filter-bar-sep"></div>
-  <a href="{% url 'assistant:feedback-export' %}?{{ request.GET.urlencode }}" class="btn btn-sm btn-outline-secondary">
-    <i class="bi bi-download"></i> {% trans "Export JSON" %}
+  <a href="{% url 'assistant:feedback-export' %}?{{ request.GET.urlencode }}" class="btn btn-sm btn-secondary">
+    <i class="bi bi-download me-1" aria-hidden="true"></i>{% trans "Export JSON" %}
   </a>
 </div>
 <script>
@@ -76,10 +77,10 @@ function setPill(param, value) {
       <tbody>
         {% for fb in feedbacks %}
         <tr>
-          <td class="text-nowrap">{{ fb.created_at|date:"d/m/Y H:i" }}</td>
+          <td class="text-nowrap tabular-nums">{{ fb.created_at|date:"SHORT_DATETIME_FORMAT" }}</td>
           <td>
             <span class="cell-stack">
-              <span>{% if fb.rating == "up" %}<span class="badge bg-success"><i class="bi bi-hand-thumbs-up"></i> {{ fb.get_rating_display }}</span>{% else %}<span class="badge bg-danger"><i class="bi bi-hand-thumbs-down"></i> {{ fb.get_rating_display }}</span>{% endif %}</span>
+              <span>{% choice_badge fb "rating" type="feedback_rating" %}</span>
               {% if fb.language %}<span class="cell-sub">{{ fb.language }}</span>{% endif %}
             </span>
           </td>
@@ -89,17 +90,17 @@ function setPill(param, value) {
               {% if fb.comment %}<span class="cell-sub" title="{{ fb.comment }}">{{ fb.comment }}</span>{% endif %}
             </span>
           </td>
-          <td>{% if fb.user %}{{ fb.user.display_name }}{% else %}-{% endif %}</td>
+          <td>{% if fb.user %}{{ fb.user.display_name }}{% else %}{% dash %}{% endif %}</td>
           <td class="text-end text-nowrap">
             <form method="post" action="{% url 'assistant:feedback-resolve' fb.pk %}" class="d-inline">
               {% csrf_token %}
               <input type="hidden" name="next_qs" value="{{ request.GET.urlencode }}">
               {% if fb.is_resolved %}
-              <span class="badge bg-secondary" title="{% if fb.resolved_by %}{{ fb.resolved_by.display_name }} - {% endif %}{{ fb.resolved_at|date:'d/m/Y H:i' }}"><i class="bi bi-check2-circle"></i> {% trans "Corrected" %}</span>
+              <span title="{% if fb.resolved_by %}{{ fb.resolved_by.display_name }} - {% endif %}{{ fb.resolved_at|date:'SHORT_DATETIME_FORMAT' }}">{% badge variant="success" label=_("Corrected") %}</span>
               <input type="hidden" name="action" value="reopen">
-              <button type="submit" class="btn btn-sm btn-link text-muted p-0 ms-1" title="{% trans 'Reopen' %}"><i class="bi bi-arrow-counterclockwise"></i></button>
+              <button type="submit" class="btn btn-sm btn-link text-muted p-0 ms-1" title="{% trans 'Reopen' %}" aria-label="{% trans 'Reopen' %}"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></button>
               {% else %}
-              <button type="submit" class="btn btn-sm btn-outline-secondary" title="{% trans 'Exclude from future exports' %}"><i class="bi bi-check2"></i> {% trans "Mark corrected" %}</button>
+              <button type="submit" class="btn btn-sm btn-secondary" title="{% trans 'Exclude from future exports' %}"><i class="bi bi-check2 me-1" aria-hidden="true"></i>{% trans "Mark corrected" %}</button>
               {% endif %}
             </form>
           </td>

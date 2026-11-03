@@ -101,6 +101,12 @@ class SoaReportCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormView)
     permission_required = "reports.report.create"
     form_class = SoaReportForm
     template_name = "reports/soa_form.html"
+    # includes/page_form.html context.
+    extra_context = {
+        "form_title": _l("Generate Statement of Applicability"),
+        "cancel_url": reverse_lazy("reports:report-list"),
+        "form_nav": "reports:report-list",
+    }
 
     def form_valid(self, form):
         frameworks = form.cleaned_data["frameworks"]
@@ -134,6 +140,11 @@ class AuditReportCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormVie
     permission_required = "reports.report.create"
     form_class = AuditReportForm
     template_name = "reports/audit_report_form.html"
+    extra_context = {
+        "form_title": _l("Generate Audit Report"),
+        "cancel_url": reverse_lazy("reports:report-list"),
+        "form_nav": "reports:report-list",
+    }
 
     def form_valid(self, form):
         assessment = form.cleaned_data["assessment"]
@@ -170,6 +181,11 @@ class ManagementReviewCreateView(LoginRequiredMixin, PermissionRequiredMixin, Fo
     permission_required = "reports.report.create"
     form_class = ManagementReviewForm
     template_name = "reports/management_review_form.html"
+    extra_context = {
+        "form_title": _l("Generate management review materials"),
+        "cancel_url": reverse_lazy("reports:report-list"),
+        "form_nav": "reports:report-list",
+    }
 
     def form_valid(self, form):
         fmt = form.cleaned_data["format"]
@@ -246,3 +262,4 @@ class ReportDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Report
     success_url = reverse_lazy("reports:report-list")
     template_name = "reports/report_confirm_delete.html"
+    extra_context = {"cancel_url": reverse_lazy("reports:report-list")}

@@ -206,6 +206,13 @@ class EntityCreateView(LoginRequiredMixin, _EntityBase, CreateView):
         messages.success(self.request, _("Created."))
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # includes/page_form.html context: title, Cancel target, breadcrumb.
+        ctx.update(form_title=self.cfg["label"], cancel_url=reverse("trust_center_manage:hub"),
+                   form_nav="trust_center_manage:settings")
+        return ctx
+
     def get_success_url(self):
         return reverse("trust_center_manage:detail", args=[self.entity, self.object.pk])
 
@@ -217,6 +224,13 @@ class EntityUpdateView(LoginRequiredMixin, _EntityBase, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, _("Updated."))
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(form_title=self.cfg["label"],
+                   cancel_url=reverse("trust_center_manage:detail", args=[self.entity, self.object.pk]),
+                   form_nav="trust_center_manage:settings")
+        return ctx
 
     def get_success_url(self):
         return reverse("trust_center_manage:detail", args=[self.entity, self.object.pk])
@@ -240,6 +254,11 @@ class EntityDeleteView(LoginRequiredMixin, _EntityBase, DeleteView):
 
     def get_success_url(self):
         return reverse("trust_center_manage:hub")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["cancel_url"] = reverse("trust_center_manage:detail", args=[self.entity, self.object.pk])
+        return ctx
 
     def form_valid(self, form):
         self.object = self.get_object()

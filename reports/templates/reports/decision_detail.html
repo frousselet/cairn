@@ -8,54 +8,42 @@
 {% url 'reports:management-review-detail' decision.review.pk as ph_parent_url %}
 {% page_header decision.title reference=decision.reference nav="reports:management-review-list" parent_label=decision.review.title parent_url=ph_parent_url accent="reports" %}
   {% if can_update_review %}
-  <a href="{% url 'reports:decision-edit' decision.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
   {% if not decision.linked_action_plan %}
-  <a href="{% url 'reports:decision-promote' decision.pk %}" class="btn btn-outline-success">{% trans "Promote to action plan" %}</a>
+  <a href="{% url 'reports:decision-promote' decision.pk %}" class="btn btn-secondary"><i class="bi bi-arrow-up-right-circle me-1" aria-hidden="true"></i>{% trans "Promote to action plan" %}</a>
   {% endif %}
+  <a href="{% url 'reports:decision-edit' decision.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
   {% endif %}
 {% endpage_header %}
 
-<div class="row g-3">
-  <div class="col-lg-8">
-    <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted small fw-semibold mb-2">{% trans "Description" %}</h6>
-      <div>{{ decision.description|linebreaks }}</div>
-    </div></div>
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Status") decision.get_status_display icon="flag" tone=decision.status|badge_variant:"status" size="sm" %}
+    {% kpi_tile _("Priority") decision.get_priority_display icon="exclamation-diamond" tone=decision.priority|badge_variant:"level" size="sm" %}
+    {% kpi_tile _("Due date") decision.due_date icon="calendar-event" tone="neutral" %}
+  {% endslot %}
 
-    {% if decision.rationale %}
-    <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted small fw-semibold mb-2">{% trans "Rationale" %}</h6>
-      <div>{{ decision.rationale|linebreaks }}</div>
-    </div></div>
-    {% endif %}
+  {% section_card _("Description") icon="text-left" %}{{ decision.description|linebreaks }}{% endsection_card %}
 
-    {% if decision.implementation_evidence %}
-    <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted small fw-semibold mb-2">{% trans "Implementation evidence" %}</h6>
-      <div>{{ decision.implementation_evidence|linebreaks }}</div>
-    </div></div>
-    {% endif %}
-  </div>
+  {% section_card _("Rationale") icon="chat-quote" hide_empty=True %}{% if decision.rationale %}{{ decision.rationale|linebreaks }}{% endif %}{% endsection_card %}
 
-  <div class="col-lg-4">
-    <div class="card"><div class="card-body">
-      <h6 class="text-muted small fw-semibold mb-3">{% trans "Details" %}</h6>
-      <dl class="row small mb-0">
-        <dt class="col-5">{% trans "Category" %}</dt><dd class="col-7">{{ decision.get_category_display }}</dd>
-        <dt class="col-5">{% trans "Input clause" %}</dt><dd class="col-7">{{ decision.get_input_clause_display|default:"-" }}</dd>
-        <dt class="col-5">{% trans "Priority" %}</dt><dd class="col-7">{{ decision.get_priority_display }}</dd>
-        <dt class="col-5">{% trans "Status" %}</dt><dd class="col-7"><span class="badge bg-secondary">{{ decision.get_status_display }}</span></dd>
-        <dt class="col-5">{% trans "Owner" %}</dt><dd class="col-7">{{ decision.owner|default:"-" }}</dd>
-        <dt class="col-5">{% trans "Due date" %}</dt><dd class="col-7">{{ decision.due_date|default:"-" }}</dd>
-        {% if decision.implemented_at %}
-        <dt class="col-5">{% trans "Implemented at" %}</dt><dd class="col-7">{{ decision.implemented_at|date:"d/m/Y" }}</dd>
-        {% endif %}
-        {% if decision.linked_action_plan %}
-        <dt class="col-5">{% trans "Action plan" %}</dt>
-        <dd class="col-7"><a href="{% url 'compliance:action-plan-detail' decision.linked_action_plan.pk %}">{{ decision.linked_action_plan.reference }}</a></dd>
-        {% endif %}
-      </dl>
-    </div></div>
-  </div>
-</div>
+  {% section_card _("Implementation evidence") icon="patch-check" hide_empty=True %}{% if decision.implementation_evidence %}{{ decision.implementation_evidence|linebreaks }}{% endif %}{% endsection_card %}
+
+  {% section_card _("Details") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Management review") %}{% ref_link decision.review url=ph_parent_url label=decision.review.title %}{% endmeta_item %}
+      {% meta_item _("Category") decision.get_category_display %}
+      {% meta_item _("Input clause") decision.get_input_clause_display %}
+      {% meta_item _("Priority") %}{% choice_badge decision "priority" %}{% endmeta_item %}
+      {% meta_item _("Status") %}{% choice_badge decision "status" type="status" %}{% endmeta_item %}
+      {% meta_item _("Owner") %}{% if decision.owner %}{% user_badge decision.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Due date") decision.due_date %}
+      {% if decision.implemented_at %}{% meta_item _("Implemented at") decision.implemented_at %}{% endif %}
+      {% if decision.linked_action_plan %}
+      {% meta_item _("Action plan") %}{% url 'compliance:action-plan-detail' decision.linked_action_plan.pk as ap_url %}{% ref_link decision.linked_action_plan url=ap_url %}{% endmeta_item %}
+      {% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% record_card decision %}
+{% enddetail_layout %}
 {% endblock %}

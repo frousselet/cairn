@@ -24,25 +24,25 @@
     {% elif u.department %}
     {{ u.department }}
     {% else %}
-    <span class="cell-empty">-</span>
+    {% dash %}
     {% endif %}
   </td>
   <td data-col="status">
-    {% if u.is_robot %}<span class="badge bg-info me-1">{% trans "Robot" %}</span>{% endif %}
+    {% if u.is_robot %}{% badge variant="info" label=_("Robot") classes="me-1" %}{% endif %}
     {% if u.is_active %}
       {% if u.is_locked %}
-      <span class="badge bg-warning text-dark">{% trans "Locked" %}</span>
+      {% badge variant="warning" label=_("Locked") %}
       {% else %}
-      <span class="badge bg-success">{% trans "Active" %}</span>
+      {% badge variant="success" label=_("Active") %}
       {% endif %}
     {% else %}
-    <span class="badge bg-secondary">{% trans "Inactive" %}</span>
+    {% badge variant="secondary" label=_("Inactive") %}
     {% endif %}
   </td>
-  <td data-col="last_login">{{ u.last_login|date:"d/m/Y H:i"|default:"-" }}</td>
+  <td data-col="last_login">{{ u.last_login|date:"SHORT_DATETIME_FORMAT"|or_dash }}</td>
   <td class="text-end" data-col="actions">
     {% if can_update %}
-    <a href="{% url 'accounts:user-update' u.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    <a href="{% url 'accounts:user-update' u.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
     {% endif %}
   </td>
 </tr>
