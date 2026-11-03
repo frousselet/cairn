@@ -24,7 +24,7 @@ File: `documents/models/policy_version.py`
 | `approved_by` | relation | FK -> User, `SET_NULL`, optional, not editable | Stamped by the `in_review -> in_force` transition (RG-DOC-07) |
 | `approved_at` | datetime | optional, not editable | Stamped by the same transition |
 | `effective_from` | date | optional; defaults to the approval date; never in the future | Date the version entered into force |
-| `superseded_at` | datetime | optional, not editable | Stamped when the version leaves `in_force` |
+| `superseded_at` | datetime | optional, not editable | Stamped when the version leaves `in_force` (the `archived` step, labelled *Superseded*) |
 | `superseded_by` | relation | FK -> self, `SET_NULL`, optional, not editable | The version that replaced it |
 | `workflow_state` | string | indexed, default `draft` | `policy_version` lifecycle step |
 | `tags`, `version`, `created_by`, `created_at`, `updated_at` | | | From `BaseModel` |
@@ -50,9 +50,9 @@ File: `documents/models/policy_version.py`
 - `effective_from` cannot be in the future (RG-DOC-07).
 - The PDF upload follows RG-DOC-04 (extension, magic bytes, 25 MB).
 
-## Transition service
+## Transitions
 
-`documents.services.transition_policy_version(version, target, user, comment)` is the single entry point for every version transition (web, REST, MCP). Inside one `transaction.atomic()` block it locks the document row (`select_for_update`), performs the transition through `transition_to(enforce_permission=True)`, and applies the side effects of [README §3.2](README.md#32-policy_version) : approval stamps, supersession of the previous version with its own recorded transition, activation of a draft document, review date recomputation, closure of the campaigns targeting the superseded version (RG-DOC-18), and the `POLICY_VERSION_IN_FORCE` notification on commit.
+`PolicyVersion.transition_to()` is the single entry point for every version transition (the generic stepper endpoint, REST, MCP). Inside one `transaction.atomic()` block it locks the document row (`select_for_update`), checks the gates (raising `DomainRefusalError`, which every surface shows), performs the transition, and applies the side effects of [README §3.2](README.md#32-policy_version) : approval stamps, supersession of the previous version with its own recorded transition, activation of a draft document, review date recomputation, closure of the campaigns targeting the superseded version (RG-DOC-18), and the `POLICY_VERSION_IN_FORCE` notification on commit.
 
 ## Deletion
 

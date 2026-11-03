@@ -53,6 +53,11 @@ class FailureReason(models.TextChoices):
 class NotificationType(models.TextChoices):
     LIFECYCLE_SUBMITTED = "lifecycle_submitted", _("Element pending validation")
     TRUST_DOCUMENT_REQUESTED = "trust_document_requested", _("Trust Center document request")
+    POLICY_REVIEW_DUE = "policy_review_due", _("Document review due")
+    POLICY_REVIEW_OVERDUE = "policy_review_overdue", _("Document review overdue")
+    POLICY_VERSION_IN_FORCE = "policy_version_in_force", _("New document version in force")
+    ACKNOWLEDGEMENT_REQUESTED = "acknowledgement_requested", _("Document to acknowledge")
+    ACKNOWLEDGEMENT_REMINDER = "acknowledgement_reminder", _("Acknowledgement reminder")
 
 
 # Lockout settings
@@ -316,6 +321,16 @@ PERMISSION_REGISTRY = {
             "label": _("Post-incident reviews"),
         },
     },
+    "documents": {
+        "policy": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("Documents"),
+        },
+        "acknowledgement": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("Acknowledgement campaigns"),
+        },
+    },
     "reports": {
         "report": {
             "actions": ["create", "read", "delete"],
@@ -428,6 +443,7 @@ MODULE_LABELS = {
     "risks": _("Risk management"),
     "compliance": _("Compliance"),
     "incidents": _("Incidents"),
+    "documents": _("Documents"),
     "reports": _("Reports"),
     "trust_center": _("Trust Center"),
     "system": _("System"),

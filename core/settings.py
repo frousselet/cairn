@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     "compliance",
     "risks",
     "incidents",
+    "documents",
     "reports",
     "mcp",
     "assistant",

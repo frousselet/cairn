@@ -14,12 +14,13 @@ Every domain record runs a registered lifecycle. A lifecycle is an ordered set o
 
 The engine is specified in [governance/lifecycle.md](../../specs/governance/lifecycle.md); the governance contract is in [governance/workflow.md](../../specs/governance/workflow.md).
 
-**30 lifecycles** are declared in code. An administrator can override any of them from `/config/lifecycles/`; this page documents the shipped defaults.
+**33 lifecycles** are declared in code. An administrator can override any of them from `/config/lifecycles/`; this page documents the shipped defaults.
 
 ## Summary
 
 | Lifecycle | Steps | Transitions | Layout | Models |
 | --- | --- | --- | --- | --- |
+| [`acknowledgement_campaign`](#acknowledgement-campaign) | 4 | 4 | graph | - |
 | [`action_plan`](#action-plan) | 10 | 17 | graph | `compliance.ComplianceActionPlan` |
 | [`certificate`](#certificate) | 7 | 7 | graph | `assets.Certificate` |
 | [`compliance_assessment`](#compliance-assessment) | 7 | 8 | graph | `compliance.ComplianceAssessment` |
@@ -37,6 +38,8 @@ The engine is specified in [governance/lifecycle.md](../../specs/governance/life
 | [`incident_notification`](#incident-notification) | 8 | 9 | graph | `incidents.IncidentNotification` |
 | [`management_review`](#management-review) | 7 | 9 | graph | `reports.ManagementReview` |
 | [`personal_data_breach`](#personal-data-breach) | 6 | 9 | graph | `incidents.PersonalDataBreach` |
+| [`policy`](#policy) | 3 | 3 | graph | - |
+| [`policy_version`](#policy-version) | 4 | 4 | graph | - |
 | [`post_incident_review`](#post-incident-review) | 8 | 10 | graph | `incidents.PostIncidentReview` |
 | [`risk`](#risk) | 11 | 16 | graph | `risks.Risk` |
 | [`risk_acceptance`](#risk-acceptance) | 6 | 10 | graph | `risks.RiskAcceptance` |
@@ -50,6 +53,26 @@ The engine is specified in [governance/lifecycle.md](../../specs/governance/life
 | [`trust_center_document_request`](#trust-center-document-request) | 5 | 6 | graph | `trust_center.DocumentRequest` |
 | [`trust_center_publication`](#trust-center-publication) | 4 | 6 | graph | `trust_center.TrustCenterCertification`, `trust_center.TrustCenterDocument`, `trust_center.TrustCenterMeasure`, `trust_center.TrustCenterSubprocessor` |
 | [`vulnerability`](#vulnerability) | 7 | 9 | graph | `risks.Vulnerability` |
+
+## acknowledgement_campaign
+
+### Steps
+
+| Code | Label | Kind | In reports | Linkable | Deletable |
+| --- | --- | --- | --- | --- | --- |
+| `draft` | Draft | draft | - | - | yes |
+| `running` | Running | intermediate | yes | - | - |
+| `closed` | Closed | intermediate | yes | - | - |
+| `archived` | Archived | archived | - | - | - |
+
+### Transitions
+
+| From | To | Label | Comment required | Permission | Restricted to roles |
+| --- | --- | --- | --- | --- | --- |
+| `draft` | `running` | Launch | - | `approve` | - |
+| `running` | `closed` | Close | - | `update` | - |
+| `closed` | `archived` | Archive | yes | `approve` | - |
+| `draft` | `archived` | Archive | yes | `approve` | - |
 
 ## action_plan
 
@@ -545,6 +568,44 @@ Run by `incidents.PersonalDataBreach`.
 | `not_a_breach` | `under_qualification` | Reopen a ruled-out qualification | yes | `approve` | - |
 | any | `archived` | Archive | yes | `approve` | - |
 | `archived` | `draft` | Restore | - | `approve` | - |
+
+## policy
+
+### Steps
+
+| Code | Label | Kind | In reports | Linkable | Deletable |
+| --- | --- | --- | --- | --- | --- |
+| `draft` | Draft | draft | - | - | yes |
+| `active` | Active | intermediate | yes | yes | - |
+| `archived` | Retired | archived | - | - | - |
+
+### Transitions
+
+| From | To | Label | Comment required | Permission | Restricted to roles |
+| --- | --- | --- | --- | --- | --- |
+| `draft` | `active` | Activate | - | `approve` | - |
+| `active` | `archived` | Retire | yes | `approve` | - |
+| `draft` | `archived` | Retire | yes | `update` | - |
+
+## policy_version
+
+### Steps
+
+| Code | Label | Kind | In reports | Linkable | Deletable |
+| --- | --- | --- | --- | --- | --- |
+| `draft` | Draft | draft | - | - | yes |
+| `in_review` | In review | intermediate | - | - | - |
+| `in_force` | In force | intermediate | yes | yes | - |
+| `archived` | Superseded | archived | - | - | - |
+
+### Transitions
+
+| From | To | Label | Comment required | Permission | Restricted to roles |
+| --- | --- | --- | --- | --- | --- |
+| `draft` | `in_review` | Submit for review | - | `update` | - |
+| `in_review` | `draft` | Send back to draft | yes | `approve` | - |
+| `in_review` | `in_force` | Approve and put in force | - | `approve` | - |
+| `in_force` | `archived` | Withdraw | yes | `approve` | - |
 
 ## post_incident_review
 

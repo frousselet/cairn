@@ -6,7 +6,7 @@
 
 Cairn does not use Django's per-model `add`/`change`/`delete` permissions. It declares its own flat codenames shaped `module.feature.action`, and every web view, REST endpoint and MCP tool is gated on one of them.
 
-There are **311 permissions** across **8 modules**. They are created by a data migration from the registry below, so adding an entry there and migrating is the whole of adding a permission.
+There are **321 permissions** across **9 modules**. They are created by a data migration from the registry below, so adding an entry there and migrating is the whole of adding a permission.
 
 ## Actions
 
@@ -105,6 +105,13 @@ There are **311 permissions** across **8 modules**. They are created by a data m
 | `notification` | Incident notifications | `incidents.notification.create`, `incidents.notification.read`, `incidents.notification.update`, `incidents.notification.delete`, `incidents.notification.approve` |
 | `review` | Post-incident reviews | `incidents.review.create`, `incidents.review.read`, `incidents.review.update`, `incidents.review.delete`, `incidents.review.validate` |
 
+## Documents (`documents`)
+
+| Feature | Label | Codenames |
+| --- | --- | --- |
+| `policy` | Documents | `documents.policy.create`, `documents.policy.read`, `documents.policy.update`, `documents.policy.delete`, `documents.policy.approve` |
+| `acknowledgement` | Acknowledgement campaigns | `documents.acknowledgement.create`, `documents.acknowledgement.read`, `documents.acknowledgement.update`, `documents.acknowledgement.delete`, `documents.acknowledgement.approve` |
+
 ## Reports (`reports`)
 
 | Feature | Label | Codenames |
@@ -145,9 +152,9 @@ Six groups ship with the platform and are kept in sync by the same data migratio
 
 | Group | Permissions | Description |
 | --- | --- | --- |
-| Super Administrateur | 311 | Full technical administration of the platform. All permissions. |
-| Administrateur | 310 | Full functional administration. All permissions except Django admin access. |
-| RSSI / DPO | 247 | GRC system steering. Read, create, update, approve. No deletion or system configuration. |
-| Auditeur | 74 | Platform consultation and audit. Read-only access to all modules. |
-| Contributeur | 179 | GRC content contribution. Read, create, update. No deletion or system access. |
-| Lecteur | 66 | Read-only access. Read on all modules except system. |
+| Super Administrateur | 321 | Full technical administration of the platform. All permissions. |
+| Administrateur | 320 | Full functional administration. All permissions except Django admin access. |
+| RSSI / DPO | 255 | GRC system steering. Read, create, update, approve. No deletion or system configuration. |
+| Auditeur | 76 | Platform consultation and audit. Read-only access to all modules. |
+| Contributeur | 185 | GRC content contribution. Read, create, update. No deletion or system access. |
+| Lecteur | 68 | Read-only access. Read on all modules except system. |
