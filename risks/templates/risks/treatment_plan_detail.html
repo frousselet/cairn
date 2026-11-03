@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n ui %}
+{% load i18n ui workflow_tags %}
 {% load help_tags %}
 {% load accounts_tags %}
 
@@ -8,209 +8,116 @@
 {% block content %}
 {% page_header plan.name reference=plan.reference nav="risks:treatment-plan-list" accent="risks" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'risks:treatment-plan-update' plan.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'risks:treatment-plan-update' plan.pk %}" class="btn btn-primary" hx-get="{% url 'risks:treatment-plan-update' plan.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.treatment_plan_detail" %}
 {% include "includes/lifecycle_stepper.html" %}
 
-{# ══════════════════════════════════════════════════════════ #}
-{# ── Two-column layout ────────────────────────────────── #}
-{# ══════════════════════════════════════════════════════════ #}
-<div class="row g-4">
+{% has_perm "risks.treatment.update" as can_edit_actions %}
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") plan.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Progress") plan.progress_percentage suffix="%" icon="bar-chart-steps" tone="info" %}
+    {% kpi_tile _("Target date") plan.target_date icon="calendar-event" tone="neutral" %}
+    {% kpi_tile _("Treatment actions") actions|length icon="list-task" tone="neutral" %}
+  {% endslot %}
 
-  {# ── LEFT COLUMN ── #}
-  <div class="col-lg-8">
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if plan.description %}<div class="ov-rich">{{ plan.description|safe }}</div>{% endif %}{% endsection_card %}
 
-    {# ── General ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Risk" %}</div>
-          <div><a href="{% url 'risks:risk-detail' plan.risk.pk %}" class="cell-link">{{ plan.risk }}</a></div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Treatment type" %}</div>
-          <div>{{ plan.get_treatment_type_display }}</div>
-        </div>
-        {% if plan.description %}
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ plan.description|safe }}</div>
-        </div>
-        {% endif %}
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Estimated cost" %}</div>
-          <div>{{ plan.cost_estimate|default:"-" }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Expected residual likelihood" %}</div>
-          <div>{{ plan.expected_residual_likelihood|default:"-" }}</div>
-        </div>
-        <div>
-          <div class="text-muted small mb-1">{% trans "Expected residual impact" %}</div>
-          <div>{{ plan.expected_residual_impact|default:"-" }}</div>
-        </div>
-      </div>
+  {% section_card _("General") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Risk") %}<div class="ref-links">{% url 'risks:risk-detail' plan.risk.pk as risk_url %}{% ref_link plan.risk url=risk_url %}</div>{% endmeta_item %}
+      {% meta_item _("Treatment type") plan.get_treatment_type_display %}
+      {% meta_item _("Estimated cost") plan.cost_estimate %}
+      {% meta_item _("Owner") %}{% if plan.owner %}{% user_badge plan.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Expected residual likelihood") plan.expected_residual_likelihood %}
+      {% meta_item _("Expected residual impact") plan.expected_residual_impact %}
+      {% meta_item _("Progress") %}{% progress_bar plan.progress_percentage %}{% endmeta_item %}
+      {% meta_item _("Tags") %}{% tag_list plan.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Planning") icon="calendar3" %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Start date") plan.start_date %}
+      {% meta_item _("Target date") plan.target_date %}
+      {% meta_item _("Completion date") plan.completion_date %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Treatment actions") icon="list-task" count=actions|length flush=True %}
+    {% slot actions %}{% if can_edit_actions %}
+    <a href="{% url 'risks:treatment-action-create' plan.pk %}"
+       class="btn btn-sm btn-secondary"
+       hx-get="{% url 'risks:treatment-action-create' plan.pk %}"
+       hx-target="#drawer-form-content" hx-swap="innerHTML">
+      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add action" %}
+    </a>
+    {% endif %}{% endslot %}
+    {% if actions %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>#</th><th>{% trans "Description" %}</th><th>{% trans "Owner" %}</th><th>{% trans "Target date" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Actions" %}</th></tr></thead>
+        <tbody>
+          {% for action in actions %}
+          <tr>
+            <td class="tabular-nums">{{ action.order }}</td>
+            <td>{{ action.description }}</td>
+            <td>{% if action.owner %}{% user_badge action.owner size=20 %}{% else %}{% dash %}{% endif %}</td>
+            <td>{{ action.target_date|or_dash }}</td>
+            <td>{% choice_badge action "status" type="status" %}</td>
+            <td class="text-end text-nowrap">
+              {% if can_edit_actions %}
+              <a href="{% url 'risks:treatment-action-update' action.pk %}"
+                 class="btn btn-sm btn-outline-primary"
+                 hx-get="{% url 'risks:treatment-action-update' action.pk %}"
+                 hx-target="#drawer-form-content" hx-swap="innerHTML"
+                 title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ action.order }}">
+                <i class="bi bi-pencil" aria-hidden="true"></i>
+              </a>
+              {% url 'risks:treatment-action-delete' action.pk as action_delete_url %}
+              {% confirm_delete url=action_delete_url name=action.description|truncatechars:60 %}
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    {% empty_state message=_("No actions defined.") %}
+    {% endif %}
+  {% endsection_card %}
 
-    {# ── Treatment actions ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="text-muted small fw-semibold mb-0"><i class="bi bi-list-task me-1"></i>{% trans "Treatment actions" %}</h6>
-          {% has_perm "risks.treatment.update" as can_edit_actions %}
-          {% if can_edit_actions %}
-          <a href="{% url 'risks:treatment-action-create' plan.pk %}"
-             class="btn btn-sm btn-outline-primary"
-             hx-get="{% url 'risks:treatment-action-create' plan.pk %}"
-             hx-target="#drawer-form-content" hx-swap="innerHTML">
-            <i class="bi bi-plus-lg me-1"></i>{% trans "Add action" %}
-          </a>
-          {% endif %}
-        </div>
-        {% if actions %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr><th>#</th><th>{% trans "Description" %}</th><th>{% trans "Owner" %}</th><th>{% trans "Target date" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Actions" %}</th></tr></thead>
-            <tbody>
-              {% for action in actions %}
-              <tr>
-                <td>{{ action.order }}</td>
-                <td>{{ action.description }}</td>
-                <td>{% if action.owner %}{% user_badge action.owner size=20 %}{% else %}-{% endif %}</td>
-                <td>{{ action.target_date|default:"-" }}</td>
-                <td>
-                  <span class="badge text-bg-{% if action.status == 'completed' %}success{% elif action.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
-                    {{ action.get_status_display }}
-                  </span>
-                </td>
-                <td class="text-end">
-                  {% if can_edit_actions %}
-                  <a href="{% url 'risks:treatment-action-update' action.pk %}"
-                     class="btn btn-sm btn-link p-0 me-2"
-                     hx-get="{% url 'risks:treatment-action-update' action.pk %}"
-                     hx-target="#drawer-form-content" hx-swap="innerHTML"
-                     title="{% trans 'Edit' %}">
-                    <i class="bi bi-pencil"></i>
-                  </a>
-                  <form method="post" action="{% url 'risks:treatment-action-delete' action.pk %}" class="d-inline"
-                        onsubmit="return confirm('{% trans 'Delete this action?' %}')">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="{% trans 'Delete' %}">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </form>
-                  {% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p class="text-muted mb-0" style="font-size:.85rem">{% trans "No actions defined." %}</p>
-        {% endif %}
-      </div>
+  {% section_card _("Related action plans") icon="clipboard-plus" count=related_action_plans|length flush=True %}
+    {% slot actions %}
+    <a href="{% url 'risks:treatment-plan-update' plan.pk %}" class="btn btn-sm btn-secondary" hx-get="{% url 'risks:treatment-plan-update' plan.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">
+      <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Manage links" %}
+    </a>
+    {% endslot %}
+    {% if related_action_plans %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Ref." %}</th><th>{% trans "Name" %}</th><th>{% trans "Owner" %}</th><th>{% trans "Progress" %}</th><th>{% trans "Status" %}</th></tr></thead>
+        <tbody>
+          {% for ap in related_action_plans %}
+          <tr>
+            <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="ref">{{ ap.reference }}</a></td>
+            <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="cell-link">{{ ap.name }}</a></td>
+            <td>{% if ap.owner %}{% user_badge ap.owner size=24 %}{% else %}{% dash %}{% endif %}</td>
+            <td>{% progress_bar ap.progress_percentage scheme="progress" %}</td>
+            <td>{% workflow_badge ap %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    {% empty_state message=_("No related action plans.") %}
+    {% endif %}
+  {% endsection_card %}
 
-    {# ── Related action plans ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="text-muted small fw-semibold mb-0"><i class="bi bi-clipboard-plus me-1"></i>{% trans "Related action plans" %}</h6>
-          <a href="{% url 'risks:treatment-plan-update' plan.pk %}" class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-pencil me-1"></i>{% trans "Manage links" %}
-          </a>
-        </div>
-        {% if related_action_plans %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Ref." %}</th><th>{% trans "Name" %}</th><th>{% trans "Owner" %}</th><th>{% trans "Progress" %}</th><th>{% trans "Status" %}</th></tr></thead>
-            <tbody>
-              {% for ap in related_action_plans %}
-              <tr>
-                <td style="font-weight:500;color:var(--text-muted);font-size:.82rem">{{ ap.reference }}</td>
-                <td><a href="{% url 'compliance:action-plan-detail' ap.pk %}" class="cell-link">{{ ap.name }}</a></td>
-                <td>{% if ap.owner %}{% user_badge ap.owner size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
-                <td>{% progress_bar ap.progress_percentage scheme="progress" %}</td>
-                <td><span class="badge text-bg-secondary">{{ ap.get_status_display }}</span></td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p class="text-muted mb-0" style="font-size:.85rem">{% trans "No related action plans." %}</p>
-        {% endif %}
-      </div>
-    </div>
-
-  </div>
-
-  {# ── RIGHT COLUMN (sidebar) ── #}
-  <div class="col-lg-4" style="position:sticky;top:1rem;align-self:flex-start;max-height:calc(100vh - 1.5rem);overflow-y:auto">
-
-    {# ── Status ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
-          <dd class="mb-3">
-            <span class="badge text-bg-{% if plan.status == 'completed' %}success{% elif plan.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
-              {{ plan.get_status_display }}
-            </span>
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Progress" %}</dt>
-          <dd class="mb-3">
-            <div class="progress" style="height:8px">
-              <div class="progress-bar bg-{% if plan.progress_percentage == 100 %}success{% elif plan.progress_percentage >= 50 %}info{% else %}warning{% endif %}" style="width:{{ plan.progress_percentage }}%"></div>
-            </div>
-            <small class="text-muted">{{ plan.progress_percentage }}%</small>
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in plan.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}</dd>
-        </dl>
-      </div>
-    </div>
-
-    {# ── People ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Owner" %}</div>
-          {% if plan.owner %}{% user_badge plan.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
-        </div>
-        <div>
-          <div class="text-muted small mb-1">{% trans "Created by" %}</div>
-          {% if plan.created_by %}{% user_badge plan.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
-        </div>
-      </div>
-    </div>
-
-    {# ── Dates ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Start date" %}</dt>
-          <dd class="mb-3">{{ plan.start_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Target date" %}</dt>
-          <dd class="mb-3">{{ plan.target_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Completion date" %}</dt>
-          <dd class="mb-3">{{ plan.completion_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
-          <dd class="mb-3">{{ plan.created_at }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>
-          <dd class="mb-0">{{ plan.updated_at }}</dd>
-        </dl>
-      </div>
-    </div>
-
-  </div>
-</div>
-
+  {% record_card plan %}
+{% enddetail_layout %}
 {% endblock %}

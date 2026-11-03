@@ -1,16 +1,11 @@
 {% extends "risks/ebios/_workshop_base.html" %}
-{% load i18n %}
+{% load i18n ui %}
 
 {% block workshop_main %}
-<div class="card">
-  <div class="card-body">
-    <h4 class="card-title">{{ workshop.get_workshop_number_display }}</h4>
-    <p class="text-muted">
-      {% trans "This workshop does not have a dedicated page yet. Use the REST API or MCP tools to interact with the underlying entities." %}
-    </p>
-    <p class="mb-0">
-      <code>/api/v1/risks/ebios/</code>
-    </p>
-  </div>
-</div>
+{% section_card workshop.get_workshop_number_display icon="info-circle" %}
+  <p class="text-muted">
+    {% trans "This workshop does not have a dedicated page yet. Use the REST API or MCP tools to interact with the underlying entities." %}
+  </p>
+  <p class="mb-0"><code>/api/v1/risks/ebios/</code></p>
+{% endsection_card %}
 {% endblock %}

@@ -1,68 +1,48 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n ui %}
 
-{% block title %}{% if feared_event %}{% trans "Edit feared event" %}{% else %}{% trans "Add feared event" %}{% endif %}{% endblock %}
+{% block title %}{% if feared_event %}{% trans "Edit feared event" %}{% else %}{% trans "Add feared event" %}{% endif %} - Cairn{% endblock %}
 
 {% block content %}
 {% with assessment=baseline.assessment %}
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-list' %}">{% trans "Assessments" %}</a></li>
-    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-detail' pk=assessment.pk %}">{{ assessment.name }}</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{% trans "Feared event" %}</li>
-  </ol>
-</nav>
+{% if feared_event %}{% trans "Edit feared event" as form_title %}{% else %}{% trans "Add feared event" as form_title %}{% endif %}
+{% url 'risks:assessment-detail' pk=assessment.pk as assessment_url %}
+{% page_header form_title nav="risks:assessment-list" parent_label=assessment.name parent_url=assessment_url accent="risks" %}{% endpage_header %}
 
-<div class="card">
-  <div class="card-header">
-    <h4 class="mb-0">
-      <i class="bi bi-exclamation-triangle me-2"></i>
-      {% if feared_event %}{% trans "Edit feared event" %}{% else %}{% trans "Add feared event" %}{% endif %}
-    </h4>
-  </div>
+<form method="post" class="card page-form" novalidate>
+  {% csrf_token %}
   <div class="card-body">
-    <form method="post" novalidate>
-      {% csrf_token %}
-      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
-      <div class="row g-3">
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">
+      {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+    </div>
+    {% endif %}
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    <div class="row gx-3">
         <div class="col-md-6">
-          <label for="{{ form.essential_asset.id_for_label }}" class="form-label">{{ form.essential_asset.label }}</label>
-          {{ form.essential_asset }}
-          {% for err in form.essential_asset.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          {% include "includes/form_field.html" with field=form.essential_asset %}
         </div>
         <div class="col-md-6">
-          <label for="{{ form.dic_criterion.id_for_label }}" class="form-label">{{ form.dic_criterion.label }}</label>
-          {{ form.dic_criterion }}
-          {% for err in form.dic_criterion.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          {% include "includes/form_field.html" with field=form.dic_criterion %}
         </div>
         <div class="col-md-12">
-          <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
-          {{ form.name }}
-          {% for err in form.name.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          {% include "includes/form_field.html" with field=form.name %}
         </div>
         <div class="col-md-12">
-          <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
-          {{ form.description }}
+          {% include "includes/form_field.html" with field=form.description %}
         </div>
         <div class="col-md-4">
-          <label for="{{ form.gravity_level.id_for_label }}" class="form-label">{{ form.gravity_level.label }}</label>
-          {{ form.gravity_level }}
+          {% include "includes/form_field.html" with field=form.gravity_level %}
         </div>
         <div class="col-md-8">
-          <label for="{{ form.gravity_justification.id_for_label }}" class="form-label">{{ form.gravity_justification.label }}</label>
-          {{ form.gravity_justification }}
+          {% include "includes/form_field.html" with field=form.gravity_justification %}
         </div>
-      </div>
-      <div class="d-flex justify-content-between mt-4">
-        <a href="{% url 'risks:assessment-detail' pk=assessment.pk %}" class="btn btn-outline-danger">
-          <i class="bi bi-arrow-left me-1"></i>{% trans "Cancel" %}
-        </a>
-        <button type="submit" class="btn btn-primary">
-          <i class="bi bi-check-lg me-1"></i>{% trans "Save" %}
-        </button>
-      </div>
-    </form>
+    </div>
+    <div class="page-form__actions form-actions-sticky d-flex gap-2">
+      <a href="{{ assessment_url }}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
+    </div>
   </div>
-</div>
+</form>
 {% endwith %}
 {% endblock %}

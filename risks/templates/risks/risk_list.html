@@ -8,13 +8,13 @@
 {% block content %}
 {% has_perm "risks.export.read" as can_export_risks %}
 {% page_header _("Risk register") nav="risks:risk-list" accent="risks" %}
-  <a href="{% url 'risks:assessment-list' %}" class="btn btn-outline-secondary"><i class="bi bi-clipboard-data me-1" aria-hidden="true"></i>{% trans 'Go to assessments' %}</a>
+  <a href="{% url 'risks:assessment-list' %}" class="btn btn-secondary"><i class="bi bi-clipboard-data me-1" aria-hidden="true"></i>{% trans 'Go to assessments' %}</a>
   {% if can_export_risks %}
-  <a href="{% url 'risks:risk-register-export-xlsx' %}?{{ request.GET.urlencode }}" hx-boost="false" download class="btn btn-outline-secondary"><i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>{% trans 'Export to Excel' %}</a>
+  <a href="{% url 'risks:risk-register-export-xlsx' %}?{{ request.GET.urlencode }}" hx-boost="false" download class="btn btn-secondary"><i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>{% trans 'Export to Excel' %}</a>
   {% endif %}
 {% endpage_header %}
 <div class="alert alert-info mb-3">
-  <i class="bi bi-info-circle me-2"></i>
+  <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
   {% trans "Risks are identified through methodology-driven assessments. Open an assessment and use its methodology workflow to create risks." %}
 </div>
 {% help_modal "risks.risk_list" %}

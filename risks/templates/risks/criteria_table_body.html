@@ -3,15 +3,15 @@
 {% for c in criteria_list %}
 <tr>
   <td data-col="reference"><a href="{% url 'risks:criteria-detail' c.pk %}" class="ref">{{ c.reference }}</a></td>
-  <td data-col="name"><a href="{% url 'risks:criteria-detail' c.pk %}" class="cell-link">{{ c.name }}</a>{% if c.is_default %} <span class="badge text-bg-success" style="font-size:.65rem">{% trans "Default" %}</span>{% endif %}</td>
+  <td data-col="name"><a href="{% url 'risks:criteria-detail' c.pk %}" class="cell-link">{{ c.name }}</a>{% if c.is_default %} {% badge variant="success" label=_("Default") %}{% endif %}</td>
   <td data-col="scopes">{% scope_popover c.scopes.all %}</td>
   <td data-col="threshold">{{ c.acceptance_threshold }}</td>
   <td data-col="status">{% workflow_badge c %}</td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=c.tags.all %}</td>
+  <td data-col="tags">{% tag_list c.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <a href="{% url 'risks:criteria-update' c.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    <a href="{% url 'risks:criteria-update' c.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ c.reference }}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
     {% if can_delete_criteria and c.is_deletable %}
-    <a href="{% url 'risks:criteria-delete' c.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+    <a href="{% url 'risks:criteria-delete' c.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ c.reference }}"><i class="bi bi-trash" aria-hidden="true"></i></a>
     {% endif %}
   </td>
 </tr>

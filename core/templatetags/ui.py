@@ -245,6 +245,37 @@ BADGE_REGISTRY: dict[str, dict[str, tuple[str, str, object]]] = {
         "not_assessed": ("secondary", "circle", _("Not assessed")),
         "not_applicable": ("secondary", "slash-circle", _("Not applicable")),
     },
+    # Risk treatment posture: an undecided risk is the one that needs action.
+    "treatment_decision": {
+        "not_decided": ("danger", "question-circle", _("Not decided")),
+        "accept": ("warning", "check2", _("Accept")),
+        "mitigate": ("accent", "tools", _("Mitigate")),
+        "transfer": ("info", "arrow-left-right", _("Transfer")),
+        "avoid": ("success", "slash-circle", _("Avoid")),
+    },
+    # EBIOS RM 1-4 scales (gravity, likelihood, threat level, risk level).
+    "ebios_scale": {
+        "1": ("info", "circle", None),
+        "2": ("info", "circle-fill", None),
+        "3": ("warning", "exclamation-triangle", None),
+        "4": ("danger", "exclamation-octagon", None),
+    },
+    "threat_zone": {
+        "control": ("success", "shield-check", _("Control zone")),
+        "monitoring": ("warning", "eye", _("Monitoring zone")),
+        "danger": ("danger", "exclamation-octagon", _("Danger zone")),
+    },
+    # Categories, not statuses: they keep the identity colour (semantic
+    # colours are reserved for statuses).
+    "methodology": {
+        "iso27005": ("accent", "diagram-2", _("ISO 27005")),
+        "ebios_rm": ("accent", "diagram-2", _("EBIOS RM")),
+    },
+    "dic": {
+        "confidentiality": ("accent", "lock", _("Confidentiality")),
+        "integrity": ("accent", "check2-square", _("Integrity")),
+        "availability": ("accent", "lightning", _("Availability")),
+    },
     "status": {
         # Generic workflow statuses that show up across the app
         "draft": ("secondary", "pencil", _("Draft")),
@@ -264,6 +295,8 @@ BADGE_REGISTRY: dict[str, dict[str, tuple[str, str, object]]] = {
         "cancelled": ("danger", "x-octagon", _("Cancelled")),
         "overdue": ("danger", "alarm", _("Overdue")),
         "archived": ("secondary", "archive", _("Archived")),
+        "inactive": ("secondary", "pause-circle", _("Inactive")),
+        "not_started": ("secondary", "circle", _("Not started")),
     },
 }
 
@@ -1175,6 +1208,10 @@ CHOICE_BADGE_TYPES = {
     "severity": "level",
     "impact_level": "level",
     "compliance_status": "compliance",
+    "treatment_decision": "treatment_decision",
+    "threat_zone": "threat_zone",
+    "methodology": "methodology",
+    "dic_criterion": "dic",
 }
 
 

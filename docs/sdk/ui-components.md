@@ -311,6 +311,8 @@ come from `BADGE_REGISTRY` in `core/templatetags/ui.py` :
 
 - `level` : priority, criticality, severity and impact share one ordinal scale.
 - `compliance` : requirement and assessment results.
+- `treatment_decision`, `threat_zone` and `ebios_scale` (the EBIOS RM 1 to 4 scales).
+- `methodology` and `dic` : categories, so they keep the identity colour.
 - `status`, `approval` and `risk`.
 
 `choice_badge` infers the type from the field name (see

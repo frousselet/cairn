@@ -9,7 +9,7 @@
       <a href="{% url 'risks:risk-detail' acc.risk.pk %}" class="cell-link" title="{{ acc.risk }}">{{ acc.risk }}</a>
       {% if acc.justification %}<span class="cell-sub" title="{{ acc.justification }}">{{ acc.justification }}</span>{% endif %}
     </span>
-    {% else %}<span class="cell-empty">-</span>{% endif %}
+    {% else %}{% dash %}{% endif %}
   </td>
   <td data-col="accepted_by">
     {% if acc.accepted_by %}
@@ -20,13 +20,13 @@
       <span class="cell-avatar-fallback">{{ acc.accepted_by.display_name|initials }}</span>
       {% endif %}
       <span class="cell-stack">
-        <span style="font-weight:600">{{ acc.accepted_by.display_name }}</span>
+        <span class="fw-semibold">{{ acc.accepted_by.display_name }}</span>
         {% if acc.accepted_by.job_title %}<span class="cell-sub">{{ acc.accepted_by.job_title }}</span>{% endif %}
       </span>
     </span>
-    {% else %}<span class="cell-empty">-</span>{% endif %}
+    {% else %}{% dash %}{% endif %}
   </td>
-  <td data-col="level">{{ acc.risk_level_at_acceptance|default:"-" }}</td>
+  <td data-col="level">{{ acc.risk_level_at_acceptance|or_dash }}</td>
   <td data-col="valid_until">
     {% if acc.valid_until %}
     <span class="cell-stack">
@@ -35,14 +35,14 @@
     </span>
     {% elif acc.accepted_at %}
     <span class="cell-sub" title="{% trans 'Acceptance date' %}"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{{ acc.accepted_at|date }}</span>
-    {% else %}<span class="cell-empty">-</span>{% endif %}
+    {% else %}{% dash %}{% endif %}
   </td>
   <td data-col="status">{% workflow_badge acc %}</td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=acc.tags.all %}</td>
+  <td data-col="tags">{% tag_list acc.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <a hx-get="{% url 'risks:acceptance-update' acc.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    <a hx-get="{% url 'risks:acceptance-update' acc.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ acc.reference }}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
     {% if can_delete_acceptances and acc.is_deletable %}
-    <a href="{% url 'risks:acceptance-delete' acc.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></a>
+    <a href="{% url 'risks:acceptance-delete' acc.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ acc.reference }}"><i class="bi bi-trash" aria-hidden="true"></i></a>
     {% endif %}
   </td>
 </tr>

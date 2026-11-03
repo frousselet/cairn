@@ -1,18 +1,11 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n ui %}
 
-{% block title %}{% if stakeholder %}{% trans "Edit ecosystem stakeholder" %}{% else %}{% trans "Add ecosystem stakeholder" %}{% endif %}{% endblock %}
+{% block title %}{% if stakeholder %}{% trans "Edit ecosystem stakeholder" %}{% else %}{% trans "Add ecosystem stakeholder" %}{% endif %} - Cairn{% endblock %}
 
 {% block content %}
-{% with title=stakeholder|yesno:"Edit ecosystem stakeholder,Add ecosystem stakeholder" %}
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-list' %}">{% trans "Assessments" %}</a></li>
-    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-detail' pk=assessment.pk %}">{{ assessment.name }}</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{% trans "Ecosystem stakeholder" %}</li>
-  </ol>
-</nav>
-{% url 'risks:assessment-detail' pk=assessment.pk as cancel_url_resolved %}
-{% include "risks/ebios/_entity_form.html" with title=title icon="diagram-3" cancel_url=cancel_url_resolved %}
-{% endwith %}
+{% if stakeholder %}{% trans "Edit ecosystem stakeholder" as form_title %}{% else %}{% trans "Add ecosystem stakeholder" as form_title %}{% endif %}
+{% url 'risks:assessment-detail' pk=assessment.pk as assessment_url %}
+{% page_header form_title nav="risks:assessment-list" parent_label=assessment.name parent_url=assessment_url accent="risks" %}{% endpage_header %}
+{% include "risks/ebios/_entity_form.html" with cancel_url=assessment_url %}
 {% endblock %}

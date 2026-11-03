@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n ui %}
+{% load i18n ui workflow_tags %}
 {% load help_tags %}
 {% load accounts_tags %}
 
@@ -8,324 +8,186 @@
 {% block content %}
 {% page_header risk.name reference=risk.reference nav="risks:risk-list" accent="risks" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'risks:risk-update' risk.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'risks:risk-update' risk.pk %}" class="btn btn-primary" hx-get="{% url 'risks:risk-update' risk.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.risk_detail" %}
 {% include "includes/lifecycle_stepper.html" %}
 
-{# ══════════════════════════════════════════════════════════ #}
-{# ── Two-column layout ────────────────────────────────── #}
-{# ══════════════════════════════════════════════════════════ #}
-<div class="row g-4">
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") risk.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Priority") risk.get_priority_display icon="flag" tone=risk.priority|badge_variant:"level" %}
+    {% kpi_tile _("Current level") risk.current_risk_level icon="speedometer2" tone="info" %}
+    {% kpi_tile _("Review date") risk.review_date icon="calendar-event" tone="neutral" %}
+  {% endslot %}
 
-  {# ── LEFT COLUMN ── #}
-  <div class="col-lg-8">
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if risk.description %}<div class="ov-rich">{{ risk.description|safe }}</div>{% endif %}{% endsection_card %}
 
-    {# ── General ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-info-circle me-1"></i>{% trans "General" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Assessment" %}</div>
-          <div><a href="{% url 'risks:assessment-detail' risk.assessment.pk %}" class="cell-link">{{ risk.assessment }}</a></div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Source" %}</div>
-          <div>{{ risk.get_risk_source_display }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Impact C / I / A" %}</div>
-          <div>
-            {% if risk.impact_confidentiality %}<span class="badge" style="background:var(--info-soft);color:var(--info)">C</span>{% endif %}
-            {% if risk.impact_integrity %}<span class="badge" style="background:var(--warning-soft);color:var(--warning)">I</span>{% endif %}
-            {% if risk.impact_availability %}<span class="badge" style="background:var(--danger-soft);color:var(--danger)">A</span>{% endif %}
-            {% if not risk.impact_confidentiality and not risk.impact_integrity and not risk.impact_availability %}-{% endif %}
-          </div>
-        </div>
-        {% if risk.description %}
-        <div>
-          <div class="text-muted small mb-1">{% trans "Description" %}</div>
-          <div>{{ risk.description|safe }}</div>
-        </div>
-        {% endif %}
-      </div>
+  {% section_card _("General") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Assessment") %}<div class="ref-links">{% url 'risks:assessment-detail' risk.assessment.pk as assessment_url %}{% ref_link risk.assessment url=assessment_url %}</div>{% endmeta_item %}
+      {% meta_item _("Source") risk.get_risk_source_display %}
+      {% meta_item _("Owner") %}{% if risk.risk_owner %}{% user_badge risk.risk_owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Priority") %}{% choice_badge risk "priority" %}{% endmeta_item %}
+      {% meta_item _("Impact C / I / A") %}{% if risk.impact_confidentiality %}{% badge variant="info" label=_("Confidentiality") %} {% endif %}{% if risk.impact_integrity %}{% badge variant="warning" label=_("Integrity") %} {% endif %}{% if risk.impact_availability %}{% badge variant="danger" label=_("Availability") %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Review date") risk.review_date %}
+      {% meta_item _("Tags") wide=True %}{% tag_list risk.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Evaluation") icon="speedometer2" flush=True %}
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead><tr><th><span class="visually-hidden">{% trans "Evaluation" %}</span></th><th class="text-end">{% trans "Likelihood" %}</th><th class="text-end">{% trans "Impact" %}</th><th class="text-end">{% trans "Risk level" %}</th></tr></thead>
+        <tbody>
+          <tr>
+            <th scope="row" class="fw-medium">{% trans "Initial risk" %}</th>
+            <td class="text-end tabular-nums">{{ risk.initial_likelihood|or_dash }}</td>
+            <td class="text-end tabular-nums">{{ risk.initial_impact|or_dash }}</td>
+            <td class="text-end tabular-nums fw-semibold">{{ risk.initial_risk_level|or_dash }}</td>
+          </tr>
+          <tr>
+            <th scope="row" class="fw-medium">{% trans "Current risk" %}</th>
+            <td class="text-end tabular-nums">{{ risk.current_likelihood|or_dash }}</td>
+            <td class="text-end tabular-nums">{{ risk.current_impact|or_dash }}</td>
+            <td class="text-end tabular-nums fw-semibold">{{ risk.current_risk_level|or_dash }}</td>
+          </tr>
+          <tr>
+            <th scope="row" class="fw-medium">{% trans "Residual risk" %}</th>
+            <td class="text-end tabular-nums">{{ risk.residual_likelihood|or_dash }}</td>
+            <td class="text-end tabular-nums">{{ risk.residual_impact|or_dash }}</td>
+            <td class="text-end tabular-nums fw-semibold">{{ risk.residual_risk_level|or_dash }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
+  {% endsection_card %}
 
-    {# ── Evaluation ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-speedometer2 me-1"></i>{% trans "Evaluation" %}</h6>
-        <div class="row g-3">
-          <div class="col-md-4">
-            <div class="stat-card text-center">
-              <h6 style="color:var(--text-muted);font-size:.8125rem;font-weight:500">{% trans "Initial risk" %}</h6>
-              <p class="mb-1" style="font-size:.85rem">{% trans "Likelihood:" %} <strong>{{ risk.initial_likelihood|default:"-" }}</strong></p>
-              <p class="mb-1" style="font-size:.85rem">{% trans "Impact:" %} <strong>{{ risk.initial_impact|default:"-" }}</strong></p>
-              <p class="stat-card-value mt-2">{{ risk.initial_risk_level|default:"-" }}</p>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="stat-card text-center">
-              <h6 style="color:var(--text-muted);font-size:.8125rem;font-weight:500">{% trans "Current risk" %}</h6>
-              <p class="mb-1" style="font-size:.85rem">{% trans "Likelihood:" %} <strong>{{ risk.current_likelihood|default:"-" }}</strong></p>
-              <p class="mb-1" style="font-size:.85rem">{% trans "Impact:" %} <strong>{{ risk.current_impact|default:"-" }}</strong></p>
-              <p class="stat-card-value mt-2">{{ risk.current_risk_level|default:"-" }}</p>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="stat-card text-center">
-              <h6 style="color:var(--text-muted);font-size:.8125rem;font-weight:500">{% trans "Residual risk" %}</h6>
-              <p class="mb-1" style="font-size:.85rem">{% trans "Likelihood:" %} <strong>{{ risk.residual_likelihood|default:"-" }}</strong></p>
-              <p class="mb-1" style="font-size:.85rem">{% trans "Impact:" %} <strong>{{ risk.residual_impact|default:"-" }}</strong></p>
-              <p class="stat-card-value mt-2">{{ risk.residual_risk_level|default:"-" }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+  {% if risk.criteria_snapshot %}
+  {% section_card _("Scoring snapshot") icon="bookmark-check" %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Criteria") %}{% if risk.assessment.risk_criteria_id %}<a href="{% url 'risks:criteria-detail' risk.assessment.risk_criteria_id %}" class="cell-link">{{ risk.criteria_snapshot.criteria_name }}</a>{% else %}{{ risk.criteria_snapshot.criteria_name }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Version at evaluation") %}{% if risk.criteria_snapshot.criteria_version %}v.{{ risk.criteria_snapshot.criteria_version }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Captured at") risk.criteria_snapshot.captured_at %}
+    {% endmeta_list %}
+    <p class="text-meta mb-0 mt-3"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>{% trans "Score frozen at evaluation time. Later edits to the criteria do not change historical scores." %}</p>
+  {% endsection_card %}
+  {% endif %}
+
+  {% section_card _("Treatment") icon="shield-check" %}
+    {% meta_list %}
+      {% meta_item _("Treatment decision") risk.get_treatment_decision_display %}
+      {% if risk.treatment_justification %}{% meta_item _("Justification") %}<div class="ov-rich">{{ risk.treatment_justification|safe }}</div>{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Treatment plans") icon="list-task" count=treatment_plans|length flush=True %}
+    {% slot actions %}<a href="{% url 'risks:treatment-plan-create' %}" class="btn btn-sm btn-secondary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New plan" %}</a>{% endslot %}
+    {% if treatment_plans %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Ref." %}</th><th>{% trans "Name" %}</th><th>{% trans "Progress" %}</th><th>{% trans "Status" %}</th></tr></thead>
+        <tbody>
+          {% for tp in treatment_plans %}
+          <tr>
+            <td><a href="{% url 'risks:treatment-plan-detail' tp.pk %}" class="ref">{{ tp.reference }}</a></td>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'risks:treatment-plan-detail' tp.pk %}" class="cell-link">{{ tp.name }}</a>
+                <span class="cell-sub">{{ tp.get_treatment_type_display }}</span>
+              </span>
+            </td>
+            <td>{% progress_bar tp.progress_percentage scheme="progress" %}</td>
+            <td>{% workflow_badge tp %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-
-    {# ── Treatment ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i>{% trans "Treatment" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Treatment decision" %}</div>
-          <div>{{ risk.get_treatment_decision_display }}</div>
-        </div>
-        {% if risk.treatment_justification %}
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Justification" %}</div>
-          <div>{{ risk.treatment_justification|safe }}</div>
-        </div>
-        {% endif %}
-
-        {# ── Treatment plans ── #}
-        <div class="d-flex justify-content-between align-items-center mb-3 mt-4 pt-3 border-top">
-          <div class="fw-medium" style="font-size:.85rem"><i class="bi bi-list-task me-1"></i>{% trans "Treatment plans" %}</div>
-          <a href="{% url 'risks:treatment-plan-create' %}" class="btn btn-sm btn-primary">{% trans "New plan" %}</a>
-        </div>
-        {% if treatment_plans %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Ref." %}</th><th>{% trans "Name" %}</th><th>{% trans "Progress" %}</th><th>{% trans "Status" %}</th></tr></thead>
-            <tbody>
-              {% for tp in treatment_plans %}
-              <tr>
-                <td><a href="{% url 'risks:treatment-plan-detail' tp.pk %}" class="ref">{{ tp.reference }}</a></td>
-                <td>
-                  <span class="cell-stack">
-                    <a href="{% url 'risks:treatment-plan-detail' tp.pk %}" class="cell-link">{{ tp.name }}</a>
-                    <span class="cell-sub">{{ tp.get_treatment_type_display }}</span>
-                  </span>
-                </td>
-                <td>{% progress_bar tp.progress_percentage scheme="progress" %}</td>
-                <td style="font-size:.85rem">{{ tp.get_status_display }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p class="text-muted mb-0" style="font-size:.85rem">{% trans "No treatment plans." %}</p>
-        {% endif %}
-
-        {# ── Risk acceptances ── #}
-        <div class="mt-4 pt-3 border-top">
-          <div class="fw-medium mb-3" style="font-size:.85rem"><i class="bi bi-check2-circle me-1"></i>{% trans "Risk acceptances" %}</div>
-          {% if acceptances %}
-          <div class="table-responsive">
-            <table class="table table-hover mb-0">
-              <thead><tr><th>{% trans "Accepted by" %}</th><th>{% trans "Level" %}</th><th>{% trans "Status" %}</th><th>{% trans "Valid until" %}</th></tr></thead>
-              <tbody>
-                {% for acc in acceptances %}
-                <tr>
-                  <td><a href="{% url 'risks:acceptance-detail' acc.pk %}" style="text-decoration:none">{% if acc.accepted_by %}{% user_badge acc.accepted_by size=20 %}{% else %}-{% endif %}</a></td>
-                  <td style="font-size:.85rem">{{ acc.risk_level_at_acceptance|default:"-" }}</td>
-                  <td style="font-size:.85rem">{{ acc.get_status_display }}</td>
-                  <td style="font-size:.85rem">{{ acc.valid_until|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% else %}
-          <p class="text-muted mb-0" style="font-size:.85rem">{% trans "No risk acceptances." %}</p>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    {# ── Affected assets ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-hdd-stack me-1"></i>{% trans "Affected assets" %}</h6>
-        <div class="mb-3">
-          <div class="fw-medium mb-2" style="font-size:.85rem">{% trans "Affected essential assets" %}</div>
-          <div class="d-flex flex-wrap gap-2">
-            {% for ea in risk.affected_essential_assets.all %}
-            <span class="badge" style="background:var(--accent-soft);color:var(--accent);font-size:.82rem;padding:.4em .8em">{{ ea }}</span>
-            {% empty %}
-            <p class="text-muted mb-0" style="font-size:.85rem">{% trans "No affected essential assets." %}</p>
-            {% endfor %}
-          </div>
-        </div>
-        <div>
-          <div class="fw-medium mb-2" style="font-size:.85rem">{% trans "Affected support assets" %}</div>
-          <div class="d-flex flex-wrap gap-2">
-            {% for sa in risk.affected_support_assets.all %}
-            <span class="badge" style="background:var(--info-soft);color:var(--info);font-size:.82rem;padding:.4em .8em">{{ sa }}</span>
-            {% empty %}
-            <p class="text-muted mb-0" style="font-size:.85rem">{% trans "No affected support assets." %}</p>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {# ── Linked requirements ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-clipboard-check me-1"></i>{% trans "Linked requirements" %}</h6>
-        {% if risk.linked_requirements.all %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Requirement" %}</th><th>{% trans "Compliance" %}</th></tr></thead>
-            <tbody>
-              {% for req in risk.linked_requirements.all %}
-              <tr>
-                <td>
-                  <span class="cell-stack">
-                    <a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.name }}</a>
-                    <span class="cell-sub">{% if req.requirement_number %}{{ req.requirement_number }} • {% endif %}{{ req.framework.short_name|default:req.framework.name }}</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="badge text-bg-{% if req.compliance_status == 'compliant' %}success{% elif req.compliance_status == 'partially_compliant' %}warning{% elif req.compliance_status == 'non_compliant' %}danger{% else %}secondary{% endif %}">
-                    {{ req.get_compliance_status_display }}
-                  </span>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p class="text-muted mb-0" style="font-size:.85rem">{% trans "No linked requirements." %}</p>
-        {% endif %}
-      </div>
-    </div>
-
-    {# ── Methodology sources ── #}
-    {% if iso27005_sources %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-diagram-2 me-1"></i>{% trans "Methodology sources" %}</h6>
-        <p class="small text-muted">
-          <i class="bi bi-info-circle me-1"></i>
-          {% trans "This risk was identified through ISO 27005 analyses (threat × vulnerability)." %}
-        </p>
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Threat" %}</th><th>{% trans "Vulnerability" %}</th><th>{% trans "Likelihood" %}</th><th>{% trans "Impact" %}</th><th>{% trans "Level" %}</th></tr></thead>
-            <tbody>
-              {% for src in iso27005_sources %}
-              <tr>
-                <td><a href="{% url 'risks:iso27005-detail' src.pk %}" class="cell-link">{{ src.threat.name }}</a></td>
-                <td style="font-size:.85rem">{{ src.vulnerability.name }}</td>
-                <td style="font-size:.85rem">{{ src.combined_likelihood|default:"-" }}</td>
-                <td style="font-size:.85rem">{{ src.max_impact|default:"-" }}</td>
-                <td style="font-weight:600;font-size:.85rem">{{ src.risk_level|default:"-" }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    {% else %}
+    {% empty_state message=_("No treatment plans.") %}
     {% endif %}
+  {% endsection_card %}
 
-  </div>
-
-  {# ── RIGHT COLUMN (sidebar) ── #}
-  <div class="col-lg-4" style="position:sticky;top:1rem;align-self:flex-start;max-height:calc(100vh - 1.5rem);overflow-y:auto">
-
-    {# ── Status ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-flag me-1"></i>{% trans "Status" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
-          <dd class="mb-3">{{ risk.get_status_display }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Priority" %}</dt>
-          <dd class="mb-3">
-            <span class="badge text-bg-{% if risk.priority == 'critical' %}danger{% elif risk.priority == 'high' %}warning{% elif risk.priority == 'medium' %}info{% else %}secondary{% endif %}">
-              {{ risk.get_priority_display }}
-            </span>
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in risk.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}</dd>
-        </dl>
-      </div>
+  {% section_card _("Risk acceptances") icon="check2-circle" count=acceptances|length flush=True %}
+    {% if acceptances %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Accepted by" %}</th><th>{% trans "Level" %}</th><th>{% trans "Status" %}</th><th>{% trans "Valid until" %}</th></tr></thead>
+        <tbody>
+          {% for acc in acceptances %}
+          <tr>
+            <td><a href="{% url 'risks:acceptance-detail' acc.pk %}" class="link-inherit">{% if acc.accepted_by %}{% user_badge acc.accepted_by size=20 %}{% else %}<span class="ref">{{ acc.reference }}</span>{% endif %}</a></td>
+            <td class="tabular-nums">{{ acc.risk_level_at_acceptance|or_dash }}</td>
+            <td>{% workflow_badge acc %}</td>
+            <td>{{ acc.valid_until|or_dash }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-
-    {# ── Scoring snapshot ── #}
-    {% if risk.criteria_snapshot %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-bookmark-check me-1"></i>{% trans "Scoring snapshot" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Criteria" %}</dt>
-          <dd class="mb-2">
-            {% if risk.assessment.risk_criteria_id %}
-            <a href="{% url 'risks:criteria-detail' risk.assessment.risk_criteria_id %}" class="cell-link">{{ risk.criteria_snapshot.criteria_name }}</a>
-            {% else %}
-            {{ risk.criteria_snapshot.criteria_name }}
-            {% endif %}
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Version at evaluation" %}</dt>
-          <dd class="mb-2">v.{{ risk.criteria_snapshot.criteria_version|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Captured at" %}</dt>
-          <dd class="mb-0 small text-muted">{{ risk.criteria_snapshot.captured_at|default:"-" }}</dd>
-        </dl>
-        <p class="small text-muted mb-0 mt-3">
-          <i class="bi bi-info-circle me-1"></i>{% trans "Score frozen at evaluation time. Later edits to the criteria do not change historical scores." %}
-        </p>
-      </div>
-    </div>
+    {% else %}
+    {% empty_state message=_("No risk acceptances.") %}
     {% endif %}
+  {% endsection_card %}
 
-    {# ── People ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Owner" %}</div>
-          {% if risk.risk_owner %}{% user_badge risk.risk_owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
-        </div>
-        <div>
-          <div class="text-muted small mb-1">{% trans "Created by" %}</div>
-          {% if risk.created_by %}{% user_badge risk.created_by size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
-        </div>
-      </div>
+  {% section_card _("Affected assets") icon="hdd-stack" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Affected essential assets") %}{% with eas=risk.affected_essential_assets.all %}{% if eas %}<div class="ref-links">{% for ea in eas %}{% url 'assets:essential-asset-detail' ea.pk as ea_url %}{% ref_link ea url=ea_url %}{% endfor %}</div>{% endif %}{% endwith %}{% endmeta_item %}
+      {% meta_item _("Affected support assets") %}{% with sas=risk.affected_support_assets.all %}{% if sas %}<div class="ref-links">{% for sa in sas %}{% url 'assets:support-asset-detail' sa.pk as sa_url %}{% ref_link sa url=sa_url %}{% endfor %}</div>{% endif %}{% endwith %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% with reqs=risk.linked_requirements.all %}
+  {% section_card _("Linked requirements") icon="clipboard-check" count=reqs|length flush=True %}
+    {% if reqs %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Requirement" %}</th><th>{% trans "Compliance" %}</th></tr></thead>
+        <tbody>
+          {% for req in reqs %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'compliance:requirement-detail' req.pk %}" class="cell-link">{{ req.name }}</a>
+                <span class="cell-sub">{% if req.requirement_number %}{{ req.requirement_number }} • {% endif %}{{ req.framework.short_name|default:req.framework.name }}</span>
+              </span>
+            </td>
+            <td>{% choice_badge req "compliance_status" %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    {% empty_state message=_("No linked requirements.") %}
+    {% endif %}
+  {% endsection_card %}
+  {% endwith %}
 
-    {# ── Dates ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Dates" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Review date" %}</dt>
-          <dd class="mb-3">{{ risk.review_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Created" %}</dt>
-          <dd class="mb-3">{{ risk.created_at }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Updated" %}</dt>
-          <dd class="mb-0">{{ risk.updated_at }}</dd>
-        </dl>
-      </div>
+  {% if iso27005_sources %}
+  {% section_card _("Methodology sources") icon="diagram-2" count=iso27005_sources|length flush=True %}
+    {% slot footer %}<p class="text-meta mb-0"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>{% trans "This risk was identified through ISO 27005 analyses (threat × vulnerability)." %}</p>{% endslot %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Threat" %}</th><th>{% trans "Vulnerability" %}</th><th class="text-end">{% trans "Likelihood" %}</th><th class="text-end">{% trans "Impact" %}</th><th class="text-end">{% trans "Level" %}</th></tr></thead>
+        <tbody>
+          {% for src in iso27005_sources %}
+          <tr>
+            <td><a href="{% url 'risks:iso27005-detail' src.pk %}" class="cell-link">{{ src.threat.name }}</a></td>
+            <td>{{ src.vulnerability.name }}</td>
+            <td class="text-end tabular-nums">{{ src.combined_likelihood|or_dash }}</td>
+            <td class="text-end tabular-nums">{{ src.max_impact|or_dash }}</td>
+            <td class="text-end tabular-nums fw-semibold">{{ src.risk_level|or_dash }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+  {% endsection_card %}
+  {% endif %}
 
-  </div>
-</div>
-
+  {% record_card risk %}
+{% enddetail_layout %}
 {% endblock %}

@@ -11,7 +11,7 @@
   </td>
   <td data-col="priority">
     <span class="cell-stack">
-      <span>{% badge r.priority type="severity" label=r.get_priority_display %}</span>
+      <span>{% choice_badge r "priority" %}</span>
       {% if r.current_risk_level is not None %}<span class="cell-sub" title="{% trans 'Current level' %}"><i class="bi bi-speedometer2 me-1" aria-hidden="true"></i>{{ r.current_risk_level }}</span>{% endif %}
     </span>
   </td>
@@ -30,13 +30,13 @@
       <span class="cell-avatar-fallback">{{ r.risk_owner.display_name|initials }}</span>
       {% endif %}
       <span class="cell-stack">
-        <span style="font-weight:600">{{ r.risk_owner.display_name }}</span>
+        <span class="fw-semibold">{{ r.risk_owner.display_name }}</span>
         {% if r.risk_owner.job_title %}<span class="cell-sub">{{ r.risk_owner.job_title }}</span>{% endif %}
       </span>
     </span>
-    {% else %}<span class="cell-empty">-</span>{% endif %}
+    {% else %}{% dash %}{% endif %}
   </td>
-  <td data-col="tags">{% include "includes/tags_badge.html" with tags=r.tags.all %}</td>
+  <td data-col="tags">{% tag_list r.tags.all %}</td>
   <td class="text-end" data-col="actions">
     <a hx-get="{% url 'risks:risk-update' r.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ r.reference }}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
     {% if can_delete_risks and r.is_deletable %}
