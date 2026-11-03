@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.36.1] - 2026-11-03
+
 ### Added
 
 - `scripts/bootstrap_dev.sh` provisions a Docker-less Debian/Ubuntu development sandbox with every system and Python dependency the image carries.
@@ -1328,6 +1330,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI with pytest
 - Docker Hub publish workflow on version tags
 
+[0.36.1]: https://github.com/frousselet/cairn/compare/v0.36.0...v0.36.1
 [0.36.0]: https://github.com/frousselet/cairn/compare/v0.35.1...v0.36.0
 [0.35.1]: https://github.com/frousselet/cairn/compare/v0.35.0...v0.35.1
 [0.35.0]: https://github.com/frousselet/cairn/compare/v0.34.1...v0.35.0
