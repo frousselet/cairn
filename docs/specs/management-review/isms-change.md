@@ -17,7 +17,8 @@ Clause 9.3.3 requirement : "any need for changes to the ISMS". Formalisation of 
 | `impact_analysis` | text | optional | Impact analysis (interested parties, risks, assets) |
 | `affected_scopes` | M2M → Scope | optional | Affected scopes |
 | `affected_frameworks` | M2M → Framework | optional | Affected frameworks |
-| `affected_policies` | text | optional | List of policies to revise (free text, future evolution towards a `Policy` model) |
+| `affected_policies` | text | optional | Free-text list of policies to revise. Kept for the changes recorded before the documents register; new changes use `affected_documents`. |
+| `affected_documents` | relation | M2M -> [`documents.Policy`](../m7-documents/policy.md), optional | The governed documents this change requires to revise (proposed for v0.37.0). The picker offers `linkable()` documents and keeps existing links (RG-DOC-20). |
 | `status` | enum | required | `proposed`, `approved`, `in_progress`, `implemented`, `rejected` |
 | `owner` | FK → User | required | Person responsible for implementation |
 | `target_date` | date | optional | Target date |

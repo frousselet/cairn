@@ -19,7 +19,8 @@ File: `trust_center/models/document.py`
 | `access` | enum | required, default `public` | `public` (direct download) or `gated` (request + approval) |
 | `requires_nda` | boolean | required, default `True` | Whether an NDA acceptance is required. **Only meaningful for gated documents.** |
 | `report` | relation | FK -> `reports.Report`, `PROTECT`, nullable, blank | Source report. `related_name="trust_center_documents"`. Mutually exclusive with the inline file (enforced in `clean()`). |
-| `file_content` | binary | nullable, blank, `editable=False` | Inline file bytes (UI-only upload path). Mutually exclusive with `report`. Never serialized; excluded from history. |
+| `file_content` | binary | nullable, blank, `editable=False` | Inline file bytes (UI-only upload path). Mutually exclusive with `report` and `policy`. Never serialized; excluded from history. |
+| `policy` | relation | FK -> [`documents.Policy`](../m7-documents/policy.md), `PROTECT`, nullable, blank | **Proposed for v0.37.0.** Source policy : the document always serves the policy's version in force (its PDF, or its rich text rendered to PDF). Only a `public`-classified policy can be chosen. Mutually exclusive with `report` and the inline file. |
 | `file_name` | string | optional, max 255, blank default | Inline file name |
 | `content_type` | string | optional, max 100, blank default | Inline MIME type (used as the download `Content-Type`) |
 | `display_order` | int | `PositiveIntegerField`, default `0` | Render order within the Documents section |
@@ -52,7 +53,7 @@ This one-of invariant (RG-TC-18) is enforced at the model level so it holds rega
 
 - `is_gated` : `access == gated`.
 - `effective_file_name` : the report's file name when report-backed, else `file_name`.
-- `get_file_bytes()` : returns the bytes from the linked report's `file_content` when report-backed, else the inline `file_content`, else `None`.
+- `get_file_bytes()` : returns the bytes from the linked report's `file_content` when report-backed, the policy's version in force rendered as PDF when policy-backed, else the inline `file_content`, else `None`.
 - `workflow_perm_namespace` : `"trust_center.document"`.
 
 ## Lifecycle
@@ -77,7 +78,7 @@ So a document backed by a report that is not yet completed (or was reverted) dro
 
 | ID | Rule |
 |---|---|
-| RG-TC-18 | Source is exactly one of `report` or inline `file_content` (+ `file_name` + `content_type`); enforced in `clean()`. |
+| RG-TC-18 | Source is exactly one of `report`, inline `file_content` (+ `file_name` + `content_type`) or `policy`; enforced in `clean()`. |
 | RG-TC-19 | `access` is `public` (direct) or `gated` (request + approval). |
 | RG-TC-20 | Bytes are streamed through a view, never exposed under `/media/`. `file_content` is excluded from history and never serialized. |
 | RG-TC-21 | A report-backed document is public only when its report is `completed`. `requires_nda` only applies to gated documents. |
