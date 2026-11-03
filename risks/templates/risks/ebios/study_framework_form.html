@@ -1,85 +1,62 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n ui %}
 
-{% block title %}{% trans "Edit study framework" %}{% endblock %}
+{% block title %}{% trans "Edit study framework" %} - Cairn{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-list' %}">{% trans "Assessments" %}</a></li>
-    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-detail' pk=object.assessment.pk %}">{{ object.assessment.name }}</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{% trans "Edit study framework" %}</li>
-  </ol>
-</nav>
+{% with assessment=object.assessment %}
+{% trans "Workshop 0 - Study framework" as form_title %}
+{% url 'risks:assessment-detail' pk=assessment.pk as assessment_url %}
+{% page_header form_title nav="risks:assessment-list" parent_label=assessment.name parent_url=assessment_url accent="risks" %}{% endpage_header %}
 
-<div class="card">
-  <div class="card-header">
-    <h4 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>{% trans "Workshop 0 - Study framework" %}</h4>
-  </div>
+<form method="post" class="card page-form" novalidate>
+  {% csrf_token %}
   <div class="card-body">
-    <form method="post" novalidate>
-      {% csrf_token %}
-      {% if form.non_field_errors %}
-        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-      {% endif %}
-      <div class="row g-3">
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">
+      {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+    </div>
+    {% endif %}
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    <div class="row gx-3">
         <div class="col-md-12">
-          <label for="{{ form.mission_statement.id_for_label }}" class="form-label">{{ form.mission_statement.label }}</label>
-          {{ form.mission_statement }}
-          {% for err in form.mission_statement.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          {% include "includes/form_field.html" with field=form.mission_statement %}
         </div>
         <div class="col-md-6">
-          <label for="{{ form.business_perimeter.id_for_label }}" class="form-label">{{ form.business_perimeter.label }}</label>
-          {{ form.business_perimeter }}
-          {% for err in form.business_perimeter.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          {% include "includes/form_field.html" with field=form.business_perimeter %}
         </div>
         <div class="col-md-6">
-          <label for="{{ form.technical_perimeter.id_for_label }}" class="form-label">{{ form.technical_perimeter.label }}</label>
-          {{ form.technical_perimeter }}
-          {% for err in form.technical_perimeter.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          {% include "includes/form_field.html" with field=form.technical_perimeter %}
         </div>
         <div class="col-md-8">
-          <label for="{{ form.temporal_perimeter.id_for_label }}" class="form-label">{{ form.temporal_perimeter.label }}</label>
-          {{ form.temporal_perimeter }}
-          {% for err in form.temporal_perimeter.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          {% include "includes/form_field.html" with field=form.temporal_perimeter %}
         </div>
         <div class="col-md-4">
-          <label for="{{ form.financial_envelope.id_for_label }}" class="form-label">{{ form.financial_envelope.label }}</label>
-          {{ form.financial_envelope }}
-          {% for err in form.financial_envelope.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          {% include "includes/form_field.html" with field=form.financial_envelope %}
         </div>
         <div class="col-md-6">
-          <label for="{{ form.participants.id_for_label }}" class="form-label">{{ form.participants.label }}</label>
-          {{ form.participants }}
-          <div class="form-text small">{% trans "Hold Ctrl / Cmd to select multiple participants." %}</div>
+          {% include "includes/form_field.html" with field=form.participants %}
+          <div class="form-text mt-n2 mb-3">{% trans "Hold Ctrl / Cmd to select multiple participants." %}</div>
         </div>
         <div class="col-md-6">
-          <label for="{{ form.applicable_frameworks.id_for_label }}" class="form-label">{{ form.applicable_frameworks.label }}</label>
-          {{ form.applicable_frameworks }}
-          <div class="form-text small">{% trans "Hold Ctrl / Cmd to select multiple frameworks." %}</div>
+          {% include "includes/form_field.html" with field=form.applicable_frameworks %}
+          <div class="form-text mt-n2 mb-3">{% trans "Hold Ctrl / Cmd to select multiple frameworks." %}</div>
         </div>
         <div class="col-md-6">
-          <label for="{{ form.assumptions.id_for_label }}" class="form-label">{{ form.assumptions.label }}</label>
-          {{ form.assumptions }}
+          {% include "includes/form_field.html" with field=form.assumptions %}
         </div>
         <div class="col-md-6">
-          <label for="{{ form.constraints.id_for_label }}" class="form-label">{{ form.constraints.label }}</label>
-          {{ form.constraints }}
+          {% include "includes/form_field.html" with field=form.constraints %}
         </div>
         <div class="col-md-12">
-          <label for="{{ form.expected_deliverables.id_for_label }}" class="form-label">{{ form.expected_deliverables.label }}</label>
-          {{ form.expected_deliverables }}
+          {% include "includes/form_field.html" with field=form.expected_deliverables %}
         </div>
-      </div>
-      <div class="d-flex justify-content-between mt-4">
-        <a href="{% url 'risks:assessment-detail' pk=object.assessment.pk %}" class="btn btn-outline-danger">
-          <i class="bi bi-arrow-left me-1"></i>{% trans "Cancel" %}
-        </a>
-        <button type="submit" class="btn btn-primary">
-          <i class="bi bi-check-lg me-1"></i>{% trans "Save" %}
-        </button>
-      </div>
-    </form>
+    </div>
+    <div class="page-form__actions form-actions-sticky d-flex gap-2">
+      <a href="{{ assessment_url }}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
+    </div>
   </div>
-</div>
+</form>
+{% endwith %}
 {% endblock %}

@@ -402,6 +402,9 @@ class RiskDashboardView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVie
             {"key": key, "label": str(label), "count": priority_counts.get(key, 0)}
             for key, label in RiskPriority.choices
         ]
+        ctx["critical_high_risk_count"] = (
+            priority_counts.get("critical", 0) + priority_counts.get("high", 0)
+        )
 
         decision_counts = dict(
             risks_qs.values_list("treatment_decision").annotate(n=Count("pk"))

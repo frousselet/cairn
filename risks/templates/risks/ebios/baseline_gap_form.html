@@ -1,67 +1,47 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n ui %}
 
-{% block title %}{% if gap %}{% trans "Edit baseline gap" %}{% else %}{% trans "Add baseline gap" %}{% endif %}{% endblock %}
+{% block title %}{% if gap %}{% trans "Edit baseline gap" %}{% else %}{% trans "Add baseline gap" %}{% endif %} - Cairn{% endblock %}
 
 {% block content %}
 {% with assessment=baseline.assessment %}
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-list' %}">{% trans "Assessments" %}</a></li>
-    <li class="breadcrumb-item"><a href="{% url 'risks:assessment-detail' pk=assessment.pk %}">{{ assessment.name }}</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{% trans "Baseline gap" %}</li>
-  </ol>
-</nav>
+{% if gap %}{% trans "Edit baseline gap" as form_title %}{% else %}{% trans "Add baseline gap" as form_title %}{% endif %}
+{% url 'risks:assessment-detail' pk=assessment.pk as assessment_url %}
+{% page_header form_title nav="risks:assessment-list" parent_label=assessment.name parent_url=assessment_url accent="risks" %}{% endpage_header %}
 
-<div class="card">
-  <div class="card-header">
-    <h4 class="mb-0">
-      <i class="bi bi-bug me-2"></i>
-      {% if gap %}{% trans "Edit baseline gap" %}{% else %}{% trans "Add baseline gap" %}{% endif %}
-    </h4>
-  </div>
+<form method="post" class="card page-form" novalidate>
+  {% csrf_token %}
   <div class="card-body">
-    <form method="post" novalidate>
-      {% csrf_token %}
-      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
-      <div class="row g-3">
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">
+      {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+    </div>
+    {% endif %}
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    <div class="row gx-3">
         <div class="col-md-12">
-          <label for="{{ form.reference_source.id_for_label }}" class="form-label">{{ form.reference_source.label }}</label>
-          {{ form.reference_source }}
-          <div class="form-text small">{% trans "Example: ISO 27002:2022 A.5.1, ANSSI hygiene guide #12, internal policy POL-007." %}</div>
-        </div>
-        <div class="col-md-12">
-          <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
-          {{ form.description }}
-        </div>
-        <div class="col-md-6">
-          <label for="{{ form.severity.id_for_label }}" class="form-label">{{ form.severity.label }}</label>
-          {{ form.severity }}
-        </div>
-        <div class="col-md-6">
-          <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
-          {{ form.status }}
+          {% include "includes/form_field.html" with field=form.reference_source %}
+          <div class="form-text mt-n2 mb-3">{% trans "Example: ISO 27002:2022 A.5.1, ANSSI hygiene guide #12, internal policy POL-007." %}</div>
         </div>
         <div class="col-md-12">
-          <label for="{{ form.linked_requirement.id_for_label }}" class="form-label">{{ form.linked_requirement.label }}</label>
-          {{ form.linked_requirement }}
-          <div class="form-text small">{% trans "Optional link to a compliance requirement for traceability." %}</div>
+          {% include "includes/form_field.html" with field=form.description %}
         </div>
         <div class="col-md-12">
-          <label for="{{ form.recommended_remediation.id_for_label }}" class="form-label">{{ form.recommended_remediation.label }}</label>
-          {{ form.recommended_remediation }}
+          {% include "includes/form_field.html" with field=form.severity %}
         </div>
-      </div>
-      <div class="d-flex justify-content-between mt-4">
-        <a href="{% url 'risks:assessment-detail' pk=assessment.pk %}" class="btn btn-outline-danger">
-          <i class="bi bi-arrow-left me-1"></i>{% trans "Cancel" %}
-        </a>
-        <button type="submit" class="btn btn-primary">
-          <i class="bi bi-check-lg me-1"></i>{% trans "Save" %}
-        </button>
-      </div>
-    </form>
+        <div class="col-md-12">
+          {% include "includes/form_field.html" with field=form.linked_requirement %}
+          <div class="form-text mt-n2 mb-3">{% trans "Optional link to a compliance requirement for traceability." %}</div>
+        </div>
+        <div class="col-md-12">
+          {% include "includes/form_field.html" with field=form.recommended_remediation %}
+        </div>
+    </div>
+    <div class="page-form__actions form-actions-sticky d-flex gap-2">
+      <a href="{{ assessment_url }}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
+    </div>
   </div>
-</div>
+</form>
 {% endwith %}
 {% endblock %}

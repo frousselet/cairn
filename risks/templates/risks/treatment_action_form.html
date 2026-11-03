@@ -1,48 +1,8 @@
-{% extends "base.html" %}
-{% load i18n ui %}
+{% extends "includes/page_form.html" %}
+{% load i18n %}
 
-{% block title %}{% if form.instance.pk %}{% trans "Edit" %}{% else %}{% trans "New" %}{% endif %} {% trans "treatment action" %} - Cairn{% endblock %}
-
-{% block content %}
-{% if form.instance.pk %}{% trans "Edit treatment action" as page_title %}{% else %}{% trans "New treatment action" as page_title %}{% endif %}
-{% page_header page_title %}{% endpage_header %}
-
-<div class="card">
-  <div class="card-body">
-    <form method="post" class="mt-0">
-      {% csrf_token %}
-
-    {% if form.non_field_errors %}
-    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-    {% endif %}
-      {% for field in form %}
-      {% if field.is_hidden %}
-      {{ field }}
-      {% else %}
-      <div class="mb-3">
-        {% if field.field.widget.input_type == 'checkbox' %}
-        <div class="form-check">
-          {{ field }}
-          <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
-        </div>
-        {% else %}
-        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
-        {{ field }}
-        {% endif %}
-        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-        {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-      </div>
-      {% endif %}
-      {% endfor %}
-      <div class="d-flex gap-2 form-actions-sticky">
-        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
-        {% if form.instance.treatment_plan_id %}
-        <a href="{% url 'risks:treatment-plan-detail' form.instance.treatment_plan_id %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
-        {% else %}
-        <a href="{% url 'risks:treatment-plan-list' %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
-        {% endif %}
-      </div>
-    </form>
-  </div>
-</div>
+{% block page_form_actions %}
+{% if form.instance.treatment_plan_id %}{% url 'risks:treatment-plan-detail' form.instance.treatment_plan_id as action_cancel_url %}{% elif view.kwargs.plan_pk %}{% url 'risks:treatment-plan-detail' view.kwargs.plan_pk as action_cancel_url %}{% else %}{% url 'risks:treatment-plan-list' as action_cancel_url %}{% endif %}
+<a href="{{ action_cancel_url }}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+<button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
 {% endblock %}

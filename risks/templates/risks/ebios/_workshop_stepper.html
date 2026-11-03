@@ -28,30 +28,30 @@ Context:
                   data-ebios-stepper-step="{{ step.workshop_number }}">
               {% csrf_token %}
               <button type="submit"
-                      class="btn btn-sm btn-outline-success d-flex align-items-center gap-1 rounded-pill px-3"
-                      style="white-space:nowrap;font-size:.8rem;border-width:2px"
+                      class="btn btn-sm btn-outline-success d-flex align-items-center gap-1 rounded-pill px-3 text-nowrap text-sm"
+                      style="border-width:2px"
                       title="{% trans 'Start this workshop' %}">
-                <i class="bi bi-arrow-right-circle"></i>
+                <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
                 <span class="fw-semibold">W{{ step.workshop_number }}</span>
                 <span class="d-none d-md-inline">- {{ step.short_label }}</span>
               </button>
             </form>
           {% else %}
             {# Past / current / future pill: link to the workshop detail page #}
-            <a class="flex-shrink-0 d-inline-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none"
+            <a class="flex-shrink-0 d-inline-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none text-nowrap text-sm"
                data-ebios-stepper-step="{{ step.workshop_number }}"
                href="{% url 'risks:ebios-workshop-detail' assessment_pk=assessment.pk workshop_pk=step.pk %}"
                title="{{ step.label }} ({{ step.status }})"
-               style="white-space:nowrap;font-size:.8rem;padding:.3rem 0;
-                 {% if step.state == 'done' %}color:var(--text-muted);background:var(--bg-subtle);border:1px solid var(--border-light)
-                 {% elif step.state == 'current' %}color:#fff;background:var(--accent);font-weight:600;border:2px solid var(--accent)
-                 {% elif step.state == 'review' %}color:#fff;background:var(--warning);font-weight:600;border:2px solid var(--warning)
-                 {% else %}color:var(--text-muted);opacity:.55;background:var(--bg-subtle);border:1px dashed var(--border-light){% endif %}
+               style="padding:.3rem 0;
+                 {% if step.state == 'done' %}color:var(--text-muted);background:var(--surface-subtle);border:1px solid var(--border-light)
+                 {% elif step.state == 'current' %}color:var(--accent-contrast);background:var(--accent);font-weight:600;border:2px solid var(--accent)
+                 {% elif step.state == 'review' %}color:var(--btn-warning-fg);background:var(--warning);font-weight:600;border:2px solid var(--warning)
+                 {% else %}color:var(--text-muted);opacity:.55;background:var(--surface-subtle);border:1px dashed var(--border-light){% endif %}
                  {% if step.is_current %}box-shadow:0 0 0 2px var(--info){% endif %}">
-              {% if step.state == 'done' %}<i class="bi bi-check-circle-fill" style="font-size:.7rem"></i>
-              {% elif step.state == 'current' %}<i class="bi bi-circle-fill" style="font-size:.5rem"></i>
-              {% elif step.state == 'review' %}<i class="bi bi-eye-fill" style="font-size:.7rem"></i>
-              {% else %}<i class="bi bi-circle" style="font-size:.5rem"></i>{% endif %}
+              {% if step.state == 'done' %}<i class="bi bi-check-circle-fill" style="font-size:.7rem" aria-hidden="true"></i>
+              {% elif step.state == 'current' %}<i class="bi bi-circle-fill" style="font-size:.5rem" aria-hidden="true"></i>
+              {% elif step.state == 'review' %}<i class="bi bi-eye-fill" style="font-size:.7rem" aria-hidden="true"></i>
+              {% else %}<i class="bi bi-circle" style="font-size:.5rem" aria-hidden="true"></i>{% endif %}
               <span>W{{ step.workshop_number }}</span>
               <span class="d-none d-md-inline">- {{ step.short_label }}</span>
             </a>
@@ -64,14 +64,14 @@ Context:
         <div style="margin-top:16px" data-ebios-stepper-branch>
           <div class="d-flex flex-wrap gap-2">
             {% for step in ebios_rejected_steps %}
-              <a class="flex-shrink-0 d-inline-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none"
+              <a class="flex-shrink-0 d-inline-flex align-items-center gap-1 rounded-pill px-3 text-decoration-none text-nowrap text-sm"
                  data-ebios-stepper-step="rejected-{{ step.workshop_number }}"
                  href="{% url 'risks:ebios-workshop-detail' assessment_pk=assessment.pk workshop_pk=step.pk %}"
                  title="{{ step.label }} ({% trans 'Rejected' %})"
-                 style="white-space:nowrap;font-size:.8rem;padding:.3rem 0;
-                   color:#fff;background:var(--danger);font-weight:600;border:2px solid var(--danger)
+                 style="padding:.3rem 0;
+                   color:var(--btn-danger-fg);background:var(--danger);font-weight:600;border:2px solid var(--danger)
                    {% if step.is_current %};box-shadow:0 0 0 2px var(--info){% endif %}">
-                <i class="bi bi-x-circle-fill" style="font-size:.7rem"></i>
+                <i class="bi bi-x-circle-fill" style="font-size:.7rem" aria-hidden="true"></i>
                 <span>W{{ step.workshop_number }}</span>
                 <span class="d-none d-md-inline">- {{ step.short_label }}</span>
               </a>

@@ -7,31 +7,34 @@
 {% block content %}
 {% page_header threat.name reference=threat.reference nav="risks:threat-list" accent="risks" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'risks:threat-update' threat.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'risks:threat-update' threat.pk %}" class="btn btn-primary" hx-get="{% url 'risks:threat-update' threat.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.threat_detail" %}
 {% include "includes/lifecycle_stepper.html" %}
 
-<div class="card">
-  <div class="card-body">
-    <dl class="row mb-0">
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Scopes" %}</dt><dd class="col-sm-9">{% grouped_scope_badges threat.scopes.all %}{% if not threat.scopes.all %}<span style="color:var(--text-muted)">-</span>{% endif %}</dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt><dd class="col-sm-9">{{ threat.get_type_display }}</dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Origin" %}</dt><dd class="col-sm-9">{{ threat.get_origin_display|default:"-" }}</dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Category" %}</dt><dd class="col-sm-9">{{ threat.get_category_display|default:"-" }}</dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Typical likelihood" %}</dt><dd class="col-sm-9">{{ threat.typical_likelihood|default:"-" }}</dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "From catalog" %}</dt><dd class="col-sm-9">{% if threat.is_from_catalog %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>
-      <dd class="col-sm-9">
-        <span class="badge text-bg-{% if threat.status == 'active' %}success{% else %}secondary{% endif %}">
-          {{ threat.get_status_display }}
-        </span>
-      </dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Description" %}</dt><dd class="col-sm-9">{{ threat.description|default:"-"|safe }}</dd>
-      <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Tags" %}</dt>
-      <dd class="col-sm-9">{% for tag in threat.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}-{% endfor %}</dd>
-    </dl>
-  </div>
-</div>
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") threat.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Typical likelihood") threat.typical_likelihood icon="speedometer2" tone="neutral" %}
+    {% kpi_tile _("Type") threat.get_type_display icon="lightning" tone="neutral" %}
+  {% endslot %}
+
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if threat.description %}<div class="ov-rich">{{ threat.description|safe }}</div>{% endif %}{% endsection_card %}
+
+  {% section_card _("General") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Type") threat.get_type_display %}
+      {% meta_item _("Origin") threat.get_origin_display %}
+      {% meta_item _("Category") threat.get_category_display %}
+      {% meta_item _("Typical likelihood") threat.typical_likelihood %}
+      {% meta_item _("From catalog") %}{% if threat.is_from_catalog %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Status") %}{% choice_badge threat "status" type="status" %}{% endmeta_item %}
+      {% meta_item _("Scopes") wide=True %}{% if threat.scopes.all %}{% grouped_scope_badges threat.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") wide=True %}{% tag_list threat.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% record_card threat %}
+{% enddetail_layout %}
 {% endblock %}
