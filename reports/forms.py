@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from compliance.constants import AssessmentStatus
 from compliance.models import ComplianceAssessment, Framework
 from context.models import Scope
-from core.lifecycle import reportable
+from core.lifecycle import linkable_or_linked, reportable
 from reports.constants import (
     DecisionPriority,
 )
@@ -147,8 +147,11 @@ class ManagementReviewModelForm(forms.ModelForm):
         )
         self.fields["facilitator"].queryset = active_users
         self.fields["approver"].queryset = active_users
-        self.fields["scopes"].queryset = Scope.objects.exclude(
-            status="archived",
+        # Scopes run a lifecycle: offer the linkable ones, plus those this
+        # review already covers (a scope archived since is never dropped).
+        editing = bool(self.instance and self.instance.pk)
+        self.fields["scopes"].queryset = linkable_or_linked(
+            Scope.objects.all(), self.instance.scopes.all() if editing else None,
         ).order_by("name")
 
     def clean(self):
@@ -268,8 +271,9 @@ class IsmsChangeForm(forms.ModelForm):
         self.fields["owner"].queryset = User.objects.filter(
             is_active=True,
         ).order_by("last_name", "first_name", "email")
-        self.fields["affected_scopes"].queryset = Scope.objects.exclude(
-            status="archived",
+        editing = bool(self.instance and self.instance.pk)
+        self.fields["affected_scopes"].queryset = linkable_or_linked(
+            Scope.objects.all(), self.instance.affected_scopes.all() if editing else None,
         ).order_by("name")
         self.fields["affected_frameworks"].queryset = Framework.objects.order_by(
             "short_name", "name",

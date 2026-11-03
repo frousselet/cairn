@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dates follow the active locale everywhere, and short numeric dates put the day first in English as in French.
 - The lifecycle editor shows its steps, transitions and JSON as stacked cards instead of tabs.
 
+### Fixed
+
+- Creating or editing a management review, and editing an ISMS change, failed with a server error; their scope pickers now offer the linkable scopes.
+
 ## [0.36.1] - 2026-11-03
 
 ### Added
