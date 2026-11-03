@@ -14,6 +14,7 @@ change has to prove before it ships.
 | [Report](report.md) | Generate a PDF, DOCX, PPTX or XLSX deliverable |
 | [Assistant provider](assistant-provider.md) | Plug a different LLM backend into Ask Cairn |
 | [Interface conventions](ui-conventions.md) | The patterns a new screen is expected to follow |
+| [UI components](ui-components.md) | The component framework screens are assembled from, and the anatomy of each kind of page |
 
 ## The idea to hold on to
 

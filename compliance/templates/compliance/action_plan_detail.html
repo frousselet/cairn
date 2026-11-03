@@ -1,193 +1,67 @@
 {% extends "base.html" %}
-{% load i18n ui %}
-{% load help_tags %}
-{% load accounts_tags %}
+{% load i18n ui help_tags accounts_tags %}
 
 {% block title %}{{ action_plan.name }} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header action_plan.name reference=action_plan.reference nav="compliance:action-plan-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'compliance:action-plan-update' action_plan.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+  <a href="{% url 'compliance:action-plan-update' action_plan.pk %}" class="btn btn-primary" hx-get="{% url 'compliance:action-plan-update' action_plan.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "compliance.action_plan_detail" %}
 
-
 {% include "includes/lifecycle_stepper.html" %}
 
-{# ══════════════════════════════════════════════════════════════ #}
-{# ── Two-column layout ──────────────────────────────────────── #}
-{# ══════════════════════════════════════════════════════════════ #}
-<div class="row g-4">
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") action_plan.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Priority") action_plan.get_priority_display icon="flag" tone=action_plan.priority|badge_variant:"level" %}
+    {% kpi_tile _("Progress") action_plan.progress_percentage suffix="%" icon="bar-chart-steps" tone="info" %}
+    {% kpi_tile _("Target date") action_plan.target_date icon="calendar-event" tone="neutral" %}
+  {% endslot %}
 
-  {# ── LEFT COLUMN ── #}
-  <div class="col-lg-8">
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if action_plan.description %}<div class="ov-rich">{{ action_plan.description|safe }}</div>{% endif %}{% endsection_card %}
 
-    {# ── Description ── #}
-    {% if action_plan.description %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-2"><i class="bi bi-text-left me-1"></i>{% trans "Description" %}</h6>
-        <div>{{ action_plan.description|safe }}</div>
-      </div>
-    </div>
-    {% endif %}
+  {% if action_plan.gap_description or action_plan.remediation_plan %}
+  {% section_card _("Remediation") icon="tools" %}
+    {% meta_list %}
+      {% if action_plan.gap_description %}{% meta_item _("Gap description") %}<div class="ov-rich">{{ action_plan.gap_description|safe }}</div>{% endmeta_item %}{% endif %}
+      {% if action_plan.remediation_plan %}{% meta_item _("Remediation plan") %}<div class="ov-rich">{{ action_plan.remediation_plan|safe }}</div>{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
+  {% endif %}
 
-    {# ── Remediation ── #}
-    {% if action_plan.gap_description or action_plan.remediation_plan %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-tools me-1"></i>{% trans "Remediation" %}</h6>
-        {% if action_plan.gap_description %}
-        <div class="mb-3">
-          <div class="fw-medium mb-1" style="font-size:.85rem">{% trans "Gap description" %}</div>
-          <div style="font-size:.875rem">{{ action_plan.gap_description|safe }}</div>
-        </div>
-        {% endif %}
-        {% if action_plan.remediation_plan %}
-        <div>
-          <div class="fw-medium mb-1" style="font-size:.85rem">{% trans "Remediation plan" %}</div>
-          <div style="font-size:.875rem">{{ action_plan.remediation_plan|safe }}</div>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
+  {% with risks=action_plan.risks.all findings=action_plan.findings.all requirements=action_plan.requirements.all treatment_plans=action_plan.related_treatment_plans.all %}
+  {% if risks or findings or requirements or treatment_plans %}
+  {% section_card _("Linkages") icon="link-45deg" %}
+    {% meta_list %}
+      {% if risks %}{% meta_item _("Linked risks") %}<div class="ref-links">{% for risk in risks %}{% url 'compliance:risk-preview' risk.pk as preview %}{% ref_link risk preview_url=preview %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+      {% if findings %}{% meta_item _("Linked findings") %}<div class="ref-links">{% for finding in findings %}{% url 'compliance:finding-preview' finding.pk as preview %}{% ref_link finding preview_url=preview label=finding.description|striptags|truncatechars:80 %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+      {% if requirements %}{% meta_item _("Linked requirements") %}<div class="ref-links">{% for req in requirements %}{% url 'compliance:requirement-detail' req.pk as req_url %}{% ref_link req url=req_url label=req.name|truncatechars:80 %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+      {% if treatment_plans %}{% meta_item _("Related treatment plans") %}<div class="ref-links">{% for tp in treatment_plans %}{% url 'risks:treatment-plan-detail' tp.pk as tp_url %}{% ref_link tp url=tp_url label=tp.name|truncatechars:80 %}{% endfor %}</div>{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
+  {% endif %}
+  {% endwith %}
 
-    {# ── Linkages ── #}
-    {% if action_plan.risks.all or action_plan.findings.all or action_plan.requirements.all or action_plan.related_treatment_plans.all %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-link-45deg me-1"></i>{% trans "Linkages" %}</h6>
-        {% if action_plan.risks.all %}
-        <div class="{% if action_plan.findings.all or action_plan.requirements.all or action_plan.related_treatment_plans.all %}mb-3 pb-3 border-bottom{% endif %}">
-          <div class="fw-medium mb-2" style="font-size:.85rem"><i class="bi bi-exclamation-triangle me-1"></i>{% trans "Linked risks" %}</div>
-          {% for risk in action_plan.risks.all %}
-          <div class="d-flex align-items-baseline mb-2">
-            <span class="ref flex-shrink-0" style="width:5.5rem;display:inline-block">{{ risk.reference }}</span>
-            <a href="#" hx-get="{% url 'compliance:risk-preview' risk.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" style="text-decoration:none;color:var(--accent);font-weight:500">{{ risk.name }}</a>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-        {% if action_plan.findings.all %}
-        <div class="{% if action_plan.requirements.all or action_plan.related_treatment_plans.all %}mb-3 pb-3 border-bottom{% endif %}">
-          <div class="fw-medium mb-2" style="font-size:.85rem"><i class="bi bi-flag me-1"></i>{% trans "Linked findings" %}</div>
-          {% for finding in action_plan.findings.all %}
-          <div class="d-flex align-items-baseline mb-2">
-            <span class="ref flex-shrink-0" style="width:5.5rem;display:inline-block">{{ finding.reference }}</span>
-            <a href="#" hx-get="{% url 'compliance:finding-preview' finding.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" style="text-decoration:none;color:var(--accent);font-weight:500">{{ finding.description|striptags|truncatechars:80 }}</a>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-        {% if action_plan.requirements.all %}
-        <div class="{% if action_plan.related_treatment_plans.all %}mb-3 pb-3 border-bottom{% endif %}">
-          <div class="fw-medium mb-2" style="font-size:.85rem"><i class="bi bi-clipboard-check me-1"></i>{% trans "Linked requirements" %}</div>
-          {% for req in action_plan.requirements.all %}
-          <div class="d-flex align-items-baseline mb-2">
-            <span class="ref flex-shrink-0" style="width:5.5rem;display:inline-block">{{ req.reference }}</span>
-            <a href="{% url 'compliance:requirement-detail' req.pk %}" style="text-decoration:none;color:var(--accent);font-weight:500">{{ req.name|truncatechars:80 }}</a>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-        {% if action_plan.related_treatment_plans.all %}
-        <div>
-          <div class="fw-medium mb-2" style="font-size:.85rem"><i class="bi bi-shield-check me-1"></i>{% trans "Related treatment plans" %}</div>
-          {% for tp in action_plan.related_treatment_plans.all %}
-          <div class="d-flex align-items-baseline mb-2">
-            <span class="ref flex-shrink-0" style="width:5.5rem;display:inline-block">{{ tp.reference }}</span>
-            <a href="{% url 'risks:treatment-plan-detail' tp.pk %}" style="text-decoration:none;color:var(--accent);font-weight:500">{{ tp.name|truncatechars:80 }}</a>
-          </div>
-          {% endfor %}
-        </div>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
+  {% section_card _("People and planning") icon="people" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Supervisor") %}{% if action_plan.owner %}{% user_badge action_plan.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Assignees") %}{% for user in action_plan.assignees.all %}<div class="mb-2">{% user_badge user size=28 link=True block=True %}</div>{% endfor %}{% endmeta_item %}
+      {% meta_item _("Start date") action_plan.start_date %}
+      {% meta_item _("Target date") action_plan.target_date %}
+      {% meta_item _("Completion date") action_plan.completion_date %}
+      {% meta_item _("Cost estimate") %}{% if action_plan.cost_estimate %}{{ action_plan.cost_estimate|floatformat:2 }} €{% endif %}{% endmeta_item %}
+      {% meta_item _("Progress") %}{% progress_bar action_plan.progress_percentage %}{% endmeta_item %}
+      {% meta_item _("Tags") %}{% tag_list action_plan.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-    {# ── Comments ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3">
-          <i class="bi bi-chat-dots me-1"></i>{% trans "Comments" %}
-          {% if comment_count %}<span class="badge bg-secondary ms-1">{{ comment_count }}</span>{% endif %}
-        </h6>
-        {% include "compliance/_action_plan_comments.html" %}
-      </div>
-    </div>
+  {% section_card _("Comments") icon="chat-dots" count=comment_count|default:"" %}
+    {% include "compliance/_action_plan_comments.html" %}
+  {% endsection_card %}
 
-  </div>
-
-  {# ── RIGHT COLUMN (sidebar) ── #}
-  <div class="col-lg-4">
-
-    {# ── Status & Priority ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Status" %}</dt>
-          <dd class="mb-3">
-            <span class="badge text-bg-{% if action_plan.status == 'validated' %}success{% elif action_plan.status == 'closed' %}dark{% elif action_plan.status == 'cancelled' %}danger{% elif action_plan.status == 'to_validate' or action_plan.status == 'implementation_to_validate' %}warning{% elif action_plan.status == 'to_implement' %}primary{% elif action_plan.status == 'to_define' %}info{% else %}secondary{% endif %}">
-              {{ action_plan.get_status_display }}
-            </span>
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Priority" %}</dt>
-          <dd class="mb-3">
-            <span class="badge text-bg-{% if action_plan.priority == 'critical' %}danger{% elif action_plan.priority == 'high' %}warning{% elif action_plan.priority == 'medium' %}info{% else %}secondary{% endif %}">
-              {{ action_plan.get_priority_display }}
-            </span>
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Progress" %}</dt>
-          <dd class="mb-3">
-            <div class="progress" style="height:8px">
-              <div class="progress-bar" style="width:{{ action_plan.progress_percentage }}%"></div>
-            </div>
-            <small class="text-muted">{{ action_plan.progress_percentage }}%</small>
-          </dd>
-          <dt class="text-muted small mb-1">{% trans "Tags" %}</dt>
-          <dd class="mb-0">{% for tag in action_plan.tags.all %}<span class="badge me-1" style="background-color:{{ tag.color }};color:#fff">{{ tag.name }}</span>{% empty %}<span class="text-muted">-</span>{% endfor %}</dd>
-        </dl>
-      </div>
-    </div>
-
-    {# ── People ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-people me-1"></i>{% trans "People" %}</h6>
-        <div class="mb-3">
-          <div class="text-muted small mb-1">{% trans "Supervisor" %}</div>
-          {% if action_plan.owner %}{% user_badge action_plan.owner size=28 link=True block=True %}{% else %}<span class="text-muted">-</span>{% endif %}
-        </div>
-        <div>
-          <div class="text-muted small mb-1">{% trans "Assignees" %}</div>
-          {% for user in action_plan.assignees.all %}
-          <div class="mb-2">{% user_badge user size=28 link=True block=True %}</div>
-          {% empty %}<span class="text-muted">-</span>{% endfor %}
-        </div>
-      </div>
-    </div>
-
-    {# ── Planning ── #}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3"><i class="bi bi-calendar3 me-1"></i>{% trans "Planning" %}</h6>
-        <dl class="mb-0">
-          <dt class="text-muted small mb-1">{% trans "Start date" %}</dt>
-          <dd class="mb-3">{{ action_plan.start_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Target date" %}</dt>
-          <dd class="mb-3">{{ action_plan.target_date }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Completion date" %}</dt>
-          <dd class="mb-3">{{ action_plan.completion_date|default:"-" }}</dd>
-          <dt class="text-muted small mb-1">{% trans "Cost estimate" %}</dt>
-          <dd class="mb-0">{% if action_plan.cost_estimate %}{{ action_plan.cost_estimate|floatformat:2 }} €{% else %}-{% endif %}</dd>
-        </dl>
-      </div>
-    </div>
-
-  </div>
-</div>
-
+  {% record_card action_plan %}
+{% enddetail_layout %}
 {% endblock %}

@@ -1,0 +1,4 @@
+<div class="ov-row{% if lead %} ov-row--lead{% endif %}" role="group"{% if label %} aria-label="{{ label }}"{% endif %}>
+  <span class="ov-row__icon" aria-hidden="true"><i class="bi bi-{{ icon|default:'dot' }}"></i></span>
+  <div class="ov-row__value{% if rich %} ov-rich{% endif %}">{{ body_html }}</div>
+</div>

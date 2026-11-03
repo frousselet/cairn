@@ -439,3 +439,7 @@ class TestStyleGuideView:
         assert b"filter-chip" in resp.content
         assert b"stepper__pill" in resp.content
         assert b"bulk-actions-bar" in resp.content
+        # Layout and content primitives (detail anatomy)
+        for marker in (b"detail-layout", b"kpi-tile__value", b"section-card__title", b"ov-row",
+                       b"meta-list__item", b"ref-link", b"tag-pill", b"section-card__details", b"ui-dash"):
+            assert marker in resp.content, marker

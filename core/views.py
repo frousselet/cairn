@@ -2069,6 +2069,22 @@ class StyleGuideView(LoginRequiredMixin, TemplateView):
             Step(value="closed", label=_("Closed"), state="future"),
         ]
         ctx["stepper_cancelled"] = Step(value="cancelled", label=_("Cancelled"), state="future")
+        # Sample data for the layout and content primitives (detail anatomy).
+        from types import SimpleNamespace
+
+        ctx["sg_tags"] = [
+            SimpleNamespace(name="GDPR", color="#1E3A8A"),
+            SimpleNamespace(name="NIS2", color="#0E7490"),
+            SimpleNamespace(name=_("Pale tag"), color="#FDE68A"),
+        ]
+        ctx["sg_item"] = SimpleNamespace(
+            reference="CAPL-17",
+            name=_("Privileged access review"),
+            priority="high",
+            get_priority_display=lambda: _("High"),
+            compliance_status="partially_compliant",
+            get_compliance_status_display=lambda: _("Partially compliant"),
+        )
 
         ctx["bulk_actions"] = [
             {"label": _("Export"), "url": "#", "variant": "secondary", "icon": "download"},

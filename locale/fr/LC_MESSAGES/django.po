@@ -18589,3 +18589,61 @@ msgstr "Frontend (JavaScript, CSS, polices)"
 
 msgid "Development and testing"
 msgstr "Développement et tests"
+
+msgid "People and planning"
+msgstr "Personnes et planning"
+
+msgid "Not set"
+msgstr "Non renseigné"
+
+msgid "Key figures"
+msgstr "Chiffres clés"
+
+msgid "Pale tag"
+msgstr "Étiquette pâle"
+
+msgid "Privileged access review"
+msgstr "Revue des accès à privilèges"
+
+msgid "Traceability"
+msgstr "Traçabilité"
+
+msgid ""
+"Pattern - detail page (detail_layout, kpi_tile, section_card, overview, "
+"meta_list, record_card)"
+msgstr ""
+"Modèle - page de détail (detail_layout, kpi_tile, section_card, overview, "
+"meta_list, record_card)"
+
+msgid ""
+"Every detail page is composed from these primitives. See docs/sdk/ui-"
+"components.md for the anatomy and the full API."
+msgstr ""
+"Chaque page de détail est composée de ces primitives. Voir docs/sdk/ui-"
+"components.md pour l'anatomie et l'API complète."
+
+msgid "Overview"
+msgstr "Vue d'ensemble"
+
+msgid ""
+"Icon-led rows : the label names the row for assistive technology, an empty "
+"row is dropped."
+msgstr ""
+"Lignes introduites par une icône : le libellé nomme la ligne pour les "
+"technologies d'assistance, une ligne vide est omise."
+
+msgid "Preview in the drawer"
+msgstr "Aperçu dans le panneau"
+
+msgid "Properties"
+msgstr "Propriétés"
+
+msgid "Collapsible section"
+msgstr "Section repliable"
+
+msgid "Secondary content folds into a native details element."
+msgstr "Le contenu secondaire se replie dans un élément details natif."
+
+#, python-format
+msgid "Delete <strong>%(object)s</strong>?"
+msgstr "Supprimer <strong>%(object)s</strong> ?"
