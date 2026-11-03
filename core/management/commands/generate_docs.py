@@ -32,7 +32,7 @@ from django.urls import URLPattern, URLResolver, get_resolver
 # third-party dependency). Used to keep the generated inventories on-topic.
 PROJECT_APPS = (
     "accounts", "assets", "assistant", "compliance", "context", "core",
-    "helpers", "incidents", "mcp", "reports", "risks", "trust_center",
+    "documents", "helpers", "incidents", "mcp", "reports", "risks", "trust_center",
 )
 
 OUTPUT_SUBDIR = Path("docs") / "reference" / "generated"
@@ -261,6 +261,7 @@ MCP_MODULE_TITLES = {
     "assets": "Assets",
     "compliance": "Compliance",
     "context": "Governance and context",
+    "documents": "Documents",
     "general": "General",
     "incidents": "Incidents",
     "reports": "Reports and management review",

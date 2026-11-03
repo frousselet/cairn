@@ -269,3 +269,29 @@ class TestCampaign:
         campaign, (person,) = self._running()
         with pytest.raises(IntegrityError), transaction.atomic():
             PolicyAcknowledgement.objects.create(campaign=campaign, user=person)
+
+
+class TestIntegrationFindings:
+    """Gaps found while wiring the API and MCP surfaces."""
+
+    def test_acknowledgement_rows_have_a_creation_history(self):
+        version = put_in_force(PolicyVersionFactory())
+        campaign = AcknowledgementCampaignFactory(policy_version=version)
+        campaign.audience_users.add(UserFactory())
+        campaign.transition_to(CAMPAIGN_RUNNING, UserFactory())
+        row = campaign.acknowledgements.get()
+        assert row.history.filter(history_type="+").exists()
+
+    def test_retired_document_refuses_a_new_version(self):
+        version = put_in_force(PolicyVersionFactory())
+        policy = version.policy
+        policy.refresh_from_db()
+        policy.transition_to(POLICY_RETIRED, UserFactory(), comment="Withdrawn")
+        with pytest.raises(DomainRefusalError):
+            policy.new_version(UserFactory())
+
+    def test_effective_date_of_an_approved_version_is_frozen(self):
+        version = put_in_force(PolicyVersionFactory())
+        version.effective_from = datetime.date(2020, 1, 1)
+        with pytest.raises(ValidationError):
+            version.save()
