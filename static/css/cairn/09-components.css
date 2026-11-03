@@ -736,26 +736,26 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 
 /* Label-less info row : the icon stands in for the field name. The accessible
    name is on the wrapper (role=group + aria-label); the icon is decorative. */
-.supplier-overview .ov-row {
+:is(.supplier-overview, .overview) .ov-row {
   display: grid;
   grid-template-columns: 1.4rem minmax(0, 1fr);
   column-gap: .7rem;
   align-items: start;
   min-width: 0;
 }
-.supplier-overview .ov-row__icon {
+:is(.supplier-overview, .overview) .ov-row__icon {
   display: inline-flex; align-items: center; justify-content: center;
   height: 1.5rem; color: var(--text-muted); font-size: .95rem; line-height: 1;
 }
-.supplier-overview .ov-row__value {
+:is(.supplier-overview, .overview) .ov-row__value {
   min-width: 0; color: var(--text-primary); font-size: .9rem; line-height: 1.5;
   overflow-wrap: anywhere;
 }
 /* Lead row : the description shown first and a touch larger. */
-.supplier-overview .ov-row--lead .ov-row__value { font-size: 1.02rem; line-height: 1.5; }
-.supplier-overview .ov-row--lead .ov-row__icon { height: 1.6rem; font-size: 1.02rem; }
-.supplier-overview .ov-link { color: var(--accent); text-decoration: none; }
-.supplier-overview .ov-link:hover { text-decoration: underline; }
+:is(.supplier-overview, .overview) .ov-row--lead .ov-row__value { font-size: 1.02rem; line-height: 1.5; }
+:is(.supplier-overview, .overview) .ov-row--lead .ov-row__icon { height: 1.6rem; font-size: 1.02rem; }
+:is(.supplier-overview, .overview) .ov-link { color: var(--accent); text-decoration: none; }
+:is(.supplier-overview, .overview) .ov-link:hover { text-decoration: underline; }
 /* Drop the separator line between the merged zone and the next subsection. */
 /* Match the sibling card titles (h6.text-muted -> --bs-secondary-color) rather than the lighter eyebrow grey. */
 .supplier-overview + .detail-subhead { border-top: 0; margin-top: 0; padding-top: 0; color: var(--bs-secondary-color); }
@@ -779,12 +779,12 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 .note-cartouche > :last-child { margin-bottom: 0; }
 .note-cartouche p { margin-bottom: .35rem; }
 .note-cartouche p:last-child { margin-bottom: 0; }
-.supplier-overview .ov-rich > :first-child { margin-top: 0; }
-.supplier-overview .ov-rich > :last-child { margin-bottom: 0; }
-.supplier-overview .ov-rich p { margin-bottom: .5rem; }
-.supplier-overview .ov-rich p:last-child { margin-bottom: 0; }
-.supplier-overview .ov-rich ul,
-.supplier-overview .ov-rich ol { margin-bottom: .5rem; padding-left: 1.25rem; }
+:is(.supplier-overview, .overview) .ov-rich > :first-child { margin-top: 0; }
+:is(.supplier-overview, .overview) .ov-rich > :last-child { margin-bottom: 0; }
+:is(.supplier-overview, .overview) .ov-rich p { margin-bottom: .5rem; }
+:is(.supplier-overview, .overview) .ov-rich p:last-child { margin-bottom: 0; }
+:is(.supplier-overview, .overview) .ov-rich ul,
+:is(.supplier-overview, .overview) .ov-rich ol { margin-bottom: .5rem; padding-left: 1.25rem; }
 
 @media (max-width: 991.98px) {
   .supplier-overview__info { padding-left: 1.5rem; }

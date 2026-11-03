@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A documented UI component framework (`detail_layout`, `section_card`, `overview`, `meta_list`, `kpi_tile`, `record_card`, `ref_link`, `tag_list`, `choice_badge`, the dash) with shared page-form and delete shells, catalogued in `docs/sdk/ui-components.md` and on `/styleguide/`.
+
 ### Changed
 
-- The design system stylesheet moves out of `base.html` into ten ordered, browser-cached files under `static/css/cairn/`.
+- The design system stylesheet moves out of `base.html` into ordered, browser-cached files under `static/css/cairn/`.
+- Status, level and lifecycle badges render as the same dot pill in tables, cards and headers alike.
 
 ## [0.36.1] - 2026-11-03
 

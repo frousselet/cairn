@@ -1,0 +1,11 @@
+{% comment %}{% kpi_tile %} : one key figure of a list or detail rail.{% endcomment %}
+<div class="card kpi-tile kpi-tile--{{ tone }}{% if href %} kpi-tile--link{% endif %}">
+  {% if href %}<a href="{{ href }}" class="stretched-link" aria-label="{{ label }}"></a>{% endif %}
+  <div class="card-body d-flex align-items-center gap-3">
+    {% if icon %}<span class="kpi-tile__icon kpi-tile__icon--{{ tone }}"><i class="bi bi-{{ icon }}" aria-hidden="true"></i></span>{% endif %}
+    <div class="min-w-0">
+      <div class="kpi-tile__label text-truncate">{{ label }}</div>
+      <div class="kpi-tile__value kpi-tile__value--{{ size }} tabular-nums">{{ value }}{% if suffix %}<span class="kpi-tile__suffix"> {{ suffix }}</span>{% endif %}</div>
+    </div>
+  </div>
+</div>

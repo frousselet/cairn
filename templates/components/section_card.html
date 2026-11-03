@@ -1,0 +1,22 @@
+{% comment %}{% section_card %} : a titled content card. See docs/sdk/ui-components.md.{% endcomment %}
+<section class="card section-card{% if flush %} section-card--flush{% endif %}"{% if card_id %} id="{{ card_id }}"{% endif %}>
+  {% if collapsible %}
+  <details class="section-card__details"{% if open %} open{% endif %}>
+    <summary class="section-card__head">
+      <h2 class="section-card__title">{% if icon %}<i class="bi bi-{{ icon }}" aria-hidden="true"></i>{% endif %}<span>{{ title }}</span>{% if count is not None and count != "" %}<span class="section-card__count tabular-nums">{{ count }}</span>{% endif %}</h2>
+      {% if actions_html %}<div class="section-card__actions">{{ actions_html }}</div>{% endif %}
+      <i class="bi bi-chevron-down section-card__chevron" aria-hidden="true"></i>
+    </summary>
+    <div class="section-card__body">{{ body_html }}</div>
+  </details>
+  {% else %}
+  {% if title %}
+  <header class="section-card__head">
+    <h2 class="section-card__title">{% if icon %}<i class="bi bi-{{ icon }}" aria-hidden="true"></i>{% endif %}<span>{{ title }}</span>{% if count is not None and count != "" %}<span class="section-card__count tabular-nums">{{ count }}</span>{% endif %}</h2>
+    {% if actions_html %}<div class="section-card__actions">{{ actions_html }}</div>{% endif %}
+  </header>
+  {% endif %}
+  <div class="section-card__body">{{ body_html }}</div>
+  {% endif %}
+  {% if footer_html %}<footer class="section-card__footer">{{ footer_html }}</footer>{% endif %}
+</section>

@@ -1,0 +1,5 @@
+{% comment %}{% detail_layout %} : main column + optional key-figures rail. See docs/sdk/ui-components.md.{% endcomment %}
+<div class="detail-layout{% if not rail_html %} detail-layout--single{% endif %}">
+  <div class="detail-main">{{ main_html }}</div>
+  {% if rail_html %}<aside class="detail-rail" aria-label="{{ rail_label }}">{{ rail_html }}</aside>{% endif %}
+</div>

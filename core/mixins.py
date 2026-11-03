@@ -2,17 +2,51 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 import json
 import math
+from urllib.parse import urlsplit
 
 from django.contrib.auth import get_user_model
 from django.db import models as dj_models
 from django.db.models import Count, F, Q
 from django.http import HttpResponse
+from django.urls import Resolver404, resolve
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.template.loader import render_to_string
 from django.utils.dateparse import parse_date
 from django.utils.translation import pgettext_lazy
 
 from core.db import NaturalSortKey
 from core.query_params import INT_MAX, INT_MIN, parse_int, parse_uuid
+
+
+def page_form_cancel_url(view) -> str:
+    """Where Cancel leads on a full-page form: the view's list, else back.
+
+    The view's ``success_url`` when it is a plain URL (the list it returns
+    to), else the same-host referrer, else the dashboard. A referrer from
+    another host is never used, so Cancel cannot become an open redirect.
+    """
+    success_url = getattr(view, "success_url", None)
+    if success_url and "{" not in str(success_url):
+        return str(success_url)
+    request = view.request
+    referer = request.META.get("HTTP_REFERER", "")
+    if referer and url_has_allowed_host_and_scheme(
+        referer, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return referer
+    return "/"
+
+
+def nav_name_for(url: str):
+    """The NAV_TREE url name of ``url`` (for a breadcrumb), or ``None``."""
+    from core.navigation import NAV_TREE
+
+    path = urlsplit(str(url)).path or "/"
+    try:
+        match = resolve(path)
+    except Resolver404:
+        return None
+    return match.view_name if match.view_name in NAV_TREE else None
 
 
 class HtmxFormMixin:
@@ -54,10 +88,18 @@ class HtmxFormMixin:
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        is_edit = getattr(self, "object", None) and self.object.pk
+        title = self.modal_title_update if is_edit else self.modal_title_create
         if self._is_htmx():
-            is_edit = getattr(self, "object", None) and self.object.pk
-            ctx["modal_title"] = self.modal_title_update if is_edit else self.modal_title_create
+            ctx["modal_title"] = title
             ctx["is_modal"] = True
+        else:
+            # The full-page fallback (``includes/page_form.html``): same title
+            # as the modal, a Cancel target and the breadcrumb of the list.
+            ctx.setdefault("form_title", title)
+            cancel_url = page_form_cancel_url(self)
+            ctx.setdefault("cancel_url", cancel_url)
+            ctx.setdefault("form_nav", nav_name_for(cancel_url))
         return ctx
 
     def form_valid(self, form):

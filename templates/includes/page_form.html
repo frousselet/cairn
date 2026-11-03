@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% comment %}
+  Full-page rendering of a create / edit form : the fallback for a direct
+  visit (a bookmarked or shared /edit/ URL, a non-JS client). In the product
+  every form opens in the modal shell (includes/modal_form.html); this page
+  renders the very same fields, in the same order and anatomy, so the two
+  never drift.
+
+  An entity template is one line : {% extends "includes/page_form.html" %}.
+  Context (set by core.mixins.HtmxFormMixin) : form_title, cancel_url,
+  form_nav (breadcrumb). Blocks : page_form_fields (custom field markup),
+  page_form_actions (custom footer), page_form_extra (after the card).
+
+  A multi-step form shows every step at once, each as a titled group : on a
+  page there is room, and nothing is hidden behind a Next button.
+{% endcomment %}
+
+{% block title %}{{ form_title }} - Cairn{% endblock %}
+
+{% block content %}
+{% if form_nav %}
+{% page_header form_title nav=form_nav %}{% endpage_header %}
+{% else %}
+{% page_header form_title %}{% endpage_header %}
+{% endif %}
+
+<form method="post" class="card page-form"{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
+  {% csrf_token %}
+  <div class="card-body">
+    {% block page_form_fields %}
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">
+      {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+    </div>
+    {% endif %}
+    {% if form.is_stepped %}
+      {% for step in form.iter_steps %}
+      {% if form.is_multistep %}
+      <fieldset class="page-form__step">
+        <legend class="section-card__title">{% if step.icon %}<i class="bi bi-{{ step.icon }}" aria-hidden="true"></i>{% endif %}<span>{{ step.title }}</span></legend>
+        {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
+      </fieldset>
+      {% else %}
+        {% for row in step.rows %}{% include "includes/form_row.html" %}{% endfor %}
+      {% endif %}
+      {% endfor %}
+      {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    {% else %}
+      {% for field in form %}
+        {% if field.is_hidden %}{{ field }}{% else %}{% include "includes/form_field.html" %}{% endif %}
+      {% endfor %}
+    {% endif %}
+    {% endblock %}
+    <div class="page-form__actions form-actions-sticky d-flex gap-2">
+      {% block page_form_actions %}
+      <a href="{{ cancel_url|default:'/' }}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
+      {% endblock %}
+    </div>
+  </div>
+</form>
+{% block page_form_extra %}{% endblock %}
+{% endblock %}

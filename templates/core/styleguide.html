@@ -335,6 +335,45 @@
   </div>
 </section>
 
+{# ── Detail anatomy : layout and content primitives ─────── #}
+<section class="sg-section">
+  <div class="sg-section__title">{% trans "Pattern - detail page (detail_layout, kpi_tile, section_card, overview, meta_list, record_card)" %}</div>
+  <p class="small text-muted">{% trans "Every detail page is composed from these primitives. See docs/sdk/ui-components.md for the anatomy and the full API." %}</p>
+  {% detail_layout %}
+    {% slot rail %}
+      {% kpi_tile _("Lifecycle stage") _("Validated") icon="signpost-split" %}
+      {% kpi_tile _("Priority") sg_item.get_priority_display icon="flag" tone=sg_item.priority|badge_variant:"level" %}
+      {% kpi_tile _("Progress") 32 suffix="%" icon="bar-chart-steps" tone="info" %}
+      {% kpi_tile _("Target date") None icon="calendar-event" tone="neutral" %}
+    {% endslot %}
+    {% section_card _("Overview") icon="info-circle" %}
+      {% overview %}
+        {% ov_row "text-left" _("Description") lead=True %}{% trans "Icon-led rows : the label names the row for assistive technology, an empty row is dropped." %}{% endov_row %}
+        {% ov_row "journal-bookmark" _("Framework") %}<a href="#" class="ov-link">ISO/IEC 27001:2022</a>{% endov_row %}
+        {% ov_row "hash" _("Number") %}{% endov_row %}
+      {% endoverview %}
+      {% subhead _("Relations") icon="link-45deg" %}
+      <div class="ref-links">
+        {% ref_link sg_item url="#" %}
+        {% ref_link sg_item label=_("Preview in the drawer") preview_url="#" %}
+      </div>
+    {% endsection_card %}
+    {% section_card _("Properties") icon="sliders" count=4 %}
+      {% slot actions %}<button type="button" class="btn btn-sm btn-secondary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add" %}</button>{% endslot %}
+      {% meta_list cols=2 %}
+        {% meta_item _("Priority") %}{% choice_badge sg_item "priority" %}{% endmeta_item %}
+        {% meta_item _("Compliance status") %}{% choice_badge sg_item "compliance_status" %}{% endmeta_item %}
+        {% meta_item _("Tags") %}{% tag_list sg_tags %}{% endmeta_item %}
+        {% meta_item _("Completion date") None %}
+      {% endmeta_list %}
+    {% endsection_card %}
+    {% section_card _("Collapsible section") icon="chevron-expand" collapsible=True open=False %}
+      <p class="mb-0">{% trans "Secondary content folds into a native details element." %}</p>
+    {% endsection_card %}
+    {% record_card request.user %}
+  {% enddetail_layout %}
+</section>
+
 {# ── Accessibility checklist ────────────────────────────── #}
 <section class="sg-section">
   <div class="sg-section__title">{% trans "Accessibility - WCAG 2.2 AA" %}</div>

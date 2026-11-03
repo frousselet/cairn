@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% comment %}
+  Full-page delete confirmation : the fallback for a direct visit to a
+  /delete/ URL (in the product, deletion opens includes/confirm_delete_modal.html).
+  Name the object, spell out the consequence, verb on the button.
+
+  An entity template extends it and fills, at most :
+    delete_title    : "Delete decision"
+    delete_message  : the sentence naming the object
+    delete_details  : consequences (linked records, protection rules)
+  Context : object, and optionally cancel_url.
+{% endcomment %}
+
+{% block title %}{% block delete_title_text %}{% trans "Confirm deletion" %}{% endblock %} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header _("Confirm deletion") %}{% endpage_header %}
+
+<form method="post" class="card page-form page-form--danger">
+  {% csrf_token %}
+  <div class="card-body">
+    <h2 class="h4 mb-3"><i class="bi bi-exclamation-triangle text-danger me-2" aria-hidden="true"></i>{% block delete_title %}{% trans "Confirm deletion" %}{% endblock %}</h2>
+    <p>{% block delete_message %}{% blocktrans with object=object %}Delete <strong>{{ object }}</strong>?{% endblocktrans %}{% endblock %}</p>
+    {% block delete_details %}{% endblock %}
+    <p class="text-muted">{% trans "This action cannot be undone." %}</p>
+    <div class="page-form__actions d-flex gap-2">
+      {% if cancel_url %}{% firstof cancel_url as back %}{% else %}{% back_url "/" as back %}{% endif %}
+      <a href="{{ back }}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+      <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% block delete_button %}{% trans "Delete" %}{% endblock %}</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

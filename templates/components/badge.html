@@ -1,1 +1,1 @@
-{% load i18n %}<span class="badge-dot {{ variant }}{% if classes %} {{ classes }}{% endif %}">{% if icon %}<i class="bi bi-{{ icon }}" aria-hidden="true"></i>{% endif %}{{ label }}</span>
+{% load i18n %}{% if empty %}{{ dash_html }}{% else %}<span class="badge-dot {{ variant|default:'secondary' }}{% if classes %} {{ classes }}{% endif %}">{% if icon %}<i class="bi bi-{{ icon }}" aria-hidden="true"></i>{% endif %}{{ label }}</span>{% endif %}

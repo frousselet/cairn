@@ -68,7 +68,7 @@ built from [`docs/`](docs/README.md).
 | --- | --- |
 | [User guide](docs/user-guide/README.md) | Using the platform, module by module |
 | [Technical](docs/technical/README.md) | Install, configure, secure, operate |
-| [SDK](docs/sdk/README.md) | Extend it : widgets, entities, endpoints, tools |
+| [SDK](docs/sdk/README.md) | Extend it : widgets, entities, endpoints, tools, UI components |
 | [Reference](docs/reference/README.md) | Endpoints, MCP tools, permissions, settings |
 | [Specifications](docs/specs/README.md) | The contract each module is held to |
 

@@ -730,8 +730,8 @@ fields.
 
 | Position | Style | Action |
 | --- | --- | --- |
-| Left | `btn btn-primary` | **Save** (primary CTA). Carries `<i class="bi bi-check-lg me-1"></i>`. |
-| Right | `btn btn-outline-secondary` | **Cancel** (escape hatch). Always present; dismisses the modal and restores the underlying context. |
+| Left (`me-auto`) | `btn btn-secondary` | **Cancel** (escape hatch). Always present; dismisses the modal and restores the underlying context. |
+| Right | `btn btn-primary` | **Save** (primary CTA). Carries `<i class="bi bi-check-lg me-1"></i>`. |
 
 On a **multi-step** form, the footer carries **Back** (outline, far left)
 and **Next** (primary, right) on intermediate steps; the last step
@@ -785,10 +785,10 @@ like every other form - never a separate page. The canonical pattern:
   </p>
 {% endblock %}
 {% block modal_form_actions %}
+  <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
   <button type="submit" class="btn btn-danger">
     <i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete permanently" %}
   </button>
-  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
 {% endblock %}
 ```
 
@@ -800,8 +800,10 @@ Rules:
   risks will be unassigned", "The 3 child sites will move to no parent".
 - Verb on the button: **Delete**, **Archive**, **Remove**, **Reject**.
   Never "OK", "Yes", "Confirm".
-- Destructive primary button on the **left**, Cancel on the right - same
-  order as Save / Cancel; muscle memory wins.
+- Cancel on the **left**, the destructive button on the right - the same
+  order as Cancel / Save; muscle memory wins. The shared shells
+  (`includes/confirm_delete_modal.html`, `includes/confirm_delete_page.html`)
+  already lay this out : extend them rather than writing the footer.
 
 ### Widgets
 

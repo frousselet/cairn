@@ -45,17 +45,38 @@ then `vendor_assets --force`. The tests check that the pinned version is the one
 the declared URLs actually fetch, and that every `vendor/…` path a template asks
 for is a file something mirrors.
 
+## Compose, never re-type
+
+A screen is assembled from [the component framework](ui-components.md) :
+`page_header`, `detail_layout`, `section_card`, `meta_list`, `kpi_tile`,
+`record_card`, `choice_badge`, `tag_list`, the shared form and delete shells.
+Hand-written card, `<dl>`, badge-colour or form-field markup is a review finding
+: the same information then looks different from one page to the next, and a
+fix made in the component never reaches the copy.
+
 ## Detail pages : cards, not tabs
 
-Use a **two-column card layout** : the main content on the left, a sticky
-metadata sidebar on the right carrying status, people and dates. Group the rest
-into stacked cards and collapsible sections.
+Use `{% detail_layout %}` : a stack of `section_card` in the main column, and a
+rail of at most four `kpi_tile` (the lifecycle stage first). The rail sits above
+the content on narrower screens and becomes a sticky right-hand column on wide
+ones. Group the content into stacked cards, collapsible where it is secondary,
+and close the page with `{% record_card obj %}`.
 
 Tabs hide content and cost the reader a click to discover what they do not know
 is there. Use them only where the views are genuinely distinct modes, as the
 compliance assessment does with Planning, Findings and History.
 `compliance/templates/compliance/action_plan_detail.html` is the reference
-implementation.
+implementation, and [the detail anatomy](ui-components.md#detail-page) gives
+the rules for header actions, the rail and the order of the sections.
+
+## Forms and deletion
+
+Every form is the modal shell (`includes/modal_form.html`), and its full-page
+fallback is one line : `{% extends "includes/page_form.html" %}`. A delete
+confirmation extends `includes/confirm_delete_modal.html` or
+`includes/confirm_delete_page.html`. Cancel is always neutral and on the left,
+and the primary or destructive action is on the right. The doctrine is in the
+[brand guidelines](../brand/brand-guidelines.md#forms).
 
 ## Lifecycle transitions
 
@@ -128,7 +149,11 @@ meaning, and motion honours `prefers-reduced-motion`.
 
 ## Checklist
 
-- [ ] Detail page is a two-column card layout, tabs only if genuinely distinct modes
+- [ ] Built from the [components](ui-components.md) : no hand-written card, `<dl>`, badge colour or field markup
+- [ ] No inline `style` for a fixed visual choice (use a component or a utility class)
+- [ ] Empty values show the dash (`{% dash %}`, `|or_dash` or a component that applies it)
+- [ ] Detail page uses `detail_layout`, ends with `record_card`, tabs only if genuinely distinct modes
+- [ ] Forms extend the modal shell, and their page fallback extends `includes/page_form.html`
 - [ ] Lifecycle transitions go through the shared stepper
 - [ ] Lists use `SortableListMixin` and `ScopeFilterMixin`
 - [ ] Renders correctly in light and dark

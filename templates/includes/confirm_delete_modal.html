@@ -1,0 +1,26 @@
+{% load i18n %}
+{% comment %}
+  Drawer-served delete confirmation, swapped into #drawer-form-content and
+  posted through HTMX (the view answers 204 + HX-Trigger=formSaved). Same
+  blocks as includes/confirm_delete_page.html : delete_title, delete_message,
+  delete_details, delete_button.
+{% endcomment %}
+<form method="post" hx-post="{{ request.path }}" hx-target="#drawer-form-content" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']">
+  {% csrf_token %}
+  <div class="modal-header">
+    <h5 class="modal-title">
+      <span class="drawer-title-icon drawer-title-icon--danger"><i class="bi bi-trash" aria-hidden="true"></i></span>
+      {% block delete_title %}{% trans "Confirm deletion" %}{% endblock %}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+  </div>
+  <div class="modal-body drawer-body">
+    <p class="mb-2">{% block delete_message %}{% blocktrans with object=object %}Delete <strong>{{ object }}</strong>?{% endblocktrans %}{% endblock %}</p>
+    {% block delete_details %}{% endblock %}
+    <p class="text-muted small mb-0">{% trans "This action cannot be undone." %}</p>
+  </div>
+  <div class="modal-footer drawer-footer">
+    <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% block delete_button %}{% trans "Delete" %}{% endblock %}</button>
+  </div>
+</form>

@@ -12,7 +12,7 @@ _TONE_CLASSES = {
     "muted": "secondary",
     "secondary": "secondary",
     "info": "info",
-    "primary": "primary",
+    "primary": "accent",
     "warning": "warning",
     "success": "success",
     "danger": "danger",
