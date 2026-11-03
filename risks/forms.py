@@ -54,7 +54,9 @@ def get_scale_choices(scale_type, criteria=None):
     default_c = RiskCriteria.objects.filter(is_default=True).first()
     if default_c and default_c not in candidates:
         candidates.append(default_c)
-    active_c = RiskCriteria.objects.filter(workflow_state="validated").first()
+    from core.lifecycle import reportable
+
+    active_c = reportable(RiskCriteria.objects.all()).first()
     if active_c and active_c not in candidates:
         candidates.append(active_c)
 
@@ -255,6 +257,17 @@ class RiskBaseForm(SteppedFormMixin, forms.ModelForm):
                 empty_value=None, label=self.fields[fname].label,
                 widget=forms.Select(attrs=SELECT_ATTRS),
             )
+        # Picking another assessment reloads the four scales from its criteria
+        # (base.html wires data-scale-source / data-scale-target, in the modal
+        # and on the page alike).
+        from django.urls import reverse
+
+        self.fields["assessment"].widget.attrs["data-scale-source"] = reverse("risks:api-scale-choices")
+        for fname, scale in (
+            ("initial_likelihood", "likelihood"), ("current_likelihood", "likelihood"),
+            ("initial_impact", "impact"), ("current_impact", "impact"),
+        ):
+            self.fields[fname].widget.attrs["data-scale-target"] = scale
         # Link pickers only offer linkable elements (existing links are kept)
         from core.lifecycle import linkable_or_linked
 

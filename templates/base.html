@@ -1129,6 +1129,46 @@
       initGlobalWidgets();
     }
     document.body.addEventListener('htmx:afterSettle', initGlobalWidgets);
+
+    /* Dependent scales: a select carrying data-scale-source="<url>" reloads,
+       when it changes, every select[data-scale-target="<scale>"] of its form
+       from <url>?assessment=<value> (a JSON {scale: [{value, label}]}). The
+       listener is delegated, so it serves the modal, the page form and boosted
+       navigations alike; TomSelect-enhanced targets are refreshed too. */
+    document.addEventListener('change', function(evt) {
+      var source = evt.target;
+      if (!source || !source.matches || !source.matches('select[data-scale-source]') || !source.value) return;
+      var form = source.form;
+      if (!form) return;
+      fetch(source.dataset.scaleSource + '?assessment=' + encodeURIComponent(source.value), {credentials: 'same-origin'})
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+          if (!data) return;
+          form.querySelectorAll('select[data-scale-target]').forEach(function(sel) {
+            var choices = data[sel.dataset.scaleTarget];
+            if (!Array.isArray(choices)) return;
+            var current = sel.value;
+            var keep = choices.some(function(c) { return c.value === current; }) ? current : '';
+            if (sel.tomselect) {
+              var ts = sel.tomselect;
+              ts.clear(true);
+              ts.clearOptions();
+              choices.forEach(function(c) { ts.addOption({value: c.value, text: c.label}); });
+              ts.refreshOptions(false);
+              ts.setValue(keep, true);
+              ts.close();
+            } else {
+              sel.innerHTML = '';
+              choices.forEach(function(c) {
+                var opt = document.createElement('option');
+                opt.value = c.value; opt.textContent = c.label;
+                sel.appendChild(opt);
+              });
+              sel.value = keep;
+            }
+          });
+        });
+    });
   })();
   </script>
 

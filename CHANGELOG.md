@@ -27,11 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Global search results for sites had no link, and the SWOT item and strategy dialogs could not be closed or cancelled.
 - The group permission matrix lacked its Validate column, which shifted the labels of the columns after it, and the decision and ISMS change forms never showed field errors.
 - Risk criteria pages had no lifecycle stepper, so a criteria set could not be submitted or validated from the interface.
+- Choosing another assessment on a new risk now reloads its likelihood and impact scales, in the dialog as on the page (it only ever worked on a fully reloaded page).
 
 ### Security
 
 - Saving a group's permission matrix silently revoked the permissions it did not display (assess, implement, close, cancel, override dates); they now have a column, and permissions outside the registry are never touched.
 - Tag colours are validated before reaching a style attribute, and Cancel / Back links no longer echo an unchecked Referer header.
+- The risk scale endpoint no longer answers with the criteria of an assessment outside the user's scopes.
+
 
 ## [0.36.1] - 2026-11-03
 
