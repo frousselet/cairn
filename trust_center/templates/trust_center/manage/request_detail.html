@@ -1,52 +1,44 @@
 {% extends "base.html" %}
-{% load i18n ui %}
+{% load i18n ui accounts_tags %}
 
-{% block title %}{{ obj.reference }} : Cairn{% endblock %}
+{% block title %}{{ obj.reference }} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header obj.reference nav="trust_center_manage:request-list" accent="trust-center" %}
+{% page_header obj.document.title reference=obj.reference nav="trust_center_manage:request-list" subtitle=obj.requester_name accent="trust-center" %}
   {% include "includes/history_trigger.html" %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 
-<div class="row g-3">
-  <div class="col-12 col-lg-8">
-    <div class="card">
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-4 text-muted">{% trans "Document" %}</dt>
-          <dd class="col-sm-8">{{ obj.document.title }}</dd>
-          <dt class="col-sm-4 text-muted">{% trans "Name" %}</dt>
-          <dd class="col-sm-8">{{ obj.requester_name }}</dd>
-          <dt class="col-sm-4 text-muted">{% trans "Email" %}</dt>
-          <dd class="col-sm-8"><a href="mailto:{{ obj.email }}">{{ obj.email }}</a></dd>
-          <dt class="col-sm-4 text-muted">{% trans "Company" %}</dt>
-          <dd class="col-sm-8">{{ obj.company|default:"-" }}</dd>
-          <dt class="col-sm-4 text-muted">{% trans "Reason for access" %}</dt>
-          <dd class="col-sm-8">{{ obj.reason|default:"-"|linebreaksbr }}</dd>
-          <dt class="col-sm-4 text-muted">{% trans "NDA accepted" %}</dt>
-          <dd class="col-sm-8">
-            {% if obj.nda_accepted %}<i class="bi bi-check-lg text-success"></i> {{ obj.nda_accepted_at|date:"SHORT_DATETIME_FORMAT" }}
-            {% else %}<i class="bi bi-dash text-muted"></i>{% endif %}
-          </dd>
-          <dt class="col-sm-4 text-muted">{% trans "Origin IP" %}</dt>
-          <dd class="col-sm-8 text-muted small">{{ obj.ip_address|default:"-" }}</dd>
-        </dl>
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-lg-4">
-    {% sidebar_card _("Lifecycle") icon="diagram-2" %}
-      {% include "includes/lifecycle_stepper.html" %}
-      <div class="small text-muted mt-3">
-        {% if obj.reviewed_by %}<div>{% trans "Reviewed by" %}: {{ obj.reviewed_by }}</div>{% endif %}
-        {% if obj.reviewed_at %}<div>{% trans "Reviewed at" %}: {{ obj.reviewed_at|date:"SHORT_DATETIME_FORMAT" }}</div>{% endif %}
-        {% if obj.decision_note %}<div class="mt-1">{% trans "Note" %}: {{ obj.decision_note }}</div>{% endif %}
-        {% if obj.download_link_expires_at %}<div class="mt-1">{% trans "Link expires" %}: {{ obj.download_link_expires_at|date:"SHORT_DATETIME_FORMAT" }}</div>{% endif %}
-        <div>{% trans "Downloads" %}: {{ obj.download_count }}</div>
-        <div>{% trans "Received" %}: {{ obj.created_at|date:"SHORT_DATETIME_FORMAT" }}</div>
-      </div>
-    {% endsidebar_card %}
-  </div>
-</div>
+{% include "includes/lifecycle_stepper.html" %}
+
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") obj.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Received") obj.created_at|date:"SHORT_DATETIME_FORMAT" icon="inbox" tone="neutral" size="sm" %}
+    {% kpi_tile _("Downloads") obj.download_count icon="download" tone="info" %}
+    {% kpi_tile _("Link expires") obj.download_link_expires_at|date:"SHORT_DATETIME_FORMAT" icon="hourglass-split" tone="neutral" size="sm" %}
+  {% endslot %}
+
+  {% section_card _("Requester") icon="envelope-paper" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Document") obj.document.title %}
+      {% meta_item _("Name") obj.requester_name %}
+      {% meta_item _("Email") %}<a href="mailto:{{ obj.email }}">{{ obj.email }}</a>{% endmeta_item %}
+      {% meta_item _("Company") obj.company %}
+      {% meta_item _("Reason for access") wide=True %}{% if obj.reason %}{{ obj.reason|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("NDA accepted") %}{% if obj.nda_accepted %}<i class="bi bi-check-lg text-success" aria-hidden="true"></i> {% trans "Yes" %} - <time datetime="{{ obj.nda_accepted_at|date:'c' }}">{{ obj.nda_accepted_at|date:"SHORT_DATETIME_FORMAT" }}</time>{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Origin IP") obj.ip_address %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Decision") icon="clipboard-check" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Reviewed by") %}{% if obj.reviewed_by %}{% user_badge obj.reviewed_by size=24 link=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Reviewed at") %}{% if obj.reviewed_at %}<time datetime="{{ obj.reviewed_at|date:'c' }}">{{ obj.reviewed_at|date:"SHORT_DATETIME_FORMAT" }}</time>{% endif %}{% endmeta_item %}
+      {% meta_item _("Note") wide=True %}{% if obj.decision_note %}{{ obj.decision_note|linebreaksbr }}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% record_card obj %}
+{% enddetail_layout %}
 {% endblock %}

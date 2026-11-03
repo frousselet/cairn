@@ -145,7 +145,7 @@
   <footer class="tc-footer">
     <div class="container d-flex flex-wrap justify-content-between gap-2">
       <span>{% if company.name %}{{ company.name }} : {% endif %}{% trans "Trust Center" %}</span>
-      {% if tc.contact_email %}<span><i class="bi bi-envelope me-1"></i><a href="mailto:{{ tc.contact_email }}">{{ tc.contact_email }}</a></span>{% endif %}
+      {% if tc.contact_email %}<span><i class="bi bi-envelope me-1" aria-hidden="true"></i><a href="mailto:{{ tc.contact_email }}">{{ tc.contact_email }}</a></span>{% endif %}
     </div>
   </footer>
 

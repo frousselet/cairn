@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n accounts_tags ui %}
+{% load i18n accounts_tags ui workflow_tags %}
 
 {% block title %}{{ review.title }} - Cairn{% endblock %}
 
@@ -7,267 +7,210 @@
 {% has_perm "reports.management_review.update" as can_update_review %}
 {% page_header review.title reference=review.reference nav="reports:management-review-list" accent="reports" %}
   {% include "includes/history_trigger.html" %}
-  {% if can_update_review %}
-  <a href="{% url 'reports:management-review-edit' review.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  {% endif %}
-  <div class="btn-group">
-    <a href="{% url 'reports:management-review-export' review.pk 'pptx' %}" hx-boost="false" download class="btn btn-outline-secondary">
-      <i class="bi bi-filetype-pptx me-1"></i>PPTX
+  <div class="btn-group" role="group" aria-label="{% trans 'Export' %}">
+    <a href="{% url 'reports:management-review-export' review.pk 'pptx' %}" hx-boost="false" download class="btn btn-secondary">
+      <i class="bi bi-filetype-pptx me-1" aria-hidden="true"></i>PPTX
     </a>
-    <a href="{% url 'reports:management-review-export' review.pk 'docx' %}" hx-boost="false" download class="btn btn-outline-secondary">
-      <i class="bi bi-filetype-docx me-1"></i>DOCX
+    <a href="{% url 'reports:management-review-export' review.pk 'docx' %}" hx-boost="false" download class="btn btn-secondary">
+      <i class="bi bi-filetype-docx me-1" aria-hidden="true"></i>DOCX
     </a>
   </div>
+  {% if can_update_review %}
+  <a href="{% url 'reports:management-review-edit' review.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 
 {% if data_source == "snapshot" %}
 <div class="alert alert-info d-flex align-items-center py-2 px-3 mb-3" role="alert">
-  <i class="bi bi-snow me-2"></i>
-  <span class="small">{% trans "Frozen data" %} - {% trans "This review is closed. Data shown is the snapshot taken on" %} {{ review.snapshot_taken_at|date:"d/m/Y H:i" }}.</span>
+  <i class="bi bi-snow me-2" aria-hidden="true"></i>
+  <span class="small">{% trans "Frozen data" %} - {% trans "This review is closed. Data shown is the snapshot taken on" %} {{ review.snapshot_taken_at|date:"DATETIME_FORMAT" }}.</span>
 </div>
 {% endif %}
 
 {% include "includes/lifecycle_stepper.html" %}
 
-{% if review.status == 'held' and closure_blockers %}
+{% if closure_blockers %}
 <div class="alert alert-warning py-2 px-3 mb-3">
-  <div class="fw-semibold mb-1"><i class="bi bi-exclamation-triangle me-1"></i>{% trans "Closure blockers" %}</div>
+  <div class="fw-semibold mb-1"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% trans "Closure blockers" %}</div>
   <ul class="mb-0 ps-3 small">
     {% for r in closure_blockers %}<li>{{ r }}</li>{% endfor %}
   </ul>
 </div>
 {% endif %}
 
-{# 2-column layout #}
-<div class="row g-4">
-  {# LEFT #}
-  <div class="col-lg-8">
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") review.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Planned date") review.planned_date icon="calendar-event" tone="neutral" %}
+    {% kpi_tile _("Decisions") decisions|length icon="check2-square" tone="info" %}
+    {% kpi_tile _("ISMS changes") isms_changes|length icon="arrow-repeat" tone="neutral" %}
+  {% endslot %}
 
-    {% if review.description %}
-    <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted small fw-semibold mb-2">{% trans "Description" %}</h6>
-      <div>{{ review.description|linebreaks }}</div>
-    </div></div>
-    {% endif %}
+  {% section_card _("Details") icon="info-circle" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Frequency") review.get_frequency_display %}
+      {% meta_item _("Period") %}{{ review.period_start }} - {{ review.period_end }}{% endmeta_item %}
+      {% meta_item _("Planned date") review.planned_date %}
+      {% meta_item _("Held date") review.held_date %}
+      {% meta_item _("Location") review.location %}
+      {% meta_item _("Next review") review.next_review_date %}
+      {% meta_item _("Facilitator") %}{% if review.facilitator %}{% user_badge review.facilitator size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Approver") %}{% if review.approver %}{% user_badge review.approver size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% with scopes=review.scopes.all %}{% if scopes %}<div class="ref-links">{% for s in scopes %}{% url 'context:scope-detail' s.pk as scope_url %}{% ref_link s url=scope_url %}{% endfor %}</div>{% endif %}{% endwith %}{% endmeta_item %}
+      {% meta_item _("Tags") %}{% tag_list review.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-    {% if review.agenda %}
-    <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted small fw-semibold mb-2">{% trans "Agenda" %}</h6>
-      <div>{{ review.agenda|linebreaks }}</div>
-    </div></div>
-    {% endif %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if review.description %}{{ review.description|linebreaks }}{% endif %}{% endsection_card %}
 
-    {# Decisions (outputs 9.3.3) #}
-    <div class="card mb-3"><div class="card-body">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="text-muted small fw-semibold mb-0">{% trans "Decisions (clause 9.3.3)" %}</h6>
-        {% if can_update_review %}
-        <a href="{% url 'reports:decision-create' review.pk %}" class="btn btn-sm btn-outline-primary">
-          <i class="bi bi-plus-lg me-1"></i>{% trans "Add decision" %}
-        </a>
-        {% endif %}
-      </div>
-      {% if decisions %}
-      <div class="table-responsive">
-        <table class="table table-sm mb-0">
-          <thead><tr>
-            <th>{% trans "Ref." %}</th><th>{% trans "Title" %}</th>
-            <th>{% trans "Owner" %}</th>
-            <th>{% trans "Due" %}</th><th>{% trans "Status" %}</th><th></th>
-          </tr></thead>
-          <tbody>
-          {% for d in decisions %}
-          <tr>
-            <td><span class="ref">{{ d.reference }}</span></td>
-            <td>
-              <span class="cell-stack">
-                <span style="font-weight:600">{{ d.title }}</span>
-                <span class="cell-sub">{{ d.get_category_display }}</span>
-              </span>
-            </td>
-            <td class="small">{{ d.owner|default:"-" }}</td>
-            <td class="small">{{ d.due_date|default:"-"|date:"d/m/Y" }}</td>
-            <td><span class="badge bg-secondary">{{ d.get_status_display }}</span></td>
-            <td class="text-end">
-              {% if can_update_review %}
-              <a href="{% url 'reports:decision-edit' d.pk %}" class="btn btn-sm btn-link p-0 me-2" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-              {% if not d.linked_action_plan %}
-              <a href="{% url 'reports:decision-promote' d.pk %}" class="btn btn-sm btn-link p-0" title="{% trans 'Promote to action plan' %}"><i class="bi bi-arrow-up-right-circle"></i></a>
-              {% endif %}
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <p class="text-muted small mb-0">{% trans "No decisions recorded yet." %}</p>
-      {% endif %}
-    </div></div>
+  {% section_card _("Agenda") icon="list-ol" hide_empty=True %}{% if review.agenda %}{{ review.agenda|linebreaks }}{% endif %}{% endsection_card %}
 
-    {# ISMS changes #}
-    <div class="card mb-3"><div class="card-body">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h6 class="text-muted small fw-semibold mb-0">{% trans "ISMS changes (clause 9.3.3)" %}</h6>
-        {% if can_update_review %}
-        <a href="{% url 'reports:isms-change-create' review.pk %}" class="btn btn-sm btn-outline-primary">
-          <i class="bi bi-plus-lg me-1"></i>{% trans "Add change" %}
-        </a>
-        {% endif %}
-      </div>
-      {% if isms_changes %}
-      <div class="table-responsive">
-        <table class="table table-sm mb-0">
-          <thead><tr>
-            <th>{% trans "Ref." %}</th><th>{% trans "Title" %}</th>
-            <th>{% trans "Type" %}</th><th>{% trans "Owner" %}</th>
-            <th>{% trans "Target" %}</th><th>{% trans "Status" %}</th><th></th>
-          </tr></thead>
-          <tbody>
-          {% for c in isms_changes %}
-          <tr>
-            <td><span class="ref">{{ c.reference }}</span></td>
-            <td>{{ c.title }}</td>
-            <td class="small">{{ c.get_change_type_display }}</td>
-            <td class="small">{{ c.owner|default:"-" }}</td>
-            <td class="small">{{ c.target_date|default:"-"|date:"d/m/Y" }}</td>
-            <td><span class="badge bg-secondary">{{ c.get_status_display }}</span></td>
-            <td class="text-end">
-              {% if can_update_review %}
-              <a href="{% url 'reports:isms-change-edit' c.pk %}" class="btn btn-sm btn-link p-0" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <p class="text-muted small mb-0">{% trans "No ISMS changes recorded yet." %}</p>
-      {% endif %}
-    </div></div>
-
-    {# Executive summary #}
-    <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted small fw-semibold mb-2">{% trans "Executive summary" %}</h6>
-      {% if review.summary %}
-        <div>{{ review.summary|linebreaks }}</div>
-      {% else %}
-        <p class="text-muted small mb-0">{% trans "No summary yet." %}</p>
-      {% endif %}
-    </div></div>
-
-    {# Comments #}
-    <div class="card mb-3"><div class="card-body">
-      <h6 class="text-muted small fw-semibold mb-3">{% trans "Comments" %}</h6>
-      {% if can_update_review %}
-      <form method="post" action="{% url 'reports:management-review-comment-create' review.pk %}" class="mb-3">
-        {% csrf_token %}
-        {{ comment_form.content }}
-        <div class="text-end mt-2"><button type="submit" class="btn btn-sm btn-primary">{% trans "Post comment" %}</button></div>
-      </form>
-      {% endif %}
-      {% for c in comments %}
-      <div class="mb-2 pb-2 border-bottom">
-        <div class="small text-muted">{{ c.author|default:"-" }} - {{ c.created_at|date:"d/m/Y H:i" }}</div>
-        <div>{{ c.content|linebreaks }}</div>
-      </div>
-      {% empty %}
-      <p class="text-muted small mb-0">{% trans "No comments yet." %}</p>
-      {% endfor %}
-    </div></div>
-
-  </div>
-
-  {# RIGHT (sticky sidebar) #}
-  <div class="col-lg-4">
-    <div class="card position-sticky" style="top:1rem">
-      <div class="card-body">
-        <h6 class="text-muted small fw-semibold mb-3">{% trans "Details" %}</h6>
-
-        <dl class="row small mb-0">
-          <dt class="col-5">{% trans "Status" %}</dt>
-          <dd class="col-7"><span class="badge bg-secondary">{{ review.get_status_display }}</span></dd>
-
-          <dt class="col-5">{% trans "Frequency" %}</dt>
-          <dd class="col-7">{{ review.get_frequency_display }}</dd>
-
-          <dt class="col-5">{% trans "Period" %}</dt>
-          <dd class="col-7">{{ review.period_start|date:"d/m/Y" }} - {{ review.period_end|date:"d/m/Y" }}</dd>
-
-          <dt class="col-5">{% trans "Planned date" %}</dt>
-          <dd class="col-7">{{ review.planned_date|date:"d/m/Y" }}</dd>
-
-          {% if review.held_date %}
-          <dt class="col-5">{% trans "Held date" %}</dt>
-          <dd class="col-7">{{ review.held_date|date:"d/m/Y" }}</dd>
-          {% endif %}
-
-          {% if review.location %}
-          <dt class="col-5">{% trans "Location" %}</dt>
-          <dd class="col-7">{{ review.location }}</dd>
-          {% endif %}
-
-          <dt class="col-5">{% trans "Facilitator" %}</dt>
-          <dd class="col-7">{{ review.facilitator }}</dd>
-
-          {% if review.approver %}
-          <dt class="col-5">{% trans "Approver" %}</dt>
-          <dd class="col-7">{{ review.approver }}</dd>
-          {% endif %}
-
-          {% if review.next_review_date %}
-          <dt class="col-5">{% trans "Next review" %}</dt>
-          <dd class="col-7">{{ review.next_review_date|date:"d/m/Y" }}</dd>
-          {% endif %}
-
-          {% if review.scopes.all %}
-          <dt class="col-5">{% trans "Scopes" %}</dt>
-          <dd class="col-7">
-            {% for s in review.scopes.all %}<span class="badge bg-light text-dark me-1">{{ s.name }}</span>{% endfor %}
-          </dd>
-          {% endif %}
-        </dl>
-
-        <hr>
-
-        <h6 class="text-muted small fw-semibold mb-2">{% trans "Participants" %}</h6>
-        {% if participants %}
-        <ul class="list-unstyled small mb-0">
-          {% for p in participants %}
-          <li class="d-flex align-items-center justify-content-between gap-2 mb-2">
-            <span class="text-truncate">
-              {% if p.attended %}<i class="bi bi-check-circle-fill text-success me-1"></i>{% else %}<i class="bi bi-circle text-muted me-1"></i>{% endif %}
-              {{ p.display_name }}
-              <small class="text-muted">- {{ p.display_role }}</small>
+  {# Decisions (outputs 9.3.3) #}
+  {% section_card _("Decisions (clause 9.3.3)") icon="check2-square" count=decisions|length flush=decisions|length %}
+    {% slot actions %}{% if can_update_review %}
+    <a href="{% url 'reports:decision-create' review.pk %}" class="btn btn-sm btn-secondary">
+      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add decision" %}
+    </a>
+    {% endif %}{% endslot %}
+    {% if decisions %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr>
+          <th>{% trans "Ref." %}</th><th>{% trans "Title" %}</th>
+          <th>{% trans "Owner" %}</th>
+          <th>{% trans "Due" %}</th><th>{% trans "Status" %}</th><th><span class="visually-hidden">{% trans "Actions" %}</span></th>
+        </tr></thead>
+        <tbody>
+        {% for d in decisions %}
+        <tr>
+          <td><a href="{% url 'reports:decision-detail' d.pk %}" class="ref">{{ d.reference }}</a></td>
+          <td>
+            <span class="cell-stack">
+              <a href="{% url 'reports:decision-detail' d.pk %}" class="cell-link">{{ d.title }}</a>
+              <span class="cell-sub">{{ d.get_category_display }}</span>
             </span>
-            {% if p.user_id == request.user.id or can_update_review %}
-              {% if p.signature_data %}
-              <a href="{% url 'reports:participant-sign' p.pk %}" class="btn btn-sm btn-outline-success py-0 px-2" title="{% trans 'Re-sign or remove signature' %}">
-                <i class="bi bi-check2"></i> {% trans "Signed" %}
-              </a>
-              {% else %}
-              <a href="{% url 'reports:participant-sign' p.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2">
-                <i class="bi bi-pen"></i> {% trans "Sign" %}
-              </a>
-              {% endif %}
-            {% elif p.signature_data %}
-              <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">
-                <i class="bi bi-check2"></i> {% trans "Signed" %}
-              </span>
+          </td>
+          <td>{{ d.owner|or_dash }}</td>
+          <td class="tabular-nums">{{ d.due_date|date:"SHORT_DATE_FORMAT"|or_dash }}</td>
+          <td>{% choice_badge d "status" type="status" %}</td>
+          <td class="text-end text-nowrap">
+            {% if can_update_review %}
+            <a href="{% url 'reports:decision-edit' d.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+            {% if not d.linked_action_plan %}
+            <a href="{% url 'reports:decision-promote' d.pk %}" class="btn btn-sm btn-outline-success" title="{% trans 'Promote to action plan' %}" aria-label="{% trans 'Promote to action plan' %}"><i class="bi bi-arrow-up-right-circle" aria-hidden="true"></i></a>
             {% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p class="text-muted small mb-0">{% trans "No participants yet. Add some via Edit." %}</p>
-        {% endif %}
-      </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
-  </div>
-</div>
+    {% else %}
+    {% empty_state message=_("No decisions recorded yet.") compact=True %}
+    {% endif %}
+  {% endsection_card %}
 
+  {# ISMS changes #}
+  {% section_card _("ISMS changes (clause 9.3.3)") icon="arrow-repeat" count=isms_changes|length flush=isms_changes|length %}
+    {% slot actions %}{% if can_update_review %}
+    <a href="{% url 'reports:isms-change-create' review.pk %}" class="btn btn-sm btn-secondary">
+      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add change" %}
+    </a>
+    {% endif %}{% endslot %}
+    {% if isms_changes %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr>
+          <th>{% trans "Ref." %}</th><th>{% trans "Title" %}</th>
+          <th>{% trans "Type" %}</th><th>{% trans "Owner" %}</th>
+          <th>{% trans "Target" %}</th><th>{% trans "Status" %}</th><th><span class="visually-hidden">{% trans "Actions" %}</span></th>
+        </tr></thead>
+        <tbody>
+        {% for c in isms_changes %}
+        <tr>
+          <td><span class="ref">{{ c.reference }}</span></td>
+          <td>{{ c.title }}</td>
+          <td>{{ c.get_change_type_display }}</td>
+          <td>{{ c.owner|or_dash }}</td>
+          <td class="tabular-nums">{{ c.target_date|date:"SHORT_DATE_FORMAT"|or_dash }}</td>
+          <td>{% choice_badge c "status" type="status" %}</td>
+          <td class="text-end">
+            {% if can_update_review %}
+            <a href="{% url 'reports:isms-change-edit' c.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% empty_state message=_("No ISMS changes recorded yet.") compact=True %}
+    {% endif %}
+  {% endsection_card %}
 
+  {# Executive summary #}
+  {% section_card _("Executive summary") icon="file-text" %}
+    {% if review.summary %}
+      {{ review.summary|linebreaks }}
+    {% else %}
+      {% empty_state message=_("No summary yet.") compact=True %}
+    {% endif %}
+  {% endsection_card %}
+
+  {# Participants #}
+  {% section_card _("Participants") icon="people" count=participants|length %}
+    {% if participants %}
+    <ul class="list-unstyled mb-0">
+      {% for p in participants %}
+      <li class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+        <span style="min-width:0">
+          {% if p.attended %}<i class="bi bi-check-circle-fill text-success me-1" title="{% trans 'Attended' %}" aria-label="{% trans 'Attended' %}"></i>{% else %}<i class="bi bi-circle text-muted me-1" aria-hidden="true"></i>{% endif %}
+          {{ p.display_name }}
+          <span class="text-meta">- {{ p.display_role }}</span>
+        </span>
+        {% if p.user_id == request.user.id or can_update_review %}
+          {% if p.signature_data %}
+          <a href="{% url 'reports:participant-sign' p.pk %}" class="btn btn-sm btn-success" title="{% trans 'Re-sign or remove signature' %}">
+            <i class="bi bi-check2 me-1" aria-hidden="true"></i>{% trans "Signed" %}
+          </a>
+          {% else %}
+          <a href="{% url 'reports:participant-sign' p.pk %}" class="btn btn-sm btn-secondary">
+            <i class="bi bi-pen me-1" aria-hidden="true"></i>{% trans "Sign" %}
+          </a>
+          {% endif %}
+        {% elif p.signature_data %}
+          {% badge variant="success" label=_("Signed") %}
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    {% empty_state message=_("No participants yet. Add some via Edit.") compact=True %}
+    {% endif %}
+  {% endsection_card %}
+
+  {# Comments #}
+  {% section_card _("Comments") icon="chat-dots" count=comments|length %}
+    {% if can_update_review %}
+    <form method="post" action="{% url 'reports:management-review-comment-create' review.pk %}" class="mb-3">
+      {% csrf_token %}
+      {{ comment_form.content }}
+      <div class="text-end mt-2"><button type="submit" class="btn btn-sm btn-primary">{% trans "Post comment" %}</button></div>
+    </form>
+    {% endif %}
+    {% for c in comments %}
+    <div class="mb-2 pb-2 border-bottom">
+      <div class="text-meta">{{ c.author|or_dash }} - <time datetime="{{ c.created_at|date:'c' }}">{{ c.created_at|date:"DATETIME_FORMAT" }}</time></div>
+      <div>{{ c.content|linebreaks }}</div>
+    </div>
+    {% empty %}
+    {% empty_state message=_("No comments yet.") compact=True %}
+    {% endfor %}
+  {% endsection_card %}
+
+  {% record_card review %}
+{% enddetail_layout %}
 {% endblock %}

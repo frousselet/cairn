@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load i18n ui workflow_tags %}
 
-{% block title %}{% trans "Document requests" %} : Cairn{% endblock %}
+{% block title %}{% trans "Document requests" %} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header _("Document requests") nav="trust_center_manage:request-list" %}
-  <a href="{% url 'trust_center_manage:hub' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
+{% page_header _("Document requests") nav="trust_center_manage:request-list" accent="trust-center" %}
+  <a href="{% url 'trust_center_manage:hub' %}" class="btn btn-secondary"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{% trans "Back" %}</a>
 {% endpage_header %}
 
 {% include "includes/table_search.html" %}
@@ -25,7 +25,7 @@
         {% for req in requests %}
         <tr>
           <td><a href="{% url 'trust_center_manage:request-detail' req.pk %}" class="ref">{{ req.reference }}</a></td>
-          <td>{{ req.document.title }}</td>
+          <td><a href="{% url 'trust_center_manage:request-detail' req.pk %}" class="cell-link">{{ req.document.title }}</a></td>
           <td>
             <span class="cell-stack">
               <span>{{ req.requester_name }}</span>

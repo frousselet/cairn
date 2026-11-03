@@ -25,7 +25,7 @@
           <tbody>
             {% for entry in entries %}
             <tr>
-              <td>{{ entry.history_date|date:"d/m/Y H:i:s" }}</td>
+              <td class="tabular-nums"><time datetime="{{ entry.history_date|date:'c' }}">{{ entry.history_date|date:"DATETIME_FORMAT" }}</time></td>
               <td>{% if entry.history_user %}{{ entry.history_user }}{% else %}{% trans "System" %}{% endif %}</td>
               <td>
                 <span class="cell-stack">
@@ -34,7 +34,7 @@
                 </span>
               </td>
               <td>
-                <span class="badge text-bg-{{ entry.action_badge }}">{{ entry.action_label }}</span>
+                {% badge variant=entry.action_badge label=entry.action_label %}
               </td>
               <td title="{{ entry.object_repr }}">{{ entry.object_repr|truncatechars:80 }}</td>
             </tr>

@@ -8,127 +8,103 @@
 {% block content %}
 {% if account_user.is_robot %}{% translate "Robot account" as user_kind %}{% endif %}
 {% page_header account_user.display_name nav="accounts:user-list" subtitle=user_kind accent="accounts" %}
-  {% has_perm "system.users.update" as can_edit %}
-  {% if can_edit %}
-  <a href="{% url 'accounts:user-update' account_user.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  {% endif %}
   {% has_perm "system.users.impersonate" as can_impersonate %}
   {% if can_impersonate and account_user.is_active and account_user.pk != request.user.pk and not request.impersonator %}
   <form method="post" action="{% url 'accounts:impersonate-start' account_user.pk %}" class="d-inline">
     {% csrf_token %}
-    <button type="submit" class="btn btn-outline-warning" onclick="return confirm('{% trans "Impersonate this user?" %}')">
-      <i class="bi bi-eye me-1"></i>{% trans "Impersonate" %}
+    <button type="submit" class="btn btn-secondary" onclick="return confirm('{% trans "Impersonate this user?" %}')">
+      <i class="bi bi-eye me-1" aria-hidden="true"></i>{% trans "Impersonate" %}
     </button>
   </form>
+  {% endif %}
+  {% has_perm "system.users.update" as can_edit %}
+  {% if can_edit %}
+  <a href="{% url 'accounts:user-update' account_user.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
   {% endif %}
 {% endpage_header %}
 {% help_modal "accounts.user_detail" %}
 
-<ul class="nav nav-tabs mb-4" role="tablist">
-  <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#info">{% trans "Information" %}</a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#groups-tab">{% trans "Groups" %}</a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#perms-tab">{% trans "Effective permissions" %}</a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#logs-tab">{% trans "Access log" %}</a></li>
-</ul>
+{% detail_layout %}
+  {% slot rail %}
+    {% if account_user.is_active %}
+      {% if account_user.is_locked %}
+      {% kpi_tile _("Status") _("Locked") icon="lock" tone="warning" size="sm" %}
+      {% else %}
+      {% kpi_tile _("Status") _("Active") icon="person-check" tone="success" size="sm" %}
+      {% endif %}
+    {% else %}
+    {% kpi_tile _("Status") _("Inactive") icon="person-dash" tone="neutral" size="sm" %}
+    {% endif %}
+    {% kpi_tile _("Groups") groups|length icon="diagram-3" %}
+    {% kpi_tile _("Effective permissions") permissions|length icon="key" tone="info" %}
+    {% kpi_tile _("Last login") account_user.last_login|date:"SHORT_DATETIME_FORMAT" icon="box-arrow-in-right" tone="neutral" size="sm" %}
+  {% endslot %}
 
-<div class="tab-content">
-  <div class="tab-pane fade show active" id="info">
-    <div class="card">
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Type" %}</dt><dd class="col-sm-9">{{ account_user.get_user_type_display }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Email" %}</dt><dd class="col-sm-9">{{ account_user.email }}</dd>
-          {% if not account_user.is_robot %}
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "First name" %}</dt><dd class="col-sm-9">{{ account_user.first_name }}</dd>
-          {% endif %}
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Last name" %}</dt><dd class="col-sm-9">{{ account_user.last_name }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Job title" %}</dt><dd class="col-sm-9">{{ account_user.job_title|default:"-" }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Department" %}</dt><dd class="col-sm-9">{{ account_user.department|default:"-" }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Phone" %}</dt><dd class="col-sm-9">{{ account_user.phone|default:"-" }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Language" %}</dt><dd class="col-sm-9">{{ account_user.get_language_display }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Timezone" %}</dt><dd class="col-sm-9">{{ account_user.timezone }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Status" %}</dt>
-          <dd class="col-sm-9">
-            {% if account_user.is_active %}
-              {% if account_user.is_locked %}
-              <span class="badge bg-warning text-dark">{% trans "Locked" %}</span>
-              {% else %}
-              <span class="badge bg-success">{% trans "Active" %}</span>
-              {% endif %}
-            {% else %}
-            <span class="badge bg-secondary">{% trans "Inactive" %}</span>
-            {% endif %}
-          </dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Last login" %}</dt><dd class="col-sm-9">{{ account_user.last_login|date:"d/m/Y H:i"|default:"-" }}</dd>
-          <dt class="col-sm-3" style="color:var(--text-muted);font-size:.82rem">{% trans "Created on" %}</dt><dd class="col-sm-9">{{ account_user.created_at|date:"d/m/Y H:i" }}</dd>
-        </dl>
-      </div>
+  {% section_card _("Information") icon="person-vcard" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Type") account_user.get_user_type_display %}
+      {% meta_item _("Email") %}<a href="mailto:{{ account_user.email }}">{{ account_user.email }}</a>{% endmeta_item %}
+      {% if not account_user.is_robot %}{% meta_item _("First name") account_user.first_name %}{% endif %}
+      {% meta_item _("Last name") account_user.last_name %}
+      {% meta_item _("Job title") account_user.job_title %}
+      {% meta_item _("Department") account_user.department %}
+      {% meta_item _("Phone") account_user.phone %}
+      {% meta_item _("Language") account_user.get_language_display %}
+      {% meta_item _("Timezone") account_user.timezone %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Groups") icon="diagram-3" count=groups|length %}
+    {% if groups %}
+    <div class="ref-links">
+      {% for group in groups %}
+      {% url 'accounts:group-detail' group.pk as group_url %}
+      <div class="d-flex align-items-baseline flex-wrap gap-2">{% ref_link group url=group_url %}{% if group.is_system %}{% badge variant="info" label=_("System") %}{% endif %}</div>
+      {% endfor %}
     </div>
-  </div>
+    {% else %}
+    {% empty_state message=_("No group assigned.") compact=True %}
+    {% endif %}
+  {% endsection_card %}
 
-  <div class="tab-pane fade" id="groups-tab">
-    <div class="card">
-      <div class="card-body">
-        {% if groups %}
-        <ul class="list-group list-group-flush">
-          {% for group in groups %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <a href="{% url 'accounts:group-detail' group.pk %}" class="cell-link">{{ group.name }}</a>
-            {% if group.is_system %}<span class="badge" style="background:var(--accent-soft);color:var(--accent);font-size:.82rem;padding:.4em .8em">{% trans "System" %}</span>{% endif %}
-          </li>
+  {% section_card _("Effective permissions") icon="key" count=permissions|length collapsible=True open=False %}
+    {% if permissions %}
+    <ul class="list-unstyled row row-cols-1 row-cols-md-2 row-cols-xl-3 g-1 mb-0 text-sm">
+      {% for perm in permissions %}
+      <li class="col"><code>{{ perm }}</code></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    {% empty_state message=_("No permissions.") compact=True %}
+    {% endif %}
+  {% endsection_card %}
+
+  {% section_card _("Access log") icon="journal-text" count=recent_access_logs|length collapsible=True open=False flush=recent_access_logs|length %}
+    {% if recent_access_logs %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Date" %}</th><th>{% trans "Event" %}</th><th>{% trans "IP" %}</th></tr></thead>
+        <tbody>
+          {% for log in recent_access_logs %}
+          <tr>
+            <td class="tabular-nums"><time datetime="{{ log.timestamp|date:'c' }}">{{ log.timestamp|date:"DATETIME_FORMAT" }}</time></td>
+            <td>
+              <span class="cell-stack">
+                <span>{{ log.get_event_type_display }}</span>
+                {% if log.failure_reason %}<span class="cell-sub">{{ log.get_failure_reason_display }}</span>{% endif %}
+              </span>
+            </td>
+            <td>{{ log.ip_address|or_dash }}</td>
+          </tr>
           {% endfor %}
-        </ul>
-        {% else %}
-        <p style="color:var(--text-muted);font-size:.85rem" class="mb-0">{% trans "No group assigned." %}</p>
-        {% endif %}
-      </div>
+        </tbody>
+      </table>
     </div>
-  </div>
+    {% else %}
+    {% empty_state message=_("No events.") compact=True %}
+    {% endif %}
+  {% endsection_card %}
 
-  <div class="tab-pane fade" id="perms-tab">
-    <div class="card">
-      <div class="card-body" style="max-height: 500px; overflow-y: auto;">
-        {% if permissions %}
-        <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
-          {% for perm in permissions %}
-          <li><code>{{ perm }}</code></li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p style="color:var(--text-muted);font-size:.85rem" class="mb-0">{% trans "No permissions." %}</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-
-  <div class="tab-pane fade" id="logs-tab">
-    <div class="card">
-      <div class="card-body">
-        {% if recent_access_logs %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr><th>{% trans "Date" %}</th><th>{% trans "Event" %}</th><th>{% trans "IP" %}</th></tr></thead>
-            <tbody>
-              {% for log in recent_access_logs %}
-              <tr>
-                <td>{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
-                <td>
-                  <span class="cell-stack">
-                    <span>{{ log.get_event_type_display }}</span>
-                    {% if log.failure_reason %}<span class="cell-sub">{{ log.get_failure_reason_display }}</span>{% endif %}
-                  </span>
-                </td>
-                <td>{{ log.ip_address|default:"-" }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p style="color:var(--text-muted);font-size:.85rem" class="mb-0">{% trans "No events." %}</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
+  {% record_card account_user %}
+{% enddetail_layout %}
 {% endblock %}

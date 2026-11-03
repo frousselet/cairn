@@ -1,22 +1,10 @@
-{% extends "base.html" %}
-{% load i18n ui %}
-
-{% block title %}{% trans "Delete" %} : Cairn{% endblock %}
-
-{% block content %}
-{% page_header _("Delete") eyebrow=cfg.label %}
-  <a href="{% url 'trust_center_manage:detail' entity obj.pk %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
-{% endpage_header %}
-
-<div class="card">
-  <div class="card-body">
-    <p class="fw-semibold">{{ obj }}</p>
-    <p>{% trans "This will permanently delete this item. This action cannot be undone." %}</p>
-    <form method="post">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-danger">{% trans "Delete" %}</button>
-      <a href="{% url 'trust_center_manage:detail' entity obj.pk %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
-    </form>
-  </div>
-</div>
+{% extends "includes/confirm_delete_page.html" %}
+{% load i18n %}
+{% block delete_title_text %}{% trans "Delete" %} : {{ cfg.label }}{% endblock %}
+{% block delete_title %}{% trans "Delete" %} : {{ cfg.label }}{% endblock %}
+{% block delete_message %}{% blocktrans with object=obj %}Delete <strong>{{ object }}</strong>?{% endblocktrans %}{% endblock %}
+{% block delete_details %}
+{% if not obj.is_deletable %}
+<div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% trans "This item cannot be deleted in its current state. Unpublish it first." %}</div>
+{% endif %}
 {% endblock %}

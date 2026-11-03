@@ -813,6 +813,47 @@ class TestGroupPermissionsUpdateView:
             "context.scope.create",
         }
 
+    def test_actions_without_a_column_can_be_granted_and_revoked(self, client):
+        """assess / implement / close / cancel / override_dates have no column
+        of their own; they used to be invisible, so saving the matrix silently
+        revoked them."""
+        admin = _superuser()
+        group = GroupFactory()
+        close = PermissionFactory(codename="compliance.action_plan.close")
+        PermissionFactory(codename="compliance.action_plan.read")
+        group.permissions.add(close)
+        client.force_login(admin)
+        html = client.get(reverse("accounts:group-detail", kwargs={"pk": group.pk})).content.decode()
+        assert 'name="permissions" value="compliance.action_plan.close"' in html
+        assert 'value="compliance.requirement.assess"' in html
+        # Saving with the box still ticked keeps it; unticking it revokes it.
+        url = reverse("accounts:group-permissions-update", kwargs={"pk": group.pk})
+        client.post(url, {"permissions": ["compliance.action_plan.close", "compliance.action_plan.read"]})
+        assert group.permissions.filter(codename="compliance.action_plan.close").exists()
+        client.post(url, {"permissions": ["compliance.action_plan.read"]})
+        assert not group.permissions.filter(codename="compliance.action_plan.close").exists()
+
+    def test_permissions_outside_the_registry_survive_a_save(self, client):
+        admin = _superuser()
+        group = GroupFactory()
+        legacy = PermissionFactory(codename="legacy.feature.read")
+        PermissionFactory(codename="context.scope.read")
+        group.permissions.add(legacy)
+        client.force_login(admin)
+        client.post(
+            reverse("accounts:group-permissions-update", kwargs={"pk": group.pk}),
+            {"permissions": ["context.scope.read", "legacy.feature.read"]},
+        )
+        codenames = set(group.permissions.values_list("codename", flat=True))
+        assert codenames == {"context.scope.read", "legacy.feature.read"}
+        # ...and cannot be granted through the form either.
+        other = GroupFactory()
+        client.post(
+            reverse("accounts:group-permissions-update", kwargs={"pk": other.pk}),
+            {"permissions": ["legacy.feature.read"]},
+        )
+        assert not other.permissions.exists()
+
     def test_system_group_allowed(self, client):
         admin = _superuser()
         group = GroupFactory(is_system=True)

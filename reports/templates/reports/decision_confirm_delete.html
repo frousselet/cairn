@@ -1,26 +1,6 @@
-{% extends "base.html" %}
-{% load i18n ui %}
-
-{% block title %}{% trans "Delete decision" %} - Cairn{% endblock %}
-
-{% block content %}
-{% page_header _("Delete decision") %}
-  <a href="{% url 'reports:management-review-detail' object.review.pk %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
-{% endpage_header %}
-
-<div class="card">
-  <div class="card-body">
-    <p>{% blocktrans with ref=object.reference title=object.title %}Delete decision <strong>{{ ref }} - {{ title }}</strong>?{% endblocktrans %}</p>
-    <p class="text-muted">{% trans "This action cannot be undone." %}</p>
-    <form method="post">
-      {% csrf_token %}
-      <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-danger">
-          <i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete permanently" %}
-        </button>
-        <a href="{% url 'reports:management-review-detail' object.review.pk %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
-      </div>
-    </form>
-  </div>
-</div>
-{% endblock %}
+{% extends "includes/confirm_delete_page.html" %}
+{% load i18n %}
+{% block delete_title_text %}{% trans "Delete decision" %}{% endblock %}
+{% block delete_title %}{% trans "Delete decision" %}{% endblock %}
+{% block delete_message %}{% blocktrans with ref=object.reference title=object.title %}Delete decision <strong>{{ ref }} - {{ title }}</strong>?{% endblocktrans %}{% endblock %}
+{% block delete_button %}{% trans "Delete permanently" %}{% endblock %}

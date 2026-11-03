@@ -1,15 +1,15 @@
 {% load i18n ui %}
 {% for log in logs %}
 <tr>
-  <td data-col="date">{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
+  <td data-col="date" class="tabular-nums"><time datetime="{{ log.timestamp|date:'c' }}">{{ log.timestamp|date:"DATETIME_FORMAT" }}</time></td>
   <td data-col="email">{{ log.email_attempted }}</td>
   <td data-col="event">
     <span class="cell-stack">
-      <span>{% if log.event_type == "login_success" %}<span class="badge bg-success">{{ log.get_event_type_display }}</span>{% elif log.event_type == "login_failed" %}<span class="badge bg-danger">{{ log.get_event_type_display }}</span>{% elif log.event_type == "account_locked" %}<span class="badge bg-warning text-dark">{{ log.get_event_type_display }}</span>{% else %}<span class="badge bg-secondary">{{ log.get_event_type_display }}</span>{% endif %}</span>
+      <span>{% choice_badge log "event_type" type="access_event" %}</span>
       {% if log.failure_reason %}<span class="cell-sub">{{ log.get_failure_reason_display }}</span>{% endif %}
     </span>
   </td>
-  <td data-col="ip">{{ log.ip_address|default:"-" }}</td>
+  <td data-col="ip">{{ log.ip_address|or_dash }}</td>
 </tr>
 {% empty %}
 {% empty_state title=_("No access events yet.") message=_("Access logs trace every sign-in, sign-out and impersonation attempt. They appear here as soon as activity happens.") colspan=4 %}

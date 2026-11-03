@@ -191,3 +191,5 @@ a.ref-link__label:hover { text-decoration: underline; }
 .entity-logo--sm { width: 16px; height: 16px; }
 .entity-logo--lg { width: 32px; height: 32px; }
 .entity-logo--fallback { display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); font-size: .75rem; font-weight: 700; }
+.min-w-0 { min-width: 0; }
+.scroll-box { max-height: 20rem; overflow-y: auto; }

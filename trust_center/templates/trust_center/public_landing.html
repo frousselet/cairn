@@ -25,7 +25,7 @@
         <div class="tc-card d-flex flex-column">
           <div class="d-flex align-items-center gap-3 mb-2">
             <span class="tc-logo">
-              {% if cert.framework.logo_64 or cert.framework.logo %}{{ cert.framework.logo_64|default:cert.framework.logo|tc_logo }}{% else %}<i class="bi bi-patch-check-fill tc-icon"></i>{% endif %}
+              {% if cert.framework.logo_64 or cert.framework.logo %}{{ cert.framework.logo_64|default:cert.framework.logo|tc_logo }}{% else %}<i class="bi bi-patch-check-fill tc-icon" aria-hidden="true"></i>{% endif %}
             </span>
             <div>
               <div class="fw-semibold">{{ cert.public_label }}</div>
@@ -51,7 +51,7 @@
       {% for measure in measures %}
       <div class="col-12 col-md-6 col-lg-4">
         <div class="tc-card">
-          <i class="bi {{ measure.icon|default:'bi-shield-check' }} tc-icon mb-2 d-block"></i>
+          <i class="bi {{ measure.icon|default:'bi-shield-check' }} tc-icon mb-2 d-block" aria-hidden="true"></i>
           <div class="fw-semibold mb-1">{{ measure.title }}</div>
           <span class="badge badge-soft mb-2">{{ measure.get_category_display }}</span>
           {% if measure.description %}<div class="text-secondary small mb-0 tc-rich">{{ measure.description|safe_html }}</div>{% endif %}
@@ -73,17 +73,17 @@
         <div class="tc-card d-flex align-items-start justify-content-between gap-3">
           <div>
             <div class="fw-semibold d-flex align-items-center gap-2">
-              <i class="bi {{ doc.file_icon }} tc-doc-icon"></i>
+              <i class="bi {{ doc.file_icon }} tc-doc-icon" aria-hidden="true"></i>
               <span>{{ doc.title }}</span>
             </div>
             {% if doc.description %}<div class="text-secondary small mb-0 tc-rich">{{ doc.description|safe_html }}</div>{% endif %}
           </div>
           <div class="text-nowrap">
             {% if doc.is_gated %}
-              <span class="badge badge-soft mb-1 d-block"><i class="bi bi-lock me-1"></i>{% trans "On request" %}</span>
+              <span class="badge badge-soft mb-1 d-block"><i class="bi bi-lock me-1" aria-hidden="true"></i>{% trans "On request" %}</span>
               <a class="btn btn-sm btn-outline-secondary" href="{% url 'trust_center:document-request' doc.id %}">{% trans "Request access" %}</a>
             {% else %}
-              <a class="btn btn-sm btn-outline-secondary" href="{% url 'trust_center:document-download' doc.id %}"><i class="bi bi-download me-1"></i>{% trans "Download" %}</a>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'trust_center:document-download' doc.id %}"><i class="bi bi-download me-1" aria-hidden="true"></i>{% trans "Download" %}</a>
             {% endif %}
           </div>
         </div>
@@ -130,7 +130,7 @@
 {% if not certifications and not measures and not documents and not subprocessors %}
 <section class="tc-section">
   <div class="container text-center text-muted">
-    <i class="bi bi-shield-lock" style="font-size:2.5rem;"></i>
+    <i class="bi bi-shield-lock" style="font-size:2.5rem;" aria-hidden="true"></i>
     <p class="mt-3">{% trans "Information will be published here soon." %}</p>
   </div>
 </section>

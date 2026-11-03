@@ -9,6 +9,7 @@
     delete_title    : "Delete decision"
     delete_message  : the sentence naming the object
     delete_details  : consequences (linked records, protection rules)
+    delete_button_attrs : extra button attributes (e.g. disabled while protected)
   Context : object, and optionally cancel_url.
 {% endcomment %}
 
@@ -27,7 +28,7 @@
     <div class="page-form__actions d-flex gap-2">
       {% if cancel_url %}{% firstof cancel_url as back %}{% else %}{% back_url "/" as back %}{% endif %}
       <a href="{{ back }}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
-      <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% block delete_button %}{% trans "Delete" %}{% endblock %}</button>
+      <button type="submit" class="btn btn-danger"{% block delete_button_attrs %}{% endblock %}><i class="bi bi-trash me-1" aria-hidden="true"></i>{% block delete_button %}{% trans "Delete" %}{% endblock %}</button>
     </div>
   </div>
 </form>

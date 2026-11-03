@@ -18653,3 +18653,26 @@ msgstr "C / I / D"
 
 msgid "EOL"
 msgstr "Fin de vie"
+
+msgid "Select"
+msgstr "Sélectionner"
+
+#, python-format
+msgid "Select %(name)s"
+msgstr "Sélectionner %(name)s"
+
+msgid "Client Secret"
+msgstr "Secret client"
+
+msgid "The generated file will also be removed from storage."
+msgstr "Le fichier généré sera également supprimé du stockage."
+
+msgid ""
+"All linked decisions, ISMS changes, comments and participants will be "
+"removed."
+msgstr ""
+"Toutes les décisions, modifications du SMSI, commentaires et participants "
+"liés seront supprimés."
+
+msgid "Other actions"
+msgstr "Autres actions"

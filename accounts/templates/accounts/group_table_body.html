@@ -4,15 +4,15 @@
 <tr>
   <td data-col="name">
     <span class="cell-stack">
-      <span><a href="{% url 'accounts:group-detail' group.pk %}" class="cell-link" style="font-weight:600">{{ group.name }}</a>{% if group.is_system %} <span class="badge bg-info" style="font-size:.65rem">{% trans "System" %}</span>{% endif %}</span>
+      <span><a href="{% url 'accounts:group-detail' group.pk %}" class="cell-link fw-semibold">{{ group.name }}</a>{% if group.is_system %} {% badge variant="info" label=_("System") %}{% endif %}</span>
       {% if group.description %}<span class="cell-sub" title="{{ group.description }}">{{ group.description }}</span>{% endif %}
     </span>
   </td>
-  <td data-col="users">{{ group.user_count }}</td>
-  <td data-col="permissions">{{ group.permission_count }}</td>
+  <td data-col="users" class="tabular-nums">{{ group.user_count }}</td>
+  <td data-col="permissions" class="tabular-nums">{{ group.permission_count }}</td>
   <td class="text-end" data-col="actions">
     {% if can_update %}
-    <a href="{% url 'accounts:group-update' group.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+    <a href="{% url 'accounts:group-update' group.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
     {% endif %}
   </td>
 </tr>

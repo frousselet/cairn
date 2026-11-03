@@ -8,24 +8,21 @@
 
 {# ── Stats badges ─────────────────────────────────────── #}
 <div class="d-flex gap-2 mb-3 flex-wrap">
-  <span class="badge" style="background:var(--success-soft);color:var(--success);font-size:.8125rem;padding:.4em .8em">
-    <i class="bi bi-plus-circle me-1"></i>{% blocktrans count count=new_count %}{{ count }} new row{% plural %}{{ count }} new rows{% endblocktrans %}
-  </span>
+  {% blocktrans count count=new_count asvar new_label %}{{ count }} new row{% plural %}{{ count }} new rows{% endblocktrans %}
+  {% badge variant="success" icon="plus-circle" label=new_label %}
   {% if conflict_count %}
-  <span class="badge" style="background:var(--warning-soft);color:var(--warning);font-size:.8125rem;padding:.4em .8em">
-    <i class="bi bi-exclamation-circle me-1"></i>{% blocktrans count count=conflict_count %}{{ count }} existing match{% plural %}{{ count }} existing matches{% endblocktrans %}
-  </span>
+  {% blocktrans count count=conflict_count asvar conflict_label %}{{ count }} existing match{% plural %}{{ count }} existing matches{% endblocktrans %}
+  {% badge variant="warning" icon="exclamation-circle" label=conflict_label %}
   {% endif %}
   {% if error_count %}
-  <span class="badge" style="background:var(--danger-soft);color:var(--danger);font-size:.8125rem;padding:.4em .8em">
-    <i class="bi bi-x-circle me-1"></i>{% blocktrans count count=error_count %}{{ count }} row with errors (skipped){% plural %}{{ count }} rows with errors (skipped){% endblocktrans %}
-  </span>
+  {% blocktrans count count=error_count asvar error_label %}{{ count }} row with errors (skipped){% plural %}{{ count }} rows with errors (skipped){% endblocktrans %}
+  {% badge variant="danger" icon="x-circle" label=error_label %}
   {% endif %}
 </div>
 
 {% if conflict_count %}
 <div class="alert alert-info">
-  <div><i class="bi bi-info-circle me-1"></i>{% trans "Some rows match an existing record. Tick \"Replace\" to overwrite it (the original creation date is kept); leave it unticked to keep the existing record unchanged." %}</div>
+  <div><i class="bi bi-info-circle me-1" aria-hidden="true"></i>{% trans "Some rows match an existing record. Tick \"Replace\" to overwrite it (the original creation date is kept); leave it unticked to keep the existing record unchanged." %}</div>
   <div class="form-check mt-2 mb-0">
     <input class="form-check-input" type="checkbox" id="replace-all">
     <label class="form-check-label fw-semibold" for="replace-all">
@@ -38,7 +35,7 @@
 {# ── Warnings ─────────────────────────────────────────── #}
 {% if warnings %}
 <div class="alert alert-warning">
-  <strong><i class="bi bi-exclamation-triangle me-1"></i>{% trans "Warnings:" %}</strong>
+  <strong><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{% trans "Warnings:" %}</strong>
   <ul class="mb-0 mt-1">
     {% for w in warnings %}
     <li>{{ w }}</li>
@@ -49,11 +46,9 @@
 
 {# ── Rows in error ────────────────────────────────────── #}
 {% if error_rows %}
-<div class="card mb-3 border-danger">
-  <div class="card-header text-danger"><i class="bi bi-x-octagon me-1"></i>{% trans "Rows that will be skipped" %}</div>
-  <div class="card-body p-0">
+{% section_card _("Rows that will be skipped") icon="x-octagon" count=error_rows|length flush=True %}
     <div class="table-responsive">
-      <table class="table table-sm mb-0 small">
+      <table class="table table-sm mb-0">
         <thead>
           <tr>
             <th>{% trans "Row" %}</th>
@@ -76,19 +71,16 @@
         </tbody>
       </table>
     </div>
-  </div>
-</div>
+{% endsection_card %}
 {% endif %}
 
 {# ── Valid rows + confirm (single form so checkboxes submit) ── #}
 <form method="post">
   {% csrf_token %}
   {% if valid_rows %}
-  <div class="card mb-3">
-    <div class="card-header">{% trans "Rows to import" %}</div>
-    <div class="card-body p-0">
+  {% section_card _("Rows to import") icon="check2-square" count=valid_rows|length flush=True %}
       <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0 small align-middle">
+        <table class="table table-sm table-hover mb-0 align-middle">
           <thead>
             <tr>
               <th>{% trans "Row" %}</th>
@@ -109,7 +101,7 @@
                   </label>
                 </div>
                 {% else %}
-                <span class="badge text-bg-light">{% trans "Create" %}</span>
+                {% badge variant="secondary" label=_("Create") %}
                 {% endif %}
               </td>
               {% for cell in row.cells %}<td>{{ cell }}</td>{% endfor %}
@@ -118,19 +110,14 @@
           </tbody>
         </table>
       </div>
-    </div>
-  </div>
+  {% endsection_card %}
   {% endif %}
 
-  <div class="card">
-    <div class="card-body">
-      <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary" {% if not valid_count %}disabled{% endif %}>
-          <i class="bi bi-check-lg me-1"></i>{% trans "Confirm import" %}
-        </button>
-        <a href="{% url 'imports:import' entity=entity %}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
-      </div>
-    </div>
+  <div class="page-form__actions d-flex gap-2">
+    <a href="{% url 'imports:import' entity=entity %}" class="btn btn-secondary me-auto">{% trans "Cancel" %}</a>
+    <button type="submit" class="btn btn-primary" {% if not valid_count %}disabled{% endif %}>
+      <i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Confirm import" %}
+    </button>
   </div>
 </form>
 

@@ -2,111 +2,239 @@
 {% load accounts_tags %}
 {% load i18n %}
 {% load help_tags %}
-{% load ui %}
+{% load ui workflow_tags %}
 {% block title %}{{ group.name }} - Cairn{% endblock %}
 
 {% block content %}
+{% has_perm "system.groups.update" as can_edit %}
+{% has_perm "system.groups.delete" as can_delete %}
 {% if group.is_system %}{% translate "System role" as group_kind %}{% endif %}
 {% page_header group.name nav="accounts:group-list" subtitle=group_kind accent="accounts" %}
-  {% has_perm "system.groups.update" as can_edit %}
-  {% if can_edit %}
-  <a href="{% url 'accounts:group-update' group.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
-  {% endif %}
-  {% has_perm "system.groups.delete" as can_delete %}
   {% if can_delete %}
-  <a href="{% url 'accounts:group-delete' group.pk %}" class="btn btn-outline-danger">{% trans "Delete" %}</a>
+  <a href="{% url 'accounts:group-delete' group.pk %}" class="btn btn-danger"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</a>
+  {% endif %}
+  {% if can_edit %}
+  <a href="{% url 'accounts:group-update' group.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
   {% endif %}
 {% endpage_header %}
 {% help_modal "accounts.group_detail" %}
 
-{% if group.description %}
-<p style="color:var(--text-muted)" class="mb-4">{{ group.description }}</p>
-{% endif %}
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Users") group_users|length icon="people" %}
+    {% kpi_tile _("Permissions") group_permissions|length icon="key" tone="info" %}
+    {% if group_scope_ids %}
+    {% kpi_tile _("Allowed scopes") group_scope_ids|length icon="bullseye" tone="neutral" %}
+    {% else %}
+    {% kpi_tile _("Allowed scopes") _("All") icon="bullseye" tone="neutral" size="sm" %}
+    {% endif %}
+  {% endslot %}
 
-<ul class="nav nav-tabs mb-4" role="tablist">
-  <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#perms-tab">{% trans "Permissions" %} <span id="perm-counter" class="badge bg-primary ms-1">0</span></a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#users-tab">{% blocktrans with count=group_users|length %}Users ({{ count }}){% endblocktrans %}</a></li>
-  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#scopes-tab">{% trans "Scopes" %}</a></li>
-</ul>
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if group.description %}<p class="mb-0">{{ group.description|linebreaksbr }}</p>{% endif %}{% endsection_card %}
 
-<div class="tab-content">
-  <!-- Permissions Matrix -->
-  <div class="tab-pane fade show active" id="perms-tab">
-    <form method="post" action="{% url 'accounts:group-permissions-update' group.pk %}" id="perm-form">
-      {% csrf_token %}
+  {# Members #}
+  {% section_card _("Users") icon="people" count=group_users|length id="users-tab" %}
+    {% if group_users %}
+    {% if can_edit %}
+    <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+      <button type="button" class="btn btn-sm btn-danger" id="bulk-remove-btn" disabled onclick="bulkRemoveUsers()">
+        <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{% trans "Remove selected" %} (<span id="remove-count">0</span>)
+      </button>
+      <div class="form-check form-check-inline mb-0 ms-auto">
+        <input type="checkbox" class="form-check-input" id="select-all-users-remove" onchange="toggleAllUserRemove(this)">
+        <label class="form-check-label text-meta" for="select-all-users-remove">{% trans "Select all" %}</label>
+      </div>
+    </div>
+    {% endif %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr>
+          {% if can_edit %}<th style="width:1%"><span class="visually-hidden">{% trans "Select" %}</span></th>{% endif %}
+          <th>{% trans "Name" %}</th><th><span class="visually-hidden">{% trans "Actions" %}</span></th>
+        </tr></thead>
+        <tbody>
+          {% for u in group_users %}
+          <tr>
+            {% if can_edit %}
+            <td style="width:1%">
+              <input type="checkbox" class="form-check-input user-remove-cb" value="{{ u.pk }}" onchange="updateRemoveCount()" aria-label="{% blocktrans with name=u.display_name %}Select {{ name }}{% endblocktrans %}">
+            </td>
+            {% endif %}
+            <td>
+              <span class="cell-people cell-people--sm">
+                {% if u.avatar %}
+                <img src="{{ u.avatar_32|default:u.avatar }}" alt="" class="cell-avatar">
+                {% else %}
+                <span class="cell-avatar-fallback">{{ u.display_name|initials }}</span>
+                {% endif %}
+                <span class="cell-stack">
+                  <a href="{% url 'accounts:user-detail' u.pk %}" class="cell-link">{{ u.display_name }}</a>
+                  <span class="cell-sub">{{ u.email }}</span>
+                </span>
+              </span>
+            </td>
+            <td class="text-end">
+              {% if can_edit %}
+              <form method="post" action="{% url 'accounts:group-users-update' group.pk %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="remove">
+                <input type="hidden" name="user_id" value="{{ u.pk }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="bi bi-x-circle" aria-hidden="true"></i></button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% empty_state message=_("No users in this group.") compact=True %}
+    {% endif %}
 
-      {% has_perm "system.groups.update" as can_edit_perms %}
-      {% if can_edit_perms %}
-      <div class="d-flex flex-wrap gap-2 mb-3">
-        <span class="text-muted small align-self-center me-1">{% trans "Quick apply:" %}</span>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="presetReadOnly()">
-          <i class="bi bi-eye me-1"></i>{% trans "Read-only" %}
+    {% if can_edit and all_users %}
+    <div class="mt-4">
+      {% subhead _("Add users") icon="person-plus" %}
+      <div class="mb-2">
+        <input type="text" class="form-control form-control-sm" id="user-search"
+          placeholder="{% trans 'Search by name or email...' %}"
+          aria-label="{% trans 'Search by name or email...' %}"
+          onkeyup="filterAvailableUsers()">
+      </div>
+      <form method="post" action="{% url 'accounts:group-users-update' group.pk %}" id="add-users-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add">
+        <div class="border rounded mb-3 overflow-auto" style="max-height:250px">
+          <table class="table table-hover table-sm mb-0">
+            <tbody id="available-users-list">
+              {% for u in all_users %}
+              <tr class="available-user-row" data-search="{{ u.display_name|lower }} {{ u.email|lower }}">
+                <td style="width:1%">
+                  <input type="checkbox" class="form-check-input user-add-cb" name="user_ids" value="{{ u.pk }}" onchange="updateAddCount()" aria-label="{% blocktrans with name=u.display_name %}Select {{ name }}{% endblocktrans %}">
+                </td>
+                <td>{{ u.display_name }}</td>
+                <td class="text-muted">{{ u.email }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <button type="submit" class="btn btn-sm btn-primary" id="add-users-btn" disabled>
+            <i class="bi bi-person-plus me-1" aria-hidden="true"></i>{% trans "Add selected" %} (<span id="add-count">0</span>)
+          </button>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAllUserAdd()">{% trans "Select all visible" %}</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+  {% endsection_card %}
+
+  {# Allowed scopes #}
+  <form method="post" action="{% url 'accounts:group-scopes-update' group.pk %}">
+    {% csrf_token %}
+    {% section_card _("Allowed scopes") icon="bullseye" count=group_scope_ids|length id="scopes-tab" %}
+      <p class="text-meta mb-3">{% trans "If no scope is selected, members of this group have access to all scopes." %}</p>
+      {% if all_scopes %}
+      {% for s in all_scopes %}
+      <div class="form-check mb-2">
+        <input type="checkbox" name="scopes" value="{{ s.pk }}"
+          {% if s.pk in group_scope_ids %}checked{% endif %}
+          {% if not can_edit %}disabled{% endif %}
+          class="form-check-input" id="scope-{{ s.pk }}">
+        <label class="form-check-label" for="scope-{{ s.pk }}">
+          {{ s.name }} {% workflow_badge s %}
+        </label>
+      </div>
+      {% endfor %}
+      {% else %}
+      {% empty_state message=_("No scopes available.") compact=True %}
+      {% endif %}
+      {% slot footer %}{% if can_edit %}<div class="d-flex justify-content-end"><button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save scopes" %}</button></div>{% endif %}{% endslot %}
+    {% endsection_card %}
+  </form>
+
+  {# Permission matrix #}
+  <form method="post" action="{% url 'accounts:group-permissions-update' group.pk %}" id="perm-form">
+    {% csrf_token %}
+    {% section_card _("Permissions") icon="key" id="perms-tab" %}
+      {% slot actions %}<span class="text-meta"><span id="perm-counter" class="tabular-nums fw-semibold">0</span> {% trans "selected" %}</span>{% endslot %}
+
+      {% if can_edit %}
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <span class="text-meta me-1">{% trans "Quick apply:" %}</span>
+        <button type="button" class="btn btn-sm btn-secondary" onclick="presetReadOnly()">
+          <i class="bi bi-eye me-1" aria-hidden="true"></i>{% trans "Read-only" %}
         </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="presetFullCrud()">
-          <i class="bi bi-pencil-square me-1"></i>{% trans "Full CRUD" %}
+        <button type="button" class="btn btn-sm btn-secondary" onclick="presetFullCrud()">
+          <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{% trans "Full CRUD" %}
         </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="presetSelectAll()">
-          <i class="bi bi-check-all me-1"></i>{% trans "Select all" %}
+        <button type="button" class="btn btn-sm btn-secondary" onclick="presetSelectAll()">
+          <i class="bi bi-check-all me-1" aria-hidden="true"></i>{% trans "Select all" %}
         </button>
-        <button type="button" class="btn btn-sm btn-outline-danger" onclick="presetClearAll()">
-          <i class="bi bi-x-lg me-1"></i>{% trans "Clear all" %}
+        <button type="button" class="btn btn-sm btn-danger" onclick="presetClearAll()">
+          <i class="bi bi-x-lg me-1" aria-hidden="true"></i>{% trans "Clear all" %}
         </button>
       </div>
       {% endif %}
 
       {% regroup permission_matrix by module_label as module_groups %}
       {% for module_group in module_groups %}
-      <div class="card mb-3" data-module="{{ module_group.grouper }}">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>{{ module_group.grouper }}</strong>
-          {% if can_edit_perms %}
-          <div class="form-check form-check-inline mb-0">
+      <div class="mb-4" data-module="{{ module_group.grouper }}">
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+          <h3 class="h6 mb-0 fw-semibold">{{ module_group.grouper }}</h3>
+          {% if can_edit %}
+          <div class="form-check form-check-inline mb-0 me-0">
             <input type="checkbox" class="form-check-input module-toggle" id="module-toggle-{{ forloop.counter }}"
               data-module-idx="{{ forloop.counter }}">
-            <label class="form-check-label small text-muted" for="module-toggle-{{ forloop.counter }}">{% trans "Select all" %}</label>
+            <label class="form-check-label text-meta" for="module-toggle-{{ forloop.counter }}">{% trans "Select all" %}</label>
           </div>
           {% endif %}
         </div>
-        <div class="card-body p-0">
+        <div class="table-responsive border rounded">
           <table class="table table-sm mb-0" data-module-table="{{ forloop.counter }}">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th style="width:30%">{% trans "Feature" %}</th>
-                {% if can_edit_perms %}
+                {% if can_edit %}
                 <th style="width:4%" class="text-center">
-                  <input type="checkbox" class="form-check-input row-all-toggle" title="{% trans 'Select row' %}" style="visibility:hidden">
+                  <input type="checkbox" class="form-check-input row-all-toggle invisible" tabindex="-1" aria-hidden="true">
                 </th>
                 {% endif %}
                 <th class="text-center"><span class="d-block">{% trans "Create" %}</span>
-                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="create" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit %}<input type="checkbox" class="form-check-input col-toggle" data-action="create" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}" aria-label="{% trans 'Toggle column' %}">{% endif %}
                 </th>
                 <th class="text-center"><span class="d-block">{% trans "Read" %}</span>
-                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="read" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit %}<input type="checkbox" class="form-check-input col-toggle" data-action="read" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}" aria-label="{% trans 'Toggle column' %}">{% endif %}
                 </th>
                 <th class="text-center"><span class="d-block">{% trans "Edit" %}</span>
-                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="update" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit %}<input type="checkbox" class="form-check-input col-toggle" data-action="update" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}" aria-label="{% trans 'Toggle column' %}">{% endif %}
                 </th>
                 <th class="text-center"><span class="d-block">{% trans "Delete" %}</span>
-                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="delete" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit %}<input type="checkbox" class="form-check-input col-toggle" data-action="delete" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}" aria-label="{% trans 'Toggle column' %}">{% endif %}
                 </th>
                 <th class="text-center"><span class="d-block">{% trans "Access" %}</span>
-                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="access" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit %}<input type="checkbox" class="form-check-input col-toggle" data-action="access" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}" aria-label="{% trans 'Toggle column' %}">{% endif %}
                 </th>
                 <th class="text-center"><span class="d-block">{% trans "Approve" %}</span>
-                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="approve" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit %}<input type="checkbox" class="form-check-input col-toggle" data-action="approve" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}" aria-label="{% trans 'Toggle column' %}">{% endif %}
+                </th>
+                <th class="text-center"><span class="d-block">{% trans "Validate" %}</span>
+                  {% if can_edit %}<input type="checkbox" class="form-check-input col-toggle" data-action="validate" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}" aria-label="{% trans 'Toggle column' %}">{% endif %}
                 </th>
                 <th class="text-center"><span class="d-block">{% trans "Impersonate" %}</span>
-                  {% if can_edit_perms %}<input type="checkbox" class="form-check-input col-toggle" data-action="impersonate" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}">{% endif %}
+                  {% if can_edit %}<input type="checkbox" class="form-check-input col-toggle" data-action="impersonate" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}" aria-label="{% trans 'Toggle column' %}">{% endif %}
                 </th>
+                <th>{% trans "Other actions" %}</th>
               </tr>
             </thead>
             <tbody>
               {% for row in module_group.list %}
               <tr>
                 <td>{{ row.feature_label }}</td>
-                {% if can_edit_perms %}
+                {% if can_edit %}
                 <td class="text-center">
-                  <input type="checkbox" class="form-check-input row-toggle" data-row-idx="{{ forloop.counter }}" title="{% trans 'Select row' %}">
+                  <input type="checkbox" class="form-check-input row-toggle" data-row-idx="{{ forloop.counter }}" title="{% trans 'Select row' %}" aria-label="{% trans 'Select row' %}">
                 </td>
                 {% endif %}
                 {% for cell in row.cells %}
@@ -114,13 +242,24 @@
                   {% if cell.has_action %}
                   <input type="checkbox" name="permissions" value="{{ cell.codename }}"
                     {% if cell.checked %}checked{% endif %}
-                    {% if not can_edit_perms %}disabled{% endif %}
-                    class="form-check-input perm-cb">
+                    {% if not can_edit %}disabled{% endif %}
+                    class="form-check-input perm-cb" aria-label="{{ cell.codename }}">
                   {% else %}
-                  <span style="color:var(--text-muted)">-</span>
+                  {% dash %}
                   {% endif %}
                 </td>
                 {% endfor %}
+                <td class="text-nowrap">
+                  {% for extra in row.extra_cells %}
+                  <div class="form-check mb-0">
+                    <input type="checkbox" name="permissions" value="{{ extra.codename }}" id="perm-{{ extra.codename|slugify }}"
+                      {% if extra.checked %}checked{% endif %}
+                      {% if not can_edit %}disabled{% endif %}
+                      class="form-check-input perm-cb">
+                    <label class="form-check-label text-sm" for="perm-{{ extra.codename|slugify }}">{{ extra.label }}</label>
+                  </div>
+                  {% empty %}{% dash %}{% endfor %}
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -128,152 +267,12 @@
         </div>
       </div>
       {% endfor %}
-      {% if can_edit_perms %}
-      <button type="submit" class="btn btn-primary">{% trans "Save permissions" %}</button>
-      {% endif %}
-    </form>
-  </div>
+      {% slot footer %}{% if can_edit %}<div class="d-flex justify-content-end"><button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save permissions" %}</button></div>{% endif %}{% endslot %}
+    {% endsection_card %}
+  </form>
 
-  <!-- Users -->
-  <div class="tab-pane fade" id="users-tab">
-    <div class="card">
-      <div class="card-body">
-        {% if group_users %}
-        {% has_perm "system.groups.update" as can_edit_group %}
-        {% if can_edit_group %}
-        <div class="d-flex align-items-center gap-2 mb-3">
-          <button type="button" class="btn btn-sm btn-outline-danger" id="bulk-remove-btn" disabled onclick="bulkRemoveUsers()">
-            <i class="bi bi-x-circle me-1"></i>{% trans "Remove selected" %} (<span id="remove-count">0</span>)
-          </button>
-          <div class="form-check form-check-inline mb-0 ms-auto">
-            <input type="checkbox" class="form-check-input" id="select-all-users-remove" onchange="toggleAllUserRemove(this)">
-            <label class="form-check-label small text-muted" for="select-all-users-remove">{% trans "Select all" %}</label>
-          </div>
-        </div>
-        {% endif %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr>
-              {% has_perm "system.groups.update" as can_edit_group %}
-              {% if can_edit_group %}
-              <th style="width:40px"></th>
-              {% endif %}
-              <th>{% trans "Name" %}</th><th></th>
-            </tr></thead>
-            <tbody>
-              {% for u in group_users %}
-              <tr>
-                {% has_perm "system.groups.update" as can_edit_group %}
-                {% if can_edit_group %}
-                <td>
-                  <input type="checkbox" class="form-check-input user-remove-cb" value="{{ u.pk }}" onchange="updateRemoveCount()">
-                </td>
-                {% endif %}
-                <td>
-                  <span class="cell-people cell-people--sm">
-                    {% if u.avatar %}
-                    <img src="{{ u.avatar_32|default:u.avatar }}" alt="" class="cell-avatar">
-                    {% else %}
-                    <span class="cell-avatar-fallback">{{ u.display_name|initials }}</span>
-                    {% endif %}
-                    <span class="cell-stack">
-                      <a href="{% url 'accounts:user-detail' u.pk %}" class="cell-link">{{ u.display_name }}</a>
-                      <span class="cell-sub">{{ u.email }}</span>
-                    </span>
-                  </span>
-                </td>
-                <td class="text-end">
-                  {% has_perm "system.groups.update" as can_edit_group %}
-                  {% if can_edit_group %}
-                  <form method="post" action="{% url 'accounts:group-users-update' group.pk %}" class="d-inline">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="remove">
-                    <input type="hidden" name="user_id" value="{{ u.pk }}">
-                    <button type="submit" class="btn btn-sm btn-outline-danger" title="{% trans 'Remove' %}"><i class="bi bi-x-circle"></i></button>
-                  </form>
-                  {% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p style="color:var(--text-muted);font-size:.85rem" class="mb-0">{% trans "No users in this group." %}</p>
-        {% endif %}
-
-        {% has_perm "system.groups.update" as can_edit_group %}
-        {% if can_edit_group and all_users %}
-        <div class="mt-4 pt-3" style="border-top:1px solid var(--border-light)">
-          <h6 class="mb-3"><i class="bi bi-person-plus me-1"></i>{% trans "Add users" %}</h6>
-          <div class="mb-2">
-            <input type="text" class="form-control form-control-sm" id="user-search"
-              placeholder="{% trans 'Search by name or email...' %}"
-              onkeyup="filterAvailableUsers()">
-          </div>
-          <form method="post" action="{% url 'accounts:group-users-update' group.pk %}" id="add-users-form">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="add">
-            <div style="max-height:250px;overflow-y:auto;border:1px solid var(--border-light);border-radius:.375rem" class="mb-3">
-              <table class="table table-hover table-sm mb-0">
-                <tbody id="available-users-list">
-                  {% for u in all_users %}
-                  <tr class="available-user-row" data-search="{{ u.display_name|lower }} {{ u.email|lower }}">
-                    <td style="width:40px">
-                      <input type="checkbox" class="form-check-input user-add-cb" name="user_ids" value="{{ u.pk }}" onchange="updateAddCount()">
-                    </td>
-                    <td>{{ u.display_name }}</td>
-                    <td class="text-muted">{{ u.email }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            <div class="d-flex align-items-center gap-2">
-              <button type="submit" class="btn btn-sm btn-primary" id="add-users-btn" disabled>
-                <i class="bi bi-person-plus me-1"></i>{% trans "Add selected" %} (<span id="add-count">0</span>)
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAllUserAdd()">{% trans "Select all visible" %}</button>
-            </div>
-          </form>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-
-  <!-- Scopes -->
-  <div class="tab-pane fade" id="scopes-tab">
-    <div class="card">
-      <div class="card-body">
-        <p style="color:var(--text-muted);font-size:.85rem" class="mb-3">
-          {% trans "If no scope is selected, members of this group have access to all scopes." %}
-        </p>
-        <form method="post" action="{% url 'accounts:group-scopes-update' group.pk %}">
-          {% csrf_token %}
-          {% if all_scopes %}
-          {% for s in all_scopes %}
-          <div class="form-check mb-2">
-            <input type="checkbox" name="scopes" value="{{ s.pk }}"
-              {% if s.pk in group_scope_ids %}checked{% endif %}
-              class="form-check-input" id="scope-{{ s.pk }}">
-            <label class="form-check-label" for="scope-{{ s.pk }}">
-              {{ s.name }} <span class="badge text-bg-{% if s.status == 'active' %}success{% elif s.status == 'draft' %}secondary{% else %}warning{% endif %}">{{ s.get_status_display }}</span>
-            </label>
-          </div>
-          {% endfor %}
-          {% else %}
-          <p style="color:var(--text-muted);font-size:.85rem">{% trans "No scopes available." %}</p>
-          {% endif %}
-          {% has_perm "system.groups.update" as can_edit_group %}
-          {% if can_edit_group %}
-          <button type="submit" class="btn btn-primary mt-3">{% trans "Save scopes" %}</button>
-          {% endif %}
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
+  {% record_card group %}
+{% enddetail_layout %}
 
 <script>
 (function() {
@@ -320,7 +319,7 @@
   });
 
   // ── Column toggle (select all features for an action) ──
-  var actionIndex = { create: 0, read: 1, update: 2, delete: 3, access: 4, approve: 5, impersonate: 6 };
+  var actionIndex = { create: 0, read: 1, update: 2, delete: 3, access: 4, approve: 5, validate: 6, impersonate: 7 };
 
   document.querySelectorAll('.col-toggle').forEach(function(toggle) {
     toggle.addEventListener('change', function() {

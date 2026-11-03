@@ -1,45 +1,37 @@
 {% extends "base.html" %}
-{% load i18n ui %}
+{% load i18n ui trust_center_tags %}
 
-{% block title %}{{ obj }} : Cairn{% endblock %}
+{% block title %}{{ obj }} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header obj eyebrow=cfg.label accent="trust-center" %}
+{% url 'trust_center_manage:hub' as hub_url %}
+{% page_header obj reference=obj.reference nav="trust_center_manage:settings" parent_label=cfg.label_plural parent_url=hub_url subtitle=cfg.label accent="trust-center" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'trust_center_manage:update' entity obj.pk %}" class="btn btn-outline-secondary">
-    <i class="bi bi-pencil me-1"></i>{% trans "Edit" %}
+  <a href="{% url 'trust_center_manage:delete' entity obj.pk %}" class="btn btn-danger">
+    <i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}
   </a>
-  <a href="{% url 'trust_center_manage:delete' entity obj.pk %}" class="btn btn-outline-danger">
-    <i class="bi bi-trash me-1"></i>{% trans "Delete" %}
+  <a href="{% url 'trust_center_manage:update' entity obj.pk %}" class="btn btn-primary">
+    <i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}
   </a>
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 
-<div class="row g-3">
-  <div class="col-12 col-lg-8">
-    <div class="card">
-      <div class="card-body">
-        <dl class="row mb-0">
-          {% for label, value in detail_rows %}
-          <dt class="col-sm-4 text-muted">{{ label }}</dt>
-          <dd class="col-sm-8">
-            {% if value is True %}<i class="bi bi-check-lg text-success"></i>
-            {% elif value is False %}<i class="bi bi-dash text-muted"></i>
-            {% else %}{{ value }}{% endif %}
-          </dd>
-          {% endfor %}
-        </dl>
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-lg-4">
-    {% sidebar_card _("Lifecycle") icon="diagram-2" %}
-      {% include "includes/lifecycle_stepper.html" %}
-      <div class="small text-muted mt-3">
-        <div>{% trans "Reference" %}: {{ obj.reference }}</div>
-        <div>{% trans "Updated" %}: {{ obj.updated_at|date:"SHORT_DATETIME_FORMAT" }}</div>
-      </div>
-    {% endsidebar_card %}
-  </div>
-</div>
+{% include "includes/lifecycle_stepper.html" %}
+
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") obj.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Display order") obj.display_order icon="sort-numeric-down" tone="neutral" %}
+  {% endslot %}
+
+  {% section_card _("Details") icon=cfg.icon|cut:"bi-" %}
+    {% meta_list cols=2 %}
+      {% for label, value in detail_rows %}
+      {% meta_item label %}{% if value is True %}<i class="bi bi-check-lg text-success" aria-hidden="true"></i> {% trans "Yes" %}{% elif value is False %}{% trans "No" %}{% elif value is not None %}{{ value|stringformat:"s"|safe_html }}{% endif %}{% endmeta_item %}
+      {% endfor %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% record_card obj %}
+{% enddetail_layout %}
 {% endblock %}
