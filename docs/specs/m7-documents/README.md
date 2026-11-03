@@ -4,7 +4,7 @@
 
 The register of the organisation's **documented information** (ISO/IEC 27001:2022 clause 7.5) : the information security policy (clause 5.2), the topic-specific policies (A.5.1), and the procedures, standards and charters that implement them. It answers the four questions an auditor asks of every governing document : *which version is in force, who approved it and when, when is it next reviewed, and who has acknowledged it.*
 
-**Status : proposed for v0.37.0, not yet implemented.**
+**Status : implemented in v0.37.0.**
 
 ## Entities
 
@@ -265,16 +265,16 @@ Platform surfaces : global search (documents and versions), calendar (`documents
 
 ### 9.1 App wiring checklist
 
-- [ ] `INSTALLED_APPS` gains `"documents"`; `DocumentsConfig.ready()` imports `documents.lifecycles` and the signal handlers.
-- [ ] Models, admin (`SimpleHistoryAdmin`), initial migration; `HistoricalRecords(excluded_fields=["file_content"])` on `PolicyVersion`.
-- [ ] `PERMISSION_REGISTRY`, `MODULE_LABELS`, the permission migration attaching the rows to the six system groups.
-- [ ] `core/navigation.py` `NAV_TREE` entries; `MODULE_ACCENTS["documents"]` with `--module-accent-documents` / `-soft` in both token blocks of `static/css/cairn/00-tokens.css`; the sidebar section.
-- [ ] Calendar categories, dashboard widget (and its context variables), kanban builder, global search categories, predefined indicators.
-- [ ] `IsmsChange.affected_documents` (M2M, with a migration) and the management review card; `TrustCenterDocument.policy` (FK `PROTECT`, with a migration) and the one-of invariant extended to three sources.
-- [ ] REST routes under `/api/v1/documents/`, MCP tools, assistant catalog entries.
-- [ ] The daily sweep (review reminders, acknowledgement reminders) as a management command scheduled like the existing deadline sweeps.
-- [ ] `scripts/seed_demo_data.py` : a Voltara document set (information security policy with three versions, access control policy, acceptable use charter, backup procedure under the operations policy, an incident response procedure), each put in force through `transition_to(..., enforce_permission=False)`; one running campaign with mixed acknowledgements, one closed.
-- [ ] Translations (with `msgctxt "document"` where a label collides, e.g. "Active", "Retired"), help banners, user guide page, README feature table, CHANGELOG.
+- [x] `INSTALLED_APPS` gains `"documents"`; `DocumentsConfig.ready()` imports `documents.lifecycles` and the signal handlers.
+- [x] Models, admin (`SimpleHistoryAdmin`), initial migration; `HistoricalRecords(excluded_fields=["file_content"])` on `PolicyVersion`.
+- [x] `PERMISSION_REGISTRY`, `MODULE_LABELS`, the permission migration attaching the rows to the six system groups.
+- [x] `core/navigation.py` `NAV_TREE` entries; `MODULE_ACCENTS["documents"]` with `--module-accent-documents` / `-soft` in both token blocks of `static/css/cairn/00-tokens.css`; the sidebar section.
+- [x] Calendar categories, dashboard widget (and its context variables), kanban builder, global search categories, predefined indicators.
+- [x] `IsmsChange.affected_documents` (M2M, with a migration) and the management review card; `TrustCenterDocument.policy` (FK `PROTECT`, with a migration) and the one-of invariant extended to three sources.
+- [x] REST routes under `/api/v1/documents/`, MCP tools, assistant catalog entries.
+- [x] The daily sweep (review reminders, acknowledgement reminders) as a management command scheduled like the existing deadline sweeps.
+- [x] `scripts/seed_demo_data.py` : a Voltara document set (information security policy with three versions, access control policy, acceptable use charter, backup procedure under the operations policy, an incident response procedure), each put in force through `transition_to(..., enforce_permission=False)`; one running campaign with mixed acknowledgements, one closed.
+- [x] Translations (with `msgctxt "document"` where a label collides, e.g. "Active", "Retired"), help banners, user guide page, README feature table, CHANGELOG.
 
 ### 9.2 History and audit trail
 

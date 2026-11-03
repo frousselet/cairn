@@ -36,6 +36,7 @@ the image carries. See the [installation guide](docs/technical/installation.md).
 | **Risks** | ISO 27005 and EBIOS RM (ANSSI v1.5, workshops 0 to 5), a three-level register, treatment plans and formal acceptance |
 | **Compliance** | Frameworks and requirements, audits, an organisation-wide nonconformity register, action plans and inter-framework mappings |
 | **Incidents** | Event intake, incident handling, sealed evidence under chain of custody, and statutory notification clocks (GDPR, NIS2, DORA) |
+| **Documents** | Policies, procedures, standards and charters : approved versions with one in force at a time, review reminders, and acknowledgement campaigns kept as evidence |
 | **Trust Center** | A public, curated page for your security posture, optionally on its own domain |
 | **Steering** | A configurable widget dashboard, a unified tasks board, management reviews, and PDF / DOCX / PPTX / XLSX reports |
 
