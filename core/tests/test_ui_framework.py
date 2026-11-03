@@ -319,3 +319,43 @@ class TestPageForm:
         assert page_form_cancel_url(view) == "/"
         view.request = RequestFactory().get("/", HTTP_REFERER="http://testserver/risks/")
         assert page_form_cancel_url(view) == "http://testserver/risks/"
+
+
+class TestFrameworkAdditions:
+    @pytest.mark.parametrize("pct,tone", [(85, "success"), (80, "success"), (65, "warning"), (10, "danger"), (None, "neutral"), ("x", "neutral")])
+    def test_score_tone(self, pct, tone):
+        assert render("{{ p|score_tone }}", {"p": pct}) == tone
+
+    def test_compact_empty_state(self):
+        assert "empty-state--compact" in render('{% empty_state message="None yet" compact=True %}')
+        assert "empty-state--compact" not in render('{% empty_state message="None yet" %}')
+
+    def test_subhead_count(self):
+        out = render('{% subhead "Sites" icon="geo-alt" count=0 %}')
+        assert 'section-card__count tabular-nums">0<' in out
+
+    def test_section_card_classes(self):
+        assert 'class="card section-card mb-3"' in render('{% section_card "X" classes="mb-3" %}b{% endsection_card %}')
+
+    def test_record_card_skips_rows_a_model_lacks(self):
+        from django.contrib.auth.models import Group as AuthGroup
+
+        out = render("{% record_card obj %}", {"obj": AuthGroup(name="g")})
+        assert "Version" not in out and "Created by" not in out
+
+    def test_choice_badge_infers_finding_and_effectiveness(self):
+        obj = SimpleNamespace(finding_type="major_nc", get_finding_type_display=lambda: "Major",
+                              effectiveness_verdict="effective", get_effectiveness_verdict_display=lambda: "Effective")
+        assert "badge-dot danger" in render('{% choice_badge o "finding_type" %}', {"o": obj})
+        assert "badge-dot success" in render('{% choice_badge o "effectiveness_verdict" %}', {"o": obj})
+
+    def test_form_fields_include(self):
+        from django import forms
+
+        class F(forms.Form):
+            name = forms.CharField(help_text="Name it")
+            secret = forms.CharField(widget=forms.HiddenInput)
+
+        out = Template('{% include "includes/form_fields.html" %}').render(Context({"form": F()}))
+        assert 'class="form-label"' in out and "Name it" in out
+        assert 'type="hidden" name="secret"' in out

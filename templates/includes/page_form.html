@@ -47,9 +47,8 @@
       {% endfor %}
       {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
     {% else %}
-      {% for field in form %}
-        {% if field.is_hidden %}{{ field }}{% else %}{% include "includes/form_field.html" %}{% endif %}
-      {% endfor %}
+      {% for field in form.visible_fields %}{% include "includes/form_field.html" %}{% endfor %}
+      {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
     {% endif %}
     {% endblock %}
     <div class="page-form__actions form-actions-sticky d-flex gap-2">

@@ -105,9 +105,10 @@ The fields, steps, helpers and progress come from the form
 It renders the same fields in the same anatomy, every step shown as a titled
 group, with the standard footer (Cancel on the left, Save on the right).
 `core.mixins.HtmxFormMixin` provides its title (`modal_title_create` /
-`modal_title_update`), its breadcrumb and its Cancel target. Override
-`page_form_fields` only for a form with no `steps`, and only to iterate the
-fields through `includes/form_field.html`.
+`modal_title_update`), its breadcrumb and its Cancel target. A form with no `steps`
+renders through `includes/form_fields.html` (non-field errors, the field loop,
+the hidden fields), which is also what a non-stepped modal puts in its
+`modal_form_fields` block.
 
 ### Delete confirmation
 
@@ -142,7 +143,7 @@ its own modal, in a table row for example, is `{% confirm_delete url=... name=..
 | [`badge` / `choice_badge`](#badge--choice_badge) | tags | Status, level and result badges |
 | `{% workflow_badge obj %}` | tag (`workflow_tags`) | The lifecycle state of an element |
 | [`dash` / `or_dash`](#dash--or_dash) | tag / filter | The "no value" marker |
-| `empty_state` | tag | An empty list or section |
+| `empty_state` | tag | An empty list or section (`compact=True` inside a card) |
 | `progress_bar` | tag | A percentage |
 | `confirm_delete` | tag | An inline delete button with its confirmation modal |
 | `bulk_actions_bar`, `filter_chip`, `stepper`, `kpi_card`, `sidebar_card`, `illustration` | tags | See their docstrings in `core/templatetags/ui.py` |
@@ -198,7 +199,9 @@ named by `rail_label`.
 
 `tone` is one of `accent` (default), `success`, `warning`, `danger`, `info` or
 `neutral`. Semantic tones are reserved for figures that carry a status : use
-`{{ value|badge_variant:"level" }}` to take the tone from the badge registry.
+`{{ value|badge_variant:"level" }}` to take the tone from the badge registry,
+or `{{ pct|score_tone }}` for a compliance score (success from 80, warning from
+50, danger below).
 `size` is `lg` for a number and `sm` for a word or a date, and is inferred when
 omitted. An empty value renders the dash. With `href`, the whole tile is a link.
 
@@ -221,14 +224,18 @@ optional `count` pill (zero is shown) and the `actions` slot on the right.
   last cells keep the card's inset).
 - `hide_empty` renders nothing when the body is empty, so an optional section
   needs no surrounding `{% if %}`.
+- `classes` adds classes to the card (spacing outside a `detail_layout`).
+- A card refreshed by HTMX keeps its `hx-*` attributes on a wrapping element
+  (`<div id="..." hx-get=... hx-trigger=...>{% section_card %}...</div>`).
 
 ### subhead
 
 ```django
-{% subhead _("Certified scope") icon="diagram-3" %}
+{% subhead _("Certified scope") icon="diagram-3" count=sites|length %}
 ```
 
-A small uppercase divider for a second level inside a card.
+A small uppercase divider for a second level inside a card, with an optional
+`count` pill.
 
 ### overview / ov_row
 
@@ -268,6 +275,7 @@ column, and `hide_empty` drops an empty block item.
 ```
 
 The reference, version, author, creation date and last change of a `BaseModel`.
+A model without a `version` or `created_by` field omits that row.
 It always comes last on a detail page, in the same order, with dates in the
 active locale's format inside `<time datetime>`.
 
@@ -310,6 +318,8 @@ Every badge is a `.badge-dot` pill, in a table, a card or a header alike. Tones
 come from `BADGE_REGISTRY` in `core/templatetags/ui.py` :
 
 - `level` : priority, criticality, severity and impact share one ordinal scale.
+- `finding` and `effectiveness` : audit findings and corrective action effectiveness.
+- `issue_status` and `objective_status` : the context module's own status fields.
 - `compliance` : requirement and assessment results.
 - `treatment_decision`, `threat_zone` and `ebios_scale` (the EBIOS RM 1 to 4 scales).
 - `methodology` and `dic` : categories, so they keep the identity colour.
@@ -354,6 +364,8 @@ A short list of utility classes replaces the inline styles that recurred most :
 | `.cursor-pointer` | `style="cursor:pointer"` |
 | `.sticky-rail` | `style="position:sticky;top:1rem;align-self:flex-start"` |
 | `.tabular-nums` | numbers that must align |
+| `.btn-icon` (`.btn-icon--danger`) | a calm icon-only button outside a table (always with an `aria-label`) |
+| `.entity-logo` (`--sm`, `--lg`, `--fallback`) | a logo thumbnail with inline `width` / `height` / `object-fit` |
 
 An inline `style` is acceptable only for a value computed per element (a width
 percentage, a custom property such as `--tag-bg`). A fixed visual choice belongs
