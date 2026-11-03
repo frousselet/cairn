@@ -1,0 +1,167 @@
+/* Cairn design system - Mobile adjustments and the scope tree widget.
+   Loaded by templates/base.html in file-name order; the order is the cascade. */
+
+/* ── Mobile ────────────────────────────────────────── */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.3);
+  z-index: 1035;
+  transition: opacity .25s var(--ease-out-expo);
+}
+/* Mobile menu toggle button */
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: .75rem;
+  left: .75rem;
+  z-index: 1045;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-glass);
+  background: var(--glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-secondary);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: top .3s var(--ease-out-expo), left .3s var(--ease-out-expo),
+              background .2s ease, border-color .2s ease, box-shadow .2s ease,
+              transform .15s ease;
+  padding: 0;
+}
+.mobile-menu-toggle:active {
+  transform: scale(.92);
+  background: var(--glass-hover);
+}
+/* When sidebar is open, integrate the close button inside the sidebar header */
+body.sidebar-open .mobile-menu-toggle {
+  top: calc(var(--sidebar-inset) + .9375rem);
+  left: calc(var(--sidebar-inset) + .25rem);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+}
+body.sidebar-open .mobile-menu-toggle:active {
+  background: var(--surface-subtle);
+}
+/* Animated hamburger icon */
+.hamburger-icon {
+  width: 18px;
+  height: 14px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.hamburger-icon span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform .3s var(--ease-out-expo), opacity .2s var(--ease-out-expo);
+  transform-origin: center;
+}
+body.sidebar-open .hamburger-icon span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+body.sidebar-open .hamburger-icon span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+body.sidebar-open .hamburger-icon span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+@media (max-width: 991.98px) {
+  html { overflow-x: hidden; }
+  .sidebar {
+    transform: translateX(calc(-100% - var(--sidebar-inset)));
+    width: calc(100vw - var(--sidebar-inset) * 2);
+    max-width: var(--sidebar-w);
+  }
+  .sidebar.show { transform: translateX(0); }
+  .sidebar.show .sidebar-brand { padding-left: 3rem; }
+  .sidebar-backdrop.show { display: block; }
+  .mobile-menu-toggle { display: flex; }
+  .sidebar-collapse-toggle { display: none !important; }
+  /* Reset collapsed state on mobile */
+  .sidebar-collapsed .sidebar { width: calc(100vw - var(--sidebar-inset) * 2); max-width: var(--sidebar-w); }
+  .sidebar-collapsed .main-content { margin-left: 0; --main-offset: 0px; padding-right: 1rem; }
+  .sidebar-collapsed .sidebar-brand { justify-content: flex-start; padding: 1.25rem 1.25rem 1.125rem; flex-direction: row; }
+  .sidebar-collapsed .sidebar-brand a { gap: .5rem; }
+  .sidebar-collapsed .sidebar-brand .sidebar-link-text { width: auto; height: auto; overflow: visible; opacity: 1; position: static; }
+  .sidebar-collapsed .sidebar-link .sidebar-link-text { width: auto; overflow: visible; opacity: 1; }
+  .sidebar-collapsed .sidebar-collapse-btn .sidebar-link-text { width: auto; overflow: visible; opacity: 1; }
+  .sidebar-collapsed .sidebar-section { font-size: .625rem; padding: 1.375rem 1.25rem .5rem; text-align: left; }
+  .sidebar-collapsed .sidebar-section::after { display: none; }
+  .sidebar-collapsed .sidebar-link { justify-content: flex-start; padding: .4375rem 1.25rem; gap: .625rem; }
+  .sidebar-collapsed .sidebar-link i { font-size: .9375rem; width: 1.25rem; }
+  .sidebar-collapsed .sidebar-collapse-btn { justify-content: flex-start; padding: .4375rem 1.25rem; gap: .625rem; }
+  .sidebar-collapsed .sidebar-collapse-btn i:first-child { font-size: .9375rem; width: 1.25rem; }
+  .sidebar-collapsed .sidebar-collapse-btn i.bi-chevron-down { display: inline; }
+  .sidebar-collapsed .sidebar-collapse-btn::after { display: none; }
+  /* The drawer is never an icon rail, so undo the rail's hiding of the
+     sub-lists - but honour the fold state instead of forcing every group
+     open, which would put the whole tree back on screen. */
+  .sidebar-collapsed .sidebar-body .collapse:not(.show) { display: none !important; }
+  .sidebar-collapsed .sidebar-body .collapse.show,
+  .sidebar-collapsed .sidebar-body .collapsing { display: block !important; }
+  .sidebar-collapsed .sidebar-sub { display: block; padding-left: 3.125rem; }
+  .sidebar-collapsed .sidebar-tooltip { display: none !important; }
+  .main-content { margin-left: 0; --main-offset: 0px; padding: 6rem 1rem 3.5rem; }
+  .main-content h1 { font-size: 1.625rem; }
+  .main-content h2 { font-size: 1.25rem; }
+  .main-content hr { margin: 1.5rem 0; }
+
+  /* Stat cards: compact on mobile */
+  .stat-card { padding: 1.25rem 1.25rem; }
+  .stat-card-value { font-size: 1.625rem; }
+  .stat-card-icon { width: 2.125rem; height: 2.125rem; font-size: 1rem; margin-bottom: .625rem; }
+
+  /* Cards compact */
+  .card-body { padding: 1rem 1.125rem; }
+
+  /* Tables scroll hint */
+  .table-responsive { -webkit-overflow-scrolling: touch; }
+
+  /* Buttons touch-friendly */
+  .btn { min-height: 2.5rem; }
+  .btn-sm { min-height: 2rem; }
+
+  /* Section headers compact */
+  .section-header { margin-bottom: 1rem; }
+  .section-header h2 { font-size: 1rem; }
+}
+@media (max-width: 575.98px) {
+  .main-content { padding: 6rem .75rem 2.5rem; }
+
+  /* Stack stat cards nicely on very small screens */
+  .stat-card { padding: .875rem 1rem; }
+  .stat-card-value { font-size: 1.3125rem; }
+
+  /* Risk matrix: allow horizontal scroll */
+  .risk-matrix-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  .filter-chip { font-size: .75rem; padding: .25rem .625rem; }
+}
+@media (min-width: 992px) and (max-width: 1399.98px) {
+  .main-content { padding: 6.5rem 2rem 3.5rem; }
+}
+/* ── Scope tree widget ──────────────────────────── */
+.scope-tree-label { transition: background-color var(--transition-fast); }
+.scope-tree-label:hover { background: var(--surface-subtle); }
+/* Selected row tinted like an active sidebar link */
+.scope-tree-label:has(input:checked) { background: var(--accent-soft); }
+.scope-tree-node.hidden { display: none; }
+.scope-tree-node.collapsed-child { display: none; }
+.scope-tree-toggle .bi { transition: transform .2s ease; }
+.scope-tree-toggle.collapsed .bi { transform: rotate(-90deg); }
+.scope-tree-label input:checked ~ .scope-tree-name { font-weight: 600; color: var(--accent) !important; }
+.scope-tree-locked .scope-tree-label { opacity: .55; cursor: default; }
+.scope-tree-locked .scope-tree-label input { cursor: default; }

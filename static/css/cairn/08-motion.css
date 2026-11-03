@@ -1,0 +1,84 @@
+/* Cairn design system - Motion : page and content transitions, skeleton loader.
+   Loaded by templates/base.html in file-name order; the order is the cascade. */
+
+/* ── Motion - Clean page + content transitions ──── */
+/*
+ * Three reusable animations:
+ *   fw-fade-in: 220ms ease-out opacity
+ *   fw-slide-up: 320ms ease-out opacity + 8px lift
+ *   fw-pop: 350ms spring scale - reserved for small attention bursts
+ *
+ * Page content fades in on first paint; rows / cards in lists
+ * stagger naturally if .fw-stagger is set (uses inline custom
+ * --i delay variable per item).
+ *
+ * Respects prefers-reduced-motion (handled by the global guard
+ * at the bottom of the stylesheet).
+ */
+@keyframes fw-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fw-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes fw-pop {
+  0%   { opacity: 0; transform: scale(.96); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.fw-fade-in  { animation: fw-fade-in 220ms var(--ease-out) both; }
+.fw-slide-up { animation: fw-slide-up 320ms var(--ease-out) both; }
+.fw-pop      { animation: fw-pop 350ms var(--ease-out) both; }
+.fw-stagger > * { animation: fw-slide-up 320ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
+
+/* ── Skeleton loader for hx-boost page transitions ────────
+ * Injected into #page-shell at htmx:beforeRequest. Mimics the
+ * coarse silhouette of a typical list/detail page so the user
+ * sees the structure form before the real content arrives.
+ * The shimmer is suppressed under prefers-reduced-motion. */
+@keyframes fw-skeleton-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-line {
+  display: block;
+  height: 1rem;
+  margin-bottom: .75rem;
+  border-radius: var(--radius-xs);
+  background: var(--surface-muted);
+  background-image: linear-gradient(
+    90deg,
+    var(--surface-muted) 0%,
+    var(--surface-subtle) 50%,
+    var(--surface-muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: fw-skeleton-shimmer 1.4s linear infinite;
+}
+.skeleton-line--eyebrow { width: 7rem; height: .625rem; margin-bottom: .625rem; }
+.skeleton-line--title   { width: 22rem; height: 1.75rem; margin-bottom: 2.5rem; max-width: 70%; }
+.skeleton-card {
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  margin-bottom: 2rem;
+}
+.skeleton-card .skeleton-line:last-child { margin-bottom: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line { animation: none; background-image: none; }
+}
+
+/* Initial page-content fade-in - applied automatically to
+ * the .main-content > .container-xl. Subtle and quick. */
+.main-content > .container-xl > :is(.page-header, h1, h2, .card, .alert, .row, .table-responsive, .empty-state, .stat-card) {
+  animation: fw-slide-up 320ms var(--ease-out) both;
+}
+.main-content > .container-xl > * + * { animation-delay: 40ms; }
+.main-content > .container-xl > * + * + * { animation-delay: 80ms; }
+.main-content > .container-xl > * + * + * + * { animation-delay: 120ms; }
+.main-content > .container-xl > * + * + * + * + * { animation-delay: 160ms; }
+
+/* Smooth global text + icon colour transitions for theme toggle */
+html { transition: background-color 320ms var(--ease-out), color 320ms var(--ease-out); }

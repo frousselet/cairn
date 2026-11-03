@@ -96,7 +96,7 @@ By default a cell is a single value (rules 4-10). When a row carries several
 spending a column on each : a **primary line** over a **muted secondary line**.
 This keeps wide entities (people, contacts) scannable and the table narrow.
 
-Use the shared helpers (defined in `base.html`, theme-aware in light/dark) :
+Use the shared helpers (defined in `static/css/cairn/`, theme-aware in light/dark) :
 
 - `.cell-stack` : the two-line wrapper (a flex column, tight `line-height`).
 - `.cell-sub` : the muted, smaller secondary line (`var(--text-muted)`, `.8125rem`).

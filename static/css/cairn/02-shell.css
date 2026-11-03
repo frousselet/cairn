@@ -1,0 +1,798 @@
+/* Cairn design system - Application shell : sidebar, its search field, user footer, collapse and flyout, main content area, vertical rhythm.
+   Loaded by templates/base.html in file-name order; the order is the cascade. */
+
+/* ── Sidebar ───────────────────────────────────────── */
+.sidebar {
+  position: fixed;
+  top: var(--sidebar-inset);
+  left: var(--sidebar-inset);
+  bottom: var(--sidebar-inset);
+  width: var(--sidebar-w);
+  background: var(--bg-page);
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  z-index: 1040;
+  display: flex;
+  flex-direction: column;
+  transition: width .35s var(--ease-out-expo), transform .3s var(--ease-out-expo);
+}
+/* Soft demarcation: a hairline on the right edge fading out
+ * toward the top and the bottom of the window */
+.sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 1px;
+  /* Above the brand veil and the sticky glass cards, so the line
+   * never gets covered and stays continuous */
+  z-index: 10;
+  background: linear-gradient(to bottom,
+    transparent,
+    var(--border-subtle) 18%,
+    var(--border-subtle) 82%,
+    transparent);
+  pointer-events: none;
+}
+/* Invisible scrollbar: the menu scrolls but shows no persistent bar */
+.sidebar,
+.sidebar-body,
+.sidebar .notif-list {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.sidebar::-webkit-scrollbar,
+.sidebar-body::-webkit-scrollbar,
+.sidebar .notif-list::-webkit-scrollbar { display: none; width: 0; }
+
+/* No border under the brand: a gradient veil hangs below it
+ * (page background fading to transparent) so scrolling entries
+ * melt away progressively from the logo level instead of being
+ * cut by a hard line. */
+.sidebar-brand {
+  position: relative;
+  z-index: 4;
+  padding: 1.25rem 1.25rem 1.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sidebar-brand::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 3rem;
+  background: linear-gradient(to bottom,
+    var(--bg-page) 0%,
+    color-mix(in srgb, var(--bg-page) 72%, transparent) 30%,
+    color-mix(in srgb, var(--bg-page) 30%, transparent) 65%,
+    transparent 100%);
+  /* Same frosted fade as the page title bar: blur the menu items
+     scrolling underneath, masked so the blur dissolves with the gradient. */
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0, #000 55%, transparent 100%);
+  pointer-events: none;
+}
+.sidebar-brand a {
+  /* Match the compact page-header title (1.25rem) so the app name and the
+     pinned page title read identically on the same line; heaviest weight
+     (900) to echo the bold page-header title. */
+  font-family: var(--font-display);
+  font-weight: 810;
+  font-size: 1.25rem;
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: normal;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.sidebar-brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+.sidebar-brand-icon svg {
+  width: 100%;
+  height: 100%;
+}
+.sidebar-brand-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* A custom company logo shows edge-to-edge: drop the navy chip framing
+   (rounded corners + glow shadow) used for the Cairn mark. */
+.sidebar-brand-icon:has(img) {
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* ── Sidebar search field - floating glass ────────── */
+.sidebar-search {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: .5rem 1rem;
+  margin-bottom: .5rem;
+}
+.sidebar-search-field {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  width: 100%;
+  padding: .5rem .875rem;
+  background: var(--glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-muted);
+  font-size: .8125rem;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+.sidebar-search-field:hover,
+.sidebar-search-field:focus-visible {
+  background: var(--glass-hover);
+  border-color: var(--border-light);
+  color: var(--text-secondary);
+}
+.sidebar-search-field .sidebar-link-text {
+  flex: 1;
+  text-align: left;
+}
+.sidebar-search-field i {
+  font-size: .8125rem;
+  flex-shrink: 0;
+}
+
+.sidebar-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.sidebar-body > * {
+  flex-shrink: 0;
+}
+
+.sidebar-section {
+  padding: 1.5rem 1.25rem .5rem;
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .625rem 1.25rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: .875rem;
+  font-weight: 500;
+  border-radius: 0;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+  margin: 0;
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sidebar-link:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+.sidebar-link.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.sidebar-link i {
+  font-size: .9375rem;
+  width: 1.25rem;
+  text-align: center;
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+.sidebar-link:hover i { color: var(--text-primary); }
+.sidebar-link.active i { color: var(--accent); }
+.sidebar-sub { padding-left: 3.125rem; font-size: .8125rem; color: var(--text-sidebar-sub); white-space: nowrap; overflow: hidden; }
+
+.sidebar-body .collapse {
+  position: relative;
+}
+/* Vertical guide line for nav sub-menus only: direct children of the
+ * body, so the collapses inside the user card (user menu,
+ * notifications) never inherit it */
+.sidebar-body > .collapse::before {
+  content: '';
+  position: absolute;
+  left: 1.875rem;
+  top: .1875rem;
+  bottom: .1875rem;
+  width: 1px;
+  background: var(--border-light);
+  border-radius: 1px;
+  opacity: .6;
+}
+
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  padding: .4375rem 1.25rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: .8125rem;
+  font-weight: 450;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sidebar-collapse-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.sidebar-collapse-btn:hover i:first-child { color: var(--accent); }
+.sidebar-collapse-btn i.bi-chevron-down {
+  margin-left: auto;
+  font-size: .5625rem;
+  transition: transform .25s var(--ease-out-expo);
+  color: var(--text-muted);
+}
+.sidebar-collapse-btn[aria-expanded="true"] i.bi-chevron-down {
+  transform: rotate(180deg);
+}
+.sidebar-collapse-btn i:first-child {
+  font-size: .9375rem;
+  width: 1.25rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* ── Sidebar user footer - floating glass ─────────── */
+.sidebar-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin-top: auto;
+  padding: .5rem 1rem;
+  /* Background + dissolve live on ::before (behind the card content). */
+  background: transparent;
+}
+/* Frosted fade above the footer, mirroring the top one: menu items
+   scrolling down dissolve (blurred + faded) before reaching the user card. */
+.sidebar-footer::before {
+  content: '';
+  position: absolute;
+  /* Covers the footer (user-card) region, behind the card content. Menu
+     text stays sharp until it reaches the card, then progressively blurs
+     and fades to a fully opaque base by the bottom of the page. */
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--bg-page) 50%, transparent) 42%,
+    color-mix(in srgb, var(--bg-page) 88%, transparent) 70%,
+    var(--bg-page) 100%);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 55%, #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 55%, #000 100%);
+}
+.sidebar-user-card {
+  background: var(--glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: .25rem;
+  overflow: hidden;
+}
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  width: 100%;
+  padding: .4375rem .5rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+  transition: background-color var(--transition-fast);
+}
+/* Unread dot shown on the avatar when the sidebar is collapsed
+ * (the bell and its badge are hidden in that mode) */
+.sidebar-user-avatar-dot {
+  display: none;
+  position: absolute;
+  top: .25rem;
+  right: .3125rem;
+  width: .5625rem;
+  height: .5625rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg-page);
+}
+.sidebar-collapsed .sidebar-user-avatar-dot:not(.d-none) {
+  display: block;
+}
+.sidebar-user:hover {
+  background: var(--glass-hover);
+}
+.sidebar-user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: .6875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.sidebar-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sidebar-user-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.sidebar-user-name {
+  font-size: .8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-user-email {
+  font-size: .6875rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-user-row {
+  display: flex;
+  align-items: center;
+  gap: .125rem;
+}
+.sidebar-user-row .sidebar-user {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+.sidebar-notif-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: .9375rem;
+  cursor: pointer;
+  position: relative;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+.sidebar-notif-btn:hover {
+  background: var(--glass-hover);
+  color: var(--text-secondary);
+}
+.sidebar-notif-panel {
+  margin-bottom: .25rem;
+}
+.sidebar-notif-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .5rem .625rem .375rem;
+}
+.sidebar-notif-title {
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.sidebar-notif-panel .notif-list {
+  max-height: min(40vh, 18rem);
+  border-radius: var(--radius-sm);
+}
+#sidebarUserMenu {
+  margin-bottom: .25rem;
+}
+#sidebarUserMenu .sidebar-link {
+  border-radius: var(--radius-sm);
+  padding: .5rem .625rem;
+}
+.sidebar-footer form { margin: 0; }
+.sidebar-footer button.sidebar-link {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.sidebar-link--danger,
+.sidebar-link--danger i { color: var(--danger) !important; }
+.sidebar-link--danger:hover { background: var(--danger-soft); }
+
+/* ── Sidebar collapse toggle ──────────────────────── */
+.sidebar-collapse-toggle {
+  position: fixed;
+  left: calc(var(--sidebar-w) + var(--sidebar-inset) - .875rem);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--border-glass);
+  background: var(--glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: .625rem;
+  padding: 0;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  z-index: 1041;
+  transition: opacity .2s ease, left .35s var(--ease-out-expo),
+              background .15s ease, color .15s ease,
+              border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.sidebar:hover ~ .sidebar-collapse-toggle,
+.sidebar-collapse-toggle:hover,
+.sidebar-collapse-toggle:focus-visible {
+  opacity: 1;
+}
+.sidebar-collapse-toggle:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 2px 10px var(--accent-glow), var(--shadow-md);
+}
+.sidebar-collapse-toggle:active {
+  transform: translateY(-50%) scale(.88);
+}
+.sidebar-collapse-toggle i {
+  transition: transform .35s var(--ease-out-expo);
+}
+.sidebar-collapsed .sidebar-collapse-toggle {
+  left: calc(var(--sidebar-collapsed-w) + var(--sidebar-inset) - .875rem);
+  opacity: 1;
+}
+.sidebar-collapsed .sidebar-collapse-toggle i {
+  transform: rotate(180deg);
+}
+
+/* ── Sidebar collapsed state (desktop only) ──────── */
+.sidebar-collapsed .sidebar {
+  width: var(--sidebar-collapsed-w);
+}
+.sidebar-collapsed .main-content {
+  margin-left: calc(var(--sidebar-collapsed-w) + var(--sidebar-inset) * 2);
+  --main-offset: calc(var(--sidebar-collapsed-w) + var(--sidebar-inset) * 2);
+  padding-right: calc(var(--sidebar-collapsed-w) + var(--sidebar-inset) * 2);
+}
+/* Brand: hide text, center icon */
+.sidebar-collapsed .sidebar-brand {
+  justify-content: center;
+  padding: 1.25rem .5rem 1.125rem;
+}
+.sidebar-collapsed .sidebar-brand a {
+  gap: 0;
+}
+.sidebar-collapsed .sidebar-brand .sidebar-link-text {
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  position: absolute;
+}
+/* Hide section headers */
+.sidebar-collapsed .sidebar-section {
+  font-size: 0;
+  padding: .75rem 0 .25rem;
+  text-align: center;
+}
+.sidebar-collapsed .sidebar-section::after {
+  content: '';
+  display: block;
+  width: 1rem;
+  height: 1px;
+  background: var(--border-light);
+  margin: 0 auto;
+}
+/* Links: icon-only, centered */
+.sidebar-collapsed .sidebar-link {
+  justify-content: center;
+  padding: .5rem .75rem;
+  gap: 0;
+  position: relative;
+}
+.sidebar-collapsed .sidebar-link .sidebar-link-text {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  white-space: nowrap;
+  transition: width .35s var(--ease-out-expo), opacity .2s ease;
+}
+.sidebar-collapsed .sidebar-link i {
+  font-size: 1.0625rem;
+  width: auto;
+}
+.sidebar-collapsed .sidebar-link.active::before {
+  top: .25rem;
+  bottom: .25rem;
+}
+/* Hide nav sub-links in collapsed (direct children only: the
+ * collapses inside the user card stay usable) */
+.sidebar-collapsed .sidebar-body > .collapse,
+.sidebar-collapsed .sidebar-body > .collapsing {
+  display: none !important;
+}
+/* Collapse buttons: icon-only, centered */
+.sidebar-collapsed .sidebar-collapse-btn {
+  justify-content: center;
+  padding: .5rem .75rem;
+  gap: 0;
+  position: relative;
+}
+.sidebar-collapsed .sidebar-collapse-btn .sidebar-link-text {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  white-space: nowrap;
+}
+.sidebar-collapsed .sidebar-collapse-btn i.bi-chevron-down {
+  display: none;
+}
+.sidebar-collapsed .sidebar-collapse-btn i:first-child {
+  font-size: 1.0625rem;
+  width: auto;
+}
+/* Small right-arrow hint for sub-menus in collapsed mode */
+.sidebar-collapsed .sidebar-collapse-btn::after {
+  content: '\F285';
+  font-family: 'bootstrap-icons';
+  position: absolute;
+  right: .375rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: .5rem;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.sidebar-collapsed .sidebar-collapse-btn:hover::after {
+  opacity: .7;
+}
+/* Search: icon-only */
+.sidebar-collapsed .sidebar-search {
+  padding: .5rem;
+}
+.sidebar-collapsed .sidebar-search-field {
+  justify-content: center;
+  padding: .5rem;
+  gap: 0;
+}
+.sidebar-collapsed .sidebar-search-field .sidebar-link-text {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  flex: 0 0 auto;
+}
+.sidebar-collapsed .sidebar-search-kbd {
+  display: none;
+}
+.sidebar-collapsed .sidebar-search-field:hover .sidebar-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+/* User footer: avatar only */
+.sidebar-collapsed .sidebar-footer {
+  padding: .5rem;
+}
+.sidebar-collapsed .sidebar-user-card {
+  padding: .125rem;
+}
+.sidebar-collapsed .sidebar-user {
+  justify-content: center;
+  padding: .375rem;
+  gap: 0;
+}
+.sidebar-collapsed .sidebar-user-info,
+.sidebar-collapsed .sidebar-notif-btn,
+.sidebar-collapsed .sidebar-notif-panel {
+  display: none;
+}
+.sidebar-collapsed .sidebar-user-row {
+  justify-content: center;
+}
+/* Tooltip on hover for collapsed items */
+.sidebar-collapsed .sidebar-link:hover .sidebar-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+.sidebar-tooltip {
+  display: none;
+}
+.sidebar-collapsed .sidebar-tooltip {
+  display: block;
+  position: absolute;
+  left: calc(100% + .5rem);
+  top: 50%;
+  transform: translateX(-4px) translateY(-50%);
+  background: var(--text-primary);
+  color: var(--bg-page);
+  font-size: .75rem;
+  font-weight: 500;
+  padding: .25rem .625rem;
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .15s ease, transform .15s var(--ease-out-expo), visibility .15s;
+  z-index: 1050;
+  box-shadow: var(--shadow-md);
+}
+/* Hide tooltip on collapse-btns (they use flyouts instead) */
+.sidebar-collapsed .sidebar-collapse-btn .sidebar-tooltip {
+  display: none;
+}
+/* Sub-items: hidden in collapsed mode */
+.sidebar-collapsed .sidebar-sub {
+  display: none;
+}
+
+/* ── Sidebar flyout (collapsed sub-menus) ─────────── */
+.sidebar-flyout {
+  display: none;
+  position: fixed;
+  z-index: 1050;
+  min-width: 180px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: .375rem 0;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity .18s var(--ease-out-expo), transform .18s var(--ease-out-expo);
+}
+.sidebar-flyout.show {
+  display: block;
+  opacity: 1;
+  transform: translateX(0);
+}
+.sidebar-flyout .flyout-title {
+  padding: .5rem .875rem .375rem;
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.sidebar-flyout a {
+  display: block;
+  padding: .375rem .875rem;
+  font-size: .8125rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: background .12s ease, color .12s ease;
+}
+.sidebar-flyout a:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.sidebar-flyout a.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Main content ──────────────────────────────────── */
+.main-content {
+  margin-left: calc(var(--sidebar-w) + var(--sidebar-inset) * 2);
+  /* Distance from the viewport's left edge to the main area (the sidebar
+     zone). Exposed so the page-header can break its background out to the
+     main area's edges (flush with the sidebar and the screen's right). */
+  --main-offset: calc(var(--sidebar-w) + var(--sidebar-inset) * 2);
+  padding: 7rem 3.25rem 5rem;
+  min-height: 100vh;
+  background: var(--bg-page);
+  /* Clip the page-header's full-bleed breakout so it never adds a horizontal
+     scrollbar. `clip` (unlike hidden/auto) does not create a scroll
+     container, so the sticky header keeps sticking to the viewport. */
+  overflow-x: clip;
+  transition: margin-left .35s var(--ease-out-expo), padding .35s var(--ease-out-expo);
+}
+
+/* Full-bleed page header: the background band spans the whole main area
+   (flush with the sidebar on the left and the screen edge on the right),
+   while the title/actions stay aligned with the page content via inner
+   padding. The horizontal "margins" thus live INSIDE the header box. */
+.main-content > .container-xl > .page-header {
+  margin-inline: calc(50% - 50vw + var(--main-offset, 0px) / 2);
+  padding-inline: calc(50vw - 50% - var(--main-offset, 0px) / 2);
+}
+
+/* ── Vertical rhythm - generous breathing room ────
+ * The page header sits alone at the top; substantial gap below
+ * lets the first content section land cleanly. Cards, rows and
+ * sections all share consistent spacing so a long page reads as
+ * a calm cadence rather than a dense brick.
+ */
+.main-content h1,
+.main-content h2 { margin-bottom: 2rem; }
+.main-content .d-flex > h1,
+.main-content .d-flex > h2 { margin-bottom: 0; }
+.main-content h3,
+.main-content h5.card-title { margin-bottom: 1.25rem; }
+.main-content hr {
+  margin: 3rem 0;
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-light) 20%, var(--border-light) 80%, transparent);
+}
+.main-content .card { margin-bottom: 2rem; }
+.main-content .row.g-3 { --bs-gutter-y: 1.5rem; }
+.main-content .row.g-4 { --bs-gutter-y: 2rem; }
+.main-content .table-responsive { margin-top: 1rem; margin-bottom: 2.5rem; }
+.main-content .card .table-responsive { margin-top: 0; margin-bottom: 0; }
+.main-content form.row { margin-bottom: 2.5rem; }
+.main-content .help-banner { margin-bottom: 2rem; }
+/* Page header gets a generous gap below it on every page */
+.main-content > .container-xl > .d-flex:first-child,
+.main-content > .container-xl > .page-header:first-child { margin-bottom: 2.5rem; }
+.main-content .pagination { margin-top: 1.75rem; }
+.main-content .alert { margin-bottom: 2rem; }
+.main-content .mb-3 { margin-bottom: 1.5rem !important; }
+.main-content .mb-4 { margin-bottom: 2.5rem !important; }

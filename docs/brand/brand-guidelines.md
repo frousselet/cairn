@@ -296,7 +296,7 @@ AND spacing, not from thick borders.
 ### Spacing
 
 The app uses Bootstrap classes (`mb-3`, `gap-2`, `g-4`, ...) with the
-adjustments defined in `templates/base.html`. In direct CSS, prefer `rem`
+adjustments defined in the design system stylesheets (`static/css/cairn/`). In direct CSS, prefer `rem`
 values consistent with the Bootstrap scale:
 
 `0.25rem` / `0.5rem` / `0.75rem` / `1rem` / `1.25rem` / `1.5rem` / `2rem` / `2.5rem` / `3rem`
@@ -518,7 +518,7 @@ is derived.
 | `SteppedFormMixin` / `Step` | `core/modal_forms.py` | Declarative steps, row layout, coverage + row-cap validation, `is_stepped` / `is_multistep` / `modal_size` / `required_field_count` / `iter_steps()`. |
 | Shell | `templates/includes/modal_form.html` | Modal chrome; emits `data-mform`, `data-modal-size`, `novalidate` (multi-step) and the progress / footer. |
 | Field / row / progress | `includes/form_field.html`, `form_row.html`, `form_steps.html`, `form_progress.html` | Auto-render of the steps. |
-| Generic JS + CSS | `templates/base.html` | Step navigation, completion meter, dialog sizing, focus, widget re-init, `#hx-live` error count. No per-entity JS. |
+| Generic JS + CSS | `templates/base.html` (JS), `static/css/cairn/07-forms.css` (CSS) | Step navigation, completion meter, dialog sizing, focus, widget re-init, `#hx-live` error count. No per-entity JS. |
 | Container | `#itemDrawer` (in `base.html`) | One centered Bootstrap modal, swap region `#drawer-form-content`, driven by the shared `HtmxFormMixin` (`core/mixins.py`). |
 | Custom field widgets | `context/widgets.py` | `IconPickerWidget`, `ImageUploadWidget` - reusable controls that auto-render in a step. |
 
@@ -903,7 +903,7 @@ Intentional motion, never decorative. Always honours
 
 ### Reusable animations
 
-Defined in `base.html`, applied via utility classes.
+Defined in `static/css/cairn/08-motion.css`, applied via utility classes.
 
 | Class | Effect | Duration |
 | --- | --- | --- |
