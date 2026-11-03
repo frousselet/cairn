@@ -1018,6 +1018,18 @@ class TestRiskCriteriaDetailView:
         assert "scale_levels" in resp.context
         assert "risk_levels" in resp.context
 
+    def test_detail_renders_the_lifecycle_stepper(self):
+        """Criteria run the default lifecycle; their page had no stepper, so
+        a criteria set could never be submitted or validated from the UI."""
+        client, user = _superuser_client()
+        criteria = RiskCriteriaFactory(workflow_state="draft")
+        resp = client.get(reverse("risks:criteria-detail", args=[criteria.pk]))
+        assert resp.context["lc_steps"]
+        assert reverse(
+            "workflow:transition",
+            kwargs={"app_label": "risks", "model": "riskcriteria", "pk": criteria.pk},
+        ) in resp.content.decode()
+
 
 class TestRiskCriteriaDeleteView:
     def test_delete_criteria(self):

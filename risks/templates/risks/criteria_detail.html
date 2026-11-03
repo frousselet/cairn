@@ -12,6 +12,8 @@
 {% include "includes/history_panel.html" %}
 {% help_modal "risks.criteria_detail" %}
 
+{% include "includes/lifecycle_stepper.html" %}
+
 {% detail_layout %}
   {% slot rail %}
     {% kpi_tile _("Lifecycle stage") criteria.lifecycle_label icon="signpost-split" %}

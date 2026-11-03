@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Opening an assessment result's edit page directly failed with a server error, and so did the preview of a finding recorded without an audit.
 - Global search results for sites had no link, and the SWOT item and strategy dialogs could not be closed or cancelled.
 - The group permission matrix lacked its Validate column, which shifted the labels of the columns after it, and the decision and ISMS change forms never showed field errors.
+- Risk criteria pages had no lifecycle stepper, so a criteria set could not be submitted or validated from the interface.
 
 ### Security
 
