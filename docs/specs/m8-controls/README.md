@@ -188,7 +188,7 @@ The gates and side effects live in each model's `transition_to()`, inside one `t
 | `controls.test.approve` | Activate / retire a test, validate / send back / withdraw a run, raise a finding from a run |
 | `controls.test.delete` | Delete a draft test or a draft run |
 
-System groups : Super Administrateur and Administrateur get every codename; RSSI / DPO get read, create, update, approve; Contributeur gets read, create, update; Auditeur gets read plus `controls.test.create` and `controls.test.update` (auditors record test runs; validation stays with the second line); Lecteur gets read. A migration creates the rows and attaches them.
+System groups : Super Administrateur and Administrateur get every codename; RSSI / DPO get read, create, update, approve; Contributeur gets read, create, update; Auditeur and Lecteur get read (an auditor who records runs is given the Contributeur group as well, so the read-only meaning of the Auditeur group is kept). A migration creates the rows and attaches them.
 
 ---
 
@@ -240,7 +240,7 @@ New `NotificationType` values with `notify_*` helpers in `accounts/notifications
 | `CONTROL_TEST_OVERDUE` : same sweep, due date passed (sent once, then weekly) | The tester and the control owner | In-app, email |
 | `CONTROL_TEST_FAILED` : a `partial` or `fail` run is validated | The control owner | In-app, email |
 
-Submission of a run sends the existing `LIFECYCLE_SUBMITTED` notification (RG-LC-06) to holders of `controls.test.approve` in scope, excluding the performer.
+Submission of a run sends the existing `LIFECYCLE_SUBMITTED` notification (RG-LC-06) through the RG-LC-09 recipient chain, which resolves to the holders of `controls.test.approve`, excluding the submitter.
 
 ---
 

@@ -289,6 +289,13 @@ BADGE_REGISTRY: dict[str, dict[str, tuple[str, str, object]]] = {
         "effective": ("success", "check-circle", pgettext_lazy("finding", "Effective")),
         "partially_effective": ("warning", "circle-half", pgettext_lazy("finding", "Partially effective")),
         "not_effective": ("danger", "x-circle", pgettext_lazy("finding", "Not effective")),
+        "not_tested": ("secondary", "dash-circle", pgettext_lazy("control effectiveness", "Not tested")),
+    },
+    # Result of a control test run (controls module).
+    "run_result": {
+        "pass": ("success", "check-circle", pgettext_lazy("test result", "Pass")),
+        "partial": ("warning", "circle-half", pgettext_lazy("test result", "Partial")),
+        "fail": ("danger", "x-circle", pgettext_lazy("test result", "Fail")),
     },
     # Access log events and assistant feedback (labels from the choices).
     "access_event": {
@@ -1323,6 +1330,7 @@ CHOICE_BADGE_TYPES = {
     "dic_criterion": "dic",
     "finding_type": "finding",
     "effectiveness_verdict": "effectiveness",
+    "effectiveness": "effectiveness",
     "tlp": "tlp",
     "notification_decision": "notification_decision",
     "triage_decision": "triage_decision",
