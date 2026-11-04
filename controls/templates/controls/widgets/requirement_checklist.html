@@ -1,0 +1,11 @@
+{% load i18n %}{% comment %}
+  RG-CTL-05 : the uncovered requirements of a framework as a bounded checklist
+  (controls.forms.RequirementChecklistWidget). Every row is a form-check.
+{% endcomment %}{% with id=widget.attrs.id %}
+<div{% if id %} id="{{ id }}"{% endif %} class="requirement-checklist scroll-box border rounded px-3 py-2">
+  {% for group, options, index in widget.optgroups %}{% for option in options %}
+  {% include option.template_name with widget=option %}
+  {% endfor %}{% empty %}
+  <p class="text-meta mb-0">{% trans "No requirement to list." %}</p>
+  {% endfor %}
+</div>{% endwith %}

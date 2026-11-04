@@ -1,0 +1,4 @@
+{% extends "includes/modal_form.html" %}
+{% comment %}RG-CTL-13 : attach an evidence file to a run in progress. Sent as multipart; size and SHA-256 are stamped by the model.{% endcomment %}
+{% block form_enctype %}enctype="multipart/form-data" hx-encoding="multipart/form-data"{% endblock %}
+{% block modal_title_icon %}<span class="drawer-title-icon"><i class="bi bi-paperclip"></i></span>{% endblock %}

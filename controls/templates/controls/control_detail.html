@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% load i18n ui help_tags workflow_tags accounts_tags controls_tags %}
+
+{% comment %}
+One security control : how it operates, how it is tested and with what result,
+which requirements it satisfies, which risks it treats, where it applies and
+which documents describe it. Its effectiveness is derived from the validated
+runs of its active tests (RG-CTL-14), never declared; the state changes only
+through the stepper.
+{% endcomment %}
+
+{% block title %}{{ control.name }} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "controls.control.update" as can_update_control %}
+{% has_perm "controls.control.delete" as can_delete_control %}
+{% has_perm "controls.test.create" as can_create_test %}
+{% page_header control.name reference=control.reference nav="controls:control-list" accent="controls" %}
+  {% include "includes/history_trigger.html" %}
+  {% if can_delete_control and control.is_deletable %}
+  <button type="button" class="btn btn-danger" hx-get="{% url 'controls:control-delete' control.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  {% endif %}
+  {% if can_update_control and not control.is_terminal_state %}
+  <a href="{% url 'controls:control-update' control.pk %}" class="btn btn-primary" hx-get="{% url 'controls:control-update' control.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+{% help_modal "controls.control_detail" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if is_stale %}
+<div class="alert alert-warning"><i class="bi bi-calendar-x me-2" aria-hidden="true"></i>{% blocktrans with date=next_test_due|date %}A test of this control was due on {{ date }} : its effectiveness rests on a test that is now overdue.{% endblocktrans %}</div>
+{% elif is_test_overdue %}
+<div class="alert alert-warning"><i class="bi bi-calendar-x me-2" aria-hidden="true"></i>{% blocktrans with date=next_test_due|date %}A test of this control was due on {{ date }}. Record a run.{% endblocktrans %}</div>
+{% endif %}
+
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") control.lifecycle_label icon="signpost-split" %}
+    {% kpi_tile _("Effectiveness") control.get_effectiveness_display icon="patch-check" tone=control.effectiveness|badge_variant:"effectiveness" size="sm" %}
+    {% if is_test_overdue %}
+    {% kpi_tile _("Next test due") next_test_due icon="calendar-x" tone="danger" %}
+    {% else %}
+    {% kpi_tile _("Next test due") next_test_due icon="calendar-event" tone="neutral" %}
+    {% endif %}
+    {% kpi_tile _("Implemented on") control.implemented_on icon="calendar-check" tone="neutral" %}
+  {% endslot %}
+
+  {# ── How the control operates ── #}
+  {% section_card _("Description") icon="text-left" %}
+    {% if control.description %}<div class="ov-rich mb-3">{{ control.description|controls_rich }}</div>{% endif %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Theme") control.get_theme_display %}
+      {% meta_item _("Nature") control.get_nature_display %}
+      {% meta_item _("Automation") control.get_automation_display %}
+      {% meta_item _("Owner") %}{% if control.owner %}{% user_badge control.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if control.scopes.all %}<div class="d-flex flex-wrap gap-1">{% for scope in control.scopes.all %}{% badge variant="secondary" label=scope.name %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Effectiveness updated at") control.effectiveness_updated_at %}
+      {% meta_item _("Tags") wide=True hide_empty=True %}{% tag_list control.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── How it is tested (RG-CTL-06, RG-CTL-07) ── #}
+  {% section_card _("Tests") icon="clipboard-check" count=tests|length flush=True %}
+    {% slot actions %}
+    {% if can_create_test and not control.is_terminal_state %}
+    <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'controls:controltest-create' control.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New test" %}</button>
+    {% endif %}
+    {% endslot %}
+    {% if tests %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Test" %}</th>
+            <th>{% trans "Method" %}</th>
+            <th>{% trans "Frequency" %}</th>
+            <th>{% trans "Latest result" %}</th>
+            <th>{% trans "Next due" %}</th>
+            <th>{% trans "Status" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tests %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'controls:controltest-detail' t.pk %}" class="cell-link">{{ t.name }}</a>
+                <span class="cell-sub">{{ t.reference }}</span>
+              </span>
+            </td>
+            <td class="text-nowrap">{{ t.get_method_display }}</td>
+            <td class="text-nowrap">{% blocktrans count counter=t.frequency_months %}Every month{% plural %}Every {{ counter }} months{% endblocktrans %}</td>
+            <td class="text-nowrap">{% if t.latest_result_value %}{% badge t.latest_result_value type="run_result" %}{% else %}{% dash %}{% endif %}</td>
+            <td class="text-nowrap">{% if t.is_overdue %}{% badge variant="danger" icon="calendar-x" label=t.next_due_date|date %}{% else %}{{ t.next_due_date|or_dash }}{% endif %}</td>
+            <td>{% workflow_badge t %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body">{% empty_state compact=True message=_("No test yet. A test says how the control is checked and how often; its validated runs make the control's effectiveness.") %}</div>
+    {% endif %}
+  {% endsection_card %}
+
+  {# ── Recent runs ── #}
+  {% section_card _("Recent runs") icon="clock-history" count=run_count flush=True hide_empty=True %}
+    {% if recent_runs %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Run" %}</th>
+            <th>{% trans "Test" %}</th>
+            <th>{% trans "Performed by" %}</th>
+            <th>{% trans "Result" %}</th>
+            <th>{% trans "Status" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in recent_runs %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'controls:controltestrun-detail' r.pk %}" class="cell-link tabular-nums">{{ r.performed_on }}</a>
+                <span class="cell-sub">{{ r.reference }}</span>
+              </span>
+            </td>
+            <td class="text-meta">{{ r.test.name }}</td>
+            <td>{% user_badge r.performed_by size=24 %}</td>
+            <td class="text-nowrap">{% choice_badge r "result" type="run_result" %}</td>
+            <td>{% workflow_badge r %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  {% endsection_card %}
+
+  {# ── What it satisfies ── #}
+  {% section_card _("Requirements") icon="list-check" count=requirement_count hide_empty=True %}
+    {% for group in requirement_groups %}
+    {% subhead group.framework.short_name|default:group.framework.name icon="journal-bookmark" count=group.requirements|length %}
+    <div class="ref-links mb-2">
+      {% for req in group.requirements %}{% url 'compliance:requirement-detail' req.pk as req_url %}{% ref_link req url=req_url reference=req.requirement_number|default:req.reference label=req.name|truncatechars:90 %}{% endfor %}
+    </div>
+    {% endfor %}
+  {% endsection_card %}
+
+  {# ── Risks and treatment (RG-CTL-20 : shown as the justification of the residual level) ── #}
+  {% section_card _("Risks and treatment") icon="shield-exclamation" hide_empty=True %}
+    {% if risks %}
+    {% subhead _("Risks") icon="shield-exclamation" count=risks|length %}
+    <div class="table-responsive mb-2">
+      <table class="table table-sm mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Risk" %}</th>
+            <th class="text-end">{% trans "Residual level" %}</th>
+            <th>{% trans "Status" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for risk in risks %}
+          <tr>
+            <td>{% url 'risks:risk-detail' risk.pk as risk_url %}{% ref_link risk url=risk_url %}</td>
+            <td class="text-end tabular-nums">{{ risk.residual_risk_level|or_dash }}</td>
+            <td>{% workflow_badge risk %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+    {% if treatment_plans %}
+    {% subhead _("Treatment plans") icon="clipboard2-pulse" count=treatment_plans|length %}
+    <div class="ref-links mb-2">
+      {% for plan in treatment_plans %}{% url 'risks:treatment-plan-detail' plan.pk as plan_url %}{% ref_link plan url=plan_url %}{% endfor %}
+    </div>
+    {% endif %}
+    {% if pacs_measures %}
+    {% subhead _("PACS measures") icon="shield-plus" count=pacs_measures|length %}
+    <div class="ref-links">
+      {% for measure in pacs_measures %}{% ref_link measure %}{% endfor %}
+    </div>
+    {% endif %}
+  {% endsection_card %}
+
+  {% section_card _("Applies to") icon="hdd-network" count=support_assets|length hide_empty=True %}
+    {% if support_assets %}
+    <div class="ref-links">
+      {% for asset in support_assets %}{% url 'assets:support-asset-detail' asset.pk as asset_url %}{% ref_link asset url=asset_url %}{% endfor %}
+    </div>
+    {% endif %}
+  {% endsection_card %}
+
+  {% section_card _("Objectives") icon="bullseye" count=objectives|length hide_empty=True %}
+    {% if objectives %}
+    <div class="ref-links">
+      {% for objective in objectives %}{% url 'context:objective-detail' objective.pk as objective_url %}{% ref_link objective url=objective_url %}{% endfor %}
+    </div>
+    {% endif %}
+  {% endsection_card %}
+
+  {% section_card _("Documents") icon="file-earmark-text" count=policies|length hide_empty=True %}
+    {% if policies %}
+    <div class="ref-links">
+      {% for policy in policies %}{% url 'documents:policy-detail' policy.pk as policy_url %}{% ref_link policy url=policy_url label=policy.title %}{% endfor %}
+    </div>
+    {% endif %}
+  {% endsection_card %}
+
+  {% record_card control %}
+{% enddetail_layout %}
+{% endblock %}

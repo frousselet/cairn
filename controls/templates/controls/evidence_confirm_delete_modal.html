@@ -1,0 +1,11 @@
+{% extends delete_shell|default:"includes/confirm_delete_modal.html" %}
+{% load i18n %}
+{% comment %}Remove an evidence file. Only while its run is in progress (RG-CTL-13); afterwards the file is part of the record.{% endcomment %}
+{% block delete_title %}{% trans "Remove evidence" %}{% endblock %}
+{% block delete_message %}{% blocktrans with name=object.original_filename reference=object.run.reference %}Are you sure you want to remove <strong>{{ name }}</strong> from {{ reference }}?{% endblocktrans %}{% endblock %}
+{% block delete_details %}
+  {% if object.run.is_frozen %}
+  <p class="text-muted small mb-2"><i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% trans "Evidence can only be added or removed while the test run is in progress." %}</p>
+  {% endif %}
+{% endblock %}
+{% block delete_button_attrs %}{% if object.run.is_frozen %} disabled{% endif %}{% endblock %}

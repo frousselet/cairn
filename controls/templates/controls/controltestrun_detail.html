@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load i18n ui help_tags workflow_tags accounts_tags %}
+
+{% comment %}
+One run of a test : who tested, when, over which period, on which sample, with
+what result and which evidence (SHA-256 recorded at upload). The content and the
+evidence are editable only while the run is in progress (RG-CTL-09, RG-CTL-13);
+it is validated by someone other than its performer (RG-CTL-11). A validated
+partial or failed run can raise one finding (RG-CTL-16).
+{% endcomment %}
+
+{% block title %}{{ run.reference }} - Cairn{% endblock %}
+
+{% block content %}
+{% trans "Control" context "control" as control_label %}
+{% has_perm "controls.test.update" as can_update_run %}
+{% has_perm "controls.test.delete" as can_delete_run %}
+{% has_perm "controls.test.approve" as can_approve_run %}
+{% url 'controls:controltest-detail' test.pk as test_url %}
+{% url 'controls:control-detail' control.pk as control_url %}
+{% page_header test.name reference=run.reference nav="controls:controltest-list" parent_label=test.reference parent_url=test_url accent="controls" %}
+  {% include "includes/history_trigger.html" %}
+  {% if can_delete_run and run.is_deletable %}
+  <button type="button" class="btn btn-danger" hx-get="{% url 'controls:controltestrun-delete' run.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  {% endif %}
+  {% if can_update_run and is_draft %}
+  <a href="{% url 'controls:controltestrun-update' run.pk %}" class="btn btn-primary" hx-get="{% url 'controls:controltestrun-update' run.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+{% help_modal "controls.run_detail" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if not is_draft %}
+<div class="alert alert-info" role="status"><i class="bi bi-lock me-2" aria-hidden="true"></i>{% trans "This run was submitted : its result, its observations and its evidence are frozen. Send it back to make a change." %}</div>
+{% endif %}
+
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") run.lifecycle_label icon="signpost-split" %}
+    {% if run.result %}
+    {% kpi_tile _("Result") run.get_result_display icon="clipboard-data" tone=run.result|badge_variant:"run_result" size="sm" %}
+    {% else %}
+    {% kpi_tile _("Result") None icon="clipboard-data" tone="neutral" %}
+    {% endif %}
+    {% kpi_tile _("Performed on") run.performed_on icon="calendar-check" tone="neutral" %}
+    {% kpi_tile _("Reviewed by") run.reviewed_by.display_name icon="person-check" tone="neutral" size="sm" %}
+  {% endslot %}
+
+  {% section_card _("Result") icon="clipboard-data" %}
+    {% meta_list cols=2 %}
+      {% meta_item control_label %}{% ref_link control url=control_url %}{% endmeta_item %}
+      {% meta_item _("Test") %}{% ref_link test url=test_url %}{% endmeta_item %}
+      {% meta_item _("Performed by") %}{% user_badge run.performed_by size=28 link=True block=True %}{% endmeta_item %}
+      {% meta_item _("Result") %}{% choice_badge run "result" type="run_result" %}{% endmeta_item %}
+      {% meta_item _("Period start") run.period_start %}
+      {% meta_item _("Period end") run.period_end %}
+      {% meta_item _("Sample") wide=True %}{% if run.sample_description %}{{ run.sample_description|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Observations") wide=True %}{% if run.observations %}{{ run.observations|linebreaksbr }}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── Evidence (RG-CTL-13) : served only through the download view ── #}
+  {% section_card _("Evidence") icon="paperclip" count=evidence|length flush=True %}
+    {% slot actions %}
+    {% if can_update_run and is_draft %}
+    <a href="{% url 'controls:evidence-upload' run.pk %}" class="btn btn-sm btn-secondary" hx-get="{% url 'controls:evidence-upload' run.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-upload me-1" aria-hidden="true"></i>{% trans "Add evidence" %}</a>
+    {% endif %}
+    {% endslot %}
+    {% if evidence %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "File" %}</th>
+            <th class="text-end">{% trans "Size" %}</th>
+            <th>{% trans "SHA-256" %}</th>
+            <th>{% trans "Uploaded by" %}</th>
+            {% if can_update_run and is_draft %}<th class="text-end">{% trans "Actions" %}</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in evidence %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'controls:evidence-download' item.pk %}" class="cell-link" hx-boost="false"><i class="bi bi-file-earmark-arrow-down me-1" aria-hidden="true"></i>{{ item.original_filename|default:_("File") }}</a>
+                {% if item.description %}<span class="cell-sub">{{ item.description }}</span>{% endif %}
+              </span>
+            </td>
+            <td class="text-end text-nowrap tabular-nums">{{ item.size|filesizeformat }}</td>
+            <td class="text-nowrap"><code class="text-sm" title="{% trans 'SHA-256 recorded at upload' %}">{{ item.sha256 }}</code></td>
+            <td>
+              <span class="cell-stack">
+                {% if item.uploaded_by %}<span>{{ item.uploaded_by.display_name }}</span>{% endif %}
+                <span class="cell-sub text-nowrap">{{ item.uploaded_at }}</span>
+              </span>
+            </td>
+            {% if can_update_run and is_draft %}
+            <td class="text-end">
+              <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'controls:evidence-delete' item.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body">{% if is_draft %}{% empty_state compact=True message=_("No evidence yet. Attach the exports, screenshots or signed sheets that support the result before submitting the run.") %}{% else %}{% empty_state compact=True message=_("No evidence was attached to this run.") %}{% endif %}</div>
+    {% endif %}
+  {% endsection_card %}
+
+  {# ── Review (RG-CTL-11) ── #}
+  {% section_card _("Review") icon="person-check" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Reviewed by") %}{% if run.reviewed_by %}{% user_badge run.reviewed_by size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Reviewed at") run.reviewed_at %}
+    {% endmeta_list %}
+    <p class="text-meta mt-2 mb-0"><i class="bi bi-people me-1" aria-hidden="true"></i>{% trans "A run is validated by a reviewer who did not perform it." %}</p>
+  {% endsection_card %}
+
+  {# ── Finding (RG-CTL-16) ── #}
+  {% if findings or needs_finding %}
+  {% section_card _("Finding") icon="exclamation-diamond" %}
+    {% slot actions %}
+    {% if needs_finding and can_approve_run %}
+    <a href="{% url 'controls:controltestrun-raise-finding' run.pk %}" class="btn btn-sm btn-secondary" hx-get="{% url 'controls:controltestrun-raise-finding' run.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-exclamation-diamond me-1" aria-hidden="true"></i>{% trans "Raise a finding" %}</a>
+    {% endif %}
+    {% endslot %}
+    {% if findings %}
+    <div class="ref-links">
+      {% for finding in findings %}{% url 'compliance:finding-detail' finding.pk as finding_url %}{% ref_link finding url=finding_url label=finding.get_finding_type_display %}{% endfor %}
+    </div>
+    {% else %}
+    {% empty_state compact=True message=_("This run found a gap and no finding was raised yet. Raise one to track its correction in the nonconformity register.") %}
+    {% endif %}
+  {% endsection_card %}
+  {% endif %}
+
+  {% record_card run %}
+{% enddetail_layout %}
+{% endblock %}
