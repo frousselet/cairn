@@ -16,6 +16,8 @@ This directory is the single source of truth for what each Cairn module does and
 | [Module 6 : incidents](m6-incidents/README.md) | Events, incidents, evidence and custody, notification obligations and filings, breaches, post-incident reviews |
 | [Module 7 : documents](m7-documents/README.md) | Policies, procedures, standards and charters : versions, approval, review cycle, acknowledgement campaigns |
 | [Module 8 : controls](m8-controls/README.md) | Security controls, their links to requirements, risks and assets, effectiveness tests, runs and evidence |
+| [Module 9 : training](m9-training/README.md) | Course catalogue, competencies by role, training campaigns and completions, CSV import, the competency matrix |
+| [Module 10 : continuity](m10-continuity/README.md) | Business impact analyses, continuity and recovery plans, exercises, plan activations and their log |
 | [Management review](management-review/README.md) | The ISO 27001 clause 9.3 entities |
 | [Assistant](assistant/README.md) | Ask Cairn : the optional question mode and its pluggable provider |
 
