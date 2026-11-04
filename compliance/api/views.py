@@ -23,6 +23,7 @@ from core.transition_messages import transition_error_detail
 from .filters import (
     ComplianceActionPlanFilter,
     ComplianceAssessmentFilter,
+    FindingFilter,
     FrameworkFilter,
     RequirementFilter,
     RequirementMappingFilter,
@@ -297,6 +298,7 @@ class AssessmentResultViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
 
 class FindingViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     serializer_class = FindingSerializer
+    filterset_class = FindingFilter
     permission_classes = [CompliancePermission]
     permission_feature = "finding"
     scope_parent_lookup = "assessment__scopes"

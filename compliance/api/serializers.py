@@ -152,12 +152,15 @@ class FindingSerializer(serializers.ModelSerializer):
     assessment_name = serializers.CharField(read_only=True)
     assessor_name = serializers.CharField(read_only=True)
     effectiveness_reviewed_by_name = serializers.CharField(read_only=True)
+    # RG-CTL-16 : set by the run's "raise a finding" action, never by a client.
+    control_test_run_reference = serializers.CharField(read_only=True)
 
     class Meta:
         model = Finding
         fields = [
             "id", "assessment", "assessment_name", "reference",
             "source", "source_display",
+            "control_test_run", "control_test_run_reference",
             "finding_type", "finding_type_display",
             "description", "recommendation", "evidence",
             "assessor", "assessor_name", "requirements",
@@ -165,7 +168,9 @@ class FindingSerializer(serializers.ModelSerializer):
             "effectiveness_reviewed_by_name", "effectiveness_verdict",
             "created_by", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "reference", "created_by", "created_at", "updated_at"]
+        read_only_fields = [
+            "id", "reference", "control_test_run", "created_by", "created_at", "updated_at",
+        ]
 
 
 class FindingListSerializer(serializers.ModelSerializer):
@@ -177,18 +182,20 @@ class FindingListSerializer(serializers.ModelSerializer):
     )
     assessment_name = serializers.CharField(read_only=True)
     assessor_name = serializers.CharField(read_only=True)
+    control_test_run_reference = serializers.CharField(read_only=True)
 
     class Meta:
         model = Finding
         fields = [
             "id", "assessment", "assessment_name", "reference",
             "source", "source_display",
+            "control_test_run", "control_test_run_reference",
             "finding_type", "finding_type_display",
             "description", "assessor", "assessor_name",
             "effectiveness_verdict",
             "created_at",
         ]
-        read_only_fields = ["id", "reference", "created_at"]
+        read_only_fields = ["id", "reference", "control_test_run", "created_at"]
 
 
 class ComplianceAssessmentSerializer(serializers.ModelSerializer):
