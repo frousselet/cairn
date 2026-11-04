@@ -62,6 +62,15 @@ class Finding(BaseModel):
         verbose_name=_("Incident"),
         help_text=_("The security incident that raised this nonconformity."),
     )
+    control_test_run = models.ForeignKey(
+        "controls.ControlTestRun",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="findings",
+        verbose_name=_("Control test run"),
+        help_text=_("The control test run that raised this nonconformity."),
+    )
     finding_type = models.CharField(
         _("Finding type"),
         max_length=20,
@@ -136,6 +145,11 @@ class Finding(BaseModel):
     def incident_reference(self):
         """Incident that raised it, if any (for read-only API / assistant output)."""
         return self.incident.reference if self.incident_id else ""
+
+    @property
+    def control_test_run_reference(self):
+        """Control test run that raised it, if any (for read-only API / assistant output)."""
+        return self.control_test_run.reference if self.control_test_run_id else ""
 
     @property
     def assessor_name(self):

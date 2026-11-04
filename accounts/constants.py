@@ -58,6 +58,9 @@ class NotificationType(models.TextChoices):
     POLICY_VERSION_IN_FORCE = "policy_version_in_force", _("New document version in force")
     ACKNOWLEDGEMENT_REQUESTED = "acknowledgement_requested", _("Document to acknowledge")
     ACKNOWLEDGEMENT_REMINDER = "acknowledgement_reminder", _("Acknowledgement reminder")
+    CONTROL_TEST_DUE = "control_test_due", _("Control test due")
+    CONTROL_TEST_OVERDUE = "control_test_overdue", _("Control test overdue")
+    CONTROL_TEST_FAILED = "control_test_failed", _("Control test failed")
 
 
 # Lockout settings
@@ -331,6 +334,16 @@ PERMISSION_REGISTRY = {
             "label": _("Acknowledgement campaigns"),
         },
     },
+    "controls": {
+        "control": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": pgettext_lazy("control", "Controls"),
+        },
+        "test": {
+            "actions": ["create", "read", "update", "delete", "approve"],
+            "label": _("Control tests"),
+        },
+    },
     "reports": {
         "report": {
             "actions": ["create", "read", "delete"],
@@ -444,6 +457,7 @@ MODULE_LABELS = {
     "compliance": _("Compliance"),
     "incidents": _("Incidents"),
     "documents": _("Documents"),
+    "controls": pgettext_lazy("control", "Controls"),
     "reports": _("Reports"),
     "trust_center": _("Trust Center"),
     "system": _("System"),

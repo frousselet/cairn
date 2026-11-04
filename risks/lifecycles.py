@@ -202,9 +202,11 @@ _EBIOS_BASELINE_GAP_TRANSITIONS = [
 ]
 
 _EBIOS_PACS_MEASURE_STATE_FLAGS = {
-    PACSMeasureStatus.PLANNED: (True, False, True, True, False, "info"),
-    PACSMeasureStatus.IN_PROGRESS: (True, False, False, False, False, "primary"),
-    PACSMeasureStatus.OVERDUE: (True, False, False, False, False, "danger"),
+    # Linkable while the measure is under way, like a treatment plan : a
+    # register control can then name the PACS measure that creates it.
+    PACSMeasureStatus.PLANNED: (True, True, True, True, False, "info"),
+    PACSMeasureStatus.IN_PROGRESS: (True, True, False, False, False, "primary"),
+    PACSMeasureStatus.OVERDUE: (True, True, False, False, False, "danger"),
     PACSMeasureStatus.COMPLETED: (True, False, False, False, True, "success"),
     PACSMeasureStatus.CANCELLED: (False, False, False, False, True, "danger"),
 }

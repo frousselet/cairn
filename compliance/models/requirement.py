@@ -97,8 +97,7 @@ class Requirement(BaseModel):
         default="",
     )
     target_date = models.DateField(_("Target date"), null=True, blank=True)
-    # M2M relations (some to modules not yet implemented - commented out)
-    # linked_measures = models.ManyToManyField("measures.Measure", blank=True)
+    # Controls : reverse accessor `controls` from controls.Control.requirements.
     linked_assets = models.ManyToManyField(
         "assets.EssentialAsset",
         blank=True,

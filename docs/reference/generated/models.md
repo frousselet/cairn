@@ -48,7 +48,7 @@ The field-by-field contract of each entity lives in its [specification](../../sp
 | compliance | `AssessmentResult` | `compliance_assessmentresult` | - | - | - | yes | 12 |
 | compliance | `ComplianceActionPlan` | `compliance_complianceactionplan` | `CAPL` | `action_plan` | yes | yes | 19 |
 | compliance | `ComplianceAssessment` | `compliance_complianceassessment` | `CAST` | `compliance_assessment` | yes | yes | 24 |
-| compliance | `Finding` | `compliance_finding` | - | `default` | - | yes | 18 |
+| compliance | `Finding` | `compliance_finding` | - | `default` | - | yes | 19 |
 | compliance | `Framework` | `compliance_framework` | `FWRK` | `default` | yes | yes | 32 |
 | compliance | `RequirementMapping` | `compliance_requirementmapping` | - | - | - | yes | 10 |
 | compliance | `Requirement` | `compliance_requirement` | `REQT` | `default` | - | yes | 27 |

@@ -327,7 +327,8 @@ Every badge is a `.badge-dot` pill, in a table, a card or a header alike. Tones
 come from `BADGE_REGISTRY` in `core/templatetags/ui.py` :
 
 - `level` : priority, criticality, severity and impact share one ordinal scale.
-- `finding` and `effectiveness` : audit findings and corrective action effectiveness.
+- `finding` and `effectiveness` : audit findings, corrective action effectiveness and control effectiveness (with `not_tested`).
+- `run_result` : the result of a control test run (`pass`, `partial`, `fail`).
 - `tlp`, `notification_decision`, `triage_decision`, `response_action_status`, `timeline_entry_type`, `filing_outcome` : incident response.
 - `issue_status` and `objective_status` : the context module's own status fields.
 - `access_event` and `feedback_rating` : the access log and assistant feedback.
