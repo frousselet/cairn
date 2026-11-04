@@ -22,7 +22,7 @@
     {% kpi_tile _("Expectations & Requirements") expectations|length icon="list-check" tone="info" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if stakeholder.description %}<div class="ov-rich">{{ stakeholder.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if stakeholder.description %}<div class="ov-rich">{{ stakeholder.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("Information") icon="info-circle" %}
     {% meta_list cols=2 %}

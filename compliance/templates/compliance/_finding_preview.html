@@ -10,9 +10,9 @@
   <div class="mb-3">{% choice_badge finding "finding_type" type="finding" %}</div>
 
   {% meta_list %}
-    {% meta_item _("Finding") %}{% if finding.description %}<div class="ov-rich text-sm">{{ finding.description|safe }}</div>{% endif %}{% endmeta_item %}
-    {% if finding.recommendation %}{% meta_item _("Auditor recommendation") %}<div class="ov-rich text-sm">{{ finding.recommendation|safe }}</div>{% endmeta_item %}{% endif %}
-    {% if finding.evidence %}{% meta_item _("Evidence presented") %}<div class="ov-rich text-sm">{{ finding.evidence|safe }}</div>{% endmeta_item %}{% endif %}
+    {% meta_item _("Finding") %}{% if finding.description %}<div class="ov-rich text-sm">{{ finding.description|rich }}</div>{% endif %}{% endmeta_item %}
+    {% if finding.recommendation %}{% meta_item _("Auditor recommendation") %}<div class="ov-rich text-sm">{{ finding.recommendation|rich }}</div>{% endmeta_item %}{% endif %}
+    {% if finding.evidence %}{% meta_item _("Evidence presented") %}<div class="ov-rich text-sm">{{ finding.evidence|rich }}</div>{% endmeta_item %}{% endif %}
     {% meta_item _("Assessor") %}{% if finding.assessor %}{% user_badge finding.assessor size=24 %}{% endif %}{% endmeta_item %}
     {% meta_item _("Assessment") %}{% if finding.assessment %}<a href="{% url 'compliance:assessment-detail' finding.assessment.pk %}" class="cell-link">{{ finding.assessment }}</a>{% else %}<span class="text-meta">{% trans "Raised outside any audit." %}</span>{% endif %}{% endmeta_item %}
   {% endmeta_list %}

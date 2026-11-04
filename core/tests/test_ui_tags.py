@@ -450,3 +450,35 @@ class TestStyleGuideView:
         for marker in (b"detail-layout", b"kpi-tile__value", b"section-card__title", b"ov-row",
                        b"meta-list__item", b"ref-link", b"tag-pill", b"section-card__details", b"ui-dash"):
             assert marker in resp.content, marker
+
+
+class TestRichFilter:
+    """Stored rich text is sanitized at render time, never trusted."""
+
+    def test_keeps_formatting_and_drops_active_content(self):
+        from core.templatetags.ui import rich
+
+        html = str(rich('<p onclick="x()">A <strong>b</strong></p><script>alert(1)</script><img src=x onerror=alert(1)>'))
+        assert html == "<p>A <strong>b</strong></p>"
+
+    def test_keeps_safe_links_only(self):
+        from core.templatetags.ui import rich
+
+        assert 'href="https://example.org"' in str(rich('<a href="https://example.org">x</a>'))
+        assert "javascript" not in str(rich('<a href="javascript:alert(1)">x</a>'))
+
+    def test_blank_renders_nothing(self):
+        from core.templatetags.ui import rich
+
+        assert rich("") == ""
+        assert rich(None) == ""
+
+
+def test_script_json_cannot_close_its_element():
+    import json
+
+    from core.safe_json import dumps_for_script
+
+    text = dumps_for_script([{"label": "</script><script>alert(1)</script> & co"}])
+    assert "<" not in text and ">" not in text and "&" not in text
+    assert json.loads(text) == [{"label": "</script><script>alert(1)</script> & co"}]

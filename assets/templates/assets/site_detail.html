@@ -35,7 +35,7 @@
     <div class="card-body">
       <div class="supplier-overview{% if not site.address %} supplier-overview--nomap{% endif %}">
         <div class="supplier-overview__info">
-          {% if site.description %}{% ov_row "card-text" _("Description") lead=True rich=True %}{{ site.description|safe }}{% endov_row %}{% endif %}
+          {% if site.description %}{% ov_row "card-text" _("Description") lead=True rich=True %}{{ site.description|rich }}{% endov_row %}{% endif %}
           {% ov_row "building" _("Type") %}{{ site.get_type_display }}{% endov_row %}
           {% if site.parent_site %}{% ov_row "diagram-2" _("Parent site") %}<a href="{% url 'assets:site-detail' site.parent_site.pk %}" class="ov-link">{{ site.parent_site.name }}</a>{% endov_row %}{% endif %}
           {% if site.address %}{% ov_row "geo-alt" _("Address") %}{{ site.address|striptags }}{% endov_row %}{% endif %}

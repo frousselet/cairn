@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tag colours are validated before reaching a style attribute, and Cancel / Back links no longer echo an unchecked Referer header.
 - The risk scale endpoint no longer answers with the criteria of an assessment outside the user's scopes.
 - The relation pickers of every list's advanced filter listed related records unscoped, printing the names of records outside the reader's scopes into the page.
+- Rich text fields were rendered unsanitized on every detail page and report (stored XSS); they are now sanitized at render time, and JSON embedded in pages can no longer close its script element.
+- Nonconformities raised by an incident were visible to every finding reader whatever their scopes, and the MCP finding update and delete tools did not check the caller's scopes.
 
 
 

@@ -21,9 +21,9 @@
     {% kpi_tile _("Priority") requirement.get_priority_display icon="flag" tone=requirement.priority|badge_variant:"level" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if requirement.description %}<div class="ov-rich">{{ requirement.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if requirement.description %}<div class="ov-rich">{{ requirement.description|rich }}</div>{% endif %}{% endsection_card %}
 
-  {% section_card _("Implementation recommendations") icon="lightbulb" hide_empty=True %}{% if requirement.guidance %}<div class="ov-rich">{{ requirement.guidance|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Implementation recommendations") icon="lightbulb" hide_empty=True %}{% if requirement.guidance %}<div class="ov-rich">{{ requirement.guidance|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("General") icon="info-circle" %}
     {% meta_list cols=2 %}
@@ -44,7 +44,7 @@
     {% meta_list cols=2 %}
       {% meta_item _("Applicable") %}{% if requirement.is_applicable %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if requirement.framework.applicability_managed_by_risks %} <span title="{% trans 'Applicability is derived automatically from linked risks for this framework.' %}">{% badge variant="info" icon="shield-check" label=_("Risk-driven") %}</span>{% endif %}{% endmeta_item %}
       {% if requirement.framework.applicability_managed_by_risks or not requirement.is_applicable %}
-      {% meta_item _("Justification") wide=True %}{% if requirement.applicability_justification %}<div class="ov-rich">{{ requirement.applicability_justification|safe }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Justification") wide=True %}{% if requirement.applicability_justification %}<div class="ov-rich">{{ requirement.applicability_justification|rich }}</div>{% endif %}{% endmeta_item %}
       {% endif %}
     {% endmeta_list %}
   {% endsection_card %}
@@ -55,8 +55,8 @@
       {% meta_item _("Level") %}{% progress_bar requirement.compliance_level scheme="score" %}{% endmeta_item %}
       {% meta_item _("Last assessment") requirement.last_assessment_date %}
       {% meta_item _("Last assessor") %}{% if requirement.last_assessed_by %}{% user_badge requirement.last_assessed_by size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Evidence") wide=True %}{% if requirement.compliance_evidence %}<div class="ov-rich">{{ requirement.compliance_evidence|safe }}</div>{% endif %}{% endmeta_item %}
-      {% meta_item _("Finding") wide=True %}{% if requirement.compliance_finding %}<div class="ov-rich">{{ requirement.compliance_finding|safe }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Evidence") wide=True %}{% if requirement.compliance_evidence %}<div class="ov-rich">{{ requirement.compliance_evidence|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Finding") wide=True %}{% if requirement.compliance_finding %}<div class="ov-rich">{{ requirement.compliance_finding|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 

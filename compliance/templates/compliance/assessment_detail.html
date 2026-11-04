@@ -71,9 +71,9 @@
     {% endoverview %}
   {% endsection_card %}
 
-  {% section_card _("Context and objectives") icon="text-left" collapsible=True open=False hide_empty=True %}{% if assessment.description %}<div class="ov-rich">{{ assessment.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Context and objectives") icon="text-left" collapsible=True open=False hide_empty=True %}{% if assessment.description %}<div class="ov-rich">{{ assessment.description|rich }}</div>{% endif %}{% endsection_card %}
 
-  {% section_card _("Limitations") icon="exclamation-circle" collapsible=True open=False hide_empty=True %}{% if assessment.limitations %}<div class="ov-rich">{{ assessment.limitations|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Limitations") icon="exclamation-circle" collapsible=True open=False hide_empty=True %}{% if assessment.limitations %}<div class="ov-rich">{{ assessment.limitations|rich }}</div>{% endif %}{% endsection_card %}
 
   {# Planning and Findings are two working modes of the assessment : the evaluation grid, and the findings register of this audit. #}
   <div>

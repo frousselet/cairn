@@ -20,7 +20,7 @@
     {% kpi_tile _("Type") threat.get_type_display icon="lightning" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if threat.description %}<div class="ov-rich">{{ threat.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if threat.description %}<div class="ov-rich">{{ threat.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("General") icon="info-circle" %}
     {% meta_list cols=2 %}

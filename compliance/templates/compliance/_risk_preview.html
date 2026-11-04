@@ -10,7 +10,7 @@
   <h6 class="mb-3">{{ risk.name }}</h6>
 
   {% if risk.description %}
-  <div class="mb-4 ov-rich text-sm">{{ risk.description|safe }}</div>
+  <div class="mb-4 ov-rich text-sm">{{ risk.description|rich }}</div>
   {% endif %}
 
   {% meta_list %}

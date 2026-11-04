@@ -22,7 +22,7 @@
     {% kpi_tile _("Sub-activities") activity.children.count icon="diagram-3" tone="info" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if activity.description %}<div class="ov-rich">{{ activity.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if activity.description %}<div class="ov-rich">{{ activity.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("General") icon="info-circle" %}
     {% meta_list cols=2 %}

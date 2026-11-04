@@ -15,7 +15,7 @@
     {% kpi_tile _("Suppliers") suppliers|length icon="truck" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" %}{% if supplier_type.description %}<div class="ov-rich">{{ supplier_type.description|safe }}</div>{% else %}{% dash %}{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" %}{% if supplier_type.description %}<div class="ov-rich">{{ supplier_type.description|rich }}</div>{% else %}{% dash %}{% endif %}{% endsection_card %}
 
   {% section_card _("Requirements") icon="list-check" count=requirements|length flush=True %}
     {% slot actions %}<a href="{% url 'assets:supplier-type-requirement-create' supplier_type.pk %}" class="btn btn-sm btn-secondary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add requirement" %}</a>{% endslot %}

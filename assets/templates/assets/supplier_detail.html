@@ -18,7 +18,7 @@
 {% endif %}
 
 {% if supplier.notes %}
-<div class="note-cartouche" role="note">{{ supplier.notes|safe }}</div>
+<div class="note-cartouche" role="note">{{ supplier.notes|rich }}</div>
 {% endif %}
 
 {% if supplier.is_contract_expired %}
@@ -49,7 +49,7 @@
     <div class="card-body">
       <div class="supplier-overview{% if not supplier.address and supplier.latitude is None %} supplier-overview--nomap{% endif %}">
         <div class="supplier-overview__info">
-          {% if supplier.description %}{% ov_row "card-text" _("Description") lead=True rich=True %}{{ supplier.description|safe }}{% endov_row %}{% endif %}
+          {% if supplier.description %}{% ov_row "card-text" _("Description") lead=True rich=True %}{{ supplier.description|rich }}{% endov_row %}{% endif %}
           {% if supplier.type %}{% ov_row "tag" _("Type") %}<a href="{% url 'assets:supplier-type-detail' supplier.type.pk %}" class="ov-link">{{ supplier.type.name }}</a>{% endov_row %}{% endif %}
           {% if supplier.website %}{% ov_row "globe" _("Website") %}<span class="d-block text-truncate"><a href="{{ supplier.website }}" target="_blank" rel="noopener" class="ov-link">{{ supplier.website }}</a></span>{% endov_row %}{% endif %}
           {% if supplier.address %}{% ov_row "geo-alt" _("Address") %}{{ supplier.address|striptags }}{% endov_row %}{% endif %}
@@ -213,7 +213,7 @@
             <td>
               <span class="cell-stack">
                 <a href="{% url 'assets:supplier-requirement-detail' req.pk %}" class="cell-link">{{ req.title }}</a>
-                {% if req.requirement %}<span class="cell-sub">{{ req.requirement.reference }} {{ req.requirement.name }}</span>{% elif req.description %}<span class="cell-sub cell-rich">{{ req.description|safe }}</span>{% endif %}
+                {% if req.requirement %}<span class="cell-sub">{{ req.requirement.reference }} {{ req.requirement.name }}</span>{% elif req.description %}<span class="cell-sub cell-rich">{{ req.description|rich }}</span>{% endif %}
               </span>
             </td>
             <td>
@@ -238,7 +238,7 @@
             <td>
               <span class="cell-stack">
                 <span class="fw-semibold">{{ tr.title }}</span>
-                {% if tr.description %}<span class="cell-sub cell-rich" title="{{ tr.description|striptags }}">{{ tr.description|safe }}</span>{% endif %}
+                {% if tr.description %}<span class="cell-sub cell-rich" title="{{ tr.description|striptags }}">{{ tr.description|rich }}</span>{% endif %}
               </span>
             </td>
             <td><a href="{% url 'assets:supplier-type-detail' supplier.type.pk %}" class="badge ov-origin ov-origin--inherited text-decoration-none" title="{% blocktrans with t=supplier.type.name %}Inherited from {{ t }}{% endblocktrans %}"><i class="bi bi-diagram-2 me-1" aria-hidden="true"></i>{% trans "Inherited" %}</a></td>

@@ -114,7 +114,9 @@ class LifecycleDefinitionUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
                     source = json.loads(raw)
                 except json.JSONDecodeError:
                     source = self.object.definition
-        ctx["definition_json"] = json.dumps(source)
+        from core.safe_json import dumps_for_script
+
+        ctx["definition_json"] = dumps_for_script(source)
         ctx["step_kinds"] = ["draft", "intermediate", "archived"]
         ctx["tones"] = [
             "neutral", "secondary", "info", "primary", "success", "warning", "danger", "dark", "muted",

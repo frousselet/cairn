@@ -23,7 +23,7 @@
     {% kpi_tile _("Next review date") framework.review_date icon="calendar-event" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if framework.description %}<div class="ov-rich">{{ framework.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if framework.description %}<div class="ov-rich">{{ framework.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("General") icon="info-circle" %}
     {% meta_list cols=2 %}

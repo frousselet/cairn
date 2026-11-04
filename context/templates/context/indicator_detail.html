@@ -31,7 +31,7 @@
     {% kpi_tile _("Measurements") measurements|length icon="clock-history" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if indicator.description %}<div class="ov-rich">{{ indicator.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if indicator.description %}<div class="ov-rich">{{ indicator.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("General") icon="info-circle" %}
     {% meta_list cols=2 %}

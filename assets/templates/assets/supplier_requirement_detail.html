@@ -20,7 +20,7 @@
   {% section_card _("Requirement") icon="list-check" %}
     {% meta_list cols=2 %}
       {% if req.requirement %}{% meta_item _("Linked requirement") wide=True %}<div class="ref-links">{% url 'compliance:requirement-detail' req.requirement.pk as linked_url %}{% ref_link req.requirement url=linked_url %}</div>{% endmeta_item %}{% endif %}
-      {% meta_item _("Description") wide=True %}{% if req.description %}<div class="ov-rich">{{ req.description|safe }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Description") wide=True %}{% if req.description %}<div class="ov-rich">{{ req.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Compliance status") %}{% choice_badge req "compliance_status" %}{% endmeta_item %}
       {% meta_item _("Due date") req.due_date %}
       {% if req.verified_by %}{% meta_item _("Last verified") wide=True %}<span class="d-inline-flex flex-wrap align-items-center gap-2"><time datetime="{{ req.verified_at|date:'c' }}">{{ req.verified_at|date:"DATETIME_FORMAT" }}</time> {% trans "by" %} {% user_badge req.verified_by size=24 %}</span>{% endmeta_item %}{% endif %}
@@ -39,7 +39,7 @@
       </div>
       {% if review.comment %}
       {% subhead _("Justification") %}
-      <div class="review-entry__body ov-rich">{{ review.comment|safe }}</div>
+      <div class="review-entry__body ov-rich">{{ review.comment|rich }}</div>
       {% endif %}
       {% if review.evidence_file %}
       {% subhead _("Supporting evidence") %}

@@ -103,7 +103,7 @@
     {% kpi_tile _("Next review") assessment.next_review_date icon="arrow-repeat" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if assessment.description %}<div class="ov-rich">{{ assessment.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if assessment.description %}<div class="ov-rich">{{ assessment.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("General") icon="info-circle" %}
     {% meta_list cols=2 %}
@@ -117,7 +117,7 @@
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Summary") icon="card-text" hide_empty=True %}{% if assessment.summary %}<div class="ov-rich">{{ assessment.summary|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Summary") icon="card-text" hide_empty=True %}{% if assessment.summary %}<div class="ov-rich">{{ assessment.summary|rich }}</div>{% endif %}{% endsection_card %}
 
   {% if assessment.methodology == 'iso27005' %}
   {% section_card _("ISO 27005 analyses") icon="diagram-3" count=iso27005_risks|length flush=True %}

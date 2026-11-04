@@ -52,10 +52,29 @@ def filter_queryset_by_scopes(qs, scope_ids, explicit=None):
         return qs
     if lookup == "id":
         return qs.filter(id__in=scope_ids)
+    alternates = _alternate_lookups(qs.model, explicit)
     matches = Q(**{f"{lookup}__id__in": scope_ids})
+    for alternate in alternates:
+        matches |= Q(**{f"{alternate}__id__in": scope_ids})
     if getattr(qs.model, "scope_parent_optional", False):
-        matches |= Q(**{f"{lookup}__isnull": True})
+        # Parentless rows stay visible, but only when no alternate parent
+        # files them either : a row reachable through an alternate parent is
+        # scoped by that parent.
+        orphan = Q(**{f"{lookup}__isnull": True})
+        for alternate in alternates:
+            orphan &= Q(**{f"{alternate}__isnull": True})
+        matches |= orphan
     return qs.filter(matches).distinct()
+
+
+def _alternate_lookups(model, explicit=None):
+    """Extra parent paths of a row that may be filed under one of several
+    parents (``scope_parent_alternates``), e.g. a nonconformity raised by an
+    audit, an incident or a control test. Ignored when a surface passes an
+    explicit lookup."""
+    if explicit:
+        return ()
+    return tuple(getattr(model, "scope_parent_alternates", ()) or ())
 
 
 def object_in_scopes(obj, scope_ids):
@@ -72,6 +91,13 @@ def object_in_scopes(obj, scope_ids):
     base = model._default_manager.filter(pk=obj.pk)
     if lookup == "id":
         return base.filter(id__in=scope_ids).exists()
-    if not base.filter(**{f"{lookup}__isnull": False}).exists():
+    lookups = (lookup, *_alternate_lookups(model))
+    filed = Q()
+    for path in lookups:
+        filed |= Q(**{f"{path}__isnull": False})
+    if not base.filter(filed).exists():
         return True
-    return base.filter(**{f"{lookup}__id__in": scope_ids}).exists()
+    reachable = Q()
+    for path in lookups:
+        reachable |= Q(**{f"{path}__id__in": scope_ids})
+    return base.filter(reachable).exists()

@@ -31,9 +31,9 @@
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if analysis.description %}<div class="ov-rich">{{ analysis.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if analysis.description %}<div class="ov-rich">{{ analysis.description|rich }}</div>{% endif %}{% endsection_card %}
 
-  {% section_card _("Existing controls") icon="shield-check" hide_empty=True %}{% if analysis.existing_controls %}<div class="ov-rich">{{ analysis.existing_controls|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Existing controls") icon="shield-check" hide_empty=True %}{% if analysis.existing_controls %}<div class="ov-rich">{{ analysis.existing_controls|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("Calculation") icon="calculator" %}
     {% subhead _("Likelihood") icon="speedometer2" %}
