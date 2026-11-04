@@ -600,7 +600,8 @@ Requires `compliance.finding.read`.
 | `offset` | `integer` | - | Offset for pagination |
 | `assessment_id` | `string` | - | Filter by assessment_id |
 | `finding_type` | `string` | - | Filter by finding_type |
-| `source` | `string` | - | Filter by source |
+| `source` | `string` | - | Filter by what surfaced the nonconformity; 'control_test' lists the findings raised from control test runs (raise_finding_from_run). |
+| `control_test_run_id` | `string` | - | Filter by the control test run the finding was raised from |
 | `effectiveness_verdict` | `string` | - | Filter by effectiveness_verdict |
 
 ## `list_frameworks`

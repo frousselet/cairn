@@ -6,7 +6,7 @@
 
 The complete route table under `/api/v1/`. Authentication, pagination, filtering and the error contract are documented in [../rest-api.md](../rest-api.md); the field-level contract of each resource is in its [specification](../../specs/README.md).
 
-**453 routes** are published across **23 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
+**471 routes** are published across **24 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
 
 ## Groups
 
@@ -19,6 +19,7 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | [`company-settings`](#company-settings) | 1 |
 | [`compliance`](#compliance) | 36 |
 | [`context`](#context) | 68 |
+| [`controls`](#controls) | 18 |
 | [`dashboard-layout`](#dashboard-layout) | 1 |
 | [`dependencies`](#dependencies) | 1 |
 | [`documents`](#documents) | 24 |
@@ -256,6 +257,29 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | `/api/v1/context/swot-analyses/<uuid:analysis_pk>/strategies/reorder/` | PATCH | `context.api.views.SwotStrategyViewSet` | `swot-strategies-reorder` |
 | `/api/v1/context/tags/` | GET, POST | `context.api.views.TagViewSet` | `tag-list` |
 | `/api/v1/context/tags/<pk>/` | DELETE, GET, PATCH, PUT | `context.api.views.TagViewSet` | `tag-detail` |
+
+## controls
+
+| Path | Methods | View | URL name |
+| --- | --- | --- | --- |
+| `/api/v1/controls/` | GET, OPTIONS | `rest_framework.routers.APIRootView` | `api-root` |
+| `/api/v1/controls/controls/` | GET, POST | `controls.api.views.ControlViewSet` | `control-list` |
+| `/api/v1/controls/controls/<pk>/` | DELETE, GET, PATCH, PUT | `controls.api.views.ControlViewSet` | `control-detail` |
+| `/api/v1/controls/controls/<pk>/history/` | GET | `controls.api.views.ControlViewSet` | `control-history` |
+| `/api/v1/controls/controls/<pk>/transition/` | GET, POST | `controls.api.views.ControlViewSet` | `control-transition` |
+| `/api/v1/controls/controls/batch/` | POST | `controls.api.views.ControlViewSet` | `control-batch-create` |
+| `/api/v1/controls/controls/from-requirements/` | POST | `controls.api.views.ControlViewSet` | `control-from-requirements` |
+| `/api/v1/controls/runs/` | GET, POST | `controls.api.views.ControlTestRunViewSet` | `controltestrun-list` |
+| `/api/v1/controls/runs/<pk>/` | DELETE, GET, PATCH, PUT | `controls.api.views.ControlTestRunViewSet` | `controltestrun-detail` |
+| `/api/v1/controls/runs/<pk>/history/` | GET | `controls.api.views.ControlTestRunViewSet` | `controltestrun-history` |
+| `/api/v1/controls/runs/<pk>/raise-finding/` | POST | `controls.api.views.ControlTestRunViewSet` | `controltestrun-raise-finding` |
+| `/api/v1/controls/runs/<pk>/transition/` | GET, POST | `controls.api.views.ControlTestRunViewSet` | `controltestrun-transition` |
+| `/api/v1/controls/runs/batch/` | POST | `controls.api.views.ControlTestRunViewSet` | `controltestrun-batch-create` |
+| `/api/v1/controls/tests/` | GET, POST | `controls.api.views.ControlTestViewSet` | `controltest-list` |
+| `/api/v1/controls/tests/<pk>/` | DELETE, GET, PATCH, PUT | `controls.api.views.ControlTestViewSet` | `controltest-detail` |
+| `/api/v1/controls/tests/<pk>/history/` | GET | `controls.api.views.ControlTestViewSet` | `controltest-history` |
+| `/api/v1/controls/tests/<pk>/transition/` | GET, POST | `controls.api.views.ControlTestViewSet` | `controltest-transition` |
+| `/api/v1/controls/tests/batch/` | POST | `controls.api.views.ControlTestViewSet` | `controltest-batch-create` |
 
 ## dashboard-layout
 

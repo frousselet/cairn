@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A documented UI component framework (`detail_layout`, `section_card`, `overview`, `meta_list`, `kpi_tile`, `record_card`, `ref_link`, `tag_list`, `choice_badge`, the dash) with shared page-form and delete shells, catalogued in `docs/sdk/ui-components.md` and on `/styleguide/`.
 - A Documents module (ISO 27001 clause 5.2, 7.5, A.5.1) : policies, procedures, standards and charters with frozen, approved versions (one in force at a time), a review cycle with reminders, and acknowledgement campaigns whose confirmations are kept as evidence, on the web, the REST API and MCP.
+- A Controls module (ISO 27001 clause 6.1.3, 9.1) : security controls linked to requirements, risks, treatment plans, PACS measures, assets, objectives and documents, tests with independently validated runs and evidence, derived effectiveness, findings raised from failed runs, an enriched Statement of Applicability, on the web, the REST API and MCP.
 
 ### Changed
 
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dates follow the active locale everywhere, and short numeric dates put the day first in English as in French.
 - The lifecycle editor shows its steps, transitions and JSON as stacked cards instead of tabs.
 - The assessment result toggles read the planning / fieldwork phase from the assessment instead of comparing a status string in the template.
+- EBIOS RM workshop 5 measures can be linked while they are planned, in progress or overdue.
 
 ### Fixed
 

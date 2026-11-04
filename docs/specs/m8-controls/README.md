@@ -6,7 +6,7 @@ The register of the organisation's **security controls** (in French, *mesures de
 
 It answers the questions an auditor asks of the Statement of Applicability and of clause 9.1 : *what does the organisation do for this requirement, is it implemented, who owns it, how do you know it works, and when was it last tested.*
 
-**Status : proposed for v0.37.0.**
+**Status : implemented in v0.37.0.**
 
 ## Entities
 
@@ -90,7 +90,7 @@ Every relation is declared **on `Control`**, with the reverse accessor `controls
 | RG-CTL-08 | Retiring a test requires a comment. A retired test no longer counts towards effectiveness and is no longer due; its runs stay readable. |
 | RG-CTL-09 | A [run](control-test-run.md) is recorded against an **active** test. Its content (result, performed by, performed on, period, sample, observations, evidence) is **editable only in `draft`**; from `in_review` onward it is frozen on every surface. Sending it back to draft re-opens it. |
 | RG-CTL-10 | Submitting a run requires a result; a `partial` or `fail` result also requires observations. `performed_on` cannot be in the future; when a period is given, `period_start <= period_end <= performed_on`. |
-| RG-CTL-11 | **Segregation of duties** : a run is validated by a holder of `controls.test.approve` who is **not** its `performed_by`. The gate applies to superusers too; the only bypass is the system path used by the seed (`enforce_permission=False`). Validation stamps `reviewed_by` / `reviewed_at` from the transition. |
+| RG-CTL-11 | **Segregation of duties** : a run is validated by a holder of `controls.test.approve` who is **neither** its `performed_by` **nor** the user who recorded it (`created_by`), so no one can record a run in a colleague's name and validate it themselves. The gate applies to superusers too; the only bypass is the system path used by the seed (`enforce_permission=False`). Validation stamps `reviewed_by` / `reviewed_at` from the transition. |
 | RG-CTL-12 | Validating a run recomputes, in the same transaction, the test's `next_due_date` (RG-CTL-07) and the control's effectiveness (RG-CTL-14). Withdrawing a validated run (to `archived`, with a comment : the run was found unreliable) recomputes both as well. |
 | RG-CTL-13 | Evidence files follow the incident evidence rules : allowed extensions, at most 25 MB each, SHA-256 stored at upload, served only through the permission-checked, scope-filtered download view, never serialized. Files are added or removed only while the run is in `draft`; afterwards an [evidence](control-test-evidence.md) row is write-once. |
 
@@ -184,7 +184,7 @@ The gates and side effects live in each model's `transition_to()`, inside one `t
 | `controls.control.delete` | Delete a proposed control |
 | `controls.test.read` | Read tests, runs and evidence |
 | `controls.test.create` | Create a test, record a run |
-| `controls.test.update` | Edit a draft test or run, add or remove its evidence, submit a run |
+| `controls.test.update` | Edit a draft or active test (a retired one is closed), edit a draft run, add or remove its evidence, submit a run |
 | `controls.test.approve` | Activate / retire a test, validate / send back / withdraw a run, raise a finding from a run |
 | `controls.test.delete` | Delete a draft test or a draft run |
 
@@ -257,7 +257,7 @@ All pages follow the [UI components](../../sdk/ui-components.md) anatomies.
 - **Reverse cards** : a *Controls* `section_card` on the requirement, risk, treatment plan, PACS measure, support asset, objective and document detail pages (reference, name, state, effectiveness).
 - Forms are drawer modals with their page fallbacks; the run form opens prefilled with the test's default tester as performer and today as date.
 
-Platform surfaces : global search (controls and tests), calendar (`controls` category : next test due dates), dashboard widget *Controls* (implemented, effective rate, overdue tests, failed runs awaiting a finding), kanban (my tests due within 14 days in *To do*, my runs in progress in *In progress*, runs I can validate in *To review*), predefined indicators `control_effectiveness_rate` and `control_tests_overdue`, help banners on the five pages, the SoA (RG-CTL-18).
+Platform surfaces : global search (controls and tests), calendar (`controls` category : next test due dates), dashboard widget *Controls* (implemented, effective rate, overdue tests, failed runs awaiting a finding), kanban (my tests due within 14 days and the runs in review I may validate, never my own, in *To do*; my runs in progress in *Doing* : the board keeps its three platform columns), predefined indicators `control_effectiveness_rate` and `control_tests_overdue`, help banners on the five pages, the SoA (RG-CTL-18).
 
 ---
 
@@ -265,19 +265,19 @@ Platform surfaces : global search (controls and tests), calendar (`controls` cat
 
 ### 9.1 App wiring checklist
 
-- [ ] `INSTALLED_APPS` gains `"controls"`; `ControlsConfig.ready()` imports `controls.lifecycles` and the signal handlers.
-- [ ] Models, admin (`SimpleHistoryAdmin`), initial migration; `HistoricalRecords(excluded_fields=["file"])` on the evidence.
-- [ ] `Finding.control_test_run` (FK `SET_NULL`) and `FindingSource.CONTROL_TEST`, with a compliance migration; the finding page shows the originating run.
-- [ ] Removal of the commented-out `linked_measures` / `related_measures` placeholders; the entity specs updated to point at `Control`.
-- [ ] `PERMISSION_REGISTRY`, `MODULE_LABELS`, the permission migration attaching the rows to the six system groups.
-- [ ] `core/navigation.py` `NAV_TREE` entries; `MODULE_ACCENTS["controls"]` with its tokens in both blocks of `static/css/cairn/00-tokens.css`; the sidebar section.
-- [ ] `BADGE_REGISTRY` : an `effectiveness` scale extended with `not_tested`, a `test_result` scale (`pass`, `partial`, `fail`), a `control_theme` scale.
-- [ ] Calendar categories, dashboard widget, kanban builder, global search categories, predefined indicators.
-- [ ] The SoA generator and its PDF template (RG-CTL-18).
-- [ ] REST routes under `/api/v1/controls/`, MCP tools, assistant catalog entries.
-- [ ] The daily sweep `controls_sweep` (due / overdue reminders, effectiveness recomputation) scheduled like the documents sweep.
-- [ ] `scripts/seed_demo_data.py` : a Voltara control set created from the ISO 27001 Annex A framework, linked to risks, treatment plans, assets, objectives and policies; tests with validated runs (pass, partial, fail with a finding), one overdue test, one run in review.
-- [ ] Translations (with `msgctxt "control"` where a label collides, e.g. "Planned", "Implemented", "Active"), help banners, user guide page, README feature table, CHANGELOG.
+- [x] `INSTALLED_APPS` gains `"controls"`; `ControlsConfig.ready()` imports `controls.lifecycles` and the signal handlers.
+- [x] Models, admin (`SimpleHistoryAdmin`), initial migration; `HistoricalRecords(excluded_fields=["file"])` on the evidence.
+- [x] `Finding.control_test_run` (FK `SET_NULL`) and `FindingSource.CONTROL_TEST`, with a compliance migration; the finding page shows the originating run.
+- [x] Removal of the commented-out `linked_measures` / `related_measures` placeholders; the entity specs updated to point at `Control`.
+- [x] `PERMISSION_REGISTRY`, `MODULE_LABELS`, the permission migration attaching the rows to the six system groups.
+- [x] `core/navigation.py` `NAV_TREE` entries; `MODULE_ACCENTS["controls"]` with its tokens in both blocks of `static/css/cairn/00-tokens.css`; the sidebar section.
+- [x] `BADGE_REGISTRY` : the `effectiveness` scale extended with `not_tested`, and a `run_result` scale (`pass`, `partial`, `fail`); themes render as neutral badges.
+- [x] Calendar categories, dashboard widget, kanban builder, global search categories, predefined indicators.
+- [x] The SoA generator and its PDF template (RG-CTL-18).
+- [x] REST routes under `/api/v1/controls/`, MCP tools, assistant catalog entries.
+- [x] The daily sweep `controls_sweep` (due / overdue reminders, effectiveness recomputation) documented with the other daily sweeps (cron `23 2 * * *`).
+- [x] `scripts/seed_demo_data.py` : a Voltara control set created from the ISO 27001 Annex A framework, linked to risks, treatment plans, assets, objectives and policies; tests with validated runs (pass, partial, fail with a finding), one overdue test, one run in review.
+- [x] Translations (with `msgctxt "control"` where a label collides, e.g. "Planned", "Implemented", "Active"), help banners, user guide page, README feature table, CHANGELOG.
 
 ### 9.2 History and audit trail
 

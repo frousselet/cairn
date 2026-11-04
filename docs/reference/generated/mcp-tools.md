@@ -8,7 +8,7 @@ Cairn's MCP server exposes the whole platform to AI assistants and scripts over 
 
 Transport, authentication and client setup are in [../mcp-server.md](../mcp-server.md).
 
-**772 tools** are registered, across **10 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
+**805 tools** are registered, across **11 modules**. Most entities carry the same surface : `list_*`, `get_*`, `create_*`, `batch_create_*`, `update_*`, `delete_*`, plus `*_transition`, `*_allowed_transitions` and `*_history` when the entity runs a lifecycle.
 
 ## Modules
 
@@ -17,6 +17,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | Assets | 136 | [mcp-tools-assets.md](mcp-tools-assets.md) |
 | Compliance | 64 | [mcp-tools-compliance.md](mcp-tools-compliance.md) |
 | Governance and context | 126 | [mcp-tools-context.md](mcp-tools-context.md) |
+| Controls | 33 | [mcp-tools-controls.md](mcp-tools-controls.md) |
 | Documents | 33 | [mcp-tools-documents.md](mcp-tools-documents.md) |
 | General | 18 | [mcp-tools-general.md](mcp-tools-general.md) |
 | Incidents | 103 | [mcp-tools-incidents.md](mcp-tools-incidents.md) |
@@ -366,6 +367,44 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `update_swot_item` | `context.swot.update` | Update an existing swot item |
 | `update_swot_strategy` | `context.swot.update` | Update an existing swot strategy |
 
+## Controls
+
+| Tool | Permission | Description |
+| --- | --- | --- |
+| `batch_create_control_test_runs` | `controls.test.create` | Record several runs (in progress) in one call (max 500). Every test_id must be an active test within the caller's scopes, or nothing is created. |
+| `batch_create_control_tests` | `controls.test.create` | Create or upsert several draft control tests in one call (max 500). Every control_id must be a control within the caller's scopes and not retired, or nothing is created. |
+| `batch_create_controls` | `controls.control.create` | Create or upsert several proposed controls in one call (max 500). Every link must be within the caller's scopes and linkable, or nothing is created. Pass 'match_on' (e.g. ["name"]) to update matching controls instead of duplicating them. |
+| `control_allowed_transitions` | `controls.control.read` | List the lifecycle transitions the caller may perform on a control from its current state. |
+| `control_test_allowed_transitions` | `controls.test.read` | List the lifecycle transitions the caller may perform on a control test from its current state. |
+| `control_test_run_allowed_transitions` | `controls.test.read` | List the lifecycle transitions the caller may perform on a control test run from its current state. |
+| `create_control` | `controls.control.create` | Create a proposed (draft) control: a durable practice the organisation operates, with its theme, nature, owner, scopes and links to requirements, risks, treatment plans, PACS measures, support assets, objectives and documents. Effectiveness is derived from validated test runs and cannot be set. Plan it or declare it implemented with transition_control. To bootstrap a register from a framework, prefer create_controls_from_requirements. |
+| `create_control_test` | `controls.test.create` | Create a draft test of a control: method, procedure, acceptance criteria, frequency and default tester. Activate it with transition_control_test(target_state='active') once the control is planned or implemented and the procedure and acceptance criteria are written (RG-CTL-06); the next due date is then derived (RG-CTL-07). |
+| `create_control_test_run` | `controls.test.create` | Record a run (in progress) of an active control test. Fill the result and observations, attach evidence through the web form, then submit it with transition_control_test_run(target_state='in_review'): from then on its content is frozen (RG-CTL-09) and someone other than its performer validates it (RG-CTL-11). |
+| `create_controls_from_requirements` | `controls.control.create` | Bootstrap a control register from a framework (RG-CTL-05): for each selected applicable requirement that no control covers yet, create one proposed (draft) control named after the requirement, with its description as a starting point, the requirement linked and the framework's scopes. Requirements already covered (by a control in any step) or not applicable are skipped and reported; existing controls are never linked. Needs controls.control.create and compliance.framework.read on a framework within your scopes. |
+| `delete_control` | `controls.control.delete` | Delete a proposed (draft) control that has no test. A control past draft, or with tests, is retired instead with transition_control(target_state='archived', comment=...). |
+| `delete_control_test` | `controls.test.delete` | Delete a draft control test that has no run. An active test is retired instead with transition_control_test(target_state='archived', comment=...). |
+| `delete_control_test_run` | `controls.test.delete` | Delete a run that is still in progress (draft), with its evidence. A submitted or validated run is withdrawn instead with transition_control_test_run(target_state='archived', comment=...) and stays readable. |
+| `get_control` | `controls.control.read` | Get a control by ID |
+| `get_control_effectiveness` | `controls.control.read` | Explain a control's effectiveness (RG-CTL-14): the derived verdict (effective, partially_effective, not_effective, not_tested) and its date, and, for each active test, its latest validated run (result, date, reviewer) and next due date. 'is_effectiveness_stale' is true when the verdict rests on an overdue test (RG-CTL-15): the last verdict is kept, never silently downgraded. |
+| `get_control_history` | `controls.control.read` | Return the change history of a control: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
+| `get_control_test` | `controls.test.read` | Get a control test by ID |
+| `get_control_test_history` | `controls.test.read` | Return the change history of a control test: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
+| `get_control_test_run` | `controls.test.read` | Get one control test run by ID: result, period, sample, observations, performer, review stamps, the finding raised from it, and its evidence files (name, size, SHA-256 and the permission-checked download URL; the bytes themselves are not returned). |
+| `get_control_test_run_history` | `controls.test.read` | Return the change history of a control test run: field-level diffs, approval events and lifecycle transitions (with comments where recorded) merged into one reverse-chronological timeline. |
+| `get_requirement_coverage` | `controls.control.read` | Read how a framework is covered by controls, the data behind the Statement of Applicability (RG-CTL-18): for each applicable, reportable requirement, its planned or implemented controls with their state and effectiveness, and an implementation summary (implemented, partial, planned, none). Proposed and retired controls never count; only the controls within your scopes are listed. 'totals' counts requirements per summary. |
+| `list_control_test_runs` | `controls.test.read` | List control test runs with optional search and filters |
+| `list_control_tests` | `controls.test.read` | List control tests with optional search and filters |
+| `list_controls` | `controls.control.read` | List controls with optional search and filters |
+| `list_my_control_tests_due` | `controls.test.read` | List the active control tests the authenticated user has to perform soon: those they are the tester of, or whose control they own when the test has no tester (the reminder recipients). Includes overdue tests; soonest due first. Record a run with create_control_test_run(test_id=...). |
+| `list_overdue_control_tests` | `controls.test.read` | List the active control tests whose next due date has passed (RG-CTL-07), oldest due first, within your scopes: the control, the tester, the due date and the latest validated run. Overdue is derived, never a lifecycle step. |
+| `raise_finding_from_run` | `controls.test.approve` | Raise a finding in the nonconformity register from a validated partial or failed test run (RG-CTL-16): source 'control_test', linked to the run, the run's observations as its description, the control's requirements as its related requirements, and the authenticated user as the person who raised it. Offered once per run: a second call is refused. The finding type is a judgement the caller makes. |
+| `transition_control` | `controls.control.read` | Change the lifecycle state of a control (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping). |
+| `transition_control_test` | `controls.test.read` | Change the lifecycle state of a control test (e.g. draft -> pending -> validated -> archived). The transition is validated against the entity's workflow: required permission, mandatory comment, and side effects (owner notification on submit, validation stamping). |
+| `transition_control_test_run` | `controls.test.read` | Move a test run through its lifecycle, as the authenticated user: 'in_review' (submit; needs a result, and observations for a partial or failed one, RG-CTL-10), 'draft' (send back, approve, comment required), 'validated' (approve; refused to the run's performer, superusers included, RG-CTL-11; recomputes the test's next due date and the control's effectiveness, RG-CTL-12), 'archived' (withdraw a validated run or cancel a draft, comment required). |
+| `update_control` | `controls.control.update` | Update a control's identity and links (any step but retired). Each *_ids array replaces the current links; links already in place survive their target leaving a linkable step. Effectiveness, its date and the lifecycle step are not writable: use transition_control. |
+| `update_control_test` | `controls.test.update` | Update a control test. Changing the frequency or the first due date recomputes the derived next due date. The control cannot change once the test has runs. The lifecycle step is not writable: use transition_control_test. |
+| `update_control_test_run` | `controls.test.update` | Update a run while it is in progress (draft). From 'in_review' on its content (performer, date, period, sample, result, observations) is frozen and any change is refused (RG-CTL-09). The test a run belongs to never changes. |
+
 ## Documents
 
 | Tool | Permission | Description |
@@ -415,7 +454,7 @@ Transport, authentication and client setup are in [../mcp-server.md](../mcp-serv
 | `delete_saved_filter` | - | Delete one of the current user's saved list filters by id. |
 | `get_dashboard_layout` | - | Get the currently authenticated user's home-dashboard widget layout (ordered list of {key, id, size, visible, zone, params}) and the catalogue of available widgets with their allowed sizes. `id` is the widget type and `key` is the per-instance id. A size is a 'WxH' tile token: width W in 1..4 quarter-columns (1=1/4 .. 4=full width) by height H in 1..4 fixed row units, e.g. '2x1' or '4x2'. A widget with `multiple: true` (e.g. 'indicator') can appear several times, each instance carrying its own `params` (the indicator widget takes `{indicator: <id>, show_chart: bool}`). |
 | `get_me` | - | Get information about the currently authenticated user, including capability flags: 'can_override_import_dates' (may set created_at / updated_at on import) and 'can_create_users'. |
-| `help` | - | Get usage documentation for the Cairn MCP server. Call without arguments for the full guide, or with a topic for focused help. Topics: context, assets, compliance, risks, incidents, documents, batch, workflow, permissions, examples, users |
+| `help` | - | Get usage documentation for the Cairn MCP server. Call without arguments for the full guide, or with a topic for focused help. Topics: context, assets, compliance, risks, incidents, documents, controls, batch, workflow, permissions, examples, users |
 | `kanban_board` | - | Get the unified To do / Doing / Done board aggregating action plans, treatment actions, audits and risk assessments (read-only) |
 | `list_dependencies` | - | List the third-party open source components this Cairn instance is built on : name, owner (the organisation publishing it), resolved version, official repository URL and what each one is used for. Same registry as the About modal. Optionally filtered by group. |
 | `list_my_pending_acknowledgements` | - | List the documents the authenticated user has been asked to acknowledge and has not yet, soonest deadline first: the campaign, the document and version, the due date, and the exact statement to confirm. Needs no permission: every user sees their own requests. Read the text with get_policy_version(policy_version_id) before acknowledging. |
