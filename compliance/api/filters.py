@@ -2,9 +2,11 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 import django_filters
 
+from compliance.constants import FindingSource, FindingType
 from compliance.models import (
     ComplianceActionPlan,
     ComplianceAssessment,
+    Finding,
     Framework,
     Requirement,
     RequirementMapping,
@@ -111,3 +113,17 @@ class ComplianceActionPlanFilter(django_filters.FilterSet):
             "owner": ["exact"],
             "workflow_state": ["exact"],
         }
+
+
+class FindingFilter(django_filters.FilterSet):
+    """``source`` accepts every :class:`FindingSource`, ``control_test``
+    included (RG-CTL-16); ``control_test_run_id`` lists the finding raised from
+    one run."""
+
+    source = django_filters.ChoiceFilter(choices=FindingSource.choices)
+    finding_type = django_filters.ChoiceFilter(choices=FindingType.choices)
+    control_test_run_id = django_filters.UUIDFilter(field_name="control_test_run_id")
+
+    class Meta:
+        model = Finding
+        fields = {"effectiveness_verdict": ["exact"]}
