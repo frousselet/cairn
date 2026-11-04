@@ -31,7 +31,7 @@ from django.urls import URLPattern, URLResolver, get_resolver
 # Apps whose contents are part of Cairn (as opposed to Django's own or a
 # third-party dependency). Used to keep the generated inventories on-topic.
 PROJECT_APPS = (
-    "accounts", "assets", "assistant", "compliance", "context", "core",
+    "accounts", "assets", "assistant", "compliance", "context", "controls", "core",
     "documents", "helpers", "incidents", "mcp", "reports", "risks", "trust_center",
 )
 
@@ -261,6 +261,7 @@ MCP_MODULE_TITLES = {
     "assets": "Assets",
     "compliance": "Compliance",
     "context": "Governance and context",
+    "controls": "Controls",
     "documents": "Documents",
     "general": "General",
     "incidents": "Incidents",
