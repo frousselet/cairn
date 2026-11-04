@@ -27,7 +27,7 @@ Steering indicator (KPI) of the ISMS, manual, fed by API or predefined by Cairn.
 | `first_review_date` | date | required | First review date (must be today or later at creation) |
 | `status` | enum | required, default `active` | `active`, `inactive`, `draft` |
 | `is_internal` | boolean | default `false` | `true` = predefined Cairn indicator, fed internally |
-| `internal_source` | enum | required if `is_internal=true` | `global_compliance_rate`, `framework_compliance_rate`, `objective_progress`, `risk_treatment_rate`, `approved_scopes_rate`, `mandatory_roles_coverage`, `policies_overdue_review`, `acknowledgement_rate` |
+| `internal_source` | enum | required if `is_internal=true` | `global_compliance_rate`, `framework_compliance_rate`, `objective_progress`, `risk_treatment_rate`, `approved_scopes_rate`, `mandatory_roles_coverage`, `policies_overdue_review`, `acknowledgement_rate`, `control_effectiveness_rate`, `control_tests_overdue` |
 | `internal_source_parameter` | string | optional | Parameter of the predefined source (for example the framework UUID for `framework_compliance_rate`) |
 | `owner` | relation | FK → User, optional | Business owner responsible for the measurement and the review |
 | `linked_objectives` | relation | M2M → Objective | Objectives whose progress the indicator measures (ISO 27001 §6.2 / §9.1) |
@@ -63,6 +63,8 @@ Steering indicator (KPI) of the ISMS, manual, fed by API or predefined by Cairn.
 | `mandatory_roles_coverage` | number | `%` | Share of roles with `is_mandatory=true` that have at least one assigned user |
 | `policies_overdue_review` | number | | Number of active documents (`documents.Policy` in a reportable step) whose `next_review_date` has passed (RG-DOC-12) |
 | `acknowledgement_rate` | number | `%` | Acknowledged rows / (all rows - excused rows) over the acknowledgement campaigns in a reportable step (running and closed), RG-DOC-19 |
+| `control_effectiveness_rate` | number | `%` | Effective controls / tested controls (effectiveness other than `not_tested`), over the controls in a reportable step (planned and implemented), RG-CTL-14 |
+| `control_tests_overdue` | number | | Number of active control tests (`controls.ControlTest` in a reportable step) whose `next_due_date` has passed (RG-CTL-07) |
 
 Internal indicators are recalculated periodically by a background service; see [§ Automated monitoring](README.md#pilotage-et-calculs-automatiques) of the module.
 

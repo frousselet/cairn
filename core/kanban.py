@@ -12,6 +12,8 @@ types:
 - Risk assessments (``risks.RiskAssessment``)
 - Incidents (``incidents.Incident``)
 - The current user's pending acknowledgements (``documents.PolicyAcknowledgement``)
+- The current user's control tests due and test runs, in progress or to
+  review (``controls.ControlTest``, ``controls.ControlTestRun``)
 
 The board is intentionally read-only (no drag-and-drop) and omits the terminal
 "removed from tracking" states (cancelled / archived): a card disappears from the
@@ -58,6 +60,8 @@ ENTITY_PERMS = {
     "risk_assessment": "risks.assessment.read",
     "incident": "incidents.incident.read",
     "acknowledgement": None,
+    "control_test": "controls.test.read",
+    "control_test_run": "controls.test.read",
 }
 
 # Bootstrap Icons identifying each type (brand: neutral type marker, icon only,
@@ -69,6 +73,8 @@ TYPE_ICONS = {
     "risk_assessment": "bi-shield-exclamation",
     "incident": "bi-fire",
     "acknowledgement": "bi-pen",
+    "control_test": "bi-clipboard-pulse",
+    "control_test_run": "bi-clipboard-check",
 }
 
 TYPE_LABELS = {
@@ -78,6 +84,8 @@ TYPE_LABELS = {
     "risk_assessment": pgettext_lazy("kanban", "Risk assessment"),
     "incident": pgettext_lazy("kanban", "Incident"),
     "acknowledgement": pgettext_lazy("kanban", "Acknowledgement"),
+    "control_test": pgettext_lazy("kanban", "Control test"),
+    "control_test_run": pgettext_lazy("kanban", "Test run"),
 }
 
 # Lifecycle ``Step.tone`` -> Bootstrap badge context, for the entities whose
@@ -444,8 +452,89 @@ def _build_acknowledgements(scope_ids, user=None):
     return cards
 
 
+def _build_control_tests(scope_ids, user=None):
+    """The current user's control tests due within ``TEST_DUE_REMINDER_DAYS``
+    (overdue ones included), in To do.
+
+    "Mine" is whoever the due reminder goes to (README §7) : the test's
+    tester, else the control owner when the test names no tester. Only an
+    active test is ever due (RG-CTL-07, read off ``reportable()``).
+    """
+    if user is None or not user.is_authenticated:
+        return []
+    from datetime import timedelta
+
+    from django.db.models import Q
+
+    from controls.constants import TEST_DUE_REMINDER_DAYS
+    from controls.models import ControlTest
+    from core.lifecycle import reportable
+
+    horizon = timezone.localdate() + timedelta(days=TEST_DUE_REMINDER_DAYS)
+    tests = _scope_filter(
+        reportable(ControlTest.objects.filter(
+            Q(tester=user) | Q(tester__isnull=True, control__owner=user),
+            next_due_date__isnull=False, next_due_date__lte=horizon,
+        )).select_related("control", "tester"),
+        scope_ids,
+    )
+    label = pgettext_lazy("kanban", "Test due")
+    return [
+        _make_card(
+            column=TODO,
+            type_key="control_test",
+            reference=test.reference,
+            title=test.name,
+            url=reverse("controls:controltest-detail", kwargs={"pk": test.pk}),
+            owner=test.tester.display_name if test.tester_id else "",
+            due_date=test.next_due_date,
+            status_label=label,
+            status_tone="warning",
+        )
+        for test in tests
+    ]
+
+
+def _build_control_test_runs(scope_ids, user=None):
+    """Test runs waiting on the current user.
+
+    - Their own runs still in progress (``draft``), in Doing, due when their
+      test is due.
+    - Runs in review they may validate, in To do : only for a holder of
+      ``controls.test.approve``, and **never their own** (RG-CTL-11, which
+      binds superusers too), since the model would refuse the validation.
+    """
+    if user is None or not user.is_authenticated:
+        return []
+    from controls.constants import RUN_DRAFT, RUN_IN_REVIEW
+    from controls.models import ControlTestRun
+    from core.lifecycle import resolve_lifecycle
+
+    lifecycle = resolve_lifecycle(ControlTestRun)
+    base = ControlTestRun.objects.select_related("test__control", "performed_by")
+    rows = [(DOING, run) for run in _scope_filter(base.filter(workflow_state=RUN_DRAFT, performed_by=user), scope_ids)]
+    if user.is_superuser or user.has_perm("controls.test.approve"):
+        to_review = base.filter(workflow_state=RUN_IN_REVIEW).exclude(performed_by=user)
+        rows += [(TODO, run) for run in _scope_filter(to_review, scope_ids)]
+    cards = []
+    for column, run in rows:
+        step = lifecycle.step(run.workflow_state)
+        cards.append(_make_card(
+            column=column,
+            type_key="control_test_run",
+            reference=run.reference,
+            title=run.test.name,
+            url=reverse("controls:controltestrun-detail", kwargs={"pk": run.pk}),
+            owner=run.performed_by.display_name if run.performed_by_id else "",
+            due_date=run.test.next_due_date if column == DOING else None,
+            status_label=step.label,
+            status_tone=_LIFECYCLE_TONE_CLASSES.get(step.tone, "secondary"),
+        ))
+    return cards
+
+
 # Builders whose cards depend on the user themselves, not only on their scopes.
-_PERSONAL_BUILDERS = {"acknowledgement"}
+_PERSONAL_BUILDERS = {"acknowledgement", "control_test", "control_test_run"}
 
 _BUILDERS = {
     "action_plan": _build_action_plans,
@@ -454,6 +543,8 @@ _BUILDERS = {
     "risk_assessment": _build_risk_assessments,
     "incident": _build_incidents,
     "acknowledgement": _build_acknowledgements,
+    "control_test": _build_control_tests,
+    "control_test_run": _build_control_test_runs,
 }
 
 

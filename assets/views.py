@@ -22,6 +22,7 @@ from django.views.generic import (
 
 from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
+from controls.integrations import linked_controls
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
@@ -609,6 +610,7 @@ class SupportAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
             "essential_asset"
         )
         ctx["children"] = self.object.children.all()
+        ctx["linked_controls"] = linked_controls(self.object, self.request.user)
         return ctx
 
 

@@ -82,6 +82,8 @@
     {% endmeta_list %}
   {% endsection_card %}
 
+  {% include "controls/includes/controls_card.html" %}
+
   {% section_card _("Treatment plans") icon="list-task" count=treatment_plans|length flush=True %}
     {% slot actions %}<a href="{% url 'risks:treatment-plan-create' %}" class="btn btn-sm btn-secondary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New plan" %}</a>{% endslot %}
     {% if treatment_plans %}

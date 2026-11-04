@@ -35,6 +35,11 @@
       {% meta_item _("Source") finding.get_source_display %}
       {% meta_item _("Raised in") %}{% if finding.assessment %}<a href="{% url 'compliance:assessment-detail' finding.assessment.pk %}" class="cell-link">{{ finding.assessment.name }}</a>{% else %}<span class="text-meta">{% trans "Raised outside any audit." %}</span>{% endif %}{% endmeta_item %}
       {% meta_item _("Raised by") %}{% if finding.assessor %}{% user_badge finding.assessor size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% if finding.control_test_run %}
+      {% with run=finding.control_test_run %}
+      {% meta_item _("Control test run") wide=True %}{% if can_read_control_tests %}{% url 'controls:controltestrun-detail' run.pk as run_url %}<div class="ref-links">{% ref_link run url=run_url label=run.test.name %}</div><span class="text-meta">{{ run.test.control.reference }} {{ run.test.control.name }} : {{ run.performed_on|date:"SHORT_DATE_FORMAT" }}</span>{% else %}<span class="ref">{{ run.reference }}</span>{% endif %}{% endmeta_item %}
+      {% endwith %}
+      {% endif %}
     {% endmeta_list %}
   {% endsection_card %}
 
