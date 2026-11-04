@@ -25,7 +25,7 @@ Represents an information security or compliance objective.
 | `related_issues` | relation | M2M → Issue | Issues addressed |
 | `related_stakeholders` | relation | M2M → Stakeholder | Stakeholders concerned |
 | `parent_objective_id` | relation | FK → Objective, optional | Parent objective (hierarchy) |
-| `linked_measures` | relation | M2M → Measure | Measures contributing to the objective (Measures module) |
+| `controls` | relation | reverse M2M ← [Control](../m8-controls/control.md) `objectives` | Controls contributing to the objective |
 | `review_date` | date | optional | Next review date |
 | `created_by` | relation | FK → User | Creator |
 | `created_at` | datetime | auto | Creation date |

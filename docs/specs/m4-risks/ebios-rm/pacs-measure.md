@@ -17,6 +17,7 @@ PACS measure (Plan d'Amélioration Continue de la Sécurité - Continuous Securi
 | `linked_treatment_plans` | M2M -> [RiskTreatmentPlan](../risk-treatment-plan.md) | optional | Treatment plans carrying the measure |
 | `linked_baseline_gaps` | M2M -> [BaselineGap](baseline-gap.md) | optional | Baseline gaps addressed by the measure |
 | `linked_requirements` | M2M -> Requirement | optional | Compliance requirements covered |
+| `controls` | reverse M2M -> [Control](../../m8-controls/control.md) via `Control.pacs_measures` | optional | Register controls the measure creates or reinforces |
 | `owner_id` | relation | FK -> User, required | Measure owner |
 | `start_date` | date | optional | Start date |
 | `target_date` | date | required | Target date |
