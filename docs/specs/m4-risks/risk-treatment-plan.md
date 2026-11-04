@@ -44,7 +44,7 @@ Represents the treatment actions associated with a risk.
 | `owner_id` | relation | FK → User, required | Action owner |
 | `target_date` | date | required | Target date |
 | `completion_date` | date | optional | Completion date |
-| `linked_measures` | relation | M2M → Measure | Associated measures (Measures module) |
+| `controls` | relation | reverse M2M ← [Control](../m8-controls/control.md) `treatment_plans` | Controls this plan creates or reinforces |
 | `status` | enum | required | `planned`, `in_progress`, `completed`, `cancelled` |
 | `order` | integer | required | Execution order |
 | `created_at` | datetime | auto | Creation date |

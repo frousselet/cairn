@@ -45,7 +45,7 @@ The module covers seven sub-domains:
 | Asset management | Activities/processes are linked to essential assets |
 | Risk management | Issues and the scope feed the risk assessment context |
 | Compliance | Stakeholders express requirements linked to standards |
-| Measures | Objectives are broken down into security measures |
+| Controls | Objectives are broken down into security [controls](../m8-controls/README.md) (`Control.objectives`) |
 | Suppliers | Supplier-type stakeholders feed the suppliers module |
 | Audits | The scope drives the audit program |
 | Incidents | Roles and responsibilities define the actors in incident management |

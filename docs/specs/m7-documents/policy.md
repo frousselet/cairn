@@ -37,7 +37,7 @@ File: `documents/models/policy.py`
 | `linked_requirements` | M2M | `compliance.Requirement` | `linked_policies` | The requirements the document answers (A.5.1, clause 5.2, A.5.15...). The requirement detail page lists them. |
 | `applies_to_roles` | M2M | `context.Role` | `applicable_policies` | Roles the document is primarily addressed to (informative; also the default audience of a new campaign) |
 
-Reverse accessors : `versions` ([PolicyVersion](policy-version.md), `CASCADE` only while draft, see deletion), `children`, `isms_changes` (`reports.IsmsChange.affected_documents`), `trust_center_documents` (`trust_center.TrustCenterDocument.policy`, `PROTECT`).
+Reverse accessors : `versions` ([PolicyVersion](policy-version.md), `CASCADE` only while draft, see deletion), `children`, `isms_changes` (`reports.IsmsChange.affected_documents`), `trust_center_documents` (`trust_center.TrustCenterDocument.policy`, `PROTECT`), `controls` ([Control](../m8-controls/control.md) `policies` : the controls the document describes).
 
 ### Meta
 

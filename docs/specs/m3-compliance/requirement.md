@@ -32,6 +32,7 @@ Individual requirement extracted from a [Framework](framework.md), the elementar
 | `linked_assets` | relation | M2M -> EssentialAsset | Essential assets concerned |
 | `linked_stakeholder_expectations` | relation | M2M -> StakeholderExpectation | Associated stakeholder expectations |
 | `linked_risks` | reverse M2M | -> Risk via `Risk.linked_requirements` | Associated risks (fed from the Risk side) |
+| `controls` | reverse M2M | -> [Control](../m8-controls/control.md) via `Control.requirements` | Controls implementing the requirement; listed in the SoA (RG-CTL-18) |
 | `mapped_requirements` | relation | M2M via [`RequirementMapping`](requirement-mapping.md) | Requirements from other frameworks mapped |
 | `status` | enum | required, default `active` | `active`, `deprecated`, `superseded` |
 | `version` | int | auto-incremented | Bumped on each major change |

@@ -25,6 +25,7 @@ The cost of the decision is real and is stated here rather than buried : it chan
 | `assessment` | relation | FK -> [ComplianceAssessment](compliance-assessment.md), **optional**, `SET_NULL` | **Changed.** Was required with `CASCADE`. Now nullable, so a nonconformity can exist without a fabricated audit, and `SET_NULL`, so deleting an audit no longer destroys the nonconformities it raised. Reverse accessor `findings`. |
 | `source` | enum | required, default `audit` | **New.** `FindingSource` : what surfaced the nonconformity. The default keeps every pre-existing row semantically unchanged. |
 | `incident` | relation | FK -> [Incident](../m6-incidents/incident.md), optional, `SET_NULL` | **New.** Set when `source = incident`. Reverse accessor `findings`. Note that `findings` now denotes different things on `User`, `ComplianceAssessment`, `Requirement` and `Incident`; that is legal but worth knowing when reading code. |
+| `control_test_run` | relation | FK -> [ControlTestRun](../m8-controls/control-test-run.md), optional, `SET_NULL` | Set when `source = control_test`, by the "Raise a finding" action (RG-CTL-16). Reverse accessor `findings`. |
 | `finding_type` | enum | required | `FindingType` : `major_nc`, `minor_nc`, `observation`, `improvement`, `strength`. Drives the reference prefix and the severity ordering. |
 | `description` | text | required | The nonconformity itself : what was observed, against what requirement |
 | `recommendation` | text | optional, blank default | Recommended treatment. Labelled *Auditor recommendation*; the label is now source-neutral in the UI. |
@@ -46,6 +47,7 @@ Inherited from `BaseModel` : `workflow_state` (default 4-state lifecycle, unchan
 | `management_review` | Management review |
 | `monitoring` | Monitoring |
 | `complaint` | Complaint |
+| `control_test` | Control test |
 
 `Audit` and `Monitoring` and `Complaint` already exist as bare `msgid`s in the catalogue, so these labels are declared with `pgettext_lazy("finding source", ...)` and a matching `msgctxt`.
 

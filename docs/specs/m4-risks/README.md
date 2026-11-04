@@ -60,7 +60,7 @@ The module breaks down into three parts:
 | Context and Organization | The scope (Scope), the issues and the interested parties feed the risk assessment context. Business activities are the objects of EBIOS RM workshop 1. |
 | Asset management | Essential assets carry the security needs (CIA) and define the impacted business values. Support assets are the targets of vulnerabilities and operational scenarios. |
 | Compliance | Non-conformities can generate risks. Compliance requirements can be linked to identified risks. |
-| Measures | Security measures reduce the risk level. Risk treatment generates new or reinforced measures. |
+| Controls | Security [controls](../m8-controls/README.md) treat risks. Risk treatment plans and EBIOS PACS measures create or reinforce controls (`Control.risks`, `Control.treatment_plans`, `Control.pacs_measures`). |
 | Suppliers | Suppliers are stakeholders of the ecosystem (EBIOS RM workshop 3) and can be risk vectors. |
 | Audits | Audit findings can reveal risks or validate the effectiveness of treatments. |
 | Incidents | Incidents feed the reassessment of risks and validate (or invalidate) the identified scenarios. |

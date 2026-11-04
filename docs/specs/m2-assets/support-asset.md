@@ -37,7 +37,7 @@ Represents a technical, human or physical asset that supports the essential asse
 | `environment` | enum | optional | `production`, `staging`, `development`, `test`, `disaster_recovery` |
 | `essential_assets` | relation | M2M → EssentialAsset (via AssetDependency) | Supported essential assets |
 | `parent_asset_id` | relation | FK → SupportAsset, optional | Parent support asset (composition) |
-| `related_measures` | relation | M2M → Measure | Applied security measures (Measures module) |
+| `controls` | relation | reverse M2M ← [Control](../m8-controls/control.md) `support_assets` | Security controls applied to the asset |
 | `status` | enum | required | `in_stock`, `deployed`, `active`, `under_maintenance`, `decommissioned`, `disposed` |
 | `review_date` | date | optional | Next review date |
 | `created_by` | relation | FK → User | Creator |

@@ -35,7 +35,7 @@ Represents an identified risk, regardless of the originating methodology. It is 
 | `treatment_decision` | enum | optional | `accept`, `mitigate`, `transfer`, `avoid`, `not_decided` |
 | `treatment_justification` | text | optional | Justification for the treatment decision |
 | `risk_owner_id` | relation | FK → User, required | Risk owner (decision-maker) |
-| `linked_measures` | relation | M2M → Measure | Existing measures covering this risk |
+| `controls` | relation | reverse M2M ← [Control](../m8-controls/control.md) `risks` | Controls treating this risk, with their effectiveness (RG-CTL-20) |
 | `linked_requirements` | relation | M2M → Requirement | Associated compliance requirements |
 | `linked_incidents` | relation | M2M → Incident | Linked incidents |
 | `priority` | enum | optional | `low`, `medium`, `high`, `critical` |

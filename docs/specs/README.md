@@ -15,6 +15,7 @@ This directory is the single source of truth for what each Cairn module does and
 | [Module 5 : Trust Center](m5-trust-center/README.md) | The public curation layer : certifications, subprocessors, measures, documents |
 | [Module 6 : incidents](m6-incidents/README.md) | Events, incidents, evidence and custody, notification obligations and filings, breaches, post-incident reviews |
 | [Module 7 : documents](m7-documents/README.md) | Policies, procedures, standards and charters : versions, approval, review cycle, acknowledgement campaigns |
+| [Module 8 : controls](m8-controls/README.md) | Security controls, their links to requirements, risks and assets, effectiveness tests, runs and evidence |
 | [Management review](management-review/README.md) | The ISO 27001 clause 9.3 entities |
 | [Assistant](assistant/README.md) | Ask Cairn : the optional question mode and its pluggable provider |
 

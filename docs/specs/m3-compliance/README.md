@@ -162,7 +162,7 @@ Identical to the previous modules. Base URL: `/api/v1/compliance/`
 | `PATCH` | `/requirements/{id}` | Partial update |
 | `DELETE` | `/requirements/{id}` | Delete (if not referenced) |
 | `PATCH` | `/requirements/{id}/assess` | Assess the compliance of a requirement (quick update) |
-| `GET` | `/requirements/{id}/measures` | List the linked controls |
+| `GET` | `/api/v1/controls/controls/?requirement_id={id}` | List the linked controls ([Module 8](../m8-controls/README.md)) |
 | `GET` | `/requirements/{id}/mappings` | List the mappings of this requirement |
 | `GET` | `/requirements/{id}/action-plans` | List the linked action plans |
 | `GET` | `/requirements/{id}/history` | Assessment history of this requirement |
@@ -179,7 +179,7 @@ Identical to the previous modules. Base URL: `/api/v1/compliance/`
 - `?compliance_level_min=0&compliance_level_max=50`
 - `?owner_id={uuid}`
 - `?priority=high,critical`
-- `?has_measures=true|false`
+- `?has_controls=true|false`
 - `?has_mappings=true|false`
 - `?search=term`
 
