@@ -21,13 +21,13 @@
     {% kpi_tile _("Target date") action_plan.target_date icon="calendar-event" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if action_plan.description %}<div class="ov-rich">{{ action_plan.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if action_plan.description %}<div class="ov-rich">{{ action_plan.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% if action_plan.gap_description or action_plan.remediation_plan %}
   {% section_card _("Remediation") icon="tools" %}
     {% meta_list %}
-      {% if action_plan.gap_description %}{% meta_item _("Gap description") %}<div class="ov-rich">{{ action_plan.gap_description|safe }}</div>{% endmeta_item %}{% endif %}
-      {% if action_plan.remediation_plan %}{% meta_item _("Remediation plan") %}<div class="ov-rich">{{ action_plan.remediation_plan|safe }}</div>{% endmeta_item %}{% endif %}
+      {% if action_plan.gap_description %}{% meta_item _("Gap description") %}<div class="ov-rich">{{ action_plan.gap_description|rich }}</div>{% endmeta_item %}{% endif %}
+      {% if action_plan.remediation_plan %}{% meta_item _("Remediation plan") %}<div class="ov-rich">{{ action_plan.remediation_plan|rich }}</div>{% endmeta_item %}{% endif %}
     {% endmeta_list %}
   {% endsection_card %}
   {% endif %}

@@ -3,7 +3,7 @@
 <tr>
   <td><span class="fw-medium text-sm">{{ finding.reference }}</span></td>
   <td>{% choice_badge finding "finding_type" type="finding" %}</td>
-  <td class="align-middle text-sm finding-desc-cell"><div class="finding-desc">{{ finding.description|truncatewords_html:20|safe }}</div></td>
+  <td class="align-middle text-sm finding-desc-cell"><div class="finding-desc">{{ finding.description|rich|truncatewords_html:20 }}</div></td>
   <td class="text-sm">
     <div class="d-flex flex-wrap gap-1 align-items-center">
     {% for req in finding.requirements.all %}

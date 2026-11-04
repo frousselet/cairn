@@ -20,7 +20,7 @@
     {% kpi_tile _("Associated support assets") dependencies|length icon="diagram-3" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if asset.description %}<div class="ov-rich">{{ asset.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if asset.description %}<div class="ov-rich">{{ asset.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("General") icon="info-circle" %}
     {% meta_list cols=2 %}
@@ -50,7 +50,7 @@
       {% meta_item _("Classification") asset.get_data_classification_display %}
       {% meta_item _("Personal data") %}{% if asset.personal_data %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
       {% if asset.personal_data and asset.personal_data_categories %}{% meta_item _("GDPR categories") asset.personal_data_categories wide=True %}{% endif %}
-      {% meta_item _("Regulatory constraints") wide=True %}{% if asset.regulatory_constraints %}<div class="ov-rich">{{ asset.regulatory_constraints|safe }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Regulatory constraints") wide=True %}{% if asset.regulatory_constraints %}<div class="ov-rich">{{ asset.regulatory_constraints|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 

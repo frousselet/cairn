@@ -925,6 +925,23 @@ def dash():
 
 
 @register.filter
+def rich(value):
+    """``{{ obj.description|rich }}``: stored rich text, sanitized at render time.
+
+    The pell editor's output is stored as submitted (forms, REST and MCP all
+    write it), so it is never trusted : only the editor's formatting tags
+    survive, every attribute but a safe ``<a href>`` is dropped and active
+    content (scripts, styles, frames, forms) is discarded. Never render a
+    user-authored field with ``|safe``.
+    """
+    from trust_center.sanitizers import clean_html
+
+    if _is_blank(value):
+        return ""
+    return mark_safe(clean_html(str(value)))  # noqa: S308 - sanitized by clean_html
+
+
+@register.filter
 def or_dash(value):
     """``{{ obj.start_date|or_dash }}``: the value, or the dash when empty."""
     if _is_blank(value):

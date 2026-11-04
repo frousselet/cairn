@@ -26,9 +26,9 @@
   {% section_card _("General") icon="info-circle" %}
     {% meta_list %}
       {% meta_item _("Risk") %}<div class="ref-links">{% url 'risks:risk-detail' acceptance.risk.pk as risk_url %}{% ref_link acceptance.risk url=risk_url %}</div>{% endmeta_item %}
-      {% meta_item _("Justification") %}{% if acceptance.justification %}<div class="ov-rich">{{ acceptance.justification|safe }}</div>{% endif %}{% endmeta_item %}
-      {% if acceptance.conditions %}{% meta_item _("Conditions") %}<div class="ov-rich">{{ acceptance.conditions|safe }}</div>{% endmeta_item %}{% endif %}
-      {% if acceptance.review_notes %}{% meta_item _("Review notes") %}<div class="ov-rich">{{ acceptance.review_notes|safe }}</div>{% endmeta_item %}{% endif %}
+      {% meta_item _("Justification") %}{% if acceptance.justification %}<div class="ov-rich">{{ acceptance.justification|rich }}</div>{% endif %}{% endmeta_item %}
+      {% if acceptance.conditions %}{% meta_item _("Conditions") %}<div class="ov-rich">{{ acceptance.conditions|rich }}</div>{% endmeta_item %}{% endif %}
+      {% if acceptance.review_notes %}{% meta_item _("Review notes") %}<div class="ov-rich">{{ acceptance.review_notes|rich }}</div>{% endmeta_item %}{% endif %}
     {% endmeta_list %}
   {% endsection_card %}
 

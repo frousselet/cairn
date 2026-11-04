@@ -37,9 +37,9 @@
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if mapping.description %}<div class="ov-rich">{{ mapping.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if mapping.description %}<div class="ov-rich">{{ mapping.description|rich }}</div>{% endif %}{% endsection_card %}
 
-  {% section_card _("Justification") icon="journal-text" hide_empty=True %}{% if mapping.justification %}<div class="ov-rich">{{ mapping.justification|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Justification") icon="journal-text" hide_empty=True %}{% if mapping.justification %}<div class="ov-rich">{{ mapping.justification|rich }}</div>{% endif %}{% endsection_card %}
 
   {% record_card mapping %}
 {% enddetail_layout %}

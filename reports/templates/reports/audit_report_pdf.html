@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-{% load i18n %}
+{% load i18n ui %}
 <style>
   @page {
     size: A4 portrait;
@@ -281,7 +281,7 @@
 
 <h3>1.1&emsp;{% trans "Context and objectives" %}</h3>
 {% if assessment_description %}
-<div class="html-content">{{ assessment_description|safe }}</div>
+<div class="html-content">{{ assessment_description|rich }}</div>
 {% else %}
 <p style="color:#999;font-style:italic">-</p>
 {% endif %}
@@ -322,7 +322,7 @@
 
 <h3>1.3&emsp;{% trans "Limitations" %}</h3>
 {% if assessment_limitations %}
-<div class="html-content">{{ assessment_limitations|safe }}</div>
+<div class="html-content">{{ assessment_limitations|rich }}</div>
 {% else %}
 <p style="color:#999;font-style:italic">-</p>
 {% endif %}
@@ -461,7 +461,7 @@
       {% for req in f.requirement_items %}
       <div{% if not forloop.last %} style="margin-bottom:2mm"{% endif %}>
         <strong>{{ req.number }} - {{ req.name }}</strong>
-        {% if req.description %}<div class="html-content" style="margin-top:1mm;color:#444">{{ req.description|safe }}</div>{% endif %}
+        {% if req.description %}<div class="html-content" style="margin-top:1mm;color:#444">{{ req.description|rich }}</div>{% endif %}
       </div>
       {% endfor %}
     </td>
@@ -472,18 +472,18 @@
   </tr>
   <tr>
     <th>{% trans "Finding" %}</th>
-    <td class="html-content">{{ f.description|safe }}</td>
+    <td class="html-content">{{ f.description|rich }}</td>
   </tr>
   {% if f.recommendation %}
   <tr>
     <th>{% trans "Recommendation" %}</th>
-    <td class="html-content">{{ f.recommendation|safe }}</td>
+    <td class="html-content">{{ f.recommendation|rich }}</td>
   </tr>
   {% endif %}
   {% if f.evidence %}
   <tr>
     <th>{% trans "Evidence presented" %}</th>
-    <td class="html-content">{{ f.evidence|safe }}</td>
+    <td class="html-content">{{ f.evidence|rich }}</td>
   </tr>
   {% endif %}
 </table>

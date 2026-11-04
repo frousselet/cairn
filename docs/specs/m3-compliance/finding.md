@@ -110,6 +110,8 @@ This is the part to read before merging.
 
 The six system roles receive these through the existing suffix lambdas in `accounts/constants.py`, unchanged.
 
+**Scopes.** A finding is filed under the scopes of whichever parent raised it : its assessment (`scope_parent_lookup = "assessment__scopes"`), or, through `scope_parent_alternates`, its incident (`incident__scopes`) or its control test run (`control_test_run__test__control__scopes`). A reader restricted to some scopes sees the findings reachable through any of these parents in those scopes, plus the findings with no parent at all (`scope_parent_optional`). Before v0.37.0 an incident-born nonconformity was visible to every finding reader whatever their scopes.
+
 ## References
 
 - [ComplianceAssessment](compliance-assessment.md) : the audit that raises most nonconformities

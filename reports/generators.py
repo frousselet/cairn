@@ -79,7 +79,11 @@ def build_soa_frameworks_data(frameworks):
                 if not justification and risks_data:
                     justification = "Selected to address linked risks."
             else:
-                justification = req.applicability_justification
+                # Stored rich text : sanitized, never trusted (the PDF engine
+                # would otherwise fetch remote images and honour any markup).
+                from trust_center.sanitizers import clean_html
+
+                justification = clean_html(req.applicability_justification or "")
 
             rows.append({
                 "number": req.requirement_number or req.reference,

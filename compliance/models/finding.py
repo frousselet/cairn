@@ -35,6 +35,9 @@ class Finding(BaseModel):
     # Without this it would be dropped by the INNER JOIN and invisible to
     # every non-superuser, which for a register is data loss in practice.
     scope_parent_optional = True
+    # A nonconformity raised by an incident or a control test is filed under
+    # that parent's scopes, not visible to every finding reader (core.scoping).
+    scope_parent_alternates = ("incident__scopes", "control_test_run__test__control__scopes")
 
     assessment = models.ForeignKey(
         "compliance.ComplianceAssessment",

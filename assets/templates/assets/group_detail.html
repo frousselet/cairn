@@ -20,7 +20,7 @@
     {% kpi_tile _("Members") members|length icon="collection" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if group.description %}<div class="ov-rich">{{ group.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if group.description %}<div class="ov-rich">{{ group.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("General") icon="info-circle" %}
     {% meta_list cols=2 %}

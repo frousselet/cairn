@@ -24,9 +24,9 @@
   {% section_card _("Nonconformity") icon="exclamation-diamond" %}
     {% meta_list %}
       {% meta_item _("Type") %}{% choice_badge finding "finding_type" type="finding" %}{% endmeta_item %}
-      {% meta_item _("Finding") %}{% if finding.description %}<div class="ov-rich">{{ finding.description|safe }}</div>{% endif %}{% endmeta_item %}
-      {% meta_item _("Recommendation") %}{% if finding.recommendation %}<div class="ov-rich">{{ finding.recommendation|safe }}</div>{% endif %}{% endmeta_item %}
-      {% meta_item _("Evidence presented") %}{% if finding.evidence %}<div class="ov-rich">{{ finding.evidence|safe }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Finding") %}{% if finding.description %}<div class="ov-rich">{{ finding.description|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Recommendation") %}{% if finding.recommendation %}<div class="ov-rich">{{ finding.recommendation|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Evidence presented") %}{% if finding.evidence %}<div class="ov-rich">{{ finding.evidence|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 

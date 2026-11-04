@@ -42,12 +42,12 @@
       <div class="supplier-overview{% if not has_site_map %} supplier-overview--nomap{% endif %}">
         <div class="supplier-overview__info">
           {% with scope_icon=scope.icon|cut:"bi-"|default:"card-text" %}
-          {% ov_row scope_icon _("Description") lead=True rich=True %}{% if scope.description %}{{ scope.description|safe }}{% endif %}{% endov_row %}
+          {% ov_row scope_icon _("Description") lead=True rich=True %}{% if scope.description %}{{ scope.description|rich }}{% endif %}{% endov_row %}
           {% endwith %}
           {% ov_row "diagram-2" _("Parent scope") %}{% if scope.parent_scope %}<a href="{% url 'context:scope-detail' scope.parent_scope.pk %}" class="ov-link">{{ scope.parent_scope.name }}</a>{% endif %}{% endov_row %}
-          {% ov_row "globe" _("Geographic scope") %}{% if scope.geographic_scope %}{{ scope.geographic_scope|safe }}{% endif %}{% endov_row %}
-          {% ov_row "building" _("Organizational scope") %}{% if scope.organizational_scope %}{{ scope.organizational_scope|safe }}{% endif %}{% endov_row %}
-          {% ov_row "cpu" _("Technical scope") %}{% if scope.technical_scope %}{{ scope.technical_scope|safe }}{% endif %}{% endov_row %}
+          {% ov_row "globe" _("Geographic scope") %}{% if scope.geographic_scope %}{{ scope.geographic_scope|rich }}{% endif %}{% endov_row %}
+          {% ov_row "building" _("Organizational scope") %}{% if scope.organizational_scope %}{{ scope.organizational_scope|rich }}{% endif %}{% endov_row %}
+          {% ov_row "cpu" _("Technical scope") %}{% if scope.technical_scope %}{{ scope.technical_scope|rich }}{% endif %}{% endov_row %}
           {% if scope.effective_date %}
           {% ov_row "calendar-check" _("Effective date") %}{% trans "In force since" %} {{ scope.effective_date }}{% if scope.review_date %} · <span class="text-muted">{% trans "next review" %} {{ scope.review_date }}</span>{% endif %}{% endov_row %}
           {% elif scope.review_date %}
@@ -125,8 +125,8 @@
   {% if scope.boundaries or scope.justification_exclusions %}
   {% section_card _("Boundaries and exclusions") icon="bounding-box" %}
     {% meta_list %}
-      {% if scope.boundaries %}{% meta_item _("Boundaries") %}<div class="ov-rich">{{ scope.boundaries|safe }}</div>{% endmeta_item %}{% endif %}
-      {% if scope.justification_exclusions %}{% meta_item _("Justification") %}<div class="ov-rich">{{ scope.justification_exclusions|safe }}</div>{% endmeta_item %}{% endif %}
+      {% if scope.boundaries %}{% meta_item _("Boundaries") %}<div class="ov-rich">{{ scope.boundaries|rich }}</div>{% endmeta_item %}{% endif %}
+      {% if scope.justification_exclusions %}{% meta_item _("Justification") %}<div class="ov-rich">{{ scope.justification_exclusions|rich }}</div>{% endmeta_item %}{% endif %}
     {% endmeta_list %}
   {% endsection_card %}
   {% endif %}

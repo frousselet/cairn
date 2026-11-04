@@ -1,4 +1,4 @@
-{% load i18n %}<!DOCTYPE html>
+{% load i18n ui %}<!DOCTYPE html>
 {% comment %}
   A document version rendered to PDF (WeasyPrint) when no PDF is attached :
   the Trust Center download and the version export (documents/rendering.py).
@@ -81,6 +81,6 @@
     {% endif %}
     <p>{% trans "Classification" %} : {{ policy.get_classification_display }}</p>
   </div>
-  <div class="content">{{ content|safe }}</div>
+  <div class="content">{{ content|rich }}</div>
 </body>
 </html>

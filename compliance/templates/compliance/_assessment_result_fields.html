@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n ui %}
 {% comment %}
   The evaluation fields of an assessment result, shared by the drawer form
   (assessment_result_form_modal.html) and its full-page fallback
@@ -13,7 +13,7 @@
     {% if requirement_obj.requirement_number %}{{ requirement_obj.requirement_number }} - {% endif %}{{ requirement_obj.name }}
   </div>
   {% if requirement_obj.description %}
-  <div class="text-meta ov-rich mt-1 overflow-auto" style="max-height:6rem">{{ requirement_obj.description|safe }}</div>
+  <div class="text-meta ov-rich mt-1 overflow-auto" style="max-height:6rem">{{ requirement_obj.description|rich }}</div>
   {% endif %}
   {% if requirement_obj.section %}
   <div class="text-meta mt-1"><i class="bi bi-folder2 me-1" aria-hidden="true"></i>{{ requirement_obj.section }}</div>
@@ -36,7 +36,7 @@
 <div class="alert alert-secondary text-sm mb-3">
   <i class="bi bi-lock me-1" aria-hidden="true"></i>{% trans "This requirement is non-applicable. Its compliance status cannot be modified." %}
   {% if requirement_obj.applicability_justification %}
-  <div class="text-meta mt-1">{{ requirement_obj.applicability_justification|safe }}</div>
+  <div class="text-meta mt-1">{{ requirement_obj.applicability_justification|rich }}</div>
   {% endif %}
 </div>
 {% endif %}
