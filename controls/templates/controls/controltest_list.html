@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load i18n ui help_tags table_tags %}
+
+{% comment %}
+The test register (ISO/IEC 27001:2022 clause 9.1) : every test of every
+control, who performs it, how often, its latest validated result and when it
+is next due (red when overdue, RG-CTL-07). Tests are created from their
+control's page; the list view answers its own HTMX table refresh.
+{% endcomment %}
+
+{% block title %}{% trans "Tests" %} - Cairn{% endblock %}
+
+{% block content %}
+{% trans "Control" context "control" as control_label %}
+{% page_header _("Tests") nav="controls:controltest-list" accent="controls" %}{% endpage_header %}
+{% help_modal "controls.test_list" %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Name" col="name" %}
+              {% sortable_th "control" control_label col="control" %}
+              {% sortable_th "tester" "Tester" col="tester" %}
+              {% sortable_th "latest_result" "Latest result" col="latest_result" %}
+              {% sortable_th "next_due" "Next due" col="next_due" %}
+              {% sortable_th "status" "Status" col="status" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{{ request.path }}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "controls/controltest_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

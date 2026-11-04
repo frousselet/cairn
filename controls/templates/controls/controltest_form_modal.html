@@ -1,0 +1,8 @@
+{% extends "includes/modal_form.html" %}
+{% comment %}
+  Create or edit a test of a control, in the drawer. Fields and steps come
+  from ControlTestForm; the next due date is derived (RG-CTL-07). A retired
+  test opens frozen.
+{% endcomment %}
+{% block modal_title_icon %}<span class="drawer-title-icon"><i class="bi bi-clipboard-check"></i></span>{% endblock %}
+{% block modal_form_fields %}{% include "controls/_frozen_note.html" %}{{ block.super }}{% endblock %}

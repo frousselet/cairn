@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load i18n ui help_tags table_tags accounts_tags %}
+
+{% comment %}
+The register of security controls (ISO/IEC 27001:2022 6.1.3, 8.1, 9.1). Each
+row answers what an auditor asks of the Statement of Applicability : is the
+control implemented, who owns it, does it work (effectiveness, derived from
+validated test runs) and when is it next tested (red when a test is overdue).
+The list view answers its own HTMX table refresh (no table-body route).
+{% endcomment %}
+
+{% block title %}{% trans "Controls" %} - Cairn{% endblock %}
+
+{% block content %}
+{% has_perm "controls.control.create" as can_create_control %}
+{% page_header _("Controls") nav="controls:control-list" accent="controls" %}
+  {% if can_create_control %}
+  <button type="button" class="btn btn-secondary" hx-get="{% url 'controls:control-from-requirements' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-list-check me-1" aria-hidden="true"></i>{% trans "Create from requirements" %}</button>
+  <button type="button" class="btn btn-primary" hx-get="{% url 'controls:control-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New control" %}</button>
+  {% endif %}
+{% endpage_header %}
+{% help_modal "controls.control_list" %}
+
+<div class="list-layout">
+  <div class="list-main">
+    <div class="card">
+      {% include "includes/list_toolbar.html" %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              {% sortable_th "reference" "Ref." col="reference" %}
+              {% sortable_th "name" "Name" col="name" %}
+              {% sortable_th "owner" "Owner" col="owner" %}
+              {% sortable_th "status" "Status" col="status" %}
+              {% sortable_th "effectiveness" "Effectiveness" col="effectiveness" %}
+              {% sortable_th "next_due" "Next test due" col="next_due" %}
+              <th class="text-end" data-col="actions">{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody id="item-table-body"
+                 hx-get="{{ request.path }}"
+                 hx-trigger="refreshTable"
+                 hx-include=".list-filter-form"
+                 hx-swap="innerHTML swap:0.12s">
+            {% include "controls/control_table_body.html" %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+  </div>
+  <aside class="list-rail list-rail--kpi">
+    {% include "includes/list_rail_kpis.html" %}
+  </aside>
+</div>
+
+{% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
+{% endblock %}

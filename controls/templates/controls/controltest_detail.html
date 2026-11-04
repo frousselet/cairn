@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load i18n ui help_tags workflow_tags accounts_tags %}
+
+{% comment %}
+One test of a control : what it establishes, the procedure the tester follows,
+what a pass looks like, how often, and every run on record with its result and
+its reviewer. The next due date is derived (RG-CTL-07); the state changes only
+through the stepper (activation needs a procedure and acceptance criteria).
+{% endcomment %}
+
+{% block title %}{{ test.name }} - Cairn{% endblock %}
+
+{% block content %}
+{% trans "Control" context "control" as control_label %}
+{% has_perm "controls.test.update" as can_update_test %}
+{% has_perm "controls.test.delete" as can_delete_test %}
+{% has_perm "controls.test.create" as can_create_run %}
+{% url 'controls:control-detail' control.pk as control_url %}
+{% page_header test.name reference=test.reference nav="controls:controltest-list" parent_label=control.reference parent_url=control_url accent="controls" %}
+  {% include "includes/history_trigger.html" %}
+  {% if can_delete_test and test.is_deletable and not runs %}
+  <button type="button" class="btn btn-danger" hx-get="{% url 'controls:controltest-delete' test.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-trash me-1" aria-hidden="true"></i>{% trans "Delete" %}</button>
+  {% endif %}
+  {% if can_update_test and not test.is_terminal_state %}
+  <a href="{% url 'controls:controltest-update' test.pk %}" class="btn btn-primary" hx-get="{% url 'controls:controltest-update' test.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% endif %}
+{% endpage_header %}
+{% include "includes/history_panel.html" %}
+{% help_modal "controls.test_detail" %}
+
+{% include "includes/lifecycle_stepper.html" %}
+
+{% if is_overdue %}
+<div class="alert alert-warning"><i class="bi bi-calendar-x me-2" aria-hidden="true"></i>{% blocktrans with date=test.next_due_date|date %}This test was due on {{ date }}. Record a run.{% endblocktrans %}</div>
+{% endif %}
+
+{% detail_layout %}
+  {% slot rail %}
+    {% kpi_tile _("Lifecycle stage") test.lifecycle_label icon="signpost-split" %}
+    {% if latest_run %}
+    {% url 'controls:controltestrun-detail' latest_run.pk as latest_url %}
+    {% kpi_tile _("Latest result") latest_run.get_result_display icon="clipboard-data" tone=latest_run.result|badge_variant:"run_result" href=latest_url size="sm" %}
+    {% else %}
+    {% kpi_tile _("Latest result") None icon="clipboard-data" tone="neutral" %}
+    {% endif %}
+    {% if is_overdue %}
+    {% kpi_tile _("Next due") test.next_due_date icon="calendar-x" tone="danger" %}
+    {% else %}
+    {% kpi_tile _("Next due") test.next_due_date icon="calendar-event" tone="neutral" %}
+    {% endif %}
+    {% blocktrans asvar frequency count counter=test.frequency_months %}Every month{% plural %}Every {{ counter }} months{% endblocktrans %}
+    {% kpi_tile _("Frequency") frequency icon="arrow-repeat" tone="neutral" size="sm" %}
+  {% endslot %}
+
+  {% section_card _("Procedure") icon="list-ol" %}
+    {% meta_list cols=2 %}
+      {% meta_item control_label %}{% ref_link control url=control_url %}{% endmeta_item %}
+      {% meta_item _("Method") test.get_method_display %}
+      {% meta_item _("Objective") wide=True %}{% if test.objective %}{{ test.objective|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Procedure") wide=True %}{% if test.procedure %}{{ test.procedure|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Acceptance criteria") wide=True %}{% if test.acceptance_criteria %}{{ test.acceptance_criteria|linebreaksbr }}{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Planning") icon="calendar-event" %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Tester") %}{% if test.tester %}{% user_badge test.tester size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("First due date") test.first_due_date %}
+      {% meta_item _("Activated on") test.activated_on %}
+      {% meta_item _("Next due") test.next_due_date %}
+      {% meta_item _("Tags") wide=True hide_empty=True %}{% tag_list test.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {% section_card _("Runs") icon="clipboard-data" count=runs|length flush=True %}
+    {% slot actions %}
+    {% if can_create_run and is_active %}
+    <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'controls:controltestrun-create' test.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Record a run" %}</button>
+    {% endif %}
+    {% endslot %}
+    {% if runs %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Date" %}</th>
+            <th>{% trans "Performed by" %}</th>
+            <th>{% trans "Result" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Reviewed by" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in runs %}
+          <tr>
+            <td>
+              <span class="cell-stack">
+                <a href="{% url 'controls:controltestrun-detail' r.pk %}" class="cell-link tabular-nums">{{ r.performed_on }}</a>
+                <span class="cell-sub">{{ r.reference }}</span>
+              </span>
+            </td>
+            <td>{% user_badge r.performed_by size=24 %}</td>
+            <td class="text-nowrap">{% choice_badge r "result" type="run_result" %}</td>
+            <td>{% workflow_badge r %}</td>
+            <td>{% if r.reviewed_by %}{% user_badge r.reviewed_by size=24 %}{% else %}{% dash %}{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body">{% if is_active %}{% empty_state compact=True message=_("No run yet. Record the first run : who tested, when, on which sample, with what result and which evidence.") %}{% else %}{% empty_state compact=True message=_("Runs are recorded once the test is active.") %}{% endif %}</div>
+    {% endif %}
+  {% endsection_card %}
+
+  {% record_card test %}
+{% enddetail_layout %}
+{% endblock %}

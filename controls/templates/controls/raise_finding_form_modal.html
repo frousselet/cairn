@@ -1,0 +1,8 @@
+{% extends "includes/modal_form.html" %}
+{% load i18n %}
+{% comment %}RG-CTL-16 : raise a finding from a validated partial or failed run. Fields from RaiseFindingForm.{% endcomment %}
+{% block modal_title_icon %}<span class="drawer-title-icon"><i class="bi bi-exclamation-diamond"></i></span>{% endblock %}
+{% block modal_form_fields %}
+<p class="text-meta">{% blocktrans with ref=run.reference %}The finding is created in the nonconformity register from run {{ ref }} : its observations become the description, and the control's requirements its related requirements.{% endblocktrans %}</p>
+{{ block.super }}
+{% endblock %}

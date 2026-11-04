@@ -1,0 +1,18 @@
+{% extends delete_shell|default:"includes/confirm_delete_modal.html" %}
+{% load i18n %}
+{% comment %}
+  Delete a control. Only a proposed control without tests is deletable; any
+  other is retired through its lifecycle, which keeps its history and its
+  tests' runs on record.
+{% endcomment %}
+{% block delete_title %}{% trans "Delete control" %}{% endblock %}
+{% block delete_message %}{% blocktrans with reference=object.reference name=object.name %}Are you sure you want to delete <strong>{{ reference }}</strong> - {{ name }}?{% endblocktrans %}{% endblock %}
+{% block delete_details %}
+  {% if not object.is_deletable %}
+  <p class="text-muted small mb-2"><i class="bi bi-lock-fill me-1" aria-hidden="true"></i>{% trans "This control is no longer proposed : retire it through its lifecycle instead." %}</p>
+  {% endif %}
+  {% with n=object.tests.count %}{% if n %}
+  <p class="text-muted small mb-2"><i class="bi bi-clipboard-check me-1" aria-hidden="true"></i>{% blocktrans count counter=n %}It has {{ counter }} test : delete the test first, or retire the control.{% plural %}It has {{ counter }} tests : delete them first, or retire the control.{% endblocktrans %}</p>
+  {% endif %}{% endwith %}
+{% endblock %}
+{% block delete_button_attrs %}{% if not object.is_deletable or object.tests.exists %} disabled{% endif %}{% endblock %}

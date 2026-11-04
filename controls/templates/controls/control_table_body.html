@@ -1,0 +1,40 @@
+{% load i18n ui workflow_tags accounts_tags %}
+{% has_perm "controls.control.update" as can_update_control %}
+{% has_perm "controls.control.delete" as can_delete_control %}
+{% for c in controls %}
+<tr>
+  <td data-col="reference" class="text-nowrap">
+    <a href="{% url 'controls:control-detail' c.pk %}" class="cell-link">{{ c.reference }}</a>
+  </td>
+  <td data-col="name">
+    <span class="cell-stack">
+      <a href="{% url 'controls:control-detail' c.pk %}" class="cell-link">{{ c.name }}</a>
+      <span class="cell-sub">{{ c.get_theme_display }} · {% blocktrans count counter=c.requirement_count %}{{ counter }} requirement{% plural %}{{ counter }} requirements{% endblocktrans %}</span>
+    </span>
+  </td>
+  <td data-col="owner">
+    {% if c.owner %}{% user_badge c.owner size=24 link=True %}{% else %}{% dash %}{% endif %}
+  </td>
+  <td data-col="status">{% workflow_badge c %}</td>
+  <td data-col="effectiveness" class="text-nowrap">{% choice_badge c "effectiveness" %}</td>
+  <td data-col="next_due" class="text-nowrap">
+    {% if c.next_due %}
+      {% if c.overdue_flag == "overdue" %}
+      <span title="{% trans 'Test overdue' %}">{% badge variant="danger" icon="calendar-x" label=c.next_due|date %}</span>
+      {% else %}{{ c.next_due }}{% endif %}
+    {% else %}{% dash %}{% endif %}
+  </td>
+  <td class="text-end" data-col="actions">
+    <div class="d-inline-flex gap-1">
+      {% if can_update_control and not c.is_terminal_state %}
+      <button type="button" class="btn btn-sm btn-outline-primary" hx-get="{% url 'controls:control-update' c.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+      {% endif %}
+      {% if can_delete_control and c.is_deletable %}
+      <button type="button" class="btn btn-sm btn-outline-danger" hx-get="{% url 'controls:control-delete' c.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+      {% endif %}
+    </div>
+  </td>
+</tr>
+{% empty %}
+{% empty_state title=_("No control yet.") message=_("Register what the organisation does to meet its requirements and treat its risks, or create proposed controls from a framework's requirements.") colspan=7 %}
+{% endfor %}

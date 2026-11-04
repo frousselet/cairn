@@ -67,6 +67,9 @@ NAV_TREE = {
     "compliance:finding-detail": ("Compliance", None, "Nonconformities"),
     "compliance:mapping-list": ("Compliance", None, "Mappings"),
     "compliance:action-plan-list": ("Compliance", None, "Action plans"),
+    # ── Controls (compliance family) ─────────────────────────────
+    "controls:control-list": ("Controls", None, "Controls"),
+    "controls:controltest-list": ("Controls", None, "Tests"),
     # ── Documents ────────────────────────────────────────────────
     "documents:policy-list": ("Documents", None, "Policies"),
     "documents:campaign-list": ("Documents", None, "Acknowledgement campaigns"),

@@ -406,6 +406,25 @@
         <span class="sidebar-tooltip">{% trans "Action plans" %}</span>
       </a>
 
+      {# ── Controls ────────────────────────────────────── #}
+      {% has_perm "controls.control.read" as can_read_controls %}
+      {% has_perm "controls.test.read" as can_read_control_tests %}
+      {% if can_read_controls or can_read_control_tests %}
+      <div class="sidebar-section">{% trans "Controls" %}</div>
+      {% if can_read_controls %}
+      <a href="{% url 'controls:control-list' %}" class="sidebar-link">
+        <i class="bi bi-shield-check"></i> <span class="sidebar-link-text">{% trans "Controls" %}</span>
+        <span class="sidebar-tooltip">{% trans "Controls" %}</span>
+      </a>
+      {% endif %}
+      {% if can_read_control_tests %}
+      <a href="{% url 'controls:controltest-list' %}" class="sidebar-link">
+        <i class="bi bi-clipboard-check"></i> <span class="sidebar-link-text">{% trans "Tests" %}</span>
+        <span class="sidebar-tooltip">{% trans "Tests" %}</span>
+      </a>
+      {% endif %}
+      {% endif %}
+
       {# ── Documents ───────────────────────────────────── #}
       {% has_perm "documents.policy.read" as can_read_policies %}
       {% has_perm "documents.acknowledgement.read" as can_read_campaigns %}

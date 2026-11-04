@@ -1,0 +1,8 @@
+{% extends "includes/modal_form.html" %}
+{% comment %}
+  Record or edit a run while it is in progress (RG-CTL-09). Fields and steps
+  come from ControlTestRunForm; the form opens prefilled with the test's
+  tester and today.
+{% endcomment %}
+{% block modal_title_icon %}<span class="drawer-title-icon"><i class="bi bi-clipboard-data"></i></span>{% endblock %}
+{% block modal_form_fields %}{% include "controls/_frozen_note.html" %}{{ block.super }}{% endblock %}
