@@ -70,6 +70,8 @@ test, so a stale result is never mistaken for a current one.
 
 ## The control register
 
+![The control register](../screenshots/controls.png)
+
 The list shows, for every control, its owner, its state, its effectiveness, the
 next test due (red when a test is overdue) and the number of requirements it
 satisfies. The rail counts the implemented controls, the effective rate
@@ -90,6 +92,8 @@ skipped and reported : re-covering it is a decision, not a bulk action.
 
 ## The control page
 
+![A control page](../screenshots/control-detail.png)
+
 The rail shows the lifecycle stage, the effectiveness, the next test due and
 the implementation date. Below it :
 
@@ -105,6 +109,8 @@ the implementation date. Below it :
 - **Applies to**, **Objectives** and **Documents**, then the traceability card.
 
 ## Tests
+
+![The test register](../screenshots/control-tests.png)
 
 A **test** says how a control is checked : its method (inquiry, observation,
 inspection, reperformance or an automated check), the **procedure** the tester

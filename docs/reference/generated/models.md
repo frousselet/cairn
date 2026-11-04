@@ -8,7 +8,7 @@ Every persisted model in the project, with the platform-wide behaviours it inher
 
 The field-by-field contract of each entity lives in its [specification](../../specs/README.md); this page is the inventory.
 
-**118 models** are registered.
+**122 models** are registered.
 
 ## Inventory
 
@@ -69,6 +69,10 @@ The field-by-field contract of each entity lives in its [specification](../../sp
 | context | `SwotItem` | `context_swotitem` | - | - | - | yes | 8 |
 | context | `SwotStrategy` | `context_swotstrategy` | - | - | - | yes | 7 |
 | context | `Tag` | `context_tag` | - | - | - | - | 4 |
+| controls | `ControlTestEvidence` | `controls_controltestevidence` | - | - | - | yes | 9 |
+| controls | `ControlTestRun` | `controls_controltestrun` | `CTRN` | `control_test_run` | - | yes | 17 |
+| controls | `ControlTest` | `controls_controltest` | `CTST` | `control_test` | - | yes | 19 |
+| controls | `Control` | `controls_control` | `CTRL` | `control` | yes | yes | 16 |
 | core | `LifecycleDefinition` | `core_lifecycledefinition` | - | - | - | - | 8 |
 | core | `LifecycleEvent` | `core_lifecycleevent` | - | - | - | - | 10 |
 | documents | `AcknowledgementCampaign` | `documents_acknowledgementcampaign` | `ACKC` | `acknowledgement_campaign` | yes | yes | 14 |
