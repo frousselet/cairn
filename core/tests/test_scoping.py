@@ -139,3 +139,39 @@ def test_workflow_transition_refuses_an_out_of_scope_child(client, two_perimeter
     two_perimeters["req_theirs"].refresh_from_db()
     assert response.status_code == 404
     assert two_perimeters["req_theirs"].workflow_state == before
+
+
+@pytest.mark.django_db
+class TestAlternateScopeParents:
+    """A finding raised by an incident or a control test is filed under that
+    parent's scopes (``scope_parent_alternates``), not visible to everyone."""
+
+    def test_finding_follows_its_incident_or_control_scopes(self):
+        from compliance.constants import FindingSource, FindingType
+        from compliance.models import Finding
+        from context.tests.factories import ScopeFactory
+        from controls.tests.factories import validated_run
+        from core.scoping import filter_queryset_by_scopes, object_in_scopes
+        from incidents.tests.factories import IncidentFactory
+
+        mine, other = ScopeFactory(), ScopeFactory()
+        incident = IncidentFactory()
+        incident.scopes.add(other)
+        run = validated_run(result="fail")
+        run.test.control.scopes.add(mine)
+        from_incident = Finding.objects.create(
+            source=FindingSource.INCIDENT, incident=incident,
+            finding_type=FindingType.OBSERVATION, description="From the incident.",
+        )
+        from_run = Finding.objects.create(
+            source=FindingSource.CONTROL_TEST, control_test_run=run,
+            finding_type=FindingType.OBSERVATION, description="From the test.",
+        )
+        orphan = Finding.objects.create(
+            source=FindingSource.MONITORING, finding_type=FindingType.OBSERVATION, description="Unfiled.",
+        )
+        visible = set(filter_queryset_by_scopes(Finding.objects.all(), [mine.pk]).values_list("pk", flat=True))
+        assert visible == {from_run.pk, orphan.pk}
+        assert object_in_scopes(from_run, [mine.pk])
+        assert not object_in_scopes(from_incident, [mine.pk])
+        assert object_in_scopes(orphan, [mine.pk])

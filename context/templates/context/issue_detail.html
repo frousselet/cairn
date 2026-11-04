@@ -21,7 +21,7 @@
     {% kpi_tile _("Next review") issue.review_date icon="calendar-event" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if issue.description %}<div class="ov-rich">{{ issue.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if issue.description %}<div class="ov-rich">{{ issue.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("Classification") icon="info-circle" %}
     {% meta_list cols=2 %}

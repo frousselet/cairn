@@ -49,7 +49,7 @@ The module covers four sub-domains:
 | Context and Organization | Activities/processes (Module 1) are attached to essential assets. The Scope frames the asset inventory. |
 | Risk management | Essential and support assets are the subjects of risk assessment (ISO 27005 and EBIOS RM). The CIA security needs feed the impact evaluation. |
 | Compliance | Some regulatory requirements bear directly on asset categories (personal data, health data, etc.). |
-| Measures | Security measures are applied to support assets to protect essential assets. |
+| Controls | Security [controls](../m8-controls/README.md) are applied to support assets to protect essential assets (`Control.support_assets`). |
 | Suppliers | Support assets of the outsourced service type are linked to suppliers. |
 | Incidents | Incidents are attached to the impacted assets. |
 
@@ -63,7 +63,7 @@ The module covers four sub-domains:
 |---|---|
 | RG-01 | Every asset (essential asset or support asset) must be attached to an active **Scope**. |
 | RG-02 | Every asset must have a designated **owner** (`owner_id`). |
-| RG-03 | Deleting an asset referenced by the Risks or Measures module is forbidden. Deactivation (`status = decommissioned` or `disposed`) is used instead. |
+| RG-03 | Deleting an asset referenced by the Risks or Controls module is forbidden. Deactivation (`status = decommissioned` or `disposed`) is used instead. |
 | RG-04 | Every change to an asset generates an entry in the **audit trail**. |
 | RG-05 | The `created_at` and `updated_at` fields are managed automatically by the system. |
 | RG-06 | Configurable value lists (categories, types) are managed through the dedicated configuration table. |
@@ -151,7 +151,7 @@ Identical to Module 1. Base URL: `/api/v1/assets/`
 | `GET` | `/support-assets/{id}/dependencies` | List the dependency relationships |
 | `GET` | `/support-assets/{id}/inherited-dic` | Detail of the inherited CIA calculation |
 | `GET` | `/support-assets/{id}/children` | List the support sub-assets |
-| `GET` | `/support-assets/{id}/measures` | List the applied measures (Measures module) |
+| `GET` | `/api/v1/controls/controls/?support_asset_id={id}` | List the applied controls ([Module 8](../m8-controls/README.md)) |
 | `GET` | `/support-assets/{id}/risks` | List the associated risks (Risks module) |
 | `GET` | `/support-assets/{id}/incidents` | List the associated incidents (Incidents module) |
 | `GET` | `/support-assets/categories` | List the available categories |

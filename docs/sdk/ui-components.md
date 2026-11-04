@@ -327,7 +327,8 @@ Every badge is a `.badge-dot` pill, in a table, a card or a header alike. Tones
 come from `BADGE_REGISTRY` in `core/templatetags/ui.py` :
 
 - `level` : priority, criticality, severity and impact share one ordinal scale.
-- `finding` and `effectiveness` : audit findings and corrective action effectiveness.
+- `finding` and `effectiveness` : audit findings, corrective action effectiveness and control effectiveness (with `not_tested`).
+- `run_result` : the result of a control test run (`pass`, `partial`, `fail`).
 - `tlp`, `notification_decision`, `triage_decision`, `response_action_status`, `timeline_entry_type`, `filing_outcome` : incident response.
 - `issue_status` and `objective_status` : the context module's own status fields.
 - `access_event` and `feedback_rating` : the access log and assistant feedback.
@@ -340,6 +341,20 @@ come from `BADGE_REGISTRY` in `core/templatetags/ui.py` :
 `CHOICE_BADGE_TYPES`). Never write an `{% if value == '...' %}` chain to pick a
 badge colour : add the value to the registry. A lifecycle state is
 `{% workflow_badge obj %}`, which reads its tone from the lifecycle.
+
+### rich
+
+```django
+<div class="ov-rich">{{ obj.description|rich }}</div>
+```
+
+Renders stored rich text (the pell editor's output) sanitized at render time :
+only the editor's formatting tags survive, every attribute but a safe
+`<a href>` is dropped, and scripts, styles, frames and forms are discarded.
+Rich text reaches the database unfiltered through forms, the REST API and MCP,
+so a user-authored field is **never** rendered with `|safe`. JSON embedded in a
+`<script>` element is built with `core.safe_json.dumps_for_script` (or
+`json_script`), never `json.dumps` and `|safe`.
 
 ### dash / or_dash
 

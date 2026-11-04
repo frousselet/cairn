@@ -14,7 +14,7 @@ Every domain record runs a registered lifecycle. A lifecycle is an ordered set o
 
 The engine is specified in [governance/lifecycle.md](../../specs/governance/lifecycle.md); the governance contract is in [governance/workflow.md](../../specs/governance/workflow.md).
 
-**33 lifecycles** are declared in code. An administrator can override any of them from `/config/lifecycles/`; this page documents the shipped defaults.
+**36 lifecycles** are declared in code. An administrator can override any of them from `/config/lifecycles/`; this page documents the shipped defaults.
 
 ## Summary
 
@@ -25,6 +25,9 @@ The engine is specified in [governance/lifecycle.md](../../specs/governance/life
 | [`certificate`](#certificate) | 7 | 7 | graph | `assets.Certificate` |
 | [`compliance_assessment`](#compliance-assessment) | 7 | 8 | graph | `compliance.ComplianceAssessment` |
 | [`contract`](#contract) | 7 | 7 | graph | `assets.Contract` |
+| [`control`](#control) | 4 | 7 | graph | `controls.Control` |
+| [`control_test`](#control-test) | 3 | 3 | graph | `controls.ControlTest` |
+| [`control_test_run`](#control-test-run) | 4 | 5 | graph | `controls.ControlTestRun` |
 | [`default`](#default) | 4 | 4 | graph | `assets.AssetGroup`, `compliance.Finding`, `compliance.Framework`, `compliance.Requirement`, `context.Activity`, `context.Indicator`, `context.Issue`, `context.Objective`, `context.Role`, `context.Stakeholder`, `context.StakeholderFeedback`, `context.SwotAnalysis`, `incidents.IncidentResponsePlan`, `incidents.ReportingAuthority`, `incidents.ReportingObligationTemplate`, `risks.AttackPathStep`, `risks.AttackTechnique`, `risks.EcosystemStakeholder`, `risks.FearedEvent`, `risks.ISO27005Risk`, `risks.OperationalScenario`, `risks.RiskCriteria`, `risks.RiskSource`, `risks.RiskSourceObjectivePair`, `risks.StrategicScenario`, `risks.TargetedObjective`, `risks.Threat` |
 | [`ebios_baseline_gap`](#ebios-baseline-gap) | 6 | 7 | graph | `risks.BaselineGap` |
 | [`ebios_pacs_measure`](#ebios-pacs-measure) | 7 | 12 | graph | `risks.PACSMeasure` |
@@ -202,6 +205,74 @@ Run by `assets.Contract`.
 | `active` | `expired` | Expire | - | - | - |
 | any | `archived` | Archive | - | - | - |
 
+## control
+
+Run by `controls.Control`.
+
+### Steps
+
+| Code | Label | Kind | In reports | Linkable | Deletable |
+| --- | --- | --- | --- | --- | --- |
+| `draft` | Proposed | draft | - | - | yes |
+| `planned` | Planned | intermediate | yes | yes | - |
+| `implemented` | Implemented | intermediate | yes | yes | - |
+| `archived` | Retired | archived | - | - | - |
+
+### Transitions
+
+| From | To | Label | Comment required | Permission | Restricted to roles |
+| --- | --- | --- | --- | --- | --- |
+| `draft` | `planned` | Plan | - | `approve` | - |
+| `draft` | `implemented` | Declare implemented | - | `approve` | - |
+| `planned` | `implemented` | Declare implemented | - | `approve` | - |
+| `implemented` | `planned` | Back to planned | yes | `update` | - |
+| `planned` | `archived` | Retire | yes | `approve` | - |
+| `implemented` | `archived` | Retire | yes | `approve` | - |
+| `draft` | `archived` | Retire | yes | `update` | - |
+
+## control_test
+
+Run by `controls.ControlTest`.
+
+### Steps
+
+| Code | Label | Kind | In reports | Linkable | Deletable |
+| --- | --- | --- | --- | --- | --- |
+| `draft` | Draft | draft | - | - | yes |
+| `active` | Active | intermediate | yes | yes | - |
+| `archived` | Retired | archived | - | - | - |
+
+### Transitions
+
+| From | To | Label | Comment required | Permission | Restricted to roles |
+| --- | --- | --- | --- | --- | --- |
+| `draft` | `active` | Activate | - | `approve` | - |
+| `active` | `archived` | Retire | yes | `approve` | - |
+| `draft` | `archived` | Retire | yes | `update` | - |
+
+## control_test_run
+
+Run by `controls.ControlTestRun`.
+
+### Steps
+
+| Code | Label | Kind | In reports | Linkable | Deletable |
+| --- | --- | --- | --- | --- | --- |
+| `draft` | In progress | draft | - | - | yes |
+| `in_review` | In review | intermediate | - | - | - |
+| `validated` | Validated | intermediate | yes | - | - |
+| `archived` | Withdrawn | archived | - | - | - |
+
+### Transitions
+
+| From | To | Label | Comment required | Permission | Restricted to roles |
+| --- | --- | --- | --- | --- | --- |
+| `draft` | `in_review` | Submit for review | - | `update` | - |
+| `in_review` | `draft` | Send back | yes | `approve` | - |
+| `in_review` | `validated` | Validate | - | `approve` | - |
+| `validated` | `archived` | Withdraw | yes | `approve` | - |
+| `draft` | `archived` | Cancel | yes | `update` | - |
+
 ## default
 
 Run by `assets.AssetGroup`, `compliance.Finding`, `compliance.Framework`, `compliance.Requirement`, `context.Activity`, `context.Indicator`, `context.Issue`, `context.Objective`, `context.Role`, `context.Stakeholder`, `context.StakeholderFeedback`, `context.SwotAnalysis`, `incidents.IncidentResponsePlan`, `incidents.ReportingAuthority`, `incidents.ReportingObligationTemplate`, `risks.AttackPathStep`, `risks.AttackTechnique`, `risks.EcosystemStakeholder`, `risks.FearedEvent`, `risks.ISO27005Risk`, `risks.OperationalScenario`, `risks.RiskCriteria`, `risks.RiskSource`, `risks.RiskSourceObjectivePair`, `risks.StrategicScenario`, `risks.TargetedObjective`, `risks.Threat`.
@@ -260,11 +331,11 @@ Run by `risks.PACSMeasure`.
 | Code | Label | Kind | In reports | Linkable | Deletable |
 | --- | --- | --- | --- | --- | --- |
 | `draft` | Draft | draft | - | - | yes |
-| `planned` | Planned | intermediate | yes | - | yes |
-| `in_progress` | In progress | intermediate | yes | - | - |
+| `planned` | Planned | intermediate | yes | yes | yes |
+| `in_progress` | In progress | intermediate | yes | yes | - |
 | `completed` | Completed | archived | yes | - | - |
 | `cancelled` | Cancelled | archived | - | - | - |
-| `overdue` | Overdue | intermediate | yes | - | - |
+| `overdue` | Overdue | intermediate | yes | yes | - |
 | `archived` | Archived | archived | - | - | - |
 
 ### Transitions

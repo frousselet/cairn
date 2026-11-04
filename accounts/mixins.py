@@ -279,8 +279,10 @@ class LifecycleStepperMixin:
                 })
 
             ctx["lc_layout"] = "graph"   # route the template to the new branch
-            ctx["lc_graph_nodes"] = json.dumps(graph_nodes)
-            ctx["lc_graph_edges"] = json.dumps(graph_edges)
+            from core.safe_json import dumps_for_script
+
+            ctx["lc_graph_nodes"] = dumps_for_script(graph_nodes)
+            ctx["lc_graph_edges"] = dumps_for_script(graph_edges)
         return ctx
 
 

@@ -62,7 +62,7 @@ def static_v(path):
 
 MODULE_ACCENTS = {
     "risks", "compliance", "assets", "context",
-    "incidents", "documents", "reports", "accounts", "helpers", "dashboard",
+    "incidents", "documents", "controls", "reports", "accounts", "helpers", "dashboard",
     "trust-center",
 }
 
@@ -289,6 +289,13 @@ BADGE_REGISTRY: dict[str, dict[str, tuple[str, str, object]]] = {
         "effective": ("success", "check-circle", pgettext_lazy("finding", "Effective")),
         "partially_effective": ("warning", "circle-half", pgettext_lazy("finding", "Partially effective")),
         "not_effective": ("danger", "x-circle", pgettext_lazy("finding", "Not effective")),
+        "not_tested": ("secondary", "dash-circle", pgettext_lazy("control effectiveness", "Not tested")),
+    },
+    # Result of a control test run (controls module).
+    "run_result": {
+        "pass": ("success", "check-circle", pgettext_lazy("test result", "Pass")),
+        "partial": ("warning", "circle-half", pgettext_lazy("test result", "Partial")),
+        "fail": ("danger", "x-circle", pgettext_lazy("test result", "Fail")),
     },
     # Access log events and assistant feedback (labels from the choices).
     "access_event": {
@@ -918,6 +925,23 @@ def dash():
 
 
 @register.filter
+def rich(value):
+    """``{{ obj.description|rich }}``: stored rich text, sanitized at render time.
+
+    The pell editor's output is stored as submitted (forms, REST and MCP all
+    write it), so it is never trusted : only the editor's formatting tags
+    survive, every attribute but a safe ``<a href>`` is dropped and active
+    content (scripts, styles, frames, forms) is discarded. Never render a
+    user-authored field with ``|safe``.
+    """
+    from trust_center.sanitizers import clean_html
+
+    if _is_blank(value):
+        return ""
+    return mark_safe(clean_html(str(value)))  # noqa: S308 - sanitized by clean_html
+
+
+@register.filter
 def or_dash(value):
     """``{{ obj.start_date|or_dash }}``: the value, or the dash when empty."""
     if _is_blank(value):
@@ -1323,6 +1347,7 @@ CHOICE_BADGE_TYPES = {
     "dic_criterion": "dic",
     "finding_type": "finding",
     "effectiveness_verdict": "effectiveness",
+    "effectiveness": "effectiveness",
     "tlp": "tlp",
     "notification_decision": "notification_decision",
     "triage_decision": "triage_decision",

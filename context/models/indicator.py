@@ -297,6 +297,10 @@ class Indicator(ScopedModel):
             return self._compute_policies_overdue_review()
         elif source == PredefinedIndicatorSource.ACKNOWLEDGEMENT_RATE:
             return self._compute_acknowledgement_rate()
+        elif source == PredefinedIndicatorSource.CONTROL_EFFECTIVENESS_RATE:
+            return self._compute_control_effectiveness_rate()
+        elif source == PredefinedIndicatorSource.CONTROL_TESTS_OVERDUE:
+            return self._compute_control_tests_overdue()
         return None
 
     def _compute_global_compliance_rate(self):
@@ -392,6 +396,36 @@ class Indicator(ScopedModel):
             return "0"
         acknowledged = rows.filter(status=AcknowledgementStatus.ACKNOWLEDGED).count()
         return str(round(acknowledged / denominator * 100, 1))
+
+    def _compute_control_effectiveness_rate(self):
+        # RG-CTL-14 / RG-CTL-17 : effective controls over tested controls,
+        # among the controls that count in reports (planned and implemented;
+        # a proposed or retired control drops out). "Tested" means an
+        # effectiveness other than not_tested, read off the stored derived
+        # value.
+        from controls.constants import ControlEffectiveness
+        from controls.models import Control
+        from core.lifecycle import reportable
+
+        tested = reportable(Control.objects.all()).exclude(effectiveness=ControlEffectiveness.NOT_TESTED)
+        denominator = tested.count()
+        if denominator == 0:
+            return "0"
+        effective = tested.filter(effectiveness=ControlEffectiveness.EFFECTIVE).count()
+        return str(round(effective / denominator * 100, 1))
+
+    def _compute_control_tests_overdue(self):
+        # RG-CTL-07 : overdue is derived (an active test whose next due date
+        # has passed), never a lifecycle step.
+        from django.utils import timezone
+
+        from controls.models import ControlTest
+        from core.lifecycle import reportable
+
+        overdue = reportable(ControlTest.objects.filter(
+            next_due_date__isnull=False, next_due_date__lt=timezone.localdate(),
+        ))
+        return str(overdue.count())
 
     def record_measurement(self, value, recorded_by=None, notes=""):
         """Record a new measurement for this indicator."""

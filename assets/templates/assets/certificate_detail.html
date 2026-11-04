@@ -17,7 +17,7 @@
 {% endif %}
 
 {% if certificate.notes %}
-<div class="note-cartouche" role="note">{{ certificate.notes|safe }}</div>
+<div class="note-cartouche" role="note">{{ certificate.notes|rich }}</div>
 {% endif %}
 
 {% if certificate.is_superseded %}

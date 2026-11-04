@@ -19691,3 +19691,871 @@ msgstr "Revue à échéance : %(title)s"
 #, python-format
 msgid "%(title)s is due for review on %(date)s."
 msgstr "La revue de %(title)s est due le %(date)s."
+
+msgid "Control tests"
+msgstr "Tests de mesures"
+
+msgid "Controls"
+msgstr "Mesures"
+
+msgid "Control effectiveness rate"
+msgstr "Taux d'efficacité des mesures"
+
+msgid "Control tests overdue"
+msgstr "Tests de mesures en retard"
+
+msgid "A submitted test run is frozen : its content can no longer be changed."
+msgstr ""
+"Une exécution de test soumise est figée : son contenu ne peut plus être "
+"modifié."
+
+msgid "A retired control takes no new test."
+msgstr "Une mesure retirée ne peut plus recevoir de nouveau test."
+
+msgid "Expected a list of identifiers."
+msgstr "Une liste d'identifiants est attendue."
+
+msgid "Framework not found."
+msgstr "Référentiel non trouvé."
+
+msgid "Unknown scope or outside your scopes."
+msgstr "Périmètre inconnu ou hors de vos périmètres."
+
+msgid "Choose a valid finding type : major_nc, minor_nc or observation."
+msgstr ""
+"Choisissez un type de constat valide : major_nc, minor_nc ou observation."
+
+msgid "Requirements and risks"
+msgstr "Exigences et risques"
+
+msgid ""
+"What the organisation does, e.g. Multi-factor authentication on remote "
+"access."
+msgstr ""
+"Ce que fait l'organisation, par exemple Authentification multifacteur sur les"
+" accès distants."
+
+msgid ""
+"How the control operates day to day : who does what, with which tool, how "
+"often."
+msgstr ""
+"Comment la mesure fonctionne au quotidien : qui fait quoi, avec quel outil, à"
+" quelle fréquence."
+
+msgid "The ISO/IEC 27002:2022 theme of the control."
+msgstr "Le thème ISO/IEC 27002:2022 de la mesure."
+
+msgid "Whether the control prevents, detects or corrects an event."
+msgstr "Si la mesure prévient, détecte ou corrige un événement."
+
+msgid "How much of the control runs without a person."
+msgstr "La part de la mesure qui fonctionne sans intervention humaine."
+
+msgid ""
+"Accountable for the control operating; receives the test reminders when a "
+"test has no tester."
+msgstr ""
+"Responsable du fonctionnement de la mesure ; reçoit les relances des tests "
+"sans testeur."
+
+msgid ""
+"Set when the control is declared implemented. It can be earlier, never in the"
+" future."
+msgstr ""
+"Renseignée quand la mesure est déclarée mise en œuvre. Elle peut être "
+"antérieure, jamais future."
+
+msgid "The requirements this control satisfies, from any framework."
+msgstr ""
+"Les exigences que cette mesure satisfait, quel que soit le référentiel."
+
+msgid "The risks this control treats."
+msgstr "Les risques que cette mesure traite."
+
+msgid "The treatment plans that create or reinforce it."
+msgstr "Les plans de traitement qui la créent ou la renforcent."
+
+msgid "The EBIOS RM security measures that create or reinforce it."
+msgstr "Les mesures de sécurité EBIOS RM qui la créent ou la renforcent."
+
+msgid "Where the control applies."
+msgstr "Là où la mesure s'applique."
+
+msgid "The objectives it contributes to."
+msgstr "Les objectifs auxquels elle contribue."
+
+msgid "The documents that describe it : procedure, standard, policy."
+msgstr "Les documents qui la décrivent : procédure, standard, politique."
+
+msgid "The parts of the organisation where the control applies."
+msgstr "Les parties de l'organisation où la mesure s'applique."
+
+msgid "A retired control is a closed record and can no longer be edited."
+msgstr ""
+"Une mesure retirée est un enregistrement clos et ne peut plus être modifiée."
+
+msgid ""
+"The framework whose requirements the new controls answer. They take its "
+"scopes."
+msgstr ""
+"Le référentiel dont les nouvelles mesures traitent les exigences. Elles en "
+"reprennent les périmètres."
+
+msgid "Requirements without a control"
+msgstr "Exigences sans mesure"
+
+msgid ""
+"One proposed control is created for each ticked requirement, named after it."
+msgstr ""
+"Une mesure proposée est créée pour chaque exigence cochée, nommée d'après "
+"elle."
+
+msgid ""
+"Choose a framework first : its requirements without a control are listed "
+"here."
+msgstr ""
+"Choisissez d'abord un référentiel : ses exigences sans mesure sont listées "
+"ici."
+
+msgid "Tick at least one requirement."
+msgstr "Cochez au moins une exigence."
+
+msgid "Every applicable requirement of this framework already has a control."
+msgstr "Chaque exigence applicable de ce référentiel a déjà une mesure."
+
+msgid "e.g. Quarterly sample of remote logins."
+msgstr "par exemple Échantillon trimestriel des connexions distantes."
+
+msgid ""
+"How the evidence is obtained : inquiry, observation, inspection, "
+"reperformance or an automated check."
+msgstr ""
+"Comment la preuve est obtenue : entretien, observation, inspection, "
+"réexécution ou contrôle automatisé."
+
+msgid ""
+"Months between two runs, from 1 to 36. The next run falls due this long after"
+" the last validated one."
+msgstr ""
+"Nombre de mois entre deux exécutions, de 1 à 36. La prochaine exécution est "
+"due ce délai après la dernière validée."
+
+msgid ""
+"What the test establishes : the design of the control, or that it operates "
+"effectively."
+msgstr ""
+"Ce que le test établit : la conception de la mesure, ou son fonctionnement "
+"effectif."
+
+msgid "The steps the tester follows. Required to activate the test."
+msgstr "Les étapes suivies par le testeur. Requis pour activer le test."
+
+msgid ""
+"What a pass looks like. Required to activate the test : a test with no pass "
+"criterion proves nothing."
+msgstr ""
+"Ce qu'est un succès. Requis pour activer le test : un test sans critère de "
+"réussite ne prouve rien."
+
+msgid "Performs the runs by default and receives the due reminders."
+msgstr "Réalise les exécutions par défaut et reçoit les relances d'échéance."
+
+msgid "When the first run is due. Leave empty to make it due on activation."
+msgstr ""
+"L'échéance de la première exécution. Laissez vide pour qu'elle soit due à "
+"l'activation."
+
+msgid "A retired test is a closed record and can no longer be edited."
+msgstr ""
+"Un test retiré est un enregistrement clos et ne peut plus être modifié."
+
+msgid "Who performed the test. They cannot validate their own run."
+msgstr ""
+"Qui a réalisé le test. Cette personne ne peut pas valider sa propre "
+"exécution."
+
+msgid "The date of the test. It cannot be in the future."
+msgstr "La date du test. Elle ne peut pas être future."
+
+msgid "The start of the period the test covers, if any."
+msgstr "Le début de la période couverte par le test, le cas échéant."
+
+msgid ""
+"The end of the period the test covers. It cannot be after the test date."
+msgstr ""
+"La fin de la période couverte par le test. Elle ne peut pas être postérieure "
+"à la date du test."
+
+msgid ""
+"The population and the sample tested, e.g. 25 of the 1,240 remote logins of "
+"the quarter."
+msgstr ""
+"La population et l'échantillon testés, par exemple 25 des 1 240 connexions "
+"distantes du trimestre."
+
+msgid "Required to submit the run for review."
+msgstr "Requis pour soumettre l'exécution à la relecture."
+
+msgid "What was found. Required to submit a partial or failed result."
+msgstr ""
+"Ce qui a été constaté. Requis pour soumettre un résultat partiel ou en échec."
+
+msgid "Not recorded yet"
+msgstr "Pas encore enregistré"
+
+msgid ""
+"An export, a screenshot, a signed review sheet (25 MB max). Its SHA-256 is "
+"recorded."
+msgstr ""
+"Un export, une capture d'écran, une fiche de revue signée (25 Mo max). Son "
+"empreinte SHA-256 est enregistrée."
+
+msgid "What the file shows, e.g. Login export for the third quarter."
+msgstr ""
+"Ce que montre le fichier, par exemple Export des connexions du troisième "
+"trimestre."
+
+msgid ""
+"A judgement on the gap : a major or minor nonconformity, or an observation."
+msgstr ""
+"Une appréciation de l'écart : non-conformité majeure ou mineure, ou "
+"observation."
+
+msgid ""
+"Optional : what should be done to close the gap. The run's observations "
+"become the finding's description."
+msgstr ""
+"Facultatif : ce qu'il faut faire pour combler l'écart. Les observations de "
+"l'exécution deviennent la description du constat."
+
+msgid "Theme"
+msgstr "Thème"
+
+msgid "Automation"
+msgstr "Automatisation"
+
+msgid "Implemented on"
+msgstr "Mise en œuvre le"
+
+msgid "Effectiveness updated at"
+msgstr "Efficacité mise à jour le"
+
+msgctxt "control"
+msgid "Control"
+msgstr "Mesure"
+
+msgid "Method"
+msgstr "Méthode"
+
+msgid "Acceptance criteria"
+msgstr "Critères d'acceptation"
+
+msgid "Tester"
+msgstr "Testeur"
+
+msgid "First due date"
+msgstr "Première échéance"
+
+msgid "Next due"
+msgstr "Prochaine échéance"
+
+msgid "Activated on"
+msgstr "Activé le"
+
+msgid "Performed on"
+msgstr "Réalisé le"
+
+msgid "Sample"
+msgstr "Échantillon"
+
+msgid "Observations"
+msgstr "Observations"
+
+msgid "Runs can only be recorded against an active test."
+msgstr "Les exécutions ne peuvent être enregistrées que sur un test actif."
+
+msgid ""
+"Evidence can only be added or removed while the test run is in progress."
+msgstr ""
+"Les preuves ne peuvent être ajoutées ou retirées que tant que l'exécution est"
+" en cours."
+
+msgid "Delete control"
+msgstr "Supprimer la mesure"
+
+msgid ""
+"This control is no longer proposed : retire it through its lifecycle instead."
+msgstr ""
+"Cette mesure n'est plus proposée : retirez-la plutôt par son cycle de vie."
+
+#, python-format
+msgid "It has %(counter)s test : delete the test first, or retire the control."
+msgstr ""
+"Elle a %(counter)s test : supprimez d'abord le test, ou retirez la mesure."
+
+#, python-format
+msgid ""
+"A test of this control was due on %(date)s : its effectiveness rests on a "
+"test that is now overdue."
+msgstr ""
+"Un test de cette mesure était dû le %(date)s : son efficacité repose sur un "
+"test désormais en retard."
+
+#, python-format
+msgid "A test of this control was due on %(date)s. Record a run."
+msgstr ""
+"Un test de cette mesure était dû le %(date)s. Enregistrez une exécution."
+
+msgid "Next test due"
+msgstr "Prochain test dû"
+
+msgid "Tests"
+msgstr "Tests"
+
+msgid "New test"
+msgstr "Nouveau test"
+
+msgid "Latest result"
+msgstr "Dernier résultat"
+
+msgid ""
+"No test yet. A test says how the control is checked and how often; its "
+"validated runs make the control's effectiveness."
+msgstr ""
+"Aucun test pour l'instant. Un test décrit comment la mesure est vérifiée et à"
+" quelle fréquence ; ses exécutions validées font l'efficacité de la mesure."
+
+msgid "Recent runs"
+msgstr "Exécutions récentes"
+
+msgid "Run"
+msgstr "Exécution"
+
+msgid "Risks and treatment"
+msgstr "Risques et traitement"
+
+msgid "Applies to"
+msgstr "S'applique à"
+
+msgid "Create from requirements"
+msgstr "Créer à partir des exigences"
+
+msgid "New control"
+msgstr "Nouvelle mesure"
+
+msgid "Test overdue"
+msgstr "Test en retard"
+
+msgid "No control yet."
+msgstr "Aucune mesure pour l'instant."
+
+msgid ""
+"Register what the organisation does to meet its requirements and treat its "
+"risks, or create proposed controls from a framework's requirements."
+msgstr ""
+"Enregistrez ce que fait l'organisation pour satisfaire ses exigences et "
+"traiter ses risques, ou créez des mesures proposées à partir des exigences "
+"d'un référentiel."
+
+msgid "Delete test"
+msgstr "Supprimer le test"
+
+msgid ""
+"This test is no longer a draft : retire it through its lifecycle instead."
+msgstr ""
+"Ce test n'est plus un brouillon : retirez-le plutôt par son cycle de vie."
+
+msgid "This test has runs on record : retire it instead."
+msgstr "Ce test a des exécutions enregistrées : retirez-le plutôt."
+
+#, python-format
+msgid "This test was due on %(date)s. Record a run."
+msgstr "Ce test était dû le %(date)s. Enregistrez une exécution."
+
+msgid "Runs"
+msgstr "Exécutions"
+
+msgid "Record a run"
+msgstr "Enregistrer une exécution"
+
+msgid ""
+"No run yet. Record the first run : who tested, when, on which sample, with "
+"what result and which evidence."
+msgstr ""
+"Aucune exécution pour l'instant. Enregistrez la première : qui a testé, "
+"quand, sur quel échantillon, avec quel résultat et quelles preuves."
+
+msgid "Runs are recorded once the test is active."
+msgstr "Les exécutions sont enregistrées une fois le test actif."
+
+msgid "every month"
+msgstr "tous les mois"
+
+msgid "No test yet."
+msgstr "Aucun test pour l'instant."
+
+msgid ""
+"Tests are created from a control's page : say how the control is checked, "
+"what a pass looks like and how often."
+msgstr ""
+"Les tests se créent depuis la page d'une mesure : dites comment la mesure est"
+" vérifiée, ce qu'est un succès et à quelle fréquence."
+
+msgid "Delete test run"
+msgstr "Supprimer l'exécution"
+
+#, python-format
+msgid ""
+"Are you sure you want to delete <strong>%(reference)s</strong> of %(date)s?"
+msgstr ""
+"Voulez-vous vraiment supprimer <strong>%(reference)s</strong> du %(date)s ?"
+
+msgid "This run was submitted : withdraw it through its lifecycle instead."
+msgstr ""
+"Cette exécution a été soumise : retirez-la plutôt par son cycle de vie."
+
+#, python-format
+msgid "Its %(counter)s evidence file is deleted with it."
+msgstr "%(counter)s fichier de preuve est supprimé avec elle."
+
+msgid ""
+"This run was submitted : its result, its observations and its evidence are "
+"frozen. Send it back to make a change."
+msgstr ""
+"Cette exécution a été soumise : son résultat, ses observations et ses preuves"
+" sont figés. Renvoyez-la pour la modifier."
+
+msgid "Add evidence"
+msgstr "Ajouter une preuve"
+
+msgid "Size"
+msgstr "Taille"
+
+msgid "SHA-256 recorded at upload"
+msgstr "SHA-256 enregistré au téléversement"
+
+msgid ""
+"No evidence yet. Attach the exports, screenshots or signed sheets that "
+"support the result before submitting the run."
+msgstr ""
+"Aucune preuve pour l'instant. Joignez les exports, captures d'écran ou fiches"
+" signées qui étayent le résultat avant de soumettre l'exécution."
+
+msgid "No evidence was attached to this run."
+msgstr "Aucune preuve n'a été jointe à cette exécution."
+
+msgid "A run is validated by a reviewer who did not perform it."
+msgstr "Une exécution est validée par un relecteur qui ne l'a pas réalisée."
+
+msgid "Raise a finding"
+msgstr "Ouvrir un constat"
+
+msgid ""
+"This run found a gap and no finding was raised yet. Raise one to track its "
+"correction in the nonconformity register."
+msgstr ""
+"Cette exécution a relevé un écart et aucun constat n'a encore été ouvert. "
+"Ouvrez-en un pour suivre sa correction dans le registre des non-conformités."
+
+msgid "Remove evidence"
+msgstr "Retirer la preuve"
+
+#, python-format
+msgid ""
+"Are you sure you want to remove <strong>%(name)s</strong> from %(reference)s?"
+msgstr ""
+"Voulez-vous vraiment retirer <strong>%(name)s</strong> de %(reference)s ?"
+
+msgid "No control linked."
+msgstr "Aucune mesure liée."
+
+#, python-format
+msgid ""
+"The finding is created in the nonconformity register from run %(ref)s : its "
+"observations become the description, and the control's requirements its "
+"related requirements."
+msgstr ""
+"Le constat est créé dans le registre des non-conformités à partir de "
+"l'exécution %(ref)s : ses observations deviennent la description, et les "
+"exigences de la mesure ses exigences associées."
+
+msgid "No requirement to list."
+msgstr "Aucune exigence à lister."
+
+msgid "Implemented controls"
+msgstr "Mesures mises en œuvre"
+
+msgid "Effective rate"
+msgstr "Taux d'efficacité"
+
+msgid "Overdue tests"
+msgstr "Tests en retard"
+
+msgid "Never tested"
+msgstr "Jamais testées"
+
+#, python-format
+msgid "%(n)d proposed control was created from %(framework)s."
+msgstr "%(n)d mesure proposée a été créée à partir de %(framework)s."
+
+#, python-format
+msgid ""
+"%(n)d requirement was skipped : it already has a control or is not "
+"applicable."
+msgstr ""
+"%(n)d exigence a été ignorée : elle a déjà une mesure ou n'est pas "
+"applicable."
+
+msgid "No control was created."
+msgstr "Aucune mesure n'a été créée."
+
+msgid "Active tests"
+msgstr "Tests actifs"
+
+msgid "Due within 14 days"
+msgstr "Échéance sous 14 jours"
+
+msgid "Latest result not a pass"
+msgstr "Dernier résultat non conforme"
+
+msgid ""
+"A finding can only be raised once, from a validated partial or failed run."
+msgstr ""
+"Un constat ne peut être ouvert qu'une fois, depuis une exécution validée "
+"partielle ou en échec."
+
+#, python-format
+msgid "Finding %(ref)s was raised from run %(run)s."
+msgstr "Le constat %(ref)s a été ouvert depuis l'exécution %(run)s."
+
+#, python-format
+msgid "The evidence %(name)s was added."
+msgstr "La preuve %(name)s a été ajoutée."
+
+msgid ""
+"Implemented controls and their effective rate, the control tests overdue, and"
+" the failed runs still awaiting a finding."
+msgstr ""
+"Les mesures mises en œuvre et leur taux d'efficacité, les tests de mesures en"
+" retard et les exécutions en échec encore en attente d'un constat."
+
+msgctxt "kanban"
+msgid "Control test"
+msgstr "Test de mesure"
+
+msgctxt "kanban"
+msgid "Test run"
+msgstr "Exécution de test"
+
+msgctxt "kanban"
+msgid "Test due"
+msgstr "Test à réaliser"
+
+msgid "Control test: "
+msgstr "Test de mesure : "
+
+msgid "Create a control"
+msgstr "Créer une mesure"
+
+msgid "Implementation"
+msgstr "Mise en œuvre"
+
+#, python-format
+msgid "%(effective)s effective out of %(tested)s tested"
+msgstr "%(effective)s efficaces sur %(tested)s testées"
+
+msgid "Tests overdue"
+msgstr "Tests en retard"
+
+msgid "Awaiting a finding"
+msgstr "En attente d'un constat"
+
+msgid "No finding raised yet"
+msgstr "Aucun constat émis"
+
+msgid "No control test overdue and no failed run awaiting a finding."
+msgstr ""
+"Aucun test de mesure en retard et aucune exécution en échec en attente d'un "
+"constat."
+
+msgid "Control test due"
+msgstr "Test de mesure à réaliser"
+
+msgid "Control test overdue"
+msgstr "Test de mesure en retard"
+
+msgid "Control test failed"
+msgstr "Test de mesure en échec"
+
+msgctxt "control"
+msgid "Controls"
+msgstr "Mesures"
+
+msgctxt "finding source"
+msgid "Control test"
+msgstr "Test de mesure"
+
+msgid "Control test run"
+msgstr "Exécution de test de mesure"
+
+msgid "The control test run that raised this nonconformity."
+msgstr "L'exécution de test de mesure à l'origine de cette non-conformité."
+
+msgid "A test that has runs cannot move to another control."
+msgstr ""
+"Un test qui a des exécutions ne peut pas être rattaché à une autre mesure."
+
+msgid "This field is required."
+msgstr "Ce champ est obligatoire."
+
+msgctxt "control theme"
+msgid "Organizational"
+msgstr "Organisationnelle"
+
+msgctxt "control theme"
+msgid "People"
+msgstr "Humaine"
+
+msgctxt "control theme"
+msgid "Physical"
+msgstr "Physique"
+
+msgctxt "control theme"
+msgid "Technological"
+msgstr "Technologique"
+
+msgctxt "control nature"
+msgid "Preventive"
+msgstr "Préventive"
+
+msgctxt "control nature"
+msgid "Detective"
+msgstr "Détective"
+
+msgctxt "control nature"
+msgid "Corrective"
+msgstr "Corrective"
+
+msgctxt "control automation"
+msgid "Manual"
+msgstr "Manuelle"
+
+msgctxt "control automation"
+msgid "Semi-automated"
+msgstr "Semi-automatisée"
+
+msgctxt "control automation"
+msgid "Automated"
+msgstr "Automatisée"
+
+msgctxt "control effectiveness"
+msgid "Not tested"
+msgstr "Non testée"
+
+msgctxt "test method"
+msgid "Inquiry"
+msgstr "Entretien"
+
+msgctxt "test method"
+msgid "Observation"
+msgstr "Observation"
+
+msgctxt "test method"
+msgid "Inspection"
+msgstr "Inspection"
+
+msgctxt "test method"
+msgid "Reperformance"
+msgstr "Ré-exécution"
+
+msgctxt "test method"
+msgid "Automated"
+msgstr "Automatisé"
+
+msgctxt "test result"
+msgid "Pass"
+msgstr "Réussi"
+
+msgctxt "test result"
+msgid "Partial"
+msgstr "Partiel"
+
+msgctxt "test result"
+msgid "Fail"
+msgstr "Échec"
+
+msgctxt "control"
+msgid "Proposed"
+msgstr "Proposée"
+
+msgctxt "control"
+msgid "Planned"
+msgstr "Planifiée"
+
+msgctxt "control"
+msgid "Implemented"
+msgstr "Mise en œuvre"
+
+msgctxt "control"
+msgid "Retired"
+msgstr "Retirée"
+
+msgctxt "control"
+msgid "Plan"
+msgstr "Planifier"
+
+msgctxt "control"
+msgid "Declare implemented"
+msgstr "Déclarer mise en œuvre"
+
+msgctxt "control"
+msgid "Back to planned"
+msgstr "Revenir à planifiée"
+
+msgctxt "control"
+msgid "Retire"
+msgstr "Retirer"
+
+msgctxt "control"
+msgid "Active"
+msgstr "Actif"
+
+msgctxt "control test run"
+msgid "In progress"
+msgstr "En cours"
+
+msgctxt "control test run"
+msgid "Validated"
+msgstr "Validée"
+
+msgctxt "control test run"
+msgid "Withdrawn"
+msgstr "Retirée"
+
+msgctxt "control test run"
+msgid "Send back"
+msgstr "Renvoyer"
+
+msgctxt "control test run"
+msgid "Validate"
+msgstr "Valider"
+
+msgctxt "control test run"
+msgid "Withdraw"
+msgstr "Retirer"
+
+msgctxt "control test run"
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "The implementation date cannot be in the future."
+msgstr "La date de mise en œuvre ne peut pas être dans le futur."
+
+#, python-format
+msgid "Control %(ref)s retired"
+msgstr "Mesure %(ref)s retirée"
+
+msgid "Frequency (months)"
+msgstr "Périodicité (mois)"
+
+msgid "Control test"
+msgstr "Test de mesure"
+
+msgid "Plan or implement the control before activating its tests."
+msgstr "Planifiez ou mettez en œuvre la mesure avant d'activer ses tests."
+
+msgid ""
+"A test needs a procedure and acceptance criteria before it can be activated."
+msgstr ""
+"Un test doit avoir une procédure et des critères de réussite avant d'être "
+"activé."
+
+msgid "Test run"
+msgstr "Exécution de test"
+
+msgid "Test runs"
+msgstr "Exécutions de test"
+
+msgid "The test date cannot be in the future."
+msgstr "La date du test ne peut pas être dans le futur."
+
+msgid "The period cannot end before it starts."
+msgstr "La période ne peut pas se terminer avant de commencer."
+
+msgid "The period tested cannot end after the test date."
+msgstr "La période testée ne peut pas se terminer après la date du test."
+
+msgid "Record the result of the test before submitting it."
+msgstr "Indiquez le résultat du test avant de le soumettre."
+
+msgid ""
+"Describe what was found : a partial or failed result needs observations."
+msgstr ""
+"Décrivez ce qui a été constaté : un résultat partiel ou en échec exige des "
+"observations."
+
+msgid "A test run is validated by a reviewer."
+msgstr "Une exécution de test est validée par un relecteur."
+
+msgid "The person who performed or recorded a test cannot validate it."
+msgstr "La personne qui a réalisé ou saisi un test ne peut pas le valider."
+
+msgid "A finding can only be raised from a validated partial or failed run."
+msgstr ""
+"Un constat ne peut être levé que depuis une exécution validée, partielle ou "
+"en échec."
+
+msgid "A finding was already raised from this run."
+msgstr "Un constat a déjà été levé depuis cette exécution."
+
+#, python-format
+msgid "Test run %(ref)s of %(test)s (%(control)s), performed on %(date)s."
+msgstr "Exécution %(ref)s de %(test)s (%(control)s), réalisée le %(date)s."
+
+msgid "An evidence file must not exceed 25 MB."
+msgstr "Un fichier de preuve ne doit pas dépasser 25 Mo."
+
+msgid "Size (bytes)"
+msgstr "Taille (octets)"
+
+msgid "Test evidence"
+msgstr "Preuves de test"
+
+msgid "An evidence file cannot be changed : remove it and upload a new one."
+msgstr ""
+"Un fichier de preuve ne peut pas être modifié : supprimez-le et déposez-en un"
+" nouveau."
+
+#, python-format
+msgid "Control test failed : %(control)s"
+msgstr "Test de mesure en échec : %(control)s"
+
+#, python-format
+msgid ""
+"Run %(ref)s of %(test)s ended with the result \"%(result)s\". The control is "
+"now %(effectiveness)s."
+msgstr ""
+"L'exécution %(ref)s de %(test)s s'est terminée avec le résultat « %(result)s "
+"». La mesure est désormais : %(effectiveness)s."
+
+#, python-format
+msgid "Control test overdue : %(test)s"
+msgstr "Test de mesure en retard : %(test)s"
+
+#, python-format
+msgid "%(test)s (%(control)s) was due on %(date)s."
+msgstr "%(test)s (%(control)s) était à réaliser le %(date)s."
+
+#, python-format
+msgid "Control test due : %(test)s"
+msgstr "Test de mesure à réaliser : %(test)s"
+
+#, python-format
+msgid "%(test)s (%(control)s) is due on %(date)s."
+msgstr "%(test)s (%(control)s) est à réaliser le %(date)s."
+
+msgid "Partially implemented"
+msgstr "Partiellement mise en œuvre"
+
+msgid "No control"
+msgstr "Aucune mesure"

@@ -24,7 +24,7 @@
         {% user_badge comment.author size=32 %}
         <time class="text-meta" datetime="{{ comment.created_at|date:'c' }}" title="{{ comment.created_at|date:'DATETIME_FORMAT' }}">{{ comment.created_at|timesince }} {% trans "ago" %}</time>
       </div>
-      <div class="ov-rich mt-2">{{ comment.content|safe }}</div>
+      <div class="ov-rich mt-2">{{ comment.content|rich }}</div>
       <button type="button" class="btn btn-link btn-sm p-0 mt-1 text-sm toggle-reply-form"
               data-target="reply-form-{{ comment.pk }}" aria-controls="reply-form-{{ comment.pk }}" aria-expanded="false">
         <i class="bi bi-reply me-1" aria-hidden="true"></i>{% trans "Reply" %}
@@ -58,7 +58,7 @@
             {% user_badge reply.author size=28 %}
             <time class="text-meta" datetime="{{ reply.created_at|date:'c' }}" title="{{ reply.created_at|date:'DATETIME_FORMAT' }}">{{ reply.created_at|timesince }} {% trans "ago" %}</time>
           </div>
-          <div class="ov-rich mt-1">{{ reply.content|safe }}</div>
+          <div class="ov-rich mt-1">{{ reply.content|rich }}</div>
         </li>
         {% endfor %}
       </ul>

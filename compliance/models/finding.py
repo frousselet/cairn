@@ -35,6 +35,9 @@ class Finding(BaseModel):
     # Without this it would be dropped by the INNER JOIN and invisible to
     # every non-superuser, which for a register is data loss in practice.
     scope_parent_optional = True
+    # A nonconformity raised by an incident or a control test is filed under
+    # that parent's scopes, not visible to every finding reader (core.scoping).
+    scope_parent_alternates = ("incident__scopes", "control_test_run__test__control__scopes")
 
     assessment = models.ForeignKey(
         "compliance.ComplianceAssessment",
@@ -61,6 +64,15 @@ class Finding(BaseModel):
         related_name="findings",
         verbose_name=_("Incident"),
         help_text=_("The security incident that raised this nonconformity."),
+    )
+    control_test_run = models.ForeignKey(
+        "controls.ControlTestRun",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="findings",
+        verbose_name=_("Control test run"),
+        help_text=_("The control test run that raised this nonconformity."),
     )
     finding_type = models.CharField(
         _("Finding type"),
@@ -136,6 +148,11 @@ class Finding(BaseModel):
     def incident_reference(self):
         """Incident that raised it, if any (for read-only API / assistant output)."""
         return self.incident.reference if self.incident_id else ""
+
+    @property
+    def control_test_run_reference(self):
+        """Control test run that raised it, if any (for read-only API / assistant output)."""
+        return self.control_test_run.reference if self.control_test_run_id else ""
 
     @property
     def assessor_name(self):

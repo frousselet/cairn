@@ -62,11 +62,11 @@ No parameters.
 
 ## `help`
 
-Get usage documentation for the Cairn MCP server. Call without arguments for the full guide, or with a topic for focused help. Topics: context, assets, compliance, risks, incidents, documents, batch, workflow, permissions, examples, users
+Get usage documentation for the Cairn MCP server. Call without arguments for the full guide, or with a topic for focused help. Topics: context, assets, compliance, risks, incidents, documents, controls, batch, workflow, permissions, examples, users
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `topic` | `string` | - | Optional topic: context, assets, compliance, risks, incidents, documents, batch, workflow, permissions, examples, users |
+| `topic` | `string` | - | Optional topic: context, assets, compliance, risks, incidents, documents, controls, batch, workflow, permissions, examples, users |
 
 ## `kanban_board`
 

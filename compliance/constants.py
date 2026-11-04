@@ -257,6 +257,7 @@ class FindingSource(models.TextChoices):
     MANAGEMENT_REVIEW = "management_review", pgettext_lazy("finding source", "Management review")
     MONITORING = "monitoring", pgettext_lazy("finding source", "Monitoring")
     COMPLAINT = "complaint", pgettext_lazy("finding source", "Complaint")
+    CONTROL_TEST = "control_test", pgettext_lazy("finding source", "Control test")
 
 
 class EffectivenessVerdict(models.TextChoices):

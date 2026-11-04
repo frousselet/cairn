@@ -37,6 +37,7 @@ the image carries. See the [installation guide](docs/technical/installation.md).
 | **Compliance** | Frameworks and requirements, audits, an organisation-wide nonconformity register, action plans and inter-framework mappings |
 | **Incidents** | Event intake, incident handling, sealed evidence under chain of custody, and statutory notification clocks (GDPR, NIS2, DORA) |
 | **Documents** | Policies, procedures, standards and charters : approved versions with one in force at a time, review reminders, and acknowledgement campaigns kept as evidence |
+| **Controls** | The security controls the organisation operates, linked to requirements, risks and assets, with effectiveness derived from independently validated test runs and their evidence, feeding the Statement of Applicability |
 | **Trust Center** | A public, curated page for your security posture, optionally on its own domain |
 | **Steering** | A configurable widget dashboard, a unified tasks board, management reviews, and PDF / DOCX / PPTX / XLSX reports |
 

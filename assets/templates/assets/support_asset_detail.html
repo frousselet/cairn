@@ -29,7 +29,7 @@
     {% kpi_tile _("Essential assets") dependencies|length icon="gem" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if asset.description %}<div class="ov-rich">{{ asset.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if asset.description %}<div class="ov-rich">{{ asset.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("General") icon="info-circle" %}
     {% meta_list cols=2 %}
@@ -91,6 +91,8 @@
       {% if children %}{% meta_item _("Child support assets") %}<div class="ref-links">{% for child in children %}{% url 'assets:support-asset-detail' child.pk as child_url %}{% ref_link child url=child_url %}{% endfor %}</div>{% endmeta_item %}{% endif %}
     {% endmeta_list %}
   {% endsection_card %}
+
+  {% include "controls/includes/controls_card.html" %}
 
   {% section_card _("People") icon="people" %}
     {% meta_list cols=2 %}

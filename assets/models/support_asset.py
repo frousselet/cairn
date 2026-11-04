@@ -115,8 +115,7 @@ class SupportAsset(LegacyStatusMixin, ScopedModel):
         related_name="children",
         verbose_name=_("Parent support asset"),
     )
-    # M2M to Measure omitted - module not yet implemented
-    # related_measures = models.ManyToManyField("measures.Measure", ...)
+    # Controls : reverse accessor `controls` from controls.Control.support_assets.
     review_date = models.DateField(_("Next review date"), null=True, blank=True)
 
     history = HistoricalRecords()

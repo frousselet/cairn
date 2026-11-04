@@ -191,6 +191,8 @@ version; the state only through the stepper.
     {% endif %}
   {% endsection_card %}
 
+  {% include "controls/includes/controls_card.html" %}
+
   {# ── Who was asked to acknowledge it ── #}
   {% section_card _("Acknowledgement campaigns") icon="patch-check" count=campaigns|length flush=True %}
     {% slot actions %}

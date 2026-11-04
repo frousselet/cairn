@@ -17,7 +17,7 @@
 {% endif %}
 
 {% if contract.notes %}
-<div class="note-cartouche" role="note">{{ contract.notes|safe }}</div>
+<div class="note-cartouche" role="note">{{ contract.notes|rich }}</div>
 {% endif %}
 
 {% if contract.is_superseded %}

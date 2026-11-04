@@ -4,7 +4,7 @@ What a Cairn deployment needs from you after it is running.
 
 ## Scheduled commands
 
-Four commands keep records in step with the passage of time. Nothing else runs
+Five commands keep records in step with the passage of time. Nothing else runs
 on a timer, and none of them are triggered by a user action, so if they are not
 scheduled the data silently ages instead of failing loudly.
 
@@ -13,15 +13,17 @@ scheduled the data silently ages instead of failing loudly.
 | `expire_risk_acceptances` | Marks an active risk acceptance `EXPIRED` once `valid_until` has passed, and prints acceptances expiring within `--reminder-days` (30 by default) | Daily |
 | `mark_overdue_treatment_plans` | Marks an in-flight treatment plan `OVERDUE` once `target_date` has passed (skips completed, cancelled and already-overdue plans) | Daily |
 | `documents_sweep` | Sends the document review reminders (due within 30 days, overdue) and the acknowledgement reminders (7 days before a campaign's due date and the day after it), each once | Daily |
+| `controls_sweep` | Sends the control test reminders (due within 14 days once per cycle, overdue once then every 7 days) and recomputes the derived effectiveness of every planned or implemented control | Daily |
 | `rebuild_semantic_index` | Refreshes the Ask Cairn requirement embeddings | Daily, only if semantic search is on |
 
-The lifecycle commands and `documents_sweep` accept `--dry-run`.
+The lifecycle commands, `documents_sweep` and `controls_sweep` accept `--dry-run`.
 
 ```cron
 # /etc/cron.d/cairn
 15 2 * * * cd /opt/cairn && docker compose exec -T web python manage.py expire_risk_acceptances
 20 2 * * * cd /opt/cairn && docker compose exec -T web python manage.py mark_overdue_treatment_plans
 22 2 * * * cd /opt/cairn && docker compose exec -T web python manage.py documents_sweep
+23 2 * * * cd /opt/cairn && docker compose exec -T web python manage.py controls_sweep
 25 2 * * * cd /opt/cairn && docker compose exec -T web python manage.py rebuild_semantic_index
 ```
 

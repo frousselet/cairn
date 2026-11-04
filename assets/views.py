@@ -22,6 +22,7 @@ from django.views.generic import (
 
 from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
+from controls.integrations import linked_controls
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
@@ -609,6 +610,7 @@ class SupportAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeF
             "essential_asset"
         )
         ctx["children"] = self.object.children.all()
+        ctx["linked_controls"] = linked_controls(self.object, self.request.user)
         return ctx
 
 
@@ -1906,8 +1908,10 @@ class DependencyGraphView(LoginRequiredMixin, PermissionRequiredMixin, TemplateV
             })
 
         import json
-        ctx["graph_nodes"] = json.dumps(list(nodes.values()))
-        ctx["graph_edges"] = json.dumps(edges)
+        from core.safe_json import dumps_for_script
+
+        ctx["graph_nodes"] = dumps_for_script(list(nodes.values()))
+        ctx["graph_edges"] = dumps_for_script(edges)
         ctx["asset_dep_count"] = asset_deps.count()
         ctx["supplier_dep_count"] = supplier_deps.count()
         ctx["site_asset_dep_count"] = site_asset_deps.count()

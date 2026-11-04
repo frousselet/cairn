@@ -22,7 +22,7 @@
     {% kpi_tile _("Review date") risk.review_date icon="calendar-event" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if risk.description %}<div class="ov-rich">{{ risk.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if risk.description %}<div class="ov-rich">{{ risk.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("General") icon="info-circle" %}
     {% meta_list cols=2 %}
@@ -78,9 +78,11 @@
   {% section_card _("Treatment") icon="shield-check" %}
     {% meta_list %}
       {% meta_item _("Treatment decision") risk.get_treatment_decision_display %}
-      {% if risk.treatment_justification %}{% meta_item _("Justification") %}<div class="ov-rich">{{ risk.treatment_justification|safe }}</div>{% endmeta_item %}{% endif %}
+      {% if risk.treatment_justification %}{% meta_item _("Justification") %}<div class="ov-rich">{{ risk.treatment_justification|rich }}</div>{% endmeta_item %}{% endif %}
     {% endmeta_list %}
   {% endsection_card %}
+
+  {% include "controls/includes/controls_card.html" %}
 
   {% section_card _("Treatment plans") icon="list-task" count=treatment_plans|length flush=True %}
     {% slot actions %}<a href="{% url 'risks:treatment-plan-create' %}" class="btn btn-sm btn-secondary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New plan" %}</a>{% endslot %}

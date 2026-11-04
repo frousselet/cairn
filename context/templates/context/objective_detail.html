@@ -26,7 +26,7 @@
     {% kpi_tile _("Next review") objective.review_date icon="arrow-repeat" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if objective.description %}<div class="ov-rich">{{ objective.description|safe }}</div>{% endif %}{% endsection_card %}
+  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if objective.description %}<div class="ov-rich">{{ objective.description|rich }}</div>{% endif %}{% endsection_card %}
 
   {% section_card _("General") icon="info-circle" %}
     {% meta_list cols=2 %}
@@ -51,6 +51,8 @@
       {% meta_item _("Progress") wide=True %}{% if objective.progress_percentage is not None %}{% progress_bar objective.progress_percentage %}{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
+
+  {% include "controls/includes/controls_card.html" %}
 
   {% record_card objective %}
 {% enddetail_layout %}

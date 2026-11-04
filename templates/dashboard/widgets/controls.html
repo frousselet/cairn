@@ -1,0 +1,115 @@
+{% load i18n ui %}
+{% comment %}
+Widget: controls (module 8). What the controls register needs from someone
+today : how many controls operate and how many of the tested ones work, the
+tests that are overdue, and the validated partial / failed runs still waiting
+for their finding (RG-CTL-16). Hidden via has_data when the register holds
+no planned or implemented control and nothing is late.
+
+Expects `controls_implemented_count`, `controls_effective_rate` (or None when
+no control is tested yet), `controls_effective_count`,
+`controls_tested_count`, `controls_overdue_tests` (rows of {test,
+days_late}), `controls_overdue_test_count`, `controls_runs_awaiting_finding`
+and `controls_runs_awaiting_finding_count`, all set by GeneralDashboardView
+through `controls_dashboard_context()`, already scope-filtered and
+permission-gated.
+{% endcomment %}
+<div class="card h-100">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+      <h5 class="card-title mb-0"><i class="bi bi-shield-check me-1 text-accent" aria-hidden="true"></i> {% trans "Controls" %}</h5>
+      <a href="{% url 'controls:control-list' %}" class="upcoming-toggle">{% trans "Register" %}</a>
+    </div>
+
+    <div class="ctlw-stats mb-3">
+      <a class="ctlw-stat" href="{% url 'controls:control-list' %}">
+        <span class="ctlw-stat__value">{{ controls_implemented_count }}</span>
+        <span class="ctlw-stat__label">{% trans "Implemented" context "control" %}</span>
+      </a>
+      <a class="ctlw-stat" href="{% url 'controls:control-list' %}" title="{% blocktrans with effective=controls_effective_count tested=controls_tested_count %}{{ effective }} effective out of {{ tested }} tested{% endblocktrans %}">
+        <span class="ctlw-stat__value">{% if controls_effective_rate is None %}{% dash %}{% else %}{{ controls_effective_rate }}&nbsp;%{% endif %}</span>
+        <span class="ctlw-stat__label">{% trans "Effective rate" %}</span>
+      </a>
+      <a class="ctlw-stat{% if controls_overdue_test_count %} ctlw-stat--late{% endif %}" href="{% url 'controls:controltest-list' %}">
+        <span class="ctlw-stat__value">{{ controls_overdue_test_count }}</span>
+        <span class="ctlw-stat__label">{% trans "Tests overdue" %}</span>
+      </a>
+      <a class="ctlw-stat{% if controls_runs_awaiting_finding_count %} ctlw-stat--gap{% endif %}" href="{% url 'controls:controltest-list' %}">
+        <span class="ctlw-stat__value">{{ controls_runs_awaiting_finding_count }}</span>
+        <span class="ctlw-stat__label">{% trans "Awaiting a finding" %}</span>
+      </a>
+    </div>
+
+    {% if controls_overdue_tests or controls_runs_awaiting_finding %}
+    <ul class="ctlw-list">
+      {% for row in controls_overdue_tests %}
+      <li>
+        <a href="{% url 'controls:controltest-detail' row.test.pk %}" class="ctlw-item ctlw-item--danger">
+          <span class="ctlw-item__head">
+            <span class="ctlw-item__name" title="{{ row.test.name }}">{{ row.test.name }}</span>
+            <span class="badge-dot danger flex-shrink-0 text-nowrap">{% blocktrans count days=row.days_late %}Late by {{ days }} day{% plural %}Late by {{ days }} days{% endblocktrans %}</span>
+          </span>
+          <span class="ctlw-item__meta">
+            <span class="ref">{{ row.test.reference }}</span>
+            <span class="ctlw-item__owner" title="{{ row.test.control.name }}">{{ row.test.control.reference }} {{ row.test.control.name }}</span>
+            {% if row.test.tester %}<span class="ctlw-item__owner">{{ row.test.tester.display_name }}</span>{% endif %}
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+      {% for run in controls_runs_awaiting_finding %}
+      <li>
+        <a href="{% url 'controls:controltestrun-detail' run.pk %}" class="ctlw-item ctlw-item--warning">
+          <span class="ctlw-item__head">
+            <span class="ctlw-item__name" title="{{ run.test.name }}">{{ run.test.name }}</span>
+            <span class="flex-shrink-0">{% choice_badge run "result" type="run_result" %}</span>
+          </span>
+          <span class="ctlw-item__meta">
+            <span class="ref">{{ run.reference }}</span>
+            <span class="text-nowrap" title="{% trans 'Performed on' %}"><i class="bi bi-calendar-event" aria-hidden="true"></i> {{ run.performed_on|date:"SHORT_DATE_FORMAT" }}</span>
+            <span>{% trans "No finding raised yet" %}</span>
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted small mb-0">{% trans "No control test overdue and no failed run awaiting a finding." %}</p>
+    {% endif %}
+  </div>
+</div>
+<style>
+  .ctlw-stats { display:flex; flex-wrap:wrap; gap:.5rem; }
+  .ctlw-stat {
+    display:flex; align-items:baseline; gap:.375rem; padding:.375rem .625rem;
+    border-radius:var(--radius-sm); background:var(--surface-subtle);
+    border:1px solid var(--border-light); text-decoration:none; color:inherit;
+    transition:border-color .15s var(--ease-out), background-color .15s var(--ease-out);
+  }
+  .ctlw-stat:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; }
+  .ctlw-stat__value { font-size:1.125rem; font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-primary); line-height:1; }
+  .ctlw-stat__label { font-size:.6875rem; color:var(--text-muted); }
+  .ctlw-stat--late .ctlw-stat__value { color:var(--danger); }
+  .ctlw-stat--gap .ctlw-stat__value { color:var(--warning); }
+  .ctlw-list { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(16rem, 1fr)); gap:.5rem; }
+  .ctlw-item {
+    display:flex; flex-direction:column; gap:.375rem; padding:.625rem .875rem;
+    border-radius:var(--radius-sm); background:var(--surface-raised);
+    border:1px solid var(--border-light); border-left:3px solid var(--border-light);
+    text-decoration:none; color:inherit;
+    transition:border-color .2s var(--ease-out), background-color .2s var(--ease-out);
+  }
+  .ctlw-item--danger { border-left-color:var(--danger); }
+  .ctlw-item--warning { border-left-color:var(--warning); }
+  .ctlw-item:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; }
+  .ctlw-item__head { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; min-width:0; }
+  .ctlw-item__name { font-size:.875rem; font-weight:600; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .ctlw-item__meta { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; font-size:.6875rem; color:var(--text-muted); min-width:0; }
+  .ctlw-item__owner { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; max-width:100%; }
+  @media (prefers-reduced-motion: reduce) {
+    .ctlw-stat, .ctlw-item { transition:none; }
+  }
+  @media (max-width: 575.98px) {
+    .ctlw-item__head { flex-direction:column; align-items:flex-start; }
+  }
+</style>
