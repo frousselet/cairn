@@ -6,6 +6,7 @@ import re
 
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.html import escape
 
 from accounts.models import CompanySettings
 
@@ -31,10 +32,20 @@ def build_soa_frameworks_data(frameworks):
     Exposed publicly so tests can assert on the structured data without
     invoking weasyprint. Each framework dict carries `framework`, `rows`
     (sorted by requirement number) and `linked_risk_count` (deduplicated).
+
+    RG-CTL-18 : each row also lists the requirement's reportable controls
+    (`controls_data` : reference, name, state, effectiveness) and, for an
+    applicable requirement, the *Implementation* summary
+    (`implementation` / `implementation_label`). The justification of an
+    applicable requirement names its controls before its action plans; a
+    not-applicable one keeps its stored justification. A proposed or retired
+    control never appears (`reportable()`).
     """
     from django.db.models import Prefetch
 
     from compliance.models import ComplianceActionPlan
+    from controls.models import Control
+    from controls.services import ImplementationSummary, summarise_implementation
     from core.lifecycle import reportable
     from risks.models import Risk
 
@@ -45,6 +56,11 @@ def build_soa_frameworks_data(frameworks):
         ).prefetch_related(
             Prefetch("linked_risks", queryset=reportable(Risk.objects.all())),
             Prefetch("action_plans", queryset=reportable(ComplianceActionPlan.objects.all())),
+            Prefetch(
+                "controls",
+                queryset=reportable(Control.objects.all()).order_by("reference"),
+                to_attr="soa_controls",
+            ),
         ).order_by("requirement_number", "created_at")
 
         rows = []
@@ -69,10 +85,31 @@ def build_soa_frameworks_data(frameworks):
             ]
             framework_risk_ids.update(r.pk for r in risks)
 
+            # Listed for an applicable requirement only (RG-CTL-18).
+            controls = req.soa_controls if req.is_applicable else []
+            controls_data = [
+                {
+                    "reference": c.reference,
+                    "name": c.name,
+                    "state": c.workflow_state,
+                    "state_label": str(c.lifecycle_label),
+                    "effectiveness": c.effectiveness,
+                    "effectiveness_label": c.get_effectiveness_display(),
+                }
+                for c in controls
+            ]
+
+            implementation = implementation_label = ""
             if req.is_applicable:
+                implementation = summarise_implementation(c.workflow_state for c in controls)
+                implementation_label = ImplementationSummary.label(implementation)
                 plans = req.action_plans.all()
                 action_plan_names = [p.name for p in plans]
-                justification = ", ".join(action_plan_names)
+                # Plain names : escaped here, since the template renders the
+                # justification as HTML (the not-applicable one is rich text).
+                justification = escape(", ".join(
+                    [f"{c.reference} {c.name}" for c in controls] + action_plan_names
+                ))
                 # If the requirement is selected primarily to mitigate risks,
                 # surface that as the justification when no action plan is
                 # named yet.
@@ -91,6 +128,9 @@ def build_soa_frameworks_data(frameworks):
                 "is_applicable": req.is_applicable,
                 "justification": justification,
                 "risks_data": risks_data,
+                "controls_data": controls_data,
+                "implementation": implementation,
+                "implementation_label": implementation_label,
             })
 
         rows.sort(key=lambda r: _natural_sort_key(r["number"]))

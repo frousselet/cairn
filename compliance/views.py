@@ -27,6 +27,7 @@ from django.views.generic import (
 
 from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
+from controls.integrations import linked_controls
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
@@ -461,6 +462,7 @@ class RequirementDetailView(
         ctx["mappings_target"] = req.mappings_as_target.select_related(
             "source_requirement__framework"
         )
+        ctx["linked_controls"] = linked_controls(req, self.request.user)
         return ctx
 
 
@@ -1567,8 +1569,17 @@ class FindingDetailView(
 
     def get_queryset(self):
         return super().get_queryset().select_related(
-            "assessment", "assessor", "effectiveness_reviewed_by"
+            "assessment", "assessor", "effectiveness_reviewed_by",
+            "control_test_run__test__control",
         ).prefetch_related("requirements", "action_plans")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # RG-CTL-16 : a finding raised from a control test run links back to
+        # it; the link is offered to the readers of tests and runs only.
+        user = self.request.user
+        ctx["can_read_control_tests"] = user.is_superuser or user.has_perm("controls.test.read")
+        return ctx
 
 
 class FindingRegisterCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):

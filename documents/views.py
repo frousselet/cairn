@@ -46,6 +46,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, FormView, L
 
 from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
+from controls.integrations import linked_controls
 from context.models import Scope
 from core.lifecycle import DomainRefusalError, LifecycleProtectedError, reportable, reportable_states, resolve_lifecycle
 from core.mixins import (
@@ -421,6 +422,7 @@ class PolicyDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterM
             "parent_retired": bool(policy.parent and policy.parent.is_terminal_state),
             "is_active": policy.workflow_state == POLICY_ACTIVE,
             "has_draft_version": any(not v.is_frozen for v in versions),
+            "linked_controls": linked_controls(policy, user),
         })
         return ctx
 

@@ -167,6 +167,7 @@ CATEGORY_GOVERNANCE = _("Governance")
 CATEGORY_ACTIVITY = _("Activity")
 CATEGORY_INCIDENTS = _("Incidents")
 CATEGORY_DOCUMENTS = _("Documents")
+CATEGORY_CONTROLS = _("Controls")
 CATEGORY_LAYOUT = _("Layout")
 
 
@@ -388,6 +389,20 @@ DASHBOARD_WIDGETS: list[DashboardWidget] = [
         description=_(
             "Document reviews overdue, documents without a version in force,"
             " and the acknowledgement campaigns running with their completion rate."
+        ),
+    ),
+    DashboardWidget(
+        id="controls",
+        title=_("Controls"),
+        icon="shield-check",
+        template="dashboard/widgets/controls.html",
+        category=CATEGORY_CONTROLS,
+        sizes=("2x2", "2x3", "3x2", "4x2"),
+        default_size="2x2",
+        default_order=68,
+        description=_(
+            "Implemented controls and their effective rate, the control tests"
+            " overdue, and the failed runs still awaiting a finding."
         ),
     ),
     DashboardWidget(

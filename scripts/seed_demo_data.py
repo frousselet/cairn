@@ -5053,6 +5053,527 @@ with transaction.atomic():
         ind.scopes.set([scope_group])
         ind.record_measurement(ind.compute_internal_value(), recorded_by=elise)
 
+    # ============================================================ controls
+    # Module 8 : the Voltara controls register, bootstrapped from the ISO/IEC
+    # 27001 Annex A framework (RG-CTL-05), then planned / implemented, linked
+    # to the risks, plans, PACS measures, assets, objectives and documents it
+    # serves, with tests and their validated runs. Every step goes through
+    # `transition_to(..., enforce_permission=False)` (the seed's system path);
+    # the validated runs keep segregation of duties (RG-CTL-11, the reviewer is
+    # never the performer). The register pre-dates the platform, so review
+    # stamps, activation dates and the matching lifecycle events are replayed
+    # onto their historical dates afterwards, never by writing a state.
+    _phase("Controls register, tests and runs...")
+    from controls.constants import (
+        CONTROL_IMPLEMENTED,
+        CONTROL_PLANNED,
+        CONTROL_RETIRED,
+        RUN_IN_REVIEW,
+        RUN_VALIDATED,
+        RUN_WITHDRAWN,
+        TEST_ACTIVE,
+        ControlAutomation,
+        ControlEffectiveness,
+        ControlNature,
+        ControlTestMethod,
+        ControlTheme,
+        RunResult,
+    )
+    from controls.models import Control, ControlTest, ControlTestEvidence, ControlTestRun
+    from controls.services import create_controls_from_requirements
+    from compliance.constants import FindingType
+    from risks.models import PACSMeasure
+
+    ctl_numbers = [
+        "A.5.15", "A.5.17", "A.5.24", "A.5.30", "A.6.3", "A.7.2", "A.8.2", "A.8.5",
+        "A.8.7", "A.8.8", "A.8.13", "A.8.15", "A.8.16", "A.8.20", "A.8.22", "A.8.24",
+    ]
+    ctl_created, _ctl_skipped = create_controls_from_requirements(
+        fw_iso, elise, requirement_ids=[iso_reqs[n].pk for n in ctl_numbers],
+    )
+    assert len(ctl_created) == len(ctl_numbers), "Annex A controls already exist"
+    ctl_by_req = {c.requirements.get().requirement_number: c for c in ctl_created}
+    # Running it again creates nothing : every selected requirement is covered.
+    assert create_controls_from_requirements(
+        fw_iso, elise, requirement_ids=[iso_reqs[n].pk for n in ctl_numbers],
+    )[0] == []
+
+    tp_mfa = RiskTreatmentPlan.objects.get(name="Phishing-resistant MFA rollout")
+    tp_portal = RiskTreatmentPlan.objects.get(name="Customer portal hardening")
+    tp_mssp = RiskTreatmentPlan.objects.get(name="MSSP contract security uplift")
+
+    # EBIOS RM workshop 5 : the PACS of the SCADA study, whose measures create
+    # or reinforce controls.
+    ebios_summary = ebios.ebios_summary
+    pacs_segmentation = PACSMeasure.objects.create(
+        summary=ebios_summary, name="Deploy IT/OT segmentation firewalls at every plant",
+        description="Zone and conduit firewalls between office IT, plant supervision and turbine networks.",
+        measure_type="protection", priority="high", owner=thomas,
+        start_date=days_ago(120), target_date=days_ahead(150), progress_percentage=40,
+        cost_estimate=Decimal("150000.00"), expected_gain="Contains a vendor VPN compromise to one zone.",
+        order=1, **approved(thomas),
+    )
+    pacs_segmentation.linked_treatment_plans.set([tp_segmentation])
+    pacs_segmentation.linked_requirements.set([iso_reqs["A.8.22"]])
+    pacs_pam = PACSMeasure.objects.create(
+        summary=ebios_summary, name="Privileged access management for OT administrators",
+        description="Vaulted, recorded sessions for every administrator of the supervision servers.",
+        measure_type="protection", priority="high", owner=thomas,
+        start_date=days_ago(200), target_date=days_ago(30), completion_date=days_ago(35),
+        progress_percentage=100, order=2, **approved(thomas),
+    )
+    pacs_pam.linked_requirements.set([iso_reqs["A.8.2"]])
+
+    def ctl_set(number, *, name, description, theme, nature, automation, owner, scopes=None, tags=(),
+                implemented=None, planned=False, requirements=(), risks=(), plans=(), pacs=(),
+                assets=(), objectives=(), policies=()):
+        control = ctl_by_req[number]
+        control.name = name
+        control.description = description
+        control.theme = theme
+        control.nature = nature
+        control.automation = automation
+        control.owner = owner
+        control.implemented_on = implemented
+        control.full_clean()
+        control.save()
+        if scopes:
+            control.scopes.set(scopes)
+        control.tags.set(list(tags))
+        control.requirements.add(*requirements)
+        control.risks.set(list(risks))
+        control.treatment_plans.set(list(plans))
+        control.pacs_measures.set(list(pacs))
+        control.support_assets.set(list(assets))
+        control.objectives.set(list(objectives))
+        control.policies.set(list(policies))
+        if planned:
+            control.transition_to(CONTROL_PLANNED, elise, enforce_permission=False)
+            replay_event(control, CONTROL_PLANNED, at(days_ago(60)))
+        if implemented is not None:
+            control.transition_to(CONTROL_IMPLEMENTED, elise, enforce_permission=False)
+            replay_event(control, CONTROL_IMPLEMENTED, at(implemented))
+        control.refresh_from_db()
+        return control
+
+    def ctl_test(control, name, *, method, frequency, tester, objective, procedure, criteria,
+                 activated, first_due=None, activate=True):
+        test = ControlTest.objects.create(
+            control=control, name=name, objective=objective, method=method,
+            procedure=procedure, acceptance_criteria=criteria, frequency_months=frequency,
+            tester=tester, first_due_date=first_due, created_by=control.owner or elise,
+        )
+        if activate:
+            test.transition_to(TEST_ACTIVE, elise, enforce_permission=False)
+            ControlTest.objects.filter(pk=test.pk).update(activated_on=activated)
+            replay_event(test, TEST_ACTIVE, at(activated))
+            test.refresh_from_db()
+            test.recompute_next_due_date()
+        return test
+
+    def ctl_run(test, performer, performed_on, result, *, reviewer=None, observations="", sample="",
+                period=None, evidence=(), submit=True):
+        """Record a run; submit it and, with a reviewer, validate it two days later."""
+        run = ControlTestRun(
+            test=test, performed_by=performer, performed_on=performed_on,
+            period_start=period[0] if period else None, period_end=period[1] if period else None,
+            sample_description=sample, result=result, observations=observations, created_by=performer,
+        )
+        run.full_clean()
+        run.save()
+        for file_name, content, description in evidence:
+            ControlTestEvidence(
+                run=run, file=ContentFile(content, name=file_name), original_filename=file_name,
+                description=description, uploaded_by=performer,
+            ).save()
+        if not submit:
+            return run
+        run.transition_to(RUN_IN_REVIEW, performer, enforce_permission=False)
+        replay_event(run, RUN_IN_REVIEW, at(performed_on, hour=16))
+        if reviewer is not None:
+            run.transition_to(RUN_VALIDATED, reviewer, enforce_permission=False)
+            reviewed = at(min(performed_on + timedelta(days=2), TODAY), hour=11)
+            ControlTestRun.objects.filter(pk=run.pk).update(reviewed_at=reviewed)
+            replay_event(run, RUN_VALIDATED, reviewed)
+        run.refresh_from_db()
+        return run
+
+    # --- Access, identity and authentication -------------------------------
+    ctl_access = ctl_set(
+        "A.5.15", name="Quarterly access review of business applications",
+        description=(
+            "<p>Every quarter, application owners review the accounts and roles of the ERP, the billing "
+            "platform and the customer portal back office against the HR register, and revoke what is "
+            "no longer justified.</p>"
+        ),
+        theme=ControlTheme.ORGANIZATIONAL, nature=ControlNature.DETECTIVE,
+        automation=ControlAutomation.MANUAL, owner=ines, implemented=months_ago(20),
+        requirements=[nis2_reqs["NIS2-21.i"]], risks=[r_insider], assets=[sa_erp, sa_ad],
+        policies=[pol_access],
+    )
+    t_access = ctl_test(
+        ctl_access, "Quarterly ERP access review", method=ControlTestMethod.INSPECTION,
+        frequency=3, tester=ines, activated=months_ago(12),
+        objective="Operating effectiveness : every active ERP account is justified.",
+        procedure=(
+            "Export the ERP accounts and roles, reconcile them with the HR leavers and movers of the "
+            "quarter, and check each revocation ticket was closed."
+        ),
+        criteria="No active account of a leaver; every privileged role approved by its owner.",
+    )
+    ctl_run(t_access, ines, days_ago(110), RunResult.PASS, reviewer=elise,
+            sample="412 accounts, 18 leavers and 9 movers of the quarter.",
+            period=(days_ago(200), days_ago(111)))
+    ctl_run(t_access, ines, days_ago(20), RunResult.PASS, reviewer=amelia,
+            sample="418 accounts, 11 leavers and 6 movers of the quarter.",
+            period=(days_ago(110), days_ago(21)),
+            evidence=[(
+                "erp-access-review.csv",
+                b"account,role,owner_decision\nj.martin,AP clerk,kept\nl.girard,AP clerk,revoked (leaver)\n",
+                "Reconciled export signed off by the ERP owner",
+            )])
+
+    ctl_secrets = ctl_set(
+        "A.5.17", name="Password vault for shared and service accounts",
+        description="<p>Shared, service and break-glass credentials live in the password vault, rotated on every staff departure.</p>",
+        theme=ControlTheme.ORGANIZATIONAL, nature=ControlNature.PREVENTIVE,
+        automation=ControlAutomation.SEMI_AUTOMATED, owner=marc, implemented=months_ago(16),
+        assets=[sa_ad], policies=[pol_access],
+    )
+    t_secrets = ctl_test(
+        ctl_secrets, "Vault coverage of service accounts", method=ControlTestMethod.REPERFORMANCE,
+        frequency=6, tester=julien, activated=months_ago(10),
+        objective="Design and operation : no service credential outside the vault.",
+        procedure="List the Active Directory service accounts and check each one has a vault entry rotated within 12 months.",
+        criteria="100% of service accounts vaulted; rotation older than 12 months on none.",
+    )
+    ctl_run(t_secrets, julien, days_ago(70), RunResult.PASS, reviewer=marc,
+            sample="All 64 service accounts of the corporate domain.")
+
+    ctl_mfa = ctl_set(
+        "A.8.5", name="Multi-factor authentication on remote access",
+        description="<p>Every remote access (VPN, webmail, collaboration suite, vendor maintenance) requires a second factor; FIDO2 keys for privileged and finance users.</p>",
+        theme=ControlTheme.TECHNOLOGICAL, nature=ControlNature.PREVENTIVE,
+        automation=ControlAutomation.AUTOMATED, owner=marc, implemented=months_ago(9),
+        tags=[tag_nis2], requirements=[nis2_reqs["NIS2-21.j"]],
+        risks=[r_vpn, r_phishing], plans=[tp_mfa], assets=[sa_vpn, sa_collab],
+        objectives=[obj_mfa], policies=[pol_access],
+    )
+    t_mfa = ctl_test(
+        ctl_mfa, "Quarterly sample of remote logins", method=ControlTestMethod.INSPECTION,
+        frequency=3, tester=julien, activated=months_ago(8),
+        objective="Operating effectiveness : remote logins actually use a second factor.",
+        procedure="Draw 25 remote logins of the quarter from the VPN and webmail logs and check each one used a second factor.",
+        criteria="Every sampled login used a second factor.",
+    )
+    ctl_run(t_mfa, julien, days_ago(130), RunResult.PASS, reviewer=elise,
+            sample="25 VPN and webmail logins drawn at random.", period=(days_ago(220), days_ago(131)))
+    run_mfa_fail = ctl_run(
+        t_mfa, julien, days_ago(38), RunResult.FAIL, reviewer=elise,
+        sample="25 VPN and webmail logins drawn at random.", period=(days_ago(130), days_ago(39)),
+        observations=(
+            "Two of the 25 sampled logins authenticated with a password only : a legacy VPN profile kept "
+            "for the metering contractor bypasses the MFA policy."
+        ),
+        evidence=[(
+            "vpn-login-sample.csv",
+            b"login_id,user,profile,second_factor\n10442,ext.metering,legacy-contractor,none\n10517,ext.metering,legacy-contractor,none\n",
+            "The two non-compliant logins of the sample",
+        )],
+    )
+    finding_mfa = run_mfa_fail.raise_finding(
+        elise, FindingType.MINOR_NON_CONFORMITY,
+        recommendation="Remove the legacy contractor VPN profile and enforce MFA on every profile.",
+    )
+
+    ctl_pam = ctl_set(
+        "A.8.2", name="Privileged access management for OT administrators",
+        description="<p>Administrator sessions on the supervision servers go through the PAM bastion : vaulted credentials, recorded sessions, approval for vendors.</p>",
+        theme=ControlTheme.TECHNOLOGICAL, nature=ControlNature.PREVENTIVE,
+        automation=ControlAutomation.SEMI_AUTOMATED, owner=thomas, implemented=days_ago(40),
+        scopes=[scope_group, scope_ot], tags=[tag_scada, tag_critical],
+        risks=[r_scada], plans=[tp_segmentation], pacs=[pacs_pam], assets=[sa_scada, sa_historian],
+        objectives=[obj_mfa, obj_scada],
+    )
+    t_pam = ctl_test(
+        ctl_pam, "Monthly privileged session review", method=ControlTestMethod.INSPECTION,
+        frequency=1, tester=thomas, activated=days_ago(38),
+        objective="Operating effectiveness : every privileged session was approved and recorded.",
+        procedure="Reconcile the bastion session log of the month with the approved change tickets.",
+        criteria="Every session matches an approved ticket and has a recording.",
+    )
+    ctl_run(t_pam, thomas, days_ago(29), RunResult.PASS, reviewer=elise,
+            sample="All 57 privileged sessions of the month.", period=(days_ago(59), days_ago(30)))
+    # The run of this month waits for its reviewer (kanban : To review).
+    run_pam_review = ctl_run(t_pam, thomas, days_ago(2), RunResult.PASS,
+                             sample="All 61 privileged sessions of the month.", period=(days_ago(28), days_ago(3)))
+
+    # --- Operations ---------------------------------------------------------
+    ctl_ir = ctl_set(
+        "A.5.24", name="Incident response plan exercised every year",
+        description="<p>The incident response plan is exercised once a year in a tabletop with IT, OT, legal and communication.</p>",
+        theme=ControlTheme.ORGANIZATIONAL, nature=ControlNature.CORRECTIVE,
+        automation=ControlAutomation.MANUAL, owner=elise, implemented=years_ago(2),
+        tags=[tag_nis2], requirements=[nis2_reqs["NIS2-21.b"]], risks=[r_ransomware],
+        policies=[proc_ir],
+    )
+    t_ir = ctl_test(
+        ctl_ir, "Annual tabletop exercise", method=ControlTestMethod.OBSERVATION,
+        frequency=12, tester=elise, activated=years_ago(1),
+        objective="Design and operation : the plan holds against a realistic scenario.",
+        procedure="Run a four-hour ransomware tabletop, time each decision and compare it with the plan.",
+        criteria="Every role knew its next step; the 24-hour NIS2 early warning was drafted in time.",
+    )
+    # Partial, validated, and no finding raised yet (dashboard : awaiting a finding).
+    ctl_run(
+        t_ir, elise, days_ago(45), RunResult.PARTIAL, reviewer=amelia,
+        sample="Ransomware on the historian, 14 participants.",
+        observations="The NIS2 early warning was drafted 5 hours late : the legal on-call contact was out of date.",
+        evidence=[(
+            "tabletop-timeline.txt",
+            b"T+00:00 detection\nT+00:40 crisis cell\nT+29:10 NIS2 early warning drafted (target T+24:00)\n",
+            "Exercise timeline kept by the facilitator",
+        )],
+    )
+
+    ctl_continuity = ctl_set(
+        "A.5.30", name="Disaster recovery of the plant historian",
+        description="<p>A warm standby of the plant historian in the second datacenter, with a recovery time objective of 8 hours.</p>",
+        theme=ControlTheme.ORGANIZATIONAL, nature=ControlNature.CORRECTIVE,
+        automation=ControlAutomation.MANUAL, owner=thomas, planned=True,
+        scopes=[scope_ot], tags=[tag_scada], risks=[r_historian], assets=[sa_historian],
+        objectives=[obj_scada],
+    )
+    ctl_test(
+        ctl_continuity, "Annual historian failover test", method=ControlTestMethod.REPERFORMANCE,
+        frequency=12, tester=thomas, activated=TODAY, activate=False,
+        objective="Operating effectiveness : the standby takes over within the RTO.",
+        procedure="Fail the primary historian over to the standby during a maintenance window.",
+        criteria="Standby serves the supervision within 8 hours with less than 15 minutes of data lost.",
+    )
+
+    ctl_phishing = ctl_set(
+        "A.6.3", name="Monthly phishing simulation campaign",
+        description="<p>A monthly simulated phishing campaign for all staff, with a short training module for those who click.</p>",
+        theme=ControlTheme.PEOPLE, nature=ControlNature.PREVENTIVE,
+        automation=ControlAutomation.AUTOMATED, owner=ines, implemented=months_ago(14),
+        risks=[r_phishing], objectives=[obj_phishing], policies=[pol_isms],
+    )
+    t_phishing = ctl_test(
+        ctl_phishing, "Monthly phishing click rate", method=ControlTestMethod.AUTOMATED,
+        frequency=1, tester=ines, activated=months_ago(6),
+        objective="Operating effectiveness : the click rate stays under the objective.",
+        procedure="Read the click and report rates of the month off the simulation platform.",
+        criteria="Click rate below 5% and report rate above 30%.",
+    )
+    ctl_run(t_phishing, ines, days_ago(52), RunResult.PASS, reviewer=elise, sample="All 380 mailboxes.")
+    # Due again within the reminder window (kanban : To do).
+    ctl_run(t_phishing, ines, days_ago(24), RunResult.PASS, reviewer=elise, sample="All 384 mailboxes.")
+
+    ctl_badge = ctl_set(
+        "A.7.2", name="Badge access control at the Lyon datacenter",
+        description="<p>Datacenter rooms open only with a personal badge and PIN; visitors are escorted and logged.</p>",
+        theme=ControlTheme.PHYSICAL, nature=ControlNature.PREVENTIVE,
+        automation=ControlAutomation.AUTOMATED, owner=david, implemented=years_ago(3),
+        scopes=[scope_group, scope_it], risks=[r_insider], assets=[sa_backup, sa_siem],
+    )
+    t_badge = ctl_test(
+        ctl_badge, "Semi-annual badge log review", method=ControlTestMethod.INSPECTION,
+        frequency=6, tester=marc, activated=years_ago(1),
+        objective="Operating effectiveness : only authorised people entered the rooms.",
+        procedure="Compare six months of badge events with the access authorisation list.",
+        criteria="No entry by a person without a current authorisation.",
+    )
+    # Last validated run over six months ago : the test is overdue.
+    ctl_run(t_badge, marc, days_ago(205), RunResult.PASS, reviewer=david,
+            sample="11 204 badge events over six months.", period=(days_ago(390), days_ago(206)))
+    ControlTest.objects.filter(pk=t_badge.pk).update(last_reminded_at=NOW - timedelta(days=3))
+
+    ctl_edr = ctl_set(
+        "A.8.7", name="EDR on every workstation and server",
+        description="<p>The EDR agent runs on every corporate laptop and Windows server; alerts go to the SOC.</p>",
+        theme=ControlTheme.TECHNOLOGICAL, nature=ControlNature.DETECTIVE,
+        automation=ControlAutomation.AUTOMATED, owner=marc, implemented=months_ago(11),
+        risks=[r_ransomware], assets=[sa_laptops], objectives=[obj_edr],
+    )
+    t_edr = ctl_test(
+        ctl_edr, "Quarterly EDR coverage report", method=ControlTestMethod.AUTOMATED,
+        frequency=3, tester=marc, activated=months_ago(9),
+        objective="Operating effectiveness : the agent is present and reporting everywhere.",
+        procedure="Reconcile the EDR console inventory with the CMDB laptop and server list.",
+        criteria="Coverage above 98%; no machine silent for more than 7 days.",
+    )
+    ctl_run(t_edr, marc, days_ago(30), RunResult.PASS, reviewer=julien,
+            sample="642 managed endpoints.")
+    # A second test whose run was withdrawn : the export was later found incomplete.
+    t_edr_design = ctl_test(
+        ctl_edr, "Annual EDR policy design review", method=ControlTestMethod.INQUIRY,
+        frequency=12, tester=julien, activated=months_ago(5),
+        objective="Design : the EDR policy blocks the techniques of the threat model.",
+        procedure="Walk through the EDR prevention policy with the SOC against the MITRE techniques retained in the EBIOS study.",
+        criteria="Every retained technique is prevented or detected.",
+    )
+    run_edr_withdrawn = ctl_run(t_edr_design, julien, days_ago(60), RunResult.PASS, reviewer=marc,
+                                sample="Prevention policy v14.")
+    run_edr_withdrawn.transition_to(
+        RUN_WITHDRAWN, elise, comment="The policy export reviewed was from the test tenant, not production.",
+        enforce_permission=False,
+    )
+    replay_event(run_edr_withdrawn, RUN_WITHDRAWN, at(days_ago(55)))
+    ControlTest.objects.filter(pk=t_edr_design.pk).update(first_due_date=days_ahead(30))
+    t_edr_design.refresh_from_db()
+    t_edr_design.recompute_next_due_date()
+
+    ctl_vuln = ctl_set(
+        "A.8.8", name="Monthly vulnerability scanning and patching",
+        description="<p>Internet-facing and internal systems are scanned every month; critical fixes are deployed within 15 days.</p>",
+        theme=ControlTheme.TECHNOLOGICAL, nature=ControlNature.CORRECTIVE,
+        automation=ControlAutomation.SEMI_AUTOMATED, owner=marc, implemented=months_ago(18),
+        risks=[r_breach], plans=[tp_portal], assets=[sa_portal, sa_erp], policies=[pol_ops],
+    )
+    t_vuln = ctl_test(
+        ctl_vuln, "Patch SLA compliance check", method=ControlTestMethod.REPERFORMANCE,
+        frequency=1, tester=julien, activated=months_ago(4),
+        objective="Operating effectiveness : critical vulnerabilities are fixed within 15 days.",
+        procedure="Take the critical findings of the previous scan and check their closure date.",
+        criteria="Every critical finding fixed within 15 days, or covered by an approved exception.",
+    )
+    ctl_run(t_vuln, julien, days_ago(27), RunResult.PASS, reviewer=marc, sample="31 critical findings.")
+    # This month's run is still being recorded (kanban : In progress).
+    ctl_run(t_vuln, julien, days_ago(1), RunResult.PARTIAL, submit=False,
+            sample="28 critical findings.", observations="Three portal findings still open after 15 days.")
+
+    ctl_backup = ctl_set(
+        "A.8.13", name="Immutable off-site backups with restoration tests",
+        description="<p>Critical systems are backed up daily to the immutable vault; a restoration is tested every quarter.</p>",
+        theme=ControlTheme.TECHNOLOGICAL, nature=ControlNature.CORRECTIVE,
+        automation=ControlAutomation.AUTOMATED, owner=marc, implemented=months_ago(7),
+        tags=[tag_nis2], requirements=[nis2_reqs["NIS2-21.c"]], risks=[r_ransomware],
+        plans=[tp_backup], assets=[sa_backup, sa_erp, sa_historian], objectives=[obj_iso],
+        policies=[proc_backup],
+    )
+    t_backup = ctl_test(
+        ctl_backup, "Quarterly restoration test", method=ControlTestMethod.REPERFORMANCE,
+        frequency=3, tester=marc, activated=months_ago(6),
+        objective="Operating effectiveness : a critical system can be restored from the vault.",
+        procedure="Restore the ERP database of a random day from the vault to the recovery environment and check its integrity.",
+        criteria="Restored within 4 hours; checksums match; application starts.",
+    )
+    ctl_run(
+        t_backup, marc, days_ago(34), RunResult.PASS, reviewer=elise,
+        sample="ERP database of a random day of the quarter.", period=(days_ago(124), days_ago(35)),
+        evidence=[
+            ("restore-test-erp.csv", b"step,started,finished,status\nfetch,09:02,09:41,ok\nrestore,09:41,11:58,ok\nchecksum,11:58,12:06,ok\n",
+             "Restoration log"),
+            ("restore-checksums.txt", b"erp_prod.bak  sha256 9f2c...e41a  match\n", "Checksum comparison"),
+        ],
+    )
+
+    ctl_logging = ctl_set(
+        "A.8.15", name="Centralised logging in the SOC SIEM",
+        description="<p>Security logs of the critical systems are forwarded to the SIEM and kept for 12 months.</p>",
+        theme=ControlTheme.TECHNOLOGICAL, nature=ControlNature.DETECTIVE,
+        automation=ControlAutomation.AUTOMATED, owner=elise, implemented=months_ago(13),
+        risks=[r_mssp], plans=[tp_mssp], assets=[sa_siem, sa_ad, sa_vpn],
+    )
+    t_logging = ctl_test(
+        ctl_logging, "Semi-annual log source coverage review", method=ControlTestMethod.INSPECTION,
+        frequency=6, tester=elise, activated=months_ago(12),
+        objective="Design : every critical system sends its security logs.",
+        procedure="Compare the SIEM log sources with the list of critical support assets.",
+        criteria="Every critical asset has an active log source received within the last 24 hours.",
+    )
+    # Due within the reminder window for Elise (kanban : To do).
+    ctl_run(t_logging, elise, days_ago(175), RunResult.PASS, reviewer=david, sample="38 log sources.")
+
+    ctl_monitoring = ctl_set(
+        "A.8.16", name="24/7 security monitoring of OT networks",
+        description="<p>The MSSP extends its round-the-clock monitoring to the plant networks once the contract uplift is signed.</p>",
+        theme=ControlTheme.TECHNOLOGICAL, nature=ControlNature.DETECTIVE,
+        automation=ControlAutomation.SEMI_AUTOMATED, owner=elise, planned=True,
+        scopes=[scope_group, scope_ot], tags=[tag_scada], risks=[r_mssp, r_scada], plans=[tp_mssp],
+        assets=[sa_scada, sa_siem],
+    )
+
+    ctl_firewall = ctl_set(
+        "A.8.20", name="Perimeter firewall rule review",
+        description="<p>Every firewall rule has an owner and a justification, and is reviewed twice a year.</p>",
+        theme=ControlTheme.TECHNOLOGICAL, nature=ControlNature.PREVENTIVE,
+        automation=ControlAutomation.MANUAL, owner=marc, implemented=years_ago(2),
+        risks=[r_ddos, r_vpn], assets=[sa_wan, sa_vpn],
+    )
+    t_firewall = ctl_test(
+        ctl_firewall, "Semi-annual firewall rule review", method=ControlTestMethod.INSPECTION,
+        frequency=6, tester=thomas, activated=years_ago(1),
+        objective="Operating effectiveness : no rule without an owner and a justification.",
+        procedure="Export the perimeter rule base and check owner, justification and last hit of each rule.",
+        criteria="No rule without owner; unused rules older than 90 days removed.",
+    )
+    ctl_run(t_firewall, thomas, days_ago(80), RunResult.PASS, reviewer=marc, sample="214 perimeter rules.")
+
+    ctl_segmentation = ctl_set(
+        "A.8.22", name="IT/OT network segmentation",
+        description="<p>Zones and conduits per IEC 62443 between office IT, plant supervision and turbine networks.</p>",
+        theme=ControlTheme.TECHNOLOGICAL, nature=ControlNature.PREVENTIVE,
+        automation=ControlAutomation.AUTOMATED, owner=thomas, planned=True,
+        scopes=[scope_ot], tags=[tag_scada, tag_critical],
+        risks=[r_scada, r_ransomware], plans=[tp_segmentation], pacs=[pacs_segmentation],
+        assets=[sa_plc, sa_scada, sa_wan], objectives=[obj_scada],
+    )
+
+    # A.8.24 stays proposed : the cryptography standard is still a draft.
+    ctl_crypto = ctl_by_req["A.8.24"]
+    ctl_crypto.owner = julien
+    ctl_crypto.description = "<p>Approved algorithms, key lengths and key custody, once the standard is approved.</p>"
+    ctl_crypto.save()
+    ctl_crypto.policies.set([std_crypto])
+
+    # --- A retired control, still visible where it was linked (RG-CTL-03) --
+    ctl_legacy = Control.objects.create(
+        name="IP allow-list on the legacy metering gateway",
+        description="<p>Only the metering contractor's addresses could reach the legacy gateway.</p>",
+        theme=ControlTheme.TECHNOLOGICAL, nature=ControlNature.PREVENTIVE,
+        automation=ControlAutomation.MANUAL, owner=marc, implemented_on=years_ago(4),
+        created_by=marc,
+    )
+    ctl_legacy.scopes.set([scope_group])
+    ctl_legacy.requirements.set([iso_reqs["A.8.20"]])
+    ctl_legacy.support_assets.set([sa_metering])
+    ctl_legacy.transition_to(CONTROL_IMPLEMENTED, elise, enforce_permission=False)
+    t_legacy = ctl_test(
+        ctl_legacy, "Annual allow-list review", method=ControlTestMethod.INSPECTION,
+        frequency=12, tester=marc, activated=years_ago(3),
+        objective="Operating effectiveness : the allow-list matches the contract.",
+        procedure="Compare the gateway allow-list with the contractor's declared addresses.",
+        criteria="No address outside the contract.",
+    )
+    ctl_legacy.transition_to(
+        CONTROL_RETIRED, elise, comment="Superseded by the MFA control once the gateway moved behind the VPN.",
+        enforce_permission=False,
+    )
+    replay_event(ctl_legacy, CONTROL_RETIRED, at(days_ago(90)))
+    t_legacy.refresh_from_db()
+    assert t_legacy.workflow_state != TEST_ACTIVE  # retired with its control
+
+    ctl_mfa.refresh_from_db()
+    assert ctl_mfa.effectiveness == ControlEffectiveness.NOT_EFFECTIVE and finding_mfa.control_test_run_id == run_mfa_fail.pk
+    assert ControlTest.objects.get(pk=t_badge.pk).is_overdue
+    assert run_pam_review.workflow_state == RUN_IN_REVIEW
+
+    for name, source in [
+        ("Control effectiveness rate", "control_effectiveness_rate"),
+        ("Control tests overdue", "control_tests_overdue"),
+    ]:
+        fmt, unit = ("number", "%") if source == "control_effectiveness_rate" else ("number", "")
+        ind = Indicator.objects.create(
+            name=name, indicator_type="organizational", collection_method="internal",
+            format=fmt, unit=unit, is_internal=True, internal_source=source,
+            review_frequency="monthly", first_review_date=TODAY + timedelta(days=12),
+            status="active", owner=elise, **approved(elise),
+        )
+        ind.scopes.set([scope_group])
+        ind.record_measurement(ind.compute_internal_value(), recorded_by=elise)
+
     # ============================================================ bulk volume
     # Generate 50+ items per category (where it makes sense) on top of the
     # curated narrative, wiring foreign keys to the objects created above so the
@@ -5671,6 +6192,10 @@ print(
     f"  Documents: {Policy.objects.count()} documents, {PolicyVersion.objects.count()} versions, "
     f"{AcknowledgementCampaign.objects.count()} campaigns, "
     f"{PolicyAcknowledgement.objects.count()} acknowledgement rows"
+)
+print(
+    f"  Controls: {Control.objects.count()} controls, {ControlTest.objects.count()} tests, "
+    f"{ControlTestRun.objects.count()} runs, {ControlTestEvidence.objects.count()} evidence files"
 )
 print(
     f"  Trust Center: {TrustCenterCertification.objects.count()} certifications, "

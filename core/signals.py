@@ -54,6 +54,7 @@ def _get_dashboard_models():
         Stakeholder,
         SwotAnalysis,
     )
+    from controls.models import Control, ControlTest, ControlTestRun
     from documents.models import (
         AcknowledgementCampaign,
         Policy,
@@ -85,6 +86,8 @@ def _get_dashboard_models():
         ComplianceActionPlan, RequirementMapping,
         # Documents (the dashboard widget and the kanban acknowledgements)
         Policy, PolicyVersion, AcknowledgementCampaign, PolicyAcknowledgement,
+        # Controls (the dashboard widget and the kanban tests and runs)
+        Control, ControlTest, ControlTestRun,
     }
     return _DASHBOARD_MODELS
 

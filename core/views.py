@@ -58,6 +58,7 @@ from compliance.models import (
 )
 from context.models import Activity, Indicator, Issue, Objective, Role, Scope, Site, Stakeholder, SwotAnalysis
 from context.views import build_indicator_slot, get_dashboard_indicator_slots
+from controls.models import Control, ControlTest
 from documents.models import Policy, PolicyVersion
 from incidents.models import Incident, SecurityEvent
 from risks.models import (
@@ -413,6 +414,9 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         # ── Documents (module 7) ─────────────────────────
         ctx.update(documents_dashboard_context(user, today))
 
+        # ── Controls (module 8) ──────────────────────────
+        ctx.update(controls_dashboard_context(user, today))
+
         # ── Today's actions ───────────────────────────
         # Presented as a prioritized to-do list rather than alarms: each
         # entry carries an action verb, a count and a link to the page
@@ -603,6 +607,13 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
                 ctx["documents_overdue_count"]
                 or ctx["documents_without_version_count"]
                 or ctx["documents_running_campaigns"]
+            ),
+            # Shown once the register holds a planned or implemented control,
+            # or while a test is overdue or a failed run awaits its finding.
+            "controls": bool(
+                ctx["controls_reportable_count"]
+                or ctx["controls_overdue_test_count"]
+                or ctx["controls_runs_awaiting_finding_count"]
             ),
             "risk_treatment_flow": bool(ctx.get("risk_treatment_flow")),
             "risk_matrix_current": bool(ctx.get("matrix_current")),
@@ -1040,7 +1051,7 @@ ALL_CATEGORIES = [
     "treatment_plan", "scope", "objective", "framework", "swot",
     "acceptance", "supplier_review",
     "notification_deadline", "post_incident_review", "evidence_retention",
-    "documents",
+    "documents", "controls",
 ]
 
 # Category label, shared by the upcoming-deadlines list and the iCal feed so a
@@ -1060,6 +1071,7 @@ CATEGORY_LABELS = {
     "post_incident_review": gettext_lazy("Post-incident reviews"),
     "evidence_retention": gettext_lazy("Evidence retention"),
     "documents": gettext_lazy("Documents"),
+    "controls": gettext_lazy("Controls"),
 }
 
 
@@ -1364,6 +1376,15 @@ def get_calendar_events(user, start=None, end=None, categories=None):
             done=lambda o: o.workflow_state != CAMPAIGN_RUNNING,
             kind=_("Due date"), responsible="created_by")
 
+    # ── Controls (module 8) ──────────────────────────────
+    # The next due date of every active test (`reportable()` keeps the active
+    # ones : a draft or retired test is never due, RG-CTL-08), within the
+    # reader's scopes through the control, for the readers of tests only.
+    if "controls" in categories and (user.is_superuser or user.has_perm("controls.test.read")):
+        add(_filter_scoped(ControlTest.objects.select_related("control"), user),
+            "next_due_date", "controls", "#65a30d", "controls:controltest-detail",
+            _("Control test: "), deadline=True, kind=_("Due date"), responsible="tester")
+
     return events
 
 
@@ -1419,6 +1440,64 @@ def documents_dashboard_context(user, today):
                 "is_overdue": campaign.is_overdue,
             })
         ctx["documents_running_campaigns"] = rows
+    return ctx
+
+
+def controls_dashboard_context(user, today):
+    """Context of the *Controls* dashboard widget (module 8, README §8).
+
+    The control figures need ``controls.control.read``, the test and run
+    figures ``controls.test.read``; every queryset goes through
+    ``core.scoping``. Steps are read off the lifecycles (``reportable()`` and
+    the step constants), overdue is derived from the date (RG-CTL-07) and the
+    effectiveness from the stored derived value (RG-CTL-14).
+    """
+    from controls.constants import CONTROL_IMPLEMENTED, ControlEffectiveness, RunResult
+    from controls.models import ControlTestRun
+    from core.lifecycle import reportable
+
+    ctx = {
+        "controls_reportable_count": 0,
+        "controls_implemented_count": 0,
+        "controls_tested_count": 0,
+        "controls_effective_count": 0,
+        "controls_effective_rate": None,
+        "controls_overdue_tests": [],
+        "controls_overdue_test_count": 0,
+        "controls_runs_awaiting_finding": [],
+        "controls_runs_awaiting_finding_count": 0,
+    }
+    if user.is_superuser or user.has_perm("controls.control.read"):
+        controls = _filter_scoped(reportable(Control.objects.all()), user)
+        ctx["controls_reportable_count"] = controls.count()
+        ctx["controls_implemented_count"] = controls.filter(workflow_state=CONTROL_IMPLEMENTED).count()
+        tested = controls.exclude(effectiveness=ControlEffectiveness.NOT_TESTED)
+        ctx["controls_tested_count"] = tested.count()
+        ctx["controls_effective_count"] = tested.filter(effectiveness=ControlEffectiveness.EFFECTIVE).count()
+        if ctx["controls_tested_count"]:
+            ctx["controls_effective_rate"] = round(
+                ctx["controls_effective_count"] / ctx["controls_tested_count"] * 100
+            )
+    if user.is_superuser or user.has_perm("controls.test.read"):
+        overdue = _filter_scoped(
+            reportable(ControlTest.objects.filter(next_due_date__isnull=False, next_due_date__lt=today))
+            .select_related("control", "tester"),
+            user,
+        ).order_by("next_due_date", "reference")
+        ctx["controls_overdue_test_count"] = overdue.count()
+        ctx["controls_overdue_tests"] = [
+            {"test": t, "days_late": (today - t.next_due_date).days} for t in overdue[:5]
+        ]
+        # RG-CTL-16 : a validated partial / failed run nobody has raised the
+        # finding of yet.
+        awaiting = _filter_scoped(
+            reportable(ControlTestRun.objects.filter(
+                result__in=[RunResult.PARTIAL, RunResult.FAIL], findings__isnull=True,
+            )).select_related("test__control"),
+            user,
+        ).order_by("-performed_on", "reference")
+        ctx["controls_runs_awaiting_finding_count"] = awaiting.count()
+        ctx["controls_runs_awaiting_finding"] = list(awaiting[:5])
     return ctx
 
 
@@ -1913,6 +1992,8 @@ class GlobalSearchView(LoginRequiredMixin, View):
         ("documents:policy-list", gettext_lazy("Policies"), "bi-file-earmark-text", None),
         ("documents:campaign-list", gettext_lazy("Acknowledgement campaigns"), "bi-patch-check", None),
         ("documents:acknowledge-list", gettext_lazy("To acknowledge"), "bi-pen", None),
+        ("controls:control-list", gettext_lazy("Controls"), "bi-shield-check", None),
+        ("controls:controltest-list", gettext_lazy("Control tests"), "bi-clipboard-pulse", None),
         ("calendar", gettext_lazy("Calendar"), "bi-calendar3", None),
         ("kanban", gettext_lazy("Tasks"), "bi-kanban", None),
     ]
@@ -1928,6 +2009,7 @@ class GlobalSearchView(LoginRequiredMixin, View):
         ("incidents:incident-create", gettext_lazy("Declare an incident"), "bi-plus-circle", "incidents.incident.create"),
         ("incidents:event-create", gettext_lazy("Report a security event"), "bi-plus-circle", "incidents.event.create"),
         ("documents:policy-create", gettext_lazy("Create a document"), "bi-plus-circle", "documents.policy.create"),
+        ("controls:control-create", gettext_lazy("Create a control"), "bi-plus-circle", "controls.control.create"),
         ("styleguide", gettext_lazy("Open styleguide"), "bi-palette", None),
     ]
 
@@ -2155,6 +2237,25 @@ class GlobalSearchView(LoginRequiredMixin, View):
                 "url": "documents:policyversion-detail",
                 "icon": "bi-files",
                 "perm": "documents.policy.read",
+            },
+            # Module 8. A control by its reference, name or description; a
+            # test by its reference, name or the control it belongs to. Gated
+            # on each read permission : the palette returns names.
+            {
+                "label": _("Controls"),
+                "model": Control,
+                "fields": ["reference", "name", "description"],
+                "url": "controls:control-detail",
+                "icon": "bi-shield-check",
+                "perm": "controls.control.read",
+            },
+            {
+                "label": _("Control tests"),
+                "model": ControlTest,
+                "fields": ["reference", "name", "control__reference", "control__name"],
+                "url": "controls:controltest-detail",
+                "icon": "bi-clipboard-pulse",
+                "perm": "controls.test.read",
             },
         ]
 

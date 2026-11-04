@@ -92,6 +92,8 @@
     {% endmeta_list %}
   {% endsection_card %}
 
+  {% include "controls/includes/controls_card.html" %}
+
   {% section_card _("People") icon="people" %}
     {% meta_list cols=2 %}
       {% meta_item _("Owner") %}{% if asset.owner %}{% user_badge asset.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}

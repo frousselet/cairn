@@ -19,6 +19,7 @@ from django.views import View
 from django.views.generic import DeleteView, DetailView, UpdateView
 
 from accounts.views import PermissionRequiredMixin
+from controls.integrations import linked_controls_for_measures
 from core.mixins import HtmxFormMixin
 from risks.constants import (
     EbiosIterationType,
@@ -374,6 +375,7 @@ class WorkshopDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
             summary = assessment.ebios_summary
             ctx["summary"] = summary
             ctx["pacs_measures"] = summary.pacs_measures.select_related("owner").all()
+            ctx["linked_controls"] = linked_controls_for_measures(ctx["pacs_measures"], self.request.user)
         return ctx
 
 

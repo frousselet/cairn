@@ -90,6 +90,8 @@
     {% endif %}
   {% endsection_card %}
 
+  {% include "controls/includes/controls_card.html" %}
+
   {% section_card _("Related action plans") icon="clipboard-plus" count=related_action_plans|length flush=True %}
     {% slot actions %}
     <a href="{% url 'risks:treatment-plan-update' plan.pk %}" class="btn btn-sm btn-secondary" hx-get="{% url 'risks:treatment-plan-update' plan.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML">

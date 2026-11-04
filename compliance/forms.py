@@ -11,6 +11,7 @@ from context.widgets import ImageUploadWidget, ScopeTreeWidget
 from compliance.constants import (
     ASSESSMENT_LOCKED_STATUSES,
     ComplianceStatus,
+    FindingSource,
 )
 from helpers.image_utils import generate_image_variants
 from .models import (
@@ -506,6 +507,13 @@ class FindingRegisterForm(SteppedFormMixin, forms.ModelForm):
         ).order_by("framework__name", "requirement_number")
         if raised_by and self.instance.assessor_id is None:
             self.instance.assessor = raised_by
+        # RG-CTL-16 : a "control test" finding is raised from its run, never
+        # declared by hand, and keeps that source once raised.
+        source = self.fields["source"]
+        if self.instance.control_test_run_id or self.instance.source == FindingSource.CONTROL_TEST:
+            source.choices = [c for c in source.choices if c[0] == FindingSource.CONTROL_TEST]
+        else:
+            source.choices = [c for c in source.choices if c[0] != FindingSource.CONTROL_TEST]
 
 
 class RequirementMappingBaseForm(SteppedFormMixin, forms.ModelForm):

@@ -1,0 +1,41 @@
+{% load i18n ui workflow_tags %}
+{% comment %}
+The *Controls* reverse card (module 8, README §8), shared by the requirement,
+risk, treatment plan, PACS measure (EBIOS RM workshop 5), support asset,
+objective and document detail pages.
+
+Expects `linked_controls` : a list built by `controls.integrations`
+(`linked_controls()` / `linked_controls_for_measures()`), already
+scope-filtered, or `None` when the reader may not read controls (the card is
+then not rendered). Controls in any step are listed with their state badge
+(RG-CTL-04); a retired one is flagged by its badge, sorted last and shows no
+effectiveness, since it no longer counts anywhere (RG-CTL-03). An
+effectiveness resting on an overdue test is flagged, never downgraded
+(RG-CTL-15). A control may carry `linked_via` (references of the element it
+is linked through, e.g. the PACS measures of a study).
+{% endcomment %}
+{% if linked_controls is not None %}
+{% trans "Test overdue" as t_stale %}
+{% section_card _("Controls") icon="shield-check" count=linked_controls|length id="linked-controls" %}
+  {% if linked_controls %}
+  <ul class="ref-links list-unstyled mb-0">
+    {% for control in linked_controls %}
+    <li class="d-flex flex-wrap align-items-center justify-content-between column-gap-3 row-gap-1">
+      <div class="d-flex flex-column min-w-0">
+        {% url 'controls:control-detail' control.pk as control_url %}{% ref_link control url=control_url %}
+        {% if control.linked_via %}<span class="cell-sub">{% trans "PACS measures" %} : {{ control.linked_via|join:", " }}</span>{% endif %}
+      </div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="visually-hidden">{% trans "Effectiveness" %} :</span>
+        {% if control.is_retired %}{% dash %}{% else %}{% choice_badge control "effectiveness" %}{% if control.effectiveness_stale %}{% badge variant="warning" icon="clock-history" label=t_stale %}{% endif %}{% endif %}
+        <span class="visually-hidden">{% trans "Status" %} :</span>
+        {% workflow_badge control %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  {% empty_state message=_("No control linked.") %}
+  {% endif %}
+{% endsection_card %}
+{% endif %}

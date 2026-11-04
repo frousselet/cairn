@@ -22,6 +22,7 @@ from django.views.generic import (
 
 from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
+from controls.integrations import linked_controls
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
@@ -1107,6 +1108,9 @@ class RiskDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMix
         ctx["treatment_plans"] = self.object.treatment_plans.all()
         ctx["acceptances"] = self.object.acceptances.all()
         ctx["iso27005_sources"] = self.object.iso27005_sources.select_related("threat", "vulnerability").all()
+        # RG-CTL-20 : the controls and their effectiveness justify the
+        # residual level the assessor sets.
+        ctx["linked_controls"] = linked_controls(self.object, self.request.user)
         return ctx
 
 
@@ -1335,6 +1339,7 @@ class TreatmentPlanDetailView(LoginRequiredMixin, PermissionRequiredMixin, Scope
         ctx["related_action_plans"] = self.object.related_action_plans.select_related(
             "owner"
         ).all()
+        ctx["linked_controls"] = linked_controls(self.object, self.request.user)
         return ctx
 
 

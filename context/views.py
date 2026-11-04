@@ -25,6 +25,7 @@ from django.views.generic import (
 
 from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
+from controls.integrations import linked_controls
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
@@ -665,6 +666,11 @@ class ObjectiveDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilt
     permission_required = "context.objective.read"
     template_name = "context/objective_detail.html"
     context_object_name = "objective"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["linked_controls"] = linked_controls(self.object, self.request.user)
+        return ctx
 
 
 class ObjectiveCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):

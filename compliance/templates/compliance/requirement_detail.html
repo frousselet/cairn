@@ -60,6 +60,8 @@
     {% endmeta_list %}
   {% endsection_card %}
 
+  {% include "controls/includes/controls_card.html" %}
+
   {% with risks=requirement.linked_risks.all %}
   {% section_card _("Linked risks") icon="shield-exclamation" count=risks|length flush=risks|length %}
     {% if risks %}

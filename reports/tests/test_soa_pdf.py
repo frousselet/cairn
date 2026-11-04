@@ -16,6 +16,8 @@ from django.utils import timezone
 from accounts.tests.factories import UserFactory
 from compliance.models import Framework
 from compliance.tests.factories import FrameworkFactory, RequirementFactory
+from controls.constants import CONTROL_PLANNED, CONTROL_RETIRED, ControlEffectiveness, RunResult
+from controls.tests.factories import ControlFactory, active_test, implemented_control, validated_run
 from reports.generators import build_soa_frameworks_data, generate_soa_pdf
 from risks.tests.factories import RiskFactory
 
@@ -121,6 +123,97 @@ class TestBuildSoaFrameworksData:
         assert data[0]["rows"][0]["justification"] == (
             "Out of scope for hosted-only operations."
         )
+
+
+class TestSoaControls:
+    """RG-CTL-18 : the SoA lists each applicable requirement's reportable
+    controls, their state and effectiveness, and an Implementation summary."""
+
+    def _row(self, fw):
+        return build_soa_frameworks_data(Framework.objects.filter(pk=fw.pk))[0]["rows"][0]
+
+    def _requirement(self, **kwargs):
+        fw = FrameworkFactory(workflow_state="validated")
+        req = RequirementFactory(workflow_state="validated", framework=fw, requirement_number="A.8.5", **kwargs)
+        return fw, req
+
+    def test_lists_reportable_controls_with_state_and_effectiveness(self):
+        fw, req = self._requirement()
+        control = implemented_control(name="Multi-factor authentication")
+        control.requirements.add(req)
+        validated_run(test=active_test(control=control), result=RunResult.PASS)
+        row = self._row(fw)
+        assert row["controls_data"] == [{
+            "reference": control.reference,
+            "name": "Multi-factor authentication",
+            "state": "implemented",
+            "state_label": str(control.lifecycle_label),
+            "effectiveness": ControlEffectiveness.EFFECTIVE,
+            "effectiveness_label": ControlEffectiveness.EFFECTIVE.label,
+        }]
+        assert row["implementation"] == "implemented"
+
+    def test_proposed_and_retired_controls_never_appear(self):
+        fw, req = self._requirement()
+        ControlFactory().requirements.add(req)  # proposed (draft)
+        retired = implemented_control()
+        retired.transition_to(CONTROL_RETIRED, retired.owner, comment="Replaced.")
+        retired.requirements.add(req)
+        row = self._row(fw)
+        assert row["controls_data"] == []
+        assert row["implementation"] == "none"
+        assert str(row["implementation_label"]) == "No control"
+
+    def test_partial_when_some_controls_are_only_planned(self):
+        fw, req = self._requirement()
+        implemented_control().requirements.add(req)
+        planned = ControlFactory()
+        planned.transition_to(CONTROL_PLANNED, planned.owner)
+        planned.requirements.add(req)
+        assert self._row(fw)["implementation"] == "partial"
+
+    def test_planned_only(self):
+        fw, req = self._requirement()
+        planned = ControlFactory()
+        planned.transition_to(CONTROL_PLANNED, planned.owner)
+        planned.requirements.add(req)
+        assert self._row(fw)["implementation"] == "planned"
+
+    def test_justification_lists_controls_before_action_plans(self):
+        from compliance.tests.factories import ComplianceActionPlanFactory as ActionPlanFactory
+
+        fw, req = self._requirement()
+        control = implemented_control(name="Backups <offsite>")
+        control.requirements.add(req)
+        from compliance.models import ComplianceActionPlan
+        from core.lifecycle import reportable_states
+
+        state = sorted(reportable_states(ComplianceActionPlan))[0]
+        plan = ActionPlanFactory(name="Roll out MFA", status=state)
+        plan.requirements.add(req)
+        justification = self._row(fw)["justification"]
+        assert justification.startswith(f"{control.reference} Backups &lt;offsite&gt;")
+        assert justification.index(control.reference) < justification.index("Roll out MFA")
+
+    def test_not_applicable_keeps_its_justification_and_has_no_implementation(self):
+        fw, req = self._requirement(is_applicable=False, applicability_justification="No development.")
+        implemented_control().requirements.add(req)
+        row = self._row(fw)
+        assert row["justification"] == "No development."
+        assert row["implementation"] == ""
+        assert row["controls_data"] == []
+
+    def test_template_renders_the_implementation_and_controls_columns(self):
+        fw, req = self._requirement()
+        control = implemented_control(name="Encrypted backups")
+        control.requirements.add(req)
+        rendered = _render_template(
+            build_soa_frameworks_data(Framework.objects.filter(pk=fw.pk)), UserFactory(is_superuser=True),
+        )
+        assert "impl-implemented" in rendered
+        assert control.reference in rendered
+        assert "Encrypted backups" in rendered
+        assert "eff-not_tested" in rendered
 
 
 class TestSoaTemplateRendering:

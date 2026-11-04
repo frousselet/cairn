@@ -233,6 +233,8 @@ class PredefinedIndicatorSource(models.TextChoices):
     MANDATORY_ROLES_COVERAGE = "mandatory_roles_coverage", _("Mandatory roles coverage rate")
     POLICIES_OVERDUE_REVIEW = "policies_overdue_review", _("Documents overdue for review")
     ACKNOWLEDGEMENT_RATE = "acknowledgement_rate", _("Document acknowledgement rate")
+    CONTROL_EFFECTIVENESS_RATE = "control_effectiveness_rate", _("Control effectiveness rate")
+    CONTROL_TESTS_OVERDUE = "control_tests_overdue", _("Control tests overdue")
 
 
 # Mapping: predefined source -> (format, unit)
@@ -245,6 +247,8 @@ PREDEFINED_SOURCE_FORMAT = {
     PredefinedIndicatorSource.MANDATORY_ROLES_COVERAGE: ("number", "%"),
     PredefinedIndicatorSource.POLICIES_OVERDUE_REVIEW: ("number", ""),
     PredefinedIndicatorSource.ACKNOWLEDGEMENT_RATE: ("number", "%"),
+    PredefinedIndicatorSource.CONTROL_EFFECTIVENESS_RATE: ("number", "%"),
+    PredefinedIndicatorSource.CONTROL_TESTS_OVERDUE: ("number", ""),
 }
 
 
