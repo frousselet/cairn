@@ -761,6 +761,7 @@ def register_all_tools(server):
     _register_risks_tools(server)
     _register_incidents_tools(server)
     _register_documents_tools(server)
+    _register_controls_tools(server)
     _register_accounts_tools(server)
     _register_reports_tools(server)
     _register_trust_center_tools(server)
@@ -916,7 +917,7 @@ Cairn is a Governance, Risk & Compliance (GRC) platform. This MCP server
 exposes its full API as tools organized by module.
 
 Call `help` with a topic for detailed field-level documentation:
-  context, assets, compliance, risks, incidents, documents, batch, workflow, permissions, examples, users
+  context, assets, compliance, risks, incidents, documents, controls, batch, workflow, permissions, examples, users
 
 ## Modules
 
@@ -928,6 +929,7 @@ Call `help` with a topic for detailed field-level documentation:
 | Risks | risks.* | Risk management: criteria, assessments, risks, treatment plans, threats, vulnerabilities, ISO 27005 |
 | Incidents | incidents.* | Incident management: security events, incidents, response plans, response actions, chronology, evidence and chain of custody, post-incident reviews, notification obligations and filings, personal data breaches, reporting authorities and obligation templates |
 | Documents | documents.* | Documented information (ISO 27001 clause 7.5): policies, procedures and charters, their approved versions, review cycle, acknowledgement campaigns and each person's acknowledgement |
+| Controls | controls.* | Security controls (ISO 27001 6.1.3, 9.1): the control register linked to requirements, risks, plans, assets, objectives and documents, its tests, their reviewed runs with evidence, derived effectiveness and requirement coverage |
 | Accounts | system.* | Users, groups, permissions, access logs, company settings |
 | Reports | compliance.report.* | SOA and audit report generation |
 
@@ -982,11 +984,12 @@ References are read-only and sequential. Reference prefixes by entity:
   IncidentResponseAction=IRAC, IncidentEvidence=EVID, PostIncidentReview=PIRV,
   IncidentNotification=INOT, NotificationFiling=NFIL, ReportingAuthority=RGAU,
   ReportingObligationTemplate=ROBT, PersonalDataBreach=PDBR,
-  Policy=PLCY, PolicyVersion=PLVR, AcknowledgementCampaign=ACKC
+  Policy=PLCY, PolicyVersion=PLVR, AcknowledgementCampaign=ACKC,
+  Control=CTRL, ControlTest=CTST, ControlTestRun=CTRN
 Read INCD twice: it is one letter-order away from the Indicator prefix, and the
 two are visually confusable in a reference string and in a list column.
-IncidentTimelineEntry, EvidenceCustodyEvent and PolicyAcknowledgement generate no
-reference at all.
+IncidentTimelineEntry, EvidenceCustodyEvent, PolicyAcknowledgement and
+ControlTestEvidence generate no reference at all.
 
 ### HTML Rich Text Fields
 Fields marked "(HTML)" accept HTML rich text content.
@@ -1301,6 +1304,9 @@ Writable: assessment_id (required), finding_type (required), description (HTML, 
 - finding_type: major_nc | minor_nc | observation | improvement | strength
 Reference auto-generated per type: NCMAJ-x, NCMIN-x, OBS-x, OA-x, STR-x
 Creating/updating/deleting findings auto-applies to linked assessment_results.
+Read-only: control_test_run_id, control_test_run_reference (set when the finding is
+  raised from a control test run with raise_finding_from_run, source control_test)
+Filters: assessment_id, finding_type, source (... | control_test), control_test_run_id
 
 ## action_plan
 Writable: name (required), description (HTML), gap_description (HTML), remediation_plan (HTML), priority, target_date, progress_percentage (0-100), owner_id, assignees (M2M user UUIDs), requirements (M2M requirement UUIDs)
@@ -1799,6 +1805,112 @@ Row status: pending | acknowledged | excused | expired
 8. get_campaign_progress(campaign_id="<campaign>")
 """
 
+    TOPIC_CONTROLS = """\
+# Controls Module - Field Reference
+
+The register of security controls (ISO/IEC 27001:2022 6.1.3, 8.1, 9.1) and of
+the tests that prove they work: what the organisation does for each
+requirement, who owns it, whether it is implemented, how it is tested, and
+whether it is effective.
+
+Two permission features: controls.control (controls, create from requirements)
+and controls.test (tests, runs, raise a finding), each with create / read /
+update / delete / approve.
+
+Rules that cut across the module:
+- A state change is a transition, never a field write: transition_{entity}(id,
+  target_state, comment), performed as the authenticated user.
+- effectiveness (RG-CTL-14) is derived from the latest validated run of each
+  active test, never declared: not_effective if any failed, else
+  partially_effective if any is partial, else effective if every active test
+  passed, else not_tested. next_due_date (RG-CTL-07) is derived as well. Both
+  are read-only everywhere.
+- A run's content is frozen from in_review on (RG-CTL-09): update_control_test_run
+  refuses any change. Segregation of duties (RG-CTL-11): the run's performer
+  can never validate it, superusers included.
+- Every link of a control must be within your scopes and in a linkable step
+  (RG-CTL-04). Tests and runs inherit the scopes of their control (RG-CTL-19).
+- Evidence files are uploaded through the web form only; runs list their name,
+  size, sha256 and download_url, never the bytes (RG-CTL-13).
+
+## control
+Writable: name (required), description (required: how it operates), theme,
+  nature, automation, owner_id, implemented_on, scope_ids, requirement_ids,
+  risk_ids, treatment_plan_ids, pacs_measure_ids, support_asset_ids,
+  objective_ids, policy_ids
+- theme: organizational | people | physical | technological
+- nature: preventive | detective | corrective
+- automation: manual | semi_automated | automated
+Read-only: effectiveness, effectiveness_updated_at, next_test_due,
+  is_test_overdue, is_effectiveness_stale (verdict resting on an overdue test)
+Lifecycle (control):
+  draft "Proposed" -> planned "Plan" (approve)
+  draft / planned -> implemented "Declare implemented" (approve; stamps
+    implemented_on, never in the future)
+  implemented -> planned "Back to planned" (update, comment required)
+  planned / implemented -> archived "Retire" (approve, comment required;
+    retires its tests); draft -> archived (update, comment required)
+Filters: workflow_state, theme, nature, automation, owner_id, effectiveness,
+  scope_id, requirement_id, risk_id, support_asset_id, policy_id,
+  objective_id, framework_id, test_overdue
+Ref prefix: CTRL
+Actions:
+- create_controls_from_requirements(framework_id, requirement_ids, scope_ids):
+  one proposed control per uncovered applicable requirement (RG-CTL-05)
+- get_control_effectiveness(control_id): the verdict and its active tests
+- get_requirement_coverage(framework_id): per applicable requirement, its
+  planned / implemented controls and the SoA implementation summary
+
+## control_test
+Writable: control_id (required), name (required), objective, method,
+  procedure, acceptance_criteria, frequency_months (1-36, default 12),
+  tester_id, first_due_date
+- method: inquiry | observation | inspection | reperformance | automated
+Read-only: next_due_date, activated_on, is_overdue, latest_result
+Lifecycle (control_test, permissions of controls.test):
+  draft -> active "Activate" (approve; the control is planned or implemented
+    and procedure + acceptance_criteria are set, RG-CTL-06)
+  active -> archived "Retire" (approve, comment); draft -> archived (update, comment)
+Filters: control_id, workflow_state, tester_id, method, overdue, due_before
+Ref prefix: CTST
+Actions:
+- list_overdue_control_tests(control_id, tester_id)
+- list_my_control_tests_due(within_days=14): the caller's tests to perform
+
+## control_test_run
+Writable (draft only): test_id (required, active test, create only),
+  performed_by_id (default: the test's tester, else the caller), performed_on,
+  period_start, period_end, sample_description, result, observations
+- result: pass | partial | fail
+Read-only: reviewed_by_id, reviewed_at, is_frozen, needs_finding; the full
+  get_control_test_run also returns the evidence and the raised finding
+Lifecycle (control_test_run, permissions of controls.test):
+  draft "In progress" -> in_review "Submit for review" (update; needs a
+    result, and observations when partial or fail, RG-CTL-10)
+  in_review -> draft "Send back" (approve, comment required)
+  in_review -> validated "Validate" (approve; not by the performer, RG-CTL-11;
+    recomputes the next due date and the effectiveness)
+  validated -> archived "Withdraw" (approve, comment); draft -> archived "Cancel"
+Filters: test_id, control_id, workflow_state, result, performed_by_id, reviewed_by_id
+Ref prefix: CTRN
+Actions:
+- raise_finding_from_run(run_id, finding_type, recommendation): once per
+  validated partial / failed run (approve, RG-CTL-16); finding_type is
+  major_nc | minor_nc | observation; the finding has source control_test
+
+## Typical flow
+1. create_controls_from_requirements(framework_id="<annex-a>")
+2. update_control(id="<ctrl>", owner_id="<uuid>", risk_ids=["<risk>"])
+3. transition_control(id="<ctrl>", target_state="implemented")
+4. create_control_test(control_id="<ctrl>", name="Quarterly sample", procedure="...",
+   acceptance_criteria="...", frequency_months=3, tester_id="<tester>")
+5. transition_control_test(id="<test>", target_state="active")
+6. create_control_test_run(test_id="<test>", result="fail", observations="...")
+7. transition_control_test_run(id="<run>", target_state="in_review")
+8. (another person) transition_control_test_run(id="<run>", target_state="validated")
+9. raise_finding_from_run(run_id="<run>", finding_type="minor_nc")
+"""
+
     TOPIC_WORKFLOW = """\
 # Workflow Reference
 
@@ -2202,6 +2314,7 @@ tool, call it by its exact name directly - the name here is authoritative.
         "risks": TOPIC_RISKS,
         "incidents": TOPIC_INCIDENTS,
         "documents": TOPIC_DOCUMENTS,
+        "controls": TOPIC_CONTROLS,
         "batch": TOPIC_BATCH,
         "workflow": TOPIC_WORKFLOW,
         "permissions": TOPIC_PERMISSIONS,
@@ -2229,13 +2342,13 @@ tool, call it by its exact name directly - the name here is authoritative.
         "help",
         "Get usage documentation for the Cairn MCP server. "
         "Call without arguments for the full guide, or with a topic for focused help. "
-        "Topics: context, assets, compliance, risks, incidents, documents, batch, workflow, permissions, examples, users",
+        "Topics: context, assets, compliance, risks, incidents, documents, controls, batch, workflow, permissions, examples, users",
         {
             "type": "object",
             "properties": {
                 "topic": {
                     "type": "string",
-                    "description": "Optional topic: context, assets, compliance, risks, incidents, documents, batch, workflow, permissions, examples, users",
+                    "description": "Optional topic: context, assets, compliance, risks, incidents, documents, controls, batch, workflow, permissions, examples, users",
                 },
             },
         },
@@ -4814,6 +4927,7 @@ def _register_compliance_tools(server):
 
     Finding = _get_model("compliance", "Finding")
     fi_fields = ["id", "reference", "assessment_id", "assessment_name", "source",
+                 "control_test_run_id", "control_test_run_reference",
                  "finding_type",
                  "description", "recommendation", "evidence",
                  "assessor_id", "assessor_name",
@@ -4870,7 +4984,17 @@ def _register_compliance_tools(server):
     fi_filter_props = {
         "assessment_id": {"type": "string", "description": "Filter by assessment_id"},
         "finding_type": {"type": "string", "description": "Filter by finding_type"},
-        "source": {"type": "string", "description": "Filter by source"},
+        "source": {
+            "type": "string",
+            "enum": ["audit", "incident", "management_review", "monitoring", "complaint", "control_test"],
+            "description": (
+                "Filter by what surfaced the nonconformity; 'control_test' lists the "
+                "findings raised from control test runs (raise_finding_from_run)."
+            ),
+        },
+        "control_test_run_id": {
+            "type": "string", "description": "Filter by the control test run the finding was raised from",
+        },
         "effectiveness_verdict": {
             "type": "string", "description": "Filter by effectiveness_verdict"
         },
@@ -4882,7 +5006,7 @@ def _register_compliance_tools(server):
         require_perm("compliance.finding.read")(
             _list_handler(Finding, fi_fields, ["reference", "description"],
                           ["assessment_id", "finding_type", "source",
-                           "effectiveness_verdict"], scope_filtered=True)
+                           "control_test_run_id", "effectiveness_verdict"], scope_filtered=True)
         ),
     )
     server.register_tool(
@@ -4901,9 +5025,14 @@ def _register_compliance_tools(server):
             obj = Finding.objects.get(pk=pk)
         except Finding.DoesNotExist:
             return _error("Finding not found.")
+        if not _filter_by_scopes(Finding.objects.filter(pk=obj.pk), user).exists():
+            return _error("Access denied: object is outside your allowed scopes.")
         assessment = obj.assessment
         obj.delete()
-        assessment.apply_findings_to_results()
+        # A finding raised outside an audit (incident, control test) has no
+        # assessment results to re-apply.
+        if assessment is not None:
+            assessment.apply_findings_to_results()
         return {"deleted": True, "id": str(pk)}
 
     server.register_tool(
@@ -4955,7 +5084,8 @@ def _register_compliance_tools(server):
                 return _error(f"Requirements not found: {missing}")
             obj.requirements.set(reqs)
         # Propagate finding to assessment results and recalculate counts
-        obj.assessment.apply_findings_to_results()
+        if obj.assessment_id:
+            obj.assessment.apply_findings_to_results()
         fields = [f.name for f in Finding._meta.fields]
         return _serialize_obj(obj, fields)
 
@@ -4994,6 +5124,8 @@ def _register_compliance_tools(server):
             obj = Finding.objects.get(pk=pk)
         except Finding.DoesNotExist:
             return _error("Finding not found.")
+        if not _filter_by_scopes(Finding.objects.filter(pk=obj.pk), user).exists():
+            return _error("Access denied: object is outside your allowed scopes.")
         requirement_ids = arguments.pop("requirement_ids", None)
         changed_fields = set()
         for field_name in fi_writable:
@@ -5014,7 +5146,8 @@ def _register_compliance_tools(server):
                 return _error(f"Requirements not found: {missing}")
             obj.requirements.set(reqs)
         # Propagate finding changes to assessment results and recalculate counts
-        obj.assessment.apply_findings_to_results()
+        if obj.assessment_id:
+            obj.assessment.apply_findings_to_results()
         fields = [f.name for f in Finding._meta.fields]
         return _serialize_obj(obj, fields)
 
@@ -9258,6 +9391,971 @@ def _register_documents_tools(server):
             required=["campaign_id"],
         ),
         require_perm("documents.acknowledgement.read")(get_campaign_progress),
+    )
+
+
+# ── Controls Module ────────────────────────────────────────
+
+#: Control relation argument -> model M2M attribute (README §1.3).
+_CTL_LINK_ARGS = {
+    "requirement_ids": "requirements",
+    "risk_ids": "risks",
+    "treatment_plan_ids": "treatment_plans",
+    "pacs_measure_ids": "pacs_measures",
+    "support_asset_ids": "support_assets",
+    "objective_ids": "objectives",
+    "policy_ids": "policies",
+}
+
+#: RG-CTL-09 : the run arguments frozen from in_review on -> model attribute.
+_CTL_RUN_FROZEN_ARGS = {
+    "performed_by_id": "performed_by_id",
+    "performed_on": "performed_on",
+    "period_start": "period_start",
+    "period_end": "period_end",
+    "sample_description": "sample_description",
+    "result": "result",
+    "observations": "observations",
+}
+
+#: RG-CTL-16 : the finding types a failed or partial run may raise.
+_CTL_RAISABLE_FINDING_TYPES = ["major_nc", "minor_nc", "observation"]
+
+
+def _ctl_messages(exc):
+    """A display-safe reason for a refused controls write."""
+    return _doc_messages(exc)
+
+
+def _ctl_guarded(handler):
+    """Report a governance refusal raised past a generic handler (a test still
+    referencing its control, a frozen run refusing a write in ``save()``) as a
+    tool error rather than an internal error."""
+    from django.db.models.deletion import ProtectedError
+
+    from core.lifecycle import LifecycleError
+
+    @wraps(handler)
+    def wrapper(user, arguments):
+        try:
+            return handler(user, arguments)
+        except ProtectedError:
+            return _error("This element is still referenced and cannot be deleted (retire it instead).")
+        except (ValidationError, LifecycleError) as exc:
+            return _error(_ctl_messages(exc))
+    return wrapper
+
+
+def _ctl_ids(value, name):
+    """``(ids, error)`` from an MCP array argument."""
+    if value is None:
+        return [], None
+    if not isinstance(value, list):
+        return None, _error(f"{name} must be an array of UUIDs.")
+    return [str(item).lower() for item in value], None
+
+
+def _ctl_link_error(user, arguments, control=None):
+    """RG-CTL-04 / RG-CTL-19 : every linked id must exist, be within the
+    caller's scopes and be in a linkable lifecycle step, unless the control is
+    already linked to it. Returns a tool error, or ``None``."""
+    from django.apps import apps as django_apps
+
+    from controls.api.serializers import CONTROL_RELATIONS, scoped_for
+    from core.lifecycle import linkable_or_linked
+
+    relations = {name: (label, lookup) for name, label, lookup in CONTROL_RELATIONS}
+    for arg, attr in _CTL_LINK_ARGS.items():
+        if arg not in arguments:
+            continue
+        ids, error = _ctl_ids(arguments[arg], arg)
+        if error:
+            return error
+        if not ids:
+            continue
+        label, lookup = relations[attr]
+        model = django_apps.get_model(label)
+        linked = getattr(control, attr).all() if control is not None else None
+        allowed = scoped_for(user, linkable_or_linked(model.objects.all(), linked), explicit=lookup)
+        try:
+            found = {str(pk) for pk in allowed.filter(pk__in=ids).values_list("pk", flat=True)}
+        except (ValueError, ValidationError):
+            return _error(f"{arg} must contain UUIDs.")
+        refused = [pk for pk in ids if pk not in found]
+        if refused:
+            return _error(
+                f"{arg}: not found, outside your scopes, or not in a linkable lifecycle state "
+                f"(RG-CTL-04): {refused}"
+            )
+    if "scope_ids" in arguments:
+        ids, error = _ctl_ids(arguments["scope_ids"], "scope_ids")
+        if error:
+            return error
+        if ids:
+            Scope = _get_model("context", "Scope")
+            try:
+                found = {
+                    str(pk) for pk in _filter_by_scopes(Scope.objects.filter(pk__in=ids), user).values_list("pk", flat=True)
+                }
+            except (ValueError, ValidationError):
+                return _error("scope_ids must contain UUIDs.")
+            if control is not None:
+                # The scopes the control already carries stay accepted.
+                found |= {str(pk) for pk in control.scopes.values_list("pk", flat=True)}
+            refused = [pk for pk in ids if pk not in found]
+            if refused:
+                return _error(f"scope_ids: unknown or outside your scopes: {refused}")
+    return None
+
+
+def _ctl_date(value):
+    return value.isoformat() if value else None
+
+
+def _ctl_comparable(value):
+    """A stored value and an MCP argument in one comparable spelling (dates as
+    ISO strings, UUIDs lower-cased, empty as "")."""
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return str(value).strip().lower()
+
+
+def _ctl_run_summary(run):
+    if run is None:
+        return None
+    return {
+        "id": str(run.pk),
+        "reference": run.reference,
+        "performed_on": _ctl_date(run.performed_on),
+        "performed_by_id": str(run.performed_by_id),
+        "result": run.result,
+        "reviewed_by_id": str(run.reviewed_by_id) if run.reviewed_by_id else None,
+        "reviewed_at": _ctl_date(run.reviewed_at),
+    }
+
+
+def _ctl_test_payload(test):
+    return {
+        "id": str(test.pk),
+        "reference": test.reference,
+        "name": test.name,
+        "workflow_state": test.workflow_state,
+        "control_id": str(test.control_id),
+        "control_reference": test.control.reference,
+        "control_name": test.control.name,
+        "method": test.method,
+        "frequency_months": test.frequency_months,
+        "tester_id": str(test.tester_id) if test.tester_id else None,
+        "tester_name": test.tester.display_name if test.tester_id else "",
+        "next_due_date": _ctl_date(test.next_due_date),
+        "is_overdue": test.is_overdue,
+        "latest_validated_run": _ctl_run_summary(test.latest_validated_run),
+    }
+
+
+def _ctl_run_payload(run):
+    """A run as MCP returns it : content, review stamps, evidence metadata and
+    the finding raised from it; never the evidence bytes."""
+    from controls.api.serializers import evidence_payload, raised_finding_payload
+
+    test = run.test
+    return {
+        "id": str(run.pk),
+        "reference": run.reference,
+        "workflow_state": run.workflow_state,
+        "test_id": str(test.pk),
+        "test_reference": test.reference,
+        "test_name": test.name,
+        "control_id": str(test.control_id),
+        "control_reference": test.control.reference,
+        "performed_by_id": str(run.performed_by_id),
+        "performed_by_name": run.performed_by.display_name,
+        "performed_on": _ctl_date(run.performed_on),
+        "period_start": _ctl_date(run.period_start),
+        "period_end": _ctl_date(run.period_end),
+        "sample_description": run.sample_description,
+        "result": run.result,
+        "observations": run.observations,
+        "reviewed_by_id": str(run.reviewed_by_id) if run.reviewed_by_id else None,
+        "reviewed_at": _ctl_date(run.reviewed_at),
+        "is_frozen": run.is_frozen,
+        "needs_finding": run.needs_finding,
+        "finding": raised_finding_payload(run),
+        "evidence": [evidence_payload(item) for item in run.evidence.select_related("uploaded_by")],
+        "created_at": _ctl_date(run.created_at),
+    }
+
+
+def _ctl_paginate(qs, arguments, payload):
+    limit = min(int(arguments.get("limit", 25)), 100)
+    offset = int(arguments.get("offset", 0))
+    total = qs.count()
+    return {
+        "total": total,
+        "items": [payload(obj) for obj in qs[offset:offset + limit]],
+        "limit": limit,
+        "offset": offset,
+    }
+
+
+def _register_controls_tools(server):
+    """Register the module 8 (controls) tool family (README §6).
+
+    ``Control`` carries its own ``scopes``; ``ControlTest`` and
+    ``ControlTestRun`` inherit theirs through ``scope_parent_lookup``
+    (RG-CTL-19), which ``_filter_by_scopes`` resolves exactly as the web and
+    REST surfaces do. Every state change goes through the model's
+    ``transition_to()`` with the authenticated user as the actor, so the
+    activation gate (RG-CTL-06), the submission gate (RG-CTL-10), the
+    segregation of duties (RG-CTL-11) and the recomputations (RG-CTL-12) hold
+    here too. Effectiveness and next due dates are derived and never writable.
+    Evidence files are uploaded through the web form only; their metadata and
+    permission-checked download URL are returned.
+    """
+    from controls.constants import (
+        ControlAutomation,
+        ControlEffectiveness,
+        ControlNature,
+        ControlTestMethod,
+        ControlTheme,
+        RunResult,
+    )
+    from controls.api.filters import filter_controls_test_overdue, overdue_tests_q
+    from core.lifecycle import reportable_states
+
+    Control = _get_model("controls", "Control")
+    ControlTest = _get_model("controls", "ControlTest")
+    ControlTestRun = _get_model("controls", "ControlTestRun")
+    Framework = _get_model("compliance", "Framework")
+
+    # ── Control ────────────────────────────────────────────
+
+    control_fields = [
+        "id", "reference", "workflow_state", "scopes", "name", "description", "theme", "nature",
+        "automation", "owner_id", "implemented_on", "effectiveness", "effectiveness_updated_at",
+        "next_test_due", "is_test_overdue", "is_effectiveness_stale",
+        "requirements", "risks", "treatment_plans", "pacs_measures", "support_assets",
+        "objectives", "policies", "created_at", "updated_at",
+    ]
+    control_m2m = {"scope_ids": "scopes", **_CTL_LINK_ARGS}
+    control_writable = [
+        "name", "description", "theme", "nature", "automation", "owner_id", "implemented_on",
+        *control_m2m,
+    ]
+    link_note = (
+        " Only targets within your scopes and in a linkable lifecycle step are accepted "
+        "(RG-CTL-04); the full list replaces the current links."
+    )
+    control_overrides = {
+        "name": {"type": "string", "description": "Control name, e.g. 'Multi-factor authentication on remote access'."},
+        "description": {"type": "string", "description": "How the control operates: what is done, by whom, on what (required)."},
+        "theme": {"type": "string", "enum": list(ControlTheme.values), "description": "ISO/IEC 27002:2022 theme (default 'technological')."},
+        "nature": {"type": "string", "enum": list(ControlNature.values), "description": "Control type attribute (default 'preventive')."},
+        "automation": {"type": "string", "enum": list(ControlAutomation.values), "description": "How the control is operated (default 'manual')."},
+        "owner_id": {"type": "string", "description": "UUID of the accountable owner (receives the failed-test notifications). Use list_users."},
+        "implemented_on": {"type": "string", "description": "Date the control started operating (ISO 8601 date), never in the future. Stamped with today when declared implemented without one (RG-CTL-02)."},
+        "scope_ids": {"type": "array", "items": {"type": "string"}, "description": "Scopes of the control (within your own). Its tests and runs inherit them."},
+        "requirement_ids": {"type": "array", "items": {"type": "string"}, "description": "Requirements the control satisfies, from any framework. Use list_requirements." + link_note},
+        "risk_ids": {"type": "array", "items": {"type": "string"}, "description": "Risks the control treats. Use list_risks." + link_note},
+        "treatment_plan_ids": {"type": "array", "items": {"type": "string"}, "description": "Risk treatment plans that create or reinforce the control. Use list_risk_treatment_plans." + link_note},
+        "pacs_measure_ids": {"type": "array", "items": {"type": "string"}, "description": "EBIOS RM PACS measures that create or reinforce the control." + link_note},
+        "support_asset_ids": {"type": "array", "items": {"type": "string"}, "description": "Support assets the control applies to. Use list_support_assets." + link_note},
+        "objective_ids": {"type": "array", "items": {"type": "string"}, "description": "Objectives the control contributes to. Use list_objectives." + link_note},
+        "policy_ids": {"type": "array", "items": {"type": "string"}, "description": "Documents (policies, procedures, standards) that describe the control. Use list_policys." + link_note},
+    }
+
+    def _control_list_filter(qs, arguments):
+        for arg, lookup in (
+            ("scope_id", "scopes__id"), ("requirement_id", "requirements__id"), ("risk_id", "risks__id"),
+            ("support_asset_id", "support_assets__id"), ("policy_id", "policies__id"),
+            ("objective_id", "objectives__id"), ("framework_id", "requirements__framework_id"),
+        ):
+            value = arguments.get(arg)
+            if value not in (None, ""):
+                qs = qs.filter(**{lookup: value}).distinct()
+        overdue = arguments.get("test_overdue")
+        if overdue not in (None, ""):
+            value = overdue if isinstance(overdue, bool) else str(overdue).lower() in ("true", "1", "yes")
+            qs = filter_controls_test_overdue(qs, value)
+        return qs
+
+    _register_crud(
+        server, "control", Control, "controls.control",
+        list_fields=control_fields,
+        writable_fields=control_writable,
+        search_fields=["reference", "name", "description"],
+        filters=["workflow_state", "theme", "nature", "automation", "owner_id", "effectiveness"],
+        required_fields=["name", "description"],
+        m2m_fields=control_m2m,
+        field_overrides=control_overrides,
+        list_queryset_filter=_control_list_filter,
+        list_extra_filter_props={
+            "effectiveness": {"type": "string", "enum": list(ControlEffectiveness.values), "description": "Filter by derived effectiveness (RG-CTL-14)."},
+            "scope_id": {"type": "string", "description": "Restrict to the controls of one scope."},
+            "requirement_id": {"type": "string", "description": "Restrict to the controls implementing one requirement."},
+            "risk_id": {"type": "string", "description": "Restrict to the controls treating one risk."},
+            "support_asset_id": {"type": "string", "description": "Restrict to the controls applying to one support asset."},
+            "policy_id": {"type": "string", "description": "Restrict to the controls described by one document."},
+            "objective_id": {"type": "string", "description": "Restrict to the controls contributing to one objective."},
+            "framework_id": {"type": "string", "description": "Restrict to the controls implementing a requirement of one framework."},
+            "test_overdue": {"type": "boolean", "description": "true: controls with at least one overdue active test (RG-CTL-15); false: none overdue."},
+        },
+    )
+
+    def create_control(user, arguments):
+        error = _ctl_link_error(user, arguments)
+        if error:
+            return error
+        return _create_handler(Control, control_writable, m2m_fields=control_m2m)(user, arguments)
+
+    create_props = {f: control_overrides[f] for f in control_writable}
+    server.register_tool(
+        "create_control",
+        "Create a proposed (draft) control: a durable practice the organisation operates, with its "
+        "theme, nature, owner, scopes and links to requirements, risks, treatment plans, PACS "
+        "measures, support assets, objectives and documents. Effectiveness is derived from "
+        "validated test runs and cannot be set. Plan it or declare it implemented with "
+        "transition_control. To bootstrap a register from a framework, prefer "
+        "create_controls_from_requirements.",
+        _obj_schema(create_props, ["name", "description"]),
+        require_perm("controls.control.create")(create_control),
+    )
+
+    def batch_create_controls(user, arguments):
+        items = arguments.get("items")
+        if isinstance(items, list):
+            for index, item in enumerate(items):
+                if not isinstance(item, dict):
+                    continue
+                error = _ctl_link_error(user, item)
+                if error:
+                    return _error(f"Item {index}: {error['content'][0]['text']}")
+        return _batch_create_handler(Control, control_writable, m2m_fields=control_m2m)(user, arguments)
+
+    server.register_tool(
+        "batch_create_controls",
+        "Create or upsert several proposed controls in one call (max 500). Every link must be "
+        "within the caller's scopes and linkable, or nothing is created. Pass 'match_on' (e.g. "
+        "[\"name\"]) to update matching controls instead of duplicating them.",
+        {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "description": "Control objects: name, description (required), theme, nature, automation, owner_id, implemented_on, scope_ids and the *_ids link arrays.",
+                    "items": _obj_schema(create_props, ["name", "description"]),
+                },
+                "match_on": {"type": "array", "items": {"type": "string"}, "description": "Optional business key (writable scalar field names) used to find an existing control to update."},
+            },
+            "required": ["items"],
+        },
+        require_perm("controls.control.create")(batch_create_controls),
+    )
+
+    def update_control(user, arguments):
+        control, error = _doc_scoped_get(Control, arguments.get("id"), user, "id")
+        if error:
+            return error
+        error = _ctl_link_error(user, arguments, control)
+        if error:
+            return error
+        return _update_handler(Control, control_writable, m2m_fields=control_m2m)(user, arguments)
+
+    update_props = {"id": {"type": "string", "description": "UUID of the control to update."}}
+    update_props.update(create_props)
+    server.register_tool(
+        "update_control",
+        "Update a control's identity and links (any step but retired). Each *_ids array replaces "
+        "the current links; links already in place survive their target leaving a linkable step. "
+        "Effectiveness, its date and the lifecycle step are not writable: use transition_control.",
+        _obj_schema(update_props, ["id"]),
+        require_perm("controls.control.update")(update_control),
+    )
+
+    server.register_tool(
+        "delete_control",
+        "Delete a proposed (draft) control that has no test. A control past draft, or with tests, "
+        "is retired instead with transition_control(target_state='archived', comment=...).",
+        _id_schema(),
+        require_perm("controls.control.delete")(_ctl_guarded(_delete_handler(Control))),
+    )
+
+    # ── ControlTest ────────────────────────────────────────
+
+    test_fields = [
+        "id", "reference", "workflow_state", "control_id", "name", "objective", "method", "procedure",
+        "acceptance_criteria", "frequency_months", "tester_id", "first_due_date", "next_due_date",
+        "activated_on", "is_overdue", "latest_result", "created_at", "updated_at",
+    ]
+    test_writable = [
+        "control_id", "name", "objective", "method", "procedure", "acceptance_criteria",
+        "frequency_months", "tester_id", "first_due_date",
+    ]
+    test_overrides = {
+        "control_id": {"type": "string", "description": "UUID of the control this test belongs to (not a retired one). Cannot change once the test has runs. Use list_controls."},
+        "name": {"type": "string", "description": "Test name, e.g. 'Quarterly sample of remote logins'."},
+        "objective": {"type": "string", "description": "What the test establishes (design, operating effectiveness)."},
+        "method": {"type": "string", "enum": list(ControlTestMethod.values), "description": "Test method (default 'inspection')."},
+        "procedure": {"type": "string", "description": "The steps the tester follows. Required to activate the test (RG-CTL-06)."},
+        "acceptance_criteria": {"type": "string", "description": "What a pass looks like. Required to activate the test (RG-CTL-06)."},
+        "frequency_months": {"type": "integer", "description": "Interval between two runs in months, 1 to 36 (default 12). Drives the next due date."},
+        "tester_id": {"type": "string", "description": "UUID of the default performer of the runs, who receives the due reminders. Use list_users."},
+        "first_due_date": {"type": "string", "description": "Due date of the first run (ISO 8601 date). Defaults to the activation date."},
+    }
+
+    def _test_list_filter(qs, arguments):
+        overdue = arguments.get("overdue")
+        if overdue not in (None, ""):
+            value = overdue if isinstance(overdue, bool) else str(overdue).lower() in ("true", "1", "yes")
+            qs = qs.filter(overdue_tests_q()) if value else qs.exclude(overdue_tests_q())
+        due_before = arguments.get("due_before")
+        if due_before:
+            qs = qs.filter(next_due_date__lte=due_before)
+        return qs
+
+    _register_crud(
+        server, "control_test", ControlTest, "controls.test",
+        list_fields=test_fields,
+        writable_fields=test_writable,
+        search_fields=["reference", "name", "objective"],
+        filters=["control_id", "workflow_state", "tester_id", "method"],
+        required_fields=["control_id", "name"],
+        field_overrides=test_overrides,
+        list_queryset_filter=_test_list_filter,
+        list_extra_filter_props={
+            "overdue": {"type": "boolean", "description": "true: active tests whose next due date has passed (RG-CTL-07)."},
+            "due_before": {"type": "string", "description": "Tests due on or before this date (ISO 8601 date)."},
+        },
+    )
+
+    def _check_test_control(user, control_id):
+        control, error = _doc_scoped_get(Control, control_id, user, "control_id")
+        if error:
+            return error
+        if control.is_retired:
+            return _error("A retired control takes no new test.")
+        return None
+
+    def create_control_test(user, arguments):
+        error = _check_test_control(user, arguments.get("control_id"))
+        if error:
+            return error
+        return _create_handler(ControlTest, test_writable)(user, arguments)
+
+    test_create_props = {f: test_overrides[f] for f in test_writable}
+    server.register_tool(
+        "create_control_test",
+        "Create a draft test of a control: method, procedure, acceptance criteria, frequency and "
+        "default tester. Activate it with transition_control_test(target_state='active') once the "
+        "control is planned or implemented and the procedure and acceptance criteria are written "
+        "(RG-CTL-06); the next due date is then derived (RG-CTL-07).",
+        _obj_schema(test_create_props, ["control_id", "name"]),
+        require_perm("controls.test.create")(create_control_test),
+    )
+
+    def batch_create_control_tests(user, arguments):
+        items = arguments.get("items")
+        if isinstance(items, list):
+            for index, item in enumerate(items):
+                if not isinstance(item, dict):
+                    continue
+                error = _check_test_control(user, item.get("control_id"))
+                if error:
+                    return _error(f"Item {index}: {error['content'][0]['text']}")
+        return _batch_create_handler(ControlTest, test_writable)(user, arguments)
+
+    server.register_tool(
+        "batch_create_control_tests",
+        "Create or upsert several draft control tests in one call (max 500). Every control_id must "
+        "be a control within the caller's scopes and not retired, or nothing is created.",
+        {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "description": "Test objects: control_id, name (required), objective, method, procedure, acceptance_criteria, frequency_months, tester_id, first_due_date.",
+                    "items": _obj_schema(test_create_props, ["control_id", "name"]),
+                },
+                "match_on": {"type": "array", "items": {"type": "string"}, "description": "Optional business key (writable field names, e.g. [\"control_id\", \"name\"]) used to find an existing test to update."},
+            },
+            "required": ["items"],
+        },
+        require_perm("controls.test.create")(batch_create_control_tests),
+    )
+
+    def update_control_test(user, arguments):
+        test, error = _doc_scoped_get(ControlTest, arguments.get("id"), user, "id")
+        if error:
+            return error
+        if "control_id" in arguments and str(arguments["control_id"]).lower() != str(test.control_id):
+            if test.runs.exists():
+                return _error("A test that has runs cannot move to another control.")
+            error = _check_test_control(user, arguments["control_id"])
+            if error:
+                return error
+        return _ctl_guarded(_update_handler(ControlTest, test_writable))(user, arguments)
+
+    test_update_props = {"id": {"type": "string", "description": "UUID of the test to update."}}
+    test_update_props.update(test_create_props)
+    server.register_tool(
+        "update_control_test",
+        "Update a control test. Changing the frequency or the first due date recomputes the derived "
+        "next due date. The control cannot change once the test has runs. The lifecycle step is not "
+        "writable: use transition_control_test.",
+        _obj_schema(test_update_props, ["id"]),
+        require_perm("controls.test.update")(update_control_test),
+    )
+
+    server.register_tool(
+        "delete_control_test",
+        "Delete a draft control test that has no run. An active test is retired instead with "
+        "transition_control_test(target_state='archived', comment=...).",
+        _id_schema(),
+        require_perm("controls.test.delete")(_ctl_guarded(_delete_handler(ControlTest))),
+    )
+
+    # ── ControlTestRun ─────────────────────────────────────
+
+    run_fields = [
+        "id", "reference", "workflow_state", "test_id", "control", "performed_by_id", "performed_on",
+        "period_start", "period_end", "sample_description", "result", "observations",
+        "reviewed_by_id", "reviewed_at", "is_frozen", "needs_finding", "created_at", "updated_at",
+    ]
+    run_writable = [
+        "test_id", "performed_by_id", "performed_on", "period_start", "period_end",
+        "sample_description", "result", "observations",
+    ]
+    run_overrides = {
+        "test_id": {"type": "string", "description": "UUID of the active test this run executes (RG-CTL-09). Cannot change afterwards. Use list_control_tests."},
+        "performed_by_id": {"type": "string", "description": "UUID of the person who performed the test. Defaults to the test's tester, else the caller. That person can never validate the run (RG-CTL-11)."},
+        "performed_on": {"type": "string", "description": "Date of the test (ISO 8601 date), never in the future. Defaults to today."},
+        "period_start": {"type": "string", "description": "Start of the period the test covers (ISO 8601 date)."},
+        "period_end": {"type": "string", "description": "End of the period the test covers (ISO 8601 date), between period_start and performed_on (RG-CTL-10)."},
+        "sample_description": {"type": "string", "description": "Population and sample tested, e.g. '25 of 1,240 remote logins, March'."},
+        "result": {"type": "string", "enum": list(RunResult.values), "description": "Outcome against the acceptance criteria. Required to submit (RG-CTL-10)."},
+        "observations": {"type": "string", "description": "What was found. Required to submit a partial or failed result (RG-CTL-10); becomes the description of a raised finding."},
+    }
+
+    _register_crud(
+        server, "control_test_run", ControlTestRun, "controls.test",
+        list_fields=run_fields,
+        writable_fields=run_writable,
+        search_fields=["reference", "observations", "sample_description"],
+        filters=["test_id", "workflow_state", "result", "performed_by_id", "reviewed_by_id"],
+        required_fields=["test_id"],
+        field_overrides=run_overrides,
+        list_queryset_filter=lambda qs, arguments: (
+            qs.filter(test__control_id=arguments["control_id"]) if arguments.get("control_id") else qs
+        ),
+        list_extra_filter_props={
+            "control_id": {"type": "string", "description": "Restrict to the runs of the tests of one control."},
+            "result": {"type": "string", "enum": list(RunResult.values), "description": "Filter by result."},
+        },
+    )
+
+    def get_control_test_run(user, arguments):
+        run, error = _doc_scoped_get(ControlTestRun, arguments.get("id"), user, "id")
+        if error:
+            return error
+        return _ctl_run_payload(run)
+
+    server.register_tool(
+        "get_control_test_run",
+        "Get one control test run by ID: result, period, sample, observations, performer, review "
+        "stamps, the finding raised from it, and its evidence files (name, size, SHA-256 and the "
+        "permission-checked download URL; the bytes themselves are not returned).",
+        _id_schema(),
+        require_perm("controls.test.read")(get_control_test_run),
+    )
+
+    def _check_run_test(user, arguments):
+        test, error = _doc_scoped_get(ControlTest, arguments.get("test_id"), user, "test_id")
+        if error:
+            return None, error
+        if not test.is_active:
+            return None, _error("Runs can only be recorded against an active test.")
+        return test, None
+
+    def create_control_test_run(user, arguments):
+        test, error = _check_run_test(user, arguments)
+        if error:
+            return error
+        arguments = dict(arguments)
+        if not arguments.get("performed_by_id"):
+            arguments["performed_by_id"] = str(test.tester_id or user.pk)
+        return _ctl_guarded(_create_handler(ControlTestRun, run_writable))(user, arguments)
+
+    run_create_props = {f: run_overrides[f] for f in run_writable}
+    server.register_tool(
+        "create_control_test_run",
+        "Record a run (in progress) of an active control test. Fill the result and observations, "
+        "attach evidence through the web form, then submit it with "
+        "transition_control_test_run(target_state='in_review'): from then on its content is frozen "
+        "(RG-CTL-09) and someone other than its performer validates it (RG-CTL-11).",
+        _obj_schema(run_create_props, ["test_id"]),
+        require_perm("controls.test.create")(create_control_test_run),
+    )
+
+    def batch_create_control_test_runs(user, arguments):
+        items = arguments.get("items")
+        if isinstance(items, list):
+            for index, item in enumerate(items):
+                if not isinstance(item, dict):
+                    continue
+                test, error = _check_run_test(user, item)
+                if error:
+                    return _error(f"Item {index}: {error['content'][0]['text']}")
+                if not item.get("performed_by_id"):
+                    item["performed_by_id"] = str(test.tester_id or user.pk)
+        return _batch_create_handler(ControlTestRun, run_writable)(user, arguments)
+
+    server.register_tool(
+        "batch_create_control_test_runs",
+        "Record several runs (in progress) in one call (max 500). Every test_id must be an active "
+        "test within the caller's scopes, or nothing is created.",
+        {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "description": "Run objects: test_id (required), performed_by_id, performed_on, period_start, period_end, sample_description, result, observations.",
+                    "items": _obj_schema(run_create_props, ["test_id"]),
+                },
+                "match_on": {"type": "array", "items": {"type": "string"}, "description": "Optional business key (writable field names) used to find an existing run to update; a submitted run refuses any change."},
+            },
+            "required": ["items"],
+        },
+        require_perm("controls.test.create")(batch_create_control_test_runs),
+    )
+
+    def update_control_test_run(user, arguments):
+        """RG-CTL-09 : the content of a submitted run is frozen; its test is fixed."""
+        run, error = _doc_scoped_get(ControlTestRun, arguments.get("id"), user, "id")
+        if error:
+            return error
+        if "test_id" in arguments and str(arguments["test_id"]).lower() != str(run.test_id):
+            return _error("A run cannot be moved to another test.")
+        if run.is_frozen:
+            changed = [
+                arg for arg, attr in _CTL_RUN_FROZEN_ARGS.items()
+                if arg in arguments and _ctl_comparable(arguments[arg]) != _ctl_comparable(getattr(run, attr))
+            ]
+            if changed:
+                return _error(
+                    "A submitted test run is frozen : its content can no longer be changed "
+                    f"(RG-CTL-09, refused: {', '.join(changed)}). A reviewer can send it back to "
+                    "draft with transition_control_test_run(target_state='draft', comment=...)."
+                )
+        writable = [f for f in run_writable if f != "test_id"]
+        return _ctl_guarded(_update_handler(ControlTestRun, writable))(user, arguments)
+
+    run_update_props = {"id": {"type": "string", "description": "UUID of the run to update."}}
+    run_update_props.update({f: run_overrides[f] for f in run_writable if f != "test_id"})
+    server.register_tool(
+        "update_control_test_run",
+        "Update a run while it is in progress (draft). From 'in_review' on its content (performer, "
+        "date, period, sample, result, observations) is frozen and any change is refused "
+        "(RG-CTL-09). The test a run belongs to never changes.",
+        _obj_schema(run_update_props, ["id"]),
+        require_perm("controls.test.update")(update_control_test_run),
+    )
+
+    server.register_tool(
+        "delete_control_test_run",
+        "Delete a run that is still in progress (draft), with its evidence. A submitted or "
+        "validated run is withdrawn instead with transition_control_test_run(target_state="
+        "'archived', comment=...) and stays readable.",
+        _id_schema(),
+        require_perm("controls.test.delete")(_ctl_guarded(_delete_handler(ControlTestRun))),
+    )
+
+    server.register_tool(
+        "transition_control_test_run",
+        "Move a test run through its lifecycle, as the authenticated user: 'in_review' (submit; "
+        "needs a result, and observations for a partial or failed one, RG-CTL-10), 'draft' (send "
+        "back, approve, comment required), 'validated' (approve; refused to the run's performer, "
+        "superusers included, RG-CTL-11; recomputes the test's next due date and the control's "
+        "effectiveness, RG-CTL-12), 'archived' (withdraw a validated run or cancel a draft, "
+        "comment required).",
+        _obj_schema(
+            {
+                "id": {"type": "string", "description": "UUID of the test run."},
+                "target_state": {"type": "string", "enum": ["draft", "in_review", "validated", "archived"], "description": "Target step (see control_test_run_allowed_transitions)."},
+                "comment": {"type": "string", "description": "Comment, mandatory to send back, withdraw or cancel."},
+            },
+            required=["id", "target_state"],
+        ),
+        require_perm("controls.test.read")(_ctl_guarded(_transition_handler(ControlTestRun, "controls.test"))),
+    )
+
+    # ── Actions ────────────────────────────────────────────
+
+    def create_controls_from_requirements(user, arguments):
+        from controls.services import create_controls_from_requirements as create_from
+
+        if not (user.is_superuser or user.has_perm("compliance.framework.read")):
+            return _error("Permission denied: compliance.framework.read")
+        framework, error = _doc_scoped_get(Framework, arguments.get("framework_id"), user, "framework_id")
+        if error:
+            return error
+        requirement_ids = arguments.get("requirement_ids")
+        if requirement_ids is not None:
+            requirement_ids, error = _ctl_ids(requirement_ids, "requirement_ids")
+            if error:
+                return error
+        scope_ids = arguments.get("scope_ids")
+        if scope_ids is not None:
+            error = _ctl_link_error(user, {"scope_ids": scope_ids})
+            if error:
+                return error
+        try:
+            created, skipped = create_from(
+                framework, user, requirement_ids=requirement_ids, scope_ids=scope_ids or None,
+            )
+        except Exception as exc:  # noqa: BLE001 - every refusal is reported to the caller
+            return _error(_ctl_messages(exc))
+        return {
+            "framework_id": str(framework.pk),
+            "created_count": len(created),
+            "skipped_count": len(skipped),
+            "created": [
+                {
+                    "id": str(control.pk),
+                    "reference": control.reference,
+                    "name": control.name,
+                    "workflow_state": control.workflow_state,
+                    "requirement_ids": [str(pk) for pk in control.requirements.values_list("pk", flat=True)],
+                    "scopes": [str(pk) for pk in control.scopes.values_list("pk", flat=True)],
+                }
+                for control in created
+            ],
+            "skipped": [
+                {
+                    "id": str(requirement.pk),
+                    "requirement_number": requirement.requirement_number,
+                    "name": requirement.name,
+                    "reason": "not_applicable" if not requirement.is_applicable else "already_covered",
+                }
+                for requirement in skipped
+            ],
+        }
+
+    server.register_tool(
+        "create_controls_from_requirements",
+        "Bootstrap a control register from a framework (RG-CTL-05): for each selected applicable "
+        "requirement that no control covers yet, create one proposed (draft) control named after "
+        "the requirement, with its description as a starting point, the requirement linked and the "
+        "framework's scopes. Requirements already covered (by a control in any step) or not "
+        "applicable are skipped and reported; existing controls are never linked. Needs "
+        "controls.control.create and compliance.framework.read on a framework within your scopes.",
+        _obj_schema(
+            {
+                "framework_id": {"type": "string", "description": "UUID of the framework, e.g. ISO/IEC 27001:2022 Annex A. Use list_frameworks."},
+                "requirement_ids": {"type": "array", "items": {"type": "string"}, "description": "Only these requirements of the framework (default: all of them). Ids of other frameworks are ignored."},
+                "scope_ids": {"type": "array", "items": {"type": "string"}, "description": "Scopes of the new controls (within your own). Default: the framework's scopes."},
+            },
+            required=["framework_id"],
+        ),
+        require_perm("controls.control.create")(create_controls_from_requirements),
+    )
+
+    def get_control_effectiveness(user, arguments):
+        control, error = _doc_scoped_get(Control, arguments.get("control_id"), user, "control_id")
+        if error:
+            return error
+        payload = {
+            "id": str(control.pk),
+            "control_id": str(control.pk),
+            "reference": control.reference,
+            "name": control.name,
+            "workflow_state": control.workflow_state,
+            "effectiveness": control.effectiveness,
+            "effectiveness_updated_at": _ctl_date(control.effectiveness_updated_at),
+            "next_test_due": _ctl_date(control.next_test_due),
+            "is_test_overdue": control.is_test_overdue,
+            "is_effectiveness_stale": control.is_effectiveness_stale,
+        }
+        if user.is_superuser or user.has_perm("controls.test.read"):
+            tests = control.active_tests.select_related("control", "tester").order_by("name")
+            payload["active_tests"] = [_ctl_test_payload(test) for test in tests]
+        else:
+            payload["active_tests"] = None
+            payload["note"] = "The active tests are listed with the controls.test.read permission."
+        return payload
+
+    server.register_tool(
+        "get_control_effectiveness",
+        "Explain a control's effectiveness (RG-CTL-14): the derived verdict (effective, "
+        "partially_effective, not_effective, not_tested) and its date, and, for each active test, "
+        "its latest validated run (result, date, reviewer) and next due date. "
+        "'is_effectiveness_stale' is true when the verdict rests on an overdue test (RG-CTL-15): "
+        "the last verdict is kept, never silently downgraded.",
+        _obj_schema(
+            {"control_id": {"type": "string", "description": "UUID of the control. Use list_controls."}},
+            required=["control_id"],
+        ),
+        require_perm("controls.control.read")(get_control_effectiveness),
+    )
+
+    test_qs = ControlTest.objects.select_related("control", "tester")
+
+    def list_overdue_control_tests(user, arguments):
+        qs = _filter_by_scopes(test_qs.filter(overdue_tests_q()), user)
+        for arg in ("control_id", "tester_id"):
+            if arguments.get(arg):
+                qs = qs.filter(**{arg: arguments[arg]})
+        return _ctl_paginate(qs.order_by("next_due_date", "reference"), arguments, _ctl_test_payload)
+
+    server.register_tool(
+        "list_overdue_control_tests",
+        "List the active control tests whose next due date has passed (RG-CTL-07), oldest due "
+        "first, within your scopes: the control, the tester, the due date and the latest validated "
+        "run. Overdue is derived, never a lifecycle step.",
+        _obj_schema({
+            "control_id": {"type": "string", "description": "Restrict to the tests of one control."},
+            "tester_id": {"type": "string", "description": "Restrict to the tests of one tester."},
+            "limit": {"type": "integer", "description": "Max items to return (default 25, max 100)"},
+            "offset": {"type": "integer", "description": "Offset for pagination"},
+        }),
+        require_perm("controls.test.read")(list_overdue_control_tests),
+    )
+
+    def list_my_control_tests_due(user, arguments):
+        from datetime import timedelta
+
+        from controls.constants import TEST_DUE_REMINDER_DAYS
+
+        try:
+            days = int(arguments.get("within_days", TEST_DUE_REMINDER_DAYS))
+        except (TypeError, ValueError):
+            days = TEST_DUE_REMINDER_DAYS
+        days = max(0, min(days, 366))
+        horizon = timezone.localdate() + timedelta(days=days)
+        mine = Q(tester=user) | Q(tester__isnull=True, control__owner=user)
+        qs = test_qs.filter(
+            mine,
+            workflow_state__in=reportable_states(ControlTest),
+            next_due_date__isnull=False,
+            next_due_date__lte=horizon,
+        )
+        qs = _filter_by_scopes(qs, user).order_by("next_due_date", "reference")
+        return _ctl_paginate(qs, arguments, _ctl_test_payload)
+
+    server.register_tool(
+        "list_my_control_tests_due",
+        "List the active control tests the authenticated user has to perform soon: those they are "
+        "the tester of, or whose control they own when the test has no tester (the reminder "
+        "recipients). Includes overdue tests; soonest due first. Record a run with "
+        "create_control_test_run(test_id=...).",
+        _obj_schema({
+            "within_days": {"type": "integer", "description": "Horizon in days from today (default 14, the reminder window)."},
+            "limit": {"type": "integer", "description": "Max items to return (default 25, max 100)"},
+            "offset": {"type": "integer", "description": "Offset for pagination"},
+        }),
+        require_perm("controls.test.read")(list_my_control_tests_due),
+    )
+
+    def raise_finding_from_run(user, arguments):
+        run, error = _doc_scoped_get(ControlTestRun, arguments.get("run_id"), user, "run_id")
+        if error:
+            return error
+        finding_type = (arguments.get("finding_type") or "").strip()
+        if finding_type not in _CTL_RAISABLE_FINDING_TYPES:
+            return _error(f"finding_type must be one of: {', '.join(_CTL_RAISABLE_FINDING_TYPES)}.")
+        try:
+            finding = run.raise_finding(user, finding_type, arguments.get("recommendation") or "")
+        except Exception as exc:  # noqa: BLE001 - every refusal is reported to the caller
+            return _error(_ctl_messages(exc))
+        return {
+            "id": str(finding.pk),
+            "reference": finding.reference,
+            "source": finding.source,
+            "finding_type": finding.finding_type,
+            "control_test_run_id": str(run.pk),
+            "control_test_run_reference": run.reference,
+            "description": finding.description,
+            "recommendation": finding.recommendation,
+            "evidence": finding.evidence,
+            "assessor_id": str(finding.assessor_id) if finding.assessor_id else None,
+            "requirement_ids": [str(pk) for pk in finding.requirements.values_list("pk", flat=True)],
+        }
+
+    server.register_tool(
+        "raise_finding_from_run",
+        "Raise a finding in the nonconformity register from a validated partial or failed test run "
+        "(RG-CTL-16): source 'control_test', linked to the run, the run's observations as its "
+        "description, the control's requirements as its related requirements, and the "
+        "authenticated user as the person who raised it. Offered once per run: a second call is "
+        "refused. The finding type is a judgement the caller makes.",
+        _obj_schema(
+            {
+                "run_id": {"type": "string", "description": "UUID of the validated partial or failed run. Use list_control_test_runs(result='fail')."},
+                "finding_type": {"type": "string", "enum": _CTL_RAISABLE_FINDING_TYPES, "description": "major_nc (major nonconformity), minor_nc (minor nonconformity) or observation."},
+                "recommendation": {"type": "string", "description": "Optional recommendation recorded on the finding."},
+            },
+            required=["run_id", "finding_type"],
+        ),
+        require_perm("controls.test.approve")(raise_finding_from_run),
+    )
+
+    def get_requirement_coverage(user, arguments):
+        from controls.services import ImplementationSummary, requirement_coverage, summarise_implementation
+
+        if not (user.is_superuser or user.has_perm("compliance.framework.read")):
+            return _error("Permission denied: compliance.framework.read")
+        framework, error = _doc_scoped_get(Framework, arguments.get("framework_id"), user, "framework_id")
+        if error:
+            return error
+        visible = set(_filter_by_scopes(Control.objects.all(), user).values_list("pk", flat=True))
+        rows = []
+        totals = {}
+        for row in requirement_coverage(framework):
+            requirement = row["requirement"]
+            controls = [c for c in row["controls"] if c.pk in visible]
+            summary = summarise_implementation(c.workflow_state for c in controls)
+            totals[summary] = totals.get(summary, 0) + 1
+            rows.append({
+                "requirement_id": str(requirement.pk),
+                "requirement_number": requirement.requirement_number,
+                "requirement_name": requirement.name,
+                "implementation": summary,
+                "implementation_label": str(ImplementationSummary.label(summary)),
+                "controls": [
+                    {
+                        "id": str(c.pk),
+                        "reference": c.reference,
+                        "name": c.name,
+                        "workflow_state": c.workflow_state,
+                        "effectiveness": c.effectiveness,
+                        "is_test_overdue": c.is_test_overdue,
+                    }
+                    for c in controls
+                ],
+            })
+        return {
+            "id": str(framework.pk),
+            "framework_id": str(framework.pk),
+            "reference": framework.reference,
+            "name": framework.name,
+            "requirement_count": len(rows),
+            "totals": totals,
+            "rows": rows,
+        }
+
+    server.register_tool(
+        "get_requirement_coverage",
+        "Read how a framework is covered by controls, the data behind the Statement of "
+        "Applicability (RG-CTL-18): for each applicable, reportable requirement, its planned or "
+        "implemented controls with their state and effectiveness, and an implementation summary "
+        "(implemented, partial, planned, none). Proposed and retired controls never count; only "
+        "the controls within your scopes are listed. 'totals' counts requirements per summary.",
+        _obj_schema(
+            {"framework_id": {"type": "string", "description": "UUID of the framework. Use list_frameworks."}},
+            required=["framework_id"],
+        ),
+        require_perm("controls.control.read")(get_requirement_coverage),
     )
 
 
