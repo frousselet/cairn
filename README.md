@@ -76,7 +76,7 @@ built from [`docs/`](docs/README.md).
 
 ## Tech stack
 
-Django 5.2 LTS, PostgreSQL 18, Django REST Framework, Channels and Redis,
+Python 3.14, Django 5.2 LTS, PostgreSQL 18, Django REST Framework, Channels and Redis,
 Bootstrap 5.3 with HTMX and Apache ECharts. No JavaScript build step.
 
 Every front-end library is served from the instance itself, never from a CDN :

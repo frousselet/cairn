@@ -164,10 +164,10 @@ fi
 VENV_PY="$VENV_DIR/bin/python"
 
 "$VENV_PY" -m pip install --quiet --upgrade pip
-info "Installing requirements.txt"
+info "Installing requirements.lock"
 # autobahn (via daphne) refuses a pure-Python wheel when its optional NVX C
 # extension cannot compile, exactly as in the Dockerfile.
-AUTOBAHN_USE_NVX=0 "$VENV_PY" -m pip install --quiet -r requirements.txt
+AUTOBAHN_USE_NVX=0 "$VENV_PY" -m pip install --quiet -r requirements.lock
 
 # ---------------------------------------------------------------------------
 # 3. Environment file

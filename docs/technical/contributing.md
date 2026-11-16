@@ -70,6 +70,26 @@ Terse, and strictly so:
   A feature that only exists as of this release was never in a prior state to
   change. Fold the detail into the `Added` entry.
 
+## Dependencies
+
+What is installed, everywhere, is `requirements.lock` : every distribution at
+an exact version, with its hashes. `requirements.txt` only lists what the
+project depends on directly.
+
+- **To add or remove a dependency**, edit `requirements.txt`, add it to the
+  registry in `core/dependencies.py`, then regenerate the lock with the command
+  written at the top of `requirements.lock`. Existing pins are kept, so the diff
+  shows the new distribution and what it brings.
+- **To take updates**, run the same command with `--upgrade`, read the diff,
+  run the suite on SQLite and on PostgreSQL, and commit the lock on its own.
+  Security releases of the Django 5.2 line arrive this way : do it at least
+  monthly, and whenever Django announces a security release.
+- **Django stays on its LTS line.** `requirements.txt` constrains it to 5.2.x
+  and a test fails if the lock leaves it. Moving to the next LTS (6.2) is an
+  upgrade of its own, with its release notes read and its deprecations handled.
+- **Python.** The image, CI and `mise.toml` name the same version. Change the
+  three together.
+
 ## Issues and pull requests
 
 Both go through the templates in `.github/`. An issue is filed through
@@ -83,6 +103,12 @@ Titles and descriptions are written in English.
 When a pull request carries a checklist, comment the progress on it at each
 commit and tick the items as they land. That is the standard way of working, not
 a courtesy for large changes only.
+
+The PostgreSQL test job does not run on every pull request (it takes about
+twelve minutes). Give the pull request the **`ci:postgres`** label, or run the
+*Tests* workflow by hand on the branch, when the change touches a migration, a
+raw query, or anything that groups, orders or compares in the database. It
+always runs on `main`.
 
 ## Style
 

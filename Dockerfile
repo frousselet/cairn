@@ -1,4 +1,7 @@
-FROM python:slim
+# The interpreter the test suite runs on, and the newest one Django 5.2 LTS
+# supports. `python:slim` followed the latest release : the image had moved to
+# a Python no test had run on and that Django 5.2 does not support.
+FROM python:3.14-slim
 
 LABEL org.opencontainers.image.source="https://github.com/frousselet/cairn"
 LABEL org.opencontainers.image.description="Cairn - Governance, Risk & Compliance platform"
@@ -26,11 +29,13 @@ RUN apt-get update \
        libffi-dev libcairo2 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+# The exact, hash-checked set of distributions : the same versions as CI and
+# as every other build of this commit, whenever it is built.
+COPY requirements.lock .
 # autobahn (transitive dep of daphne) refuses to emit a pure-Python wheel when
 # its optional NVX C extension can't compile (no gcc in python:slim). Opt out of
 # the native extension so the pure-Python build is allowed.
-RUN AUTOBAHN_USE_NVX=0 pip install --no-cache-dir -r requirements.txt
+RUN AUTOBAHN_USE_NVX=0 pip install --no-cache-dir -r requirements.lock
 
 COPY --chown=cairn:cairn . .
 
