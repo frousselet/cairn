@@ -158,6 +158,17 @@ class TestPageHeaderTag:
         assert "Risks" in out
         assert "page-header__actions" not in out
 
+    def test_a_record_name_steps_down_a_size(self):
+        """A section name keeps the display size; a sentence-long record name
+        takes the smaller one so it holds on one or two lines."""
+        short = render('{% page_header "Risk register" %}{% endpage_header %}')
+        long = render(
+            '{% page_header "Ransomware encrypting corporate IT and propagating to OT" %}'
+            "{% endpage_header %}"
+        )
+        assert "page-header__title--long" not in short
+        assert "page-header__title--long" in long
+
     def test_reference_renders(self):
         out = render('{% page_header "Risk-1" reference="RISK-1" %}{% endpage_header %}')
         assert "RISK-1" in out

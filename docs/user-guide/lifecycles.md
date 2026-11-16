@@ -15,30 +15,33 @@ differ : one counts what is in force, the other shows what exists.
 
 ## The stepper
 
-Every detail page carries the same control, at the top, showing where the record
-has been, where it is, and where it can go.
+Every detail page carries the same control, at the top : a single line showing
+where the record has been, where it is, and where it can go.
 
-It comes in two shapes, and which one you see depends on the record's lifecycle
-rather than on the page. A **linear** lifecycle, such as the default one, draws
-a connected row of pills. A **graph** lifecycle, such as an incident's, draws
-the steps as a network, because the route is genuinely not a line : an incident
-under investigation can be contained, reclassified as an event, or archived, and
-a row of pills would misrepresent that as an order.
+![The lifecycle bar on an incident](../screenshots/incident-detail.png)
 
-![The stepper on an incident, whose lifecycle is a graph rather than a line](../screenshots/incident-detail.png)
+The line reads left to right.
 
-In both shapes the same rules apply.
-
-- **Done steps** are behind you.
-- **The current step** is highlighted.
-- **The next step** is a button, and it is only offered if you have the
-  permission for it. If you cannot see the button someone else can, that is the
-  gate working.
-- **Future steps** are shown greyed, so you can see the road ahead.
-- **Earlier pills are clickable**, which is how you send something back. That is
+- **Done steps** are behind you, marked with a tick. On a long lifecycle they
+  fold to the tick alone; hover one to read its name.
+- **The current step** is the status badge, the same one the lists show.
+- **A step you can move to is a button**, named after the action ("Validate",
+  "Record containment") rather than after the step. It is only offered if you
+  have the permission for it. If you cannot see a button someone else can, that
+  is the gate working.
+- **Steps ahead** are shown greyed, so you can see the road.
+- **A way back is a quieter button** on the left, with a return arrow. That is
   refusal and rework : an action plan submitted too early goes back to drafting,
   and the round trip is recorded.
-- **Archiving** is the off-ramp, available from anywhere.
+- **Leaving the flow** (archiving, reclassifying an incident as an event) sits
+  apart on the right, available wherever the lifecycle allows it.
+
+The line only shows the route the record is on. A lifecycle is often not a line
+at all : an incident under investigation can be contained, reclassified as an
+event, or archived. The button at the far right of the bar opens the **full
+lifecycle** as a diagram, with every step and every transition, including the
+branches this record did not take. The steps you can move to are clickable
+there too.
 
 Some transitions **require a comment**, and Cairn will not let you proceed
 without one. Those are the moments where the reason matters as much as the

@@ -86,9 +86,11 @@ Add `LifecycleStepperMixin` to the DetailView, include the shared template:
 {% include "includes/lifecycle_stepper.html" %}
 ```
 
-It renders done, current, next and future steps, the permission-aware next step,
-refusal and rework through clickable earlier pills, the archived off-ramp, and
-the comment modal for transitions that require one. State badges use
+It renders the lifecycle bar : the completed, current and upcoming steps of the
+path the record is on, a button for each step the user may move to (named after
+the transition, permission-aware, quiet for a way back or an exit), and the
+comment and confirmation modals for the transitions that ask for them. A toggle
+opens the full directed graph of the lifecycle underneath. State badges use
 `{% workflow_badge obj %}`.
 
 Never a plain button, never a status dropdown, never per-page stepper markup.

@@ -20559,3 +20559,10 @@ msgstr "Partiellement mise en œuvre"
 
 msgid "No control"
 msgstr "Aucune mesure"
+
+msgid "Show the full lifecycle"
+msgstr "Afficher le cycle de vie complet"
+
+#, python-format
+msgid "Move to : %(label)s"
+msgstr "Passer à : %(label)s"

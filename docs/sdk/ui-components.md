@@ -44,6 +44,16 @@ Reference : `compliance/templates/compliance/action_plan_list.html`. The table
 itself follows the [table standard](../brand/table-standard.md). An empty
 `<tbody>` renders `{% empty_state colspan=N ... %}`.
 
+A table that fits its card keeps a header that sticks under the page header. A
+table wider than its card (many columns, a narrow screen) scrolls inside the
+card instead, with a soft shadow on each edge that still hides columns : the
+column freeze script in `base.html` toggles `.table-responsive--scroll`, there
+is nothing to declare. `SortableListMixin` prefetches the `tags` of the listed
+rows; any other relation printed on every row belongs in the view's
+`get_queryset()` (`select_related` / `prefetch_related`), and
+`core/tests/test_list_queries.py` shows how to prove a list costs the same
+number of queries whatever its length.
+
 ### Detail page
 
 ```django
@@ -74,8 +84,11 @@ Reference : `compliance/templates/compliance/action_plan_detail.html`.
   `btn-primary`, always last, always with the `pencil` icon and always opening
   the edit modal (`hx-get` into the drawer, with the page URL as `href` so a
   middle click still works).
-- **The stepper** is the only place a state changes, and the only status
-  display needed. Do not repeat the state as a badge in a card.
+- **The stepper** (the lifecycle bar) is the only place a state changes, and
+  the only status display needed. Do not repeat the state as a badge in a card.
+  It is one line : the path the record is on, the moves the user may make as
+  buttons, and a toggle that opens the full graph. It needs no option and takes
+  none : everything is derived from the registered lifecycle.
 - **The rail** holds at most four `kpi_tile`. The first one is the lifecycle
   stage, then the figures a reader looks for first (priority, a due date, a
   count, a score).
@@ -186,6 +199,12 @@ detail page, the last crumb is the reference. On detail pages the header also
 shows who last changed the element, and when. `accent` takes a module key (see
 the brand guidelines).
 
+The title takes the free width and wraps inside it, so the actions always stay
+on its right (they only drop under it on a phone). A title longer than 32
+characters, which in practice means a record name rather than a section name,
+renders one size down (`.page-header__title--long`) : the tag decides, a
+template never sets a title size.
+
 ### detail_layout
 
 ```django
@@ -195,8 +214,9 @@ the brand guidelines).
 {% enddetail_layout %}
 ```
 
-Below 1800 px the rail sits above the content, as a row of tiles that wraps.
-From 1800 px it becomes a sticky right-hand column and the page widens. Without
+Below 1800 px the rail sits above the content, as a slim strip of key figures
+(icon beside the label and value, two per line on a phone, where the icon is
+dropped). From 1800 px it becomes a sticky right-hand column and the page widens. Without
 a `rail` slot the main column takes the full width. The rail is an `<aside>`
 named by `rail_label`.
 
@@ -416,7 +436,7 @@ and the file order is the cascade :
 | `06-responsive.css` | Mobile adjustments |
 | `07-forms.css` | The modal form engine |
 | `08-motion.css` | Page transitions, skeleton loader |
-| `09-components.css` | Page header, empty state, KPI, list and detail layouts, stepper, lifecycle graph |
+| `09-components.css` | Page header, empty state, KPI, list and detail layouts, stepper, lifecycle bar and graph |
 | `10-framework.css` | The primitives on this page and the utilities |
 
 Only rules that need the template engine stay inline in `base.html` : the

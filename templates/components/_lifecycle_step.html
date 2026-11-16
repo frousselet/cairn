@@ -1,0 +1,31 @@
+{% load i18n %}
+{% comment %}
+One step of the lifecycle bar. A step the user may move to is a transition
+form whose button carries the transition's own label ("Validate", not
+"Validated"); the current step is the status badge; the others are plain
+markers. Only a forward move is highlighted : a way back (rework, refusal) and
+an exit (archive) are quiet buttons. Expects `step` and `lc_transition_url`.
+{% endcomment %}
+{% if step.actionable %}
+<li class="lc-step lc-step--action">
+  <form method="post" action="{{ lc_transition_url }}" class="stepper__pill-form" data-lc-title="{{ step.action_label }}"{% if step.requires_comment %} data-lc-requires-comment{% endif %}{% if step.confirm %} data-lc-confirm data-lc-confirm-message="{{ step.confirm_message }}"{% endif %}>
+    {% csrf_token %}
+    <input type="hidden" name="target_status" value="{{ step.value }}">
+    <input type="hidden" name="comment" data-lc-comment value="">
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <button type="submit" class="btn btn-sm {% if step.direction == 'forward' %}btn-primary{% else %}btn-secondary{% endif %} lc-step__btn" title="{% blocktrans with label=step.label %}Move to : {{ label }}{% endblocktrans %}">
+      <i class="bi bi-{% if step.direction == 'forward' %}arrow-right{% elif step.direction == 'exit' %}{% if step.value == 'archived' %}archive{% else %}box-arrow-right{% endif %}{% else %}arrow-counterclockwise{% endif %}" aria-hidden="true"></i>
+      <span>{{ step.action_label }}</span>
+    </button>
+  </form>
+</li>
+{% elif step.path == "current" %}
+<li class="lc-step lc-step--current" aria-current="step">
+  <span class="badge-dot {{ step.badge_class }} lc-step__badge">{{ step.label }}</span>
+</li>
+{% else %}
+<li class="lc-step lc-step--{{ step.path }}" title="{{ step.label }}">
+  <i class="bi bi-{% if step.path == 'done' %}check-lg{% else %}circle{% endif %} lc-step__mark" aria-hidden="true"></i>
+  <span class="lc-step__label">{{ step.label }}</span>
+</li>
+{% endif %}

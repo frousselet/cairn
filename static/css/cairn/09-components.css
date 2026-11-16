@@ -21,7 +21,7 @@
   top: -1px;
   z-index: 1030;
   margin: 0 0 .5rem;
-  padding: 1.25rem 0 2.5rem;
+  padding: 1.25rem 0 1.25rem;
   /* Long, multi-stop fade so the sticky bar dissolves softly into the
      page instead of cutting against the scrolling content. */
   /* Gradient tint + frosted blur live on ::before (below the title), so the
@@ -109,7 +109,7 @@
    * brand (its block is 1.25rem top padding + 2rem icon, centre ~36px).
    * Breadcrumb collapsed: title lines up with the action buttons. */
   padding-top: 1.125rem;
-  padding-bottom: 2rem;
+  padding-bottom: 1.5rem;
   align-items: center;
   margin-bottom: .25rem;
 }
@@ -145,8 +145,11 @@
   display: flex;
   align-items: flex-start;
   gap: .875rem;
-  min-width: 0;
-  flex: 1 1 auto;
+  /* Take the free space and wrap the title inside it, so a long record name
+     never pushes the actions onto a line of their own. Below 20rem of room
+     (phones) the actions wrap under the title instead. */
+  min-width: min(100%, 20rem);
+  flex: 1 1 0;
   transition: gap var(--transition-normal);
 }
 .page-header.is-compact .page-header__main { gap: .5rem; }
@@ -175,15 +178,20 @@
 .page-header__text { min-width: 0; }
 .page-header__title {
   font-family: var(--font-display);
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 810;
   color: var(--text-primary);
   letter-spacing: normal;
-  line-height: 1.12;
+  line-height: 1.15;
+  text-wrap: balance;
   transition: font-size var(--transition-normal);
 }
+/* A record name is a sentence, not a section name : it steps down a size so
+   it reads on one or two lines instead of filling the top of the page. */
+.page-header__title--long { font-size: 1.5rem; line-height: 1.2; }
 @media (max-width: 991.98px) {
-  .page-header__title { font-size: 1.875rem; }
+  .page-header__title { font-size: 1.625rem; }
+  .page-header__title--long { font-size: 1.3125rem; }
 }
 .page-header__eyebrow {
   font-size: .75rem;
@@ -499,6 +507,18 @@ a.page-header__crumb:hover { text-decoration: underline; }
    right column with the tiles stacked. */
 .list-rail--kpi { order: -1; flex-direction: row; flex-wrap: wrap; gap: 1rem; }
 .list-rail--kpi > * { flex: 1 1 12rem; min-width: 0; }
+/* Key figures introduce the table, they do not compete with it : a tight
+   padding keeps the first rows of the list above the fold. */
+.list-rail--kpi .kpi-tile .card-body { padding: .875rem 1.125rem; }
+.list-rail--kpi .kpi-tile__icon { width: 2.375rem; height: 2.375rem; font-size: 1.125rem; }
+/* Phones : two figures per line and no icon, so four figures cost two lines
+   instead of four cards stacked above the table. */
+@media (max-width: 575.98px) {
+  .list-rail--kpi { gap: .5rem; }
+  .list-rail--kpi > * { flex: 1 1 8.5rem; }
+  .list-rail--kpi .kpi-tile__icon { display: none; }
+  .list-rail--kpi .kpi-tile .card-body { padding: .75rem .875rem; }
+}
 @media (min-width: 1800px) {
   .main-content > .container-xl:has(.list-layout) { max-width: 1900px; }
   .list-layout {
@@ -536,33 +556,35 @@ a.page-header__crumb:hover { text-decoration: underline; }
   flex-direction: column;
   gap: 1.5rem;
 }
-/* Stacked above the content (below the wide breakpoint) the rail lays its
-   widgets out as a wrapping ROW (4 columns), like the list-page KPI rail;
-   it only becomes a stacked sticky column in the wide side-rail below. */
+/* Stacked above the content (below the wide breakpoint) the rail is a slim
+   strip of key figures : each tile keeps its icon beside the label / value
+   and a tight padding, so the strip costs one line of the page instead of a
+   band of tall cards. It only becomes a stacked sticky column in the wide
+   side-rail below. */
 .detail-layout .detail-rail {
   order: -1;
   min-width: 0;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: .75rem;
 }
-.detail-layout .detail-rail > * { flex: 1 1 8rem; min-width: 0; }
-/* In the wrapping-row (stacked) mode the columns are narrow, so each tile
-   stacks its content vertically (icon on top, centred) to give the label /
-   value the full column width instead of truncating beside the icon. */
+.detail-layout .detail-rail > * { flex: 1 1 11rem; min-width: 0; }
 .detail-layout .detail-rail .kpi-tile .card-body {
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: .5rem;
+  padding: .75rem 1rem;
+  gap: .75rem;
 }
-.detail-layout .detail-rail .kpi-tile .min-w-0 { width: 100%; }
-/* Narrow columns : let the label / value wrap rather than truncate to a stub. */
-.detail-layout .detail-rail .kpi-tile .text-truncate {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
+.detail-layout .detail-rail .kpi-tile__icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 1.0625rem;
+}
+.detail-layout .detail-rail .kpi-tile .min-w-0 { flex: 1 1 auto; }
+@media (max-width: 575.98px) {
+  .detail-layout .detail-rail { gap: .5rem; }
+  .detail-layout .detail-rail > * { flex: 1 1 9rem; }
+  .detail-layout .detail-rail .kpi-tile__icon { display: none; }
+  .detail-layout .detail-rail .kpi-tile__value--sm { white-space: normal; }
 }
 .detail-layout .card { margin-bottom: 0; }
 /* Contracts as cards (no table) : a responsive bento-ish grid. */
@@ -845,11 +867,9 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
     gap: 1.5rem;
   }
   .detail-layout .detail-rail > * { flex: none; }
-  /* Wide side-rail : tiles are wide, so revert to the icon-beside-text row. */
+  /* Wide side-rail : the tiles have room, so they take the roomier padding. */
   .detail-layout .detail-rail .kpi-tile .card-body {
-    flex-direction: row;
-    align-items: center;
-    text-align: left;
+    padding: 1rem 1.25rem;
     gap: 1rem;
   }
 }
@@ -1061,6 +1081,24 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
   z-index: 3;
   background: var(--surface-raised);
 }
+/* A table too wide for its card (many columns, narrow screen) scrolls inside
+   the card instead of spilling under the page edge. The header cannot stick
+   inside a scroll container, so it rests in place; a soft shadow on each edge
+   that still hides columns says there is more to see. Toggled by the column
+   freeze script in base.html. */
+.list-toolbar + .table-responsive.table-responsive--scroll {
+  overflow-x: auto;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background:
+    linear-gradient(to right, var(--surface-raised) 40%, transparent) left center / 2.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--surface-raised) 40%, transparent) right center / 2.5rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--scroll-shadow), transparent) left center / .875rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--scroll-shadow), transparent) right center / .875rem 100% no-repeat scroll;
+}
+.list-toolbar + .table-responsive.table-responsive--scroll thead th {
+  position: static;
+  background: transparent;
+}
 
 /* ── Component: approval-banner ────────────────── */
 .approval-banner { margin-bottom: 1rem; }
@@ -1125,58 +1163,147 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 /* Detached gap before a branch state (archived / cancelled): a space, no
    connector line. */
 .stepper__gap { flex-shrink: 0; width: 2.5rem; }
-/* Wrapping variant (standardised-engine lifecycles, which can have many
-   steps and cycles): the row spans the full width and wraps across lines
-   instead of staying on a single scrolling line. */
-.stepper--wrap .stepper__row {
-  width: 100%;
-  max-width: 100%;
-  flex-wrap: wrap;
-  row-gap: .75rem;
+/* ── Component: lifecycle bar ─────────────────────
+   Where the record stands and what can be done next, on one line : the steps
+   of the path it is on (completed, current as its status badge, ahead), the
+   steps the user may move to as buttons, the Archived exit apart on the right
+   and a toggle that opens the full directed graph underneath. A lifecycle too
+   long for the line scrolls inside the track, never the page. */
+.lc-bar {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-height: 3rem;
+  margin: 0 0 1.5rem;
+  padding: .4375rem .5rem .4375rem 1rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
 }
-.stepper__pill--action { font-weight: 600; }
-/* Detached exit row (Archived): sits below the main flow, no connector. */
-.stepper__exits { margin-top: 1rem; }
-
-/* ── Cyclic lifecycle: responsive horizontal flow (SVG) ───────────
-   The pills wrap onto centred rows when they do not fit (no horizontal
-   scroll). [arrow + pill] are grouped so they never split across a wrap.
-   The loop-back transition is an SVG arrow routed below + around the left
-   (head-room reserved by padding-bottom). The Archived exit sits below. */
-.lc-loop { position: relative; margin-bottom: 2rem; padding-bottom: 2.5rem; }
-.lc-loop__svg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  overflow: visible;
+.lc-bar__track {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  /* Room for the focus ring of a step button inside the scroll container. */
+  padding: .1875rem;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-.lc-loop__row { gap: .55rem .15rem; }
-.lc-unit { display: inline-flex; align-items: center; flex-shrink: 0; }
-/* Directional separator between steps: a short line + arrowhead. */
-.lc-sep {
+.lc-bar__track::-webkit-scrollbar { display: none; }
+/* Fade the edge(s) the track can still scroll towards. */
+.lc-bar--more-end .lc-bar__track {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+}
+.lc-bar--more-start .lc-bar__track {
+  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to left, #000 calc(100% - 2.5rem), transparent);
+}
+.lc-bar--more-start.lc-bar--more-end .lc-bar__track {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 2.5rem, #000 calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 2.5rem, #000 calc(100% - 2.5rem), transparent);
+}
+.lc-step {
   display: inline-flex;
   align-items: center;
-  flex-shrink: 0;
-  color: var(--border-light);
-  margin: 0 .1rem;
+  gap: .375rem;
+  /* A label is never cut to a stub : a line too short scrolls instead. */
+  flex: none;
+  font-size: .8125rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
-.lc-sep__line { width: 1.1rem; height: 2px; background: currentColor; }
-.lc-sep__head { font-size: .7rem; margin-left: -3px; line-height: 1; }
-.lc-sep--done { color: var(--accent); }
-.lc-loop .stepper__exits { margin-top: 1rem; }
+/* Connector between two steps. */
+.lc-step + .lc-step::before {
+  content: "";
+  flex: none;
+  width: 1.125rem;
+  height: 1px;
+  margin: 0 .375rem 0 .5rem;
+  background: var(--border-light);
+}
+.lc-step--done + .lc-step::before { background: var(--text-muted); }
+.lc-step__mark { flex: none; font-size: .5rem; }
+.lc-step--done { color: var(--text-secondary); }
+.lc-step--done .lc-step__mark { font-size: .875rem; color: var(--accent); }
+.lc-step__badge { font-size: .75rem; padding: .35em .875em; }
+.lc-step__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  border-radius: 100px;
+  font-weight: 600;
+  white-space: nowrap;
+  --bs-btn-padding-y: .25rem;
+  --bs-btn-padding-x: .8125rem;
+}
+.lc-step .stepper__pill-form { display: inline-flex; }
+/* A long lifecycle folds its completed steps to their tick : the label stays
+   in the accessibility tree and in the title. */
+.lc-bar--dense .lc-step--done .lc-step__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.lc-bar__side {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex: none;
+  padding-left: .75rem;
+  border-left: 1px solid var(--border-light);
+}
+.lc-bar__exits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lc-bar__exits .lc-step + .lc-step::before { content: none; }
+.lc-bar__toggle { --bs-btn-padding-x: .5rem; }
+.lc-bar__toggle[aria-expanded="true"] { background: var(--accent-soft); color: var(--accent); }
+/* The full graph opens right under the bar, as its continuation. */
+.lc-bar__graph { margin-top: -1rem; }
+.lc-bar__graph .lc-dagre {
+  margin: 0 0 1.5rem;
+  padding: 1.25rem 1rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+}
+/* Phones : the track takes the first line, the exit and the graph toggle the
+   second, and the completed steps always fold to their tick. */
+@media (max-width: 575.98px) {
+  .lc-bar { flex-wrap: wrap; gap: .5rem; padding: .5rem .625rem; }
+  .lc-bar__track { flex: 1 1 100%; }
+  .lc-bar__side {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    padding: .5rem 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--border-light);
+  }
+  .lc-step--done .lc-step__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
 
-/* ── Cyclic lifecycle as a horizontally-wrapping flow of pills ──
-   Schema-driven, theme-aware, never scrolls horizontally and never scales.
-   The main-flow steps are real HTML pills in a centred flex-wrap row : on a
-   narrow screen they wrap onto MORE horizontal rows (the flow always reads
-   left-to-right, never a vertical single column, never shrunk). An SVG
-   overlay, sized to the stage box and measured from the rendered pill
-   positions, draws the arrows : forward (solid accent), the cycle back-edge
-   (dashed accent), the archive exit and the archived restore (dashed
-   muted). The Archived exit sits detached on its own row below the flow. */
-/* No card chrome : the diagram rests directly on the page background, with
-   a little breathing room below so it is not glued to the tags. */
 /* ── Data-driven lifecycle graph (dagre + d3) ── */
 .lc-dagre {
   position: relative;
@@ -1202,138 +1329,6 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 }
 .lc-dagre [role="button"]:focus-visible rect { outline: 2px solid var(--accent, #1E3A8A); outline-offset: 2px; }
 
-.lc-graph {
-  position: relative;
-  margin: 2.25rem 0 3.5rem;     /* breathing room above and below the diagram */
-  /* The snake layout wraps to the available width, so most graphs fit with no
-     scroll. A very wide graph (many branch outcomes) on a narrow screen scrolls
-     horizontally as a safety net rather than overlapping or clipping any node. */
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-/* The stage is the shared coordinate space of the pills and the SVG overlay. */
-.lc-graph__stage {
-  position: relative;
-  width: 100%;
-}
-/* Overlay sits under the pills ; sized in px inline by the renderer. */
-.lc-graph__svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-  overflow: visible;
-}
-/* Pills wrap onto extra HORIZONTAL rows ; the gap leaves room for the
-   step-down connectors when a pill wraps to the next row. */
-.lc-graph__flow {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem 1.75rem;
-}
-/* Archived exit : detached, centred, on its own row below the flow with room
-   above for the dashed feeder. */
-.lc-graph__exits {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: .75rem;
-  /* Reserve room above for the dashed loop lane + the muted archive feeder
-     (routed at maxBottom + 18 / + 38 in the renderer). */
-  margin-top: 4.5rem;
-}
-
-/* Pill nodes : reuse the chip visual language via theme tokens. Natural,
-   readable size at all widths (no scaling). */
-.lc-pill {
-  display: inline-flex;
-  align-items: center;
-  font-family: "GitLab Sans", sans-serif;
-  font-size: .75rem;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: normal;
-  padding: .4rem .8rem;
-  border-radius: 999px;
-  border: 1px solid var(--border-light);
-  background: var(--surface-subtle);
-  color: var(--text-muted);
-  white-space: nowrap;
-  transition: background-color .18s var(--ease-out, ease),
-              border-color .18s var(--ease-out, ease),
-              color .18s var(--ease-out, ease);
-}
-button.lc-pill { cursor: default; }
-/* Leading step number (operational stages only). Inherits the pill colour so
-   it reads correctly on the navy current pill and the muted others. */
-.lc-pill__num {
-  font-weight: 700;
-  margin-right: .45rem;
-  opacity: .65;
-  font-variant-numeric: tabular-nums;
-}
-.lc-pill--current .lc-pill__num,
-.lc-pill--actionable .lc-pill__num { opacity: .85; }
-
-.lc-pill--done {
-  background: var(--surface-subtle);
-  border-color: var(--border-light);
-  color: var(--text-secondary);
-}
-.lc-pill--current {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-contrast);
-  font-weight: 600;
-}
-.lc-pill--future {
-  background: var(--surface-subtle);
-  border-style: dashed;
-  border-color: var(--border-light);
-  color: var(--text-muted);
-}
-
-/* Actionable next-step pills : success-tinted, clearly clickable. */
-.lc-pill--actionable {
-  background: var(--surface);
-  border-color: var(--success, #16A34A);
-  border-style: solid;
-  color: var(--success, #16A34A);
-  font-weight: 600;
-  cursor: pointer;
-}
-.lc-pill--actionable:hover {
-  background: color-mix(in srgb, var(--success, #16A34A) 12%, var(--surface));
-}
-.lc-pill--actionable:focus-visible {
-  outline: 2px solid var(--success, #16A34A);
-  outline-offset: 2px;
-}
-
-/* SVG edges. */
-.lc-edge { transition: opacity .18s var(--ease-out, ease); }
-.lc-edge--forward { stroke: var(--accent); stroke-width: 2; opacity: .85; }
-.lc-edge--loop { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; opacity: .7; }
-.lc-edge--exit { stroke: var(--text-muted); stroke-width: 1.6; stroke-dasharray: 4 4; opacity: .7; }
-.lc-edge--restore { stroke: var(--text-muted); stroke-width: 1.6; stroke-dasharray: 4 4; opacity: .7; }
-.lc-edge-label {
-  fill: var(--text-secondary);
-  font-family: "GitLab Sans", sans-serif;
-  font-size: 10.5px;
-  letter-spacing: normal;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lc-pill, .lc-edge { transition: none; }
-}
 .stepper__line {
   flex-shrink: 0;
   width: 2rem;

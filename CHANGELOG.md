@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The assessment result toggles read the planning / fieldwork phase from the assessment instead of comparing a status string in the template.
 - EBIOS RM workshop 5 measures can be linked while they are planned, in progress or overdue.
 - List pages read their tags, scope ancestors and filter options in a constant number of queries instead of one per row or per option.
+- Detail pages show the lifecycle as a one-line bar (the path the record is on, each possible move as a button named after its transition, the full graph on demand) instead of a full-width diagram.
+- Pages are denser : content starts near the top of the window, record titles step down a size and keep their actions beside them, and key figures form a slim strip above the content.
+- The sidebar menu rows share one size, weight and hover, whether they open a page or a group.
 
 ### Fixed
 
@@ -41,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A lifecycle edited in the administration was only applied by the worker process that saved it; every worker now picks it up within `LIFECYCLE_CACHE_TTL` seconds (5 by default).
 - Pages touching the cache (the update check, the assistant briefing, the Trust Center rate limiter) failed with a server error whenever Redis was unreachable; the cache now degrades to a miss and logs the outage.
 - The Docker-less development settings (`core.settings_local`) still required Redis for the cache.
+- A list table wider than its card had its last columns clipped and unreachable on laptop screens; it now scrolls inside the card.
 
 ### Security
 

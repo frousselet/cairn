@@ -23,8 +23,8 @@ Declared in code, assigned per model, governed by flags:
 
 - **`Step`** : `code`, translatable `label`, UI `tone` (badge colour), `kind`
   (`StepKind.DRAFT` - the single entry; `StepKind.INTERMEDIATE`; `StepKind.ARCHIVED`
-  - the detached exit shown on the stepper's single line but separated by a gap with
-  no connector to the main flow), and the governance flags:
+  - the detached exit, shown apart on the right of the lifecycle bar, with no
+  connector to the main flow), and the governance flags:
   - `counts_in_reports` - included in reports, KPIs, the calendar and exports;
   - `linkable` - may be targeted by a new link;
   - `deletable` - may be deleted.
@@ -171,11 +171,17 @@ Decisions recorded during the rollout:
   `reject_trust_center_document_request`).
 - **UI** : every detail page renders the generic stepper
   (`includes/lifecycle_stepper.html`, context built by
-  `accounts.mixins.LifecycleStepperMixin`) - a single centred line drawn directly on
-  the page background (no card) holding the main flow pills and the archived off-ramp
-  (detached, no connector); cyclic lifecycles use the directed-graph layout. Both the
-  forward next step and an allowed backward move are **clickable pills**, with the
-  shared comment modal gated by each transition's `requires_comment`. Transitions post
+  `accounts.mixins.LifecycleStepperMixin`) as the **lifecycle bar** : one line
+  holding the steps of the path the record is on (completed, current as its status
+  badge, ahead), the exits apart on the right, and a toggle opening the full
+  directed graph underneath. The path is read from the schema, not from the
+  declaration order : a step is completed when the current one is reachable from it
+  along forward transitions, so a branch that was not taken is left off the bar (the
+  graph still shows it). A step the user may move to is a **button carrying the
+  transition's label** : highlighted for a forward move, quiet for a way back or an
+  exit, with the shared comment modal gated by each transition's `requires_comment`.
+  A lifecycle longer than six steps folds its completed steps to their tick, and a
+  line that still does not fit scrolls inside the bar. Transitions post
   to `workflow:transition` (`/workflow/<app>/<model>/<pk>/transition/`, validated-referer
   redirect) or to the entity's bespoke endpoint (`lifecycle_transition_url_name`).
   State badges render via `{% workflow_badge obj %}` (`helpers.templatetags.workflow_tags`).

@@ -224,7 +224,8 @@ Emphasis is carried by weight. GitLab Sans is variable, so non-standard weights
 | `h5` | GitLab Sans | 0.9375rem (15 px) | 600 | normal | 1.4 |
 | `h6` (eyebrow) | GitLab Sans | 0.75rem (12 px) | 600 | +0.04em uppercase | 1.4 |
 | `.display-4` / `.display-6` / `.text-display` | GitLab Sans | 2.25rem (36 px) / … | 700 | normal | 1.1 |
-| `.page-header__title` | GitLab Sans | 2.5rem (1.875rem ≤992px · 1.25rem compact) | 810 | normal | 1.12 |
+| `.page-header__title` | GitLab Sans | 2rem (1.625rem ≤992px · 1.25rem compact) | 810 | normal | 1.15 |
+| `.page-header__title--long` (record names) | GitLab Sans | 1.5rem (1.3125rem ≤992px) | 810 | normal | 1.2 |
 | Sidebar app name | GitLab Sans | 1.25rem | 810 | normal | - |
 | KPI / stat-card value · Overall compliance | GitLab Sans | 1.375-2.75rem | 900 | normal | 1-1.2 |
 | `body` | GitLab Sans | 0.9375rem (15 px) | 400 | normal | 1.6 |
@@ -300,6 +301,13 @@ adjustments defined in the design system stylesheets (`static/css/cairn/`). In d
 values consistent with the Bootstrap scale:
 
 `0.25rem` / `0.5rem` / `0.75rem` / `1rem` / `1.25rem` / `1.5rem` / `2rem` / `2.5rem` / `3rem`
+
+**Vertical rhythm.** One cadence for a page : `1.5rem` between blocks (cards,
+the lifecycle bar, the key-figure strip, a banner) and `1rem` under the page
+header. The page starts `1.75rem` from the top of the window. Calm does not
+mean empty : on a laptop screen the first content block lands in the top third
+of the page, and a list shows its first rows without scrolling. A component
+that needs more air than this cadence is a component that is too big.
 
 ---
 
@@ -398,6 +406,10 @@ action on the right. Cancel is always neutral (`btn-secondary`), never red.
 {% endpage_header %}
 ```
 
+- The title takes the free width and wraps inside it; the actions stay on its
+  right and only drop under it on a phone.
+- A record name (longer than 32 characters) renders one size down, so it holds
+  on one or two lines. The tag decides; a template never sets a title size.
 - Without `accent`: plain header, normal h1.
 - With `accent="<module>"`: a 2 px coloured line appears under the eyebrow.
   Available modules: `risks`, `compliance`, `assets`, `context`, `reports`,
