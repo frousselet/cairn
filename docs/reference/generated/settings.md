@@ -32,7 +32,7 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `ALLOWED_HOSTS` | `localhost,127.0.0.1` | yes |  |
 | `CSRF_COOKIE_SECURE` | `False` | yes |  |
 | `CSRF_TRUSTED_ORIGINS` | - | yes | Reverse proxy: trusted origins for CSRF (include scheme) |
-| `DEBUG` | `True` | yes |  |
+| `DEBUG` | `False` | yes |  |
 | `DEFAULT_FROM_EMAIL` | `cairn@localhost` | yes |  |
 | `EMAIL_BACKEND` | `'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'` | yes | Outgoing email (notifications, invitations, password resets). The console backend is the default under DEBUG, SMTP otherwise. |
 | `EMAIL_HOST` | `localhost` | yes |  |
@@ -53,7 +53,7 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `POSTGRES_USER` | `postgres` | yes |  |
 | `REDIS_HOST` | `redis` | yes | Redis - Channels layer (real-time) and the shared cache. Required: several cross-worker locks (onboarding runner, semantic index rebuild, SPOF scheduler, Trust Center rate limiter) coordinate through it. |
 | `REDIS_PORT` | `6379` | yes |  |
-| `SECRET_KEY` | `django-insecure-change-me-in-production` | yes |  |
+| `SECRET_KEY` | `django-insecure-change-me-in-production` | yes | This file is a development configuration. For a deployment : give SECRET_KEY a long random value of your own (Cairn refuses to start on this placeholder once DEBUG is off) and remove the DEBUG line, which is off by default. |
 | `SECURE_HSTS_INCLUDE_SUBDOMAINS` | `False` | yes |  |
 | `SECURE_HSTS_PRELOAD` | `False` | yes |  |
 | `SECURE_HSTS_SECONDS` | `0` | yes |  |

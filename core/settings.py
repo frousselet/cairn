@@ -15,7 +15,10 @@ SECRET_KEY = os.environ.get(
     "django-insecure-change-me-in-production",
 )
 
-DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes")
+# Off unless asked for : an instance started with no configuration must not
+# serve tracebacks, settings and local variables to whoever triggers an error.
+# Development sets DEBUG=True (.env.example does, core.settings_local too).
+DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "yes")
 
 # The placeholder keys are public : they ship in this file and in .env.example.
 # Outside DEBUG a deployment that kept one would sign its sessions, its
@@ -31,7 +34,9 @@ if not DEBUG and SECRET_KEY in _PLACEHOLDER_SECRET_KEYS:
     raise ImproperlyConfigured(
         "SECRET_KEY is still the public placeholder while DEBUG is off. Set "
         "SECRET_KEY to a long random value (for example : python -c \"import "
-        "secrets; print(secrets.token_urlsafe(64))\") before starting Cairn."
+        "secrets; print(secrets.token_urlsafe(64))\") before starting Cairn. "
+        "For local development, load your .env (it sets DEBUG=True) or use "
+        "--settings=core.settings_local."
     )
 
 

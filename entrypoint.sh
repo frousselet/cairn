@@ -1,6 +1,44 @@
 #!/bin/sh
 set -e
 
+# ── Drop privileges ────────────────────────────────────────────────────
+# The container starts as root so that it can hand the writable directories
+# to the account the application runs as, then it restarts this script as that
+# account : nothing below this block, and no web worker, runs as root.
+#
+# Which account : the owner of /app. In the image that is `cairn`. With the
+# development bind-mount (.:/app) it is whoever owns the checkout on the host,
+# so the files the container generates there (translations, collected static,
+# uploads) stay theirs. A root-owned /app (some bind-mount drivers report
+# that) falls back to `cairn`.
+#
+# Started as anything other than root (`docker run --user`, an orchestrator's
+# runAsUser), the script runs as given and this block is skipped.
+if [ "$(id -u)" = "0" ]; then
+    run_uid=$(stat -c %u /app)
+    run_gid=$(stat -c %g /app)
+    if [ "$run_uid" = "0" ]; then
+        run_uid=$(id -u cairn)
+        run_gid=$(id -g cairn)
+    fi
+    # Uploads and collected static written by an earlier, root-running version
+    # of the image (a media volume, typically) : hand them over once. Only
+    # root-owned directories are touched, never a directory a host user owns.
+    for dir in /app/media /app/staticfiles; do
+        mkdir -p "$dir"
+        if [ "$(stat -c %u "$dir")" = "0" ]; then
+            chown -R "$run_uid:$run_gid" "$dir"
+        fi
+    done
+    # An account with no passwd entry (a host uid) has no home of its own.
+    if [ "$run_uid" != "$(id -u cairn)" ]; then
+        export HOME=/tmp
+    else
+        export HOME=/home/cairn
+    fi
+    exec setpriv --reuid="$run_uid" --regid="$run_gid" --clear-groups "$0" "$@"
+fi
+
 # Clear stale bytecode from image layer that may conflict with bind-mounted source
 find /app -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 
@@ -64,8 +102,11 @@ fi
 echo "Checking front-end libraries…"
 python manage.py vendor_assets || echo "Warning: front-end libraries could not be mirrored; the interface may render unstyled."
 
+# Non-fatal : the image already carries the compiled catalogues, and an
+# account that cannot write next to them (an arbitrary `--user`) must still
+# be able to start.
 echo "Compiling translation files…"
-python manage.py compilemessages
+python manage.py compilemessages || echo "Warning: translations could not be recompiled; using the ones shipped in the image."
 
 # Refresh collected static at runtime, not just at image build. The compose
 # bind-mount (.:/app) shadows the image's build-time staticfiles/, and deploys

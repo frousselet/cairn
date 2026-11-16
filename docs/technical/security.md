@@ -144,7 +144,7 @@ turning them on blindly breaks an HTTP-only deployment.
    HSTS caveat are in [configuration.md](configuration.md#https-hardening).
 2. **Set a real `SECRET_KEY`** and keep it out of the image. With `DEBUG` off,
    Cairn refuses to start while the key is one of the public placeholders.
-3. **Set `DEBUG=False`** and a specific `ALLOWED_HOSTS`.
+3. **Leave `DEBUG` off** (it is the default) and set a specific `ALLOWED_HOSTS`.
 4. **Run `python manage.py check --deploy`** and read what it says.
 5. **Back up PostgreSQL and the media directory together.** The history tables
    are in the database, the evidence artefacts are on disk, and a restore that

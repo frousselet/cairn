@@ -2,7 +2,13 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 """Test settings - SQLite in-memory, fast password hashing, migrations bypassed."""
 
-from core.settings import *  # noqa: F401, F403
+import os
+
+# The settings refuse to load outside DEBUG with the public placeholder key.
+# The suite runs with DEBUG off, like production, so it brings a key of its own.
+os.environ.setdefault("SECRET_KEY", "test-suite-only-key-never-used-by-a-running-instance")
+
+from core.settings import *  # noqa: E402, F401, F403
 
 DATABASES = {
     "default": {

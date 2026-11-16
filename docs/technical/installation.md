@@ -1,6 +1,6 @@
 # Installation
 
-Cairn runs as a Docker stack: the Django application (ASGI/Uvicorn), PostgreSQL 16 and Redis 7 (real-time features). For local development and debugging, it can also run in pure Python with no Docker (see [Option 3](#option-3--run-in-pure-python-for-debugging-mise)).
+Cairn runs as a Docker stack: the Django application (ASGI/Uvicorn), PostgreSQL 18 and Redis 8 (real-time features). For local development and debugging, it can also run in pure Python with no Docker (see [Option 3](#option-3--run-in-pure-python-for-debugging-mise)).
 
 ## Prerequisites
 
@@ -38,9 +38,14 @@ services:
     image: frousselet/cairn:latest
     ports:
       - "8000:8000"
+    volumes:
+      # Uploaded files (evidence, documents, logos). Without this volume they
+      # live in the container and are lost the next time it is recreated.
+      - media_data:/app/media
     environment:
-      SECRET_KEY: change-me-to-a-random-secret-key
-      DEBUG: "False"
+      # Required : a long random value of your own. Cairn refuses to start
+      # with a placeholder. python -c "import secrets; print(secrets.token_urlsafe(64))"
+      SECRET_KEY: "<paste your own random value>"
       ALLOWED_HOSTS: localhost,127.0.0.1
       POSTGRES_DB: open_grc
       POSTGRES_USER: postgres
@@ -56,7 +61,7 @@ services:
         condition: service_healthy
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     ports:
       - "6379:6379"
     healthcheck:
@@ -66,9 +71,9 @@ services:
       retries: 5
 
   db:
-    image: postgres:16
+    image: postgres:18
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     environment:
       POSTGRES_DB: open_grc
       POSTGRES_USER: postgres
@@ -81,7 +86,27 @@ services:
 
 volumes:
   postgres_data:
+  media_data:
 ```
+
+Three things in this file are not optional.
+
+- **`SECRET_KEY`** must be your own. `DEBUG` is off unless you turn it on, and
+  with it off Cairn refuses to start on a placeholder key.
+- **The `media_data` volume** holds every uploaded file : audit evidence,
+  document versions, incident artefacts. A deployment without it loses them
+  when the container is recreated, which is what every upgrade does.
+- **The PostgreSQL major version is fixed** (`postgres:18`), on purpose. A new
+  major cannot read the previous one's data directory, so moving to it is a
+  dump and a restore, never a side effect of `docker compose pull`. An
+  installation created on PostgreSQL 16 stays on `postgres:16` (with its
+  `postgres_data:/var/lib/postgresql/data` mount) until you migrate it.
+
+The container starts as root only to hand the media and static directories to
+the unprivileged `cairn` account (uid 1000), then runs everything, the web
+workers included, as that account. A media volume written by an earlier,
+root-running image is handed over on first start. To run as another account,
+set `user:` on the service : the container then runs as given.
 
 Then start the stack:
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Cairn is a Governance, Risk and Compliance (GRC) platform built with Django 5.2, PostgreSQL 16, and Bootstrap 5.3 + HTMX for the frontend. It covers organizational context, asset management, risk management (ISO 27005/EBIOS RM), and compliance tracking.
+Cairn is a Governance, Risk and Compliance (GRC) platform built with Django 5.2, PostgreSQL 18, and Bootstrap 5.3 + HTMX for the frontend. It covers organizational context, asset management, risk management (ISO 27005/EBIOS RM), and compliance tracking.
 
 ## Development Commands
 
@@ -99,7 +99,7 @@ python manage.py collectstatic --noinput  # Collect static files
 
 GitHub Actions (`.github/workflows/`) is the CI:
 
-- `tests.yml` (Tests) - on every push to `main` and on pull requests, two jobs: `test` installs dependencies, runs `ruff check`, compiles `.po` translations, then runs `pytest -x -v --cov` on SQLite; `test (PostgreSQL, migrations)` checks that models and migrations are in sync (`makemigrations --check`) and runs the same suite on PostgreSQL 16 with every migration replayed.
+- `tests.yml` (Tests) - on every push to `main` and on pull requests, two jobs: `test` installs dependencies, runs `ruff check`, compiles `.po` translations, then runs `pytest -x -v --cov` on SQLite; `test (PostgreSQL, migrations)` checks that models and migrations are in sync (`makemigrations --check`) and runs the same suite on PostgreSQL 18 (the major the compose file ships) with every migration replayed.
 - `docker-publish.yml` (Docker) - on version tags (`v*`): builds and pushes the Docker image to Docker Hub (`frousselet/cairn`) with semver + `latest` tags. Requires the `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` repository secrets.
 - `docs.yml` (Documentation) - on every push to `main`, on pull requests and on version tags: verifies the generated reference is current (`manage.py generate_docs --check`) and that every internal documentation link resolves (`scripts/build_wiki.py --check`); on a tag it also builds the wiki and pushes it to the wiki repository. Wiki push needs a `WIKI_DEPLOY_KEY` repository secret : the private half of a **deploy key** with write access on this repository (`GITHUB_TOKEN` generally cannot write to a wiki, and fine-grained PATs have no wiki permission at all). Never use a classic PAT here : its `repo` scope would grant the workflow write access to every repository the account owns, whereas a deploy key reaches this repository alone. Without the secret the job prints the setup steps and fails rather than dying on an opaque git error.
 - CodeQL scanning runs on pushes to `main` and on a schedule.

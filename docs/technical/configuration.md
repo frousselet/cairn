@@ -13,7 +13,7 @@ covers what to think about rather than what exists.
 | Variable | Why |
 | --- | --- |
 | `SECRET_KEY` | Signs sessions, password-reset links and Trust Center download links. The shipped default is a public placeholder; a deployment that kept it could have its sessions forged, so **Cairn refuses to start with a placeholder key once `DEBUG` is off**. Generate 50+ random characters : `python -c "import secrets; print(secrets.token_urlsafe(64))"`. |
-| `DEBUG` | Must be `False` in production. Left on, a crash returns a full traceback page including settings and local variables. |
+| `DEBUG` | Off by default, and must stay off in production : left on, a crash returns a full traceback page including settings and local variables. Development turns it on (`.env.example` does, and so does `core.settings_local`). |
 | `ALLOWED_HOSTS` | The hostnames the application answers on. A wildcard reopens the Host-header attacks Django's check exists to close. |
 | `POSTGRES_PASSWORD` | The compose file ships `postgres/postgres`. |
 

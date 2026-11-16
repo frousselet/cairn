@@ -113,6 +113,20 @@ The image declares it as its `HEALTHCHECK`, so `docker ps` shows the container
 as `healthy` once migrations have run and the server answers. The compose file
 also gates `web` on the `db` and `redis` healthchecks.
 
+## The account the container runs as
+
+No web worker runs as root. The container starts as root for one job : handing
+`/app/media` and `/app/staticfiles` to the unprivileged `cairn` account (uid
+1000) when they are still root-owned, which is the case of a media volume
+written by an image older than this arrangement. It then restarts its
+entrypoint as that account and never goes back.
+
+- With the development bind-mount (`.:/app`), the account is the owner of the
+  checkout on the host, so generated files stay yours.
+- Started with `user:` (or an orchestrator's `runAsUser`), the container runs
+  as given and skips the hand-over. That account must be able to write the
+  media volume.
+
 ## Error pages
 
 Outside `DEBUG`, a missing page, a refused permission, an expired form (CSRF)
