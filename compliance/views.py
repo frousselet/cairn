@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
+from django.db.models import F
 from django.db.models import Prefetch
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
@@ -28,6 +29,7 @@ from django.views.generic import (
 from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
 from controls.integrations import linked_controls
+from core.db import NaturalSortKey
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
@@ -175,8 +177,13 @@ class FrameworkDetailView(
         ctx = super().get_context_data(**kwargs)
         fw = self.object
         ctx["sections"] = fw.sections.filter(parent_section__isnull=True).order_by("order")
-        ctx["requirements"] = fw.requirements.select_related("section", "owner").order_by(
-            "section__order", "requirement_number"
+        # Natural order of the numbers (A.5.2 before A.5.10), as in the
+        # requirements list : now that the card shows the first rows only, a
+        # lexicographic order would put A.5.10 right after A.5.1.
+        ctx["requirements"] = (
+            fw.requirements.select_related("section", "owner")
+            .annotate(_number_order=NaturalSortKey(F("requirement_number")))
+            .order_by("section__order", "_number_order", "pk")
         )
         ctx["assessments"] = fw.assessments.order_by("-assessment_start_date")[:10]
         return ctx

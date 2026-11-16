@@ -26,12 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The lifecycle editor shows its steps, transitions and JSON as stacked cards instead of tabs.
 - The assessment result toggles read the planning / fieldwork phase from the assessment instead of comparing a status string in the template.
 - EBIOS RM workshop 5 measures can be linked while they are planned, in progress or overdue.
-- List pages read their tags, scope ancestors and filter options in a constant number of queries instead of one per row or per option.
+- List pages read their tags, scope ancestors and filter options in a constant number of queries instead of one per row or per option, and so do the tag list and the dashboard's indicators.
 - Detail pages show the lifecycle as a one-line bar (the path the record is on, each possible move as a button named after its transition, the full graph on demand) instead of a full-width diagram.
 - Pages are denser : content starts near the top of the window, record titles step down a size and keep their actions beside them, and key figures form a slim strip above the content.
 - The sidebar menu rows share one size, weight and hover, whether they open a page or a group.
 - Detail pages are shorter : traceability becomes a single line, an empty section a line of small print, long embedded tables show their first rows behind "Show all", and an audit folds its requirements by section.
 - A detail page with six sections or more gains a "Jump to a section" menu in its header.
+- The incident registers show their references as the clickable pill every other list uses.
+- The dashboard summary heads its card on one line when there is no written briefing, instead of leaving a column empty.
 - Empty selects read "Choose…" or "None" instead of a row of dashes, and on a phone the form step indicator shows the current step's name in full.
 - The container runs as an unprivileged account (uid 1000) instead of root, handing over a media volume written by an earlier image on first start.
 - `DEBUG` is off unless set, instead of on : development environments set `DEBUG=True` (`.env.example` and `core.settings_local` do).
@@ -56,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A lifecycle edited in the administration was only applied by the worker process that saved it; every worker now picks it up within `LIFECYCLE_CACHE_TTL` seconds (5 by default).
 - Pages touching the cache (the update check, the assistant briefing, the Trust Center rate limiter) failed with a server error whenever Redis was unreachable; the cache now degrades to a miss and logs the outage.
 - The Docker-less development settings (`core.settings_local`) still required Redis for the cache.
+- A framework listed its requirements in lexicographic order (A.5.10 before A.5.2) instead of the natural order of their numbers.
 - Two developer comments were printed as text on the management review page and in an incident's regulatory obligations.
 - The pages of an API list could repeat a record and skip another, on the lists with no default order and under any `?ordering=` with ties; every list is now paginated in a total order.
 - The `date_before` filter of the risks API left out the risks created on the day given.

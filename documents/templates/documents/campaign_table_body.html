@@ -4,7 +4,7 @@
 {% for c in campaigns %}
 <tr>
   <td data-col="reference" class="text-nowrap">
-    <a href="{% url 'documents:acknowledgementcampaign-detail' c.pk %}" class="cell-link">{{ c.reference }}</a>
+    <a href="{% url 'documents:acknowledgementcampaign-detail' c.pk %}" class="ref">{{ c.reference }}</a>
   </td>
   <td data-col="name">
     <a href="{% url 'documents:acknowledgementcampaign-detail' c.pk %}" class="cell-link">{{ c.name }}</a>

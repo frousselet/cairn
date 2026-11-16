@@ -1307,6 +1307,8 @@
     if (pendingEl) pendingEl.remove();
     var countEl = card.querySelector('[data-ai-count]');
     if (textEl && countEl) { textEl.textContent = countEl.textContent; fadeIn(textEl); }
+    // One sentence, not a briefing : the card takes its single-column layout.
+    card.classList.add('ask-cairn--brief');
   }
   fetch('{% url "dashboard-ask-cairn-briefing" %}', {
     method: 'POST',

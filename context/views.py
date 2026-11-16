@@ -139,7 +139,15 @@ def build_indicator_slot(ind, show_chart):
     """
     # Fetch enough measurements for sparklines when the chart is enabled.
     limit = 20 if show_chart else 2
-    measurements = list(ind.measurements.order_by("-recorded_at")[:limit])
+    if "measurements" in getattr(ind, "_prefetched_objects_cache", {}):
+        # The caller prefetched them (the dashboard does, for every indicator
+        # at once) : ordering and slicing in the database here would discard
+        # that and issue one query per indicator.
+        measurements = sorted(
+            ind.measurements.all(), key=lambda m: m.recorded_at, reverse=True
+        )[:limit]
+    else:
+        measurements = list(ind.measurements.order_by("-recorded_at")[:limit])
     current = measurements[0] if measurements else None
     previous = measurements[1] if len(measurements) > 1 else None
 
@@ -1410,19 +1418,26 @@ class TagListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     def get_queryset(self):
         from django.db.models.fields.related import ManyToManyRel
 
-        qs = Tag.objects.all()
-        tags = list(qs)
+        # Usage of every tag, one grouped query per tagged model : counting
+        # relation by relation for each tag cost (tags x models) queries.
+        usage_by_tag = {}
+        for field in Tag._meta.get_fields():
+            if not isinstance(field, ManyToManyRel):
+                continue
+            tag_column = field.field.m2m_reverse_field_name()
+            model_name = str(field.related_model._meta.verbose_name_plural)
+            counts = (
+                field.through._default_manager
+                .values_list(f"{tag_column}_id")
+                .annotate(n=Count("pk"))
+            )
+            for tag_id, count in counts:
+                usage_by_tag.setdefault(tag_id, []).append((model_name, count))
+
+        tags = list(Tag.objects.all())
         for tag in tags:
-            usage = []
-            for field in Tag._meta.get_fields():
-                if isinstance(field, ManyToManyRel):
-                    accessor = field.get_accessor_name()
-                    count = getattr(tag, accessor).count()
-                    if count > 0:
-                        model_name = field.related_model._meta.verbose_name_plural
-                        usage.append((str(model_name), count))
-            tag.usage = usage
-            tag.usage_total = sum(c for _, c in usage)
+            tag.usage = usage_by_tag.get(tag.pk, [])
+            tag.usage_total = sum(c for _, c in tag.usage)
             tag.as_list = [tag]  # for {% tag_list %}, which renders a sequence
         return tags
 

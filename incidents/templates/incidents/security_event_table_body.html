@@ -4,7 +4,7 @@
 {% for e in events %}
 <tr>
   <td data-col="reference">
-    <a href="{% url 'incidents:event-detail' e.pk %}" class="cell-link">{{ e.reference }}</a>
+    <a href="{% url 'incidents:event-detail' e.pk %}" class="ref">{{ e.reference }}</a>
   </td>
   <td data-col="title">
     <span class="cell-stack">

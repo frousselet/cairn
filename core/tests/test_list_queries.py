@@ -80,6 +80,57 @@ def test_role_list_cost_does_not_grow_with_its_rows(admin_client):
     assert longer == short
 
 
+def test_tag_list_cost_does_not_grow_with_its_tags(admin_client):
+    """Usage was counted relation by relation for each tag."""
+    url = reverse("context:tag-list")
+    issue = IssueFactory()
+    for i in range(2):
+        issue.tags.add(Tag.objects.create(name=f"probe-{i}"))
+    short = _queries(admin_client, url)
+    for i in range(2, 12):
+        issue.tags.add(Tag.objects.create(name=f"probe-{i}"))
+    longer = _queries(admin_client, url)
+    assert longer == short
+
+
+def test_tag_list_still_counts_usage(admin_client):
+    tag = Tag.objects.create(name="counted")
+    IssueFactory().tags.add(tag)
+    IssueFactory().tags.add(tag)
+    response = admin_client.get(reverse("context:tag-list"))
+    listed = next(t for t in response.context["tags"] if t.pk == tag.pk)
+    assert listed.usage_total == 2
+    assert [count for _name, count in listed.usage] == [2]
+
+
+def test_dashboard_reads_indicator_measurements_from_the_prefetch():
+    """The dashboard prefetches the measurements of its indicators; ordering
+    and slicing them in the database threw that away, one query per indicator."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from context.models import Indicator, IndicatorMeasurement
+    from context.views import build_indicator_slot
+
+    created = Indicator.objects.create(
+        review_frequency="monthly", first_review_date="2025-01-01", name="Probe",
+        indicator_type="technical", collection_method="manual", format="number",
+    )
+    now = timezone.now()
+    for days, value in ((3, "10"), (2, "20"), (1, "30")):
+        IndicatorMeasurement.objects.create(
+            indicator=created, value=value, recorded_at=now - timedelta(days=days),
+        )
+    indicator = Indicator.objects.prefetch_related("measurements").get(pk=created.pk)
+    with CaptureQueriesContext(connection) as ctx:
+        slot = build_indicator_slot(indicator, True)
+    assert not [q for q in ctx.captured_queries if "indicatormeasurement" in q["sql"]]
+    # Same answer as the database ordering gave : the latest measurement first.
+    assert str(slot["current_measurement"].value) == "30"
+    assert str(slot["previous_measurement"].value) == "20"
+
+
 def test_filter_options_are_read_once_and_not_per_option(admin_client):
     """The advanced filter lists the records of each relation. It was built
     twice per request and labelled each option with a query of its own."""

@@ -100,3 +100,23 @@ def test_no_template_comment_spans_several_lines():
             if opened.search(line):
                 offenders.append(f"{path.relative_to(settings.BASE_DIR)}:{number}")
     assert not offenders, "multi-line {# #} comments are printed as text :\n" + "\n".join(offenders)
+
+
+def test_a_list_shows_its_reference_as_the_clickable_pill():
+    """Table standard, rule 4 : the reference column is `<a class="ref">`. The
+    newer registers had drifted to a plain link, so a reference looked like one
+    thing in the risk register and another in the controls register."""
+    import re
+    from pathlib import Path
+
+    from django.conf import settings
+
+    own_reference_as_plain_link = re.compile(r'class="cell-link">\{\{ \w+\.reference \}\}</a>')
+    offenders = []
+    for path in Path(settings.BASE_DIR).rglob("*table_body*.html"):
+        parts = path.relative_to(settings.BASE_DIR).parts
+        if parts[0] in {".venv", "staticfiles"}:
+            continue
+        if own_reference_as_plain_link.search(path.read_text(encoding="utf-8")):
+            offenders.append(str(path.relative_to(settings.BASE_DIR)))
+    assert not offenders, "reference rendered as a plain link :\n" + "\n".join(offenders)
