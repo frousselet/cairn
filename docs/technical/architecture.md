@@ -50,7 +50,27 @@ and the Trust Center rate limiter. Django's default per-process `LocMemCache`
 would make each of those locks local to one worker and silently ineffective.
 
 The test settings override both with in-memory equivalents, because the suite is
-single-process and must not need a live Redis.
+single-process and must not need a live Redis. So do the Docker-less development
+settings (`core.settings_local`).
+
+**Required is not the same as fatal.** Nothing in the cache is a record : it
+holds derived data (the latest release, an assistant briefing, a rate-limit
+counter, a lock). The cache backend is `core.cache.ResilientRedisCache`, which
+answers as an empty cache would when Redis is unreachable (a read misses, a
+write is dropped, `add()` reports that nothing was stored) and logs the outage
+once a minute, instead of raising on every call. A Redis restart therefore
+costs the coordination described above for its duration, not a server error on
+every page that touches the cache. The 2-second socket timeouts keep a silent
+Redis (a network partition, a frozen host) from holding each request for the
+kernel's connect timeout. The Channels layer already degraded the same way :
+a failed broadcast is logged and dropped.
+
+One piece of state is deliberately **not** in Redis : the lifecycle definitions
+edited in the administration are cached in each worker process, because they
+are read on almost every request. A worker revalidates that cache against the
+table at most every `LIFECYCLE_CACHE_TTL` seconds (5 by default, one aggregate
+query), so an edit saved by one worker reaches the others within that delay
+rather than at their next restart.
 
 ## Applications
 

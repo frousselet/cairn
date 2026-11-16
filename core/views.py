@@ -1642,9 +1642,15 @@ def ongoing_audits_queryset(user, today):
     """
     from compliance.constants import AssessmentStatus
 
+    from core.scoping import filter_queryset_by_scopes
+
     qs = ComplianceAssessment.objects.all()
-    if not user.is_superuser:
-        qs = qs.filter(scopes__id__in=user.get_allowed_scope_ids()).distinct()
+    # None means "no scope restriction" (a superuser, or a group that allows
+    # every scope) : filtering on it raised and took the whole dashboard down
+    # for every such user who is not a superuser.
+    scope_ids = user.get_allowed_scope_ids()
+    if scope_ids is not None:
+        qs = filter_queryset_by_scopes(qs, scope_ids)
     return (
         qs.filter(
             assessment_start_date__lte=today,

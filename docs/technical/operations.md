@@ -108,3 +108,5 @@ file already gates `web` on the `db` and `redis` healthchecks.
 | Static files 404 under `DEBUG=False` | `collectstatic` never ran |
 | The live dashboard never updates | Redis unreachable, so the Channels layer has no transport |
 | Widgets show stale counts across reloads | The cache fell back to per-process memory; check `REDIS_HOST` |
+| `Cache unreachable (... failed ...). Serving without it.` in the log, once a minute | Redis is down or unreachable. The application keeps serving from the database; the About modal re-asks GitHub, the Trust Center rate limiter lets requests through and the scheduler locks are not taken until it is back |
+| A lifecycle edited in the administration seems to apply on some requests only | Expected for up to `LIFECYCLE_CACHE_TTL` seconds (5 by default) : each worker re-reads the definitions at that pace |

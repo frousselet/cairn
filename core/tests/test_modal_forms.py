@@ -144,3 +144,24 @@ def test_too_many_rows_raises():
 
     with pytest.raises(ImproperlyConfigured, match="4 layout rows"):
         FatForm()
+
+
+@pytest.mark.django_db
+def test_a_model_rule_on_a_field_the_form_lacks_is_reported_not_raised():
+    """`Model.clean()` naming a field outside the form used to raise
+    "has no field named ..." (a server error) instead of a validation error."""
+    from compliance.constants import FindingSource, FindingType
+    from compliance.forms import FindingRegisterForm
+
+    form = FindingRegisterForm(data={
+        "source": FindingSource.COMPLAINT,
+        "finding_type": FindingType.MINOR_NON_CONFORMITY,
+        "description": "x",
+    })
+    # Force the model rule : an audit source with no audit, as a stale or
+    # forged instance would carry.
+    form.fields["source"].choices = list(FindingSource.choices)
+    form.data = {**form.data, "source": FindingSource.AUDIT}
+
+    assert form.is_valid() is False
+    assert form.non_field_errors()

@@ -38,6 +38,7 @@ importable from any layer (views, DRF, MCP, reports).
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from enum import Enum
@@ -405,8 +406,20 @@ class Lifecycle:
 LIFECYCLE_REGISTRY: dict[str, Lifecycle] = {}
 
 #: name -> built :class:`Lifecycle` from the DB (``None`` = no DB row). Cleared
-#: whenever a ``LifecycleDefinition`` is saved / deleted.
+#: whenever a ``LifecycleDefinition`` is saved / deleted in this process, and
+#: revalidated against the table for the edits made by the other workers.
 _DB_LIFECYCLE_CACHE: dict[str, "Lifecycle | None"] = {}
+
+#: Seconds a worker trusts its cache before re-reading the table's stamp. The
+#: cache lives in each worker process while a definition is edited in only one
+#: of them : without this check the others would keep enforcing the previous
+#: lifecycle until they restart.
+LIFECYCLE_CACHE_TTL_DEFAULT = 5.0
+
+#: (row count, latest ``updated_at``) the cache was built against, and when it
+#: was last compared with the table (``time.monotonic()``).
+_cache_stamp: tuple | None = None
+_cache_checked_at: float = 0.0
 
 
 def register_lifecycle(lifecycle: Lifecycle) -> Lifecycle:
@@ -422,7 +435,40 @@ def register_lifecycle(lifecycle: Lifecycle) -> Lifecycle:
 
 def clear_lifecycle_cache() -> None:
     """Drop the built-from-DB lifecycle cache (call after any definition edit)."""
+    global _cache_stamp, _cache_checked_at
     _DB_LIFECYCLE_CACHE.clear()
+    _cache_stamp = None
+    _cache_checked_at = 0.0
+
+
+def _revalidate_lifecycle_cache() -> None:
+    """Drop the cache when the definitions table changed under this process.
+
+    One aggregate query at most every ``LIFECYCLE_CACHE_TTL`` seconds per
+    worker : cheap enough to run on the request path, and it bounds how long a
+    worker can serve a lifecycle another worker has just replaced. A database
+    error (table not migrated yet) leaves the cache as it is.
+    """
+    global _cache_stamp, _cache_checked_at
+    from django.conf import settings
+
+    ttl = getattr(settings, "LIFECYCLE_CACHE_TTL", LIFECYCLE_CACHE_TTL_DEFAULT)
+    now = time.monotonic()
+    if _cache_checked_at and now - _cache_checked_at < ttl:
+        return
+    try:
+        from django.db.models import Count, Max
+
+        from core.models import LifecycleDefinition
+
+        row = LifecycleDefinition.objects.aggregate(count=Count("pk"), last=Max("updated_at"))
+    except Exception:
+        return
+    _cache_checked_at = now
+    stamp = (row["count"], row["last"])
+    if stamp != _cache_stamp:
+        _DB_LIFECYCLE_CACHE.clear()
+        _cache_stamp = stamp
 
 
 def _db_lifecycle(name: str) -> "Lifecycle | None":
@@ -431,6 +477,7 @@ def _db_lifecycle(name: str) -> "Lifecycle | None":
     Resilient to the table not existing yet (initial migrate, ``--run-syncdb``)
     and to an invalid stored JSON : both fall through to the code default.
     """
+    _revalidate_lifecycle_cache()
     if name in _DB_LIFECYCLE_CACHE:
         return _DB_LIFECYCLE_CACHE[name]
     built = None
