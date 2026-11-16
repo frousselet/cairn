@@ -295,290 +295,9 @@
         <span class="sidebar-tooltip">{% trans "Tasks" %}</span>
       </a>
 
-      {# ── Gouvernance ─────────────────────────────────── #}
-      <div class="sidebar-section">{% trans "Governance" %}</div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navGouv" aria-controls="navGouv" aria-expanded="false">
-        <i class="bi bi-diagram-3"></i> <span class="sidebar-link-text">{% trans "Organization" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Organization" %}</span>
-      </button>
-      <div class="collapse" id="navGouv" data-bs-parent=".sidebar-body">
-        <a href="{% url 'context:scope-list' %}" class="sidebar-link sidebar-sub">{% trans "Scopes" %}</a>
-        <a href="{% url 'context:issue-list' %}" class="sidebar-link sidebar-sub">{% trans "Issues" %}</a>
-        <a href="{% url 'context:stakeholder-list' %}" class="sidebar-link sidebar-sub">{% trans "Stakeholders" %}</a>
-        <a href="{% url 'context:objective-list' %}" class="sidebar-link sidebar-sub">{% trans "Objectives" %}</a>
-        <a href="{% url 'context:swot-list' %}" class="sidebar-link sidebar-sub">{% trans "SWOT analyses" %}</a>
-      </div>
-      <a href="{% url 'context:role-list' %}" class="sidebar-link">
-        <i class="bi bi-person-badge"></i> <span class="sidebar-link-text">{% trans "Roles" %}</span>
-        <span class="sidebar-tooltip">{% trans "Roles" %}</span>
-      </a>
-      <a href="{% url 'context:activity-list' %}" class="sidebar-link">
-        <i class="bi bi-activity"></i> <span class="sidebar-link-text">{% trans "Activities" %}</span>
-        <span class="sidebar-tooltip">{% trans "Activities" %}</span>
-      </a>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navIndicateurs" aria-controls="navIndicateurs" aria-expanded="false">
-        <i class="bi bi-bar-chart-line"></i> <span class="sidebar-link-text">{% trans "Indicators" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Indicators" %}</span>
-      </button>
-      <div class="collapse" id="navIndicateurs" data-bs-parent=".sidebar-body">
-        <a href="{% url 'context:indicator-organizational-list' %}" class="sidebar-link sidebar-sub">{% trans "Organizational" %}</a>
-        <a href="{% url 'context:indicator-technical-list' %}" class="sidebar-link sidebar-sub">{% trans "Technical" %}</a>
-      </div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navStrategie" aria-controls="navStrategie" aria-expanded="false">
-        <i class="bi bi-compass"></i> <span class="sidebar-link-text">{% trans "Strategy" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Strategy" %}</span>
-      </button>
-      <div class="collapse" id="navStrategie" data-bs-parent=".sidebar-body">
-        <a href="{% url 'reports:report-list' %}" class="sidebar-link sidebar-sub">{% trans "Reports" %}</a>
-        <a href="{% url 'reports:management-review-list' %}" class="sidebar-link sidebar-sub">{% trans "Management reviews" %}</a>
-      </div>
-
-      {# ── Actifs ──────────────────────────────────────── #}
-      <div class="sidebar-section">{% trans "Assets" %}</div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navActifs" aria-controls="navActifs" aria-expanded="false">
-        <i class="bi bi-box-seam"></i> <span class="sidebar-link-text">{% trans "Goods" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Goods" %}</span>
-      </button>
-      <div class="collapse" id="navActifs" data-bs-parent=".sidebar-body">
-        <a href="{% url 'assets:essential-asset-list' %}" class="sidebar-link sidebar-sub">{% trans "Essential assets" %}</a>
-        <a href="{% url 'assets:support-asset-list' %}" class="sidebar-link sidebar-sub">{% trans "Support assets" %}</a>
-        <a href="{% url 'assets:group-list' %}" class="sidebar-link sidebar-sub">{% trans "Asset groups" %}</a>
-      </div>
-      <a href="{% url 'assets:site-list' %}" class="sidebar-link">
-        <i class="bi bi-building"></i> <span class="sidebar-link-text">{% trans "Sites" %}</span>
-        <span class="sidebar-tooltip">{% trans "Sites" %}</span>
-      </a>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navSuppliers" aria-controls="navSuppliers" aria-expanded="false">
-        <i class="bi bi-truck"></i> <span class="sidebar-link-text">{% trans "Suppliers" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Suppliers" %}</span>
-      </button>
-      <div class="collapse" id="navSuppliers" data-bs-parent=".sidebar-body">
-        <a href="{% url 'assets:supplier-list' %}" class="sidebar-link sidebar-sub">{% trans "Suppliers" %}</a>
-        <a href="{% url 'assets:supplier-type-list' %}" class="sidebar-link sidebar-sub">{% trans "Supplier types" %}</a>
-      </div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navDocuments" aria-controls="navDocuments" aria-expanded="false">
-        <i class="bi bi-file-earmark-text"></i> <span class="sidebar-link-text">{% trans "Documents" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Documents" %}</span>
-      </button>
-      <div class="collapse" id="navDocuments" data-bs-parent=".sidebar-body">
-        <a href="{% url 'assets:contract-list' %}" class="sidebar-link sidebar-sub">{% trans "Contracts" %}</a>
-        <a href="{% url 'assets:certificate-list' %}" class="sidebar-link sidebar-sub">{% trans "Certificates" %}</a>
-      </div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navDeps" aria-controls="navDeps" aria-expanded="false">
-        <i class="bi bi-share"></i> <span class="sidebar-link-text">{% trans "Dependencies" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Dependencies" %}</span>
-      </button>
-      <div class="collapse" id="navDeps" data-bs-parent=".sidebar-body">
-        <a href="{% url 'assets:dependency-list' %}" class="sidebar-link sidebar-sub">{% trans "Asset dependencies" %}</a>
-        <a href="{% url 'assets:supplier-dependency-list' %}" class="sidebar-link sidebar-sub">{% trans "Supplier dependencies" %}</a>
-        <a href="{% url 'assets:site-asset-dependency-list' %}" class="sidebar-link sidebar-sub">{% trans "Site–asset dependencies" %}</a>
-        <a href="{% url 'assets:site-supplier-dependency-list' %}" class="sidebar-link sidebar-sub">{% trans "Site–supplier dependencies" %}</a>
-        <a href="{% url 'assets:dependency-graph' %}" class="sidebar-link sidebar-sub">{% trans "Graph view" %}</a>
-      </div>
-
-      {# ── Gestion des risques ───────────────────────── #}
-      <div class="sidebar-section">{% trans "Risk management" %}</div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navRiskAssess" aria-controls="navRiskAssess" aria-expanded="false">
-        <i class="bi bi-clipboard-data"></i> <span class="sidebar-link-text">{% trans "Assessments" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Assessments" %}</span>
-      </button>
-      <div class="collapse" id="navRiskAssess" data-bs-parent=".sidebar-body">
-        <a href="{% url 'risks:assessment-list' %}" class="sidebar-link sidebar-sub">{% trans "Assessments" %}</a>
-        <a href="{% url 'risks:criteria-list' %}" class="sidebar-link sidebar-sub">{% trans "Criteria" %}</a>
-      </div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navRiskReg" aria-controls="navRiskReg" aria-expanded="false">
-        <i class="bi bi-shield-exclamation"></i> <span class="sidebar-link-text">{% trans "Register" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Register" %}</span>
-      </button>
-      <div class="collapse" id="navRiskReg" data-bs-parent=".sidebar-body">
-        <a href="{% url 'risks:risk-list' %}" class="sidebar-link sidebar-sub">{% trans "Risks" %}</a>
-        <a href="{% url 'risks:treatment-plan-list' %}" class="sidebar-link sidebar-sub">{% trans "Treatment plans" %}</a>
-        <a href="{% url 'risks:acceptance-list' %}" class="sidebar-link sidebar-sub">{% trans "Acceptances" %}</a>
-      </div>
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navRiskCatalogs" aria-controls="navRiskCatalogs" aria-expanded="false">
-        <i class="bi bi-journal-bookmark"></i> <span class="sidebar-link-text">{% trans "Catalogs" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Catalogs" %}</span>
-      </button>
-      <div class="collapse" id="navRiskCatalogs" data-bs-parent=".sidebar-body">
-        <a href="{% url 'risks:threat-list' %}" class="sidebar-link sidebar-sub">{% trans "Threats" %}</a>
-        <a href="{% url 'risks:vulnerability-list' %}" class="sidebar-link sidebar-sub">{% trans "Vulnerabilities" %}</a>
-      </div>
-
-      {# ── Conformité ──────────────────────────────────── #}
-      <div class="sidebar-section">{% trans "Compliance" %}</div>
-      <a href="{% url 'compliance:framework-list' %}" class="sidebar-link">
-        <i class="bi bi-journal-bookmark"></i> <span class="sidebar-link-text">{% trans "Frameworks" %}</span>
-        <span class="sidebar-tooltip">{% trans "Frameworks" %}</span>
-      </a>
-      <a href="{% url 'compliance:requirement-list' %}" class="sidebar-link">
-        <i class="bi bi-list-check"></i> <span class="sidebar-link-text">{% trans "Requirements" %}</span>
-        <span class="sidebar-tooltip">{% trans "Requirements" %}</span>
-      </a>
-      <a href="{% url 'compliance:assessment-list' %}" class="sidebar-link">
-        <i class="bi bi-clipboard-data"></i> <span class="sidebar-link-text">{% trans "Audits & compliance" %}</span>
-        <span class="sidebar-tooltip">{% trans "Audits & compliance" %}</span>
-      </a>
-      <a href="{% url 'compliance:finding-list' %}" class="sidebar-link">
-        <i class="bi bi-exclamation-diamond"></i> <span class="sidebar-link-text">{% trans "Nonconformities" %}</span>
-        <span class="sidebar-tooltip">{% trans "Nonconformities" %}</span>
-      </a>
-      <a href="{% url 'compliance:mapping-list' %}" class="sidebar-link">
-        <i class="bi bi-arrow-left-right"></i> <span class="sidebar-link-text">{% trans "Mappings" %}</span>
-        <span class="sidebar-tooltip">{% trans "Mappings" %}</span>
-      </a>
-      <a href="{% url 'compliance:action-plan-list' %}" class="sidebar-link">
-        <i class="bi bi-card-checklist"></i> <span class="sidebar-link-text">{% trans "Action plans" %}</span>
-        <span class="sidebar-tooltip">{% trans "Action plans" %}</span>
-      </a>
-
-      {# ── Controls ────────────────────────────────────── #}
-      {% has_perm "controls.control.read" as can_read_controls %}
-      {% has_perm "controls.test.read" as can_read_control_tests %}
-      {% if can_read_controls or can_read_control_tests %}
-      <div class="sidebar-section">{% trans "Controls" %}</div>
-      {% if can_read_controls %}
-      <a href="{% url 'controls:control-list' %}" class="sidebar-link">
-        <i class="bi bi-shield-check"></i> <span class="sidebar-link-text">{% trans "Controls" %}</span>
-        <span class="sidebar-tooltip">{% trans "Controls" %}</span>
-      </a>
-      {% endif %}
-      {% if can_read_control_tests %}
-      <a href="{% url 'controls:controltest-list' %}" class="sidebar-link">
-        <i class="bi bi-clipboard-check"></i> <span class="sidebar-link-text">{% trans "Tests" %}</span>
-        <span class="sidebar-tooltip">{% trans "Tests" %}</span>
-      </a>
-      {% endif %}
-      {% endif %}
-
-      {# ── Documents ───────────────────────────────────── #}
-      {% has_perm "documents.policy.read" as can_read_policies %}
-      {% has_perm "documents.acknowledgement.read" as can_read_campaigns %}
-      {% if can_read_policies or can_read_campaigns %}
-      <div class="sidebar-section">{% trans "Documents" %}</div>
-      {% if can_read_policies %}
-      <a href="{% url 'documents:policy-list' %}" class="sidebar-link">
-        <i class="bi bi-file-earmark-text"></i> <span class="sidebar-link-text">{% trans "Policies" %}</span>
-        <span class="sidebar-tooltip">{% trans "Policies" %}</span>
-      </a>
-      {% endif %}
-      {% if can_read_campaigns %}
-      <a href="{% url 'documents:campaign-list' %}" class="sidebar-link">
-        <i class="bi bi-patch-check"></i> <span class="sidebar-link-text">{% trans "Acknowledgement campaigns" %}</span>
-        <span class="sidebar-tooltip">{% trans "Acknowledgement campaigns" %}</span>
-      </a>
-      {% endif %}
-      {% endif %}
-
-      {# ── Incidents ───────────────────────────────────── #}
-      <div class="sidebar-section">{% trans "Incidents" %}</div>
-      <a href="{% url 'incidents:incident-list' %}" class="sidebar-link">
-        <i class="bi bi-fire"></i> <span class="sidebar-link-text">{% trans "Incidents" %}</span>
-        <span class="sidebar-tooltip">{% trans "Incidents" %}</span>
-      </a>
-      <a href="{% url 'incidents:event-list' %}" class="sidebar-link">
-        <i class="bi bi-broadcast"></i> <span class="sidebar-link-text">{% trans "Security events" %}</span>
-        <span class="sidebar-tooltip">{% trans "Security events" %}</span>
-      </a>
-      <a href="{% url 'incidents:notification-list' %}" class="sidebar-link">
-        <i class="bi bi-hourglass-split"></i> <span class="sidebar-link-text">{% trans "Notification obligations" %}</span>
-        <span class="sidebar-tooltip">{% trans "Notification obligations" %}</span>
-      </a>
-      <a href="{% url 'incidents:response-plan-list' %}" class="sidebar-link">
-        <i class="bi bi-clipboard-pulse"></i> <span class="sidebar-link-text">{% trans "Response plans" %}</span>
-        <span class="sidebar-tooltip">{% trans "Response plans" %}</span>
-      </a>
-
-      {# ── Administration ──────────────────────────────── #}
-      {% has_module_perms "system" as can_admin %}
-      {% if can_admin %}
-      {% has_perm "system.config.read" as can_config %}
-      {% has_perm "trust_center.settings.read" as can_trust_center %}
-      {% has_perm "system.users.read" as can_users %}
-      {% has_perm "system.groups.read" as can_groups %}
-      {% has_perm "system.audit_trail.read" as can_audit %}
-      {% has_perm "system.assistant_feedback.read" as can_feedback %}
-      <div class="sidebar-section">{% trans "Administration" %}</div>
-
-      {# ── Général ──────────────────────────────── #}
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminGeneral" aria-controls="navAdminGeneral" aria-expanded="false">
-        <i class="bi bi-gear"></i> <span class="sidebar-link-text">{% trans "General" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "General" %}</span>
-      </button>
-      <div class="collapse" id="navAdminGeneral" data-bs-parent=".sidebar-body">
-        {% if can_config %}
-        <a href="{% url 'accounts:company-settings' %}" class="sidebar-link sidebar-sub">{% trans "Company" %}</a>
-        {% endif %}
-        <a href="{% url 'context:tag-list' %}" class="sidebar-link sidebar-sub">{% trans "Tags" %}</a>
-        {% if can_config %}
-        <a href="{% url 'core:lifecycle-list' %}" class="sidebar-link sidebar-sub">{% trans "Lifecycles" %}</a>
-        {% endif %}
-        {% if can_users %}
-        <a href="{% url 'accounts:calendar-subscription-list' %}" class="sidebar-link sidebar-sub">{% trans "Calendar subscriptions" %}</a>
-        {% endif %}
-        {% if can_trust_center %}
-        <a href="{% url 'trust_center_manage:settings' %}" class="sidebar-link sidebar-sub">{% trans "Trust Center" %}</a>
-        {% endif %}
-      </div>
-
-      {# ── Accès ──────────────────────────────── #}
-      {% if can_users or can_groups %}
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminAccess" aria-controls="navAdminAccess" aria-expanded="false">
-        <i class="bi bi-shield-lock"></i> <span class="sidebar-link-text">{% trans "Access" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Access" %}</span>
-      </button>
-      <div class="collapse" id="navAdminAccess" data-bs-parent=".sidebar-body">
-        {% if can_users %}
-        <a href="{% url 'accounts:user-list' %}" class="sidebar-link sidebar-sub">{% trans "Users" %}</a>
-        {% endif %}
-        {% if can_groups %}
-        <a href="{% url 'accounts:group-list' %}" class="sidebar-link sidebar-sub">{% trans "Groups" %}</a>
-        <a href="{% url 'accounts:permission-list' %}" class="sidebar-link sidebar-sub">{% trans "Permissions" %}</a>
-        {% endif %}
-      </div>
-      {% endif %}
-
-      {# ── Ask Cairn ──────────────────────────────── #}
-      {% if can_feedback or AI_ASSISTANT_ENABLED and can_config %}
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navAdminAskCairn" aria-controls="navAdminAskCairn" aria-expanded="false">
-        <i class="bi bi-stars"></i> <span class="sidebar-link-text">{{ ASSISTANT_NAME }}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{{ ASSISTANT_NAME }}</span>
-      </button>
-      <div class="collapse" id="navAdminAskCairn" data-bs-parent=".sidebar-body">
-        {% if AI_ASSISTANT_ENABLED and can_config %}
-        <a href="{% url 'assistant:semantic-index' %}" class="sidebar-link sidebar-sub">{% trans "Semantic index" %}</a>
-        {% endif %}
-        {% if can_feedback %}
-        <a href="{% url 'assistant:feedback-list' %}" class="sidebar-link sidebar-sub">{% trans "Feedback" %}</a>
-        {% endif %}
-      </div>
-      {% endif %}
-
-      {# ── Logs ──────────────────────────────── #}
-      {% if can_audit %}
-      <button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#navLogs" aria-controls="navLogs" aria-expanded="false">
-        <i class="bi bi-journal-text"></i> <span class="sidebar-link-text">{% trans "Logs" %}</span>
-        <i class="bi bi-chevron-down"></i>
-        <span class="sidebar-tooltip">{% trans "Logs" %}</span>
-      </button>
-      <div class="collapse" id="navLogs" data-bs-parent=".sidebar-body">
-        <a href="{% url 'accounts:access-log-list' %}" class="sidebar-link sidebar-sub">{% trans "Access log" %}</a>
-        <a href="{% url 'accounts:action-log-list' %}" class="sidebar-link sidebar-sub">{% trans "Action log" %}</a>
-      </div>
-      {% endif %}
-      {% endif %}
+      {# ── Sections : rendered from core.navigation.MENU ── #}
+      <div class="sidebar-divider" role="presentation"></div>
+      {% sidebar_menu %}
 
       {% if user.is_authenticated %}
       <div class="sidebar-footer">
@@ -660,20 +379,48 @@
       if (btn) btn.setAttribute('aria-expanded', 'true');
     }
 
+    /* The current entry is the one whose URL is the longest prefix of the
+     * page's : /risks/register/ stays current on /risks/register/<id>/, and
+     * /incidents/events/ wins over /incidents/. An entry with several views
+     * lists all their URLs in data-nav-paths. "/" only matches itself. */
+    function matchLength(link, path) {
+      var paths = (link.getAttribute('data-nav-paths') || link.getAttribute('href') || '').split(' ');
+      var best = 0;
+      for (var i = 0; i < paths.length; i++) {
+        var p = paths[i];
+        if (!p) continue;
+        if (p === path || (p !== '/' && p.slice(-1) === '/' && path.indexOf(p) === 0)) {
+          if (p.length > best) best = p.length;
+        }
+      }
+      return best;
+    }
+
     function syncActive() {
       var path = location.pathname;
+      var links = document.querySelectorAll('.sidebar .sidebar-link');
+      var current = null, best = 0;
+      links.forEach(function(link) {
+        var n = matchLength(link, path);
+        if (n > best) { best = n; current = link; }
+      });
       var activeCollapse = null;
-      document.querySelectorAll('.sidebar-link').forEach(function(link) {
-        var href = link.getAttribute('href');
-        if (href === path) {
+      links.forEach(function(link) {
+        if (link === current) {
           link.classList.add('active');
           link.setAttribute('aria-current', 'page');
-          var collapse = link.closest('.collapse');
-          if (collapse) activeCollapse = collapse;
+          activeCollapse = link.closest('.collapse');
         } else {
           link.classList.remove('active');
           link.removeAttribute('aria-current');
         }
+      });
+      /* The section holding the current page keeps a mark of its own : it is
+       * what says where you are when the section is folded, or when the
+       * sidebar is reduced to its icons. */
+      document.querySelectorAll('.sidebar-body > .sidebar-collapse-btn').forEach(function(btn) {
+        var target = activeCollapse && ('#' + activeCollapse.id);
+        btn.classList.toggle('is-current-section', btn.getAttribute('data-bs-target') === target);
       });
       return activeCollapse;
     }

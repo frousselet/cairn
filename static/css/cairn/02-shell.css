@@ -177,6 +177,13 @@
   flex-shrink: 0;
 }
 
+/* A hairline between the three everyday links and the sections. */
+.sidebar-divider {
+  height: 1px;
+  margin: .625rem 1.25rem;
+  background: var(--border-light);
+}
+.sidebar-collapsed .sidebar-divider { margin-inline: .875rem; }
 .sidebar-section {
   padding: 1.25rem 1.25rem .375rem;
   font-size: .75rem;
@@ -265,6 +272,9 @@
   color: var(--text-primary);
 }
 .sidebar-collapse-btn:hover i:first-child { color: var(--text-primary); }
+/* The section holding the current page (set by the script after the sidebar). */
+.sidebar-collapse-btn.is-current-section { color: var(--text-primary); font-weight: 600; }
+.sidebar-collapse-btn.is-current-section i:first-child { color: var(--accent); }
 .sidebar-collapse-btn i.bi-chevron-down {
   margin-left: auto;
   font-size: .5625rem;

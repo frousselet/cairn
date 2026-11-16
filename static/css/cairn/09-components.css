@@ -270,6 +270,31 @@ a.page-header__crumb:hover { text-decoration: underline; }
 @media (max-width: 575.98px) {
   .page-header__modified { white-space: normal; min-height: 0; width: 100%; }
 }
+/* ── Page switcher ───────────────────────────────
+   The views of one menu entry (the indicators : organizational, technical;
+   the dependencies : by asset, by supplier, ...), as a row of links under the
+   header of each of their list pages. Links, not tabs : each view is a page
+   with its own address. */
+.page-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+  margin: 0 0 1rem;
+}
+.page-switcher__link {
+  padding: .3125rem .75rem;
+  border-radius: 100px;
+  font-size: .8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+.page-switcher__link:hover { background: var(--surface-subtle); color: var(--text-primary); }
+.page-switcher__link.is-current { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.page-switcher__link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-glow); }
+@media (prefers-reduced-motion: reduce) { .page-switcher__link { transition: none; } }
+
 /* Module accent variant - bold editorial banner.
  *
  * Bloc de couleur plein (Cusp-inspired), white text, big uppercase

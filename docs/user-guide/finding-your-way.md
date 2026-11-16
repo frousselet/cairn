@@ -2,23 +2,32 @@
 
 ## The sidebar
 
-The module navigation, grouped by domain. What you see depends on your
-permissions : an entry you cannot read is absent rather than disabled.
+Three links you use every day (the dashboard, the calendar, your tasks), then
+one section per area of work. A section opens on its pages : there is nothing
+nested inside it. What you see depends on your permissions : a page you cannot
+open is absent rather than disabled, and a section with nothing for you is not
+shown at all.
 
-| Section | Contains |
+| Section | Pages |
 | --- | --- |
-| **Governance** | Organization (scopes, issues, stakeholders, objectives, SWOT), roles, activities, indicators (organizational and technical), strategy (reports, management reviews) |
-| **Assets** | Goods (essential assets, support assets, asset groups), sites, suppliers and supplier types, documents (contracts, certificates), dependencies and the dependency graph |
-| **Risk management** | Assessments and criteria, the register (risks, treatment plans, acceptances, ISO 27005 analyses), catalogs (threats, vulnerabilities) |
-| **Compliance** | Frameworks, requirements, audits and compliance, nonconformities, mappings, action plans |
-| **Incidents** | Incidents, security events, notification obligations, response plans, and the configuration (reporting authorities, obligation templates) |
-| **Administration** | General (company, tags, lifecycles, calendar subscriptions, Trust Center), access (users, groups, permissions), Ask Cairn feedback, logs |
+| **Governance** | Scopes, issues, stakeholders, objectives, SWOT analyses, roles, activities, indicators, management reviews, reports |
+| **Assets and third parties** | Essential assets, support assets, sites, suppliers, contracts, certificates, dependencies |
+| **Risk management** | Assessments, risks, treatment plans, acceptances |
+| **Compliance** | Frameworks, requirements, audits, nonconformities, action plans, controls and their tests, policies and acknowledgement campaigns |
+| **Incidents** | Incidents, security events, notification obligations, response plans |
+| **Reference data** | What the registers draw on, set up once and rarely opened : asset groups, supplier types, risk criteria, threats, vulnerabilities, requirement mappings, reporting authorities, obligation templates |
+| **Administration** | Company, users, groups, permissions, tags, lifecycles, calendar subscriptions, Trust Center, Ask Cairn, the access and action logs |
 
-Entries that hold a sub-list are **folded by default**, and only one of them is
-open at a time : the one holding the page you are on. Opening another folds the
-previous one, so the menu never grows back to the whole product tree. There is
-nothing to set up and nothing to remember - the open group always follows where
-you are.
+Sections are **folded by default**, and only one is open at a time : the one
+holding the page you are on, which stays marked while you are on one of its
+records. Opening another folds the previous one, so the menu never grows back
+to the whole product tree. There is nothing to set up and nothing to remember :
+the open section always follows where you are.
+
+Two entries cover several lists of the same subject. **Indicators** opens on
+the organizational ones and **Dependencies** on those between assets; a row of
+links under the page title switches to the other views (technical indicators;
+supplier, site and graph views of the dependencies).
 
 Every page carries a breadcrumb built from this same tree, so a detail page
 always tells you where it sits : `Governance > Organization > Stakeholders >

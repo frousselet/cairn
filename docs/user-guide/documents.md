@@ -7,9 +7,9 @@ document it answers the four questions an auditor asks : which version is in
 force, who approved it and when, when it is next reviewed, and who has
 acknowledged it.
 
-Open it from the **Documents** section of the sidebar, between Compliance and
-Incidents : *Policies* is the register, *Acknowledgement campaigns* is who was
-asked to read what. Both entries appear only if your group can read them.
+Open it from the **Compliance** section of the sidebar : *Policies* is the
+register, *Acknowledgement campaigns* is who was asked to read what. Both
+entries appear only if your group can read them.
 
 ## A document and its versions
 

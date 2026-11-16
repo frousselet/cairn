@@ -8,9 +8,9 @@ asks of the Statement of Applicability and of clause 9.1 : what does the
 organisation do for this requirement, is it implemented, who owns it, how do
 you know it works, and when was it last tested.
 
-Open it from the **Controls** section of the sidebar, between Compliance and
-Documents : *Controls* is the register, *Tests* is every test of every control
-with its next due date. Both entries appear only if your group can read them.
+Open it from the **Compliance** section of the sidebar : *Controls* is the
+register, *Control tests* is every test of every control with its next due
+date. Both entries appear only if your group can read them.
 
 ## A control
 

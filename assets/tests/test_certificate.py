@@ -253,11 +253,11 @@ class TestCertificatePermissions:
 
     def test_list_header_has_breadcrumb(self, client):
         # The header eyebrow must render the NAV_TREE trail
-        # (Assets > Documents > Certificates), like every other list page.
+        # (Assets and third parties > Certificates), like every other list page.
         client.force_login(UserFactory(is_superuser=True, is_staff=True))
         resp = client.get(reverse("assets:certificate-list"))
         assert b"page-header__breadcrumb" in resp.content
-        assert b"Documents" in resp.content
+        assert b"Assets and third parties" in resp.content
         assert b"Certificates" in resp.content
 
     def test_detail_renders_with_lifecycle_stepper(self, client):

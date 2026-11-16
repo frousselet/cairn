@@ -20641,3 +20641,15 @@ msgstr "Choisir…"
 msgctxt "empty select option"
 msgid "None"
 msgstr "Aucun"
+
+msgid "Assets and third parties"
+msgstr "Actifs et tiers"
+
+msgid "Reference data"
+msgstr "Données de référence"
+
+msgid "Requirement mappings"
+msgstr "Correspondances d'exigences"
+
+msgid "Views"
+msgstr "Vues"
