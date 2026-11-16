@@ -166,6 +166,8 @@ its own modal, in a table row for example, is `{% confirm_delete url=... name=..
 | `{% workflow_badge obj %}` | tag (`workflow_tags`) | The lifecycle state of an element |
 | [`dash` / `or_dash`](#dash--or_dash) | tag / filter | The "no value" marker |
 | `empty_state` | tag | An empty list or section (`compact=True` inside a card) |
+| `iso_datetime` | filter | A timestamp stored as an ISO 8601 string (in a JSON snapshot), rendered like any other date-time |
+| `plain_empty_option` | filter | A form field whose select opens on *Choose…* / *None*; applied by `includes/form_field.html` |
 | `progress_bar` | tag | A percentage |
 | `confirm_delete` | tag | An inline delete button with its confirmation modal |
 | `bulk_actions_bar`, `filter_chip`, `stepper`, `kpi_card`, `sidebar_card`, `illustration` | tags | See their docstrings in `core/templatetags/ui.py` |

@@ -1159,6 +1159,31 @@ def do_section_card(parser, token):
 
 
 @register.filter
+def iso_datetime(value):
+    """``{{ snapshot.captured_at|iso_datetime }}`` : an ISO 8601 string as a date.
+
+    A timestamp frozen in a JSON snapshot is stored as text. Printed as it is,
+    it reads ``2026-11-04T10:44:38.610034+00:00``; this renders it like every
+    other date-time of the interface, in the active locale and time zone. A
+    value that is not a timestamp is returned unchanged.
+    """
+    from django.utils import formats, timezone
+    from django.utils.dateparse import parse_datetime
+
+    if not isinstance(value, str):
+        return value
+    try:
+        parsed = parse_datetime(value)
+    except ValueError:
+        parsed = None
+    if parsed is None:
+        return value
+    if timezone.is_aware(parsed):
+        parsed = timezone.localtime(parsed)
+    return formats.date_format(parsed, "SHORT_DATETIME_FORMAT")
+
+
+@register.filter
 def plain_empty_option(bound_field):
     """``{{ field|plain_empty_option }}`` : the field, its select opening on
     *Choose…* / *None* instead of Django's row of dashes.
