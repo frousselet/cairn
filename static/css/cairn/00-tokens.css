@@ -98,6 +98,8 @@
   --border-light: rgba(0,0,0,.08);
   --border-subtle: rgba(0,0,0,.05);
   --border-hairline: rgba(0,0,0,.03);
+  /* Edge shadow of a horizontally scrolling area (more content that way) */
+  --scroll-shadow: rgba(0,0,0,.14);
   --border-glass: rgba(255,255,255,.5);
   /* Text */
   --text-primary: var(--color-neutral-900);
@@ -193,6 +195,7 @@
   --border-light: rgba(255,255,255,.10);
   --border-subtle: rgba(255,255,255,.06);
   --border-hairline: rgba(255,255,255,.05);
+  --scroll-shadow: rgba(0,0,0,.5);
   --border-glass: rgba(255,255,255,.06);
   --text-primary: var(--color-charcoal-100);
   --text-secondary: var(--color-charcoal-300);

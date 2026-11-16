@@ -35,6 +35,10 @@ class HistoryUrlMixin:
         return ctx
 
 
+# Number of steps past which the lifecycle bar folds the completed ones.
+LIFECYCLE_BAR_DENSE_FROM = 6
+
+
 class LifecycleStepperMixin:
     """Build the stepper context for an entity on the standardised engine.
 
@@ -66,6 +70,7 @@ class LifecycleStepperMixin:
 
     def get_context_data(self, **kwargs):
         from core.lifecycle import StepKind
+        from helpers.templatetags.workflow_tags import _TONE_CLASSES
 
         ctx = super().get_context_data(**kwargs)
         obj = self.object
@@ -109,6 +114,9 @@ class LifecycleStepperMixin:
                 "value": step.code,
                 "label": step.label,
                 "tone": step.tone,
+                # Same dot-pill class as {% workflow_badge %}, so the current
+                # step of the bar reads as the status badge it is.
+                "badge_class": _TONE_CLASSES.get(step.tone, "secondary"),
                 "state": state,
                 "actionable": step.code in target_to_label,
                 "action_label": target_to_label.get(step.code, step.label),
@@ -174,115 +182,151 @@ class LifecycleStepperMixin:
             for step in exit_steps
         ]
 
+        # Path-aware reading of the main flow, for the compact lifecycle bar.
+        # ``state`` above follows the declaration order, which reads a branch
+        # that was never taken as "done" (an accepted risk would show its
+        # treatment steps ticked). ``path`` follows the schema instead : a step
+        # is "done" when the current step is reachable from it along forward
+        # transitions, "ahead" when it is reachable from the current step, and
+        # "off" when it sits on another branch. The bar hides the "off" steps
+        # unless the user can move to them; the full graph still shows them.
+        flow_index = {code: i for i, code in enumerate(main_codes)}
+        forward: dict[str, set[str]] = {code: set() for code in main_codes}
+        backward: dict[str, set[str]] = {code: set() for code in main_codes}
+        for src, tgt in edges:
+            if src in flow_index and tgt in flow_index and flow_index[tgt] > flow_index[src]:
+                forward[src].add(tgt)
+                backward[tgt].add(src)
+
+        def reachable(start, graph):
+            seen, stack = set(), [start]
+            while stack:
+                for nxt in graph[stack.pop()]:
+                    if nxt not in seen:
+                        seen.add(nxt)
+                        stack.append(nxt)
+            return seen
+
+        on_flow = current in flow_index
+        ahead = reachable(current, forward) if on_flow else set(main_codes)
+        behind = reachable(current, backward) if on_flow else set()
+        for node in steps:
+            code = node["value"]
+            if code == current:
+                node["path"] = "current"
+            elif code in behind:
+                node["path"] = "done"
+            elif code in ahead:
+                node["path"] = "ahead"
+            else:
+                node["path"] = "off"
+            # A move to a step that is not ahead of the current one is a way
+            # back (rework, refusal, restore), whatever branch it sits on.
+            node["direction"] = "forward" if node["path"] == "ahead" else "back"
+            node["on_bar"] = node["path"] != "off" or node["actionable"]
+        for node in exits:
+            node["path"] = "current" if node["state"] == "current" else "ahead"
+            # Leaving the flow is a quiet action, never the highlighted next step.
+            node["direction"] = "exit"
+            node["on_bar"] = node["path"] == "current" or node["actionable"]
+        bar_steps = [node for node in steps if node["on_bar"]]
+        bar_exits = [node for node in exits if node["on_bar"]]
+
         ctx.update({
             "lc_enabled": True,
             "lc_layout": lifecycle.layout,
             "lc_steps": steps,
             "lc_exits": exits,
+            "lc_bar_steps": bar_steps,
+            "lc_bar_exits": bar_exits,
+            # Past this many steps the bar folds the completed ones to a tick,
+            # so a long lifecycle still holds on one line.
+            "lc_bar_dense": len(bar_steps) > LIFECYCLE_BAR_DENSE_FROM,
             "lc_current": current,
             "lc_current_label": obj.lifecycle_label,
             "lc_entity_label": str(obj._meta.verbose_name),
             "lc_container_id": f"lifecycle-stepper-{obj.pk}",
             "lc_transition_url": self.get_lifecycle_transition_url(obj),
         })
-        if lifecycle.layout in ("cycle", "graph"):
-            import json
+        # The graph payload is always built : the bar is the default rendering
+        # and the full directed graph opens on demand, whatever the layout the
+        # lifecycle declares.
+        # ---- Schema-driven directed-graph payload (dagre+D3 renderer) ----
+        # Nodes = every step (draft + intermediates + archived). Edges =
+        # every transition; a wildcard source (ANY) becomes a single
+        # "from-any" edge into its target (the archive exit). The diagram is
+        # entirely derived here, so editing assets/lifecycles.py regenerates
+        # it with no template change.
+        state_by_code = {}
+        for node in steps:
+            state_by_code[node["value"]] = node["state"]
+        for node in exits:
+            state_by_code[node["value"]] = node["state"]
 
-            # Position of every intermediate step on the spine. A transition
-            # between two intermediates is a LOOP back-edge when its target sits
-            # earlier than (or level with) its source, and a forward edge
-            # otherwise. The lifecycle may carry several loops (e.g. each branch
-            # outcome looping back to an earlier step) - all of them are drawn.
-            inter = [s.code for s in lifecycle.steps if s.kind == StepKind.INTERMEDIATE]
-            pos = {code: i for i, code in enumerate(inter)}
-            # A single representative loop (longest span) kept for the legacy
-            # cycle layout + as a convenience for any consumer of lc_loop_*.
-            loop_from = loop_to = None
-            best = -1
-            for t in lifecycle.transitions:
-                if t.source in pos and t.target in pos and pos[t.target] < pos[t.source]:
-                    span = pos[t.source] - pos[t.target]
-                    if span > best:
-                        best, loop_from, loop_to = span, t.source, t.target
-            ctx["lc_loop_from"] = loop_from
-            ctx["lc_loop_to"] = loop_to
+        kind_by_code = {s.code: s.kind.value for s in lifecycle.steps}
 
-            # ---- Schema-driven directed-graph payload (dagre+D3 renderer) ----
-            # Nodes = every step (draft + intermediates + archived). Edges =
-            # every transition; a wildcard source (ANY) becomes a single
-            # "from-any" edge into its target (the archive exit). The diagram is
-            # entirely derived here, so editing assets/lifecycles.py regenerates
-            # it with no template change.
-            state_by_code = {}
-            for node in steps:
-                state_by_code[node["value"]] = node["state"]
-            for node in exits:
-                state_by_code[node["value"]] = node["state"]
+        graph_nodes = []
+        for s in lifecycle.steps:
+            code = s.code
+            confirm = s.confirm_trigger
+            graph_nodes.append({
+                "id": code,
+                "label": str(s.label),
+                "tone": s.tone,
+                "kind": kind_by_code[code],          # draft|intermediate|archived
+                "state": state_by_code.get(code, "future"),
+                "actionable": code in target_to_label,
+                "action_label": str(target_to_label.get(code, s.label)),
+                "requires_comment": bool(target_to_requires_comment.get(code, False)),
+                # "confirm" trigger : ask before moving INTO this step.
+                "confirm": confirm is not None,
+                "confirm_message": str(confirm.config.get("message", "")) if confirm else "",
+            })
 
-            kind_by_code = {s.code: s.kind.value for s in lifecycle.steps}
+        # Edge classification is keyed off the full main-flow order (Draft +
+        # intermediates) and the Archived step kind, NOT the intermediates
+        # alone : a send-back to Draft (pending -> draft) is a loop, and an
+        # archive edge from a specific step (validated -> archived) is an
+        # exit - both used to be mis-read as forward, which turned the source
+        # into a spurious two-target branch and overlapped the nodes.
+        archived_codes = {s.code for s in lifecycle.steps if s.kind == StepKind.ARCHIVED}
+        flow_pos = {code: i for i, code in enumerate(main_codes)}
+        graph_edges = []
+        for t in lifecycle.transitions:
+            if t.target in archived_codes:
+                kind = "exit"                         # (any or a step) -> archived
+                source = t.source
+            elif t.source in archived_codes:
+                kind = "restore"                      # archived -> earlier step
+                source = t.source
+            elif (
+                t.source in flow_pos
+                and t.target in flow_pos
+                and flow_pos[t.target] <= flow_pos[t.source]
+            ):
+                # A back-edge along the main flow (including the send-back to
+                # Draft) is a loop, never a forward branch. Several may exist
+                # (each terminal branch outcome looping back) - all are drawn.
+                kind = "loop"
+                source = t.source
+            else:
+                # Forward edge along the spine, including the divergence into
+                # a terminal branch (one source -> several later targets).
+                kind = "forward"
+                source = t.source
+            graph_edges.append({
+                "source": source,
+                "target": t.target,
+                "kind": kind,
+                "label": str(t.label),
+                "available": (t.source, t.target) in available_pairs,
+            })
 
-            graph_nodes = []
-            for s in lifecycle.steps:
-                code = s.code
-                confirm = s.confirm_trigger
-                graph_nodes.append({
-                    "id": code,
-                    "label": str(s.label),
-                    "tone": s.tone,
-                    "kind": kind_by_code[code],          # draft|intermediate|archived
-                    "state": state_by_code.get(code, "future"),
-                    "actionable": code in target_to_label,
-                    "action_label": str(target_to_label.get(code, s.label)),
-                    "requires_comment": bool(target_to_requires_comment.get(code, False)),
-                    # "confirm" trigger : ask before moving INTO this step.
-                    "confirm": confirm is not None,
-                    "confirm_message": str(confirm.config.get("message", "")) if confirm else "",
-                })
+        ctx["lc_layout"] = "graph"   # kept for consumers : the graph is always available
+        from core.safe_json import dumps_for_script
 
-            # Edge classification is keyed off the full main-flow order (Draft +
-            # intermediates) and the Archived step kind, NOT the intermediates
-            # alone : a send-back to Draft (pending -> draft) is a loop, and an
-            # archive edge from a specific step (validated -> archived) is an
-            # exit - both used to be mis-read as forward, which turned the source
-            # into a spurious two-target branch and overlapped the nodes.
-            archived_codes = {s.code for s in lifecycle.steps if s.kind == StepKind.ARCHIVED}
-            flow_pos = {code: i for i, code in enumerate(main_codes)}
-            graph_edges = []
-            for t in lifecycle.transitions:
-                if t.target in archived_codes:
-                    kind = "exit"                         # (any or a step) -> archived
-                    source = t.source
-                elif t.source in archived_codes:
-                    kind = "restore"                      # archived -> earlier step
-                    source = t.source
-                elif (
-                    t.source in flow_pos
-                    and t.target in flow_pos
-                    and flow_pos[t.target] <= flow_pos[t.source]
-                ):
-                    # A back-edge along the main flow (including the send-back to
-                    # Draft) is a loop, never a forward branch. Several may exist
-                    # (each terminal branch outcome looping back) - all are drawn.
-                    kind = "loop"
-                    source = t.source
-                else:
-                    # Forward edge along the spine, including the divergence into
-                    # a terminal branch (one source -> several later targets).
-                    kind = "forward"
-                    source = t.source
-                graph_edges.append({
-                    "source": source,
-                    "target": t.target,
-                    "kind": kind,
-                    "label": str(t.label),
-                    "available": (t.source, t.target) in available_pairs,
-                })
-
-            ctx["lc_layout"] = "graph"   # route the template to the new branch
-            from core.safe_json import dumps_for_script
-
-            ctx["lc_graph_nodes"] = dumps_for_script(graph_nodes)
-            ctx["lc_graph_edges"] = dumps_for_script(graph_edges)
+        ctx["lc_graph_nodes"] = dumps_for_script(graph_nodes)
+        ctx["lc_graph_edges"] = dumps_for_script(graph_edges)
         return ctx
 
 

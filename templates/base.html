@@ -2449,11 +2449,19 @@
         if (r.style.display === 'none') { r.style.display = ''; rehide.push(r); }
       });
       var ths = headRow.querySelectorAll('th');
+      var wrap = table.closest('.table-responsive');
+      if (wrap) wrap.classList.remove('table-responsive--scroll');
       table.style.tableLayout = 'auto';
       ths.forEach(function(th) { th.style.width = ''; });
       var widths = Array.prototype.map.call(ths, function(th) {
         return th.classList.contains('col-hidden') ? null : th.getBoundingClientRect().width;
       });
+      /* A table wider than its card scrolls inside it : without this the
+         columns past the edge were clipped by the page and unreachable. */
+      if (wrap) {
+        wrap.classList.toggle('table-responsive--scroll',
+          table.getBoundingClientRect().width > wrap.clientWidth + 1);
+      }
       ths.forEach(function(th, i) { if (widths[i] != null) th.style.width = widths[i] + 'px'; });
       table.style.tableLayout = 'fixed';
       rehide.forEach(function(r) { r.style.display = 'none'; });

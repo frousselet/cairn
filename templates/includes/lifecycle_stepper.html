@@ -1,10 +1,6 @@
 {% load i18n %}
 {% if lc_enabled %}
-  {% if lc_layout == "graph" or lc_layout == "cycle" %}
-    {% include "components/lifecycle_dagre.html" %}
-  {% else %}
-    {% include "components/lifecycle_stepper.html" %}
-  {% endif %}
+  {% include "components/lifecycle_bar.html" %}
 
   {# ── Shared confirmation modal ("confirm" trigger on the target step) ── #}
   <div class="modal fade" id="lifecycleConfirmModal" tabindex="-1" aria-labelledby="lifecycleConfirmModalTitle" aria-hidden="true">
@@ -114,9 +110,9 @@
       });
     }
 
-    // The line / cycle steppers use one <form> per actionable pill. Intercept
-    // the submit of any pill form carrying a trigger flag and route it through
-    // the modal chain (the graph stepper calls cairnLifecycleTransition directly).
+    // The lifecycle bar uses one <form> per step the user may move to. Intercept
+    // the submit of any such form carrying a trigger flag and route it through
+    // the modal chain (the full graph calls cairnLifecycleTransition directly).
     document.addEventListener('submit', function (e) {
       var form = e.target;
       if (!form.matches || !form.matches('.stepper__pill-form[data-lc-requires-comment], .stepper__pill-form[data-lc-confirm]')) { return; }

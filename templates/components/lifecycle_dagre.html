@@ -5,8 +5,11 @@ CairnLifecycleGraph renderer. Everything is derived from lc_graph_nodes /
 lc_graph_edges (from the JSON lifecycle definition), so arrows are routed and
 never overlap a node, at any width. "From any state" (*) transitions are drawn as
 a single dot -> target arrow with the target detached below the flow.
+
+It sits in the collapsed panel of the lifecycle bar : the renderer and its
+libraries (d3, dagre) are only loaded when the panel is first opened.
 {% endcomment %}
-<div class="lc-dagre" id="{{ lc_container_id }}" data-transition-url="{{ lc_transition_url }}">
+<div class="lc-dagre" id="{{ lc_container_id }}-diagram" data-transition-url="{{ lc_transition_url }}">
   <form method="post" action="{{ lc_transition_url }}" class="d-none" data-lc-form hx-boost="false">
     {% csrf_token %}
     <input type="hidden" name="target_status" value="" data-lc-target>
@@ -23,7 +26,7 @@ a single dot -> target arrow with the target detached below the flow.
 {% include "components/lifecycle_graph_lib.html" %}
 <script>
 (function () {
-  var root = document.getElementById('{{ lc_container_id }}');
+  var root = document.getElementById('{{ lc_container_id }}-diagram');
   if (!root || root.dataset.lcInit) { return; }
   root.dataset.lcInit = '1';
   var stage = root.querySelector('[data-lc-stage]');
@@ -55,13 +58,22 @@ a single dot -> target arrow with the target detached below the flow.
       mode: 'display', containerWidth: stage.clientWidth, onNodeClick: go,
     });
   }
-  window.cairnWithLifecycleGraph(function () {
-    window.CairnLifecycleGraph.ensureLibs('{% static "vendor/d3/d3.min.js" %}', '{% static "vendor/dagre/dagre.min.js" %}', function () {
-      render();
-      if (window.ResizeObserver) { new ResizeObserver(render).observe(stage); } else { window.addEventListener('resize', render); }
-      if (document.fonts && document.fonts.ready) { document.fonts.ready.then(render); }
-      new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+  function boot() {
+    window.cairnWithLifecycleGraph(function () {
+      window.CairnLifecycleGraph.ensureLibs('{% static "vendor/d3/d3.min.js" %}', '{% static "vendor/dagre/dagre.min.js" %}', function () {
+        render();
+        if (window.ResizeObserver) { new ResizeObserver(render).observe(stage); } else { window.addEventListener('resize', render); }
+        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(render); }
+        new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+      });
     });
-  });
+  }
+  // Collapsed by default : draw on first opening, never on page load.
+  var panel = root.closest('[data-lc-graph-panel]');
+  if (panel && !panel.classList.contains('show')) {
+    panel.addEventListener('show.bs.collapse', boot, { once: true });
+  } else {
+    boot();
+  }
 })();
 </script>

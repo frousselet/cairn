@@ -112,9 +112,9 @@ body.sidebar-open .hamburger-icon span:nth-child(3) {
   .sidebar-collapsed .sidebar-body .collapse:not(.show) { display: none !important; }
   .sidebar-collapsed .sidebar-body .collapse.show,
   .sidebar-collapsed .sidebar-body .collapsing { display: block !important; }
-  .sidebar-collapsed .sidebar-sub { display: block; padding-left: 3.125rem; }
+  .sidebar-collapsed .sidebar-sub { display: block; padding-left: 3.25rem; }
   .sidebar-collapsed .sidebar-tooltip { display: none !important; }
-  .main-content { margin-left: 0; --main-offset: 0px; padding: 6rem 1rem 3.5rem; }
+  .main-content { margin-left: 0; --main-offset: 0px; padding: 4.25rem 1rem 3rem; }
   .main-content h1 { font-size: 1.625rem; }
   .main-content h2 { font-size: 1.25rem; }
   .main-content hr { margin: 1.5rem 0; }
@@ -139,7 +139,7 @@ body.sidebar-open .hamburger-icon span:nth-child(3) {
   .section-header h2 { font-size: 1rem; }
 }
 @media (max-width: 575.98px) {
-  .main-content { padding: 6rem .75rem 2.5rem; }
+  .main-content { padding: 4.25rem .875rem 2.5rem; }
 
   /* Stack stat cards nicely on very small screens */
   .stat-card { padding: .875rem 1rem; }
@@ -151,7 +151,7 @@ body.sidebar-open .hamburger-icon span:nth-child(3) {
   .filter-chip { font-size: .75rem; padding: .25rem .625rem; }
 }
 @media (min-width: 992px) and (max-width: 1399.98px) {
-  .main-content { padding: 6.5rem 2rem 3.5rem; }
+  .main-content { padding: 1.75rem 1.75rem 3.5rem; }
 }
 /* ── Scope tree widget ──────────────────────────── */
 .scope-tree-label { transition: background-color var(--transition-fast); }

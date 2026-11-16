@@ -8,7 +8,7 @@
         {% for crumb in crumbs %}{% if not forloop.first %}<i class="bi bi-chevron-right page-header__crumb-sep" aria-hidden="true"></i>{% endif %}{% if crumb.url %}<a href="{{ crumb.url }}" class="page-header__crumb">{{ crumb.label }}</a>{% else %}<span class="page-header__crumb page-header__crumb--current">{{ crumb.label }}</span>{% endif %}{% endfor %}
       </nav>
       {% elif eyebrow %}<div class="page-header__eyebrow">{{ eyebrow }}</div>{% endif %}
-      <h1 class="page-header__title mb-0">{% if logo %}<img src="{{ logo }}" alt="" class="page-header__logo">{% endif %}{{ title }}</h1>
+      <h1 class="page-header__title{% if long_title %} page-header__title--long{% endif %} mb-0">{% if logo %}<img src="{{ logo }}" alt="" class="page-header__logo">{% endif %}{{ title }}</h1>
       {% if reference and not crumbs %}<span class="ref page-header__reference">{{ reference }}</span>{% endif %}
       {% if subtitle %}<div class="page-header__subtitle">{{ subtitle }}</div>{% endif %}
     </div>

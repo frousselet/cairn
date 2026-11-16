@@ -598,6 +598,10 @@ def do_page_header(parser, token):
     return PageHeaderNode(title_expr, kwargs, nodelist)
 
 
+# Titles longer than this many characters render at the smaller record size.
+PAGE_TITLE_LONG_FROM = 32
+
+
 class PageHeaderNode(template.Node):
     def __init__(self, title_expr, kwargs, nodelist):
         self.title_expr = title_expr
@@ -687,6 +691,9 @@ class PageHeaderNode(template.Node):
                 modified_at = getattr(obj, "updated_at", None) or getattr(last, "history_date", None)
         with context.push(
             title=title,
+            # A record name is a sentence : past this length it steps down a
+            # size so it holds on one or two lines (see .page-header__title--long).
+            long_title=len(str(title or "")) > PAGE_TITLE_LONG_FROM,
             subtitle=resolved_kwargs.get("subtitle"),
             reference=resolved_kwargs.get("reference"),
             icon=resolved_kwargs.get("icon"),

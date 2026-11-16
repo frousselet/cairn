@@ -1,0 +1,66 @@
+{% load i18n %}
+{% comment %}
+The lifecycle bar : where the record stands and what can be done next, on one
+line. The track lists the steps of the path the record is on (completed, then
+the current one as its status badge, then the steps ahead); a step the user may
+move to is a button named after the transition. The exit (Archived) sits apart
+on the right, next to the toggle that opens the full directed graph below.
+Built from lc_bar_steps / lc_bar_exits (accounts.mixins.LifecycleStepperMixin).
+{% endcomment %}
+<div class="lc-bar{% if lc_bar_dense %} lc-bar--dense{% endif %}" id="{{ lc_container_id }}" data-lc-bar>
+  <ol class="lc-bar__track" aria-label="{% trans 'Lifecycle steps' %}" data-lc-track>
+    {% for step in lc_bar_steps %}
+      {% include "components/_lifecycle_step.html" with step=step %}
+    {% endfor %}
+  </ol>
+  <div class="lc-bar__side">
+    {% if lc_bar_exits %}
+    <ul class="lc-bar__exits" aria-label="{% trans 'Exit' %}">
+      {% for step in lc_bar_exits %}
+        {% include "components/_lifecycle_step.html" with step=step %}
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <button type="button" class="btn btn-sm btn-secondary lc-bar__toggle"
+            data-bs-toggle="collapse" data-bs-target="#{{ lc_container_id }}-graph"
+            aria-expanded="false" aria-controls="{{ lc_container_id }}-graph"
+            title="{% trans 'Show the full lifecycle' %}">
+      <i class="bi bi-diagram-3" aria-hidden="true"></i>
+      <span class="visually-hidden">{% trans "Show the full lifecycle" %}</span>
+    </button>
+  </div>
+</div>
+<div class="collapse lc-bar__graph" id="{{ lc_container_id }}-graph" data-lc-graph-panel>
+  {% include "components/lifecycle_dagre.html" %}
+</div>
+<script>
+(function () {
+  var bar = document.getElementById('{{ lc_container_id }}');
+  if (!bar || bar.dataset.lcBarInit) { return; }
+  bar.dataset.lcBarInit = '1';
+  var track = bar.querySelector('[data-lc-track]');
+  var current = track && track.querySelector('[aria-current="step"]');
+  // A long lifecycle scrolls inside the track : start the view one step before
+  // the current one, so the line reads "where it stands, then what comes next"
+  // (scrollLeft, not scrollIntoView, so the page itself never moves).
+  function centre() {
+    if (!current || track.scrollWidth <= track.clientWidth) { return; }
+    // On a narrow track the room goes to the current step and the next move.
+    var lead = (track.clientWidth >= 480 && current.previousElementSibling) || current;
+    track.scrollLeft += lead.getBoundingClientRect().left - track.getBoundingClientRect().left;
+  }
+  // Fade the edge the track can still scroll towards.
+  function edges() {
+    if (!track) { return; }
+    var max = track.scrollWidth - track.clientWidth;
+    bar.classList.toggle('lc-bar--more-start', track.scrollLeft > 2);
+    bar.classList.toggle('lc-bar--more-end', track.scrollLeft < max - 2);
+  }
+  if (track) {
+    centre();
+    edges();
+    track.addEventListener('scroll', edges, { passive: true });
+    if (window.ResizeObserver) { new ResizeObserver(function () { centre(); edges(); }).observe(track); }
+  }
+})();
+</script>
