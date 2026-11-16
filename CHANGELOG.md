@@ -59,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pages touching the cache (the update check, the assistant briefing, the Trust Center rate limiter) failed with a server error whenever Redis was unreachable; the cache now degrades to a miss and logs the outage.
 - The Docker-less development settings (`core.settings_local`) still required Redis for the cache.
 - A framework listed its requirements in lexicographic order (A.5.10 before A.5.2) instead of the natural order of their numbers.
+- A risk's scoring snapshot showed its capture time as a raw ISO timestamp.
 - Two developer comments were printed as text on the management review page and in an incident's regulatory obligations.
 - The pages of an API list could repeat a record and skip another, on the lists with no default order and under any `?ordering=` with ties; every list is now paginated in a total order.
 - The `date_before` filter of the risks API left out the risks created on the day given.

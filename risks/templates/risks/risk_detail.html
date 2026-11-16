@@ -69,7 +69,7 @@
     {% meta_list cols=3 %}
       {% meta_item _("Criteria") %}{% if risk.assessment.risk_criteria_id %}<a href="{% url 'risks:criteria-detail' risk.assessment.risk_criteria_id %}" class="cell-link">{{ risk.criteria_snapshot.criteria_name }}</a>{% else %}{{ risk.criteria_snapshot.criteria_name }}{% endif %}{% endmeta_item %}
       {% meta_item _("Version at evaluation") %}{% if risk.criteria_snapshot.criteria_version %}v.{{ risk.criteria_snapshot.criteria_version }}{% endif %}{% endmeta_item %}
-      {% meta_item _("Captured at") risk.criteria_snapshot.captured_at %}
+      {% meta_item _("Captured at") risk.criteria_snapshot.captured_at|iso_datetime %}
     {% endmeta_list %}
     <p class="text-meta mb-0 mt-3"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>{% trans "Score frozen at evaluation time. Later edits to the criteria do not change historical scores." %}</p>
   {% endsection_card %}

@@ -418,3 +418,14 @@ class TestPlainEmptyOption:
         html = render_to_string("includes/form_field.html", {"field": Probe()["owner"]})
         assert "---------" not in html
         assert ">None<" in html
+
+
+class TestIsoDatetime:
+    def test_a_stored_timestamp_reads_like_any_other_date(self):
+        out = render("{{ value|iso_datetime }}", {"value": "2026-11-04T10:44:38.610034+00:00"})
+        assert "T10:44" not in out and "+00:00" not in out
+        assert "2026" in out
+
+    def test_anything_else_is_left_as_it_is(self):
+        assert render("{{ value|iso_datetime }}", {"value": "not a date"}).strip() == "not a date"
+        assert render("{{ value|iso_datetime }}", {"value": None}).strip() == "None"
