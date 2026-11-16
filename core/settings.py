@@ -186,14 +186,22 @@ DATABASES = {
 # Redis is already a hard dependency (Channels layer), so this adds no new
 # infrastructure. The test settings override this with a local-memory cache
 # (the suite is single-process and must not need a live Redis).
+# The cache only holds derived data, so an unreachable Redis must cost a cache
+# miss, not a server error : core.cache.ResilientRedisCache degrades instead of
+# raising, and the socket timeouts keep a silent Redis (network partition, host
+# frozen) from holding every request for the kernel's connect timeout.
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "BACKEND": "core.cache.ResilientRedisCache",
         "LOCATION": "redis://{host}:{port}/1".format(
             host=os.environ.get("REDIS_HOST", "redis"),
             port=int(os.environ.get("REDIS_PORT", 6379)),
         ),
         "KEY_PREFIX": "cairn",
+        "OPTIONS": {
+            "socket_connect_timeout": 2,
+            "socket_timeout": 2,
+        },
     }
 }
 
@@ -259,6 +267,11 @@ VENDOR_ASSETS_AUTO_DOWNLOAD = os.environ.get(
 UPDATE_CHECK_ENABLED = os.environ.get(
     "UPDATE_CHECK_ENABLED", "True"
 ).lower() in ("true", "1", "yes")
+
+# Seconds a worker process trusts its in-memory lifecycle definitions before
+# checking the table again. A lifecycle edited in the administration is saved
+# by one worker; this bounds how long the others keep applying the previous one.
+LIFECYCLE_CACHE_TTL = float(os.environ.get("LIFECYCLE_CACHE_TTL", "5"))
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"

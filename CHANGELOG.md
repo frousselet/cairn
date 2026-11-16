@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Opening a drawer-only delete link directly (incidents, nonconformities, supplier contacts and sub-processors) rendered a bare dialog fragment instead of a confirmation page.
 - The Trust Center hub and the semantic index pages showed a loose eyebrow (the hub's even read "Strategy") instead of their menu breadcrumb.
 - Lifecycle governance helpers given an `app.Model` label (rather than the model) silently used the default lifecycle.
+- The dashboard failed with a server error for every non-superuser member of a group that allows all scopes.
+- Submitting the nonconformity register form failed with a server error when its source was Audit; that source is now only offered for a finding that has its audit.
+- A lifecycle edited in the administration was only applied by the worker process that saved it; every worker now picks it up within `LIFECYCLE_CACHE_TTL` seconds (5 by default).
+- Pages touching the cache (the update check, the assistant briefing, the Trust Center rate limiter) failed with a server error whenever Redis was unreachable; the cache now degrades to a miss and logs the outage.
+- The Docker-less development settings (`core.settings_local`) still required Redis for the cache.
 
 ### Security
 

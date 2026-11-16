@@ -8,6 +8,7 @@ with zero external services:
 - SQLite stored in a file (``db.sqlite3``) so data persists across restarts,
   unlike the in-memory database used by the test suite.
 - In-memory channel layer, so Channels / WebSockets work without Redis.
+- Local-memory cache, so nothing waits on a Redis that is not there.
 
 Activate it by setting ``DJANGO_SETTINGS_MODULE=core.settings_local`` (the
 VS Code launch configurations do this for you).
@@ -28,5 +29,13 @@ DATABASES = {
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
+
+# Local-memory cache - no Redis needed. The dev server is a single process, so
+# this behaves like the shared cache used in production.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     },
 }

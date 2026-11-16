@@ -188,6 +188,45 @@ def test_db_definition_overrides_the_code_default():
     assert "servicing" in {s.code for s in get_lifecycle("support_asset").steps}
 
 
+def _edit_from_another_worker(name):
+    """Change a definition without going through ``save()``, as another
+    worker process would : this process's cache is not told about it."""
+    from django.utils import timezone
+
+    row = LifecycleDefinition.objects.get(name=name)
+    row.definition["steps"].insert(-1, {
+        "code": "servicing", "label": "Servicing", "kind": "intermediate", "counts_in_reports": True,
+    })
+    LifecycleDefinition.objects.filter(pk=row.pk).update(
+        definition=row.definition, updated_at=timezone.now(),
+    )
+
+
+@pytest.mark.django_db
+def test_an_edit_made_by_another_worker_is_picked_up(settings):
+    """Production runs several worker processes, each with its own cache : an
+    edit saved by one must reach the others without a restart."""
+    settings.LIFECYCLE_CACHE_TTL = 0
+    clear_lifecycle_cache()
+    assert "servicing" not in {s.code for s in get_lifecycle("support_asset").steps}
+    _edit_from_another_worker("support_asset")
+    assert "servicing" in {s.code for s in get_lifecycle("support_asset").steps}
+
+
+@pytest.mark.django_db
+def test_the_table_is_not_re_read_within_the_cache_ttl(settings, django_assert_num_queries):
+    """The revalidation is throttled : inside the TTL a lifecycle is served
+    from memory, with no query at all."""
+    settings.LIFECYCLE_CACHE_TTL = 3600
+    clear_lifecycle_cache()
+    get_lifecycle("support_asset")  # builds the cache and stamps it
+    _edit_from_another_worker("support_asset")
+    with django_assert_num_queries(0):
+        steps = {s.code for s in get_lifecycle("support_asset").steps}
+    assert "servicing" not in steps
+    clear_lifecycle_cache()
+
+
 @pytest.mark.django_db
 def test_invalid_definition_falls_back_to_code_default():
     clear_lifecycle_cache()

@@ -147,6 +147,18 @@ hours across all workers. Nothing about the instance is sent : it is a plain
 read of a public endpoint. Set it to `False` where policy forbids the
 application originating outbound traffic at all.
 
+## Lifecycle definitions across workers
+
+```bash
+LIFECYCLE_CACHE_TTL=5   # seconds a worker trusts its in-memory lifecycle definitions
+```
+
+The lifecycles edited under *Administration > Lifecycles* are cached in each
+worker process. A worker checks the table again at most every
+`LIFECYCLE_CACHE_TTL` seconds, so an edit saved by one worker is applied by the
+others within that delay. Lower it for a faster propagation at the cost of one
+small query more often; there is rarely a reason to raise it.
+
 ## Superuser bootstrap
 
 `DJANGO_SUPERUSER_EMAIL` and `DJANGO_SUPERUSER_PASSWORD` are read by the

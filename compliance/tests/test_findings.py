@@ -230,6 +230,41 @@ class TestNonconformityRegisterViews:
         assert raised.assessment_id is None
         assert raised.assessor_id == superuser.id
 
+    def test_an_empty_or_invalid_submission_shows_errors_not_a_server_error(self, client, superuser):
+        """The model requires an audit for `source = audit`, a field this form
+        does not carry : the rule used to crash the page instead of being
+        reported."""
+        client.force_login(superuser)
+        url = reverse("compliance:finding-register-create")
+
+        empty = client.post(url, {})
+        forged = client.post(url, {
+            "source": FindingSource.AUDIT,
+            "finding_type": FindingType.MINOR_NON_CONFORMITY,
+            "description": "Forged audit source with no audit.",
+        })
+
+        assert empty.status_code == 200
+        assert forged.status_code == 200
+        assert not Finding.objects.exists()
+
+    def test_the_register_form_does_not_offer_the_audit_source(self):
+        """RG-FND-01 : an audit finding is raised from inside its audit."""
+        from compliance.forms import FindingRegisterForm
+
+        offered = [value for value, _label in FindingRegisterForm().fields["source"].choices]
+
+        assert FindingSource.AUDIT not in offered
+        assert FindingSource.COMPLAINT in offered
+
+    def test_an_audit_finding_edited_from_the_register_keeps_its_source(self):
+        from compliance.forms import FindingRegisterForm
+
+        finding = FindingFactory()  # raised by an audit
+        offered = [value for value, _label in FindingRegisterForm(instance=finding).fields["source"].choices]
+
+        assert FindingSource.AUDIT in offered
+
     def test_a_scoped_user_still_sees_nonconformities_that_have_no_audit(self):
         """The parent join must not drop parentless rows.
 

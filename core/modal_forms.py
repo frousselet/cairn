@@ -12,7 +12,7 @@ and ordering.
 See ``docs/brand/brand-guidelines.md`` (Forms section) for the doctrine.
 """
 
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import NON_FIELD_ERRORS, ImproperlyConfigured, ValidationError
 
 
 def _col_class(width):
@@ -101,6 +101,29 @@ class SteppedFormMixin:
             self._validate_steps()
 
     # -- internals ---------------------------------------------------------
+
+    def _update_errors(self, errors):
+        """Report a model rule about a field this form does not carry.
+
+        ``Model.clean()`` may raise an error keyed on a field the form leaves
+        out (a parent set by the view, a derived field). Django then fails with
+        "has no field named ..." and the page answers a server error instead of
+        a validation message. Such errors are shown at the top of the form.
+        """
+        error_dict = getattr(errors, "error_dict", None)
+        if error_dict:
+            foreign = [
+                name for name in error_dict
+                if name != NON_FIELD_ERRORS and name not in self.fields
+            ]
+            if foreign:
+                remapped = {k: v for k, v in error_dict.items() if k not in foreign}
+                general = list(remapped.pop(NON_FIELD_ERRORS, []))
+                for name in foreign:
+                    general.extend(error_dict[name])
+                remapped[NON_FIELD_ERRORS] = general
+                errors = ValidationError(remapped)
+        super()._update_errors(errors)
 
     def _visible_field_names(self):
         return [name for name, f in self.fields.items() if not f.widget.is_hidden]

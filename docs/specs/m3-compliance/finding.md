@@ -67,7 +67,7 @@ Inherited from `BaseModel` : `workflow_state` (default 4-state lifecycle, unchan
 
 | ID | Rule |
 |---|---|
-| RG-FND-01 | `assessment` is optional. A `Finding` with `source = audit` and no assessment is a data error, not a supported state : `clean()` requires an assessment when `source == audit`. |
+| RG-FND-01 | `assessment` is optional. A `Finding` with `source = audit` and no assessment is a data error, not a supported state : `clean()` requires an assessment when `source == audit`. The register form carries no audit field, so it only offers the `Audit` source for a finding that already has its audit (edited from the register) : an audit finding is raised from inside its assessment. |
 | RG-FND-02 | `assessor` is required when `source == audit` and optional otherwise, enforced in `clean()`. The column stays non-null-constrained at database level only in the sense that existing rows are unaffected; the field itself becomes `null=True`. |
 | RG-FND-03 | Deleting a [ComplianceAssessment](compliance-assessment.md) no longer deletes its findings : the FK is `SET_NULL`. A nonconformity survives the audit that raised it, which is the point of a register. |
 | RG-FND-04 | `ComplianceAssessment.apply_findings_to_results()` and the assessment's own scoring iterate the reverse accessor `self.findings`, which by construction never yields a null-assessment row. Incident-born nonconformities therefore never leak into audit-scoped scoring, with no filter to remember and no null guard to write. |

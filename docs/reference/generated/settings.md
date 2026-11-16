@@ -8,7 +8,7 @@ Cairn is configured entirely through the environment. This page lists every vari
 
 The **In template** column says whether `.env.example` mentions it. Copy that file to `.env` to get started; anything absent from it falls back to the default below. Setting them up is covered in [../../technical/configuration.md](../../technical/configuration.md).
 
-**48 variables** are read by the code.
+**49 variables** are read by the code.
 
 ## Variables
 
@@ -40,6 +40,7 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `EMAIL_HOST_USER` | - | yes |  |
 | `EMAIL_PORT` | `25` | yes |  |
 | `EMAIL_USE_TLS` | `False` | yes |  |
+| `LIFECYCLE_CACHE_TTL` | `5` | yes | Seconds a worker process trusts its in-memory lifecycle definitions before checking the table again : how long the other workers may keep applying the previous version of a lifecycle edited in the administration. |
 | `POSTGRES_DB` | `open_grc` | yes |  |
 | `POSTGRES_HOST` | `db` | yes |  |
 | `POSTGRES_PASSWORD` | `postgres` | yes |  |

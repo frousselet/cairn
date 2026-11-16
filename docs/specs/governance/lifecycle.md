@@ -79,6 +79,19 @@ validates the move (legality, role/user restriction, required comment),
 validates the per-transition form when one is declared, writes the new step,
 persists, and appends the `LifecycleEvent`. Returns `(event, transition)`.
 
+## Definitions cache
+
+`get_lifecycle(name)` prefers the `LifecycleDefinition` row over the code
+default and caches the built lifecycle **in the worker process**
+(`_DB_LIFECYCLE_CACHE`). Saving or deleting a definition clears the cache of the
+process that did it; the other workers find out by revalidation : at most every
+`LIFECYCLE_CACHE_TTL` seconds (default 5) a worker compares the table's stamp
+(row count and latest `updated_at`, one aggregate query) with the one its cache
+was built against, and drops the cache when they differ. A lifecycle edited in
+the administration is therefore enforced by every worker within that delay, and
+never until "the next restart". A database error during the check (table not
+migrated yet) leaves the cache untouched.
+
 ## Restriction model
 
 Restriction is **by ISO 27001 role and/or named user**, not by Django

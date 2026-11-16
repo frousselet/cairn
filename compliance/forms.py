@@ -514,6 +514,17 @@ class FindingRegisterForm(SteppedFormMixin, forms.ModelForm):
             source.choices = [c for c in source.choices if c[0] == FindingSource.CONTROL_TEST]
         else:
             source.choices = [c for c in source.choices if c[0] != FindingSource.CONTROL_TEST]
+        # RG-FND-01 : an audit finding needs its audit, and this form carries no
+        # audit field : such a finding is raised from inside its assessment. The
+        # "Audit" source is therefore only kept for a finding that already has
+        # one (edited from the register). Offering it here let the model rule
+        # fail on a field the form does not have, which crashed the page.
+        if self.instance.assessment_id is None:
+            source.choices = [c for c in source.choices if c[0] != FindingSource.AUDIT]
+            if self.instance.pk is None and self.instance.source == FindingSource.AUDIT:
+                # The model default is "audit" : start on the first source this
+                # form can actually record.
+                source.initial = source.choices[0][0] if source.choices else None
 
 
 class RequirementMappingBaseForm(SteppedFormMixin, forms.ModelForm):

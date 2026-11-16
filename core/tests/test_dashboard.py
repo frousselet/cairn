@@ -61,6 +61,21 @@ def _regular_client():
     return client, user
 
 
+@pytest.mark.django_db
+def test_dashboard_renders_for_a_member_of_an_unrestricted_group():
+    """A group with no allowed scope means "every scope" : its members have
+    no scope restriction without being superusers. The ongoing-audits query
+    filtered on that absence of restriction and took the dashboard down."""
+    from accounts.tests.factories import GroupFactory
+
+    client, user = _regular_client()
+    group = GroupFactory()
+    group.users.add(user)
+    assert user.get_allowed_scope_ids() is None
+
+    assert client.get(reverse("home")).status_code == 200
+
+
 def _make_indicator(**kwargs):
     defaults = {
         "name": "Dashboard Indicator",
