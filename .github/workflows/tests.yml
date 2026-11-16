@@ -9,6 +9,8 @@ permissions:
   contents: read
 
 jobs:
+  # Fast run : in-memory SQLite, schema built from the models. Lint, coverage
+  # and the whole suite, including the interface sweep on the demo dataset.
   test:
     runs-on: ubuntu-latest
 
@@ -35,3 +37,61 @@ jobs:
 
       - name: Run tests
         run: pytest -x -v --tb=short --cov --cov-report=term-missing
+
+  # Same suite on the production engine, with every migration replayed from
+  # the first one. The fast run above never executes a migration and never
+  # meets PostgreSQL : a migration that fails, a model changed without its
+  # migration, or a query SQLite tolerates and PostgreSQL refuses would
+  # otherwise be discovered on a deployment.
+  test-postgres:
+    name: test (PostgreSQL, migrations)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: cairn
+          POSTGRES_USER: cairn
+          POSTGRES_PASSWORD: cairn
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cairn"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DJANGO_SETTINGS_MODULE: core.settings_test_postgres
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: cairn
+      POSTGRES_USER: cairn
+      POSTGRES_PASSWORD: cairn
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compile translations
+        run: python manage.py compilemessages
+
+      # A model changed without its migration passes every test (the schema
+      # is built from the models) and breaks the first deployment.
+      - name: Models and migrations are in sync
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run tests on PostgreSQL
+        run: pytest --ds=core.settings_test_postgres -x --tb=short
