@@ -72,21 +72,27 @@ Terse, and strictly so:
 
 ## Dependencies
 
-What is installed, everywhere, is `requirements.lock` : every distribution at
-an exact version, with its hashes. `requirements.txt` only lists what the
-project depends on directly.
+What is installed, everywhere, is `requirements.txt` : every distribution at an
+exact version, with its hashes. It is compiled from `requirements.in`, which
+lists only what the project depends on directly.
 
-- **To add or remove a dependency**, edit `requirements.txt`, add it to the
-  registry in `core/dependencies.py`, then regenerate the lock with the command
-  written at the top of `requirements.lock`. Existing pins are kept, so the diff
-  shows the new distribution and what it brings.
-- **To take updates**, run the same command with `--upgrade`, read the diff,
-  run the suite on SQLite and on PostgreSQL, and commit the lock on its own.
-  Security releases of the Django 5.2 line arrive this way : do it at least
-  monthly, and whenever Django announces a security release.
-- **Django stays on its LTS line.** `requirements.txt` constrains it to 5.2.x
-  and a test fails if the lock leaves it. Moving to the next LTS (6.2) is an
-  upgrade of its own, with its release notes read and its deprecations handled.
+- **To add or remove a dependency**, edit `requirements.in`, add it to the
+  registry in `core/dependencies.py`, then recompile :
+  `uvx --python 3.14 --from pip-tools pip-compile --generate-hashes --strip-extras --output-file requirements.txt requirements.in`
+  (or `pip-compile` with the same options from an environment that has
+  `pip-tools`). Existing pins are kept, so the diff shows the new distribution
+  and what it brings.
+- **Updates arrive by pull request.** Dependabot (`.github/dependabot.yml`)
+  recompiles the file every Monday and proposes the result as one pull request,
+  labelled `ci:postgres` so the suite also runs on PostgreSQL. It does the same
+  for the Python patch releases of the image and for the GitHub Actions. A
+  security advisory on a pinned version gets its own pull request without
+  waiting for Monday. To take updates by hand, add `--upgrade` to the command
+  above.
+- **Django stays on its LTS line.** `requirements.in` constrains it to 5.2.x,
+  Dependabot is told to ignore anything above, and a test fails if the compiled
+  file leaves the line. Moving to the next LTS (6.2) is an upgrade of its own,
+  with its release notes read and its deprecations handled.
 - **Python.** The image, CI and `mise.toml` name the same version. Change the
   three together.
 

@@ -1,0 +1,38 @@
+# Direct dependencies. What gets installed is requirements.txt, the exact,
+# hash-checked set compiled from this file : edit a line here, then regenerate
+# it (the command is at the top of requirements.txt). Dependabot does the same
+# every week and proposes the result as a pull request.
+#
+# Django follows the current LTS line (5.2, supported until April 2028). The
+# next one is 6.2 : moving to it is a deliberate upgrade, not a side effect of
+# an install.
+Django>=5.2,<5.3
+whitenoise  # serve static files from the ASGI app (uvicorn) under DEBUG=False
+psycopg[binary]
+gunicorn
+django-htmx
+djangorestframework
+django-filter
+django-simple-history
+Pillow
+djangorestframework-simplejwt
+openpyxl
+weasyprint
+python-pptx
+python-docx
+fido2
+channels
+channels-redis
+redis  # shared cache backend (Django RedisCache) + Channels layer client
+daphne
+icalendar
+uvicorn[standard]
+httpx
+# Testing & linting
+ruff
+pytest
+pytest-django
+pytest-cov
+pytest-asyncio
+pytest-xdist
+factory-boy

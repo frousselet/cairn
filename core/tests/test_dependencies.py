@@ -4,7 +4,7 @@
 
 The registry in ``core/dependencies.py`` is what the About modal, the REST
 endpoint and the ``list_dependencies`` MCP tool all answer from, so a library
-added to ``requirements.txt`` without a registry entry would make the instance
+added to ``requirements.in`` without a registry entry would make the instance
 state an inventory that is not its own.
 
 For the front-end the registry does more than describe : it is what loads the
@@ -49,8 +49,8 @@ def _normalise(name):
 
 
 def _requirements():
-    """The distributions declared in requirements.txt, extras and comments stripped."""
-    raw = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8")
+    """The distributions declared in requirements.in, extras and comments stripped."""
+    raw = (REPO_ROOT / "requirements.in").read_text(encoding="utf-8")
     names = []
     for line in raw.splitlines():
         line = line.split("#")[0].strip()
@@ -216,23 +216,23 @@ LOCK_PIN = re.compile(r"^([A-Za-z0-9_.-]+)==([^\s\;]+)", re.MULTILINE)
 
 
 def _locked():
-    """``{distribution: version}`` pinned in requirements.lock."""
-    raw = (REPO_ROOT / "requirements.lock").read_text(encoding="utf-8")
+    """``{distribution: version}`` pinned in the compiled requirements.txt."""
+    raw = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8")
     return {_normalise(name): version for name, version in LOCK_PIN.findall(raw)}
 
 
 def test_every_direct_dependency_is_pinned_in_the_lock():
-    """A line added to requirements.txt without regenerating the lock would be
-    installed nowhere : the image and CI install requirements.lock."""
+    """A line added to requirements.in without recompiling would be installed
+    nowhere : the image and CI install the compiled requirements.txt."""
     missing = sorted(set(_requirements()) - set(_locked()))
     assert not missing, (
-        f"not in requirements.lock : {missing}. Regenerate it with the command "
-        "at the top of the file."
+        f"not in requirements.txt : {missing}. Recompile it from requirements.in "
+        "(docs/technical/contributing.md)."
     )
 
 
 def test_the_lock_is_hash_checked():
-    raw = (REPO_ROOT / "requirements.lock").read_text(encoding="utf-8")
+    raw = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8")
     assert raw.count("--hash=sha256:") >= len(_locked())
 
 
@@ -244,10 +244,31 @@ def test_django_is_locked_on_the_lts_line():
 
 def test_the_running_django_is_the_locked_one():
     """Tests that pass on another Django than the one shipped prove little.
-    If this fails locally : pip install -r requirements.lock"""
+    If this fails locally : pip install -r requirements.txt"""
     import django
 
     assert django.get_version() == _locked()["django"], (
         f"installed Django {django.get_version()}, locked {_locked()['django']} : "
-        "run `pip install -r requirements.lock`"
+        "run `pip install -r requirements.txt`"
     )
+
+
+def test_dependabot_respects_the_decisions_of_the_project():
+    """The update bot must propose what can be merged : it leaves Django on its
+    LTS line and Python on the version that line supports, and it asks for the
+    PostgreSQL job, which a dependency update needs most."""
+    import yaml
+
+    config = yaml.safe_load((REPO_ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8"))
+    by_ecosystem = {entry["package-ecosystem"]: entry for entry in config["updates"]}
+    assert set(by_ecosystem) == {"pip", "docker", "github-actions"}
+
+    pip = by_ecosystem["pip"]
+    assert {"dependency-name": "django", "versions": [">=5.3"]} in pip["ignore"]
+    assert "ci:postgres" in pip["labels"]
+
+    docker = by_ecosystem["docker"]
+    python_rule = next(rule for rule in docker["ignore"] if rule["dependency-name"] == "python")
+    assert set(python_rule["update-types"]) == {
+        "version-update:semver-major", "version-update:semver-minor",
+    }
