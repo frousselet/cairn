@@ -120,7 +120,7 @@
   {% section_card _("Summary") icon="card-text" hide_empty=True %}{% if assessment.summary %}<div class="ov-rich">{{ assessment.summary|rich }}</div>{% endif %}{% endsection_card %}
 
   {% if assessment.methodology == 'iso27005' %}
-  {% section_card _("ISO 27005 analyses") icon="diagram-3" count=iso27005_risks|length flush=True %}
+  {% section_card _("ISO 27005 analyses") icon="diagram-3" count=iso27005_risks|length flush=True clamp=True %}
     {% slot actions %}<a href="{% url 'risks:iso27005-create' %}?assessment={{ assessment.pk }}" class="btn btn-sm btn-secondary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New analysis" %}</a>{% endslot %}
     {% if iso27005_risks %}
     <div class="table-responsive">
@@ -165,7 +165,7 @@
   {% endsection_card %}
   {% endif %}
 
-  {% section_card _("Associated risks") icon="exclamation-triangle" count=risks|length flush=True %}
+  {% section_card _("Associated risks") icon="exclamation-triangle" count=risks|length flush=True clamp=True %}
     {% slot footer %}{% if assessment.methodology == 'iso27005' %}<p class="text-meta mb-0"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>{% trans "Risks are created by consolidating ISO 27005 analyses." %}</p>{% endif %}{% endslot %}
     {% if risks %}
     <div class="table-responsive">

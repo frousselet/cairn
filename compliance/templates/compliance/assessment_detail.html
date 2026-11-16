@@ -148,7 +148,12 @@
         {% endsection_card %}
 
         {% section_card _("Requirements") icon="list-check" flush=True %}
-          {% slot actions %}{% if is_toggleable %}
+          {% slot actions %}
+          <button type="button" class="btn btn-sm btn-secondary" data-group-toggle-all="#item-table-body"
+                  title="{% trans 'Unfold or fold every section' %}" aria-label="{% trans 'Unfold or fold every section' %}">
+            <i class="bi bi-arrows-expand" aria-hidden="true"></i>
+          </button>
+          {% if is_toggleable %}
           <button type="button" class="btn btn-sm btn-secondary"
                   hx-post="{% url 'compliance:assessment-bulk-toggle-evaluated' assessment.pk %}"
                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
@@ -171,7 +176,7 @@
                   <th class="text-end"><span class="visually-hidden">{% trans "Actions" %}</span></th>
                 </tr>
               </thead>
-              <tbody id="item-table-body"
+              <tbody id="item-table-body" data-group-store="assessment-{{ assessment.pk }}"
                      hx-get="{% url 'compliance:assessment-results-table-body' assessment.pk %}"
                      hx-trigger="refreshTable"
                      hx-swap="innerHTML">

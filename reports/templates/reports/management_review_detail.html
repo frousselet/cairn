@@ -160,8 +160,7 @@
     {% endif %}
   {% endsection_card %}
 
-  {# Documents due for review (module 7) : the review is where an overdue
-     policy review is supposed to surface (ISO 27001 clause 5.2 / 9.3). #}
+  {% comment %}Documents due for review (module 7) : the review is where an overdue policy review is supposed to surface (ISO 27001 clause 5.2 / 9.3).{% endcomment %}
   {% if documents_due_for_review is not None %}
   {% section_card _("Documents due for review") icon="file-earmark-text" count=documents_due_for_review|length flush=documents_due_for_review|length %}
     {% if documents_due_for_review %}

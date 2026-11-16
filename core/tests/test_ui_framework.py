@@ -359,3 +359,62 @@ class TestFrameworkAdditions:
         out = Template('{% include "includes/form_fields.html" %}').render(Context({"form": F()}))
         assert 'class="form-label"' in out and "Name it" in out
         assert 'type="hidden" name="secret"' in out
+
+
+class TestSectionCardClamp:
+    """A long list inside a detail page shows its first rows only."""
+
+    def test_a_long_list_is_clamped_behind_a_button(self):
+        out = render('{% section_card "Rows" count=n clamp=True %}<table></table>{% endsection_card %}', {"n": 12})
+        assert "section-card--clamp" in out
+        assert "data-clamp-toggle" in out
+        assert "Show all 12" in out
+        assert 'aria-expanded="false"' in out
+
+    def test_a_short_list_is_left_alone(self):
+        out = render('{% section_card "Rows" count=n clamp=True %}<table></table>{% endsection_card %}', {"n": 8})
+        assert "section-card--clamp" not in out and "data-clamp-toggle" not in out
+
+    def test_clamp_needs_a_count(self):
+        """Without a count there is no way to know rows are hidden, so no button."""
+        out = render('{% section_card "Rows" clamp=True %}<table></table>{% endsection_card %}')
+        assert "section-card--clamp" not in out
+
+    def test_the_css_rule_hides_from_the_row_after_the_last_one_shown(self):
+        from pathlib import Path
+
+        from django.conf import settings
+
+        from core.templatetags.ui import SECTION_CLAMP_ROWS
+
+        css = (Path(settings.BASE_DIR) / "static/css/cairn/10-framework.css").read_text()
+        assert f"tbody > tr:nth-child(n+{SECTION_CLAMP_ROWS + 1})" in css
+
+
+class TestRecordLine:
+    def test_traceability_is_a_line_not_a_section_card(self):
+        from context.tests.factories import IssueFactory
+
+        out = render("{% record_card obj %}", {"obj": IssueFactory()})
+        assert "record-line" in out
+        assert "section-card" not in out
+
+    def test_an_unknown_author_shows_the_dash(self):
+        from context.tests.factories import IssueFactory
+
+        out = render("{% record_card obj %}", {"obj": IssueFactory(created_by=None)})
+        assert "Created by" in out
+        assert "cell-empty" in out or ">-<" in out
+
+
+class TestPlainEmptyOption:
+    def test_the_shared_field_partial_never_prints_a_row_of_dashes(self):
+        from django import forms
+        from django.template.loader import render_to_string
+
+        class Probe(forms.Form):
+            owner = forms.ChoiceField(choices=[("", "---------"), ("a", "A")], required=False)
+
+        html = render_to_string("includes/form_field.html", {"field": Probe()["owner"]})
+        assert "---------" not in html
+        assert ">None<" in html

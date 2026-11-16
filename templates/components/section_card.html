@@ -1,5 +1,5 @@
 {% comment %}{% section_card %} : a titled content card. See docs/sdk/ui-components.md.{% endcomment %}
-<section class="card section-card{% if flush %} section-card--flush{% endif %}{% if classes %} {{ classes }}{% endif %}"{% if card_id %} id="{{ card_id }}"{% endif %}>
+{% load i18n %}<section class="card section-card{% if flush %} section-card--flush{% endif %}{% if clamped %} section-card--clamp{% endif %}{% if classes %} {{ classes }}{% endif %}"{% if card_id %} id="{{ card_id }}"{% endif %}>
   {% if collapsible %}
   <details class="section-card__details"{% if open %} open{% endif %}>
     <summary class="section-card__head">
@@ -17,6 +17,15 @@
   </header>
   {% endif %}
   <div class="section-card__body">{{ body_html }}</div>
+  {% endif %}
+  {% if clamped %}
+  <div class="section-card__more">
+    <button type="button" class="btn btn-sm btn-secondary" data-clamp-toggle aria-expanded="false"
+            data-label-more="{% blocktrans %}Show all {{ count }}{% endblocktrans %}" data-label-less="{% trans 'Show fewer' %}">
+      <i class="bi bi-chevron-down" aria-hidden="true"></i>
+      <span data-clamp-label>{% blocktrans %}Show all {{ count }}{% endblocktrans %}</span>
+    </button>
+  </div>
   {% endif %}
   {% if footer_html %}<footer class="section-card__footer">{{ footer_html }}</footer>{% endif %}
 </section>

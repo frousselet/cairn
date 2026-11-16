@@ -20620,3 +20620,24 @@ msgstr "Une erreur est survenue de notre côté"
 
 msgid "The error has been recorded. Nothing you entered on other pages is lost. Try again in a moment; if it happens again, tell your administrator what you were doing."
 msgstr "L'erreur a été enregistrée. Rien de ce que vous avez saisi sur d'autres pages n'est perdu. Réessayez dans un instant ; si elle se reproduit, indiquez à votre administrateur ce que vous étiez en train de faire."
+
+#, python-format
+msgid "Show all %(count)s"
+msgstr "Tout afficher (%(count)s)"
+
+msgid "Show fewer"
+msgstr "Afficher moins"
+
+msgid "Unfold or fold every section"
+msgstr "Déplier ou replier toutes les sections"
+
+msgid "Jump to a section"
+msgstr "Aller à une section"
+
+msgctxt "empty select option"
+msgid "Choose…"
+msgstr "Choisir…"
+
+msgctxt "empty select option"
+msgid "None"
+msgstr "Aucun"

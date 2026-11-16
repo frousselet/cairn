@@ -10,12 +10,14 @@
 </tr>
 {% endif %}
 {% for group in fw_group.sections %}
-{# ── Section header row ── #}
-<tr class="results-section-row{% if multi_framework %} results-section-row--nested{% endif %}">
+{% comment %}Section header row : folds and unfolds its requirements (data-group-toggle, handled in base.html). The first section with work left starts open.{% endcomment %}
+<tr class="results-section-row{% if multi_framework %} results-section-row--nested{% endif %}"
+    data-group-toggle="{{ forloop.parentloop.counter }}-{{ forloop.counter }}"{% if group.evaluated < group.total %} data-group-pending{% endif %}
+    tabindex="0" role="button" aria-expanded="true">
   <td colspan="5">
     <div class="d-flex align-items-center justify-content-between">
       <div>
-        <i class="bi bi-folder2 me-1 text-muted" aria-hidden="true"></i>
+        <i class="bi bi-chevron-down results-section-row__chevron me-1 text-muted" aria-hidden="true"></i>
         {% if group.section %}
           {{ group.section.reference }} - {{ group.section.name }}
         {% else %}
@@ -44,7 +46,7 @@
 </tr>
 {# ── Requirement rows ── #}
 {% for entry in group.requirements %}
-<tr>
+<tr data-group="{{ forloop.parentloop.parentloop.counter }}-{{ forloop.parentloop.counter }}">
   <td>
     <a href="{% url 'compliance:requirement-detail' entry.requirement.pk %}" class="cell-link text-sm">
       {{ entry.requirement.requirement_number|default:entry.requirement.reference }}

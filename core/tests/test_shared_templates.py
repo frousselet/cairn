@@ -78,3 +78,25 @@ def test_changelog_popup_badges_come_from_the_view(settings):
     assert 'id="changelogModal"' in content
     assert '<span class="badge-dot warning mb-1">' in content
     assert "bg-warning" not in content
+
+
+def test_no_template_comment_spans_several_lines():
+    """`{# ... #}` is a one-line comment in Django templates. Written over
+    several lines it is not a comment at all : its text is printed in the page,
+    which is how two developer notes ended up displayed to users. A longer
+    note goes in `{% comment %}...{% endcomment %}`."""
+    import re
+    from pathlib import Path
+
+    from django.conf import settings
+
+    opened = re.compile(r"\{#(?:(?!#\}).)*$")
+    offenders = []
+    for path in Path(settings.BASE_DIR).rglob("*.html"):
+        parts = path.relative_to(settings.BASE_DIR).parts
+        if parts[0] in {".venv", "staticfiles", "node_modules", "media"} or "templates" not in parts:
+            continue
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if opened.search(line):
+                offenders.append(f"{path.relative_to(settings.BASE_DIR)}:{number}")
+    assert not offenders, "multi-line {# #} comments are printed as text :\n" + "\n".join(offenders)

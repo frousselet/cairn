@@ -265,7 +265,7 @@ passed outranks everything else the page has to say.
   {% endif %}
 
   {# ── Chronology : append-only, re-rendered over HTMX ── #}
-  {% section_card _("Chronology") icon="clock-history" count=timeline_entries|length %}
+  {% section_card _("Chronology") icon="clock-history" count=timeline_entries|length clamp=True %}
     {% slot actions %}
     {% if can_update_incident %}
     <button type="button" class="btn btn-sm btn-secondary" hx-get="{% url 'incidents:timeline-entry-create' incident.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" title="{% trans 'Add a chronology entry' %}" aria-label="{% trans 'Add a chronology entry' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>
@@ -398,9 +398,7 @@ passed outranks everything else the page has to say.
                 {# A fact about the law : nothing is owed by a date. #}
                 <span class="cell-empty">{% trans "No statutory deadline" %}</span>
               {% else %}
-                {# A clock that exists and has not started. Never merged
-                   with the line above : that is how a real deadline
-                   disappears from a page. #}
+                {% comment %}A clock that exists and has not started. Never merged with the line above : that is how a real deadline disappears from a page.{% endcomment %}
                 {% badge variant="secondary" label=_("Deadline pending") %}
               {% endif %}
             </td>

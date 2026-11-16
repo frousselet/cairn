@@ -58,7 +58,7 @@
       {% if pform.instance.pk %}{{ pform.id }}{% endif %}
       <div class="col-md-3">
         <label class="form-label small" for="{{ pform.user.id_for_label }}">{% trans "User" %}</label>
-        {{ pform.user }}
+        {{ pform.user|plain_empty_option }}
         {% for error in pform.user.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
       </div>
       <div class="col-md-3">

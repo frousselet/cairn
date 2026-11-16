@@ -187,6 +187,35 @@ class SiteSweepTests(TestCase):
                 failures.append((response.status_code, url, ""))
         assert not failures, f"{len(failures)} pages failed for {user.email} :\n{report(failures)}"
 
+    def test_an_audit_folds_its_requirements_by_section(self):
+        """Every requirement row of an audit belongs to a section header that
+        can fold it : a row with no header would stay hidden or never fold."""
+        client = self.client_for(self.superuser)
+        audits = [url for url in self.pages if re.fullmatch(r"/compliance/assessments/[0-9a-f-]{36}/", url)]
+        assert audits, "the crawl reached no compliance assessment"
+        checked = 0
+        for url in audits:
+            html = client.get(url).content.decode()
+            headers = set(re.findall(r'data-group-toggle="([^"]+)"', html))
+            rows = set(re.findall(r'<tr data-group="([^"]+)"', html))
+            if not rows:
+                continue
+            checked += 1
+            assert rows <= headers, f"{url} : rows without a section header {sorted(rows - headers)}"
+        assert checked, "no audit with requirement rows in the demo dataset"
+
+    def test_no_form_select_opens_on_a_row_of_dashes(self):
+        client = self.client_for(self.superuser)
+        offenders, seen = [], set()
+        for url, (status, _referer) in self.pages.items():
+            kind = page_type(url)
+            if status != 200 or not FORM_URL.search(url) or kind in seen:
+                continue
+            seen.add(kind)
+            if ">---------<" in client.get(url).content.decode("utf-8", "replace"):
+                offenders.append(kind)
+        assert not offenders, "forms printing Django's dashed empty option :\n  " + "\n  ".join(offenders)
+
     def test_no_form_fails_on_an_empty_or_invalid_submission(self):
         """A form answers its errors (200) or refuses (4xx); it never crashes."""
         client = self.client_for(self.superuser)

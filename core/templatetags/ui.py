@@ -1102,6 +1102,12 @@ def kpi_tile(label, value=None, *, icon=None, tone="accent", href=None, suffix=N
 # ───────────────────────── Section card ────────────────────────────────────
 
 
+# Rows a clamped section card shows before its "Show all" button. The CSS
+# rule (.section-card--clamp in 10-framework.css) hides from the next one on :
+# change both together.
+SECTION_CLAMP_ROWS = 8
+
+
 class SectionCardNode(_ComponentNode):
     template_name = "components/section_card.html"
 
@@ -1109,10 +1115,16 @@ class SectionCardNode(_ComponentNode):
         if not body and kwargs.get("hide_empty"):
             return None
         title = args[0] if args else kwargs.get("title")
+        count = kwargs.get("count")
+        # A long list inside a detail page is cut to its first rows, the rest
+        # one click away : the page stays a page about the record, not a
+        # register. Only worth a button when rows are actually hidden.
+        clamped = bool(kwargs.get("clamp")) and isinstance(count, int) and count > SECTION_CLAMP_ROWS
         return {
             "title": title,
             "icon": kwargs.get("icon"),
-            "count": kwargs.get("count"),
+            "count": count,
+            "clamped": clamped,
             "card_id": kwargs.get("id"),
             "collapsible": bool(kwargs.get("collapsible")),
             "open": kwargs.get("open", True),
@@ -1138,11 +1150,29 @@ def do_section_card(parser, token):
     Options: ``count`` (a pill after the title), ``collapsible=True`` with
     ``open=False`` (a native ``<details>``), ``flush=True`` (no body padding,
     for a table that runs edge to edge), ``hide_empty=True`` (render nothing
-    when the body is empty), ``id``. Slots: ``actions`` (right of the
-    title), ``footer``.
+    when the body is empty), ``clamp=True`` (with ``count`` : show the first
+    rows of a long table, or of a ``data-clamp-items`` list, behind a "Show
+    all" button), ``id``. Slots: ``actions`` (right of the title), ``footer``.
     """
     args, kwargs, nodelist = _parse_tag(parser, token, "endsection_card")
     return SectionCardNode(args, kwargs, nodelist)
+
+
+@register.filter
+def plain_empty_option(bound_field):
+    """``{{ field|plain_empty_option }}`` : the field, its select opening on
+    *Choose…* / *None* instead of Django's row of dashes.
+
+    Applied by ``includes/form_field.html``, the one renderer every form goes
+    through, so it holds whatever the form inherits from and however late it
+    set its choices.
+    """
+    from core.modal_forms import humanise_empty_choice
+
+    inner = getattr(bound_field, "field", None)
+    if inner is not None:
+        humanise_empty_choice(inner)
+    return bound_field
 
 
 @register.inclusion_tag("components/subhead.html")

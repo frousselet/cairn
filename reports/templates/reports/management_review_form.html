@@ -1,5 +1,5 @@
 {% extends "includes/page_form.html" %}
-{% load i18n %}
+{% load i18n ui %}
 {% block page_form_fields %}
 {% if form.non_field_errors %}
 <div class="alert alert-danger" role="alert">
@@ -9,7 +9,7 @@
 <fieldset class="mb-3">
   <legend class="form-label">{{ form.format.label }}{% if form.format.field.required %} <span class="form-required" aria-hidden="true">*</span>{% endif %}</legend>
   <div class="d-flex flex-wrap gap-4">
-    {% for radio in form.format %}
+    {% for radio in form.format|plain_empty_option %}
     <div class="form-check">
       {{ radio.tag }}
       <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>

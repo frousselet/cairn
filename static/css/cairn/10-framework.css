@@ -11,7 +11,7 @@
 /* ── Section card ─────────────────────────────────────
    One titled card. Header (eyebrow title, optional count and actions),
    body, optional footer. Padding matches .card-body. */
-.section-card { --section-pad-x: 2rem; --section-pad-y: 1.75rem; }
+.section-card { --section-pad-x: 1.5rem; --section-pad-y: 1.25rem; }
 .section-card__head {
   display: flex;
   align-items: center;
@@ -55,7 +55,7 @@
   gap: .5rem;
   flex-shrink: 0;
 }
-.section-card__body { padding: 1rem var(--section-pad-x) var(--section-pad-y); min-width: 0; }
+.section-card__body { padding: .875rem var(--section-pad-x) var(--section-pad-y); min-width: 0; }
 .section-card__body > :last-child { margin-bottom: 0; }
 /* A card without a title starts its body at the top padding. */
 .section-card > .section-card__body:first-child { padding-top: var(--section-pad-y); }
@@ -107,6 +107,60 @@
 }
 .meta-list__value { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
 .meta-list__value > :last-child { margin-bottom: 0; }
+
+/* ── Clamped section card ─────────────────────────────
+   {% section_card ... count=n clamp=True %} : a long table (or a
+   `data-clamp-items` list) shows its first 8 rows, the rest behind the "Show
+   all" button under it. The number is SECTION_CLAMP_ROWS in ui.py. */
+.section-card--clamp:not(.is-expanded) tbody > tr:nth-child(n+9),
+.section-card--clamp:not(.is-expanded) [data-clamp-items] > :nth-child(n+9) { display: none; }
+.section-card__more {
+  display: flex;
+  justify-content: center;
+  padding: .75rem var(--section-pad-x) 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+.section-card__more .bi { transition: transform var(--transition-fast); }
+.section-card--clamp.is-expanded .section-card__more .bi { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .section-card__more .bi { transition: none; } }
+
+/* ── Section menu ─────────────────────────────────────
+   The jump list of a long detail page (built in base.html). A card reached
+   through it stops clear of the pinned page header. */
+.detail-main .section-card { scroll-margin-top: calc(var(--page-header-offset) + 1.25rem); }
+.detail-main .section-card:focus { outline: none; }
+.section-menu { min-width: 15rem; max-height: min(70vh, 32rem); overflow-y: auto; }
+.section-menu .dropdown-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.section-menu__count { font-size: .75rem; color: var(--text-muted); }
+
+/* ── Foldable table groups ────────────────────────────
+   A header row that folds its group of rows (data-group-toggle, base.html). */
+tr[data-group-toggle] { cursor: pointer; }
+tr[data-group-toggle]:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--accent-glow); }
+.results-section-row__chevron { display: inline-block; font-size: .75rem; transition: transform var(--transition-fast); }
+tr[data-group-toggle][aria-expanded="false"] .results-section-row__chevron { transform: rotate(-90deg); }
+@media (prefers-reduced-motion: reduce) { .results-section-row__chevron { transition: none; } }
+
+/* ── Record line ──────────────────────────────────────
+   The traceability of a record (reference, version, author, dates) closes
+   every detail page as one line of small print : present on each page, in the
+   same place, without the height of a card. */
+.record-line { padding: .75rem 1.5rem; }
+.record-line__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .375rem 1.75rem;
+  margin: 0;
+  font-size: .8125rem;
+}
+.record-line__item { display: inline-flex; align-items: center; gap: .5rem; min-width: 0; }
+.record-line__item dt { font-weight: 400; color: var(--text-muted); white-space: nowrap; }
+.record-line__item dd { margin: 0; color: var(--text-secondary); }
+@media (max-width: 575.98px) {
+  .record-line { padding: .75rem 1.25rem; }
+  .record-line__list { gap: .375rem 1.25rem; }
+}
 
 /* ── KPI tile text ─────────────────────────────────── */
 .kpi-tile__label { font-size: .8125rem; color: var(--text-muted); }
@@ -169,6 +223,24 @@ a.ref-link__label:hover { text-decoration: underline; }
 /* ── Compact empty state (inside a card) ───────────── */
 .empty-state.empty-state--compact { padding: .75rem 0; align-items: flex-start; text-align: left; }
 .empty-state--compact .empty-state__message { margin: 0; font-size: .8125rem; }
+/* Inside a section card, "nothing here yet" is one line of small print under
+   the title, never a centred block : an empty section must not cost the page
+   more than a filled one. This holds whether or not the tag asked for
+   `compact`, so every detail page gets it. */
+.section-card .empty-state {
+  padding: 0;
+  align-items: flex-start;
+  text-align: left;
+}
+.section-card .empty-state .empty-state__icon,
+.section-card .empty-state .empty-state__illustration { display: none; }
+.section-card .empty-state .empty-state__title { font-size: .875rem; margin-bottom: .125rem; }
+.section-card .empty-state .empty-state__message { margin: 0; font-size: .8125rem; }
+.section-card--flush .section-card__body > .empty-state {
+  padding: 0 var(--section-pad-x) var(--section-pad-y);
+}
+/* A card holding nothing but that line gives up the gap under its title. */
+.section-card:has(> .section-card__body > .empty-state:only-child) > .section-card__body { padding-top: .375rem; }
 
 /* ── Calm icon button anywhere (the table treatment) ── */
 .btn.btn-icon {

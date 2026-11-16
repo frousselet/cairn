@@ -803,7 +803,10 @@ button[type="submit"].btn-loading::after {
   box-shadow: var(--shadow-lg);
   padding: .375rem;
   font-size: .875rem;
-  background: var(--surface-glass);
+  /* The near-opaque glass : a menu opens over arbitrary content, and its
+     items must read without relying on the blur (absent where the browser
+     or the user's settings switch it off). */
+  background: var(--surface-glass-strong);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   animation: dropdownFade .15s var(--ease-out-expo);

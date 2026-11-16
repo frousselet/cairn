@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detail pages show the lifecycle as a one-line bar (the path the record is on, each possible move as a button named after its transition, the full graph on demand) instead of a full-width diagram.
 - Pages are denser : content starts near the top of the window, record titles step down a size and keep their actions beside them, and key figures form a slim strip above the content.
 - The sidebar menu rows share one size, weight and hover, whether they open a page or a group.
+- Detail pages are shorter : traceability becomes a single line, an empty section a line of small print, long embedded tables show their first rows behind "Show all", and an audit folds its requirements by section.
+- A detail page with six sections or more gains a "Jump to a section" menu in its header.
+- Empty selects read "Choose…" or "None" instead of a row of dashes, and on a phone the form step indicator shows the current step's name in full.
 - The container runs as an unprivileged account (uid 1000) instead of root, handing over a media volume written by an earlier image on first start.
 - `DEBUG` is off unless set, instead of on : development environments set `DEBUG=True` (`.env.example` and `core.settings_local` do).
 - The compose file fixes the major versions of its services (`postgres:18`, `redis:8-alpine`) instead of following `latest`.
@@ -53,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A lifecycle edited in the administration was only applied by the worker process that saved it; every worker now picks it up within `LIFECYCLE_CACHE_TTL` seconds (5 by default).
 - Pages touching the cache (the update check, the assistant briefing, the Trust Center rate limiter) failed with a server error whenever Redis was unreachable; the cache now degrades to a miss and logs the outage.
 - The Docker-less development settings (`core.settings_local`) still required Redis for the cache.
+- Two developer comments were printed as text on the management review page and in an incident's regulatory obligations.
 - The pages of an API list could repeat a record and skip another, on the lists with no default order and under any `?ordering=` with ties; every list is now paginated in a total order.
 - The `date_before` filter of the risks API left out the risks created on the day given.
 - The dashboard's "what's new" dialog never appeared on the published image, which left `CHANGELOG.md` out; the image also carries its `LICENSE` and `README.md` again.
