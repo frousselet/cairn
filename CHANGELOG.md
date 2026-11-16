@@ -33,7 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The container runs as an unprivileged account (uid 1000) instead of root, handing over a media volume written by an earlier image on first start.
 - `DEBUG` is off unless set, instead of on : development environments set `DEBUG=True` (`.env.example` and `core.settings_local` do).
 - The compose file fixes the major versions of its services (`postgres:18`, `redis:8-alpine`) instead of following `latest`.
-- CI runs the test suite a second time on PostgreSQL with every migration replayed, checks that no model changed without its migration, and crawls every page and form of the demo dataset.
+- CI crawls every page and form of the demo dataset, and runs the suite a second time on PostgreSQL with every migration replayed (on `main`, and on a pull request labelled `ci:postgres`).
+- Python dependencies install from `requirements.lock` (exact versions, hash-checked) instead of the latest release of everything, with Django held on its 5.2 LTS line and the image on Python 3.14, the version CI tests.
 - The application logs to the console in production as under `DEBUG`, tracebacks of request errors included (`LOG_LEVEL` sets the verbosity).
 
 ### Fixed
@@ -54,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Docker-less development settings (`core.settings_local`) still required Redis for the cache.
 - The pages of an API list could repeat a record and skip another, on the lists with no default order and under any `?ordering=` with ties; every list is now paginated in a total order.
 - The `date_before` filter of the risks API left out the risks created on the day given.
+- The dashboard's "what's new" dialog never appeared on the published image, which left `CHANGELOG.md` out; the image also carries its `LICENSE` and `README.md` again.
 - The documented deployment of the published image had no volume for uploaded files, which were lost each time the container was recreated.
 - A list table wider than its card had its last columns clipped and unreachable on laptop screens; it now scrolls inside the card.
 - The scope, site and supplier maps showed an "API key required" watermark instead of the map, their tile provider no longer serving anonymous requests; they draw OpenStreetMap tiles by default.

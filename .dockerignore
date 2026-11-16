@@ -13,5 +13,9 @@ staticfiles
 .claude
 .idea
 .vscode
+# Documentation stays out of the image, with three exceptions the running
+# application or its licence needs : the dashboard's "what's new" dialog reads
+# CHANGELOG.md, and an AGPL image carries its licence text and its README.
 *.md
-LICENSE
+!CHANGELOG.md
+!README.md

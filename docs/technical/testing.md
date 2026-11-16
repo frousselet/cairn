@@ -47,8 +47,10 @@ POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=55432 POSTGRES_USER=cairn POSTGRES_PASSWOR
 the database, which is PostgreSQL, and the migrations, which are replayed from
 the first one. CI runs the whole suite a second time with it
 (`test (PostgreSQL, migrations)` in `tests.yml`), after checking with
-`makemigrations --check` that no model changed without its migration. It takes
-about five minutes instead of one, which is why it is not the default; run it
+`makemigrations --check` that no model changed without its migration : on every
+push to `main`, and on a pull request when it carries the `ci:postgres` label
+or when the workflow is run by hand on its branch. It takes about five minutes
+locally instead of one, which is why it is not the default; run it
 locally before a change to a migration, to a raw query or to anything that
 groups, orders or compares in the database. Do not add `-n` to it : every
 worker would replay the migrations on a database of its own, and the run gets
@@ -81,9 +83,9 @@ The suite runs with no warning, and two of them fail it on purpose
   zone.
 
 A warning that appears after a dependency upgrade is either fixed or silenced
-there with the reason, so the next one is noticed. The `EMAIL_*` deprecation
-of Django 6.1 is silenced for now : moving to `MAILERS` depends on which Django
-line the project supports.
+there with the reason, so the next one is noticed. The only one silenced today
+is the notice Django 5.2 prints about `FORMS_URLFIELD_ASSUME_HTTPS`, a
+transitional setting the project sets on purpose.
 
 Factories whose post-generation hooks only set relations declare
 `skip_postgeneration_save = True`. One that relies on a save once its relations
@@ -126,17 +128,20 @@ means, in order:
 
 ## Continuous integration
 
-`.github/workflows/tests.yml` runs two jobs on every push to `main` and every
-pull request.
+`.github/workflows/tests.yml` has two jobs. Both install `requirements.lock`
+on the Python version of the image.
 
-`test`, the fast run on SQLite :
+`test`, the fast run on SQLite, on every push to `main` and every pull request :
 
 1. `ruff check .`
 2. `python manage.py compilemessages` (a duplicate `msgid` fails here)
 3. `pytest -x -v --tb=short --cov --cov-report=term-missing`, interface sweep
    included
 
-`test (PostgreSQL, migrations)`, on the PostgreSQL major the compose file ships :
+`test (PostgreSQL, migrations)`, on the PostgreSQL major the compose file
+ships, on every push to `main`, and on a pull request only when it carries the
+`ci:postgres` label or when the workflow is run by hand
+(`gh workflow run tests.yml --ref <branch>`) :
 
 1. `python manage.py makemigrations --check --dry-run` (a model changed without
    its migration fails here)

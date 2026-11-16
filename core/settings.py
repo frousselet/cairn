@@ -257,6 +257,11 @@ LOGGING = {
     },
 }
 
+# A URL typed without a scheme ("example.org") is completed with https, not
+# http. That is the behaviour Django adopts from 6.0 on; this transitional
+# setting gives it on the 5.2 LTS line, and is simply ignored by later versions.
+FORMS_URLFIELD_ASSUME_HTTPS = True
+
 # Custom User Model
 AUTH_USER_MODEL = "accounts.User"
 

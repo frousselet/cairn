@@ -455,7 +455,11 @@ def render_models() -> dict:
             code(lifecycle),
             yesno(any(f.name == "scopes" and f.many_to_many for f in meta.get_fields())),
             yesno(hasattr(model, "history")),
-            str(len([f for f in meta.get_fields() if getattr(f, "concrete", False)])),
+            # Columns of the model's own table. `concrete_fields` rather than a
+            # test on `field.concrete`, which counts many-to-many fields on
+            # some Django versions and not on others : the reference must not
+            # change with the framework version.
+            str(len(meta.concrete_fields)),
         ])
     rows.sort(key=lambda r: (r[0], r[1]))
 

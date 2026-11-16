@@ -208,3 +208,46 @@ def test_dependencies_endpoint_returns_the_same_registry(client):
 @pytest.mark.django_db
 def test_dependencies_endpoint_requires_authentication(client):
     assert client.get("/api/v1/dependencies/").status_code in (401, 403)
+
+
+# ── The lock file ─────────────────────────────────────────────────────────
+
+LOCK_PIN = re.compile(r"^([A-Za-z0-9_.-]+)==([^\s\;]+)", re.MULTILINE)
+
+
+def _locked():
+    """``{distribution: version}`` pinned in requirements.lock."""
+    raw = (REPO_ROOT / "requirements.lock").read_text(encoding="utf-8")
+    return {_normalise(name): version for name, version in LOCK_PIN.findall(raw)}
+
+
+def test_every_direct_dependency_is_pinned_in_the_lock():
+    """A line added to requirements.txt without regenerating the lock would be
+    installed nowhere : the image and CI install requirements.lock."""
+    missing = sorted(set(_requirements()) - set(_locked()))
+    assert not missing, (
+        f"not in requirements.lock : {missing}. Regenerate it with the command "
+        "at the top of the file."
+    )
+
+
+def test_the_lock_is_hash_checked():
+    raw = (REPO_ROOT / "requirements.lock").read_text(encoding="utf-8")
+    assert raw.count("--hash=sha256:") >= len(_locked())
+
+
+def test_django_is_locked_on_the_lts_line():
+    """5.2 is the current long-term support line. Leaving it is a decision
+    (the next LTS is 6.2), not something an install may do on its own."""
+    assert _locked()["django"].startswith("5.2."), _locked()["django"]
+
+
+def test_the_running_django_is_the_locked_one():
+    """Tests that pass on another Django than the one shipped prove little.
+    If this fails locally : pip install -r requirements.lock"""
+    import django
+
+    assert django.get_version() == _locked()["django"], (
+        f"installed Django {django.get_version()}, locked {_locked()['django']} : "
+        "run `pip install -r requirements.lock`"
+    )
