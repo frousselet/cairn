@@ -34,6 +34,7 @@ class ScopeFactory(factory.django.DjangoModelFactory):
 class SiteFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Site
+        skip_postgeneration_save = True  # the hooks below only set relations
 
     name = factory.Sequence(lambda n: f"Site {n}")
     type = SiteType.OFFICE
@@ -48,6 +49,7 @@ class SiteFactory(factory.django.DjangoModelFactory):
 class IssueFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Issue
+        skip_postgeneration_save = True  # the hooks below only set relations
 
     name = factory.Sequence(lambda n: f"Issue {n}")
     type = IssueType.INTERNAL
@@ -72,6 +74,7 @@ class IssueFactory(factory.django.DjangoModelFactory):
 class SwotAnalysisFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SwotAnalysis
+        skip_postgeneration_save = True  # the hooks below only set relations
 
     name = factory.Sequence(lambda n: f"SWOT Analysis {n}")
     description = "Test SWOT analysis"
@@ -106,6 +109,15 @@ class SwotStrategyFactory(factory.django.DjangoModelFactory):
 class ObjectiveFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Objective
+        skip_postgeneration_save = True  # saved explicitly below
+
+    @classmethod
+    def _after_postgeneration(cls, instance, create, results=None):
+        """Save once the scopes are set : `Objective.save()` checks that a
+        child shares a scope with its parent, which it can only do then."""
+        super()._after_postgeneration(instance, create, results)
+        if create and results:
+            instance.save()
 
     reference = factory.Sequence(lambda n: f"OBJ-{n:03d}")
     name = factory.Sequence(lambda n: f"Objective {n}")

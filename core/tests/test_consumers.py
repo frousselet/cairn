@@ -3,7 +3,7 @@
 """Tests for the dashboard WebSocket consumer and signal handlers."""
 
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -131,7 +131,8 @@ class TestNotifyDashboard:
     def test_notify_sends_group_message(self, mock_get_layer):
         """_notify_dashboard sends a dashboard.refresh to the group."""
         mock_layer = MagicMock()
-        mock_layer.group_send = MagicMock(return_value=_async_noop())
+        # group_send is a coroutine function on a real channel layer.
+        mock_layer.group_send = AsyncMock()
         mock_get_layer.return_value = mock_layer
 
         _notify_dashboard()
