@@ -1,0 +1,116 @@
+{% load i18n static %}{% get_current_language as LANGUAGE_CODE %}<!doctype html>
+{% comment %}
+Shell of the error pages (400, 403, 404, 500 and the CSRF refusal).
+
+Self-contained on purpose : it does not extend base.html, runs no query, needs
+no context processor and resolves no static file, so it still renders when the
+database, the cache or the static manifest is what failed. The palette and the
+type scale are the design tokens, copied here rather than linked for that
+reason. `get_static_prefix` only reads STATIC_URL.
+{% endcomment %}
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{% block title %}{% endblock %} - Cairn</title>
+  <style>
+    @font-face {
+      font-family: "GitLab Sans";
+      font-weight: 100 900;
+      font-display: swap;
+      src: url('{% get_static_prefix %}vendor/gitlab-sans/GitLabSans.woff2') format('woff2');
+    }
+    :root {
+      --bg: #FAFAFA; --surface: #FFFFFF; --border: rgba(0,0,0,.08);
+      --text: #18181B; --text-secondary: #52525B; --text-muted: #71717A;
+      --accent: #1E3A8A; --accent-hover: #1E2E5E; --accent-contrast: #FFFFFF;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0F1011; --surface: #1C1F23; --border: rgba(255,255,255,.10);
+        --text: #E4E4E7; --text-secondary: #A1A1AA; --text-muted: #A1A1AA;
+        --accent: #3B5BB8; --accent-hover: #4C6BC6; --accent-contrast: #FFFFFF;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: var(--bg);
+      color: var(--text);
+      font: 400 .9375rem/1.6 "GitLab Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-synthesis: none;
+    }
+    .error-card {
+      width: 100%;
+      max-width: 30rem;
+      padding: 2.25rem 2rem 2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: .875rem;
+    }
+    .error-brand { display: flex; align-items: center; gap: .625rem; margin-bottom: 1.75rem; }
+    .error-brand svg { width: 2rem; height: 2rem; flex: none; }
+    .error-brand span { font-size: 1.25rem; font-weight: 810; color: var(--accent); }
+    .error-eyebrow {
+      margin: 0 0 .5rem;
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    h1 { margin: 0 0 .75rem; font-size: 1.75rem; font-weight: 810; line-height: 1.2; }
+    p { margin: 0 0 1.75rem; color: var(--text-secondary); }
+    .error-actions { display: flex; flex-wrap: wrap; gap: .625rem; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.5rem;
+      padding: .5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: .625rem;
+      background: transparent;
+      color: var(--text-secondary);
+      font: inherit;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color .15s ease-out, border-color .15s ease-out;
+    }
+    .btn:hover { border-color: var(--text-muted); }
+    .btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent); outline-offset: 2px; }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+  </style>
+</head>
+<body>
+  <main class="error-card">
+    <div class="error-brand">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
+        <rect width="64" height="64" rx="13" fill="#1E3A8A"/>
+        <path d="M 19 38 A 14 14 0 1 1 45 38" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none"/>
+        <rect x="22" y="40" width="20" height="4" rx="1" fill="#FFFFFF"/>
+        <rect x="25" y="33" width="14" height="4" rx="1" fill="#FFFFFF"/>
+        <rect x="28" y="26" width="8" height="4" rx="1" fill="#FFFFFF"/>
+      </svg>
+      <span>Cairn</span>
+    </div>
+    <p class="error-eyebrow">{% block eyebrow %}{% endblock %}</p>
+    <h1>{% block heading %}{% endblock %}</h1>
+    <p>{% block message %}{% endblock %}</p>
+    <div class="error-actions">
+      {% block actions %}
+      <a class="btn btn-primary" href="/">{% trans "Back to the dashboard" %}</a>
+      <button class="btn" type="button" onclick="history.back()">{% trans "Go back" %}</button>
+      {% endblock %}
+    </div>
+  </main>
+</body>
+</html>

@@ -17,6 +17,23 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes")
 
+# The placeholder keys are public : they ship in this file and in .env.example.
+# Outside DEBUG a deployment that kept one would sign its sessions, its
+# password-reset links and its Trust Center download links with a key anyone
+# can read, so it refuses to start instead of running forgeable.
+_PLACEHOLDER_SECRET_KEYS = {
+    "django-insecure-change-me-in-production",
+    "change-me-to-a-random-secret-key",
+}
+if not DEBUG and SECRET_KEY in _PLACEHOLDER_SECRET_KEYS:
+    from django.core.exceptions import ImproperlyConfigured
+
+    raise ImproperlyConfigured(
+        "SECRET_KEY is still the public placeholder while DEBUG is off. Set "
+        "SECRET_KEY to a long random value (for example : python -c \"import "
+        "secrets; print(secrets.token_urlsafe(64))\") before starting Cairn."
+    )
+
 
 def _detect_version():
     """Return app version from /etc/app-version, version.txt, or 'dev'."""
@@ -90,6 +107,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # First on purpose : a health probe calls by IP with no session, and must
+    # be answered before host validation, redirects or session handling.
+    "core.middleware.HealthCheckMiddleware",
     "django.middleware.security.SecurityMiddleware",
     # Serve collected static files directly from the ASGI app (uvicorn does not
     # serve static, and core/urls.py only wires them under DEBUG). Without this,
@@ -129,6 +149,7 @@ TEMPLATES = [
                 "core.context_processors.app_version",
                 "core.context_processors.third_party_dependencies",
                 "core.context_processors.assistant_enabled",
+                "core.context_processors.map_tiles",
                 "core.context_processors.company",
             ],
         },
@@ -205,6 +226,32 @@ CACHES = {
     }
 }
 
+# Everything is logged to the console (stderr), where a container runtime
+# collects it. Django's own default only writes there under DEBUG : in
+# production an unhandled error left no traceback anywhere, only a 500 line in
+# the access log. LOG_LEVEL filters the whole tree (DEBUG, INFO, WARNING, ERROR).
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "plain": {
+            "format": "%(asctime)s %(levelname)s %(name)s : %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "plain"},
+    },
+    "root": {"handlers": ["console"], "level": LOG_LEVEL},
+    "loggers": {
+        # Replaces Django's DEBUG-only console handler : request errors
+        # (django.request, with their traceback) are logged in production too.
+        "django": {"handlers": ["console"], "level": LOG_LEVEL, "propagate": False},
+        # One line per SQL statement at DEBUG : only on explicit request.
+        "django.db.backends": {"level": os.environ.get("LOG_LEVEL_SQL", "WARNING").upper()},
+    },
+}
+
 # Custom User Model
 AUTH_USER_MODEL = "accounts.User"
 
@@ -267,6 +314,23 @@ VENDOR_ASSETS_AUTO_DOWNLOAD = os.environ.get(
 UPDATE_CHECK_ENABLED = os.environ.get(
     "UPDATE_CHECK_ENABLED", "True"
 ).lower() in ("true", "1", "yes")
+
+# Basemap of the maps on the scope, site and supplier pages. The tiles are
+# fetched by the reader's browser, straight from this provider. The default is
+# OpenStreetMap's own tile service, which needs no account; point it at any
+# other XYZ provider (with its key in the URL) for heavier use or another
+# style. An empty value switches the maps off, for an instance whose browsers
+# must not reach an outside service.
+MAP_TILE_URL = os.environ.get(
+    "MAP_TILE_URL", "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+).strip()
+# Tiles to use under the dark theme. Empty : the tiles above are dimmed.
+MAP_TILE_URL_DARK = os.environ.get("MAP_TILE_URL_DARK", "").strip()
+# Credit line shown on the map, as the provider's terms require (HTML).
+MAP_TILE_ATTRIBUTION = os.environ.get(
+    "MAP_TILE_ATTRIBUTION",
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+)
 
 # Seconds a worker process trusts its in-memory lifecycle definitions before
 # checking the table again. A lifecycle edited in the administration is saved

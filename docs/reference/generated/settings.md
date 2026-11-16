@@ -8,7 +8,7 @@ Cairn is configured entirely through the environment. This page lists every vari
 
 The **In template** column says whether `.env.example` mentions it. Copy that file to `.env` to get started; anything absent from it falls back to the default below. Setting them up is covered in [../../technical/configuration.md](../../technical/configuration.md).
 
-**49 variables** are read by the code.
+**54 variables** are read by the code.
 
 ## Variables
 
@@ -41,6 +41,11 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `EMAIL_PORT` | `25` | yes |  |
 | `EMAIL_USE_TLS` | `False` | yes |  |
 | `LIFECYCLE_CACHE_TTL` | `5` | yes | Seconds a worker process trusts its in-memory lifecycle definitions before checking the table again : how long the other workers may keep applying the previous version of a lifecycle edited in the administration. |
+| `LOG_LEVEL` | `INFO` | yes | Verbosity of the application log, written to the console in production as under DEBUG : DEBUG, INFO, WARNING or ERROR. |
+| `LOG_LEVEL_SQL` | `WARNING` | yes | Set to DEBUG to log every SQL statement (verbose, for a diagnosis only). |
+| `MAP_TILE_ATTRIBUTION` | `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors` | yes | Credit line shown on the map, as the provider's terms require (HTML). |
+| `MAP_TILE_URL` | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | yes | Basemap of the maps on the scope, site and supplier pages. The tiles are fetched by the reader's browser, straight from this provider. Any XYZ tile URL works, with its key when the provider needs one. Empty : no map. |
+| `MAP_TILE_URL_DARK` | - | yes | Tiles to use under the dark theme. Empty : the tiles above are dimmed. |
 | `POSTGRES_DB` | `open_grc` | yes |  |
 | `POSTGRES_HOST` | `db` | yes |  |
 | `POSTGRES_PASSWORD` | `postgres` | yes |  |

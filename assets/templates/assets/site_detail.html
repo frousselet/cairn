@@ -132,18 +132,15 @@
   map appears on boosted navigation too, not only after a hard refresh.
 {% endcomment %}
 (function () {
-  var ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
   var docEl = document.documentElement;
-  function tileUrl() {
-    var dark = docEl.getAttribute('data-bs-theme') === 'dark';
-    return 'https://{s}.basemaps.cartocdn.com/' + (dark ? 'dark_all' : 'light_all') + '/{z}/{x}/{y}{r}.png';
-  }
   function accent() {
     return (getComputedStyle(docEl).getPropertyValue('--accent') || '').trim() || '#1E3A8A';
   }
   function initSiteMap() {
     var el = document.getElementById('site-map');
     if (!el || el.dataset.mapReady || !window.L) { return; }
+    // No basemap configured (MAP_TILE_URL empty) : the page shows no map.
+    if (!window.cairnBasemap.enabled) { el.style.display = 'none'; return; }
     el.dataset.mapReady = '1';
 
     function render(lat, lon) {
@@ -152,9 +149,7 @@
         doubleClickZoom: false, boxZoom: false, touchZoom: false, keyboard: false
       });
       var center = L.latLng(lat, lon);
-      var layer = L.tileLayer(tileUrl(), {
-        maxZoom: 19, subdomains: 'abcd', attribution: ATTR
-      }).addTo(map);
+      window.cairnBasemap.addTo(map);
       L.circleMarker(center, {
         radius: 7, color: '#ffffff', weight: 2.5, fillColor: accent(), fillOpacity: 1
       }).addTo(map);
@@ -171,8 +166,6 @@
       }
       applyView();
       map.on('resize', applyView);
-      new MutationObserver(function () { layer.setUrl(tileUrl()); })
-        .observe(docEl, { attributes: true, attributeFilter: ['data-bs-theme'] });
       setTimeout(function () { map.invalidateSize(); applyView(); }, 120);
     }
 

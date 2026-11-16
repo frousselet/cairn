@@ -272,20 +272,15 @@
   too, not only after a hard refresh.
 {% endcomment %}
 (function () {
-  // CARTO basemaps : free, no API key, meant for embedding (OSM's own tile
-  // servers block app usage), with light / dark styles that follow the theme.
-  var ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
   var docEl = document.documentElement;
-  function tileUrl() {
-    var dark = docEl.getAttribute('data-bs-theme') === 'dark';
-    return 'https://{s}.basemaps.cartocdn.com/' + (dark ? 'dark_all' : 'light_all') + '/{z}/{x}/{y}{r}.png';
-  }
   function accent() {
     return (getComputedStyle(docEl).getPropertyValue('--accent') || '').trim() || '#1E3A8A';
   }
   function initSupplierMap() {
     var el = document.getElementById('supplier-map');
     if (!el || el.dataset.mapReady || !window.L) { return; }
+    // No basemap configured (MAP_TILE_URL empty) : the page shows no map.
+    if (!window.cairnBasemap.enabled) { el.style.display = 'none'; return; }
 
     function render(lat, lon) {
       el.dataset.mapReady = '1';
@@ -295,9 +290,7 @@
         doubleClickZoom: false, boxZoom: false, touchZoom: false, keyboard: false
       });
       var center = L.latLng(lat, lon);
-      var layer = L.tileLayer(tileUrl(), {
-        maxZoom: 19, subdomains: 'abcd', attribution: ATTR
-      }).addTo(map);
+      window.cairnBasemap.addTo(map);
       // Brand-navy dot with a white ring (matches the Ruby map treatment).
       L.circleMarker(center, {
         radius: 7, color: '#ffffff', weight: 2.5, fillColor: accent(), fillOpacity: 1
@@ -319,9 +312,6 @@
       }
       applyView();
       map.on('resize', applyView);
-      // Swap the basemap when the user toggles light / dark.
-      new MutationObserver(function () { layer.setUrl(tileUrl()); })
-        .observe(docEl, { attributes: true, attributeFilter: ['data-bs-theme'] });
       setTimeout(function () { map.invalidateSize(); applyView(); }, 120);
     }
 

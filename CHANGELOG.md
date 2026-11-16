@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A documented UI component framework (`detail_layout`, `section_card`, `overview`, `meta_list`, `kpi_tile`, `record_card`, `ref_link`, `tag_list`, `choice_badge`, the dash) with shared page-form and delete shells, catalogued in `docs/sdk/ui-components.md` and on `/styleguide/`.
 - A Documents module (ISO 27001 clause 5.2, 7.5, A.5.1) : policies, procedures, standards and charters with frozen, approved versions (one in force at a time), a review cycle with reminders, and acknowledgement campaigns whose confirmations are kept as evidence, on the web, the REST API and MCP.
 - A Controls module (ISO 27001 clause 6.1.3, 9.1) : security controls linked to requirements, risks, treatment plans, PACS measures, assets, objectives and documents, tests with independently validated runs and evidence, derived effectiveness, findings raised from failed runs, an enriched Statement of Applicability, on the web, the REST API and MCP.
+- `GET /health/` reports whether the instance can serve (database reachable), with no session and whatever the Host header, and is the image's `HEALTHCHECK`.
+- Error pages in the product's design and in the reader's language for a missing page, a refused permission, an expired form and a server error.
+- The basemap of the scope, site and supplier maps is a deployment setting (`MAP_TILE_URL`, `MAP_TILE_URL_DARK`, `MAP_TILE_ATTRIBUTION`); an empty value switches the maps off.
 
 ### Changed
 
@@ -27,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detail pages show the lifecycle as a one-line bar (the path the record is on, each possible move as a button named after its transition, the full graph on demand) instead of a full-width diagram.
 - Pages are denser : content starts near the top of the window, record titles step down a size and keep their actions beside them, and key figures form a slim strip above the content.
 - The sidebar menu rows share one size, weight and hover, whether they open a page or a group.
+- The application logs to the console in production as under `DEBUG`, tracebacks of request errors included (`LOG_LEVEL` sets the verbosity).
 
 ### Fixed
 
@@ -45,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pages touching the cache (the update check, the assistant briefing, the Trust Center rate limiter) failed with a server error whenever Redis was unreachable; the cache now degrades to a miss and logs the outage.
 - The Docker-less development settings (`core.settings_local`) still required Redis for the cache.
 - A list table wider than its card had its last columns clipped and unreachable on laptop screens; it now scrolls inside the card.
+- The scope, site and supplier maps showed an "API key required" watermark instead of the map, their tile provider no longer serving anonymous requests; they draw OpenStreetMap tiles by default.
 
 ### Security
 
@@ -53,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The risk scale endpoint no longer answers with the criteria of an assessment outside the user's scopes.
 - The relation pickers of every list's advanced filter listed related records unscoped, printing the names of records outside the reader's scopes into the page.
 - Rich text fields were rendered unsanitized on every detail page and report (stored XSS); they are now sanitized at render time, and JSON embedded in pages can no longer close its script element.
+- With `DEBUG` off, Cairn refuses to start while `SECRET_KEY` is one of the public placeholder values, instead of signing sessions with a key anyone can read.
 - Nonconformities raised by an incident were visible to every finding reader whatever their scopes, and the MCP finding update and delete tools did not check the caller's scopes.
 
 

@@ -77,6 +77,17 @@ def assistant_enabled(request):
     return {"AI_ASSISTANT_ENABLED": settings.AI_ASSISTANT_ENABLED}
 
 
+def map_tiles(request):
+    """The basemap the hero maps draw (see MAP_TILE_URL in the settings)."""
+    return {
+        "MAP_TILES": {
+            "url": settings.MAP_TILE_URL,
+            "darkUrl": settings.MAP_TILE_URL_DARK,
+            "attribution": settings.MAP_TILE_ATTRIBUTION,
+        }
+    }
+
+
 def company(request):
     """Expose the company settings singleton and the resolved application name to
     every template (sidebar brand, tab titles). Uses .first() so a GET never
