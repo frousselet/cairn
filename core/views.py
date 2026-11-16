@@ -1789,7 +1789,7 @@ class CalendarUpcomingView(LoginRequiredMixin, View):
     """
 
     def get(self, request):
-        today = timezone.now().date()
+        today = timezone.localdate()
         items = build_upcoming_deadlines(
             request.user,
             today,
@@ -1816,7 +1816,7 @@ class ICalFeedView(View):
 
         from icalendar import Calendar, Event as ICalEvent
 
-        today = date.today()
+        today = timezone.localdate()
         start_iso = (today - timedelta(days=90)).isoformat()
         end_iso = (today + timedelta(days=365)).isoformat()
         events = get_calendar_events(user, start=start_iso, end=end_iso)

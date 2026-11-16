@@ -179,7 +179,7 @@ class RequirementViewSet(
             k: v for k, v in serializer.validated_data.items()
             if k in allowed_fields
         }
-        update_data["last_assessment_date"] = timezone.now().date()
+        update_data["last_assessment_date"] = timezone.localdate()
         update_data["last_assessed_by"] = request.user
         for attr, value in update_data.items():
             setattr(requirement, attr, value)
@@ -434,7 +434,7 @@ class ComplianceActionPlanViewSet(
             p = item["priority"]
             by_priority[p] = by_priority.get(p, 0) + 1
         overdue = qs.filter(
-            target_date__lt=timezone.now().date()
+            target_date__lt=timezone.localdate()
         ).exclude(workflow_state__in=[ActionPlanStatus.CLOSED, ActionPlanStatus.CANCELLED]).count()
         return Response({
             "total": total,

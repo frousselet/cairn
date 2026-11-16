@@ -228,7 +228,7 @@ BULK = json.load(open(_seed_path("scripts/seed_bulk_data.json")))
 RNG = _random.Random(20260625)  # deterministic sampling for reproducible seeds
 
 NOW = timezone.now()
-TODAY = NOW.date()
+TODAY = timezone.localdate()  # the business day, not the UTC day
 PASSWORD = "VoltaraDemo!2026"
 
 

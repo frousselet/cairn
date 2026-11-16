@@ -16,6 +16,7 @@ from assets.tests.factories import ContractFactory, SupplierFactory
 from context.constants import InfluenceLevel, IssueType, StakeholderCategory
 from context.models import Stakeholder
 from context.tests.factories import ScopeFactory
+from django.utils import timezone
 
 
 def _make_stakeholder(category):
@@ -64,7 +65,7 @@ class TestContractModel:
         assert list(parent.amendments.all()) == [amend]
 
     def test_is_expired(self):
-        today = datetime.date.today()
+        today = timezone.localdate()
         past = Contract.objects.create(status="active", end_date=today - datetime.timedelta(days=1))
         future = Contract.objects.create(status="active", end_date=today + datetime.timedelta(days=1))
         archived = Contract.objects.create(status="archived", end_date=today - datetime.timedelta(days=1))

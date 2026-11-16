@@ -16,6 +16,7 @@ from assets.tests.factories import CertificateFactory
 from compliance.tests.factories import FrameworkFactory
 from context.models import Site
 from context.tests.factories import ScopeFactory
+from django.utils import timezone
 
 _PDF_BYTES = b"%PDF-1.4\n%fake minimal pdf\n"
 
@@ -55,7 +56,7 @@ class TestCertificateModel:
         assert Certificate.objects.create(label="cert3").framework_label == ""
 
     def test_is_expired(self):
-        today = datetime.date.today()
+        today = timezone.localdate()
         past = Certificate.objects.create(status="certified", expiry_date=today - datetime.timedelta(days=1))
         future = Certificate.objects.create(status="certified", expiry_date=today + datetime.timedelta(days=1))
         archived = Certificate.objects.create(status="archived", expiry_date=today - datetime.timedelta(days=1))

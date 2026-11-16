@@ -9,6 +9,7 @@ import pytest
 from accounts.tests.factories import GroupFactory, PermissionFactory, UserFactory
 from mcp.server import McpServer
 from mcp.tools import register_all_tools
+from django.utils import timezone
 
 pytestmark = pytest.mark.django_db
 
@@ -161,14 +162,14 @@ class TestSupplierListTool:
         hr = SupplierTypeFactory(name="HR software")
         expired = SupplierFactory(
             type=hr, status=SupplierStatus.ACTIVE,
-            contract_end_date=date.today() - timedelta(days=10),
+            contract_end_date=timezone.localdate() - timedelta(days=10),
         )
         # Active contract (future end date) and an expired-but-archived supplier
         # must both be excluded by expired=true.
         SupplierFactory(status=SupplierStatus.ACTIVE,
-                        contract_end_date=date.today() + timedelta(days=10))
+                        contract_end_date=timezone.localdate() + timedelta(days=10))
         SupplierFactory(status=SupplierStatus.ARCHIVED,
-                        contract_end_date=date.today() - timedelta(days=10))
+                        contract_end_date=timezone.localdate() - timedelta(days=10))
 
         srv, user = self._server_user()
         handler = srv.get_tool("list_suppliers")["handler"]

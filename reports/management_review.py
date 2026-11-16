@@ -295,7 +295,7 @@ def gather_management_review_data(user, scope_ids=None,
             "progress": f"{ap.progress_percentage}%" if ap.progress_percentage is not None else "-",
             "is_overdue": (
                 ap.target_date
-                and ap.target_date < now.date()
+                and ap.target_date < timezone.localtime(now).date()
                 and ap.status not in [
                     ActionPlanStatus.CLOSED,
                     ActionPlanStatus.CANCELLED,

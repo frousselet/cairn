@@ -53,7 +53,7 @@ class TestActionPlanTransitions:
         ap = ComplianceActionPlanFactory(status=ActionPlanStatus.VALIDATED)
         ap.transition_to(ActionPlanStatus.CLOSED, user)
         assert ap.status == ActionPlanStatus.CLOSED
-        assert ap.completion_date == timezone.now().date()
+        assert ap.completion_date == timezone.localdate()
         assert ap.progress_percentage == 100
 
     def test_full_forward_workflow(self):

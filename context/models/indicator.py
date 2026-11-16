@@ -226,7 +226,7 @@ class Indicator(ScopedModel):
             )
         # First review date must be today or in the future (only on creation)
         if not self.pk and self.first_review_date:
-            if self.first_review_date < timezone.now().date():
+            if self.first_review_date < timezone.localdate():
                 raise ValidationError(
                     {
                         "first_review_date": _(

@@ -109,14 +109,14 @@ class TestSupportAssetProperties:
     def test_is_end_of_life_true(self):
         sa = SupportAssetFactory(
             status=SupportAssetStatus.ACTIVE,
-            end_of_life_date=timezone.now().date() - timezone.timedelta(days=1),
+            end_of_life_date=timezone.localdate() - timezone.timedelta(days=1),
         )
         assert sa.is_end_of_life is True
 
     def test_is_end_of_life_false_future(self):
         sa = SupportAssetFactory(
             status=SupportAssetStatus.ACTIVE,
-            end_of_life_date=timezone.now().date() + timezone.timedelta(days=30),
+            end_of_life_date=timezone.localdate() + timezone.timedelta(days=30),
         )
         assert sa.is_end_of_life is False
 
@@ -205,21 +205,21 @@ class TestSupplier:
     def test_is_contract_expired_true(self):
         supplier = SupplierFactory(
             status="active",
-            contract_end_date=timezone.now().date() - timezone.timedelta(days=1),
+            contract_end_date=timezone.localdate() - timezone.timedelta(days=1),
         )
         assert supplier.is_contract_expired is True
 
     def test_is_contract_expired_false(self):
         supplier = SupplierFactory(
             status="active",
-            contract_end_date=timezone.now().date() + timezone.timedelta(days=30),
+            contract_end_date=timezone.localdate() + timezone.timedelta(days=30),
         )
         assert supplier.is_contract_expired is False
 
     def test_is_contract_expired_archived(self):
         supplier = SupplierFactory(
             status="archived",
-            contract_end_date=timezone.now().date() - timezone.timedelta(days=1),
+            contract_end_date=timezone.localdate() - timezone.timedelta(days=1),
         )
         assert supplier.is_contract_expired is False
 

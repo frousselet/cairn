@@ -74,8 +74,8 @@ class TestManagementReviewModel:
             held_date=None,
         )
         review.transition_to(ManagementReviewStatus.HELD, user)
-        # Match the model: it writes timezone.now().date() (Django timezone).
-        # Naive date.today() (system clock) can disagree across midnight.
+        # Match the model: it writes timezone.localdate() (Django timezone).
+        # Naive timezone.localdate() (system clock) can disagree across midnight.
         assert review.held_date == timezone.localdate()
 
     def test_closure_requires_complete_decisions(self):
@@ -265,7 +265,7 @@ class TestDecisionPromote:
             {
                 "name": "Promoted plan",
                 "priority": "medium",
-                "target_date": (date.today() + timedelta(days=30)).isoformat(),
+                "target_date": (timezone.localdate() + timedelta(days=30)).isoformat(),
                 "gap_description": "Gap",
                 "remediation_plan": "Plan",
                 "owner": user.pk,
@@ -290,7 +290,7 @@ def _build_indicator(**overrides):
         "indicator_type": "organizational",
         "format": "number",
         "review_frequency": "monthly",
-        "first_review_date": date.today() + timedelta(days=1),
+        "first_review_date": timezone.localdate() + timedelta(days=1),
         "status": "active",
     }
     defaults.update(overrides)
@@ -394,15 +394,15 @@ class TestIndicatorTrend:
         indicator = _build_indicator()
         result = _compute_indicator_trend(
             indicator,
-            date.today() - timedelta(days=30),
-            date.today(),
+            timezone.localdate() - timedelta(days=30),
+            timezone.localdate(),
         )
         assert result["label"] == "insufficient_data"
         assert result["symbol"] == "-"
 
     def test_improving_trend(self):
         indicator = _build_indicator()
-        today = date.today()
+        today = timezone.localdate()
         period_start = today - timedelta(days=30)
         # Previous period (days -60 to -31): measurements at value=10
         prev_ts = timezone.make_aware(datetime.combine(today - timedelta(days=45), datetime.min.time()))
@@ -418,7 +418,7 @@ class TestIndicatorTrend:
 
     def test_degrading_trend(self):
         indicator = _build_indicator()
-        today = date.today()
+        today = timezone.localdate()
         period_start = today - timedelta(days=30)
         prev_ts = timezone.make_aware(datetime.combine(today - timedelta(days=45), datetime.min.time()))
         _add_measurement(indicator, 100, prev_ts)
@@ -431,7 +431,7 @@ class TestIndicatorTrend:
 
     def test_stable_trend_within_threshold(self):
         indicator = _build_indicator()
-        today = date.today()
+        today = timezone.localdate()
         period_start = today - timedelta(days=30)
         prev_ts = timezone.make_aware(datetime.combine(today - timedelta(days=45), datetime.min.time()))
         _add_measurement(indicator, 100, prev_ts)
@@ -445,7 +445,7 @@ class TestIndicatorTrend:
 
     def test_measurement_compliance_ratio(self):
         indicator = _build_indicator(review_frequency="weekly")
-        today = date.today()
+        today = timezone.localdate()
         period_start = today - timedelta(days=30)
         # Expected ~ 4 weekly measurements, we record 2
         for days_ago in (5, 20):

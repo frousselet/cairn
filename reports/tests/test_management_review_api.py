@@ -17,6 +17,7 @@ from .factories import (
     ManagementReviewDecisionFactory,
     ManagementReviewFactory,
 )
+from django.utils import timezone
 
 
 pytestmark = pytest.mark.django_db
@@ -45,7 +46,7 @@ class TestManagementReviewAPI:
         assert len(items) == 3
 
     def test_create(self):
-        today = date.today()
+        today = timezone.localdate()
         response = self.client.post(
             "/api/v1/reports/management-reviews/",
             {
@@ -278,7 +279,7 @@ class TestStakeholderFeedbackAPI:
             {
                 "stakeholder": str(stakeholder.pk),
                 "channel": "complaint",
-                "received_date": date.today().isoformat(),
+                "received_date": timezone.localdate().isoformat(),
                 "subject": "Request",
                 "content": "Some content",
                 "status": "new",

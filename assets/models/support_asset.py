@@ -179,7 +179,7 @@ class SupportAsset(LegacyStatusMixin, ScopedModel):
         """RS-03: end of life alert."""
         from django.utils import timezone
         if self.end_of_life_date and self.status == SupportAssetStatus.ACTIVE:
-            return self.end_of_life_date <= timezone.now().date()
+            return self.end_of_life_date <= timezone.localdate()
         return False
 
     @property

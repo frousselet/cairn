@@ -194,7 +194,7 @@ class SupportAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMix
 
     @action(detail=False, methods=["get"], url_path="end-of-life")
     def end_of_life(self, request):
-        today = timezone.now().date()
+        today = timezone.localdate()
         qs = self.filter_queryset(self.get_queryset()).filter(
             end_of_life_date__isnull=False,
             workflow_state__in=["in_stock", "deployed", "active", "under_maintenance"],
@@ -204,7 +204,7 @@ class SupportAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMix
     @action(detail=False, methods=["get"])
     def dashboard(self, request):
         qs = self.filter_queryset(self.get_queryset())
-        today = timezone.now().date()
+        today = timezone.localdate()
         total = qs.count()
         by_type = dict(qs.values_list("type").annotate(c=Count("id")).values_list("type", "c"))
         by_status = dict(qs.values_list("workflow_state").annotate(c=Count("id")).values_list("workflow_state", "c"))
