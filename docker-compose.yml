@@ -14,8 +14,12 @@ services:
       redis:
         condition: service_healthy
 
+  # Major versions are fixed, minor and patch releases still flow in. A new
+  # PostgreSQL major cannot read the previous one's data directory : left on
+  # `latest`, a routine `docker compose pull` would one day stop the database
+  # from starting. Moving to a new major is a dump and a restore, on purpose.
   redis:
-    image: redis:alpine
+    image: redis:8-alpine
     ports:
       - "6379:6379"
     healthcheck:
@@ -25,7 +29,7 @@ services:
       retries: 5
 
   db:
-    image: postgres:latest
+    image: postgres:18
     volumes:
       - postgres_data:/var/lib/postgresql
     env_file:

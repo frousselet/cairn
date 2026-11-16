@@ -8,6 +8,11 @@ on:
 permissions:
   contents: read
 
+# The settings refuse to load outside DEBUG with the public placeholder key.
+# The jobs run with DEBUG off, like production, so they bring a key of their own.
+env:
+  SECRET_KEY: ci-only-key-never-used-by-a-running-instance
+
 jobs:
   # Fast run : in-memory SQLite, schema built from the models. Lint, coverage
   # and the whole suite, including the interface sweep on the demo dataset.
@@ -38,18 +43,18 @@ jobs:
       - name: Run tests
         run: pytest -x -v --tb=short --cov --cov-report=term-missing
 
-  # Same suite on the production engine, with every migration replayed from
-  # the first one. The fast run above never executes a migration and never
-  # meets PostgreSQL : a migration that fails, a model changed without its
-  # migration, or a query SQLite tolerates and PostgreSQL refuses would
-  # otherwise be discovered on a deployment.
+  # Same suite on the production engine (the major the compose file ships),
+  # with every migration replayed from the first one. The fast run above never
+  # executes a migration and never meets PostgreSQL : a migration that fails, a
+  # model changed without its migration, or a query SQLite tolerates and
+  # PostgreSQL refuses would otherwise be discovered on a deployment.
   test-postgres:
     name: test (PostgreSQL, migrations)
     runs-on: ubuntu-latest
 
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_DB: cairn
           POSTGRES_USER: cairn

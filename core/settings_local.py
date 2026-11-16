@@ -14,8 +14,15 @@ Activate it by setting ``DJANGO_SETTINGS_MODULE=core.settings_local`` (the
 VS Code launch configurations do this for you).
 """
 
-from core.settings import *  # noqa: F401, F403
-from core.settings import BASE_DIR
+import os
+
+# A development setup : tracebacks in the browser, static files served by
+# runserver, the console email backend. Set DEBUG=False in the environment to
+# try the production behaviour locally (it then needs a real SECRET_KEY).
+os.environ.setdefault("DEBUG", "True")
+
+from core.settings import *  # noqa: E402, F401, F403
+from core.settings import BASE_DIR  # noqa: E402
 
 # SQLite on disk - no Postgres needed.
 DATABASES = {

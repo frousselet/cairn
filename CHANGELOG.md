@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detail pages show the lifecycle as a one-line bar (the path the record is on, each possible move as a button named after its transition, the full graph on demand) instead of a full-width diagram.
 - Pages are denser : content starts near the top of the window, record titles step down a size and keep their actions beside them, and key figures form a slim strip above the content.
 - The sidebar menu rows share one size, weight and hover, whether they open a page or a group.
+- The container runs as an unprivileged account (uid 1000) instead of root, handing over a media volume written by an earlier image on first start.
+- `DEBUG` is off unless set, instead of on : development environments set `DEBUG=True` (`.env.example` and `core.settings_local` do).
+- The compose file fixes the major versions of its services (`postgres:18`, `redis:8-alpine`) instead of following `latest`.
 - CI runs the test suite a second time on PostgreSQL with every migration replayed, checks that no model changed without its migration, and crawls every page and form of the demo dataset.
 - The application logs to the console in production as under `DEBUG`, tracebacks of request errors included (`LOG_LEVEL` sets the verbosity).
 
@@ -49,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A lifecycle edited in the administration was only applied by the worker process that saved it; every worker now picks it up within `LIFECYCLE_CACHE_TTL` seconds (5 by default).
 - Pages touching the cache (the update check, the assistant briefing, the Trust Center rate limiter) failed with a server error whenever Redis was unreachable; the cache now degrades to a miss and logs the outage.
 - The Docker-less development settings (`core.settings_local`) still required Redis for the cache.
+- The documented deployment of the published image had no volume for uploaded files, which were lost each time the container was recreated.
 - A list table wider than its card had its last columns clipped and unreachable on laptop screens; it now scrolls inside the card.
 - The scope, site and supplier maps showed an "API key required" watermark instead of the map, their tile provider no longer serving anonymous requests; they draw OpenStreetMap tiles by default.
 

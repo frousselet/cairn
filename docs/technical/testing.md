@@ -38,7 +38,7 @@ for.
 
 ```bash
 docker run -d --name cairn-test-pg -e POSTGRES_USER=cairn -e POSTGRES_PASSWORD=cairn \
-  -e POSTGRES_DB=cairn -p 127.0.0.1:55432:5432 postgres:16-alpine
+  -e POSTGRES_DB=cairn -p 127.0.0.1:55432:5432 postgres:18-alpine
 POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=55432 POSTGRES_USER=cairn POSTGRES_PASSWORD=cairn \
   POSTGRES_DB=cairn pytest --ds=core.settings_test_postgres
 ```

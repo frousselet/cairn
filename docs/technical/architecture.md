@@ -12,7 +12,7 @@ deployable as one container behind one reverse proxy.
 | --- | --- | --- |
 | Language | Python 3.12 | The version CI pins and the image ships |
 | Framework | Django 5.2 LTS | Long-term support matters more than novelty for a platform that outlives audits |
-| Database | PostgreSQL 16 | JSON fields, real constraints, and a migration story |
+| Database | PostgreSQL 18 | JSON fields, real constraints, and a migration story. The major is fixed in the compose file and is the one CI runs the suite on |
 | Async | Django Channels 4 over ASGI | WebSocket push for the live dashboard |
 | Message layer / cache | Redis | Both the Channels layer and the shared cache; see below |
 | API | Django REST Framework | Plus `django-filter` and SimpleJWT |
