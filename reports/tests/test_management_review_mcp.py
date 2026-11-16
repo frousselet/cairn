@@ -25,6 +25,7 @@ from .factories import (
     ManagementReviewDecisionFactory,
     ManagementReviewFactory,
 )
+from django.utils import timezone
 
 
 pytestmark = pytest.mark.django_db
@@ -81,7 +82,7 @@ class TestManagementReviewMCP:
         assert "error" in result
 
     def test_create_management_review(self):
-        today = date.today()
+        today = timezone.localdate()
         scope = ScopeFactory()
         result = _call_tool(
             self.srv, self.user, "create_management_review",
@@ -180,7 +181,7 @@ class TestDecisionMCP:
                 "category": "improvement",
                 "priority": "high",
                 "owner_id": str(self.user.pk),
-                "due_date": date.today().isoformat(),
+                "due_date": timezone.localdate().isoformat(),
             },
         )
         assert result.get("title") == "Decision title"
@@ -295,7 +296,7 @@ class TestStakeholderFeedbackMCP:
             {
                 "stakeholder_id": str(stakeholder.pk),
                 "channel": "complaint",
-                "received_date": date.today().isoformat(),
+                "received_date": timezone.localdate().isoformat(),
                 "subject": "Feedback subject",
                 "content": "Body",
                 "scope_ids": [str(scope.pk)],
@@ -313,13 +314,13 @@ class TestStakeholderFeedbackMCP:
         StakeholderFeedback.objects.create(
             stakeholder=stakeholder,
             channel="email",
-            received_date=date.today(),
+            received_date=timezone.localdate(),
             subject="s1", content="c1",
         )
         StakeholderFeedback.objects.create(
             stakeholder=stakeholder,
             channel="email",
-            received_date=date.today(),
+            received_date=timezone.localdate(),
             subject="s2", content="c2",
         )
         result = _call_tool(
@@ -349,9 +350,9 @@ class TestMCPPermissions:
             {
                 "title": "x",
                 "frequency": "annual",
-                "period_start": date.today().isoformat(),
-                "period_end": date.today().isoformat(),
-                "planned_date": date.today().isoformat(),
+                "period_start": timezone.localdate().isoformat(),
+                "period_end": timezone.localdate().isoformat(),
+                "planned_date": timezone.localdate().isoformat(),
                 "facilitator_id": str(self.user.pk),
             },
         )

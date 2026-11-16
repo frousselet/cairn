@@ -99,7 +99,7 @@ class ComplianceActionPlan(LegacyStatusMixin, ScopedModel):
             return False
         if self.status in (ActionPlanStatus.CLOSED, ActionPlanStatus.CANCELLED):
             return False
-        return self.target_date < timezone.now().date()
+        return self.target_date < timezone.localdate()
 
     def get_allowed_transitions(self):
         """Return the list of statuses this action plan can transition to."""
@@ -122,7 +122,7 @@ class ComplianceActionPlan(LegacyStatusMixin, ScopedModel):
 
         previous = self.workflow_state or self.status
         if target == ActionPlanStatus.CLOSED:
-            self.completion_date = timezone.now().date()
+            self.completion_date = timezone.localdate()
             self.progress_percentage = 100
 
         transition = super().transition_to(

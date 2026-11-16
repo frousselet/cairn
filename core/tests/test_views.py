@@ -227,7 +227,7 @@ class TestCalendarUpcomingView:
 
     def test_in_progress_range_shows_target_not_start(self):
         """A plan started 131 days ago shows its target date as the milestone."""
-        today = timezone.now().date()
+        today = timezone.localdate()
         ComplianceActionPlanFactory(
             start_date=today - timedelta(days=131),
             target_date=today + timedelta(days=10),
@@ -241,7 +241,7 @@ class TestCalendarUpcomingView:
         assert items[0]["overdue"] is False
 
     def test_not_started_range_shows_start(self):
-        today = timezone.now().date()
+        today = timezone.localdate()
         ComplianceActionPlanFactory(
             start_date=today + timedelta(days=5),
             target_date=today + timedelta(days=25),
@@ -254,7 +254,7 @@ class TestCalendarUpcomingView:
         assert items[0]["days_left"] == 5
 
     def test_past_due_plan_flagged_overdue(self):
-        today = timezone.now().date()
+        today = timezone.localdate()
         ComplianceActionPlanFactory(
             start_date=today - timedelta(days=72),
             target_date=today - timedelta(days=5),
@@ -267,7 +267,7 @@ class TestCalendarUpcomingView:
         assert items[0]["due"] == (today - timedelta(days=5)).isoformat()
 
     def test_never_a_negative_day_count_without_overdue_flag(self):
-        today = timezone.now().date()
+        today = timezone.localdate()
         for delta_start, delta_target in [(-131, 10), (-88, 2), (-72, -5), (3, 20)]:
             ComplianceActionPlanFactory(
                 start_date=today + timedelta(days=delta_start),
@@ -281,7 +281,7 @@ class TestCalendarUpcomingView:
             assert item["overdue"] or item["days_left"] >= 0
 
     def test_sorted_by_milestone_date(self):
-        today = timezone.now().date()
+        today = timezone.localdate()
         # Created in reverse milestone order: started long ago but due in
         # 20 days, vs starting in 2 days. Sorting on the raw range start
         # would rank the first one on top.
@@ -300,7 +300,7 @@ class TestCalendarUpcomingView:
         assert [i["days_left"] for i in items] == [2, 20]
 
     def test_concluded_items_excluded(self):
-        today = timezone.now().date()
+        today = timezone.localdate()
         ComplianceActionPlanFactory(
             start_date=today - timedelta(days=60),
             target_date=today - timedelta(days=5),
@@ -310,7 +310,7 @@ class TestCalendarUpcomingView:
         assert self._items(client) == []
 
     def test_respects_categories_filter(self):
-        today = timezone.now().date()
+        today = timezone.localdate()
         ComplianceActionPlanFactory(
             start_date=today - timedelta(days=10),
             target_date=today + timedelta(days=10),

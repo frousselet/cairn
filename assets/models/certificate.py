@@ -114,7 +114,7 @@ class Certificate(LegacyStatusMixin, ScopedModel):
             CertificateStatus.CERTIFIED,
             CertificateStatus.UNDER_RENEWAL,
         ):
-            return self.expiry_date <= timezone.now().date()
+            return self.expiry_date <= timezone.localdate()
         return False
 
     @property

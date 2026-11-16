@@ -111,7 +111,7 @@ class DashboardConsumer(AsyncWebsocketConsumer):
             Vulnerability,
         )
 
-        today = timezone.now().date()
+        today = timezone.localdate()
 
         def scope_ids():
             if user.is_superuser:

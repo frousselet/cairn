@@ -403,7 +403,7 @@ class TestAssessmentDeleteView:
 class TestAssessmentTransitionView:
     def test_transition_to_planned(self, client, superuser):
         fw = FrameworkFactory()
-        today = timezone.now().date()
+        today = timezone.localdate()
         assessment = ComplianceAssessmentFactory(assessor=superuser, framework=fw)
         assessment.assessment_start_date = today
         assessment.assessment_end_date = today + timedelta(days=30)

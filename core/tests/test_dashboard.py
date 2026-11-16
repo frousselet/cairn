@@ -83,7 +83,7 @@ def _make_indicator(**kwargs):
         "collection_method": CollectionMethod.MANUAL,
         "format": IndicatorFormat.NUMBER,
         "review_frequency": MeasurementFrequency.MONTHLY,
-        "first_review_date": timezone.now().date() + timedelta(days=30),
+        "first_review_date": timezone.localdate() + timedelta(days=30),
         "status": IndicatorStatus.ACTIVE,
     }
     defaults.update(kwargs)
@@ -222,12 +222,12 @@ class TestDashboardAssets:
 
     def test_eol_count(self):
         SupportAssetFactory(
-            end_of_life_date=date.today() - timedelta(days=30),
+            end_of_life_date=timezone.localdate() - timedelta(days=30),
             status="active",
         )
         # Not past EOL
         SupportAssetFactory(
-            end_of_life_date=date.today() + timedelta(days=30),
+            end_of_life_date=timezone.localdate() + timedelta(days=30),
             status="active",
         )
         client, user = _superuser_client()
@@ -249,11 +249,11 @@ class TestDashboardAssets:
 
     def test_expired_contract_count(self):
         SupplierFactory(
-            contract_end_date=date.today() - timedelta(days=10),
+            contract_end_date=timezone.localdate() - timedelta(days=10),
             status="active",
         )
         SupplierFactory(
-            contract_end_date=date.today() + timedelta(days=10),
+            contract_end_date=timezone.localdate() + timedelta(days=10),
             status="active",
         )
         client, user = _superuser_client()
@@ -317,17 +317,17 @@ class TestDashboardCompliance:
 
     def test_overdue_plan_count(self):
         ComplianceActionPlanFactory(
-            target_date=date.today() - timedelta(days=10),
+            target_date=timezone.localdate() - timedelta(days=10),
             status="in_progress",
         )
         # Not overdue
         ComplianceActionPlanFactory(
-            target_date=date.today() + timedelta(days=30),
+            target_date=timezone.localdate() + timedelta(days=30),
             status="in_progress",
         )
         # Closed, past target - should not count
         ComplianceActionPlanFactory(
-            target_date=date.today() - timedelta(days=10),
+            target_date=timezone.localdate() - timedelta(days=10),
             status="closed",
         )
         client, user = _superuser_client()
@@ -421,7 +421,7 @@ class TestDashboardTodayActions:
 
     def test_eol_action(self):
         SupportAssetFactory(
-            end_of_life_date=date.today() - timedelta(days=5),
+            end_of_life_date=timezone.localdate() - timedelta(days=5),
             status="active",
         )
         client, user = _superuser_client()
@@ -437,7 +437,7 @@ class TestDashboardTodayActions:
 
     def test_overdue_plan_action(self):
         ComplianceActionPlanFactory(
-            target_date=date.today() - timedelta(days=5),
+            target_date=timezone.localdate() - timedelta(days=5),
             status="in_progress",
         )
         client, user = _superuser_client()
@@ -455,7 +455,7 @@ class TestDashboardTodayActions:
 
     def test_expired_contract_action(self):
         SupplierFactory(
-            contract_end_date=date.today() - timedelta(days=5),
+            contract_end_date=timezone.localdate() - timedelta(days=5),
             status="active",
         )
         client, user = _superuser_client()
@@ -466,7 +466,7 @@ class TestDashboardTodayActions:
         RiskFactory(priority="critical")
         RiskFactory(priority="critical")
         SupplierFactory(
-            contract_end_date=date.today() - timedelta(days=5),
+            contract_end_date=timezone.localdate() - timedelta(days=5),
             status="active",
         )
         client, user = _superuser_client()

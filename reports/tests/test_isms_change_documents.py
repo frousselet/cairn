@@ -21,6 +21,7 @@ from mcp.tools import register_all_tools
 from reports.forms import IsmsChangeForm
 from reports.management_review_views import documents_due_for_review
 from reports.tests.factories import IsmsChangeFactory, ManagementReviewFactory
+from django.utils import timezone
 
 pytestmark = pytest.mark.django_db
 
@@ -137,14 +138,14 @@ class TestIsmsChangeMCP:
 
 class TestDocumentsDueForReview:
     def _review(self, **kwargs):
-        today = date.today()
+        today = timezone.localdate()
         defaults = dict(period_start=today - timedelta(days=180), period_end=today + timedelta(days=30),
                         planned_date=today + timedelta(days=10))
         defaults.update(kwargs)
         return ManagementReviewFactory(**defaults)
 
     def test_lists_documents_due_in_the_period_or_overdue(self):
-        today = date.today()
+        today = timezone.localdate()
         in_period = _active_policy(next_review_override=today + timedelta(days=20))
         overdue = _active_policy(next_review_override=today - timedelta(days=400))
         later = _active_policy(next_review_override=today + timedelta(days=200))
@@ -158,7 +159,7 @@ class TestDocumentsDueForReview:
         assert flags[in_period] is False
 
     def test_draft_and_retired_documents_are_left_out(self):
-        today = date.today()
+        today = timezone.localdate()
         draft = PolicyFactory(next_review_override=today)
         retired = _active_policy(next_review_override=today)
         retired.transition_to(POLICY_RETIRED, retired.owner, comment="Gone")
@@ -167,7 +168,7 @@ class TestDocumentsDueForReview:
         assert draft not in listed and retired not in listed
 
     def test_review_scopes_narrow_the_register(self):
-        today = date.today()
+        today = timezone.localdate()
         mine, other = ScopeFactory(), ScopeFactory()
         inside = _active_policy(next_review_override=today)
         inside.scopes.set([mine])
@@ -182,7 +183,7 @@ class TestDocumentsDueForReview:
         assert documents_due_for_review(self._review(), UserFactory()) is None
 
     def test_detail_page_renders_the_card_and_the_linked_documents(self):
-        today = date.today()
+        today = timezone.localdate()
         due = _active_policy(title="Access control policy", next_review_override=today)
         review = self._review()
         change = IsmsChangeFactory(review=review)

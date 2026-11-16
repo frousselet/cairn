@@ -151,7 +151,7 @@ class Supplier(ScopedModel):
         from django.utils import timezone
 
         if self.contract_end_date and self.status == SupplierStatus.ACTIVE:
-            return self.contract_end_date <= timezone.now().date()
+            return self.contract_end_date <= timezone.localdate()
         return False
 
     @property

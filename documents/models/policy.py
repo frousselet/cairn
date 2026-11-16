@@ -122,8 +122,11 @@ class Policy(ScopedModel):
         if current is None or current.effective_from is None:
             return None
         start = current.effective_from
-        if self.last_reviewed_at and self.last_reviewed_at.date() > start:
-            start = self.last_reviewed_at.date()
+        # The calendar day of the review, in the organisation's time zone : the
+        # UTC day is the previous one for the first hours of every local day.
+        reviewed_on = timezone.localtime(self.last_reviewed_at).date() if self.last_reviewed_at else None
+        if reviewed_on and reviewed_on > start:
+            start = reviewed_on
         return add_months(start, self.review_frequency_months)
 
     @property

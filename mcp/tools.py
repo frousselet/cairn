@@ -3499,7 +3499,7 @@ def _register_assets_tools(server):
             qs = qs.filter(
                 status=SupplierStatus.ACTIVE,
                 contract_end_date__isnull=False,
-                contract_end_date__lte=timezone.now().date(),
+                contract_end_date__lte=timezone.localdate(),
             )
         return qs
 

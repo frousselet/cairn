@@ -11,6 +11,7 @@ from accounts.tests.factories import UserFactory
 from assistant.engine import PERMISSION_DENIED, AssistantEngine
 from assistant.providers import AssistantDisabled, ServiceUnreachable
 from reports.tests.factories import ManagementReviewDecisionFactory, ManagementReviewFactory
+from django.utils import timezone
 
 
 class FakeClient:
@@ -53,10 +54,10 @@ def test_canonical_plan_resolves_placeholder_to_latest_closed_review(superuser):
     must not win; $1.id resolves to the closed review found by step 1."""
     closed = ManagementReviewFactory(
         status="closed",
-        held_date=date.today() - timedelta(days=30),
-        planned_date=date.today() - timedelta(days=35),
+        held_date=timezone.localdate() - timedelta(days=30),
+        planned_date=timezone.localdate() - timedelta(days=35),
     )
-    ManagementReviewFactory(status="planned", planned_date=date.today() + timedelta(days=30))
+    ManagementReviewFactory(status="planned", planned_date=timezone.localdate() + timedelta(days=30))
     decisions = ManagementReviewDecisionFactory.create_batch(2, review=closed)
     client = FakeClient(_plan(
         _step("list_management_reviews", status="closed", limit=1),
@@ -85,7 +86,7 @@ def test_canonical_plan_resolves_placeholder_to_latest_closed_review(superuser):
 def test_placeholder_falls_back_when_status_filter_matches_nothing(superuser):
     """A held-but-never-closed review must still be found: the engine retries
     the parent step without its status filter when it returns nothing."""
-    held = ManagementReviewFactory(status="held", held_date=date.today() - timedelta(days=10))
+    held = ManagementReviewFactory(status="held", held_date=timezone.localdate() - timedelta(days=10))
     ManagementReviewDecisionFactory(review=held)
     client = FakeClient(_plan(
         _step("list_management_reviews", status="closed", limit=1),
@@ -123,7 +124,7 @@ def test_non_allowlisted_tool_is_refused(superuser):
 def test_hallucinated_literal_id_is_refused(superuser):
     """A literal id that comes from nowhere (e.g. copied from the prompt
     examples) must never reach a tool."""
-    ManagementReviewFactory(status="closed", held_date=date.today())
+    ManagementReviewFactory(status="closed", held_date=timezone.localdate())
     client = FakeClient(_plan(
         _step("list_management_review_decisions", review_id="9f31", limit=5),
     ))
@@ -135,7 +136,7 @@ def test_hallucinated_literal_id_is_refused(superuser):
 @override_settings(AI_ASSISTANT_ENABLED=True)
 @pytest.mark.django_db
 def test_id_pasted_in_the_question_is_allowed(superuser):
-    review = ManagementReviewFactory(status="closed", held_date=date.today())
+    review = ManagementReviewFactory(status="closed", held_date=timezone.localdate())
     ManagementReviewDecisionFactory(review=review)
     client = FakeClient(_plan(
         _step("list_management_review_decisions", review_id=str(review.pk), limit=5),
@@ -166,7 +167,7 @@ def test_permission_denied_is_flagged_without_data():
 @override_settings(AI_ASSISTANT_ENABLED=True)
 @pytest.mark.django_db
 def test_arguments_are_sanitized_and_limit_clamped(superuser):
-    ManagementReviewFactory(status="held", held_date=date.today())
+    ManagementReviewFactory(status="held", held_date=timezone.localdate())
     client = FakeClient(_plan(
         _step("list_management_reviews", status="held", evil="rm -rf", limit=50),
     ))
@@ -190,7 +191,7 @@ def test_plan_longer_than_max_steps_is_truncated(superuser):
 @override_settings(AI_ASSISTANT_ENABLED=True)
 @pytest.mark.django_db
 def test_summary_failure_degrades_but_keeps_cards(superuser):
-    ManagementReviewFactory(status="held", held_date=date.today())
+    ManagementReviewFactory(status="held", held_date=timezone.localdate())
     client = FakeClient(
         _plan(_step("list_management_reviews", limit=5)),
         summary=ServiceUnreachable("down"),
@@ -204,7 +205,7 @@ def test_summary_failure_degrades_but_keeps_cards(superuser):
 @override_settings(AI_ASSISTANT_ENABLED=True)
 @pytest.mark.django_db
 def test_summary_payload_contains_no_identifiers(superuser):
-    review = ManagementReviewFactory(status="closed", held_date=date.today())
+    review = ManagementReviewFactory(status="closed", held_date=timezone.localdate())
     ManagementReviewDecisionFactory(review=review)
     client = FakeClient(_plan(_step("list_management_reviews", limit=5)))
     AssistantEngine(superuser, client=client).ask("Dernière revue ?")
@@ -248,9 +249,9 @@ def test_expired_supplier_question_returns_only_expired(superuser):
     from assets.tests.factories import SupplierFactory
 
     SupplierFactory(name="OldVendor", status="active",
-                    contract_end_date=date.today() - timedelta(days=5))
+                    contract_end_date=timezone.localdate() - timedelta(days=5))
     SupplierFactory(name="CurrentVendor", status="active",
-                    contract_end_date=date.today() + timedelta(days=30))
+                    contract_end_date=timezone.localdate() + timedelta(days=30))
     client = FakeClient(_plan(_step("list_suppliers", expired=True, limit=5)))
     outcome = AssistantEngine(superuser, client=client).ask("Liste-moi les fournisseurs expirés")
     titles = [card["title"] for run in outcome.tool_runs for card in run.cards]
@@ -287,7 +288,7 @@ def test_disabled_flag_raises():
 @override_settings(AI_ASSISTANT_ENABLED=True)
 @pytest.mark.django_db
 def test_as_dict_shape(superuser):
-    review = ManagementReviewFactory(status="closed", held_date=date.today())
+    review = ManagementReviewFactory(status="closed", held_date=timezone.localdate())
     ManagementReviewDecisionFactory(review=review)
     client = FakeClient(_plan(
         _step("list_management_reviews", status="closed", limit=1),

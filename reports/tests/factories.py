@@ -24,6 +24,7 @@ from reports.models import (
     ManagementReviewParticipant,
     Report,
 )
+from django.utils import timezone
 
 
 class ReportFactory(factory.django.DjangoModelFactory):
@@ -42,9 +43,9 @@ class ManagementReviewFactory(factory.django.DjangoModelFactory):
 
     title = factory.Sequence(lambda n: f"Management review {n}")
     frequency = ManagementReviewFrequency.ANNUAL
-    period_start = date.today() - timedelta(days=365)
-    period_end = date.today()
-    planned_date = date.today()
+    period_start = timezone.localdate() - timedelta(days=365)
+    period_end = timezone.localdate()
+    planned_date = timezone.localdate()
     status = ManagementReviewStatus.PLANNED
     facilitator = factory.SubFactory(UserFactory)
     created_by = factory.SubFactory(UserFactory)
@@ -68,7 +69,7 @@ class ManagementReviewDecisionFactory(factory.django.DjangoModelFactory):
     title = factory.Sequence(lambda n: f"Decision {n}")
     description = "Test decision description"
     owner = factory.SubFactory(UserFactory)
-    due_date = date.today() + timedelta(days=30)
+    due_date = timezone.localdate() + timedelta(days=30)
     priority = DecisionPriority.MEDIUM
     status = DecisionStatus.PENDING
 

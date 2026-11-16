@@ -35,7 +35,7 @@ def _make_indicator(**kwargs):
         "collection_method": CollectionMethod.MANUAL,
         "format": IndicatorFormat.NUMBER,
         "review_frequency": MeasurementFrequency.MONTHLY,
-        "first_review_date": timezone.now().date() + timedelta(days=30),
+        "first_review_date": timezone.localdate() + timedelta(days=30),
         "status": IndicatorStatus.ACTIVE,
     }
     defaults.update(kwargs)
@@ -266,20 +266,20 @@ class TestIndicatorFirstReviewDateValidation:
 
     def test_today_first_review_date_is_ok(self):
         ind = _make_indicator(
-            first_review_date=timezone.now().date(),
+            first_review_date=timezone.localdate(),
         )
         assert ind.pk is not None
 
     def test_future_first_review_date_is_ok(self):
         ind = _make_indicator(
-            first_review_date=timezone.now().date() + timedelta(days=60),
+            first_review_date=timezone.localdate() + timedelta(days=60),
         )
         assert ind.pk is not None
 
     def test_past_date_ok_on_update(self):
         """Once created, updating a record with an existing past date should not raise."""
         ind = _make_indicator(
-            first_review_date=timezone.now().date() + timedelta(days=1),
+            first_review_date=timezone.localdate() + timedelta(days=1),
         )
         # Simulate updating an existing record
         ind.name = "Updated"

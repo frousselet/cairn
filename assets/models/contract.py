@@ -106,7 +106,7 @@ class Contract(LegacyStatusMixin, ScopedModel):
         from django.utils import timezone
 
         if self.end_date and self.status == ContractStatus.ACTIVE:
-            return self.end_date <= timezone.now().date()
+            return self.end_date <= timezone.localdate()
         return False
 
     @property
