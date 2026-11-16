@@ -30,10 +30,45 @@ you add a data migration that seeds reference rows the suite depends on, it
 needs a matching line there, or the tests will pass locally against a stale
 database and fail on a fresh one.
 
-The trade-off has a second consequence worth knowing : **the suite does not
-exercise the migrations**. A migration that is broken will pass CI and fail on
-deployment. Run `python manage.py migrate` against a scratch PostgreSQL database
-before tagging a release.
+The trade-off has a second consequence worth knowing : **this fast run does
+not exercise the migrations, nor PostgreSQL**. That is what the second run is
+for.
+
+## The PostgreSQL run
+
+```bash
+docker run -d --name cairn-test-pg -e POSTGRES_USER=cairn -e POSTGRES_PASSWORD=cairn \
+  -e POSTGRES_DB=cairn -p 127.0.0.1:55432:5432 postgres:16-alpine
+POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=55432 POSTGRES_USER=cairn POSTGRES_PASSWORD=cairn \
+  POSTGRES_DB=cairn pytest --ds=core.settings_test_postgres
+```
+
+`core.settings_test_postgres` keeps everything from the fast settings except
+the database, which is PostgreSQL, and the migrations, which are replayed from
+the first one. CI runs the whole suite a second time with it
+(`test (PostgreSQL, migrations)` in `tests.yml`), after checking with
+`makemigrations --check` that no model changed without its migration. It takes
+about five minutes instead of one, which is why it is not the default; run it
+locally before a change to a migration, to a raw query or to anything that
+groups, orders or compares in the database. Do not add `-n` to it : every
+worker would replay the migrations on a database of its own, and the run gets
+slower.
+
+## The interface sweep
+
+`core/tests/test_site_sweep.py` loads the demo dataset, follows every link from
+the dashboard as a superuser, requests the same pages as an administrator who
+is not a superuser and as a user with no permission, then submits every create
+and edit form empty and with invalid values. No page may answer a server error
+and no printed link may be broken. It covers what nobody thought of writing a
+test for : it was first run by hand and found four server errors the rest of
+the suite was green on.
+
+It is also the only test that executes `scripts/seed_demo_data.py`, so it is
+what enforces that the seed follows the schema. It is part of the default run
+and takes under a minute; while iterating on something else, leave it out with
+`pytest -m "not sweep"`. A page it should not open (one whose `GET` has an
+effect) goes in its `SKIP` pattern, with the reason.
 
 ## How tests are organised
 

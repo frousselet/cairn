@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detail pages show the lifecycle as a one-line bar (the path the record is on, each possible move as a button named after its transition, the full graph on demand) instead of a full-width diagram.
 - Pages are denser : content starts near the top of the window, record titles step down a size and keep their actions beside them, and key figures form a slim strip above the content.
 - The sidebar menu rows share one size, weight and hover, whether they open a page or a group.
+- CI runs the test suite a second time on PostgreSQL with every migration replayed, checks that no model changed without its migration, and crawls every page and form of the demo dataset.
 - The application logs to the console in production as under `DEBUG`, tracebacks of request errors included (`LOG_LEVEL` sets the verbosity).
 
 ### Fixed

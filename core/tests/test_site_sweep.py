@@ -1,0 +1,201 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
+"""Sweep of the whole interface on the demo dataset.
+
+Unit tests check what their author thought of. This module checks the rest :
+it loads the Voltara Energy demo dataset (``scripts/seed_demo_data.py``, which
+exercises every model and field) and then
+
+1. follows every link reachable from the dashboard as a superuser,
+2. requests those same pages as an administrator who is not a superuser, and
+   as a signed-in user with no permission at all,
+3. submits every create and edit form empty, then with invalid values.
+
+No page may answer a server error, and no link printed in a page may lead to a
+missing one. The first run of this sweep, done by hand, found a dashboard that
+failed for every non-superuser with unrestricted scopes and a form that crashed
+on submission, both green in the rest of the suite.
+
+It is also the only test that runs the demo seed, so a schema change that
+leaves the seed behind fails here.
+
+The sweep is marked ``sweep`` and takes about a minute; deselect it while
+iterating with ``pytest -m "not sweep"``.
+"""
+
+import contextlib
+import io
+import re
+import shutil
+import tempfile
+from collections import deque
+
+import pytest
+from django.conf import settings
+from django.test import Client, TestCase, override_settings
+
+pytestmark = pytest.mark.sweep
+
+SEED_PATH = settings.BASE_DIR / "scripts" / "seed_demo_data.py"
+MEDIA_ROOT = tempfile.mkdtemp(prefix="cairn-sweep-media-")
+
+# Links the crawl does not follow.
+SKIP = re.compile(
+    r"^/(?:static|media|admin|api|i18n|oauth|authorize|\.well-known)(?:/|$)"  # not the web UI
+    r"|logout"                # would end the crawl's own session
+    r"|/impersonate"          # would change who the crawl is
+)
+LINK = re.compile(r"""(?:href|hx-get)=["']([^"'#]+)""")
+FORM_URL = re.compile(r"/(?:create|edit|update|new|add)(?:/|$)")
+UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+
+# Records opened per page type : enough to catch a template that breaks on
+# some rows only, without opening every record of the dataset.
+RECORDS_PER_PAGE_TYPE = 2
+
+# What an invalid submission looks like : wrong types everywhere.
+JUNK = {
+    "name": "x" * 5000,
+    "reference": "x",
+    "title": "\x00",
+    "scopes": "not-a-uuid",
+    "owner": "zzz",
+    "due_date": "31/02/2026",
+    "start_date": "tomorrow",
+    "status": "no-such-status",
+    "target_status": "no-such-step",
+    "priority": "-1",
+}
+
+
+def page_type(url):
+    """The URL with its record ids blanked : one entry per page type."""
+    path, _, query = url.partition("?")
+    path = re.sub(r"/\d+(?=/|$)", "/<n>", UUID.sub("<id>", path))
+    keys = sorted(part.split("=")[0] for part in query.split("&")) if query else []
+    return path + ("?" + "&".join(keys) if keys else "")
+
+
+def crawl(client, start="/"):
+    """Follow every link from ``start``. Return ``{url: (status, referer)}``."""
+    seen, per_type, visited = set(), {}, {}
+    queue = deque([(start, "")])
+    while queue:
+        url, referer = queue.popleft()
+        if url in seen:
+            continue
+        seen.add(url)
+        kind = page_type(url)
+        per_type[kind] = per_type.get(kind, 0) + 1
+        if per_type[kind] > RECORDS_PER_PAGE_TYPE:
+            continue
+        response = client.get(url)
+        visited[url] = (response.status_code, referer)
+        if response.status_code in (301, 302):
+            target = response.get("Location", "")
+            if target.startswith("/") and not SKIP.search(target):
+                queue.append((target, url))
+            continue
+        if "text/html" not in response.get("Content-Type", ""):
+            continue
+        for link in LINK.findall(response.content.decode("utf-8", "replace")):
+            link = link.replace("&amp;", "&")
+            if link.startswith("/") and not link.startswith("//") and not SKIP.search(link):
+                queue.append((link, url))
+    return visited
+
+
+def report(failures):
+    """One line per page type, so a broken template is listed once."""
+    lines, listed = [], set()
+    for status, url, detail in failures:
+        key = (status, page_type(url))
+        if key not in listed:
+            listed.add(key)
+            lines.append(f"  {status} {url} {detail}".rstrip())
+    return "\n".join(lines)
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT, ALLOWED_HOSTS=["testserver"])
+class SiteSweepTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        # The seed is a script, executed the way the onboarding runner does.
+        namespace = {"SEED_BASE_DIR": str(settings.BASE_DIR), "__name__": "seed_demo_data"}
+        with contextlib.redirect_stdout(io.StringIO()):
+            exec(compile(SEED_PATH.read_text(), str(SEED_PATH), "exec"), namespace)  # noqa: S102
+
+        from accounts.models import Group, User
+
+        cls.superuser = User.objects.filter(is_superuser=True, is_active=True).order_by("created_at").first()
+        # Every permission, every scope, but through a group : the profile of a
+        # real administrator, which a superuser shortcut never exercises.
+        cls.administrator = (
+            Group.objects.get(name="Administrateur").users.filter(is_superuser=False, is_active=True).first()
+        )
+        cls.outsider = User.objects.create_user(
+            email="outsider@voltara.example", password="x", first_name="No", last_name="Permission",
+        )
+        superuser_client = Client(raise_request_exception=False)
+        superuser_client.force_login(cls.superuser)
+        cls.pages = crawl(superuser_client)
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
+
+    def client_for(self, user):
+        client = Client(raise_request_exception=False)
+        client.force_login(user)
+        return client
+
+    def test_the_crawl_reaches_the_whole_interface(self):
+        """Guards the sweep itself : a crawl that stops at the dashboard would
+        pass every other test of this class while checking nothing."""
+        reached = {page_type(url).split("/")[1] for url in self.pages}
+        expected = {"context", "assets", "risks", "compliance", "incidents", "documents",
+                    "controls", "reports", "accounts", "kanban", "calendar"}
+        assert expected <= reached, f"not reached : {sorted(expected - reached)}"
+        assert len(self.pages) > 300, f"only {len(self.pages)} pages crawled"
+
+    def test_no_page_fails_and_no_link_is_broken_for_a_superuser(self):
+        failures = [
+            (status, url, f"<- {referer}")
+            for url, (status, referer) in self.pages.items()
+            # 405 : a page legitimately prints the URL of a POST-only endpoint.
+            if status >= 400 and status != 405
+        ]
+        assert not failures, f"{len(failures)} pages failed :\n{report(failures)}"
+
+    def test_no_page_fails_for_an_administrator_who_is_not_a_superuser(self):
+        assert self.administrator is not None, "the seed no longer puts a user in the Administrateur group"
+        self._assert_no_server_error(self.administrator)
+
+    def test_no_page_fails_for_a_user_with_no_permission(self):
+        """Refused or hidden, never broken : a 403 is an answer, a 500 is not."""
+        self._assert_no_server_error(self.outsider)
+
+    def _assert_no_server_error(self, user):
+        client = self.client_for(user)
+        failures = []
+        for url, (status, _referer) in self.pages.items():
+            if status != 200:
+                continue
+            response = client.get(url)
+            if response.status_code >= 500:
+                failures.append((response.status_code, url, ""))
+        assert not failures, f"{len(failures)} pages failed for {user.email} :\n{report(failures)}"
+
+    def test_no_form_fails_on_an_empty_or_invalid_submission(self):
+        """A form answers its errors (200) or refuses (4xx); it never crashes."""
+        client = self.client_for(self.superuser)
+        forms = [url for url, (status, _r) in self.pages.items() if status == 200 and FORM_URL.search(url)]
+        assert len(forms) > 100, f"only {len(forms)} forms found"
+        failures = []
+        for url in forms:
+            for label, payload in (("empty", {}), ("invalid", JUNK)):
+                response = client.post(url, payload)
+                if response.status_code >= 500:
+                    failures.append((response.status_code, url, f"({label} submission)"))
+        assert not failures, f"{len(failures)} form submissions failed :\n{report(failures)}"
