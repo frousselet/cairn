@@ -496,7 +496,7 @@ Opened from the foot of the sidebar, available to any authenticated user.
   the pins the libraries are mirrored with.
 - The registry behind it is `core/dependencies.py`, the single source the dialog,
   `GET /api/v1/dependencies` and the `list_dependencies` MCP tool all answer from.
-  A library added to `requirements.txt` without a registry entry fails the test
+  A library added to `requirements.in` without a registry entry fails the test
   suite, as does a front-end library that declares no files to mirror.
 - **Front-end libraries are served by the instance**, never by a CDN. The
   registry declares the files each one needs and their Subresource-Integrity

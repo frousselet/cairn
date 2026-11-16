@@ -128,7 +128,7 @@ means, in order:
 
 ## Continuous integration
 
-`.github/workflows/tests.yml` has two jobs. Both install `requirements.lock`
+`.github/workflows/tests.yml` has two jobs. Both install `requirements.txt`
 on the Python version of the image.
 
 `test`, the fast run on SQLite, on every push to `main` and every pull request :

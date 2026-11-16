@@ -1,0 +1,66 @@
+# Dependabot keeps three things current, each as one weekly pull request.
+#
+# Nothing here takes a decision the project has made on purpose : Django stays
+# on its LTS line and the image on the Python that line supports, so the
+# updates proposed are the ones that can be merged after the tests pass.
+#
+# Security alerts are a separate mechanism (repository settings) and are not
+# limited by the schedules below : a vulnerable pin gets its own pull request
+# as soon as the advisory is published.
+version: 2
+
+updates:
+  # Python : requirements.txt is compiled from requirements.in by pip-compile.
+  # Dependabot re-runs the compilation, so the proposal is a consistent set
+  # (versions and hashes), not a list of pins bumped one by one.
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      # The PostgreSQL job (migrations replayed) is optional on pull requests :
+      # a dependency update is exactly when it must run.
+      - "ci:postgres"
+    groups:
+      python:
+        patterns:
+          - "*"
+    ignore:
+      # The LTS line is a decision (requirements.in constrains it too). The
+      # move to the next one, 6.2, is done by hand with its release notes.
+      - dependency-name: django
+        versions:
+          - ">=5.3"
+
+  # The base image of the Dockerfile. Patch releases of Python only : a new
+  # minor is taken when Django's LTS line supports it and CI has moved to it
+  # (the Dockerfile, the workflows and mise.toml change together).
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - "ci:postgres"
+    ignore:
+      - dependency-name: python
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+
+  # The actions the workflows use.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+    groups:
+      actions:
+        patterns:
+          - "*"

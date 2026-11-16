@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DEBUG` is off unless set, instead of on : development environments set `DEBUG=True` (`.env.example` and `core.settings_local` do).
 - The compose file fixes the major versions of its services (`postgres:18`, `redis:8-alpine`) instead of following `latest`.
 - CI crawls every page and form of the demo dataset, and runs the suite a second time on PostgreSQL with every migration replayed (on `main`, and on a pull request labelled `ci:postgres`).
-- Python dependencies install from `requirements.lock` (exact versions, hash-checked) instead of the latest release of everything, with Django held on its 5.2 LTS line and the image on Python 3.14, the version CI tests.
+- Python dependencies install from a compiled `requirements.txt` (exact versions, hash-checked, generated from `requirements.in` and refreshed weekly by Dependabot) instead of the latest release of everything, with Django held on its 5.2 LTS line and the image on Python 3.14, the version CI tests.
 - The application logs to the console in production as under `DEBUG`, tracebacks of request errors included (`LOG_LEVEL` sets the verbosity).
 
 ### Fixed

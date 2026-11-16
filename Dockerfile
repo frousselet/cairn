@@ -31,11 +31,11 @@ RUN apt-get update \
 
 # The exact, hash-checked set of distributions : the same versions as CI and
 # as every other build of this commit, whenever it is built.
-COPY requirements.lock .
+COPY requirements.txt .
 # autobahn (transitive dep of daphne) refuses to emit a pure-Python wheel when
 # its optional NVX C extension can't compile (no gcc in python:slim). Opt out of
 # the native extension so the pure-Python build is allowed.
-RUN AUTOBAHN_USE_NVX=0 pip install --no-cache-dir -r requirements.lock
+RUN AUTOBAHN_USE_NVX=0 pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=cairn:cairn . .
 

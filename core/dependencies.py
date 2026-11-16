@@ -4,7 +4,7 @@
 
 The list is curated rather than derived : the running application has no single
 machine-readable inventory to read from (Python distributions come from
-``requirements.txt``, front-end libraries are declared below). Keeping one
+``requirements.in``, front-end libraries are declared below). Keeping one
 registry means the About modal, the REST API and the MCP tool all answer the
 same thing.
 

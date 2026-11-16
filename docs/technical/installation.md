@@ -136,7 +136,7 @@ scripts/bootstrap_dev.sh --with-postgres  # ... plus a PostgreSQL server
 scripts/bootstrap_dev.sh --with-chrome    # ... plus headless Chrome for the screenshot script
 ```
 
-It installs the `apt` packages the [`Dockerfile`](../../Dockerfile) lists (`gettext`, `libpq-dev`, and the Pango / Cairo stack WeasyPrint loads at runtime : without it every PDF report dies on a missing `libgobject`), creates `.venv` and installs `requirements.lock`, writes a `.env` with a random `SECRET_KEY` (an existing one is never touched), starts Redis, mirrors the front-end libraries, compiles the translation catalogs, and ends on a check that WeasyPrint, the Office writers, Redis and, with `--with-postgres`, the database server all answer.
+It installs the `apt` packages the [`Dockerfile`](../../Dockerfile) lists (`gettext`, `libpq-dev`, and the Pango / Cairo stack WeasyPrint loads at runtime : without it every PDF report dies on a missing `libgobject`), creates `.venv` and installs `requirements.txt`, writes a `.env` with a random `SECRET_KEY` (an existing one is never touched), starts Redis, mirrors the front-end libraries, compiles the translation catalogs, and ends on a check that WeasyPrint, the Office writers, Redis and, with `--with-postgres`, the database server all answer.
 
 It provisions an **environment and nothing else** : no migration is applied and no data is written. Start the application and the first-run screen applies the migrations and offers to create your company or to load the demo dataset, exactly as on a fresh Docker install. Every step is idempotent, so re-running it on a half-provisioned sandbox only fills in what is missing; `--skip-apt` runs it without touching a single system package.
 
@@ -167,7 +167,7 @@ mise install
 # 2. Create and activate a virtual environment, then install dependencies
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.lock
+pip install -r requirements.txt
 ```
 
 Point the VS Code Python extension at the mise-managed interpreter (`Python: Select Interpreter` → `${env:HOME}/.local/share/mise/installs/python/3.14/bin/python`); debugpy and the tasks then use it via `${command:python.interpreterPath}`.

@@ -22,8 +22,8 @@ deployable as one container behind one reverse proxy.
 | Auth | Session, JWT, OAuth 2.0, WebAuthn (`fido2`) | Four callers : browser, script, MCP client, passkey |
 | Server | uvicorn (ASGI), WhiteNoise for static | Three workers in the shipped image |
 
-`requirements.txt` is the authoritative list of the Python distributions the
-project depends on directly, and `requirements.lock` the exact, hash-checked
+`requirements.in` is the authoritative list of the Python distributions the
+project depends on directly, and `requirements.txt` the exact, hash-checked
 set that is installed : the image, CI and a developer's environment all run the
 same versions of everything, whenever they are built. Django is held on its
 current long-term support line (5.2, supported until April 2028), on Python
@@ -33,7 +33,7 @@ describes both in one registry, with the official repository of each component :
 it is what the About dialog, `GET /api/v1/dependencies` and the
 `list_dependencies` MCP tool answer from. Python versions are resolved from the
 installed metadata rather than declared, and `core/tests/test_dependencies.py`
-fails if the registry drifts from `requirements.txt` or from the versions the
+fails if the registry drifts from `requirements.in` or from the versions the
 templates actually load, if a direct dependency is missing from the lock, or if
 the tests are running on another Django than the locked one.
 
