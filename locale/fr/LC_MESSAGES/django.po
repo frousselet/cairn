@@ -20566,3 +20566,57 @@ msgstr "Afficher le cycle de vie complet"
 #, python-format
 msgid "Move to : %(label)s"
 msgstr "Passer à : %(label)s"
+
+msgid "Back to the dashboard"
+msgstr "Retour au tableau de bord"
+
+msgid "Go back"
+msgstr "Page précédente"
+
+msgid "Page not found"
+msgstr "Page introuvable"
+
+msgid "Error 404"
+msgstr "Erreur 404"
+
+msgid "This page does not exist, has been moved, or the record it showed has been deleted."
+msgstr "Cette page n'existe pas, a été déplacée, ou l'élément qu'elle affichait a été supprimé."
+
+msgid "Access denied"
+msgstr "Accès refusé"
+
+msgid "Error 403"
+msgstr "Erreur 403"
+
+msgid "Your account does not have the permission this page requires. If you need it, ask an administrator of your organisation."
+msgstr "Votre compte ne dispose pas de la permission requise par cette page. Si vous en avez besoin, adressez-vous à un administrateur de votre organisation."
+
+msgid "Form expired"
+msgstr "Formulaire expiré"
+
+msgid "This form has expired"
+msgstr "Ce formulaire a expiré"
+
+msgid "The page stayed open too long, or your session ended in another tab. Nothing was saved. Go back, reload the page and submit again."
+msgstr "La page est restée ouverte trop longtemps, ou votre session s'est terminée dans un autre onglet. Rien n'a été enregistré. Revenez en arrière, rechargez la page et validez à nouveau."
+
+msgid "Bad request"
+msgstr "Requête invalide"
+
+msgid "Error 400"
+msgstr "Erreur 400"
+
+msgid "The request could not be understood. Go back and try again."
+msgstr "La requête n'a pas pu être interprétée. Revenez en arrière et réessayez."
+
+msgid "Server error"
+msgstr "Erreur serveur"
+
+msgid "Error 500"
+msgstr "Erreur 500"
+
+msgid "Something went wrong on our side"
+msgstr "Une erreur est survenue de notre côté"
+
+msgid "The error has been recorded. Nothing you entered on other pages is lost. Try again in a moment; if it happens again, tell your administrator what you were doing."
+msgstr "L'erreur a été enregistrée. Rien de ce que vous avez saisi sur d'autres pages n'est perdu. Réessayez dans un instant ; si elle se reproduit, indiquez à votre administrateur ce que vous étiez en train de faire."

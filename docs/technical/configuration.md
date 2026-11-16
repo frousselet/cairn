@@ -12,7 +12,7 @@ covers what to think about rather than what exists.
 
 | Variable | Why |
 | --- | --- |
-| `SECRET_KEY` | Signs sessions, password-reset links and Trust Center download links. The shipped default is a placeholder; a deployment that keeps it can have its sessions forged. Generate 50+ random characters. |
+| `SECRET_KEY` | Signs sessions, password-reset links and Trust Center download links. The shipped default is a public placeholder; a deployment that kept it could have its sessions forged, so **Cairn refuses to start with a placeholder key once `DEBUG` is off**. Generate 50+ random characters : `python -c "import secrets; print(secrets.token_urlsafe(64))"`. |
 | `DEBUG` | Must be `False` in production. Left on, a crash returns a full traceback page including settings and local variables. |
 | `ALLOWED_HOSTS` | The hostnames the application answers on. A wildcard reopens the Host-header attacks Django's check exists to close. |
 | `POSTGRES_PASSWORD` | The compose file ships `postgres/postgres`. |
@@ -124,6 +124,40 @@ Provider setup, model guidance and the data-egress detail are in the
 [generated settings reference](../reference/generated/settings.md); their
 defaults are conservative on purpose, so a slow provider degrades the command
 palette rather than the whole application.
+
+## Logging
+
+```bash
+LOG_LEVEL=INFO          # DEBUG, INFO, WARNING or ERROR, for the whole application
+LOG_LEVEL_SQL=WARNING   # set to DEBUG to log every SQL statement (verbose)
+```
+
+Everything is written to the console (stderr), where the container runtime
+collects it, in production as under `DEBUG`. That includes the traceback of an
+unhandled request error : the user sees the error page, the operator finds the
+cause in the log.
+
+## Maps
+
+```bash
+MAP_TILE_URL=https://tile.openstreetmap.org/{z}/{x}/{y}.png   # empty : no map
+MAP_TILE_URL_DARK=                                            # tiles for the dark theme
+MAP_TILE_ATTRIBUTION=...                                      # credit line (HTML)
+```
+
+The scope, site and supplier pages show their location on a map. The tiles are
+fetched **by the reader's browser**, straight from the provider : the instance
+itself makes no call. The default is OpenStreetMap's own tile service, which
+needs no account and is meant for moderate use with visible attribution. For
+heavier use, or for another style, point `MAP_TILE_URL` at any XYZ tile
+provider, with its key in the URL when it needs one. Without
+`MAP_TILE_URL_DARK` the same tiles are dimmed under the dark theme. Whatever
+the provider, the tiles are desaturated so the map stays a backdrop.
+
+Set `MAP_TILE_URL` to an empty value where browsers must not reach an outside
+service : the pages then show no map. The address lookup of the site and
+supplier forms (Photon) is a second browser-side call, made only when someone
+types an address.
 
 ## What the instance calls out to
 

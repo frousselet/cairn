@@ -188,6 +188,41 @@
       };
     })();
   </script>
+  {{ MAP_TILES|json_script:"cairn-map-tiles" }}
+  <script>
+    /* ── Basemap of the hero maps ────────────────────────────────────
+     * One place decides which tiles a map draws : the provider comes from
+     * the MAP_TILE_URL settings, so a deployment can change it (or switch
+     * the maps off with an empty value) without touching a template.
+     * window.cairnBasemap.addTo(map) adds the tile layer and keeps it in
+     * step with the theme : the dark tiles when the deployment has some,
+     * the same tiles dimmed otherwise. */
+    (function () {
+      var conf = {};
+      try { conf = JSON.parse(document.getElementById('cairn-map-tiles').textContent) || {}; } catch (e) {}
+      var docEl = document.documentElement;
+      function dark() { return docEl.getAttribute('data-bs-theme') === 'dark'; }
+      window.cairnBasemap = {
+        enabled: !!conf.url,
+        addTo: function (map) {
+          function url() { return dark() && conf.darkUrl ? conf.darkUrl : conf.url; }
+          var layer = L.tileLayer(url(), {
+            maxZoom: 19, subdomains: 'abcd', attribution: conf.attribution || '',
+            /* The page's own referrer policy withholds the Referer from other
+               origins, and tile services refuse anonymous requests. */
+            referrerPolicy: 'strict-origin-when-cross-origin'
+          }).addTo(map);
+          function sync() {
+            layer.setUrl(url());
+            map.getContainer().classList.toggle('entity-map--dimmed', dark() && !conf.darkUrl);
+          }
+          sync();
+          new MutationObserver(sync).observe(docEl, { attributes: true, attributeFilter: ['data-bs-theme'] });
+          return layer;
+        }
+      };
+    })();
+  </script>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
       hx-boost="true">

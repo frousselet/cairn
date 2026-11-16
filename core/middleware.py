@@ -2,14 +2,58 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 """Project-wide middleware."""
 
+import logging
 from functools import cached_property
 
 from django.conf import settings
+from django.db import connection
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import NoReverseMatch, reverse
 
 from core.onboarding import runner
 from core.onboarding.state import is_first_run, schema_ready
+
+logger = logging.getLogger(__name__)
+
+
+HEALTH_PATH = "/health/"
+
+
+class HealthCheckMiddleware:
+    """Answer ``GET /health/`` before anything else in the stack runs.
+
+    A probe (the container healthcheck, a load balancer, an orchestrator) calls
+    the instance by IP or by ``localhost``, with no session and no cookie. It
+    must not be refused by ``ALLOWED_HOSTS``, redirected to the onboarding or
+    the sign-in screen, or answered by the Trust Center host routing, so the
+    check sits first in ``MIDDLEWARE`` and never reaches them.
+
+    The answer says one thing : whether this process can serve a request that
+    needs the database. ``200 {"status": "ok"}`` when it can, ``503
+    {"status": "unavailable"}`` when it cannot. It carries no version, no
+    hostname and no error text : the endpoint is unauthenticated.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path != HEALTH_PATH:
+            return self.get_response(request)
+        if request.method not in ("GET", "HEAD"):
+            return JsonResponse({"status": "method not allowed"}, status=405)
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+        except Exception:
+            logger.exception("Health check failed : the database is unreachable")
+            response = JsonResponse({"status": "unavailable"}, status=503)
+        else:
+            response = JsonResponse({"status": "ok"})
+        response["Cache-Control"] = "no-store"
+        return response
 
 
 class OnboardingMiddleware:

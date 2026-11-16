@@ -74,8 +74,14 @@ migration runs once across the worker fleet rather than three times.
 
 ## Logs
 
-uvicorn writes an access log to stdout; Django's logging goes to the same place.
-In a compose deployment, `docker compose logs -f web`.
+uvicorn writes an access log to stdout; the application logs to stderr, in
+production as under `DEBUG`, one line per record :
+`time level logger : message`. In a compose deployment,
+`docker compose logs -f web`. `LOG_LEVEL` sets the verbosity.
+
+An unhandled error shows the user the error page and writes its traceback
+here, under the `django.request` logger. Start there when someone reports
+"Something went wrong on our side".
 
 Two categories are worth routing somewhere durable rather than reading ad hoc :
 
@@ -89,12 +95,31 @@ Two categories are worth routing somewhere durable rather than reading ad hoc :
 
 ## Health
 
-There is no dedicated health endpoint. `GET /accounts/login/` returning 200 is a
-sufficient liveness check for a reverse proxy; it exercises the ASGI stack, the
-template layer and the session middleware without touching a protected view.
+`GET /health/` answers `200 {"status": "ok"}` when the process can serve a
+request that needs the database, and `503 {"status": "unavailable"}` when it
+cannot. It is the endpoint to give a container healthcheck, a load balancer or
+an orchestrator probe.
 
-Readiness is `python manage.py check` plus a database connection. The compose
-file already gates `web` on the `db` and `redis` healthchecks.
+- It needs no session and no cookie, and it is answered before host
+  validation : a probe that calls by IP or by `localhost` is not refused by
+  `ALLOWED_HOSTS`, nor redirected to the sign-in or the onboarding screen.
+- It discloses nothing : no version, no hostname, no error text. The reason of
+  a failure is in the log.
+- It does not check Redis. The application keeps serving without it (see
+  [architecture.md](architecture.md#redis-is-not-optional)), so a Redis outage
+  must not take the instance out of a load balancer.
+
+The image declares it as its `HEALTHCHECK`, so `docker ps` shows the container
+as `healthy` once migrations have run and the server answers. The compose file
+also gates `web` on the `db` and `redis` healthchecks.
+
+## Error pages
+
+Outside `DEBUG`, a missing page, a refused permission, an expired form (CSRF)
+and an unhandled error each render a page in the product's own design, in the
+reader's language, with a way back. They are self-contained (`templates/errors/`
+: no query, no static file to resolve), so the 500 page still renders when the
+database is what failed.
 
 ## When something is wrong
 

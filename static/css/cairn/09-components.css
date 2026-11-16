@@ -690,6 +690,14 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 }
 /* Beat Leaflet's default #ddd container flash with double-class specificity. */
 .entity-map.leaflet-container { background: var(--surface-muted); }
+/* The basemap is a backdrop, not the subject : whatever the provider, its
+   tiles are desaturated so the map sits calmly behind the record. Under the
+   dark theme, a deployment with no dark tiles gets the same tiles inverted
+   and dimmed (.entity-map--dimmed, set by window.cairnBasemap). */
+.entity-map .leaflet-tile-pane { filter: saturate(.3) contrast(.95); }
+.entity-map--dimmed .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) saturate(.3) brightness(.85) contrast(.9);
+}
 /* Zoom buttons hidden (drag / double-click / pinch still zoom). */
 .entity-map .leaflet-control-zoom { display: none !important; }
 /* Attribution stays out of the way and fades in on hover / focus only. */

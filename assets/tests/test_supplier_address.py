@@ -62,11 +62,34 @@ class TestSupplierMap:
         assert 'data-lat="48.87"' in html and 'data-lon="2.32"' in html
         # Leaflet is served from this instance, not from a CDN.
         assert "/static/vendor/leaflet/leaflet.js" in html
-        urls = re.findall(r'https?://[^\s"\'<>]+', html)
-        # Leaflet's {s} subdomain placeholder makes the parsed hostname
-        # "{s}.basemaps.cartocdn.com", so accept the CARTO domain or any subdomain.
-        hosts = [urlparse(u).hostname or "" for u in urls]
-        assert any(h == "basemaps.cartocdn.com" or h.endswith(".basemaps.cartocdn.com") for h in hosts)
+        # The basemap comes from the MAP_TILE_URL setting, never from a
+        # provider written into the template.
+        assert "tile.openstreetmap.org" in html
+        assert "cartocdn" not in html
+        assert "window.cairnBasemap.addTo(map)" in html
+
+    def test_the_basemap_provider_is_a_deployment_setting(self, client, settings):
+        settings.MAP_TILE_URL = "https://tiles.example.org/{z}/{x}/{y}.png?key=abc"
+        settings.MAP_TILE_URL_DARK = "https://tiles.example.org/dark/{z}/{x}/{y}.png?key=abc"
+        settings.MAP_TILE_ATTRIBUTION = "Example Maps"
+        client.force_login(UserFactory(is_superuser=True, is_staff=True))
+        s = SupplierFactory(address="17 Rue de Surene", latitude=48.87, longitude=2.32)
+        html = client.get(reverse("assets:supplier-detail", kwargs={"pk": s.pk})).content.decode()
+        assert "tiles.example.org/dark/" in html
+        assert "Example Maps" in html
+        assert "tile.openstreetmap.org" not in html
+
+    def test_an_empty_setting_switches_the_maps_off(self, client, settings):
+        """An instance whose browsers must not reach an outside service."""
+        import json
+
+        settings.MAP_TILE_URL = ""
+        client.force_login(UserFactory(is_superuser=True, is_staff=True))
+        s = SupplierFactory(address="17 Rue de Surene", latitude=48.87, longitude=2.32)
+        html = client.get(reverse("assets:supplier-detail", kwargs={"pk": s.pk})).content.decode()
+        conf = html.split('id="cairn-map-tiles" type="application/json">')[1].split("</script>")[0]
+        assert json.loads(conf)["url"] == ""
+        assert "window.cairnBasemap.enabled" in html
 
     def test_no_map_without_address_or_coords(self, client):
         client.force_login(UserFactory(is_superuser=True, is_staff=True))

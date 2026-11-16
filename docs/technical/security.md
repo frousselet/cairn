@@ -142,7 +142,8 @@ turning them on blindly breaks an HTTP-only deployment.
 1. **Serve over HTTPS and turn on the hardening flags** : `SESSION_COOKIE_SECURE`,
    `CSRF_COOKIE_SECURE`, `SECURE_SSL_REDIRECT`, then HSTS. The order and the
    HSTS caveat are in [configuration.md](configuration.md#https-hardening).
-2. **Set a real `SECRET_KEY`** and keep it out of the image.
+2. **Set a real `SECRET_KEY`** and keep it out of the image. With `DEBUG` off,
+   Cairn refuses to start while the key is one of the public placeholders.
 3. **Set `DEBUG=False`** and a specific `ALLOWED_HOSTS`.
 4. **Run `python manage.py check --deploy`** and read what it says.
 5. **Back up PostgreSQL and the media directory together.** The history tables

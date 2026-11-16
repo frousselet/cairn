@@ -1,0 +1,5 @@
+{% extends "errors/base.html" %}{% load i18n %}
+{% block title %}{% trans "Server error" %}{% endblock %}
+{% block eyebrow %}{% trans "Error 500" %}{% endblock %}
+{% block heading %}{% trans "Something went wrong on our side" %}{% endblock %}
+{% block message %}{% trans "The error has been recorded. Nothing you entered on other pages is lost. Try again in a moment; if it happens again, tell your administrator what you were doing." %}{% endblock %}

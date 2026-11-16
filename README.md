@@ -85,6 +85,9 @@ are mirrored into `static/vendor/` from the pins in
 [`core/dependencies.py`](core/dependencies.py) - by the Docker build, or on the
 first launch of a direct install - and each download is checked against a
 Subresource-Integrity digest. `python manage.py vendor_assets` does it by hand.
+The one thing a browser fetches elsewhere is the map shown on scope, site and
+supplier pages, whose tiles come from the provider set in `MAP_TILE_URL`
+(OpenStreetMap by default); an empty value switches the maps off.
 
 That same file is the full inventory of third-party components, and a running
 instance states it in the About dialog, at `GET /api/v1/dependencies` and

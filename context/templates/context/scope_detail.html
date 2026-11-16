@@ -139,24 +139,21 @@
 <script>
 {% comment %}
   Plot the perimeter's included sites (and its sub-scopes' sites) on a static
-  OpenStreetMap (Leaflet/CARTO) hero map. Each site is geocoded once from its
+  Leaflet hero map (basemap : MAP_TILE_URL). Each site is geocoded once from its
   address (client-side, Photon); the map then frames every located site in the
   clear upper-right zone (out of the gradient fade). Leaflet is loaded through the
   shared window.ensureLeaflet loader so the map appears on boosted navigation too.
 {% endcomment %}
 (function () {
-  var ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
   var docEl = document.documentElement;
-  function tileUrl() {
-    var dark = docEl.getAttribute('data-bs-theme') === 'dark';
-    return 'https://{s}.basemaps.cartocdn.com/' + (dark ? 'dark_all' : 'light_all') + '/{z}/{x}/{y}{r}.png';
-  }
   function accent() {
     return (getComputedStyle(docEl).getPropertyValue('--accent') || '').trim() || '#1E3A8A';
   }
   function initScopeMap() {
     var el = document.getElementById('scope-map');
     if (!el || el.dataset.mapReady || !window.L) { return; }
+    // No basemap configured (MAP_TILE_URL empty) : the page shows no map.
+    if (!window.cairnBasemap.enabled) { el.style.display = 'none'; return; }
     var sites;
     try { sites = JSON.parse(el.dataset.sites || '[]'); } catch (e) { sites = []; }
     if (!sites.length) { el.style.display = 'none'; return; }
@@ -166,9 +163,7 @@
       zoomControl: false, dragging: false, scrollWheelZoom: false,
       doubleClickZoom: false, boxZoom: false, touchZoom: false, keyboard: false
     });
-    var layer = L.tileLayer(tileUrl(), {
-      maxZoom: 19, subdomains: 'abcd', attribution: ATTR
-    }).addTo(map);
+    window.cairnBasemap.addTo(map);
     map.setView([46.6, 2.4], 5);  // France-ish default until markers resolve
 
     var latlngs = [];
@@ -225,8 +220,6 @@
         .finally(function () { if (--pending === 0) { fit(); } });
     });
 
-    new MutationObserver(function () { layer.setUrl(tileUrl()); })
-      .observe(docEl, { attributes: true, attributeFilter: ['data-bs-theme'] });
   }
   // Runs on first load and on every boosted #page-shell swap (this block is
   // re-executed by htmx), waiting for the shared loader to make Leaflet ready.

@@ -1,0 +1,5 @@
+{% extends "errors/base.html" %}{% load i18n %}
+{% block title %}{% trans "Access denied" %}{% endblock %}
+{% block eyebrow %}{% trans "Error 403" %}{% endblock %}
+{% block heading %}{% trans "Access denied" %}{% endblock %}
+{% block message %}{% trans "Your account does not have the permission this page requires. If you need it, ask an administrator of your organisation." %}{% endblock %}
