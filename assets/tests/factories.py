@@ -34,6 +34,7 @@ from context.constants import Criticality
 class EssentialAssetFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = EssentialAsset
+        skip_postgeneration_save = True  # the hooks below only set relations
 
     reference = factory.Sequence(lambda n: f"EA-{n:03d}")
     name = factory.Sequence(lambda n: f"Essential Asset {n}")
@@ -61,6 +62,7 @@ class EssentialAssetFactory(factory.django.DjangoModelFactory):
 class SupportAssetFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SupportAsset
+        skip_postgeneration_save = True  # the hooks below only set relations
 
     reference = factory.Sequence(lambda n: f"SA-{n:03d}")
     name = factory.Sequence(lambda n: f"Support Asset {n}")
@@ -102,6 +104,7 @@ class SupplierTypeFactory(factory.django.DjangoModelFactory):
 class SupplierFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Supplier
+        skip_postgeneration_save = True  # the hooks below only set relations
 
     reference = factory.Sequence(lambda n: f"SUPP-{n:03d}")
     name = factory.Sequence(lambda n: f"Supplier {n}")
@@ -126,6 +129,7 @@ class SupplierFactory(factory.django.DjangoModelFactory):
 class ContractFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Contract
+        skip_postgeneration_save = True  # the hooks below only set relations
 
     reference = factory.Sequence(lambda n: f"CTRT-{n:03d}")
     label = factory.Sequence(lambda n: f"Contract {n}")
@@ -153,6 +157,7 @@ class ContractFactory(factory.django.DjangoModelFactory):
 class CertificateFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Certificate
+        skip_postgeneration_save = True  # the hooks below only set relations
 
     reference = factory.Sequence(lambda n: f"CERT-{n:03d}")
     label = factory.Sequence(lambda n: f"Certificate {n}")

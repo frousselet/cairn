@@ -257,6 +257,26 @@ class TestRiskViewSet:
         assert "RecentOne" in names
         assert "OldOne" not in names
 
+    def test_filter_by_date_before_includes_the_day_itself(self):
+        """`date_before=D` means "up to D included". Compared as a date-time,
+        D was read as midnight and everything created during D was left out."""
+        from datetime import timedelta
+        from django.utils import timezone as tz
+        from risks.models import Risk
+        that_day = RiskFactory(name="ThatDay")
+        later = RiskFactory(name="Later")
+        day = tz.localtime(tz.now() - timedelta(days=5)).replace(hour=15, minute=30)
+        Risk.objects.filter(pk=that_day.pk).update(created_at=day)
+        Risk.objects.filter(pk=later.pk).update(created_at=day + timedelta(days=2))
+        response = self.client.get(
+            "/api/v1/risks/risks/", {"date_before": day.date().isoformat()},
+        )
+        body = _data(response)
+        items = body["results"] if isinstance(body, dict) else body
+        names = [r["name"] for r in items]
+        assert "ThatDay" in names
+        assert "Later" not in names
+
     def test_unauthenticated(self):
         client = APIClient()
         response = client.get("/api/v1/risks/risks/")

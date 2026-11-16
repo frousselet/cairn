@@ -62,6 +62,7 @@ from risks.models.risk_criteria import RiskCriteria, RiskLevel, ScaleLevel
 class RiskCriteriaFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = RiskCriteria
+        skip_postgeneration_save = True  # the hooks below only set relations
 
     name = factory.Sequence(lambda n: f"Criteria {n}")
     workflow_state = "validated"
@@ -102,6 +103,7 @@ class RiskLevelFactory(factory.django.DjangoModelFactory):
 class RiskAssessmentFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = RiskAssessment
+        skip_postgeneration_save = True  # the hooks below only set relations
 
     reference = factory.Sequence(lambda n: f"RA-{n:03d}")
     name = factory.Sequence(lambda n: f"Assessment {n}")
@@ -132,6 +134,7 @@ class RiskFactory(factory.django.DjangoModelFactory):
 class ThreatFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Threat
+        skip_postgeneration_save = True  # the hooks below only set relations
 
     name = factory.Sequence(lambda n: f"Threat {n}")
     type = ThreatType.DELIBERATE
@@ -146,6 +149,7 @@ class ThreatFactory(factory.django.DjangoModelFactory):
 class VulnerabilityFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Vulnerability
+        skip_postgeneration_save = True  # the hooks below only set relations
 
     name = factory.Sequence(lambda n: f"Vulnerability {n}")
     severity = "medium"

@@ -46,9 +46,12 @@ class RiskFilter(django_filters.FilterSet):
     assessment = django_filters.UUIDFilter(field_name="assessment_id")
     risk_owner = django_filters.UUIDFilter(field_name="risk_owner_id")
 
-    # Date range on creation (ISO format: YYYY-MM-DD)
-    date_after = django_filters.DateFilter(field_name="created_at", lookup_expr="gte")
-    date_before = django_filters.DateFilter(field_name="created_at", lookup_expr="lte")
+    # Date range on creation (ISO format: YYYY-MM-DD), both ends included. The
+    # field is a date-time : compared with a bare date it was read as midnight,
+    # so `date_before` left out everything created on that day itself. The
+    # `date` transform compares calendar days in the active time zone.
+    date_after = django_filters.DateFilter(field_name="created_at", lookup_expr="date__gte")
+    date_before = django_filters.DateFilter(field_name="created_at", lookup_expr="date__lte")
 
     # Asset / requirement / methodology source filters
     essential_asset = django_filters.UUIDFilter(

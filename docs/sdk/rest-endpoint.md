@@ -80,6 +80,18 @@ What each mixin buys you:
 | `HistoryAPIMixin` | `GET .../<uuid>/history/` |
 | `BatchCreateMixin` | Batch creation, up to 500 objects, non-atomic with partial success reporting |
 
+Lists are paginated by `context.api.pagination.StandardPagination`, which
+gives every list a total order before cutting it into pages : an unordered
+queryset is served oldest first (`created_at`), and the primary key is appended
+to any order, including one chosen with `?ordering=`, as the final
+tie-breaker. Without it the pages of a list can repeat one row and never show
+another. You do not have to set an `ordering` on the viewset for that; set one
+when the list has a natural order of its own.
+
+A filter on a date-time field that takes a calendar date uses the `date`
+transform (`lookup_expr="date__gte"`, `"date__lte"`) : compared directly, the
+date is read as midnight and the last day of the range is left out.
+
 An entity that runs no lifecycle simply does not mix in `LifecycleAPIMixin`, and
 no `transition/` route is generated for it. Absence is the mechanism; there is
 no flag to remember.

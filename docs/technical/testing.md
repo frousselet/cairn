@@ -70,6 +70,26 @@ and takes under a minute; while iterating on something else, leave it out with
 `pytest -m "not sweep"`. A page it should not open (one whose `GET` has an
 effect) goes in its `SKIP` pattern, with the reason.
 
+## Warnings
+
+The suite runs with no warning, and two of them fail it on purpose
+(`filterwarnings` in `pytest.ini`), because they are defects rather than noise :
+
+- **an API list paginated without a total order** (`UnorderedObjectListWarning`),
+  whose pages can repeat one row and skip another;
+- **a date-time compared with a naive value**, which is read in the wrong time
+  zone.
+
+A warning that appears after a dependency upgrade is either fixed or silenced
+there with the reason, so the next one is noticed. The `EMAIL_*` deprecation
+of Django 6.1 is silenced for now : moving to `MAILERS` depends on which Django
+line the project supports.
+
+Factories whose post-generation hooks only set relations declare
+`skip_postgeneration_save = True`. One that relies on a save once its relations
+exist (`ObjectiveFactory`, whose model checks scopes on save) does that save
+itself in `_after_postgeneration`.
+
 ## How tests are organised
 
 Every app has a `tests/` package with the same two kinds of file.
@@ -106,12 +126,23 @@ means, in order:
 
 ## Continuous integration
 
-`.github/workflows/tests.yml` runs on every push to `main` and every pull
-request:
+`.github/workflows/tests.yml` runs two jobs on every push to `main` and every
+pull request.
+
+`test`, the fast run on SQLite :
 
 1. `ruff check .`
 2. `python manage.py compilemessages` (a duplicate `msgid` fails here)
-3. `pytest -x -v --tb=short --cov --cov-report=term-missing`
+3. `pytest -x -v --tb=short --cov --cov-report=term-missing`, interface sweep
+   included
+
+`test (PostgreSQL, migrations)`, on the PostgreSQL major the compose file ships :
+
+1. `python manage.py makemigrations --check --dry-run` (a model changed without
+   its migration fails here)
+2. `pytest --ds=core.settings_test_postgres -x`, every migration replayed
+
+Both run with `DEBUG` off and a key of their own, like a deployment.
 
 `.github/workflows/docs.yml` adds the documentation gate : the generated
 reference pages must be current, and every internal documentation link must

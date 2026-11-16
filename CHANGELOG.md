@@ -52,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A lifecycle edited in the administration was only applied by the worker process that saved it; every worker now picks it up within `LIFECYCLE_CACHE_TTL` seconds (5 by default).
 - Pages touching the cache (the update check, the assistant briefing, the Trust Center rate limiter) failed with a server error whenever Redis was unreachable; the cache now degrades to a miss and logs the outage.
 - The Docker-less development settings (`core.settings_local`) still required Redis for the cache.
+- The pages of an API list could repeat a record and skip another, on the lists with no default order and under any `?ordering=` with ties; every list is now paginated in a total order.
+- The `date_before` filter of the risks API left out the risks created on the day given.
 - The documented deployment of the published image had no volume for uploaded files, which were lost each time the container was recreated.
 - A list table wider than its card had its last columns clipped and unreachable on laptop screens; it now scrolls inside the card.
 - The scope, site and supplier maps showed an "API key required" watermark instead of the map, their tile provider no longer serving anonymous requests; they draw OpenStreetMap tiles by default.
