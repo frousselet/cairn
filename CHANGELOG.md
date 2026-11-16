@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The lifecycle editor shows its steps, transitions and JSON as stacked cards instead of tabs.
 - The assessment result toggles read the planning / fieldwork phase from the assessment instead of comparing a status string in the template.
 - EBIOS RM workshop 5 measures can be linked while they are planned, in progress or overdue.
+- List pages read their tags, scope ancestors and filter options in a constant number of queries instead of one per row or per option.
 
 ### Fixed
 

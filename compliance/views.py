@@ -1553,7 +1553,11 @@ class FindingListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMi
     search_fields = ["reference", "description", "recommendation"]
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related("assessment", "assessor")
+        qs = (
+            super().get_queryset()
+            .select_related("assessment", "assessor")
+            .prefetch_related("requirements")  # counted on every row
+        )
         qs = self.filter_queryset_predefined(qs)
         return self.filter_queryset_advanced(qs)
 
@@ -2031,7 +2035,11 @@ class FindingTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBod
     text_filters = FINDING_TEXT_FILTERS
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related("assessment", "assessor")
+        qs = (
+            super().get_queryset()
+            .select_related("assessment", "assessor")
+            .prefetch_related("requirements")  # counted on every row
+        )
         qs = self.filter_queryset_predefined(qs)
         return self.filter_queryset_advanced(qs)
 
