@@ -634,6 +634,15 @@ helper is an unfinished field; only a self-evident adornment control
 | Helper | `.form-text` | 13 px / 400 / `--text-muted`. **Always present.** Short, concrete, says what the value is for or how to fill it. No terminal punctuation unless it's a full sentence. |
 | Error | `.invalid-feedback.d-block` | 13 px / 400 / `--danger`. Says what to fix, not just "invalid". Use `.d-block` so it appears unconditionally below the control. |
 
+**An empty select says what empty means.** A select never opens on Django's
+row of dashes : a required one opens on *Choose…*, an optional one on *None*.
+The shared field partial does it (`{{ field|plain_empty_option }}`), so a field
+rendered by hand applies the same filter.
+
+**On a phone, the step indicator names one step.** The step being filled in
+shows its label whole; the others keep their number. Three labels cut to their
+first letters name nothing.
+
 ### Visual states
 
 | State | Treatment |

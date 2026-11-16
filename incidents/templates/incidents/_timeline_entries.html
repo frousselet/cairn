@@ -66,7 +66,8 @@ errors rather than replacing the card with a form.
 </details>
 {% endif %}
 
-<div class="d-flex flex-column gap-2">
+{# data-clamp-items : the card shows the latest entries, the rest behind "Show all". #}
+<div class="d-flex flex-column gap-2" data-clamp-items>
 {% for entry in timeline_entries reversed %}
   {% comment %}
   The anchor is what the two supersession links point at, in both directions :

@@ -13,6 +13,7 @@ See ``docs/brand/brand-guidelines.md`` (Forms section) for the doctrine.
 """
 
 from django.core.exceptions import NON_FIELD_ERRORS, ImproperlyConfigured, ValidationError
+from django.utils.translation import pgettext_lazy
 
 
 def _col_class(width):
@@ -78,6 +79,43 @@ class Step:
         return f"Step({self.title!r}, {self.icon!r}, {self.fields!r})"
 
 
+# Django's label for "no value" in a select.
+_DJANGO_BLANK_LABEL = "---------"
+
+
+def humanise_empty_choice(field):
+    """Replace Django's ``---------`` by words in the select of ``field``.
+
+    A row of dashes says neither "you must choose" nor "this may stay empty".
+    A required select opens on *Choose…*, an optional one on *None*. Only the
+    default label is replaced : a form that set its own ``empty_label`` or
+    blank choice keeps it. Returns the field.
+    """
+    from django.forms import ChoiceField, ModelChoiceField, ModelMultipleChoiceField
+
+    if isinstance(field, ModelMultipleChoiceField):
+        return field
+    label = (
+        pgettext_lazy("empty select option", "Choose…")
+        if field.required
+        else pgettext_lazy("empty select option", "None")
+    )
+    if isinstance(field, ModelChoiceField):
+        if field.empty_label == _DJANGO_BLANK_LABEL:
+            field.empty_label = label
+    elif isinstance(field, ChoiceField):
+        choices = list(field.choices)
+        if choices and choices[0][0] in ("", None) and str(choices[0][1]) == _DJANGO_BLANK_LABEL:
+            field.choices = [(choices[0][0], label), *choices[1:]]
+    return field
+
+
+def humanise_empty_choices(form):
+    """Apply :func:`humanise_empty_choice` to every field of ``form``."""
+    for field in form.fields.values():
+        humanise_empty_choice(field)
+
+
 class SteppedFormMixin:
     """Declarative grouping / stepping for a Django form.
 
@@ -97,6 +135,7 @@ class SteppedFormMixin:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        humanise_empty_choices(self)
         if self.steps:
             self._validate_steps()
 

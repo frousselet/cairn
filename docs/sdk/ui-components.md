@@ -159,7 +159,7 @@ its own modal, in a table row for example, is `{% confirm_delete url=... name=..
 | [`subhead`](#subhead) | tag | A divider title inside a card |
 | [`overview` / `ov_row`](#overview--ov_row) | block tags | Icon-led summary rows |
 | [`meta_list` / `meta_item`](#meta_list--meta_item) | block tags | Label and value pairs |
-| [`record_card`](#record_card) | tag | The traceability card that closes a detail page |
+| [`record_card`](#record_card) | tag | The traceability line that closes a detail page |
 | [`ref_link`](#ref_link) | tag | A linked element : reference pill and name |
 | [`tag_list`](#tag_list) | tag | Tags as coloured pills |
 | [`badge` / `choice_badge`](#badge--choice_badge) | tags | Status, level and result badges |
@@ -253,6 +253,15 @@ optional `count` pill (zero is shown) and the `actions` slot on the right.
   last cells keep the card's inset).
 - `hide_empty` renders nothing when the body is empty, so an optional section
   needs no surrounding `{% if %}`.
+- `clamp=True`, with an integer `count`, shows the first eight rows of the
+  card's table (or of a list marked `data-clamp-items`) and a "Show all n"
+  button under them. Use it for a list that can grow long on a page that is
+  about something else : the requirements of a framework, the analyses of an
+  assessment, the chronology of an incident. A link to a hidden row opens the
+  card first. Below nine rows nothing changes.
+- An `{% empty_state %}` inside a section card is always one line of small
+  print under the title, whatever its options : an empty section never costs
+  more height than a filled one.
 - `classes` adds classes to the card (spacing outside a `detail_layout`).
 - A card refreshed by HTMX keeps its `hx-*` attributes on a wrapping element
   (`<div id="..." hx-get=... hx-trigger=...>{% section_card %}...</div>`).
@@ -303,10 +312,35 @@ column, and `hide_empty` drops an empty block item.
 {% record_card obj %}
 ```
 
-The reference, version, author, creation date and last change of a `BaseModel`.
-A model without a `version` or `created_by` field omits that row.
-It always comes last on a detail page, in the same order, with dates in the
-active locale's format inside `<time datetime>`.
+The traceability of the record, as one line of small print closing the page :
+reference, version, author, creation and last-change dates. It is on every
+detail page, in the same place, and deliberately not a card of its own (it was
+one, 270 px tall, on every page). A model that is not a `BaseModel` omits the
+items it has no field for; a record with no known author shows the dash.
+
+### Long pages
+
+Three mechanisms keep a detail page a page about its record. None needs a
+declaration beyond what is shown here.
+
+- **The section menu.** A page with six titled section cards or more gets a
+  "Jump to a section" button at the head of its header actions, listing the
+  cards with their counts. It is built in `base.html` from the cards the page
+  renders; the header being pinned, it stays one click away while scrolling.
+- **Clamped lists** : `clamp=True` on a section card, above.
+- **Foldable table groups.** A table whose rows are grouped under header rows
+  folds its groups : the header row carries `data-group-toggle="key"`
+  (`tabindex="0" role="button" aria-expanded="true"`), its rows
+  `data-group="key"`. Past fifteen rows the groups start folded, except the
+  first header marked `data-group-pending` (the group with work left). What the
+  reader opened is kept for the session under the `<tbody>`'s
+  `data-group-store`, so an HTMX refresh of the body comes back as it was. A
+  button with `data-group-toggle-all="#tbody-id"` unfolds or folds everything.
+  Reference : `compliance/templates/compliance/assessment_results_table_body.html`.
+
+A template comment longer than one line is written `{% comment %}...{% endcomment %}`.
+`{# ... #}` only works on a single line : spread over several, its text is
+printed in the page (a test enforces this).
 
 ### ref_link
 

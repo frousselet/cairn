@@ -82,6 +82,20 @@
   transition: background-color .2s var(--ease-out), border-color .2s var(--ease-out), color .2s var(--ease-out);
 }
 .mform-pill-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Phones : there is room for one label, so it goes to the step being filled
+   in, whole; the other steps keep their number (their name stays in the
+   accessibility tree). Three labels cut to "Id..." told nothing. */
+@media (max-width: 575.98px) {
+  .mform-pill:not(.is-current) .mform-pill-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .mform-pill.is-current { flex: 0 1 auto; min-width: 0; }
+  .mform-pill.is-current .mform-pill-label { overflow: visible; }
+}
 /* Connector dissolving toward the next step, like the sidebar
  * hairlines fading at their ends */
 .mform-pill::after {

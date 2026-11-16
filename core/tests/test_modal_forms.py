@@ -165,3 +165,32 @@ def test_a_model_rule_on_a_field_the_form_lacks_is_reported_not_raised():
 
     assert form.is_valid() is False
     assert form.non_field_errors()
+
+
+class TestEmptySelectOption:
+    """Django labels "no value" with a row of dashes. The forms say it in words."""
+
+    def _form(self):
+        from controls.forms import ControlForm
+
+        return ControlForm()
+
+    @pytest.mark.django_db
+    def test_no_stepped_form_select_shows_a_row_of_dashes(self):
+        assert "---------" not in self._form().as_p()
+
+    def test_an_optional_select_opens_on_none_and_a_required_one_on_choose(self):
+        from django import forms
+
+        from core.modal_forms import SteppedFormMixin
+
+        class Probe(SteppedFormMixin, forms.Form):
+            optional = forms.ChoiceField(choices=[("", "---------"), ("a", "A")], required=False)
+            required = forms.ChoiceField(choices=[("", "---------"), ("a", "A")])
+            custom = forms.ChoiceField(choices=[("", "Any colour"), ("a", "A")], required=False)
+
+        form = Probe()
+        assert str(form.fields["optional"].choices[0][1]) == "None"
+        assert str(form.fields["required"].choices[0][1]) == "Choose…"
+        # A label the form chose itself is kept.
+        assert form.fields["custom"].choices[0][1] == "Any colour"

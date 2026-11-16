@@ -2508,6 +2508,195 @@
     window.addEventListener('resize', function() { clearTimeout(rt); rt = setTimeout(freeze, 200); });
   })();
 
+  /* ── Clamped section cards ───────────────────────────
+     A card rendered with clamp=True shows the first rows of its table; this
+     button shows the rest and folds them back. Delegated, so it keeps working
+     when HTMX re-renders the card's content. */
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-clamp-toggle]');
+    if (!btn) return;
+    var card = btn.closest('.section-card');
+    if (!card) return;
+    var expanded = card.classList.toggle('is-expanded');
+    btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    var label = btn.querySelector('[data-clamp-label]');
+    if (label) label.textContent = btn.getAttribute(expanded ? 'data-label-less' : 'data-label-more');
+    /* Folding back : bring the card's top into view, or the reader is left
+       far below it. */
+    if (!expanded && card.getBoundingClientRect().top < 0) card.scrollIntoView({ block: 'start' });
+  });
+  /* A link to a row the clamp hides (a chronology entry pointing at the one it
+     corrects) opens the card first, or the jump would lead nowhere. */
+  function revealClampedTarget() {
+    var id = decodeURIComponent((location.hash || '').slice(1));
+    var target = id && document.getElementById(id);
+    var card = target && target.closest('.section-card--clamp:not(.is-expanded)');
+    if (!card || target.offsetParent !== null) return;
+    var btn = card.querySelector('[data-clamp-toggle]');
+    if (btn) { btn.click(); target.scrollIntoView({ block: 'center' }); }
+  }
+  window.addEventListener('hashchange', revealClampedTarget);
+  document.addEventListener('DOMContentLoaded', revealClampedTarget);
+
+  /* ── Section menu of long detail pages ───────────────
+     A detail page with many sections gets a "Sections" button at the head of
+     its header actions : the list of its cards, each a jump. The header stays
+     pinned while the page scrolls, so the menu is always one click away and
+     costs the page nothing. Built here from the cards the page renders, so no
+     template has to declare it. */
+  (function() {
+    var MIN_SECTIONS = 6;
+    var LABEL = '{% trans "Jump to a section" as jump_label %}{{ jump_label|escapejs }}';
+    function slug(text, used) {
+      var base = 'section-' + (text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'x');
+      var id = base, n = 2;
+      while (used[id] || document.getElementById(id)) { id = base + '-' + n++; }
+      used[id] = true;
+      return id;
+    }
+    function initSectionMenu() {
+      var layout = document.querySelector('.main-content .detail-layout');
+      var header = document.querySelector('.main-content .page-header');
+      if (!layout || !header || header.querySelector('[data-section-menu]')) return;
+      var cards = [], used = {};
+      layout.querySelectorAll('.detail-main .section-card').forEach(function(card) {
+        var title = card.querySelector(':scope > .section-card__head .section-card__title > span, :scope > details > summary .section-card__title > span');
+        if (!title || !title.textContent.trim()) return;
+        if (!card.id) card.id = slug(title.textContent.trim(), used);
+        var count = card.querySelector('.section-card__count');
+        cards.push({ id: card.id, label: title.textContent.trim(), count: count ? count.textContent.trim() : '' });
+      });
+      if (cards.length < MIN_SECTIONS) return;
+      var actions = header.querySelector('.page-header__actions');
+      if (!actions) {
+        actions = document.createElement('div');
+        actions.className = 'page-header__actions header-actions';
+        header.appendChild(actions);
+      }
+      var wrap = document.createElement('div');
+      wrap.className = 'dropdown';
+      wrap.setAttribute('data-section-menu', '');
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-secondary';
+      btn.setAttribute('data-bs-toggle', 'dropdown');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-label', LABEL);
+      btn.title = LABEL;
+      btn.innerHTML = '<i class="bi bi-list-nested" aria-hidden="true"></i>';
+      var menu = document.createElement('ul');
+      menu.className = 'dropdown-menu dropdown-menu-end section-menu';
+      cards.forEach(function(c) {
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.className = 'dropdown-item';
+        a.href = '#' + c.id;
+        a.setAttribute('hx-boost', 'false');
+        var name = document.createElement('span');
+        name.textContent = c.label;
+        a.appendChild(name);
+        if (c.count) {
+          var n = document.createElement('span');
+          n.className = 'section-menu__count tabular-nums';
+          n.textContent = c.count;
+          a.appendChild(n);
+        }
+        a.addEventListener('click', function(e) {
+          e.preventDefault();
+          var card = document.getElementById(c.id);
+          if (!card) return;
+          var details = card.querySelector(':scope > details');
+          if (details) details.open = true;
+          var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          card.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+          card.setAttribute('tabindex', '-1');
+          card.focus({ preventScroll: true });
+        });
+        li.appendChild(a);
+        menu.appendChild(li);
+      });
+      wrap.appendChild(btn);
+      wrap.appendChild(menu);
+      actions.insertBefore(wrap, actions.firstChild);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSectionMenu);
+    else initSectionMenu();
+    document.body.addEventListener('htmx:afterSettle', initSectionMenu);
+  })();
+
+  /* ── Foldable table groups ───────────────────────────
+     A table whose rows are grouped under header rows (the requirements of an
+     audit under their sections) folds its groups : a header row carries
+     data-group-toggle="key", its rows data-group="key". A long table starts
+     folded except the first group with work left (data-group-pending), so the
+     page shows the sections and the reader opens the one being worked on.
+     What the reader opened is kept for the session (the body is re-rendered
+     over HTMX after each evaluation and must come back as it was). */
+  (function() {
+    var FOLD_FROM = 15; /* rows below which nothing is folded by default */
+    function key(tbody) { return 'cairn.groups.' + (tbody.dataset.groupStore || location.pathname); }
+    function load(tbody) {
+      try { return JSON.parse(sessionStorage.getItem(key(tbody)) || '{}') || {}; } catch (e) { return {}; }
+    }
+    function save(tbody, state) {
+      try { sessionStorage.setItem(key(tbody), JSON.stringify(state)); } catch (e) {}
+    }
+    function set(tbody, header, open) {
+      header.setAttribute('aria-expanded', open ? 'true' : 'false');
+      var rows = tbody.querySelectorAll('tr[data-group="' + header.dataset.groupToggle + '"]');
+      for (var i = 0; i < rows.length; i++) rows[i].hidden = !open;
+    }
+    function apply(tbody) {
+      var headers = tbody.querySelectorAll('tr[data-group-toggle]');
+      if (!headers.length) return;
+      var state = load(tbody);
+      var foldByDefault = headers.length > 1 && tbody.querySelectorAll('tr[data-group]').length > FOLD_FROM;
+      var firstPending = tbody.querySelector('tr[data-group-toggle][data-group-pending]');
+      headers.forEach(function(header) {
+        var k = header.dataset.groupToggle;
+        var open = (k in state) ? state[k] : (!foldByDefault || header === firstPending);
+        set(tbody, header, open);
+      });
+    }
+    function toggle(header) {
+      var tbody = header.closest('tbody');
+      var open = header.getAttribute('aria-expanded') !== 'true';
+      set(tbody, header, open);
+      var state = load(tbody); state[header.dataset.groupToggle] = open; save(tbody, state);
+    }
+    function init(root) {
+      (root || document).querySelectorAll('tbody').forEach(function(tbody) {
+        if (tbody.querySelector('tr[data-group-toggle]')) apply(tbody);
+      });
+    }
+    document.addEventListener('click', function(e) {
+      var all = e.target.closest('[data-group-toggle-all]');
+      if (all) {
+        var tbody = document.querySelector(all.getAttribute('data-group-toggle-all'));
+        if (!tbody) return;
+        var headers = tbody.querySelectorAll('tr[data-group-toggle]');
+        var anyClosed = Array.prototype.some.call(headers, function(h) { return h.getAttribute('aria-expanded') !== 'true'; });
+        var state = {};
+        headers.forEach(function(h) { set(tbody, h, anyClosed); state[h.dataset.groupToggle] = anyClosed; });
+        save(tbody, state);
+        return;
+      }
+      /* A click on a link or a control inside the header row is that control's. */
+      if (e.target.closest('a, button, input, select, label')) return;
+      var header = e.target.closest('tr[data-group-toggle]');
+      if (header) toggle(header);
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var header = e.target.closest && e.target.closest('tr[data-group-toggle]');
+      if (header && e.target === header) { e.preventDefault(); toggle(header); }
+    });
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function() { init(); });
+    else init();
+    document.body.addEventListener('htmx:afterSwap', function(e) { init(e.target.closest ? (e.target.closest('table') || e.target) : document); });
+  })();
+
   /* ── Combinable filter chips ─────────────────────── */
   (function() {
     document.addEventListener('click', function(e) {

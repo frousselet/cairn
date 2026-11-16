@@ -1,11 +1,16 @@
 {% load i18n ui accounts_tags %}
-{% comment %}{% record_card obj %} : the traceability card closing every detail page.{% endcomment %}
-{% section_card _("Traceability") icon="shield-check" %}
-  {% meta_list cols=2 %}
-    {% if obj.reference %}{% meta_item _("Reference") %}<span class="ref">{{ obj.reference }}</span>{% endmeta_item %}{% endif %}
-    {% if has_version %}{% meta_item _("Version") obj.version %}{% endif %}
-    {% if has_author %}{% meta_item _("Created by") %}{% if obj.created_by %}{% user_badge obj.created_by size=24 link=True %}{% endif %}{% endmeta_item %}{% endif %}
-    {% meta_item _("Created on") %}{% if obj.created_at %}<time datetime="{{ obj.created_at|date:'c' }}">{{ obj.created_at|date:"DATETIME_FORMAT" }}</time>{% endif %}{% endmeta_item %}
-    {% meta_item _("Modified on") %}{% if obj.updated_at %}<time datetime="{{ obj.updated_at|date:'c' }}">{{ obj.updated_at|date:"DATETIME_FORMAT" }}</time>{% endif %}{% endmeta_item %}
-  {% endmeta_list %}
-{% endsection_card %}
+{% comment %}
+{% record_card obj %} : the traceability line closing every detail page.
+Reference, version, author and dates on one line : the audit metadata is always
+there and always in the same place, without costing the page a card of its own.
+{% endcomment %}
+<section class="card record-line" aria-labelledby="record-line-title-{{ obj.pk }}">
+  <h2 class="visually-hidden" id="record-line-title-{{ obj.pk }}">{% trans "Traceability" %}</h2>
+  <dl class="record-line__list">
+    {% if obj.reference %}<div class="record-line__item"><dt>{% trans "Reference" %}</dt><dd><span class="ref">{{ obj.reference }}</span></dd></div>{% endif %}
+    {% if has_version %}<div class="record-line__item"><dt>{% trans "Version" %}</dt><dd class="tabular-nums">{{ obj.version }}</dd></div>{% endif %}
+    {% if has_author %}<div class="record-line__item"><dt>{% trans "Created by" %}</dt><dd>{% if obj.created_by %}{% user_badge obj.created_by size=20 link=True %}{% else %}{% dash %}{% endif %}</dd></div>{% endif %}
+    {% if obj.created_at %}<div class="record-line__item"><dt>{% trans "Created on" %}</dt><dd><time datetime="{{ obj.created_at|date:'c' }}">{{ obj.created_at|date:"SHORT_DATETIME_FORMAT" }}</time></dd></div>{% endif %}
+    {% if obj.updated_at %}<div class="record-line__item"><dt>{% trans "Modified on" %}</dt><dd><time datetime="{{ obj.updated_at|date:'c' }}">{{ obj.updated_at|date:"SHORT_DATETIME_FORMAT" }}</time></dd></div>{% endif %}
+  </dl>
+</section>
