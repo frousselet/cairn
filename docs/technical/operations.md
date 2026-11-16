@@ -30,7 +30,7 @@ The lifecycle commands, `documents_sweep` and `controls_sweep` accept `--dry-run
 `rebuild_semantic_index` is idempotent : it re-embeds only changed requirements
 and prunes deleted ones, so a daily run is cheap. The index is also refreshed at
 startup, pruned immediately when a requirement is deleted, and can be forced
-from **Administration -> Semantic index**. The cron entry is the self-healing
+from **Administration -> Ask Cairn** (the *Semantic index* view). The cron entry is the self-healing
 backstop rather than the primary mechanism.
 
 The complete command list is in

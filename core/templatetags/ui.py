@@ -21,7 +21,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext, gettext_lazy as _, pgettext_lazy
 from django.views.generic.detail import BaseDetailView
 
-from core.navigation import NAV_TREE
+from core.navigation import NAV_TREE, nav_views
 
 register = template.Library()
 
@@ -634,6 +634,7 @@ class PageHeaderNode(template.Node):
         nav = resolved_kwargs.get("nav")
         reference = resolved_kwargs.get("reference")
         crumbs = None
+        switcher = []
         if nav and nav in NAV_TREE:
             section, group, leaf_label = NAV_TREE[nav]
             request = context.get("request")
@@ -656,6 +657,20 @@ class PageHeaderNode(template.Node):
                 crumbs.append({"label": group_label, "url": None})
             if on_list_page:
                 crumbs.append({"label": gettext(leaf_label), "url": None})
+                # One subject, several lists (the indicators, the dependencies) :
+                # the list page switches between them. Not on a page pinned in
+                # its compact form, which has no room for a second row.
+                if group and request is not None and not resolved_kwargs.get("compact"):
+                    for view_label, view_name in nav_views(nav, request.user):
+                        try:
+                            view_url = reverse(view_name)
+                        except NoReverseMatch:
+                            continue
+                        switcher.append({
+                            "label": gettext(view_label),
+                            "url": view_url,
+                            "current": view_name == nav,
+                        })
             else:
                 crumbs.append({"label": gettext(leaf_label), "url": list_url})
                 if parent_label:
@@ -701,6 +716,7 @@ class PageHeaderNode(template.Node):
             accent=accent,
             eyebrow=eyebrow,
             crumbs=crumbs,
+            switcher=switcher,
             modified_by=modified_by,
             modified_at=modified_at,
             # When set, the bar renders in its compact (collapsed) form from the
@@ -1156,6 +1172,22 @@ def do_section_card(parser, token):
     """
     args, kwargs, nodelist = _parse_tag(parser, token, "endsection_card")
     return SectionCardNode(args, kwargs, nodelist)
+
+
+@register.inclusion_tag("includes/sidebar_menu.html", takes_context=True)
+def sidebar_menu(context):
+    """``{% sidebar_menu %}`` : the sections of the sidebar the user may open.
+
+    Rendered from ``core.navigation.MENU``, the single declaration of the
+    navigation, which the breadcrumbs are derived from as well.
+    """
+    from core.navigation import visible_menu
+
+    request = context.get("request")
+    user = getattr(request, "user", None)
+    if user is None or not user.is_authenticated:
+        return {"nav_sections": []}
+    return {"nav_sections": visible_menu(user, context)}
 
 
 @register.filter

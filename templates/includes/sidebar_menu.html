@@ -1,0 +1,21 @@
+{% load i18n %}
+{% comment %}
+The sections of the sidebar, rendered from core.navigation.MENU by
+{% sidebar_menu %}. Two levels : a section folds and unfolds its pages. Every
+section ships folded; the script after the sidebar opens the one holding the
+current page, so the open section is always derived from the URL.
+`data-nav-paths` lists every URL an entry stands for (its views), which is how
+the entry is marked current on any of them and on their detail pages.
+{% endcomment %}
+{% for section in nav_sections %}
+<button class="sidebar-collapse-btn" data-bs-toggle="collapse" data-bs-target="#nav-{{ section.key }}" aria-controls="nav-{{ section.key }}" aria-expanded="false">
+  <i class="bi bi-{{ section.icon }}"></i> <span class="sidebar-link-text">{{ section.label }}</span>
+  <i class="bi bi-chevron-down"></i>
+  <span class="sidebar-tooltip">{{ section.label }}</span>
+</button>
+<div class="collapse" id="nav-{{ section.key }}" data-bs-parent=".sidebar-body">
+  {% for item in section.items %}
+  <a href="{{ item.url }}" class="sidebar-link sidebar-sub" data-nav-paths="{{ item.paths }}">{{ item.label }}</a>
+  {% endfor %}
+</div>
+{% endfor %}

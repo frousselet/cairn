@@ -30,3 +30,8 @@
   </div>
   {% endif %}
 </div>
+{% if switcher %}
+<nav class="page-switcher" aria-label="{% trans 'Views' %}">
+  {% for view in switcher %}<a href="{{ view.url }}" class="page-switcher__link{% if view.current %} is-current{% endif %}"{% if view.current %} aria-current="page"{% endif %}>{{ view.label }}</a>{% endfor %}
+</nav>
+{% endif %}

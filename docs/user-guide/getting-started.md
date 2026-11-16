@@ -41,9 +41,10 @@ are locked out and cannot wait, an administrator can unlock you.
 
 Every screen has the same three parts.
 
-**The sidebar**, on the left, is the module navigation. It is grouped by domain :
-Governance, Assets, Risk management, Compliance, Incidents, and Administration
-for those who have it.
+**The sidebar**, on the left, is the navigation : three everyday links, then one
+section per area of work (Governance, Assets and third parties, Risk management,
+Compliance, Incidents, Reference data, and Administration for those who have
+it). You only see the pages you can open.
 
 **The header** carries global search, the command palette, notifications and
 your account menu.

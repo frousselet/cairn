@@ -1,106 +1,291 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 François Rousselet
-"""Central navigation hierarchy, mirroring the main sidebar menu.
+"""The navigation of the application, declared once.
 
-Single source of truth used by the ``{% page_header %}`` tag to build the
-breadcrumb (eyebrow) of list and detail pages so it always reflects the
-sidebar tree, e.g. ``Governance > Organization > Stakeholders > STKH-1``.
+``MENU`` is the sidebar : a short list of sections, each holding the pages of
+one area of work. Everything that shows where a page sits is derived from it :
 
-Each entry is keyed by the leaf's *list* URL name and maps to its menu
-ancestry::
+- the sidebar itself (``{% sidebar_menu %}``, ``includes/sidebar_menu.html``);
+- the breadcrumb of every list and detail page (``NAV_TREE``, read by
+  ``{% page_header nav="<url name>" %}``);
+- the view switcher of an entry that has several views (``nav_views``).
 
-    "<namespace>:<entity>-list": (section, group, leaf_label)
+Two levels, on purpose. A section opens on its pages; there is no group inside
+a section. What used to be a third level is either a page of the section, or
+several *views* of one entry : the indicators are one entry whose page switches
+between organizational and technical, not a folder of two.
 
-``section`` and ``group`` are menu headings with no page of their own, so
-they render as plain (non-clickable) crumbs. ``group`` is ``None`` for leaves
-that sit directly under a section. ``leaf_label`` is the menu label of the
-leaf itself (which may differ from the list page title, e.g. menu "Risks" vs
-title "Risk register"); it links to the list on detail pages and is the
-current crumb on the list page itself.
+Reference data (the catalogs and types the registers draw on, set up once and
+then rarely opened) has a section of its own, so that the sections people work
+in every day only list what they work on.
 
-Labels are stored as plain English strings and translated at render time with
-``gettext`` (they already exist in the catalogs since the sidebar uses them).
+Labels are plain English strings, translated at render time with ``gettext``.
+Add the French translation of a new label to ``locale/fr/LC_MESSAGES/django.po``.
 """
 
-# leaf list URL name -> (section, group | None, leaf menu label)
-NAV_TREE = {
-    # ── Governance ───────────────────────────────────────────────
-    "context:scope-list": ("Governance", "Organization", "Scopes"),
-    "context:issue-list": ("Governance", "Organization", "Issues"),
-    "context:stakeholder-list": ("Governance", "Organization", "Stakeholders"),
-    "context:objective-list": ("Governance", "Organization", "Objectives"),
-    "context:swot-list": ("Governance", "Organization", "SWOT analyses"),
-    "context:role-list": ("Governance", None, "Roles"),
-    "context:activity-list": ("Governance", None, "Activities"),
-    "context:indicator-organizational-list": ("Governance", "Indicators", "Organizational"),
-    "context:indicator-technical-list": ("Governance", "Indicators", "Technical"),
-    "reports:report-list": ("Governance", "Strategy", "Reports"),
-    "reports:management-review-list": ("Governance", "Strategy", "Management reviews"),
-    # ── Assets ───────────────────────────────────────────────────
-    "assets:essential-asset-list": ("Assets", "Goods", "Essential assets"),
-    "assets:support-asset-list": ("Assets", "Goods", "Support assets"),
-    "assets:group-list": ("Assets", "Goods", "Asset groups"),
-    "assets:site-list": ("Assets", None, "Sites"),
-    "assets:supplier-list": ("Assets", "Suppliers", "Suppliers"),
-    "assets:supplier-type-list": ("Assets", "Suppliers", "Supplier types"),
-    "assets:contract-list": ("Assets", "Documents", "Contracts"),
-    "assets:certificate-list": ("Assets", "Documents", "Certificates"),
-    "assets:dependency-list": ("Assets", "Dependencies", "Asset dependencies"),
-    "assets:supplier-dependency-list": ("Assets", "Dependencies", "Supplier dependencies"),
-    "assets:site-asset-dependency-list": ("Assets", "Dependencies", "Site–asset dependencies"),
-    "assets:site-supplier-dependency-list": ("Assets", "Dependencies", "Site–supplier dependencies"),
-    "assets:dependency-graph": ("Assets", "Dependencies", "Dependency graph"),
-    # ── Risk management ──────────────────────────────────────────
-    "risks:assessment-list": ("Risk management", "Assessments", "Assessments"),
-    "risks:criteria-list": ("Risk management", "Assessments", "Criteria"),
-    "risks:risk-list": ("Risk management", "Register", "Risks"),
-    "risks:treatment-plan-list": ("Risk management", "Register", "Treatment plans"),
-    "risks:acceptance-list": ("Risk management", "Register", "Acceptances"),
-    "risks:iso27005-list": ("Risk management", "Register", "ISO 27005 analyses"),
-    "risks:threat-list": ("Risk management", "Catalogs", "Threats"),
-    "risks:vulnerability-list": ("Risk management", "Catalogs", "Vulnerabilities"),
-    # ── Compliance ───────────────────────────────────────────────
-    "compliance:framework-list": ("Compliance", None, "Frameworks"),
-    "compliance:requirement-list": ("Compliance", None, "Requirements"),
-    "compliance:assessment-list": ("Compliance", None, "Audits & compliance"),
-    "compliance:finding-list": ("Compliance", None, "Nonconformities"),
-    "compliance:finding-detail": ("Compliance", None, "Nonconformities"),
-    "compliance:mapping-list": ("Compliance", None, "Mappings"),
-    "compliance:action-plan-list": ("Compliance", None, "Action plans"),
-    # ── Controls (compliance family) ─────────────────────────────
-    "controls:control-list": ("Controls", None, "Controls"),
-    "controls:controltest-list": ("Controls", None, "Tests"),
-    # ── Documents ────────────────────────────────────────────────
-    "documents:policy-list": ("Documents", None, "Policies"),
-    "documents:campaign-list": ("Documents", None, "Acknowledgement campaigns"),
-    "documents:acknowledge-list": ("Documents", None, "To acknowledge"),
-    # ── Incidents ────────────────────────────────────────────────
-    "incidents:incident-list": ("Incidents", None, "Incidents"),
-    "incidents:incident-detail": ("Incidents", None, "Incidents"),
-    "incidents:event-list": ("Incidents", None, "Security events"),
-    "incidents:event-detail": ("Incidents", None, "Security events"),
-    "incidents:notification-list": ("Incidents", None, "Notification obligations"),
-    "incidents:notification-detail": ("Incidents", None, "Notification obligations"),
-    "incidents:response-plan-list": ("Incidents", None, "Response plans"),
-    "incidents:response-plan-detail": ("Incidents", None, "Response plans"),
-    "incidents:reporting-authority-list": ("Incidents", "Configuration", "Reporting authorities"),
-    "incidents:reporting-authority-detail": ("Incidents", "Configuration", "Reporting authorities"),
-    "incidents:obligation-template-list": ("Incidents", "Configuration", "Obligation templates"),
-    "incidents:obligation-template-detail": ("Incidents", "Configuration", "Obligation templates"),
-    # ── Administration ───────────────────────────────────────────
-    "accounts:company-settings": ("Administration", "General", "Company"),
-    "context:tag-list": ("Administration", "General", "Tags"),
-    "core:lifecycle-list": ("Administration", "General", "Lifecycles"),
-    "core:lifecycle-edit": ("Administration", "General", "Lifecycles"),
-    "accounts:calendar-subscription-list": ("Administration", "General", "Calendar subscriptions"),
-    "trust_center_manage:hub": ("Administration", "General", "Trust Center"),
-    "trust_center_manage:settings": ("Administration", "General", "Trust Center"),
-    "trust_center_manage:request-list": ("Administration", "Trust Center", "Document requests"),
-    "accounts:user-list": ("Administration", "Access", "Users"),
-    "accounts:group-list": ("Administration", "Access", "Groups"),
-    "accounts:permission-list": ("Administration", "Access", "Permissions"),
-    "assistant:semantic-index": ("Administration", "Ask Cairn", "Semantic index"),
-    "assistant:feedback-list": ("Administration", "Ask Cairn", "Feedback"),
-    "accounts:access-log-list": ("Administration", "Logs", "Access log"),
-    "accounts:action-log-list": ("Administration", "Logs", "Action log"),
-}
+from dataclasses import dataclass
+from functools import lru_cache
+
+
+@dataclass(frozen=True)
+class NavView:
+    """One view of a menu entry that has several (a list among sibling lists)."""
+
+    label: str
+    url_name: str
+    # Shown only to a user holding this permission. ``None`` : the permission
+    # the page itself requires (see ``required_permissions``).
+    perm: str | None = None
+    # Shown only when this Django setting is true.
+    setting: str | None = None
+
+
+@dataclass(frozen=True)
+class NavItem:
+    """One entry of a section : a page, or several views of one subject."""
+
+    label: str
+    url_name: str = ""
+    perm: str | None = None
+    setting: str | None = None
+    # Sibling views. The entry links to the first one the user may open, and
+    # each of their pages shows a switcher between them.
+    views: tuple[NavView, ...] = ()
+    # Other URL names whose breadcrumb is this entry's (a detail page that
+    # declares itself, a second entry point to the same register).
+    aliases: tuple[str, ...] = ()
+    # False : the entry gives pages their breadcrumb but has no line in the
+    # sidebar (it is reached from elsewhere, e.g. the user menu).
+    in_menu: bool = True
+    # The entry is labelled with this template context variable instead of
+    # ``label`` (the assistant's name is configurable).
+    label_context: str = ""
+
+
+@dataclass(frozen=True)
+class NavSection:
+    key: str
+    label: str
+    icon: str
+    items: tuple[NavItem, ...]
+    # Shown only to a user holding a permission of this module.
+    module: str | None = None
+
+
+MENU: tuple[NavSection, ...] = (
+    NavSection("governance", "Governance", "diagram-3", (
+        NavItem("Scopes", "context:scope-list"),
+        NavItem("Issues", "context:issue-list"),
+        NavItem("Stakeholders", "context:stakeholder-list"),
+        NavItem("Objectives", "context:objective-list"),
+        NavItem("SWOT analyses", "context:swot-list"),
+        NavItem("Roles", "context:role-list"),
+        NavItem("Activities", "context:activity-list"),
+        NavItem("Indicators", views=(
+            NavView("Organizational", "context:indicator-organizational-list"),
+            NavView("Technical", "context:indicator-technical-list"),
+        )),
+        NavItem("Management reviews", "reports:management-review-list"),
+        NavItem("Reports", "reports:report-list"),
+    )),
+    NavSection("assets", "Assets and third parties", "box-seam", (
+        NavItem("Essential assets", "assets:essential-asset-list"),
+        NavItem("Support assets", "assets:support-asset-list"),
+        NavItem("Sites", "assets:site-list"),
+        NavItem("Suppliers", "assets:supplier-list"),
+        NavItem("Contracts", "assets:contract-list"),
+        NavItem("Certificates", "assets:certificate-list"),
+        NavItem("Dependencies", views=(
+            NavView("Asset dependencies", "assets:dependency-list"),
+            NavView("Supplier dependencies", "assets:supplier-dependency-list"),
+            NavView("Site–asset dependencies", "assets:site-asset-dependency-list"),
+            NavView("Site–supplier dependencies", "assets:site-supplier-dependency-list"),
+            NavView("Dependency graph", "assets:dependency-graph"),
+        )),
+    )),
+    NavSection("risks", "Risk management", "shield-exclamation", (
+        NavItem("Assessments", "risks:assessment-list"),
+        NavItem("Risks", "risks:risk-list"),
+        NavItem("Treatment plans", "risks:treatment-plan-list"),
+        NavItem("Acceptances", "risks:acceptance-list"),
+        NavItem("ISO 27005 analyses", "risks:iso27005-list", in_menu=False),
+    )),
+    NavSection("compliance", "Compliance", "patch-check", (
+        NavItem("Frameworks", "compliance:framework-list"),
+        NavItem("Requirements", "compliance:requirement-list"),
+        NavItem("Audits & compliance", "compliance:assessment-list"),
+        NavItem("Nonconformities", "compliance:finding-list", aliases=("compliance:finding-detail",)),
+        NavItem("Action plans", "compliance:action-plan-list"),
+        NavItem("Controls", "controls:control-list"),
+        NavItem("Control tests", "controls:controltest-list"),
+        NavItem("Policies", "documents:policy-list"),
+        NavItem("Acknowledgement campaigns", "documents:campaign-list"),
+        NavItem("To acknowledge", "documents:acknowledge-list", in_menu=False),
+    )),
+    NavSection("incidents", "Incidents", "fire", (
+        NavItem("Incidents", "incidents:incident-list", aliases=("incidents:incident-detail",)),
+        NavItem("Security events", "incidents:event-list", aliases=("incidents:event-detail",)),
+        NavItem("Notification obligations", "incidents:notification-list",
+                aliases=("incidents:notification-detail",)),
+        NavItem("Response plans", "incidents:response-plan-list",
+                aliases=("incidents:response-plan-detail",)),
+    )),
+    NavSection("reference", "Reference data", "collection", (
+        NavItem("Asset groups", "assets:group-list"),
+        NavItem("Supplier types", "assets:supplier-type-list"),
+        NavItem("Risk criteria", "risks:criteria-list"),
+        NavItem("Threats", "risks:threat-list"),
+        NavItem("Vulnerabilities", "risks:vulnerability-list"),
+        NavItem("Requirement mappings", "compliance:mapping-list"),
+        NavItem("Reporting authorities", "incidents:reporting-authority-list",
+                aliases=("incidents:reporting-authority-detail",)),
+        NavItem("Obligation templates", "incidents:obligation-template-list",
+                aliases=("incidents:obligation-template-detail",)),
+    )),
+    NavSection("administration", "Administration", "gear", (
+        NavItem("Company", "accounts:company-settings", perm="system.config.read"),
+        NavItem("Users", "accounts:user-list", perm="system.users.read"),
+        NavItem("Groups", "accounts:group-list", perm="system.groups.read"),
+        NavItem("Permissions", "accounts:permission-list", perm="system.groups.read"),
+        NavItem("Tags", "context:tag-list"),
+        NavItem("Lifecycles", "core:lifecycle-list", perm="system.config.read",
+                aliases=("core:lifecycle-edit",)),
+        NavItem("Calendar subscriptions", "accounts:calendar-subscription-list", perm="system.users.read"),
+        NavItem("Trust Center", "trust_center_manage:settings", perm="trust_center.settings.read",
+                aliases=("trust_center_manage:hub",)),
+        NavItem("Document requests", "trust_center_manage:request-list", in_menu=False),
+        NavItem("Ask Cairn", label_context="ASSISTANT_NAME", views=(
+            NavView("Semantic index", "assistant:semantic-index", perm="system.config.read",
+                    setting="AI_ASSISTANT_ENABLED"),
+            NavView("Feedback", "assistant:feedback-list", perm="system.assistant_feedback.read"),
+        )),
+        NavItem("Access log", "accounts:access-log-list", perm="system.audit_trail.read"),
+        NavItem("Action log", "accounts:action-log-list", perm="system.audit_trail.read"),
+    ), module="system"),
+)
+
+
+def _build_tree():
+    """``url name -> (section, group | None, leaf label)`` for the breadcrumbs.
+
+    ``group`` is the entry's label when the page is one of its views, ``None``
+    otherwise : the breadcrumb reads *Governance > Indicators > Technical* and
+    *Governance > Scopes*.
+    """
+    tree = {}
+    for section in MENU:
+        for item in section.items:
+            if item.views:
+                for view in item.views:
+                    tree[view.url_name] = (section.label, item.label, view.label)
+            else:
+                tree[item.url_name] = (section.label, None, item.label)
+            for alias in item.aliases:
+                tree[alias] = (section.label, None, item.label)
+    return tree
+
+
+# leaf URL name -> (section, group | None, leaf menu label)
+NAV_TREE = _build_tree()
+
+
+@lru_cache(maxsize=None)
+def required_permissions(url_name):
+    """The permissions the page behind ``url_name`` asks for, as a tuple.
+
+    Read from the view itself (``permission_required``), so a menu entry is
+    shown exactly to the users the page lets in : an entry that only leads to
+    a refusal is not offered. A page with no declared permission is open.
+    """
+    from django.urls import NoReverseMatch, Resolver404, resolve, reverse
+
+    try:
+        match = resolve(reverse(url_name))
+    except (NoReverseMatch, Resolver404):
+        return ()
+    view_class = getattr(match.func, "view_class", None)
+    required = getattr(view_class, "permission_required", None)
+    if not required:
+        return ()
+    return (required,) if isinstance(required, str) else tuple(required)
+
+
+def _allowed(user, url_name, perm, setting):
+    from django.conf import settings as django_settings
+
+    if setting and not getattr(django_settings, setting, False):
+        return False
+    codenames = (perm,) if perm else required_permissions(url_name)
+    return all(user.has_perm(codename) for codename in codenames)
+
+
+def nav_views(url_name, user):
+    """The views the switcher of ``url_name``'s page offers to ``user``.
+
+    ``[(label, url name), ...]``, empty when the page is not one view among
+    several or when the user may open only one of them.
+    """
+    for section in MENU:
+        for item in section.items:
+            if any(view.url_name == url_name for view in item.views):
+                visible = [
+                    (view.label, view.url_name)
+                    for view in item.views
+                    if _allowed(user, view.url_name, view.perm, view.setting)
+                ]
+                return visible if len(visible) > 1 else []
+    return []
+
+
+def visible_menu(user, context=None):
+    """The sidebar for ``user`` : sections and entries they may open.
+
+    Returns ``[{"key", "label", "icon", "items": [{"label", "url", "paths"}]}]``
+    with URLs resolved. ``paths`` lists every URL an entry stands for (its
+    views), so the sidebar can mark it current on any of them. A section with
+    no visible entry is left out.
+    """
+    from django.urls import NoReverseMatch, reverse
+    from django.utils.translation import gettext
+
+    def url_of(name):
+        try:
+            return reverse(name)
+        except NoReverseMatch:
+            return None
+
+    sections = []
+    for section in MENU:
+        if section.module and not user.has_module_perms(section.module):
+            continue
+        items = []
+        for item in section.items:
+            if not item.in_menu:
+                continue
+            if item.views:
+                targets = [
+                    url_of(view.url_name)
+                    for view in item.views
+                    if _allowed(user, view.url_name, view.perm, view.setting)
+                ]
+                targets = [url for url in targets if url]
+            else:
+                if not _allowed(user, item.url_name, item.perm, item.setting):
+                    continue
+                targets = [url for url in [url_of(item.url_name)] if url]
+            if not targets:
+                continue
+            label = (context or {}).get(item.label_context) if item.label_context else None
+            items.append({
+                "label": label or gettext(item.label),
+                "url": targets[0],
+                "paths": " ".join(targets),
+            })
+        if items:
+            sections.append({
+                "key": section.key,
+                "label": gettext(section.label),
+                "icon": section.icon,
+                "items": items,
+            })
+    return sections

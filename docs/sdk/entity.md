@@ -108,7 +108,13 @@ The detail page follows the platform's layout convention : a two-column card
 layout, main content left and a sticky metadata sidebar right, with collapsible
 sections rather than tabs. See [ui-conventions.md](ui-conventions.md).
 
-Add the entry to the navigation (`core/navigation.py`).
+Add the entry to the navigation : one `NavItem` in the right section of `MENU`
+(`core/navigation.py`). The sidebar and the breadcrumb of the entity's pages
+both come from it, and the entry is shown to the users its list view lets in
+(`permission_required`), so there is nothing to add to a template. A register
+people work in goes in its area's section; a catalog or a type set up once goes
+in *Reference data*. Another list of a subject that already has an entry is a
+`NavView` of that entry, not a new line.
 
 ## 5. The REST endpoint
 

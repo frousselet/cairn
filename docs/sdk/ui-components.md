@@ -196,8 +196,12 @@ component stay with that component.
 {% endpage_header %}
 ```
 
-`nav` builds the breadcrumb from the sidebar tree (`core/navigation.py`). On a
-detail page, the last crumb is the reference. On detail pages the header also
+`nav` builds the breadcrumb from the navigation (`MENU` in
+`core/navigation.py`, which the sidebar is rendered from as well) : section,
+then entry, and on a detail page the reference as the last crumb. When the
+entry has several views (the indicators, the dependencies), each of their list
+pages also gets a row of links to the other views under its header, limited to
+the views the reader may open. On detail pages the header also
 shows who last changed the element, and when. `accent` takes a module key (see
 the brand guidelines).
 
