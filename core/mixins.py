@@ -5,6 +5,7 @@ import math
 from urllib.parse import urlsplit
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import FieldDoesNotExist
 from django.db import models as dj_models
 from django.db.models import Count, F, Q
 from django.http import HttpResponse
@@ -209,7 +210,25 @@ class SortableListMixin:
     def get_queryset(self):
         qs = super().get_queryset()
         qs = self._apply_sorting(qs)
-        return qs
+        return self._prefetch_row_tags(qs)
+
+    def _prefetch_row_tags(self, qs):
+        """Load the tags of every listed row in one query.
+
+        Almost every list prints the tags of its rows, and reading them row by
+        row costs one query per line (50 a page). Skipped when the queryset does
+        not yield model instances (``values()``), which cannot be prefetched.
+        """
+        model = getattr(qs, "model", None)
+        if model is None or getattr(qs, "_fields", None) is not None:
+            return qs
+        try:
+            field = model._meta.get_field("tags")
+        except FieldDoesNotExist:
+            return qs
+        if not field.many_to_many or "tags" in qs._prefetch_related_lookups:
+            return qs
+        return qs.prefetch_related("tags")
 
     def _apply_sorting(self, qs):
         sort_field, order = self._resolve_sort()
@@ -670,7 +689,15 @@ class AdvancedFilterMixin:
         """
         from core.scoping import filter_queryset_by_scopes, resolve_scope_lookup
 
-        qs = model._default_manager.all()
+        # An option is labelled with str(record), and many __str__ read a
+        # parent (a permission its content type, a test run its test) : join
+        # the mandatory parents so the picker costs one query, not one per
+        # option.
+        parents = [
+            f.name for f in model._meta.concrete_fields
+            if f.many_to_one and not f.null
+        ]
+        qs = model._default_manager.select_related(*parents) if parents else model._default_manager.all()
         user = getattr(getattr(self, "request", None), "user", None)
         if user is None or user.is_superuser or resolve_scope_lookup(model) is None:
             return qs
@@ -680,7 +707,17 @@ class AdvancedFilterMixin:
         return filter_queryset_by_scopes(qs, scope_ids)
 
     def get_filter_fields(self):
-        """Return the registry: ordered list of field definitions (plain dicts)."""
+        """Return the registry: ordered list of field definitions (plain dicts).
+
+        Built once per request : the queryset filter and the page context both
+        need it, and its relation options are read from the database.
+        """
+        cached = getattr(self, "_filter_fields", None)
+        if cached is None:
+            cached = self._filter_fields = self._build_filter_fields()
+        return cached
+
+    def _build_filter_fields(self):
         fields = []
         for field in self._iter_model_fields():
             ftype = self._classify_field(field)

@@ -1087,7 +1087,7 @@ class RoleListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
             accountable_count=Count("responsibilities", filter=Q(responsibilities__raci_type="accountable"), distinct=True),
             consulted_count=Count("responsibilities", filter=Q(responsibilities__raci_type="consulted"), distinct=True),
             informed_count=Count("responsibilities", filter=Q(responsibilities__raci_type="informed"), distinct=True),
-        )
+        ).prefetch_related("assigned_users")  # the avatars of every row, in one query
         qs = self.filter_queryset_predefined(qs)
         return self.filter_queryset_advanced(qs)
 
@@ -1357,7 +1357,7 @@ class RoleTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, TableBodyPa
             accountable_count=Count("responsibilities", filter=Q(responsibilities__raci_type="accountable"), distinct=True),
             consulted_count=Count("responsibilities", filter=Q(responsibilities__raci_type="consulted"), distinct=True),
             informed_count=Count("responsibilities", filter=Q(responsibilities__raci_type="informed"), distinct=True),
-        )
+        ).prefetch_related("assigned_users")  # the avatars of every row, in one query
         qs = self.filter_queryset_predefined(qs)
         return self.filter_queryset_advanced(qs)
 
