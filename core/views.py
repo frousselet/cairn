@@ -1266,7 +1266,8 @@ def get_calendar_events(user, start=None, end=None, categories=None):
         def acceptance_done(o):
             return o.status in (AcceptanceStatus.REVOKED, AcceptanceStatus.RENEWED)
 
-        qs = RiskAcceptance.objects.all()
+        # An acceptance is titled after its risk : joined, not read per row.
+        qs = RiskAcceptance.objects.select_related("risk")
         add(qs, "valid_until", "acceptance", "#f97316",
             "risks:acceptance-detail", deadline=True, done=acceptance_done,
             kind=_("Valid until"))

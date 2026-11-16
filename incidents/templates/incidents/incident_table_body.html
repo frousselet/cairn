@@ -9,7 +9,7 @@ would cost one query per row.
 {% for inc in incidents %}
 <tr>
   <td data-col="reference">
-    <a href="{% url 'incidents:incident-detail' inc.pk %}" class="cell-link">{{ inc.reference }}</a>
+    <a href="{% url 'incidents:incident-detail' inc.pk %}" class="ref">{{ inc.reference }}</a>
   </td>
   <td data-col="title">
     <span class="cell-stack">

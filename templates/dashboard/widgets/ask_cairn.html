@@ -1,6 +1,6 @@
 {% load i18n %}
 {# Widget: Summary ("Résumé") - the day's metrics synthesised by the LLM (Mistral). The widget posts `data-facts` (a metrics snapshot) to the briefing endpoint, renders the model's synthesis, lists the key items it draws on as references, and shows an honest "powered by" attribution. The point count is a deterministic fallback (assistant off, loading or unavailable). When it sits in the full-width stacked rail it reflows into a banner: summary on the left third, references filling two columns on the right. #}
-<div class="card ask-cairn h-100" data-ai-enabled="{% if AI_ASSISTANT_ENABLED %}1{% else %}0{% endif %}" data-facts="{{ ask_cairn_data_json }}">
+<div class="card ask-cairn{% if not AI_ASSISTANT_ENABLED %} ask-cairn--brief{% endif %} h-100" data-ai-enabled="{% if AI_ASSISTANT_ENABLED %}1{% else %}0{% endif %}" data-facts="{{ ask_cairn_data_json }}">
   <div class="card-body ask-cairn__body">
     <h5 class="card-title ask-cairn__title"><i class="bi bi-stars me-1 text-accent" aria-hidden="true"></i> {% trans "Summary" context "dashboard widget title" %}</h5>
     <div class="ask-cairn__content">
@@ -133,6 +133,16 @@
       grid-template-columns: 1fr 1fr;
       gap: .25rem .75rem;
     }
+    /* Without a written briefing (assistant off, or the model did not answer)
+       the summary is one sentence : a column of its own would stand empty
+       beside the links and the audits. It heads the card instead, and the
+       links take the full width, three abreast. */
+    .dashboard-rail .ask-cairn--brief .ask-cairn__content:has(.ask-cairn__aside) {
+      display: flex;
+      flex-direction: column;
+    }
+    .dashboard-rail .ask-cairn--brief .ask-cairn__aside { margin-top: .875rem; }
+    .dashboard-rail .ask-cairn--brief .ask-cairn__refs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     /* Denser rows kept to a single line, so the banner stays close to one row tall. */
     .dashboard-rail .ask-cairn__ref { padding: .25rem .5rem; }
     .dashboard-rail .ask-cairn__ref-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

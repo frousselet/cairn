@@ -124,6 +124,11 @@
 .section-card--clamp.is-expanded .section-card__more .bi { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) { .section-card__more .bi { transition: none; } }
 
+/* ── Tags under the lifecycle bar ─────────────────────
+   A record's tags, when a page shows them above its cards : a row aligned
+   with the content, close under the bar it follows. */
+.detail-tags { display: flex; flex-wrap: wrap; gap: .375rem; margin: -.625rem 0 1.25rem; }
+
 /* ── Section menu ─────────────────────────────────────
    The jump list of a long detail page (built in base.html). A card reached
    through it stops clear of the pinned page header. */

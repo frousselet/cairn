@@ -13,7 +13,7 @@
 {% include "includes/lifecycle_stepper.html" %}
 
 {% if certificate.tags.all %}
-<div class="detail-tags d-flex justify-content-center mb-4">{% tag_list certificate.tags.all %}</div>
+<div class="detail-tags">{% tag_list certificate.tags.all %}</div>
 {% endif %}
 
 {% if certificate.notes %}

@@ -19,7 +19,7 @@ absolute-dated, so it degrades with JavaScript unavailable.
 {% for n in notifications %}
 <tr{% if n.is_overdue %} class="table-danger"{% elif n.is_undecided %} class="table-warning"{% endif %}>
   <td data-col="reference">
-    <a href="{% url 'incidents:notification-detail' n.pk %}" class="cell-link">{{ n.reference }}</a>
+    <a href="{% url 'incidents:notification-detail' n.pk %}" class="ref">{{ n.reference }}</a>
   </td>
   <td data-col="incident">
     <span class="cell-stack">
