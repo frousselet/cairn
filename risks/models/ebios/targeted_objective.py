@@ -16,6 +16,10 @@ class TargetedObjective(BaseModel):
     target one or more essential assets and feared events.
     """
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "risk_source__assessment__scopes"
+
     REFERENCE_PREFIX = "ETOV"
 
     risk_source = models.ForeignKey(

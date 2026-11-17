@@ -188,6 +188,10 @@ class Supplier(ScopedModel):
 class SupplierContact(models.Model):
     """A contact person at a supplier. A supplier may have several."""
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "supplier__scopes"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     supplier = models.ForeignKey(
         Supplier,
@@ -217,6 +221,10 @@ class SupplierContact(models.Model):
 
 class SupplierRequirement(models.Model):
     """A requirement applied to a supplier (e.g. must be ISO 27001 certified)."""
+
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "supplier__scopes"
 
     id = models.AutoField(primary_key=True)
     supplier = models.ForeignKey(
@@ -283,6 +291,10 @@ class SupplierRequirement(models.Model):
 class SupplierRequirementReview(models.Model):
     """A review / justification entry for a supplier requirement."""
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "supplier_requirement__supplier__scopes"
+
     id = models.AutoField(primary_key=True)
     supplier_requirement = models.ForeignKey(
         SupplierRequirement,
@@ -337,6 +349,11 @@ class SupplierRequirementReview(models.Model):
 
 class SupplierDependency(ReferenceGeneratorMixin):
     """Link between a support asset and a supplier."""
+
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "support_asset__scopes"
+    scope_parent_alternates = ("supplier__scopes",)
 
     REFERENCE_PREFIX = "SDEP"
 
@@ -420,6 +437,10 @@ class SupplierSubprocessor(ReferenceGeneratorMixin):
     supplier records, so a sub-processor carries its own requirements, reviews
     and criticality, and the chain feeds nth-party risk analysis.
     """
+
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "supplier__scopes"
 
     REFERENCE_PREFIX = "SSPR"
 

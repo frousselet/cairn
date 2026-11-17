@@ -14,6 +14,10 @@ class SecurityBaseline(LegacyStatusMixin, BaseModel):
     and baseline references. Exactly one instance per ebios_rm RiskAssessment.
     """
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "assessment__scopes"
+
     LIFECYCLE_NAME = "ebios_security_baseline"
 
     REFERENCE_PREFIX = "EBSL"

@@ -46,16 +46,41 @@ anyone editing a group by hand.
 
 ## Tenancy
 
-Scopes are the tenancy axis. A user is assigned scopes; `ScopeFilterMixin`
-filters querysets to them, and the same filtering applies on the REST API and
-the MCP layer.
+Scopes are the tenancy axis. A permission says what a user may do; the scopes
+of their groups say on which records. Both are checked, on every surface.
 
 Child entities do not carry their own scopes : they inherit the parent's
-perimeter through a declared scope path. An incident's timeline entry is
-unreachable when its incident is out of perimeter, and it is unreachable on
-every surface, including the generic history and workflow endpoints. Shared
-catalogues (reporting authorities, obligation templates) are deliberately not
-scope-filtered, because they are reference data rather than records.
+perimeter through a path **declared on the model** (`scope_parent_lookup`, with
+`scope_parent_alternates` for a row filed under one of several parents and
+`scope_parent_optional` when the parent is optional). `core/scoping.py` resolves
+it for every surface at once. An incident's timeline entry, a risk, a SWOT item
+or a supplier contact is unreachable when its parent is out of perimeter, and it
+is unreachable everywhere, including the generic history and workflow
+endpoints. Shared catalogues (reporting authorities, obligation templates) are
+deliberately not scope-filtered, because they are reference data rather than
+records; the Trust Center is one publication for the whole instance.
+
+| A record is reached through | What checks the scopes |
+| --- | --- |
+| A list | `ScopeFilterMixin` (web), `ScopeFilterAPIMixin` (REST), `_filter_by_scopes` (MCP) |
+| A detail, update or delete view | `PermissionRequiredMixin.get_object` : every generic single-record view, whether or not it also carries `ScopeFilterMixin` |
+| An identifier taken from the request by any other view (a transition, a comment, an export, a row added under a parent) | `core.scoping.get_scoped_object_or_404(user, Model, ...)`, or `get_scoped_object_or_none` for an optional lookup |
+| A selection of identifiers (a bulk action, the records a report is generated from) | `core.scoping.scoped_queryset(user, queryset)`, `narrow_scope_ids(user, asked)` for a set of scopes |
+| A REST resource nested under a parent | `scope_parent = (Model, "url_kwarg")` on the viewset : the parent is fetched within the scopes before any handler runs |
+
+A record out of reach answers as an unknown one (`404`) : the refusal does not
+tell whether it exists. A visitor who is not signed in is sent to the login
+page, even by a view that fetches its parent record before its login check
+(`accounts.middleware.AuthenticationRequiredMiddleware`). A record filed under
+no scope at all stays reachable by its address : scoping restricts what has been
+filed under a perimeter, it does not hide what nobody has filed yet.
+
+Forgetting the scope on a new surface is a test failure, not a review comment.
+`core/tests/test_scoping.py` walks the URL configuration and the models : every
+single-record view goes through the guard, every model that hangs under a
+scoped record declares its path, every REST class serving such a model carries
+the mixin, and no view module calls Django's own `get_object_or_404`. Each of
+the four has an explicit list of exceptions, with the reason of each.
 
 A superuser bypasses scope filtering. That is the intended escape hatch, and it
 is why superuser is not a role you hand out.

@@ -17,6 +17,10 @@ class AttackTechnique(BaseModel):
     two must be provided; the constraint is enforced by `full_clean()`.
     """
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "scenario__assessment__scopes"
+
     REFERENCE_PREFIX = "EATT"
 
     scenario = models.ForeignKey(

@@ -75,6 +75,7 @@ from risks.views import (
     build_risk_matrix,
     build_risk_treatment_flow,
 )
+from core.scoping import get_scoped_object_or_none
 
 
 # Keep a Changelog category -> badge tone of the "What's new" popup.
@@ -99,10 +100,11 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         scope_ids = self._scope_ids()
         if scope_ids is None:
             return qs
-        model = qs.model
-        if any(f.name == "scopes" for f in model._meta.many_to_many):
-            return qs.filter(scopes__id__in=scope_ids).distinct()
-        return qs
+        # Through the one resolver : a model filed under the scopes of its
+        # parent (a risk under its assessment) is restricted like the others.
+        from core.scoping import filter_queryset_by_scopes
+
+        return filter_queryset_by_scopes(qs, scope_ids)
 
     def _filter_scopes(self, qs):
         scope_ids = self._scope_ids()
@@ -941,10 +943,12 @@ class DashboardIndicatorWidgetPartialView(LoginRequiredMixin, TemplateView):
         slot = None
         if indicator_id:
             try:
-                ind = (
-                    Indicator.objects.filter(pk=indicator_id, status="active")
-                    .prefetch_related("measurements")
-                    .first()
+                # Among the indicators the user may reach : a widget is not a
+                # way to read the indicator of another scope by its id.
+                ind = get_scoped_object_or_none(
+                    self.request.user,
+                    Indicator.objects.prefetch_related("measurements"),
+                    pk=indicator_id, status="active",
                 )
             except (ValueError, ValidationError):
                 ind = None

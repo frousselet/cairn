@@ -190,7 +190,9 @@ class TestIso27005ReportExportView:
         resp = client.get(
             reverse("risks:assessment-export-docx", args=[assessment_out.pk]),
         )
-        assert resp.status_code == 403
+        # A record out of the user's scopes answers as an unknown one : the
+        # refusal must not tell that it exists.
+        assert resp.status_code == 404
 
 
 class TestIso27005ReportMCP:

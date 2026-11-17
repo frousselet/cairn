@@ -171,7 +171,7 @@ class ISO27005RiskViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMix
         return ISO27005RiskSerializer
 
 
-class TreatmentActionViewSet(viewsets.ModelViewSet):
+class TreatmentActionViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     """CRUD for individual TreatmentAction rows under a RiskTreatmentPlan."""
 
     queryset = TreatmentAction.objects.select_related("treatment_plan", "owner").all()
@@ -183,20 +183,8 @@ class TreatmentActionViewSet(viewsets.ModelViewSet):
     search_fields = ["description"]
     ordering_fields = ["order", "status", "target_date", "created_at"]
 
-    def get_queryset(self):
-        qs = super().get_queryset()
-        user = self.request.user
-        if not user.is_authenticated or user.is_superuser:
-            return qs
-        scope_ids = user.get_allowed_scope_ids()
-        if scope_ids is None:
-            return qs
-        return qs.filter(
-            treatment_plan__risk__assessment__scopes__id__in=scope_ids
-        ).distinct()
 
-
-class ScaleLevelViewSet(viewsets.ReadOnlyModelViewSet):
+class ScaleLevelViewSet(ScopeFilterAPIMixin, viewsets.ReadOnlyModelViewSet):
     """Read-only access to scale levels of a risk criteria."""
 
     queryset = ScaleLevel.objects.select_related("criteria").all()
@@ -208,7 +196,7 @@ class ScaleLevelViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ["scale_type", "level"]
 
 
-class RiskLevelViewSet(viewsets.ReadOnlyModelViewSet):
+class RiskLevelViewSet(ScopeFilterAPIMixin, viewsets.ReadOnlyModelViewSet):
     """Read-only access to risk levels (outcomes) of a risk criteria."""
 
     queryset = RiskLevel.objects.select_related("criteria").all()

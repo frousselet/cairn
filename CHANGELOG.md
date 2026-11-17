@@ -105,6 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OAuth client registration accepted any redirect address, including none (then any address was accepted at consent) : it requires `https`, loopback `http` or an application's private scheme, matched exactly, and the consent screen shows where the access goes.
 - OAuth access tokens expire (`OAUTH_ACCESS_TOKEN_LIFETIME_DAYS`, 90 days by default) instead of living for ever; existing ones are brought back to that lifetime.
 - The open OAuth endpoints (registration, token) are rate limited, an authorization code is spent atomically, and consent is only offered to accounts allowed to use MCP.
+- A user restricted to some scopes could change or delete the records of another scope by their address, and read them through 28 REST resources (the whole EBIOS RM API among them), report generation and the generic transition and history endpoints : every way a record is reached now checks the scopes, and structural tests fail on a surface that does not.
 - A stored contract, certificate or Trust Center document was served with the content type its uploader declared; one declared as a script or a page is now served as opaque bytes.
 - Pages and API answers carry `Cross-Origin-Resource-Policy: same-origin` and a `Permissions-Policy` switching off the browser features the application never uses.
 

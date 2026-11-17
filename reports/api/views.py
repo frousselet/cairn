@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from accounts.api.permissions import ModulePermission
 from compliance.constants import ActionPlanStatus, AssessmentStatus
 from compliance.models import ComplianceActionPlan, ComplianceAssessment, Framework
+from core.scoping import get_scoped_object_or_none, scoped_queryset
 from core.transition_messages import transition_error_detail
 from reports.constants import ManagementReviewStatus, ReportStatus, ReportType
 from reports.generators import generate_audit_report_pdf, generate_soa_pdf
@@ -37,9 +38,10 @@ from .serializers import (
     SoaReportCreateSerializer,
     TransitionActionSerializer,
 )
+from accounts.api.mixins import ScopeFilterAPIMixin
 
 
-class ReportViewSet(viewsets.ReadOnlyModelViewSet):
+class ReportViewSet(ScopeFilterAPIMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
     permission_classes = [ModulePermission]
@@ -56,7 +58,11 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
         ser = SoaReportCreateSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
 
-        frameworks = Framework.objects.filter(id__in=ser.validated_data["framework_ids"])
+        # Only the frameworks the user may reach : a statement of applicability
+        # is not a way to read the compliance of another scope.
+        frameworks = scoped_queryset(
+            request.user, Framework.objects.filter(id__in=ser.validated_data["framework_ids"])
+        )
         if not frameworks.exists():
             return Response(
                 {"detail": _("No frameworks found for given IDs.")},
@@ -93,11 +99,11 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
         ser = AuditReportCreateSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
 
-        try:
-            assessment = ComplianceAssessment.objects.get(
-                id=ser.validated_data["assessment_id"],
-            )
-        except ComplianceAssessment.DoesNotExist:
+        # An assessment filed outside the user's scopes answers as an unknown one.
+        assessment = get_scoped_object_or_none(
+            request.user, ComplianceAssessment, id=ser.validated_data["assessment_id"],
+        )
+        if assessment is None:
             return Response(
                 {"detail": _("Assessment not found.")},
                 status=status.HTTP_404_NOT_FOUND,
@@ -188,7 +194,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
 # =====================================================================
 
 
-class ManagementReviewViewSet(viewsets.ModelViewSet):
+class ManagementReviewViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     queryset = ManagementReview.objects.all().select_related("facilitator", "approver")
     serializer_class = ManagementReviewSerializer
     permission_classes = [ModulePermission]
@@ -320,7 +326,7 @@ class ManagementReviewViewSet(viewsets.ModelViewSet):
         return Response(ser.data, status=status.HTTP_201_CREATED)
 
 
-class ManagementReviewDecisionViewSet(viewsets.ModelViewSet):
+class ManagementReviewDecisionViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     queryset = ManagementReviewDecision.objects.all().select_related("owner", "review")
     serializer_class = ManagementReviewDecisionSerializer
     permission_classes = [ModulePermission]
@@ -367,7 +373,7 @@ class ManagementReviewDecisionViewSet(viewsets.ModelViewSet):
         )
 
 
-class IsmsChangeViewSet(viewsets.ModelViewSet):
+class IsmsChangeViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     queryset = IsmsChange.objects.all().select_related("owner", "review")
     serializer_class = IsmsChangeSerializer
     permission_classes = [ModulePermission]

@@ -16,6 +16,10 @@ class AttackPathStep(BaseModel):
     vocabulary (initial access, lateral movement, exfiltration, ...).
     """
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "scenario__assessment__scopes"
+
     REFERENCE_PREFIX = "EAPS"
 
     scenario = models.ForeignKey(

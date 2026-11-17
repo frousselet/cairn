@@ -106,7 +106,25 @@ method, which is usually wrong : add it to `custom_action_map` explicitly.
 
 The failure this guards against is **silent**. A child model with no
 `scope_parent_lookup` makes `ScopeFilterAPIMixin` a no-op, and the register is
-then readable from outside its perimeter with no error anywhere.
+then readable from outside its perimeter with no error anywhere. So is a
+viewset serving a scoped model without the mixin.
+
+Three declarations close it, and `core/tests/test_scoping.py` fails when one is
+missing :
+
+- the model declares its path to the scopes (`scope_parent_lookup`, see
+  [entity.md](entity.md#1-the-model));
+- the viewset carries `ScopeFilterAPIMixin`. It restricts the queryset in
+  `get_queryset`, and again in `filter_queryset` for a viewset that writes its
+  own `get_queryset`, so a list and a single-record lookup are both covered;
+- a resource nested under a parent names it :
+  `scope_parent = (ComplianceAssessment, "assessment_pk")`. The parent is then
+  fetched within the user's scopes before any handler runs (and kept as
+  `self.parent_record`), so a row cannot be read, nor created, under the record
+  of another scope.
+
+An action that takes identifiers from the body (the frameworks a report is
+generated from) restricts them with `core.scoping.scoped_queryset(user, qs)`.
 
 The incidents module handles this by refusing at import time, in
 `__init_subclass__`, any viewset whose tenancy does not add up : scope-filtered

@@ -59,6 +59,7 @@ from .serializers import (
     SwotStrategySerializer,
     TagSerializer,
 )
+from core.scoping import get_scoped_object_or_404
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -97,7 +98,7 @@ class ScopeViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, Crea
         return Response(ScopeSerializer(scope).data)
 
 
-class SiteViewSet(LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class SiteViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = Site.objects.select_related("parent_site").all()
     serializer_class = SiteSerializer
     filterset_class = SiteFilter
@@ -135,9 +136,10 @@ class StakeholderViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixi
         return Response(list(data))
 
 
-class StakeholderExpectationViewSet(CreatedByMixin, viewsets.ModelViewSet):
+class StakeholderExpectationViewSet(ScopeFilterAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     serializer_class = StakeholderExpectationSerializer
     permission_classes = [ContextPermission]
+    scope_parent = (Stakeholder, "stakeholder_pk")
 
     def get_queryset(self):
         return StakeholderExpectation.objects.filter(
@@ -214,9 +216,10 @@ class SwotAnalysisViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixi
         return Response(SwotAnalysisSerializer(analysis).data)
 
 
-class SwotItemViewSet(viewsets.ModelViewSet):
+class SwotItemViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     serializer_class = SwotItemSerializer
     permission_classes = [ContextPermission]
+    scope_parent = (SwotAnalysis, "analysis_pk")
 
     def get_queryset(self):
         return SwotItem.objects.filter(
@@ -237,9 +240,10 @@ class SwotItemViewSet(viewsets.ModelViewSet):
         return Response({"status": "success"})
 
 
-class SwotStrategyViewSet(viewsets.ModelViewSet):
+class SwotStrategyViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     serializer_class = SwotStrategySerializer
     permission_classes = [ContextPermission]
+    scope_parent = (SwotAnalysis, "analysis_pk")
 
     def get_queryset(self):
         return SwotStrategy.objects.filter(
@@ -306,16 +310,17 @@ class RoleViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, Creat
         return Response(alerts)
 
 
-class ResponsibilityViewSet(viewsets.ModelViewSet):
+class ResponsibilityViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     serializer_class = ResponsibilitySerializer
     permission_classes = [ContextPermission]
+    scope_parent = (Role, "role_pk")
 
     def get_queryset(self):
         return Responsibility.objects.filter(role_id=self.kwargs["role_pk"])
 
     def _send_role_back_to_draft(self):
         """Changing a role's responsibilities sends the role back to draft."""
-        get_object_or_404(Role, pk=self.kwargs["role_pk"]).send_back_to_draft()
+        self.parent_record.send_back_to_draft()
 
     def perform_create(self, serializer):
         serializer.save(role_id=self.kwargs["role_pk"])
@@ -418,9 +423,10 @@ class IndicatorViewSet(ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, 
         )
 
 
-class IndicatorMeasurementViewSet(viewsets.ModelViewSet):
+class IndicatorMeasurementViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     serializer_class = IndicatorMeasurementSerializer
     permission_classes = [ContextPermission]
+    scope_parent = (Indicator, "indicator_pk")
 
     def get_queryset(self):
         return IndicatorMeasurement.objects.filter(
@@ -428,7 +434,7 @@ class IndicatorMeasurementViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer):
-        indicator = Indicator.objects.get(pk=self.kwargs["indicator_pk"])
+        indicator = self.parent_record
         measurement = serializer.save(
             indicator=indicator,
             recorded_by=self.request.user,

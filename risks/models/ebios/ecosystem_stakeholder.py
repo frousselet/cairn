@@ -36,6 +36,10 @@ class EcosystemStakeholder(BaseModel):
     ISO ones (influence, interest).
     """
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "assessment__scopes"
+
     REFERENCE_PREFIX = "EECS"
 
     assessment = models.ForeignKey(

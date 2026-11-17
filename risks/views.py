@@ -34,7 +34,7 @@ from core.mixins import (
     TableBodyPaginatedMixin,
 )
 from core.query_params import parse_date_param, parse_uuid
-from core.scoping import filter_queryset_by_scopes
+from core.scoping import filter_queryset_by_scopes, get_scoped_object_or_404, get_scoped_object_or_none
 from .constants import (
     AcceptanceStatus,
     AssessmentStatus,
@@ -674,7 +674,7 @@ class ISO27005ReportExportView(LoginRequiredMixin, PermissionRequiredMixin, Scop
         return RiskAssessment.objects.all()
 
     def get(self, request, pk, *args, **kwargs):
-        assessment = get_object_or_404(self.get_queryset(), pk=pk)
+        assessment = get_scoped_object_or_404(request.user, self.get_queryset(), pk=pk)
         # Re-apply scope filter using the same mixin contract.
         user = request.user
         if not user.is_superuser:
@@ -1656,7 +1656,9 @@ class ThreatListView(
         assessment_id = parse_uuid(self.request.GET.get("assessment"))
         ctx["parent_assessment"] = None
         if assessment_id:
-            ctx["parent_assessment"] = RiskAssessment.objects.filter(pk=assessment_id).first()
+            ctx["parent_assessment"] = get_scoped_object_or_none(
+                self.request.user, RiskAssessment, pk=assessment_id,
+            )
         return ctx
 
 
@@ -1782,7 +1784,9 @@ class VulnerabilityListView(
         assessment_id = parse_uuid(self.request.GET.get("assessment"))
         ctx["parent_assessment"] = None
         if assessment_id:
-            ctx["parent_assessment"] = RiskAssessment.objects.filter(pk=assessment_id).first()
+            ctx["parent_assessment"] = get_scoped_object_or_none(
+                self.request.user, RiskAssessment, pk=assessment_id,
+            )
         return ctx
 
 
@@ -2018,7 +2022,7 @@ class ISO27005ConsolidateView(LoginRequiredMixin, PermissionRequiredMixin, View)
     permission_required = "risks.risk.create"
 
     def post(self, request, pk):
-        analysis = get_object_or_404(
+        analysis = get_scoped_object_or_404(request.user, 
             ISO27005Risk.objects.select_related("assessment", "threat", "vulnerability"),
             pk=pk,
         )

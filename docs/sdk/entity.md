@@ -53,9 +53,20 @@ should filter; `BaseModel` for a shared catalogue that everyone sees. Both give
 a UUID primary key, timestamps, `created_by`, a lifecycle and versioning.
 
 A child entity that has no perimeter of its own inherits its parent's, and the
-path has to be **declared** on the viewset. See
-[rest-endpoint.md](rest-endpoint.md#3-declare-tenancy-do-not-assume-it) : the
-failure mode when you forget is silent.
+path has to be **declared on the model** :
+
+```python
+class SupplierContact(models.Model):
+    scope_parent_lookup = "supplier__scopes"   # the ORM path to the parent's scopes
+```
+
+`core/scoping.py` resolves it for the lists, the single-record views, the
+generic transition and history endpoints, the REST API and the MCP server at
+once. A model that hangs under a scoped record and declares nothing fails
+`core/tests/test_scoping.py` : either declare the path, or add the model to the
+test's list of exceptions with the reason. See
+[rest-endpoint.md](rest-endpoint.md#3-declare-tenancy-do-not-assume-it) for the
+REST side.
 
 ```bash
 python manage.py makemigrations
@@ -103,6 +114,18 @@ Form, views, URLs, templates.
 The mixins carry most of it : `SortableListMixin` for server-side sorting
 persisted per user, `ScopeFilterMixin` for tenancy, `CreatedByMixin` on create,
 `LifecycleStepperMixin` on the detail view.
+
+A view that is not a generic detail / update / delete view and takes the
+identifier of a record from the request (a transition, a comment, a row added
+under a parent) fetches it with `core.scoping.get_scoped_object_or_404` :
+
+```python
+review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
+```
+
+It is Django's `get_object_or_404` with the user in front, and it answers `404`
+for a record filed outside the user's scopes. Django's own helper is refused in
+view modules by `core/tests/test_scoping.py`.
 
 The detail page follows the platform's layout convention : a two-column card
 layout, main content left and a sticky metadata sidebar right, with collapsible
@@ -193,7 +216,7 @@ spec ──▶ model ──▶ migration ──▶ lifecycle ──▶ permissio
 - [ ] Permissions registered and migrated
 - [ ] List, detail, create, update, delete views, with the stepper on detail
 - [ ] Navigation entry added
-- [ ] REST endpoint with tenancy declared
+- [ ] Tenancy declared : `scope_parent_lookup` on a child model, `ScopeFilterAPIMixin` on the REST class, the scoped fetch in custom views
 - [ ] MCP tools, full set
 - [ ] Strings wrapped and translated; `compilemessages` passes
 - [ ] Seed data exercises every field

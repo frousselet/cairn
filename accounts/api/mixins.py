@@ -136,13 +136,32 @@ class ScopeFilterAPIMixin:
     Works for:
     - ViewSets with ``scope_parent_lookup`` attribute → filter via parent FK path
     - Models with a ``scopes`` M2M → filter on scopes__id
+    - Models declaring ``scope_parent_lookup`` → filter via the parent's scopes
     - Scope model itself → filter on id
+
+    Every viewset serving a model with a path to the scopes carries it :
+    ``core/tests/test_scoping.py`` fails on one that does not.
     """
 
     scope_parent_lookup = None
 
-    def get_queryset(self):
-        qs = super().get_queryset()
+    #: ``(model, url kwarg)`` of the record a nested resource hangs under
+    #: (``/roles/<role_pk>/responsibilities/``). The parent named by the URL is
+    #: fetched within the user's scopes before any handler runs : without it a
+    #: child could be created under the record of another scope.
+    scope_parent = None
+
+    def initial(self, request, *args, **kwargs):
+        # Authentication and permissions first : an anonymous or unauthorised
+        # request is refused before a record is looked for.
+        super().initial(request, *args, **kwargs)
+        if self.scope_parent is not None:
+            from core.scoping import get_scoped_object_or_404
+
+            model, kwarg = self.scope_parent
+            self.parent_record = get_scoped_object_or_404(request.user, model, pk=kwargs[kwarg])
+
+    def _within_scopes(self, qs):
         user = self.request.user
 
         if not user.is_authenticated or user.is_superuser:
@@ -155,6 +174,22 @@ class ScopeFilterAPIMixin:
         return filter_queryset_by_scopes(
             qs, scope_ids, explicit=getattr(self, "scope_parent_lookup", None)
         )
+
+    def get_queryset(self):
+        return self._within_scopes(super().get_queryset())
+
+    def filter_queryset(self, queryset):
+        """Restrict a queryset the viewset built on its own.
+
+        A viewset that writes its own ``get_queryset`` (a nested resource
+        filtering on its parent) does not go through the one above. Every
+        list and every single-record lookup of DRF passes here : the scopes
+        are applied at this point for those viewsets.
+        """
+        queryset = super().filter_queryset(queryset)
+        if type(self).get_queryset is ScopeFilterAPIMixin.get_queryset:
+            return queryset
+        return self._within_scopes(queryset)
 
 
 class BatchCreateMixin:

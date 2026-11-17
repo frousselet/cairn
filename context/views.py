@@ -92,6 +92,7 @@ from .models import (
     SwotStrategy,
     Tag,
 )
+from core.scoping import get_scoped_object_or_404, get_scoped_object_or_none
 
 
 # ── Mixins ──────────────────────────────────────────────────
@@ -858,7 +859,7 @@ class SwotItemCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView
     template_name = "context/swot_item_form_modal.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.analysis = get_object_or_404(SwotAnalysis, pk=kwargs["analysis_pk"])
+        self.analysis = get_scoped_object_or_404(request.user, SwotAnalysis, pk=kwargs["analysis_pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_initial(self):
@@ -890,7 +891,7 @@ class SwotItemUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView
     template_name = "context/swot_item_form_modal.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.analysis = get_object_or_404(SwotAnalysis, pk=kwargs["analysis_pk"])
+        self.analysis = get_scoped_object_or_404(request.user, SwotAnalysis, pk=kwargs["analysis_pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -911,7 +912,7 @@ class SwotItemDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
     permission_required = "context.swot.delete"
 
     def post(self, request, analysis_pk, pk):
-        item = get_object_or_404(SwotItem, pk=pk, swot_analysis_id=analysis_pk)
+        item = get_scoped_object_or_404(request.user, SwotItem, pk=pk, swot_analysis_id=analysis_pk)
         item.delete()
         return HttpResponse(status=204, headers={"HX-Trigger": "refreshItems"})
 
@@ -923,7 +924,7 @@ class SwotStrategyCreateView(LoginRequiredMixin, PermissionRequiredMixin, Create
     template_name = "context/swot_strategy_form_modal.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.analysis = get_object_or_404(SwotAnalysis, pk=kwargs["analysis_pk"])
+        self.analysis = get_scoped_object_or_404(request.user, SwotAnalysis, pk=kwargs["analysis_pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_initial(self):
@@ -955,7 +956,7 @@ class SwotStrategyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Update
     template_name = "context/swot_strategy_form_modal.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.analysis = get_object_or_404(SwotAnalysis, pk=kwargs["analysis_pk"])
+        self.analysis = get_scoped_object_or_404(request.user, SwotAnalysis, pk=kwargs["analysis_pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -976,7 +977,7 @@ class SwotStrategyDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View):
     permission_required = "context.swot.delete"
 
     def post(self, request, analysis_pk, pk):
-        strategy = get_object_or_404(SwotStrategy, pk=pk, swot_analysis_id=analysis_pk)
+        strategy = get_scoped_object_or_404(request.user, SwotStrategy, pk=pk, swot_analysis_id=analysis_pk)
         strategy.delete()
         return HttpResponse(status=204, headers={"HX-Trigger": "refreshItems"})
 
@@ -990,7 +991,7 @@ class ResponsibilityCreateView(LoginRequiredMixin, PermissionRequiredMixin, Crea
     template_name = "context/responsibility_form_modal.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.role = get_object_or_404(Role, pk=kwargs["role_pk"])
+        self.role = get_scoped_object_or_404(request.user, Role, pk=kwargs["role_pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -1016,7 +1017,7 @@ class ResponsibilityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Upda
     template_name = "context/responsibility_form_modal.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.role = get_object_or_404(Role, pk=kwargs["role_pk"])
+        self.role = get_scoped_object_or_404(request.user, Role, pk=kwargs["role_pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -1041,8 +1042,8 @@ class ResponsibilityDeleteView(LoginRequiredMixin, PermissionRequiredMixin, View
     permission_required = "context.role.update"
 
     def post(self, request, role_pk, pk):
-        role = get_object_or_404(Role, pk=role_pk)
-        responsibility = get_object_or_404(Responsibility, pk=pk, role_id=role_pk)
+        role = get_scoped_object_or_404(request.user, Role, pk=role_pk)
+        responsibility = get_scoped_object_or_404(request.user, Responsibility, pk=pk, role_id=role_pk)
         responsibility.delete()
         role.send_back_to_draft()
         return HttpResponse(status=204, headers={"HX-Trigger": "refreshItems"})
@@ -1486,8 +1487,8 @@ def dashboard_indicator_toggle(request):
         return JsonResponse({"error": "indicator_id is required"}, status=400)
     indicator_id = str(indicator_id)
 
-    # Verify the indicator exists
-    if not Indicator.objects.filter(pk=indicator_id).exists():
+    # Verify the indicator exists, among those the user may reach
+    if get_scoped_object_or_none(request.user, Indicator, pk=indicator_id) is None:
         return JsonResponse({"error": "Indicator not found"}, status=404)
 
     user = request.user
@@ -1825,7 +1826,7 @@ class IndicatorRecordMeasurementView(LoginRequiredMixin, PermissionRequiredMixin
     permission_required = "context.indicator.update"
 
     def post(self, request, pk):
-        indicator = get_object_or_404(Indicator, pk=pk)
+        indicator = get_scoped_object_or_404(request.user, Indicator, pk=pk)
         form = IndicatorMeasurementForm(request.POST, indicator_format=indicator.format)
         if form.is_valid():
             indicator.record_measurement(
@@ -1844,7 +1845,7 @@ class IndicatorRefreshView(LoginRequiredMixin, PermissionRequiredMixin, View):
     permission_required = "context.indicator.update"
 
     def post(self, request, pk):
-        indicator = get_object_or_404(Indicator, pk=pk)
+        indicator = get_scoped_object_or_404(request.user, Indicator, pk=pk)
         if not indicator.is_internal:
             messages.error(request, _("This indicator is not a predefined indicator."))
             return redirect("context:indicator-detail", pk=pk)

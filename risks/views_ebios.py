@@ -149,6 +149,7 @@ from risks.models import (
     StudyFramework,
     TargetedObjective,
 )
+from core.scoping import get_scoped_object_or_404
 
 
 # ── Workshop transitions ──────────────────────────────────────
@@ -169,7 +170,7 @@ class _WorkshopTransitionView(LoginRequiredMixin, PermissionRequiredMixin, View)
         return []
 
     def post(self, request, assessment_pk, workshop_pk):
-        workshop = get_object_or_404(
+        workshop = get_scoped_object_or_404(request.user, 
             EbiosWorkshopProgress.objects.select_related("assessment"),
             pk=workshop_pk,
             assessment_id=assessment_pk,
@@ -257,7 +258,7 @@ class WorkshopRejectView(_WorkshopTransitionView):
         return []
 
     def post(self, request, assessment_pk, workshop_pk):
-        workshop = get_object_or_404(
+        workshop = get_scoped_object_or_404(request.user, 
             EbiosWorkshopProgress.objects.select_related("assessment"),
             pk=workshop_pk,
             assessment_id=assessment_pk,
@@ -432,7 +433,7 @@ class FearedEventCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def get(self, request, baseline_pk):
         from django.shortcuts import render
-        baseline = get_object_or_404(SecurityBaseline, pk=baseline_pk)
+        baseline = get_scoped_object_or_404(request.user, SecurityBaseline, pk=baseline_pk)
         form = FearedEventForm()
         return render(
             request,
@@ -441,7 +442,7 @@ class FearedEventCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
         )
 
     def post(self, request, baseline_pk):
-        baseline = get_object_or_404(SecurityBaseline, pk=baseline_pk)
+        baseline = get_scoped_object_or_404(request.user, SecurityBaseline, pk=baseline_pk)
         form = FearedEventForm(request.POST)
         if not form.is_valid():
             from django.shortcuts import render
@@ -514,7 +515,7 @@ class BaselineGapCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def get(self, request, baseline_pk):
         from django.shortcuts import render
-        baseline = get_object_or_404(SecurityBaseline, pk=baseline_pk)
+        baseline = get_scoped_object_or_404(request.user, SecurityBaseline, pk=baseline_pk)
         form = BaselineGapForm()
         return render(
             request,
@@ -523,7 +524,7 @@ class BaselineGapCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
         )
 
     def post(self, request, baseline_pk):
-        baseline = get_object_or_404(SecurityBaseline, pk=baseline_pk)
+        baseline = get_scoped_object_or_404(request.user, SecurityBaseline, pk=baseline_pk)
         form = BaselineGapForm(request.POST)
         if not form.is_valid():
             from django.shortcuts import render
@@ -614,14 +615,14 @@ class RiskSourceCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def get(self, request, assessment_pk):
         from django.shortcuts import render
-        assessment = get_object_or_404(RiskAssessment, pk=assessment_pk)
+        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
         return render(request, "risks/ebios/risk_source_form.html", {
             "form": RiskSourceForm(), "assessment": assessment, "risk_source": None,
         })
 
     def post(self, request, assessment_pk):
         from django.shortcuts import render
-        assessment = get_object_or_404(RiskAssessment, pk=assessment_pk)
+        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
         form = RiskSourceForm(request.POST)
         if not form.is_valid():
             return render(request, "risks/ebios/risk_source_form.html", {
@@ -664,14 +665,14 @@ class TargetedObjectiveCreateView(LoginRequiredMixin, PermissionRequiredMixin, V
 
     def get(self, request, risk_source_pk):
         from django.shortcuts import render
-        risk_source = get_object_or_404(RiskSource, pk=risk_source_pk)
+        risk_source = get_scoped_object_or_404(request.user, RiskSource, pk=risk_source_pk)
         return render(request, "risks/ebios/targeted_objective_form.html", {
             "form": TargetedObjectiveForm(), "risk_source": risk_source, "objective": None,
         })
 
     def post(self, request, risk_source_pk):
         from django.shortcuts import render
-        risk_source = get_object_or_404(RiskSource, pk=risk_source_pk)
+        risk_source = get_scoped_object_or_404(request.user, RiskSource, pk=risk_source_pk)
         form = TargetedObjectiveForm(request.POST)
         if not form.is_valid():
             return render(request, "risks/ebios/targeted_objective_form.html", {
@@ -715,7 +716,7 @@ class SrOvPairCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def get(self, request, assessment_pk):
         from django.shortcuts import render
-        assessment = get_object_or_404(RiskAssessment, pk=assessment_pk)
+        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
         form = RiskSourceObjectivePairForm()
         # Filter the SR and OV dropdowns to this assessment's retained entities
         form.fields["risk_source"].queryset = RiskSource.objects.filter(
@@ -730,7 +731,7 @@ class SrOvPairCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def post(self, request, assessment_pk):
         from django.shortcuts import render
-        assessment = get_object_or_404(RiskAssessment, pk=assessment_pk)
+        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
         form = RiskSourceObjectivePairForm(request.POST)
         form.fields["risk_source"].queryset = RiskSource.objects.filter(assessment=assessment)
         form.fields["targeted_objective"].queryset = TargetedObjective.objects.filter(
@@ -790,14 +791,14 @@ class EcosystemStakeholderCreateView(LoginRequiredMixin, PermissionRequiredMixin
 
     def get(self, request, assessment_pk):
         from django.shortcuts import render
-        assessment = get_object_or_404(RiskAssessment, pk=assessment_pk)
+        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
         return render(request, "risks/ebios/ecosystem_form.html", {
             "form": EcosystemStakeholderForm(), "assessment": assessment, "stakeholder": None,
         })
 
     def post(self, request, assessment_pk):
         from django.shortcuts import render
-        assessment = get_object_or_404(RiskAssessment, pk=assessment_pk)
+        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
         form = EcosystemStakeholderForm(request.POST)
         if not form.is_valid():
             return render(request, "risks/ebios/ecosystem_form.html", {
@@ -841,7 +842,7 @@ class StrategicScenarioCreateView(LoginRequiredMixin, PermissionRequiredMixin, V
 
     def get(self, request, assessment_pk):
         from django.shortcuts import render
-        assessment = get_object_or_404(RiskAssessment, pk=assessment_pk)
+        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
         form = StrategicScenarioForm()
         form.fields["sr_ov_pair"].queryset = RiskSourceObjectivePair.objects.filter(
             assessment=assessment, is_retained=True,
@@ -855,7 +856,7 @@ class StrategicScenarioCreateView(LoginRequiredMixin, PermissionRequiredMixin, V
 
     def post(self, request, assessment_pk):
         from django.shortcuts import render
-        assessment = get_object_or_404(RiskAssessment, pk=assessment_pk)
+        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
         form = StrategicScenarioForm(request.POST)
         form.fields["sr_ov_pair"].queryset = RiskSourceObjectivePair.objects.filter(
             assessment=assessment,
@@ -915,7 +916,7 @@ class AttackPathStepCreateView(LoginRequiredMixin, PermissionRequiredMixin, View
 
     def get(self, request, scenario_pk):
         from django.shortcuts import render
-        scenario = get_object_or_404(StrategicScenario, pk=scenario_pk)
+        scenario = get_scoped_object_or_404(request.user, StrategicScenario, pk=scenario_pk)
         form = AttackPathStepForm()
         form.fields["stakeholder"].queryset = EcosystemStakeholder.objects.filter(
             assessment=scenario.assessment,
@@ -926,7 +927,7 @@ class AttackPathStepCreateView(LoginRequiredMixin, PermissionRequiredMixin, View
 
     def post(self, request, scenario_pk):
         from django.shortcuts import render
-        scenario = get_object_or_404(StrategicScenario, pk=scenario_pk)
+        scenario = get_scoped_object_or_404(request.user, StrategicScenario, pk=scenario_pk)
         form = AttackPathStepForm(request.POST)
         form.fields["stakeholder"].queryset = EcosystemStakeholder.objects.filter(
             assessment=scenario.assessment,
@@ -982,7 +983,7 @@ class OperationalScenarioCreateView(LoginRequiredMixin, PermissionRequiredMixin,
 
     def get(self, request, assessment_pk):
         from django.shortcuts import render
-        assessment = get_object_or_404(RiskAssessment, pk=assessment_pk)
+        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
         form = OperationalScenarioForm()
         form.fields["strategic_scenario"].queryset = StrategicScenario.objects.filter(
             assessment=assessment, is_retained=True,
@@ -993,7 +994,7 @@ class OperationalScenarioCreateView(LoginRequiredMixin, PermissionRequiredMixin,
 
     def post(self, request, assessment_pk):
         from django.shortcuts import render
-        assessment = get_object_or_404(RiskAssessment, pk=assessment_pk)
+        assessment = get_scoped_object_or_404(request.user, RiskAssessment, pk=assessment_pk)
         form = OperationalScenarioForm(request.POST)
         form.fields["strategic_scenario"].queryset = StrategicScenario.objects.filter(
             assessment=assessment,
@@ -1048,7 +1049,7 @@ class OperationalScenarioConsolidateView(LoginRequiredMixin, PermissionRequiredM
     permission_required = "risks.risk.create"
 
     def post(self, request, pk):
-        scenario = get_object_or_404(OperationalScenario, pk=pk)
+        scenario = get_scoped_object_or_404(request.user, OperationalScenario, pk=pk)
         if scenario.consolidated_risk_id:
             messages.info(
                 request,
@@ -1086,7 +1087,7 @@ class AttackTechniqueCreateView(LoginRequiredMixin, PermissionRequiredMixin, Vie
 
     def get(self, request, scenario_pk):
         from django.shortcuts import render
-        scenario = get_object_or_404(OperationalScenario, pk=scenario_pk)
+        scenario = get_scoped_object_or_404(request.user, OperationalScenario, pk=scenario_pk)
         form = AttackTechniqueForm()
         return render(request, "risks/ebios/attack_technique_form.html", {
             "form": form, "scenario": scenario, "technique": None,
@@ -1094,7 +1095,7 @@ class AttackTechniqueCreateView(LoginRequiredMixin, PermissionRequiredMixin, Vie
 
     def post(self, request, scenario_pk):
         from django.shortcuts import render
-        scenario = get_object_or_404(OperationalScenario, pk=scenario_pk)
+        scenario = get_scoped_object_or_404(request.user, OperationalScenario, pk=scenario_pk)
         form = AttackTechniqueForm(request.POST)
         if not form.is_valid():
             return render(request, "risks/ebios/attack_technique_form.html", {
@@ -1162,7 +1163,7 @@ class EbiosSummaryCaptureMappingsView(LoginRequiredMixin, PermissionRequiredMixi
     permission_required = "risks.ebios_summary.update"
 
     def post(self, request, pk):
-        summary = get_object_or_404(EbiosSummary, pk=pk)
+        summary = get_scoped_object_or_404(request.user, EbiosSummary, pk=pk)
         slot = request.POST.get("slot", "both")
         capture_before = slot in ("before", "both")
         capture_after = slot in ("after", "both")
@@ -1178,14 +1179,14 @@ class PACSMeasureCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def get(self, request, summary_pk):
         from django.shortcuts import render
-        summary = get_object_or_404(EbiosSummary, pk=summary_pk)
+        summary = get_scoped_object_or_404(request.user, EbiosSummary, pk=summary_pk)
         return render(request, "risks/ebios/pacs_measure_form.html", {
             "form": PACSMeasureForm(), "summary": summary, "measure": None,
         })
 
     def post(self, request, summary_pk):
         from django.shortcuts import render
-        summary = get_object_or_404(EbiosSummary, pk=summary_pk)
+        summary = get_scoped_object_or_404(request.user, EbiosSummary, pk=summary_pk)
         form = PACSMeasureForm(request.POST)
         if not form.is_valid():
             return render(request, "risks/ebios/pacs_measure_form.html", {

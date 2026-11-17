@@ -19,6 +19,11 @@ from context.models.base import ReferenceGeneratorMixin
 class SiteAssetDependency(ReferenceGeneratorMixin):
     """A support asset depends on a site (e.g. a server is located at a datacenter)."""
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "support_asset__scopes"
+    scope_parent_alternates = ("site__scopes",)
+
     REFERENCE_PREFIX = "SADP"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -84,6 +89,11 @@ class SiteAssetDependency(ReferenceGeneratorMixin):
 
 class SiteSupplierDependency(ReferenceGeneratorMixin):
     """A site depends on a supplier (e.g. a datacenter is maintained by a provider)."""
+
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "site__scopes"
+    scope_parent_alternates = ("supplier__scopes",)
 
     REFERENCE_PREFIX = "SSDP"
 

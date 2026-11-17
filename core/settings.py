@@ -147,6 +147,7 @@ MIDDLEWARE = [
     "core.middleware.OnboardingMiddleware",
     "accounts.middleware.UserLanguageMiddleware",
     "accounts.middleware.ImpersonationMiddleware",
+    "accounts.middleware.AuthenticationRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",

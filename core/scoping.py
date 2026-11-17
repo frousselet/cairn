@@ -77,6 +77,124 @@ def _alternate_lookups(model, explicit=None):
     return tuple(getattr(model, "scope_parent_alternates", ()) or ())
 
 
+class AuthenticationRequired(Exception):
+    """A record was asked for by a visitor who is not signed in.
+
+    Raised by `get_scoped_object_or_404` : a view that fetches its parent
+    record before its login check ran (in `dispatch`) must still send the
+    visitor to the login page, not answer 404, and must never hand the record
+    over. `accounts.middleware.AuthenticationRequiredMiddleware` turns it into
+    that redirect.
+    """
+
+
+def user_can_reach(user, obj):
+    """Whether `user` may act on `obj`, as far as scope tenancy goes.
+
+    A superuser and a user no group restricts reach everything. Anyone else
+    reaches what is filed under one of their scopes (`object_in_scopes`). A
+    visitor who is not signed in reaches nothing through this door : a public
+    surface fetches its records explicitly.
+    """
+    if not getattr(user, "is_authenticated", False):
+        return False
+    if user.is_superuser:
+        return True
+    allowed = user.get_allowed_scope_ids()
+    return allowed is None or object_in_scopes(obj, allowed)
+
+
+def scoped_queryset(user, qs, explicit=None):
+    """`qs` restricted to the records `user` may reach.
+
+    The queryset side of `get_scoped_object_or_404` : for a selection made of
+    identifiers taken from the request (a bulk action, the records a report
+    is generated from), or a record looked up without a 404.
+    """
+    if not getattr(user, "is_authenticated", False):
+        return qs.none()
+    if user.is_superuser:
+        return qs
+    allowed = user.get_allowed_scope_ids()
+    if allowed is None:
+        return qs
+    return filter_queryset_by_scopes(qs, allowed, explicit)
+
+
+def narrow_scope_ids(user, requested=None):
+    """The scope ids a selection may cover for `user`, `None` meaning no limit.
+
+    A superuser, or a user no group restricts, gets what was asked (`None`
+    when nothing was). A user restricted to some scopes gets the asked ids
+    that are theirs, or all of theirs when none was asked : an empty list
+    when nothing of what was asked is theirs, which must select nothing (a
+    caller tests `is not None`, never the truth of the list).
+    """
+    requested = list(requested) if requested else None
+    if not getattr(user, "is_authenticated", False):
+        return []
+    if user.is_superuser:
+        return requested
+    allowed = user.get_allowed_scope_ids()
+    if allowed is None:
+        return requested
+    if requested is None:
+        return list(allowed)
+    mine = {str(scope_id) for scope_id in allowed}
+    return [scope_id for scope_id in requested if str(scope_id) in mine]
+
+
+def get_scoped_object_or_404(user, klass, *args, **kwargs):
+    """`get_object_or_404`, refusing a record filed outside the user's scopes.
+
+    The one way a view fetches a record named by the request (an identifier
+    in the URL or in the body) when it is not a generic single-record view,
+    which `accounts.views.PermissionRequiredMixin.get_object` already guards.
+    A permission says what a user may do, their scopes on which records :
+    a view that checks the first and fetches with `get_object_or_404` lets a
+    user restricted to one scope act on the records of another by their
+    address. The answer to a record out of reach is the one of an unknown
+    record (404) : it does not tell whether the record exists.
+
+    `klass` is a model, a manager or a queryset, as for `get_object_or_404`.
+    A model with no path to the scopes is returned as found. A visitor who is
+    not signed in is sent to the login page (`AuthenticationRequired`) before
+    anything is fetched.
+    """
+    from django.http import Http404
+    from django.shortcuts import get_object_or_404
+
+    if not getattr(user, "is_authenticated", False):
+        raise AuthenticationRequired
+    obj = get_object_or_404(klass, *args, **kwargs)
+    if not user_can_reach(user, obj):
+        raise Http404
+    return obj
+
+
+def get_scoped_object_or_none(user, klass, *args, **kwargs):
+    """The record asked for, or `None` when it is unknown or out of reach.
+
+    `get_scoped_object_or_404` for a lookup that is optional (a record named
+    by a query parameter, a reference kept in the session) : the caller goes
+    on without it. Same rule : a record filed under no scope stays reachable,
+    one filed under another scope does not.
+    """
+    if not getattr(user, "is_authenticated", False):
+        return None
+    from django.core.exceptions import ValidationError
+
+    queryset = klass if hasattr(klass, "filter") else klass._default_manager
+    try:
+        obj = queryset.filter(*args, **kwargs).first()
+    except (ValueError, TypeError, ValidationError):
+        # A malformed identifier names no record.
+        return None
+    if obj is None or not user_can_reach(user, obj):
+        return None
+    return obj
+
+
 def object_in_scopes(obj, scope_ids):
     """Whether `obj` is visible to a user allowed `scope_ids`.
 
