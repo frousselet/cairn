@@ -42,6 +42,9 @@ services:
       # Uploaded files (evidence, documents, logos). Without this volume they
       # live in the container and are lost the next time it is recreated.
       - media_data:/app/media
+      # Where `manage.py backup` writes its archives : a directory of the host,
+      # to be copied off the machine (see Operations, Backups).
+      - ./backups:/app/backups
     environment:
       # Required : a long random value of your own. Cairn refuses to start
       # with a placeholder. python -c "import secrets; print(secrets.token_urlsafe(64))"
@@ -89,13 +92,17 @@ volumes:
   media_data:
 ```
 
-Three things in this file are not optional.
+Four things in this file are not optional.
 
 - **`SECRET_KEY`** must be your own. `DEBUG` is off unless you turn it on, and
   with it off Cairn refuses to start on a placeholder key.
 - **The `media_data` volume** holds every uploaded file : audit evidence,
   document versions, incident artefacts. A deployment without it loses them
   when the container is recreated, which is what every upgrade does.
+- **Backups are yours to schedule.** `docker compose exec web python manage.py
+  backup` writes the database and the uploaded files into one verified archive
+  under `./backups`; nothing runs it for you. See
+  [Operations](operations.md#backups).
 - **The PostgreSQL major version is fixed** (`postgres:18`), on purpose. A new
   major cannot read the previous one's data directory, so moving to it is a
   dump and a restore, never a side effect of `docker compose pull`. An

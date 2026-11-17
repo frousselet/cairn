@@ -148,7 +148,9 @@ turning them on blindly breaks an HTTP-only deployment.
 4. **Run `python manage.py check --deploy`** and read what it says.
 5. **Back up PostgreSQL and the media directory together.** The history tables
    are in the database, the evidence artefacts are on disk, and a restore that
-   has one without the other is not a restore. See [operations.md](operations.md).
+   has one without the other is not a restore. `manage.py backup` writes both
+   into one checksummed archive, which holds every secret of the instance :
+   store its copies encrypted. See [operations.md](operations.md#backups).
 6. **Review the group assignments.** The default groups are a starting point;
    who is in them is your decision and your audit finding.
 

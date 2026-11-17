@@ -22,11 +22,21 @@ RUN groupadd --gid 1000 cairn \
     && mkdir -p /app/media /app/staticfiles \
     && chown -R cairn:cairn /app
 
+# The major of the PostgreSQL server the compose file ships. `manage.py backup`
+# and `restore` drive pg_dump, pg_restore and psql, and pg_dump refuses a
+# server newer than itself : the client tools follow the server.
+ARG POSTGRES_MAJOR=18
+
+# The distribution packages an older client; the PostgreSQL project's own
+# repository (enabled by the script postgresql-common ships) has every major.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        libpq-dev gettext \
        libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 \
        libffi-dev libcairo2 libglib2.0-0 \
+       postgresql-common ca-certificates \
+    && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
+    && apt-get install -y --no-install-recommends "postgresql-client-${POSTGRES_MAJOR}" \
     && rm -rf /var/lib/apt/lists/*
 
 # The exact, hash-checked set of distributions : the same versions as CI and

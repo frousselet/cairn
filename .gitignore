@@ -67,6 +67,8 @@ db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
+# Archives written by `manage.py backup` (BACKUP_DIR).
+backups/
 
 # Redis snapshots (local dev server)
 dump.rdb
