@@ -1177,25 +1177,6 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent-tex
   margin-left: auto;
 }
 
-/* ── Component: stepper ──────────────────────────
-   Renders directly on the page background (no card), as a single centred
-   line. The row is sized to its content and centred via auto inline
-   margins; when it is wider than the viewport the container scrolls. */
-.stepper { margin-bottom: 2rem; }
-.stepper__container {
-  overflow-x: auto;
-  position: relative;
-  padding: .25rem 0;
-}
-.stepper__row {
-  width: max-content;
-  max-width: 100%;
-  margin-inline: auto;
-  padding: .25rem 0;
-}
-/* Detached gap before a branch state (archived / cancelled): a space, no
-   connector line. */
-.stepper__gap { flex-shrink: 0; width: 2.5rem; }
 /* ── Component: lifecycle bar ─────────────────────
    Where the record stands and what can be done next, on one line : the steps
    of the path it is on (completed, current as its status badge, ahead), the
@@ -1274,7 +1255,6 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent-tex
   --bs-btn-padding-y: .25rem;
   --bs-btn-padding-x: .8125rem;
 }
-.lc-step .stepper__pill-form { display: inline-flex; }
 /* A long lifecycle folds its completed steps to their tick : the label stays
    in the accessibility tree and in the title. */
 .lc-bar--dense .lc-step--done .lc-step__label {
@@ -1361,58 +1341,6 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent-tex
   pointer-events: none;
 }
 .lc-dagre [role="button"]:focus-visible rect { outline: 2px solid var(--accent, #1E3A8A); outline-offset: 2px; }
-
-.stepper__line {
-  flex-shrink: 0;
-  width: 2rem;
-  height: 2px;
-}
-.stepper__line--done { background: var(--accent); }
-.stepper__line--pending { background: var(--border-light); }
-.stepper__pill {
-  display: inline-flex;
-  align-items: center;
-  gap: .375rem;
-  flex-shrink: 0;
-  padding: .3rem .85rem;
-  font-size: .8rem;
-  white-space: nowrap;
-  border-radius: 100px;
-  line-height: 1.4;
-}
-.stepper__pill-icon { font-size: .5rem; }
-.stepper__pill-icon--current { font-size: .5rem; }
-.stepper__pill-icon--future { font-size: .5rem; }
-.stepper__pill--done {
-  color: var(--text-muted);
-  background: var(--surface-subtle);
-  border: 1px solid var(--border-light);
-}
-.stepper__pill--current {
-  color: var(--accent-contrast);
-  background: var(--accent);
-  font-weight: 600;
-  border: 2px solid var(--accent);
-}
-.stepper__pill--future {
-  color: var(--text-muted);
-  background: var(--surface-subtle);
-  border: 1px dashed var(--border-light);
-}
-.stepper__pill--next {
-  border-width: 2px;
-}
-.stepper__pill--cancelled-current {
-  color: #fff;
-  background: var(--danger);
-  font-weight: 600;
-  border: 2px solid var(--danger);
-}
-.stepper__pill-form { margin: 0; flex-shrink: 0; }
-.stepper__pill--cancel,
-.stepper__pill--back {
-  border-width: 2px;
-}
 
 /* ── Impersonation banner - Refined ────────────── */
 .impersonation-banner {

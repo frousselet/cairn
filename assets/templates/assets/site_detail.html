@@ -124,7 +124,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{% csp_nonce %}">
 {% comment %}
   Render the site address on an OpenStreetMap (Leaflet) hero map. The address is
   geocoded once client-side (Photon) to place a single marker. Static map, theme
@@ -171,15 +171,9 @@
 
     var addr = (el.dataset.address || '').trim();
     if (!addr) { el.style.display = 'none'; return; }
-    fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(addr) + '&limit=1')
-      .then(function (r) { return r.ok ? r.json() : { features: [] }; })
-      .then(function (d) {
-        var f = (d.features || [])[0];
-        if (f && f.geometry && f.geometry.coordinates) {
-          render(f.geometry.coordinates[1], f.geometry.coordinates[0]);
-        } else { el.style.display = 'none'; }
-      })
-      .catch(function () { el.style.display = 'none'; });
+    window.cairnBasemap.geocode(addr).then(function (ll) {
+      if (ll) { render(ll[0], ll[1]); } else { el.style.display = 'none'; }
+    });
   }
   // Runs on first load and on every boosted #page-shell swap (this block is
   // re-executed by htmx), waiting for the shared loader to make Leaflet ready.

@@ -142,13 +142,13 @@
           <div class="ob-actions">
             {# Step 1 actions #}
             <div class="ob-act" data-act="1">
-              <button type="button" class="btn-accent" onclick="obGo(2)">{% trans "Continue" %}<i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
+              <button type="button" class="btn-accent" data-on-click="obGo" data-arg="2">{% trans "Continue" %}<i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
               <a href="{% url 'onboarding:landing' %}" class="ob-btn-ghost d-block">{% trans "Back to setup" %}</a>
             </div>
             {# Step 2 actions #}
             <div class="ob-act" data-act="2" style="display:none">
               <button type="submit" class="btn-accent">{% trans "Create and sign in" %}</button>
-              <button type="button" class="ob-btn-ghost" onclick="obGo(1)"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{% trans "Back" %}</button>
+              <button type="button" class="ob-btn-ghost" data-on-click="obGo" data-arg="1"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{% trans "Back" %}</button>
             </div>
           </div>
         </aside>
@@ -159,7 +159,7 @@
 
 {% block extra_script %}
   {% include "includes/image_resize.html" %}
-  <script>
+  <script nonce="{% csp_nonce %}">
   (function () {
     var form = document.getElementById('ob-form');
     var STORE_KEY = 'cairn-onboarding-company-v1';
@@ -184,7 +184,8 @@
       var li = e.target.closest('li[data-step]');
       if (li) setStep(parseInt(li.getAttribute('data-step'), 10));
     });
-    window.obGo = function (n) {
+    window.obGo = window.cairnActions.obGo = function (n) {
+      n = parseInt(n, 10);
       setStep(n);
       var first = document.querySelector('#ob-panel-' + n + ' input:not([type=hidden]), #ob-panel-' + n + ' textarea');
       if (first) first.focus();

@@ -170,7 +170,7 @@ its own modal, in a table row for example, is `{% confirm_delete url=... name=..
 | `plain_empty_option` | filter | A form field whose select opens on *Choose…* / *None*; applied by `includes/form_field.html` |
 | `progress_bar` | tag | A percentage |
 | `confirm_delete` | tag | An inline delete button with its confirmation modal |
-| `bulk_actions_bar`, `filter_chip`, `stepper`, `kpi_card`, `sidebar_card`, `illustration` | tags | See their docstrings in `core/templatetags/ui.py` |
+| `bulk_actions_bar`, `filter_chip`, `kpi_card`, `sidebar_card`, `illustration` | tags | See their docstrings in `core/templatetags/ui.py` |
 | [`back_url`](#back_url) | tag | A safe "back to where I came from" link |
 
 ### Slots
@@ -479,7 +479,7 @@ and the file order is the cascade :
 | `06-responsive.css` | Mobile adjustments |
 | `07-forms.css` | The modal form engine |
 | `08-motion.css` | Page transitions, skeleton loader |
-| `09-components.css` | Page header, empty state, KPI, list and detail layouts, stepper, lifecycle bar and graph |
+| `09-components.css` | Page header, empty state, KPI, list and detail layouts, lifecycle bar and graph |
 | `10-framework.css` | The primitives on this page and the utilities |
 
 Only rules that need the template engine stay inline in `base.html` : the

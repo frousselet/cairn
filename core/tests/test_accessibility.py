@@ -179,6 +179,7 @@ class TestMarkupAudit:
         ('<input type="text" name="q">', "form control without a label"),
         ('<select name="s"><option>1</option></select>', "form control without a label"),
         ('<div tabindex="3">x</div>', "positive tabindex"),
+        ('<button type="button" onclick="go()">Go</button>', "inline event handler"),
     ])
     def test_it_reports(self, html, expected):
         assert any(expected in problem for problem in markup_audit.problems(html)), markup_audit.problems(html)
@@ -196,6 +197,7 @@ class TestMarkupAudit:
         '<div aria-hidden="true"><button type="button"></button></div>',
         '<script>var h = \'<a hx-get="/x/">x</a>\';</script>',
         '<div tabindex="-1">x</div>',
+        '<button type="button" data-on-click="go">Go</button>',
     ])
     def test_it_accepts(self, html):
         assert markup_audit.problems(html) == []

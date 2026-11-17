@@ -10,7 +10,9 @@ defects a screen reader or a keyboard trips on, whatever the theme :
 - a link that acts (``hx-get``, ``onclick``...) but has no ``href``, so the
   keyboard never reaches it (2.1.1);
 - a form control with no label (1.3.1, 3.3.2);
-- a positive ``tabindex``, which overrides the reading order (2.4.3).
+- a positive ``tabindex``, which overrides the reading order (2.4.3);
+- an inline event handler (``onclick=``...), which the Content Security Policy
+  refuses : the control is there and does nothing.
 
 What depends on the cascade (contrast, target size, focus rings) is left to the
 browser audit, ``scripts/a11y_audit.py``. Markup built by a script at run time
@@ -147,6 +149,11 @@ def problems(html):
             )
             if not labelled:
                 found.append(f"form control without a label : {node.snippet()}")
+        for name in attrs:
+            # onclick, onchange... : script in the markup. The Content Security
+            # Policy refuses it, so the control would do nothing in a browser.
+            if name.startswith("on") and name[2:].isalpha() and node.tag not in ("script", "style"):
+                found.append(f"inline event handler ({name}) : {node.snippet()}")
         tabindex = attrs.get("tabindex")
         if tabindex and tabindex.lstrip("-").isdigit() and int(tabindex) > 0:
             found.append(f"positive tabindex : {node.snippet()}")

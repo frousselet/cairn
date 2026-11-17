@@ -40,7 +40,7 @@
         <div class="fw-semibold">{{ company.name|default:_("No company name set") }}</div>
         {% if company.logo and can_edit %}
         <button type="button" id="remove-logo-btn" class="btn btn-link btn-sm p-0 mt-1 text-meta link-inherit"
-                onclick="removeLogo()">
+                data-on-click="removeLogo">
           <i class="bi bi-x me-1" aria-hidden="true"></i>{% trans "Remove logo" %}
         </button>
         {% endif %}
@@ -71,7 +71,7 @@
                class="form-control form-control-color cursor-pointer"
                aria-label="{% trans 'Pick accent colour' %}">
         <div style="max-width:11rem">{{ form.accent_color }}</div>
-        <button type="button" class="btn btn-link btn-sm p-0 text-sm" onclick="resetAccentColor()">{% trans "Reset to default" %}</button>
+        <button type="button" class="btn btn-link btn-sm p-0 text-sm" data-on-click="resetAccentColor">{% trans "Reset to default" %}</button>
       </div>
       <div class="form-text">{{ form.accent_color.help_text }}</div>
       {% for error in form.accent_color.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
@@ -105,7 +105,7 @@
 {% block extra_js %}
 {% if can_edit %}
 {% include "includes/image_resize.html" %}
-<script>
+<script nonce="{% csp_nonce %}">
 document.getElementById('{{ form.logo_file.id_for_label }}').addEventListener('change', function(e) {
   var file = e.target.files[0];
   if (!file) return;
@@ -126,6 +126,8 @@ document.getElementById('{{ form.logo_file.id_for_label }}').addEventListener('c
     hideSpinner();
   });
 });
+
+window.cairnActions.removeLogo = removeLogo;
 
 function removeLogo() {
   document.getElementById('id_remove_logo').value = 'True';
@@ -151,6 +153,7 @@ function removeLogo() {
     if (/^#?[0-9A-Fa-f]{6}$/.test(v)) picker.value = (v.charAt(0) === '#' ? v : '#' + v);
   });
 })();
+window.cairnActions.resetAccentColor = resetAccentColor;
 function resetAccentColor() {
   var t = document.getElementById('{{ form.accent_color.id_for_label }}');
   if (t) t.value = '';

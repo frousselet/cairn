@@ -35,7 +35,7 @@
       <div class="ob-spinner"><i class="bi bi-exclamation-triangle-fill" style="color:var(--warn)"></i></div>
       <h1 class="ob-h1">{% trans "Something went wrong" %}</h1>
       <p class="ob-tile-desc" id="ob-error-msg" style="color:var(--text-secondary);margin:.5rem 0 1.25rem"></p>
-      <button type="button" class="btn-accent" onclick="window.location.reload()">{% trans "Reload" %}</button>
+      <button type="button" class="btn-accent" data-on-click="reloadPage">{% trans "Reload" %}</button>
     </div>
   </div>
 {% endblock %}
@@ -45,7 +45,7 @@
   {% trans "of" as tr_of %}
   {% trans "Finishing up..." as tr_finishing %}
   {% trans "Lost connection to the server. Check that it is running, then reload." as tr_lost %}
-  <script>
+  <script nonce="{% csp_nonce %}">
   (function () {
     var bar = document.getElementById('ob-bar');
     var step = document.getElementById('ob-step');

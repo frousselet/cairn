@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n csp %}
 {# ── Scope tree-radio widget (rendered by ScopeTreeRadioWidget) ─ #}
 {% with widget_id=widget.attrs.id %}
 <div class="scope-tree-widget scope-tree-radio" id="stw-{{ widget_id }}">
@@ -41,7 +41,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   var ctr = document.getElementById('stw-{{ widget_id }}');
   if (!ctr || ctr._stw_init) return;

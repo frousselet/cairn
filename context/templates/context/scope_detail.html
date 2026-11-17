@@ -136,7 +136,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{% csp_nonce %}">
 {% comment %}
   Plot the perimeter's included sites (and its sub-scopes' sites) on a static
   Leaflet hero map (basemap : MAP_TILE_URL). Each site is geocoded once from its
@@ -204,19 +204,15 @@
     sites.forEach(function (s) {
       var addr = (s.address || '').trim();
       if (!addr) { if (--pending === 0) { fit(); } return; }
-      fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(addr) + '&limit=1')
-        .then(function (r) { return r.ok ? r.json() : { features: [] }; })
-        .then(function (d) {
-          var f = (d.features || [])[0];
-          if (f && f.geometry && f.geometry.coordinates) {
-            var ll = [f.geometry.coordinates[1], f.geometry.coordinates[0]];
+      window.cairnBasemap.geocode(addr)
+        .then(function (ll) {
+          if (ll) {
             latlngs.push(ll);
             L.circleMarker(ll, {
               radius: 7, color: '#ffffff', weight: 2.5, fillColor: accent(), fillOpacity: 1
             }).addTo(map).bindTooltip(s.name || addr);
           }
         })
-        .catch(function () {})
         .finally(function () { if (--pending === 0) { fit(); } });
     });
 

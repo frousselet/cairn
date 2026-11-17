@@ -2,8 +2,7 @@
 {% block title %}{% trans "Form expired" %}{% endblock %}
 {% block eyebrow %}{% trans "Error 403" %}{% endblock %}
 {% block heading %}{% trans "This form has expired" %}{% endblock %}
-{% block message %}{% trans "The page stayed open too long, or your session ended in another tab. Nothing was saved. Go back, reload the page and submit again." %}{% endblock %}
+{% block message %}{% trans "The page stayed open too long, or your session ended in another tab. Nothing was saved. Use your browser's Back button, reload the page and submit again." %}{% endblock %}
 {% block actions %}
-<button class="btn btn-primary" type="button" onclick="history.back()">{% trans "Go back" %}</button>
-<a class="btn" href="/">{% trans "Back to the dashboard" %}</a>
+<a class="btn btn-primary" href="/">{% trans "Back to the dashboard" %}</a>
 {% endblock %}

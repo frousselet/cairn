@@ -122,6 +122,10 @@ MIDDLEWARE = [
     # X-Content-Type-Options: nosniff then blocks. Must sit right after
     # SecurityMiddleware. In DEBUG, staticfiles/runserver handle serving instead.
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    # Outside everything that renders a page (the onboarding, the Trust Center
+    # host routing, the views) : each of their responses carries the policy,
+    # with the nonce its template asked for.
+    "core.csp.ContentSecurityPolicyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "trust_center.middleware.TrustCenterHostMiddleware",
@@ -145,6 +149,9 @@ TEMPLATES = [
         "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
+            # {% csp_nonce %} in every template without a {% load %} : an inline
+            # script that forgets its nonce does nothing in a browser.
+            "builtins": ["core.templatetags.csp"],
             "context_processors": [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
@@ -336,11 +343,25 @@ MAP_TILE_URL = os.environ.get(
 ).strip()
 # Tiles to use under the dark theme. Empty : the tiles above are dimmed.
 MAP_TILE_URL_DARK = os.environ.get("MAP_TILE_URL_DARK", "").strip()
+# Geocoder the maps ask for the position of an address that has no
+# coordinates : a Photon-compatible API, called by the reader's browser with
+# the address as its query. The address of a site or a supplier therefore
+# leaves the instance. An empty value switches it off : the maps then only
+# place what has a latitude and a longitude.
+MAP_GEOCODER_URL = os.environ.get("MAP_GEOCODER_URL", "https://photon.komoot.io/api/").strip()
 # Credit line shown on the map, as the provider's terms require (HTML).
 MAP_TILE_ATTRIBUTION = os.environ.get(
     "MAP_TILE_ATTRIBUTION",
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 )
+
+# Content Security Policy (core/csp.py) : `enforce` (the default) makes the
+# browser refuse what the policy does not allow, `report` only logs it in the
+# browser console (to try the policy on an instance behind a proxy that
+# rewrites pages), `off` sends no policy.
+CSP_MODE = os.environ.get("CSP_MODE", "enforce").strip().lower()
+if CSP_MODE not in ("enforce", "report", "off"):
+    raise ImproperlyConfigured(f"CSP_MODE must be enforce, report or off, not {CSP_MODE!r}.")
 
 # Seconds a worker process trusts its in-memory lifecycle definitions before
 # checking the table again. A lifecycle edited in the administration is saved

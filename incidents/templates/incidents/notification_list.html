@@ -86,7 +86,7 @@ map, and a header that disagrees with the crumb above it reads as two pages.
 
 {% include "includes/list_filter_offcanvas.html" with filter_list_url=request.path %}
 
-<script>
+<script nonce="{% csp_nonce %}">
   /* The deadline facet is a query parameter the shared list refresh knows
      nothing about : gatherListParams() reads the filter form, and none of these
      six values is a field on it. Left alone, typing one character in the search

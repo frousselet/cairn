@@ -12,7 +12,7 @@
         {% endif %}
       </div>
     </div>
-    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deletePasskey('{{ pk.id }}', '{{ pk.name|escapejs }}')" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}">
+    <button type="button" class="btn btn-sm btn-outline-danger" data-on-click="deletePasskey" data-arg="{{ pk.id }}" data-arg2="{{ pk.name }}" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}">
       <i class="bi bi-trash" aria-hidden="true"></i>
     </button>
   </li>

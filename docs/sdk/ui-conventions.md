@@ -143,6 +143,44 @@ Boosted navigation means a page can be swapped into an existing document rather
 than loaded fresh. Anything that initialises on page load has to survive that,
 which is the usual cause of "it only works after a hard refresh".
 
+## Scripts and the Content Security Policy
+
+Pages are served with a policy that runs the instance's own script files and
+the inline scripts carrying the response's nonce, and nothing else
+([security](../technical/security.md#content-security-policy)). A page that
+ignores it does not fail a test of its view : it renders, and its buttons do
+nothing.
+
+- **An inline script** carries the nonce :
+  `<script nonce="{% csp_nonce %}">`. In a fragment returned to htmx as well
+  (htmx re-creates the script with the page's nonce).
+- **No inline event handler.** Not `onclick="save()"` but an action :
+
+  ```html
+  <button type="button" data-on-click="deletePasskey" data-arg="{{ pk.id }}" data-arg2="{{ pk.name }}">
+  ```
+
+  ```html
+  <script nonce="{% csp_nonce %}">
+  window.cairnActions.deletePasskey = function (id, name, element, event) { ... };
+  </script>
+  ```
+
+  The function receives `data-arg`, `data-arg2`, `data-arg3` (as strings), then
+  the element and the event. `data-on-change`, `-input`, `-keyup` and `-submit`
+  work the same way. Built in : `submitForm` (a select that submits its form),
+  `copyValue` (copy the field whose id is `data-arg`), `historyBack`,
+  `reloadPage`. A confirmation is an attribute :
+  `data-confirm="{% trans 'Delete this review?' %}"` on a form, a button or a
+  link. See `static/js/cairn/actions.js`.
+- **Nothing htmx would evaluate** : no `hx-on`, no `js:` value, no trigger
+  filter (`hx-trigger="keyup[key=='Enter']"`). Listen in a script instead. To
+  refresh another element once a request has gone through :
+  `data-after-request-trigger="refreshTable" data-after-request-target="#item-table-body"`.
+- **No other origin.** A script, a style, a font or an image comes from the
+  instance. A new outside service is a setting, added to the policy in
+  `core/csp.py`, documented as traffic leaving the browser.
+
 ## Accessibility
 
 The commitment is WCAG 2.2 AA, and three checks hold it (see
@@ -185,5 +223,6 @@ screen :
 - [ ] Bootstrap Icons only
 - [ ] Every string wrapped and translated
 - [ ] Works after a boosted navigation, not only a hard refresh
+- [ ] Inline scripts carry `nonce="{% csp_nonce %}"`, no inline handler, no `hx-on`
 - [ ] Controls named, focus visible, colour not the only signal, text in a text or ink token
 - [ ] `python scripts/a11y_audit.py` passes on the new page in both themes (add it to the audit's page list if it is a new kind of page)

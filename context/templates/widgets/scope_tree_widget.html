@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n csp %}
 {# ── Scope tree-checkbox widget (rendered by ScopeTreeWidget) ─ #}
 {% with widget_id=widget.attrs.id %}
 <div class="scope-tree-widget" id="stw-{{ widget_id }}">
@@ -38,7 +38,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   const ctr = document.getElementById('stw-{{ widget_id }}');
   if (!ctr || ctr._stw_init) return;

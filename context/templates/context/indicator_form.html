@@ -6,7 +6,7 @@
   fields (and clear them) when the format is boolean, and only offer the
   threshold operators that match the format.
 {% endcomment %}
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   var formatSelect = document.getElementById('id_format');
   if (!formatSelect) return;

@@ -108,7 +108,7 @@
 </div>
 
 {# ── Auto-fill compliance_level from status + conditional fields ── #}
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   var statusSel = document.getElementById('{{ form.compliance_status.id_for_label }}');
   var levelInput = document.getElementById('{{ form.compliance_level.id_for_label }}');

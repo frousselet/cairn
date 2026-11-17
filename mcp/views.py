@@ -99,7 +99,7 @@ class OAuthAuthorizeView(View):
             return HttpResponseRedirect(safe_redirect_target(request, target, login_url))
 
         # User is authenticated - show consent page
-        return render(request, "mcp/authorize.html", {
+        response = render(request, "mcp/authorize.html", {
             "app": app,
             "client_id": client_id,
             "redirect_uri": redirect_uri,
@@ -108,6 +108,11 @@ class OAuthAuthorizeView(View):
             "state": state,
             "scope": scope,
         })
+        # The consent form posts here and is answered by a redirect to the
+        # client's own address, which `form-action 'self'` would make the
+        # browser refuse. The address is one the application registered.
+        response.csp_exclude = {"form-action"}
+        return response
 
     def post(self, request):
         """Handle consent form submission."""
@@ -122,14 +127,9 @@ class OAuthAuthorizeView(View):
         scope = request.POST.get("scope", "")
         action = request.POST.get("action")
 
-        if action == "deny":
-            params = urlencode({"error": "access_denied", "state": state})
-            redirect_url = f"{redirect_uri}?{params}"
-            response = HttpResponse(status=302)
-            response["Location"] = redirect_url
-            return response
-
-        # Validate client
+        # Validate the client and its redirect address before anything is sent
+        # there : a refusal redirects too, and must not go to an address the
+        # form was tampered with to carry.
         try:
             app = OAuthApplication.objects.get(client_id=client_id, is_active=True)
         except OAuthApplication.DoesNotExist:
@@ -137,6 +137,13 @@ class OAuthAuthorizeView(View):
 
         if not app.validate_redirect_uri(redirect_uri):
             return JsonResponse({"error": "invalid_redirect_uri"}, status=400)
+
+        if action == "deny":
+            params = urlencode({"error": "access_denied", "state": state})
+            redirect_url = f"{redirect_uri}?{params}"
+            response = HttpResponse(status=302)
+            response["Location"] = redirect_url
+            return response
 
         # Reassign the application to the authorizing user (for dynamic clients)
         if app.is_public_client and app.user.email == "system@mcp.internal":

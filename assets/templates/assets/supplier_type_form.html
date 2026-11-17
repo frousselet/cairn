@@ -60,7 +60,7 @@
         </tbody>
       </table>
     </div>
-    <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addRequirementRow()">
+    <button type="button" class="btn btn-sm btn-secondary mt-2" data-on-click="addRequirementRow">
       <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add a requirement" %}
     </button>
   {% endsection_card %}
@@ -74,7 +74,8 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{% csp_nonce %}">
+window.cairnActions.addRequirementRow = addRequirementRow;
 function addRequirementRow() {
   var prefix = 'requirements';
   var totalInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');

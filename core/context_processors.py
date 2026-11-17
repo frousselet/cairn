@@ -72,6 +72,7 @@ def map_tiles(request):
             "url": settings.MAP_TILE_URL,
             "darkUrl": settings.MAP_TILE_URL_DARK,
             "attribution": settings.MAP_TILE_ATTRIBUTION,
+            "geocoder": settings.MAP_GEOCODER_URL,
         }
     }
 

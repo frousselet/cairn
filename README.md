@@ -94,9 +94,13 @@ are mirrored into `static/vendor/` from the pins in
 [`core/dependencies.py`](core/dependencies.py) - by the Docker build, or on the
 first launch of a direct install - and each download is checked against a
 Subresource-Integrity digest. `python manage.py vendor_assets` does it by hand.
-The one thing a browser fetches elsewhere is the map shown on scope, site and
-supplier pages, whose tiles come from the provider set in `MAP_TILE_URL`
-(OpenStreetMap by default); an empty value switches the maps off.
+Two things a browser fetches elsewhere, both for the maps of the scope, site
+and supplier pages and both switched off by an empty setting : the tiles, from
+the provider set in `MAP_TILE_URL` (OpenStreetMap by default), and the position
+of an address that has no coordinates, from the geocoder set in
+`MAP_GEOCODER_URL` (Photon by default), which is sent that address. A Content
+Security Policy forbids every other origin, and any script that is not the
+instance's own.
 
 That same file is the full inventory of third-party components, and a running
 instance states it in the About dialog, at `GET /api/v1/dependencies` and

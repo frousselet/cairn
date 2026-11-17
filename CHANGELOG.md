@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Empty selects read "Choose…" or "None" instead of a row of dashes, and on a phone the form step indicator shows the current step's name in full.
 - The container runs as an unprivileged account (uid 1000) instead of root, handing over a media volume written by an earlier image on first start.
 - `DEBUG` is off unless set, instead of on : development environments set `DEBUG=True` (`.env.example` and `core.settings_local` do).
+- The geocoder the maps and address fields call is a setting (`MAP_GEOCODER_URL`, Photon by default) : an empty value keeps addresses from leaving the browser.
 - The image ships the PostgreSQL client tools of the server the compose file runs, for the backup and restore commands.
 - The compose file fixes the major versions of its services (`postgres:18`, `redis:8-alpine`) instead of following `latest`.
 - CI crawls every page and form of the demo dataset, and runs the suite a second time on PostgreSQL with every migration replayed (on `main`, and on a pull request labelled `ci:postgres`).
@@ -94,8 +95,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rich text fields were rendered unsanitized on every detail page and report (stored XSS); they are now sanitized at render time, and JSON embedded in pages can no longer close its script element.
 - With `DEBUG` off, Cairn refuses to start while `SECRET_KEY` is one of the public placeholder values, instead of signing sessions with a key anyone can read.
 - Nonconformities raised by an incident were visible to every finding reader whatever their scopes, and the MCP finding update and delete tools did not check the caller's scopes.
-
-
+- Every page is served with a Content Security Policy : only the instance's own scripts run (inline ones by a per-response nonce), no inline event handler, no `eval`, no other origin than the map services (`CSP_MODE`).
+- Refusing an OAuth consent redirected to the address carried by the form before checking it was one the application registered.
 
 ## [0.36.1] - 2026-11-03
 

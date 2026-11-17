@@ -71,7 +71,7 @@
   {% endif %}
 </div>
 
-<script>
+<script nonce="{% csp_nonce %}">
 document.querySelectorAll('#comments-section .toggle-reply-form').forEach(function(btn) {
   btn.addEventListener('click', function() {
     var target = document.getElementById(this.dataset.target);

@@ -31,7 +31,7 @@
   </td>
   <td class="text-end" data-col="actions">
     <form method="post" action="{% url 'accounts:calendar-subscription-revoke' t.pk %}"
-          onsubmit="return confirm('{% trans "Revoke this calendar subscription?" %}')">
+          data-confirm="{% trans 'Revoke this calendar subscription?' %}">
       {% csrf_token %}
       <button type="submit" class="btn btn-sm btn-outline-danger">
         <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{% trans "Revoke" %}

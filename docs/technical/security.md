@@ -115,6 +115,49 @@ For an audit this matters twice over : the code a user's browser executes is
 fixed at build time and verifiable, and no third party receives a request that
 would tell them who consults a compliance platform and when.
 
+## Content Security Policy
+
+Every response carries a `Content-Security-Policy` header (`core/csp.py`). It
+tells the browser to run a script only when it comes from the instance's own
+static files, or carries the nonce generated for that very response :
+
+```text
+default-src 'self'; script-src 'self' 'nonce-<random>'; style-src 'self' 'unsafe-inline';
+img-src 'self' data: blob: <map tiles>; font-src 'self' data:;
+connect-src 'self' ws://<host> wss://<host> <geocoder>;
+object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+```
+
+It is the second line behind output escaping and the rich-text sanitiser : a
+script that reached a page anyway (a field that escaped sanitising, a tampered
+record) has neither the origin nor the nonce, and is refused. So is an inline
+event handler, a `javascript:` link, `eval`, a plugin, a form posting elsewhere
+and a page framing this one. The only other origins are the ones a setting
+names : the map tiles (`img-src`) and the geocoder (`connect-src`).
+
+What keeps it that way :
+
+- No template has an inline event handler. An element names an action
+  registered in `window.cairnActions` (`data-on-click="..."`,
+  `static/js/cairn/actions.js`); only a registered function can be named.
+- Every inline `<script>` carries `nonce="{% csp_nonce %}"`. htmx gives the
+  scripts of a swapped fragment the nonce of the page, and evaluates nothing
+  written in an attribute (`allowEval` is off).
+- The error pages contain no script (the 500 page is rendered with no context
+  and could carry no nonce).
+- Tests refuse a handler, a script without its nonce or an `hx-on` attribute
+  in any template, and the browser audit of the CI fails on any violation a
+  browser reports (see [testing](testing.md#accessibility)).
+
+Styles are allowed inline (`style-src 'unsafe-inline'`). A style cannot run
+code, and the libraries in use position their elements with style attributes;
+the residual risk is content restyling, not script execution.
+
+`CSP_MODE=report` sends the policy as `Content-Security-Policy-Report-Only` :
+nothing is blocked, violations appear in the browser console. It is there to
+try the policy on an instance whose reverse proxy injects something into the
+pages. `CSP_MODE=off` sends no policy. Leave it on `enforce`.
+
 ## Public exposure
 
 The Trust Center is the only surface meant to be public, and it is a curation

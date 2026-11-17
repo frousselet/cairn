@@ -33,7 +33,7 @@ Built from lc_bar_steps / lc_bar_exits (accounts.mixins.LifecycleStepperMixin).
 <div class="collapse lc-bar__graph" id="{{ lc_container_id }}-graph" data-lc-graph-panel>
   {% include "components/lifecycle_dagre.html" %}
 </div>
-<script>
+<script nonce="{% csp_nonce %}">
 (function () {
   var bar = document.getElementById('{{ lc_container_id }}');
   if (!bar || bar.dataset.lcBarInit) { return; }

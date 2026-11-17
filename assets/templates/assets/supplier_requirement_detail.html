@@ -35,7 +35,7 @@
         {% choice_badge review "result" type="compliance" %}
         <strong>{{ review.review_date }}</strong>
         {% if review.reviewer %}<span class="review-entry__by">{% user_badge review.reviewer size=22 %}</span>{% endif %}
-        <a href="{% url 'assets:supplier-requirement-review-delete' review.pk %}" class="btn btn-sm btn-outline-danger ms-auto" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}" onclick="return confirm('{% trans "Delete this review?" %}')"><i class="bi bi-trash" aria-hidden="true"></i></a>
+        <a href="{% url 'assets:supplier-requirement-review-delete' review.pk %}" class="btn btn-sm btn-outline-danger ms-auto" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}" data-confirm="{% trans 'Delete this review?' %}"><i class="bi bi-trash" aria-hidden="true"></i></a>
       </div>
       {% if review.comment %}
       {% subhead _("Justification") %}
