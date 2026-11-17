@@ -2,19 +2,27 @@
 {% comment %}
   Progress header for a stepped modal form: a stepper for multi-step forms,
   a required-fields completion meter for single-step forms.
+
+  Each step of the stepper is a button : the steps already filled in can be
+  reopened, and every step of a record being edited (nothing is gated then).
+  Past four steps the labels no longer fit : the step being filled in keeps
+  its name, the others their number (their name stays in the accessibility
+  tree and in the tooltip).
 {% endcomment %}
 {% if form.is_multistep %}
-<nav class="mform-stepper" data-mform-stepper aria-label="{% trans 'Form steps' %}">
+<nav class="mform-stepper{% if form.step_count > 4 %} mform-stepper--compact{% endif %}" data-mform-stepper aria-label="{% trans 'Form steps' %}">
   <ol>
     {% for step in form.iter_steps %}
-    <li class="mform-pill{% if step.is_first %} is-current{% endif %}" data-mform-pill="{{ step.index }}"{% if step.is_first %} aria-current="step"{% endif %}>
-      <span class="mform-pill-num">{{ step.number }}</span>
-      <span class="mform-pill-label">{{ step.title }}</span>
+    <li class="mform-pill{% if step.is_first %} is-current{% endif %}">
+      <button type="button" class="mform-pill-btn" data-mform-pill="{{ step.index }}" title="{{ step.title }}"{% if step.is_first %} aria-current="step"{% endif %}>
+        <span class="mform-pill-num" aria-hidden="true">{{ step.number }}</span>
+        <span class="mform-pill-label">{{ step.title }}</span>
+      </button>
     </li>
     {% endfor %}
   </ol>
 </nav>
-{% else %}
+{% elif form.required_field_count %}
 <div class="mform-meter" data-mform-meter>
   <div class="mform-meter-track"><span class="mform-meter-fill"></span></div>
   <span class="mform-meter-text" data-mform-meter-text data-template="{% trans '{done} of {total} required' %}"></span>

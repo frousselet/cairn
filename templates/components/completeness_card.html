@@ -1,0 +1,22 @@
+{% comment %}{% completeness_card %} : what the record still needs. See docs/sdk/ui-components.md.{% endcomment %}
+{% load i18n %}{% if shown %}
+<section class="card section-card todo-card" aria-labelledby="todo-card-title">
+  <header class="section-card__head">
+    <h2 class="section-card__title" id="todo-card-title"><i class="bi bi-list-check" aria-hidden="true"></i><span>{% trans "To complete" %}</span><span class="section-card__count tabular-nums">{{ count }}</span></h2>
+  </header>
+  <div class="section-card__body">
+    {% if blocking %}
+    <p class="todo-card__lead">{% if gate_label %}{% blocktrans %}Needed before the record can move to "{{ gate_label }}".{% endblocktrans %}{% else %}{% trans "The record is in use, and this is still missing." %}{% endif %}</p>
+    <ul class="todo-list">
+      {% for item in blocking %}{% include "components/completeness_item.html" with tone="blocking" %}{% endfor %}
+    </ul>
+    {% endif %}
+    {% if advised %}
+    <p class="todo-card__lead">{% trans "Advised : the record is more useful with it." %}</p>
+    <ul class="todo-list">
+      {% for item in advised %}{% include "components/completeness_item.html" with tone="advised" %}{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</section>
+{% endif %}

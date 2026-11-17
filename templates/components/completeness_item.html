@@ -1,0 +1,16 @@
+{% comment %}One line of {% completeness_card %} : the line is the button that opens the section's dialog, or the link to the page where it is done.{% endcomment %}
+<li>
+  {% if edit_url and item.section %}
+  <a class="todo-item todo-item--{{ tone }}" href="{{ edit_url }}?section={{ item.section }}" hx-get="{{ edit_url }}?section={{ item.section }}" hx-target="#drawer-form-content" hx-swap="innerHTML">
+    <i class="bi bi-circle todo-item__mark" aria-hidden="true"></i><span class="todo-item__label">{{ item.label }}</span><i class="bi bi-chevron-right todo-item__go" aria-hidden="true"></i>
+  </a>
+  {% elif item.href %}
+  <a class="todo-item todo-item--{{ tone }}" href="{{ item.href }}">
+    <i class="bi bi-circle todo-item__mark" aria-hidden="true"></i><span class="todo-item__label">{{ item.label }}</span><i class="bi bi-arrow-right todo-item__go" aria-hidden="true"></i>
+  </a>
+  {% else %}
+  <span class="todo-item todo-item--{{ tone }}">
+    <i class="bi bi-circle todo-item__mark" aria-hidden="true"></i><span class="todo-item__label">{{ item.label }}</span>
+  </span>
+  {% endif %}
+</li>

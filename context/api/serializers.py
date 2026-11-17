@@ -20,6 +20,7 @@ from context.models import (
     SwotStrategy,
     Tag,
 )
+from core.completeness_api import CompletenessSerializerMixin
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -29,7 +30,7 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
 
 
-class ScopeSerializer(serializers.ModelSerializer):
+class ScopeSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     parent_scope_name = serializers.CharField(
         source="parent_scope.name", read_only=True, default=None
     )
@@ -43,6 +44,7 @@ class ScopeSerializer(serializers.ModelSerializer):
             "geographic_scope", "organizational_scope", "technical_scope",
             "included_sites", "excluded_sites", "managers",
             "effective_date", "review_date", "tags",
+            "completeness",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]

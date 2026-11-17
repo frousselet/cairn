@@ -1,0 +1,45 @@
+{% load i18n %}
+{% comment %}
+  The first steps of a new instance (core/getting_started.py) : what to do
+  first, in the order the work is done. The step to take next carries its
+  sentence and its button; the others are a line each. Shown above the widgets
+  until the instance holds its first records, or the reader hides it.
+{% endcomment %}
+<section class="card first-steps" aria-labelledby="first-steps-title">
+  <div class="first-steps__head">
+    <div class="min-w-0">
+      <h2 class="first-steps__title" id="first-steps-title">{% trans "First steps" %}</h2>
+      <p class="first-steps__lead">{% trans "A new instance is empty. Here is what to do first, in order : each step takes a few minutes." %}</p>
+    </div>
+    <div class="first-steps__meta">
+      <span class="first-steps__count tabular-nums">{% blocktrans with done=first_steps.done total=first_steps.total %}{{ done }} of {{ total }} done{% endblocktrans %}</span>
+      {% comment %}The styleguide shows the card as a sample : its button then hides nothing.{% endcomment %}
+      {% if first_steps_sample %}
+      <button type="button" class="btn btn-sm btn-secondary">{% trans "Hide" %}</button>
+      {% else %}
+      <form method="post" action="{% url 'dashboard-first-steps' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-secondary">{% trans "Hide" %}</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  <ol class="first-steps__list">
+    {% for step in first_steps.steps %}
+    <li class="first-step{% if step.done %} is-done{% elif step.is_next %} is-next{% endif %}">
+      <span class="first-step__mark" aria-hidden="true">{% if step.done %}<i class="bi bi-check-lg"></i>{% else %}{{ forloop.counter }}{% endif %}</span>
+      <div class="first-step__body">
+        {% if step.done %}
+        <span class="first-step__title">{{ step.title }}<span class="visually-hidden"> ({% trans "done" %})</span></span>
+        {% elif step.is_next %}
+        <span class="first-step__title">{{ step.title }}</span>
+        <p class="first-step__why">{{ step.why }}</p>
+        <a href="{{ step.url }}" class="btn btn-primary btn-sm">{% if step.can_act %}{% trans "Start" %}{% else %}{% trans "Open" context "verb" %}{% endif %}<i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
+        {% else %}
+        <a href="{{ step.url }}" class="first-step__title first-step__link">{{ step.title }}</a>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+</section>

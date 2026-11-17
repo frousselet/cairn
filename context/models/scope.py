@@ -3,10 +3,17 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
+from core.completeness import Completeness, Requirement
+
 from .base import BaseModel
+
+# The step that makes a scope authoritative (``context/lifecycles.py``).
+SCOPE_IN_FORCE = "in_force"
 
 
 class Scope(BaseModel):
@@ -72,6 +79,35 @@ class Scope(BaseModel):
 
     history = HistoricalRecords()
 
+    # A scope is created with its name and what it covers, then completed on
+    # its page. It cannot be submitted for validation, nor put in force, until
+    # it says where it stops and who answers for it (RS-08 in
+    # docs/specs/m1-context/README.md). The rest is advised.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "boundaries", _("say where the scope stops"),
+            fields=["boundaries"], section="boundaries",
+        ),
+        Requirement(
+            "managers", _("name at least one manager"),
+            fields=["managers"], section="managers",
+        ),
+        Requirement(
+            "coverage", _("say what it covers : places, teams, systems"),
+            any_of=["geographic_scope", "organizational_scope", "technical_scope"],
+            section="coverage", blocking=False,
+        ),
+        Requirement(
+            "sites", _("attach the sites it covers"),
+            fields=["included_sites"], section="sites", blocking=False,
+        ),
+        Requirement(
+            "review", _("plan its next review"),
+            fields=["review_date"], section="planning", blocking=False,
+        ),
+        before=("validation", SCOPE_IN_FORCE),
+    )
+
     class Meta(BaseModel.Meta):
         ordering = ["name"]
         verbose_name = _("Scope")
@@ -79,6 +115,28 @@ class Scope(BaseModel):
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("context:scope-detail", kwargs={"pk": self.pk})
+
+    def transition_to(self, target, user=None, comment=None, *, enforce_permission=False, save=True):
+        """Date the scope when it comes into force and no date was given (RS-09).
+
+        The day a scope takes effect is a fact the lifecycle knows : it is not
+        asked again. A date typed beforehand (a planned entry into force) is
+        kept. A refused transition leaves the record as it was.
+        """
+        stamp = target == SCOPE_IN_FORCE and self.effective_date is None
+        if stamp:
+            self.effective_date = timezone.localdate()
+        try:
+            return super().transition_to(
+                target, user, comment=comment, enforce_permission=enforce_permission, save=save,
+            )
+        except Exception:
+            if stamp:
+                self.effective_date = None
+            raise
 
     @property
     def manager_names(self):

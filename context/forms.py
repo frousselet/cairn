@@ -3,6 +3,7 @@
 import math
 
 from django import forms
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from .models import (
@@ -81,16 +82,29 @@ class ScopedFormMixin:
 
 
 class ScopeBaseForm(SteppedFormMixin, forms.ModelForm):
+    # One step per card of the scope page : a step opens on its own from its
+    # card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "diagram-3",
-             [[("icon", "auto"), "name"], "parent_scope", "description"]),
-        Step(_("Boundaries"), "bounding-box",
-             ["boundaries", "justification_exclusions",
-              "geographic_scope", "organizational_scope", "technical_scope"]),
-        Step(_("Sites & people"), "geo-alt",
-             [["included_sites", "excluded_sites"], "managers"]),
-        Step(_("Dates & tags"), "calendar-event",
-             [["effective_date", "review_date"], "tags"]),
+             [[("icon", "auto"), "name"], "parent_scope", "description", "tags"],
+             key="identity"),
+        Step(_("Coverage"), "bullseye",
+             ["geographic_scope", "organizational_scope", "technical_scope"],
+             key="coverage",
+             intro=_("What the scope takes in. Fill in what applies, in your own words.")),
+        Step(_("Boundaries and exclusions"), "bounding-box",
+             ["boundaries", "justification_exclusions"],
+             key="boundaries",
+             intro=_("Where the scope stops : what is left out, and why. It is the first thing an auditor reads.")),
+        Step(_("Sites"), "geo-alt",
+             ["included_sites", "excluded_sites"],
+             key="sites"),
+        Step(_("Managers"), "people",
+             ["managers"],
+             key="managers"),
+        Step(_("Dates"), "calendar-event",
+             [["effective_date", "review_date"]],
+             key="planning"),
     ]
 
     class Meta:
@@ -120,54 +134,89 @@ class ScopeBaseForm(SteppedFormMixin, forms.ModelForm):
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Name of the scope."),
-            "parent_scope": _("Parent scope, if this is a sub-scope."),
+            "name": _('For example "Head office", "Customer service" or "The whole company".'),
+            "parent_scope": _("Leave empty unless this scope is a part of another one."),
             "icon": "",  # self-evident adornment: no helper (overrides model help_text)
-            "description": _("What this scope covers."),
-            "boundaries": _("Where the scope starts and stops."),
-            "justification_exclusions": _("Why certain elements are excluded."),
-            "geographic_scope": _("Geographic perimeter covered."),
-            "organizational_scope": _("Organizational perimeter covered."),
-            "technical_scope": _("Technical perimeter covered."),
-            "included_sites": _("Sites inside the scope."),
-            "excluded_sites": _("Sites explicitly left out."),
-            "managers": _("Users responsible for this scope; they automatically get access."),
-            "effective_date": _("Date the scope takes effect."),
-            "review_date": _("Next date this scope should be reviewed."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "description": _("In a sentence or two : what this scope covers, and what it is for."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
+            "geographic_scope": _("Countries, cities or buildings concerned."),
+            "organizational_scope": _("Entities, departments or teams concerned."),
+            "technical_scope": _("Information systems, applications and networks concerned."),
+            "boundaries": _('What is left out of the scope. Write "no exclusion" when it covers everything.'),
+            "justification_exclusions": _("Why each exclusion is acceptable : an auditor will ask."),
+            "included_sites": _("Pick them among the sites already registered (Sites menu)."),
+            "excluded_sites": _("Only the sites you want on record as left out."),
+            "managers": _("They answer for this scope, and get access to everything in it."),
+            "effective_date": _("Filled in for you the day the scope comes into force. Set it only to plan a later date."),
+            "review_date": _("When to check that the scope is still right. Once a year is usual."),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        qs = Scope.objects.exclude(workflow_state="archived")
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        field = self.fields["parent_scope"]
-        field.queryset = qs
-        # Build tree data for the radio widget
-        selected_id = self.instance.parent_scope_id if self.instance.pk else None
-        if self.data and self.add_prefix("parent_scope") in self.data:
-            selected_id = self.data.get(self.add_prefix("parent_scope"))
-        field.widget.build_tree_data(qs, selected_id)
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
+        if "parent_scope" in self.fields:
+            qs = Scope.objects.exclude(workflow_state="archived")
+            # A user restricted to some scopes picks a parent among theirs.
+            # The parent already set stays offered, or saving the form would
+            # silently detach the scope from it.
+            if user is not None and not user.is_superuser:
+                allowed = user.get_allowed_scope_ids()
+                if allowed is not None:
+                    qs = qs.filter(Q(id__in=allowed) | Q(pk=self.instance.parent_scope_id))
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            field = self.fields["parent_scope"]
+            field.queryset = qs
+            # Build tree data for the radio widget
+            selected_id = self.instance.parent_scope_id if not self.instance._state.adding else None
+            if self.data and self.add_prefix("parent_scope") in self.data:
+                selected_id = self.data.get(self.add_prefix("parent_scope"))
+            elif selected_id is None:
+                selected_id = self.initial.get("parent_scope")
+            field.widget.build_tree_data(qs, selected_id)
         # Site tree choices for included/excluded
-        site_qs = Site.objects.exclude(workflow_state="archived")
-        site_choices = _site_tree_choices(site_qs)
-        for fname in ("included_sites", "excluded_sites"):
-            self.fields[fname].queryset = site_qs
-            self.fields[fname].choices = site_choices
+        if "included_sites" in self.fields or "excluded_sites" in self.fields:
+            site_qs = Site.objects.exclude(workflow_state="archived")
+            site_choices = _site_tree_choices(site_qs)
+            for fname in ("included_sites", "excluded_sites"):
+                if fname in self.fields:
+                    self.fields[fname].queryset = site_qs
+                    self.fields[fname].choices = site_choices
         # Managers: only active users
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        self.fields["managers"].queryset = User.objects.filter(is_active=True).order_by("first_name", "last_name", "email")
+        if "managers" in self.fields:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            self.fields["managers"].queryset = User.objects.filter(is_active=True).order_by("first_name", "last_name", "email")
 
 
 class ScopeCreateForm(ScopeBaseForm):
-    """Scope creation modal form."""
+    """Scope creation : what makes the scope exist, on one screen.
+
+    The rest (coverage, boundaries, sites, managers, dates) is filled in on
+    the scope page, which lists what is missing.
+    """
+
+    steps = [
+        Step(_("Identity"), "diagram-3",
+             [[("icon", "auto"), "name"], "parent_scope", "description"]),
+    ]
+
+    class Meta(ScopeBaseForm.Meta):
+        fields = ["name", "description", "parent_scope", "icon"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The first scope has no possible parent : the question is not asked.
+        if not self.fields["parent_scope"].queryset.exists():
+            del self.fields["parent_scope"]
 
 
 class ScopeUpdateForm(ScopeBaseForm):
-    """Scope edition modal form."""
+    """Scope edition : the whole form, or one of its sections."""
 
 
 class IssueBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):

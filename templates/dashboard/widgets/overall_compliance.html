@@ -5,14 +5,22 @@
     <div class="row align-items-center g-4">
       <div class="col-lg-7">
         <div class="overall-compliance__eyebrow">{% trans "Overall compliance" %}</div>
+        {% comment %}With no framework followed there is no rate : a 0% in red would read as a failure of something that has not begun.{% endcomment %}
+        {% if active_frameworks %}
         <div class="overall-compliance__value-wrap">
           <span class="overall-compliance__value tabular-nums" data-ws-field="overall_compliance" data-ws-suffix="%">{{ overall_compliance|floatformat:0 }}%</span>
           <span class="overall-compliance__delta overall-compliance__delta--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}" aria-hidden="true"></span>
         </div>
         <p class="overall-compliance__hint">{% blocktrans count count=tracked_requirement_count %}Average across all active frameworks - {{ count }} requirement tracked.{% plural %}Average across all active frameworks - {{ count }} requirements tracked.{% endblocktrans %}</p>
+        {% else %}
+        <div class="overall-compliance__value-wrap">
+          <span class="overall-compliance__value overall-compliance__value--none" aria-hidden="true">-</span>
+        </div>
+        <p class="overall-compliance__hint">{% trans "No framework is followed yet : the rate appears once you follow a standard or a regulation." %}</p>
+        {% endif %}
       </div>
       <div class="col-lg-5">
-        <div class="overall-compliance__bar overall-compliance__bar--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}">
+        <div class="overall-compliance__bar overall-compliance__bar--{% if not active_frameworks %}none{% elif overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}">
           <div class="overall-compliance__bar-track">
             <div class="overall-compliance__bar-fill overall-compliance__bar-fill--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}"
                  role="progressbar" aria-label="{% trans 'Overall compliance' %}"
@@ -73,6 +81,10 @@
   .overall-compliance__bar--good { --oc-c1: #34D399; --oc-c2: #16A34A; }
   .overall-compliance__bar--warn { --oc-c1: #FBBF24; --oc-c2: #F59E0B; }
   .overall-compliance__bar--bad  { --oc-c1: #FB7185; --oc-c2: #EF4444; }
+  /* No framework followed : a neutral, empty track, with no status glow. */
+  .overall-compliance__bar--none { --oc-c1: transparent; --oc-c2: transparent; }
+  .overall-compliance__bar--none .overall-compliance__bar-track { box-shadow: inset 0 1px 2px rgba(0,0,0,.06); }
+  .overall-compliance__value--none { color: var(--text-muted); }
   .overall-compliance__bar-track {
     height: 1.375rem;
     background: var(--surface-muted);

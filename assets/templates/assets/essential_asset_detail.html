@@ -6,7 +6,7 @@
 {% block content %}
 {% page_header asset.name reference=asset.reference nav="assets:essential-asset-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'assets:essential-asset-update' asset.pk %}" class="btn btn-primary" hx-get="{% url 'assets:essential-asset-update' asset.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.essential_asset_detail" %}
@@ -20,32 +20,56 @@
     {% kpi_tile _("Associated support assets") dependencies|length icon="diagram-3" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if asset.description %}<div class="ov-rich">{{ asset.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What the asset still needs, each line opening the dialog that
+     fills it. Nothing is rendered once the asset is complete. Each card below
+     is one section of the asset form : its Edit button opens that section
+     alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("General") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="gem" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if asset.description %}<div class="ov-rich">{{ asset.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Type") asset.get_type_display %}
       {% meta_item _("Category") asset.get_category_display %}
-      {% meta_item _("Tags") %}{% tag_list asset.tags.all %}{% endmeta_item %}
       {% meta_item _("Scopes") %}{% if asset.scopes.all %}{% grouped_scope_badges asset.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") %}{% tag_list asset.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("CIA valuation") icon="shield-check" %}
-    {% meta_list cols=3 %}
-      {% meta_item _("Confidentiality") %}{{ asset.confidentiality_level|dic_badge }}{% if asset.confidentiality_justification %}<div class="text-meta mt-1">{{ asset.confidentiality_justification }}</div>{% endif %}{% endmeta_item %}
-      {% meta_item _("Integrity") %}{{ asset.integrity_level|dic_badge }}{% if asset.integrity_justification %}<div class="text-meta mt-1">{{ asset.integrity_justification }}</div>{% endif %}{% endmeta_item %}
-      {% meta_item _("Availability") %}{{ asset.availability_level|dic_badge }}{% if asset.availability_justification %}<div class="text-meta mt-1">{{ asset.availability_justification }}</div>{% endif %}{% endmeta_item %}
-    {% endmeta_list %}
-    {% subhead _("Business continuity") icon="clock-history" %}
-    {% meta_list cols=3 %}
-      {% meta_item _("MTD / Max tolerable downtime") asset.max_tolerable_downtime %}
-      {% meta_item _("RTO") asset.recovery_time_objective %}
-      {% meta_item _("RPO") asset.recovery_point_objective %}
+  {# ── 2. People ── #}
+  {% section_card _("People") icon="people" %}
+    {% slot actions %}{% section_edit edit_url "people" _("People") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Owner") %}{% if asset.owner %}{% user_badge asset.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Custodian") %}{% if asset.custodian %}{% user_badge asset.custodian size=28 link=True block=True %}{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Classification") icon="lock" %}
+  {# ── 3. Security needs : each level with its word, and why ── #}
+  {% section_card _("Security needs") icon="shield-lock" %}
+    {% slot actions %}{% section_edit edit_url "security" _("Security needs") %}{% endslot %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Confidentiality") %}{{ asset.confidentiality_level|dic_level }}{% if asset.confidentiality_justification %}<div class="text-meta mt-1">{{ asset.confidentiality_justification|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Integrity") %}{{ asset.integrity_level|dic_level }}{% if asset.integrity_justification %}<div class="text-meta mt-1">{{ asset.integrity_justification|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Availability") %}{{ asset.availability_level|dic_level }}{% if asset.availability_justification %}<div class="text-meta mt-1">{{ asset.availability_justification|rich }}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 4. Business continuity ── #}
+  {% section_card _("Business continuity") icon="clock-history" %}
+    {% slot actions %}{% section_edit edit_url "continuity" _("Business continuity") %}{% endslot %}
+    {% meta_list cols=3 %}
+      {% meta_item _("Maximum tolerable downtime (MTD)") asset.max_tolerable_downtime %}
+      {% meta_item _("Recovery time objective (RTO)") asset.recovery_time_objective %}
+      {% meta_item _("Recovery point objective (RPO)") asset.recovery_point_objective %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 5. Data and regulation ── #}
+  {% section_card _("Data and regulation") icon="lock" %}
+    {% slot actions %}{% section_edit edit_url "data" _("Data and regulation") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Classification") asset.get_data_classification_display %}
       {% meta_item _("Personal data") %}{% if asset.personal_data %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
@@ -54,6 +78,7 @@
     {% endmeta_list %}
   {% endsection_card %}
 
+  {# ── 6. Support assets it relies on ── #}
   {% section_card _("Associated support assets") icon="diagram-3" count=dependencies|length flush=dependencies %}
     {% if dependencies %}
     <div class="table-responsive">
@@ -71,7 +96,7 @@
             <td>
               <span class="cell-stack">
                 <span>{% choice_badge dep "criticality" %}</span>
-                {% if dep.is_single_point_of_failure %}<span class="cell-sub text-danger"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>{% trans "SPOF" %}</span>{% endif %}
+                {% if dep.is_single_point_of_failure %}<span class="cell-sub text-danger"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>{% trans "Single point of failure (SPOF)" %}</span>{% endif %}
               </span>
             </td>
           </tr>
@@ -80,24 +105,33 @@
       </table>
     </div>
     {% else %}
-    <div class="alert alert-warning mb-0">{% trans "No associated support asset (unsupported essential asset)." %}</div>
+    {% url 'assets:dependency-list' as dependency_list_url %}
+    {% empty_state icon="diagram-3" compact=True message=_("No support asset yet : the systems, premises and suppliers this asset relies on are attached from the dependencies.") cta_url=dependency_list_url cta_label=_("Open the dependencies") cta_icon="arrow-right" %}
     {% endif %}
   {% endsection_card %}
 
-  {% section_card _("CIA valuation history") icon="graph-up" count=valuations|length flush=valuations collapsible=True open=False %}
+  {# ── 7. Activities and review ── #}
+  {% section_card _("Activities and review") icon="arrow-repeat" %}
+    {% slot actions %}{% section_edit edit_url "relations" _("Activities and review") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Business activities") %}{% if activities %}<div class="d-flex flex-wrap gap-1">{% for activity in activities %}<a href="{% url 'context:activity-detail' activity.pk %}" class="link-inherit">{% badge variant="secondary" label=activity.name %}</a>{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Next review date") asset.review_date %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 8. History of the assessments ── #}
+  {% section_card _("History of the security needs") icon="graph-up" count=valuations|length flush=valuations collapsible=True open=False %}
     {% if valuations %}
     <div class="table-responsive">
       <table class="table table-hover mb-0">
-        <thead><tr><th>{% trans "Date" %}</th><th>{% trans "C / I / A" %}</th><th>{% trans "Evaluator" %}</th><th>{% trans "Context" %}</th></tr></thead>
+        <thead><tr><th>{% trans "Date" %}</th><th>{% trans "Confidentiality" %}</th><th>{% trans "Integrity" %}</th><th>{% trans "Availability" %}</th><th>{% trans "Evaluator" %}</th><th>{% trans "Context" %}</th></tr></thead>
         <tbody>
           {% for val in valuations %}
           <tr>
             <td>{{ val.evaluation_date }}</td>
-            <td>
-              <span class="d-inline-flex gap-1 align-items-center text-nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
-                {{ val.confidentiality_level|dic_badge }}{{ val.integrity_level|dic_badge }}{{ val.availability_level|dic_badge }}
-              </span>
-            </td>
+            <td>{{ val.confidentiality_level|dic_level }}</td>
+            <td>{{ val.integrity_level|dic_level }}</td>
+            <td>{{ val.availability_level|dic_level }}</td>
             <td>{% if val.evaluated_by %}{% user_badge val.evaluated_by size=24 %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
             <td>{{ val.context|or_dash }}</td>
           </tr>
@@ -106,15 +140,8 @@
       </table>
     </div>
     {% else %}
-    {% empty_state message=_("No valuation recorded.") %}
+    {% empty_state compact=True message=_("No assessment recorded yet.") %}
     {% endif %}
-  {% endsection_card %}
-
-  {% section_card _("People") icon="people" %}
-    {% meta_list cols=2 %}
-      {% meta_item _("Owner") %}{% if asset.owner %}{% user_badge asset.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Custodian") %}{% if asset.custodian %}{% user_badge asset.custodian size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-    {% endmeta_list %}
   {% endsection_card %}
 
   {% record_card asset %}

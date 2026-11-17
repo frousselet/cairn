@@ -79,7 +79,8 @@ The module covers four sub-domains:
 | RV-03 | The CIA levels **inherited** by a support asset correspond to the **maximum** of the CIA levels of all essential assets to which it is attached. This calculation is performed automatically. |
 | RV-04 | Any change to the CIA levels of an essential asset triggers a **recalculation** of the inherited levels of its associated support assets. |
 | RV-05 | The user can view the detail of a support asset's CIA inheritance (which essential assets contribute to each level). |
-| RV-06 | Each time the CIA levels of an essential asset are changed, an `AssetValuation` record is created to preserve the history. |
+| RV-06 | Each time the CIA levels of an essential asset are changed, an `AssetValuation` record is created to preserve the history : by `POST /essential-assets/{id}/valuations`, and by the web form, which records the author and the day once the three levels are set and one of them changed. |
+| RV-07 | A CIA level is a decision, never a default : an essential asset is created with its three levels **empty** ("not assessed"), on the web, the REST API and the MCP server. An inherited level (RV-03) is the maximum over the assets that have one. |
 
 ### 3.3 Specific rules
 
@@ -94,6 +95,7 @@ The module covers four sub-domains:
 | RS-07 | An `AssetDependency` relationship flagged `is_single_point_of_failure = true` with `redundancy_level = none` triggers a specific **alert** displayed on the dashboard. |
 | RS-08 | An essential asset without any associated support asset triggers an **alert** (unsupported essential asset). |
 | RS-09 | A support asset without any associated essential asset triggers a **warning** (orphan support asset). |
+| RS-10 | An essential asset cannot become `active` until its three CIA levels are set. The transition is refused with what remains to be done, on the web interface, the REST API and the MCP server alike (see [essential-asset.md](essential-asset.md)). |
 
 ---
 
@@ -227,12 +229,14 @@ The module is accessible through a main navigation item "Asset Management" that 
 ### 5.2 "Essential assets" view
 
 - **List:** Table with columns (Reference, Name, Type, Category, Owner, C/I/A, Classification, Status). Each CIA level is shown with a colored indicator (green : red). Filtering and sorting on all columns.
-- **Detail / Edit:** Form with tabs:
-  - *General information:* identification, type, category, owner, custodian.
-  - *CIA valuation:* rating of the 3 criteria with sliders or selectors, justifications, MTD/RTO/RPO.
-  - *Classification:* data classification, personal data, regulatory constraints.
-  - *Relationships:* associated support assets (with dependency type), linked business activities.
-  - *History:* history of valuations and changes.
+- **Creation:** One screen : name, category (the type follows), owner, description, and the scopes when there are several. The user lands on the new asset.
+- **Detail / Edit:** The page opens on what the asset still needs (RS-10), then one card per section of its form, each opening its own dialog; the header opens the whole form :
+  - *Identity:* name, category, description, scopes, tags.
+  - *People:* owner, custodian.
+  - *Security needs:* the 3 criteria, each a question with its level (shown with its word) and its justification.
+  - *Business continuity:* MTD, RTO, RPO, spelled out.
+  - *Data and regulation:* data classification, personal data, regulatory constraints.
+  - *Associated support assets* (with dependency type), *activities and review*, *history of the security needs*.
 - **Actions:** Create, Edit, Rate (CIA), Export.
 
 ### 5.3 "Support assets" view

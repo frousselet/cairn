@@ -84,7 +84,9 @@ def perform_transition(
     :class:`~core.models.LifecycleEvent`.
 
     Returns ``(event, transition)``. Raises a :class:`core.lifecycle.LifecycleError`
-    subclass on an invalid or forbidden transition, or
+    subclass on an invalid or forbidden transition (a
+    :class:`core.lifecycle.DomainRefusalError` naming what remains to be done
+    when the model's completeness holds the target step), or
     :class:`django.core.exceptions.ValidationError` when the form is invalid.
     """
     from django.core.exceptions import ValidationError
@@ -103,6 +105,15 @@ def perform_transition(
         comment=comment,
         enforce_permission=enforce_permission,
     )
+
+    # A record created with few fields is completed on its page : the steps
+    # its model names (``COMPLETENESS.before``) wait for it. Checked here, once
+    # the move is known to be legal and allowed (a caller who may not perform
+    # it is told so, not what the record lacks), and for every surface at
+    # once : the interface, the REST API and the MCP server all come through.
+    from core.completeness import refuse_if_incomplete
+
+    refuse_if_incomplete(instance, target)
 
     form_data: dict = {}
     form = build_transition_form(transition, instance, data=data, files=files)

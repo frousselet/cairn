@@ -35,5 +35,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No essential asset registered yet.") message=_("Essential assets are the information, processes and services whose loss would hurt the business. They sit at the top of every dependency chain.") colspan=7 %}
+{% url 'assets:essential-asset-create' as asset_create_url %}
+{% list_empty title=_("No essential asset yet.") message=_("An essential asset is what the business cannot do without : an information it holds (the customer file) or an activity it runs (payroll). List them first; what protects them comes next.") colspan=7 create_url=asset_create_url create_label=_("New essential asset") permission="assets.essential_asset.create" %}
 {% endfor %}

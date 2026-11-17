@@ -35,5 +35,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No scope defined yet.") message=_("Scopes draw the boundaries of your ISMS. Define at least one (geographic, organisational, technical) to anchor every other entity.") colspan=7 %}
+{% url 'context:scope-create' as scope_create_url %}
+{% list_empty title=_("No scope yet.") message=_("A scope says what your security work covers : the whole company, one site or one activity. Every other record is filed under a scope, so this is where to start.") colspan=7 create_url=scope_create_url create_label=_("New scope") permission="context.scope.create" %}
 {% endfor %}

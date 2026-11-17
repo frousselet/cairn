@@ -6,6 +6,37 @@ the arrangement is persisted per user. The editing experience mirrors the Apple
 widget editor: an **Edit** button, a wiggle animation, a dotted placement grid,
 drag-to-reorder, per-widget resizing, and an **Add a widget** gallery.
 
+## First steps of a new instance
+
+Until the instance holds its first records, the dashboard opens, above the
+widgets, on the **first steps** (`core/getting_started.py`,
+`templates/dashboard/first_steps.html`) : what to do first, in the order the
+work is done.
+
+| Step | Done when the instance holds | Page |
+|---|---|---|
+| Say what is covered | a scope | Scopes |
+| List what the business cannot do without | an essential asset | Essential assets |
+| List what it relies on | a support asset | Support assets |
+| Choose what to comply with | a framework | Frameworks |
+| Assess your risks | a risk assessment | Risk assessments |
+| Bring your colleagues in | more than one active account | Users |
+
+- A step is done when the instance holds the thing, whoever created it : the
+  list describes the instance, not the reader.
+- A reader sees the steps whose page they may open (its read permission); the
+  step to take next carries one sentence and a button, which reads *Start* for
+  who may create and *Open* otherwise.
+- A reader may hide the list (`POST /dashboard/first-steps/`, kept in
+  `User.dismissed_helpers` under `getting_started`); while steps remain, the
+  dashboard header offers to bring it back (`show=1`).
+- Once every step is done the list is gone for good; the answer is kept for the
+  life of the process.
+- While the list is shown the instance reports nothing it has not begun : the
+  summary widget reads "Nothing to report yet" instead of "you're all clear",
+  and the overall compliance shows no rate (and no red) before a framework is
+  followed.
+
 ## Layout model
 
 The dashboard has **two zones**: a **main area** (normal width, directly below

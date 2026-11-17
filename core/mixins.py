@@ -4,15 +4,17 @@ import json
 import math
 from urllib.parse import urlsplit
 
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models as dj_models
 from django.db.models import Count, F, Q
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.urls import Resolver404, resolve
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.template.loader import render_to_string
 from django.utils.dateparse import parse_date
+from django.utils.translation import gettext as _
 from django.utils.translation import pgettext_lazy
 
 from core.db import NaturalSortKey
@@ -95,11 +97,21 @@ class HtmxFormMixin:
         modal_template_name: Template for the modal form partial.
         modal_title_create: Title for the create modal.
         modal_title_update: Title for the update modal.
+        land_on_record: After a creation, open the new record instead of
+            going back to the list : the record is where the rest of it is
+            filled in ("create short, complete on the record", see
+            ``docs/sdk/usability-standard.md``). The model needs a
+            ``get_absolute_url``. A full-page edit returns to the record too.
+
+    An update view whose form declares sections (``Step(..., key=...)``) opens
+    on one of them with ``?section=<key>`` : the form then carries the fields
+    of that section only, and the dialog takes its title.
     """
 
     modal_template_name = None
     modal_title_create = ""
     modal_title_update = ""
+    land_on_record = False
 
     def _is_htmx(self):
         # The drawer flow targets #drawer-form-content; a boosted navigation
@@ -111,10 +123,48 @@ class HtmxFormMixin:
             return [self.modal_template_name]
         return super().get_template_names()
 
+    def _requested_section(self):
+        """The section the form is asked to open on, or ``None``.
+
+        Only an existing record is edited by section : a creation restricted
+        to one would leave the required fields of the others unasked. An
+        unknown key is a 404, not a silent fallback to the whole form.
+        """
+        if getattr(self, "object", None) is None:
+            return None
+        key = self.request.GET.get("section") or self.request.POST.get("_section") or ""
+        if not key:
+            return None
+        section_keys = getattr(self.get_form_class(), "section_keys", None)
+        if section_keys is None or key not in section_keys():
+            raise Http404
+        return key
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        section = self._requested_section()
+        if section:
+            kwargs["section"] = section
+        return kwargs
+
+    def get_success_url(self):
+        obj = getattr(self, "object", None)
+        if self.land_on_record and obj is not None:
+            return obj.get_absolute_url()
+        return super().get_success_url()
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         is_edit = getattr(self, "object", None) and self.object.pk
         title = self.modal_title_update if is_edit else self.modal_title_create
+        # A form opened on one section is named after it : the dialog answers
+        # the card the user clicked on.
+        section = getattr(ctx.get("form"), "active_section", None)
+        if section is not None:
+            title = section.title
+        # The button says what it does : a record that does not exist yet is
+        # created, an existing one is saved.
+        ctx.setdefault("submit_label", _("Save") if is_edit else _("Create"))
         if self._is_htmx():
             ctx["modal_title"] = title
             ctx["is_modal"] = True
@@ -122,14 +172,28 @@ class HtmxFormMixin:
             # The full-page fallback (``includes/page_form.html``): same title
             # as the modal, a Cancel target and the breadcrumb of the list.
             ctx.setdefault("form_title", title)
-            cancel_url = page_form_cancel_url(self)
+            list_url = page_form_cancel_url(self)
+            cancel_url = list_url
+            if self.land_on_record and is_edit:
+                cancel_url = self.object.get_absolute_url()
             ctx.setdefault("cancel_url", cancel_url)
-            ctx.setdefault("form_nav", nav_name_for(cancel_url))
+            ctx.setdefault("form_nav", nav_name_for(list_url))
         return ctx
 
     def form_valid(self, form):
+        creating = getattr(self, "object", None) is None
         response = super().form_valid(form)
+        landing = creating and self.land_on_record
+        if landing:
+            messages.success(
+                self.request,
+                _('The record "%(name)s" is created. You can now complete it.')
+                % {"name": getattr(self.object, "name", None) or str(self.object)},
+            )
         if self._is_htmx():
+            if landing:
+                # A full navigation : the drawer closes on the new record.
+                return HttpResponse(status=204, headers={"HX-Redirect": self.get_success_url()})
             return HttpResponse(
                 status=204,
                 headers={"HX-Trigger": "formSaved"},
@@ -141,6 +205,43 @@ class HtmxFormMixin:
             self.object = getattr(self, "object", None)
             return self.render_to_response(self.get_context_data(form=form))
         return super().form_invalid(form)
+
+
+class CompleteOnRecordMixin:
+    """Detail-view side of "create short, complete on the record".
+
+    For a ``DetailView`` whose record is completed on its own page : it puts
+    in the context what the page needs to offer the dialogs that fill it,
+
+    - ``edit_url`` : the update URL of the record, or ``""`` when the user may
+      not edit it (``{% section_edit %}`` and ``{% completeness_card %}`` then
+      render no action);
+    - ``can_edit`` : the same answer as a boolean;
+    - ``completeness`` : the :class:`core.completeness.Report` of the record,
+      or ``None`` when its model declares no ``COMPLETENESS``.
+
+    Class attributes:
+        edit_url_name: URL name of the update view, taking ``pk``.
+        edit_permission: codename the update view requires.
+    """
+
+    edit_url_name = None
+    edit_permission = None
+
+    def get_context_data(self, **kwargs):
+        from django.urls import reverse
+
+        from core.completeness import completeness_of
+
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        can_edit = bool(self.edit_url_name) and (
+            user.is_superuser or not self.edit_permission or user.has_perm(self.edit_permission)
+        )
+        ctx["can_edit"] = can_edit
+        ctx["edit_url"] = reverse(self.edit_url_name, kwargs={"pk": self.object.pk}) if can_edit else ""
+        ctx["completeness"] = completeness_of(self.object)
+        return ctx
 
 
 class SortableListMixin:

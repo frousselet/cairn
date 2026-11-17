@@ -131,6 +131,12 @@ The detail page follows the platform's layout convention : a two-column card
 layout, main content left and a sticky metadata sidebar right, with collapsible
 sections rather than tabs. See [ui-conventions.md](ui-conventions.md).
 
+A new entity is built to the [usability standard](usability-standard.md) from
+the start : a creation form of six fields at most that lands on the record, an
+edit form whose steps are sections, a `COMPLETENESS` on the model, and a detail
+page that lists what is missing and edits one card at a time. That page walks
+the eight steps, with scopes and essential assets as the examples.
+
 Add the entry to the navigation : one `NavItem` in the right section of `MENU`
 (`core/navigation.py`). The sidebar and the breadcrumb of the entity's pages
 both come from it, and the entry is shown to the users its list view lets in
@@ -215,6 +221,7 @@ spec ──▶ model ──▶ migration ──▶ lifecycle ──▶ permissio
 - [ ] Lifecycle declared and registered, or the default deliberately kept
 - [ ] Permissions registered and migrated
 - [ ] List, detail, create, update, delete views, with the stepper on detail
+- [ ] Built to the usability standard, and listed in `core/tests/test_usability_standard.py`
 - [ ] Navigation entry added
 - [ ] Tenancy declared : `scope_parent_lookup` on a child model, `ScopeFilterAPIMixin` on the REST class, the scoped fetch in custom views
 - [ ] MCP tools, full set

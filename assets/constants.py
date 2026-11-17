@@ -55,6 +55,29 @@ class EssentialAssetCategory(models.TextChoices):
     COMMERCIAL_DATA = "commercial_data", _("Commercial data")
 
 
+def essential_asset_type_for(category):
+    """The type the essential-asset ``category`` belongs to, or ``""``.
+
+    A category names its type (a core process is a business process, financial
+    data is an information) : a form asks for the category alone and the type
+    follows, so the two can never disagree (RS-01).
+    """
+    if category in PROCESS_CATEGORIES:
+        return EssentialAssetType.BUSINESS_PROCESS.value
+    if category in INFORMATION_CATEGORIES:
+        return EssentialAssetType.INFORMATION.value
+    return ""
+
+
+def essential_asset_category_choices():
+    """The categories, grouped under the type each belongs to (a select with groups)."""
+    labels = dict(EssentialAssetCategory.choices)
+    return [
+        (EssentialAssetType.BUSINESS_PROCESS.label, [(code, labels[code]) for code in PROCESS_CATEGORIES]),
+        (EssentialAssetType.INFORMATION.label, [(code, labels[code]) for code in INFORMATION_CATEGORIES]),
+    ]
+
+
 class DataClassification(models.TextChoices):
     PUBLIC = "public", _("Public")
     INTERNAL = "internal", _("Internal")

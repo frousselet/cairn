@@ -3,8 +3,11 @@
 import base64
 
 from django import forms
+from django.db.models import Q
 from django.forms import inlineformset_factory
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 
 from compliance.models import Framework
 from context.constants import StakeholderCategory
@@ -18,7 +21,10 @@ from .constants import (
     CERTIFICATE_PDF_MAGIC,
     CONTRACT_MAX_PDF_BYTES,
     CONTRACT_PDF_MAGIC,
+    DICLevel,
     SupplierStatus,
+    essential_asset_category_choices,
+    essential_asset_type_for,
 )
 from .models import (
     AssetDependency,
@@ -82,26 +88,45 @@ class ScopedFormMixin:
             field.widget.build_tree_data(qs, selected_ids)
 
 
+# A plain two-line box : a justification is a sentence, not a formatted text.
+_JUSTIFICATION = forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 2, "class": "form-control no-richtext"})
+_LEVEL_FIELDS = ("confidentiality_level", "integrity_level", "availability_level")
+
+
 class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the asset page : a step opens on its own from its
+    # card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "gem",
-             ["name", ["type", "category"], ["owner", "custodian"], "description"]),
+             ["name", "category", "description", "scopes", "tags"],
+             key="identity"),
+        Step(_("People"), "people",
+             [["owner", "custodian"]],
+             key="people"),
         Step(_("Security needs"), "shield-lock",
-             [["confidentiality_level", "integrity_level", "availability_level"],
-              "confidentiality_justification", "integrity_justification",
-              "availability_justification"]),
-        Step(_("Continuity & data"), "arrow-repeat",
-             [["max_tolerable_downtime", "recovery_time_objective", "recovery_point_objective"],
-              ["data_classification", "personal_data"], "regulatory_constraints"]),
-        Step(_("Relations & status"), "diagram-3",
-             ["related_activities", "review_date", "scopes", "tags"]),
+             [[("confidentiality_level", 4), "confidentiality_justification"],
+              [("integrity_level", 4), "integrity_justification"],
+              [("availability_level", 4), "availability_justification"]],
+             key="security",
+             intro=_("For each of the three questions, pick how much harm it would do, from negligible to critical. A few words of justification make the choice defensible later.")),
+        Step(_("Business continuity"), "clock-history",
+             ["max_tolerable_downtime", "recovery_time_objective", "recovery_point_objective"],
+             key="continuity",
+             intro=_('How long the business can do without this asset. A duration in plain words is enough : "4 hours", "2 days".')),
+        Step(_("Data and regulation"), "lock",
+             [["data_classification", "personal_data"], "regulatory_constraints"],
+             key="data"),
+        Step(_("Activities and review"), "diagram-3",
+             ["related_activities", "review_date"],
+             key="relations"),
     ]
 
     class Meta:
         model = EssentialAsset
+        # ``type`` is not asked : the category names it (see ``clean``).
         fields = [
             "scopes", "name", "description",
-            "type", "category", "owner", "custodian",
+            "category", "owner", "custodian",
             "confidentiality_level", "integrity_level", "availability_level",
             "confidentiality_justification", "integrity_justification",
             "availability_justification",
@@ -115,16 +140,15 @@ class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
             "scopes": ScopeTreeWidget(),
             "name": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "description": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 4}),
-            "type": forms.Select(attrs=SELECT_ATTRS),
             "category": forms.Select(attrs=SELECT_ATTRS),
             "owner": forms.Select(attrs=SELECT_ATTRS),
             "custodian": forms.Select(attrs=SELECT_ATTRS),
             "confidentiality_level": forms.Select(attrs=SELECT_ATTRS),
             "integrity_level": forms.Select(attrs=SELECT_ATTRS),
             "availability_level": forms.Select(attrs=SELECT_ATTRS),
-            "confidentiality_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 2}),
-            "integrity_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 2}),
-            "availability_justification": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 2}),
+            "confidentiality_justification": _JUSTIFICATION,
+            "integrity_justification": _JUSTIFICATION,
+            "availability_justification": _JUSTIFICATION,
             "max_tolerable_downtime": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "recovery_time_objective": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
             "recovery_point_objective": forms.TextInput(attrs=FORM_WIDGET_ATTRS),
@@ -135,38 +159,138 @@ class EssentialAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Name of the essential asset."),
-            "type": _("Kind of essential asset."),
-            "category": _("Category of the asset."),
-            "owner": _("Person accountable for the asset."),
-            "custodian": _("Person operating the asset day to day."),
-            "description": _("What the asset is and why it matters."),
-            "confidentiality_level": _("Required confidentiality level."),
-            "integrity_level": _("Required integrity level."),
-            "availability_level": _("Required availability level."),
-            "confidentiality_justification": _("Why this confidentiality level."),
-            "integrity_justification": _("Why this integrity level."),
-            "availability_justification": _("Why this availability level."),
-            "max_tolerable_downtime": _("Maximum time the asset can stay unavailable (MTD)."),
-            "recovery_time_objective": _("Target time to restore the asset (RTO)."),
-            "recovery_point_objective": _("Maximum tolerable data loss (RPO)."),
-            "data_classification": _("Sensitivity classification of the data."),
-            "personal_data": _("Tick if the asset handles personal data."),
-            "regulatory_constraints": _("Laws or regulations applying to the asset."),
-            "related_activities": _("Business activities relying on this asset."),
-            "review_date": _("Next date this asset should be reviewed."),
-            "scopes": _("Organizational scopes this asset applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('For example "Customer file", "Payroll" or "Online ordering".'),
+            "category": _("An activity the business runs on, or an information it holds."),
+            "owner": _("The person who answers for this asset and decides what it needs."),
+            "custodian": _("The person or team running it day to day, when it is not the owner."),
+            "description": _("What it is used for, and what would be lost without it."),
+            "scopes": _("Without a scope, every user sees this asset."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
+            "confidentiality_level": _("What if it were disclosed to people who should not see it ?"),
+            "integrity_level": _("What if it were wrong, or altered without anyone noticing ?"),
+            "availability_level": _("What if it were out of reach when it is needed ?"),
+            "max_tolerable_downtime": _("Beyond this, the business is in danger. Always longer than the recovery time objective."),
+            "recovery_time_objective": _('How fast you aim to have it back, for example "4 hours".'),
+            "recovery_point_objective": _('How much recent data you can afford to lose, for example "1 hour of entries".'),
+            "data_classification": _("How widely it may circulate, from public to secret."),
+            "personal_data": _("Tick when it holds data about identifiable people (customers, employees) : the GDPR then applies."),
+            "regulatory_constraints": _("Laws, regulations or contracts that apply to it, for example the GDPR or a client's security clause."),
+            "related_activities": _("The business activities that cannot run without it."),
+            "review_date": _("When to check this record is still right. Once a year is usual."),
         }
+
+    def __init__(self, *args, user=None, **kwargs):
+        self._user = user
+        super().__init__(*args, user=user, **kwargs)
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
+        if "category" in self.fields:
+            self.fields["category"].choices = [
+                ("", pgettext_lazy("empty select option", "Choose…")),
+                *essential_asset_category_choices(),
+            ]
+        # An empty level reads "Not assessed" : it is a state of the record,
+        # not a missing choice.
+        for name in _LEVEL_FIELDS:
+            if name in self.fields:
+                self.fields[name].choices = [("", _("Not assessed")), *DICLevel.choices]
+        # People are picked among the active accounts; whoever is already set stays.
+        from django.contrib.auth import get_user_model
+
+        active = get_user_model().objects.filter(is_active=True)
+        for name in ("owner", "custodian"):
+            if name in self.fields:
+                current = getattr(self.instance, f"{name}_id", None)
+                self.fields[name].queryset = (
+                    get_user_model().objects.filter(Q(is_active=True) | Q(pk=current))
+                    if current else active
+                ).order_by("first_name", "last_name", "email")
+        self._levels_before = tuple(getattr(self.instance, name) for name in _LEVEL_FIELDS)
+
+    def clean(self):
+        cleaned = super().clean()
+        # RS-01 : the category names its type, so the two cannot disagree.
+        category = cleaned.get("category")
+        if category:
+            self.instance.type = essential_asset_type_for(category)
+        return cleaned
+
+    def save(self, commit=True):
+        asset = super().save(commit=commit)
+        if commit:
+            self._record_valuation(asset)
+        return asset
+
+    def _record_valuation(self, asset):
+        """RV-06 : setting or changing the security needs is an assessment.
+
+        It is recorded with its author and its date, so the history of the
+        valuations shows who decided what. Nothing is recorded while a level
+        is still missing, or when the three are unchanged.
+        """
+        levels = tuple(getattr(asset, name) for name in _LEVEL_FIELDS)
+        if None in levels or levels == self._levels_before or self._user is None:
+            return
+        reasons = [
+            f"{self._meta.model._meta.get_field(name).verbose_name} : {text}"
+            for name, text in (
+                ("confidentiality_level", asset.confidentiality_justification),
+                ("integrity_level", asset.integrity_justification),
+                ("availability_level", asset.availability_justification),
+            )
+            if text.strip()
+        ]
+        AssetValuation.objects.create(
+            essential_asset=asset,
+            evaluation_date=timezone.localdate(),
+            confidentiality_level=levels[0],
+            integrity_level=levels[1],
+            availability_level=levels[2],
+            evaluated_by=self._user,
+            justification="\n".join(reasons),
+        )
+        self._levels_before = levels
 
 
 class EssentialAssetCreateForm(EssentialAssetBaseForm):
-    """Essential asset creation modal form."""
+    """Essential asset creation : what it is and who answers for it, on one screen.
+
+    The security needs, the continuity figures and the rest are filled in on
+    the asset page, which lists what is missing.
+    """
+
+    steps = [
+        Step(_("Identity"), "gem", ["name", ["category", "owner"], "scopes", "description"]),
+    ]
+
+    class Meta(EssentialAssetBaseForm.Meta):
+        fields = ["scopes", "name", "description", "category", "owner"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # With one scope only there is nothing to choose : the question is not
+        # asked, and the asset is filed under that scope when it is saved.
+        self._only_scope = None
+        only = list(self.fields["scopes"].queryset[:2])
+        if len(only) == 1:
+            self._only_scope = only[0]
+            del self.fields["scopes"]
+        # Whoever registers an asset usually answers for it.
+        if not self.is_bound and self._user is not None:
+            self.fields["owner"].initial = self._user.pk
+
+    def save(self, commit=True):
+        asset = super().save(commit=commit)
+        if commit and self._only_scope is not None:
+            asset.scopes.add(self._only_scope)
+        return asset
 
 
 class EssentialAssetUpdateForm(EssentialAssetBaseForm):
-    """Essential asset edition modal form."""
+    """Essential asset edition : the whole form, or one of its sections."""
 
 
 class SupportAssetBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):

@@ -90,6 +90,80 @@
   .section-card__head { flex-wrap: wrap; }
 }
 
+/* ── To complete : what a record still needs ──────────
+   {% completeness_card %}. A list of the missing pieces; a line is the
+   button that opens the dialog which fills it. What the lifecycle waits for
+   carries the warning ink, an advice stays neutral. */
+.todo-card__lead {
+  margin: 0 0 .625rem;
+  font-size: .8125rem;
+  color: var(--text-secondary);
+}
+.todo-list + .todo-card__lead { margin-top: 1.125rem; }
+.todo-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  min-height: 2.75rem;
+  padding: .5rem .875rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: .875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+a.todo-item:hover { background: var(--surface-muted); color: var(--text-primary); }
+a.todo-item:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus-ring); }
+.todo-item__mark { flex-shrink: 0; font-size: .875rem; color: var(--text-muted); }
+.todo-item--blocking .todo-item__mark { color: var(--warning-text); }
+.todo-item__label { min-width: 0; }
+.todo-item__go { margin-left: auto; flex-shrink: 0; font-size: .75rem; color: var(--text-muted); }
+
+/* ── First steps : what a new instance does first ─────
+   templates/dashboard/first_steps.html. A numbered list; the step to take
+   next is opened (its sentence, its button), the others are a line each. */
+.first-steps { padding: 1.25rem 1.5rem 1.375rem; margin-bottom: 1.5rem; }
+.first-steps__head { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
+.first-steps__title { margin: 0; font-size: 1.0625rem; font-weight: 810; letter-spacing: normal; color: var(--text-primary); }
+.first-steps__lead { margin: .25rem 0 0; font-size: .875rem; color: var(--text-secondary); }
+.first-steps__meta { margin-left: auto; display: flex; align-items: center; gap: .75rem; flex-shrink: 0; }
+.first-steps__count { font-size: .8125rem; color: var(--text-secondary); white-space: nowrap; }
+.first-steps__list { list-style: none; margin: 0; padding: 0; display: grid; gap: .25rem; }
+.first-step { display: flex; align-items: flex-start; gap: .75rem; padding: .5rem .625rem; border-radius: var(--radius-md); }
+.first-step.is-next { background: var(--surface-muted); padding: .875rem .875rem 1rem; margin: .25rem 0; }
+.first-step__mark {
+  width: 1.625rem;
+  height: 1.625rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-light);
+  background: var(--surface);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.first-step.is-next .first-step__mark { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+.first-step.is-done .first-step__mark { background: var(--success-soft, var(--surface-muted)); border-color: transparent; color: var(--success-text); }
+.first-step__body { min-width: 0; padding-top: .125rem; }
+.first-step__title { font-size: .9375rem; font-weight: 600; color: var(--text-primary); }
+.first-step.is-done .first-step__title { font-weight: 500; color: var(--text-secondary); }
+.first-step__link { text-decoration: none; font-weight: 500; }
+.first-step__link:hover { text-decoration: underline; color: var(--text-primary); }
+.first-step__why { margin: .25rem 0 .75rem; font-size: .875rem; line-height: 1.5; color: var(--text-secondary); max-width: 46rem; }
+@media (max-width: 575.98px) {
+  .first-steps { padding: 1.125rem 1.125rem 1.25rem; }
+  .first-steps__head { flex-direction: column; gap: .75rem; }
+  .first-steps__meta { margin-left: 0; }
+}
+
 /* ── Overview : icon-led summary rows ─────────────────
    The row rules are shared with .supplier-overview (09-components.css). */
 .overview { display: flex; flex-direction: column; gap: .55rem; }

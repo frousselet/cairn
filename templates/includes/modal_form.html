@@ -10,8 +10,13 @@
   - Legacy: the entity template overrides `modal_form_fields` with
     hand-written markup; the progress bar and step footer stay off because
     `form.is_stepped` is falsey.
+
+  Every form ends on a footer whose buttons carry words : Cancel on the left,
+  the action on the right. A multi-step form adds Previous / Next; a record
+  being edited can be saved from any step (nothing is gated), a record being
+  created is saved from the last one.
 {% endcomment %}
-<form method="post" {% block form_enctype %}{% endblock %} hx-post="{{ request.path }}" hx-target="#drawer-form-content" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']" data-mform-error-tpl="{% trans '{n} fields need attention' %}"{% if form.is_stepped %} data-mform data-modal-size="{{ form.modal_size }}"{% endif %}{% if form.is_multistep %} novalidate{% endif %}>
+<form method="post" {% block form_enctype %}{% endblock %} hx-post="{{ request.path }}" hx-target="#drawer-form-content" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']" data-mform-error-tpl="{% trans '{n} fields need attention' %}"{% if form.is_stepped %} data-mform data-modal-size="{{ form.modal_size }}" data-mform-mode="{% if form.is_editing %}edit{% else %}create{% endif %}"{% endif %}{% if form.is_multistep %} novalidate{% endif %}>
   {% comment %}
     novalidate on multi-step forms: native browser validation can't focus a
     field on a hidden step ("invalid form control is not focusable"), which
@@ -19,6 +24,8 @@
     server-side (the source of truth), which re-renders the modal on error.
   {% endcomment %}
   {% csrf_token %}
+  {% comment %}A form opened on one section says so when it comes back.{% endcomment %}
+  {% if form.active_section %}<input type="hidden" name="_section" value="{{ form.active_section.key }}">{% endif %}
   <div class="modal-header">
     <h5 class="modal-title">
       {% block modal_title_icon %}<span class="drawer-title-icon"><i class="bi bi-pencil-square"></i></span>{% endblock %}
@@ -31,20 +38,23 @@
     {% block modal_form_fields %}{% include "includes/form_steps.html" %}{% endblock %}
   </div>
   {% if form.is_multistep %}
-    {% comment %}
-      Multi-step navigation lives OUTSIDE the modal as floating side arrows
-      (rendered once in base.html, wired by the stepper JS): left = previous,
-      right = next, becoming a save check on the last step. There is no footer;
-      cancellation is the header X or a backdrop click. This visually-hidden
-      submit button is what the check arrow triggers (and what HTMX disables
-      while the request is in flight).
-    {% endcomment %}
-    <button type="submit" class="btn btn-primary visually-hidden" data-mform-submit tabindex="-1" aria-hidden="true">{% trans "Save" %}</button>
+  {% comment %}
+    The navigation of a multi-step form. Not a block : its buttons are wired
+    by the stepper script (data-mform-prev / -next / -submit), which shows
+    Previous from the second step on and swaps Next for the action on the
+    last one. Editing : the action is offered on every step.
+  {% endcomment %}
+  <div class="modal-footer drawer-footer mform-footer">
+    <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+    <button type="button" class="btn btn-secondary" data-mform-prev hidden><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{% trans "Previous" %}</button>
+    <button type="button" class="btn {% if form.is_editing %}btn-secondary{% else %}btn-primary{% endif %}" data-mform-next data-required-msg="{% trans 'Fill the required fields to continue.' %}">{% trans "Next" %}<i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
+    <button type="submit" class="btn btn-primary" data-mform-submit{% if not form.is_editing %} hidden{% endif %}><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{{ submit_label|default:_("Save") }}</button>
+  </div>
   {% else %}
   <div class="modal-footer drawer-footer">
     {% block modal_form_actions %}
       <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
-      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save" %}</button>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{{ submit_label|default:_("Save") }}</button>
     {% endblock %}
   </div>
   {% endif %}

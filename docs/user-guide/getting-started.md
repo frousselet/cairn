@@ -69,8 +69,28 @@ problem. See [Scopes](organisational-context.md#scopes).
 
 ## The first hour
 
-If you are setting up a real instance, this order saves rework, because each
-step is what the next one attaches to.
+A new instance is empty, and says so : until it holds its first records, the
+dashboard opens on its **first steps**, a short list of what to do first, in
+order. The step to take next carries one sentence and a *Start* button; a step
+is ticked once the instance holds the thing, whoever created it. You can hide
+the list (it comes back from the *First steps* button of the dashboard
+header), and it disappears for good once every step is done.
+
+1. **Say what is covered** : a scope.
+2. **List what the business cannot do without** : your essential assets.
+3. **List what it relies on** : your support assets.
+4. **Choose what to comply with** : a framework.
+5. **Assess your risks** : a risk assessment.
+6. **Bring your colleagues in** : accounts and roles.
+
+Each of these creations fits one screen. You give a record its name and what
+it is, and you land on its page, which lists what it still needs and opens the
+right dialog for each line. Nothing has to be filled in at once : what a record
+lacks only matters when it is put to use, and its page tells you then (see
+[Scopes](organisational-context.md#scopes)).
+
+If you are setting up a real instance in full, this longer order saves rework,
+because each step is what the next one attaches to.
 
 1. **Company settings.** Name, logo, accent colour. Administration -> Company.
 2. **At least one scope.** Everything else attaches to a perimeter, and a record

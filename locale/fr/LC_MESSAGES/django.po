@@ -20693,3 +20693,292 @@ msgstr "L'application choisit elle-même son nom : n'approuvez que si vous êtes
 
 msgid "This page was opened over an unencrypted connection. Signing in requires HTTPS : open this address with https://, or ask your administrator."
 msgstr "Cette page a été ouverte sur une connexion non chiffrée. La connexion exige HTTPS : ouvrez cette adresse en https://, ou contactez votre administrateur."
+
+msgid "For each of the three questions, pick how much harm it would do, from negligible to critical. A few words of justification make the choice defensible later."
+msgstr "Pour chacune des trois questions, choisissez la gravité des conséquences, de négligeable à critique. Quelques mots de justification rendront ce choix défendable plus tard."
+
+msgid "How long the business can do without this asset. A duration in plain words is enough : \"4 hours\", \"2 days\"."
+msgstr "Combien de temps l'activité peut se passer de ce bien. Une durée en toutes lettres suffit : « 4 heures », « 2 jours »."
+
+msgid "Data and regulation"
+msgstr "Données et réglementation"
+
+msgid "Activities and review"
+msgstr "Activités et revue"
+
+msgid "For example \"Customer file\", \"Payroll\" or \"Online ordering\"."
+msgstr "Par exemple « Fichier clients », « Paie » ou « Prise de commande en ligne »."
+
+msgid "An activity the business runs on, or an information it holds."
+msgstr "Une activité dont l'entreprise dépend, ou une information qu'elle détient."
+
+msgid "The person who answers for this asset and decides what it needs."
+msgstr "La personne qui répond de ce bien et décide de ce qu'il lui faut."
+
+msgid "The person or team running it day to day, when it is not the owner."
+msgstr "La personne ou l'équipe qui s'en occupe au quotidien, si ce n'est pas le propriétaire."
+
+msgid "What it is used for, and what would be lost without it."
+msgstr "À quoi il sert, et ce qui serait perdu sans lui."
+
+msgid "Without a scope, every user sees this asset."
+msgstr "Sans périmètre, tous les utilisateurs voient ce bien."
+
+msgid "Free words to find and group records, for example \"ISO 27001\"."
+msgstr "Des mots libres pour retrouver et regrouper les fiches, par exemple « ISO 27001 »."
+
+msgid "What if it were disclosed to people who should not see it ?"
+msgstr "Que se passerait-il s'il était divulgué à des personnes qui ne devraient pas le voir ?"
+
+msgid "What if it were wrong, or altered without anyone noticing ?"
+msgstr "Que se passerait-il s'il était faux, ou modifié sans que personne ne le remarque ?"
+
+msgid "What if it were out of reach when it is needed ?"
+msgstr "Que se passerait-il s'il était inaccessible au moment où on en a besoin ?"
+
+msgid "Beyond this, the business is in danger. Always longer than the recovery time objective."
+msgstr "Au-delà, l'activité est en danger. Toujours plus longue que le délai de reprise visé."
+
+msgid "How fast you aim to have it back, for example \"4 hours\"."
+msgstr "En combien de temps vous visez de le remettre en service, par exemple « 4 heures »."
+
+msgid "How much recent data you can afford to lose, for example \"1 hour of entries\"."
+msgstr "Combien de données récentes vous pouvez vous permettre de perdre, par exemple « 1 heure de saisie »."
+
+msgid "How widely it may circulate, from public to secret."
+msgstr "Jusqu'où il peut circuler, de public à secret."
+
+msgid "Tick when it holds data about identifiable people (customers, employees) : the GDPR then applies."
+msgstr "À cocher s'il contient des données sur des personnes identifiables (clients, salariés) : le RGPD s'applique alors."
+
+msgid "Laws, regulations or contracts that apply to it, for example the GDPR or a client's security clause."
+msgstr "Lois, règlements ou contrats qui s'y appliquent, par exemple le RGPD ou la clause de sécurité d'un client."
+
+msgid "The business activities that cannot run without it."
+msgstr "Les activités métier qui ne peuvent pas fonctionner sans lui."
+
+msgid "When to check this record is still right. Once a year is usual."
+msgstr "Quand vérifier que cette fiche est toujours juste. Une fois par an est l'usage."
+
+msgid "Maximum tolerable downtime (MTD)"
+msgstr "Durée maximale d'interruption tolérable (DMT)"
+
+msgid "Recovery time objective (RTO)"
+msgstr "Délai de reprise visé (RTO)"
+
+msgid "Recovery point objective (RPO)"
+msgstr "Perte de données maximale admissible (RPO)"
+
+msgid "assess its security needs"
+msgstr "évaluer ses besoins de sécurité"
+
+msgid "say what it is used for"
+msgstr "dire à quoi il sert"
+
+msgid "attach the support assets it relies on"
+msgstr "rattacher les biens supports dont il dépend"
+
+msgid "say how long the business can do without it"
+msgstr "dire combien de temps l'activité peut s'en passer"
+
+msgid "No support asset yet : the systems, premises and suppliers this asset relies on are attached from the dependencies."
+msgstr "Aucun bien support pour l'instant : les systèmes, locaux et fournisseurs dont ce bien dépend se rattachent depuis les dépendances."
+
+msgid "Open the dependencies"
+msgstr "Ouvrir les dépendances"
+
+msgid "History of the security needs"
+msgstr "Historique des besoins de sécurité"
+
+msgid "No assessment recorded yet."
+msgstr "Aucune évaluation enregistrée pour l'instant."
+
+msgid "No essential asset yet."
+msgstr "Aucun bien essentiel pour l'instant."
+
+msgid "An essential asset is what the business cannot do without : an information it holds (the customer file) or an activity it runs (payroll). List them first; what protects them comes next."
+msgstr "Un bien essentiel est ce dont l'activité ne peut pas se passer : une information qu'elle détient (le fichier clients) ou une activité qu'elle mène (la paie). Commencez par les recenser ; ce qui les protège vient ensuite."
+
+msgid "What the scope takes in. Fill in what applies, in your own words."
+msgstr "Ce que le périmètre englobe. Remplissez ce qui s'applique, avec vos mots."
+
+msgid "Where the scope stops : what is left out, and why. It is the first thing an auditor reads."
+msgstr "Où s'arrête le périmètre : ce qui en est exclu, et pourquoi. C'est la première chose que lit un auditeur."
+
+msgid "For example \"Head office\", \"Customer service\" or \"The whole company\"."
+msgstr "Par exemple « Siège social », « Service client » ou « Toute l'entreprise »."
+
+msgid "Leave empty unless this scope is a part of another one."
+msgstr "Laissez vide, sauf si ce périmètre fait partie d'un autre."
+
+msgid "In a sentence or two : what this scope covers, and what it is for."
+msgstr "En une ou deux phrases : ce que couvre ce périmètre, et à quoi il sert."
+
+msgid "Countries, cities or buildings concerned."
+msgstr "Pays, villes ou bâtiments concernés."
+
+msgid "Entities, departments or teams concerned."
+msgstr "Entités, directions ou équipes concernées."
+
+msgid "Information systems, applications and networks concerned."
+msgstr "Systèmes d'information, applications et réseaux concernés."
+
+msgid "What is left out of the scope. Write \"no exclusion\" when it covers everything."
+msgstr "Ce qui reste en dehors du périmètre. Écrivez « aucune exclusion » s'il couvre tout."
+
+msgid "Why each exclusion is acceptable : an auditor will ask."
+msgstr "Pourquoi chaque exclusion est acceptable : un auditeur le demandera."
+
+msgid "Pick them among the sites already registered (Sites menu)."
+msgstr "À choisir parmi les sites déjà enregistrés (menu Sites)."
+
+msgid "Only the sites you want on record as left out."
+msgstr "Seulement les sites dont vous voulez garder la trace qu'ils sont exclus."
+
+msgid "They answer for this scope, and get access to everything in it."
+msgstr "Ils répondent de ce périmètre et ont accès à tout ce qu'il contient."
+
+msgid "Filled in for you the day the scope comes into force. Set it only to plan a later date."
+msgstr "Renseignée pour vous le jour où le périmètre entre en vigueur. À saisir seulement pour prévoir une date ultérieure."
+
+msgid "When to check that the scope is still right. Once a year is usual."
+msgstr "Quand vérifier que le périmètre est toujours juste. Une fois par an est l'usage."
+
+msgid "say where the scope stops"
+msgstr "indiquer où s'arrête le périmètre"
+
+msgid "name at least one manager"
+msgstr "désigner au moins un responsable"
+
+msgid "say what it covers : places, teams, systems"
+msgstr "préciser ce qu'il couvre : lieux, équipes, systèmes"
+
+msgid "attach the sites it covers"
+msgstr "rattacher les sites concernés"
+
+msgid "plan its next review"
+msgstr "planifier sa prochaine revue"
+
+msgid "Places, teams and systems the scope takes in : not described yet."
+msgstr "Lieux, équipes et systèmes que le périmètre englobe : pas encore décrits."
+
+msgid "What the scope leaves out, and why : not described yet."
+msgstr "Ce que le périmètre exclut, et pourquoi : pas encore décrit."
+
+msgid "No site attached yet."
+msgstr "Aucun site rattaché pour l'instant."
+
+msgid "Nobody answers for this scope yet."
+msgstr "Personne ne répond encore de ce périmètre."
+
+msgid "No scope yet."
+msgstr "Aucun périmètre pour l'instant."
+
+msgid "A scope says what your security work covers : the whole company, one site or one activity. Every other record is filed under a scope, so this is where to start."
+msgstr "Un périmètre dit ce que couvre votre démarche de sécurité : toute l'entreprise, un site ou une activité. Toutes les autres fiches se rangent sous un périmètre : c'est par là qu'on commence."
+
+msgid "Before moving to \"%(step)s\", this remains to be done : %(todo)s."
+msgstr "Avant de passer à « %(step)s », il reste à : %(todo)s."
+
+msgid "Say what is covered"
+msgstr "Dire ce qui est couvert"
+
+msgid "A scope is what your security work applies to : the whole company, one site or one activity. Every other record is filed under a scope."
+msgstr "Un périmètre est ce à quoi s'applique votre démarche de sécurité : toute l'entreprise, un site ou une activité. Toutes les autres fiches se rangent sous un périmètre."
+
+msgid "List what the business cannot do without"
+msgstr "Recenser ce dont l'activité ne peut pas se passer"
+
+msgid "Your essential assets : the information you hold and the activities you run, such as the customer file, payroll or production."
+msgstr "Vos biens essentiels : les informations que vous détenez et les activités que vous menez, comme le fichier clients, la paie ou la production."
+
+msgid "List what it relies on"
+msgstr "Recenser ce qui les fait fonctionner"
+
+msgid "Your support assets : the systems, premises and suppliers your essential assets depend on."
+msgstr "Vos biens supports : les systèmes, locaux et fournisseurs dont dépendent vos biens essentiels."
+
+msgid "Choose what to comply with"
+msgstr "Choisir à quoi se conformer"
+
+msgid "A framework is a standard or a regulation, ISO 27001 for instance : its requirements become the list you work through."
+msgstr "Un référentiel est une norme ou un règlement, l'ISO 27001 par exemple : ses exigences deviennent la liste que vous déroulez."
+
+msgid "Assess your risks"
+msgstr "Passer vos risques en revue"
+
+msgid "What could go wrong for your essential assets, how likely it is, and what you decide to do about it."
+msgstr "Ce qui pourrait mal tourner pour vos biens essentiels, avec quelle vraisemblance, et ce que vous décidez d'en faire."
+
+msgid "Bring your colleagues in"
+msgstr "Faire venir vos collègues"
+
+msgid "Security is not one person's job : give everyone involved an account and a role."
+msgstr "La sécurité n'est pas l'affaire d'une seule personne : donnez un compte et un rôle à chacun des intéressés."
+
+msgid "The record \"%(name)s\" is created. You can now complete it."
+msgstr "La fiche « %(name)s » est créée. Vous pouvez maintenant la compléter."
+
+msgid "Tick \"%(label)s\"."
+msgstr "Cochez « %(label)s »."
+
+msgid "Choose a value for \"%(label)s\"."
+msgstr "Choisissez une valeur pour « %(label)s »."
+
+msgid "Add a file for \"%(label)s\"."
+msgstr "Ajoutez un fichier pour « %(label)s »."
+
+msgid "Fill in \"%(label)s\"."
+msgstr "Renseignez le champ « %(label)s »."
+
+msgid "Scenario"
+msgstr "Scénario"
+
+msgid "To complete"
+msgstr "À compléter"
+
+msgid "Needed before the record can move to \"%(gate_label)s\"."
+msgstr "Nécessaire pour que la fiche passe à l'étape « %(gate_label)s »."
+
+msgid "The record is in use, and this is still missing."
+msgstr "La fiche est utilisée, et il lui manque encore ceci."
+
+msgid "Advised : the record is more useful with it."
+msgstr "Conseillé : la fiche est plus utile avec."
+
+msgid "Nothing matches."
+msgstr "Aucun résultat."
+
+msgid "No record matches the search or the filters. Widen the search, or reset the filters."
+msgstr "Aucune fiche ne correspond à la recherche ou aux filtres. Élargissez la recherche, ou réinitialisez les filtres."
+
+msgid "Edit : %(label)s"
+msgstr "Modifier : %(label)s"
+
+msgid "Multi-step footer (every button carries its word)"
+msgstr "Pied de formulaire à étapes (chaque bouton porte son mot)"
+
+msgid "First steps"
+msgstr "Premiers pas"
+
+msgid "A new instance is empty. Here is what to do first, in order : each step takes a few minutes."
+msgstr "Une instance neuve est vide. Voici par quoi commencer, dans l'ordre : chaque étape prend quelques minutes."
+
+msgid "%(done)s of %(total)s done"
+msgstr "%(done)s sur %(total)s faites"
+
+msgid "Hide"
+msgstr "Masquer"
+
+msgid "done"
+msgstr "fait"
+
+msgctxt "verb"
+msgid "Open"
+msgstr "Ouvrir"
+
+msgid "Nothing to report yet : this summary fills in as you record your scopes, assets, frameworks and risks."
+msgstr "Rien à signaler pour l'instant : ce résumé se remplira à mesure que vous enregistrerez vos périmètres, vos biens, vos référentiels et vos risques."
+
+msgid "No framework is followed yet : the rate appears once you follow a standard or a regulation."
+msgstr "Aucun référentiel n'est encore suivi : le taux apparaîtra dès que vous suivrez une norme ou un règlement."

@@ -27,6 +27,7 @@ from core.downloads import safe_content_type
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
+    CompleteOnRecordMixin,
     ConfirmDeleteShellMixin,
     HtmxFormMixin,
     ListSummaryMixin,
@@ -175,18 +176,25 @@ class EssentialAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSu
         return self.filter_queryset_advanced(qs)
 
 
-class EssentialAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class EssentialAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, CompleteOnRecordMixin, DetailView):
     model = EssentialAsset
     template_name = "assets/essential_asset_detail.html"
     context_object_name = "asset"
     permission_required = "assets.essential_asset.read"
+    # The asset is completed on this page, one card at a time.
+    edit_url_name = "assets:essential-asset-update"
+    edit_permission = "assets.essential_asset.update"
+
+    def get_queryset(self):
+        return super().get_queryset().select_related("owner", "custodian")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["dependencies"] = self.object.dependencies_as_essential.select_related(
             "support_asset"
         )
-        ctx["valuations"] = self.object.valuations.all()[:10]
+        ctx["valuations"] = self.object.valuations.select_related("evaluated_by")[:10]
+        ctx["activities"] = self.object.related_activities.all()
         return ctx
 
 
@@ -199,6 +207,8 @@ class EssentialAssetCreateView(LoginRequiredMixin, PermissionRequiredMixin, Htmx
     modal_title_create = _l("New essential asset")
     modal_title_update = _l("Edit essential asset")
     success_url = reverse_lazy("assets:essential-asset-list")
+    # Created with what it is and who answers for it, then completed on its page.
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -215,6 +225,8 @@ class EssentialAssetUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Htmx
     modal_title_create = _l("New essential asset")
     modal_title_update = _l("Edit essential asset")
     success_url = reverse_lazy("assets:essential-asset-list")
+    # Created with what it is and who answers for it, then completed on its page.
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

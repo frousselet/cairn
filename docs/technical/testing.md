@@ -147,6 +147,22 @@ No automated check proves a page accessible : these catch regressions on what
 a machine can measure. A new kind of page is added to the audit's page list,
 and tried once with the keyboard alone.
 
+## Usability
+
+What a screen owes to someone who has never used the product is written as a
+standard ([usability standard](../sdk/usability-standard.md)), and the part of
+it that can be measured is held by tests, the way contrast is :
+
+| Test | What it holds |
+| --- | --- |
+| `core/tests/test_usability_standard.py` | The forms and pages brought to the standard : a creation of six fields at most on one screen, helpers that say something (in English and in French), no acronym alone as a label, sections on the edit form, landing on the record, the completeness card, the empty register |
+| `core/tests/test_modal_forms.py` | The shared shell : a footer whose buttons carry words, steps as buttons, sections, required errors named after their field |
+| `core/tests/test_completeness.py` | What *complete* means for each model that declares it, against its lifecycle and its form; the refusal on the web, the REST API and MCP; permission answered before completeness |
+| `core/tests/test_getting_started.py` | The first steps of a new instance, and that an empty instance reports neither success nor failure |
+
+A screen is added to the list of the first test when it is brought to the
+standard : the list is what is claimed, nothing more.
+
 ## Warnings
 
 The suite runs with no warning, and two of them fail it on purpose

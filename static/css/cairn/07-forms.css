@@ -61,11 +61,32 @@
 .mform-pill {
   display: flex;
   align-items: center;
-  gap: .45rem;
+  gap: .25rem;
   font-size: .75rem;
   font-weight: 500;
   color: var(--text-muted);
   min-width: 0;
+}
+/* A step is a button : a step already filled in reopens, and every step of a
+   record being edited. A step not reached yet is disabled, not hidden. */
+.mform-pill-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.mform-pill-btn:disabled { cursor: default; }
+.mform-pill-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--focus-ring);
 }
 .mform-pill-num {
   width: 1.5rem;
@@ -82,9 +103,19 @@
   transition: background-color .2s var(--ease-out), border-color .2s var(--ease-out), color .2s var(--ease-out);
 }
 .mform-pill-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* Phones : there is room for one label, so it goes to the step being filled
-   in, whole; the other steps keep their number (their name stays in the
-   accessibility tree). Three labels cut to "Id..." told nothing. */
+/* When the labels do not all fit (a phone, or a form of more than four
+   steps), the room goes to the step being filled in, whole; the other steps
+   keep their number (their name stays in the accessibility tree and in the
+   tooltip). Labels cut to "Id..." told nothing. */
+.mform-stepper--compact .mform-pill:not(.is-current) .mform-pill-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.mform-stepper--compact .mform-pill.is-current { flex: 0 1 auto; }
+.mform-stepper--compact .mform-pill.is-current .mform-pill-label { overflow: visible; }
 @media (max-width: 575.98px) {
   .mform-pill:not(.is-current) .mform-pill-label {
     position: absolute;
@@ -113,11 +144,18 @@
   border-color: var(--accent);
   color: var(--accent-contrast);
 }
-.mform-pill.is-done { color: var(--text-secondary); cursor: pointer; }
+.mform-pill.is-done { color: var(--text-secondary); }
 .mform-pill.is-done .mform-pill-num {
   background: var(--accent-soft);
   border-color: var(--accent);
   color: var(--accent-text);
+}
+/* One sentence above the fields of a step : what the section is about. */
+.mform-intro {
+  margin: 0 0 1.125rem;
+  font-size: .8125rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 .mform-meter { padding: .7rem 1.5rem .1rem; display: flex; align-items: center; gap: .625rem; flex-shrink: 0; }
 .mform-meter-track {
@@ -238,11 +276,12 @@
   font-size: .8rem;
   flex-shrink: 0;
 }
+/* The close button sits at the far end of the header, where it is looked for. */
 #itemDrawer .modal-header .btn-close {
   opacity: .5;
   transition: opacity .15s;
   font-size: .75rem;
-  margin: 0;
+  margin: 0 0 0 auto;
 }
 #itemDrawer .modal-header .btn-close:hover { opacity: 1; }
 
@@ -275,83 +314,19 @@
   flex-shrink: 0;
 }
 
-/* ── Multi-step side navigation (floating arrows outside the modal) ──
- * Prev (left) and Next (right) sit just outside the dialog, vertically
- * centred, sharing the frosted button chrome. On the last step the Next
- * arrow becomes a navy check; clicking it spins while the item saves.
- * Cancel is the header X or a backdrop click - there is no footer. */
-#itemDrawer .modal-dialog { position: relative; }
-.mform-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3rem;
-  height: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border-radius: 50%;
-  border: 1px solid var(--border-glass);
-  background: var(--glass);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-md);
-  color: var(--text-secondary);
-  font-size: 1.15rem;
-  line-height: 1;
-  cursor: pointer;
-  z-index: 5;
-  /* .modal-dialog is pointer-events:none (so gaps click through to the
-     backdrop); re-enable it on the arrows themselves. */
-  pointer-events: auto;
-  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-}
-.mform-nav[hidden] { display: none; }
-.mform-nav--prev { left: -4rem; }
-.mform-nav--next { right: -4rem; }
-.mform-nav:hover {
-  background: var(--glass-hover);
-  color: var(--text-primary);
-  border-color: var(--border-light);
-  box-shadow: var(--shadow-lg);
-}
-.mform-nav:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus-ring);
-}
-/* Last step : the Next arrow becomes the solid navy "save" check. */
-.mform-nav--next.is-final {
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-fg);
-  border-color: transparent;
-}
-.mform-nav--next.is-final:hover {
-  background: var(--btn-primary-bg-hover);
-  color: var(--btn-primary-fg);
-}
-/* Saving : icon fades out, a spinner takes its place, clicks blocked. */
-.mform-nav.is-loading { pointer-events: none; }
-.mform-nav.is-loading i { visibility: hidden; }
-.mform-nav.is-loading::after {
-  content: "";
-  position: absolute;
-  width: 1.15rem;
-  height: 1.15rem;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: htmx-spin .6s linear infinite;
-}
-/* Narrow screens : no room beside the dialog, so the arrows tuck into the
- * lower corners, floating over the (footerless) multi-step body. */
+/* ── Multi-step footer ─────────────────────────
+ * Cancel on the left; Previous, Next and the action on the right, each with
+ * its word. On a phone the buttons wrap, and the action of a record being
+ * edited (offered on every step, beside Next) takes the last row whole. */
+#itemDrawer .mform-footer { flex-wrap: wrap; }
+#itemDrawer .mform-footer > .btn { margin: 0; }
+#itemDrawer .mform-footer > .btn.me-auto { margin-right: auto; }
 @media (max-width: 575.98px) {
-  .mform-nav { top: auto; bottom: .85rem; transform: none; width: 2.75rem; height: 2.75rem; }
-  .mform-nav--prev { left: .85rem; }
-  .mform-nav--next { right: .85rem; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .mform-nav.is-loading::after { animation-duration: 1.2s; }
+  /* Tighter, so Cancel, Previous and Next share the first row in the order
+     they are read and focused; the action of an edit takes the second. */
+  #itemDrawer .mform-footer { gap: .375rem; padding-left: 1rem; padding-right: 1rem; }
+  #itemDrawer .mform-footer > .btn { padding-left: .7rem; padding-right: .7rem; }
+  #itemDrawer form[data-mform-mode="edit"] .mform-footer > [data-mform-submit] { flex: 1 0 100%; }
 }
 
 /* ── Sections ─────────────────────────────────── */

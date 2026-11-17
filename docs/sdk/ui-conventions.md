@@ -78,6 +78,14 @@ confirmation extends `includes/confirm_delete_modal.html` or
 and the primary or destructive action is on the right. The doctrine is in the
 [brand guidelines](../brand/brand-guidelines.md#forms).
 
+A form must be usable by someone who has never seen the product. The rules
+that can be measured are the [usability standard](usability-standard.md) : a
+creation asks for six fields at most on one screen and lands on the record,
+which lists what it still needs and edits itself one card at a time; a helper
+says what its label does not, or is absent; a label is words, an acronym
+follows in brackets; every button carries its word. A screen brought to the
+standard is listed in `core/tests/test_usability_standard.py`, which holds it.
+
 ## Lifecycle transitions
 
 Add `LifecycleStepperMixin` to the DetailView, include the shared template:
@@ -216,6 +224,7 @@ screen :
 - [ ] Empty values show the dash (`{% dash %}`, `|or_dash` or a component that applies it)
 - [ ] Detail page uses `detail_layout`, ends with `record_card`, tabs only if genuinely distinct modes
 - [ ] Forms extend the modal shell, and their page fallback extends `includes/page_form.html`
+- [ ] New forms follow the [usability standard](usability-standard.md) : creation on one screen, helpers that say something, no acronym alone, an empty register that explains and offers
 - [ ] Lifecycle transitions go through the shared stepper
 - [ ] Lists use `SortableListMixin` and `ScopeFilterMixin`
 - [ ] Renders correctly in light and dark

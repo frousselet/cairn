@@ -576,8 +576,12 @@ with transaction.atomic():
     scope_it = Scope.objects.create(
         name="Corporate IT",
         description="Corporate information systems: ERP, collaboration, customer portal and end-user computing.",
+        boundaries="Industrial control networks are left out : they belong to the Industrial Operations scope.",
+        justification_exclusions="The OT networks are segregated and run under their own scope and their own manager.",
+        technical_scope="ERP, collaboration suite, customer portal, workstations and the corporate network.",
         parent_scope=scope_group,
         icon="bi-pc-display",
+        review_date=days_ahead(120),
         effective_date=months_ago(18),
         workflow_state="in_force",
         **approved(elise),
@@ -587,8 +591,12 @@ with transaction.atomic():
     scope_ot = Scope.objects.create(
         name="Industrial Operations (OT)",
         description="Industrial control systems for the wind, solar and hydro production fleet: SCADA, PLCs, historian.",
+        boundaries="Corporate IT and the customer portal are left out. No production site is excluded.",
+        geographic_scope="The wind, solar and hydro production sites in France.",
+        technical_scope="SCADA, PLCs, the historian and the industrial networks.",
         parent_scope=scope_group,
         icon="bi-lightning-charge",
+        review_date=days_ahead(200),
         effective_date=months_ago(18),
         workflow_state="in_force",
         **approved(elise),
@@ -599,22 +607,32 @@ with transaction.atomic():
     scope_cust = Scope.objects.create(
         name="Customer Services",
         description="Customer-facing processes: contracting, billing, support and the self-service portal.",
+        boundaries="No exclusion : every customer-facing process is covered.",
+        organizational_scope="Customer relations, billing and the support desk.",
         parent_scope=scope_group,
         icon="bi-people",
+        review_date=days_ahead(260),
         effective_date=months_ago(13),
         workflow_state="in_force",
         **approved(elise),
     )
     scope_cust.managers.set([ines])
 
+    # Submitted for validation : it says where it stops and who answers for
+    # it, which is what a scope needs to be submitted. Its sites and its next
+    # review are still to come, so its page lists them as advised
+    # (core/completeness.py).
     scope_rnd = Scope.objects.create(
         name="R&D Innovation Lab",
         description="Experimental perimeter for grid storage and forecasting research projects.",
+        boundaries="Production systems are left out : the lab works on copies of the data, on its own network.",
+        organizational_scope="The research and innovation team.",
         parent_scope=scope_group,
         icon="bi-lightbulb",
         workflow_state="validation",
         created_by=marc,
     )
+    scope_rnd.managers.set([marc])
     all_scopes = [scope_group, scope_it, scope_ot, scope_cust]
 
     # Sites run the operational lifecycle (core.lifecycle "site"): most are
@@ -1208,6 +1226,16 @@ with transaction.atomic():
     essential_assets = [ea_control, ea_billing, ea_custdata, ea_forecast, ea_telemetry, ea_hr, ea_trading]
     for ea in essential_assets:
         ea.scopes.set([scope_group])
+    # Just identified : its security needs are not assessed yet (the three
+    # levels are empty, not "medium"), so it cannot become active and its page
+    # lists what remains to be done. Kept out of ``essential_assets`` : nothing
+    # depends on it yet.
+    ea_contracts = EssentialAsset.objects.create(
+        name="Supplier contracts repository", type="information", category="legal_data",
+        description="Signed contracts, amendments and security annexes of every supplier.",
+        owner=marc, created_by=marc,
+    )
+    ea_contracts.scopes.set([scope_group])
     ea_control.scopes.add(scope_ot)
     ea_telemetry.scopes.add(scope_ot)
     ea_billing.scopes.add(scope_cust)

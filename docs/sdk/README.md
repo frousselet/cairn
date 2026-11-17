@@ -15,6 +15,7 @@ change has to prove before it ships.
 | [Assistant provider](assistant-provider.md) | Plug a different LLM backend into Ask Cairn |
 | [Interface conventions](ui-conventions.md) | The patterns a new screen is expected to follow |
 | [UI components](ui-components.md) | The component framework screens are assembled from, and the anatomy of each kind of page |
+| [Usability standard](usability-standard.md) | What a screen owes to someone who has never used the product, rule by rule, and how to apply it to an entity |
 
 ## The idea to hold on to
 

@@ -78,6 +78,8 @@ The module covers seven sub-domains:
 | RS-05 | A **SwotItem** in the `strength` or `weakness` quadrant must be consistent with `internal` **Issues**; `opportunity` and `threat` with `external` Issues. This rule is a recommendation (warning) and not a hard block. |
 | RS-06 | A **Role** marked `is_mandatory = true` must have at least one assigned user. Otherwise the system raises a compliance warning. |
 | RS-07 | The **RACI** matrix (via Responsibility) must comply with the rule: a single `accountable` person per activity. The system raises a warning if this rule is violated. |
+| RS-08 | A **Scope** cannot move to `validation` nor to `in_force` until it says where it stops (`boundaries`) and names at least one manager. The transition is refused with what remains to be done, on the web interface, the REST API and the MCP server alike (see [scope.md](scope.md)). |
+| RS-09 | A **Scope** that comes into force with no `effective_date` is dated that day. A date typed beforehand is kept, and a refused transition leaves the scope undated. |
 
 ---
 
@@ -257,8 +259,9 @@ The module is accessible through a main navigation item "Context & Organization"
 
 ### "Scope" view
 
-- **List:** Table with columns (Name, Version, Status, Review date) with filters and sorting.
-- **Detail / Edit:** Form with tabs: General information, Scopes (geographic, organizational, technical), Exclusions, Applicable standards, History.
+- **List:** Table with columns (Name, Version, Status, Review date) with filters and sorting. Empty, it says what a scope is and offers to create the first one.
+- **Creation:** One screen : icon, name, description, and the parent scope once a scope exists. The user lands on the new scope.
+- **Detail / Edit:** The page opens on what the scope still needs (RS-08), then one card per section of its form (identity, coverage, boundaries and exclusions, sites, managers, dates). Each card opens the dialog of its section; the header opens the whole form.
 - **Actions:** Create, Edit, Archive, Export.
 
 ### "Issues" view

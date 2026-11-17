@@ -163,7 +163,15 @@ def _get_handler(model_class, fields, scope_filtered=True):
             qs = _filter_by_scopes(model_class.objects.filter(pk=pk), user)
             if not qs.exists():
                 return _error("Access denied: object is outside your allowed scopes.")
-        return _serialize_obj(obj, fields)
+        data = _serialize_obj(obj, fields)
+        # What the record still needs before its lifecycle lets it through
+        # (core/completeness.py), for the models that declare it.
+        from core.completeness import as_payload
+
+        completeness = as_payload(obj)
+        if completeness is not None:
+            data["completeness"] = completeness
+        return data
     return handler
 
 
@@ -323,6 +331,33 @@ def _apply_timestamp_override(obj, model_class, data, user):
     return None
 
 
+def _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, pre_clean=None):
+    """Validate and save ``obj`` with its many-to-many values, as one unit.
+
+    A lifecycle state written directly (``status`` on an import, or on an
+    update) is held to the same completeness as a transition : a record is not
+    created in, nor moved by an update to, a step its model makes wait
+    (``COMPLETENESS.before``, ``core/completeness.py``) while a blocking
+    requirement is missing. The refusal rolls the whole write back, and its
+    sentence says what remains to be done.
+    """
+    from django.db import transaction
+
+    from core.completeness import refuse_if_incomplete
+
+    with transaction.atomic():
+        if pre_clean is not None:
+            pre_clean(obj)
+        obj.full_clean()
+        obj.save()
+        # Set M2M fields after save
+        for param_name, ids in m2m_values.items():
+            getattr(obj, m2m_fields[param_name]).set(ids)
+        state = getattr(obj, "workflow_state", None)
+        if state and state != previous_state:
+            refuse_if_incomplete(obj, state)
+
+
 def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_fields=None,
                     pre_clean=None):
     """Create a generic create handler.
@@ -351,14 +386,7 @@ def _create_handler(model_class, writable_fields, scope_filtered=True, m2m_field
             kwargs["created_by"] = user
         try:
             obj = model_class(**kwargs)
-            if pre_clean is not None:
-                pre_clean(obj)
-            obj.full_clean()
-            obj.save()
-            # Set M2M fields after save
-            for param_name, ids in m2m_values.items():
-                m2m_attr = m2m_fields[param_name]
-                getattr(obj, m2m_attr).set(ids)
+            _save_held_to_completeness(obj, m2m_values, m2m_fields, None, pre_clean)
             ts_status = _apply_timestamp_override(obj, model_class, arguments, user)
         except (ValidationError, Exception) as e:
             return _error(str(e))
@@ -458,14 +486,10 @@ def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m
 
                 if existing is not None:
                     obj = existing
+                    previous_state = getattr(obj, "workflow_state", None)
                     for target, value in kwargs.items():
                         setattr(obj, target, value)
-                    if pre_clean is not None:
-                        pre_clean(obj)
-                    obj.full_clean()
-                    obj.save()
-                    for param_name, ids in m2m_values.items():
-                        getattr(obj, m2m_fields[param_name]).set(ids)
+                    _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state, pre_clean)
                     ts_status = _apply_timestamp_override(obj, model_class, item_data, user)
                     entry = {
                         "index": idx,
@@ -482,12 +506,7 @@ def _batch_create_handler(model_class, writable_fields, scope_filtered=True, m2m
                     if hasattr(model_class, "created_by"):
                         kwargs["created_by"] = user
                     obj = model_class(**kwargs)
-                    if pre_clean is not None:
-                        pre_clean(obj)
-                    obj.full_clean()
-                    obj.save()
-                    for param_name, ids in m2m_values.items():
-                        getattr(obj, m2m_fields[param_name]).set(ids)
+                    _save_held_to_completeness(obj, m2m_values, m2m_fields, None, pre_clean)
                     ts_status = _apply_timestamp_override(obj, model_class, item_data, user)
                     entry = {
                         "index": idx,
@@ -544,6 +563,7 @@ def _update_handler(model_class, writable_fields, scope_filtered=True, m2m_field
                 return _error("Access denied: object is outside your allowed scopes.")
         changed_fields = set()
         m2m_values = {}
+        previous_state = getattr(obj, "workflow_state", None)
         for field_name in writable_fields:
             if field_name in arguments:
                 if field_name in m2m_fields:
@@ -555,12 +575,7 @@ def _update_handler(model_class, writable_fields, scope_filtered=True, m2m_field
                         model_class, field_name, arguments[field_name]))
                     changed_fields.add(field_name)
         try:
-            obj.full_clean()
-            obj.save()
-            # Set M2M fields after save
-            for param_name, ids in m2m_values.items():
-                m2m_attr = m2m_fields[param_name]
-                getattr(obj, m2m_attr).set(ids)
+            _save_held_to_completeness(obj, m2m_values, m2m_fields, previous_state)
         except (ValidationError, Exception) as e:
             return _error(str(e))
         fields = [f.name for f in model_class._meta.fields]
@@ -1011,7 +1026,10 @@ Writable: name (required), description (HTML), type, status, effective_date, rev
 - type: draft | active | archived
 - status: draft | active | archived
 - manager_ids: array of user UUIDs (M2M, scope managers get automatic access)
-- effective_date / review_date: ISO 8601 date (e.g. "2025-12-31")
+- effective_date / review_date: ISO 8601 date (e.g. "2025-12-31"); effective_date is set for you when the scope comes into force
+Read-only (get_scope): completeness = {complete, can_advance, missing: [{key, label, blocking}]}
+- A scope cannot move to validation or in_force while a blocking item is missing (boundaries, at least one manager):
+  transition_scope then answers with what remains to be done.
 Filters: type, status
 
 ## issue
@@ -1122,11 +1140,16 @@ Writable: name (required), description (HTML), type (required), category, owner_
 - type: business_process | information
 - category (process): core_process | support_process | management_process
 - category (info): strategic_data | operational_data | personal_data | financial_data | technical_data | legal_data | research_data | commercial_data
-- confidentiality/integrity/availability_level: integer 0-4 OR text: negligible | low | medium | high | critical
+- confidentiality/integrity/availability_level: integer 0-4 OR text: negligible | low | medium | high | critical;
+  left out, a level stays null = "not assessed yet" (there is no default level)
 - data_classification: public | internal | confidential | restricted | secret
 - personal_data: boolean
 - status: identified | active | under_review | decommissioned
 - tags: array of tag UUIDs (M2M)
+Read-only (get_essential_asset): completeness = {complete, can_advance, missing: [{key, label, blocking}]}
+- An essential asset cannot become active until its three security needs are assessed:
+  transition_essential_asset then answers with what remains to be done, and so do create / update / batch
+  when they write status = active directly (the write is rolled back).
 Filters: type, category, status, owner_id, data_classification, personal_data
 Ref prefix: EAST
 
