@@ -15,7 +15,7 @@ Expects `documents_overdue` (rows of {policy, days_late}),
 <div class="card h-100">
   <div class="card-body">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-      <h5 class="card-title mb-0"><i class="bi bi-file-earmark-text me-1 text-accent" aria-hidden="true"></i> {% trans "Documents" %}</h5>
+      <h2 class="card-title mb-0"><i class="bi bi-file-earmark-text me-1 text-accent" aria-hidden="true"></i> {% trans "Documents" %}</h2>
       <a href="{% url 'documents:policy-list' %}" class="upcoming-toggle">{% trans "Register" %}</a>
     </div>
 
@@ -95,8 +95,8 @@ Expects `documents_overdue` (rows of {policy, days_late}),
   .docw-stat:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; }
   .docw-stat__value { font-size:1.125rem; font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-primary); line-height:1; }
   .docw-stat__label { font-size:.6875rem; color:var(--text-muted); }
-  .docw-stat--late .docw-stat__value { color:var(--danger); }
-  .docw-stat--gap .docw-stat__value { color:var(--warning); }
+  .docw-stat--late .docw-stat__value { color:var(--danger-text); }
+  .docw-stat--gap .docw-stat__value { color:var(--warning-text); }
   .docw-list, .docw-campaigns { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(16rem, 1fr)); gap:.5rem; }
   .docw-item, .docw-campaign {
     display:flex; flex-direction:column; gap:.375rem; padding:.625rem .875rem;

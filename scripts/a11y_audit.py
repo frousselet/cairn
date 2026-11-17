@@ -1,0 +1,280 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 François Rousselet
+"""Audit the rendered pages against WCAG 2.2 AA with axe-core.
+
+The test suite checks what can be read from the markup and the style sheets
+(``core/tests/test_contrast.py``, ``core/tests/test_accessibility.py``). What
+a page really looks like once the cascade, the theme and the scripts have run
+(the contrast of a badge on a tinted row, the name of a button drawn by a
+script, the size of a target) only a browser can tell. This script opens every
+page of the screenshot set, in the light and the dark theme, runs axe-core on
+it and fails on any violation of a level A or AA rule. A dialog and a filter
+panel are opened first (a hidden one is skipped by axe), and a few pages are
+audited again at a phone's width.
+
+    python scripts/a11y_audit.py --base-url http://127.0.0.1:8001 --axe axe.min.js
+    python scripts/a11y_audit.py --axe axe.min.js --theme dark --only calendar dashboard
+
+Prerequisites : a running instance serving the demo dataset (the same one the
+screenshots are taken from), ``google-chrome-stable`` on the PATH, and a copy
+of ``axe.min.js`` (``npm pack axe-core`` : the CI workflow pins the version).
+axe-core is not vendored : it is a development tool, never served to a user.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import capture_screenshots as shots  # noqa: E402
+
+DEBUG_PORT = 9334
+# Tall enough for the longest open sidebar section to clear the pinned user
+# card : a link sliding under it is a scroll position, not a small target.
+WIDTH, HEIGHT = 1440, 1400
+
+# The rules a WCAG 2.2 AA conformance claim rests on. axe's "best-practice"
+# rules are advice, reported by --best-practice and never failing.
+WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
+
+# Pages opened without a session : what a visitor sees before signing in.
+PUBLIC_PAGES: dict[str, str] = {
+    "login": "/accounts/login/",
+    "trust-center-public": "/trust/",
+}
+
+# Signed-in pages on top of the screenshot set : a form page, and the catalogue
+# of components (a component broken there is broken everywhere it is used).
+EXTRA_PAGES: dict[str, str] = {
+    "risk-form": "/risks/register/create/",
+    "tags": "/context/tags/",
+    "styleguide": "/styleguide/",
+}
+
+# What a page only shows after a click : a hidden dialog or panel is skipped by
+# axe, so it is opened first. name -> (path, script that opens it).
+OPEN_STATES: dict[str, tuple[str, str]] = {
+    "edit-dialog": (
+        "/assets/suppliers/",
+        "document.querySelector('a[hx-target=\"#drawer-form-content\"]').click()",
+    ),
+    "filter-panel": ("/risks/register/", "document.querySelector('.list-filter-toggle').click()"),
+}
+
+# Pages audited again at a phone's width, where the layout stacks and the
+# targets sit closer together. The detail page is the first risk.
+PHONE = (390, 844)
+PHONE_PAGES: dict[str, str] = {
+    "dashboard-phone": "/",
+    "risk-register-phone": "/risks/register/",
+    "calendar-phone": "/calendar/",
+}
+
+RUN_AXE = """
+(async () => {
+  const result = await axe.run(document, {
+    runOnly: {type: 'tag', values: %(tags)s},
+    resultTypes: ['violations'],
+  });
+  return JSON.stringify(result.violations.map(v => ({
+    id: v.id, impact: v.impact, help: v.help,
+    nodes: v.nodes.map(n => ({
+      target: n.target.join(' '),
+      html: n.html.slice(0, 200),
+      why: n.any.concat(n.all, n.none).map(c => c.message).join(' | ').slice(0, 300),
+    })),
+  })));
+})()
+"""
+
+
+def start_chrome(profile: Path) -> subprocess.Popen:
+    return subprocess.Popen(
+        [
+            "google-chrome-stable", "--headless=new", "--no-sandbox", "--disable-gpu",
+            "--disable-dev-shm-usage", "--hide-scrollbars",
+            f"--remote-debugging-port={DEBUG_PORT}", f"--user-data-dir={profile}",
+            f"--window-size={WIDTH},{HEIGHT}", "about:blank",
+        ],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
+
+
+def evaluate(devtools, expression: str, *, await_promise: bool = False):
+    result = devtools.call("Runtime.evaluate", {
+        "expression": expression, "returnByValue": True, "awaitPromise": await_promise,
+    })
+    return result.get("result", {}).get("result", {}).get("value")
+
+
+def open_page(devtools, url: str, settle: float) -> None:
+    """Navigate and wait for the page to finish loading, then for its scripts."""
+    devtools.call("Page.navigate", {"url": url})
+    deadline = time.monotonic() + 30
+    time.sleep(0.3)
+    while time.monotonic() < deadline:
+        if evaluate(devtools, "document.readyState") == "complete":
+            break
+        time.sleep(0.2)
+    time.sleep(settle)
+
+
+def audit(devtools, axe_source: str, tags: list[str]) -> list[dict]:
+    evaluate(devtools, axe_source)
+    raw = evaluate(devtools, RUN_AXE % {"tags": json.dumps(tags)}, await_promise=True)
+    if raw is None:
+        raise RuntimeError("axe-core did not return a result")
+    return json.loads(raw)
+
+
+def set_theme(devtools, theme: str) -> None:
+    # Reduced motion : the entrance animations would otherwise be measured
+    # half-way through their fade.
+    devtools.call("Emulation.setEmulatedMedia", {"features": [
+        {"name": "prefers-color-scheme", "value": theme},
+        {"name": "prefers-reduced-motion", "value": "reduce"},
+    ]})
+
+
+def report(name: str, theme: str, url: str, violations: list[dict]) -> int:
+    count = sum(len(v["nodes"]) for v in violations)
+    if not count:
+        print(f"  ok    {name} ({theme})")
+        return 0
+    print(f"  FAIL  {name} ({theme}) : {count} element(s)  {url}")
+    for violation in violations:
+        print(f"        {violation['id']} [{violation['impact']}] {violation['help']} "
+              f"x{len(violation['nodes'])}")
+        for node in violation["nodes"][:3]:
+            print(f"          {node['target'][:110]}")
+            print(f"            {node['why'][:200]}")
+    return count
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--base-url", default="http://127.0.0.1:8000")
+    parser.add_argument("--axe", type=Path, required=True, help="Path to axe.min.js.")
+    parser.add_argument("--theme", choices=("light", "dark", "both"), default="both")
+    parser.add_argument("--only", nargs="*", help="Audit only these page names.")
+    parser.add_argument("--best-practice", action="store_true",
+                        help="Also report axe's best-practice rules (they never fail the run).")
+    parser.add_argument("--report", type=Path, help="Write the full result as JSON.")
+    args = parser.parse_args()
+
+    base = args.base_url.rstrip("/")
+    axe_source = args.axe.read_text(encoding="utf-8")
+    themes = ["light", "dark"] if args.theme == "both" else [args.theme]
+    wanted = set(args.only) if args.only else None
+
+    def selected(name: str) -> bool:
+        return wanted is None or name in wanted
+
+    cookie_name, cookie_value = shots.build_session()
+    shots.DEBUG_PORT = DEBUG_PORT
+
+    results: dict[str, dict] = {}
+    failures = advice = 0
+    profile = Path(tempfile.mkdtemp(prefix="cairn-a11y-"))
+    chrome = start_chrome(profile)
+    try:
+        devtools = shots.DevTools(shots.debugger_url())
+        for method in ("Network.enable", "Page.enable", "Runtime.enable"):
+            devtools.call(method)
+
+        def viewport(width: int, height: int, mobile: bool) -> None:
+            devtools.call("Emulation.setDeviceMetricsOverride",
+                          {"width": width, "height": height, "deviceScaleFactor": 1, "mobile": mobile})
+
+        viewport(WIDTH, HEIGHT, False)
+
+        def run(name: str, url: str, theme: str, settle: float, action: str | None = None,
+                shell: bool = True) -> None:
+            nonlocal failures, advice
+            open_page(devtools, url, settle)
+            # An error page has nothing to fail on : it would pass for the
+            # page it stands in for. A signed-in page always has the shell.
+            if shell and not evaluate(devtools, "!!document.getElementById('page-shell')"):
+                print(f"  FAIL  {name} ({theme}) : the page did not render  {url}")
+                results[f"{name}:{theme}"] = {"url": url, "violations": [], "rendered": False}
+                failures += 1
+                return
+            if action:
+                evaluate(devtools, action)
+                time.sleep(2.0)  # the request, the swap and the opening transition
+            violations = audit(devtools, axe_source, WCAG_TAGS)
+            results[f"{name}:{theme}"] = {"url": url, "violations": violations}
+            failures += report(name, theme, url, violations)
+            if args.best_practice:
+                for item in audit(devtools, axe_source, ["best-practice"]):
+                    advice += len(item["nodes"])
+                    print(f"        advice : {item['id']} x{len(item['nodes'])} ({item['help']})")
+
+        print(f"Auditing {base} with axe-core ({', '.join(WCAG_TAGS)})")
+        # Public pages first, before the session cookie exists.
+        for theme in themes:
+            set_theme(devtools, theme)
+            for name, path in PUBLIC_PAGES.items():
+                if selected(name):
+                    run(name, base + path, theme, 1.0, shell=False)
+
+        devtools.call("Network.setCookie", {"name": cookie_name, "value": cookie_value, "url": base})
+        # Detail pages are found once : the record ids differ between datasets.
+        details = {}
+        for name, (path, selector, _wait) in shots.DETAIL_SHOTS.items():
+            if selected(name) or (name == "risk-detail" and selected("risk-detail-phone")):
+                details[name] = shots.first_link(devtools, base, path, selector)
+
+        for theme in themes:
+            set_theme(devtools, theme)
+            for name, (path, wait) in shots.SHOTS.items():
+                if selected(name):
+                    # A chart-heavy page (a long screenshot wait) gets longer to draw.
+                    run(name, base + path, theme, 2.5 if wait > 5 else 1.0,
+                        shell=path not in PUBLIC_PAGES.values())
+            for name, path in EXTRA_PAGES.items():
+                if selected(name):
+                    run(name, base + path, theme, 1.0)
+            for name, url in details.items():
+                if not selected(name):
+                    continue
+                if url:
+                    run(name, url, theme, 1.5)
+                else:
+                    print(f"  skip  {name} : no record to open")
+            for name, (path, action) in OPEN_STATES.items():
+                if selected(name):
+                    run(name, base + path, theme, 1.0, action)
+            viewport(*PHONE, True)
+            for name, path in PHONE_PAGES.items():
+                if selected(name):
+                    run(name, base + path, theme, 2.5 if path == "/" else 1.0)
+            if selected("risk-detail-phone") and details.get("risk-detail"):
+                run("risk-detail-phone", details["risk-detail"], theme, 1.5)
+            viewport(WIDTH, HEIGHT, False)
+    finally:
+        chrome.terminate()
+        shutil.rmtree(profile, ignore_errors=True)
+
+    if args.report:
+        args.report.write_text(json.dumps(results, indent=1), encoding="utf-8")
+    pages = len(results)
+    if failures:
+        print(f"\n{failures} element(s) fail a WCAG 2.2 A/AA rule across {pages} page renderings.")
+        return 1
+    print(f"\nNo WCAG 2.2 A/AA violation across {pages} page renderings."
+          + (f" {advice} best-practice remark(s)." if args.best_practice else ""))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

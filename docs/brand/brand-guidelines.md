@@ -114,10 +114,12 @@ and three semantic colours **reserved for status only**.
 
 | Token | Hex | Usage |
 | --- | --- | --- |
-| `--accent` | `#1E3A8A` | Navy. The identity colour. Logo, active link, focus ring, primary CTA. |
+| `--accent` | `#1E3A8A` | Navy. The identity colour, as a **fill** : logo, primary CTA, active marker, progress. |
+| `--accent-text` | `#1E3A8A` | Navy as **text** : links, accent labels, accent icons. Same value as the fill on the light theme, a lighter tint on the dark one (see Fill and ink). |
 | `--accent-hover` | `#1E2E5E` | Deeper navy. `hover` / `active` state of primary. |
 | `--accent-soft` | `#EEF2FF` | Pale lavender. Active chip backgrounds, info alerts, subtle hovers. |
-| `--accent-glow` | `rgba(99,102,241,.18)` | Focus ring outline. |
+| `--accent-glow` | `rgba(30,58,138,.20)` | Soft halo around a focused field or a primary button. Decoration, never the only focus indicator. |
+| `--accent-contrast` | `#FFFFFF` | What sits on the accent fill (button label, check mark). |
 
 ### Neutrals (canvas and surfaces)
 
@@ -129,7 +131,7 @@ and three semantic colours **reserved for status only**.
 | `--surface-subtle` | `#F5F5F5` | Disabled state, visual separators. |
 | `--text-primary` | `#18181B` | Titles, values, main table text. |
 | `--text-secondary` | `#52525B` | Secondary labels, meta information. |
-| `--text-muted` | `#A1A1AA` | Placeholders, eyebrows, counters, ancillary info. |
+| `--text-muted` | `#6B6B74` | Placeholders, eyebrows, counters, ancillary info. The lightest grey that carries text. |
 | `--border-light` | `rgba(0,0,0,.08)` | Card, input, sidebar borders. |
 | `--border-subtle` | `rgba(0,0,0,.05)` | Separators inside lists. |
 | `--border-hairline` | `rgba(0,0,0,.03)` | Intra-table lines. |
@@ -146,6 +148,24 @@ and three semantic colours **reserved for status only**.
 | `--danger-soft` | `#FEF2F2` | Danger alert / chip background. |
 | `--info` | `#0891B2` | Neutral information. |
 | `--info-soft` | `#ECFEFF` | Info alert / chip background. |
+
+### Fill and ink
+
+A colour has two tones, because a fill and a text do not need the same
+contrast : a dot, a bar or an icon tile reads at 3:1, a word needs 4.5:1.
+
+| Fill (dot, bar, tile, button) | Ink (text) | Light | Dark |
+| --- | --- | --- | --- |
+| `--accent` | `--accent-text` | `#1E3A8A` | `#869FEA` |
+| `--success` | `--success-text` | `#15803D` | `#10B981` |
+| `--warning` | `--warning-text` | `#B45309` | `#F59E0B` |
+| `--danger` | `--danger-text` | `#B91C1C` | `#F87171` |
+| `--info` | `--info-text` | `#0E7490` | `#06B6D4` |
+
+> Rule: text never uses a fill token. `color: var(--success)` is a 3:1 colour
+> used as a word; write `color: var(--success-text)`. A badge is the ink on
+> the soft background (`--success-text` on `--success-soft`). A test fails
+> the build on a fill token used as a text colour.
 
 > Rule: no semantic colour is used as decoration. If an element is not a
 > status, it takes navy or a neutral. The one sanctioned exception is an
@@ -166,7 +186,9 @@ warm-charcoal, never true black (#000), off-white text never pure white.
 | `--surface-raised` | `#1C1F23` |
 | `--text-primary` | `#E4E4E7` |
 | `--text-secondary` | `#A1A1AA` |
-| `--accent` | `#818CF8` (lighter indigo to carry on dark backgrounds) |
+| `--text-muted` | `#8E8E98` |
+| `--accent` | `#3B5BB8` (the fill : buttons, markers) |
+| `--accent-text` | `#869FEA` (the ink : the fill is too deep to read as text on charcoal) |
 
 ### WCAG 2.2 contrast
 
@@ -174,13 +196,32 @@ warm-charcoal, never true black (#000), off-white text never pure white.
 | --- | --- | --- |
 | `text-primary #18181B` on `bg-page #FAFAFA` | 16.6:1 | AAA |
 | `text-secondary #52525B` on `surface #FFFFFF` | 7.9:1 | AAA |
-| `text-muted #A1A1AA` on `surface #FFFFFF` | 2.85:1 | AA for large text only |
-| `accent #1E3A8A` on `surface #FFFFFF` | 10.2:1 | AAA |
-| `#FFFFFF` on `accent #1E3A8A` (primary CTA) | 10.2:1 | AAA |
-| `success #16A34A` on `surface #FFFFFF` | 3.4:1 | AA (UI), AA large text |
+| `text-muted #6B6B74` on `surface #FFFFFF` | 5.3:1 | AA |
+| `text-muted #6B6B74` on `surface-subtle #F5F5F5` | 4.8:1 | AA |
+| `accent #1E3A8A` on `surface #FFFFFF` | 10.4:1 | AAA |
+| `#FFFFFF` on `accent #1E3A8A` (primary CTA) | 10.4:1 | AAA |
+| `success-text #15803D` on `success-soft #F0FDF4` (badge) | 4.8:1 | AA |
+| `warning-text #B45309` on `warning-soft #FFFBEB` (badge) | 4.8:1 | AA |
+| `danger-text #B91C1C` on `danger-soft #FEF2F2` (badge) | 5.9:1 | AA |
+| `info-text #0E7490` on `info-soft #ECFEFF` (badge) | 5.2:1 | AA |
+| `success #16A34A` on `surface #FFFFFF` (fill only) | 3.3:1 | AA for a graphic, not for text |
+| Dark : `text-muted #8E8E98` on `surface-raised #1C1F23` | 5.1:1 | AA |
+| Dark : `accent-text #869FEA` on `surface-raised #1C1F23` | 6.4:1 | AA |
 
-> `text-muted` must never carry running text - it is reserved for labels,
-> eyebrows and small annotations where the lightness is intentional.
+> Every text token reads at 4.5:1 or more on every surface, in both themes :
+> `core/tests/test_contrast.py` recomputes the ratios from the tokens and
+> fails the build otherwise. Greys lighter than `text-muted` (`neutral-400`
+> and below) are for borders and decoration, never for text. On a tinted
+> table row the ancillary text takes `text-secondary`.
+
+### Colours chosen by an administrator
+
+The company accent and the Trust Center accent are free colours. Whatever is
+typed, the interface derives from it (`core/colors.py`) : the **ink** (same
+hue, lightness moved as far as 4.5:1 asks on each theme), the **label** that
+sits on the fill (near-black or white, whichever reads), and for the Trust
+Center banner a **fill** deepened until its white text reads. A pale yellow
+stays a yellow button; the links drawn in it turn ochre.
 
 ---
 
@@ -418,8 +459,9 @@ action on the right. Cancel is always neutral (`btn-secondary`), never red.
 ### Form inputs (token-level)
 
 Inputs use a `1px` border, radius `0.75rem`, padding `0.5625rem 0.875rem`.
-Focus draws an accent ring (`0 0 0 3px var(--accent-glow)`) and switches
-the border to `--accent`. Labels are 13 px, weight 600, in
+Focus switches the border to `--accent-text` and adds a soft halo
+(`0 0 0 3px var(--accent-glow)`); the border change is the indicator, the
+halo is decoration. Labels are 13 px, weight 600, in
 `--text-secondary`.
 
 For the doctrine, anatomy, steps, validation, deletion, accessibility and
@@ -649,9 +691,9 @@ first letters name nothing.
 | --- | --- |
 | Default | Border `--border-light`, surface background. |
 | Hover | Border darkens to `rgba(22,19,18,.22)` (subtle, not aggressive). |
-| Focus | Border `--accent`, glow ring `0 0 0 3px var(--accent-glow)`. |
+| Focus | Border `--accent-text`, soft halo `0 0 0 3px var(--accent-glow)`. |
 | Filled | No special styling: a value is its own signal. |
-| Placeholder | `--text-muted` at 70 % opacity, weight 400 (lighter than the typed value). |
+| Placeholder | `--text-muted` at full opacity, weight 400 (told from a typed value by its tone and weight; a fainter one drops under 4.5:1). |
 | Disabled / readonly | Background `--surface-muted`, text `--text-secondary`. |
 | Invalid | Add Bootstrap `.is-invalid` (red border). Error appears below as `.invalid-feedback.d-block`. |
 
@@ -961,13 +1003,30 @@ criteria covered.
 
 | Criterion | How | Level |
 | --- | --- | --- |
-| 1.4.3 Minimum contrast | All palette text/bg pairs are AA, most AAA | AA |
-| 2.4.7 Focus visible | Global `:focus-visible` rule, 2 px accent outline at min 3:1 | AA |
+| 1.4.3 Minimum contrast | Every text token reads at 4.5:1 on every surface in both themes; text uses the ink tokens, never a fill | AA |
+| 1.4.11 Non-text contrast | Focus ring (`--focus-ring`) at 3:1 or more on every surface | AA |
+| 2.1.1 Keyboard | Every acting link has an `href`, every control is a real button; what the mouse does by dragging has a button (dashboard widgets) | A |
+| 2.4.1 Bypass blocks | *Skip to main content* is the first stop of the keyboard | A |
+| 2.4.7 Focus visible | Global `:focus-visible` rule, 2 px neutral ring; a component that draws its own uses the same token | AA |
 | 2.3.3 Reduced motion | Global guard `prefers-reduced-motion: reduce` | AAA |
 | 4.1.3 Status messages | ARIA polite region `#hx-live` announces every HTMX mutation | AA |
-| 4.1.2 Name, Role, Value | Command palette in combobox pattern (role, aria-controls, aria-activedescendant) | A |
+| 4.1.2 Name, Role, Value | Command palette in combobox pattern; every control has an accessible name; a form control in a grid takes its column as `aria-label` | A |
+| 1.3.1 Info and relationships | Named landmarks (sidebar, main navigation, main), one `h1` per page and card titles as `h2` | A |
 | 2.4.4 Link purpose | Descriptive `aria-label` on every icon-only button | A |
-| 2.5.8 Target size | Icon-only buttons at 36×36 px, above the 24×24 minimum | AA |
+| 2.5.8 Target size | Icon-only buttons at 36×36 px, calendar events 24 px tall, above the 24×24 minimum | AA |
+
+### How it is checked
+
+Three layers, from the cheapest to the most faithful (see
+`docs/technical/testing.md`) :
+
+1. **The tokens** : `core/tests/test_contrast.py` recomputes every text /
+   surface ratio from `00-tokens.css` and refuses a fill token used as text.
+2. **The markup of every page** : the interface sweep parses each page for an
+   image without `alt`, a control without a name, a link without `href`, a
+   form control without a label.
+3. **The rendered pages** : `scripts/a11y_audit.py` runs axe-core in a browser
+   on every page of the screenshot set, in both themes, in CI.
 
 ### Commitments
 
@@ -980,6 +1039,10 @@ criteria covered.
   `prefers-reduced-motion: reduce`.
 - The app is fully usable from the keyboard (tab, shift+tab, escape,
   enter, cmd+k for the command palette).
+- A category colour (calendar) is a tint and a marker; the text on it stays
+  in the text colour, so any hue reads in both themes.
+- An opacity is never used to quieten a text : it lowers its contrast
+  unseen. Use `--text-muted`.
 
 ---
 

@@ -12,23 +12,23 @@
     .ob-stepper { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .25rem; }
     @media (max-width: 619.98px) { .ob-stepper { flex-direction: row; gap: 1rem; } }
     .ob-stepper li { display: flex; align-items: center; gap: .625rem; padding: .5rem .625rem; border-radius: var(--radius-sm); color: var(--text-muted); font-size: .8125rem; font-weight: 550; }
-    .ob-stepper li.active { background: var(--accent-soft); color: var(--accent); }
+    .ob-stepper li.active { background: var(--accent-soft); color: var(--accent-text); }
     .ob-stepper li.done { color: var(--text-secondary); }
     .ob-stepper .sd { flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; background: var(--surface-subtle); border: 1px solid var(--border-light); color: var(--text-muted); }
-    .ob-stepper li.active .sd { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .ob-stepper li.active .sd { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
     .ob-stepper li.done .sd { background: var(--ok); border-color: var(--ok); color: #fff; }
     .ob-actions { display: flex; flex-direction: column; gap: .5rem; }
     .ob-actions .btn-accent, .ob-actions .ob-btn-ghost { width: 100%; text-align: center; }
     .ob-btn-ghost { background: transparent; border: 1px solid var(--border-light); color: var(--text-secondary); border-radius: var(--radius-sm); padding: .625rem 1rem; font-weight: 600; font-size: .8125rem; transition: all .2s var(--ease-out-expo); text-decoration: none; }
-    .ob-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .ob-btn-ghost:hover { border-color: var(--accent); color: var(--accent-text); }
     /* ── Form bits ─────────────────────────────────────────────────── */
     .ob-panel { display: none; }
     .ob-panel.active { display: block; }
     .ob-hint { font-size: .72rem; color: var(--text-muted); margin-top: .25rem; }
     .ob-logo-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
     .ob-logo-prev { width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: contain; border: 1px solid var(--border-light); background: var(--surface-subtle); padding: 4px; }
-    .ob-logo-ph { width: 64px; height: 64px; border-radius: var(--radius-md); background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid var(--border-light); }
-    .ob-logo-cam { position: absolute; bottom: -4px; right: -4px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: .65rem; border: 2px solid var(--surface); }
+    .ob-logo-ph { width: 64px; height: 64px; border-radius: var(--radius-md); background: var(--accent-soft); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid var(--border-light); }
+    .ob-logo-cam { position: absolute; bottom: -4px; right: -4px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--accent-contrast); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: .65rem; border: 2px solid var(--surface); }
     .form-check-label { font-size: .8125rem; color: var(--text-secondary); }
     .form-text { font-size: .72rem; color: var(--text-muted); margin-top: .25rem; }
     .ob-color-picker { width: 2.5rem; height: 2.375rem; padding: .125rem; border: 1px solid var(--border-light); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; flex-shrink: 0; }

@@ -86,7 +86,7 @@
   font-family: var(--font-display);
   font-weight: 810;
   font-size: 1.25rem;
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: none;
   letter-spacing: normal;
   display: flex;
@@ -215,7 +215,7 @@
 }
 .sidebar-link.active {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
 }
 .sidebar-link i {
@@ -226,7 +226,7 @@
   transition: color var(--transition-fast);
 }
 .sidebar-link:hover i { color: var(--text-primary); }
-.sidebar-link.active i { color: var(--accent); }
+.sidebar-link.active i { color: var(--accent-text); }
 .sidebar-sub { padding-left: 3.25rem; font-size: .8125rem; color: var(--text-sidebar-sub); white-space: nowrap; overflow: hidden; }
 
 .sidebar-body .collapse {
@@ -274,7 +274,7 @@
 .sidebar-collapse-btn:hover i:first-child { color: var(--text-primary); }
 /* The section holding the current page (set by the script after the sidebar). */
 .sidebar-collapse-btn.is-current-section { color: var(--text-primary); font-weight: 600; }
-.sidebar-collapse-btn.is-current-section i:first-child { color: var(--accent); }
+.sidebar-collapse-btn.is-current-section i:first-child { color: var(--accent-text); }
 .sidebar-collapse-btn i.bi-chevron-down {
   margin-left: auto;
   font-size: .5625rem;
@@ -375,7 +375,7 @@
   height: 2rem;
   border-radius: 50%;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: .6875rem;
   font-weight: 600;
   flex-shrink: 0;
@@ -469,7 +469,7 @@
   cursor: pointer;
 }
 .sidebar-link--danger,
-.sidebar-link--danger i { color: var(--danger) !important; }
+.sidebar-link--danger i { color: var(--danger-text) !important; }
 .sidebar-link--danger:hover { background: var(--danger-soft); }
 
 /* ── Sidebar collapse toggle ──────────────────────── */
@@ -743,10 +743,10 @@
 }
 .sidebar-flyout a:hover {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .sidebar-flyout a.active {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
 }
 
@@ -807,3 +807,18 @@
 .main-content .alert { margin-bottom: 1.5rem; }
 .main-content .mb-3 { margin-bottom: 1.25rem !important; }
 .main-content .mb-4 { margin-bottom: 1.5rem !important; }
+
+/* ── Skip link ────────────────────────────────────────
+ * First stop of the keyboard : jumps over the sidebar to the page. Off screen
+ * until it takes the focus. */
+.skip-link {
+  position: fixed; top: .5rem; left: .5rem; z-index: 2000;
+  padding: .5rem .875rem; border-radius: var(--radius-sm);
+  background: var(--surface-raised); color: var(--accent-text);
+  border: 1px solid var(--border-light); box-shadow: var(--shadow-md);
+  font-size: .875rem; font-weight: 600; text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip-link:focus { transform: none; }
+/* The page takes the focus when the skip link is followed : no ring around it. */
+.main-content:focus { outline: none; }

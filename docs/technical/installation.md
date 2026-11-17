@@ -224,7 +224,7 @@ The repository ships ready-to-use VS Code configurations:
   - **stack: compile messages** : recompiles the `.po` -> `.mo` translation catalogs on demand (after editing a `locale/*.po` file).
   - **stack: createsuperuser** : creates an additional superuser interactively.
 
-To start from a clean dataset, delete `db.sqlite3` and run the bootstrap task again.
+To start from a clean dataset, delete `db.sqlite3` and run the bootstrap task again. To keep your dataset and work on a throwaway copy instead (a crawl, the accessibility audit), point `SQLITE_PATH` at another file : the local settings use it in place of `db.sqlite3` (see [testing](testing.md#accessibility) for building such a database in seconds).
 
 ## Demo data (optional)
 

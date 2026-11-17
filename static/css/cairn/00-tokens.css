@@ -26,7 +26,7 @@
   --color-neutral-200: #E4E4E7;
   --color-neutral-300: #D4D4D8;
   --color-neutral-400: #A1A1AA;
-  --color-neutral-500: #71717A;
+  --color-neutral-500: #6B6B74;
   --color-neutral-600: #52525B;
   --color-neutral-700: #3F3F46;
   --color-neutral-800: #27272A;
@@ -47,7 +47,7 @@
   --color-charcoal-700: #1C1F23;
   --color-charcoal-600: #2A2D32;
   --color-charcoal-500: #3A3D42;
-  --color-charcoal-400: #71717A;
+  --color-charcoal-400: #8E8E98;
   --color-charcoal-300: #A1A1AA;
   --color-charcoal-100: #E4E4E7;
 
@@ -104,14 +104,30 @@
   /* Text */
   --text-primary: var(--color-neutral-900);
   --text-secondary: var(--color-neutral-600);
-  --text-muted: var(--color-neutral-400);
-  --text-xs: var(--color-neutral-400);
+  /* The lightest grey that carries text : 4.5:1 or more on every surface it
+     sits on (page, card, subtle fill, tinted table row). Lighter greys
+     (neutral-400 and below) are for borders and decoration only. */
+  --text-muted: var(--color-neutral-500);
+  --text-xs: var(--color-neutral-500);
   /* Accent + semantic aliases (kept for backward compat) */
   --accent: var(--color-navy-500);
   --accent-soft: #EEF2FF;
   --accent-hover: var(--color-navy-600);
   --accent-glow: rgba(30,58,138,.20);
   --accent-contrast: #fff;
+  /* Keyboard focus : one neutral ring, 3:1 or more against every surface in
+     both themes (WCAG 1.4.11, 2.4.7). Drawn as an outline, or as a shadow
+     where an outline would be clipped. */
+  --focus-ring: color-mix(in srgb, var(--text-primary) 60%, transparent);
+  /* Ink : the tone a colour takes when it is *text* (a link, a status label,
+     a figure). The plain token stays the fill (dot, bar, icon tile, button),
+     which only needs 3:1; the ink clears 4.5:1 on the surfaces and on its own
+     soft background, in both themes. Text never uses the fill token. */
+  --accent-text: var(--color-navy-500);
+  --success-text: #15803D;
+  --warning-text: #B45309;
+  --danger-text: #B91C1C;
+  --info-text: #0E7490;
   --success: var(--color-success);
   --success-soft: #F0FDF4;
   --warning: var(--color-warning);
@@ -130,7 +146,7 @@
    * white label clears WCAG AA. Fill + text are tuned per theme. */
   --btn-primary-bg: color-mix(in srgb, var(--accent) 92%, transparent);
   --btn-primary-bg-hover: var(--color-navy-600);
-  --btn-primary-fg: #fff;
+  --btn-primary-fg: var(--accent-contrast);
   --btn-danger-bg: #C01C1C;
   --btn-danger-bg-hover: #A21717;
   --btn-danger-fg: #fff;
@@ -200,12 +216,19 @@
   --text-primary: var(--color-charcoal-100);
   --text-secondary: var(--color-charcoal-300);
   --text-muted: var(--color-charcoal-400);
-  --text-xs: var(--color-charcoal-500);
+  --text-xs: var(--color-charcoal-400);
   --accent: var(--color-navy-400);
   --accent-soft: rgba(59,91,184,.15);
   --accent-hover: var(--color-navy-300);
   --accent-glow: rgba(59,91,184,.22);
   --accent-contrast: #fff;
+  /* Ink (dark) : the navy fill is too deep to read as text on charcoal, so
+     links and accent labels take a lighter tint of the same hue. */
+  --accent-text: #869FEA;
+  --success-text: #10b981;
+  --warning-text: #f59e0b;
+  --danger-text: #F87171;
+  --info-text: #06b6d4;
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
@@ -219,7 +242,7 @@
    * keeps the white label. */
   --btn-primary-bg: color-mix(in srgb, var(--accent) 92%, transparent);
   --btn-primary-bg-hover: #2F4A9E;
-  --btn-primary-fg: #fff;
+  --btn-primary-fg: var(--accent-contrast);
   --btn-danger-bg: #ef4444;
   --btn-danger-bg-hover: #f05a5a;
   --btn-danger-fg: #2a1212;

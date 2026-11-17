@@ -6,14 +6,14 @@ cancelled) sit on the same line but are detached - a gap, no connector.
 {% endcomment %}
 <div class="stepper">
   <div class="stepper__container" id="{{ container_id }}" data-stepper-container>
-    <div class="stepper__row d-flex align-items-center gap-0" role="list" aria-label="{% trans 'Workflow steps' %}">
+    <div class="stepper__row d-flex align-items-center gap-0" role="group" aria-label="{% trans 'Workflow steps' %}">
       {% for step in steps %}
         {% if not forloop.first %}
           <div class="stepper__line stepper__line--{% if step.state == 'done' or step.state == 'current' %}done{% else %}pending{% endif %}" aria-hidden="true"></div>
         {% endif %}
         {% if step.state == 'next' and next_status and transition_url %}
           {# Forward transition: advance to the next state. #}
-          <form method="post" action="{{ transition_url }}" class="stepper__pill-form" data-stepper-step="{{ step.value }}" role="listitem">
+          <form method="post" action="{{ transition_url }}" class="stepper__pill-form" data-stepper-step="{{ step.value }}">
             {% csrf_token %}
             <input type="hidden" name="target_status" value="{{ next_status }}">
             <button type="submit" class="btn btn-sm btn-outline-success stepper__pill stepper__pill--next">
@@ -24,12 +24,12 @@ cancelled) sit on the same line but are detached - a gap, no connector.
           {# Backward transition: click the earlier state to move back to it. #}
           {% if refuse_requires_comment and transition_modal_callback and entity_id %}
             <button type="button" class="btn btn-sm btn-outline-secondary stepper__pill stepper__pill--back"
-                    data-stepper-step="{{ step.value }}" role="listitem"
+                    data-stepper-step="{{ step.value }}"
                     onclick="{{ transition_modal_callback }}('{{ entity_id }}', '{{ refusal.status }}', true, '{{ step.label }}')">
               <i class="bi bi-arrow-left-circle" aria-hidden="true"></i> {{ step.label }}
             </button>
           {% else %}
-            <form method="post" action="{{ transition_url }}" class="stepper__pill-form" data-stepper-step="{{ step.value }}" role="listitem">
+            <form method="post" action="{{ transition_url }}" class="stepper__pill-form" data-stepper-step="{{ step.value }}">
               {% csrf_token %}
               <input type="hidden" name="target_status" value="{{ refusal.status }}">
               <button type="submit" class="btn btn-sm btn-outline-secondary stepper__pill stepper__pill--back">
@@ -40,7 +40,6 @@ cancelled) sit on the same line but are detached - a gap, no connector.
         {% else %}
           <span class="stepper__pill stepper__pill--{{ step.state }}"
                 data-stepper-step="{{ step.value }}"
-                role="listitem"
                 {% if step.state == 'current' %}aria-current="step"{% endif %}>
             {% if step.state == 'done' %}<i class="bi bi-check-circle-fill stepper__pill-icon" aria-hidden="true"></i>{% elif step.state == 'current' %}<i class="bi bi-circle-fill stepper__pill-icon stepper__pill-icon--current" aria-hidden="true"></i>{% else %}<i class="bi bi-circle stepper__pill-icon stepper__pill-icon--future" aria-hidden="true"></i>{% endif %}
             {{ step.label }}
@@ -58,15 +57,13 @@ cancelled) sit on the same line but are detached - a gap, no connector.
       {% if cancelled.state == 'current' %}
         <span class="stepper__gap" aria-hidden="true"></span>
         <span class="stepper__pill stepper__pill--cancelled-current"
-              data-stepper-step="{{ cancelled.value }}"
-              role="listitem" aria-current="step">
+              data-stepper-step="{{ cancelled.value }}" aria-current="step">
           <i class="bi bi-x-circle-fill stepper__pill-icon" aria-hidden="true"></i> {{ cancelled.label }}
         </span>
       {% elif cancelled and can_cancel and transition_modal_callback and entity_id %}
         <span class="stepper__gap" aria-hidden="true"></span>
         <button type="button" class="btn btn-sm btn-outline-danger stepper__pill stepper__pill--cancel"
                 data-stepper-step="{{ cancelled.value }}"
-                role="listitem"
                 onclick="{{ transition_modal_callback }}('{{ entity_id }}', '{{ cancelled.value }}', {{ cancel_requires_comment|yesno:'true,false' }}, '{% trans "Cancel" %}: {{ cancelled.label }}')">
           <i class="bi bi-x-circle" aria-hidden="true"></i> {{ cancelled.label }}
         </button>

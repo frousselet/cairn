@@ -8,6 +8,7 @@ from compliance.constants import AssessmentStatus
 from compliance.models import ComplianceAssessment, Framework
 from context.models import Scope
 from core.lifecycle import linkable_or_linked, reportable
+from core.modal_forms import LabelledRowsFormSet
 from documents.models import Policy
 from reports.constants import (
     DecisionPriority,
@@ -202,6 +203,7 @@ ParticipantFormSet = forms.inlineformset_factory(
     form=ManagementReviewParticipantForm,
     extra=1,
     can_delete=True,
+    formset=LabelledRowsFormSet,
 )
 
 
@@ -300,6 +302,7 @@ class ManagementReviewCommentForm(forms.ModelForm):
             "content": forms.Textarea(attrs={
                 **_FORM_CONTROL, "rows": 2,
                 "placeholder": _("Write a comment"),
+                "aria-label": _("Write a comment"),
             }),
         }
 

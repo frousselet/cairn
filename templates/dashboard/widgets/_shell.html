@@ -16,6 +16,13 @@
     </button>
     <span class="dash-widget__grip" title="{% trans 'Drag to move' %}" aria-hidden="true"><i class="bi bi-grip-horizontal"></i></span>
     <span class="dash-widget__tools">
+      {# The keyboard's way to reorder : dragging has no keyboard equivalent. #}
+      <button type="button" class="dash-widget__btn dash-widget__move" data-move="earlier" title="{% trans 'Move earlier' %}" aria-label="{% trans 'Move earlier' %}">
+        <i class="bi bi-arrow-up" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="dash-widget__btn dash-widget__move" data-move="later" title="{% trans 'Move later' %}" aria-label="{% trans 'Move later' %}">
+        <i class="bi bi-arrow-down" aria-hidden="true"></i>
+      </button>
       {% if placed.configurable %}
       <button type="button" class="dash-widget__btn dash-widget__config" title="{% trans 'Configure' %}" aria-label="{% trans 'Configure' %}">
         <i class="bi bi-gear" aria-hidden="true"></i>

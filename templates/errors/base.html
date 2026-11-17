@@ -23,14 +23,14 @@ reason. `get_static_prefix` only reads STATIC_URL.
     }
     :root {
       --bg: #FAFAFA; --surface: #FFFFFF; --border: rgba(0,0,0,.08);
-      --text: #18181B; --text-secondary: #52525B; --text-muted: #71717A;
-      --accent: #1E3A8A; --accent-hover: #1E2E5E; --accent-contrast: #FFFFFF;
+      --text: #18181B; --text-secondary: #52525B; --text-muted: #6B6B74;
+      --accent: #1E3A8A; --accent-text: #1E3A8A; --accent-hover: #1E2E5E; --accent-contrast: #FFFFFF;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #0F1011; --surface: #1C1F23; --border: rgba(255,255,255,.10);
         --text: #E4E4E7; --text-secondary: #A1A1AA; --text-muted: #A1A1AA;
-        --accent: #3B5BB8; --accent-hover: #4C6BC6; --accent-contrast: #FFFFFF;
+        --accent: #3B5BB8; --accent-text: #869FEA; --accent-hover: #4C6BC6; --accent-contrast: #FFFFFF;
       }
     }
     * { box-sizing: border-box; }
@@ -56,7 +56,7 @@ reason. `get_static_prefix` only reads STATIC_URL.
     }
     .error-brand { display: flex; align-items: center; gap: .625rem; margin-bottom: 1.75rem; }
     .error-brand svg { width: 2rem; height: 2rem; flex: none; }
-    .error-brand span { font-size: 1.25rem; font-weight: 810; color: var(--accent); }
+    .error-brand span { font-size: 1.25rem; font-weight: 810; color: var(--accent-text); }
     .error-eyebrow {
       margin: 0 0 .5rem;
       font-size: .75rem;

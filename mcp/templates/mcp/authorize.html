@@ -55,6 +55,8 @@
     }
     :root {
       --accent: #1E3A8A;
+      --accent-text: #1E3A8A;
+      --accent-contrast: #FFFFFF;
       --accent-hover: #1E2E5E;
       --accent-soft: #EEF2FF;
       --accent-glow: rgba(30,58,138,.20);
@@ -62,7 +64,7 @@
       --border-light: rgba(0,0,0,.08);
       --text-primary: #18181B;
       --text-secondary: #52525B;
-      --text-muted: #A1A1AA;
+      --text-muted: #6B6B74;
       --radius-lg: 1.125rem;
       --radius-md: .625rem;
       --radius-sm: .5rem;
@@ -73,8 +75,10 @@
       --border-light: rgba(255,255,255,.10);
       --text-primary: #E4E4E7;
       --text-secondary: #A1A1AA;
-      --text-muted: #71717A;
+      --text-muted: #8E8E98;
       --accent: #3B5BB8;
+      --accent-text: #869FEA;
+      --accent-contrast: #FFFFFF;
       --accent-soft: rgba(59,91,184,.15);
       --accent-glow: rgba(59,91,184,.22);
     }
@@ -179,7 +183,7 @@
     .btn-authorize {
       background: var(--accent);
       border: none;
-      color: #fff;
+      color: var(--accent-contrast);
       border-radius: var(--radius-sm);
       padding: .625rem;
       font-weight: 600;
@@ -210,7 +214,7 @@
       border-color: #ef4444;
       color: #ef4444;
     }
-    ::selection { background: var(--accent-soft); color: var(--accent); }
+    ::selection { background: var(--accent-soft); color: var(--accent-text); }
   </style>
 </head>
 <body>

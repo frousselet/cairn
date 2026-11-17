@@ -76,7 +76,9 @@ in a fourth column.
 ![The calendar](../screenshots/calendar.png)
 
 Dated obligations, in one place : review dates, audit windows, target dates,
-acceptance expiries, notification deadlines.
+acceptance expiries, notification deadlines. Each kind of record has its
+colour, shown as a tint and a rule on the left of the event; the chips above
+the grid show or hide a kind.
 
 It can be **subscribed to** rather than merely read. Administration -> Calendar
 subscriptions issues a personal iCal feed you can add to Outlook, Google
@@ -119,6 +121,15 @@ account.
 
 Note that the **data** is not translated. A requirement written in French stays
 in French for an English user; only the interface changes.
+
+## Keyboard and readability
+
+The first press of `Tab` on any page offers **Skip to main content**, which
+jumps over the sidebar, and the element that has the focus is always outlined.
+Links, buttons, menus and forms work from the keyboard; on the dashboard, the
+arrow buttons of a tile do what dragging does. Texts meet the WCAG 2.2 AA
+contrast level in both themes, status badges included, whatever accent colour
+your organisation has chosen.
 
 ## About this instance
 

@@ -27,6 +27,9 @@
 }
 .card-body { padding: 1.75rem 2rem; }
 .card-title { font-weight: 600; color: var(--text-primary); font-size: .9375rem; letter-spacing: normal; margin-bottom: 1.25rem; }
+/* A card title is a second-level heading of its page (the outline has no gap
+   under the page title) that keeps the card title's size. */
+.main-content h2.card-title { font-family: var(--font-sans); font-size: .9375rem; font-weight: 600; line-height: 1.4; margin-bottom: 1.25rem; }
 
 /* ── List group - Refined ──────────────────────────── */
 .list-group {
@@ -58,7 +61,7 @@
 .btn-close { filter: var(--btn-close-filter, none); }
 [data-bs-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
 .alert { color: var(--text-primary); }
-code { color: var(--accent); }
+code { color: var(--accent-text); }
 
 /* ── Stat cards (bento) ────────────────────────────── */
 /*
@@ -87,11 +90,11 @@ code { color: var(--accent); }
   font-size: 1.125rem;
   margin-bottom: 1rem;
 }
-.stat-card-icon.accent { background: var(--accent-soft); color: var(--accent); }
-.stat-card-icon.success { background: var(--success-soft); color: var(--success); }
-.stat-card-icon.warning { background: var(--warning-soft); color: var(--warning); }
-.stat-card-icon.danger { background: var(--danger-soft); color: var(--danger); }
-.stat-card-icon.info { background: var(--info-soft); color: var(--info); }
+.stat-card-icon.accent { background: var(--accent-soft); color: var(--accent-text); }
+.stat-card-icon.success { background: var(--success-soft); color: var(--success-text); }
+.stat-card-icon.warning { background: var(--warning-soft); color: var(--warning-text); }
+.stat-card-icon.danger { background: var(--danger-soft); color: var(--danger-text); }
+.stat-card-icon.info { background: var(--info-soft); color: var(--info-text); }
 .stat-card-label {
   font-size: .8125rem;
   font-weight: 500;
@@ -114,7 +117,7 @@ code { color: var(--accent); }
 .stat-card-link {
   font-size: .78rem;
   font-weight: 500;
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -220,6 +223,11 @@ code { color: var(--accent); }
   --bs-table-bg: var(--warning-soft);
   --bs-table-hover-bg: var(--warning-soft);
 }
+/* On a tinted row the muted grey loses its margin : secondary text there. */
+.table > tbody > tr.table-danger .cell-sub, .table > tbody > tr.table-danger .cell-empty,
+.table > tbody > tr.table-warning .cell-sub, .table > tbody > tr.table-warning .cell-empty {
+  color: var(--text-secondary);
+}
 
 /* ── Table badges - dot-pill style (refined) ───────── */
 .table .badge,
@@ -253,7 +261,7 @@ code { color: var(--accent); }
 .table .badge.text-bg-success, .table .badge.bg-success,
 .badge-dot.success {
   background: var(--success-soft) !important;
-  color: var(--success) !important;
+  color: var(--success-text) !important;
 }
 .table .badge.text-bg-success::before, .table .badge.bg-success::before,
 .badge-dot.success::before { background: var(--success); }
@@ -262,9 +270,9 @@ code { color: var(--accent); }
 .table .badge.text-bg-warning, .table .badge.bg-warning,
 .badge-dot.warning {
   background: var(--warning-soft) !important;
-  color: var(--warning) !important;
+  color: var(--warning-text) !important;
 }
-.table .badge.bg-warning.text-dark { color: var(--warning) !important; }
+.table .badge.bg-warning.text-dark { color: var(--warning-text) !important; }
 .table .badge.text-bg-warning::before, .table .badge.bg-warning::before,
 .badge-dot.warning::before { background: var(--warning); }
 
@@ -272,7 +280,7 @@ code { color: var(--accent); }
 .table .badge.text-bg-danger, .table .badge.bg-danger,
 .badge-dot.danger {
   background: var(--danger-soft) !important;
-  color: var(--danger) !important;
+  color: var(--danger-text) !important;
 }
 .table .badge.text-bg-danger::before, .table .badge.bg-danger::before,
 .badge-dot.danger::before { background: var(--danger); }
@@ -281,7 +289,7 @@ code { color: var(--accent); }
 .table .badge.text-bg-info, .table .badge.bg-info,
 .badge-dot.info {
   background: var(--info-soft) !important;
-  color: var(--info) !important;
+  color: var(--info-text) !important;
 }
 .table .badge.text-bg-info::before, .table .badge.bg-info::before,
 .badge-dot.info::before { background: var(--info); }
@@ -290,7 +298,7 @@ code { color: var(--accent); }
 .table .badge.text-bg-primary, .table .badge.bg-primary,
 .badge-dot.accent {
   background: var(--accent-soft) !important;
-  color: var(--accent) !important;
+  color: var(--accent-text) !important;
 }
 .table .badge.text-bg-primary::before, .table .badge.bg-primary::before,
 .badge-dot.accent::before { background: var(--accent); }
@@ -374,8 +382,15 @@ code { color: var(--accent); }
    !important removes that generic accent outline even on boosted swaps. */
 .btn:focus-visible {
   outline: none !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-primary) 25%, transparent) !important;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus-ring) !important;
 }
+/* Bootstrap's close button draws a pale blue halo : the shared ring instead. */
+.btn-close:focus, .btn-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus-ring);
+  opacity: 1;
+}
+.btn-close:focus:not(:focus-visible) { box-shadow: none; }
 .btn:focus:not(:focus-visible) {
   outline: none !important;
   box-shadow: var(--shadow-sm) !important;
@@ -449,7 +464,7 @@ code { color: var(--accent); }
   --btn-bg-hover: transparent;
   --btn-border: transparent;
   --btn-border-hover: transparent;
-  --btn-fg: var(--accent);
+  --btn-fg: var(--accent-text);
   --btn-fg-hover: var(--accent-hover);
   box-shadow: none;
   -webkit-backdrop-filter: none;
@@ -477,16 +492,16 @@ code { color: var(--accent); }
   --btn-fg-hover: var(--text-primary);
 }
 .table .btn-danger, .table .btn-outline-danger {
-  --btn-fg: var(--danger); --btn-fg-hover: var(--danger); --btn-bg-hover: var(--danger-soft);
+  --btn-fg: var(--danger-text); --btn-fg-hover: var(--danger-text); --btn-bg-hover: var(--danger-soft);
 }
 .table .btn-warning, .table .btn-outline-warning {
-  --btn-fg: var(--warning); --btn-fg-hover: var(--warning); --btn-bg-hover: var(--warning-soft);
+  --btn-fg: var(--warning-text); --btn-fg-hover: var(--warning-text); --btn-bg-hover: var(--warning-soft);
 }
 .table .btn-success, .table .btn-outline-success {
-  --btn-fg: var(--success); --btn-fg-hover: var(--success); --btn-bg-hover: var(--success-soft);
+  --btn-fg: var(--success-text); --btn-fg-hover: var(--success-text); --btn-bg-hover: var(--success-soft);
 }
 .table .btn-info, .table .btn-outline-info {
-  --btn-fg: var(--info); --btn-fg-hover: var(--info); --btn-bg-hover: var(--info-soft);
+  --btn-fg: var(--info-text); --btn-fg-hover: var(--info-text); --btn-bg-hover: var(--info-soft);
 }
 
 /* ── HTMX loading feedback (buttons & form submit) ── */
@@ -683,7 +698,7 @@ button[type="submit"].btn-loading::after {
 .inline-form-label {
   font-size: .78rem;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
   white-space: nowrap;
 }
 
@@ -710,7 +725,7 @@ button[type="submit"].btn-loading::after {
   border-color: var(--field-border-hover);
 }
 .form-control:focus, .form-select:focus {
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   box-shadow: 0 0 0 3px var(--accent-glow);
   background-color: var(--surface);
 }
@@ -721,7 +736,9 @@ button[type="submit"].btn-loading::after {
   border-color: var(--border-subtle);
   box-shadow: none;
 }
-.form-control::placeholder { color: var(--text-muted); opacity: .7; font-weight: 400; }
+/* Full muted grey : a placeholder is text, and a lighter one drops under 4.5:1.
+   It is told from a typed value by its tone and its weight. */
+.form-control::placeholder { color: var(--text-muted); opacity: 1; font-weight: 400; }
 .input-group-text {
   background: var(--field-bg);
   border: 1px solid var(--field-border);
@@ -746,7 +763,7 @@ button[type="submit"].btn-loading::after {
 }
 .form-check-input:focus {
   box-shadow: 0 0 0 3px var(--accent-glow);
-  border-color: var(--accent);
+  border-color: var(--accent-text);
 }
 .form-check-label { font-weight: 500; }
 .inline-form-bar .form-control,
@@ -782,7 +799,7 @@ button[type="submit"].btn-loading::after {
 .page-link:hover {
   background: var(--accent-soft);
   border-color: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .page-item.active .page-link {
   background: var(--text-primary);
@@ -826,7 +843,7 @@ button[type="submit"].btn-loading::after {
 .dropdown-item:hover,
 .dropdown-item:focus {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .dropdown-divider {
   border-top: 1px solid var(--border-light);

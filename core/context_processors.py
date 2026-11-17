@@ -4,6 +4,8 @@ import colorsys
 
 from django.conf import settings
 
+from core.colors import ink_on_dark, ink_on_light, label_on
+
 
 def app_version(request):
     return {"APP_VERSION": settings.APP_VERSION}
@@ -36,20 +38,6 @@ def _parse_hex(hex_color):
 def _hls_to_hex(hue, light, sat):
     r, g, b = colorsys.hls_to_rgb(hue, light, sat)
     return "#{:02X}{:02X}{:02X}".format(round(r * 255), round(g * 255), round(b * 255))
-
-
-def _contrast_fg(hex_color):
-    """Return a legible foreground (#18181B dark or #FFFFFF) for text sitting on
-    ``hex_color``, based on its perceived luminance."""
-    h = hex_color.lstrip("#")
-    if len(h) != 6:
-        return "#FFFFFF"
-    try:
-        r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
-    except ValueError:
-        return "#FFFFFF"
-    luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-    return "#18181B" if luminance > 0.6 else "#FFFFFF"
 
 
 def _accent_for_light(hex_color):
@@ -118,6 +106,10 @@ def company(request):
         ctx["ACCENT_LIGHT"] = _accent_for_light(accent)
         ctx["ACCENT_DARK"] = _accent_for_dark(accent)
         # Foreground (text / checkmarks / switch knobs) that sits on the accent.
-        ctx["ACCENT_LIGHT_FG"] = _contrast_fg(ctx["ACCENT_LIGHT"])
-        ctx["ACCENT_DARK_FG"] = _contrast_fg(ctx["ACCENT_DARK"])
+        ctx["ACCENT_LIGHT_FG"] = label_on(ctx["ACCENT_LIGHT"])
+        ctx["ACCENT_DARK_FG"] = label_on(ctx["ACCENT_DARK"])
+        # The accent as text (links, labels) : the same hue, taken as far as
+        # 4.5:1 asks on each theme's surfaces. The fill above only needs 3:1.
+        ctx["ACCENT_LIGHT_TEXT"] = ink_on_light(ctx["ACCENT_LIGHT"])
+        ctx["ACCENT_DARK_TEXT"] = ink_on_dark(ctx["ACCENT_DARK"])
     return ctx

@@ -23,7 +23,7 @@
              style="width:80px;height:80px;border-radius:12px;object-fit:contain;border:2px solid var(--border-light);background:var(--card-bg);padding:4px">
         {% else %}
         <div id="logo-preview"
-             style="width:80px;height:80px;border-radius:12px;background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--accent) 18%,transparent));color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:600;border:2px solid var(--border-light)">
+             style="width:80px;height:80px;border-radius:12px;background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--accent) 18%,transparent));color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:600;border:2px solid var(--border-light)">
           <i class="bi bi-building" aria-hidden="true"></i>
         </div>
         {% endif %}
@@ -133,7 +133,7 @@ function removeLogo() {
   var el = document.getElementById('logo-preview');
   var div = document.createElement('div');
   div.id = 'logo-preview';
-  div.style.cssText = 'width:80px;height:80px;border-radius:12px;background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--accent) 18%,transparent));color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:600;border:2px solid var(--border-light)';
+  div.style.cssText = 'width:80px;height:80px;border-radius:12px;background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--accent) 18%,transparent));color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:600;border:2px solid var(--border-light)';
   div.innerHTML = '<i class="bi bi-building"></i>';
   el.parentNode.replaceChild(div, el);
   var btn = document.getElementById('remove-logo-btn');

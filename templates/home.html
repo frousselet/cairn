@@ -73,9 +73,13 @@
     .dashboard-main > .dash-widget .card-body { overflow: visible; }
     /* Progress rows take their natural height when stacked (no even-division);
        skeleton placeholders only make sense for the fixed-height tile. */
-    .dashboard-main > .dash-widget [data-progress-rows] { overflow: visible; }
+    .dashboard-main > .dash-widget [data-progress-rows] { overflow: visible !important; }
+    /* !important : the fixed-tile rules further down this sheet have the same
+       specificity and come later, so they used to win here and squash every
+       row to nothing on a phone. */
     .dashboard-main > .dash-widget [data-progress-rows] > .fw-bar {
-      flex: none;
+      flex: none !important;
+      min-height: auto !important;
       margin-bottom: .75rem !important;
     }
     .dashboard-main > .dash-widget .fw-bar--placeholder { display: none !important; }
@@ -336,7 +340,7 @@
     cursor: pointer;
     font-size: .8125rem;
   }
-  .dash-widget__btn:hover { color: var(--accent); border-color: var(--accent); }
+  .dash-widget__btn:hover { color: var(--accent-text); border-color: var(--accent); }
   /* The widget content dims slightly in edit mode so the chrome reads clearly. */
   body.dash-editing .dash-widget__body > * { opacity: .85; }
 
@@ -390,13 +394,13 @@
   .widget-gallery__icon {
     flex-shrink: 0; width: 2.5rem; height: 2.5rem; border-radius: var(--radius-sm);
     display: inline-flex; align-items: center; justify-content: center;
-    background: var(--accent-soft); color: var(--accent); font-size: 1.125rem;
+    background: var(--accent-soft); color: var(--accent-text); font-size: 1.125rem;
   }
   .widget-gallery__text { display: flex; flex-direction: column; gap: .125rem; min-width: 0; flex: 1; }
   .widget-gallery__name { font-weight: 600; font-size: .875rem; color: var(--text-primary); }
   .widget-gallery__desc { font-size: .75rem; color: var(--text-muted); }
   .widget-gallery__add {
-    flex-shrink: 0; color: var(--accent); font-size: 1rem;
+    flex-shrink: 0; color: var(--accent-text); font-size: 1rem;
     width: 1.75rem; height: 1.75rem; border-radius: 50%;
     display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft);
   }
@@ -437,7 +441,8 @@
     ) !important;
   }
   .fw-bar__head { min-height: 1.5rem; }
-  .fw-bar__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* 24 px tall : a comfortable target on a phone (WCAG 2.5.8). */
+  .fw-bar__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.5rem; }
 
   /* ── Progress-bar list widgets (compliance by framework, active objectives) ──
      The client (layoutProgressWidget) sorts the rows and shows the first N for
@@ -704,6 +709,32 @@
         }));
       }
     });
+  }
+
+  // Move a widget one place earlier or later in the reading order : the
+  // keyboard's equivalent of the drag. Hidden widgets (removed singletons kept
+  // in the DOM) are stepped over; past the end of a zone the widget enters the
+  // neighbouring zone. Returns false when it is already at the very end.
+  function moveWidget(el, direction) {
+    var earlier = direction === 'earlier';
+    var shown = function(node) { return node && node.getAttribute('data-visible') !== 'false'; };
+    var sibling = earlier ? el.previousElementSibling : el.nextElementSibling;
+    while (sibling && !shown(sibling)) {
+      sibling = earlier ? sibling.previousElementSibling : sibling.nextElementSibling;
+    }
+    var zone = el.parentNode;
+    if (sibling) {
+      zone.insertBefore(el, earlier ? sibling : sibling.nextSibling);
+    } else {
+      var order = [mainZone, railTopZone, railBottomZone].filter(Boolean);
+      var target = order[order.indexOf(zone) + (earlier ? -1 : 1)];
+      if (!target) return false;
+      if (earlier) target.appendChild(el); else target.insertBefore(el, target.firstChild);
+      syncZone(el, target);
+      if (target === mainZone) applySize(el, el.getAttribute('data-size'));
+    }
+    fitWidget(el);
+    return true;
   }
 
   function setEditing(on) {
@@ -1220,6 +1251,16 @@
     var configBtn = e.target.closest('.dash-widget__config');
     if (configBtn) {
       openConfigFor(configBtn.closest('.dash-widget'));
+      return;
+    }
+    var moveBtn = e.target.closest('.dash-widget__move');
+    if (moveBtn) {
+      if (moveWidget(moveBtn.closest('.dash-widget'), moveBtn.getAttribute('data-move'))) {
+        dirty = true;
+        var liveMove = document.getElementById('hx-live');
+        if (liveMove) liveMove.textContent = moveBtn.getAttribute('aria-label');
+      }
+      moveBtn.focus();
       return;
     }
     var sizeBtn = e.target.closest('.dash-widget__size');

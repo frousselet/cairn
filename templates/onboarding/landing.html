@@ -31,17 +31,17 @@
     }
     .ob-tile:not(.disabled):hover { border-color: var(--accent); box-shadow: 0 8px 24px var(--accent-glow); transform: translateY(-2px); }
     .ob-tile.disabled { opacity: .55; }
-    .ob-tile-icon { font-size: 1.5rem; color: var(--accent); margin-bottom: .5rem; }
+    .ob-tile-icon { font-size: 1.5rem; color: var(--accent-text); margin-bottom: .5rem; }
     .ob-tile-title { font-weight: 700; font-size: .9375rem; color: var(--text-primary); margin-bottom: .25rem; }
     .ob-tile-desc { font-size: .8125rem; color: var(--text-secondary); flex: 1; margin-bottom: 1rem; }
     .ob-tile form { margin: 0; }
     .ob-tile .btn-accent, .ob-tile .btn-outline-accent { width: 100%; }
     .btn-outline-accent {
-      background: transparent; border: 1px solid var(--accent); color: var(--accent);
+      background: transparent; border: 1px solid var(--accent); color: var(--accent-text);
       border-radius: var(--radius-sm); padding: .625rem 1rem; font-weight: 600; font-size: .8125rem;
       transition: all .2s var(--ease-out-expo);
     }
-    .btn-outline-accent:hover { background: var(--accent); color: #fff; }
+    .btn-outline-accent:hover { background: var(--accent); color: var(--accent-contrast); }
 {% endblock %}
 
 {% block content %}

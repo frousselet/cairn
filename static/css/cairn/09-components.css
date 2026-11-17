@@ -155,7 +155,7 @@
 .page-header.is-compact .page-header__main { gap: .5rem; }
 .page-header__icon {
   font-size: 1.625rem;
-  color: var(--accent);
+  color: var(--accent-text);
   flex-shrink: 0;
   margin-top: .25rem;
 }
@@ -196,7 +196,7 @@
 .page-header__eyebrow {
   font-size: .75rem;
   font-weight: 600;
-  color: var(--module-accent, var(--text-muted));
+  color: var(--module-accent-text, var(--text-muted));
   margin-bottom: .625rem;
   line-height: 1;
   transition: opacity var(--transition-fast),
@@ -220,7 +220,7 @@
               margin var(--transition-normal);
 }
 .page-header__crumb {
-  color: var(--module-accent, var(--accent));
+  color: var(--module-accent-text, var(--accent-text));
   text-decoration: none;
   transition: color var(--transition-fast);
 }
@@ -291,8 +291,8 @@ a.page-header__crumb:hover { text-decoration: underline; }
   transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 .page-switcher__link:hover { background: var(--surface-subtle); color: var(--text-primary); }
-.page-switcher__link.is-current { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-.page-switcher__link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-glow); }
+.page-switcher__link.is-current { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+.page-switcher__link:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }
 @media (prefers-reduced-motion: reduce) { .page-switcher__link { transition: none; } }
 
 /* Module accent variant - bold editorial banner.
@@ -310,7 +310,7 @@ a.page-header__crumb:hover { text-decoration: underline; }
  * module. No painted block, no offset shadow, no UPPERCASE shout.
  */
 .page-header--accent .page-header__eyebrow {
-  color: var(--module-accent, var(--accent));
+  color: var(--module-accent-text, var(--accent-text));
   position: relative;
   padding-bottom: .5rem;
 }
@@ -325,7 +325,7 @@ a.page-header__crumb:hover { text-decoration: underline; }
   background: var(--module-accent, var(--accent));
 }
 .page-header--accent .page-header__icon {
-  color: var(--module-accent, var(--accent));
+  color: var(--module-accent-text, var(--accent-text));
 }
 .page-header--accent-risks      { --module-accent: var(--module-accent-risks); }
 .page-header--accent-compliance { --module-accent: var(--module-accent-compliance); }
@@ -445,11 +445,11 @@ a.page-header__crumb:hover { text-decoration: underline; }
   font-size: 1.125rem;
   flex-shrink: 0;
 }
-.kpi-card--accent .kpi-card__icon { background: var(--accent-soft); color: var(--accent); }
-.kpi-card--success .kpi-card__icon { background: var(--success-soft); color: var(--success); }
-.kpi-card--warning .kpi-card__icon { background: var(--warning-soft); color: var(--warning); }
-.kpi-card--danger .kpi-card__icon { background: var(--danger-soft); color: var(--danger); }
-.kpi-card--info .kpi-card__icon { background: var(--info-soft); color: var(--info); }
+.kpi-card--accent .kpi-card__icon { background: var(--accent-soft); color: var(--accent-text); }
+.kpi-card--success .kpi-card__icon { background: var(--success-soft); color: var(--success-text); }
+.kpi-card--warning .kpi-card__icon { background: var(--warning-soft); color: var(--warning-text); }
+.kpi-card--danger .kpi-card__icon { background: var(--danger-soft); color: var(--danger-text); }
+.kpi-card--info .kpi-card__icon { background: var(--info-soft); color: var(--info-text); }
 .kpi-card--secondary .kpi-card__icon { background: var(--surface-subtle); color: var(--text-secondary); }
 .kpi-card__body { min-width: 0; }
 .kpi-card__value {
@@ -475,8 +475,8 @@ a.page-header__crumb:hover { text-decoration: underline; }
   font-weight: 500;
   margin-top: .25rem;
 }
-.kpi-card__trend--up { color: var(--success); }
-.kpi-card__trend--down { color: var(--danger); }
+.kpi-card__trend--up { color: var(--success-text); }
+.kpi-card__trend--down { color: var(--danger-text); }
 .kpi-card__trend--flat { color: var(--text-muted); }
 .kpi-card__trend-label { color: var(--text-muted); font-weight: 400; }
 
@@ -672,19 +672,19 @@ a.page-header__crumb:hover { text-decoration: underline; }
 .contact-card__actions { display: flex; gap: .1rem; flex-shrink: 0; margin-left: auto; align-self: flex-start; }
 .contact-card__actions .btn {
   --btn-bg: transparent; --btn-bg-hover: var(--surface);
-  --btn-fg: var(--text-muted); --btn-fg-hover: var(--accent);
+  --btn-fg: var(--text-muted); --btn-fg-hover: var(--accent-text);
   --btn-border: transparent; --btn-border-hover: transparent;
   padding: .25rem .35rem; border-radius: 8px;
   box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
   line-height: 1; font-size: .95rem;
 }
 .contact-card__actions .btn:hover { box-shadow: none; }
-.contact-card__actions .btn--danger { --btn-fg-hover: var(--danger); }
+.contact-card__actions .btn--danger { --btn-fg-hover: var(--danger-text); }
 .contact-card__meta { display: flex; flex-direction: column; gap: .5rem; font-size: .84rem; min-width: 0; }
 .contact-card__row { display: flex; align-items: flex-start; gap: .55rem; line-height: 1.45; color: var(--text-secondary); text-decoration: none; word-break: break-word; }
 .contact-card__row > span { min-width: 0; }
 .contact-card__row i { flex-shrink: 0; width: 1rem; text-align: center; color: var(--text-muted); font-size: .9rem; line-height: inherit; }
-a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
+a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent-text); }
 
 /* Address autocomplete (Photon / OSM) suggestion dropdown. */
 .address-ac { position: relative; }
@@ -735,7 +735,7 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 }
 .entity-map:hover .leaflet-control-attribution,
 .entity-map:focus-within .leaflet-control-attribution { opacity: 1; }
-.entity-map .leaflet-control-attribution a { color: var(--accent) !important; }
+.entity-map .leaflet-control-attribution a { color: var(--accent-text) !important; }
 /* Brand-navy circle marker with a soft halo so it reads on either basemap. */
 .entity-map .leaflet-overlay-pane circle { filter: drop-shadow(0 1px 2px rgba(2, 6, 23, .35)); }
 [data-bs-theme="dark"] .entity-map .leaflet-overlay-pane circle {
@@ -809,7 +809,7 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 /* Lead row : the description shown first and a touch larger. */
 :is(.supplier-overview, .overview) .ov-row--lead .ov-row__value { font-size: 1.02rem; line-height: 1.5; }
 :is(.supplier-overview, .overview) .ov-row--lead .ov-row__icon { height: 1.6rem; font-size: 1.02rem; }
-:is(.supplier-overview, .overview) .ov-link { color: var(--accent); text-decoration: none; }
+:is(.supplier-overview, .overview) .ov-link { color: var(--accent-text); text-decoration: none; }
 :is(.supplier-overview, .overview) .ov-link:hover { text-decoration: underline; }
 /* Drop the separator line between the merged zone and the next subsection. */
 /* Match the sibling card titles (h6.text-muted -> --bs-secondary-color) rather than the lighter eyebrow grey. */
@@ -952,7 +952,7 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 }
 .list-toolbar__search input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   box-shadow: 0 0 0 .15rem var(--accent-soft);
 }
 .list-toolbar__spacer { flex: 1 1 auto; }
@@ -968,7 +968,7 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
   font-weight: 600;
   border-radius: 100px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast);
 }
 /* Columns menu: a scrollable list of draggable, toggleable column rows. */
 .columns-menu { min-width: 15rem; max-height: 22rem; overflow-y: auto; padding: .35rem; }
@@ -1007,8 +1007,8 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
   font-size: .85rem; cursor: pointer;
   transition: border-color .15s var(--ease-out), color .15s var(--ease-out);
 }
-.page-btn:hover:not(:disabled):not(.is-current) { border-color: var(--accent); color: var(--accent); }
-.page-btn.is-current { background: var(--accent); border-color: var(--accent); color: #fff; cursor: default; }
+.page-btn:hover:not(:disabled):not(.is-current) { border-color: var(--accent); color: var(--accent-text); }
+.page-btn.is-current { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); cursor: default; }
 .page-btn:disabled { opacity: .4; cursor: default; }
 .page-ellipsis { padding: 0 .25rem; color: var(--text-muted); }
 
@@ -1035,7 +1035,7 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 }
 .saved-filter-apply:hover { background: var(--surface-subtle); }
 .saved-filter-del { border: none; background: none; color: var(--text-muted); padding: .3rem .4rem; border-radius: var(--radius-sm); cursor: pointer; }
-.saved-filter-del:hover { color: var(--danger); background: var(--surface-subtle); }
+.saved-filter-del:hover { color: var(--danger-text); background: var(--surface-subtle); }
 .saved-filter-empty { padding: .4rem .5rem; font-size: .8rem; color: var(--text-muted); }
 .saved-filter-save { border-top: 1px solid var(--border-light); margin-top: .25rem; padding: .5rem .25rem .25rem; }
 
@@ -1059,14 +1059,14 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
   align-items: center;
   justify-content: center;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 1.25rem;
 }
 /* Tone variants: semantic colours, reserved for status / severity KPIs. */
-.kpi-tile__icon--success { background: var(--success-soft); color: var(--success); }
-.kpi-tile__icon--warning { background: var(--warning-soft); color: var(--warning); }
-.kpi-tile__icon--danger { background: var(--danger-soft); color: var(--danger); }
-.kpi-tile__icon--info { background: var(--info-soft); color: var(--info); }
+.kpi-tile__icon--success { background: var(--success-soft); color: var(--success-text); }
+.kpi-tile__icon--warning { background: var(--warning-soft); color: var(--warning-text); }
+.kpi-tile__icon--danger { background: var(--danger-soft); color: var(--danger-text); }
+.kpi-tile__icon--info { background: var(--info-soft); color: var(--info-text); }
 .kpi-tile__icon--neutral { background: var(--surface-subtle); color: var(--text-muted); }
 /* An accent bar keyed to the tile's tone adds a touch of colour: on top when
    the rail is stacked (narrow), on the left edge when it is the side column
@@ -1168,7 +1168,7 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
   align-items: center;
   gap: .375rem;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .bulk-actions-bar__actions {
   display: flex;
@@ -1262,7 +1262,7 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 .lc-step--done + .lc-step::before { background: var(--text-muted); }
 .lc-step__mark { flex: none; font-size: .5rem; }
 .lc-step--done { color: var(--text-secondary); }
-.lc-step--done .lc-step__mark { font-size: .875rem; color: var(--accent); }
+.lc-step--done .lc-step__mark { font-size: .875rem; color: var(--accent-text); }
 .lc-step__badge { font-size: .75rem; padding: .35em .875em; }
 .lc-step__btn {
   display: inline-flex;
@@ -1304,7 +1304,7 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 }
 .lc-bar__exits .lc-step + .lc-step::before { content: none; }
 .lc-bar__toggle { --bs-btn-padding-x: .5rem; }
-.lc-bar__toggle[aria-expanded="true"] { background: var(--accent-soft); color: var(--accent); }
+.lc-bar__toggle[aria-expanded="true"] { background: var(--accent-soft); color: var(--accent-text); }
 /* The full graph opens right under the bar, as its continuation. */
 .lc-bar__graph { margin-top: -1rem; }
 .lc-bar__graph .lc-dagre {
@@ -1396,7 +1396,6 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 }
 .stepper__pill--future {
   color: var(--text-muted);
-  opacity: .45;
   background: var(--surface-subtle);
   border: 1px dashed var(--border-light);
 }
@@ -1489,7 +1488,7 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent); }
 .split-pane__row:hover { background: var(--surface-muted); color: inherit; }
 .split-pane__row.active {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   border-left: 3px solid var(--accent);
   padding-left: calc(.875rem - 3px);
 }

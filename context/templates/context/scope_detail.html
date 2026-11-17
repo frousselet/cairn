@@ -34,7 +34,7 @@
   {% if has_site_map or scope.description or scope.parent_scope or scope.geographic_scope or scope.organizational_scope or scope.technical_scope or scope.effective_date or scope.review_date or scope.tags.exists %}
   <div class="card supplier-card{% if not has_site_map %} supplier-card--nomap{% endif %}">
     {% if has_site_map %}
-    <div class="supplier-card__map" aria-hidden="true">
+    <div class="supplier-card__map" aria-hidden="true" inert>
       <div id="scope-map" class="entity-map" data-sites="{{ scope_sites_json }}"></div>
     </div>
     {% endif %}

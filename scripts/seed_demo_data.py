@@ -6037,7 +6037,7 @@ with transaction.atomic():
         ".tc-hero {\n"
         "  background:\n"
         "    radial-gradient(120% 120% at 85% -10%, rgba(163, 230, 53, .30) 0%, transparent 55%),\n"
-        "    linear-gradient(135deg, #065F46 0%, #0E9F6E 60%, #0BA5A4 100%);\n"
+        "    linear-gradient(135deg, #064E3B 0%, #047857 60%, #0F766E 100%);\n"
         "}\n"
         ".tc-section h2 { display: inline-block; padding-bottom: .35rem; border-bottom: 3px solid var(--accent); }\n"
         ".tc-card:hover { border-color: var(--accent); box-shadow: 0 12px 30px var(--accent-glow); }\n"

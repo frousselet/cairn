@@ -2,7 +2,7 @@
 {# Widget: Summary ("Résumé") - the day's metrics synthesised by the LLM (Mistral). The widget posts `data-facts` (a metrics snapshot) to the briefing endpoint, renders the model's synthesis, lists the key items it draws on as references, and shows an honest "powered by" attribution. The point count is a deterministic fallback (assistant off, loading or unavailable). When it sits in the full-width stacked rail it reflows into a banner: summary on the left third, references filling two columns on the right. #}
 <div class="card ask-cairn{% if not AI_ASSISTANT_ENABLED %} ask-cairn--brief{% endif %} h-100" data-ai-enabled="{% if AI_ASSISTANT_ENABLED %}1{% else %}0{% endif %}" data-facts="{{ ask_cairn_data_json }}">
   <div class="card-body ask-cairn__body">
-    <h5 class="card-title ask-cairn__title"><i class="bi bi-stars me-1 text-accent" aria-hidden="true"></i> {% trans "Summary" context "dashboard widget title" %}</h5>
+    <h2 class="card-title ask-cairn__title"><i class="bi bi-stars me-1 text-accent" aria-hidden="true"></i> {% trans "Summary" context "dashboard widget title" %}</h2>
     <div class="ask-cairn__content">
       <div class="ask-cairn__main">
         {% if ask_cairn_data %}
@@ -59,11 +59,11 @@
   /* The model returns the briefing as <p> paragraphs (audit lead first). */
   .ask-cairn__text p { margin: 0 0 .625rem; }
   .ask-cairn__text p:last-child { margin-bottom: 0; }
-  .ask-cairn__text--clear { color: var(--success); }
+  .ask-cairn__text--clear { color: var(--success-text); }
   /* People named in the briefing are rendered as a photo + name chip. */
   .ask-cairn__chip { display: inline-flex; align-items: center; gap: .25rem; margin: 0 .0625rem; padding: .0625rem .4375rem .0625rem .125rem; border-radius: 100px; background: var(--accent-soft); color: var(--text-primary); font-weight: 550; white-space: nowrap; vertical-align: middle; line-height: 1.4; }
   .ask-cairn__chip-img { width: 1.125rem; height: 1.125rem; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-  .ask-cairn__chip-img--fb { display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: #fff; font-size: .5625rem; font-weight: 700; }
+  .ask-cairn__chip-img--fb { display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: var(--accent-contrast); font-size: .5625rem; font-weight: 700; }
   .ask-cairn__pending { margin: .375rem 0 0; font-size: .75rem; color: var(--text-muted); }
   .ask-cairn__disclaimer { margin: .75rem 0 0; font-size: .6875rem; color: var(--text-muted); font-style: italic; }
   /* The right-hand column: references on top, ongoing-audit cards below. */
@@ -86,13 +86,13 @@
   .ask-cairn__ref--medium { border-left-color: var(--warning); }
   .ask-cairn__ref--low { border-left-color: var(--info, var(--accent)); }
   .ask-cairn__ref-icon { flex-shrink: 0; color: var(--text-muted); }
-  .ask-cairn__ref--high .ask-cairn__ref-icon { color: var(--danger); }
-  .ask-cairn__ref--medium .ask-cairn__ref-icon { color: var(--warning); }
+  .ask-cairn__ref--high .ask-cairn__ref-icon { color: var(--danger-text); }
+  .ask-cairn__ref--medium .ask-cairn__ref-icon { color: var(--warning-text); }
   .ask-cairn__ref--low .ask-cairn__ref-icon { color: var(--info, var(--accent)); }
   .ask-cairn__ref-label { flex: 1 1 auto; min-width: 0; }
   .ask-cairn__ref-go { flex-shrink: 0; color: var(--text-muted); font-size: .75rem; opacity: 0; transition: opacity .15s var(--ease-out); }
   .ask-cairn__ref:hover .ask-cairn__ref-go { opacity: 1; }
-  .ask-cairn__spin { display: inline-block; animation: ask-cairn-spin 1.4s linear infinite; color: var(--accent); }
+  .ask-cairn__spin { display: inline-block; animation: ask-cairn-spin 1.4s linear infinite; color: var(--accent-text); }
   @keyframes ask-cairn-spin { to { transform: rotate(360deg); } }
   /* Skeleton shown while the briefing loads, sized to roughly reserve the text's
      space so the rail widgets below it don't jump when the real text swaps in. */

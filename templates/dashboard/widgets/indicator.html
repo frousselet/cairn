@@ -14,7 +14,7 @@
         {% endif %}
       </div>
       <div class="d-flex align-items-baseline gap-2">
-        <span class="stat-card-value mb-0" style="{% if slot.indicator.is_critical %}color:var(--danger){% endif %}">
+        <span class="stat-card-value mb-0" style="{% if slot.indicator.is_critical %}color:var(--danger-text){% endif %}">
           {% if slot.indicator.format == "boolean" %}
             {% if slot.indicator.current_value == "true" or slot.indicator.current_value == "1" or slot.indicator.current_value == "yes" %}
               <i class="bi bi-check-circle-fill text-success"></i>
@@ -31,19 +31,19 @@
         <small class="text-muted">{{ slot.indicator.unit }}</small>
         {% endif %}
         {% if slot.trend == "up" %}
-          <span class="ms-auto" title="{% trans 'Trend' %}: +{{ slot.trend_value|floatformat:1 }}"><i class="bi bi-arrow-up-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger){% else %}var(--success){% endif %}"></i></span>
+          <span class="ms-auto" title="{% trans 'Trend' %}: +{{ slot.trend_value|floatformat:1 }}"><i class="bi bi-arrow-up-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger-text){% else %}var(--success-text){% endif %}"></i></span>
         {% elif slot.trend == "down" %}
-          <span class="ms-auto" title="{% trans 'Trend' %}: {{ slot.trend_value|floatformat:1 }}"><i class="bi bi-arrow-down-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger){% else %}var(--danger){% endif %}"></i></span>
+          <span class="ms-auto" title="{% trans 'Trend' %}: {{ slot.trend_value|floatformat:1 }}"><i class="bi bi-arrow-down-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger-text){% else %}var(--danger-text){% endif %}"></i></span>
         {% elif slot.trend == "stable" %}
           <span class="ms-auto" title="{% trans 'Stable' %}"><i class="bi bi-dash fs-5" style="color:var(--text-muted)"></i></span>
         {% elif slot.trend == "changed" %}
-          <span class="ms-auto" title="{% trans 'Changed' %}"><i class="bi bi-arrow-left-right fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger){% else %}var(--warning){% endif %}"></i></span>
+          <span class="ms-auto" title="{% trans 'Changed' %}"><i class="bi bi-arrow-left-right fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger-text){% else %}var(--warning-text){% endif %}"></i></span>
         {% endif %}
       </div>
       {% if slot.current_measurement %}
       <small class="text-muted" style="font-size:.72rem">
         <i class="bi bi-calendar3 me-1" aria-hidden="true"></i>{{ slot.current_measurement.recorded_at|date:"SHORT_DATE_FORMAT" }}
-        {% if slot.delta_display %} · <i class="bi bi-plus-slash-minus me-1" aria-hidden="true"></i><span style="color:{% if slot.indicator.is_critical %}var(--danger){% elif slot.trend == 'up' %}var(--success){% elif slot.trend == 'down' %}var(--danger){% else %}var(--text-muted){% endif %}">{{ slot.delta_display }}{% if slot.indicator.unit %} {{ slot.indicator.unit }}{% endif %}</span>{% endif %}
+        {% if slot.delta_display %} · <i class="bi bi-plus-slash-minus me-1" aria-hidden="true"></i><span style="color:{% if slot.indicator.is_critical %}var(--danger-text){% elif slot.trend == 'up' %}var(--success-text){% elif slot.trend == 'down' %}var(--danger-text){% else %}var(--text-muted){% endif %}">{{ slot.delta_display }}{% if slot.indicator.unit %} {{ slot.indicator.unit }}{% endif %}</span>{% endif %}
       </small>
       {% else %}
       <small class="text-muted" style="font-size:.72rem">{% trans "No measurement" %}</small>
@@ -60,7 +60,7 @@
 {% else %}
 {# Unconfigured: shown only in edit mode (the shell flags it as empty). Prompts the user to pick an indicator via the gear. #}
 <div class="stat-card h-100 d-flex flex-column align-items-center justify-content-center text-center" style="gap:.5rem;border:1px dashed var(--border-light);background:var(--surface-raised)">
-  <span class="d-inline-flex align-items-center justify-content-center" style="width:2.25rem;height:2.25rem;border-radius:50%;background:var(--accent-soft);color:var(--accent)"><i class="bi bi-graph-up"></i></span>
+  <span class="d-inline-flex align-items-center justify-content-center" style="width:2.25rem;height:2.25rem;border-radius:50%;background:var(--accent-soft);color:var(--accent-text)"><i class="bi bi-graph-up"></i></span>
   <span class="text-muted small">{% trans "Choose an indicator" %}</span>
 </div>
 {% endif %}

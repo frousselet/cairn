@@ -254,7 +254,10 @@ The title is an uppercase eyebrow (`h2.section-card__title`), followed by an
 optional `count` pill (zero is shown) and the `actions` slot on the right.
 
 - `collapsible` turns the card into a native `<details>`, and `open=False`
-  starts it folded.
+  starts it folded. Its `actions` are rendered beside the `<summary>`, not
+  inside it : a button inside the toggle is a control inside a control, which
+  a keyboard and a screen reader cannot tell apart. They are hidden with the
+  body while the card is folded.
 - `flush` drops the body padding, so a table runs edge to edge (its first and
   last cells keep the card's inset).
 - `hide_empty` renders nothing when the body is empty, so an optional section

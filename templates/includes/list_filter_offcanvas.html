@@ -18,8 +18,8 @@ Saved filters live in the toolbar dropdown, not here.
     <form class="list-filter-form" data-list-url="{{ filter_list_url }}">
       {% for group in list_filters %}
       <div class="list-filter-group">
-        <label class="filter-label">{{ group.label }}</label>
-        <select name="{{ group.param }}" class="form-select form-select-sm" multiple data-ts-filter placeholder="{% trans 'Any' %}">
+        <label class="filter-label" for="list-filter-{{ group.param }}">{{ group.label }}</label>
+        <select name="{{ group.param }}" id="list-filter-{{ group.param }}" class="form-select form-select-sm" multiple data-ts-filter placeholder="{% trans 'Any' %}">
           {% for opt in group.options %}
           <option value="{{ opt.value }}"{% if opt.checked %} selected{% endif %}>{{ opt.label }}</option>
           {% endfor %}
@@ -28,20 +28,20 @@ Saved filters live in the toolbar dropdown, not here.
       {% endfor %}
       {% for rule in list_text_filters %}
       <div class="list-filter-group">
-        <label class="filter-label">{{ rule.label }}</label>
+        <label class="filter-label" for="list-filter-{{ rule.param }}">{{ rule.label }}</label>
         <div class="d-flex gap-1">
-          <select name="{{ rule.param }}_op" class="form-select form-select-sm" style="flex:0 0 8.5rem">
+          <select name="{{ rule.param }}_op" class="form-select form-select-sm" style="flex:0 0 8.5rem" aria-label="{% blocktrans with field=rule.label %}{{ field }} : condition{% endblocktrans %}">
             {% for op in rule.operators %}
             <option value="{{ op.value }}"{% if op.selected %} selected{% endif %}>{{ op.label }}</option>
             {% endfor %}
           </select>
-          <input type="text" name="{{ rule.param }}_q" value="{{ rule.value }}" class="form-control form-control-sm" autocomplete="off">
+          <input type="text" name="{{ rule.param }}_q" id="list-filter-{{ rule.param }}" value="{{ rule.value }}" class="form-control form-control-sm" autocomplete="off">
         </div>
       </div>
       {% endfor %}
       {% if filter_fields_json %}
       <div class="list-adv-filters" data-fields="{{ filter_fields_json }}" data-rules="{{ filter_rules_json }}">
-        <label class="filter-label">{% trans "Advanced filters" %}</label>
+        <div class="filter-label">{% trans "Advanced filters" %}</div>
         <div class="list-adv-rules"></div>
         <button type="button" class="btn btn-sm btn-outline-secondary list-adv-add">
           <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add filter" %}

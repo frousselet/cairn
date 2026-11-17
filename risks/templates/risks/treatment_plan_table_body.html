@@ -40,7 +40,7 @@
   <td data-col="status">{% workflow_badge p %}</td>
   <td data-col="tags">{% tag_list p.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <a hx-get="{% url 'risks:treatment-plan-update' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ p.reference }}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+    <a href="{% url 'risks:treatment-plan-update' p.pk %}" hx-get="{% url 'risks:treatment-plan-update' p.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ p.reference }}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
     {% if can_delete_plans and p.is_deletable %}
     <a href="{% url 'risks:treatment-plan-delete' p.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ p.reference }}"><i class="bi bi-trash" aria-hidden="true"></i></a>
     {% endif %}

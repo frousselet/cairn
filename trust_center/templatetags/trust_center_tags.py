@@ -3,6 +3,7 @@
 from django import template
 from django.utils.safestring import mark_safe
 
+from core.colors import fill_under_white, ink_on_dark, ink_on_light
 from trust_center.sanitizers import (
     clean_html,
     clean_svg,
@@ -40,3 +41,26 @@ def safe_svg(markup):
 def safe_html(markup):
     """Sanitize admin-authored rich text for safe public rendering."""
     return mark_safe(clean_html(markup or ""))  # noqa: S308 - sanitized by clean_html
+
+
+# The accent the Trust Center falls back to when none is set : the Cairn navy.
+DEFAULT_ACCENT = "#1E3A8A"
+
+
+@register.filter(name="accent_ink")
+def accent_ink(colour, theme="light"):
+    """The Trust Center accent as *text* on the given theme (``light`` / ``dark``).
+
+    The administrator picks any colour; links, icons and figures drawn in it
+    must still read on the page (WCAG 1.4.3). Hue and saturation are kept, the
+    lightness goes only as far as 4.5:1 asks.
+    """
+    colour = colour or DEFAULT_ACCENT
+    return ink_on_dark(colour) if theme == "dark" else ink_on_light(colour)
+
+
+@register.filter(name="accent_fill")
+def accent_fill(colour):
+    """The accent as the hero's background : deepened, if need be, until its
+    white text reads on it."""
+    return fill_under_white(colour or DEFAULT_ACCENT)

@@ -117,7 +117,7 @@
 .mform-pill.is-done .mform-pill-num {
   background: var(--accent-soft);
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .mform-meter { padding: .7rem 1.5rem .1rem; display: flex; align-items: center; gap: .625rem; flex-shrink: 0; }
 .mform-meter-track {
@@ -231,7 +231,7 @@
   height: 28px;
   border-radius: .625rem;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -318,7 +318,7 @@
 }
 .mform-nav:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-primary) 25%, transparent);
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus-ring);
 }
 /* Last step : the Next arrow becomes the solid navy "save" check. */
 .mform-nav--next.is-final {
@@ -422,7 +422,7 @@
 }
 #itemDrawer .form-control:focus,
 #itemDrawer .form-select:focus {
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   box-shadow: 0 0 0 2px var(--accent-glow);
   background: var(--surface);
 }
@@ -520,7 +520,7 @@
 }
 
 /* ── Scope breadcrumb pills ──────────────────────── */
-.scope-crumb { display: inline-flex; align-items: center; flex-wrap: nowrap; max-width: 100%; background: var(--success-soft); color: var(--success); border: none; border-radius: 999px; padding: .2em .7em; font-size: .625rem; font-weight: 600; letter-spacing: .02em; line-height: 1.4; vertical-align: middle; gap: .1em .35em; margin-bottom: .2em; }
+.scope-crumb { display: inline-flex; align-items: center; flex-wrap: nowrap; max-width: 100%; background: var(--success-soft); color: var(--success-text); border: none; border-radius: 999px; padding: .2em .7em; font-size: .625rem; font-weight: 600; letter-spacing: .02em; line-height: 1.4; vertical-align: middle; gap: .1em .35em; margin-bottom: .2em; }
 .scope-crumb-sep { opacity: .4; font-weight: 500; flex-shrink: 0; }
 /* Parent segments truncate with … so the crumb stays on one line; the leaf (most specific scope) is preserved. */
 .scope-crumb-seg { opacity: .65; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -528,7 +528,7 @@
 
 /* ── Scope count popover (tables) ─────────────── */
 .scope-pop-wrap { display: inline-block; }
-.scope-pop-btn { background: var(--success-soft); color: var(--success); border: 0; border-radius: 999px; padding: .2em .65em; font-size: .75rem; font-weight: 700; cursor: pointer; white-space: nowrap; line-height: 1.4; transition: background-color .15s, color .15s; }
+.scope-pop-btn { background: var(--success-soft); color: var(--success-text); border: 0; border-radius: 999px; padding: .2em .65em; font-size: .75rem; font-weight: 700; cursor: pointer; white-space: nowrap; line-height: 1.4; transition: background-color .15s, color .15s; }
 .scope-pop-btn:hover { background: var(--accent); color: var(--accent-contrast); }
 .scope-pop-btn .bi { font-size: .7rem; }
 .scope-pop-panel { display: none; position: fixed; z-index: 1050; background: var(--surface-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: .875rem; padding: .625rem .75rem; box-shadow: var(--shadow-lg); min-width: max-content; max-width: 360px; }

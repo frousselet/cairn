@@ -17,7 +17,7 @@
   <td data-col="status"><span>{% workflow_badge certificate %}</span></td>
   <td data-col="tags">{% tag_list certificate.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <a hx-get="{% url 'assets:certificate-update' certificate.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+    <a href="{% url 'assets:certificate-update' certificate.pk %}" hx-get="{% url 'assets:certificate-update' certificate.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}

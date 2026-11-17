@@ -197,9 +197,9 @@
               <tr>
                 <th style="width:30%">{% trans "Feature" %}</th>
                 {% if can_edit %}
-                <th style="width:4%" class="text-center">
-                  <input type="checkbox" class="form-check-input row-all-toggle invisible" tabindex="-1" aria-hidden="true">
-                </th>
+                <td style="width:4%" class="text-center">
+                  <input type="checkbox" class="form-check-input row-all-toggle invisible" tabindex="-1" aria-hidden="true" disabled>
+                </td>
                 {% endif %}
                 <th class="text-center"><span class="d-block">{% trans "Create" %}</span>
                   {% if can_edit %}<input type="checkbox" class="form-check-input col-toggle" data-action="create" data-module-idx="{{ forloop.counter }}" title="{% trans 'Toggle column' %}" aria-label="{% trans 'Toggle column' %}">{% endif %}

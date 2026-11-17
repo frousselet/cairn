@@ -12,6 +12,7 @@ and ordering.
 See ``docs/brand/brand-guidelines.md`` (Forms section) for the doctrine.
 """
 
+from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS, ImproperlyConfigured, ValidationError
 from django.utils.translation import pgettext_lazy
 
@@ -114,6 +115,22 @@ def humanise_empty_choices(form):
     """Apply :func:`humanise_empty_choice` to every field of ``form``."""
     for field in form.fields.values():
         humanise_empty_choice(field)
+
+
+class LabelledRowsFormSet(forms.BaseInlineFormSet):
+    """An inline formset laid out as a table, one record per row.
+
+    The column header names a column on screen but is tied to no control : a
+    screen reader would announce a row of nameless fields. Every control takes
+    its field's label as ``aria-label``. Pass it as ``formset=`` to
+    ``inlineformset_factory`` for any formset rendered as a grid.
+    """
+
+    def add_fields(self, form, index):
+        super().add_fields(form, index)
+        for field in form.fields.values():
+            if field.label and not field.widget.is_hidden:
+                field.widget.attrs.setdefault("aria-label", str(field.label))
 
 
 class SteppedFormMixin:

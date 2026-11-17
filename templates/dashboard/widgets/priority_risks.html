@@ -3,7 +3,7 @@
 <div class="card h-100">
   <div class="card-body">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-      <h5 class="card-title mb-0"><i class="bi bi-fire me-1 text-accent" aria-hidden="true"></i> {% trans "Priority risks" %}</h5>
+      <h2 class="card-title mb-0"><i class="bi bi-fire me-1 text-accent" aria-hidden="true"></i> {% trans "Priority risks" %}</h2>
       <a href="{% url 'risks:risk-list' %}" class="upcoming-toggle">{% trans "Register" %}</a>
     </div>
     {% if priority_risks %}
@@ -56,6 +56,6 @@
   .priority-risks__level { display:inline-flex; align-items:center; gap:.1875rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
   .priority-risks__person { display:flex; align-items:center; gap:.5rem; min-width:0; }
   .priority-risks__avatar { width:1.5rem; height:1.5rem; border-radius:50%; object-fit:cover; flex-shrink:0; }
-  .priority-risks__avatar--fallback { display:inline-flex; align-items:center; justify-content:center; background:var(--accent-soft); color:var(--accent); font-size:.625rem; font-weight:600; }
+  .priority-risks__avatar--fallback { display:inline-flex; align-items:center; justify-content:center; background:var(--accent-soft); color:var(--accent-text); font-size:.625rem; font-weight:600; }
   .priority-risks__person-name { font-size:.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 </style>

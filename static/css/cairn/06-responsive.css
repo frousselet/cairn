@@ -162,6 +162,6 @@ body.sidebar-open .hamburger-icon span:nth-child(3) {
 .scope-tree-node.collapsed-child { display: none; }
 .scope-tree-toggle .bi { transition: transform .2s ease; }
 .scope-tree-toggle.collapsed .bi { transform: rotate(-90deg); }
-.scope-tree-label input:checked ~ .scope-tree-name { font-weight: 600; color: var(--accent) !important; }
+.scope-tree-label input:checked ~ .scope-tree-name { font-weight: 600; color: var(--accent-text) !important; }
 .scope-tree-locked .scope-tree-label { opacity: .55; cursor: default; }
 .scope-tree-locked .scope-tree-label input { cursor: default; }

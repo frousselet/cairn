@@ -8,15 +8,19 @@
   /* Result breakdown rows : count chip + full-width track. The tone comes
      from the row modifier, the fill width is computed per row. */
   .finding-breakdown { display: flex; flex-direction: column; gap: .5rem; }
-  .finding-row { --row-tone: var(--text-secondary); display: flex; align-items: center; gap: .75rem; }
-  .finding-row--success { --row-tone: var(--success); }
-  .finding-row--warning { --row-tone: var(--warning); }
-  .finding-row--danger { --row-tone: var(--danger); }
-  .finding-row--accent { --row-tone: var(--accent); }
-  .finding-row--neutral { --row-tone: var(--color-charcoal-500); }
+  .finding-row { --row-tone: var(--text-secondary); --row-ink: var(--text-secondary); display: flex; align-items: center; gap: .75rem; }
+  .finding-row--success { --row-tone: var(--success); --row-ink: var(--success-text); }
+  .finding-row--warning { --row-tone: var(--warning); --row-ink: var(--warning-text); }
+  .finding-row--danger { --row-tone: var(--danger); --row-ink: var(--danger-text); }
+  .finding-row--accent { --row-tone: var(--accent); --row-ink: var(--accent-text); }
+  .finding-row--neutral { --row-tone: var(--text-muted); }
+  /* The count is a soft chip in the row's tone : a white figure on the plain
+     tone does not reach 4.5:1 (green, amber) in either theme. */
   .finding-count {
     min-width: 1.5rem; height: 1.5rem; padding: 0 .35rem; flex-shrink: 0;
-    border-radius: var(--radius-xs); background: var(--row-tone); color: var(--color-neutral-0);
+    border-radius: var(--radius-xs);
+    background: color-mix(in srgb, var(--row-tone) 8%, var(--surface));
+    color: var(--row-ink);
     font-size: .75rem; font-weight: 700;
     display: inline-flex; align-items: center; justify-content: center;
     font-variant-numeric: tabular-nums;

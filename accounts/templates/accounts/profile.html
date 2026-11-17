@@ -31,7 +31,7 @@
                style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--border-light)">
           {% else %}
           <div id="avatar-preview"
-               style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--accent) 18%,transparent));color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:600;letter-spacing:.02em;border:3px solid var(--border-light)">
+               style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--accent) 18%,transparent));color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:600;letter-spacing:.02em;border:3px solid var(--border-light)">
             {{ user.display_name|initials }}
           </div>
           {% endif %}
@@ -232,7 +232,7 @@ function removeAvatar() {
   var el = document.getElementById('avatar-preview');
   var div = document.createElement('div');
   div.id = 'avatar-preview';
-  div.style.cssText = 'width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--accent) 18%,transparent));color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:600;letter-spacing:.02em;border:3px solid var(--border-light)';
+  div.style.cssText = 'width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--accent) 18%,transparent));color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:600;letter-spacing:.02em;border:3px solid var(--border-light)';
   div.textContent = '{{ user.display_name|initials }}';
   el.parentNode.replaceChild(div, el);
   var btn = document.getElementById('remove-avatar-btn');
