@@ -174,6 +174,10 @@ class ManagementReview(LegacyStatusMixin, ScopedModel):
 class ManagementReviewParticipant(models.Model):
     """Participant (internal user or external person) of a management review."""
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "review__scopes"
+
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
     )
@@ -243,6 +247,10 @@ class ManagementReviewParticipant(models.Model):
 
 class ManagementReviewDecision(models.Model):
     """Structured decision recorded during a management review (clause 9.3.3)."""
+
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "review__scopes"
 
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
@@ -365,6 +373,10 @@ class ManagementReviewDecision(models.Model):
 class IsmsChange(models.Model):
     """ISMS change recorded as an output of a management review (clause 9.3.3)."""
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "review__scopes"
+
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
     )
@@ -462,6 +474,10 @@ class IsmsChange(models.Model):
 
 class ManagementReviewComment(models.Model):
     """Comment thread attached to a management review."""
+
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "review__scopes"
 
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,

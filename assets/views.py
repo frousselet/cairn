@@ -96,6 +96,7 @@ from .models import (
     SupplierTypeRequirement,
     SupportAsset,
 )
+from core.scoping import get_scoped_object_or_404
 
 
 class CreatedByMixin:
@@ -393,7 +394,7 @@ class ContractDocumentDownloadView(LoginRequiredMixin, PermissionRequiredMixin, 
             scope_ids = request.user.get_allowed_scope_ids()
             if scope_ids is not None:
                 qs = qs.filter(scopes__id__in=scope_ids).distinct()
-        contract = get_object_or_404(qs, pk=pk)
+        contract = get_scoped_object_or_404(request.user, qs, pk=pk)
         data = contract.get_file_bytes()
         if not data:
             raise Http404()
@@ -538,7 +539,7 @@ class CertificateDocumentDownloadView(LoginRequiredMixin, PermissionRequiredMixi
             scope_ids = request.user.get_allowed_scope_ids()
             if scope_ids is not None:
                 qs = qs.filter(scopes__id__in=scope_ids).distinct()
-        certificate = get_object_or_404(qs, pk=pk)
+        certificate = get_scoped_object_or_404(request.user, qs, pk=pk)
         data = certificate.get_file_bytes()
         if not data:
             raise Http404()
@@ -976,7 +977,7 @@ class SupplierContactCreateView(LoginRequiredMixin, PermissionRequiredMixin, Par
     permission_required = "assets.supplier.update"
 
     def dispatch(self, request, *args, **kwargs):
-        self.supplier = get_object_or_404(Supplier, pk=kwargs["supplier_pk"])
+        self.supplier = get_scoped_object_or_404(request.user, Supplier, pk=kwargs["supplier_pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -1042,7 +1043,7 @@ class SupplierSubprocessorCreateView(LoginRequiredMixin, PermissionRequiredMixin
     permission_required = "assets.supplier.update"
 
     def dispatch(self, request, *args, **kwargs):
-        self.supplier = get_object_or_404(Supplier, pk=kwargs["supplier_pk"])
+        self.supplier = get_scoped_object_or_404(request.user, Supplier, pk=kwargs["supplier_pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
@@ -1218,7 +1219,7 @@ class SupplierTypeRequirementCreateView(LoginRequiredMixin, PermissionRequiredMi
     permission_required = "assets.supplier.create"
 
     def dispatch(self, request, *args, **kwargs):
-        self.supplier_type = get_object_or_404(SupplierType, pk=kwargs["type_pk"])
+        self.supplier_type = get_scoped_object_or_404(request.user, SupplierType, pk=kwargs["type_pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -1273,7 +1274,7 @@ class SupplierRequirementCreateView(LoginRequiredMixin, PermissionRequiredMixin,
     permission_required = "assets.supplier.create"
 
     def dispatch(self, request, *args, **kwargs):
-        self.supplier = get_object_or_404(Supplier, pk=kwargs["supplier_pk"])
+        self.supplier = get_scoped_object_or_404(request.user, Supplier, pk=kwargs["supplier_pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -1377,7 +1378,7 @@ class _RequirementReviewModalBase(LoginRequiredMixin, PermissionRequiredMixin, P
 
 class SupplierRequirementReviewCreateView(_RequirementReviewModalBase):
     def dispatch(self, request, *args, **kwargs):
-        self.supplier_requirement = get_object_or_404(
+        self.supplier_requirement = get_scoped_object_or_404(request.user, 
             SupplierRequirement.objects.select_related("supplier"),
             pk=kwargs["requirement_pk"],
         )
@@ -1406,8 +1407,8 @@ class InstantiateTypeRequirementReviewView(_RequirementReviewModalBase):
     SupplierRequirement for this supplier (idempotent), then record the review."""
 
     def dispatch(self, request, *args, **kwargs):
-        self.supplier = get_object_or_404(Supplier, pk=kwargs["supplier_pk"])
-        self.type_req = get_object_or_404(SupplierTypeRequirement, pk=kwargs["type_req_pk"])
+        self.supplier = get_scoped_object_or_404(request.user, Supplier, pk=kwargs["supplier_pk"])
+        self.type_req = get_scoped_object_or_404(request.user, SupplierTypeRequirement, pk=kwargs["type_req_pk"])
         self.requirement_title = self.type_req.title
         return super().dispatch(request, *args, **kwargs)
 

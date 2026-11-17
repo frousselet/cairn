@@ -39,6 +39,10 @@ class SwotAnalysis(ScopedModel):
 
 
 class SwotItem(models.Model):
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "swot_analysis__scopes"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     swot_analysis = models.ForeignKey(
         SwotAnalysis,
@@ -87,6 +91,10 @@ class SwotItem(models.Model):
 
 
 class SwotStrategy(models.Model):
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "swot_analysis__scopes"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     swot_analysis = models.ForeignKey(
         SwotAnalysis,

@@ -9,6 +9,10 @@ from context.models.base import BaseModel
 
 
 class ISO27005Risk(BaseModel):
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "assessment__scopes"
+
     REFERENCE_PREFIX = "I27R"
 
     assessment = models.ForeignKey(

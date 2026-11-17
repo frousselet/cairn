@@ -21,6 +21,10 @@ class EbiosSummary(LegacyStatusMixin, BaseModel):
     the user controls when the cartography baseline is set.
     """
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "assessment__scopes"
+
     LIFECYCLE_NAME = "ebios_summary"
 
     REFERENCE_PREFIX = "ESUM"

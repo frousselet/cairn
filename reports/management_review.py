@@ -203,6 +203,14 @@ def gather_management_review_data(user, scope_ids=None,
                 review.participants.select_related("user").all()
             )
             return data
+    else:
+        # A report covers what its author may reach : the scopes asked for are
+        # narrowed to the author's own, and an author restricted to some
+        # scopes who asks for none gets theirs, never the whole instance. A
+        # saved review was fetched within the scopes already, and keeps its own.
+        from core.scoping import narrow_scope_ids
+
+        scope_ids = narrow_scope_ids(user, scope_ids)
 
     from compliance.constants import (
         ActionPlanStatus,
@@ -257,7 +265,7 @@ def gather_management_review_data(user, scope_ids=None,
     action_plans = ComplianceActionPlan.objects.select_related(
         "owner",
     ).prefetch_related("requirements", "findings", "risks")
-    if scope_ids:
+    if scope_ids is not None:
         action_plans = action_plans.filter(scopes__id__in=scope_ids)
     action_plans = _period_filter(action_plans)
 
@@ -306,7 +314,7 @@ def gather_management_review_data(user, scope_ids=None,
 
     # ── 2. Changes to external and internal issues ──
     issues = Issue.objects.all()
-    if scope_ids:
+    if scope_ids is not None:
         issues = issues.filter(scopes__id__in=scope_ids)
     issues = _period_filter(issues)
 
@@ -326,7 +334,7 @@ def gather_management_review_data(user, scope_ids=None,
 
     # ── 3. Changes to needs and expectations of interested parties ──
     stakeholders = Stakeholder.objects.prefetch_related("expectations")
-    if scope_ids:
+    if scope_ids is not None:
         stakeholders = stakeholders.filter(scopes__id__in=scope_ids)
     stakeholders = _period_filter(stakeholders)
     stakeholders = list(stakeholders.order_by("-updated_at")[:20])
@@ -370,7 +378,7 @@ def gather_management_review_data(user, scope_ids=None,
 
     # ── 4b. Monitoring and measurement results ──
     indicators = Indicator.objects.all()
-    if scope_ids:
+    if scope_ids is not None:
         indicators = indicators.filter(scopes__id__in=scope_ids)
     indicators = list(indicators.filter(status="active").order_by("name")[:20])
 
@@ -393,7 +401,7 @@ def gather_management_review_data(user, scope_ids=None,
 
     # ── 4c. Audit results ──
     assessments = ComplianceAssessment.objects.prefetch_related("frameworks")
-    if scope_ids:
+    if scope_ids is not None:
         assessments = assessments.filter(scopes__id__in=scope_ids)
     assessments = _period_filter_date(assessments, "assessment_end_date")
     recent_assessments = list(
@@ -417,7 +425,7 @@ def gather_management_review_data(user, scope_ids=None,
 
     # ── 4d. Achievement of information security objectives ──
     objectives = Objective.objects.select_related("owner")
-    if scope_ids:
+    if scope_ids is not None:
         objectives = objectives.filter(scopes__id__in=scope_ids)
     objectives = _period_filter(objectives)
     objectives = list(objectives.filter(
@@ -462,7 +470,7 @@ def gather_management_review_data(user, scope_ids=None,
 
     # ── 6. Risk assessment results and treatment plan status ──
     risk_assessments = RiskAssessment.objects.all()
-    if scope_ids:
+    if scope_ids is not None:
         risk_assessments = risk_assessments.filter(scopes__id__in=scope_ids)
     risk_assessments = _period_filter(risk_assessments, "created_at")
     risk_assessments = list(risk_assessments.order_by("-created_at")[:10])
@@ -480,7 +488,7 @@ def gather_management_review_data(user, scope_ids=None,
         })
 
     risks = Risk.objects.select_related("assessment")
-    if scope_ids:
+    if scope_ids is not None:
         risks = risks.filter(assessment__scopes__id__in=scope_ids)
     risks = _period_filter(risks)
 

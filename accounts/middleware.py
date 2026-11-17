@@ -94,3 +94,29 @@ class ImpersonationMiddleware:
 
         request.impersonator = original_user
         return self.get_response(request)
+
+
+class AuthenticationRequiredMiddleware:
+    """Send a visitor who is not signed in to the login page, wherever the need shows.
+
+    A view checks the login in `dispatch` (`LoginRequiredMixin`), but a view
+    that first fetches the record it hangs under does so before that check
+    ran. `core.scoping.get_scoped_object_or_404` then raises
+    `AuthenticationRequired` instead of handing the record over : this turns
+    it into the same redirect as the mixin, back to the page that was asked.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_exception(self, request, exception):
+        from core.scoping import AuthenticationRequired
+
+        if isinstance(exception, AuthenticationRequired):
+            from django.contrib.auth.views import redirect_to_login
+
+            return redirect_to_login(request.get_full_path())
+        return None

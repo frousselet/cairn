@@ -584,6 +584,10 @@ def _attachment_upload_path(instance, filename):
 
 
 class AssessmentResultAttachment(models.Model):
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "result__assessment__scopes"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     result = models.ForeignKey(
         AssessmentResult,

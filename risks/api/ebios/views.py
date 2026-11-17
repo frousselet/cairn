@@ -70,10 +70,11 @@ from .serializers import (
     StudyFrameworkSerializer,
     TargetedObjectiveSerializer,
 )
+from accounts.api.mixins import ScopeFilterAPIMixin
 
 
 class StudyFrameworkViewSet(
-    HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         StudyFramework.objects.select_related("assessment")
@@ -89,7 +90,7 @@ class StudyFrameworkViewSet(
 
 
 class EbiosWorkshopProgressViewSet(
-    BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         EbiosWorkshopProgress.objects.select_related("assessment", "validated_by").all()
@@ -109,7 +110,7 @@ class EbiosWorkshopProgressViewSet(
 
 
 class SecurityBaselineViewSet(
-    LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         SecurityBaseline.objects.select_related("assessment")
@@ -130,7 +131,7 @@ class SecurityBaselineViewSet(
 
 
 class FearedEventViewSet(
-    BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = FearedEvent.objects.select_related("baseline", "essential_asset").all()
     serializer_class = FearedEventSerializer
@@ -142,7 +143,7 @@ class FearedEventViewSet(
 
 
 class BaselineGapViewSet(
-    BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         BaselineGap.objects.select_related("baseline", "linked_requirement")
@@ -158,7 +159,7 @@ class BaselineGapViewSet(
 
 
 class RiskSourceViewSet(
-    BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = RiskSource.objects.select_related("assessment").all()
     serializer_class = RiskSourceSerializer
@@ -176,7 +177,7 @@ class RiskSourceViewSet(
 
 
 class TargetedObjectiveViewSet(
-    BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         TargetedObjective.objects.select_related("risk_source")
@@ -192,7 +193,7 @@ class TargetedObjectiveViewSet(
 
 
 class RiskSourceObjectivePairViewSet(
-    BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         RiskSourceObjectivePair.objects.select_related(
@@ -214,7 +215,7 @@ class RiskSourceObjectivePairViewSet(
 
 
 class EcosystemStakeholderViewSet(
-    BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         EcosystemStakeholder.objects.select_related("assessment", "stakeholder", "supplier")
@@ -274,7 +275,7 @@ class EcosystemStakeholderViewSet(
 
 
 class StrategicScenarioViewSet(
-    BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         StrategicScenario.objects.select_related(
@@ -303,7 +304,7 @@ class StrategicScenarioViewSet(
 
 
 class AttackPathStepViewSet(
-    BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = AttackPathStep.objects.select_related("scenario", "stakeholder").all()
     serializer_class = AttackPathStepSerializer
@@ -334,7 +335,7 @@ class MitreAttackTechniqueViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class OperationalScenarioViewSet(
-    BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         OperationalScenario.objects.select_related(
@@ -450,7 +451,7 @@ class OperationalScenarioViewSet(
 
 
 class AttackTechniqueViewSet(
-    BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = AttackTechnique.objects.select_related(
         "scenario", "mitre_technique", "targeted_support_asset",
@@ -464,7 +465,7 @@ class AttackTechniqueViewSet(
 
 
 class EbiosSummaryViewSet(
-    LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         EbiosSummary.objects.select_related("assessment", "validated_by")
@@ -504,7 +505,7 @@ class EbiosSummaryViewSet(
 
 
 class PACSMeasureViewSet(
-    BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
+    ScopeFilterAPIMixin, BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet
 ):
     queryset = (
         PACSMeasure.objects.select_related("summary", "owner")

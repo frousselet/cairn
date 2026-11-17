@@ -23,6 +23,10 @@ class OperationalScenario(BaseModel):
     justification (enforced at the form / serializer level).
     """
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "assessment__scopes"
+
     REFERENCE_PREFIX = "EOPS"
 
     assessment = models.ForeignKey(

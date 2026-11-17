@@ -21,6 +21,10 @@ class PACSMeasure(LegacyStatusMixin, BaseModel):
     as a traceability matrix.
     """
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "summary__assessment__scopes"
+
     LIFECYCLE_NAME = "ebios_pacs_measure"
 
     REFERENCE_PREFIX = "EPAC"

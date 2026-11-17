@@ -222,7 +222,7 @@ class SupportAssetViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMix
         })
 
 
-class AssetDependencyViewSet(BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class AssetDependencyViewSet(ScopeFilterAPIMixin, BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = AssetDependency.objects.select_related(
         "essential_asset", "support_asset"
     ).all()
@@ -418,7 +418,7 @@ class SupplierViewSet(BatchCreateMixin, ScopeFilterAPIMixin, LifecycleAPIMixin, 
         })
 
 
-class SupplierContactViewSet(viewsets.ModelViewSet):
+class SupplierContactViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     queryset = SupplierContact.objects.select_related("supplier").all()
     serializer_class = SupplierContactSerializer
     permission_classes = [ContextPermission]
@@ -428,7 +428,7 @@ class SupplierContactViewSet(viewsets.ModelViewSet):
     ordering_fields = ["name", "created_at"]
 
 
-class SupplierDependencyViewSet(BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class SupplierDependencyViewSet(ScopeFilterAPIMixin, BatchCreateMixin, LifecycleAPIMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = SupplierDependency.objects.select_related(
         "support_asset", "supplier"
     ).all()
@@ -443,7 +443,7 @@ class SupplierDependencyViewSet(BatchCreateMixin, LifecycleAPIMixin, HistoryAPIM
     ordering_fields = ["dependency_type", "criticality", "created_at"]
 
 
-class SupplierSubprocessorViewSet(BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
+class SupplierSubprocessorViewSet(ScopeFilterAPIMixin, BatchCreateMixin, HistoryAPIMixin, CreatedByMixin, viewsets.ModelViewSet):
     queryset = SupplierSubprocessor.objects.select_related(
         "supplier", "subprocessor"
     ).all()

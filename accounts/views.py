@@ -8,6 +8,7 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Count
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import translation
@@ -19,6 +20,7 @@ from django.views.generic import DetailView, ListView
 from accounts.constants import ACTION_LABELS, PERMISSION_REGISTRY, MODULE_LABELS, AccessEventType, PermissionAction, UserType
 from accounts.action_log import MergedHistory, entry_kind
 from core.history import EntryKind
+from core.scoping import object_in_scopes
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
@@ -43,7 +45,16 @@ from context.models import Scope
 
 
 class PermissionRequiredMixin:
-    """Mixin checking custom dotted permissions (module.feature.action)."""
+    """Mixin checking custom dotted permissions (module.feature.action).
+
+    A permission says what a user may do; the scopes of their groups say on
+    which records. Both are checked here, so a view that fetches one record
+    (detail, update, delete, or any view built on ``get_object``) refuses a
+    record filed outside the user's scopes whether or not it also carries
+    ``ScopeFilterMixin`` : forgetting the mixin on an update or a delete view
+    used to let a user restricted to one scope change the records of another
+    by their address.
+    """
 
     permission_required = None
 
@@ -59,6 +70,20 @@ class PermissionRequiredMixin:
                     messages.error(request, _("You do not have the required permissions."))
                     return redirect("/")
         return super().dispatch(request, *args, **kwargs)
+
+    def get_object(self, queryset=None):
+        """The record of the view, refused when it lies outside the user's scopes.
+
+        The answer is the one of an unknown record (404) : it must not tell
+        whether the record exists.
+        """
+        obj = super().get_object(queryset)
+        user = self.request.user
+        if not user.is_superuser:
+            allowed = user.get_allowed_scope_ids()
+            if allowed is not None and not object_in_scopes(obj, allowed):
+                raise Http404
+        return obj
 
 
 # ── Authentication ──────────────────────────────────────────

@@ -29,6 +29,7 @@ from .management_review import (
     generate_management_review_pptx,
 )
 from .models import Report
+from core.scoping import get_scoped_object_or_404
 
 
 REPORT_FILTER_GROUPS = [
@@ -241,7 +242,7 @@ class ReportDownloadView(LoginRequiredMixin, PermissionRequiredMixin, View):
     }
 
     def get(self, request, pk):
-        report = get_object_or_404(Report, pk=pk)
+        report = get_scoped_object_or_404(request.user, Report, pk=pk)
         if not report.file_content:
             raise Http404
         import os

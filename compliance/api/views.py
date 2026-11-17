@@ -270,6 +270,7 @@ class AssessmentResultViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     permission_classes = [CompliancePermission]
     permission_feature = "assessment"
     scope_parent_lookup = "assessment__scopes"
+    scope_parent = (ComplianceAssessment, "assessment_pk")
 
     def get_queryset(self):
         return AssessmentResult.objects.filter(
@@ -302,6 +303,7 @@ class FindingViewSet(ScopeFilterAPIMixin, viewsets.ModelViewSet):
     permission_classes = [CompliancePermission]
     permission_feature = "finding"
     scope_parent_lookup = "assessment__scopes"
+    scope_parent = (ComplianceAssessment, "assessment_pk")
 
     def get_queryset(self):
         return Finding.objects.filter(

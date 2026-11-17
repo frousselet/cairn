@@ -20,6 +20,10 @@ class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
     iteration_number=1). New iterations are created via the `iterate` action.
     """
 
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "assessment__scopes"
+
     LIFECYCLE_NAME = "ebios_workshop"
 
     REFERENCE_PREFIX = "EWSP"

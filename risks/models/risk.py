@@ -18,6 +18,10 @@ from risks.constants import (
 
 
 class Risk(LegacyStatusMixin, BaseModel):
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "assessment__scopes"
+
     REFERENCE_PREFIX = "RISK"
     LIFECYCLE_NAME = "risk"
 

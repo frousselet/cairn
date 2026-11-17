@@ -193,7 +193,11 @@ means, in order:
 1. **The permission.** An unauthorised caller is refused, on the web view, the
    REST endpoint and the MCP tool. Three surfaces, three assertions.
 2. **The tenancy.** A user outside the scope does not see the record, including
-   through a child entity or the generic history endpoint.
+   through a child entity or the generic history endpoint, and can neither
+   change nor delete it by its address. The structural tests of
+   `core/tests/test_scoping.py` already fail on a view, a model or a REST class
+   that forgets the scopes; a feature adds the behavioural assertion for its
+   own records.
 3. **The lifecycle.** The transitions that should be allowed are, the ones that
    should not are refused with the right status, and a required comment is
    actually required.

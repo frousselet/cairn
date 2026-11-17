@@ -11,6 +11,11 @@ from reports.constants import ReportStatus, ReportType
 
 
 class Report(models.Model):
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "assessment__scopes"
+    scope_parent_optional = True
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     report_type = models.CharField(
         _("Report type"),

@@ -63,6 +63,7 @@ from .models import (
     ManagementReviewDecision,
     ManagementReviewParticipant,
 )
+from core.scoping import get_scoped_object_or_404
 
 
 log = logging.getLogger(__name__)
@@ -349,7 +350,7 @@ class ManagementReviewTransitionView(
     permission_required = "reports.management_review.update"
 
     def post(self, request, pk):
-        review = get_object_or_404(ManagementReview, pk=pk)
+        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
         form = ManagementReviewTransitionForm(request.POST)
         if not form.is_valid():
             messages.error(request, _("Invalid transition request."))
@@ -430,7 +431,7 @@ class ManagementReviewExportView(
     permission_required = "reports.management_review.read"
 
     def get(self, request, pk, fmt):
-        review = get_object_or_404(ManagementReview, pk=pk)
+        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
         scope_ids = list(review.scopes.values_list("id", flat=True))
 
         try:
@@ -472,7 +473,7 @@ class ManagementReviewCommentCreateView(
     permission_required = "reports.management_review.update"
 
     def post(self, request, pk):
-        review = get_object_or_404(ManagementReview, pk=pk)
+        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
         form = ManagementReviewCommentForm(request.POST)
         if form.is_valid():
             ManagementReviewComment.objects.create(
@@ -494,7 +495,7 @@ class DecisionCreateView(
     permission_required = "reports.management_review.update"
 
     def get(self, request, pk):
-        review = get_object_or_404(ManagementReview, pk=pk)
+        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
         form = ManagementReviewDecisionForm()
         return render(request, "reports/decision_form.html", {
             "review": review, "form": form, "action": "create",
@@ -502,7 +503,7 @@ class DecisionCreateView(
         })
 
     def post(self, request, pk):
-        review = get_object_or_404(ManagementReview, pk=pk)
+        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
         form = ManagementReviewDecisionForm(request.POST)
         if form.is_valid():
             decision = form.save(commit=False)
@@ -563,7 +564,7 @@ class DecisionPromoteView(
         if not self._check_perms(request):
             messages.error(request, _("You lack the action plan create permission."))
             return redirect("reports:decision-detail", pk=pk)
-        decision = get_object_or_404(ManagementReviewDecision, pk=pk)
+        decision = get_scoped_object_or_404(request.user, ManagementReviewDecision, pk=pk)
         form = DecisionPromoteForm(initial={
             "name": decision.title,
             "priority": decision.priority,
@@ -581,7 +582,7 @@ class DecisionPromoteView(
         if not self._check_perms(request):
             messages.error(request, _("You lack the action plan create permission."))
             return redirect("reports:decision-detail", pk=pk)
-        decision = get_object_or_404(ManagementReviewDecision, pk=pk)
+        decision = get_scoped_object_or_404(request.user, ManagementReviewDecision, pk=pk)
         form = DecisionPromoteForm(request.POST)
         if not form.is_valid():
             return render(request, "reports/decision_promote_form.html", {
@@ -631,7 +632,7 @@ class IsmsChangeCreateView(
     permission_required = "reports.management_review.update"
 
     def get(self, request, pk):
-        review = get_object_or_404(ManagementReview, pk=pk)
+        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
         form = IsmsChangeForm()
         return render(request, "reports/isms_change_form.html", {
             "review": review, "form": form, "action": "create",
@@ -639,7 +640,7 @@ class IsmsChangeCreateView(
         })
 
     def post(self, request, pk):
-        review = get_object_or_404(ManagementReview, pk=pk)
+        review = get_scoped_object_or_404(request.user, ManagementReview, pk=pk)
         form = IsmsChangeForm(request.POST)
         if form.is_valid():
             change = form.save(commit=False)
@@ -708,7 +709,7 @@ class ParticipantSignatureView(LoginRequiredMixin, View):
         return participant.user_id == request.user.pk
 
     def get(self, request, pk):
-        participant = get_object_or_404(ManagementReviewParticipant, pk=pk)
+        participant = get_scoped_object_or_404(request.user, ManagementReviewParticipant, pk=pk)
         if not self._authorized(request, participant):
             messages.error(request, _("You cannot sign for this participant."))
             return redirect("reports:management-review-detail", pk=participant.review_id)
@@ -719,7 +720,7 @@ class ParticipantSignatureView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
         import base64 as _b64
-        participant = get_object_or_404(ManagementReviewParticipant, pk=pk)
+        participant = get_scoped_object_or_404(request.user, ManagementReviewParticipant, pk=pk)
         if not self._authorized(request, participant):
             messages.error(request, _("You cannot sign for this participant."))
             return redirect("reports:management-review-detail", pk=participant.review_id)

@@ -101,6 +101,7 @@ from .models import (
     RequirementMapping,
 )
 from .models.assessment import ALLOWED_ATTACHMENT_EXTENSIONS
+from core.scoping import get_scoped_object_or_404, get_scoped_object_or_none
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -301,7 +302,7 @@ class FrameworkImportPreviewView(LoginRequiredMixin, PermissionRequiredMixin, Te
     def _get_existing_framework(self, import_data):
         fw_id = import_data.get("existing_framework_id")
         if fw_id:
-            return Framework.objects.filter(pk=fw_id).first()
+            return get_scoped_object_or_none(self.request.user, Framework, pk=fw_id)
         return None
 
     def get_context_data(self, **kwargs):
@@ -726,7 +727,7 @@ class AssessmentTransitionView(LoginRequiredMixin, PermissionRequiredMixin, View
     }
 
     def post(self, request, pk):
-        assessment = get_object_or_404(ComplianceAssessment, pk=pk)
+        assessment = get_scoped_object_or_404(request.user, ComplianceAssessment, pk=pk)
         new_status = request.POST.get("target_status") or request.POST.get("status")
 
         # Validate required fields for the target status
@@ -979,7 +980,7 @@ class FrozenAssessmentGuardMixin:
 
     def dispatch(self, request, *args, **kwargs):
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
-            assessment = get_object_or_404(
+            assessment = get_scoped_object_or_404(request.user, 
                 ComplianceAssessment, pk=kwargs.get("assessment_pk")
             )
             frozen = _check_assessment_not_frozen(assessment)
@@ -993,7 +994,7 @@ class EditableAssessmentGuardMixin:
 
     def dispatch(self, request, *args, **kwargs):
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
-            assessment = get_object_or_404(
+            assessment = get_scoped_object_or_404(request.user, 
                 ComplianceAssessment, pk=kwargs.get("assessment_pk")
             )
             error = _check_assessment_editable(assessment)
@@ -1028,7 +1029,7 @@ class AssessmentResultCreateView(EditableAssessmentGuardMixin, LoginRequiredMixi
     modal_title_create = _("Evaluate requirement")
 
     def get_assessment(self):
-        return get_object_or_404(
+        return get_scoped_object_or_404(self.request.user, 
             ComplianceAssessment, pk=self.kwargs["assessment_pk"]
         )
 
@@ -1037,7 +1038,7 @@ class AssessmentResultCreateView(EditableAssessmentGuardMixin, LoginRequiredMixi
         kwargs["assessment"] = self.get_assessment()
         req_pk = parse_uuid(self.request.GET.get("requirement"))
         if req_pk:
-            kwargs["requirement_instance"] = get_object_or_404(
+            kwargs["requirement_instance"] = get_scoped_object_or_404(self.request.user, 
                 Requirement, pk=req_pk
             )
         return kwargs
@@ -1047,7 +1048,7 @@ class AssessmentResultCreateView(EditableAssessmentGuardMixin, LoginRequiredMixi
         ctx["assessment"] = self.get_assessment()
         req_pk = parse_uuid(self.request.GET.get("requirement"))
         if req_pk:
-            ctx["requirement_obj"] = get_object_or_404(Requirement, pk=req_pk)
+            ctx["requirement_obj"] = get_scoped_object_or_404(self.request.user, Requirement, pk=req_pk)
         return ctx
 
     def form_valid(self, form):
@@ -1058,7 +1059,7 @@ class AssessmentResultCreateView(EditableAssessmentGuardMixin, LoginRequiredMixi
         # If requirement was disabled in the form, set it from the URL param
         req_pk = parse_uuid(self.request.GET.get("requirement"))
         if req_pk and not form.cleaned_data.get("requirement"):
-            form.instance.requirement = get_object_or_404(Requirement, pk=req_pk)
+            form.instance.requirement = get_scoped_object_or_404(self.request.user, Requirement, pk=req_pk)
         response = super().form_valid(form)
         _save_attachments(self.request, self.object)
         assessment.recalculate_counts()
@@ -1081,7 +1082,7 @@ class AssessmentResultUpdateView(EditableAssessmentGuardMixin, LoginRequiredMixi
     modal_title_update = _("Edit evaluation")
 
     def get_assessment(self):
-        return get_object_or_404(
+        return get_scoped_object_or_404(self.request.user, 
             ComplianceAssessment, pk=self.kwargs["assessment_pk"]
         )
 
@@ -1128,7 +1129,7 @@ class AssessmentResultDeleteView(EditableAssessmentGuardMixin, LoginRequiredMixi
     template_name = "compliance/confirm_delete.html"
 
     def get_assessment(self):
-        return get_object_or_404(
+        return get_scoped_object_or_404(self.request.user, 
             ComplianceAssessment, pk=self.kwargs["assessment_pk"]
         )
 
@@ -1155,12 +1156,12 @@ class AssessmentResultAttachmentDeleteView(EditableAssessmentGuardMixin, LoginRe
     permission_required = "compliance.assessment.update"
 
     def get_assessment(self):
-        return get_object_or_404(
+        return get_scoped_object_or_404(self.request.user, 
             ComplianceAssessment, pk=self.kwargs["assessment_pk"]
         )
 
     def delete(self, request, *args, **kwargs):
-        attachment = get_object_or_404(
+        attachment = get_scoped_object_or_404(request.user, 
             AssessmentResultAttachment,
             pk=self.kwargs["attachment_pk"],
             result__pk=self.kwargs["result_pk"],
@@ -1183,11 +1184,11 @@ class ToggleResultEvaluatedView(LoginRequiredMixin, PermissionRequiredMixin, Vie
     permission_required = "compliance.assessment.update"
 
     def post(self, request, assessment_pk, requirement_pk):
-        assessment = get_object_or_404(ComplianceAssessment, pk=assessment_pk)
+        assessment = get_scoped_object_or_404(request.user, ComplianceAssessment, pk=assessment_pk)
         error = _check_assessment_toggleable(assessment)
         if error:
             return error
-        requirement = get_object_or_404(
+        requirement = get_scoped_object_or_404(request.user, 
             assessment.get_all_requirements(), pk=requirement_pk
         )
         # Don't toggle if requirement is non-applicable
@@ -1252,7 +1253,7 @@ class BulkToggleEvaluatedView(LoginRequiredMixin, PermissionRequiredMixin, View)
     permission_required = "compliance.assessment.update"
 
     def post(self, request, pk):
-        assessment = get_object_or_404(ComplianceAssessment, pk=pk)
+        assessment = get_scoped_object_or_404(request.user, ComplianceAssessment, pk=pk)
         error = _check_assessment_toggleable(assessment)
         if error:
             return error
@@ -1356,7 +1357,7 @@ class AssessmentResultsTableBodyView(LoginRequiredMixin, PermissionRequiredMixin
     def get(self, request, pk):
         from django.template.loader import render_to_string
 
-        assessment = get_object_or_404(ComplianceAssessment, pk=pk)
+        assessment = get_scoped_object_or_404(request.user, ComplianceAssessment, pk=pk)
         result_data = _build_sections_with_results(assessment)
         html = render_to_string(
             "compliance/assessment_results_table_body.html",
@@ -1384,7 +1385,7 @@ class FindingCreateView(EditableAssessmentGuardMixin, LoginRequiredMixin, Permis
     modal_title_create = _("Add finding")
 
     def get_assessment(self):
-        return get_object_or_404(
+        return get_scoped_object_or_404(self.request.user, 
             ComplianceAssessment, pk=self.kwargs["assessment_pk"]
         )
 
@@ -1421,7 +1422,7 @@ class FindingUpdateView(EditableAssessmentGuardMixin, LoginRequiredMixin, Permis
     modal_title_update = _("Edit finding")
 
     def get_assessment(self):
-        return get_object_or_404(
+        return get_scoped_object_or_404(self.request.user, 
             ComplianceAssessment, pk=self.kwargs["assessment_pk"]
         )
 
@@ -1454,7 +1455,7 @@ class FindingDeleteView(EditableAssessmentGuardMixin, LoginRequiredMixin, Permis
     template_name = "compliance/confirm_delete.html"
 
     def get_assessment(self):
-        return get_object_or_404(
+        return get_scoped_object_or_404(self.request.user, 
             ComplianceAssessment, pk=self.kwargs["assessment_pk"]
         )
 
@@ -1487,7 +1488,7 @@ class FindingsTableBodyView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def get(self, request, pk):
         from django.template.loader import render_to_string
 
-        assessment = get_object_or_404(ComplianceAssessment, pk=pk)
+        assessment = get_scoped_object_or_404(request.user, ComplianceAssessment, pk=pk)
         findings = assessment.findings.select_related("assessor").prefetch_related(
             "requirements"
         ).order_by("reference")
@@ -1871,7 +1872,7 @@ class ActionPlanTransitionView(LoginRequiredMixin, PermissionRequiredMixin, View
     permission_required = "compliance.action_plan.update"
 
     def post(self, request, pk):
-        action_plan = get_object_or_404(ComplianceActionPlan, pk=pk)
+        action_plan = get_scoped_object_or_404(request.user, ComplianceActionPlan, pk=pk)
         form = ActionPlanTransitionForm(request.POST)
         if not form.is_valid():
             messages.error(request, _("Invalid transition data."))
@@ -1911,7 +1912,7 @@ class ActionPlanCommentCreateView(LoginRequiredMixin, PermissionRequiredMixin, V
     permission_required = "compliance.action_plan.update"
 
     def post(self, request, pk):
-        action_plan = get_object_or_404(ComplianceActionPlan, pk=pk)
+        action_plan = get_scoped_object_or_404(request.user, ComplianceActionPlan, pk=pk)
         content = request.POST.get("content", "").strip()
         if not content:
             return HttpResponse(status=400)
@@ -1922,7 +1923,7 @@ class ActionPlanCommentCreateView(LoginRequiredMixin, PermissionRequiredMixin, V
         parent_id = parse_uuid(request.POST.get("parent"))
         parent = None
         if parent_id:
-            parent = get_object_or_404(
+            parent = get_scoped_object_or_404(request.user, 
                 ActionPlanComment, pk=parent_id, action_plan=action_plan
             )
             # Enforce single-level nesting

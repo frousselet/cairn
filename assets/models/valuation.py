@@ -11,6 +11,10 @@ from assets.constants import DICLevel
 
 
 class AssetValuation(models.Model):
+    # Filed under the scopes of its parent : every surface resolves it
+    # through core.scoping (lists, records, transitions, history, API, MCP).
+    scope_parent_lookup = "essential_asset__scopes"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     essential_asset = models.ForeignKey(
         "assets.EssentialAsset",
