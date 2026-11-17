@@ -152,13 +152,21 @@ class TestValidateTransition:
 
 @pytest.mark.django_db
 class TestRestrictions:
-    def test_open_transition_allows_anyone(self):
-        from accounts.tests.factories import UserFactory
+    def test_a_transition_that_declares_nothing_asks_to_change_the_record(self):
+        """It used to be allowed to anyone : see test_transition_permissions.py."""
+        from accounts.models import Permission
+        from accounts.tests.factories import GroupFactory, UserFactory
 
         lc = linear_lifecycle()
         t = lc.find_transition("draft", "active")
         issue = IssueFactory()
-        assert user_can_perform(t, issue, UserFactory()) is True
+        assert user_can_perform(t, issue, UserFactory()) is False
+
+        editor = UserFactory()
+        group = GroupFactory()
+        group.permissions.set(Permission.objects.filter(codename="context.issue.update"))
+        group.users.add(editor)
+        assert user_can_perform(t, issue, editor) is True
 
     def test_superuser_always_passes_restricted(self):
         from accounts.tests.factories import UserFactory

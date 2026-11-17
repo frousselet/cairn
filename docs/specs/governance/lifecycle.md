@@ -57,9 +57,11 @@ Three layers, deliberately separated so the schema stays pure and testable:
   source + wildcards, self-target excluded), `find_transition(source, target)`
   (explicit wins over wildcard) and the governance code sets.
 - **Registry** : `register_lifecycle()` / `get_lifecycle()` / `LIFECYCLE_REGISTRY`.
-- **Evaluation** : `user_can_perform(transition, instance, user)` (open ⇒ anyone;
-  superuser bypass; ISO role assignment **scoped to the instance**; or the
-  resolved allowed users), `available_transitions(...)` and `validate_transition(...)`
+- **Evaluation** : `user_can_perform(transition, instance, user)` (superuser
+  bypass; the declared `permission_action`; ISO role assignment **scoped to the
+  instance**, or the resolved allowed users; a transition that declares nothing
+  asks for the permission to change the record, `.update` or `.approve`),
+  `available_transitions(...)` and `validate_transition(...)`
   (raises `UnknownStepError` / `IllegalTransitionError` /
   `TransitionNotAllowedError` / `CommentRequiredError`).
 
@@ -99,8 +101,10 @@ permission (a deliberate departure from the legacy engine). `allowed_roles`
 lists `RoleType` categories; a user passes if assigned to a `context.Role` of
 one of those types **that shares a scope with the instance** (a role's authority
 is bounded by its scopes). `allowed_users` is a callable resolved against the
-instance for dynamic people (e.g. `lambda obj: [obj.owner]`). An unrestricted
-transition is open to anyone with access; superusers always pass.
+instance for dynamic people (e.g. `lambda obj: [obj.owner]`). A transition that
+declares no permission, no role and no user is **not** open to anyone with
+access : it is a change of the record and asks for the entity's `.update`
+permission (or `.approve`, which implies it). Superusers always pass.
 
 > Binding a transition to a *specific* named role (e.g. exactly "CISO" rather
 > than any Governance role) is the planned next extension point - a small DB
