@@ -24,7 +24,7 @@ class OAuthTokenAuthentication(BaseAuthentication):
         token_hash = OAuthAccessToken.hash_token(raw_token)
         try:
             token = OAuthAccessToken.objects.select_related(
-                "application__user"
+                "application__user", "user",
             ).get(token_hash=token_hash)
         except OAuthAccessToken.DoesNotExist:
             return None  # Not an OAuth token; let next authenticator try
@@ -32,8 +32,12 @@ class OAuthTokenAuthentication(BaseAuthentication):
         app = token.application
         if not app.is_active:
             raise AuthenticationFailed("OAuth application is disabled.")
+        if token.is_expired:
+            raise AuthenticationFailed("Access token expired.")
 
-        user = app.user
+        # The account the token was issued for, not the owner of the
+        # application : a public client is shared by all who authorize it.
+        user = token.acting_user
         if not user.is_active:
             raise AuthenticationFailed("User account is disabled.")
 

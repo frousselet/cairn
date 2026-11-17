@@ -200,7 +200,7 @@ class TestMcpEndpoint:
         assert response.status_code == 200
 
     def test_mcp_delete_session_with_old_token(self, client):
-        """DELETE should succeed even with an old token (tokens never expire)."""
+        """DELETE should succeed with a valid token (it ends the session)."""
         user, token = self._create_authenticated_token()
 
         response = client.delete(

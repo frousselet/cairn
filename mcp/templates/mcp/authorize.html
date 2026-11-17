@@ -234,6 +234,11 @@
         <div class="auth-info-label">{% trans "Application" %}</div>
         <div class="auth-info-value">{{ app.name }}</div>
       </div>
+      <div class="auth-info">
+        <div class="auth-info-label">{% trans "It will receive access at" %}</div>
+        <div class="auth-info-value">{{ redirect_host }}</div>
+      </div>
+      <p class="auth-subtitle">{% trans "The application names itself : approve only if you started this connection and recognise this address." %}</p>
 
       <div class="auth-user">
         {% blocktrans with email=request.user.email %}Signed in as <strong>{{ email }}</strong>{% endblocktrans %}

@@ -93,7 +93,7 @@ The field-by-field contract of each entity lives in its [specification](../../sp
 | incidents | `ReportingAuthority` | `incidents_reportingauthority` | `RGAU` | `default` | - | yes | 18 |
 | incidents | `ReportingObligationTemplate` | `incidents_reportingobligationtemplate` | `ROBT` | `default` | - | yes | 26 |
 | incidents | `SecurityEvent` | `incidents_securityevent` | `EVNT` | `security_event` | yes | yes | 27 |
-| mcp | `OAuthAccessToken` | `mcp_oauthaccesstoken` | - | - | - | - | 5 |
+| mcp | `OAuthAccessToken` | `mcp_oauthaccesstoken` | - | - | - | - | 6 |
 | mcp | `OAuthApplication` | `mcp_oauthapplication` | - | - | - | - | 11 |
 | mcp | `OAuthAuthorizationCode` | `mcp_oauthauthorizationcode` | - | - | - | - | 11 |
 | reports | `IsmsChange` | `reports_ismschange` | - | - | - | yes | 14 |

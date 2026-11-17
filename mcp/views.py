@@ -98,9 +98,22 @@ class OAuthAuthorizeView(View):
             target = f"{login_url}?next={quote(authorize_url)}"
             return HttpResponseRedirect(safe_redirect_target(request, target, login_url))
 
+        # Nothing to consent to for an account that may not use MCP : the token
+        # endpoint would refuse it, after the user had approved.
+        if not request.user.is_superuser and not request.user.has_perm("system.mcp.access"):
+            return JsonResponse(
+                {"error": "access_denied", "error_description": "Your account does not have MCP access."},
+                status=403,
+            )
+
         # User is authenticated - show consent page
+        from urllib.parse import urlsplit
+
         response = render(request, "mcp/authorize.html", {
             "app": app,
+            # Where the code goes once approved : shown, so that the name an
+            # application gave itself is not the only thing to judge it by.
+            "redirect_host": urlsplit(redirect_uri).netloc or urlsplit(redirect_uri).scheme,
             "client_id": client_id,
             "redirect_uri": redirect_uri,
             "code_challenge": code_challenge,
