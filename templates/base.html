@@ -3091,21 +3091,6 @@
   {% endcomment %}
   <div class="modal fade" tabindex="-1" id="itemDrawer" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      {% comment %}
-        Multi-step navigation lives OUTSIDE the modal as floating side arrows.
-        The left arrow goes back; the right arrow advances and, on the last
-        step, becomes a check that submits (then spins while saving). Hidden
-        unless a multi-step form is open. Cancel is the header X / backdrop.
-      {% endcomment %}
-      <button type="button" class="mform-nav mform-nav--prev" data-mform-prev hidden aria-label="{% trans 'Previous step' %}">
-        <i class="bi bi-arrow-left" aria-hidden="true"></i>
-      </button>
-      <button type="button" class="mform-nav mform-nav--next" data-mform-next hidden
-              data-required-msg="{% trans 'Fill the required fields to continue.' %}"
-              data-label-next="{% trans 'Next step' %}" data-label-save="{% trans 'Save' %}"
-              aria-label="{% trans 'Next step' %}">
-        <i class="bi bi-arrow-right" aria-hidden="true"></i>
-      </button>
       <div id="drawer-form-content" class="modal-content"></div>
     </div>
   </div>
@@ -3187,11 +3172,6 @@
     /* Cleanup modal content on hide (X, ESC, backdrop, or form save). */
     drawerEl.addEventListener('hidden.bs.modal', function() {
       document.getElementById('drawer-form-content').innerHTML = '';
-      /* Reset the floating side-nav arrows so they never linger between opens. */
-      ['[data-mform-prev]', '[data-mform-next]'].forEach(function(sel) {
-        var b = drawerEl.querySelector(sel);
-        if (b) { b.hidden = true; b.classList.remove('is-loading', 'is-final'); }
-      });
       if (isOnDrawerEntry()) {
         internalHide = false;
         history.back();
@@ -3219,22 +3199,26 @@
   {% endcomment %}
   <script nonce="{% csp_nonce %}">
   (function() {
-    function controlsIn(scope) {
-      return Array.prototype.slice.call(
-        scope.querySelectorAll('[data-mform-required]')
-      ).map(function(w) {
-        /* Only consider named controls: the rich-text editor (pell) keeps
-         * the real, synced textarea[name] hidden alongside its editable div. */
-        return w.querySelector('input[name], select[name], textarea[name]')
-          || w.querySelector('input, select, textarea');
-      }).filter(Boolean);
+    /* The wrappers of the required fields found in `scope`. */
+    function requiredIn(scope) {
+      return Array.prototype.slice.call(scope.querySelectorAll('[data-mform-required]'));
     }
 
-    function isFilled(c) {
-      if (!c) return false;
-      if (c.type === 'checkbox' || c.type === 'radio') return c.checked;
-      if (c.multiple) return c.selectedOptions && c.selectedOptions.length > 0;
-      return String(c.value).trim() !== '';
+    /* The named controls of one field wrapper. The rich-text editor (pell)
+     * keeps the real, synced textarea[name] hidden beside its editable div. */
+    function controlsOf(wrap) {
+      var named = wrap.querySelectorAll('input[name], select[name], textarea[name]');
+      if (named.length) return Array.prototype.slice.call(named);
+      return Array.prototype.slice.call(wrap.querySelectorAll('input, select, textarea'));
+    }
+
+    function isFilled(wrap) {
+      return controlsOf(wrap).some(function(c) {
+        if (c.type === 'hidden' && !c.name) return false;
+        if (c.type === 'checkbox' || c.type === 'radio') return c.checked;
+        if (c.multiple) return c.selectedOptions && c.selectedOptions.length > 0;
+        return String(c.value).trim() !== '';
+      });
     }
 
     /* ── Single-step: required-fields completion meter ── */
@@ -3243,9 +3227,9 @@
       var text = meterEl.querySelector('[data-mform-meter-text]');
       var tpl = text ? (text.getAttribute('data-template') || '') : '';
       function update() {
-        var ctrls = controlsIn(form);
-        var total = ctrls.length;
-        var done = ctrls.filter(isFilled).length;
+        var wraps = requiredIn(form);
+        var total = wraps.length;
+        var done = wraps.filter(isFilled).length;
         if (fill) fill.style.width = total ? Math.round(done / total * 100) + '%' : '0%';
         if (text) text.textContent = tpl
           .replace('{done}', done).replace('{total}', total);
@@ -3255,29 +3239,19 @@
       update();
     }
 
-    /* Hide / reset the floating side-nav arrows. initStepper re-shows them
-       for multi-step forms; single-step and non-form content leave them off. */
-    function resetDrawerNav() {
-      var modal = document.getElementById('itemDrawer');
-      if (!modal) return;
-      ['[data-mform-prev]', '[data-mform-next]'].forEach(function(sel) {
-        var b = modal.querySelector(sel);
-        if (b) { b.hidden = true; b.classList.remove('is-loading', 'is-final'); }
-      });
-    }
-
-    /* ── Multi-step wizard, driven by the external side arrows ──
-     * Prev (left) / Next (right) float outside the modal. On the last step
-     * Next becomes a save check that, on click, spins while the item saves.
-     * Cancel is the header X or a backdrop click - there is no footer. */
+    /* ── Multi-step form, driven by the buttons of its footer ──
+     * Cancel / Previous / Next / the action, each with its word. Creating :
+     * a step is left once its required fields are filled, and the action
+     * comes on the last step. Editing : the record already exists, so every
+     * step is open and the action is offered on each of them. */
     function initStepper(form) {
       var steps = Array.prototype.slice.call(form.querySelectorAll('[data-mform-step]'));
       var pills = Array.prototype.slice.call(form.querySelectorAll('[data-mform-pill]'));
       var submitBtn = form.querySelector('[data-mform-submit]');
-      var modal = form.closest('.modal');
-      var prevBtn = modal ? modal.querySelector('[data-mform-prev]') : null;
-      var nextBtn = modal ? modal.querySelector('[data-mform-next]') : null;
+      var prevBtn = form.querySelector('[data-mform-prev]');
+      var nextBtn = form.querySelector('[data-mform-next]');
       if (!steps.length || !prevBtn || !nextBtn) return;
+      var editing = form.getAttribute('data-mform-mode') === 'edit';
 
       var current = 0;
       /* If the server re-rendered with errors, open the first step that
@@ -3285,50 +3259,54 @@
       for (var i = 0; i < steps.length; i++) {
         if (steps[i].querySelector('.is-invalid, .invalid-feedback')) { current = i; break; }
       }
+      /* The furthest step reached : going back never closes the way forward. */
+      var reached = current;
 
-      function render() {
+      function render(focus) {
         steps.forEach(function(s, i) { s.hidden = (i !== current); });
         pills.forEach(function(p, i) {
-          p.classList.toggle('is-current', i === current);
-          p.classList.toggle('is-done', i < current);
+          var item = p.closest('.mform-pill');
+          if (item) {
+            item.classList.toggle('is-current', i === current);
+            item.classList.toggle('is-done', i < current);
+          }
           if (i === current) { p.setAttribute('aria-current', 'step'); }
           else { p.removeAttribute('aria-current'); }
+          p.disabled = !(editing || i <= reached);
         });
         var last = (current === steps.length - 1);
         prevBtn.hidden = (current === 0);
-        nextBtn.hidden = false;
-        nextBtn.classList.remove('is-loading');
-        nextBtn.classList.toggle('is-final', last);
-        var icon = nextBtn.querySelector('i');
-        if (icon) icon.className = 'bi ' + (last ? 'bi-check-lg' : 'bi-arrow-right');
-        var lbl = nextBtn.getAttribute(last ? 'data-label-save' : 'data-label-next');
-        if (lbl) nextBtn.setAttribute('aria-label', lbl);
-        var firstField = steps[current].querySelector('input, select, textarea');
+        nextBtn.hidden = last;
+        if (submitBtn) submitBtn.hidden = !(editing || last);
+        if (focus === false) return;
+        var firstField = steps[current].querySelector('input:not([type="hidden"]), select, textarea');
         if (firstField) { try { firstField.focus(); } catch (_) {} }
       }
 
       function validateCurrent() {
-        var ok = true;
-        controlsIn(steps[current]).forEach(function(c) {
-          var wrap = c.closest('[data-mform-required]');
-          if (!isFilled(c)) {
-            ok = false;
-            c.classList.add('is-invalid');
-            if (wrap && !wrap.querySelector('.mform-step-error')) {
-              var msg = document.createElement('div');
-              msg.className = 'invalid-feedback d-block mform-step-error';
-              msg.textContent = nextBtn.getAttribute('data-required-msg') || '';
-              wrap.appendChild(msg);
-            }
-          } else {
-            c.classList.remove('is-invalid');
-            if (wrap) {
-              var e = wrap.querySelector('.mform-step-error');
-              if (e) e.remove();
-            }
+        var firstMissing = null;
+        requiredIn(steps[current]).forEach(function(wrap) {
+          var ctrls = controlsOf(wrap);
+          var old = wrap.querySelector('.mform-step-error');
+          if (isFilled(wrap)) {
+            ctrls.forEach(function(c) { c.classList.remove('is-invalid'); });
+            if (old) old.remove();
+            return;
+          }
+          if (!firstMissing) firstMissing = ctrls[0] || null;
+          ctrls.forEach(function(c) { c.classList.add('is-invalid'); });
+          if (!old) {
+            var msg = document.createElement('div');
+            msg.className = 'invalid-feedback d-block mform-step-error';
+            /* The sentence that asks for this very field (set by the form),
+               not one sentence repeated under every empty field. */
+            msg.textContent = wrap.getAttribute('data-mform-required')
+              || nextBtn.getAttribute('data-required-msg') || '';
+            wrap.appendChild(msg);
           }
         });
-        return ok;
+        if (firstMissing) { try { firstMissing.focus(); } catch (_) {} }
+        return !firstMissing;
       }
 
       /* Smoothly tween the modal's height when the active step (and thus its
@@ -3339,6 +3317,7 @@
       try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) {}
 
       function goTo(idx) {
+        if (idx > reached) reached = idx;
         if (reduceMotion || !content) { current = idx; render(); return; }
         var start = content.offsetHeight;
         current = idx;
@@ -3360,31 +3339,49 @@
       }
 
       function advance() {
-        if (!validateCurrent()) return;
-        if (current < steps.length - 1) {
-          goTo(current + 1);
-        } else {
-          /* Last step : spin the check and submit (HTMX intercepts). */
-          nextBtn.classList.add('is-loading');
-          if (form.requestSubmit) { form.requestSubmit(submitBtn || undefined); }
-          else if (submitBtn) { submitBtn.click(); }
-          else { form.submit(); }
-        }
+        /* Editing : the server validates on save, a step is never a gate. */
+        if (!editing && !validateCurrent()) return;
+        if (current < steps.length - 1) { goTo(current + 1); }
       }
 
-      /* Persistent shell arrows : assign (not add) so re-init never stacks
-         duplicate handlers. */
-      nextBtn.onclick = advance;
-      prevBtn.onclick = function() { if (current > 0) { goTo(current - 1); } };
+      function submit() {
+        if (form.requestSubmit) { form.requestSubmit(submitBtn || undefined); }
+        else if (submitBtn) { submitBtn.click(); }
+        else { form.submit(); }
+      }
+
+      nextBtn.addEventListener('click', advance);
+      prevBtn.addEventListener('click', function() { if (current > 0) { goTo(current - 1); } });
       pills.forEach(function(p, i) {
-        p.onclick = function() { if (i < current) { goTo(i); } };
+        p.addEventListener('click', function() {
+          if (i === current || p.disabled) return;
+          /* Creating : a step ahead is reached through Next, which checks the
+             required fields on the way. */
+          if (!editing && i > current && !validateCurrent()) return;
+          goTo(i);
+        });
       });
-      /* Enter advances / submits instead of submitting the form prematurely. */
-      form.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && e.target && e.target.tagName !== 'TEXTAREA' && !e.target.isContentEditable) {
+      /* Creating : the last step is the only one that saves, and it checks its
+         own required fields first. */
+      form.addEventListener('submit', function(e) {
+        if (editing) return;
+        if (current < steps.length - 1 || !validateCurrent()) {
           e.preventDefault();
-          advance();
+          e.stopImmediatePropagation();
         }
+      }, true);
+      /* Enter moves on (creating) or saves (editing, or on the last step),
+         instead of submitting a form whose other steps were never seen. */
+      form.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter' || !e.target) return;
+        /* Enter already served a control (it picked the highlighted option of
+           a searchable select) : it does not also move on or save. */
+        if (e.defaultPrevented) return;
+        var tag = e.target.tagName;
+        if (tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'A' || e.target.isContentEditable) return;
+        e.preventDefault();
+        if (editing || current === steps.length - 1) { submit(); }
+        else { advance(); }
       });
       render();
     }
@@ -3400,22 +3397,10 @@
       var form = root.querySelector('form[data-mform]');
       if (!form || form.dataset.mformReady) return;
       form.dataset.mformReady = '1';
-      /* Reset the side-nav; initStepper re-shows it for multi-step forms. */
-      resetDrawerNav();
       if (form.querySelector('[data-mform-stepper]')) initStepper(form);
       var meter = form.querySelector('[data-mform-meter]');
       if (meter) initMeter(form, meter);
     }
-
-    /* Stop the check spinner if the save request ends without closing the
-       modal (validation re-render handles its own reset via initStepper). */
-    document.body.addEventListener('htmx:afterRequest', function(evt) {
-      var t = evt.detail && evt.detail.target;
-      if (t && t.id === 'drawer-form-content') {
-        var nb = document.querySelector('#itemDrawer [data-mform-next]');
-        if (nb) nb.classList.remove('is-loading');
-      }
-    });
 
     document.body.addEventListener('htmx:afterSettle', function(evt) {
       if (evt.detail.target && evt.detail.target.id === 'drawer-form-content') {

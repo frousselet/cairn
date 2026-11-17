@@ -29,6 +29,7 @@ from controls.integrations import linked_controls
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
+    CompleteOnRecordMixin,
     HtmxFormMixin,
     ListSummaryMixin,
     PredefinedFilterMixin,
@@ -327,11 +328,14 @@ class ScopeListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixi
         return result
 
 
-class ScopeDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, LifecycleStepperMixin, HistoryUrlMixin, DetailView):
+class ScopeDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, LifecycleStepperMixin, HistoryUrlMixin, CompleteOnRecordMixin, DetailView):
     model = Scope
     permission_required = "context.scope.read"
     template_name = "context/scope_detail.html"
     context_object_name = "scope"
+    # The scope is completed on this page, one card at a time.
+    edit_url_name = "context:scope-update"
+    edit_permission = "context.scope.update"
 
     def get_queryset(self):
         return super().get_queryset().select_related("parent_scope")
@@ -395,6 +399,21 @@ class ScopeCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin
     modal_title_create = _l("New scope")
     modal_title_update = _l("Edit scope")
     success_url = reverse_lazy("context:scope-list")
+    # Created with its name and what it covers, then completed on its page.
+    land_on_record = True
+
+    def get_initial(self):
+        """A sub-scope is started from its parent : ``?parent=<pk>``."""
+        initial = super().get_initial()
+        parent = get_scoped_object_or_none(self.request.user, Scope, pk=parse_uuid(self.request.GET.get("parent")))
+        if parent is not None:
+            initial["parent_scope"] = parent.pk
+        return initial
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class ScopeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, UpdateView):
@@ -406,6 +425,12 @@ class ScopeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin
     modal_title_create = _l("New scope")
     modal_title_update = _l("Edit scope")
     success_url = reverse_lazy("context:scope-list")
+    land_on_record = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class ScopeDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):

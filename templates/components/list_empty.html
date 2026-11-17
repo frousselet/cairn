@@ -1,0 +1,2 @@
+{% comment %}{% list_empty %} : the empty row of a register. See docs/sdk/ui-components.md.{% endcomment %}
+{% load i18n ui %}{% if narrowed %}{% empty_state title=_("Nothing matches.") message=_("No record matches the search or the filters. Widen the search, or reset the filters.") colspan=colspan %}{% elif create_url %}{% empty_state title=title message=message cta_url=create_url cta_label=create_label cta_modal=True colspan=colspan %}{% else %}{% empty_state title=title message=message colspan=colspan %}{% endif %}

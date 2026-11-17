@@ -89,6 +89,11 @@ DETAIL_SHOTS: dict[str, tuple[str, str, float]] = {
     "control-detail": ("/controls/", "table tbody tr td a", 5),
     "risk-detail": ("/risks/register/", "table tbody tr td a", 5),
     "supplier-detail": ("/assets/suppliers/", "table tbody tr td a", 5),
+    # Two records that still need something : their page opens on what is
+    # missing (the completeness card) and edits one card at a time. Found by a
+    # search, so the capture does not depend on the order of the register.
+    "scope-detail": ("/context/scopes/?q=Innovation+Lab", "table tbody tr td a", 5),
+    "essential-asset-detail": ("/assets/essential/?q=Supplier+contracts", "table tbody tr td a", 5),
 }
 
 

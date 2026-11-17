@@ -42,7 +42,9 @@ There are four kinds of screen. Each has one canonical anatomy.
 
 Reference : `compliance/templates/compliance/action_plan_list.html`. The table
 itself follows the [table standard](../brand/table-standard.md). An empty
-`<tbody>` renders `{% empty_state colspan=N ... %}`.
+`<tbody>` renders [`{% list_empty %}`](#list_empty) : a register with nothing
+in it says what the thing is and offers to create the first one, a register
+emptied by a search says that instead.
 
 A table that fits its card keeps a header that sticks under the page header. A
 table wider than its card (many columns, a narrow screen) scrolls inside the
@@ -97,6 +99,11 @@ Reference : `compliance/templates/compliance/action_plan_detail.html`.
   relations, then comments. Always close with `record_card`.
 - **No tabs**, unless the page really has separate modes (see the
   [conventions](ui-conventions.md)).
+- **A record that is completed on its page** (the
+  [usability standard](usability-standard.md)) opens its body with
+  [`completeness_card`](#completeness_card) and gives each card the
+  [`section_edit`](#section_edit) of the form section it shows. Reference :
+  `context/templates/context/scope_detail.html`.
 
 ### Form
 
@@ -116,9 +123,13 @@ The fields, steps, helpers and progress come from the form
 ```
 
 It renders the same fields in the same anatomy, every step shown as a titled
-group, with the standard footer (Cancel on the left, Save on the right).
-`core.mixins.HtmxFormMixin` provides its title (`modal_title_create` /
-`modal_title_update`), its breadcrumb and its Cancel target. A form with no `steps`
+group, with the standard footer (Cancel on the left, the action on the right :
+*Create* or *Save*). `core.mixins.HtmxFormMixin` provides its title
+(`modal_title_create` / `modal_title_update`, or the title of the section the
+form is opened on with `?section=<key>`), the name of its action, its
+breadcrumb and its Cancel target. A creation is short and lands on the record
+(`land_on_record = True`) : see the
+[usability standard](usability-standard.md). A form with no `steps`
 renders through `includes/form_fields.html` (non-field errors, the field loop,
 the hidden fields), which is also what a non-stepped modal puts in its
 `modal_form_fields` block.
@@ -160,12 +171,15 @@ its own modal, in a table row for example, is `{% confirm_delete url=... name=..
 | [`overview` / `ov_row`](#overview--ov_row) | block tags | Icon-led summary rows |
 | [`meta_list` / `meta_item`](#meta_list--meta_item) | block tags | Label and value pairs |
 | [`record_card`](#record_card) | tag | The traceability line that closes a detail page |
+| [`completeness_card`](#completeness_card) | tag | What a record still needs, each line opening the dialog that fills it |
+| [`section_edit`](#section_edit) | tag | The Edit button of a card : opens one section of the record's form |
+| [`list_empty`](#list_empty) | tag | The empty row of a register |
 | [`ref_link`](#ref_link) | tag | A linked element : reference pill and name |
 | [`tag_list`](#tag_list) | tag | Tags as coloured pills |
 | [`badge` / `choice_badge`](#badge--choice_badge) | tags | Status, level and result badges |
 | `{% workflow_badge obj %}` | tag (`workflow_tags`) | The lifecycle state of an element |
 | [`dash` / `or_dash`](#dash--or_dash) | tag / filter | The "no value" marker |
-| `empty_state` | tag | An empty list or section (`compact=True` inside a card) |
+| `empty_state` | tag | An empty section (`compact=True` inside a card), with an optional action (`cta_url`, `cta_label`, `cta_modal=True` for a form opened in the dialog, `cta_icon`) |
 | `iso_datetime` | filter | A timestamp stored as an ISO 8601 string (in a JSON snapshot), rendered like any other date-time |
 | `plain_empty_option` | filter | A form field whose select opens on *Choose…* / *None*; applied by `includes/form_field.html` |
 | `progress_bar` | tag | A percentage |
@@ -326,6 +340,54 @@ reference, version, author, creation and last-change dates. It is on every
 detail page, in the same place, and deliberately not a card of its own (it was
 one, 270 px tall, on every page). A model that is not a `BaseModel` omits the
 items it has no field for; a record with no known author shows the dash.
+
+### completeness_card
+
+```django
+{% completeness_card completeness edit_url=edit_url %}
+```
+
+What the record still needs, as the first card of its page : the requirements
+its lifecycle waits for (with the step they open), then the advised ones. A
+line is the button that opens the dialog of the form section which fills it; a
+requirement done elsewhere is a link to that page. Nothing is rendered for a
+complete record, nor for a model that declares no `COMPLETENESS`
+(`core/completeness.py`). `completeness` and `edit_url` come from
+`core.mixins.CompleteOnRecordMixin` on the detail view; `edit_url` is empty for
+a reader who may not edit, and the lines are then plain text.
+
+### section_edit
+
+```django
+{% section_card _("Boundaries and exclusions") icon="bounding-box" %}
+  {% slot actions %}{% section_edit edit_url "boundaries" _("Boundaries and exclusions") %}{% endslot %}
+  ...
+{% endsection_card %}
+```
+
+The Edit button of a card. It opens, in the dialog, the one section of the
+record's form that the card shows (`Step(..., key="boundaries")`), instead of
+walking the whole form. The third argument names the section for a screen
+reader ("Edit : Boundaries and exclusions"). Renders nothing when `edit_url`
+is empty. One card, one section : a card that mixes the fields of two sections
+is two cards.
+
+### list_empty
+
+```django
+{% for scope in scopes %}
+  ...
+{% empty %}
+  {% url 'context:scope-create' as create_url %}
+  {% list_empty title=_("No scope yet.") message=_("A scope says what your security work covers : ...") colspan=7 create_url=create_url create_label=_("New scope") permission="context.scope.create" %}
+{% endfor %}
+```
+
+The empty row of a register. With nothing in the register it says what the
+thing is (one sentence a newcomer understands, no acronym) and offers the
+creation dialog to who holds `permission`. When the request carries a search or
+a filter it reads *Nothing matches* instead, and offers nothing to create : the
+record looked for may well exist.
 
 ### Long pages
 

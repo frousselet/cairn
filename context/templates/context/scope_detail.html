@@ -8,7 +8,7 @@
 {% block content %}
 {% page_header scope.name reference=scope.reference nav="context:scope-list" breadcrumb=scope_breadcrumb accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:scope-update' scope.pk %}" class="btn btn-primary" hx-get="{% url 'context:scope-update' scope.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.scope_detail" %}
@@ -27,11 +27,15 @@
     {% kpi_tile _("Essential assets") kpi_essential_assets icon="gem" tone="success" %}
   {% endslot %}
 
-  {% comment %} 1. Overview : perimeter info overlaid on a hero map of its sites.
-     Reuses the shared entity-hero pattern (piloted on suppliers): the included
-     sites are geocoded client-side and plotted, so the overview shows the
-     perimeter's geographic footprint. {% endcomment %}
-  {% if has_site_map or scope.description or scope.parent_scope or scope.geographic_scope or scope.organizational_scope or scope.technical_scope or scope.effective_date or scope.review_date or scope.tags.exists %}
+  {% comment %} What the scope still needs, each line opening the dialog that
+     fills it. Nothing is rendered once the scope is complete. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {% comment %} 1. Identity : what the scope is, overlaid on a hero map of its
+     sites. Reuses the shared entity-hero pattern (piloted on suppliers): the
+     included sites are geocoded client-side and plotted, so the card shows the
+     perimeter's geographic footprint. Each card below is one section of the
+     scope form : its Edit button opens that section alone. {% endcomment %}
   <div class="card supplier-card{% if not has_site_map %} supplier-card--nomap{% endif %}">
     {% if has_site_map %}
     <div class="supplier-card__map" aria-hidden="true" inert>
@@ -45,24 +49,44 @@
           {% ov_row scope_icon _("Description") lead=True rich=True %}{% if scope.description %}{{ scope.description|rich }}{% endif %}{% endov_row %}
           {% endwith %}
           {% ov_row "diagram-2" _("Parent scope") %}{% if scope.parent_scope %}<a href="{% url 'context:scope-detail' scope.parent_scope.pk %}" class="ov-link">{{ scope.parent_scope.name }}</a>{% endif %}{% endov_row %}
-          {% ov_row "globe" _("Geographic scope") %}{% if scope.geographic_scope %}{{ scope.geographic_scope|rich }}{% endif %}{% endov_row %}
-          {% ov_row "building" _("Organizational scope") %}{% if scope.organizational_scope %}{{ scope.organizational_scope|rich }}{% endif %}{% endov_row %}
-          {% ov_row "cpu" _("Technical scope") %}{% if scope.technical_scope %}{{ scope.technical_scope|rich }}{% endif %}{% endov_row %}
-          {% if scope.effective_date %}
-          {% ov_row "calendar-check" _("Effective date") %}{% trans "In force since" %} {{ scope.effective_date }}{% if scope.review_date %} · <span class="text-muted">{% trans "next review" %} {{ scope.review_date }}</span>{% endif %}{% endov_row %}
-          {% elif scope.review_date %}
-          {% ov_row "arrow-repeat" _("Next review") %}{% trans "Next review" %} {{ scope.review_date }}{% endov_row %}
-          {% endif %}
           {% ov_row "tags" _("Tags") %}{% tag_list scope.tags.all %}{% endov_row %}
+          {% if edit_url %}<div class="supplier-overview__edit">{% section_edit edit_url "identity" _("Identity") %}</div>{% endif %}
         </div>
       </div>
     </div>
   </div>
-  {% endif %}
 
-  {# ── Sites ── #}
+  {# ── 2. Coverage : what the scope takes in ── #}
+  {% section_card _("Coverage") icon="bullseye" %}
+    {% slot actions %}{% section_edit edit_url "coverage" _("Coverage") %}{% endslot %}
+    {% if scope.geographic_scope or scope.organizational_scope or scope.technical_scope %}
+    {% meta_list %}
+      {% if scope.geographic_scope %}{% meta_item _("Geographic scope") %}<div class="ov-rich">{{ scope.geographic_scope|rich }}</div>{% endmeta_item %}{% endif %}
+      {% if scope.organizational_scope %}{% meta_item _("Organizational scope") %}<div class="ov-rich">{{ scope.organizational_scope|rich }}</div>{% endmeta_item %}{% endif %}
+      {% if scope.technical_scope %}{% meta_item _("Technical scope") %}<div class="ov-rich">{{ scope.technical_scope|rich }}</div>{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+    {% else %}
+    {% empty_state icon="bullseye" compact=True message=_("Places, teams and systems the scope takes in : not described yet.") %}
+    {% endif %}
+  {% endsection_card %}
+
+  {# ── 3. Boundaries and exclusions : where it stops ── #}
+  {% section_card _("Boundaries and exclusions") icon="bounding-box" %}
+    {% slot actions %}{% section_edit edit_url "boundaries" _("Boundaries and exclusions") %}{% endslot %}
+    {% if scope.boundaries or scope.justification_exclusions %}
+    {% meta_list %}
+      {% if scope.boundaries %}{% meta_item _("Boundaries") %}<div class="ov-rich">{{ scope.boundaries|rich }}</div>{% endmeta_item %}{% endif %}
+      {% if scope.justification_exclusions %}{% meta_item _("Justification") %}<div class="ov-rich">{{ scope.justification_exclusions|rich }}</div>{% endmeta_item %}{% endif %}
+    {% endmeta_list %}
+    {% else %}
+    {% empty_state icon="bounding-box" compact=True message=_("What the scope leaves out, and why : not described yet.") %}
+    {% endif %}
+  {% endsection_card %}
+
+  {# ── 4. Sites ── #}
   {% with included=scope.included_sites.all excluded=scope.excluded_sites.all %}
   {% section_card _("Sites") icon="geo-alt" count=included|length %}
+    {% slot actions %}{% section_edit edit_url "sites" _("Sites") %}{% endslot %}
     {% if included or excluded %}
     {% meta_list %}
       {% if included %}
@@ -73,14 +97,15 @@
       {% endif %}
     {% endmeta_list %}
     {% else %}
-    {% empty_state icon="geo-alt" message=_("No site declared yet.") %}
+    {% empty_state icon="geo-alt" compact=True message=_("No site attached yet.") %}
     {% endif %}
   {% endsection_card %}
   {% endwith %}
 
-  {# ── Managers ── #}
+  {# ── 5. Managers ── #}
   {% with managers=scope.managers.all %}
   {% section_card _("Managers") icon="people" count=managers|length %}
+    {% slot actions %}{% section_edit edit_url "managers" _("Managers") %}{% endslot %}
     {% if managers %}
     <div class="contact-grid">
       {% for manager in managers %}
@@ -96,12 +121,21 @@
       {% endfor %}
     </div>
     {% else %}
-    {% empty_state icon="people" message=_("No manager assigned yet.") %}
+    {% empty_state icon="people" compact=True message=_("Nobody answers for this scope yet.") %}
     {% endif %}
   {% endsection_card %}
   {% endwith %}
 
-  {# ── 2. Sub-scopes ── #}
+  {# ── 6. Dates ── #}
+  {% section_card _("Dates") icon="calendar-event" %}
+    {% slot actions %}{% section_edit edit_url "planning" _("Dates") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Effective date") scope.effective_date %}
+      {% meta_item _("Next review date") scope.review_date %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 7. Sub-scopes ── #}
   {% if children %}
   {% section_card _("Sub-scopes") icon="diagram-3" count=children|length %}
     <div class="contract-grid">
@@ -118,16 +152,6 @@
       </div>
       {% endfor %}
     </div>
-  {% endsection_card %}
-  {% endif %}
-
-  {# ── 3. Boundaries and exclusions ── #}
-  {% if scope.boundaries or scope.justification_exclusions %}
-  {% section_card _("Boundaries and exclusions") icon="bounding-box" %}
-    {% meta_list %}
-      {% if scope.boundaries %}{% meta_item _("Boundaries") %}<div class="ov-rich">{{ scope.boundaries|rich }}</div>{% endmeta_item %}{% endif %}
-      {% if scope.justification_exclusions %}{% meta_item _("Justification") %}<div class="ov-rich">{{ scope.justification_exclusions|rich }}</div>{% endmeta_item %}{% endif %}
-    {% endmeta_list %}
   {% endsection_card %}
   {% endif %}
 

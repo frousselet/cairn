@@ -37,3 +37,25 @@ def dic_badge(value):
         '<span class="badge-dot {}" title="{}">{}<span class="visually-hidden"> {}</span></span>',
         variant, label, level, label,
     )
+
+
+@register.filter
+def dic_level(value):
+    """Render a DIC level with its word, for a place that has room for it.
+
+    A scale shows its words, not only its number : "3" tells nothing to who
+    does not know the scale, "High" does. The compact numeric pill
+    (``dic_badge``) stays for a table cell holding the three levels. A level
+    that is not set reads "Not assessed" : it is a state of the asset, not a
+    missing value.
+    """
+    from django.utils.translation import gettext as _
+
+    try:
+        level = int(value)
+    except (TypeError, ValueError):
+        return format_html('<span class="badge-dot secondary">{}</span>', _("Not assessed"))
+    variant, _icon, label = BADGE_REGISTRY["level"].get(
+        DIC_LEVEL_KEYS.get(level, ""), ("secondary", "circle", "?")
+    )
+    return format_html('<span class="badge-dot {}">{}</span>', variant, label)

@@ -9,11 +9,20 @@ meter (single-step) and to lay out the fields, so entity templates carry
 no field markup. This is the single source of truth for a form's grouping
 and ordering.
 
-See ``docs/brand/brand-guidelines.md`` (Forms section) for the doctrine.
+A step is also a **section** of the record : a step that carries a ``key``
+can be opened on its own (``FormClass(..., section="key")``), which is how a
+detail page edits one card at a time instead of walking the whole form.
+
+See ``docs/brand/brand-guidelines.md`` (Forms section) for the doctrine and
+``docs/sdk/usability-standard.md`` for the rules a form is held to.
 """
 
 from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS, ImproperlyConfigured, ValidationError
+from django.forms.utils import pretty_name
+from django.forms.widgets import CheckboxInput, ChoiceWidget, FileInput
+from django.utils.functional import lazy
+from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
 
@@ -45,6 +54,10 @@ def _row_cells(item):
     return cells
 
 
+class UnknownSectionError(LookupError):
+    """A form was asked for a section none of its steps carries."""
+
+
 class Step:
     """One group of fields in a modal form.
 
@@ -60,14 +73,23 @@ class Step:
                 "parent_scope",
                 "description",
             ])
+
+    ``key``    : a stable slug naming the step as a **section** of the record.
+        With it the step opens on its own (``?section=<key>``), which is how a
+        card of the detail page is edited without walking the whole form.
+    ``intro``  : one sentence, shown above the fields, that says in plain
+        words what the section is about. It is where a notion is explained
+        once, rather than in the helper of each of its fields.
     """
 
-    __slots__ = ("title", "icon", "fields")
+    __slots__ = ("title", "icon", "fields", "key", "intro")
 
-    def __init__(self, title, icon, fields):
+    def __init__(self, title, icon, fields, *, key=None, intro=None):
         self.title = title
         self.icon = icon
         self.fields = tuple(fields)
+        self.key = key
+        self.intro = intro
 
     def field_names(self):
         """Flat list of every field name in the step, row layout aside."""
@@ -117,6 +139,50 @@ def humanise_empty_choices(form):
         humanise_empty_choice(field)
 
 
+def _named(template, label):
+    return str(template) % {"label": str(label)}
+
+
+_named_lazy = lazy(_named, str)
+
+
+def _required_template(field):
+    """The sentence asking for ``field``, worded after what its control is."""
+    widget = field.widget
+    if isinstance(widget, CheckboxInput):
+        return _('Tick "%(label)s".')
+    if isinstance(widget, ChoiceWidget):
+        return _('Choose a value for "%(label)s".')
+    if isinstance(widget, FileInput):
+        return _('Add a file for "%(label)s".')
+    return _('Fill in "%(label)s".')
+
+
+def name_required_errors(form):
+    """Make every "required" error of ``form`` name its field and the act.
+
+    Django answers *This field is required.* under every empty field : the
+    same sentence five times tells nothing a red border did not. Each required
+    field answers with its own label and what to do (*Fill in "Name".*,
+    *Choose a value for "Type".*). A field that already carries its own
+    message keeps it.
+
+    Idempotent : it runs when the form is built, when it is laid out and when
+    it is validated, so a field made required (or relabelled) by a subclass
+    after ``super().__init__()`` is named as well.
+    """
+    default = str(forms.Field.default_error_messages["required"])
+    for name, field in form.fields.items():
+        if not field.required or field.widget.is_hidden:
+            continue
+        ours = getattr(field, "_required_named", False)
+        if not ours and str(field.error_messages.get("required", default)) != default:
+            continue
+        label = field.label or pretty_name(name)
+        field.error_messages["required"] = _named_lazy(_required_template(field), label)
+        field._required_named = True
+
+
 class LabelledRowsFormSet(forms.BaseInlineFormSet):
     """An inline formset laid out as a table, one record per row.
 
@@ -150,13 +216,65 @@ class SteppedFormMixin:
     #: exceeding this raises, forcing the step to be split.
     max_rows_per_step = 7
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, section=None, **kwargs):
         super().__init__(*args, **kwargs)
         humanise_empty_choices(self)
+        #: The :class:`Step` the form is restricted to, or ``None`` (whole form).
+        self.active_section = None
         if self.steps:
             self._validate_steps()
+            if section:
+                self._restrict_to(section)
+        name_required_errors(self)
+
+    # -- sections ----------------------------------------------------------
+
+    @classmethod
+    def section_keys(cls):
+        """The keys under which a step of this form opens on its own."""
+        return [step.key for step in cls.steps if step.key]
+
+    @classmethod
+    def section(cls, key):
+        """The :class:`Step` carrying ``key``, or ``None``."""
+        for step in cls.steps:
+            if step.key and step.key == key:
+                return step
+        return None
+
+    def _restrict_to(self, key):
+        """Keep the fields of one section : the form edits that card alone.
+
+        The other fields leave ``self.fields``, so they are neither validated
+        nor written (Django saves what is in ``cleaned_data`` only) : the
+        stored values of the rest of the record are untouched. Hidden fields
+        stay, they carry no question.
+        """
+        step = self.section(key)
+        if step is None:
+            raise UnknownSectionError(key)
+        keep = set(step.field_names())
+        for name in [n for n, f in self.fields.items() if n not in keep and not f.widget.is_hidden]:
+            del self.fields[name]
+        self.steps = [step]
+        self.active_section = step
+
+    @property
+    def is_editing(self):
+        """Whether the form changes an existing record (``False`` : it creates).
+
+        Read from the model instance state, not from its key : a UUID key is
+        set before the first save.
+        """
+        instance = getattr(self, "instance", None)
+        state = getattr(instance, "_state", None)
+        return bool(state is not None and not state.adding)
 
     # -- internals ---------------------------------------------------------
+
+    def full_clean(self):
+        name_required_errors(self)
+        super().full_clean()
 
     def _update_errors(self, errors):
         """Report a model rule about a field this form does not carry.
@@ -186,6 +304,13 @@ class SteppedFormMixin:
 
     def _validate_steps(self):
         seen = []
+        keys = [step.key for step in self.steps if step.key]
+        duplicated = sorted({k for k in keys if keys.count(k) > 1})
+        if duplicated:
+            raise ImproperlyConfigured(
+                f"{type(self).__name__}: section key used by more than one "
+                f"step: {', '.join(duplicated)}."
+            )
         for step in self.steps:
             for name in step.field_names():
                 if name not in self.fields:
@@ -214,13 +339,26 @@ class SteppedFormMixin:
 
     # -- public API consumed by the template -------------------------------
 
+    def _live_steps(self):
+        """The steps that still hold a field.
+
+        A form may drop a field that does not apply (the parent of the very
+        first scope) after ``super().__init__()`` : the layout follows, and a
+        step left with nothing is not shown.
+        """
+        return [step for step in self.steps if any(n in self.fields for n in step.field_names())]
+
     @property
     def is_stepped(self):
         return bool(self.steps)
 
     @property
     def is_multistep(self):
-        return len(self.steps) > 1
+        return len(self._live_steps()) > 1
+
+    @property
+    def step_count(self):
+        return len(self._live_steps())
 
     @property
     def modal_size(self):
@@ -250,22 +388,29 @@ class SteppedFormMixin:
         cell is ``{"field": BoundField, "col_class": "col-sm"|...}``. A
         full-width field is simply a one-cell row.
         """
-        total = len(self.steps)
-        for index, step in enumerate(self.steps):
+        name_required_errors(self)
+        steps = self._live_steps()
+        total = len(steps)
+        for index, step in enumerate(steps):
             rows = []
             bound = []
             for item in step.fields:
                 row = []
                 for name, width in _row_cells(item):
+                    if name not in self.fields:
+                        continue
                     bf = self[name]
                     bound.append(bf)
                     row.append({"field": bf, "col_class": _col_class(width)})
-                rows.append(row)
+                if row:
+                    rows.append(row)
             yield {
                 "index": index,
                 "number": index + 1,
                 "title": step.title,
                 "icon": step.icon,
+                "key": step.key,
+                "intro": step.intro,
                 "rows": rows,
                 "fields": bound,
                 "required_count": sum(1 for bf in bound if bf.field.required),

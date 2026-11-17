@@ -17,9 +17,9 @@ Represents a business process or a type of information essential to the organiza
 | `category` | enum | required | See list below |
 | `owner_id` | relation | FK → User, required | Essential asset owner |
 | `custodian_id` | relation | FK → User, optional | Custodian / operational manager |
-| `confidentiality_level` | enum | required | `negligible` (0), `low` (1), `medium` (2), `high` (3), `critical` (4) |
-| `integrity_level` | enum | required | `negligible` (0), `low` (1), `medium` (2), `high` (3), `critical` (4) |
-| `availability_level` | enum | required | `negligible` (0), `low` (1), `medium` (2), `high` (3), `critical` (4) |
+| `confidentiality_level` | enum | optional, no default | `negligible` (0), `low` (1), `medium` (2), `high` (3), `critical` (4). Empty : not assessed yet (RV-07) |
+| `integrity_level` | enum | optional, no default | Same scale. Empty : not assessed yet |
+| `availability_level` | enum | optional, no default | Same scale. Empty : not assessed yet |
 | `confidentiality_justification` | text | optional | Justification of the confidentiality level |
 | `integrity_justification` | text | optional | Justification of the integrity level |
 | `availability_justification` | text | optional | Justification of the availability level |
@@ -44,3 +44,34 @@ Represents a business process or a type of information essential to the organiza
 - *Type `information`:* `strategic_data`, `operational_data`, `personal_data`, `financial_data`, `technical_data`, `legal_data`, `research_data`, `commercial_data`
 
 > Note: The categories must be configurable by the administrator.
+
+## Creation, completion, completeness
+
+An essential asset follows the
+[usability standard](../../sdk/usability-standard.md) : it is created short,
+then completed on its page.
+
+**Creation** asks for the name, the category (grouped under the type it
+belongs to : the type follows from it, RS-01), the owner (the creator by
+default), the description and the scopes. With a single scope there is nothing
+to choose : the asset is filed under it. The security needs are **not** asked :
+they start empty (RV-07). The user lands on the page of the new asset.
+
+**The page** lists what the asset still needs (below) and shows one card per
+section of its form, each with its own dialog : identity, people, security
+needs (the three questions, each with its justification), business continuity,
+data and regulation, activities and review. A level is shown with its word
+(*High*), an empty one reads *Not assessed*.
+
+**Completeness** (`EssentialAsset.COMPLETENESS`, rule RS-10) :
+
+| Key | The asset... | Tested on | Holds the lifecycle |
+|---|---|---|---|
+| `security_needs` | has its security needs assessed | the three levels are set | yes |
+| `description` | says what it is used for | `description` is not empty | no (advised) |
+| `support_assets` | has the support assets it relies on | a dependency exists | no (advised) |
+| `continuity` | says how long the business can do without it | one of `max_tolerable_downtime`, `recovery_time_objective`, `recovery_point_objective` | no (advised) |
+
+The REST API serves it with a single asset
+(`completeness : {complete, can_advance, missing : [{key, label, blocking}]}`)
+and the MCP `get_essential_asset` tool reports the same.

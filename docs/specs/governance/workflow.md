@@ -158,6 +158,24 @@ Decisions recorded during the rollout:
   permission and is restricted to no role or user requires the permission to
   change the record (`.update`, or `.approve` which implies it) : no transition
   is open to a reader, on the web endpoint, the REST API or the MCP tools.
+- **RG-LC-10 (completeness)** : a model may declare what it needs before its
+  lifecycle lets it through (`COMPLETENESS`, `core/completeness.py`) : a list of
+  requirements, each *blocking* or *advised*, and the steps that wait for the
+  blocking ones (`before`). The transition service refuses a transition to one
+  of those steps while a blocking requirement is missing
+  (`DomainRefusalError`), whatever the surface, and the refusal names the step
+  and what remains to be done. It is checked once the move is known to be legal
+  and allowed : a caller who may not perform it is told so, not what the record
+  lacks. The rule holds each time the step is entered,
+  including when a record comes back to it from a review. A record already
+  standing on such a step is not moved : its page says what it lacks. This is
+  what lets a record be created with few fields
+  (see the [usability standard](../../sdk/usability-standard.md)) without
+  lowering what an authoritative record is worth. A lifecycle state written
+  directly by the MCP create, update and batch tools (`status`, kept for
+  imports) is held to the same rule : the write is rolled back and answers
+  with what remains to be done. Declared so far : scopes
+  (RS-08 of module 1) and essential assets (RS-10 of module 2).
 
 ## Surfaces
 

@@ -1711,7 +1711,13 @@ class TestAskCairnWidget:
         assert "point needs your attention today" in content
         assert "ask-cairn__refs" in content and refs[0]["label"] in content
 
-    def test_all_clear_when_nothing_urgent(self):
+    def test_all_clear_when_nothing_urgent(self, monkeypatch):
+        # "All clear" is said of an instance that has taken its first steps :
+        # before that the summary says there is nothing to report yet
+        # (core/tests/test_getting_started.py).
+        from core import getting_started
+
+        monkeypatch.setattr(getting_started, "_instance_started", True)
         # A non-urgent ("to plan") item exists, but the summary reacts only to
         # urgent ones, so it still reads all-clear.
         Role.objects.create(name="DPO", type="governance", is_mandatory=True)

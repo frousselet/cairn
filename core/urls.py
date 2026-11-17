@@ -14,7 +14,7 @@ from .views import (
     CalendarView, ChangelogDismissView, DashboardAskCairnBriefingView,
     DashboardIndicatorsPartialView,
     DashboardIndicatorWidgetPartialView,
-    DashboardLayoutSaveView, GeneralDashboardView, GlobalSearchView,
+    DashboardLayoutSaveView, FirstStepsVisibilityView, GeneralDashboardView, GlobalSearchView,
     ICalFeedView, KanbanBoardDataView, KanbanBoardView,
     SectionCollapseToggleView, StyleGuideView, UpdateCheckView,
 )
@@ -33,6 +33,7 @@ urlpatterns = [
     path("dashboard/indicator-widget/", DashboardIndicatorWidgetPartialView.as_view(), name="dashboard-indicator-widget"),
     path("dashboard/ask-cairn-briefing/", DashboardAskCairnBriefingView.as_view(), name="dashboard-ask-cairn-briefing"),
     path("dashboard/changelog-dismiss/", ChangelogDismissView.as_view(), name="changelog-dismiss"),
+    path("dashboard/first-steps/", FirstStepsVisibilityView.as_view(), name="dashboard-first-steps"),
     path("dashboard/section-toggle/", SectionCollapseToggleView.as_view(), name="dashboard-section-toggle"),
     path("dashboard/layout/", DashboardLayoutSaveView.as_view(), name="dashboard-layout-save"),
     path("update-check/", UpdateCheckView.as_view(), name="update-check"),

@@ -504,6 +504,9 @@
 {% endif %}
 {% help_modal "home" %}
 
+{# ── First steps of a new instance (core/getting_started.py) ── #}
+{% if first_steps and not first_steps.hidden %}{% include "dashboard/first_steps.html" %}{% endif %}
+
 {# ── Widget zones: main area + dedicated side rail ───────── #}
 <div class="dashboard-zones" id="dashboardZones" data-save-url="{% url 'dashboard-layout-save' %}" data-indicator-widget-url="{% url 'dashboard-indicator-widget' %}">
   <div class="dashboard-main" id="dashboardMain" data-zone="main">

@@ -3,6 +3,7 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
@@ -12,9 +13,11 @@ from assets.constants import (
     DICLevel,
     DataClassification,
     EssentialAssetCategory,
+    EssentialAssetStatus,
     EssentialAssetType,
 )
 from context.models.base import LegacyStatusMixin, ScopedModel
+from core.completeness import Completeness, Requirement
 
 
 class EssentialAsset(LegacyStatusMixin, ScopedModel):
@@ -43,14 +46,18 @@ class EssentialAsset(LegacyStatusMixin, ScopedModel):
         related_name="custodian_essential_assets",
         verbose_name=_("Custodian"),
     )
+    # The security needs. Empty means "not assessed yet" : a level is a
+    # decision somebody took, never a default the record was born with
+    # (RV-07). An asset is created without them and cannot become active
+    # until the three are set (COMPLETENESS below).
     confidentiality_level = models.IntegerField(
-        _("Confidentiality"), choices=DICLevel.choices, default=DICLevel.MEDIUM
+        _("Confidentiality"), choices=DICLevel.choices, null=True, blank=True
     )
     integrity_level = models.IntegerField(
-        _("Integrity"), choices=DICLevel.choices, default=DICLevel.MEDIUM
+        _("Integrity"), choices=DICLevel.choices, null=True, blank=True
     )
     availability_level = models.IntegerField(
-        _("Availability"), choices=DICLevel.choices, default=DICLevel.MEDIUM
+        _("Availability"), choices=DICLevel.choices, null=True, blank=True
     )
     confidentiality_justification = models.TextField(
         _("Confidentiality justification"), blank=True, default=""
@@ -61,14 +68,16 @@ class EssentialAsset(LegacyStatusMixin, ScopedModel):
     availability_justification = models.TextField(
         _("Availability justification"), blank=True, default=""
     )
+    # The label spells the notion out, its acronym follows : the reader who
+    # has never met "RTO" still knows what is asked.
     max_tolerable_downtime = models.CharField(
-        _("MTD / Max tolerable downtime"), max_length=100, blank=True, default=""
+        _("Maximum tolerable downtime (MTD)"), max_length=100, blank=True, default=""
     )
     recovery_time_objective = models.CharField(
-        _("RTO"), max_length=100, blank=True, default=""
+        _("Recovery time objective (RTO)"), max_length=100, blank=True, default=""
     )
     recovery_point_objective = models.CharField(
-        _("RPO"), max_length=100, blank=True, default=""
+        _("Recovery point objective (RPO)"), max_length=100, blank=True, default=""
     )
     data_classification = models.CharField(
         _("Classification"),
@@ -96,12 +105,41 @@ class EssentialAsset(LegacyStatusMixin, ScopedModel):
 
     history = HistoricalRecords()
 
+    # An essential asset is created with what it is and who answers for it,
+    # then completed on its page. It cannot become active until its security
+    # needs are assessed (RS-10 in docs/specs/m2-assets/README.md).
+    COMPLETENESS = Completeness(
+        Requirement(
+            "security_needs", _("assess its security needs"),
+            fields=["confidentiality_level", "integrity_level", "availability_level"],
+            section="security",
+        ),
+        Requirement(
+            "description", _("say what it is used for"),
+            fields=["description"], section="identity", blocking=False,
+        ),
+        Requirement(
+            "support_assets", _("attach the support assets it relies on"),
+            fields=["dependencies_as_essential"], blocking=False,
+            href=lambda asset: reverse("assets:dependency-list"),
+        ),
+        Requirement(
+            "continuity", _("say how long the business can do without it"),
+            any_of=["max_tolerable_downtime", "recovery_time_objective", "recovery_point_objective"],
+            section="continuity", blocking=False,
+        ),
+        before=(EssentialAssetStatus.ACTIVE.value,),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Essential asset")
         verbose_name_plural = _("Essential assets")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("assets:essential-asset-detail", kwargs={"pk": self.pk})
 
     @property
     def owner_name(self):
@@ -135,9 +173,16 @@ class EssentialAsset(LegacyStatusMixin, ScopedModel):
             dep.support_asset.recalculate_inherited_dic()
 
     @property
+    def security_needs_assessed(self):
+        """Whether the three security needs have been set."""
+        return None not in (self.confidentiality_level, self.integrity_level, self.availability_level)
+
+    @property
     def max_dic_level(self):
-        return max(
-            self.confidentiality_level,
-            self.integrity_level,
-            self.availability_level,
-        )
+        """The highest of the levels set, or ``None`` when none is."""
+        levels = [
+            level
+            for level in (self.confidentiality_level, self.integrity_level, self.availability_level)
+            if level is not None
+        ]
+        return max(levels) if levels else None

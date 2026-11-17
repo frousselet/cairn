@@ -7,6 +7,6 @@
   {% endif %}
   {% if title %}<div class="empty-state__title">{{ title }}</div>{% endif %}
   {% if message %}<p class="empty-state__message">{{ message }}</p>{% endif %}
-  {% if cta_url and cta_label %}<a href="{{ cta_url }}" class="btn btn-sm btn-primary mt-2"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{{ cta_label }}</a>{% endif %}
+  {% if cta_url and cta_label %}<a href="{{ cta_url }}"{% if cta_modal %} hx-get="{{ cta_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"{% endif %} class="btn btn-sm btn-primary mt-2"><i class="bi bi-{{ cta_icon|default:'plus-lg' }} me-1" aria-hidden="true"></i>{{ cta_label }}</a>{% endif %}
 </div>
 {% if colspan %}</td></tr>{% endif %}

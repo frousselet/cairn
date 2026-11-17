@@ -1,0 +1,2 @@
+{% comment %}{% section_edit %} : the button of a card that opens the dialog of one form section. See docs/sdk/ui-components.md.{% endcomment %}
+{% load i18n %}{% if url %}<a href="{{ url }}?section={{ key }}" hx-get="{{ url }}?section={{ key }}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-secondary section-edit"{% if label %} aria-label="{% blocktrans %}Edit : {{ label }}{% endblocktrans %}"{% endif %}><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}

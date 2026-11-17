@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The basemap of the scope, site and supplier maps is a deployment setting (`MAP_TILE_URL`, `MAP_TILE_URL_DARK`, `MAP_TILE_ATTRIBUTION`); an empty value switches the maps off.
 - `manage.py backup` writes the database and the uploaded files into one archive with a manifest and a checksum per file, and `manage.py restore` puts an instance back in its exact state after verifying it and saving what it replaces (`BACKUP_DIR`, `MEDIA_ROOT`).
 - A *Skip to main content* link is the first stop of the keyboard on every page, and dashboard tiles gain *Move earlier* / *Move later* buttons so the layout can be rearranged without dragging.
+- The dashboard of a new instance opens on its first steps, a short ordered list of what to do first, until the instance holds its first records.
+- A record is created on one screen, then completed on its own page, which lists what it still needs and edits it one card at a time : scopes and essential assets are the first to follow the usability standard (`docs/sdk/usability-standard.md`).
 
 ### Changed
 
@@ -55,6 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A custom accent colour (company or Trust Center) stays readable whatever it is : the text drawn in it, the label on it and the Trust Center banner are derived from it for each theme.
 - Keyboard focus is one neutral ring that stands out on every surface, instead of pale halos on buttons, close buttons and switchers.
 - CI audits every page of the demo dataset with axe-core in the light and the dark theme, recomputes the palette's contrast ratios and parses every page for unnamed controls.
+- Every form ends on a footer whose buttons carry words (Cancel, Previous, Next, Create or Save) instead of arrows floating outside the dialog; its steps are buttons, a record being edited can be saved from any step, and a required field left empty answers with its own name.
+- A scope cannot be submitted nor put in force until it says where it stops and names a manager, and an essential asset cannot become active until its security needs are assessed : the refusal says what remains to be done, on the web, the REST API and MCP.
+- The security needs of an essential asset have no default level : left out they read *Not assessed* instead of *Medium*, on the REST API and MCP as well, and the web form no longer asks for the type, which its category names.
 
 ### Fixed
 
@@ -89,6 +94,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Form dialogs had no accessible name, their searchable selects were announced twice (once with no name), and a table scrolling sideways could not be scrolled from the keyboard.
 - The dashboard's framework tile read "90 requirement" whatever the count.
 - The action log loaded the whole audit trail into memory on every visit; it now asks the database for the page shown, so opening it no longer slows down as the history grows.
+- The dashboard of an instance with nothing in it read "you're all clear" and showed an overall compliance of 0% in red; it now says there is nothing to report yet.
+- Setting the security needs of an essential asset in the web form did not record the assessment in its history, as the REST API did.
+- The help banner of the scope list still said that a single scope could be active at a time.
 
 ### Security
 

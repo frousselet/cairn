@@ -16,7 +16,12 @@
         <div class="ask-cairn__text" data-ai-text>{{ count_text }}</div>
         {% endif %}
         {% else %}
+        {% comment %}An instance that has not taken its first steps has nothing to report : "all clear" would be true and of no help.{% endcomment %}
+        {% if first_steps %}
+        <p class="ask-cairn__text"><i class="bi bi-signpost-2 me-1" aria-hidden="true"></i>{% trans "Nothing to report yet : this summary fills in as you record your scopes, assets, frameworks and risks." %}</p>
+        {% else %}
         <p class="ask-cairn__text ask-cairn__text--clear"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{% trans "Nothing pressing today - you're all clear." %}</p>
+        {% endif %}
         {% endif %}
         <p class="ask-cairn__disclaimer" data-ai-disclaimer hidden></p>
       </div>

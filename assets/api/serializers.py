@@ -18,6 +18,7 @@ from assets.models import (
     SupportAsset,
 )
 from assets.models.supplier import SupplierType
+from core.completeness_api import CompletenessSerializerMixin
 
 
 class AssetValuationSerializer(serializers.ModelSerializer):
@@ -52,7 +53,7 @@ class AssetDependencySerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "reference", "is_single_point_of_failure", "created_by", "created_at", "updated_at", "version"]
 
 
-class EssentialAssetSerializer(serializers.ModelSerializer):
+class EssentialAssetSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = EssentialAsset
@@ -67,7 +68,7 @@ class EssentialAssetSerializer(serializers.ModelSerializer):
             "data_classification", "personal_data",
             "personal_data_categories", "regulatory_constraints",
             "related_activities", "status", "review_date", "tags",
-            "version",
+            "version", "completeness",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "reference", "created_by", "created_at", "updated_at", "version"]

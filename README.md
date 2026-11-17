@@ -57,6 +57,13 @@ with your GRC data directly, under the caller's own permissions.
 scope-based tenancy, role-based permissions and passkey login. Bilingual
 throughout, English and French.
 
+**Usable on the first day.** A new instance opens on its first steps, in the
+order the work is done. A record is created on one screen, then completed on
+its own page, which lists what it still needs and edits it one card at a time;
+its lifecycle refuses to make it authoritative while something is missing, and
+says what. Scopes and essential assets are the first screens held to this
+[usability standard](docs/sdk/usability-standard.md), the rest follows.
+
 **Readable and usable from the keyboard.** The interface targets WCAG 2.2 AA
 in its light and dark themes, and the build checks it : contrast ratios are
 recomputed from the palette, and every page is audited with axe-core.

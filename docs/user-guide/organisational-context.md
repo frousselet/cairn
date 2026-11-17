@@ -22,6 +22,22 @@ exclusions, the justification for those exclusions, the geographic,
 organisational and technical extent, the applicable standards, an effective date
 and a review date.
 
+**Creating a scope takes one screen** : its name, a sentence or two on what it
+covers, and its parent if it is part of another scope. You then land on its
+page, which opens on a *To complete* list. Each line opens the dialog that
+fills it; each card of the page (coverage, boundaries and exclusions, sites,
+managers, dates) has its own *Edit* button, so you never walk the whole form to
+change one thing.
+
+![A scope and what it still needs](../screenshots/scope-detail.png)
+
+Two lines of that list are **needed before the scope can be submitted** :
+saying where it stops (write "no exclusion" when it covers everything) and
+naming at least one manager. Until then the scope can be worked on, but
+*Validation* and *In force* are refused, with what remains to be done. The
+other lines (what it covers, its sites, its next review) are advised. The
+effective date is filled in for you the day the scope comes into force.
+
 It runs its own lifecycle rather than the default one, because a perimeter is
 not simply approved or not:
 

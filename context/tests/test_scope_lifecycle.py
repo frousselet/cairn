@@ -76,7 +76,10 @@ def test_in_force_scope_is_authoritative():
 
 def test_review_step_loops_back_to_in_force():
     user = UserFactory()
-    scope = ScopeFactory(workflow_state="in_force")
+    # Coming back into force waits for a complete scope (RS-08) :
+    # it says where it stops and who answers for it.
+    scope = ScopeFactory(workflow_state="in_force", boundaries="No exclusion.")
+    scope.managers.add(user)
     scope.transition_to("review", user)
     assert scope.workflow_state == "review"
     # A scope under review stays authoritative.

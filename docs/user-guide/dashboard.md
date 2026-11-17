@@ -26,6 +26,13 @@ to ask.
 | **Current risks** / **Residual risks** | The probability x impact heatmaps, before and after treatment |
 | **Section** | A heading, to group the rest into labelled sections |
 
+On a new instance the page opens, above the widgets, on the **first steps** :
+what to do first, in order, until the instance holds its first records (see
+[Getting started](getting-started.md#the-first-hour)). While they are shown the
+dashboard reports nothing it has not begun : the summary says there is nothing
+to report yet, and the overall compliance shows no rate before a framework is
+followed.
+
 Two behaviours are deliberate and worth knowing.
 
 **A widget with nothing to show hides itself.** The ongoing audits tile is

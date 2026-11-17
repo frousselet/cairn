@@ -198,6 +198,11 @@ class BaseModel(ReferenceGeneratorMixin):
         Returns the matched :class:`core.lifecycle.Transition`. Permission
         enforcement is opt-in here (the view / API / MCP layer is the enforcement
         point). Submitting a default-lifecycle element notifies its owners.
+
+        A model that declares ``COMPLETENESS`` (``core/completeness.py``) is
+        refused the steps it names while a blocking requirement is missing :
+        :class:`core.lifecycle.DomainRefusalError`, with what remains to do
+        (checked by ``perform_transition``, once the move itself is allowed).
         """
         from core.lifecycle import DEFAULT_LIFECYCLE_NAME
         from core.lifecycle_service import perform_transition

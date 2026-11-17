@@ -19,3 +19,18 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
     with django_db_blocker.unblock():
         sync_system_permissions()
+
+
+@pytest.fixture(autouse=True)
+def _fresh_first_steps():
+    """Forget that an instance "took every first step" between tests.
+
+    ``core.getting_started`` keeps that answer for the life of the process (a
+    running instance never goes back to empty). A test that fills the whole
+    dataset would otherwise hide the first steps from every test after it.
+    """
+    from core.getting_started import reset_getting_started_state
+
+    reset_getting_started_state()
+    yield
+    reset_getting_started_state()

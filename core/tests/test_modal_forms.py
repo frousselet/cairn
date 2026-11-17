@@ -194,3 +194,292 @@ class TestEmptySelectOption:
         assert str(form.fields["required"].choices[0][1]) == "Choose…"
         # A label the form chose itself is kept.
         assert form.fields["custom"].choices[0][1] == "Any colour"
+
+
+# ── Sections : a step opens on its own ──────────────────────────────────────
+
+
+class SectionedForm(SteppedFormMixin, forms.Form):
+    name = forms.CharField()
+    kind = forms.ChoiceField(choices=[("", "---------"), ("a", "A")])
+    note = forms.CharField(required=False)
+    agree = forms.BooleanField()
+    token = forms.CharField(widget=forms.HiddenInput, required=False)
+
+    steps = [
+        Step("Identity", "person", ["name", "kind"], key="identity", intro="Who it is."),
+        Step("Extra", "tag", ["note", "agree"], key="extra"),
+    ]
+
+
+def test_a_step_with_a_key_is_a_section():
+    assert SectionedForm.section_keys() == ["identity", "extra"]
+    assert SectionedForm.section("extra").title == "Extra"
+    assert SectionedForm.section("nope") is None
+    # A step without a key is not a section.
+    assert MultiStepForm.section_keys() == []
+
+
+def test_a_form_opened_on_a_section_carries_its_fields_only():
+    form = SectionedForm(section="extra")
+
+    assert form.active_section.key == "extra"
+    # The other section's fields are gone; the hidden field, which asks nothing, stays.
+    assert set(form.fields) == {"note", "agree", "token"}
+    assert form.is_multistep is False
+    assert [step["title"] for step in form.iter_steps()] == ["Extra"]
+
+
+def test_a_section_validates_and_keeps_its_own_fields_only():
+    """The required fields of the other sections are neither asked nor missed."""
+    form = SectionedForm({"note": "kept", "agree": "on"}, section="extra")
+
+    assert form.is_valid(), form.errors
+    assert set(form.cleaned_data) == {"note", "agree", "token"}
+
+
+def test_an_unknown_section_is_refused():
+    from core.modal_forms import UnknownSectionError
+
+    with pytest.raises(UnknownSectionError):
+        SectionedForm(section="nope")
+
+
+def test_two_steps_cannot_share_a_section_key():
+    class Twice(SteppedFormMixin, forms.Form):
+        a = forms.CharField()
+        b = forms.CharField()
+        steps = [Step("A", "x", ["a"], key="same"), Step("B", "x", ["b"], key="same")]
+
+    with pytest.raises(ImproperlyConfigured, match="section key"):
+        Twice()
+
+
+def test_a_step_carries_its_introduction():
+    first = next(iter(SectionedForm().iter_steps()))
+
+    assert first["key"] == "identity"
+    assert first["intro"] == "Who it is."
+
+
+def test_a_field_dropped_by_the_form_leaves_the_layout():
+    """A form may drop a question that does not apply : nothing breaks, and a
+    step left with nothing is not a step."""
+
+    class Dropping(SectionedForm):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            del self.fields["note"]
+            del self.fields["agree"]
+
+    form = Dropping()
+
+    assert form.step_count == 1
+    assert form.is_multistep is False
+    assert [step["title"] for step in form.iter_steps()] == ["Identity"]
+
+
+# ── A required field says its name and what to do ────────────────────────────
+
+
+def test_a_required_error_names_the_field_and_the_act():
+    form = SectionedForm({})
+
+    assert not form.is_valid()
+    assert form.errors["name"] == ['Fill in "Name".']
+    assert form.errors["kind"] == ['Choose a value for "Kind".']
+    assert form.errors["agree"] == ['Tick "Agree".']
+
+
+def test_a_field_with_its_own_required_message_keeps_it():
+    class Own(SteppedFormMixin, forms.Form):
+        name = forms.CharField(error_messages={"required": "Give it a name."})
+        steps = [Step("Identity", "person", ["name"])]
+
+    form = Own({})
+
+    assert not form.is_valid()
+    assert form.errors["name"] == ["Give it a name."]
+
+
+def test_a_field_made_required_after_init_is_named_as_well():
+    """A subclass often sets ``required`` after ``super().__init__()``."""
+
+    class Late(SteppedFormMixin, forms.Form):
+        name = forms.CharField(required=False, label="Title")
+        steps = [Step("Identity", "person", ["name"])]
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fields["name"].required = True
+            self.fields["name"].label = "Short title"
+
+    form = Late({})
+
+    assert not form.is_valid()
+    assert form.errors["name"] == ['Fill in "Short title".']
+    # And the sentence the page shows before any submit is the same one.
+    row = next(iter(Late().iter_steps()))["fields"][0]
+    assert str(row.field.error_messages["required"]) == 'Fill in "Short title".'
+
+
+def test_an_optional_field_keeps_no_named_message():
+    form = SectionedForm()
+
+    assert "required" in form.fields["note"].error_messages
+    assert not getattr(form.fields["note"], "_required_named", False)
+
+
+@pytest.mark.django_db
+def test_is_editing_reads_the_instance_state_not_its_key():
+    """A UUID key is set before the first save : it does not tell an edit."""
+    from context.forms import ScopeCreateForm, ScopeUpdateForm
+    from context.models import Scope
+
+    assert ScopeCreateForm().is_editing is False
+    assert Scope().pk is not None
+    # A form over an instance read from the database edits it.
+    existing = Scope(name="x", description="y")
+    existing._state.adding = False
+    assert ScopeUpdateForm(instance=existing).is_editing is True
+    # A plain form creates.
+    assert SectionedForm().is_editing is False
+
+
+# ── The shell : every button carries its word ────────────────────────────────
+
+
+def _render_shell(form, **context):
+    from django.template.loader import render_to_string
+    from django.test import RequestFactory
+
+    request = RequestFactory().get("/somewhere/")
+    return render_to_string(
+        "includes/modal_form.html", {"form": form, "modal_title": "Title", "request": request, **context},
+    )
+
+
+class _Button:
+    """A button of the rendered shell : its attributes, and the text it shows."""
+
+    def __init__(self, node):
+        self.node = node
+
+    def get(self, name, default=None):
+        # A boolean attribute (hidden, data-mform-next) parses to None : it is
+        # there all the same, so it is told from a missing one.
+        if name not in self.node.attrs:
+            return default
+        value = self.node.attrs[name]
+        return "" if value is None else value
+
+    @property
+    def text(self):
+        return " ".join(" ".join(t for n in self.node.walk() for t in n.text).split())
+
+
+def _buttons(html):
+    from core.tests.markup_audit import parse
+
+    return [_Button(node) for node in parse(html).walk() if node.tag == "button"]
+
+
+def _text(button):
+    return button.text
+
+
+def test_a_multistep_form_ends_on_a_footer_with_words():
+    html = _render_shell(SectionedForm())
+    labels = [_text(b) for b in _buttons(html) if "mform-pill-btn" not in (b.get("class") or "")]
+
+    assert "Cancel" in labels
+    assert "Previous" in labels
+    assert "Next" in labels
+    assert "Save" in labels
+    # The floating arrows are gone, here and in the page shell.
+    assert "mform-nav" not in html
+    from pathlib import Path
+
+    base = Path(__file__).resolve().parents[2] / "templates" / "base.html"
+    assert "mform-nav" not in base.read_text(encoding="utf-8")
+
+
+def test_the_action_waits_for_the_last_step_of_a_creation_only():
+    creating = _render_shell(SectionedForm())
+    submit = next(b for b in _buttons(creating) if b.get("data-mform-submit") is not None)
+    assert submit.get("hidden") is not None
+    assert 'data-mform-mode="create"' in creating
+
+
+@pytest.mark.django_db
+def test_a_record_being_edited_can_be_saved_from_any_step():
+    from context.forms import ScopeUpdateForm
+    from context.models import Scope
+
+    existing = Scope(name="x", description="y")
+    existing._state.adding = False
+    html = _render_shell(ScopeUpdateForm(instance=existing))
+
+    assert 'data-mform-mode="edit"' in html
+    submit = next(b for b in _buttons(html) if b.get("data-mform-submit") is not None)
+    assert submit.get("hidden") is None
+    # Next is then the quiet button : one primary action at a time.
+    following = next(b for b in _buttons(html) if b.get("data-mform-next") is not None)
+    assert "btn-secondary" in following.get("class")
+
+
+def test_each_step_of_the_stepper_is_a_named_button():
+    html = _render_shell(SectionedForm())
+    pills = [b for b in _buttons(html) if "mform-pill-btn" in (b.get("class") or "")]
+
+    assert [_text(p) for p in pills] == ["1 Identity", "2 Extra"]
+    assert pills[0].get("aria-current") == "step"
+    assert all(p.get("type") == "button" for p in pills)
+
+
+def test_past_four_steps_the_stepper_names_the_current_one_only():
+    class Six(SteppedFormMixin, forms.Form):
+        a = forms.CharField(required=False)
+        b = forms.CharField(required=False)
+        c = forms.CharField(required=False)
+        d = forms.CharField(required=False)
+        e = forms.CharField(required=False)
+        steps = [Step(n.upper(), "x", [n]) for n in "abcde"]
+
+    assert "mform-stepper--compact" in _render_shell(Six())
+    assert "mform-stepper--compact" not in _render_shell(SectionedForm())
+
+
+def test_the_submit_button_says_what_it_does():
+    assert "Save" in [_text(b) for b in _buttons(_render_shell(SingleStepForm()))]
+    created = [_text(b) for b in _buttons(_render_shell(SingleStepForm(), submit_label="Create"))]
+    assert "Create" in created and "Save" not in created
+
+
+def test_a_form_with_nothing_required_shows_no_meter():
+    class Optional(SteppedFormMixin, forms.Form):
+        note = forms.CharField(required=False)
+        steps = [Step("Note", "x", ["note"])]
+
+    assert "data-mform-meter" not in _render_shell(Optional())
+    assert "data-mform-meter" in _render_shell(SingleStepForm())
+
+
+def test_a_section_says_so_when_it_comes_back():
+    html = _render_shell(SectionedForm(section="extra"))
+
+    assert 'name="_section"' in html and 'value="extra"' in html
+    assert 'name="_section"' not in _render_shell(SectionedForm())
+
+
+def test_a_required_field_carries_the_sentence_that_asks_for_it():
+    html = _render_shell(SectionedForm())
+
+    assert 'data-mform-required="Fill in &quot;Name&quot;."' in html
+    assert 'data-mform-required="Choose a value for &quot;Kind&quot;."' in html
+
+
+def test_the_introduction_of_a_step_is_shown_above_its_fields():
+    html = _render_shell(SectionedForm())
+
+    assert '<p class="mform-intro">Who it is.</p>' in html

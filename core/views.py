@@ -19,7 +19,7 @@ from django.db.models import (
     When,
 )
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import formats, timezone
 from django.utils.dateparse import parse_datetime
@@ -124,6 +124,12 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         # objects.first() instead of CompanySettings.get() to avoid creating
         # the singleton row on a GET request.
         ctx["company"] = CompanySettings.objects.first()
+
+        # The first steps of a new instance : what to do first, until the
+        # instance holds its first records (core/getting_started.py).
+        from core.getting_started import first_steps_for
+
+        ctx["first_steps"] = first_steps_for(self.request.user)
 
         # ── Gouvernance ──────────────────────────────────
         from core.lifecycle import reportable
@@ -759,6 +765,20 @@ class ChangelogDismissView(LoginRequiredMixin, View):
             request.user.last_seen_version = version
             request.user.save(update_fields=["last_seen_version"])
         return JsonResponse({"ok": True})
+
+
+class FirstStepsVisibilityView(LoginRequiredMixin, View):
+    """Hide the dashboard's first steps for the reader, or bring them back.
+
+    POST ``show=1`` to bring them back, anything else hides them. A plain
+    form post : it works without scripts, and returns to the dashboard.
+    """
+
+    def post(self, request, *args, **kwargs):
+        from core.getting_started import set_dismissed
+
+        set_dismissed(request.user, hidden=request.POST.get("show") != "1")
+        return redirect("home")
 
 
 class UpdateCheckView(LoginRequiredMixin, View):
@@ -2328,4 +2348,28 @@ class StyleGuideView(LoginRequiredMixin, TemplateView):
             {"label": _("Approve"), "url": "#", "variant": "success", "icon": "check-lg"},
             {"label": _("Delete"), "url": "#", "variant": "danger", "icon": "trash", "confirm": _("Confirm deletion?")},
         ]
+
+        # Samples for "create short, complete on the record" : what a record
+        # still needs, and the first steps of a new instance. Built from the
+        # real declarations, so the page shows the sentences users read.
+        from context.models import Scope
+        from core.completeness import Item, Report
+        from core.getting_started import STEPS
+
+        ctx["sg_completeness"] = Report(
+            items=tuple(Item(requirement, met=False) for requirement in Scope.COMPLETENESS.requirements),
+            gate_label=_("Validation"),
+        )
+        ctx["sg_first_steps"] = {
+            "steps": [
+                {
+                    "key": step.key, "title": step.title, "why": step.why, "icon": step.icon, "url": "#",
+                    "done": index < 2, "can_act": True, "is_next": index == 2,
+                }
+                for index, step in enumerate(STEPS)
+            ],
+            "done": 2,
+            "total": len(STEPS),
+            "hidden": False,
+        }
         return ctx

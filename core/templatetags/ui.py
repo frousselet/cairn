@@ -480,11 +480,18 @@ def progress_bar(pct, *, scheme="progress", variant=None, title=None, count=None
 
 
 @register.inclusion_tag("components/empty_state.html")
-def empty_state(*, icon=None, illustration=None, title=None, message=None, cta_url=None, cta_label=None, colspan=None, compact=False):
+def empty_state(*, icon=None, illustration=None, title=None, message=None, cta_url=None, cta_label=None, cta_modal=False, cta_icon="plus-lg", colspan=None, compact=False):
     """Render a standardized empty state.
 
     Use inside a ``<tbody>`` by setting ``colspan`` to the number of
     columns; otherwise render at block level.
+
+    A page with nothing to show says what the thing is and offers the act
+    that makes the first one : ``cta_url`` + ``cta_label``, with
+    ``cta_modal=True`` when the URL is a form that opens in the dialog (the
+    link keeps its ``href``, so it still works without scripts). Pass them
+    only when the user may perform the act. ``cta_icon`` is the plus of a
+    creation by default; a link that leads elsewhere takes ``arrow-right``.
 
     By default (no ``icon`` and no ``illustration``), only the title +
     message + optional CTA render - the brand-default plain variant.
@@ -503,8 +510,52 @@ def empty_state(*, icon=None, illustration=None, title=None, message=None, cta_u
         "message": message,
         "cta_url": cta_url,
         "cta_label": cta_label,
+        "cta_modal": bool(cta_modal),
+        "cta_icon": cta_icon,
         "colspan": colspan,
         "compact": bool(compact),
+    }
+
+
+# Query parameters that order or page a list without narrowing it.
+_NOT_A_FILTER = frozenset({"sort", "order", "page", "per_page", "partial"})
+
+
+@register.inclusion_tag("components/list_empty.html", takes_context=True)
+def list_empty(context, *, title, message, colspan, create_url=None, create_label=None, permission=None):
+    """``{% list_empty %}`` : the empty row of a register.
+
+    A register with nothing in it says what the thing is, in a sentence a
+    newcomer understands, and offers to create the first one (``create_url``,
+    opened in the dialog) when the user holds ``permission``. The same table
+    emptied by a search or a filter says that instead, and offers nothing to
+    create : the record looked for may well exist.
+
+    Usage, as the ``{% empty %}`` of the rows partial::
+
+        {% url 'context:scope-create' as create_url %}
+        {% list_empty title=_("No scope yet.") message=_("...") colspan=7 create_url=create_url create_label=_("New scope") permission="context.scope.create" %}
+    """
+    request = context.get("request")
+    narrowed = False
+    can_create = False
+    if request is not None:
+        narrowed = any(
+            value.strip()
+            for key in request.GET
+            if key not in _NOT_A_FILTER
+            for value in request.GET.getlist(key)
+        )
+        user = getattr(request, "user", None)
+        if create_url and user is not None and user.is_authenticated:
+            can_create = not permission or user.has_perm(permission)
+    return {
+        "narrowed": narrowed,
+        "title": title,
+        "message": message,
+        "colspan": colspan,
+        "create_url": create_url if can_create else None,
+        "create_label": create_label,
     }
 
 
@@ -1273,6 +1324,42 @@ def record_card(context, obj):
         "has_version": "version" in fields,
         "has_author": "created_by" in fields,
     }
+
+
+@register.inclusion_tag("components/completeness_card.html")
+def completeness_card(report, *, edit_url=""):
+    """``{% completeness_card completeness edit_url=edit_url %}`` : what the record still needs.
+
+    Lists the requirements the record does not meet yet
+    (``core.completeness``), the ones its lifecycle waits for first, then the
+    advised ones. A line whose requirement names a form section opens the
+    dialog of that section. Renders nothing for a complete record, or for a
+    model that declares no completeness. The context comes from
+    ``core.mixins.CompleteOnRecordMixin``.
+    """
+    if report is None or report.is_complete:
+        return {"shown": False}
+    return {
+        "shown": True,
+        "blocking": report.blocking_missing,
+        "advised": report.advised_missing,
+        "count": len(report.missing),
+        "gate_label": report.gate_label,
+        "edit_url": edit_url or "",
+    }
+
+
+@register.inclusion_tag("components/section_edit.html")
+def section_edit(url, key, label=None):
+    """``{% section_edit edit_url "boundaries" _("Boundaries") %}`` : edit one card.
+
+    The button of a detail-page card that opens the dialog of one section of
+    the record's form (``Step(..., key=...)``), instead of walking the whole
+    form. ``label`` names the section for a screen reader. Renders nothing
+    when ``url`` is empty (the user may not edit the record). Goes in the
+    ``actions`` slot of ``{% section_card %}``.
+    """
+    return {"url": url or "", "key": key, "label": label}
 
 
 # ───────────────────────── References & tags ───────────────────────────────

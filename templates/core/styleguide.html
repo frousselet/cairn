@@ -297,11 +297,18 @@
     <h3 class="sg-subtitle text-muted mb-2">{% trans "Multi-step stepper (done / current / upcoming)" %}</h3>
     <nav class="mform-stepper" aria-label="{% trans 'Form steps' %}">
       <ol>
-        <li class="mform-pill is-done"><span class="mform-pill-num">1</span><span class="mform-pill-label">{% trans "Identity" %}</span></li>
-        <li class="mform-pill is-current" aria-current="step"><span class="mform-pill-num">2</span><span class="mform-pill-label">{% trans "Evaluation" %}</span></li>
-        <li class="mform-pill"><span class="mform-pill-num">3</span><span class="mform-pill-label">{% trans "Relations & status" %}</span></li>
+        <li class="mform-pill is-done"><button type="button" class="mform-pill-btn"><span class="mform-pill-num" aria-hidden="true">1</span><span class="mform-pill-label">{% trans "Identity" %}</span></button></li>
+        <li class="mform-pill is-current"><button type="button" class="mform-pill-btn" aria-current="step"><span class="mform-pill-num" aria-hidden="true">2</span><span class="mform-pill-label">{% trans "Evaluation" %}</span></button></li>
+        <li class="mform-pill"><button type="button" class="mform-pill-btn" disabled><span class="mform-pill-num" aria-hidden="true">3</span><span class="mform-pill-label">{% trans "Relations & status" %}</span></button></li>
       </ol>
     </nav>
+
+    <h3 class="sg-subtitle text-muted mt-3 mb-2">{% trans "Multi-step footer (every button carries its word)" %}</h3>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-secondary me-auto">{% trans "Cancel" %}</button>
+      <button type="button" class="btn btn-secondary"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>{% trans "Previous" %}</button>
+      <button type="button" class="btn btn-primary">{% trans "Next" %}<i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
+    </div>
 
     <h3 class="sg-subtitle text-muted mt-3 mb-2">{% trans "Single-step completion meter" %}</h3>
     <div class="mform-meter">
@@ -367,6 +374,18 @@
     {% endsection_card %}
     {% record_card request.user %}
   {% enddetail_layout %}
+</section>
+
+{# ── Create short, complete on the record ───────────────── #}
+<section class="sg-section">
+  <h2 class="sg-section__title">{% trans "Pattern - complete on the record (completeness_card, section_edit, first steps)" %}</h2>
+  <p class="small text-muted">{% trans "A record is created on one screen, then completed on its page : the card lists what it still needs, each line opening the dialog that fills it, and each section card has its own Edit button. See the usability standard." %}</p>
+  {% completeness_card sg_completeness edit_url="#" %}
+  {% section_card _("Boundaries and exclusions") icon="bounding-box" %}
+    {% slot actions %}{% section_edit "#" "boundaries" _("Boundaries and exclusions") %}{% endslot %}
+    {% empty_state icon="bounding-box" compact=True message=_("What the scope leaves out, and why : not described yet.") %}
+  {% endsection_card %}
+  {% with first_steps=sg_first_steps first_steps_sample=True %}{% include "dashboard/first_steps.html" %}{% endwith %}
 </section>
 
 {# ── Accessibility checklist ────────────────────────────── #}

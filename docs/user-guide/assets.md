@@ -15,6 +15,19 @@ ultimately about. Each is valued on three criteria, **confidentiality,
 integrity and availability**, on a five-level scale. That valuation is a
 business judgement and it is where the whole model gets its weighting.
 
+**Registering one takes one screen** : its name, its category (an activity the
+business runs on, or an information it holds) and who answers for it. You land
+on its page, which lists what it still needs.
+
+![An essential asset whose security needs are not assessed yet](../screenshots/essential-asset-detail.png)
+
+Its **security needs** are not asked at creation, and they have no default :
+until somebody answers the three questions (what if it were disclosed, wrong,
+out of reach ?) they read *Not assessed*, and the asset cannot become
+*Active*. Answering them from the *Security needs* card records who decided
+and when, in the history at the bottom of the page. A level is shown with its
+word (*High*), not its number.
+
 **Support assets** are the IT infrastructure that carries them : servers,
 applications, network equipment, services, sites, people. They have a lifecycle
 of their own : end of life, end of support, warranty expiry.

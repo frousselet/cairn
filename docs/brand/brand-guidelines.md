@@ -494,12 +494,14 @@ error.
 
 ### Principles
 
-These seven rules govern **every** form in the product. They are not
+These eight rules govern **every** form in the product. They are not
 suggestions to weigh case by case : a screen that breaks one of them is a
 bug, not a variant. The aim is the 2026 baseline for data-entry surfaces -
 focused, single-task overlays that never make the user lose their place,
 never make them scroll to find the next field, and always tell them how
-far they have left to go.
+far they have left to go. A form must be usable by someone who has never
+seen the product : the measurable part of these rules is the
+[usability standard](../sdk/usability-standard.md), held by tests.
 
 | # | Principle | What it means concretely |
 | --- | --- | --- |
@@ -508,8 +510,9 @@ far they have left to go.
 | 3 | **Reusable by construction** | The shell, the field partials and the step chrome are shared components. A new form composes them; it never re-implements layout, validation rendering or footer. |
 | 4 | **One form per action** | Create and edit are distinct forms - distinct form classes, distinct endpoints, distinct modals, distinct titles. No single template branches on `instance.pk` to do both jobs. |
 | 5 | **No vertical scroll, visible progress** | Every step fits within the viewport on a 13-inch laptop. A form too large for one step becomes a multi-step modal, and the user always sees where they are and what remains. |
-| 6 | **Required fields are unmistakable** | Required fields are marked at the label and counted in the progress meter. The user never discovers a field was mandatory only after submitting. |
-| 7 | **Every field has a helper** | Each data field carries a short, always-visible helper under the control. Guidance is never hidden behind a tooltip or an info icon. A self-evident adornment control (e.g. the icon picker, whose label and affordance already say what it is) may omit it. |
+| 6 | **Required fields are unmistakable** | Required fields are marked at the label and counted in the progress meter. The user never discovers a field was mandatory only after submitting, and a field left empty answers with its own name. |
+| 7 | **A helper says something, or is absent** | A helper tells what the label does not : an example, a consequence, how to answer. It is always visible under the control, never hidden behind a tooltip or an info icon. A helper that says its label again ("Name : name of the scope") is removed : it costs a line and teaches the reader to skip helpers. |
+| 8 | **Create short, complete on the record** | A creation asks for what makes the record exist : six fields at most, one screen, no steps. The record then opens on its own page, which lists what it still needs and edits it one card at a time. Its lifecycle refuses to make it authoritative while something it needs is missing. |
 
 ### One model, everywhere : the form modal
 
@@ -520,6 +523,8 @@ edit and confirm alike.
 
 - The form **never navigates**. The URL behind it does not change to a
   full-page form route; the underlying screen stays mounted and dimmed.
+  One exception, on purpose : a **creation closes on the page of the new
+  record**, where the rest of it is filled in (principle 8).
 - Closing (Escape, scrim click, Cancel) **restores the exact context** :
   scroll position, applied filters, table selection. The user resumes
   where they were, not on a reloaded list.
@@ -569,7 +574,9 @@ is derived.
 
 | Piece | Where | Role |
 | --- | --- | --- |
-| `SteppedFormMixin` / `Step` | `core/modal_forms.py` | Declarative steps, row layout, coverage + row-cap validation, `is_stepped` / `is_multistep` / `modal_size` / `required_field_count` / `iter_steps()`. |
+| `SteppedFormMixin` / `Step` | `core/modal_forms.py` | Declarative steps, row layout, coverage + row-cap validation, `is_stepped` / `is_multistep` / `modal_size` / `required_field_count` / `iter_steps()`. A step with a `key` is a section (`FormClass(..., section="key")`), with an optional `intro`; required errors are named after their field. |
+| `HtmxFormMixin` | `core/mixins.py` | Serves the form in the modal or on a page, opens it on `?section=<key>`, names the action (*Create* / *Save*), lands on the record after a creation (`land_on_record`). |
+| `Completeness` | `core/completeness.py` | What a record needs before its lifecycle lets it through; `{% completeness_card %}` lists it on the record page. |
 | Shell | `templates/includes/modal_form.html` | Modal chrome; emits `data-mform`, `data-modal-size`, `novalidate` (multi-step) and the progress / footer. |
 | Field / row / progress | `includes/form_field.html`, `form_row.html`, `form_steps.html`, `form_progress.html` | Auto-render of the steps. |
 | Generic JS + CSS | `templates/base.html` (JS), `static/css/cairn/07-forms.css` (CSS) | Step navigation, completion meter, dialog sizing, focus, widget re-init, `#hx-live` error count. No per-entity JS. |
@@ -621,9 +628,11 @@ remains :
 - **Multi-step** : a step indicator sits in the modal header - numbered,
   labelled pills connected by a thin rule, with done / current / upcoming
   states (the same visual language as the workflow stepper). The current
-  step is the navy pill; done steps carry a checkmark; upcoming steps are
-  faded. Forward is gated on the current step's required fields being
-  valid; backward is always free and never loses input.
+  step is the navy pill; upcoming steps are faded. Each step is a **button** :
+  a step already filled in reopens, and every step of a record being edited.
+  Creating, forward is gated on the current step's required fields being
+  valid; backward is always free and never loses input. Editing, nothing is
+  gated : the record exists, the server validates on save.
 - **Single-step** : a slim **completion meter** in the header counts
   required fields - "2 of 5 required" - filling toward navy as the user
   progresses. It is a calm progress signal, not a validation alarm :
@@ -634,16 +643,16 @@ remains :
 | Form fits one viewport | Completion meter | Header chip "N of M required", `--accent` fill, `--surface-subtle` track. |
 | Form exceeds one viewport | Step indicator | Header stepper, pills navy / check / faded, thin connecting rule. |
 
-**Multi-step navigation lives outside the modal.** A multi-step form has
-**no footer** : navigation is two floating round arrows just outside the
-dialog, vertically centred (`.mform-nav`, rendered once in `base.html` and
-wired by the stepper JS). The left arrow goes back (hidden on the first
-step); the right arrow advances and, on the **last step, becomes a navy
-check** that submits. Clicking the check **spins it in place** while the
-item saves. There is no Cancel button : **cancellation is the header X or a
-backdrop click**. On narrow screens the arrows tuck into the lower corners
-of the dialog. Single-step forms keep the standard sticky footer (Cancel
-left, Save right).
+**Every form ends on a footer whose buttons carry words.** A multi-step
+form has the same footer as any other, with two more buttons : **Cancel**
+on the left; **Previous** (from the second step on), **Next** and the
+action on the right. Creating, the action (**Create**) comes on the last
+step, in place of Next. Editing, the action (**Save**) is offered on every
+step and Next becomes the quiet button : one primary action at a time. No
+button made of an icon alone moves through a form : the round arrows that
+once floated outside the dialog told a newcomer neither what they did nor
+that the left one was the way back. On a phone the buttons wrap, and the
+action of a record being edited takes the last row whole.
 
 When the active step changes, the modal **morphs its height with a smooth
 260 ms ease** (a measure-swap-measure height tween on the modal content)
@@ -653,10 +662,13 @@ instead of snapping, so steps of different heights feel continuous.
 ### Anatomy of a field
 
 The four parts of any field, always in this order: label, control,
-helper, error. Helper is **mandatory on data fields** : every such field
-defines `help_text` and the partial renders it. A data field with no
-helper is an unfinished field; only a self-evident adornment control
-(e.g. the icon picker) may omit it.
+helper, error. The helper is there **when it says something the label does
+not** : an example ("Head office", "The whole company"), a consequence
+("They get access to everything in it"), how to answer ("Write *no
+exclusion* when it covers everything"). A field whose label says it all
+carries none. A notion that needs explaining is explained once, in the
+sentence that introduces its step (`Step(..., intro=...)`), not under each
+of its fields.
 
 ```django
 <div class="mb-3">
@@ -673,17 +685,19 @@ helper is an unfinished field; only a self-evident adornment control
 | --- | --- | --- |
 | Label | `.form-label` | 13 px / 600 / `--text-secondary`. Trailing `*` on required (with a space before it). Never hidden, never replaced by a placeholder. |
 | Control | `.form-control` / `.form-select` / `.form-check-input` | 15 px / 500 / `--text-primary`. 1 px border, radius `0.75rem`, padding `.5625rem .875rem`. |
-| Helper | `.form-text` | 13 px / 400 / `--text-muted`. **Always present.** Short, concrete, says what the value is for or how to fill it. No terminal punctuation unless it's a full sentence. |
-| Error | `.invalid-feedback.d-block` | 13 px / 400 / `--danger`. Says what to fix, not just "invalid". Use `.d-block` so it appears unconditionally below the control. |
+| Helper | `.form-text` | 13 px / 400 / `--text-muted`. **Present when it adds to the label, absent otherwise.** Short, concrete : an example, a consequence, how to answer. No terminal punctuation unless it's a full sentence. |
+| Error | `.invalid-feedback.d-block` | 13 px / 400 / `--danger`. Says what to fix, not just "invalid". A required field left empty names itself and the act : *Fill in "Name".*, *Choose a value for "Type".* (set by the engine, a form may give its own). Use `.d-block` so it appears unconditionally below the control. |
 
 **An empty select says what empty means.** A select never opens on Django's
 row of dashes : a required one opens on *Choose…*, an optional one on *None*.
 The shared field partial does it (`{{ field|plain_empty_option }}`), so a field
 rendered by hand applies the same filter.
 
-**On a phone, the step indicator names one step.** The step being filled in
-shows its label whole; the others keep their number. Three labels cut to their
-first letters name nothing.
+**When the labels do not all fit, the step indicator names one step.** On a
+phone, or in a form of more than four steps, the step being filled in shows
+its label whole; the others keep their number (their name stays in the
+tooltip and in the accessibility tree). Labels cut to their first letters
+name nothing.
 
 ### Visual states
 
@@ -726,8 +740,14 @@ the user keeps every value.
 For a form too large for one viewport : split it into steps along the
 [field grouping](#field-grouping). Each step is one column of fields,
 short enough to fit without scrolling. The header carries the step
-indicator; the footer carries Back / Next (and Save on the last step).
-Step navigation is HTMX-driven and never loses input on either direction.
+indicator; the footer carries Previous / Next and the action. Moving
+between steps happens in the page and never loses input on either
+direction. A step may open with one sentence saying what it is about.
+
+A step that carries a `key` is also a **section** of the record : it opens
+on its own (`?section=<key>`) from the card of the detail page that shows
+it, as a single-step dialog named after it. Saving it writes its fields
+and leaves the rest of the record untouched.
 
 Order the steps so the most identifying fields come first (Identity), and
 the optional or relational ones come last - a user who abandons after
@@ -794,12 +814,13 @@ fields.
 | Position | Style | Action |
 | --- | --- | --- |
 | Left (`me-auto`) | `btn btn-secondary` | **Cancel** (escape hatch). Always present; dismisses the modal and restores the underlying context. |
-| Right | `btn btn-primary` | **Save** (primary CTA). Carries `<i class="bi bi-check-lg me-1"></i>`. |
+| Right | `btn btn-primary` | **Create** on a creation, **Save** on an edit (primary CTA). Carries `<i class="bi bi-check-lg me-1"></i>`. |
 
-On a **multi-step** form, the footer carries **Back** (outline, far left)
-and **Next** (primary, right) on intermediate steps; the last step
-swaps Next for **Save**. Cancel is always reachable. Back never loses
-input.
+On a **multi-step** form the footer gains **Previous** and **Next**, to
+the left of the action. Creating : Next is primary on intermediate steps
+and the last step swaps it for **Create**. Editing : **Save** is there on
+every step and Next is secondary. Cancel is always reachable. Previous
+never loses input.
 
 #### Destructive actions
 
@@ -820,10 +841,14 @@ Create and edit are **two forms**, not one template branching on
 shell, the field anatomy and the footer are shared, so the two read
 identically; only the form class, the endpoint and the title differ.
 
-- Create starts empty, focuses the first field, and may omit audit fields
-  that only exist after a first save (approval, history).
+- Create starts empty, focuses the first field, and asks for **what makes
+  the record exist** : six fields at most, on one screen. A question that
+  cannot have an answer is not asked (the parent of the very first scope).
+  What can wait is filled in on the record page, which lists it.
 - Edit pre-fills from the `ModelForm`. Never repeat a stored value in a
-  placeholder or helper - the user already sees it in the control.
+  placeholder or helper - the user already sees it in the control. The
+  whole form opens from the page header; each card of the page opens its
+  own section.
 - Audit-relevant fields (status, approval, history) stay visible in edit,
   readonly where appropriate. Never silently strip them.
 - The modal title states the action and the object : **New risk** /
@@ -938,7 +963,9 @@ section. Concrete rules for forms specifically:
 | `Name` (label on a risk form) | `Risk name` |
 | `Required` (help text) | (just the trailing `*`) |
 | `Invalid input` (error) | `Use a date later than the start date.` |
-| `Please fill out this field.` (browser default) | `Enter a name.` |
+| `Please fill out this field.` (browser default) | `Fill in "Name".` |
+| `Name of the scope.` (helper under *Name*) | `For example "Head office" or "The whole company".` |
+| `RTO` (label) | `Recovery time objective (RTO)` |
 | `Saving...` (button while submitting) | The button stays "Save"; the form-wide spinner via `hx-disabled-elt` carries the loading signal. |
 | `Are you sure?` (delete) | `Delete framework "ISO 27001"? 12 requirements and 4 assessments will become orphaned.` |
 | `OK` (button) | `Save`, `Create the risk`, `Approve`, `Delete permanently` |
@@ -1059,6 +1086,9 @@ Cairn speaks to professionals who know their craft. The tone is:
 - **Bilingual by default**: every string is translated to French and
   English. When in doubt, the French follows the ANSSI / CNIL / ISO
   vocabulary ("exigence", "périmètre", "partie intéressée").
+- **One thing, one name**: the [glossary](glossary.md) gives the word for
+  each notion, the acronyms spelled out and the verb of each act. It is a
+  proposal until the product owner settles the rows it marks.
 
 ### To avoid
 

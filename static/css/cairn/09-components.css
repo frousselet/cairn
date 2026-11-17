@@ -1447,3 +1447,6 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent-tex
 @media (max-width: 991.98px) {
   .split-pane__detail { display: none; }
 }
+
+/* The Edit button of the identity card (entity hero) : under its rows. */
+.supplier-overview__edit { margin-top: 1rem; }
