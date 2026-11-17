@@ -246,6 +246,8 @@ def main() -> int:
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--only", nargs="*", help="Capture only these names.")
+    parser.add_argument("--theme", choices=("light", "dark"), default="light",
+                        help="Theme to capture in (the documentation set is light).")
     args = parser.parse_args()
 
     base = args.base_url.rstrip("/")
@@ -265,6 +267,11 @@ def main() -> int:
         devtools.call("Emulation.setDeviceMetricsOverride",
                       {"width": WIDTH, "height": HEIGHT,
                        "deviceScaleFactor": 1, "mobile": False})
+        # Headless Chrome follows the theme of the machine it runs on : the set
+        # must not come out dark because whoever captured it works in dark mode.
+        devtools.call("Emulation.setEmulatedMedia", {"features": [
+            {"name": "prefers-color-scheme", "value": args.theme},
+        ]})
 
         wanted = set(args.only) if args.only else None
 
