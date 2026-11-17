@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GET /health/` reports whether the instance can serve (database reachable), with no session and whatever the Host header, and is the image's `HEALTHCHECK`.
 - Error pages in the product's design and in the reader's language for a missing page, a refused permission, an expired form and a server error.
 - The basemap of the scope, site and supplier maps is a deployment setting (`MAP_TILE_URL`, `MAP_TILE_URL_DARK`, `MAP_TILE_ATTRIBUTION`); an empty value switches the maps off.
+- `manage.py backup` writes the database and the uploaded files into one archive with a manifest and a checksum per file, and `manage.py restore` puts an instance back in its exact state after verifying it and saving what it replaces (`BACKUP_DIR`, `MEDIA_ROOT`).
 - A *Skip to main content* link is the first stop of the keyboard on every page, and dashboard tiles gain *Move earlier* / *Move later* buttons so the layout can be rearranged without dragging.
 
 ### Changed
@@ -39,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Empty selects read "Choose…" or "None" instead of a row of dashes, and on a phone the form step indicator shows the current step's name in full.
 - The container runs as an unprivileged account (uid 1000) instead of root, handing over a media volume written by an earlier image on first start.
 - `DEBUG` is off unless set, instead of on : development environments set `DEBUG=True` (`.env.example` and `core.settings_local` do).
+- The image ships the PostgreSQL client tools of the server the compose file runs, for the backup and restore commands.
 - The compose file fixes the major versions of its services (`postgres:18`, `redis:8-alpine`) instead of following `latest`.
 - CI crawls every page and form of the demo dataset, and runs the suite a second time on PostgreSQL with every migration replayed (on `main`, and on a pull request labelled `ci:postgres`).
 - Python dependencies install from a compiled `requirements.txt` (exact versions, hash-checked, generated from `requirements.in` and refreshed weekly by Dependabot) instead of the latest release of everything, with Django held on its 5.2 LTS line and the image on Python 3.14, the version CI tests.

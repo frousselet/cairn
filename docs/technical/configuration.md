@@ -137,6 +137,17 @@ collects it, in production as under `DEBUG`. That includes the traceback of an
 unhandled request error : the user sees the error page, the operator finds the
 cause in the log.
 
+## Files and backups
+
+```bash
+MEDIA_ROOT=/app/media     # uploaded files : evidence artefacts, filed documents
+BACKUP_DIR=/app/backups   # where `manage.py backup` writes its archives
+```
+
+Both default to a directory beside the code, and both must outlive the
+container : mount a volume on the first and a host directory on the second.
+The backup and restore procedure is in [Operations](operations.md#backups).
+
 ## Maps
 
 ```bash

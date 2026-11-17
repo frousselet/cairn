@@ -8,7 +8,7 @@ Cairn is configured entirely through the environment. This page lists every vari
 
 The **In template** column says whether `.env.example` mentions it. Copy that file to `.env` to get started; anything absent from it falls back to the default below. Setting them up is covered in [../../technical/configuration.md](../../technical/configuration.md).
 
-**54 variables** are read by the code.
+**56 variables** are read by the code.
 
 ## Variables
 
@@ -30,6 +30,7 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `AI_ASSISTANT_SEMANTIC_ENABLED` | `False` | yes | Semantic (meaning-based, cross-language) requirement search. After enabling, build the index: docker compose exec web python manage.py rebuild_semantic_index |
 | `AI_ASSISTANT_TIMEOUT` | `30` | yes |  |
 | `ALLOWED_HOSTS` | `localhost,127.0.0.1` | yes |  |
+| `BACKUP_DIR` | - | yes | Directory `manage.py backup` writes its archives to. In a container, mount a volume or a host directory there (default : backups/ beside the code). |
 | `CSRF_COOKIE_SECURE` | `False` | yes |  |
 | `CSRF_TRUSTED_ORIGINS` | - | yes | Reverse proxy: trusted origins for CSRF (include scheme) |
 | `DEBUG` | `False` | yes |  |
@@ -46,6 +47,7 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `MAP_TILE_ATTRIBUTION` | `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors` | yes | Credit line shown on the map, as the provider's terms require (HTML). |
 | `MAP_TILE_URL` | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | yes | Basemap of the maps on the scope, site and supplier pages. The tiles are fetched by the reader's browser, straight from this provider. Any XYZ tile URL works, with its key when the provider needs one. Empty : no map. |
 | `MAP_TILE_URL_DARK` | - | yes | Tiles to use under the dark theme. Empty : the tiles above are dimmed. |
+| `MEDIA_ROOT` | - | yes | Directory of the uploaded files (evidence artefacts, filed documents). Mount a volume there : it must outlive the container (default : media/ beside the code). |
 | `POSTGRES_DB` | `open_grc` | yes |  |
 | `POSTGRES_HOST` | `db` | yes |  |
 | `POSTGRES_PASSWORD` | `postgres` | yes |  |

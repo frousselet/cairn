@@ -10,6 +10,8 @@ venv
 !.env.example
 *.sqlite3
 staticfiles
+backups
+media
 .claude
 .idea
 .vscode

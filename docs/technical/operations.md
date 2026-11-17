@@ -40,21 +40,123 @@ The complete command list is in
 
 Two things must be captured, and captured **together**.
 
-1. **PostgreSQL.** It holds the records, the history tables and the access log.
+1. **The database.** It holds the records, the history tables and the access log.
 2. **The media directory** (`MEDIA_ROOT`). It holds incident evidence artefacts,
-   proof-of-filing documents, contract and certificate PDFs, and Trust Center
-   documents.
+   proof-of-filing documents and control evidence files.
 
 A restore with one and not the other is not a restore. An evidence register
 whose artefacts are missing is worse than an empty one, because the chain of
 custody still claims they exist.
 
+### Taking one
+
 ```bash
-docker compose exec -T db pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > cairn-$(date +%F).sql.gz
-tar czf cairn-media-$(date +%F).tar.gz media/
+docker compose exec web python manage.py backup
 ```
 
-Test the restore. An untested backup is a hypothesis.
+writes one archive into `BACKUP_DIR` (`/app/backups` in the image), holding
+both :
+
+```text
+cairn-backup-20261117-081333Z.tar
+    manifest.json      format, Cairn version, engine and server version,
+                       applied migrations, size and SHA-256 of every member
+    database.pgdump    pg_dump, custom format, one consistent snapshot
+    media/...          every file under MEDIA_ROOT
+```
+
+The command reads the archive back and checks every checksum before it reports
+success, so a backup that cannot be read is known on the day it is made. The
+application keeps running : `pg_dump` works on a snapshot.
+
+Mount a volume or a host directory on `BACKUP_DIR`. An archive kept inside the
+container goes with the container, and one kept on the disk of the database
+goes with the disk : copy it elsewhere.
+
+```yaml
+services:
+  web:
+    environment:
+      BACKUP_DIR: /backups
+    volumes:
+      - media_data:/app/media
+      - /srv/cairn/backups:/backups
+```
+
+Schedule it from the host, and let it rotate :
+
+```cron
+# every night at 02:30, keeping the last fourteen
+30 2 * * *  cd /srv/cairn && docker compose exec -T web python manage.py backup --keep 14
+```
+
+`--keep N` deletes all but the `N` most recent archives of the directory once
+the new one is written and verified. `--output DIR` writes somewhere else for
+one run.
+
+The archive holds everything : password hashes, sessions, API tokens, every
+record. It is created readable by its owner only; store its copies encrypted
+and treat them as the instance itself.
+
+### Restoring
+
+```bash
+docker compose exec web python manage.py restore /backups/cairn-backup-20261117-081333Z.tar
+```
+
+puts the instance back in the exact state of the archive. In order :
+
+1. Every member is checked against the manifest. A damaged, incomplete or
+   altered archive is refused before anything is touched.
+2. An archive made by a **newer** release than the one running is refused : its
+   schema has tables and columns this code does not know.
+3. The current state is saved beside the archive as
+   `cairn-before-restore-<time>.tar`, so a restore of the wrong archive can be
+   undone. (`--no-safety-backup` skips it, for an empty instance.)
+4. The database dump is loaded into a **new database**, which then takes the
+   name of the current one. Until that swap the current database is not
+   touched : a dump that fails to load costs nothing. The sessions the
+   application holds are closed for the swap; it reconnects on its next request.
+5. The media directory is replaced by the archive's files.
+
+`--check` stops after steps 1 and 2 : it says whether the archive is sound and
+restorable here, and changes nothing. `--yes` skips the confirmation, for a
+scripted restore.
+
+The restore is exact : a record, a table or a file created since the backup is
+gone afterwards. If the archive is older than the release running, the command
+ends by saying how many migrations it is behind : run `python manage.py
+migrate` next. Safety backups are not rotated; delete them once the restore is
+confirmed.
+
+Two requirements on PostgreSQL :
+
+- The database role must own the database and hold `CREATEDB` (it creates the
+  database the archive is loaded into). The role a compose deployment creates
+  does. Otherwise the command stops with the statement to run.
+- The client tools (`pg_dump`, `pg_restore`, `psql`) must be of the **same
+  major version** as the server. The image ships the tools of the server its
+  compose file runs (`postgres:18`). An instance still on another major either
+  builds the image with `--build-arg POSTGRES_MAJOR=16`, or backs up by hand
+  from the database container, which always has matching tools :
+
+  ```bash
+  docker compose exec -T db pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB" > cairn-$(date +%F).pgdump
+  docker compose exec -T web tar czf - -C /app media > cairn-media-$(date +%F).tar.gz
+  ```
+
+### Testing the restore
+
+An untested backup is a hypothesis. Restore last night's archive on a second
+instance (another compose project, its own volumes) and open it : that is the
+only proof it works with *your* data and *your* storage. `restore --check` on
+the production host verifies the archive without touching anything, and is
+cheap enough to run after every backup.
+
+The mechanism itself is tested on every change : the suite backs up a
+throwaway instance, damages it, restores it and compares; the PostgreSQL job
+does the same on a real server, including a dump that fails half-way and a
+restore while the application is connected.
 
 ## Upgrading
 
@@ -66,8 +168,9 @@ docker compose exec web python manage.py migrate
 
 Migrations are forward-only in practice : several are data migrations that seed
 permissions, system groups, lifecycles and risk criteria, and they reconcile
-rather than replace, so re-running them is safe. Take the database backup first
-anyway.
+rather than replace, so re-running them is safe. Take a backup first anyway
+(`python manage.py backup`) : it is the way back if the new release misbehaves,
+since an archive can be restored on the release that made it or a later one.
 
 The first-run onboarding runner coordinates through the shared cache, so
 migration runs once across the worker fleet rather than three times.

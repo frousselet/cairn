@@ -61,6 +61,11 @@ throughout, English and French.
 in its light and dark themes, and the build checks it : contrast ratios are
 recomputed from the palette, and every page is audited with axe-core.
 
+**Built to be operated.** One command writes the database and the uploaded
+files into a single verified archive, another restores an instance exactly;
+a health endpoint, console logs and locked dependencies come with the image.
+See [Operations](docs/technical/operations.md).
+
 **Optional AI, off by default.** [Ask Cairn](docs/user-guide/ask-cairn.md)
 answers questions in plain language and cites real records. Point it at Mistral,
 OpenAI, Claude, or your own Ollama so nothing leaves your infrastructure.

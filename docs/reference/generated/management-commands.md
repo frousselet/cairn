@@ -12,6 +12,7 @@ The ones meant to run on a schedule are covered in [../../technical/operations.m
 
 | Command | App | Purpose |
 | --- | --- | --- |
+| `backup` | core | Write one archive holding the database and the media directory, with a manifest and a checksum for every file. Restore it with `manage.py restore`. |
 | `controls_sweep` | controls | Send the control test reminders (due within 14 days, overdue once then every 7 days) and recompute the effectiveness of every reportable control. Run daily. |
 | `detect_spof` | assets | Detect Single Points of Failure (SPOF) in the dependency graph |
 | `documents_sweep` | documents | Send the document review reminders (due within 30 days, overdue) and the acknowledgement reminders (7 days before a campaign's due date and the day after it). Run daily. |
@@ -21,4 +22,5 @@ The ones meant to run on a schedule are covered in [../../technical/operations.m
 | `rebuild_semantic_index` | assistant | Build or refresh the requirement semantic search index. |
 | `recalculate_compliance` | compliance | Recalculate compliance counts for all assessments, then propagate to requirements/sections/frameworks. |
 | `refresh_mitre_attack` | risks | Refresh the MITRE ATT&CK catalogue from a JSON fixture. |
+| `restore` | core | Replace the database and the media directory with the content of an archive made by `manage.py backup`. Every checksum is verified first, and a safety backup of the current state is taken before anything is replaced. |
 | `vendor_assets` | core | Download the front-end libraries into static/vendor/ so the instance serves them from its own origin instead of a CDN. |

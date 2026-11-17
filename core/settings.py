@@ -348,7 +348,14 @@ MAP_TILE_ATTRIBUTION = os.environ.get(
 LIFECYCLE_CACHE_TTL = float(os.environ.get("LIFECYCLE_CACHE_TTL", "5"))
 
 MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
+# Uploaded files (evidence artefacts, proof-of-filing documents). MEDIA_ROOT
+# moves them out of the code directory, onto a mounted volume for instance.
+MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT") or BASE_DIR / "media")
+
+# Where `manage.py backup` writes its archives. In a container, mount a volume
+# (or a host directory) there : an archive kept inside the container goes with
+# it, and one kept on the same disk as the database goes with the disk.
+BACKUP_DIR = Path(os.environ.get("BACKUP_DIR") or BASE_DIR / "backups")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
