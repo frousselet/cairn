@@ -45,6 +45,7 @@
   {% trans "of" as tr_of %}
   {% trans "Finishing up..." as tr_finishing %}
   {% trans "Lost connection to the server. Check that it is running, then reload." as tr_lost %}
+  {% trans "The installation is not progressing. Reload the page; if nothing changes, look at the server log." as tr_stuck %}
   <script nonce="{% csp_nonce %}">
   (function () {
     var bar = document.getElementById('ob-bar');
@@ -58,9 +59,35 @@
     var TR_STEP = '{{ tr_step|escapejs }}';
     var TR_OF = '{{ tr_of|escapejs }}';
     var TR_LOST = '{{ tr_lost|escapejs }}';
+    var TR_STUCK = '{{ tr_stuck|escapejs }}';
     var finished = false;
     var failures = 0;
     var MAX_FAILURES = 6;  // ~4s of dead backend before we surface an error
+    /* A job that never started, or that died, holds no lock : the screen then
+       goes back to the page that starts what is pending, instead of waiting
+       for ever. Three times at most, then it says so. */
+    var orphanPolls = 0;
+    var MAX_ORPHAN_POLLS = 8;  // ~6s with no job behind the screen
+    var MAX_RESTARTS = 3;
+    var RESTARTS_KEY = 'cairn-onboarding-restarts';
+
+    function restarts() {
+      try { return parseInt(window.sessionStorage.getItem(RESTARTS_KEY) || '0', 10) || 0; }
+      catch (e) { return 0; }
+    }
+    function rememberRestarts(count) {
+      try {
+        if (count) window.sessionStorage.setItem(RESTARTS_KEY, String(count));
+        else window.sessionStorage.removeItem(RESTARTS_KEY);
+      } catch (e) { /* storage refused : the screen only loses its count */ }
+    }
+    function restart() {
+      var count = restarts();
+      if (count >= MAX_RESTARTS) { rememberRestarts(0); showError(TR_STUCK); return; }
+      finished = true;
+      rememberRestarts(count + 1);
+      window.location.href = window.location.pathname;
+    }
 
     function showError(msg) {
       finished = true;
@@ -78,8 +105,15 @@
                           ' <span class="ob-pct">(' + pct + '%)</span>';
       }
       if (data.label) { step.textContent = data.label; step.title = data.label; }
+      if (data.status !== 'done' && data.alive === false) {
+        orphanPolls += 1;
+        if (orphanPolls >= MAX_ORPHAN_POLLS) { restart(); return; }
+      } else {
+        orphanPolls = 0;
+      }
       if (data.status === 'done') {
         finished = true;
+        rememberRestarts(0);
         bar.style.width = '100%';
         count.textContent = '{{ tr_finishing|escapejs }}';
         step.textContent = '';

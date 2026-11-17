@@ -71,6 +71,24 @@ Redis (a network partition, a frozen host) from holding each request for the
 kernel's connect timeout. The Channels layer already degraded the same way :
 a failed broadcast is logged and dropped.
 
+**A lock is the exception to "an empty cache".** `add()` reporting that nothing
+was stored is the right answer for a value, and the wrong one for a lock : a
+caller reads it as *someone else holds it*, and when nobody can reach the cache
+nobody holds anything. A job gated that way never runs again, which is how a
+new instance once stayed on its installation screen for ever. What takes a lock
+therefore goes through `core.cache.acquire_lock()`, which tells an unreachable
+cache from a held lock and falls back to a lock of its own process :
+
+| Job | With Redis | Redis unreachable |
+| --- | --- | --- |
+| Installation and upgrade (`core/onboarding/runner.py`) | One worker runs the migrations, the others watch its progress | Each worker that is asked starts the job; a PostgreSQL advisory lock makes them run one after the other, and the second finds nothing left to apply |
+| Detection of single points of failure | One worker per interval | Every worker, each interval (the detection is idempotent) |
+| Semantic index rebuild | One at a time | One per worker |
+
+The database lock of the installation is taken whatever the cache says : it is
+what makes two concurrent migrations impossible, the cache lock only decides
+who starts.
+
 One piece of state is deliberately **not** in Redis : the lifecycle definitions
 edited in the administration are cached in each worker process, because they
 are read on almost every request. A worker revalidates that cache against the

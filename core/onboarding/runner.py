@@ -22,13 +22,28 @@ job; the others observe its progress through the same shared keys.
 
 Progress is best-effort UI sugar; correctness is decided by real state
 (migrations applied, users created), never by these events.
+
+Two things hold when the shared cache cannot be reached (Redis down, or an
+instance started without one) :
+
+- the job still starts. The lock and the progress then live in this process
+  (``_ResilientStore``), which is enough for one worker and lets the others
+  start their own;
+- two workers never apply the migrations at once, whatever each believes
+  about the lock : the job takes a lock of the database itself
+  (``_database_lock``, a PostgreSQL advisory lock), so a second runner waits
+  for the first and then finds nothing left to apply.
 """
 
 import logging
 import threading
+import time
+from contextlib import contextmanager
 
 from django.conf import settings
 from django.core.cache import caches
+
+from core.cache import unguarded
 
 logger = logging.getLogger(__name__)
 
@@ -58,55 +73,103 @@ _IDLE = {
 }
 
 
+class _SharedCacheDown(Exception):
+    """The shared cache could not be reached : the operation is carried out locally."""
+
+
 class _ResilientStore:
     """Onboarding coordination store that survives a shared-cache outage.
 
-    Every operation is delegated to the shared cache (Redis in production). When
-    that backend is unreachable, the call falls back to a process-local store
-    instead of letting the connection error bubble up. This matters because the
-    onboarding middleware reads the lock on **every** request during the un-
-    initialised window: with Redis down, an unguarded read would turn each of
-    those requests into a 500 (the whole site becomes unreachable), and a fresh
-    single-process install (dev ``runserver`` with no Redis) could never
-    bootstrap at all.
+    Every operation goes to the shared cache (Redis in production). When that
+    backend cannot be reached, the operation is carried out on a process-local
+    store instead. Both halves matter :
 
-    The fallback is per-process, so it cannot coordinate across several uvicorn
-    workers; that is acceptable because the shared cache being down is already an
-    outage, and single-process coordination is strictly better than a 500 loop.
-    Coordination is best-effort UI sugar anyway: real correctness is decided by
-    the database state (migrations applied, users created), never by these keys.
+    - a read must not raise : the onboarding middleware reads the lock on
+      **every** request during the un-initialised window, and an unguarded
+      failure there turns the whole site into a 500;
+    - a failed ``add`` must not read as *the lock is held* : nobody holds a
+      lock nobody can reach, and the migrations of a new instance would wait
+      for it for ever. The cache backend of the project answers a connection
+      failure as an empty cache would (``core.cache.ResilientRedisCache``),
+      so the store asks for its operations unguarded and decides itself.
+
+    A key written locally stays read locally until it is deleted : the job
+    that took its lock during an outage keeps a coherent view of it if the
+    cache comes back before it ends.
+
+    The local store is per process, so it cannot coordinate several uvicorn
+    workers. Each may then start a job; ``_database_lock`` is what keeps two
+    of them from running at once.
+
+    After a failure the shared cache is left alone for ``_RETRY_AFTER``
+    seconds. A cache that refuses the connection fails at once, but one that
+    does not answer costs its whole timeout on every call : the screen polls
+    twice a second and a migration writes its progress at every step, so
+    without the pause an installation of five minutes would take an hour.
     """
 
     _local = {}
     _lock = threading.Lock()
+    # Monotonic time before which the shared cache is not tried again.
+    _down_until = 0.0
+    _RETRY_AFTER = 15.0
+
+    @classmethod
+    def reset(cls):
+        """Forget what is held locally and that the cache was down (used by tests)."""
+        with cls._lock:
+            cls._local.clear()
+        cls._down_until = 0.0
 
     def _cache(self):
         return caches[_CACHE_ALIAS]
 
-    def _degrade(self, exc):
-        logger.warning("Onboarding shared cache unreachable, using process-local store: %s", exc)
+    def _call(self, operation, *args):
+        return unguarded(self._cache(), operation)(*args)
+
+    def _shared(self, operation, *args):
+        """Run ``operation`` on the shared cache, or raise ``_SharedCacheDown``."""
+        cls = type(self)
+        if time.monotonic() < cls._down_until:
+            raise _SharedCacheDown
+        try:
+            return self._call(operation, *args)
+        except Exception as exc:  # noqa: BLE001 - any backend error degrades to local
+            cls._down_until = time.monotonic() + cls._RETRY_AFTER
+            # One line per pause, not one per call.
+            logger.warning(
+                "Onboarding shared cache unreachable, using the process-local store for %ds : %s",
+                cls._RETRY_AFTER, exc,
+            )
+            raise _SharedCacheDown from exc
 
     def get(self, key, default=None):
+        with self._lock:
+            if key in self._local:
+                return self._local[key]
         try:
-            return self._cache().get(key, default)
-        except Exception as exc:  # noqa: BLE001 - any backend error degrades to local
-            self._degrade(exc)
-            with self._lock:
-                return self._local.get(key, default)
+            return self._shared("get", key, default)
+        except _SharedCacheDown:
+            return default
 
     def set(self, key, value, timeout=None):
         try:
-            self._cache().set(key, value, timeout)
-        except Exception as exc:  # noqa: BLE001
-            self._degrade(exc)
+            self._shared("set", key, value, timeout)
+        except _SharedCacheDown:
             with self._lock:
                 self._local[key] = value
+        else:
+            with self._lock:
+                if key in self._local:
+                    self._local[key] = value
 
     def add(self, key, value, timeout=None):
+        with self._lock:
+            if key in self._local:
+                return False
         try:
-            return self._cache().add(key, value, timeout)
-        except Exception as exc:  # noqa: BLE001
-            self._degrade(exc)
+            return bool(self._shared("add", key, value, timeout))
+        except _SharedCacheDown:
             with self._lock:
                 if key in self._local:
                     return False
@@ -114,18 +177,18 @@ class _ResilientStore:
                 return True
 
     def delete(self, key):
+        with self._lock:
+            self._local.pop(key, None)
         try:
-            self._cache().delete(key)
-        except Exception as exc:  # noqa: BLE001
-            self._degrade(exc)
-            with self._lock:
-                self._local.pop(key, None)
+            self._shared("delete", key)
+        except _SharedCacheDown:
+            pass
 
     def touch(self, key, timeout=None):
         try:
-            self._cache().touch(key, timeout)
-        except Exception as exc:  # noqa: BLE001 - a missed heartbeat only shortens the lock TTL
-            self._degrade(exc)
+            self._shared("touch", key, timeout)
+        except _SharedCacheDown:
+            pass  # a missed heartbeat only shortens the lock TTL
 
 
 def _store():
@@ -148,11 +211,60 @@ def progress_snapshot():
     return dict(snap) if snap else dict(_IDLE)
 
 
+def progress_report():
+    """What the progress screen polls : the snapshot, and whether a job is alive.
+
+    ``alive`` is the presence of the lock. A snapshot that still reads
+    *running* while nothing holds the lock is a job that died (a worker
+    killed mid-run), and a screen that reads *idle* is one whose job never
+    started : in both cases the screen goes back to the landing page, which
+    starts what is pending, instead of waiting for ever.
+    """
+    report = progress_snapshot()
+    report["alive"] = is_running()
+    return report
+
+
 def reset_runner_state():
     """Forget the shared lock and progress (used by tests)."""
+    _ResilientStore.reset()
     store = _store()
     store.delete(_LOCK_KEY)
     store.delete(_STATE_KEY)
+
+
+# The database's own lock, for the time of a job. Any 64-bit number no other
+# application of the same database would pick : the letters "CAIRN" and a
+# trailing 1.
+_DATABASE_LOCK_ID = 0x43414952_4E01
+
+
+@contextmanager
+def _database_lock(connection):
+    """Hold the lock of the database itself for the time of a job (PostgreSQL).
+
+    The cache lock says who *starts* a job; this one is what makes two jobs
+    impossible at the same time, even between workers that cannot reach the
+    cache and each believe they are alone. A second runner blocks here until
+    the first has finished. It is a session lock : it is released when the
+    block ends, and in any case when the connection closes.
+
+    Other databases (SQLite, in development and in tests) serve a single
+    process : there is nothing to take.
+    """
+    if connection.vendor != "postgresql":
+        yield
+        return
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pg_advisory_lock(%s)", [_DATABASE_LOCK_ID])
+    try:
+        yield
+    finally:
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pg_advisory_unlock(%s)", [_DATABASE_LOCK_ID])
+        except Exception:  # noqa: BLE001 - the lock ends with the connection anyway
+            logger.warning("The onboarding database lock could not be released; it ends with the connection.")
 
 
 def _set(**fields):
@@ -175,8 +287,6 @@ def _start(kind, target, **extra):
     that wins it runs the job; any other worker (or a second request on the same
     worker) gets ``False`` and simply watches the shared progress.
     """
-    import threading
-
     if not _store().add(_LOCK_KEY, "1", _LOCK_TTL):
         return False
     _set(kind=kind, status="running", label="", current=0, total=0, error="", **extra)
@@ -207,17 +317,20 @@ def _run_migrations():
 
     try:
         connection = connections["default"]
-        executor = MigrationExecutor(connection, progress_callback=_migration_callback)
-        targets = executor.loader.graph.leaf_nodes()
-        plan = executor.migration_plan(targets)
-        _set(total=len(plan))
-        print(f"Applying {len(plan)} database migrations...", flush=True)
-        executor.migrate(targets, plan=plan)
-        print("Database migrations applied.", flush=True)
-        # MigrationExecutor.migrate() does not fire post_migrate (the management
-        # command does). Emit it so ContentTypes and built-in permissions are
-        # created - the demo seed and generic relations depend on them.
-        emit_post_migrate_signal(verbosity=1, interactive=False, db=connection.alias)
+        with _database_lock(connection):
+            # Read after the lock is held : a runner that waited for another
+            # one sees what that one applied, and has nothing left to do.
+            executor = MigrationExecutor(connection, progress_callback=_migration_callback)
+            targets = executor.loader.graph.leaf_nodes()
+            plan = executor.migration_plan(targets)
+            _set(total=len(plan))
+            print(f"Applying {len(plan)} database migrations...", flush=True)
+            executor.migrate(targets, plan=plan)
+            print("Database migrations applied.", flush=True)
+            # MigrationExecutor.migrate() does not fire post_migrate (the management
+            # command does). Emit it so ContentTypes and built-in permissions are
+            # created - the demo seed and generic relations depend on them.
+            emit_post_migrate_signal(verbosity=1, interactive=False, db=connection.alias)
         _set(status="done", current=len(plan), total=len(plan))
     except Exception as exc:  # noqa: BLE001 - report any failure to the UI
         logger.exception("Database migration failed during onboarding")
@@ -261,7 +374,16 @@ def _run_seed():
             "SEED_BASE_DIR": str(settings.BASE_DIR),
             "__name__": "seed_demo_data",
         }
-        exec(compile(source, str(SEED_PATH), "exec"), namespace)
+        with _database_lock(connections["default"]):
+            # The sample data is loaded into an instance nobody uses yet. A
+            # runner that waited for another one finds its users, and loads
+            # nothing on top of them.
+            from accounts.models import User
+
+            if User.objects.exists():
+                logger.info("The instance already has users : the sample data is not loaded a second time.")
+            else:
+                exec(compile(source, str(SEED_PATH), "exec"), namespace)
 
         _set(status="done", current=total, total=total)
     except Exception as exc:  # noqa: BLE001 - report any failure to the UI

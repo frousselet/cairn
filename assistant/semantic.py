@@ -14,13 +14,13 @@ import threading
 import time
 
 from django.conf import settings
-from django.core.cache import cache
 from django.db import connections
 from django.db.models import Max
 from django.utils.html import strip_tags
 
 from assistant.models import SemanticIndex, content_hash
 from assistant.providers import get_client
+from core.cache import acquire_lock, lock_held, release_lock
 
 logger = logging.getLogger(__name__)
 
@@ -147,13 +147,15 @@ def rebuild_index_async(*, force=False):
     """Run :func:`rebuild_index` once in a guarded background daemon thread.
 
     Returns True if a rebuild was started, False if semantic search is off or a
-    rebuild is already running (the cache lock dedupes the startup hook, the
-    admin button and accidental double triggers). All failures are logged inside
-    the thread, never raised to the caller.
+    rebuild is already running (the lock dedupes the startup hook, the admin
+    button and accidental double triggers; it falls back to a lock of this
+    process when the shared cache cannot be reached, so the rebuild still
+    runs). All failures are logged inside the thread, never raised to the
+    caller.
     """
     if not settings.AI_ASSISTANT_SEMANTIC_ENABLED:
         return False
-    if not cache.add(REBUILD_LOCK_KEY, "1", REBUILD_LOCK_TTL):
+    if not acquire_lock(REBUILD_LOCK_KEY, REBUILD_LOCK_TTL):
         return False
 
     def _worker():
@@ -166,7 +168,7 @@ def rebuild_index_async(*, force=False):
         except Exception:
             logger.exception("Semantic index rebuild failed")
         finally:
-            cache.delete(REBUILD_LOCK_KEY)
+            release_lock(REBUILD_LOCK_KEY)
             # A worker thread owns its own DB connections; close them so they
             # are not leaked back to the pool.
             connections.close_all()
@@ -205,7 +207,7 @@ def rebuild_index_on_startup():
             while runner.is_running() or not instance_ready():
                 connections.close_all()
                 time.sleep(READINESS_POLL_INTERVAL)
-            if not cache.add(REBUILD_LOCK_KEY, "1", REBUILD_LOCK_TTL):
+            if not acquire_lock(REBUILD_LOCK_KEY, REBUILD_LOCK_TTL):
                 return
             try:
                 result = rebuild_index(force=False)
@@ -214,7 +216,7 @@ def rebuild_index_on_startup():
                     result,
                 )
             finally:
-                cache.delete(REBUILD_LOCK_KEY)
+                release_lock(REBUILD_LOCK_KEY)
         except Exception:
             logger.exception("Semantic index rebuild failed")
         finally:
@@ -239,5 +241,5 @@ def index_status():
         "indexed": rows.count(),
         "total": Requirement.objects.count(),
         "last_updated": rows.aggregate(Max("updated_at"))["updated_at__max"],
-        "running": cache.get(REBUILD_LOCK_KEY) is not None,
+        "running": lock_held(REBUILD_LOCK_KEY),
     }

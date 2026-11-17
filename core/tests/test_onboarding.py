@@ -31,10 +31,14 @@ def _reset_onboarding_state():
     """
     from django.core.cache import cache
 
+    from core.onboarding import runner
+
     ob_state.reset_onboarding_state()
+    runner._ResilientStore.reset()
     cache.clear()
     yield
     ob_state.reset_onboarding_state()
+    runner._ResilientStore.reset()
     cache.clear()
 
 
@@ -182,7 +186,27 @@ class TestProgressView:
         resp = client.get(reverse("onboarding:progress"))
         assert resp.status_code == 200
         data = resp.json()
-        assert set(data) == {"kind", "status", "label", "current", "total", "error", "upgrade"}
+        assert set(data) == {"kind", "status", "label", "current", "total", "error", "upgrade", "alive"}
+        # The poll is never answered from a cache : it is the live state.
+        assert resp["Cache-Control"] == "no-store"
+
+    def test_the_poll_says_whether_a_job_is_alive(self, client):
+        """A screen whose job never started, or died, must be able to tell."""
+        from core.onboarding import runner
+
+        assert client.get(reverse("onboarding:progress")).json()["alive"] is False
+
+        runner._store().add(runner._LOCK_KEY, "1", runner._LOCK_TTL)
+
+        assert client.get(reverse("onboarding:progress")).json()["alive"] is True
+
+    def test_the_screen_goes_back_to_the_landing_page_when_no_job_is_behind_it(self, client):
+        with patch("core.onboarding.views.migration_status", return_value=PENDING), \
+             patch("core.onboarding.views.start_migrations"):
+            body = client.get(reverse("onboarding:landing")).content.decode()
+
+        assert "data.alive === false" in body
+        assert "The installation is not progressing." in body
 
 
 @pytest.mark.django_db
@@ -387,7 +411,7 @@ class TestRunner:
                 raise ConnectionError("redis down")
 
         # Clear any process-local carry-over from a prior degraded test.
-        runner._ResilientStore._local.clear()
+        runner._ResilientStore.reset()
         with patch.object(runner._ResilientStore, "_cache", return_value=_DeadCache()):
             # No lock yet: reads answer False instead of raising.
             assert runner.is_running() is False
@@ -395,4 +419,322 @@ class TestRunner:
             assert runner._store().add(runner._LOCK_KEY, "1", runner._LOCK_TTL) is True
             assert runner._store().add(runner._LOCK_KEY, "1", runner._LOCK_TTL) is False
             assert runner.is_running() is True
-        runner._ResilientStore._local.clear()
+        runner._ResilientStore.reset()
+
+    def test_a_cache_that_is_down_is_left_alone_for_a_while(self):
+        """A cache that does not answer costs its timeout on every call : after a
+        failure it is not tried again at once, or the polls and the migration
+        steps of one installation would wait for it hundreds of times."""
+        from core.onboarding import runner
+
+        calls = []
+
+        class _SilentCache:
+            def get(self, *a, **k):
+                calls.append("get")
+                raise TimeoutError("no answer")
+
+            def set(self, *a, **k):
+                calls.append("set")
+                raise TimeoutError("no answer")
+
+        runner._ResilientStore.reset()
+        with patch.object(runner._ResilientStore, "_cache", return_value=_SilentCache()):
+            for _ in range(20):
+                runner.is_running()
+                runner._set(current=1)
+            assert len(calls) == 1
+            # The pause over, the cache is tried again.
+            runner._ResilientStore._down_until = 0.0
+            runner.is_running()
+            assert len(calls) == 2
+        runner._ResilientStore.reset()
+
+
+# Nothing listens on port 1 : every call fails at once with a refused connection.
+UNREACHABLE_CACHE = {
+    "default": {
+        "BACKEND": "core.cache.ResilientRedisCache",
+        "LOCATION": "redis://127.0.0.1:1/1",
+        "OPTIONS": {"socket_connect_timeout": 1, "socket_timeout": 1},
+    }
+}
+
+
+def _wait_until(condition, seconds=5.0):
+    import time
+
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        if condition():
+            return True
+        time.sleep(0.02)
+    return condition()
+
+
+class TestWithoutASharedCache:
+    """An instance whose Redis cannot be reached still installs itself.
+
+    The cache backend of the project answers an unreachable Redis as an empty
+    cache would : ``add`` returns ``False``. Taken as "the lock is held", that
+    answer left a new instance on its installation screen for ever, the
+    migrations waiting for a lock nobody could take. These tests use the real
+    backend, pointed at a port where nothing listens.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _no_redis(self):
+        from django.test import override_settings
+
+        from core.onboarding import runner
+
+        runner._ResilientStore.reset()
+        with override_settings(CACHES=UNREACHABLE_CACHE):
+            yield
+        runner._ResilientStore.reset()
+
+    def test_the_backend_alone_would_refuse_the_lock(self):
+        """What the store must not take at face value."""
+        from django.core.cache import caches
+
+        assert caches["default"].add("anything", "1", 60) is False
+
+    def test_the_migrations_start_and_only_once(self):
+        import threading
+
+        from core.onboarding import runner
+
+        started, release = threading.Event(), threading.Event()
+
+        def job():
+            started.set()
+            release.wait(5)
+
+        with patch.object(runner, "_run_migrations", job):
+            assert runner.start_migrations() is True
+            assert started.wait(5)
+            # The job is seen as running, and a second request starts no rival.
+            assert runner.is_running() is True
+            assert runner.start_migrations() is False
+            report = runner.progress_report()
+            assert (report["status"], report["kind"], report["alive"]) == ("running", "migrate", True)
+            release.set()
+            assert _wait_until(lambda: not runner.is_running())
+
+        # The lock is given back : the next job (the sample data) can start.
+        with patch.object(runner, "_run_seed", lambda: None):
+            assert runner.start_seed() is True
+            assert _wait_until(lambda: not runner.is_running())
+
+    def test_the_progress_is_kept_for_the_screen(self):
+        from core.onboarding import runner
+
+        runner._set(kind="migrate", status="running", current=3, total=9, label="accounts.0003")
+
+        snap = runner.progress_snapshot()
+
+        assert (snap["current"], snap["total"], snap["label"]) == (3, 9, "accounts.0003")
+
+    @pytest.mark.django_db
+    def test_the_landing_page_starts_the_pending_migrations(self, client):
+        import threading
+
+        from core.onboarding import runner
+
+        ran = threading.Event()
+        with patch("core.onboarding.views.migration_status", return_value=PENDING), \
+             patch.object(runner, "_run_migrations", ran.set):
+            resp = client.get(reverse("onboarding:landing"))
+            assert ran.wait(5), "the migrations never started"
+            assert _wait_until(lambda: not runner.is_running())
+
+        assert resp.status_code == 200
+        assert b"onboarding/progress.json" in resp.content
+
+    def test_a_key_taken_here_stays_read_here_if_the_cache_comes_back(self):
+        """The job that took its lock during an outage keeps a coherent view of it."""
+        from django.test import override_settings
+
+        from core.onboarding import runner
+
+        assert runner._store().add(runner._LOCK_KEY, "1", runner._LOCK_TTL) is True
+        # The cache answers again (the in-memory cache of the test settings).
+        with override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}):
+            assert runner.is_running() is True
+            assert runner._store().add(runner._LOCK_KEY, "1", runner._LOCK_TTL) is False
+            runner._store().delete(runner._LOCK_KEY)
+            assert runner.is_running() is False
+
+
+@pytest.mark.django_db
+class TestTheDatabaseLock:
+    """Two runners never work at once, whatever each believes about the cache."""
+
+    def test_nothing_is_asked_of_a_database_that_serves_one_process(self, django_assert_num_queries):
+        from django.db import connection
+
+        from core.onboarding import runner
+
+        if connection.vendor == "postgresql":
+            pytest.skip("covered by the PostgreSQL test below")
+        with django_assert_num_queries(0), runner._database_lock(connection):
+            pass
+
+    def test_a_second_session_cannot_take_it_while_it_is_held(self):
+        from django.db import connection
+
+        from core.onboarding import runner
+
+        if connection.vendor != "postgresql":
+            pytest.skip("advisory locks are a PostgreSQL feature")
+        other = connection.copy()
+        try:
+            with runner._database_lock(connection):
+                with other.cursor() as cursor:
+                    cursor.execute("SELECT pg_try_advisory_lock(%s)", [runner._DATABASE_LOCK_ID])
+                    assert cursor.fetchone()[0] is False
+            with other.cursor() as cursor:
+                cursor.execute("SELECT pg_try_advisory_lock(%s)", [runner._DATABASE_LOCK_ID])
+                assert cursor.fetchone()[0] is True
+                cursor.execute("SELECT pg_advisory_unlock(%s)", [runner._DATABASE_LOCK_ID])
+        finally:
+            other.close()
+
+    def test_the_sample_data_is_not_loaded_on_top_of_existing_users(self, tmp_path, monkeypatch):
+        """A runner that waited for another one finds its users, and loads nothing more."""
+        from django.db import connections
+
+        from core.onboarding import runner
+
+        seed = tmp_path / "seed.py"
+        seed.write_text('_phase("only")\nraise RuntimeError("the seed ran")\n')
+        monkeypatch.setattr(runner, "SEED_PATH", seed)
+        UserFactory()
+
+        with patch.object(connections, "close_all"):
+            runner._run_seed()
+
+        assert runner.progress_snapshot()["status"] == "done"
+
+    def test_the_sample_data_is_loaded_into_an_empty_instance(self, tmp_path, monkeypatch):
+        from django.db import connections
+
+        from core.onboarding import runner
+
+        seed = tmp_path / "seed.py"
+        seed.write_text('SEED_PROGRESS("only")  # _phase("only")\n')
+        monkeypatch.setattr(runner, "SEED_PATH", seed)
+
+        with patch.object(connections, "close_all"):
+            runner._run_seed()
+
+        snap = runner.progress_snapshot()
+        assert (snap["status"], snap["current"], snap["total"]) == ("done", 1, 1)
+
+
+@pytest.mark.django_db
+class TestNoQueryBeforeTheSchemaExists:
+    """A new database is not asked for tables it does not hold yet.
+
+    Each such query was caught and harmless for the page, and left an
+    ``ERROR: relation ... does not exist`` in the database log : three per
+    poll of the installation screen for a browser that still held a session
+    cookie, hundreds of lines for one installation.
+    """
+
+    def test_has_table(self):
+        assert ob_state.has_table(User._meta.db_table) is True
+        assert ob_state.has_table("no_such_table") is False
+
+    def test_a_table_seen_once_is_not_looked_for_again(self, django_assert_num_queries):
+        ob_state.has_table(User._meta.db_table)
+
+        with django_assert_num_queries(0):
+            assert ob_state.has_table(User._meta.db_table) is True
+
+    @pytest.mark.parametrize("failure", [DatabaseError("unreachable"), RuntimeError("Database access not allowed")])
+    def test_a_database_that_cannot_be_asked_holds_no_table(self, monkeypatch, failure):
+        """Unreachable, or asked where no query is allowed (a module imported
+        while tests are collected) : the caller takes its "no table" path."""
+        from django.db import connections
+
+        def refuse(*args, **kwargs):
+            raise failure
+
+        monkeypatch.setattr(connections["default"], "cursor", refuse)
+
+        assert ob_state.has_table("anything") is False
+        # And nothing is remembered : the next call asks again.
+        assert "anything" not in ob_state._known_tables
+
+    def test_the_first_run_is_decided_without_asking_a_missing_table(self, monkeypatch, django_assert_num_queries):
+        monkeypatch.setattr(ob_state, "has_table", lambda name: False)
+
+        with django_assert_num_queries(0):
+            assert is_first_run() is True
+
+    def test_the_company_settings_are_not_read_before_their_table_exists(self, rf, monkeypatch, django_assert_num_queries):
+        from core.context_processors import company
+
+        monkeypatch.setattr(ob_state, "has_table", lambda name: False)
+
+        with django_assert_num_queries(0):
+            context = company(rf.get("/onboarding/"))
+
+        assert context["company"] is None
+        assert context["APP_NAME"] == "Cairn"
+
+    def test_a_lifecycle_falls_back_to_its_code_default_without_a_query(self, monkeypatch, django_assert_num_queries):
+        from core.lifecycle import LIFECYCLE_REGISTRY, clear_lifecycle_cache, get_lifecycle
+
+        monkeypatch.setattr(ob_state, "has_table", lambda name: False)
+        clear_lifecycle_cache()
+
+        with django_assert_num_queries(0):
+            assert get_lifecycle("scope") is LIFECYCLE_REGISTRY["scope"]
+        clear_lifecycle_cache()
+
+    def test_nobody_is_signed_in_while_the_schema_is_not_ready(self, client, settings, django_assert_num_queries):
+        """A session cookie kept from an earlier instance must cost no query."""
+        settings.ONBOARDING_REDIRECT_ENABLED = True
+        client.force_login(UserFactory())
+        ob_state.reset_onboarding_state()
+        ob_state.has_table("django_session")  # seen once, never looked for again
+
+        with patch("core.middleware.schema_ready", return_value=False), django_assert_num_queries(0):
+            response = client.get(reverse("onboarding:progress"))
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "idle"
+
+    def test_nobody_is_signed_in_before_the_session_table_exists(self, rf, settings):
+        """Static files and the language switch go past the onboarding rules : they
+        must not look a session up in a database that has no session table."""
+        from django.contrib.auth.models import AnonymousUser
+
+        from core.middleware import OnboardingMiddleware
+
+        settings.ONBOARDING_REDIRECT_ENABLED = True
+        seen = {}
+
+        def view(request):
+            seen["user"] = request.user
+            return "response"
+
+        request = rf.get(settings.STATIC_URL + "css/cairn/00-tokens.css")
+        request.user = "a lazy user that would read the session"
+
+        with patch("core.middleware.has_table", return_value=False):
+            assert OnboardingMiddleware(view)(request) == "response"
+
+        assert isinstance(seen["user"], AnonymousUser)
+
+    def test_the_session_is_read_again_once_the_schema_is_ready(self, client, settings):
+        settings.ONBOARDING_REDIRECT_ENABLED = True
+        user = UserFactory()
+        client.force_login(user)
+
+        response = client.get(reverse("home"))
+
+        assert response.status_code == 200
+        assert response.wsgi_request.user == user

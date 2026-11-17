@@ -82,6 +82,24 @@ are created. The JSON poll touches neither the database nor the session, so it
 works before any table exists. Using one mechanism for both phases keeps the
 client simple.
 
+The answer carries `alive` beside the snapshot : whether a job holds the lock.
+A screen whose job never started, or died with its worker, reads `alive: false`
+without `status: done`. After about six seconds of that it goes back to the
+page it came from, which starts what is pending; after three such restarts it
+says *The installation is not progressing* instead of waiting for ever.
+
+**No query before the schema exists.** The onboarding middleware makes a
+request anonymous in two cases, so that nothing behind it reads the session or
+the user tables : while the database has no session table at all (a new
+database; this covers every request, static files included), and while the
+schema is not ready (`schema_ready()` false : an installation or an upgrade in
+flight, for the onboarding screens). A browser that kept a session cookie from
+an earlier instance otherwise sent three failing queries per poll. For the
+same reason `is_first_run()`, the company context processor and the lifecycle
+definitions ask the catalogue (`core.onboarding.state.has_table`) before
+reading a table that may not exist. A new database is installed without a
+single `relation does not exist` in its log.
+
 ## Concurrency: one migration across all workers
 
 Production runs several uvicorn workers (see the Dockerfile `CMD`). Every web
@@ -107,6 +125,24 @@ A per-process `LocMemCache` (Django's default when no `CACHES` is configured)
 would make every one of these locks local to a single worker and silently
 ineffective, so a shared cache backend is a correctness requirement here, not an
 optimisation.
+
+**When the shared cache cannot be reached** (Redis down, or an instance started
+without one), the job still starts :
+
+- the store (`_ResilientStore`) asks the cache backend for its operations
+  *unguarded*. The backend of the project (`core.cache.ResilientRedisCache`)
+  answers a connection failure as an empty cache would, and `add()` returning
+  `False` would otherwise read as "the lock is held" : the migrations of a new
+  instance would wait for ever for a lock nobody can take. On a failure the
+  lock and the progress are kept in the process, and the cache is left alone for
+  fifteen seconds, so a Redis that does not answer costs one timeout per pause
+  rather than one per poll and per migration step;
+- that local lock cannot coordinate several workers, so each may start a job.
+  The job therefore also takes **a lock of the database itself**
+  (`_database_lock`, `pg_advisory_lock`) for its whole duration, whatever the
+  cache says. A second runner waits for the first, reads the migration plan
+  once it holds the lock and finds nothing left to apply; a second seed finds
+  the users of the first and loads nothing on top of them.
 
 Note: the migration runner applies migrations with ``MigrationExecutor`` (for the
 per-migration progress callback) and then emits the ``post_migrate`` signal

@@ -17,11 +17,46 @@ _initialised = False
 _schema_ready = False
 
 
+# The tables this process has seen. A table does not go away under a running
+# process, so a table seen once is not looked for again.
+_known_tables = set()
+
+
 def reset_onboarding_state():
     """Forget the cached flags (used by tests)."""
     global _initialised, _schema_ready
     _initialised = False
     _schema_ready = False
+    _known_tables.clear()
+
+
+def has_table(name):
+    """Whether the database holds the table ``name``, asked without an error.
+
+    On a new database the first screens are served before any migration ran.
+    Code that reads a table there used to try, fail and carry on : harmless
+    for the page, but each attempt leaves an ``ERROR: relation ... does not
+    exist`` in the database log, hundreds of them while the installation
+    screen polls. Asking the catalogue first costs one query until the table
+    is there, and nothing afterwards.
+
+    ``False`` as well when the database cannot be asked at all, whatever the
+    reason : it is unreachable, or the code runs where no query is allowed (a
+    module imported while tests are collected). The callers then take the
+    path they take for a missing table, as they did when their own query
+    failed.
+    """
+    if name in _known_tables:
+        return True
+    try:
+        connection = connections["default"]
+        with connection.cursor() as cursor:
+            present = name in connection.introspection.table_names(cursor)
+    except Exception:  # noqa: BLE001 - any failure to ask is "not readable now"
+        return False
+    if present:
+        _known_tables.add(name)
+    return present
 
 
 def is_first_run():
@@ -37,10 +72,13 @@ def is_first_run():
 
     from accounts.models import User
 
+    if not has_table(User._meta.db_table):
+        # No table yet (migrations not applied) -> still a first run.
+        return True
     try:
         has_users = User.objects.exists()
     except DatabaseError:
-        # Table or database not ready yet -> still a first run.
+        # Database not ready -> still a first run.
         return True
 
     if has_users:
