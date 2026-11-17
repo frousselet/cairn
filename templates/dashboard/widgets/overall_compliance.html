@@ -15,7 +15,7 @@
         <div class="overall-compliance__bar overall-compliance__bar--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}">
           <div class="overall-compliance__bar-track">
             <div class="overall-compliance__bar-fill overall-compliance__bar-fill--{% if overall_compliance >= 80 %}good{% elif overall_compliance >= 50 %}warn{% else %}bad{% endif %}"
-                 role="progressbar"
+                 role="progressbar" aria-label="{% trans 'Overall compliance' %}"
                  style="width: {{ overall_compliance|floatformat:0 }}%"
                  aria-valuenow="{{ overall_compliance|floatformat:0 }}"
                  aria-valuemin="0"
@@ -58,11 +58,11 @@
     display: inline-flex; align-items: center; justify-content: center;
     font-size: .75rem; font-weight: 600;
   }
-  .overall-compliance__delta--good { background: var(--success-soft); color: var(--success); }
+  .overall-compliance__delta--good { background: var(--success-soft); color: var(--success-text); }
   .overall-compliance__delta--good::before { content: "\2197"; }
-  .overall-compliance__delta--warn { background: var(--warning-soft); color: var(--warning); }
+  .overall-compliance__delta--warn { background: var(--warning-soft); color: var(--warning-text); }
   .overall-compliance__delta--warn::before { content: "\2192"; }
-  .overall-compliance__delta--bad  { background: var(--danger-soft);  color: var(--danger); }
+  .overall-compliance__delta--bad  { background: var(--danger-soft);  color: var(--danger-text); }
   .overall-compliance__delta--bad::before  { content: "\2198"; }
   .overall-compliance__hint {
     color: var(--text-muted); font-size: .875rem;

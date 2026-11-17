@@ -24,7 +24,7 @@ body {
      display titles render at their true weight instead of synthesized. */
   font-synthesis: none;
 }
-::selection { background: var(--accent-soft); color: var(--accent); }
+::selection { background: var(--accent-soft); color: var(--accent-text); }
 
 /* ── Typography ladder - Space Grotesk titles, Inter body ───── */
 h1 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; letter-spacing: normal; color: var(--text-primary); line-height: 1.2; }

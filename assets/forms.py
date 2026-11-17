@@ -10,7 +10,7 @@ from compliance.models import Framework
 from context.constants import StakeholderCategory
 from context.models import Scope, Site, Stakeholder
 from context.widgets import ImageUploadWidget, ScopeTreeWidget
-from core.modal_forms import Step, SteppedFormMixin
+from core.modal_forms import LabelledRowsFormSet, Step, SteppedFormMixin
 from helpers.image_utils import generate_image_variants
 
 from .constants import (
@@ -528,6 +528,7 @@ SupplierTypeRequirementFormSet = inlineformset_factory(
     form=SupplierTypeRequirementForm,
     extra=1,
     can_delete=True,
+    formset=LabelledRowsFormSet,
 )
 
 

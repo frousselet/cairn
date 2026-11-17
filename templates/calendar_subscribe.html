@@ -95,7 +95,7 @@
     {% csrf_token %}
     <input type="hidden" name="action" value="create">
     <div class="input-group input-group-sm">
-      <input type="text" name="name" class="form-control" placeholder="{% trans 'Subscription name (e.g. MacBook, iPhone)' %}" required>
+      <input type="text" name="name" class="form-control" placeholder="{% trans 'Subscription name (e.g. MacBook, iPhone)' %}" aria-label="{% trans 'Name' %}" required>
       <button type="submit" class="btn btn-primary">
         <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Create" %}
       </button>

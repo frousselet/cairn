@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from context.models import Scope
 from context.widgets import ScopeTreeWidget
-from core.modal_forms import Step, SteppedFormMixin
+from core.modal_forms import LabelledRowsFormSet, Step, SteppedFormMixin
 from .constants import DEFAULT_IMPACT_SCALES, DEFAULT_LIKELIHOOD_SCALES
 from .models import (
     ISO27005Risk,
@@ -569,6 +569,7 @@ LikelihoodFormSet = forms.inlineformset_factory(
     form=ScaleLevelForm,
     extra=0,
     can_delete=True,
+    formset=LabelledRowsFormSet,
 )
 
 ImpactFormSet = forms.inlineformset_factory(
@@ -576,6 +577,7 @@ ImpactFormSet = forms.inlineformset_factory(
     form=ScaleLevelForm,
     extra=0,
     can_delete=True,
+    formset=LabelledRowsFormSet,
 )
 
 RiskLevelFormSet = forms.inlineformset_factory(
@@ -583,6 +585,7 @@ RiskLevelFormSet = forms.inlineformset_factory(
     form=RiskLevelForm,
     extra=0,
     can_delete=True,
+    formset=LabelledRowsFormSet,
 )
 
 

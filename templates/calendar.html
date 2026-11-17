@@ -14,10 +14,15 @@
     color:var(--text-secondary); background:var(--surface);
     cursor:pointer; transition:all .2s cubic-bezier(.16,1,.3,1); user-select:none;
   }
-  .calendar-filter:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
-  .calendar-filter.active { color:#fff; border-color:transparent; box-shadow:0 2px 8px rgba(0,0,0,.1); }
-  .calendar-filter .dot { width:.5rem; height:.5rem; border-radius:50%; display:inline-block; }
-  .calendar-filter.active .dot { background:#fff; }
+  .calendar-filter:hover { border-color:var(--accent); color:var(--accent-text); background:var(--accent-soft); }
+  /* A category is told by its dot and a tint, never by a white label on the
+     plain hue : half of the twelve hues do not carry white text at 4.5:1. */
+  .calendar-filter.active {
+    color:var(--text-primary); border-color:color-mix(in srgb, var(--ev) 45%, transparent);
+    background:color-mix(in srgb, var(--ev) 14%, var(--surface));
+  }
+  .calendar-filter .dot { width:.5rem; height:.5rem; border-radius:50%; display:inline-block; border:1.5px solid var(--ev); }
+  .calendar-filter.active .dot { background:var(--ev); }
 
   /* ── View toggle ──────────────────────────────────── */
   /* Segmented view switch sized to match the standard .btn so it lines up
@@ -29,8 +34,8 @@
     cursor:pointer; transition:all .15s cubic-bezier(.4,0,.2,1);
   }
   .view-toggle button:not(:last-child) { border-right:1px solid var(--border-light); }
-  .view-toggle button.active { background:var(--accent); color:#fff; }
-  .view-toggle button:hover:not(.active) { background:var(--accent-soft); color:var(--accent); }
+  .view-toggle button.active { background:var(--accent); color:var(--accent-contrast); }
+  .view-toggle button:hover:not(.active) { background:var(--accent-soft); color:var(--accent-text); }
   @media (max-width:575.98px) { .view-toggle button { min-height:2.5rem; } }
 
   /* ── Nav bar ──────────────────────────────────────── */
@@ -68,25 +73,25 @@
     font-size:.8125rem; font-weight:500; color:var(--text-secondary);
     padding:.375rem .4375rem .125rem; font-variant-numeric:tabular-nums;
   }
-  .cal-day-num.other-month { opacity:.45; }
-  .cal-day-num.today { color:var(--accent); font-weight:700; }
-  .cal-span-ev {
-    display:block; padding:1px 6px; margin:1px 2px; font-size:.6875rem; font-weight:500;
-    border-radius:var(--radius-xs, .375rem); color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    text-decoration:none; cursor:pointer; line-height:1.5; transition:opacity .15s;
+  .cal-day-num.other-month { color:var(--text-muted); font-weight:400; }
+  .cal-day-num.today { color:var(--accent-text); font-weight:700; }
+  /* An event : the category's hue as a tint and a left rule, the title in the
+     text colour. Readable in both themes whatever the hue, 24 px tall (WCAG
+     2.5.8) so it is a comfortable target. */
+  .cal-span-ev, .cal-ev {
+    display:block; padding:3px 6px; font-size:.75rem; font-weight:500; line-height:1.5;
+    border-radius:var(--radius-xs, .375rem); border-left:3px solid var(--ev);
+    background:color-mix(in srgb, var(--ev) 16%, var(--surface-raised));
+    color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    text-decoration:none; cursor:pointer; transition:background .15s;
   }
-  .cal-span-ev:hover { opacity:.85; color:#fff; }
-  .cal-span-ev.cont-left { border-top-left-radius:0; border-bottom-left-radius:0; margin-left:0; padding-left:4px; }
+  .cal-span-ev:hover, .cal-ev:hover { background:color-mix(in srgb, var(--ev) 28%, var(--surface-raised)); color:var(--text-primary); }
+  .cal-span-ev { margin:1px 2px; }
+  .cal-span-ev.cont-left { border-left:0; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:0; }
   .cal-span-ev.cont-right { border-top-right-radius:0; border-bottom-right-radius:0; margin-right:0; }
   .cal-day-events { padding:0 .25rem .125rem; }
-  .cal-ev {
-    display:block; padding:1px 5px; margin-bottom:2px; font-size:.6875rem; font-weight:500;
-    border-radius:var(--radius-xs, .375rem); color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    text-decoration:none; cursor:pointer; line-height:1.5; transition:opacity .15s;
-  }
-  .cal-ev:hover { opacity:.85; color:#fff; }
-  .cal-more { font-size:.625rem; color:var(--text-muted); cursor:pointer; font-weight:550; transition:color .15s; }
-  .cal-more:hover { color:var(--accent); }
+  .cal-ev { margin-bottom:2px; }
+  .cal-more { font-size:.6875rem; color:var(--text-muted); font-weight:550; }
 
   /* ── Year grid ────────────────────────────────────── */
   .year-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
@@ -104,8 +109,10 @@
     font-size:.6875rem; text-align:center; padding:.1875rem 0;
     color:var(--text-secondary); position:relative; font-variant-numeric:tabular-nums;
   }
-  .year-mini-day.other { color:var(--border-light); }
-  .year-mini-day.today { color:var(--accent); font-weight:700; }
+  /* Days of the neighbouring months only pad the grid : not shown. */
+  .year-mini-day.other { visibility:hidden; }
+  .year-mini-day.today { color:var(--accent-text); font-weight:700; }
+  button.year-mini-day { border:0; background:none; width:100%; font:inherit; font-size:.6875rem; }
   .year-mini-day.has-events { cursor:pointer; }
   .year-mini-day.has-events:hover { background:var(--accent-soft); border-radius:var(--radius-xs, .375rem); }
   .year-mini-day .year-dot-row { display:flex; justify-content:center; gap:1px; margin-top:1px; }
@@ -137,7 +144,7 @@
     display:flex; align-items:center; justify-content:space-between;
     margin-bottom:.75rem;
   }
-  .upcoming-header h6 { margin:0; font-size:.875rem; font-weight:650; color:var(--text-primary); }
+  .upcoming-header .upcoming-title { margin:0; font-size:.875rem; font-weight:650; color:var(--text-primary); }
   .upcoming-header .badge { font-size:.6875rem; font-weight:500; }
   .upcoming-list { display:flex; flex-direction:column; gap:.3125rem; }
   .upcoming-item {
@@ -154,11 +161,11 @@
   }
   .upcoming-item-date .upcoming-days {
     display:inline-block; margin-left:.25rem; font-size:.625rem; font-weight:550;
-    color:var(--accent); background:var(--accent-soft); padding:.0625rem .375rem;
+    color:var(--accent-text); background:var(--accent-soft); padding:.0625rem .375rem;
     border-radius:100px; line-height:1.5;
   }
   .upcoming-item-date .upcoming-days--overdue {
-    color:var(--danger); background:var(--danger-soft);
+    color:var(--danger-text); background:var(--danger-soft);
   }
   .upcoming-item-kind {
     flex-shrink:0; font-size:.625rem; font-weight:550; line-height:1.5;
@@ -169,7 +176,7 @@
   .upcoming-item-cat { font-size:.6875rem; color:var(--text-muted); flex-shrink:0; }
   .upcoming-empty { text-align:center; padding:1.25rem 1rem; color:var(--text-muted); font-size:.8125rem; }
   .upcoming-toggle {
-    font-size:.75rem; color:var(--accent); background:none; border:none;
+    font-size:.75rem; color:var(--accent-text); background:none; border:none;
     cursor:pointer; font-weight:500; padding:0; transition:color .15s;
   }
   .upcoming-toggle:hover { text-decoration:underline; color:var(--accent-hover); }
@@ -183,9 +190,9 @@
     <i class="bi bi-rss me-1" aria-hidden="true"></i>{% trans "Subscribe" %}
   </button>
   <div class="view-toggle" id="viewToggle">
-    <button data-view="month" class="active"><i class="bi bi-calendar-month me-1" aria-hidden="true"></i>{% trans "Month" %}</button>
-    <button data-view="year"><i class="bi bi-calendar4 me-1" aria-hidden="true"></i>{% trans "Year" %}</button>
-    <button data-view="timeline"><i class="bi bi-list-ul me-1" aria-hidden="true"></i>{% trans "Timeline" %}</button>
+    <button type="button" data-view="month" class="active" aria-pressed="true"><i class="bi bi-calendar-month me-1" aria-hidden="true"></i>{% trans "Month" %}</button>
+    <button type="button" data-view="year" aria-pressed="false"><i class="bi bi-calendar4 me-1" aria-hidden="true"></i>{% trans "Year" %}</button>
+    <button type="button" data-view="timeline" aria-pressed="false"><i class="bi bi-list-ul me-1" aria-hidden="true"></i>{% trans "Timeline" %}</button>
   </div>
 {% endpage_header %}
 
@@ -208,40 +215,40 @@
 <div class="card">
   <div class="card-body">
     <div class="calendar-filters" id="calendarFilters">
-      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="risk_assessment" style="background:#ef4444;border-color:#ef4444;" data-color="#ef4444">
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="risk_assessment" style="--ev:#ef4444">
         <span class="dot" aria-hidden="true"></span> {% trans "Risk assessments" %}
       </button>
-      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="compliance_assessment" style="background:#1E3A8A;border-color:#1E3A8A;" data-color="#1E3A8A">
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="compliance_assessment" style="--ev:#1E3A8A">
         <span class="dot" aria-hidden="true"></span> {% trans "Compliance assessments" %}
       </button>
-      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="action_plan" style="background:#f59e0b;border-color:#f59e0b;" data-color="#f59e0b">
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="action_plan" style="--ev:#f59e0b">
         <span class="dot" aria-hidden="true"></span> {% trans "Action plans" %}
       </button>
-      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="treatment_plan" style="background:#475569;border-color:#475569;" data-color="#475569">
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="treatment_plan" style="--ev:#475569">
         <span class="dot" aria-hidden="true"></span> {% trans "Treatment plans" %}
       </button>
-      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="scope" style="background:#06b6d4;border-color:#06b6d4;" data-color="#06b6d4">
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="scope" style="--ev:#06b6d4">
         <span class="dot" aria-hidden="true"></span> {% trans "Scopes" %}
       </button>
-      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="objective" style="background:#14b8a6;border-color:#14b8a6;" data-color="#14b8a6">
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="objective" style="--ev:#14b8a6">
         <span class="dot" aria-hidden="true"></span> {% trans "Objectives" %}
       </button>
-      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="framework" style="background:#3b82f6;border-color:#3b82f6;" data-color="#3b82f6">
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="framework" style="--ev:#3b82f6">
         <span class="dot" aria-hidden="true"></span> {% trans "Frameworks" %}
       </button>
-      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="swot" style="background:#ec4899;border-color:#ec4899;" data-color="#ec4899">
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="swot" style="--ev:#ec4899">
         <span class="dot" aria-hidden="true"></span> {% trans "SWOT analyses" %}
       </button>
-      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="acceptance" style="background:#f97316;border-color:#f97316;" data-color="#f97316">
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="acceptance" style="--ev:#f97316">
         <span class="dot" aria-hidden="true"></span> {% trans "Risk acceptances" %}
       </button>
-      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="supplier_review" style="background:#d946ef;border-color:#d946ef;" data-color="#d946ef">
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="supplier_review" style="--ev:#d946ef">
         <span class="dot" aria-hidden="true"></span> {% trans "Supplier reviews" %}
       </button>
-      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="documents" style="background:#4f46e5;border-color:#4f46e5;" data-color="#4f46e5">
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="documents" style="--ev:#4f46e5">
         <span class="dot" aria-hidden="true"></span> {% trans "Documents" %}
       </button>
-      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="controls" style="background:#65a30d;border-color:#65a30d;" data-color="#65a30d">
+      <button type="button" class="calendar-filter active" aria-pressed="true" data-category="controls" style="--ev:#65a30d">
         <span class="dot" aria-hidden="true"></span> {% trans "Controls" %}
       </button>
     </div>
@@ -271,6 +278,7 @@
   {% trans "No upcoming events" as t_noupcoming %}{% trans "today" as t_todaylabel %}
   {% trans "tomorrow" as t_tomorrow %}{% trans "Show all" as t_showall %}
   {% trans "in %(days)s days" as t_indays %}{% trans "Overdue" as t_overdue %}
+  {% trans "Previous" as t_prev %}{% trans "Next" as t_next %}{% trans "events" as t_events %}
 
   var CAT = {
     risk_assessment:'{{ t_ra|escapejs }}', compliance_assessment:'{{ t_ca|escapejs }}',
@@ -292,6 +300,9 @@
   var TXT_SHOWALL = '{{ t_showall|escapejs }}';
   var TXT_INDAYS = '{{ t_indays|escapejs }}';
   var TXT_OVERDUE = '{{ t_overdue|escapejs }}';
+  var TXT_PREV = '{{ t_prev|escapejs }}';
+  var TXT_NEXT = '{{ t_next|escapejs }}';
+  var TXT_EVENTS = '{{ t_events|escapejs }}';
 
   // ── State ───────────────────────────────────────────
   var view = 'month';
@@ -329,10 +340,10 @@
   // ── Nav bar builder ─────────────────────────────────
   function navHTML(title) {
     return '<div class="cal-nav">'
-      +'<button class="btn btn-sm btn-outline-secondary" id="calPrev"><i class="bi bi-chevron-left"></i></button>'
-      +'<button class="btn btn-sm btn-outline-secondary" id="calToday">'+TXT_TODAY+'</button>'
-      +'<span class="cal-nav-title">'+esc(title)+'</span>'
-      +'<button class="btn btn-sm btn-outline-secondary" id="calNext"><i class="bi bi-chevron-right"></i></button>'
+      +'<button type="button" class="btn btn-sm btn-outline-secondary" id="calPrev" aria-label="'+TXT_PREV+'"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>'
+      +'<button type="button" class="btn btn-sm btn-outline-secondary" id="calToday">'+TXT_TODAY+'</button>'
+      +'<span class="cal-nav-title" aria-live="polite">'+esc(title)+'</span>'
+      +'<button type="button" class="btn btn-sm btn-outline-secondary" id="calNext" aria-label="'+TXT_NEXT+'"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>'
       +'</div>';
   }
   function bindNav(prevFn, nextFn, todayFn) {
@@ -453,7 +464,7 @@
           var cls='cal-span-ev';
           if(sp.contL) cls+=' cont-left';
           if(sp.contR) cls+=' cont-right';
-          h+='<a class="'+cls+'" style="grid-column:'+gc+';grid-row:'+row+';background:'+ev.color+';"'+href+' title="'+esc(ev.title)+'">'+esc(ev.title)+'</a>';
+          h+='<a class="'+cls+'" style="grid-column:'+gc+';grid-row:'+row+';--ev:'+ev.color+';"'+href+' title="'+esc(ev.title)+'">'+esc(ev.title)+'</a>';
         });
         // Point events
         week.forEach(function(day,ci){
@@ -463,7 +474,7 @@
           for(var j=0;j<Math.min(devs.length,MAX_PT);j++){
             var ev=devs[j];
             var href=ev.url?' href="'+esc(ev.url)+'"':'';
-            h+='<a class="cal-ev" style="background:'+ev.color+'"'+href+' title="'+esc(ev.title)+'">'+esc(ev.title)+'</a>';
+            h+='<a class="cal-ev" style="--ev:'+ev.color+'"'+href+' title="'+esc(ev.title)+'">'+esc(ev.title)+'</a>';
           }
           if(devs.length>MAX_PT) h+='<span class="cal-more">+'+(devs.length-MAX_PT)+'</span>';
           h+='</div>';
@@ -519,18 +530,19 @@
           }
           var dayEv=byDate[dateStr]||[];
           if(dayEv.length) cls+=' has-events';
-          h += '<div class="'+cls+'"';
-          if(dayEv.length) h+=' title="'+dayEv.length+' event(s)" onclick="window._calGoMonth('+m+')"';
+          var tag=dayEv.length?'button':'div';
+          h += '<'+tag+' class="'+cls+'"';
+          if(dayEv.length) h+=' type="button" aria-label="'+dayNum+' '+MONTHS[m]+' : '+dayEv.length+' '+TXT_EVENTS+'" onclick="window._calGoMonth('+m+')"';
           h += '>'+dayNum;
           if(dayEv.length) {
-            h += '<div class="year-dot-row">';
+            h += '<span class="year-dot-row" aria-hidden="true">';
             var colors={};
             dayEv.forEach(function(e){ colors[e.color]=1; });
             var ck=Object.keys(colors);
             for(var j=0;j<Math.min(ck.length,4);j++) h+='<span class="year-mini-dot" style="background:'+ck[j]+'"></span>';
-            h += '</div>';
+            h += '</span>';
           }
-          h += '</div>';
+          h += '</'+tag+'>';
         }
         h += '</div></div>';
       }
@@ -618,8 +630,8 @@
         var shown=upcomingExpanded?items:items.slice(0,collapsed);
 
         var h='<div class="upcoming-header">'
-          +'<h6><i class="bi bi-clock-history me-1"></i>'+TXT_UPCOMING
-          +' <span class="badge-dot secondary">'+count+' - '+TXT_NEXT30+'</span></h6>';
+          +'<h2 class="upcoming-title"><i class="bi bi-clock-history me-1" aria-hidden="true"></i>'+TXT_UPCOMING
+          +' <span class="badge-dot secondary">'+count+' - '+TXT_NEXT30+'</span></h2>';
         if(count>collapsed){
           h+='<button class="upcoming-toggle" id="upcomingToggle">'
             +(upcomingExpanded?'&#9650;':'&#9660; '+TXT_SHOWALL+' ('+count+')')
@@ -672,6 +684,7 @@
   function setActiveBtn(v) {
     document.querySelectorAll('#viewToggle button').forEach(function(b){
       b.classList.toggle('active',b.dataset.view===v);
+      b.setAttribute('aria-pressed', b.dataset.view===v ? 'true' : 'false');
     });
   }
   document.querySelectorAll('#viewToggle button').forEach(function(btn) {
@@ -683,16 +696,8 @@
   // ── Filter toggle ──────────────────────────────────
   document.querySelectorAll('.calendar-filter').forEach(function(btn) {
     btn.addEventListener('click',function(){
-      var color=btn.dataset.color;
-      if(btn.classList.contains('active')){
-        btn.classList.remove('active'); btn.setAttribute('aria-pressed','false');
-        btn.style.background='var(--surface)'; btn.style.borderColor='var(--border-light)'; btn.style.color='var(--text-secondary)';
-        btn.querySelector('.dot').style.background=color;
-      } else {
-        btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
-        btn.style.background=color; btn.style.borderColor=color; btn.style.color='#fff';
-        btn.querySelector('.dot').style.background='#fff';
-      }
+      var on=btn.classList.toggle('active');
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
       render();
     });
   });

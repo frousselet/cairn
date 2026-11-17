@@ -31,7 +31,7 @@
   <td data-col="status">{% workflow_badge asset %}</td>
   <td data-col="tags">{% tag_list asset.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <a hx-get="{% url 'assets:essential-asset-update' asset.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+    <a href="{% url 'assets:essential-asset-update' asset.pk %}" hx-get="{% url 'assets:essential-asset-update' asset.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}

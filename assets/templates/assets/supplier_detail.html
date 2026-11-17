@@ -39,7 +39,7 @@
   {# Keeps the exact #supplier-map id / class / data-* for the init JS below. #}
   <div class="card supplier-card{% if not supplier.address and supplier.latitude is None %} supplier-card--nomap{% endif %}">
     {% if supplier.address or supplier.latitude is not None %}
-    <div class="supplier-card__map" aria-hidden="true">
+    <div class="supplier-card__map" aria-hidden="true" inert>
       <div id="supplier-map" class="entity-map"
            data-lat="{{ supplier.latitude|default_if_none:'' }}"
            data-lon="{{ supplier.longitude|default_if_none:'' }}"

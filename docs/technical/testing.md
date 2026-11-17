@@ -72,6 +72,62 @@ and takes under a minute; while iterating on something else, leave it out with
 `pytest -m "not sweep"`. A page it should not open (one whose `GET` has an
 effect) goes in its `SKIP` pattern, with the reason.
 
+## Accessibility
+
+The target is WCAG 2.2 AA, held by three checks that each see what the others
+cannot.
+
+**The tokens** (`core/tests/test_contrast.py`). The palette is read from
+`static/css/cairn/00-tokens.css` and every text token is measured against
+every surface, in the light and the dark theme : under 4.5:1, the test fails.
+It also refuses a *fill* token (`--accent`, `--success`...) used as a text
+colour anywhere in the style sheets and templates; text uses the ink tokens
+(`--accent-text`, `--success-text`...). The colours an administrator types
+(company accent, Trust Center accent) are covered through `core/colors.py`,
+which derives a readable tone from any of them.
+
+**The markup of every page** (`core/tests/markup_audit.py`, run by the
+interface sweep). Each page the crawl reaches is parsed for an image without
+`alt`, a link or button without an accessible name, a link that acts without
+an `href` (out of the keyboard's reach), a form control without a label, a
+positive `tabindex`. It sees closed panels and modals, which a browser audit
+skips because they are hidden.
+
+**The rendered pages** (`scripts/a11y_audit.py`, the `accessibility` job).
+Contrast on a tinted row, the name of a control drawn by a script, the size of
+a target : only a browser knows. The script opens every page of the screenshot
+set plus the sign-in page, a form and the component catalogue, in both themes,
+runs [axe-core](https://github.com/dequelabs/axe-core) on each and fails on
+any violation of a level A or AA rule. It also opens an edit dialog and a
+filter panel before auditing them (axe skips what is hidden), and audits the
+dashboard, a list, a record and the calendar again at a phone's width : about
+ninety renderings in three minutes. To run it locally :
+
+```bash
+npm pack axe-core@4.10.3 && tar -xzf axe-core-4.10.3.tgz package/axe.min.js
+export DJANGO_SETTINGS_MODULE=core.settings_local SQLITE_PATH=/tmp/cairn-a11y.sqlite3 SCHEMA_FROM_MODELS=1
+python manage.py migrate --run-syncdb --noinput
+python manage.py shell -c "from accounts.reference_data import sync_system_permissions; sync_system_permissions(); exec(open('scripts/seed_demo_data.py').read())"
+python manage.py runserver 127.0.0.1:8000 --noreload &
+python scripts/a11y_audit.py --axe package/axe.min.js            # every page, both themes
+python scripts/a11y_audit.py --axe package/axe.min.js --only calendar --theme dark
+```
+
+It needs `google-chrome-stable` on the `PATH`. `SQLITE_PATH` points the local
+settings at a throwaway file, so the audit never touches a developer's
+database. `SCHEMA_FROM_MODELS=1` builds its tables straight from the models
+(replaying every migration on SQLite takes minutes; the PostgreSQL job is the
+one that checks them), and `sync_system_permissions()` writes the reference
+rows the data migrations would have, as the test suite does. A page that does
+not render fails the audit : an error page would otherwise pass for the page
+it stands in for. `--best-practice` adds axe's advisory rules, which never fail the
+run. axe-core is fetched, not vendored : it is a development tool that is
+never served to a user, and its version is pinned in the workflow.
+
+No automated check proves a page accessible : these catch regressions on what
+a machine can measure. A new kind of page is added to the audit's page list,
+and tried once with the keyboard alone.
+
 ## Warnings
 
 The suite runs with no warning, and two of them fail it on purpose
@@ -128,7 +184,7 @@ means, in order:
 
 ## Continuous integration
 
-`.github/workflows/tests.yml` has two jobs. Both install `requirements.txt`
+`.github/workflows/tests.yml` has three jobs. All install `requirements.txt`
 on the Python version of the image.
 
 `test`, the fast run on SQLite, on every push to `main` and every pull request :
@@ -148,6 +204,14 @@ ships, on every push to `main`, and on a pull request only when it carries the
 2. `pytest --ds=core.settings_test_postgres -x`, every migration replayed
 
 Both run with `DEBUG` off and a key of their own, like a deployment.
+
+`accessibility (axe-core, both themes)`, on every push to `main` and every
+pull request :
+
+1. a demo instance is created from the models, seeded and served
+   (`core.settings_local` on a throwaway SQLite file)
+2. `python scripts/a11y_audit.py` audits every page in both themes (see
+   [Accessibility](#accessibility))
 
 `.github/workflows/docs.yml` adds the documentation gate : the generated
 reference pages must be current, and every internal documentation link must

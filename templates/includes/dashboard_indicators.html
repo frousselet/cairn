@@ -33,7 +33,7 @@
             {% endif %}
           </div>
           <div class="d-flex align-items-baseline gap-2">
-            <span class="stat-card-value mb-0" style="{% if slot.indicator.is_critical %}color:var(--danger){% endif %}">
+            <span class="stat-card-value mb-0" style="{% if slot.indicator.is_critical %}color:var(--danger-text){% endif %}">
               {% if slot.indicator.format == "boolean" %}
                 {% if slot.indicator.current_value == "true" or slot.indicator.current_value == "1" or slot.indicator.current_value == "yes" %}
                   <i class="bi bi-check-circle-fill text-success"></i>
@@ -51,11 +51,11 @@
             {% endif %}
             {% if slot.trend == "up" %}
               <span class="ms-auto" title="{% trans 'Trend' %}: +{{ slot.trend_value|floatformat:1 }}">
-                <i class="bi bi-arrow-up-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger){% else %}var(--success){% endif %}"></i>
+                <i class="bi bi-arrow-up-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger-text){% else %}var(--success-text){% endif %}"></i>
               </span>
             {% elif slot.trend == "down" %}
               <span class="ms-auto" title="{% trans 'Trend' %}: {{ slot.trend_value|floatformat:1 }}">
-                <i class="bi bi-arrow-down-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger){% else %}var(--danger){% endif %}"></i>
+                <i class="bi bi-arrow-down-short fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger-text){% else %}var(--danger-text){% endif %}"></i>
               </span>
             {% elif slot.trend == "stable" %}
               <span class="ms-auto" title="{% trans 'Stable' %}">
@@ -63,7 +63,7 @@
               </span>
             {% elif slot.trend == "changed" %}
               <span class="ms-auto" title="{% trans 'Changed' %}">
-                <i class="bi bi-arrow-left-right fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger){% else %}var(--warning){% endif %}"></i>
+                <i class="bi bi-arrow-left-right fs-5" style="color:{% if slot.indicator.is_critical %}var(--danger-text){% else %}var(--warning-text){% endif %}"></i>
               </span>
             {% endif %}
           </div>
@@ -71,7 +71,7 @@
           <small class="text-muted" style="font-size:.72rem">
             <i class="bi bi-calendar3 me-1" aria-hidden="true"></i>{{ slot.current_measurement.recorded_at|date:"SHORT_DATE_FORMAT" }}
             {% if slot.delta_display %}
-              · <i class="bi bi-plus-slash-minus me-1" aria-hidden="true"></i><span style="color:{% if slot.indicator.is_critical %}var(--danger){% elif slot.trend == 'up' %}var(--success){% elif slot.trend == 'down' %}var(--danger){% else %}var(--text-muted){% endif %}">{{ slot.delta_display }}{% if slot.indicator.unit %} {{ slot.indicator.unit }}{% endif %}</span>
+              · <i class="bi bi-plus-slash-minus me-1" aria-hidden="true"></i><span style="color:{% if slot.indicator.is_critical %}var(--danger-text){% elif slot.trend == 'up' %}var(--success-text){% elif slot.trend == 'down' %}var(--danger-text){% else %}var(--text-muted){% endif %}">{{ slot.delta_display }}{% if slot.indicator.unit %} {{ slot.indicator.unit }}{% endif %}</span>
             {% endif %}
           </small>
           {% else %}
@@ -101,7 +101,7 @@
       </div>
       <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
         <div class="d-flex align-items-center justify-content-center" style="width:36px;height:36px;border-radius:50%;background:var(--accent-soft)">
-          <i class="bi bi-plus" style="font-size:1.25rem;color:var(--accent)"></i>
+          <i class="bi bi-plus" style="font-size:1.25rem;color:var(--accent-text)"></i>
         </div>
       </div>
     </div>

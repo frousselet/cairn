@@ -116,3 +116,64 @@ jobs:
 
       - name: Run tests on PostgreSQL
         run: pytest --ds=core.settings_test_postgres -x --tb=short
+
+  # What only a browser can tell : the contrast a text really has once the
+  # cascade and the theme are applied, the name of a control drawn by a script,
+  # the size of a target. A demo instance is seeded and served, and axe-core
+  # audits every page of the screenshot set in the light and the dark theme;
+  # any WCAG 2.2 A or AA violation fails the job (docs/technical/testing.md).
+  accessibility:
+    name: accessibility (axe-core, both themes)
+    runs-on: ubuntu-latest
+
+    env:
+      DJANGO_SETTINGS_MODULE: core.settings_local
+      SQLITE_PATH: /tmp/cairn-a11y.sqlite3
+      SCHEMA_FROM_MODELS: "1"
+      # A development tool, never served : pinned here rather than vendored.
+      AXE_CORE_VERSION: 4.10.3
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch axe-core
+        working-directory: ${{ runner.temp }}
+        run: |
+          npm pack "axe-core@${AXE_CORE_VERSION}" --silent
+          tar -xzf "axe-core-${AXE_CORE_VERSION}.tgz" package/axe.min.js
+
+      # The schema is built from the models : replaying every migration on
+      # SQLite takes nine minutes, and the PostgreSQL job is the one that
+      # checks them. The reference rows the data migrations write are created
+      # by sync_system_permissions(), as in the test suite.
+      - name: Seed a demo instance
+        run: |
+          python manage.py migrate --run-syncdb --noinput
+          python manage.py shell -c "from accounts.reference_data import sync_system_permissions; sync_system_permissions(); exec(open('scripts/seed_demo_data.py').read())"
+
+      - name: Serve it
+        run: |
+          python manage.py runserver 127.0.0.1:8000 --noreload > "${RUNNER_TEMP}/server.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            curl --silent --fail --output /dev/null http://127.0.0.1:8000/health/ && exit 0
+            sleep 1
+          done
+          cat "${RUNNER_TEMP}/server.log"
+          exit 1
+
+      - name: Audit every page with axe-core
+        run: python scripts/a11y_audit.py --base-url http://127.0.0.1:8000 --axe "${RUNNER_TEMP}/package/axe.min.js"
+
+      - name: Server log
+        if: failure()
+        run: tail -n 100 "${RUNNER_TEMP}/server.log"

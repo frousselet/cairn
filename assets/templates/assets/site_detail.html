@@ -28,7 +28,7 @@
   {# Overview : site info overlaid on a hero map of its location (#site-map is read by the init JS below). #}
   <div class="card supplier-card{% if not site.address %} supplier-card--nomap{% endif %}">
     {% if site.address %}
-    <div class="supplier-card__map" aria-hidden="true">
+    <div class="supplier-card__map" aria-hidden="true" inert>
       <div id="site-map" class="entity-map" data-address="{{ site.address|striptags }}"></div>
     </div>
     {% endif %}

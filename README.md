@@ -57,6 +57,10 @@ with your GRC data directly, under the caller's own permissions.
 scope-based tenancy, role-based permissions and passkey login. Bilingual
 throughout, English and French.
 
+**Readable and usable from the keyboard.** The interface targets WCAG 2.2 AA
+in its light and dark themes, and the build checks it : contrast ratios are
+recomputed from the palette, and every page is audited with axe-core.
+
 **Optional AI, off by default.** [Ask Cairn](docs/user-guide/ask-cairn.md)
 answers questions in plain language and cites real records. Point it at Mistral,
 OpenAI, Claude, or your own Ollama so nothing leaves your infrastructure.

@@ -38,7 +38,7 @@
   </td>
   <td data-col="tags">{% tag_list r.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <a hx-get="{% url 'risks:risk-update' r.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ r.reference }}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+    <a href="{% url 'risks:risk-update' r.pk %}" hx-get="{% url 'risks:risk-update' r.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}: {{ r.reference }}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
     {% if can_delete_risks and r.is_deletable %}
     <a href="{% url 'risks:risk-delete' r.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" aria-label="{% trans 'Delete' %}: {{ r.reference }}"><i class="bi bi-trash" aria-hidden="true"></i></a>
     {% endif %}

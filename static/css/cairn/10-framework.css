@@ -77,9 +77,14 @@
   color: var(--text-muted);
   transition: transform var(--transition-normal, 220ms) var(--ease-out, ease-out);
 }
-.section-card__actions + .section-card__chevron { margin-left: .25rem; }
+/* The actions of a collapsible card sit on the header line, left of the
+   chevron, but outside the <summary> (see the template). */
+.section-card__details { position: relative; }
+.section-card__actions--beside {
+  position: absolute; top: calc(var(--section-pad-y) - .25rem); right: calc(var(--section-pad-x) + 1.75rem);
+}
 .section-card__details[open] .section-card__chevron { transform: rotate(180deg); }
-.section-card__details > summary:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--accent-glow); border-radius: var(--radius-lg); }
+.section-card__details > summary:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--focus-ring); border-radius: var(--radius-lg); }
 @media (max-width: 575.98px) {
   .section-card { --section-pad-x: 1.25rem; --section-pad-y: 1.25rem; }
   .section-card__head { flex-wrap: wrap; }
@@ -141,7 +146,7 @@
 /* ── Foldable table groups ────────────────────────────
    A header row that folds its group of rows (data-group-toggle, base.html). */
 tr[data-group-toggle] { cursor: pointer; }
-tr[data-group-toggle]:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--accent-glow); }
+tr[data-group-toggle]:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--focus-ring); }
 .results-section-row__chevron { display: inline-block; font-size: .75rem; transition: transform var(--transition-fast); }
 tr[data-group-toggle][aria-expanded="false"] .results-section-row__chevron { transform: rotate(-90deg); }
 @media (prefers-reduced-motion: reduce) { .results-section-row__chevron { transition: none; } }
@@ -179,7 +184,7 @@ tr[data-group-toggle][aria-expanded="false"] .results-section-row__chevron { tra
 .ref-link { display: flex; align-items: baseline; gap: .625rem; min-width: 0; }
 .ref-link .ref { flex-shrink: 0; }
 .ref-link__label { min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
-a.ref-link__label { color: var(--accent); text-decoration: none; }
+a.ref-link__label { color: var(--accent-text); text-decoration: none; }
 a.ref-link__label:hover { text-decoration: underline; }
 
 /* ── Tag pills (colour carried by --tag-bg / --tag-fg) ── */
@@ -207,11 +212,19 @@ a.ref-link__label:hover { text-decoration: underline; }
 .badge-dot:has(> .bi)::before { display: none; }
 
 /* ── Utilities replacing recurring inline styles ───── */
-.text-accent { color: var(--accent) !important; }
+.text-accent { color: var(--accent-text) !important; }
+/* Bootstrap's status text utilities, on the ink tokens : its own hues do not
+   reach 4.5:1 on the tinted surfaces, nor on the dark theme. */
+.text-success { color: var(--success-text) !important; }
+.text-warning { color: var(--warning-text) !important; }
+.text-danger { color: var(--danger-text) !important; }
+.text-info { color: var(--info-text) !important; }
+.text-primary { color: var(--accent-text) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
 .text-meta { color: var(--text-muted); font-size: .8125rem; }
 .text-sm { font-size: .8125rem; }
 .link-inherit { color: inherit; text-decoration: none; }
-.link-inherit:hover { color: var(--accent); }
+.link-inherit:hover { color: var(--accent-text); }
 .cursor-pointer { cursor: pointer; }
 .sticky-rail { position: sticky; top: 1rem; align-self: flex-start; }
 
@@ -220,7 +233,7 @@ a.ref-link__label:hover { text-decoration: underline; }
 .page-form__step { margin: 0 0 1.75rem; padding: 0; border: 0; min-width: 0; }
 .page-form__step > legend { display: flex; float: none; width: 100%; margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--border-light); }
 .page-form__actions { margin-top: .5rem; }
-#itemDrawer .drawer-title-icon--danger { background: var(--danger-soft); color: var(--danger); }
+#itemDrawer .drawer-title-icon--danger { background: var(--danger-soft); color: var(--danger-text); }
 
 /* ── TomSelect option row (form multi-selects) ─────── */
 .ts-dropdown .ts-opt { padding: 6px 10px; font-size: .8125rem; }
@@ -261,12 +274,12 @@ a.ref-link__label:hover { text-decoration: underline; }
   padding: .25rem .4rem;
   line-height: 1;
 }
-.btn.btn-icon.btn-icon--danger { --btn-fg: var(--danger); --btn-fg-hover: var(--danger); --btn-bg-hover: var(--danger-soft); }
+.btn.btn-icon.btn-icon--danger { --btn-fg: var(--danger-text); --btn-fg-hover: var(--danger-text); --btn-bg-hover: var(--danger-soft); }
 
 /* ── Entity logo thumbnail ─────────────────────────── */
 .entity-logo { width: 24px; height: 24px; flex-shrink: 0; object-fit: cover; border-radius: var(--radius-xs); }
 .entity-logo--sm { width: 16px; height: 16px; }
 .entity-logo--lg { width: 32px; height: 32px; }
-.entity-logo--fallback { display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); font-size: .75rem; font-weight: 700; }
+.entity-logo--fallback { display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent-text); font-size: .75rem; font-weight: 700; }
 .min-w-0 { min-width: 0; }
 .scroll-box { max-height: 20rem; overflow-y: auto; }

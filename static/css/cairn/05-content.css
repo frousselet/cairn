@@ -4,7 +4,7 @@
 /* ── Hero section - Brutalist painted slab ────────── */
 .hero-section {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast);
   border: 2px solid var(--border-light);
   border-radius: 1.75rem;
   padding: 2rem 2.25rem;
@@ -75,17 +75,17 @@
   white-space: nowrap;
 }
 a.ref { text-decoration: none; transition: background-color var(--transition-fast), color var(--transition-fast); }
-a.ref:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); }
+a.ref:hover { background: var(--accent-soft); color: var(--accent-text); border-color: var(--accent-soft); }
 
 /* ── Table cell links ──────────────────────────────── */
 /*
  * Canonical link inside a list-table cell (primary Name column and
  * any cross-reference to another record). Replaces the inline
- * `color:var(--accent);text-decoration:none;font-weight:500` that
+ * `color:var(--accent-text);text-decoration:none;font-weight:500` that
  * used to be copy-pasted across every list template.
  */
 .cell-link {
-  color: var(--accent);
+  color: var(--accent-text);
   text-decoration: none;
   font-weight: 500;
   transition: color var(--transition-fast);
@@ -116,7 +116,7 @@ a.ref:hover { background: var(--accent-soft); color: var(--accent); border-color
   font-weight: 600; font-size: .72rem; letter-spacing: .01em;
   padding: .25rem .55rem; border-radius: 999px; white-space: nowrap;
 }
-.ov-origin--inherited { background: var(--accent-soft); color: var(--accent); }
+.ov-origin--inherited { background: var(--accent-soft); color: var(--accent-text); }
 .ov-origin--specific {
   background: var(--surface-muted); color: var(--text-muted);
   border: 1px solid var(--border-light);
@@ -133,7 +133,7 @@ a.ref:hover { background: var(--accent-soft); color: var(--accent); border-color
 .review-entry__body > :first-child { margin-top: 0; }
 .review-entry__body > :last-child { margin-bottom: 0; }
 .review-entry__file { margin-top: .45rem; font-size: .85rem; }
-.review-entry__file a { color: var(--accent); text-decoration: none; }
+.review-entry__file a { color: var(--accent-text); text-decoration: none; }
 .review-entry__file a:hover { text-decoration: underline; }
 
 /* People cell: avatar + two-line identity (used in the users admin table).
@@ -148,7 +148,7 @@ a.ref:hover { background: var(--accent-soft); color: var(--accent); border-color
 .cell-avatar-fallback {
   display: inline-flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, var(--accent-soft), color-mix(in srgb, var(--accent) 18%, transparent));
-  color: var(--accent); font-size: .9375rem; font-weight: 600; letter-spacing: .02em;
+  color: var(--accent-text); font-size: .9375rem; font-weight: 600; letter-spacing: .02em;
 }
 /* Denser variant for a secondary people column (e.g. an owner). */
 .cell-people--sm { gap: .5rem; }
@@ -184,7 +184,7 @@ a.ref:hover { background: var(--accent-soft); color: var(--accent); border-color
   background: var(--surface-muted);
   border: 2px solid var(--surface);
   box-shadow: 0 0 0 1px var(--border-light);
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
   line-height: 1;
   text-decoration: none;
@@ -274,11 +274,11 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
   color: var(--text-primary) !important;
   background: var(--surface-muted) !important;
 }
-.sortable-th:hover .sort-icon { opacity: 1 !important; color: var(--accent) !important; }
+.sortable-th:hover .sort-icon { opacity: 1 !important; color: var(--accent-text) !important; }
 
 /* Sort icons */
 .sort-icon { transition: opacity var(--transition-fast), color var(--transition-fast); }
-.sort-icon-active { font-size: .85rem; opacity: 1; color: var(--accent); font-weight: 700; }
+.sort-icon-active { font-size: .85rem; opacity: 1; color: var(--accent-text); font-weight: 700; }
 .sort-icon-idle { font-size: .8rem; opacity: 1; color: var(--text-secondary); }
 
 [data-bs-theme="dark"] .sort-icon-active { color: var(--accent-hover); }
@@ -326,7 +326,7 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
 }
 .table-toolbar-input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 .table-toolbar-input::placeholder {
@@ -341,14 +341,14 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
   text-decoration: none;
   transition: color var(--transition-fast);
 }
-.table-toolbar-clear:hover { color: var(--danger); }
+.table-toolbar-clear:hover { color: var(--danger-text); }
 .table-toolbar-badge {
   display: inline-flex;
   align-items: center;
   padding: .2rem .625rem;
   font-size: .7rem;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--accent-soft);
   border-radius: 100px;
   white-space: nowrap;
@@ -462,7 +462,7 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
 }
 .ts-wrapper.focus .ts-control {
   background: var(--surface);
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 .ts-dropdown {
@@ -479,7 +479,7 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
 }
 .ts-dropdown .active {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .ts-dropdown .option {
   padding: .4375rem .75rem;
@@ -487,7 +487,7 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
   font-size: .8125rem;
 }
 .ts-dropdown .create {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 [data-bs-theme="dark"] .ts-wrapper .ts-control {
   background: var(--field-bg);
@@ -528,7 +528,7 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
 .pell:hover:not(:focus-within) { border-color: var(--field-border-hover); }
 .pell:focus-within {
   background: var(--surface);
-  border-color: var(--accent);
+  border-color: var(--accent-text);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 .pell-actionbar {
@@ -560,9 +560,9 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
 .pell-button:hover { background: var(--surface-muted); color: var(--text-primary); }
 .pell-button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--accent-glow);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
-.pell-button-selected { background: var(--accent-soft); color: var(--accent); }
+.pell-button-selected { background: var(--accent-soft); color: var(--accent-text); }
 .pell-content {
   height: auto;
   min-height: 9rem;
@@ -587,7 +587,7 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
 .pell-content:focus { outline: none; }
 .pell-content > :first-child { margin-top: 0; }
 .pell-content > :last-child { margin-bottom: 0; }
-.pell-content a { color: var(--accent); text-decoration: underline; }
+.pell-content a { color: var(--accent-text); text-decoration: underline; }
 .pell-content h2 { font-size: 1.05rem; font-weight: 700; margin: .6rem 0 .35rem; }
 .pell-content h3 { font-size: .95rem; font-weight: 700; margin: .55rem 0 .3rem; }
 .pell-content ul, .pell-content ol { padding-left: 1.35rem; margin: .35rem 0; }
@@ -622,7 +622,8 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
  * - the default navy accent otherwise drew a blue ring on every control.
  * Only shown for keyboard focus; a mouse :focus draws nothing. */
 :focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--text-primary) 45%, transparent);
+  /* 60 % of the text colour : 3:1 or more against every surface (WCAG 1.4.11). */
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
 }
@@ -658,7 +659,7 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
   border: 0;
   background: none;
   padding: 0;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: .75rem;
   cursor: pointer;
 }
@@ -755,7 +756,7 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
 .about-modal-content .about-version { font-size: .8125rem; color: var(--text-muted); margin-top: .25rem; }
 .about-modal-content .about-license { font-size: .75rem; color: var(--text-muted); margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--border-light); }
 .about-modal-content .about-license a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
-.about-modal-content .about-license a:hover { color: var(--accent); }
+.about-modal-content .about-license a:hover { color: var(--accent-text); }
 .about-modal-content .about-source-offer { display: inline-block; margin-top: .35rem; opacity: .85; }
 .about-modal-content .about-github-link {
   display: inline-flex;
@@ -766,7 +767,7 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
   text-decoration: none;
   transition: color var(--transition-fast);
 }
-.about-modal-content .about-github-link:hover { color: var(--accent); }
+.about-modal-content .about-github-link:hover { color: var(--accent-text); }
 /* Empty until the check answers, and empty for good when it cannot : the
    slot collapses rather than reserving a blank line. */
 .about-update-slot:empty { display: none; }
@@ -786,13 +787,13 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
   padding: .2rem .5rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
   transition: background var(--transition-fast);
 }
 .about-update--outdated:hover {
   background: color-mix(in srgb, var(--accent) 20%, transparent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .about-modal-content .about-libraries {
@@ -848,7 +849,7 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
   text-decoration: none;
   overflow-wrap: anywhere;
 }
-.about-lib-list a:hover { color: var(--accent); text-decoration: underline; }
+.about-lib-list a:hover { color: var(--accent-text); text-decoration: underline; }
 /* The owner is the provenance, the name is what the reader looks for :
    the owner recedes so the eye lands on the library. */
 .about-lib-owner { color: var(--text-muted); }

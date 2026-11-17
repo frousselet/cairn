@@ -13,7 +13,7 @@ GeneralDashboardView and already scope-filtered and permission-gated.
 <div class="card h-100">
   <div class="card-body">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-      <h5 class="card-title mb-0"><i class="bi bi-hourglass-split me-1 text-accent" aria-hidden="true"></i> {% trans "Notification deadlines" %}</h5>
+      <h2 class="card-title mb-0"><i class="bi bi-hourglass-split me-1 text-accent" aria-hidden="true"></i> {% trans "Notification deadlines" %}</h2>
       <a href="{% url 'incidents:notification-list' %}" class="upcoming-toggle">{% trans "Register" %}</a>
     </div>
 
@@ -79,8 +79,8 @@ GeneralDashboardView and already scope-filtered and permission-gated.
   a.ndl-stat:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; }
   .ndl-stat__value { font-size:1.125rem; font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-primary); line-height:1; }
   .ndl-stat__label { font-size:.6875rem; color:var(--text-muted); }
-  .ndl-stat--late .ndl-stat__value { color:var(--danger); }
-  .ndl-stat--running .ndl-stat__value { color:var(--warning); }
+  .ndl-stat--late .ndl-stat__value { color:var(--danger-text); }
+  .ndl-stat--running .ndl-stat__value { color:var(--warning-text); }
   .ndl-list { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(18rem, 1fr)); gap:.75rem; }
   .ndl-item {
     display:flex; flex-direction:column; gap:.5rem; padding:.875rem 1rem;
@@ -99,7 +99,7 @@ GeneralDashboardView and already scope-filtered and permission-gated.
   .ndl-item__incident { display:flex; align-items:center; gap:.375rem; min-width:0; font-size:.75rem; color:var(--text-secondary); }
   .ndl-item__incident-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .ndl-more { margin-top:.75rem; font-size:.75rem; }
-  .ndl-more a { color:var(--accent); text-decoration:none; }
+  .ndl-more a { color:var(--accent-text); text-decoration:none; }
   .ndl-more a:hover { text-decoration:underline; }
   @media (max-width: 575.98px) {
     .ndl-item__head { flex-direction:column; align-items:flex-start; }

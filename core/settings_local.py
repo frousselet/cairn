@@ -28,9 +28,26 @@ from core.settings import BASE_DIR  # noqa: E402
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        # SQLITE_PATH points a throwaway run (the accessibility audit, a crawl)
+        # at its own file instead of the developer's database.
+        "NAME": os.environ.get("SQLITE_PATH") or BASE_DIR / "db.sqlite3",
     }
 }
+
+# SCHEMA_FROM_MODELS=1 builds the tables straight from the models
+# (`migrate --run-syncdb`) instead of replaying every migration, which takes
+# minutes on SQLite. For a throwaway instance only (the accessibility audit in
+# CI) : the reference rows the data migrations write are then created by
+# `accounts.reference_data.sync_system_permissions()`.
+if os.environ.get("SCHEMA_FROM_MODELS"):
+    class _SchemaFromModels:
+        def __contains__(self, item):
+            return True
+
+        def __getitem__(self, item):
+            return None
+
+    MIGRATION_MODULES = _SchemaFromModels()
 
 # In-memory channel layer - no Redis needed.
 CHANNEL_LAYERS = {

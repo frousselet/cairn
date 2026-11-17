@@ -8442,10 +8442,6 @@ msgstr[1] ""
 msgid "Compliance by framework"
 msgstr "Conformité par référentiel"
 
-#, python-format
-msgid "%(count)s requirement%(count|pluralize:\"s\")s"
-msgstr "%(count)s exigence%(count|pluralize:\"s\")s"
-
 msgid "Partial compliance"
 msgstr "Conformité partielle"
 
@@ -20653,3 +20649,35 @@ msgstr "Correspondances d'exigences"
 
 msgid "Views"
 msgstr "Vues"
+
+msgid "Skip to main content"
+msgstr "Aller au contenu principal"
+
+msgid "Sidebar"
+msgstr "Barre latérale"
+
+msgid "Main navigation"
+msgstr "Navigation principale"
+
+msgid "Move earlier"
+msgstr "Déplacer avant"
+
+msgid "Move later"
+msgstr "Déplacer après"
+
+msgid "Show or hide the scopes below"
+msgstr "Afficher ou masquer les périmètres en dessous"
+
+msgid "events"
+msgstr "événements"
+
+#, python-format
+msgid "%(field)s : condition"
+msgstr "%(field)s : condition"
+
+#, python-format
+msgid "%(name)s : %(pct)s%% compliant"
+msgstr "%(name)s : %(pct)s %% conforme"
+
+msgid "Scrollable table"
+msgstr "Tableau défilant"

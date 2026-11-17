@@ -33,7 +33,7 @@ File: `trust_center/models/settings.py`
 | RG-TC-06 | Singleton : exactly one row, accessed via `get()`, enforced in `save()`. |
 | RG-TC-10 | `is_published` is the global kill switch. The public view layer (`require_published()` in `trust_center/api/public_views.py` and the web views) 404s the whole surface when it is `False`. This is independent of, and additional to, each entity's dual publication gate. |
 | RG-TC-12 | `show_compliance_percentages` is the global half of the two-toggle rule for certification percentages (the other half is the per-item `show_percentage`). |
-| RG-TC-13 | `theme_accent` must be a valid hex colour; the default is the brand navy `#1E3A8A`. |
+| RG-TC-13 | `theme_accent` must be a valid hex colour; the default is the brand navy `#1E3A8A`. Any colour is accepted : the public page derives from it the tones that stay readable (WCAG 2.2 AA, 4.5:1). The hero uses the accent deepened, if need be, until its white text reads (`accent_fill`); links, icons and figures use the accent moved in lightness for each theme (`accent_ink`). Hue and saturation are kept. A custom stylesheet may still override the resulting custom properties (`--accent-fill`, `--accent-text`). |
 
 ## Endpoints
 

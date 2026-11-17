@@ -45,6 +45,8 @@
     }
     :root {
       --accent: #1E3A8A;
+      --accent-text: #1E3A8A;
+      --accent-contrast: #FFFFFF;
       --accent-hover: #1E2E5E;
       --accent-soft: #EEF2FF;
       --accent-glow: rgba(30,58,138,.20);
@@ -53,7 +55,7 @@
       --border-light: rgba(0,0,0,.08);
       --text-primary: #18181B;
       --text-secondary: #52525B;
-      --text-muted: #A1A1AA;
+      --text-muted: #6B6B74;
       --ok: #15803D;
       --warn: #B45309;
       --radius-lg: 1.125rem;
@@ -67,8 +69,10 @@
       --border-light: rgba(255,255,255,.10);
       --text-primary: #E4E4E7;
       --text-secondary: #A1A1AA;
-      --text-muted: #71717A;
+      --text-muted: #8E8E98;
       --accent: #3B5BB8;
+      --accent-text: #869FEA;
+      --accent-contrast: #FFFFFF;
       --accent-soft: rgba(59,91,184,.15);
       --accent-glow: rgba(59,91,184,.22);
       --ok: #4ADE80;
@@ -160,7 +164,7 @@
     }
     .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
     .btn-accent {
-      background: var(--accent); border: none; color: #fff;
+      background: var(--accent); border: none; color: var(--accent-contrast);
       border-radius: var(--radius-sm); padding: .625rem 1rem;
       font-weight: 600; font-size: .8125rem;
       transition: all .2s var(--ease-out-expo);
@@ -169,9 +173,9 @@
     .btn-accent:hover { background: var(--accent-hover); transform: translateY(-1px); color: #fff; }
     .btn-accent:disabled { opacity: .55; transform: none; cursor: not-allowed; }
     .alert { border-radius: var(--radius-sm); font-size: .8125rem; }
-    a.ob-link { color: var(--accent); text-decoration: none; font-weight: 550; font-size: .8125rem; }
+    a.ob-link { color: var(--accent-text); text-decoration: none; font-weight: 550; font-size: .8125rem; }
     a.ob-link:hover { text-decoration: underline; }
-    ::selection { background: var(--accent-soft); color: var(--accent); }
+    ::selection { background: var(--accent-soft); color: var(--accent-text); }
     {% block extra_style %}{% endblock %}
   </style>
 </head>

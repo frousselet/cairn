@@ -252,7 +252,10 @@ class TestFilterChipTag:
         )
         assert "filter-chip" in out
         assert "active" not in out.replace("filter-chip", "")
-        assert 'aria-pressed="false"' in out
+        # A chip is a link : its active state is aria-current, not aria-pressed
+        # (which only a button may carry).
+        assert "aria-current" not in out
+        assert "aria-pressed" not in out
         assert "?status=open" in out
 
     def test_active_toggles_off(self):
@@ -262,7 +265,7 @@ class TestFilterChipTag:
             '{% filter_chip label="Open" param="status" value="open" %}',
             {"request": req},
         )
-        assert 'aria-pressed="true"' in out
+        assert 'aria-current="true"' in out
         assert "status=open" not in out  # toggled off
 
     def test_other_params_preserved(self):

@@ -39,7 +39,9 @@ scopes. Your dashboard and your colleague's can differ, and both are correct.
 
 Enter **edit mode** from the dashboard header. The grid comes alive.
 
-**Move** a tile by dragging its handle. **Resize** it from the aspect-ratio
+**Move** a tile by dragging its handle, or with its two arrow buttons, which
+shift it one place earlier or later (the way to reorder from the keyboard).
+**Resize** it from the aspect-ratio
 button : each widget offers a set of sizes, expressed as width by height. A
 tile's content is fitted to the size you give it, so a taller list widget shows
 *more rows* rather than growing a scrollbar. **Remove** a tile with the minus

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GET /health/` reports whether the instance can serve (database reachable), with no session and whatever the Host header, and is the image's `HEALTHCHECK`.
 - Error pages in the product's design and in the reader's language for a missing page, a refused permission, an expired form and a server error.
 - The basemap of the scope, site and supplier maps is a deployment setting (`MAP_TILE_URL`, `MAP_TILE_URL_DARK`, `MAP_TILE_ATTRIBUTION`); an empty value switches the maps off.
+- A *Skip to main content* link is the first stop of the keyboard on every page, and dashboard tiles gain *Move earlier* / *Move later* buttons so the layout can be rearranged without dragging.
 
 ### Changed
 
@@ -42,6 +43,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI crawls every page and form of the demo dataset, and runs the suite a second time on PostgreSQL with every migration replayed (on `main`, and on a pull request labelled `ci:postgres`).
 - Python dependencies install from a compiled `requirements.txt` (exact versions, hash-checked, generated from `requirements.in` and refreshed weekly by Dependabot) instead of the latest release of everything, with Django held on its 5.2 LTS line and the image on Python 3.14, the version CI tests.
 - The application logs to the console in production as under `DEBUG`, tracebacks of request errors included (`LOG_LEVEL` sets the verbosity).
+- Texts meet the WCAG 2.2 AA contrast level in both themes : the muted grey, status badges, and links and accent labels on the dark theme take readable tones (ink tokens `--accent-text`, `--success-text`...), and placeholders lose their transparency.
+- The calendar shows an event as a tint and a rule in its category colour with the title in the text colour, instead of white text on hues half of which could not carry it.
+- A custom accent colour (company or Trust Center) stays readable whatever it is : the text drawn in it, the label on it and the Trust Center banner are derived from it for each theme.
+- Keyboard focus is one neutral ring that stands out on every surface, instead of pale halos on buttons, close buttons and switchers.
+- CI audits every page of the demo dataset with axe-core in the light and the dark theme, recomputes the palette's contrast ratios and parses every page for unnamed controls.
 
 ### Fixed
 
@@ -69,6 +75,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The documented deployment of the published image had no volume for uploaded files, which were lost each time the container was recreated.
 - A list table wider than its card had its last columns clipped and unreachable on laptop screens; it now scrolls inside the card.
 - The scope, site and supplier maps showed an "API key required" watermark instead of the map, their tile provider no longer serving anonymous requests; they draw OpenStreetMap tiles by default.
+- The Edit buttons of fourteen lists and the days of the calendar's year view could not be reached from the keyboard.
+- Filter panel fields, grid forms (risk criteria, supplier type requirements, review participants), the mobile menu button and the calendar arrows had no accessible name.
+- The public Trust Center was unreadable in places on the dark theme (navy links on charcoal, grey text and buttons).
+- On a phone, the rows of the dashboard's progress-bar tiles (frameworks, objectives) collapsed onto each other.
+- Form dialogs had no accessible name, their searchable selects were announced twice (once with no name), and a table scrolling sideways could not be scrolled from the keyboard.
+- The dashboard's framework tile read "90 requirement" whatever the count.
 
 ### Security
 

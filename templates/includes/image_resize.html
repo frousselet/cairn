@@ -41,7 +41,7 @@ function showImageUploadSpinner(previewEl, minMs) {
   var overlay = document.createElement('div');
   overlay.className = 'image-upload-spinner';
   overlay.setAttribute('role', 'status');
-  overlay.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true" style="color:var(--accent)"></span>';
+  overlay.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true" style="color:var(--accent-text)"></span>';
   overlay.style.cssText =
     'position:absolute;display:flex;align-items:center;justify-content:center;z-index:5;' +
     'left:' + (er.left - pr.left) + 'px;top:' + (er.top - pr.top) + 'px;' +

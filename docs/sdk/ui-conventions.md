@@ -145,9 +145,31 @@ which is the usual cause of "it only works after a hard refresh".
 
 ## Accessibility
 
-The commitment is WCAG 2.2 AA. In practice, on a new screen: every control has
-an accessible name, focus is visible, colour is never the only carrier of
-meaning, and motion honours `prefers-reduced-motion`.
+The commitment is WCAG 2.2 AA, and three checks hold it (see
+[testing](../technical/testing.md#accessibility)). In practice, on a new
+screen :
+
+- **Text colour** : `--text-primary`, `--text-secondary` or `--text-muted`,
+  and for a colour the *ink* token (`--accent-text`, `--success-text`,
+  `--warning-text`, `--danger-text`, `--info-text`). Never a fill token
+  (`--accent`, `--success`...) as a text colour, never a hard-coded `#fff` on
+  an accent fill (`--accent-contrast`), never an `opacity` to quieten a text.
+- **Names** : an icon-only button or link carries an `aria-label`, its icon
+  `aria-hidden="true"`; an image has an `alt` (empty when decorative); a form
+  control has a `<label for>` or, in a grid, an `aria-label`. An inline formset
+  rendered as a table uses `core.modal_forms.LabelledRowsFormSet`, which names
+  each control after its column.
+- **Keyboard** : what acts is a `<button>` or an `<a href>`. A link that opens
+  a modal over HTMX keeps its `href` next to its `hx-get`
+  (`<a href="{{ url }}" hx-get="{{ url }}" ...>`); without it the keyboard
+  never reaches it. Never a `<div onclick>`. An interaction by dragging has a
+  button that does the same.
+- **Focus** : leave the global ring alone. A component that must draw its own
+  uses `var(--focus-ring)`; the accent glow alone is not an indicator.
+- **Structure** : one `h1` (the page header), card titles as `h2`, no level
+  skipped; a decorative block that holds focusable content (a map) is `inert`.
+- Colour is never the only carrier of meaning, and motion honours
+  `prefers-reduced-motion`.
 
 ## Checklist
 
@@ -163,4 +185,5 @@ meaning, and motion honours `prefers-reduced-motion`.
 - [ ] Bootstrap Icons only
 - [ ] Every string wrapped and translated
 - [ ] Works after a boosted navigation, not only a hard refresh
-- [ ] Controls named, focus visible, colour not the only signal
+- [ ] Controls named, focus visible, colour not the only signal, text in a text or ink token
+- [ ] `python scripts/a11y_audit.py` passes on the new page in both themes (add it to the audit's page list if it is a new kind of page)

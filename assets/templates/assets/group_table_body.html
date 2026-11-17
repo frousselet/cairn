@@ -26,7 +26,7 @@
   <td data-col="status">{% workflow_badge group %}</td>
   <td data-col="tags">{% tag_list group.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <a hx-get="{% url 'assets:group-update' group.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+    <a href="{% url 'assets:group-update' group.pk %}" hx-get="{% url 'assets:group-update' group.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}

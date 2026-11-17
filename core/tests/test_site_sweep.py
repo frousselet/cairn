@@ -34,6 +34,8 @@ import pytest
 from django.conf import settings
 from django.test import Client, TestCase, override_settings
 
+from core.tests import markup_audit
+
 pytestmark = pytest.mark.sweep
 
 SEED_PATH = settings.BASE_DIR / "scripts" / "seed_demo_data.py"
@@ -203,6 +205,27 @@ class SiteSweepTests(TestCase):
             checked += 1
             assert rows <= headers, f"{url} : rows without a section header {sorted(rows - headers)}"
         assert checked, "no audit with requirement rows in the demo dataset"
+
+    def test_no_page_has_a_markup_accessibility_defect(self):
+        """Every image has an alternative, every control a name and a label,
+        every acting link an href (see ``markup_audit``)."""
+        client = self.client_for(self.superuser)
+        offenders, seen = {}, set()
+        for url, (status, _referer) in self.pages.items():
+            kind = page_type(url)
+            if status != 200 or kind in seen:
+                continue
+            seen.add(kind)
+            response = client.get(url)
+            if "text/html" not in response.get("Content-Type", ""):
+                continue
+            for problem in markup_audit.problems(response.content.decode("utf-8", "replace")):
+                # One line per defect, not per record it is rendered for.
+                key = re.sub(r"\d+", "N", UUID.sub("<id>", problem))
+                offenders.setdefault(key, kind)
+        assert len(seen) > 150, f"only {len(seen)} page types checked"
+        listing = "\n".join(f"  {kind}\n      {problem}" for problem, kind in sorted(offenders.items(), key=lambda item: item[1]))
+        assert not offenders, f"{len(offenders)} accessibility defects in the markup :\n{listing}"
 
     def test_no_form_select_opens_on_a_row_of_dashes(self):
         client = self.client_for(self.superuser)

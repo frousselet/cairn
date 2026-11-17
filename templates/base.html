@@ -115,6 +115,7 @@
   <style id="brand-accent-override">
     :root {
       --accent: {{ ACCENT_LIGHT }};
+      --accent-text: {{ ACCENT_LIGHT_TEXT }};
       --accent-hover: color-mix(in srgb, {{ ACCENT_LIGHT }} 82%, black);
       --accent-soft: color-mix(in srgb, {{ ACCENT_LIGHT }} 12%, white);
       --accent-glow: color-mix(in srgb, {{ ACCENT_LIGHT }} 22%, transparent);
@@ -122,6 +123,7 @@
     }
     [data-bs-theme="dark"] {
       --accent: {{ ACCENT_DARK }};
+      --accent-text: {{ ACCENT_DARK_TEXT }};
       --accent-hover: color-mix(in srgb, {{ ACCENT_DARK }} 80%, white);
       --accent-soft: color-mix(in srgb, {{ ACCENT_DARK }} 18%, transparent);
       --accent-glow: color-mix(in srgb, {{ ACCENT_DARK }} 28%, transparent);
@@ -252,8 +254,9 @@
   {% endif %}
   {% block layout %}
   {# ── Sidebar ────────────────────────────────────────── #}
+  <a class="skip-link" href="#page-shell">{% trans "Skip to main content" %}</a>
   <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar" id="sidebar" aria-label="{% trans 'Sidebar' %}">
     <div class="sidebar-brand">
       <a href="/">
         <span class="sidebar-brand-icon">
@@ -270,7 +273,7 @@
       </a>
     </div>
 
-    <div class="sidebar-body">
+    <nav class="sidebar-body" aria-label="{% trans 'Main navigation' %}">
       {% if user.is_authenticated %}
       <div class="sidebar-search">
         <button type="button" class="sidebar-search-field" id="sidebarSearchBtn" title="{% trans 'Search' %} (Ctrl+K)" aria-label="{% trans 'Search' %}">
@@ -356,7 +359,7 @@
         </div>
       </div>
       {% endif %}
-    </div>
+    </nav>
 
   </aside>
   <script>
@@ -464,7 +467,7 @@
   <div class="sidebar-flyout" id="sidebarFlyout"></div>
 
   {# ── Mobile menu toggle ──────────────────────────────── #}
-  <button class="mobile-menu-toggle" onclick="toggleSidebar()">
+  <button type="button" class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="{% trans 'Toggle sidebar' %}" aria-controls="sidebar">
     <div class="hamburger-icon">
       <span></span>
       <span></span>
@@ -589,7 +592,7 @@
   and clean themselves up when the user leaves the page. The sidebar
   stays mounted, preserving its scroll position across navigations.
   {% endcomment %}
-  <main class="main-content" id="page-shell" hx-history-elt>
+  <main class="main-content" id="page-shell" tabindex="-1" hx-history-elt>
     {% block extra_css %}{% endblock %}
     <div class="container-xl">
       {% block content %}{% endblock %}
@@ -714,6 +717,9 @@
             }
           }
         });
+        /* The native select stays in the page, hidden : out of the screen
+           reader's tree too (its label now names the Tom Select control). */
+        el.setAttribute('aria-hidden', 'true');
 
         /* Space and comma trigger tag creation */
         ts.control_input.addEventListener('keydown', function(e) {
@@ -924,6 +930,15 @@
       }
     };
 
+    /* Tom Select keeps the native <select> in the page, visually hidden, and
+       moves the field's label to its own control. The native one is then a
+       second, nameless field for a screen reader : taken out of its tree. */
+    function hideReplacedSelects() {
+      document.querySelectorAll('select.tomselected:not([aria-hidden])').forEach(function(el) {
+        el.setAttribute('aria-hidden', 'true');
+      });
+    }
+
     function initGlobalWidgets() {
       /* Rich-text on all textarea.form-control not inside a formset-table */
       document.querySelectorAll('textarea.form-control:not([data-rt-ready]):not(.no-richtext):not(.no-jodit)').forEach(initRichText);
@@ -947,6 +962,7 @@
         if (Array.prototype.some.call(el.attributes, function(a) { return a.name.indexOf('data-ts-') === 0; })) return;
         new TomSelect(el, tsFormMultiConfig);
       });
+      hideReplacedSelects();
     }
 
     if (document.readyState === 'loading') {
@@ -2255,6 +2271,48 @@
     window.addEventListener('resize', function() { clearTimeout(rt); rt = setTimeout(freeze, 200); });
   })();
 
+  /* ── Scrollable tables and dialog names ──────────────
+     A table wider than its card scrolls sideways inside it. A keyboard can
+     only scroll what it can focus : such a region becomes a focus stop, named
+     after its card (WCAG 2.1.1). A dialog whose content arrives over HTMX is
+     named after its title once that title exists (WCAG 4.1.2). */
+  (function() {
+    var FALLBACK = "{% trans 'Scrollable table' %}";
+    function markScrollRegions() {
+      document.querySelectorAll('.table-responsive').forEach(function(wrap) {
+        var scrolls = wrap.scrollWidth > wrap.clientWidth + 1;
+        if (scrolls && !wrap.hasAttribute('tabindex')) {
+          var card = wrap.closest('.section-card, .card');
+          var title = card && card.querySelector('.section-card__title span, .card-title');
+          wrap.setAttribute('tabindex', '0');
+          wrap.setAttribute('role', 'region');
+          wrap.setAttribute('aria-label', (title && title.textContent.trim()) || FALLBACK);
+          wrap.setAttribute('data-scroll-region', '');
+        } else if (!scrolls && wrap.hasAttribute('data-scroll-region')) {
+          ['tabindex', 'role', 'aria-label', 'data-scroll-region'].forEach(function(a) { wrap.removeAttribute(a); });
+        }
+      });
+    }
+    function nameDialog(modal) {
+      if (!modal || !modal.classList || modal.getAttribute('aria-label')) return;
+      var title = modal.querySelector('.modal-title, .offcanvas-title');
+      if (!title) return;
+      if (!title.id) title.id = (modal.id || 'dialog') + '-title';
+      modal.setAttribute('aria-labelledby', title.id);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', markScrollRegions);
+    else markScrollRegions();
+    document.body.addEventListener('htmx:afterSettle', function(e) {
+      markScrollRegions();
+      nameDialog(e.target && e.target.closest ? e.target.closest('.modal, .offcanvas') : null);
+    });
+    document.addEventListener('show.bs.modal', function(e) { nameDialog(e.target); });
+    document.addEventListener('shown.bs.modal', markScrollRegions);
+    document.addEventListener('show.bs.offcanvas', function(e) { nameDialog(e.target); });
+    var st;
+    window.addEventListener('resize', function() { clearTimeout(st); st = setTimeout(markScrollRegions, 200); });
+  })();
+
   /* ── Clamped section cards ───────────────────────────
      A card rendered with clamp=True shows the first rows of its table; this
      button shows the rest and folds them back. Delegated, so it keeps working
@@ -2890,7 +2948,7 @@
       var idx = text.toLowerCase().indexOf(q.toLowerCase());
       if (idx === -1) return escapeHtml(text);
       return escapeHtml(text.substring(0, idx))
-        + '<mark style="background:var(--accent-soft);color:var(--accent);padding:0 1px;border-radius:2px">'
+        + '<mark style="background:var(--accent-soft);color:var(--accent-text);padding:0 1px;border-radius:2px">'
         + escapeHtml(text.substring(idx, idx + q.length)) + '</mark>'
         + escapeHtml(text.substring(idx + q.length));
     }

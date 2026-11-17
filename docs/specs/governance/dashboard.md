@@ -291,11 +291,16 @@ mode and shown only as a removable placeholder while editing.
 
 Toggled client-side (no reload). Entering edit mode sets `body.dash-editing`,
 which reveals the dotted placement grid (on both zones), the per-widget chrome
-(remove button, drag grip, a **config gear** on configurable widgets, resize
-menu) and the wiggle animation. Reordering uses
-[SortableJS](https://sortablejs.github.io/Sortable/) (lazy-loaded from a CDN,
-like ECharts): each zone is its own sortable, sharing a group, so a widget can be
-**dragged between the main area and the rail** - its `zone` is updated on drop.
+(remove button, drag grip, two **move buttons**, a **config gear** on
+configurable widgets, resize menu) and the wiggle animation. Reordering uses
+[SortableJS](https://sortablejs.github.io/Sortable/) (lazy-loaded from
+`static/vendor/`, like ECharts): each zone is its own sortable, sharing a group,
+so a widget can be **dragged between the main area and the rail** - its `zone`
+is updated on drop. The move buttons (*Move earlier* / *Move later*) are the
+keyboard's equivalent of the drag (WCAG 2.1.1, 2.5.7) : each shifts the widget
+one place in the reading order, stepping over hidden widgets and entering the
+neighbouring zone past the end of its own; the move is announced in the live
+region and the button keeps the focus.
 The resize menu is hidden in the rail (rail widgets fill the rail width).
 
 Adding and removing depends on the widget kind. A **singleton** is removed by

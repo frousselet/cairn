@@ -7,7 +7,7 @@
       {% if supplier.logo %}
       <img src="{{ supplier.logo_32|default:supplier.logo }}" alt="" style="width:32px;height:32px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--border-light)">
       {% else %}
-      <span class="d-inline-flex align-items-center justify-content-center" style="width:32px;height:32px;border-radius:6px;background:var(--accent-soft);color:var(--accent);flex-shrink:0"><i class="bi bi-building" aria-hidden="true"></i></span>
+      <span class="d-inline-flex align-items-center justify-content-center" style="width:32px;height:32px;border-radius:6px;background:var(--accent-soft);color:var(--accent-text);flex-shrink:0"><i class="bi bi-building" aria-hidden="true"></i></span>
       {% endif %}
       <span class="cell-stack">
         <span class="cell-link">{{ supplier.name }}</span>
@@ -45,7 +45,7 @@
   </td>
   <td data-col="tags">{% tag_list supplier.tags.all %}</td>
   <td class="text-end" data-col="actions">
-    <a hx-get="{% url 'assets:supplier-update' supplier.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+    <a href="{% url 'assets:supplier-update' supplier.pk %}" hx-get="{% url 'assets:supplier-update' supplier.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}

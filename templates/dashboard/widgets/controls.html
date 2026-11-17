@@ -17,7 +17,7 @@ permission-gated.
 <div class="card h-100">
   <div class="card-body">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-      <h5 class="card-title mb-0"><i class="bi bi-shield-check me-1 text-accent" aria-hidden="true"></i> {% trans "Controls" %}</h5>
+      <h2 class="card-title mb-0"><i class="bi bi-shield-check me-1 text-accent" aria-hidden="true"></i> {% trans "Controls" %}</h2>
       <a href="{% url 'controls:control-list' %}" class="upcoming-toggle">{% trans "Register" %}</a>
     </div>
 
@@ -89,8 +89,8 @@ permission-gated.
   .ctlw-stat:hover { border-color:var(--accent); background:var(--accent-soft); color:inherit; }
   .ctlw-stat__value { font-size:1.125rem; font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-primary); line-height:1; }
   .ctlw-stat__label { font-size:.6875rem; color:var(--text-muted); }
-  .ctlw-stat--late .ctlw-stat__value { color:var(--danger); }
-  .ctlw-stat--gap .ctlw-stat__value { color:var(--warning); }
+  .ctlw-stat--late .ctlw-stat__value { color:var(--danger-text); }
+  .ctlw-stat--gap .ctlw-stat__value { color:var(--warning-text); }
   .ctlw-list { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(16rem, 1fr)); gap:.5rem; }
   .ctlw-item {
     display:flex; flex-direction:column; gap:.375rem; padding:.625rem .875rem;
