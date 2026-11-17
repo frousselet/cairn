@@ -1533,7 +1533,7 @@ class SiteListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMixin
     permission_required = "context.site.read"
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related("parent_site")
+        qs = super().get_queryset().select_related("parent_site").prefetch_related("tags")
         qs = self.filter_queryset_predefined(qs)
         return self.filter_queryset_advanced(qs)
 

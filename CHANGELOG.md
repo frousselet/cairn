@@ -81,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On a phone, the rows of the dashboard's progress-bar tiles (frameworks, objectives) collapsed onto each other.
 - Form dialogs had no accessible name, their searchable selects were announced twice (once with no name), and a table scrolling sideways could not be scrolled from the keyboard.
 - The dashboard's framework tile read "90 requirement" whatever the count.
+- The action log loaded the whole audit trail into memory on every visit; it now asks the database for the page shown, so opening it no longer slows down as the history grows.
 
 ### Security
 
