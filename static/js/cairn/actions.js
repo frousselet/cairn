@@ -84,6 +84,32 @@
     if (form) form.submit();
   };
 
+  /* The help of a page (templates/includes/help_modal.html) : hide it, or
+     bring it back. The choice is kept for the reader; focus follows what is
+     shown, so a keyboard or a screen reader lands on it. */
+  function csrfToken() {
+    var field = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (field) return field.value;
+    return (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+  }
+  function setPageHelp(element, hidden) {
+    var block = element.closest('[data-help]');
+    if (!block) return;
+    var banner = block.querySelector('.help-banner');
+    var opener = block.querySelector('.page-help__open');
+    if (!banner || !opener) return;
+    banner.hidden = hidden;
+    opener.hidden = !hidden;
+    (hidden ? opener : banner).focus();
+    fetch(block.getAttribute('data-help-url'), {
+      method: 'POST',
+      headers: {'X-CSRFToken': csrfToken(), 'Content-Type': 'application/json'},
+      body: JSON.stringify({key: block.getAttribute('data-helper-key'), dismissed: hidden})
+    }).catch(function () { /* offline : the choice holds for this page only */ });
+  }
+  actions.hidePageHelp = function (element) { setPageHelp(element, true); };
+  actions.showPageHelp = function (element) { setPageHelp(element, false); };
+
   actions.historyBack = function () { window.history.back(); };
   actions.reloadPage = function () { window.location.reload(); };
 

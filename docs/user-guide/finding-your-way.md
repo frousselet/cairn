@@ -11,9 +11,9 @@ shown at all.
 | Section | Pages |
 | --- | --- |
 | **Governance** | Scopes, issues, stakeholders, objectives, SWOT analyses, roles, activities, indicators, management reviews, reports |
-| **Assets and third parties** | Essential assets, support assets, sites, suppliers, contracts, certificates, dependencies |
+| **Assets and suppliers** | Essential assets, support assets, sites, suppliers, contracts, certificates, dependencies |
 | **Risk management** | Assessments, risks, treatment plans, acceptances |
-| **Compliance** | Frameworks, requirements, audits, nonconformities, action plans, controls and their tests, policies and acknowledgement campaigns |
+| **Compliance** | Frameworks, requirements, audits, nonconformities, action plans, controls and their tests, documents and acknowledgement campaigns |
 | **Incidents** | Incidents, security events, notification obligations, response plans |
 | **Reference data** | What the registers draw on, set up once and rarely opened : asset groups, supplier types, risk criteria, threats, vulnerabilities, requirement mappings, reporting authorities, obligation templates |
 | **Administration** | Company, users, groups, permissions, tags, lifecycles, calendar subscriptions, Trust Center, Ask Cairn, the access and action logs |
@@ -42,6 +42,27 @@ search never reveals a record a list would have hidden.
 
 Searching by **reference** is the fastest way to reach a known record. Every
 record carries one, and they are stable : `RISK-42`, `INCD-7`, `ASST-15`.
+
+The search also answers **a word**. Type the name you know a thing by
+(*audit*, *vendor*, an acronym such as *RTO*) and a *Glossary* group gives the
+name the application uses for it, with its definition one click away.
+
+## The words : the help of a page and the glossary
+
+Every register and every record page opens on a short **help** : one sentence
+that says what the thing is, an example, and what to do first. Close it once
+you know; a *Help on this page* button stays in its place and brings it back,
+on the tenth day as on the first.
+
+![A register and its help](../screenshots/scopes-help.png)
+
+The **Glossary** (your account menu, or the link at the foot of every help)
+lists the words the application uses and what they mean, then the acronyms
+spelled out. One thing has one name everywhere : each entry also gives the
+other names people know it by, so that a word from a standard, from another
+tool or from everyday speech leads to the right page.
+
+![The glossary](../screenshots/glossary.png)
 
 ## The command palette
 

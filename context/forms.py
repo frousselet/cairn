@@ -480,7 +480,7 @@ class ResponsibilityForm(forms.ModelForm):
         }
         help_texts = {
             "description": _("What this role is responsible for."),
-            "raci_type": _("RACI involvement for this responsibility."),
+            "raci_type": _("Responsible does the work, Accountable answers for the result, Consulted is asked before, Informed is told after."),
             "related_activity": _("Activity this responsibility relates to, if any."),
         }
 

@@ -26,7 +26,7 @@ class SecurityBaseline(LegacyStatusMixin, BaseModel):
         "risks.RiskAssessment",
         on_delete=models.CASCADE,
         related_name="ebios_security_baseline",
-        verbose_name=_("Assessment"),
+        verbose_name=_("Risk assessment"),
     )
     business_values = models.ManyToManyField(
         "context.Activity",
@@ -46,7 +46,7 @@ class SecurityBaseline(LegacyStatusMixin, BaseModel):
         related_name="ebios_security_baselines",
         verbose_name=_("Support assets"),
     )
-    dic_summary = models.TextField(_("DIC needs summary"), blank=True)
+    dic_summary = models.TextField(_("Security needs summary"), blank=True)
     baseline_references = models.ManyToManyField(
         "compliance.Framework",
         blank=True,

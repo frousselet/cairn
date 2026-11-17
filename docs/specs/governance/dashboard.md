@@ -32,6 +32,9 @@ work is done.
   dashboard header offers to bring it back (`show=1`).
 - Once every step is done the list is gone for good; the answer is kept for the
   life of the process.
+- The list stands for the help of the dashboard while it is shown : one
+  guidance at a time. The help of the page (see [Words](words.md)) comes once
+  the list is done or hidden.
 - While the list is shown the instance reports nothing it has not begun : the
   summary widget reads "Nothing to report yet" instead of "you're all clear",
   and the overall compliance shows no rate (and no red) before a framework is

@@ -36,7 +36,7 @@ class RiskSourceObjectivePair(BaseModel):
         "risks.RiskAssessment",
         on_delete=models.CASCADE,
         related_name="ebios_sr_ov_pairs",
-        verbose_name=_("Assessment"),
+        verbose_name=_("Risk assessment"),
     )
     risk_source = models.ForeignKey(
         "risks.RiskSource",

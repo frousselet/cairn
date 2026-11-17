@@ -799,7 +799,6 @@
 .main-content .table-responsive { margin-top: 1rem; margin-bottom: 1.5rem; }
 .main-content .card .table-responsive { margin-top: 0; margin-bottom: 0; }
 .main-content form.row { margin-bottom: 1.5rem; }
-.main-content .help-banner { margin-bottom: 1.5rem; }
 /* The first content block sits close under the page header on every page */
 .main-content > .container-xl > .d-flex:first-child,
 .main-content > .container-xl > .page-header:first-child { margin-bottom: 1rem; }

@@ -221,7 +221,7 @@ disclosure of a client's breach.
   {# Art. 33(3)(b) to (d) : the rest of the minimum content #}
   {% section_card _("Art. 33(3)(b) to (d) : contact, consequences and measures") icon="list-check" %}
     {% meta_list %}
-      {% meta_item _("DPO contact") %}{% if breach.dpo_contact %}{{ breach.dpo_contact }}{% else %}<span class="text-meta">{% trans "No contact point recorded. Art. 33(3)(b) requires one." %}</span>{% endif %}{% endmeta_item %}
+      {% meta_item _("Data protection officer (DPO) contact") %}{% if breach.dpo_contact %}{{ breach.dpo_contact }}{% else %}<span class="text-meta">{% trans "No contact point recorded. Art. 33(3)(b) requires one." %}</span>{% endif %}{% endmeta_item %}
       {% meta_item _("Likely consequences") %}{% if breach.likely_consequences %}{{ breach.likely_consequences|linebreaksbr }}{% else %}<span class="text-meta">{% trans "No likely consequences recorded. Art. 33(3)(c) requires them." %}</span>{% endif %}{% endmeta_item %}
       {% meta_item _("Measures taken") %}{% if breach.measures_taken %}{{ breach.measures_taken|linebreaksbr }}{% else %}<span class="text-meta">{% trans "No measures recorded. Art. 33(3)(d) requires the measures taken or proposed, including those mitigating possible adverse effects." %}</span>{% endif %}{% endmeta_item %}
     {% endmeta_list %}

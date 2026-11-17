@@ -33,6 +33,7 @@ inherits, which is why a change to one of them is a change to all of them.
 | [Dashboard](governance/dashboard.md) | The configurable widget dashboard |
 | [History](governance/history.md) | The audit-trail framework |
 | [Kanban](governance/kanban.md) | The unified tasks board |
+| [Words](governance/words.md) | The glossary shown in the application, the help of every page, and what holds the French catalogue |
 
 Each module directory contains:
 

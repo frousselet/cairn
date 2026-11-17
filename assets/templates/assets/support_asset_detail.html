@@ -49,13 +49,13 @@
       {% meta_item _("Software version") asset.software_version %}
       {% meta_item _("IP address") asset.ip_address %}
       {% meta_item _("Hostname") asset.hostname %}
-      {% meta_item _("OS") asset.operating_system %}
+      {% meta_item _("Operating system") asset.operating_system %}
       {% meta_item _("Exposure") asset.get_exposure_level_display %}
       {% meta_item _("Environment") asset.get_environment_display %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Inherited CIA") icon="shield-check" %}
+  {% section_card _("Inherited security needs") icon="shield-check" %}
     {% meta_list cols=3 %}
       {% meta_item _("Inherited confidentiality") %}{{ asset.inherited_confidentiality|dic_badge }}{% endmeta_item %}
       {% meta_item _("Inherited integrity") %}{{ asset.inherited_integrity|dic_badge }}{% endmeta_item %}

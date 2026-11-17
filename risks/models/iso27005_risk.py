@@ -19,7 +19,7 @@ class ISO27005Risk(BaseModel):
         "risks.RiskAssessment",
         on_delete=models.CASCADE,
         related_name="iso27005_risks",
-        verbose_name=_("Assessment"),
+        verbose_name=_("Risk assessment"),
     )
     threat = models.ForeignKey(
         "risks.Threat",

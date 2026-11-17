@@ -7,29 +7,54 @@ from django.http import JsonResponse
 from django.views import View
 
 
+#: A help key is the identifier of a page ("context.scope_list").
+MAX_HELPER_KEY_LENGTH = 100
+#: Far above the number of pages that carry a help; a bound, so the list a
+#: reader keeps cannot be grown without end by posting made-up keys.
+MAX_DISMISSED_HELPERS = 500
+
+
 class DismissHelperView(LoginRequiredMixin, View):
-    """Persist the dismissal of a help banner for the current user."""
+    """Keep, for the current user, that a help is hidden or shown again.
+
+    The body is ``{"key": "...", "dismissed": true}``; ``dismissed`` may be
+    left out (hidden) and ``false`` brings the help back.
+    """
 
     def post(self, request):
         try:
             data = json.loads(request.body)
         except (json.JSONDecodeError, ValueError):
             return JsonResponse({"error": "Invalid JSON"}, status=400)
+        if not isinstance(data, dict):
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-        key = data.get("key", "").strip()
+        key = data.get("key")
+        key = key.strip() if isinstance(key, str) else ""
         if not key:
             return JsonResponse({"error": "Missing key"}, status=400)
+        if len(key) > MAX_HELPER_KEY_LENGTH:
+            return JsonResponse({"error": "Invalid key"}, status=400)
+        hidden = data.get("dismissed", True)
+        if not isinstance(hidden, bool):
+            return JsonResponse({"error": "Invalid value"}, status=400)
 
         dismissed = request.user.dismissed_helpers
         if not isinstance(dismissed, list):
             dismissed = []
 
-        if key not in dismissed:
-            dismissed.append(key)
-            request.user.dismissed_helpers = dismissed
-            request.user.save(update_fields=["dismissed_helpers"])
+        if hidden and key not in dismissed:
+            if len(dismissed) >= MAX_DISMISSED_HELPERS:
+                return JsonResponse({"error": "Too many keys"}, status=400)
+            dismissed = [*dismissed, key]
+        elif not hidden and key in dismissed:
+            dismissed = [item for item in dismissed if item != key]
+        else:
+            return JsonResponse({"status": "ok", "dismissed": hidden})
 
-        return JsonResponse({"status": "ok"})
+        request.user.dismissed_helpers = dismissed
+        request.user.save(update_fields=["dismissed_helpers"])
+        return JsonResponse({"status": "ok", "dismissed": hidden})
 
 
 class SaveSortPreferenceView(LoginRequiredMixin, View):

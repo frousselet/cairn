@@ -160,8 +160,13 @@ it that can be measured is held by tests, the way contrast is :
 | `core/tests/test_completeness.py` | What *complete* means for each model that declares it, against its lifecycle and its form; the refusal on the web, the REST API and MCP; permission answered before completeness |
 | `core/tests/test_getting_started.py` | The first steps of a new instance, and that an empty instance reports neither success nor failure |
 
+| `core/tests/test_glossary.py` | The vocabulary, for the whole product : no spelling the glossary retires in the French catalogue, no acronym alone as a label, an acronym that spreads explained; the glossary on its page, in the search palette, over REST and MCP |
+| `core/tests/test_translations.py` | The French catalogue against the code : nothing missing (the menu and the column headings included), a counted sentence filed as a plural, variables kept. Needs `xgettext`; fails rather than skips in CI without it |
+| `helpers/tests/test_help_content.py` | The help of every page : one per page that asks for it, in both languages, a title that defines, a body with an example, acronyms spelled out; the migration leaves a rewritten help alone; hiding and bringing back |
+
 A screen is added to the list of the first test when it is brought to the
-standard : the list is what is claimed, nothing more.
+standard : the list is what is claimed, nothing more. The three tests about
+words hold every screen, listed or not.
 
 ## Warnings
 

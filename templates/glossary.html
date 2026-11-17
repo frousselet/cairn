@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load i18n ui %}
+{% comment %}
+  The glossary : the words the application uses, and what they mean
+  (core/glossary.py). Reached from the help of every page, from the user menu
+  and from the search palette.
+{% endcomment %}
+
+{% block title %}{% trans "Glossary" %} - Cairn{% endblock %}
+
+{% block content %}
+{% page_header _("Glossary") %}{% endpage_header %}
+<p class="page-intro">{% trans "The words this application uses, and what they mean. One thing has one name everywhere : if you know it by another name, type that name here." %}</p>
+
+<form method="get" action="{% url 'glossary' %}" class="card glossary-search" role="search">
+  <div class="list-toolbar">
+    <div class="list-toolbar__search">
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <input type="search" name="q" value="{{ q }}" placeholder="{% trans 'Search a word or an acronym…' %}" aria-label="{% trans 'Search a word or an acronym' %}" autocomplete="off" maxlength="128">
+    </div>
+    <div class="list-toolbar__spacer"></div>
+    {% if q %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'glossary' %}">{% trans "Show everything" %}</a>{% endif %}
+    <button type="submit" class="btn btn-sm btn-primary">{% trans "Search" %}</button>
+  </div>
+</form>
+
+{% if terms %}
+{% section_card _("Words") icon="book" count=terms|length %}
+  {% definition_list terms %}
+{% endsection_card %}
+{% endif %}
+
+{% if acronyms %}
+{% section_card _("Acronyms") icon="type" count=acronyms|length %}
+  {% definition_list acronyms %}
+{% endsection_card %}
+{% endif %}
+
+{% if not terms and not acronyms %}
+<div class="card">
+  {% blocktrans asvar nothing_found with query=q %}No word of the glossary matches "{{ query }}". Try another spelling, or show everything.{% endblocktrans %}
+  {% url 'glossary' as glossary_url %}
+  {% empty_state icon="search" title=_("Nothing found") message=nothing_found cta_url=glossary_url cta_label=_("Show everything") cta_icon="arrow-counterclockwise" %}
+</div>
+{% endif %}
+{% endblock %}

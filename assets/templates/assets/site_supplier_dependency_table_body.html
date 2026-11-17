@@ -21,7 +21,7 @@
   <td data-col="criticality">
     <span class="cell-stack">
       <span>{% choice_badge dep "criticality" %}</span>
-      {% if dep.is_single_point_of_failure %}<span class="cell-sub text-danger"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>{% trans "SPOF" %}</span>{% endif %}
+      {% if dep.is_single_point_of_failure %}<span class="cell-sub text-danger"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>{% trans "Single point of failure (SPOF)" %}</span>{% endif %}
     </span>
   </td>
   <td data-col="status">{% workflow_badge dep %}</td>

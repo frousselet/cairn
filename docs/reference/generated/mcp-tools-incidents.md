@@ -501,7 +501,7 @@ Requires `incidents.event.validate`.
 | `description` | `string` | - | Override the incident description (defaults to the event's). |
 | `category` | `string` | - | Override the incident category. |
 | `severity` | `string` | - | Severity of the new incident. |
-| `tlp` | `string` | - | Handling caveat for the new incident. |
+| `tlp` | `string` | - | Sharing level of the new incident (Traffic Light Protocol). |
 | `is_exercise` | `boolean` | - | The new incident is an exercise. Exercises raise no notification obligation. |
 | `personal_data_involved` | `boolean` | - | Personal data was, or may have been, affected. |
 | `awareness_at` | `string` | - | Legal awareness anchor for the new incident (ISO 8601). |

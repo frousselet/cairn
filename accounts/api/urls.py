@@ -30,6 +30,9 @@ urlpatterns = [
     path("dependencies/", views.DependenciesAPIView.as_view(), name="api-dependencies"),
     path("update-check/", views.UpdateCheckAPIView.as_view(), name="api-update-check"),
 
+    # The vocabulary of the application (terms and acronyms)
+    path("glossary/", views.GlossaryAPIView.as_view(), name="api-glossary"),
+
     # Resource endpoints
     path("", include(router.urls)),
 ]

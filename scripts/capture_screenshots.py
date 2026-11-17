@@ -41,9 +41,14 @@ DEFAULT_OUT = REPO / "docs" / "screenshots"
 WIDTH, HEIGHT = 2560, 1440
 DEBUG_PORT = 9333
 
-# Help banners are guidance for a first-time user, not part of the screen being
-# documented, and they push the real content down the page.
-CLEAN_JS = "document.querySelectorAll('.help-banner').forEach(e => e.remove());"
+# The help of a page is guidance for a first-time reader, not part of the
+# screen being documented, and it pushes the real content down the page. The
+# whole block goes (the banner and the button that brings it back), except on
+# the captures whose subject it is.
+CLEAN_JS = "document.querySelectorAll('.page-help').forEach(e => e.remove());"
+# These show the help : the instance must hold the help content, which the
+# data migrations write (an instance built straight from the models has none).
+WITH_HELP = {"scopes-help"}
 
 # name -> (path, seconds to settle). The wait is per page rather than global:
 # a chart-heavy page needs longer than a list, and padding every capture to the
@@ -53,6 +58,8 @@ SHOTS: dict[str, tuple[str, float]] = {
     "calendar": ("/calendar/", 5),
     "tasks-board": ("/kanban/", 5),
     "scopes": ("/context/scopes/", 4),
+    "scopes-help": ("/context/scopes/", 4),
+    "glossary": ("/glossary/", 4),
     "objectives": ("/context/objectives/", 4),
     "indicators": ("/context/indicators/organizational/", 6),
     "essential-assets": ("/assets/essential/", 4),
@@ -228,7 +235,8 @@ def build_session() -> tuple[str, str]:
 def capture(devtools: DevTools, url: str, wait: float, out: Path) -> None:
     devtools.call("Page.navigate", {"url": url})
     time.sleep(wait)
-    devtools.call("Runtime.evaluate", {"expression": CLEAN_JS})
+    if out.stem not in WITH_HELP:
+        devtools.call("Runtime.evaluate", {"expression": CLEAN_JS})
     time.sleep(0.5)
     result = devtools.call("Page.captureScreenshot", {"format": "png"})
     out.write_bytes(base64.b64decode(result["result"]["data"]))

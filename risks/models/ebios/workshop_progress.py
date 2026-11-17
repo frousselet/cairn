@@ -32,7 +32,7 @@ class EbiosWorkshopProgress(LegacyStatusMixin, BaseModel):
         "risks.RiskAssessment",
         on_delete=models.CASCADE,
         related_name="ebios_workshops",
-        verbose_name=_("Assessment"),
+        verbose_name=_("Risk assessment"),
     )
     workshop_number = models.IntegerField(
         _("Workshop number"),

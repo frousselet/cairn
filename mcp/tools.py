@@ -964,6 +964,12 @@ Every entity follows a consistent CRUD pattern:
 
 ## Key Concepts
 
+### Vocabulary
+Call `get_glossary` to read the words the interface shows : each notion under its one name
+(essential asset, stakeholder, control...), a plain definition, the other names people know it by,
+and the acronyms spelled out. Use those names when you answer a user, in their language :
+the French interface says "bien essentiel", "partie intéressée", "appréciation des risques", "mesure".
+
 ### UUIDs
 All domain objects use UUID primary keys (e.g. "550e8400-e29b-41d4-a716-446655440000").
 Foreign key fields expect UUID strings.
@@ -1184,7 +1190,7 @@ Filters: essential_asset_id, support_asset_id, dependency_type, criticality
 Ref prefix: ADEP
 
 ## asset_valuation
-DIC valuation record for an essential asset.
+Security needs assessment (confidentiality, integrity, availability) of an essential asset.
 Writable: essential_asset_id (required), evaluation_date, confidentiality_level (0-4), integrity_level (0-4), availability_level (0-4), justification, context
 Creating a valuation automatically updates the essential asset's DIC levels.
 Filters: essential_asset_id
@@ -2360,6 +2366,44 @@ tool, call it by its exact name directly - the name here is authoritative.
             available = ", ".join(sorted(ALL_TOPICS.keys()))
             result = f"Unknown topic '{topic}'. Available topics: {available}\n\nCall help without a topic for the full guide."
         return result
+
+    def glossary_handler(user, arguments):
+        from django.utils import translation
+
+        from core import glossary
+
+        query = str(arguments.get("query") or "").strip()[:128]
+        language = str(arguments.get("language") or "").strip().lower()
+        if language and language not in {"en", "fr"}:
+            return _error("language must be 'en' or 'fr'.")
+        # The words the user reads : their own language unless another is asked.
+        language = language or getattr(user, "language", "") or translation.get_language() or "en"
+        with translation.override(language):
+            return {"language": language, **glossary.as_payload(query)}
+
+    server.register_tool(
+        "get_glossary",
+        "The vocabulary of the application : each notion under the one name the interface gives it "
+        "(essential asset, stakeholder, control...), a plain definition, the other names people know it by, "
+        "and the acronyms spelled out (ISMS, RTO, SPOF...). Use it to speak the words the user sees on screen, "
+        "and to map a word they use (asset, audit, CIA) to the name the product uses. "
+        "No permission required : it holds no record.",
+        {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Optional word to look up, by any name a notion is known by, or within a definition.",
+                },
+                "language": {
+                    "type": "string",
+                    "enum": ["en", "fr"],
+                    "description": "Language of the answer. Defaults to the language of the user.",
+                },
+            },
+        },
+        glossary_handler,
+    )
 
     server.register_tool(
         "help",
@@ -6432,7 +6476,7 @@ def _register_risks_tools(server):
         has_approve=True,
         required_fields=["assessment_id"],
         field_overrides={
-            "dic_summary": _html_field("DIC needs summary"),
+            "dic_summary": _html_field("Security needs summary"),
             "status": {
                 "type": "string",
                 "description": "Baseline status: draft, in_progress, completed.",
@@ -6464,7 +6508,7 @@ def _register_risks_tools(server):
             "gravity_justification": _html_field("Gravity justification"),
             "dic_criterion": {
                 "type": "string",
-                "description": "DIC criterion impaired: confidentiality, integrity, availability.",
+                "description": "Security criterion impaired: confidentiality, integrity, availability.",
             },
             "gravity_level": {
                 "type": "integer",
@@ -8548,7 +8592,7 @@ def _register_incidents_tools(server):
                 "description": {"type": "string", "description": "Override the incident description (defaults to the event's)."},
                 "category": {"type": "string", "description": "Override the incident category.", "enum": _INC_THREAT_CATEGORIES},
                 "severity": {"type": "string", "description": "Severity of the new incident.", "enum": _INC_CRITICALITY},
-                "tlp": {"type": "string", "description": "Handling caveat for the new incident.", "enum": _INC_TLP},
+                "tlp": {"type": "string", "description": "Sharing level of the new incident (Traffic Light Protocol).", "enum": _INC_TLP},
                 "is_exercise": {"type": "boolean", "description": "The new incident is an exercise. Exercises raise no notification obligation."},
                 "personal_data_involved": {"type": "boolean", "description": "Personal data was, or may have been, affected."},
                 "awareness_at": {"type": "string", "description": "Legal awareness anchor for the new incident (ISO 8601)."},

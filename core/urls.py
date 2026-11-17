@@ -14,7 +14,7 @@ from .views import (
     CalendarView, ChangelogDismissView, DashboardAskCairnBriefingView,
     DashboardIndicatorsPartialView,
     DashboardIndicatorWidgetPartialView,
-    DashboardLayoutSaveView, FirstStepsVisibilityView, GeneralDashboardView, GlobalSearchView,
+    DashboardLayoutSaveView, FirstStepsVisibilityView, GeneralDashboardView, GlobalSearchView, GlossaryView,
     ICalFeedView, KanbanBoardDataView, KanbanBoardView,
     SectionCollapseToggleView, StyleGuideView, UpdateCheckView,
 )
@@ -46,6 +46,7 @@ urlpatterns = [
     path("api/calendar-upcoming/", CalendarUpcomingView.as_view(), name="calendar-upcoming"),
     path("api/search/", GlobalSearchView.as_view(), name="global-search"),
     path("api/assistant/", include("assistant.urls")),
+    path("glossary/", GlossaryView.as_view(), name="glossary"),
     path("styleguide/", StyleGuideView.as_view(), name="styleguide"),
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")),

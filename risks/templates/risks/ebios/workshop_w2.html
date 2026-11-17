@@ -87,7 +87,7 @@
 {% endsection_card %}
 
 {# SR/OV pairs table #}
-{% section_card _("SR/OV pairs") icon="diagram-2" count=sr_ov_pairs|length flush=True %}
+{% section_card _("Risk source and targeted objective pairs (SR/OV)") icon="diagram-2" count=sr_ov_pairs|length flush=True %}
   {% slot actions %}
     <a href="{% url 'risks:ebios-sr-ov-pair-create' assessment_pk=assessment.pk %}" class="btn btn-sm btn-secondary">
       <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add" %}

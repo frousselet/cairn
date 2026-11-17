@@ -460,7 +460,7 @@ class TestGlobalSearchView:
         titles = {item["title"] for item in actions["items"]}
         # Styleguide is permission-free, the create actions require permissions
         assert "Open styleguide" in titles
-        for create_label in ["Create a risk", "Create an action plan"]:
+        for create_label in ["New risk", "New action plan"]:
             assert create_label not in titles
 
     def test_navigation_labels_follow_request_language(self):

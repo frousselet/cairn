@@ -74,7 +74,7 @@
             <th>{% trans "Asset" %}</th>
             <th>{% trans "Dependency type" %}</th>
             <th>{% trans "Criticality" %}</th>
-            <th>{% trans "SPOF" %}</th>
+            <th>{% trans "Single point of failure (SPOF)" %}</th>
           </tr>
         </thead>
         <tbody>
@@ -83,7 +83,7 @@
             <td><a href="{% url 'assets:support-asset-detail' dep.support_asset.pk %}" class="cell-link">{{ dep.support_asset.name }}</a></td>
             <td>{{ dep.get_dependency_type_display }}</td>
             <td>{% choice_badge dep "criticality" %}</td>
-            <td>{% if dep.is_single_point_of_failure %}{% badge variant="danger" icon="exclamation-triangle-fill" label=_("SPOF") %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+            <td>{% if dep.is_single_point_of_failure %}{% badge variant="danger" icon="exclamation-triangle-fill" label=_("Single point of failure") %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -100,7 +100,7 @@
             <th>{% trans "Supplier" %}</th>
             <th>{% trans "Dependency type" %}</th>
             <th>{% trans "Criticality" %}</th>
-            <th>{% trans "SPOF" %}</th>
+            <th>{% trans "Single point of failure (SPOF)" %}</th>
           </tr>
         </thead>
         <tbody>
@@ -109,7 +109,7 @@
             <td><a href="{% url 'assets:supplier-detail' dep.supplier.pk %}" class="cell-link">{{ dep.supplier.name }}</a></td>
             <td>{{ dep.get_dependency_type_display }}</td>
             <td>{% choice_badge dep "criticality" %}</td>
-            <td>{% if dep.is_single_point_of_failure %}{% badge variant="danger" icon="exclamation-triangle-fill" label=_("SPOF") %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
+            <td>{% if dep.is_single_point_of_failure %}{% badge variant="danger" icon="exclamation-triangle-fill" label=_("Single point of failure") %}{% else %}<span class="cell-empty">-</span>{% endif %}</td>
           </tr>
           {% endfor %}
         </tbody>

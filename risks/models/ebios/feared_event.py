@@ -14,7 +14,7 @@ class FearedEvent(BaseModel):
 
     Characterizes a DIC impairment on an essential asset with a gravity
     level. At most three feared events per (baseline, essential_asset),
-    one per DIC criterion.
+    one per security criterion (confidentiality, integrity, availability).
     """
 
     # Filed under the scopes of its parent : every surface resolves it
@@ -38,7 +38,7 @@ class FearedEvent(BaseModel):
     name = models.CharField(_("Name"), max_length=255)
     description = models.TextField(_("Description"), blank=True)
     dic_criterion = models.CharField(
-        _("DIC criterion"),
+        _("Security criterion"),
         max_length=20,
         choices=DICCriterion.choices,
     )

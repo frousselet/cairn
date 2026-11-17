@@ -49,6 +49,31 @@ bug even if it happens to be an English word that reads fine.
 
 **Every new string gets its French translation in the same change.** Leaving an
 empty `msgstr` ships an English string into a French interface.
+`core/tests/test_translations.py` extracts the messages the way `makemessages`
+does (it needs `xgettext`, and fails rather than skips in CI when it is
+missing) and fails on a string with no French. Two families of labels are
+translated when shown, not where they are written, and are read from their
+own registries : the menu (`core/navigation.py`) and the column headings
+(`{% sortable_th %}`).
+
+**A sentence used with a count is filed as a plural.** `{% blocktrans count %}`
+and `ngettext` look their message up as a plural : an entry with a single
+`msgstr` is never found, and the reader gets the English.
+
+```po
+msgid "%(counter)s requirement"
+msgid_plural "%(counter)s requirements"
+msgstr[0] "%(counter)s exigence"
+msgstr[1] "%(counter)s exigences"
+```
+
+**A translation carries the variables of its sentence**, no more and no fewer :
+an unknown `%(name)s` raises when the page renders.
+
+**The French follows the glossary.** One thing has one name
+([docs/brand/glossary.md](../brand/glossary.md)); `core/tests/test_glossary.py`
+refuses the spellings the glossary retires and an acronym used alone as a
+label.
 
 **No duplicate `msgid`.** Two entries with the same `msgid` and no distinct
 `msgctxt` make `compilemessages` fail, which fails CI. When a string already
@@ -86,3 +111,10 @@ msgfmt --statistics locale/fr/LC_MESSAGES/django.po -o /dev/null
 
 CI compiles the catalogues before running the suite, so a duplicate or malformed
 entry fails the build rather than the deployment.
+
+```bash
+pytest core/tests/test_translations.py core/tests/test_glossary.py
+```
+
+checks the rest : nothing missing, plurals filed as plurals, variables kept,
+the vocabulary of the glossary.

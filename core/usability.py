@@ -9,7 +9,8 @@ test_usability_standard.py``) and not by the memory of whoever reviews it :
 
 - a creation form asks for six fields at most, on one screen;
 - a helper says something its label does not, or is absent;
-- a label is made of words, an acronym comes after them in brackets.
+- a label is made of words, an acronym comes after them in brackets
+  (everyday ones aside : ``EVERYDAY_ACRONYMS``).
 
 A form that follows the standard is added to the list of that test. The
 functions take a form *instance* in the language to check.
@@ -25,6 +26,19 @@ MAX_CREATION_FIELDS = 6
 
 #: A helper that adds fewer words than this to its label says nothing new.
 MIN_NEW_WORDS = 3
+
+#: Acronyms that are everyday words of office and IT life, or the name of a
+#: format or a protocol only an administrator meets : more familiar than
+#: their expansion, they may stand alone and need no entry in the glossary.
+#: Every other acronym is spelled out where it is a label, and explained in
+#: ``core/glossary.py``.
+EVERYDAY_ACRONYMS = frozenset({
+    "AI", "IA", "API", "CSS", "CSV", "DOC", "DOCX", "HR", "HTML", "ID", "IP", "JPEG", "JPG", "JSON", "PDF",
+    "PKCE", "PNG", "RH", "SHA", "UI", "URL", "UTF", "XLS", "XLSX",
+})
+
+# A mark of the Traffic Light Protocol is written as the protocol writes it.
+_PROTOCOL_MARK = re.compile(r"^TLP:[A-Z+]+$")
 
 # Words that carry no information of their own, in the two languages shipped.
 _FILLER = frozenset("""
@@ -59,6 +73,19 @@ def is_bare_acronym(label):
     return bool(letters) and len(letters) <= 6 and letters.isupper() and " " not in text
 
 
+def is_unexplained_acronym(label):
+    """Whether ``label`` is an acronym alone that a newcomer cannot be expected to know.
+
+    "RTO" and "SPOF" are; "PDF" and "URL" are everyday words, and "TLP:RED"
+    is the mark the protocol itself prescribes.
+    """
+    text = str(label).strip()
+    if not is_bare_acronym(text) or _PROTOCOL_MARK.match(text):
+        return False
+    letters = re.sub(r"[^A-Za-zÀ-ÿ]", "", text).upper()
+    return text.upper() not in EVERYDAY_ACRONYMS and letters not in EVERYDAY_ACRONYMS
+
+
 def form_findings(form, *, creation=False):
     """What ``form`` owes to the standard, as a list of sentences (empty : nothing).
 
@@ -78,7 +105,7 @@ def form_findings(form, *, creation=False):
             findings.append(f"{name} walks through steps at creation : a creation fits one screen.")
     for key, field in visible.items():
         label = field.label if field.label is not None else key
-        if is_bare_acronym(label):
+        if is_unexplained_acronym(label):
             findings.append(f'{name}.{key} : the label "{label}" is an acronym alone, spell it out first.')
         help_text = str(field.help_text or "").strip()
         if help_text and help_restates_label(label, help_text):

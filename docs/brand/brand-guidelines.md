@@ -1081,14 +1081,19 @@ Cairn speaks to professionals who know their craft. The tone is:
   the interface (they are fine in release notes and docs).
 - **Precise**: "Risk assessment" rather than "assessment"; "approved by
   X on DD/MM/YYYY" rather than "validated".
-- **Action-oriented**: buttons describe the action, not the state
-  ("Create a risk" rather than "New").
+- **Action-oriented**: a button names what it does and to what ("New
+  risk", "Save", "Declare an incident"), never a bare word ("New"). The
+  [glossary](glossary.md) gives the verb of each act.
 - **Bilingual by default**: every string is translated to French and
   English. When in doubt, the French follows the ANSSI / CNIL / ISO
   vocabulary ("exigence", "périmètre", "partie intéressée").
 - **One thing, one name**: the [glossary](glossary.md) gives the word for
-  each notion, the acronyms spelled out and the verb of each act. It is a
-  proposal until the product owner settles the rows it marks.
+  each notion, the acronyms spelled out and the verb of each act. The
+  interface follows it, the application shows it on its *Glossary* page,
+  and a test refuses the spellings it retires.
+- **Plain words first**: the help of a page says what the thing is in one
+  sentence, gives an example, then says what to do. An acronym comes
+  after its words, in brackets, or is not used.
 
 ### To avoid
 
@@ -1104,7 +1109,9 @@ Cairn speaks to professionals who know their craft. The tone is:
 | "Oops, something went wrong" | "The record failed to save. Check the highlighted fields." |
 | "Validated ✓" | "Approved by Alice Dupont on 2026-05-30" |
 | "Empty" | "No risk recorded yet. Open an assessment to create one." |
-| "New" | "Create a requirement" |
+| "New" | "New requirement" |
+| "This page presents the selected supplier with its criticality" | "Everything you know about one supplier" |
+| "RTO" as a label | "Recovery time objective (RTO)" |
 
 ---
 

@@ -82,7 +82,7 @@ class Responsibility(models.Model):
         verbose_name=_("Role"),
     )
     description = models.TextField(_("Description"))
-    raci_type = models.CharField(_("RACI type"), max_length=20, choices=RaciType.choices)
+    raci_type = models.CharField(_("Involvement (RACI)"), max_length=20, choices=RaciType.choices)
     related_activity = models.ForeignKey(
         "context.Activity",
         on_delete=models.SET_NULL,

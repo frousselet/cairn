@@ -64,6 +64,14 @@ its lifecycle refuses to make it authoritative while something is missing, and
 says what. Scopes and essential assets are the first screens held to this
 [usability standard](docs/sdk/usability-standard.md), the rest follows.
 
+**Written in plain words.** One thing has one name everywhere, and the
+application shows its vocabulary : a glossary gives each notion a definition
+anyone can read and the other names people know it by, and the search answers
+those names (also over `GET /api/v1/glossary/` and the `get_glossary` MCP
+tool). Every page opens on a help that says what the thing is, gives an
+example and says what to do first; it can be hidden and brought back. No
+acronym stands alone as a label.
+
 **Readable and usable from the keyboard.** The interface targets WCAG 2.2 AA
 in its light and dark themes, and the build checks it : contrast ratios are
 recomputed from the palette, and every page is audited with axe-core.

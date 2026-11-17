@@ -249,7 +249,7 @@ class PersonalDataBreach(BaseModel):
     # --- Art. 33(3)(b) to (d) ----------------------------------------------
 
     dpo_contact = models.CharField(
-        _("DPO contact"),
+        _("Data protection officer (DPO) contact"),
         max_length=255,
         blank=True,
         default="",

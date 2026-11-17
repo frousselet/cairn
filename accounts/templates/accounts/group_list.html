@@ -9,7 +9,7 @@
 {% has_perm "system.groups.create" as can_create %}
 {% page_header _("Groups") nav="accounts:group-list" accent="accounts" %}
   {% if can_create %}
-  <a href="{% url 'accounts:group-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'Create a group' %}</a>
+  <a href="{% url 'accounts:group-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New group' %}</a>
   {% endif %}
 {% endpage_header %}
 {% help_modal "accounts.group_list" %}

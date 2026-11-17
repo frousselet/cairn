@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n ui %}
 {% load table_tags %}
+{% load help_tags %}
 
 {% block title %}{% trans "Nonconformities" %} - Cairn{% endblock %}
 
@@ -8,6 +9,7 @@
 {% page_header _("Nonconformities") nav="compliance:finding-list" accent="compliance" %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'compliance:finding-register-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'Raise a nonconformity' %}</button>
 {% endpage_header %}
+{% help_modal "compliance.finding_list" %}
 
 <div class="list-layout">
   <div class="list-main">

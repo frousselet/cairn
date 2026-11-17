@@ -7,7 +7,7 @@ document it answers the four questions an auditor asks : which version is in
 force, who approved it and when, when it is next reviewed, and who has
 acknowledged it.
 
-Open it from the **Compliance** section of the sidebar : *Policies* is the
+Open it from the **Compliance** section of the sidebar : *Documents* is the
 register, *Acknowledgement campaigns* is who was asked to read what. Both
 entries appear only if your group can read them.
 
@@ -92,7 +92,7 @@ Two things close a review cycle :
 
 ![The documents register](../screenshots/documents.png)
 
-The *Policies* list shows, for each document, its type, owner, the version in
+The *Documents* list shows, for each document, its type, owner, the version in
 force and since when, the next review date and the completion rate of its
 latest campaign. The rail counts the active documents, the overdue reviews, the
 documents without a version in force and the average acknowledgement rate. The

@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% load i18n ui %}
+{% load help_tags %}
 {% block title %}{% trans "Lifecycles" %} - Cairn{% endblock %}
 
 {% block content %}
-{% page_header _("Lifecycles") subtitle=_("Every entity's lifecycle is a JSON graph of steps and transitions. Edit one to re-shape its stepper, allowed moves and governance flags - no code change.") nav="core:lifecycle-list" accent="accounts" %}{% endpage_header %}
+{% page_header _("Lifecycles") nav="core:lifecycle-list" accent="accounts" %}{% endpage_header %}
+{% help_modal "core.lifecycle_list" %}
 
 <div class="card">
   <div class="table-responsive">

@@ -28,8 +28,8 @@ To add one, follow [sdk/dashboard-widget.md](../../sdk/dashboard-widget.md).
 | `documents` | Documents | Documents | `2x2` `2x3` `3x2` `4x2` | `2x2` | `main` | - | - | Document reviews overdue, documents without a version in force, and the acknowledgement campaigns running with their completion rate. |
 | `controls` | Controls | Controls | `2x2` `2x3` `3x2` `4x2` | `2x2` | `main` | - | - | Implemented controls and their effective rate, the control tests overdue, and the failed runs still awaiting a finding. |
 | `risk_treatment_flow` | Risk treatment flow | Risks | `2x2` `3x2` `4x2` `4x3` | `4x2` | `main` | - | - | How treatment moves risks from their current to their residual level. |
-| `risk_matrix_current` | Current risks | Risks | `2x2` `2x3` | `2x2` | `main` | - | - | Probability x impact heatmap, before treatment. |
-| `risk_matrix_residual` | Residual risks | Risks | `2x2` `2x3` | `2x2` | `main` | - | - | Probability x impact heatmap, after treatment. |
+| `risk_matrix_current` | Current risks | Risks | `2x2` `2x3` | `2x2` | `main` | - | - | Likelihood x impact heatmap, before treatment. |
+| `risk_matrix_residual` | Residual risks | Risks | `2x2` `2x3` | `2x2` | `main` | - | - | Likelihood x impact heatmap, after treatment. |
 | `section` | Section | Layout | `4x0.5` | `4x0.5` | `main` | yes | `section` | A full-width heading placed on the page background to group widgets into sections. |
 
 ## Templates

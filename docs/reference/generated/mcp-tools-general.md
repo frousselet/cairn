@@ -4,7 +4,7 @@
 
 # MCP tool parameters : General
 
-Input schemas for the 18 `general` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
+Input schemas for the 19 `general` tools. The index of every module is in [mcp-tools.md](mcp-tools.md); a live server answers the same thing authoritatively through the `tools/list` JSON-RPC method.
 
 ## `acknowledge_policy_version`
 
@@ -53,6 +53,15 @@ Delete one of the current user's saved list filters by id.
 Get the currently authenticated user's home-dashboard widget layout (ordered list of {key, id, size, visible, zone, params}) and the catalogue of available widgets with their allowed sizes. `id` is the widget type and `key` is the per-instance id. A size is a 'WxH' tile token: width W in 1..4 quarter-columns (1=1/4 .. 4=full width) by height H in 1..4 fixed row units, e.g. '2x1' or '4x2'. A widget with `multiple: true` (e.g. 'indicator') can appear several times, each instance carrying its own `params` (the indicator widget takes `{indicator: <id>, show_chart: bool}`).
 
 No parameters.
+
+## `get_glossary`
+
+The vocabulary of the application : each notion under the one name the interface gives it (essential asset, stakeholder, control...), a plain definition, the other names people know it by, and the acronyms spelled out (ISMS, RTO, SPOF...). Use it to speak the words the user sees on screen, and to map a word they use (asset, audit, CIA) to the name the product uses. No permission required : it holds no record.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `query` | `string` | - | Optional word to look up, by any name a notion is known by, or within a definition. |
+| `language` | `string` | - | Language of the answer. Defaults to the language of the user. |
 
 ## `get_me`
 

@@ -132,10 +132,10 @@ class SupportAssetCategory(models.TextChoices):
     LAN = "lan", _("Local area network (LAN)")
     WAN = "wan", _("Wide area network (WAN)")
     WIFI = "wifi", _("Wi-Fi")
-    VPN = "vpn", _("VPN")
+    VPN = "vpn", _("Virtual private network (VPN)")
     INTERNET_LINK = "internet_link", _("Internet link")
     FIREWALL_ZONE = "firewall_zone", _("Firewall zone")
-    DMZ = "dmz", _("DMZ")
+    DMZ = "dmz", _("Demilitarized zone (DMZ)")
     OTHER_NETWORK = "other_network", _("Other network")
     # Person
     INTERNAL_STAFF = "internal_staff", _("Internal staff")
@@ -188,7 +188,7 @@ class ExposureLevel(models.TextChoices):
     INTERNAL = "internal", _("Internal")
     EXPOSED = "exposed", _("Exposed")
     INTERNET_FACING = "internet_facing", _("Internet-facing")
-    DMZ = "dmz", _("DMZ")
+    DMZ = "dmz", _("Demilitarized zone (DMZ)")
 
 
 class Environment(models.TextChoices):

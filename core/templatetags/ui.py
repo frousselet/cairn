@@ -1365,6 +1365,22 @@ def section_edit(url, key, label=None):
 # ───────────────────────── References & tags ───────────────────────────────
 
 
+@register.inclusion_tag("components/definition_list.html")
+def definition_list(entries):
+    """A list of terms and what they mean (``<dl>``) : the glossary.
+
+    Usage::
+
+        {% definition_list terms %}
+
+    Each entry is a mapping : ``term`` (the word), ``definition`` (a sentence
+    or two), and optionally ``id`` (an anchor), ``lead`` (what follows the
+    term on its line, the words of an acronym), ``also`` (the other names it
+    is known by) and ``url`` / ``url_label`` (where the thing lives).
+    """
+    return {"entries": entries}
+
+
 @register.inclusion_tag("components/ref_link.html")
 def ref_link(obj, *, url=None, preview_url=None, label=None, reference=None):
     """A linked element: its reference pill, then its name as a link.
