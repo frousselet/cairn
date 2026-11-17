@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 François Rousselet
-from itertools import chain
-from operator import attrgetter
 
 from django.apps import apps
 from django.conf import settings
@@ -19,7 +17,8 @@ from django.views import View
 from django.views.generic import DetailView, ListView
 
 from accounts.constants import ACTION_LABELS, PERMISSION_REGISTRY, MODULE_LABELS, AccessEventType, PermissionAction, UserType
-from core.history import EntryKind, classify_record
+from accounts.action_log import MergedHistory, entry_kind
+from core.history import EntryKind
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
@@ -1053,24 +1052,10 @@ class ActionLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
         ]
 
     def get_queryset(self):
+        # Never the rows themselves : a lazy sequence the paginator slices, so
+        # a visit reads one page of the audit trail, not all of it.
         labels = _get_model_labels()
-
-        querysets = []
-        for hist_model in self._get_historical_models():
-            app, model_label = labels.get(hist_model, (None, None))
-            if not app:
-                continue
-            querysets.append(hist_model.objects.select_related("history_user").all())
-
-        if not querysets:
-            return []
-
-        merged = sorted(
-            chain(*querysets),
-            key=attrgetter("history_date"),
-            reverse=True,
-        )
-        return merged
+        return MergedHistory(model for model in self._get_historical_models() if labels.get(model, (None, None))[0])
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1086,8 +1071,7 @@ class ActionLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummary
             except Exception:
                 entry.object_repr = "-"
 
-            # Classify via the shared core.history classifier.
-            kind = classify_record(entry)
+            kind = entry_kind(entry)
             if kind == EntryKind.TRANSITION:
                 entry.action_label = _("Transition")
                 entry.action_badge = "info"

@@ -62,6 +62,21 @@ def test_issue_list_cost_does_not_grow_with_its_rows(admin_client):
     assert longer == short
 
 
+def test_site_list_cost_does_not_grow_with_its_rows(admin_client):
+    """The site list is not a sortable list : it prefetches its tags itself."""
+    from context.tests.factories import SiteFactory
+
+    tags = [Tag.objects.create(name=f"site-tag-{i}") for i in range(2)]
+    url = reverse("assets:site-list")
+    for _ in range(2):
+        SiteFactory().tags.set(tags)
+    short = _queries(admin_client, url)
+    for _ in range(8):
+        SiteFactory().tags.set(tags)
+    longer = _queries(admin_client, url)
+    assert longer == short
+
+
 def test_role_list_cost_does_not_grow_with_its_rows(admin_client):
     users = [UserFactory() for _ in range(3)]
     url = reverse("context:role-list")
