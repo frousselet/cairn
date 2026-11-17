@@ -20678,3 +20678,9 @@ msgstr "%(name)s : %(pct)s %% conforme"
 
 msgid "Scrollable table"
 msgstr "Tableau défilant"
+
+msgid "Expand all"
+msgstr "Tout déplier"
+
+msgid "Collapse all"
+msgstr "Tout replier"

@@ -283,3 +283,30 @@ a.ref-link__label:hover { text-decoration: underline; }
 .entity-logo--fallback { display: inline-flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent-text); font-size: .75rem; font-weight: 700; }
 .min-w-0 { min-width: 0; }
 .scroll-box { max-height: 20rem; overflow-y: auto; }
+
+/* ── Permission matrix : one folded module per line ──
+   A group's permissions are a few hundred checkboxes. Folded, the page shows
+   what the group can do module by module (granted / available); a module is
+   opened to read or change it. Native <details> : the keyboard folds it. */
+.perm-module { position: relative; border-top: 1px solid var(--border-light); }
+.perm-module:last-of-type { border-bottom: 1px solid var(--border-light); }
+.perm-module__head {
+  display: flex; align-items: center; gap: .625rem;
+  padding: .75rem .25rem; cursor: pointer; list-style: none;
+}
+.perm-module__head::-webkit-details-marker { display: none; }
+.perm-module__head:hover { background: var(--surface-muted); }
+.perm-module__head:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--focus-ring); border-radius: var(--radius-xs); }
+.perm-module__chevron { font-size: .75rem; color: var(--text-muted); transition: transform var(--transition-fast); }
+.perm-module[open] > .perm-module__head .perm-module__chevron { transform: rotate(90deg); }
+.perm-module__count {
+  margin-left: auto; font-size: .8125rem; font-weight: 600; color: var(--text-secondary);
+  padding: .125rem .5rem; border-radius: 100px; background: var(--surface-subtle);
+}
+.perm-module__count--none { color: var(--text-muted); font-weight: 500; }
+.perm-module__count--all { color: var(--success-text); background: var(--success-soft); }
+/* "Select all" for the module, above its table once the module is open. */
+.perm-module__all { display: flex; justify-content: flex-end; gap: .375rem; margin: 0 0 .5rem; padding-left: 0; }
+.perm-module__all .form-check-input { float: none; margin-left: 0; }
+.perm-module > .table-responsive { margin-bottom: 1rem; }
+@media (prefers-reduced-motion: reduce) { .perm-module__chevron { transition: none; } }

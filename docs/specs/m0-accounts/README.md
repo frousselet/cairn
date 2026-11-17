@@ -451,7 +451,7 @@ The Django admin access button is displayed **only** if the user holds the `syst
 - **List:** Table with columns (Name, Description, System, Number of users, Number of permissions). "System" badge for non-editable groups.
 - **Detail / Editing:** the detail page follows the [detail anatomy](../../sdk/ui-components.md), with stacked (some collapsible) section cards rather than tabs:
   - *Information:* name, description.
-  - *Permissions:* interactive matrix organized by module → feature → action (create/read/update/delete). Each cell is a checkbox. Ability to check/uncheck by row (feature) or by column (action). For system groups, the matrix is read-only.
+  - *Permissions:* interactive matrix organized by module → feature → action (create/read/update/delete). Each cell is a checkbox. Ability to check/uncheck by row (feature) or by column (action). For system groups, the matrix is read-only. Each module is a folded section (a native `<details>`) whose header shows how many of its permissions the group holds (`granted / available`, kept current as boxes are ticked); *Expand all* opens every module. A folded module's checkboxes remain part of the form, so saving never depends on what is open.
   - *Users:* list of members with the ability to add/remove.
 - **Actions:** Create, Edit, Delete (if empty and non-system).
 

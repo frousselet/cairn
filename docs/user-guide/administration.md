@@ -49,6 +49,11 @@ The complete catalogue is in the
 Custom groups are the normal case for a real organisation. Start from the
 shipped group closest to the role and adjust.
 
+On a group's page the permissions are listed module by module. Each module is
+a line showing how many of its permissions the group holds (`12 / 40`); open
+it to read or change them, by cell, by row, by column or all at once, or use
+*Expand all*. Saving applies the whole matrix, whatever is open.
+
 ## Lifecycles
 
 ![The lifecycle editor](../screenshots/lifecycles.png)

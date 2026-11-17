@@ -65,6 +65,12 @@ EXTRA_PAGES: dict[str, str] = {
     "styleguide": "/styleguide/",
 }
 
+# Records audited on top of the screenshot set : the first one of a list.
+EXTRA_DETAILS: dict[str, tuple[str, str]] = {
+    # The permission matrix : a few hundred checkboxes behind folded sections.
+    "group-detail": ("/accounts/groups/", "table tbody tr td a"),
+}
+
 # What a page only shows after a click : a hidden dialog or panel is skipped by
 # axe, so it is opened first. name -> (path, script that opens it).
 OPEN_STATES: dict[str, tuple[str, str]] = {
@@ -262,6 +268,9 @@ def main() -> int:
         details = {}
         for name, (path, selector, _wait) in shots.DETAIL_SHOTS.items():
             if selected(name) or (name == "risk-detail" and selected("risk-detail-phone")):
+                details[name] = shots.first_link(devtools, base, path, selector)
+        for name, (path, selector) in EXTRA_DETAILS.items():
+            if selected(name):
                 details[name] = shots.first_link(devtools, base, path, selector)
 
         for theme in themes:
