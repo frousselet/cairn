@@ -40,8 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Empty selects read "Choose…" or "None" instead of a row of dashes, and on a phone the form step indicator shows the current step's name in full.
 - The container runs as an unprivileged account (uid 1000) instead of root, handing over a media volume written by an earlier image on first start.
 - `DEBUG` is off unless set, instead of on : development environments set `DEBUG=True` (`.env.example` and `core.settings_local` do).
+- Outside `DEBUG`, the session and CSRF cookies are only sent over HTTPS, and a session ends twelve hours after sign-in instead of two weeks (`SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, `SESSION_COOKIE_AGE`); the sign-in page says so when opened over plain http.
+- Maps are off until a tile provider is named in `MAP_TILE_URL` : an instance that showed maps must set it to keep them (`https://tile.openstreetmap.org/{z}/{x}/{y}.png` for the former default).
+- The image reads which proxy to believe from `FORWARDED_ALLOW_IPS` (still `*` by default) instead of a fixed command-line flag.
 - A group's permission matrix folds each module behind a line showing how many of its permissions the group holds, instead of a form several screens long.
-- The geocoder the maps and address fields call is a setting (`MAP_GEOCODER_URL`, Photon by default) : an empty value keeps addresses from leaving the browser.
+- The geocoder the maps and address fields called from the browser is a setting, `MAP_GEOCODER_URL`, off by default : addresses no longer leave the instance unless a geocoder is named.
 - The image ships the PostgreSQL client tools of the server the compose file runs, for the backup and restore commands.
 - The compose file fixes the major versions of its services (`postgres:18`, `redis:8-alpine`) instead of following `latest`.
 - CI crawls every page and form of the demo dataset, and runs the suite a second time on PostgreSQL with every migration replayed (on `main`, and on a pull request labelled `ci:postgres`).
@@ -102,6 +105,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OAuth client registration accepted any redirect address, including none (then any address was accepted at consent) : it requires `https`, loopback `http` or an application's private scheme, matched exactly, and the consent screen shows where the access goes.
 - OAuth access tokens expire (`OAUTH_ACCESS_TOKEN_LIFETIME_DAYS`, 90 days by default) instead of living for ever; existing ones are brought back to that lifetime.
 - The open OAuth endpoints (registration, token) are rate limited, an authorization code is spent atomically, and consent is only offered to accounts allowed to use MCP.
+- A stored contract, certificate or Trust Center document was served with the content type its uploader declared; one declared as a script or a page is now served as opaque bytes.
+- Pages and API answers carry `Cross-Origin-Resource-Policy: same-origin` and a `Permissions-Policy` switching off the browser features the application never uses.
 
 ## [0.36.1] - 2026-11-03
 

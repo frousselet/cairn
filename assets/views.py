@@ -23,6 +23,7 @@ from django.views.generic import (
 from accounts.mixins import HistoryUrlMixin, LifecycleStepperMixin, ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
 from controls.integrations import linked_controls
+from core.downloads import safe_content_type
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
@@ -397,7 +398,7 @@ class ContractDocumentDownloadView(LoginRequiredMixin, PermissionRequiredMixin, 
         if not data:
             raise Http404()
         resp = HttpResponse(
-            data, content_type=contract.content_type or "application/pdf"
+            data, content_type=safe_content_type(contract.content_type or "application/pdf")
         )
         resp["Content-Disposition"] = _attachment_disposition(
             contract.file_name or f"{contract.reference}.pdf"
@@ -542,7 +543,7 @@ class CertificateDocumentDownloadView(LoginRequiredMixin, PermissionRequiredMixi
         if not data:
             raise Http404()
         resp = HttpResponse(
-            data, content_type=certificate.content_type or "application/pdf"
+            data, content_type=safe_content_type(certificate.content_type or "application/pdf")
         )
         resp["Content-Disposition"] = _attachment_disposition(
             certificate.file_name or f"{certificate.reference}.pdf"

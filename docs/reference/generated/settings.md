@@ -8,7 +8,7 @@ Cairn is configured entirely through the environment. This page lists every vari
 
 The **In template** column says whether `.env.example` mentions it. Copy that file to `.env` to get started; anything absent from it falls back to the default below. Setting them up is covered in [../../technical/configuration.md](../../technical/configuration.md).
 
-**59 variables** are read by the code.
+**60 variables** are read by the code.
 
 ## Variables
 
@@ -32,7 +32,7 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `ALLOWED_HOSTS` | `localhost,127.0.0.1` | yes |  |
 | `BACKUP_DIR` | - | yes | Directory `manage.py backup` writes its archives to. In a container, mount a volume or a host directory there (default : backups/ beside the code). |
 | `CSP_MODE` | `enforce` | yes | Content Security Policy sent with every page : enforce (default), report (nothing blocked, violations in the browser console) or off. |
-| `CSRF_COOKIE_SECURE` | `False` | yes |  |
+| `CSRF_COOKIE_SECURE` | `_secure_cookies` | yes |  |
 | `CSRF_TRUSTED_ORIGINS` | - | yes | Reverse proxy: trusted origins for CSRF (include scheme) |
 | `DEBUG` | `False` | yes |  |
 | `DEFAULT_FROM_EMAIL` | `cairn@localhost` | yes |  |
@@ -45,9 +45,9 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `LIFECYCLE_CACHE_TTL` | `5` | yes | Seconds a worker process trusts its in-memory lifecycle definitions before checking the table again : how long the other workers may keep applying the previous version of a lifecycle edited in the administration. |
 | `LOG_LEVEL` | `INFO` | yes | Verbosity of the application log, written to the console in production as under DEBUG : DEBUG, INFO, WARNING or ERROR. |
 | `LOG_LEVEL_SQL` | `WARNING` | yes | Set to DEBUG to log every SQL statement (verbose, for a diagnosis only). |
-| `MAP_GEOCODER_URL` | `https://photon.komoot.io/api/` | yes | Geocoder the maps and the address fields ask for the position of an address (a Photon-compatible API). The address is sent to it by the reader's browser. Empty : no geocoding, nothing leaves. |
+| `MAP_GEOCODER_URL` | - | yes | Geocoder the maps and the address fields ask for the position of an address (a Photon-compatible API). Off unless set : the address is sent to it by the reader's browser. |
 | `MAP_TILE_ATTRIBUTION` | `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors` | yes | Credit line shown on the map, as the provider's terms require (HTML). |
-| `MAP_TILE_URL` | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | yes | Basemap of the maps on the scope, site and supplier pages. The tiles are fetched by the reader's browser, straight from this provider. Any XYZ tile URL works, with its key when the provider needs one. Empty : no map. |
+| `MAP_TILE_URL` | - | yes | Basemap of the maps on the scope, site and supplier pages. Off unless set : the tiles are fetched by the reader's browser, straight from this provider, which learns who looks at which place. Any XYZ tile URL works, with its key when the provider needs one. |
 | `MAP_TILE_URL_DARK` | - | yes | Tiles to use under the dark theme. Empty : the tiles above are dimmed. |
 | `MEDIA_ROOT` | - | yes | Directory of the uploaded files (evidence artefacts, filed documents). Mount a volume there : it must outlive the container (default : media/ beside the code). |
 | `OAUTH_ACCESS_TOKEN_LIFETIME_DAYS` | `90` | yes | Days an OAuth access token (MCP clients, API scripts) stays valid. |
@@ -62,8 +62,9 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `SECURE_HSTS_INCLUDE_SUBDOMAINS` | `False` | yes |  |
 | `SECURE_HSTS_PRELOAD` | `False` | yes |  |
 | `SECURE_HSTS_SECONDS` | `0` | yes |  |
-| `SECURE_SSL_REDIRECT` | `False` | yes |  |
-| `SESSION_COOKIE_SECURE` | `False` | yes | HTTPS hardening. All default to off so an HTTP-only deployment keeps working; turn them on once TLS terminates in front of the app. Enable the two cookie flags first, confirm you can still sign in, then add the redirect, and only then HSTS - a browser remembers HSTS for the whole max-age even if you undo it. |
+| `SECURE_SSL_REDIRECT` | `False` | yes | The redirect and HSTS are opt-in : add the redirect once the proxy forwards X-Forwarded-Proto, and only then HSTS - a browser remembers HSTS for the whole max-age even if you undo it. |
+| `SESSION_COOKIE_AGE` | `str(12 * 60 * 60)` | yes | Seconds a session lasts from sign-in (12 hours by default). |
+| `SESSION_COOKIE_SECURE` | `_secure_cookies` | yes | HTTPS hardening. With DEBUG off the session and CSRF cookies are only sent over HTTPS : an instance is meant to sit behind a proxy terminating TLS. Set them to False only for an instance deliberately reached without TLS. |
 | `SITE_URL` | - | yes | Absolute URL prefix used in notification emails and invitation links. Leave empty and links are relative, which breaks them in an email client. |
 | `SPOF_REFRESH_INTERVAL` | `300` | yes | How often (seconds) the background SPOF detector re-scans the dependency graph. |
 | `TRUST_CENTER_DOWNLOAD_TTL` | `604800` | yes | Lifetime (seconds) of a gated-document download link (default 7 days). |

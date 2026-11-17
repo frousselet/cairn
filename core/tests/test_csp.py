@@ -155,15 +155,29 @@ class TestNonceOutsideThePageContext:
 
 
 class TestSources:
+    def test_by_default_a_page_reaches_no_other_origin(self):
+        """No map provider, no geocoder unless the operator names one : the
+        policy of a fresh instance lists the instance and nothing else."""
+        response = _client().get(reverse("home"))
+        assert "http://" not in response[HEADER].replace("ws://testserver", "")
+        assert "https://" not in response[HEADER]
+
+    @override_settings(
+        MAP_TILE_URL="https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        MAP_GEOCODER_URL="https://photon.komoot.io/api/",
+    )
     def test_the_map_tiles_and_the_geocoder_are_the_only_other_origins(self):
         policy = _directives(_client().get(reverse("home")))
-        assert "https://tile.openstreetmap.org" in policy["img-src"]
-        assert "https://photon.komoot.io" in policy["connect-src"]
-        others = [
+        # Exact sources, compared as sets : each is a whole origin of the
+        # policy, never a fragment of a longer one.
+        tiles, geocoder = {"https://tile.openstreetmap.org"}, {"https://photon.komoot.io"}
+        assert tiles <= set(policy["img-src"])
+        assert geocoder <= set(policy["connect-src"])
+        outside = {
             source for sources in policy.values() for source in sources
-            if source.startswith("http") and source not in ("https://tile.openstreetmap.org", "https://photon.komoot.io")
-        ]
-        assert others == []
+            if source.split(":", 1)[0] in ("http", "https")
+        }
+        assert outside == tiles | geocoder
 
     @override_settings(
         MAP_TILE_URL="https://{s}.tiles.example.org/{z}/{x}/{y}.png?key=abc",
@@ -172,8 +186,7 @@ class TestSources:
     )
     def test_the_origins_follow_the_settings(self):
         policy = csp.build_policy(RequestFactory().get("/"), "n")
-        assert "https://*.tiles.example.org" in policy["img-src"]
-        assert "https://dark.example.net" in policy["img-src"]
+        assert {"https://*.tiles.example.org", "https://dark.example.net"} <= set(policy["img-src"])
         # No geocoder : nothing but the instance and its own WebSocket.
         assert policy["connect-src"] == ["'self'", "ws://testserver", "wss://testserver"]
 
@@ -184,9 +197,9 @@ class TestSources:
 
     @override_settings(MAP_GEOCODER_URL="")
     def test_the_geocoder_can_be_switched_off(self):
-        html = _client().get(reverse("home")).content.decode()
-        assert '"geocoder": ""' in html
-        assert "photon.komoot.io" not in html
+        response = _client().get(reverse("home"))
+        assert '"geocoder": ""' in response.content.decode()
+        assert _directives(response)["connect-src"] == ["'self'", "ws://testserver", "wss://testserver"]
 
     def test_a_malformed_url_adds_no_source(self):
         assert csp._origin("not a url") is None
@@ -196,6 +209,32 @@ class TestSources:
     @override_settings(X_FRAME_OPTIONS="SAMEORIGIN")
     def test_framing_follows_the_frame_options_setting(self):
         assert csp.build_policy(RequestFactory().get("/"))["frame-ancestors"] == ["'self'"]
+
+
+class TestOtherResponseHeaders:
+    def test_no_other_site_may_embed_a_page_or_use_the_browser_features(self):
+        response = _client().get(reverse("home"))
+        assert response["Cross-Origin-Resource-Policy"] == "same-origin"
+        permissions = response["Permissions-Policy"]
+        for feature in ("camera", "microphone", "geolocation", "payment", "usb"):
+            assert f"{feature}=()" in permissions
+        # Passkeys must keep working : their feature is not switched off.
+        assert "publickey-credentials" not in permissions
+
+    def test_an_api_answer_carries_them_too(self):
+        response = _client().get("/api/v1/dependencies/")
+        assert response["Cross-Origin-Resource-Policy"] == "same-origin"
+
+    @override_settings(SECURE_SSL_REDIRECT=True)
+    def test_an_https_only_instance_upgrades_stray_http_references(self):
+        policy = csp.build_policy(RequestFactory().get("/"), "n")
+        assert "upgrade-insecure-requests" in csp.serialize(policy)
+        assert "upgrade-insecure-requests" not in csp.serialize(
+            csp.build_policy(RequestFactory().get("/"), "n", exclude={"upgrade-insecure-requests"})
+        )
+
+    def test_a_plain_http_instance_does_not(self):
+        assert "upgrade-insecure-requests" not in csp.serialize(csp.build_policy(RequestFactory().get("/"), "n"))
 
 
 class TestModes:

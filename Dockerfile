@@ -79,10 +79,16 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=180s --retries=3 \
     CMD python -c "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=4).status == 200 else 1)"
 
+# Whose X-Forwarded-For / X-Forwarded-Proto the server believes (uvicorn reads
+# this variable). "*" suits a container only its reverse proxy can reach. If
+# the port is reachable any other way, set it to the proxy's address : with
+# "*", whoever connects directly chooses the client address written in the
+# access log and whether the request counts as HTTPS.
+ENV FORWARDED_ALLOW_IPS="*"
+
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["uvicorn", "core.asgi:application", \
      "--host", "0.0.0.0", "--port", "8000", \
      "--workers", "3", \
      "--proxy-headers", \
-     "--forwarded-allow-ips", "*", \
      "--access-log"]

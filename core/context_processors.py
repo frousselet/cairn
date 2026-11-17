@@ -8,7 +8,12 @@ from core.colors import ink_on_dark, ink_on_light, label_on
 
 
 def app_version(request):
-    return {"APP_VERSION": settings.APP_VERSION}
+    return {
+        "APP_VERSION": settings.APP_VERSION,
+        # The session cookie only travels over HTTPS : the sign-in page warns
+        # a visitor who opened it over plain http, where signing in cannot work.
+        "HTTPS_ONLY_SESSIONS": settings.SESSION_COOKIE_SECURE,
+    }
 
 
 def third_party_dependencies(request):
@@ -71,7 +76,8 @@ def map_tiles(request):
         "MAP_TILES": {
             "url": settings.MAP_TILE_URL,
             "darkUrl": settings.MAP_TILE_URL_DARK,
-            "attribution": settings.MAP_TILE_ATTRIBUTION,
+            # No credit line (it links to the provider) where no map is drawn.
+            "attribution": settings.MAP_TILE_ATTRIBUTION if settings.MAP_TILE_URL else "",
             "geocoder": settings.MAP_GEOCODER_URL,
         }
     }
