@@ -129,17 +129,43 @@ jobs:
 
   # What only a browser can tell : the contrast a text really has once the
   # cascade and the theme are applied, the name of a control drawn by a script,
-  # the size of a target. A demo instance is seeded and served, and axe-core
-  # audits every page of the screenshot set in the light and the dark theme;
-  # any WCAG 2.2 A or AA violation fails the job (docs/technical/testing.md).
+  # the size of a target, and whether the page works under its Content
+  # Security Policy. A demo instance is built by the real migrations on
+  # PostgreSQL, seeded and served, and every page of the screenshot set is
+  # audited in the light and the dark theme : any WCAG 2.2 A or AA violation,
+  # any policy violation and any script error fail the job
+  # (docs/technical/testing.md).
+  #
+  # The instance is migrated, not built from the models : the help content,
+  # the default lifecycles and the reference data come from data migrations,
+  # and a page audited without them is not the page a deployment serves.
   accessibility:
     name: accessibility (axe-core, both themes)
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: cairn
+          POSTGRES_USER: cairn
+          POSTGRES_PASSWORD: cairn
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cairn"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     env:
       DJANGO_SETTINGS_MODULE: core.settings_local
-      SQLITE_PATH: /tmp/cairn-a11y.sqlite3
-      SCHEMA_FROM_MODELS: "1"
+      LOCAL_POSTGRES: "1"
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: cairn
+      POSTGRES_USER: cairn
+      POSTGRES_PASSWORD: cairn
       # A development tool, never served : pinned here rather than vendored.
       AXE_CORE_VERSION: 4.10.3
 
@@ -162,14 +188,32 @@ jobs:
           npm pack "axe-core@${AXE_CORE_VERSION}" --silent
           tar -xzf "axe-core-${AXE_CORE_VERSION}.tgz" package/axe.min.js
 
-      # The schema is built from the models : replaying every migration on
-      # SQLite takes nine minutes, and the PostgreSQL job is the one that
-      # checks them. The reference rows the data migrations write are created
-      # by sync_system_permissions(), as in the test suite.
-      - name: Seed a demo instance
+      # Replaying the migrations takes about seven minutes, and their result
+      # only changes when a migration does : the migrated, still empty
+      # database is kept as a dump, keyed on the content of every migration
+      # file. A hit restores it in seconds; `migrate` then runs anyway, finds
+      # nothing to apply and fires the post-migrate hooks.
+      - name: Look for the migrated database in the cache
+        id: migrated
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/migrated.pgdump
+          key: migrated-postgres18-${{ hashFiles('**/migrations/*.py') }}
+
+      # pg_dump and pg_restore are run inside the service container : they are
+      # of the server's own version, which the runner's are not.
+      - name: Migrate and seed a demo instance
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         run: |
-          python manage.py migrate --run-syncdb --noinput
-          python manage.py shell -c "from accounts.reference_data import sync_system_permissions; sync_system_permissions(); exec(open('scripts/seed_demo_data.py').read())"
+          if [ "${{ steps.migrated.outputs.cache-hit }}" = "true" ]; then
+            docker exec -i "$POSTGRES_CONTAINER" pg_restore --no-owner --exit-on-error -U cairn -d cairn < "${RUNNER_TEMP}/migrated.pgdump"
+          fi
+          python manage.py migrate --noinput
+          if [ "${{ steps.migrated.outputs.cache-hit }}" != "true" ]; then
+            docker exec "$POSTGRES_CONTAINER" pg_dump -U cairn --format=custom cairn > "${RUNNER_TEMP}/migrated.pgdump"
+          fi
+          python manage.py shell -c "exec(open('scripts/seed_demo_data.py').read())"
 
       - name: Serve it
         run: |

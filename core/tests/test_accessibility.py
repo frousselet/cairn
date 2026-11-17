@@ -209,6 +209,31 @@ class TestBrowserAudit:
         assert "scripts/a11y_audit.py" in workflow
         assert "axe-core@" in workflow
 
+    def test_ci_audits_an_instance_built_by_the_real_migrations(self):
+        """The help content, the default lifecycles and the reference data
+        come from data migrations. An instance built straight from the models
+        has none of them : audited that way, the help dialog's refused script
+        went unseen."""
+        workflow = (settings.BASE_DIR / ".github" / "workflows" / "tests.yml").read_text()
+        job = workflow.split("  accessibility:", 1)[1]
+        assert "python manage.py migrate --noinput" in job
+        assert "--run-syncdb" not in job and "SCHEMA_FROM_MODELS" not in job
+        assert 'LOCAL_POSTGRES: "1"' in job and "image: postgres:" in job
+
+    def test_the_cached_database_is_still_a_migrated_one(self):
+        """The job keeps the migrated database as a dump to save the replay.
+        The dump is keyed on every migration file, and `migrate` runs after a
+        restore as after a miss : a shortcut that stops being the real
+        migrations is how the audit went blind once."""
+        workflow = (settings.BASE_DIR / ".github" / "workflows" / "tests.yml").read_text()
+        job = workflow.split("  accessibility:", 1)[1]
+        assert "hashFiles('**/migrations/*.py')" in job
+        restore, migrate, seed = (job.index("pg_restore --no-owner"), job.index("python manage.py migrate --noinput"),
+                                  job.index("seed_demo_data.py"))
+        assert restore < migrate < seed
+        # The dump is taken before the demo data goes in.
+        assert migrate < job.index("pg_dump -U") < seed
+
     def test_a_page_that_does_not_render_fails_the_audit(self):
         """An error page has no contrast defect : it must not pass for the
         page it replaced."""

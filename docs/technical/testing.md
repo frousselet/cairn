@@ -105,22 +105,34 @@ ninety renderings in three minutes. To run it locally :
 
 ```bash
 npm pack axe-core@4.10.3 && tar -xzf axe-core-4.10.3.tgz package/axe.min.js
-export DJANGO_SETTINGS_MODULE=core.settings_local SQLITE_PATH=/tmp/cairn-a11y.sqlite3 SCHEMA_FROM_MODELS=1
-python manage.py migrate --run-syncdb --noinput
-python manage.py shell -c "from accounts.reference_data import sync_system_permissions; sync_system_permissions(); exec(open('scripts/seed_demo_data.py').read())"
+export DJANGO_SETTINGS_MODULE=core.settings_local LOCAL_POSTGRES=1    # with the POSTGRES_* variables of a scratch server
+python manage.py migrate --noinput
+python manage.py shell -c "exec(open('scripts/seed_demo_data.py').read())"
 python manage.py runserver 127.0.0.1:8000 --noreload &
 python scripts/a11y_audit.py --axe package/axe.min.js            # every page, both themes
 python scripts/a11y_audit.py --axe package/axe.min.js --only calendar --theme dark
 ```
 
-It needs `google-chrome-stable` on the `PATH`. `SQLITE_PATH` points the local
-settings at a throwaway file, so the audit never touches a developer's
-database. `SCHEMA_FROM_MODELS=1` builds its tables straight from the models
-(replaying every migration on SQLite takes minutes; the PostgreSQL job is the
-one that checks them), and `sync_system_permissions()` writes the reference
-rows the data migrations would have, as the test suite does. A page that does
-not render fails the audit : an error page would otherwise pass for the page
-it stands in for. `--best-practice` adds axe's advisory rules, which never fail the
+It needs `google-chrome-stable` on the `PATH`. A page that does not render
+fails the audit : an error page would otherwise pass for the page it stands in
+for.
+
+**The instance must be built by the real migrations**, which is why the job
+runs on PostgreSQL (`LOCAL_POSTGRES=1` keeps the main settings' database under
+the local settings). The help content, the default lifecycles and the
+reference data are written by data migrations : an instance without them is
+not the one a deployment serves. The audit first ran on a database built
+straight from the models, and passed while the help dialog's script was being
+refused on every real instance.
+
+For a quick look while working on one page, a throwaway SQLite instance is
+ready in fifteen seconds, with that blind spot :
+
+```bash
+export DJANGO_SETTINGS_MODULE=core.settings_local SQLITE_PATH=/tmp/cairn-a11y.sqlite3 SCHEMA_FROM_MODELS=1
+python manage.py migrate --run-syncdb --noinput
+python manage.py shell -c "from accounts.reference_data import sync_system_permissions; sync_system_permissions(); exec(open('scripts/seed_demo_data.py').read())"
+``` `--best-practice` adds axe's advisory rules, which never fail the
 run. axe-core is fetched, not vendored : it is a development tool that is
 never served to a user, and its version is pinned in the workflow.
 
@@ -215,8 +227,11 @@ Both run with `DEBUG` off and a key of their own, like a deployment.
 `accessibility (axe-core, both themes)`, on every push to `main` and every
 pull request :
 
-1. a demo instance is created from the models, seeded and served
-   (`core.settings_local` on a throwaway SQLite file)
+1. a demo instance is migrated on PostgreSQL, seeded and served
+   (`core.settings_local` with `LOCAL_POSTGRES=1`). The migrated, still empty
+   database is cached as a dump keyed on the content of the migration files,
+   since replaying them takes seven minutes; `migrate` runs after a restore
+   too
 2. `python scripts/a11y_audit.py` audits every page in both themes (see
    [Accessibility](#accessibility))
 

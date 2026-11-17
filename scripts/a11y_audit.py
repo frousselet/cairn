@@ -21,8 +21,10 @@ passes every server-side test and does nothing in a browser.
     python scripts/a11y_audit.py --base-url http://127.0.0.1:8001 --axe axe.min.js
     python scripts/a11y_audit.py --axe axe.min.js --theme dark --only calendar dashboard
 
-Prerequisites : a running instance serving the demo dataset (the same one the
-screenshots are taken from), ``google-chrome-stable`` on the PATH, and a copy
+Prerequisites : a running instance serving the demo dataset, built by the
+real migrations (the help content, the default lifecycles and the reference
+data come from data migrations : an instance without them hides the pages'
+real content, and hid a refused script once), ``google-chrome-stable`` on the PATH, and a copy
 of ``axe.min.js`` (``npm pack axe-core`` : the CI workflow pins the version).
 axe-core is not vendored : it is a development tool, never served to a user.
 """
@@ -61,6 +63,9 @@ PUBLIC_PAGES: dict[str, str] = {
 # of components (a component broken there is broken everywhere it is used).
 EXTRA_PAGES: dict[str, str] = {
     "risk-form": "/risks/register/create/",
+    # A form opened as a page of its own : its scope picker is a form widget,
+    # whose script is rendered outside the page's template context.
+    "issue-form": "/context/issues/create/",
     "tags": "/context/tags/",
     "styleguide": "/styleguide/",
 }

@@ -12,8 +12,8 @@
     {# "None" option #}
     <div class="scope-tree-node" data-depth="0" data-id="" data-parent="">
       <label class="d-flex align-items-center gap-1 px-1 py-1 scope-tree-label" style="cursor:pointer;margin:0;font-size:.85rem;border-radius:var(--radius-xs)">
-        <span style="width:14px;display:inline-block;flex-shrink:0"></span>
-        <input type="radio" name="{{ widget.name }}" value="" class="form-check-input mt-0" style="min-width:14px;min-height:14px;width:14px;height:14px;flex-shrink:0" {% if not widget.value or widget.value == "None" %}checked{% endif %}>
+        <span class="scope-tree-spacer"></span>
+        <input type="radio" name="{{ widget.name }}" value="" class="form-check-input mt-0 scope-tree-input" {% if not widget.value or widget.value == "None" %}checked{% endif %}>
         <span class="scope-tree-icon" style="color:var(--text-muted);font-size:.7rem;flex-shrink:0;width:14px;text-align:center">
           <i class="bi bi-dash-circle"></i>
         </span>
@@ -24,13 +24,13 @@
     <div class="scope-tree-node" data-depth="{{ node.depth }}" data-id="{{ node.id }}" data-parent="{{ node.parent_id }}" style="padding-left:{{ node.indent }}px">
       <label class="d-flex align-items-center gap-1 px-1 py-1 scope-tree-label" style="cursor:pointer;margin:0;font-size:.85rem;border-radius:var(--radius-xs)">
         {% if node.has_children %}
-        <button type="button" class="btn btn-sm p-0 border-0 scope-tree-toggle" style="width:14px;height:14px;line-height:14px;font-size:.6rem;color:var(--text-muted);background:none;flex-shrink:0" data-target="{{ node.id }}" aria-label="{% trans 'Show or hide the scopes below' %}">
+        <button type="button" class="scope-tree-toggle" data-target="{{ node.id }}" aria-label="{% trans 'Show or hide the scopes below' %}">
           <i class="bi bi-chevron-down" aria-hidden="true"></i>
         </button>
         {% else %}
-        <span style="width:14px;display:inline-block;flex-shrink:0"></span>
+        <span class="scope-tree-spacer"></span>
         {% endif %}
-        <input type="radio" name="{{ widget.name }}" value="{{ node.id }}" class="form-check-input mt-0" style="min-width:14px;min-height:14px;width:14px;height:14px;flex-shrink:0" {% if node.selected %}checked{% endif %}>
+        <input type="radio" name="{{ widget.name }}" value="{{ node.id }}" class="form-check-input mt-0 scope-tree-input" {% if node.selected %}checked{% endif %}>
         <span class="scope-tree-icon" style="color:var(--accent-text);font-size:.7rem;flex-shrink:0;width:14px;text-align:center">
           {% if node.icon %}<i class="bi {{ node.icon }}"></i>{% elif node.depth == 0 %}<i class="bi bi-building"></i>{% elif node.has_children %}<i class="bi bi-diagram-3"></i>{% else %}<i class="bi bi-geo-alt"></i>{% endif %}
         </span>
