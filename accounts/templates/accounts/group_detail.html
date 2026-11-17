@@ -177,20 +177,29 @@
         </button>
       </div>
       {% endif %}
+      <div class="d-flex justify-content-end mb-2">
+        <button type="button" class="btn btn-sm btn-secondary" data-on-click="togglePermModules" aria-expanded="false"
+                data-label-open="{% trans 'Expand all' %}" data-label-close="{% trans 'Collapse all' %}">
+          <i class="bi bi-arrows-expand me-1" aria-hidden="true"></i><span>{% trans "Expand all" %}</span>
+        </button>
+      </div>
 
       {% regroup permission_matrix by module_label as module_groups %}
       {% for module_group in module_groups %}
-      <div class="mb-4" data-module="{{ module_group.grouper }}">
-        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+      {# A module is folded : its header says how many of its permissions the group holds. The checkboxes of a folded module are still part of the form. #}
+      <details class="perm-module" data-module="{{ module_group.grouper }}">
+        <summary class="perm-module__head">
+          <i class="bi bi-chevron-right perm-module__chevron" aria-hidden="true"></i>
           <h3 class="h6 mb-0 fw-semibold">{{ module_group.grouper }}</h3>
-          {% if can_edit %}
-          <div class="form-check form-check-inline mb-0 me-0">
-            <input type="checkbox" class="form-check-input module-toggle" id="module-toggle-{{ forloop.counter }}"
-              data-module-idx="{{ forloop.counter }}">
-            <label class="form-check-label text-meta" for="module-toggle-{{ forloop.counter }}">{% trans "Select all" %}</label>
-          </div>
-          {% endif %}
+          <span class="perm-module__count tabular-nums" data-module-count="{{ forloop.counter }}"></span>
+        </summary>
+        {% if can_edit %}
+        <div class="form-check perm-module__all">
+          <input type="checkbox" class="form-check-input module-toggle" id="module-toggle-{{ forloop.counter }}"
+            data-module-idx="{{ forloop.counter }}">
+          <label class="form-check-label text-meta" for="module-toggle-{{ forloop.counter }}">{% trans "Select all" %}</label>
         </div>
+        {% endif %}
         <div class="table-responsive border rounded">
           <table class="table table-sm mb-0" data-module-table="{{ forloop.counter }}">
             <thead>
@@ -265,7 +274,7 @@
             </tbody>
           </table>
         </div>
-      </div>
+      </details>
       {% endfor %}
       {% slot footer %}{% if can_edit %}<div class="d-flex justify-content-end"><button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>{% trans "Save permissions" %}</button></div>{% endif %}{% endslot %}
     {% endsection_card %}
@@ -403,6 +412,31 @@
     toggle.indeterminate = !toggle.checked && checked.length > 0;
   }
 
+  // The count in a module's header : granted / available. It is what a folded
+  // module shows, so it follows every change, for a reader as for an editor.
+  function syncModuleCount(table) {
+    var badge = document.querySelector('[data-module-count="' + table.dataset.moduleTable + '"]');
+    if (!badge) return;
+    var all = table.querySelectorAll('.perm-cb').length;
+    var granted = table.querySelectorAll('.perm-cb:checked').length;
+    badge.textContent = granted + ' / ' + all;
+    badge.classList.toggle('perm-module__count--none', granted === 0);
+    badge.classList.toggle('perm-module__count--all', all > 0 && granted === all);
+  }
+  function syncAllModuleCounts() {
+    document.querySelectorAll('[data-module-table]').forEach(syncModuleCount);
+  }
+  syncAllModuleCounts();
+  document.getElementById('perm-form').addEventListener('change', syncAllModuleCounts);
+
+  window.cairnActions.togglePermModules = function(button) {
+    var open = button.getAttribute('aria-expanded') !== 'true';
+    document.querySelectorAll('details.perm-module').forEach(function(d) { d.open = open; });
+    button.setAttribute('aria-expanded', open ? 'true' : 'false');
+    button.querySelector('span').textContent = button.getAttribute(open ? 'data-label-close' : 'data-label-open');
+    button.querySelector('.bi').className = 'bi me-1 ' + (open ? 'bi-arrows-collapse' : 'bi-arrows-expand');
+  };
+
   // Init module toggles
   document.querySelectorAll('[data-module-table]').forEach(function(table) {
     syncModuleToggleFromTable(table);
@@ -436,6 +470,7 @@
 
   function refreshAllToggles() {
     updatePermCounter();
+    syncAllModuleCounts();
     document.querySelectorAll('[data-module-table]').forEach(function(table) {
       table.querySelectorAll('.row-toggle').forEach(function(rt) {
         var first = rt.closest('tr').querySelector('.perm-cb');

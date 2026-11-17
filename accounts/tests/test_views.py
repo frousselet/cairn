@@ -629,6 +629,43 @@ class TestGroupListView:
 # ── GroupDetailView ────────────────────────────────────────────
 
 
+class TestGroupPermissionMatrix:
+    """The matrix is a few hundred checkboxes : one folded section per module."""
+
+    def _html(self, client):
+        client.force_login(_superuser())
+        return client.get(reverse("accounts:group-detail", kwargs={"pk": GroupFactory().pk})).content.decode()
+
+    def test_each_module_is_a_folded_section_with_its_count(self, client):
+        import re
+
+        html = self._html(client)
+        modules = re.findall(r'<details class="perm-module" data-module="([^"]+)">', html)
+        assert len(modules) >= 5 and len(set(modules)) == len(modules)
+        assert "<details class=\"perm-module\" open" not in html
+        assert len(re.findall(r'data-module-count="\d+"', html)) == len(modules)
+        assert len(re.findall(r'data-module-table="\d+"', html)) == len(modules)
+
+    def test_a_folded_module_stays_in_the_form(self, client):
+        """Saving must never depend on which modules are open : every
+        permission checkbox is inside the form, folded or not."""
+        import re
+
+        html = self._html(client)
+        form = html.split('id="perm-form"', 1)[1].split("</form>", 1)[0]
+        assert form.count('name="permissions"') == html.count('name="permissions"') > 100
+        assert form.count("<details") == form.count("</details>")
+        # Nothing to operate inside a header : the module's "Select all" sits
+        # under it, not in the <summary>.
+        for summary in re.findall(r"<summary.*?</summary>", form, re.S):
+            assert "<input" not in summary and "<button" not in summary
+
+    def test_every_module_can_be_opened_at_once(self, client):
+        html = self._html(client)
+        assert 'data-on-click="togglePermModules"' in html
+        assert "window.cairnActions.togglePermModules" in html
+
+
 class TestGroupDetailView:
     def test_anonymous_redirect(self, client):
         group = GroupFactory()

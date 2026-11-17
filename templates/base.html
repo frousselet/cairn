@@ -2321,8 +2321,10 @@
       document.querySelectorAll('.table-responsive').forEach(function(wrap) {
         var scrolls = wrap.scrollWidth > wrap.clientWidth + 1;
         if (scrolls && !wrap.hasAttribute('tabindex')) {
-          var card = wrap.closest('.section-card, .card');
-          var title = card && card.querySelector('.section-card__title span, .card-title');
+          /* Named after the nearest thing that titles it : the folded section
+             it sits in (a module of the permission matrix), else its card. */
+          var holder = wrap.closest('details, .section-card, .card');
+          var title = holder && holder.querySelector('summary h3, summary h2, .section-card__title span, .card-title');
           wrap.setAttribute('tabindex', '0');
           wrap.setAttribute('role', 'region');
           wrap.setAttribute('aria-label', (title && title.textContent.trim()) || FALLBACK);

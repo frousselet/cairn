@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Empty selects read "Choose…" or "None" instead of a row of dashes, and on a phone the form step indicator shows the current step's name in full.
 - The container runs as an unprivileged account (uid 1000) instead of root, handing over a media volume written by an earlier image on first start.
 - `DEBUG` is off unless set, instead of on : development environments set `DEBUG=True` (`.env.example` and `core.settings_local` do).
+- A group's permission matrix folds each module behind a line showing how many of its permissions the group holds, instead of a form several screens long.
 - The geocoder the maps and address fields call is a setting (`MAP_GEOCODER_URL`, Photon by default) : an empty value keeps addresses from leaving the browser.
 - The image ships the PostgreSQL client tools of the server the compose file runs, for the backup and restore commands.
 - The compose file fixes the major versions of its services (`postgres:18`, `redis:8-alpine`) instead of following `latest`.
