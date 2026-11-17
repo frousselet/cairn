@@ -418,6 +418,30 @@ class DependenciesAPIView(APIView):
         return Response({"status": "success", "count": len(data), "data": data})
 
 
+class GlossaryAPIView(APIView):
+    """The vocabulary of the application : its terms and its acronyms.
+
+    Same registry as the glossary page (``core.glossary``), in the language of
+    the request. ``?q=`` keeps what answers a word, by any of the names a
+    thing is known by : an integration can speak the words the interface
+    shows, and map the ones its users know (*actif*, *audit*) to them.
+    """
+
+    permission_classes = [IsAuthenticated]
+    MAX_QUERY_LENGTH = 128
+
+    def get(self, request):
+        from core import glossary
+
+        query = str(request.query_params.get("q", "")).strip()[: self.MAX_QUERY_LENGTH]
+        data = glossary.as_payload(query)
+        return Response({
+            "status": "success",
+            "count": len(data["terms"]) + len(data["acronyms"]),
+            "data": data,
+        })
+
+
 class UpdateCheckAPIView(APIView):
     """Whether a newer Cairn release is published, and which one.
 

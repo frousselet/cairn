@@ -33,11 +33,11 @@ class EbiosSummary(LegacyStatusMixin, BaseModel):
         "risks.RiskAssessment",
         on_delete=models.CASCADE,
         related_name="ebios_summary",
-        verbose_name=_("Assessment"),
+        verbose_name=_("Risk assessment"),
     )
     residual_risk_strategy = models.TextField(_("Residual risk strategy"), blank=True)
     monitoring_plan = models.TextField(_("Monitoring plan"), blank=True)
-    pacs_summary = models.TextField(_("PACS summary"), blank=True)
+    pacs_summary = models.TextField(_("Summary of the security improvement plan (PACS)"), blank=True)
     risk_mapping_before = models.JSONField(
         _("Risk mapping before treatment"),
         null=True,

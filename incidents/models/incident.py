@@ -225,11 +225,15 @@ class Incident(ScopedModel):
         ),
     )
     tlp = models.CharField(
-        _("TLP"),
+        _("Sharing level (TLP)"),
         max_length=20,
         choices=TrafficLightProtocol.choices,
         default=TrafficLightProtocol.AMBER,
-        help_text=_("Handling caveat for the incident file and its evidence."),
+        help_text=_(
+            "Who may see the incident file and its evidence, in the Traffic Light "
+            "Protocol : RED the people named only, AMBER+STRICT the organisation, "
+            "AMBER the organisation and its clients, GREEN its community, CLEAR anyone."
+        ),
     )
 
     # --- Impact picture ----------------------------------------------------

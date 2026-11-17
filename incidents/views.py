@@ -377,7 +377,7 @@ INCIDENT_FILTER_GROUPS = [
     {"param": "severity", "field": "severity", "label": _SEVERITY, "options": Criticality.choices},
     {"param": "category", "field": "category", "label": _l("Category"), "options": ThreatCategory.choices},
     {"param": "detection_source", "field": "detection_source", "label": _DETECTION_SOURCE, "options": DetectionSource.choices},
-    {"param": "tlp", "field": "tlp", "label": _l("TLP"), "options": TrafficLightProtocol.choices},
+    {"param": "tlp", "field": "tlp", "label": _l("Sharing level (TLP)"), "options": TrafficLightProtocol.choices},
 ]
 INCIDENT_TEXT_FILTERS = [
     {"param": "reference", "field": "reference", "label": _l("Reference")},

@@ -3,6 +3,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 from simple_history.models import HistoricalRecords
 
 from context.models.base import LegacyStatusMixin, ScopedModel
@@ -21,7 +22,7 @@ class RiskAssessment(LegacyStatusMixin, ScopedModel):
         choices=Methodology.choices,
         default=Methodology.ISO27005,
     )
-    assessment_date = models.DateField(_("Assessment date"), null=True, blank=True)
+    assessment_date = models.DateField(pgettext_lazy("risk", "Assessment date"), null=True, blank=True)
     assessor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

@@ -8,11 +8,11 @@ version is in force, since when, when it is next reviewed (red when overdue),
 and how far its latest acknowledgement campaign got.
 {% endcomment %}
 
-{% block title %}{% trans "Policies" %} - Cairn{% endblock %}
+{% block title %}{% trans "Documents" %} - Cairn{% endblock %}
 
 {% block content %}
 {% has_perm "documents.policy.create" as can_create_policy %}
-{% page_header _("Policies") nav="documents:policy-list" accent="documents" %}
+{% page_header _("Documents") nav="documents:policy-list" accent="documents" %}
   {% if can_create_policy %}
   <button type="button" class="btn btn-primary" hx-get="{% url 'documents:policy-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New document" %}</button>
   {% endif %}

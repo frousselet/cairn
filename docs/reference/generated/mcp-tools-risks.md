@@ -414,7 +414,7 @@ Requires `risks.ebios_baseline.create`.
 | `essential_asset_id` | `string` | yes | essential_asset_id |
 | `name` | `string` | yes | name |
 | `description` | `string` | - | Description (HTML rich text) |
-| `dic_criterion` | `string` | yes | DIC criterion impaired: confidentiality, integrity, availability. |
+| `dic_criterion` | `string` | yes | Security criterion impaired: confidentiality, integrity, availability. |
 | `gravity_level` | `integer` | - | Gravity level on the assessment impact scale (e.g. 1-4 or 1-5). |
 | `gravity_justification` | `string` | - | Gravity justification (HTML rich text) |
 | `business_impacts` | `object` | - | Optional business impact breakdown. Accepts a JSON object with keys such as financial, legal, reputation, operational, human, environmental. |
@@ -500,7 +500,7 @@ Requires `risks.ebios_baseline.create`.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `assessment_id` | `string` | yes | assessment_id |
-| `dic_summary` | `string` | - | DIC needs summary (HTML rich text) |
+| `dic_summary` | `string` | - | Security needs summary (HTML rich text) |
 | `status` | `string` | - | Baseline status: draft, in_progress, completed. |
 | `created_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
 | `updated_at` | `string` | - | Optional ISO 8601 date-time to preserve from a legacy system on bulk import (e.g. 2023-05-12T09:00:00Z). Requires the 'system.data_import.override_dates' permission; ignored without it. |
@@ -2561,7 +2561,7 @@ Requires `risks.ebios_baseline.update`.
 | `essential_asset_id` | `string` | - | essential_asset_id |
 | `name` | `string` | - | name |
 | `description` | `string` | - | Description (HTML rich text) |
-| `dic_criterion` | `string` | - | DIC criterion impaired: confidentiality, integrity, availability. |
+| `dic_criterion` | `string` | - | Security criterion impaired: confidentiality, integrity, availability. |
 | `gravity_level` | `integer` | - | Gravity level on the assessment impact scale (e.g. 1-4 or 1-5). |
 | `gravity_justification` | `string` | - | Gravity justification (HTML rich text) |
 | `business_impacts` | `object` | - | Optional business impact breakdown. Accepts a JSON object with keys such as financial, legal, reputation, operational, human, environmental. |
@@ -2643,7 +2643,7 @@ Requires `risks.ebios_baseline.update`.
 | --- | --- | --- | --- |
 | `id` | `string` | yes | UUID of the object to update |
 | `assessment_id` | `string` | - | assessment_id |
-| `dic_summary` | `string` | - | DIC needs summary (HTML rich text) |
+| `dic_summary` | `string` | - | Security needs summary (HTML rich text) |
 | `status` | `string` | - | Baseline status: draft, in_progress, completed. |
 
 ## `update_ebios_sr_ov_pair`

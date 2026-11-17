@@ -174,6 +174,8 @@ its own modal, in a table row for example, is `{% confirm_delete url=... name=..
 | [`completeness_card`](#completeness_card) | tag | What a record still needs, each line opening the dialog that fills it |
 | [`section_edit`](#section_edit) | tag | The Edit button of a card : opens one section of the record's form |
 | [`list_empty`](#list_empty) | tag | The empty row of a register |
+| [`help_modal`](#help_modal) | tag (`help_tags`) | The help of a page : open until hidden, then a button that brings it back |
+| [`definition_list`](#definition_list) | tag | Terms and what they mean (the glossary) |
 | [`ref_link`](#ref_link) | tag | A linked element : reference pill and name |
 | [`tag_list`](#tag_list) | tag | Tags as coloured pills |
 | [`badge` / `choice_badge`](#badge--choice_badge) | tags | Status, level and result badges |
@@ -388,6 +390,38 @@ thing is (one sentence a newcomer understands, no acronym) and offers the
 creation dialog to who holds `permission`. When the request carries a search or
 a filter it reads *Nothing matches* instead, and offers nothing to create : the
 record looked for may well exist.
+
+### help_modal
+
+```django
+{% load help_tags %}
+{% page_header _("Scopes") nav="context:scope-list" %}...{% endpage_header %}
+{% help_modal "context.scope_list" %}
+```
+
+The help of a page, placed under its header : a title that says what the thing
+is in one sentence, a body that gives an example and says what to do first,
+and a link to the glossary. It is open until the reader hides it, and then
+leaves a *Help on this page* button in its place, which brings it back; the
+choice is kept per reader. The text comes from `helpers.HelpContent` (the
+key, in the language of the reader) and is shipped by a data migration, never
+written in the template : see [Words](../specs/governance/words.md) for the
+rules a text follows. A page without a text renders nothing. The block is a
+note named by its title, carries no inline style and no script (two actions
+of `static/js/cairn/actions.js`).
+
+### definition_list
+
+```django
+{% definition_list terms %}
+```
+
+A list of terms and what they mean, as a description list : the term on the
+left, its definition on the right, stacked on a phone. Each entry is a mapping
+with `term` and `definition`, and optionally `id` (an anchor, highlighted when
+it is the target of the address), `lead` (what follows the term on its line :
+the words of an acronym), `also` (the other names it is known by) and `url` /
+`url_label` (where the thing lives). The glossary page is its only use so far.
 
 ### Long pages
 

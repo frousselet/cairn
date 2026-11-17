@@ -23,7 +23,7 @@ is linked through, e.g. the PACS measures of a study).
     <li class="d-flex flex-wrap align-items-center justify-content-between column-gap-3 row-gap-1">
       <div class="d-flex flex-column min-w-0">
         {% url 'controls:control-detail' control.pk as control_url %}{% ref_link control url=control_url %}
-        {% if control.linked_via %}<span class="cell-sub">{% trans "PACS measures" %} : {{ control.linked_via|join:", " }}</span>{% endif %}
+        {% if control.linked_via %}<span class="cell-sub">{% trans "Measures of the security improvement plan (PACS)" %} : {{ control.linked_via|join:", " }}</span>{% endif %}
       </div>
       <div class="d-flex flex-wrap align-items-center gap-2">
         <span class="visually-hidden">{% trans "Effectiveness" %} :</span>

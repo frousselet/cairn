@@ -150,13 +150,13 @@ class RiskAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm)
         help_texts = {
             "name": _("Name of the risk assessment."),
             "methodology": _("Risk methodology used."),
-            "assessor": _("Person leading the assessment."),
-            "description": _("Scope and purpose of the assessment."),
+            "assessor": _("Person leading the risk assessment."),
+            "description": _("Scope and purpose of the risk assessment."),
             "risk_criteria": _("Risk criteria scale to apply."),
             "assessment_date": _("Date the assessment is conducted."),
             "next_review_date": _("Next date this assessment should be reviewed."),
             "summary": _("Executive summary of the results."),
-            "scopes": _("Organizational scopes this assessment applies to."),
+            "scopes": _("Organizational scopes this risk assessment applies to."),
             "tags": _("Free-form labels for filtering and grouping."),
         }
 

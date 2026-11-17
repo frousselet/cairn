@@ -850,9 +850,3 @@ button[type="submit"].btn-loading::after {
   margin: .375rem 0;
 }
 
-/* ── Help banner - Brutalist ──────────────────────── */
-.help-banner {
-  background: var(--warning-soft);
-  border: 2px solid var(--border-light);
-  border-radius: 1.125rem;
-}

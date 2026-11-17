@@ -1,0 +1,17 @@
+{% load i18n %}
+{% comment %}
+  {% definition_list entries %} : terms and what they mean. One entry per row,
+  the term on the left and its definition on the right (stacked on a phone).
+{% endcomment %}
+<dl class="def-list">
+  {% for entry in entries %}
+  <div class="def-list__entry"{% if entry.id %} id="{{ entry.id }}"{% endif %}>
+    <dt class="def-list__term">{{ entry.term }}{% if entry.lead %}<span class="def-list__lead">{{ entry.lead }}</span>{% endif %}</dt>
+    <dd class="def-list__body">
+      <p class="def-list__text">{{ entry.definition }}</p>
+      {% if entry.also %}<p class="def-list__also">{% trans "Also called" %} : {{ entry.also|join:", " }}</p>{% endif %}
+      {% if entry.url %}<a class="def-list__link" href="{{ entry.url }}">{{ entry.url_label }}<i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>{% endif %}
+    </dd>
+  </div>
+  {% endfor %}
+</dl>

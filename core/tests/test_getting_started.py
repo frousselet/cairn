@@ -148,6 +148,24 @@ class TestTheDashboard:
         assert 'id="first-steps-title"' not in html
         assert "Nothing to report yet" not in html
 
+    def test_the_first_steps_stand_for_the_help_of_the_dashboard(self, client, admin):
+        """One guidance at a time : the help speaks of figures a new instance does
+        not have yet, and comes once the first steps are done or hidden."""
+        from helpers.models import HelpContent
+
+        HelpContent.objects.update_or_create(
+            key="home", language="en", defaults={"title": "Your dashboard : what needs you today", "body": "The figures."},
+        )
+
+        new_instance = client.get(reverse("home")).content.decode()
+        assert 'id="first-steps-title"' in new_instance
+        assert "Your dashboard : what needs you today" not in new_instance
+
+        client.post(reverse("dashboard-first-steps"), {"hidden": "1"})
+        hidden = client.get(reverse("home")).content.decode()
+        assert 'id="first-steps-title"' not in hidden
+        assert "Your dashboard : what needs you today" in hidden
+
     def test_a_reader_hides_the_list_and_brings_it_back(self, client, admin):
         url = reverse("dashboard-first-steps")
 

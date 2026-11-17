@@ -164,6 +164,61 @@ a.todo-item:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface),
   .first-steps__meta { margin-left: 0; }
 }
 
+/* ── Page help : what a page is for, in plain words ───
+   templates/includes/help_modal.html ({% help_modal "key" %}). Open until the
+   reader hides it; hidden, it leaves a button that brings it back. */
+.page-help { margin-bottom: 1.5rem; }
+.page-help__open {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .3rem .7rem; border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text-secondary);
+  font-size: .8125rem; font-weight: 500; line-height: 1.4;
+  transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out);
+}
+.page-help__open:hover { background: var(--surface-muted); color: var(--text-primary); }
+.page-help__open:focus-visible,
+.help-banner:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus-ring); }
+.help-banner {
+  display: flex; align-items: flex-start; gap: .75rem;
+  padding: .875rem 1rem; border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
+  border-radius: var(--radius-md); background: var(--accent-soft);
+}
+.help-banner[hidden], .page-help__open[hidden] { display: none; }
+.help-banner__icon { flex-shrink: 0; margin-top: .15rem; font-size: .9375rem; color: var(--accent-text); }
+.help-banner__text { flex: 1 1 auto; min-width: 0; }
+.help-banner__title { margin: 0; font-size: .875rem; font-weight: 600; line-height: 1.4; color: var(--text-primary); }
+.help-banner__body { margin-top: .25rem; max-width: 46rem; font-size: .8125rem; line-height: 1.55; color: var(--text-secondary); }
+.help-banner__body p { margin: 0 0 .35rem; }
+.help-banner__body p:last-child { margin-bottom: 0; }
+.help-banner__more { display: inline-block; margin-top: .4rem; font-size: .78rem; color: var(--accent-text); text-decoration: none; }
+.help-banner__more:hover { text-decoration: underline; }
+.help-banner__close { flex-shrink: 0; margin-left: .5rem; font-size: .625rem; }
+
+/* ── Definition list : terms and what they mean ───────
+   {% definition_list entries %}, the glossary. The term on the left, its
+   definition on the right; stacked on a phone. */
+.def-list { margin: 0; }
+.def-list__entry {
+  display: grid; grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr); gap: .25rem 1.5rem;
+  padding: .875rem 0; border-top: 1px solid var(--border-light); scroll-margin-top: 5rem;
+}
+.def-list__entry:first-child { border-top: 0; padding-top: 0; }
+.def-list__entry:last-child { padding-bottom: 0; }
+.def-list__entry:target { background: var(--accent-soft); box-shadow: 0 0 0 .5rem var(--accent-soft); border-radius: var(--radius-xs); }
+.def-list__term { margin: 0; font-size: .9375rem; font-weight: 600; line-height: 1.45; color: var(--text-primary); }
+.def-list__lead { display: block; font-size: .8125rem; font-weight: 400; color: var(--text-secondary); }
+.def-list__body { margin: 0; min-width: 0; }
+.def-list__text { margin: 0; max-width: 46rem; font-size: .9rem; line-height: 1.55; color: var(--text-primary); }
+.def-list__also { margin: .25rem 0 0; font-size: .8125rem; color: var(--text-secondary); }
+.def-list__link { display: inline-block; margin-top: .35rem; font-size: .8125rem; color: var(--accent-text); text-decoration: none; }
+.def-list__link:hover { text-decoration: underline; }
+@media (max-width: 767.98px) {
+  .def-list__entry { grid-template-columns: minmax(0, 1fr); }
+}
+.page-intro { max-width: 46rem; margin: 0 0 1.25rem; font-size: .9375rem; line-height: 1.55; color: var(--text-secondary); }
+.glossary-search { margin-bottom: 1.5rem; }
+.glossary-search .list-toolbar { border-bottom: 0; }
+
 /* ── Overview : icon-led summary rows ─────────────────
    The row rules are shared with .supplier-overview (09-components.css). */
 .overview { display: flex; flex-direction: column; gap: .55rem; }

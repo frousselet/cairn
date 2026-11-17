@@ -22,7 +22,7 @@
 {% section_card _("Monitoring plan") icon="binoculars" collapsible=True open=False %}{{ summary.monitoring_plan|linebreaksbr }}{% endsection_card %}
 {% endif %}
 {% if summary.pacs_summary %}
-{% section_card _("PACS summary") icon="card-text" collapsible=True open=False %}{{ summary.pacs_summary|linebreaksbr }}{% endsection_card %}
+{% section_card _("Summary of the security improvement plan (PACS)") icon="card-text" collapsible=True open=False %}{{ summary.pacs_summary|linebreaksbr }}{% endsection_card %}
 {% endif %}
 
 {# Risk mapping snapshots #}
@@ -86,7 +86,7 @@
 {% endsection_card %}
 
 {# PACS measures #}
-{% section_card _("PACS measures") icon="list-check" count=pacs_measures|length flush=True %}
+{% section_card _("Measures of the security improvement plan (PACS)") icon="list-check" count=pacs_measures|length flush=True %}
   {% slot actions %}
     <a href="{% url 'risks:ebios-pacs-measure-create' summary_pk=summary.pk %}" class="btn btn-sm btn-secondary">
       <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add" %}

@@ -104,7 +104,7 @@ msgid "Issues"
 msgstr "Enjeux"
 
 msgid "Stakeholders"
-msgstr "Parties prenantes"
+msgstr "Parties intéressées"
 
 msgid "Expectations"
 msgstr "Attentes"
@@ -129,7 +129,7 @@ msgstr "Indicateurs"
 
 #| msgid "Stakeholder"
 msgid "Stakeholder feedback"
-msgstr "Retours partie prenante"
+msgstr "Retours des parties intéressées"
 
 msgid "Sites"
 msgstr "Sites"
@@ -156,7 +156,7 @@ msgid "Dependencies"
 msgstr "Dépendances"
 
 msgid "Asset groups"
-msgstr "Groupes d'actifs"
+msgstr "Groupes de biens"
 
 msgid "Suppliers"
 msgstr "Fournisseurs"
@@ -165,16 +165,16 @@ msgid "Supplier dependencies"
 msgstr "Dépendances fournisseurs"
 
 msgid "Asset import"
-msgstr "Import d'actifs"
+msgstr "Import de biens"
 
 msgid "Asset configuration"
-msgstr "Configuration des actifs"
+msgstr "Configuration des biens"
 
 msgid "Asset export"
-msgstr "Export des actifs"
+msgstr "Export des biens"
 
 msgid "Asset audit trail"
-msgstr "Piste d'audit des actifs"
+msgstr "Piste d'audit des biens"
 
 msgid "Frameworks"
 msgstr "Référentiels"
@@ -313,7 +313,7 @@ msgid "Governance"
 msgstr "Gouvernance"
 
 msgid "Assets"
-msgstr "Actifs"
+msgstr "Biens"
 
 msgid "Risk management"
 msgstr "Gestion des risques"
@@ -632,9 +632,6 @@ msgstr "Période"
 msgid "Clear"
 msgstr "Effacer"
 
-msgid "IP"
-msgstr "IP"
-
 msgid "Reason"
 msgstr "Raison"
 
@@ -845,9 +842,6 @@ msgstr "Enregistrer les périmètres"
 msgid "Groups - Cairn"
 msgstr "Groupes - Cairn"
 
-msgid "Create a group"
-msgstr "Créer un groupe"
-
 msgid "Type"
 msgstr "Type"
 
@@ -861,9 +855,7 @@ msgstr "Aucun groupe créé pour le moment."
 msgid ""
 "Groups bundle related items together so you can apply controls and analyses "
 "at the right granularity."
-msgstr ""
-"Les groupes rassemblent des éléments connexes pour appliquer contrôles et "
-"analyses à la bonne granularité."
+msgstr "Les groupes rassemblent des éléments liés, pour appliquer mesures et analyses au bon niveau de détail."
 
 msgid "Sign in - Cairn"
 msgstr "Se connecter - Cairn"
@@ -1021,9 +1013,6 @@ msgstr "Aucun événement."
 
 msgid "Users - Cairn"
 msgstr "Utilisateurs - Cairn"
-
-msgid "Create a user"
-msgstr "Créer un utilisateur"
 
 msgid "No user found."
 msgstr "Aucun utilisateur trouvé."
@@ -1308,17 +1297,11 @@ msgstr "Réseau étendu (WAN)"
 msgid "Wi-Fi"
 msgstr "Wi-Fi"
 
-msgid "VPN"
-msgstr "VPN"
-
 msgid "Internet link"
 msgstr "Liaison Internet"
 
 msgid "Firewall zone"
 msgstr "Zone pare-feu"
-
-msgid "DMZ"
-msgstr "DMZ"
 
 msgid "Other network"
 msgstr "Autre réseau"
@@ -1498,7 +1481,7 @@ msgid "Non-compliant"
 msgstr "Non conforme"
 
 msgid "Supporting evidence"
-msgstr "Pièce probante"
+msgstr "Preuve à l'appui"
 
 msgid "Upload a supporting document (certificate, report, etc.)."
 msgstr "Téléverser un document justificatif (certificat, rapport, etc.)."
@@ -1552,7 +1535,7 @@ msgid "Owner"
 msgstr "Propriétaire"
 
 msgid "Custodian"
-msgstr "Dépositaire"
+msgstr "Gestionnaire"
 
 msgid "Confidentiality"
 msgstr "Confidentialité"
@@ -1571,15 +1554,6 @@ msgstr "Justification de l'intégrité"
 
 msgid "Availability justification"
 msgstr "Justification de la disponibilité"
-
-msgid "MTD / Max tolerable downtime"
-msgstr "DMT / Durée maximale tolérable d'interruption"
-
-msgid "RTO"
-msgstr "RTO"
-
-msgid "RPO"
-msgstr "RPO"
 
 msgid "Classification"
 msgstr "Classification"
@@ -1607,7 +1581,7 @@ msgid "Members"
 msgstr "Membres"
 
 msgid "Asset group"
-msgstr "Groupe d'actifs"
+msgstr "Groupe de biens"
 
 msgid "Site–asset dependency"
 msgstr "Dépendance site–bien"
@@ -1788,12 +1762,6 @@ msgstr "Évaluateur"
 msgid "Context"
 msgstr "Contexte"
 
-msgid "DIC valuation"
-msgstr "Évaluation DIC"
-
-msgid "DIC valuations"
-msgstr "Évaluations DIC"
-
 msgid "Confirm deletion"
 msgstr "Confirmer la suppression"
 
@@ -1816,7 +1784,7 @@ msgid "Dependency graph"
 msgstr "Graphe de dépendances"
 
 msgid "Asset dep."
-msgstr "Dép. actifs"
+msgstr "Dép. biens"
 
 msgid "Supplier dep."
 msgstr "Dép. fournisseurs"
@@ -1842,9 +1810,6 @@ msgstr "Zoom arrière"
 msgid "No dependencies to display."
 msgstr "Aucune dépendance à afficher."
 
-msgid "SPOF"
-msgstr "SPOF"
-
 msgid "Redundancy"
 msgstr "Redondance"
 
@@ -1853,7 +1818,7 @@ msgstr "En attente"
 
 #| msgid "asset dependency(ies)"
 msgid "No asset dependency mapped yet."
-msgstr "Aucune dépendance d'actif définie."
+msgstr "Aucune dépendance entre biens pour l'instant."
 
 msgid ""
 "Dependencies declare which support asset feeds which essential asset. "
@@ -1868,9 +1833,6 @@ msgstr "Retour"
 msgid "General"
 msgstr "Général"
 
-msgid "CIA valuation"
-msgstr "Évaluation CIA"
-
 msgid "Yes"
 msgstr "Oui"
 
@@ -1883,14 +1845,11 @@ msgstr "Biens supports associés"
 msgid "No associated support asset (unsupported essential asset)."
 msgstr "Aucun bien support associé (bien essentiel non supporté)."
 
-msgid "CIA valuation history"
-msgstr "Historique des évaluations CIA"
-
 msgid "No valuation recorded."
 msgstr "Aucune évaluation enregistrée."
 
 msgid "Tags"
-msgstr "Tags"
+msgstr "Étiquettes"
 
 msgid "People"
 msgstr "Personnes"
@@ -1931,9 +1890,6 @@ msgstr "Classification des données"
 
 msgid "Related activities"
 msgstr "Activités associées"
-
-msgid "DIC Valuation"
-msgstr "Évaluation DIC"
 
 msgid "Continuity"
 msgstr "Continuité"
@@ -1979,14 +1935,12 @@ msgstr "Nouvelle dépendance site–bien"
 
 #| msgid "No risks recorded."
 msgid "No site-asset link declared yet."
-msgstr "Aucun lien site–actif déclaré."
+msgstr "Aucun lien entre site et bien pour l'instant."
 
 msgid ""
 "Linking sites to assets shows where each asset physically lives or is "
 "processed."
-msgstr ""
-"Le lien entre sites et actifs montre où chaque actif réside ou est traité "
-"physiquement."
+msgstr "Le lien entre sites et biens montre où chaque bien se trouve ou est traité physiquement."
 
 msgid "Parent site"
 msgstr "Site parent"
@@ -2010,13 +1964,8 @@ msgstr "Nouveau site"
 msgid "No site declared yet."
 msgstr "Aucun site déclaré."
 
-msgid ""
-"Sites are the physical locations covered by your ISMS - offices, "
-"datacenters, factories, anywhere data lives or is processed."
-msgstr ""
-"Les sites sont les emplacements physiques couverts par votre SMSI : bureaux,"
-" centres de données, usines, partout où les données résident ou sont "
-"traitées."
+msgid "Sites are the places where you work or keep your equipment : offices, data centres, factories, anywhere information lives or is processed."
+msgstr "Les sites sont les lieux où vous travaillez ou gardez vos équipements : bureaux, centres de données, usines, partout où l'information se trouve ou est traitée."
 
 msgid "site–supplier dependency"
 msgstr "dépendance site–fournisseur"
@@ -2054,9 +2003,7 @@ msgstr "Aucune dépendance fournisseur déclarée."
 msgid ""
 "Track which assets depend on which suppliers - critical for vendor risk and "
 "continuity planning."
-msgstr ""
-"Suivez quels actifs dépendent de quels fournisseurs - critique pour le "
-"risque tiers et le plan de continuité."
+msgstr "Suivez quels biens dépendent de quels fournisseurs : essentiel pour maîtriser le risque fournisseur et préparer la continuité."
 
 msgid "Archive this supplier?"
 msgstr "Archiver ce fournisseur ?"
@@ -2130,9 +2077,7 @@ msgstr "Aucun fournisseur enregistré."
 msgid ""
 "Suppliers are external parties you depend on - SaaS vendors, hosting "
 "providers, contractors. Track them to assess third-party risk."
-msgstr ""
-"Les fournisseurs sont les parties externes dont vous dépendez : éditeurs "
-"SaaS, hébergeurs, prestataires. Suivez-les pour évaluer le risque tiers."
+msgstr "Les fournisseurs sont les organisations extérieures dont vous dépendez : éditeurs de logiciels en ligne, hébergeurs, sous-traitants. Suivez-les pour mesurer le risque qu'ils vous font porter."
 
 msgid "Last verified"
 msgstr "Dernière vérification"
@@ -2191,9 +2136,7 @@ msgstr "Aucun type de fournisseur défini."
 msgid ""
 "Supplier types group your vendors by category (cloud, software, legal). Each"
 " type carries its own baseline requirements."
-msgstr ""
-"Les types de fournisseurs regroupent vos prestataires par catégorie (cloud, "
-"logiciel, juridique). Chaque type porte ses propres exigences de socle."
+msgstr "Les types de fournisseurs regroupent vos fournisseurs par catégorie (cloud, logiciel, juridique). Chaque type porte ses propres exigences de base."
 
 msgid "This support asset has exceeded its end of life date"
 msgstr "Ce bien support a dépassé sa date de fin de vie"
@@ -2201,14 +2144,8 @@ msgstr "Ce bien support a dépassé sa date de fin de vie"
 msgid "Technical specifications"
 msgstr "Spécifications techniques"
 
-msgid "OS"
-msgstr "OS"
-
 msgid "Exposure"
 msgstr "Exposition"
-
-msgid "Inherited CIA"
-msgstr "CIA hérité"
 
 msgid "Source (contributing essential assets)"
 msgstr "Source (biens essentiels contribuant)"
@@ -2392,7 +2329,7 @@ msgid "Send back to draft"
 msgstr "Repasser en brouillon"
 
 msgid "Lifecycle state"
-msgstr "État du cycle de vie"
+msgstr "Étape du cycle de vie"
 
 msgid "Recipient"
 msgstr "Destinataire"
@@ -2443,17 +2380,15 @@ msgid "%(label)s \"%(name)s\" was submitted for validation."
 msgstr "%(label)s « %(name)s » a été soumis pour validation."
 
 msgid "Current state of the element in its lifecycle workflow."
-msgstr "État actuel de l'élément dans son workflow de cycle de vie."
+msgstr "Étape actuelle de l'élément dans son cycle de vie."
 
 msgid "Workflow"
-msgstr "Workflow"
+msgstr "Cycle de vie"
 
 msgid ""
 "Name of the lifecycle workflow for this item type. Leave blank to use the "
 "default workflow."
-msgstr ""
-"Nom du workflow de cycle de vie pour ce type d'élément. Laisser vide pour "
-"utiliser le workflow par défaut."
+msgstr "Nom du cycle de vie de ce type d'élément. Laissez vide pour utiliser le cycle de vie par défaut."
 
 msgid "Deprecated"
 msgstr "Obsolète"
@@ -2865,10 +2800,10 @@ msgid "Uploaded at"
 msgstr "Téléversé le"
 
 msgid "Assessment result attachment"
-msgstr "Pièce jointe de résultat d'audit"
+msgstr "Pièce jointe de résultat d'évaluation"
 
 msgid "Assessment result attachments"
-msgstr "Pièces jointes de résultats d'audit"
+msgstr "Pièces jointes de résultats d'évaluation"
 
 msgid "Finding type"
 msgstr "Type de constat"
@@ -2877,7 +2812,7 @@ msgid "Auditor recommendation"
 msgstr "Recommandation de l'auditeur"
 
 msgid "Evidence presented"
-msgstr "Pièces présentées"
+msgstr "Preuves présentées"
 
 msgid "Related requirements"
 msgstr "Exigences associées"
@@ -2969,7 +2904,7 @@ msgid "Linked essential assets"
 msgstr "Biens essentiels liés"
 
 msgid "Linked stakeholder expectations"
-msgstr "Attentes des parties prenantes liées"
+msgstr "Attentes des parties intéressées liées"
 
 msgid "Parent section"
 msgstr "Section parente"
@@ -3095,10 +3030,7 @@ msgstr "Aucun plan d'action ouvert pour le moment."
 msgid ""
 "Action plans track remediation work for assessment findings or risk "
 "treatments. Each one has an owner, a target date and a workflow."
-msgstr ""
-"Les plans d'action suivent le travail de remédiation des constats "
-"d'évaluation ou des traitements de risque. Chacun a un propriétaire, une "
-"date cible et un workflow."
+msgstr "Les plans d'action suivent le travail de correction issu des constats d'évaluation ou des traitements de risque. Chacun a un propriétaire, une date cible et un cycle de vie."
 
 msgid "This action is irreversible. Do you want to continue?"
 msgstr "Cette action est irréversible. Voulez-vous continuer ?"
@@ -3447,7 +3379,7 @@ msgid "Please fill the required fields before advancing: %(fields)s"
 msgstr "Renseignez les champs obligatoires avant de continuer : %(fields)s"
 
 msgid "This assessment is locked and cannot be modified."
-msgstr "Cet audit est verrouillé et ne peut plus être modifié."
+msgstr "Cette évaluation est verrouillée et ne peut plus être modifiée."
 
 msgid "Evaluate requirement"
 msgstr "Évaluer l'exigence"
@@ -3908,7 +3840,7 @@ msgid "Trend"
 msgstr "Tendance"
 
 msgid "Related stakeholders"
-msgstr "Parties prenantes associées"
+msgstr "Parties intéressées associées"
 
 msgid "Issue"
 msgstr "Enjeu"
@@ -3961,9 +3893,6 @@ msgstr "Rôle"
 
 msgid "Mandatory role without assigned user"
 msgstr "Rôle obligatoire sans utilisateur assigné"
-
-msgid "RACI type"
-msgstr "Type RACI"
 
 msgid "Related activity"
 msgstr "Activité associée"
@@ -4029,7 +3958,7 @@ msgid "Interest level"
 msgstr "Niveau d'intérêt"
 
 msgid "Stakeholder"
-msgstr "Partie prenante"
+msgstr "Partie intéressée"
 
 #| msgid "Changed"
 msgid "Channel"
@@ -4105,7 +4034,7 @@ msgid "Hex color code, e.g. #ff5733"
 msgstr "Code couleur hexadécimal, ex. #ff5733"
 
 msgid "Tag"
-msgstr "Tag"
+msgstr "Étiquette"
 
 msgid "Add strategy"
 msgstr "Ajouter une stratégie"
@@ -4132,14 +4061,8 @@ msgstr "Activités et processus"
 msgid "No activity catalogued yet."
 msgstr "Aucune activité cataloguée pour le moment."
 
-msgid ""
-"Activities are the business processes your ISMS protects. Cataloguing them "
-"lets you trace risks and controls back to what the organisation actually "
-"does."
-msgstr ""
-"Les activités sont les processus métier que votre SMSI protège. Les "
-"cataloguer permet de relier les risques et les contrôles à ce que "
-"l'organisation fait réellement."
+msgid "Activities are what the organisation does as part of its business. Listing them lets you trace risks and controls back to what the organisation actually does."
+msgstr "Les activités sont ce que l'organisation fait dans le cadre de son métier. Les recenser permet de relier les risques et les mesures à ce que l'organisation fait réellement."
 
 #, python-format
 msgid "Are you sure you want to delete <strong>%(object)s</strong>?"
@@ -4221,10 +4144,7 @@ msgid ""
 "A predefined indicator is automatically populated from Cairn data. It is "
 "always of organizational type. The first measurement will be taken "
 "automatically upon creation."
-msgstr ""
-"Un indicateur prédéfini est automatiquement alimenté depuis les données Open"
-" GRC. Il est toujours de type organisationnel. Le premier relevé sera "
-"effectué automatiquement à la création."
+msgstr "Un indicateur prédéfini est alimenté automatiquement à partir des données de Cairn. Il est toujours de type organisationnel. Le premier relevé est effectué automatiquement à la création."
 
 msgid "Optional. E.g. framework ID for compliance rate by framework."
 msgstr ""
@@ -4242,20 +4162,14 @@ msgstr "Valeurs"
 msgid ""
 "A predefined indicator is automatically populated from Cairn data. The first"
 " measurement will be taken automatically upon creation."
-msgstr ""
-"Un indicateur prédéfini est automatiquement alimenté depuis les données Open"
-" GRC. Le premier relevé sera effectué automatiquement à la création."
+msgstr "Un indicateur prédéfini est alimenté automatiquement à partir des données de Cairn. Le premier relevé est effectué automatiquement à la création."
 
 #| msgid "No indicator defined."
 msgid "No indicator defined yet."
 msgstr "Aucun indicateur défini pour le moment."
 
-msgid ""
-"Indicators measure the health of your ISMS. Define what to measure, the "
-"expected level and the review frequency."
-msgstr ""
-"Les indicateurs mesurent la santé de votre SMSI. Définissez ce qu'il faut "
-"mesurer, le niveau attendu et la fréquence de revue."
+msgid "Indicators are the figures you follow to know whether your security work goes as intended. Define what to measure, the expected level and the review frequency."
+msgstr "Les indicateurs sont les chiffres que vous suivez pour savoir si votre démarche de sécurité avance comme prévu. Définissez ce qu'il faut mesurer, le niveau attendu et la fréquence de revue."
 
 msgid "Next review"
 msgstr "Prochaine revue"
@@ -4276,15 +4190,8 @@ msgstr "Analyse"
 msgid "No issue identified yet."
 msgstr "Aucun enjeu identifié pour le moment."
 
-msgid ""
-"Issues are internal/external factors that influence your ISMS - strategic "
-"context, regulatory pressure, notable incidents."
-msgstr ""
-"Les enjeux sont les facteurs internes/externes qui influencent votre SMSI : "
-"contexte stratégique, pression réglementaire, incidents notables."
-
-msgid "KPI"
-msgstr "KPI"
+msgid "Issues are the facts, inside or outside the organisation, that weigh on your security : strategic context, regulatory pressure, notable incidents."
+msgstr "Les enjeux sont les faits, dans l'organisation ou autour d'elle, qui pèsent sur votre sécurité : contexte stratégique, pression réglementaire, incidents marquants."
 
 msgid "objective"
 msgstr "objectif"
@@ -4334,12 +4241,8 @@ msgstr "Rôles et responsabilités"
 msgid "No role described yet."
 msgstr "Aucun rôle décrit pour le moment."
 
-msgid ""
-"Roles formalise who does what in the ISMS. Map each role to its "
-"responsibilities, then assign it to a person."
-msgstr ""
-"Les rôles formalisent qui fait quoi dans le SMSI. Cartographiez chaque rôle "
-"avec ses responsabilités, puis assignez-le à une personne."
+msgid "Roles say who does what for security. Map each role to its responsibilities, then give it to a person."
+msgstr "Les rôles disent qui fait quoi pour la sécurité. Associez chaque rôle à ses responsabilités, puis confiez-le à une personne."
 
 msgid "Scope details"
 msgstr "Détails du périmètre"
@@ -4399,28 +4302,23 @@ msgid "No expectation defined."
 msgstr "Aucune attente définie."
 
 msgid "stakeholder"
-msgstr "partie prenante"
+msgstr "partie intéressée"
 
 msgid "Edit stakeholder"
-msgstr "Modifier la partie prenante"
+msgstr "Modifier la partie intéressée"
 
 msgid "New stakeholder"
-msgstr "Nouvelle partie prenante"
+msgstr "Nouvelle partie intéressée"
 
 msgid "Influence & Interest"
 msgstr "Influence et intérêt"
 
 #| msgid "No stakeholder defined."
 msgid "No stakeholder mapped yet."
-msgstr "Aucune partie prenante mappée pour le moment."
+msgstr "Aucune partie intéressée pour l'instant."
 
-msgid ""
-"Stakeholders are the parties who care about your ISMS (clients, regulators, "
-"suppliers). Map who they are and what they expect."
-msgstr ""
-"Les parties prenantes sont les acteurs concernés par votre SMSI (clients, "
-"régulateurs, fournisseurs). Cartographiez qui ils sont et ce qu'ils "
-"attendent."
+msgid "Stakeholders are the people and organisations that expect something of your security (clients, regulators, suppliers). Note who they are and what they expect."
+msgstr "Les parties intéressées sont les personnes et les organisations qui attendent quelque chose de votre sécurité (clients, régulateurs, fournisseurs). Notez qui elles sont et ce qu'elles attendent."
 
 msgid "Strengths"
 msgstr "Forces"
@@ -4512,13 +4410,13 @@ msgstr ""
 "Une par périmètre ou initiative majeure est la cadence courante."
 
 msgid "Edit tag"
-msgstr "Modifier le tag"
+msgstr "Modifier l'étiquette"
 
 msgid "Linked items"
 msgstr "Éléments liés"
 
 msgid "No tag created yet."
-msgstr "Aucun tag créé pour le moment."
+msgstr "Aucune étiquette pour l'instant."
 
 msgid ""
 "Tags are free-form classifiers (project, criticality tier, regulation). "
@@ -4553,9 +4451,6 @@ msgstr "Modifier la responsabilité"
 
 msgid "What this role is responsible for."
 msgstr "Ce dont ce rôle est responsable."
-
-msgid "RACI involvement for this responsibility."
-msgstr "Implication RACI pour cette responsabilité."
 
 msgid "Activity this responsibility relates to, if any."
 msgstr "Activité à laquelle cette responsabilité se rapporte, le cas échéant."
@@ -4627,9 +4522,7 @@ msgid "Approval enabled"
 msgstr "Approbation activée"
 
 msgid "When disabled, approval workflow is hidden for this item type."
-msgstr ""
-"Lorsqu'il est désactivé, le workflow d'approbation est masqué pour ce type "
-"d'élément."
+msgstr "Lorsqu'il est désactivé, le circuit d'approbation est masqué pour ce type d'élément."
 
 msgid ""
 "List of field names whose modification triggers a version increment and "
@@ -4713,22 +4606,6 @@ msgstr "Renouveler %(count)d contrat(s) fournisseur expiré(s)"
 msgid "Review %(count)d risk acceptance(s) expiring within 30 days"
 msgstr "Réexaminer %(count)d acceptation(s) de risque expirant sous 30 jours"
 
-#, python-format
-msgid "Mitigate %(count)d SPOF in asset dependencies"
-msgstr "Traiter %(count)d SPOF dans les dépendances d'actifs"
-
-#, python-format
-msgid "Mitigate %(count)d SPOF in supplier dependencies"
-msgstr "Traiter %(count)d SPOF dans les dépendances fournisseurs"
-
-#, python-format
-msgid "Mitigate %(count)d SPOF in site-asset dependencies"
-msgstr "Traiter %(count)d SPOF dans les dépendances site-bien"
-
-#, python-format
-msgid "Mitigate %(count)d SPOF in site-supplier dependencies"
-msgstr "Traiter %(count)d SPOF dans les dépendances site-fournisseur"
-
 msgid "Deadlines and events"
 msgstr "Échéances et événements"
 
@@ -4781,27 +4658,6 @@ msgstr "Tableau de bord"
 msgid "Calendar"
 msgstr "Calendrier"
 
-msgid "Create a risk"
-msgstr "Créer un risque"
-
-msgid "Create a risk assessment"
-msgstr "Créer une appréciation des risques"
-
-msgid "Create a requirement"
-msgstr "Créer une exigence"
-
-msgid "Create a compliance assessment"
-msgstr "Créer une évaluation de conformité"
-
-msgid "Create an action plan"
-msgstr "Créer un plan d'action"
-
-msgid "Create an essential asset"
-msgstr "Créer un bien essentiel"
-
-msgid "Create an objective"
-msgstr "Créer un objectif"
-
 msgid "Open styleguide"
 msgstr "Ouvrir le guide de style"
 
@@ -4818,7 +4674,7 @@ msgid "Support Assets"
 msgstr "Biens supports"
 
 msgid "Asset Groups"
-msgstr "Groupes d'actifs"
+msgstr "Groupes de biens"
 
 msgid "Compliance Assessments"
 msgstr "Évaluations de conformité"
@@ -4827,7 +4683,7 @@ msgid "Action Plans"
 msgstr "Plans d'action"
 
 msgid "Risk Assessments"
-msgstr "Analyses de risques"
+msgstr "Appréciations des risques"
 
 msgid "Risks"
 msgstr "Risques"
@@ -4954,10 +4810,10 @@ msgid "Statement of Applicability"
 msgstr "Déclaration d'applicabilité"
 
 msgid "Assessment not found."
-msgstr "Audit non trouvé."
+msgstr "Évaluation introuvable."
 
 msgid "The assessment must be completed or closed to generate a report."
-msgstr "L'audit doit être terminé ou clôturé pour générer un rapport."
+msgstr "L'évaluation doit être terminée ou clôturée pour générer un rapport."
 
 msgid "Audit report"
 msgstr "Rapport d'audit"
@@ -4996,7 +4852,7 @@ msgid "Management review - Minutes"
 msgstr "Revue de direction - Compte rendu"
 
 msgid "ISO 27005 risk assessment report"
-msgstr "Rapport d'évaluation des risques ISO 27005"
+msgstr "Rapport d'appréciation des risques ISO 27005"
 
 msgid "Generating"
 msgstr "En cours de génération"
@@ -5044,7 +4900,7 @@ msgid "Continual improvement"
 msgstr "Amélioration continue"
 
 msgid "ISMS change"
-msgstr "Changement SMSI"
+msgstr "Changement du SMSI"
 
 #| msgid "Regulation"
 msgid "Resource allocation"
@@ -5256,7 +5112,7 @@ msgid "Action plan %(ref)s created from decision."
 msgstr "Plan d'action %(ref)s créé à partir de la décision."
 
 msgid "ISMS change added."
-msgstr "Changement SMSI ajouté."
+msgstr "Changement du SMSI ajouté."
 
 msgid "You cannot sign for this participant."
 msgstr "Vous ne pouvez pas signer pour ce participant."
@@ -5305,7 +5161,7 @@ msgid "The review must be in 'held' status before closure."
 msgstr "La revue doit être en statut « tenue » avant clôture."
 
 msgid "All decisions must have an owner and a due date."
-msgstr "Toutes les décisions doivent avoir un responsable et une échéance."
+msgstr "Chaque décision doit avoir un propriétaire et une échéance."
 
 #| msgid "External"
 msgid "External name"
@@ -5361,7 +5217,7 @@ msgid "Linked objective"
 msgstr "Objectif lié"
 
 msgid "Linked ISMS change"
-msgstr "Changement SMSI lié"
+msgstr "Changement du SMSI lié"
 
 #| msgid "Management review - Presentation"
 msgid "Management review decision"
@@ -5392,7 +5248,7 @@ msgid "Affected policies"
 msgstr "Politiques impactées"
 
 msgid "ISMS changes"
-msgstr "Changements SMSI"
+msgstr "Changements du SMSI"
 
 #| msgid "Management review"
 msgid "Management review comment"
@@ -5439,7 +5295,7 @@ msgid "Table of contents"
 msgstr "Sommaire"
 
 msgid "Objectives and scope"
-msgstr "Objectifs et champ d'application"
+msgstr "Objectifs et périmètre"
 
 msgid "Finding qualifications"
 msgstr "Qualification des constats"
@@ -5535,18 +5391,18 @@ msgid "Create action plan"
 msgstr "Créer le plan d'action"
 
 msgid "Delete ISMS change"
-msgstr "Supprimer le changement SMSI"
+msgstr "Supprimer le changement du SMSI"
 
 #, python-format
 #| msgid "Signed in as <strong>%(email)s</strong>"
 msgid "Delete ISMS change <strong>%(ref)s - %(title)s</strong>?"
-msgstr "Supprimer le changement SMSI <strong>%(ref)s - %(title)s</strong> ?"
+msgstr "Supprimer le changement du SMSI <strong>%(ref)s - %(title)s</strong> ?"
 
 msgid "Edit ISMS change"
-msgstr "Modifier le changement SMSI"
+msgstr "Modifier le changement du SMSI"
 
 msgid "New ISMS change"
-msgstr "Nouveau changement SMSI"
+msgstr "Nouveau changement du SMSI"
 
 #| msgid "Management review"
 msgid "Delete management review"
@@ -5561,9 +5417,7 @@ msgstr ""
 msgid ""
 "This action cannot be undone. All linked decisions, ISMS changes, comments "
 "and participants will be removed."
-msgstr ""
-"Cette action est irréversible. Toutes les décisions, changements SMSI, "
-"commentaires et participants liés seront supprimés."
+msgstr "Cette action est irréversible. Les décisions, les changements du SMSI, les commentaires et les participants liés seront supprimés."
 
 #| msgid "Personal data"
 msgid "Frozen data"
@@ -5581,7 +5435,7 @@ msgid "Closure blockers"
 msgstr "Blocages à la clôture"
 
 msgid "Decisions (clause 9.3.3)"
-msgstr "Décisions (clause 9.3.3)"
+msgstr "Décisions (chapitre 9.3.3)"
 
 #| msgid "Add finding"
 msgid "Add decision"
@@ -5596,7 +5450,7 @@ msgid "No decisions recorded yet."
 msgstr "Aucune décision enregistrée pour le moment."
 
 msgid "ISMS changes (clause 9.3.3)"
-msgstr "Changements SMSI (clause 9.3.3)"
+msgstr "Changements du SMSI (chapitre 9.3.3)"
 
 #| msgid "Password change"
 msgid "Add change"
@@ -5604,7 +5458,7 @@ msgstr "Ajouter un changement"
 
 #| msgid "No findings recorded yet."
 msgid "No ISMS changes recorded yet."
-msgstr "Aucun changement SMSI enregistré pour le moment."
+msgstr "Aucun changement du SMSI pour l'instant."
 
 #| msgid "No comments yet."
 msgid "No summary yet."
@@ -5680,13 +5534,8 @@ msgstr "Décisions"
 msgid "No management review yet."
 msgstr "Aucune revue de direction pour le moment."
 
-msgid ""
-"Management reviews are the periodic ISMS check-ins required by ISO 27001 § "
-"9.3. Plan one, gather inputs, record decisions."
-msgstr ""
-"Les revues de direction sont les points périodiques du SMSI exigés par l'ISO"
-" 27001 § 9.3. Planifiez-en une, collectez les entrées, consignez les "
-"décisions."
+msgid "A management review is the regular meeting where the management looks at how security is doing (ISO 27001, clause 9.3). Plan one, gather the inputs, record the decisions."
+msgstr "Une revue de direction est la réunion régulière où la direction regarde où en est la sécurité (ISO 27001, chapitre 9.3). Planifiez-en une, rassemblez les éléments d'entrée, consignez les décisions."
 
 #| msgid "Management review"
 msgid "Edit management review"
@@ -5759,10 +5608,7 @@ msgstr ""
 msgid ""
 "Generate an audit report for a completed assessment, including summary "
 "statistics, findings, and detailed compliance results per requirement."
-msgstr ""
-"Générer un rapport d'audit pour un audit terminé, incluant les statistiques "
-"de synthèse, les constats et les résultats de conformité détaillés par "
-"exigence."
+msgstr "Générer un rapport d'audit pour une évaluation terminée, avec les statistiques de synthèse, les constats et les résultats de conformité détaillés par exigence."
 
 msgid ""
 "Generate management review materials (presentation or meeting minutes) "
@@ -5792,10 +5638,8 @@ msgstr "Générer la déclaration d'applicabilité"
 #, python-format
 msgid "%(counter)s risk addressed by this framework's controls."
 msgid_plural "%(counter)s risks addressed by this framework's controls."
-msgstr[0] ""
-"%(counter)s risque pris en compte par les contrôles de ce référentiel."
-msgstr[1] ""
-"%(counter)s risques pris en compte par les contrôles de ce référentiel."
+msgstr[0] "%(counter)s risque traité par les mesures de ce référentiel."
+msgstr[1] "%(counter)s risques traités par les mesures de ce référentiel."
 
 msgid "Treated risks"
 msgstr "Risques traités"
@@ -6307,9 +6151,6 @@ msgstr "Stratégie résiduelle de risque"
 msgid "Monitoring plan"
 msgstr "Plan de suivi"
 
-msgid "PACS summary"
-msgstr "Synthèse du PACS"
-
 msgid "Risk mapping before treatment"
 msgstr "Cartographie des risques avant traitement"
 
@@ -6412,10 +6253,6 @@ msgstr "Partie prenante de l'écosystème EBIOS RM"
 
 msgid "EBIOS RM ecosystem stakeholders"
 msgstr "Parties prenantes de l'écosystème EBIOS RM"
-
-#| msgid "criteria"
-msgid "DIC criterion"
-msgstr "Critère DIC"
 
 #| msgid "Impact level"
 msgid "Gravity level"
@@ -6610,10 +6447,6 @@ msgstr "Sources de risque EBIOS RM"
 #| msgid "Business activities"
 msgid "Business values (activities)"
 msgstr "Valeurs métier (activités)"
-
-#| msgid "Management summary"
-msgid "DIC needs summary"
-msgstr "Synthèse des besoins DIC"
 
 #| msgid "Table preferences"
 msgid "Baseline references"
@@ -6931,10 +6764,10 @@ msgid "Treatment actions"
 msgstr "Actions de traitement"
 
 msgid "Affected asset types"
-msgstr "Types d'actifs affectés"
+msgstr "Types de biens affectés"
 
 msgid "Affected assets"
-msgstr "Actifs affectés"
+msgstr "Biens affectés"
 
 msgid "CVE references"
 msgstr "Références CVE"
@@ -7036,9 +6869,7 @@ msgstr "risque(s)"
 msgid ""
 "Unknown methodology. Please edit this assessment and select a valid "
 "methodology."
-msgstr ""
-"Méthodologie inconnue. Veuillez modifier cette évaluation et sélectionner "
-"une méthodologie valide."
+msgstr "Méthode inconnue. Modifiez cette appréciation et choisissez une méthode valide."
 
 msgid "Max impact"
 msgstr "Impact max"
@@ -7132,16 +6963,13 @@ msgstr "Aucun critère de risque défini pour le moment."
 msgid ""
 "Risk criteria are the scales (likelihood, impact) and the level matrix used "
 "during assessments. Define them once per methodology."
-msgstr ""
-"Les critères de risque sont les échelles (vraisemblance, impact) et la "
-"matrice de niveau utilisées lors des évaluations. Définissez-les une fois "
-"par méthodologie."
+msgstr "Les critères de risque sont les échelles (vraisemblance, impact) et la matrice de niveaux utilisées pendant les appréciations des risques. Définissez-les une fois par méthode."
 
 msgid "Risk dashboard"
 msgstr "Tableau de bord des risques"
 
 msgid "Go to assessments"
-msgstr "Aller aux évaluations"
+msgstr "Aller aux appréciations"
 
 msgid "Go to risk register"
 msgstr "Ouvrir le registre des risques"
@@ -7389,13 +7217,6 @@ msgstr "Événements redoutés"
 msgid "Gravity"
 msgstr "Gravité"
 
-msgid ""
-"No feared event yet. Add at least one feared event per essential asset and "
-"DIC criterion."
-msgstr ""
-"Aucun événement redouté pour le moment. Ajoutez au moins un événement "
-"redouté par bien essentiel et par critère DIC."
-
 msgid "Baseline gaps"
 msgstr "Écarts au socle"
 
@@ -7424,9 +7245,6 @@ msgid ""
 msgstr ""
 "Aucune source de risque pour le moment. Identifiez les acteurs de menace et "
 "les sources naturelles pertinentes pour le périmètre."
-
-msgid "SR/OV pairs"
-msgstr "Couples SR/OV"
 
 msgid ""
 "No SR/OV pair yet. Pair each retained risk source with its targeted "
@@ -7522,9 +7340,6 @@ msgstr "Aucune capture pour le moment."
 msgid "After treatment"
 msgstr "Après traitement"
 
-msgid "PACS measures"
-msgstr "Mesures du PACS"
-
 msgid ""
 "No PACS measure yet. Define the continuous security improvement plan from "
 "the consolidated risks."
@@ -7583,10 +7398,7 @@ msgstr "Évaluation"
 msgid ""
 "ISO 27005 analyses are created from within an assessment's methodology "
 "workflow. Open an ISO 27005 assessment to create new analyses."
-msgstr ""
-"Les analyses ISO 27005 sont créées depuis la démarche méthodologique d'une "
-"évaluation. Ouvrez une évaluation ISO 27005 pour créer de nouvelles "
-"analyses."
+msgstr "Les analyses ISO 27005 se créent depuis la démarche d'une appréciation des risques. Ouvrez une appréciation ISO 27005 pour en créer de nouvelles."
 
 #| msgid "No ISO 27005 analyses."
 msgid "No ISO 27005 analysis yet."
@@ -7595,10 +7407,7 @@ msgstr "Aucune analyse ISO 27005 pour le moment."
 msgid ""
 "ISO 27005 risks combine an essential asset, a threat and a vulnerability. "
 "They are usually created from a risk assessment workflow."
-msgstr ""
-"Les risques ISO 27005 combinent un bien essentiel, une menace et une "
-"vulnérabilité. Ils sont généralement créés à partir d'un workflow "
-"d'évaluation de risque."
+msgstr "Les risques ISO 27005 combinent un bien essentiel, une menace et une vulnérabilité. Ils sont généralement créés depuis une appréciation des risques."
 
 msgid "Impact C / I / A"
 msgstr "Impact C / I / D"
@@ -7680,9 +7489,7 @@ msgstr "Exporter vers Excel"
 msgid ""
 "Risks are identified through methodology-driven assessments. Open an "
 "assessment and use its methodology workflow to create risks."
-msgstr ""
-"Les risques sont identifiés au travers d'évaluations méthodologiques. Ouvrez"
-" une évaluation et utilisez sa démarche pour créer des risques."
+msgstr "Les risques se relèvent au cours d'une appréciation des risques. Ouvrez une appréciation et suivez sa démarche pour créer des risques."
 
 msgid "Decision:"
 msgstr "Décision :"
@@ -7715,9 +7522,7 @@ msgstr "Aucun risque enregistré pour le moment."
 msgid ""
 "Risks are identified through methodology-driven assessments. Open an "
 "assessment and use its workflow to create them."
-msgstr ""
-"Les risques sont identifiés au travers d'évaluations méthodologiques. Ouvrez"
-" une évaluation et utilisez sa démarche pour créer des risques."
+msgstr "Les risques se relèvent au cours d'une appréciation des risques. Ouvrez une appréciation et suivez sa démarche pour les créer."
 
 msgid "threat"
 msgstr "menace"
@@ -7738,9 +7543,7 @@ msgstr "Aucune menace cataloguée pour le moment."
 msgid ""
 "Threats are the events or sources that could harm assets. Maintain a shared "
 "catalogue to keep assessments consistent."
-msgstr ""
-"Les menaces sont les événements ou sources qui pourraient nuire aux actifs. "
-"Maintenez un catalogue partagé pour garder les évaluations cohérentes."
+msgstr "Les menaces sont les événements ou les sources qui pourraient nuire à vos biens. Tenez un catalogue commun pour garder des appréciations cohérentes."
 
 msgid "treatment action"
 msgstr "action de traitement"
@@ -7791,7 +7594,7 @@ msgstr ""
 "et dates cibles."
 
 msgid "No affected assets."
-msgstr "Aucun actif affecté."
+msgstr "Aucun bien affecté."
 
 msgid "vulnerability"
 msgstr "vulnérabilité"
@@ -7820,7 +7623,7 @@ msgid "Residual risks"
 msgstr "Risques résiduels"
 
 msgid "Assessment is outside your allowed scopes."
-msgstr "L'évaluation est hors de vos périmètres autorisés."
+msgstr "Cette appréciation est hors de vos périmètres."
 
 msgid "Unsupported bulk action."
 msgstr "Action groupée non prise en charge."
@@ -7845,9 +7648,7 @@ msgstr "%(count)d risque(s) supprimé(s)."
 msgid ""
 "Please select an assessment and use its methodology workflow to create "
 "risks."
-msgstr ""
-"Veuillez sélectionner une évaluation et utiliser sa démarche méthodologique "
-"pour créer des risques."
+msgstr "Choisissez une appréciation et suivez sa démarche pour créer des risques."
 
 msgid "This analysis is already linked to a risk."
 msgstr "Cette analyse est déjà liée à un risque."
@@ -7911,7 +7712,7 @@ msgid "Goods"
 msgstr "Biens"
 
 msgid "Asset dependencies"
-msgstr "Dépendances d'actifs"
+msgstr "Dépendances entre biens"
 
 msgid "Graph view"
 msgstr "Vue graphe"
@@ -8151,7 +7952,7 @@ msgstr ""
 "irréversible."
 
 msgid "Workflow steps"
-msgstr "Étapes du workflow"
+msgstr "Étapes du cycle de vie"
 
 msgid "Styleguide"
 msgstr "Guide de style"
@@ -8230,7 +8031,7 @@ msgid "New entry"
 msgstr "Nouvelle entrée"
 
 msgid "Risks are identified through methodology-driven assessments."
-msgstr "Les risques sont identifiés au travers d'évaluations méthodologiques."
+msgstr "Les risques se relèvent au cours d'une appréciation des risques."
 
 msgid "Open an assessment"
 msgstr "Ouvrir une évaluation"
@@ -8459,7 +8260,7 @@ msgstr ""
 "point(s) de défaillance unique (SPOF) détecté(s) dans vos dépendances."
 
 msgid "asset dependency(ies)"
-msgstr "dépendance(s) d'actifs"
+msgstr "dépendance(s) entre biens"
 
 msgid "View"
 msgstr "Voir"
@@ -8654,7 +8455,7 @@ msgid "Organizational scopes this role applies to."
 msgstr "Périmètres organisationnels auxquels ce rôle s'applique."
 
 msgid "Lifecycle state of the role."
-msgstr "État du cycle de vie du rôle."
+msgstr "Étape du cycle de vie du rôle."
 
 msgid "Free-form labels for filtering and grouping."
 msgstr "Étiquettes libres pour filtrer et regrouper."
@@ -8723,7 +8524,7 @@ msgid "Next date this issue should be reviewed."
 msgstr "Prochaine date de revue de l'enjeu."
 
 msgid "Lifecycle state of the issue."
-msgstr "État du cycle de vie de l'enjeu."
+msgstr "Étape du cycle de vie de l'enjeu."
 
 msgid "Organizational scopes this issue applies to."
 msgstr "Périmètres organisationnels concernés par l'enjeu."
@@ -8750,7 +8551,7 @@ msgid "Organizational scopes this activity applies to."
 msgstr "Périmètres organisationnels concernés par l'activité."
 
 msgid "Lifecycle state of the activity."
-msgstr "État du cycle de vie de l'activité."
+msgstr "Étape du cycle de vie de l'activité."
 
 msgid "Title of the SWOT analysis."
 msgstr "Titre de l'analyse SWOT."
@@ -8765,7 +8566,7 @@ msgid "Purpose and context of the analysis."
 msgstr "Objet et contexte de l'analyse."
 
 msgid "Lifecycle state of the analysis."
-msgstr "État du cycle de vie de l'analyse."
+msgstr "Étape du cycle de vie de l'analyse."
 
 msgid "Organizational scopes this analysis applies to."
 msgstr "Périmètres organisationnels concernés par l'analyse."
@@ -8801,7 +8602,7 @@ msgid "Next date this stakeholder should be reviewed."
 msgstr "Prochaine date de revue de la partie intéressée."
 
 msgid "Lifecycle state of the stakeholder."
-msgstr "État du cycle de vie de la partie intéressée."
+msgstr "Étape du cycle de vie de la partie intéressée."
 
 msgid "Organizational scopes this stakeholder applies to."
 msgstr "Périmètres organisationnels concernés par la partie intéressée."
@@ -8855,7 +8656,7 @@ msgid "Next date this objective should be reviewed."
 msgstr "Prochaine date de revue de l'objectif."
 
 msgid "Lifecycle state of the objective."
-msgstr "État du cycle de vie de l'objectif."
+msgstr "Étape du cycle de vie de l'objectif."
 
 msgid "Organizational scopes this objective applies to."
 msgstr "Périmètres organisationnels concernés par l'objectif."
@@ -8894,7 +8695,7 @@ msgid "Date of the first review."
 msgstr "Date de la première revue."
 
 msgid "Lifecycle state of the indicator."
-msgstr "État du cycle de vie de l'indicateur."
+msgstr "Étape du cycle de vie de l'indicateur."
 
 msgid "Organizational scopes this indicator applies to."
 msgstr "Périmètres organisationnels concernés par l'indicateur."
@@ -8918,7 +8719,7 @@ msgid "Parent scope, if this is a sub-scope."
 msgstr "Périmètre parent, s'il s'agit d'un sous-périmètre."
 
 msgid "Lifecycle state of the scope."
-msgstr "État du cycle de vie du périmètre."
+msgstr "Étape du cycle de vie du périmètre."
 
 msgid "Icon representing the scope."
 msgstr "Icône représentant le périmètre."
@@ -8958,19 +8759,19 @@ msgid "Next date this scope should be reviewed."
 msgstr "Prochaine date de revue du périmètre."
 
 msgid "New asset group"
-msgstr "Nouveau groupe d'actifs"
+msgstr "Nouveau groupe de biens"
 
 msgid "Edit asset group"
-msgstr "Modifier le groupe d'actifs"
+msgstr "Modifier le groupe de biens"
 
 msgid "Location & tags"
 msgstr "Localisation et étiquettes"
 
 msgid "Name of the asset group."
-msgstr "Nom du groupe d'actifs."
+msgstr "Nom du groupe de biens."
 
 msgid "Kind of asset group."
-msgstr "Type de groupe d'actifs."
+msgstr "Type de groupe de biens."
 
 msgid "Person accountable for the group."
 msgstr "Personne responsable du groupe."
@@ -8982,7 +8783,7 @@ msgid "Organizational scopes this group applies to."
 msgstr "Périmètres organisationnels concernés par le groupe."
 
 msgid "Lifecycle state of the group."
-msgstr "État du cycle de vie du groupe."
+msgstr "Étape du cycle de vie du groupe."
 
 msgid "Name of the site."
 msgstr "Nom du site."
@@ -8991,7 +8792,7 @@ msgid "Kind of site."
 msgstr "Type de site."
 
 msgid "Lifecycle state of the site."
-msgstr "État du cycle de vie du site."
+msgstr "Étape du cycle de vie du site."
 
 msgid "Parent site, if this is a sub-site."
 msgstr "Site parent, s'il s'agit d'un sous-site."
@@ -9027,7 +8828,7 @@ msgid "What the asset is and why it matters."
 msgstr "Ce qu'est le bien et son importance."
 
 msgid "Lifecycle state of the asset."
-msgstr "État du cycle de vie du bien."
+msgstr "Étape du cycle de vie du bien."
 
 msgid "Next date this asset should be reviewed."
 msgstr "Prochaine date de revue du bien."
@@ -9171,7 +8972,7 @@ msgid "Free-form notes about the supplier."
 msgstr "Notes libres sur le fournisseur."
 
 msgid "Lifecycle state of the supplier."
-msgstr "État du cycle de vie du fournisseur."
+msgstr "Étape du cycle de vie du fournisseur."
 
 msgid "Organizational scopes this supplier applies to."
 msgstr "Périmètres organisationnels concernés par le fournisseur."
@@ -9240,7 +9041,7 @@ msgid "Next date this framework should be reviewed."
 msgstr "Prochaine date de revue du référentiel."
 
 msgid "Lifecycle state of the framework."
-msgstr "État du cycle de vie du référentiel."
+msgstr "Étape du cycle de vie du référentiel."
 
 msgid "Organizational scopes this framework applies to."
 msgstr "Périmètres organisationnels concernés par le référentiel."
@@ -9267,7 +9068,7 @@ msgid "Assessment end date."
 msgstr "Date de fin de l'évaluation."
 
 msgid "Lifecycle state of the assessment."
-msgstr "État du cycle de vie de l'évaluation."
+msgstr "Étape du cycle de vie de l'évaluation."
 
 msgid "Organizational scopes this assessment applies to."
 msgstr "Périmètres organisationnels concernés par l'évaluation."
@@ -9342,7 +9143,7 @@ msgid "Acceptance"
 msgstr "Acceptation"
 
 msgid "Edit risk assessment"
-msgstr "Modifier l'évaluation des risques"
+msgstr "Modifier l'appréciation des risques"
 
 msgid "Edit threat"
 msgstr "Modifier la menace"
@@ -9354,7 +9155,7 @@ msgid "Edit risk acceptance"
 msgstr "Modifier l'acceptation du risque"
 
 msgid "Name of the risk assessment."
-msgstr "Nom de l'évaluation des risques."
+msgstr "Nom de l'appréciation des risques."
 
 msgid "Risk methodology used."
 msgstr "Méthodologie de risque utilisée."
@@ -9363,10 +9164,10 @@ msgid "Risk criteria scale to apply."
 msgstr "Échelle de critères de risque à appliquer."
 
 msgid "Date the assessment is conducted."
-msgstr "Date de réalisation de l'évaluation."
+msgstr "Date à laquelle l'appréciation est menée."
 
 msgid "Next date this assessment should be reviewed."
-msgstr "Prochaine date de revue de l'évaluation."
+msgstr "Prochaine date de revue de cette appréciation."
 
 msgid "Executive summary of the results."
 msgstr "Synthèse des résultats."
@@ -9393,7 +9194,7 @@ msgid "Tick if taken from a catalog."
 msgstr "Cochez si issu d'un catalogue."
 
 msgid "Lifecycle state of the threat."
-msgstr "État du cycle de vie de la menace."
+msgstr "Étape du cycle de vie de la menace."
 
 msgid "Organizational scopes this threat applies to."
 msgstr "Périmètres organisationnels concernés par la menace."
@@ -9417,7 +9218,7 @@ msgid "Assets affected by this vulnerability."
 msgstr "Biens affectés par cette vulnérabilité."
 
 msgid "Lifecycle state of the vulnerability."
-msgstr "État du cycle de vie de la vulnérabilité."
+msgstr "Étape du cycle de vie de la vulnérabilité."
 
 msgid "Organizational scopes this vulnerability applies to."
 msgstr "Périmètres organisationnels concernés par la vulnérabilité."
@@ -9450,7 +9251,7 @@ msgid "Target completion date."
 msgstr "Date d'achèvement cible."
 
 msgid "Lifecycle state of the action."
-msgstr "État du cycle de vie de l'action."
+msgstr "Étape du cycle de vie de l'action."
 
 msgid "Display order within the plan."
 msgstr "Ordre d'affichage dans le plan."
@@ -9477,7 +9278,7 @@ msgid "Short, recognizable name of the risk."
 msgstr "Nom court et reconnaissable du risque."
 
 msgid "Assessment this risk belongs to."
-msgstr "Évaluation à laquelle appartient le risque."
+msgstr "Appréciation des risques à laquelle appartient ce risque."
 
 msgid "Source of the risk."
 msgstr "Source du risque."
@@ -9528,7 +9329,7 @@ msgid "Requirements related to this risk."
 msgstr "Exigences liées à ce risque."
 
 msgid "Lifecycle state of the risk."
-msgstr "État du cycle de vie du risque."
+msgstr "Étape du cycle de vie du risque."
 
 msgid "Next date this risk should be reviewed."
 msgstr "Prochaine date de revue du risque."
@@ -9552,13 +9353,13 @@ msgid "Expected impact after treatment."
 msgstr "Impact attendu après traitement."
 
 msgid "Lifecycle state of the plan."
-msgstr "État du cycle de vie du plan."
+msgstr "Étape du cycle de vie du plan."
 
 msgid "Compliance action plans linked to this treatment."
 msgstr "Plans d'action de conformité liés à ce traitement."
 
 msgid "ISO 27005 assessment this risk belongs to."
-msgstr "Évaluation ISO 27005 à laquelle appartient le risque."
+msgstr "Appréciation ISO 27005 à laquelle appartient ce risque."
 
 msgid "Threat involved."
 msgstr "Menace impliquée."
@@ -9613,7 +9414,7 @@ msgid "Short, recognizable name."
 msgstr "Nom court et reconnaissable."
 
 msgid "Lifecycle state."
-msgstr "État du cycle de vie."
+msgstr "Étape du cycle de vie."
 
 msgid "Ask Cairn"
 msgstr "Ask Cairn"
@@ -9657,9 +9458,7 @@ msgstr ""
 msgid ""
 "The assistant only answers questions about your GRC data: risks, reviews, "
 "action plans, assets, compliance..."
-msgstr ""
-"L'assistant répond uniquement aux questions sur vos données GRC : risques, "
-"revues, plans d'action, actifs, conformité..."
+msgstr "L'assistant répond uniquement aux questions sur vos données : risques, revues, plans d'action, biens, conformité..."
 
 msgid "Was this helpful?"
 msgstr "Cette réponse vous a-t-elle aidé ?"
@@ -9685,9 +9484,6 @@ msgstr "Langue de l'interface"
 msgid "Rating"
 msgstr "Évaluation"
 
-msgid "LLM summary"
-msgstr "Résumé du LLM"
-
 msgid "Returned records"
 msgstr "Enregistrements retournés"
 
@@ -9696,12 +9492,6 @@ msgstr "Réponse dégradée"
 
 msgid "Refused tools"
 msgstr "Outils refusés"
-
-msgid "LLM provider"
-msgstr "Fournisseur LLM"
-
-msgid "LLM model"
-msgstr "Modèle LLM"
 
 msgid "Assistant feedback"
 msgstr "Retour sur l'assistant"
@@ -10062,9 +9852,7 @@ msgid "Nothing yet."
 msgstr "Rien pour le moment."
 
 msgid "This item cannot be deleted in its current state. Unpublish it first."
-msgstr ""
-"Cet élément ne peut pas être supprimé dans son état actuel. Dépubliez-le "
-"d'abord."
+msgstr "Cet élément ne peut pas être supprimé à son étape actuelle. Dépubliez-le d'abord."
 
 msgid "This will permanently delete this item. This action cannot be undone."
 msgstr ""
@@ -10274,10 +10062,10 @@ msgid "This transition is not allowed."
 msgstr "Cette transition n'est pas autorisée."
 
 msgid "This transition is not allowed from the current state."
-msgstr "Cette transition n'est pas autorisée depuis l'état actuel."
+msgstr "Cette transition n'est pas possible depuis l'étape actuelle."
 
 msgid "Unknown target state."
-msgstr "État cible inconnu."
+msgstr "Étape cible inconnue."
 
 msgid "Site dependencies"
 msgstr "Dépendances de sites"
@@ -10394,7 +10182,7 @@ msgid "No scope matching reference or name \"%(token)s\"."
 msgstr "Aucun périmètre correspondant à la référence ou au nom « %(token)s »."
 
 msgid "Tag \"%(name)s\" will be created."
-msgstr "Le tag « %(name)s » sera créé."
+msgstr "L'étiquette « %(name)s » sera créée."
 
 msgid "%(count)s row to import"
 msgid_plural "%(count)s rows to import"
@@ -10639,13 +10427,8 @@ msgstr ""
 "Comment le traitement fait passer les risques de leur niveau actuel à leur "
 "niveau résiduel."
 
-msgid "Probability x impact heatmaps, current and residual."
-msgstr "Cartes de chaleur probabilité x impact, actuelles et résiduelles."
-
 msgid "A prioritized to-do list built from the current state of your ISMS."
-msgstr ""
-"Une liste de tâches priorisée construite à partir de l'état actuel de votre "
-"SMSI."
+msgstr "Une liste de tâches classées par priorité, établie à partir de la situation actuelle de votre SMSI."
 
 msgid "Add a widget"
 msgstr "Ajouter un widget"
@@ -11085,11 +10868,11 @@ msgstr "Questionnaire risques"
 
 #: assets/lifecycles.py
 msgid "Compliant asset"
-msgstr "Actif conforme"
+msgstr "Bien conforme"
 
 #: assets/lifecycles.py
 msgid "Non-compliant asset"
-msgstr "Actif non conforme"
+msgstr "Bien non conforme"
 
 #: assets/lifecycles.py
 msgid "Start integration"
@@ -11142,7 +10925,7 @@ msgstr "Évaluer"
 
 #: assets/forms.py
 msgid "Supporting evidence (file)"
-msgstr "Justificatif (fichier)"
+msgstr "Preuve à l'appui (fichier)"
 
 #: assets/forms.py
 msgid "Written justification for the compliance assessment (rich text)."
@@ -11289,7 +11072,7 @@ msgid "Short title of the contract."
 msgstr "Titre court du contrat."
 
 msgid "Lifecycle state of the contract."
-msgstr "État du cycle de vie du contrat."
+msgstr "Étape du cycle de vie du contrat."
 
 msgid "If this contract is an amendment, the contract it amends."
 msgstr "Si ce contrat est un avenant, le contrat qu'il modifie."
@@ -11604,7 +11387,7 @@ msgid "Issue date"
 msgstr "Date de délivrance"
 
 msgid "Lifecycle state of the certificate."
-msgstr "État du cycle de vie du certificat."
+msgstr "Étape du cycle de vie du certificat."
 
 msgid "New certificate"
 msgstr "Nouveau certificat"
@@ -11692,10 +11475,10 @@ msgid "Decommission"
 msgstr "Décommissionner"
 
 msgid "Hosted support assets"
-msgstr "Actifs supports hébergés"
+msgstr "Biens supports hébergés"
 
 msgid "Hosted assets"
-msgstr "Actifs hébergés"
+msgstr "Biens hébergés"
 
 msgid "Are you sure?"
 msgstr "Êtes-vous sûr ?"
@@ -11914,7 +11697,7 @@ msgstr ""
 "terminale prouve sa mise en oeuvre, jamais son efficacité."
 
 msgid "An audit finding must be linked to an assessment."
-msgstr "Un constat d'audit doit être rattaché à un audit."
+msgstr "Un constat d'audit doit être rattaché à une évaluation."
 
 msgid "An audit finding must name who raised it."
 msgstr "Un constat d'audit doit nommer la personne qui l'a constaté."
@@ -11999,10 +11782,6 @@ msgstr "Personne ayant revu l'efficacité."
 # ── Module 6 : security incidents ──────────────────────────
 msgid "Incident response plans"
 msgstr "Plans de réponse aux incidents"
-
-msgctxt "incident"
-msgid "SOC or SIEM alert"
-msgstr "Alerte SOC ou SIEM"
 
 msgctxt "incident"
 msgid "Memory dump"
@@ -12243,9 +12022,7 @@ msgstr ""
 "été fusionné."
 
 msgid "The third party whose breach or outage caused this."
-msgstr ""
-"Le tiers dont la compromission ou l'interruption de service est à l'origine "
-"de l'incident."
+msgstr "Le fournisseur dont la compromission ou la panne est à l'origine de l'incident."
 
 msgid ""
 "Suppliers hit or notified downstream, kept apart from the origin because the"
@@ -12454,7 +12231,7 @@ msgid "The command to run, the runbook section, who to call."
 msgstr "La commande à exécuter, la section du runbook, qui appeler."
 
 msgid "Operational progress, not a governance state."
-msgstr "Avancement opérationnel, et non un état de gouvernance."
+msgstr "Avancement opérationnel, et non une étape de gouvernance."
 
 msgid "Who actually executed it, when that is someone else."
 msgstr "Qui l'a réellement exécutée, lorsqu'il s'agit de quelqu'un d'autre."
@@ -12795,7 +12572,7 @@ msgstr ""
 "procédure. Seule une autorité validée peut être citée."
 
 msgid "A registered stakeholder, rather than a retyped contact."
-msgstr "Une partie prenante enregistrée, plutôt qu'un contact ressaisi."
+msgstr "Une partie intéressée enregistrée, plutôt qu'un contact ressaisi."
 
 msgid ""
 "A supplier recipient, including the controller to notify when the "
@@ -13867,13 +13644,6 @@ msgstr ""
 "vie identique et mêmes jalons, exclu de tous les indicateurs et de tous les "
 "rapports, et n'instanciant jamais de notification réglementaire."
 
-msgid "TLP"
-msgstr "TLP"
-
-msgid "Handling caveat for the incident file and its evidence."
-msgstr ""
-"Restriction de diffusion applicable au dossier d'incident et à ses preuves."
-
 msgid ""
 "Mirrors the risk register's impact flags so incident and risk impact read "
 "the same way in reports."
@@ -13992,10 +13762,7 @@ msgstr "Incident majeur composé de sous-incidents, ou cible de fusion."
 msgid ""
 "The third party whose breach or outage caused this. A sub-processor is "
 "itself a supplier row, so nth-party origin needs no extra field."
-msgstr ""
-"Le tiers dont la compromission ou l'interruption de service est à l'origine "
-"de l'incident. Un sous-traitant ultérieur est lui-même une fiche fournisseur"
-" : une origine de rang n ne nécessite donc aucun champ supplémentaire."
+msgstr "Le fournisseur dont la compromission ou la panne est à l'origine de l'incident. Un sous-traitant ultérieur est lui-même une fiche fournisseur : une origine de rang n ne demande donc aucun champ de plus."
 
 msgid ""
 "Suppliers impacted or notified downstream. The causal direction is kept "
@@ -14112,9 +13879,7 @@ msgstr "Le fondement légal ou contractuel dont découle l'obligation."
 msgid ""
 "Registered stakeholder recipient, reusing the stakeholder register rather "
 "than retyping a contact."
-msgstr ""
-"Destinataire partie prenante enregistrée, en réutilisant le registre des "
-"parties prenantes plutôt qu'en ressaisissant un contact."
+msgstr "Destinataire choisi parmi les parties intéressées enregistrées, plutôt qu'un contact ressaisi."
 
 msgid ""
 "Supplier recipient, and the controller we must notify under GDPR Art. 33(2) "
@@ -14127,9 +13892,7 @@ msgstr ""
 msgid ""
 "Free-text recipient when it is neither a registered stakeholder, supplier "
 "nor authority of record."
-msgstr ""
-"Destinataire en texte libre lorsqu'il ne s'agit ni d'une partie prenante "
-"enregistrée, ni d'un fournisseur, ni d'une autorité référencée."
+msgstr "Destinataire en texte libre lorsqu'il ne s'agit ni d'une partie intéressée enregistrée, ni d'un fournisseur, ni d'une autorité référencée."
 
 msgid ""
 "Derived recipient discriminator backing the uniqueness of an obligation. "
@@ -14741,12 +14504,10 @@ msgstr "La commande à exécuter, la section du runbook, la personne à appeler.
 msgid ""
 "Operational progress. A plain status column, not a lifecycle state : this "
 "row follows its parent incident's governance."
-msgstr ""
-"Avancement opérationnel. Une simple colonne de statut, pas un état de cycle "
-"de vie : cette ligne suit la gouvernance de l'incident parent."
+msgstr "Avancement opérationnel. Une simple colonne de statut, pas une étape de cycle de vie : cette ligne suit la gouvernance de l'incident parent."
 
 msgid "Who actually executed it, when that differs from the owner."
-msgstr "Qui l'a réellement exécutée, lorsque cela diffère du responsable."
+msgstr "Qui l'a réellement exécutée, lorsque ce n'est pas son propriétaire."
 
 msgid ""
 "Execution end. With the start time, the raw material of the mean-time-to-"
@@ -14962,8 +14723,7 @@ msgstr ""
 "dans une table parallèle."
 
 msgid "Clause 10.2 e) : the changes to the ISMS this incident forced."
-msgstr ""
-"Chapitre 10.2 e) : les modifications du SMSI imposées par cet incident."
+msgstr "Chapitre 10.2 e) : les changements du SMSI imposés par cet incident."
 
 msgid ""
 "Effectiveness cannot be verified before the review that decides the "
@@ -15183,7 +14943,7 @@ msgid "The operational step this entry narrates, when there is one."
 msgstr "L'étape opérationnelle que cette entrée relate, le cas échéant."
 
 msgid "The evidence item this entry narrates, when there is one."
-msgstr "L'élément de preuve que cette entrée relate, le cas échéant."
+msgstr "La preuve que cette entrée relate, le cas échéant."
 
 msgid ""
 "Include this entry verbatim in generated regulatory filings and in the "
@@ -15634,7 +15394,7 @@ msgid "A legal hold is in force."
 msgstr "Un gel probatoire est en vigueur."
 
 msgid "Register an evidence item"
-msgstr "Enregistrer un élément de preuve"
+msgstr "Enregistrer une preuve"
 
 msgid ""
 "This item is sealed : the acquisition and integrity facts are frozen and can"
@@ -16232,12 +15992,10 @@ msgstr "Aucune faille n'a été enregistrée à partir de cette revue."
 msgid ""
 "Clause 10.2 e). An ISMS change is an output of a management review : this "
 "review links one, it never creates it."
-msgstr ""
-"Chapitre 10.2 e). Une modification du SMSI est une donnée de sortie d'une "
-"revue de direction : cette revue en relie une, elle n'en crée jamais."
+msgstr "Chapitre 10.2 e). Un changement du SMSI est une donnée de sortie d'une revue de direction : cette revue en relie un, elle n'en crée jamais."
 
 msgid "No ISMS change has been tabled from this review."
-msgstr "Aucune modification du SMSI n'a été proposée à partir de cette revue."
+msgstr "Aucun changement du SMSI n'a été proposé à partir de cette revue."
 
 msgid ""
 "Clause 10.2 d) and f) : a closed action plan proves the action was "
@@ -16369,13 +16127,10 @@ msgstr ""
 "le dépôt. Enregistrez une correction comme un nouveau dépôt."
 
 msgid "This element cannot be changed in its current lifecycle state."
-msgstr ""
-"Cet élément ne peut pas être modifié dans l'état actuel de son cycle de vie."
+msgstr "Cet élément ne peut pas être modifié à l'étape actuelle de son cycle de vie."
 
 msgid "This element cannot be deleted in its current lifecycle state."
-msgstr ""
-"Cet élément ne peut pas être supprimé dans l'état actuel de son cycle de "
-"vie."
+msgstr "Cet élément ne peut pas être supprimé à l'étape actuelle de son cycle de vie."
 
 msgid ""
 "A comment is required : promotion is the assessment verdict, and the "
@@ -16571,10 +16326,12 @@ msgid "Nonconformity %(reference)s"
 msgstr "Non-conformité %(reference)s"
 
 msgid "%(counter)s requirement"
-msgstr "%(counter)s exigence"
+msgid_plural "%(counter)s requirements"
+msgstr[0] "%(counter)s exigence"
+msgstr[1] "%(counter)s exigences"
 
 msgid "Current state of the element in its lifecycle."
-msgstr "État actuel de l'élément dans son cycle de vie."
+msgstr "Étape actuelle de l'élément dans son cycle de vie."
 
 msgid "Person accountable for the indicator's measurement and review."
 msgstr "Personne responsable de la mesure et de la revue de l'indicateur."
@@ -16584,8 +16341,7 @@ msgstr "Objectifs liés"
 
 msgid ""
 "Objectives this indicator measures progress against (ISO 27001 §6.2 / §9.1)."
-msgstr ""
-"Objectifs dont cet indicateur mesure l'avancement (ISO 27001 §6.2 / §9.1)."
+msgstr "Objectifs dont cet indicateur mesure l'avancement (ISO 27001 chapitre 6.2 / chapitre 9.1)."
 
 msgid "Compliance requirements this indicator measures the satisfaction of."
 msgstr "Exigences de conformité dont cet indicateur mesure la satisfaction."
@@ -16605,11 +16361,11 @@ msgstr ""
 "Obligations de notification réglementaires en retard ou encore en cours, "
 "avec les incidents restés ouverts derrière elles."
 
-msgid "Probability x impact heatmap, before treatment."
-msgstr "Carte de chaleur probabilité x impact, avant traitement."
+msgid "Likelihood x impact heatmap, before treatment."
+msgstr "Carte de chaleur vraisemblance x impact, avant traitement."
 
-msgid "Probability x impact heatmap, after treatment."
-msgstr "Carte de chaleur probabilité x impact, après traitement."
+msgid "Likelihood x impact heatmap, after treatment."
+msgstr "Carte de chaleur vraisemblance x impact, après traitement."
 
 msgctxt "kanban"
 msgid "Incident"
@@ -17386,7 +17142,7 @@ msgid "Links and correction"
 msgstr "Liens et correction"
 
 msgid "The evidence item this line narrates."
-msgstr "L'élément de preuve que cette ligne relate."
+msgstr "La preuve que cette ligne relate."
 
 msgid "Which ISO 27035 response step this belongs to."
 msgstr "À quelle étape de réponse ISO 27035 cette action se rattache."
@@ -17481,9 +17237,6 @@ msgstr "Enregistrements (estimation)"
 msgid "Volumes are estimates"
 msgstr "Volumes estimatifs"
 
-msgid "DPO contact"
-msgstr "Contact du DPO"
-
 msgid "Measures taken"
 msgstr "Mesures prises"
 
@@ -17527,17 +17280,14 @@ msgstr "Bien support d'origine"
 msgid "Sealed at"
 msgstr "Scellé le"
 
-msgid "Handling caveat"
-msgstr "Restriction de diffusion"
-
 msgid "Legal hold"
 msgstr "Gel probatoire"
 
 msgid "Evidence item"
-msgstr "Élément de preuve"
+msgstr "Preuve"
 
 msgid "Evidence items"
-msgstr "Éléments de preuve"
+msgstr "Preuves"
 
 msgid "Occurred at"
 msgstr "Survenu le"
@@ -17681,7 +17431,7 @@ msgid "Recipient kind"
 msgstr "Type de destinataire"
 
 msgid "Recipient stakeholder"
-msgstr "Destinataire partie prenante"
+msgstr "Partie intéressée destinataire"
 
 msgid "Recipient supplier"
 msgstr "Destinataire fournisseur"
@@ -17838,9 +17588,7 @@ msgstr "Rôles responsables"
 
 msgid ""
 "This incident response plan cannot be put into force from its current state."
-msgstr ""
-"Ce plan de réponse aux incidents ne peut pas être mis en vigueur depuis son "
-"état actuel."
+msgstr "Ce plan de réponse aux incidents ne peut pas être mis en vigueur depuis son étape actuelle."
 
 msgid "When the review is planned."
 msgstr "La date à laquelle la revue est prévue."
@@ -17876,7 +17624,7 @@ msgid "Effectiveness notes"
 msgstr "Notes sur l'efficacité"
 
 msgid "Raised findings"
-msgstr "Non-conformités relevées"
+msgstr "Constats relevés"
 
 msgid "Corrective action plans"
 msgstr "Plans d'actions correctives"
@@ -18063,7 +17811,7 @@ msgid "No external register reference recorded."
 msgstr "Aucune référence de registre externe enregistrée."
 
 msgid "Remove evidence item"
-msgstr "Retirer l'élément de preuve"
+msgstr "Retirer la preuve"
 
 msgid "Never verified"
 msgstr "Jamais vérifiée"
@@ -18117,7 +17865,7 @@ msgid "The retention date has not passed."
 msgstr "La date de conservation n'est pas échue."
 
 msgid "Edit evidence item"
-msgstr "Modifier l'élément de preuve"
+msgstr "Modifier la preuve"
 
 msgid "Record a filing"
 msgstr "Enregistrer un dépôt"
@@ -18131,19 +17879,15 @@ msgstr ""
 "Êtes-vous sûr de vouloir supprimer <strong>%(reference)s</strong> - "
 "%(title)s ?"
 
-msgid ""
-"%(counter)s notification obligation arises from this incident, and an "
-"obligation protects the incident it arises from."
-msgstr ""
-"%(counter)s obligation de notification découle de cet incident, et une "
-"obligation protège l'incident dont elle découle."
+msgid "%(counter)s notification obligation arises from this incident, and an obligation protects the incident it arises from."
+msgid_plural "%(counter)s notification obligations arise from this incident, and an obligation protects the incident it arises from."
+msgstr[0] "%(counter)s obligation de notification découle de cet incident, et une obligation protège l'incident dont elle découle."
+msgstr[1] "%(counter)s obligations de notification découlent de cet incident, et une obligation protège l'incident dont elle découle."
 
-msgid ""
-"%(counter)s evidence item belongs to this incident, and evidence protects "
-"the incident it belongs to."
-msgstr ""
-"%(counter)s élément de preuve appartient à cet incident, et une preuve "
-"protège l'incident auquel elle appartient."
+msgid "%(counter)s evidence item belongs to this incident, and evidence protects the incident it belongs to."
+msgid_plural "%(counter)s evidence items belong to this incident, and evidence protects the incident it belongs to."
+msgstr[0] "%(counter)s preuve appartient à cet incident, et une preuve protège l'incident auquel elle appartient."
+msgstr[1] "%(counter)s preuves appartiennent à cet incident, et une preuve protège l'incident auquel elle appartient."
 
 msgid "Overdue obligations"
 msgstr "Obligations en retard"
@@ -18158,7 +17902,7 @@ msgid "Add a chronology entry"
 msgstr "Ajouter une entrée de chronologie"
 
 msgid "No evidence item registered for this incident."
-msgstr "Aucun élément de preuve enregistré pour cet incident."
+msgstr "Aucune preuve enregistrée pour cet incident."
 
 msgid "Regulatory obligations"
 msgstr "Obligations réglementaires"
@@ -18325,12 +18069,10 @@ msgstr "Aucune autorité de notification dans le catalogue pour l'instant."
 msgid "Delete response plan"
 msgstr "Supprimer le plan de réponse"
 
-msgid ""
-"%(counter)s incident was handled under this plan, and points at it as the "
-"procedure of record."
-msgstr ""
-"%(counter)s incident a été traité selon ce plan et le désigne comme "
-"procédure de référence."
+msgid "%(counter)s incident was handled under this plan, and points at it as the procedure of record."
+msgid_plural "%(counter)s incidents were handled under this plan, and point at it as the procedure of record."
+msgstr[0] "%(counter)s incident a été traité selon ce plan et le désigne comme procédure de référence."
+msgstr[1] "%(counter)s incidents ont été traités selon ce plan et le désignent comme procédure de référence."
 
 msgid "No applicable regime declared."
 msgstr "Aucun régime applicable déclaré."
@@ -18545,7 +18287,9 @@ msgid "No notification deadline running."
 msgstr "Aucune échéance de notification en cours."
 
 msgid "%(counter)s result"
-msgstr "%(counter)s résultat"
+msgid_plural "%(counter)s results"
+msgstr[0] "%(counter)s résultat"
+msgstr[1] "%(counter)s résultats"
 
 msgid "Pagination"
 msgstr "Pagination"
@@ -18647,9 +18391,6 @@ msgstr "Supprimer <strong>%(object)s</strong> ?"
 msgid "C / I / A"
 msgstr "C / I / D"
 
-msgid "EOL"
-msgstr "Fin de vie"
-
 msgid "Select"
 msgstr "Sélectionner"
 
@@ -18666,9 +18407,7 @@ msgstr "Le fichier généré sera également supprimé du stockage."
 msgid ""
 "All linked decisions, ISMS changes, comments and participants will be "
 "removed."
-msgstr ""
-"Toutes les décisions, modifications du SMSI, commentaires et participants "
-"liés seront supprimés."
+msgstr "Les décisions, les changements du SMSI, les commentaires et les participants liés seront supprimés."
 
 msgid "Other actions"
 msgstr "Autres actions"
@@ -19151,7 +18890,7 @@ msgid "The parts of the organisation this document governs."
 msgstr "Les parties de l'organisation régies par ce document."
 
 msgid "The requirements this document answers (clause 5.2, A.5.1...)."
-msgstr "Les exigences auxquelles répond ce document (clause 5.2, A.5.1...)."
+msgstr "Les exigences auxquelles répond ce document (chapitre 5.2, A.5.1...)."
 
 #, python-format
 msgid ""
@@ -19419,9 +19158,6 @@ msgstr "Taux de prise de connaissance des documents"
 msgid "Document versions"
 msgstr "Versions de documents"
 
-msgid "Create a document"
-msgstr "Créer un document"
-
 msgid "Acknowledgement: "
 msgstr "Prise de connaissance : "
 
@@ -19489,9 +19225,6 @@ msgstr "Dispensé"
 
 msgid "Web"
 msgstr "Web"
-
-msgid "MCP"
-msgstr "MCP"
 
 msgid "Retired"
 msgstr "Retiré"
@@ -19986,8 +19719,9 @@ msgstr ""
 
 #, python-format
 msgid "It has %(counter)s test : delete the test first, or retire the control."
-msgstr ""
-"Elle a %(counter)s test : supprimez d'abord le test, ou retirez la mesure."
+msgid_plural "It has %(counter)s tests : delete them first, or retire the control."
+msgstr[0] "Elle a %(counter)s test : supprimez d'abord le test, ou retirez la mesure."
+msgstr[1] "Elle a %(counter)s tests : supprimez-les d'abord, ou retirez la mesure."
 
 #, python-format
 msgid ""
@@ -20085,7 +19819,9 @@ msgid "Runs are recorded once the test is active."
 msgstr "Les exécutions sont enregistrées une fois le test actif."
 
 msgid "every month"
-msgstr "tous les mois"
+msgid_plural "every %(counter)s months"
+msgstr[0] "tous les mois"
+msgstr[1] "tous les %(counter)s mois"
 
 msgid "No test yet."
 msgstr "Aucun test pour l'instant."
@@ -20112,7 +19848,9 @@ msgstr ""
 
 #, python-format
 msgid "Its %(counter)s evidence file is deleted with it."
-msgstr "%(counter)s fichier de preuve est supprimé avec elle."
+msgid_plural "Its %(counter)s evidence files are deleted with it."
+msgstr[0] "Son %(counter)s fichier de preuve est supprimé avec elle."
+msgstr[1] "Ses %(counter)s fichiers de preuve sont supprimés avec elle."
 
 msgid ""
 "This run was submitted : its result, its observations and its evidence are "
@@ -20192,15 +19930,15 @@ msgstr "Jamais testées"
 
 #, python-format
 msgid "%(n)d proposed control was created from %(framework)s."
-msgstr "%(n)d mesure proposée a été créée à partir de %(framework)s."
+msgid_plural "%(n)d proposed controls were created from %(framework)s."
+msgstr[0] "%(n)d mesure proposée a été créée à partir de %(framework)s."
+msgstr[1] "%(n)d mesures proposées ont été créées à partir de %(framework)s."
 
 #, python-format
-msgid ""
-"%(n)d requirement was skipped : it already has a control or is not "
-"applicable."
-msgstr ""
-"%(n)d exigence a été ignorée : elle a déjà une mesure ou n'est pas "
-"applicable."
+msgid "%(n)d requirement was skipped : it already has a control or is not applicable."
+msgid_plural "%(n)d requirements were skipped : they already have a control or are not applicable."
+msgstr[0] "%(n)d exigence a été ignorée : elle a déjà une mesure ou n'est pas applicable."
+msgstr[1] "%(n)d exigences ont été ignorées : elles ont déjà une mesure ou ne sont pas applicables."
 
 msgid "No control was created."
 msgstr "Aucune mesure n'a été créée."
@@ -20249,9 +19987,6 @@ msgstr "Test à réaliser"
 
 msgid "Control test: "
 msgstr "Test de mesure : "
-
-msgid "Create a control"
-msgstr "Créer une mesure"
 
 msgid "Implementation"
 msgstr "Mise en œuvre"
@@ -20635,8 +20370,8 @@ msgctxt "empty select option"
 msgid "None"
 msgstr "Aucun"
 
-msgid "Assets and third parties"
-msgstr "Actifs et tiers"
+msgid "Assets and suppliers"
+msgstr "Biens et fournisseurs"
 
 msgid "Reference data"
 msgstr "Données de référence"
@@ -20983,5 +20718,737 @@ msgstr "Rien à signaler pour l'instant : ce résumé se remplira à mesure que 
 msgid "No framework is followed yet : the rate appears once you follow a standard or a regulation."
 msgstr "Aucun référentiel n'est encore suivi : le taux apparaîtra dès que vous suivrez une norme ou un règlement."
 
+msgid "New user"
+msgstr "Nouvel utilisateur"
+
+msgid "Security needs assessment"
+msgstr "Évaluation des besoins de sécurité"
+
+msgid "Security needs assessments"
+msgstr "Évaluations des besoins de sécurité"
+
+msgid "Inherited security needs"
+msgstr "Besoins de sécurité hérités"
+
+msgid "New compliance assessment"
+msgstr "Nouvelle évaluation de conformité"
+
+msgid "Security criterion"
+msgstr "Critère de sécurité"
+
+msgid "Security needs summary"
+msgstr "Synthèse des besoins de sécurité"
+
+msgid "No feared event yet. Add at least one feared event per essential asset and security criterion."
+msgstr "Aucun événement redouté pour l'instant. Ajoutez-en au moins un par bien essentiel et par critère de sécurité."
+
+msgid "Sharing level (TLP)"
+msgstr "Niveau de diffusion (TLP)"
+
+msgid "Who may see the incident file and its evidence, in the Traffic Light Protocol : RED the people named only, AMBER+STRICT the organisation, AMBER the organisation and its clients, GREEN its community, CLEAR anyone."
+msgstr "Qui peut voir le dossier de l'incident et ses preuves, selon le protocole TLP (Traffic Light Protocol) : RED les seules personnes nommées, AMBER+STRICT l'organisation, AMBER l'organisation et ses clients, GREEN sa communauté, CLEAR tout le monde."
+
+msgctxt "incident"
+msgid "Security monitoring alert (SOC, SIEM)"
+msgstr "Alerte de la supervision de sécurité (SOC, SIEM)"
+
+msgctxt "incident"
+msgid "Incident response team (CERT, CSIRT)"
+msgstr "Centre de réponse aux incidents (CERT, CSIRT)"
+
+msgctxt "incident"
+msgid "Incident response team (CSIRT)"
+msgstr "Centre de réponse aux incidents (CSIRT)"
+
+msgid "Data protection officer (DPO) contact"
+msgstr "Contact du délégué à la protection des données (DPO)"
+
+msgid "Single point of failure"
+msgstr "Point de défaillance unique"
+
+msgid "Remove %(count)d single point(s) of failure between assets"
+msgstr "Supprimer %(count)d point(s) de défaillance unique entre biens"
+
+msgid "Remove %(count)d single point(s) of failure on suppliers"
+msgstr "Supprimer %(count)d point(s) de défaillance unique chez les fournisseurs"
+
+msgid "Remove %(count)d single point(s) of failure between sites and assets"
+msgstr "Supprimer %(count)d point(s) de défaillance unique entre sites et biens"
+
+msgid "Remove %(count)d single point(s) of failure between sites and suppliers"
+msgstr "Supprimer %(count)d point(s) de défaillance unique entre sites et fournisseurs"
+
+msgid "Key performance indicator (KPI)"
+msgstr "Indicateur clé de performance (KPI)"
+
+msgid "Virtual private network (VPN)"
+msgstr "Réseau privé virtuel (VPN)"
+
+msgid "Demilitarized zone (DMZ)"
+msgstr "Zone démilitarisée (DMZ)"
+
+msgid "Involvement (RACI)"
+msgstr "Implication (RACI)"
+
+msgid "Responsible does the work, Accountable answers for the result, Consulted is asked before, Informed is told after."
+msgstr "Le responsable réalise, l'approbateur répond du résultat, le consulté est interrogé avant, l'informé est prévenu après."
+
+msgid "Summary by the language model"
+msgstr "Résumé rédigé par le modèle de langage"
+
+msgid "Language model provider"
+msgstr "Fournisseur du modèle de langage"
+
+msgid "Language model"
+msgstr "Modèle de langage"
+
+msgid "Risk source and targeted objective pairs (SR/OV)"
+msgstr "Couples source de risque et objectif visé (SR/OV)"
+
+msgid "Summary of the security improvement plan (PACS)"
+msgstr "Synthèse du plan d'amélioration continue de la sécurité (PACS)"
+
+msgid "Measures of the security improvement plan (PACS)"
+msgstr "Mesures du plan d'amélioration continue de la sécurité (PACS)"
+
+msgid "No test overdue"
+msgstr "Aucun test en retard"
+
+msgid "Edit control"
+msgstr "Modifier la mesure"
+
+msgid "Create controls from requirements"
+msgstr "Créer des mesures à partir des exigences"
+
+msgid "Due later"
+msgstr "À échéance plus lointaine"
+
+msgid "Not scheduled"
+msgstr "Non planifié"
+
+msgid "Edit test"
+msgstr "Modifier le test"
+
+msgid "Edit run"
+msgstr "Modifier l'exécution"
+
+msgid "With a deadline"
+msgstr "Avec échéance"
+
+msgid "Pattern - complete on the record (completeness_card, section_edit, first steps)"
+msgstr "Modèle - compléter sur la fiche (completeness_card, section_edit, premiers pas)"
+
+msgid "A record is created on one screen, then completed on its page : the card lists what it still needs, each line opening the dialog that fills it, and each section card has its own Edit button. See the usability standard."
+msgstr "Une fiche est créée sur un seul écran, puis complétée sur sa page : la carte liste ce qu'il lui manque, chaque ligne ouvre la fenêtre qui le renseigne, et chaque carte de section a son propre bouton Modifier. Voir le standard d'utilisabilité."
+
+msgid "Glossary"
+msgstr "Glossaire"
+
+msgid "Open the register"
+msgstr "Ouvrir le registre"
+
+msgid "Also called"
+msgstr "Autres noms"
+
+msgid "The words this application uses, and what they mean. One thing has one name everywhere : if you know it by another name, type that name here."
+msgstr "Les mots que cette application emploie, et ce qu'ils veulent dire. Une chose porte un seul nom partout : si vous la connaissez sous un autre nom, saisissez-le ici."
+
+msgid "Search a word or an acronym…"
+msgstr "Rechercher un mot ou un sigle…"
+
+msgid "Search a word or an acronym"
+msgstr "Rechercher un mot ou un sigle"
+
+msgid "Show everything"
+msgstr "Tout afficher"
+
+msgid "Words"
+msgstr "Mots"
+
+msgid "Acronyms"
+msgstr "Sigles"
+
+msgid "No word of the glossary matches \"%(query)s\". Try another spelling, or show everything."
+msgstr "Aucun mot du glossaire ne correspond à « %(query)s ». Essayez une autre orthographe, ou affichez tout."
+
+msgid "Nothing found"
+msgstr "Rien trouvé"
+
+msgid "Help on this page"
+msgstr "Aide sur cette page"
+
+msgid "A word you do not know ? Open the glossary"
+msgstr "Un mot inconnu ? Ouvrez le glossaire"
+
+msgid "Hide this help"
+msgstr "Masquer cette aide"
+
+msgid "Manager"
+msgstr "Responsable"
+
+msgid "What your security work applies to : the whole company, one site or one activity. Every other record is filed under a scope."
+msgstr "Ce à quoi s'applique votre démarche de sécurité : toute l'entreprise, un site ou une activité. Toutes les autres fiches sont rangées sous un périmètre."
+
+msgctxt "glossary : other names"
+msgid "perimeter, boundary"
+msgstr "domaine d'application, champ d'application"
+
+msgid "A place where the organisation works or keeps its equipment : an office, a data centre, a factory."
+msgstr "Un lieu où l'organisation travaille ou garde ses équipements : un bureau, un centre de données, une usine."
+
+msgctxt "glossary : other names"
+msgid "location, premises"
+msgstr "lieu, implantation, locaux"
+
+msgid "A fact, inside or outside the organisation, that weighs on your security : a new regulation, fast growth, a move to the cloud."
+msgstr "Un fait, dans l'organisation ou autour d'elle, qui pèse sur votre sécurité : une nouvelle réglementation, une croissance rapide, un passage au cloud."
+
+msgctxt "glossary : other names"
+msgid "context factor"
+msgstr "facteur de contexte, enjeu interne, enjeu externe"
+
+msgid "A person or an organisation that expects something of your security : a client, a regulator, your staff."
+msgstr "Une personne ou une organisation qui attend quelque chose de votre sécurité : un client, un régulateur, vos collaborateurs."
+
+msgctxt "glossary : other names"
+msgid "interested party"
+msgstr "partie prenante"
+
+msgid "A measurable aim of your security work, for example training every newcomer within a month."
+msgstr "Un but mesurable de votre démarche de sécurité, par exemple former chaque nouvel arrivant dans le mois."
+
+msgctxt "glossary : other names"
+msgid "goal, target"
+msgstr "but, cible"
+
+msgid "A figure followed over time to know whether things go as intended : the share of laptops encrypted, the time taken to close an incident."
+msgstr "Un chiffre suivi dans le temps pour savoir si les choses vont comme prévu : la part des ordinateurs portables chiffrés, le temps mis à clore un incident."
+
+msgctxt "glossary : other names"
+msgid "metric, KPI"
+msgstr "métrique, KPI"
+
+msgid "A function in the security organisation, with its responsibilities, given to one or several people."
+msgstr "Une fonction dans l'organisation de la sécurité, avec ses responsabilités, confiée à une ou plusieurs personnes."
+
+msgctxt "glossary : other names"
+msgid "function"
+msgstr "fonction"
+
+msgid "Something the organisation does as part of its business : invoicing, recruiting, manufacturing."
+msgstr "Ce que l'organisation fait dans le cadre de son métier : facturer, recruter, fabriquer."
+
+msgctxt "glossary : other names"
+msgid "business process"
+msgstr "processus métier"
+
+msgid "The regular meeting where the management looks at how security is doing and decides what changes."
+msgstr "La réunion régulière où la direction regarde où en est la sécurité et décide de ce qui change."
+
+msgctxt "glossary : other names"
+msgid "steering committee"
+msgstr "comité de pilotage"
+
+msgid "What the business cannot do without : a piece of information you hold or an activity you run, such as the customer file, payroll or production."
+msgstr "Ce dont l'activité ne peut pas se passer : une information que vous détenez ou une activité que vous menez, comme le fichier clients, la paie ou la production."
+
+msgctxt "glossary : other names"
+msgid "business value, primary asset"
+msgstr "valeur métier, actif primordial, actif essentiel"
+
+msgid "What an essential asset relies on to work : a server, an application, premises, a team or the service of a supplier."
+msgstr "Ce sur quoi un bien essentiel s'appuie pour fonctionner : un serveur, une application, des locaux, une équipe ou le service d'un fournisseur."
+
+msgctxt "glossary : other names"
+msgid "supporting asset"
+msgstr "actif support, bien de support"
+
+msgid "How much an essential asset must stay available, exact and secret : its availability, its integrity and its confidentiality, each rated on a scale."
+msgstr "À quel point un bien essentiel doit rester disponible, exact et secret : sa disponibilité, son intégrité et sa confidentialité, chacune notée sur une échelle."
+
+msgctxt "glossary : other names"
+msgid "CIA, valuation, classification"
+msgstr "DIC, valorisation, classification"
+
+msgid "The link saying that one thing needs another to work : payroll needs the HR application, which needs its hosting supplier."
+msgstr "Le lien qui dit qu'une chose a besoin d'une autre pour fonctionner : la paie a besoin de l'application RH, qui a besoin de son hébergeur."
+
+msgid "An outside organisation you depend on : a hosting company, a software publisher, a subcontractor."
+msgstr "Une organisation extérieure dont vous dépendez : un hébergeur, un éditeur de logiciel, un sous-traitant."
+
+msgctxt "glossary : other names"
+msgid "third party, vendor, provider"
+msgstr "tiers, prestataire, sous-traitant"
+
+msgid "Something that could go wrong, and what it would cost you : a threat, the weakness it uses and the damage it would do."
+msgstr "Ce qui pourrait mal tourner, et ce que cela vous coûterait : une menace, la faiblesse qu'elle exploite et le dommage qu'elle causerait."
+
+msgid "The exercise of listing your risks, rating how likely and how serious each one is, and deciding what to do about them."
+msgstr "L'exercice qui consiste à lister vos risques, à estimer pour chacun sa vraisemblance et sa gravité, et à décider quoi en faire."
+
+msgctxt "glossary : other names"
+msgid "risk analysis, risk study"
+msgstr "analyse de risques, évaluation des risques, étude de risques"
+
+msgid "What could cause harm : a fire, a ransomware attack, a mistake."
+msgstr "Ce qui pourrait causer un dommage : un incendie, une attaque par rançongiciel, une erreur."
+
+msgid "A weakness a threat can use : a server that is not updated, a newcomer who was not trained."
+msgstr "Une faiblesse qu'une menace peut exploiter : un serveur qui n'est pas mis à jour, un nouvel arrivant qui n'a pas été formé."
+
+msgctxt "glossary : other names"
+msgid "weakness, flaw"
+msgstr "faiblesse, faille"
+
+msgid "How plausible it is that a risk happens, on the scale of your risk criteria."
+msgstr "À quel point il est plausible qu'un risque se produise, sur l'échelle de vos critères de risque."
+
+msgctxt "glossary : other names"
+msgid "probability"
+msgstr "probabilité"
+
+msgid "How serious the damage would be if the risk happened, on the scale of your risk criteria."
+msgstr "La gravité du dommage si le risque se produisait, sur l'échelle de vos critères de risque."
+
+msgctxt "glossary : other names"
+msgid "severity, gravity"
+msgstr "gravité, sévérité"
+
+msgid "What you decide to do about a risk : reduce it, avoid it, share it or accept it, with the actions that follow."
+msgstr "Ce que vous décidez de faire d'un risque : le réduire, l'éviter, le partager ou l'accepter, avec les actions qui en découlent."
+
+msgctxt "glossary : other names"
+msgid "risk treatment, remediation plan"
+msgstr "traitement du risque, plan de remédiation"
+
+msgid "The formal decision, by someone entitled to take it, to live with a risk as it is, for a given time."
+msgstr "La décision formelle, prise par une personne habilitée, de vivre avec un risque tel qu'il est, pour une durée donnée."
+
+msgid "A standard, a law or a set of internal rules you choose to comply with, ISO 27001 for instance. It is made of requirements."
+msgstr "Une norme, une loi ou un ensemble de règles internes auquel vous choisissez de vous conformer, l'ISO 27001 par exemple. Il est fait d'exigences."
+
+msgctxt "glossary : other names"
+msgid "standard, regulation"
+msgstr "norme, règlement, réglementation"
+
+msgid "One thing a framework asks of you, such as keeping an inventory of what you protect."
+msgstr "Une chose qu'un référentiel vous demande, par exemple tenir l'inventaire de ce que vous protégez."
+
+msgctxt "glossary : other names"
+msgid "clause, obligation"
+msgstr "clause, obligation, article"
+
+msgid "A check, at a given date, of how far you meet the requirements of a framework : a self-assessment, an internal audit or a certification audit."
+msgstr "Une vérification, à une date donnée, de la mesure dans laquelle vous répondez aux exigences d'un référentiel : une auto-évaluation, un audit interne ou un audit de certification."
+
+msgctxt "glossary : other names"
+msgid "audit, evaluation"
+msgstr "audit, contrôle de conformité"
+
+msgid "What an assessment or a test noticed : a nonconformity to correct, a remark, or a point that works well."
+msgstr "Ce qu'une évaluation ou un test a relevé : une non-conformité à corriger, une remarque, ou un point qui fonctionne bien."
+
+msgctxt "glossary : other names"
+msgid "observation, gap"
+msgstr "observation, écart"
+
+msgid "A finding that says a requirement is not met. It is corrected through an action plan."
+msgstr "Un constat qui dit qu'une exigence n'est pas respectée. Elle se corrige par un plan d'action."
+
+msgctxt "glossary : other names"
+msgid "deviation, gap"
+msgstr "écart, anomalie"
+
+msgid "The work decided to correct a finding or to reach compliance, with an owner and a deadline."
+msgstr "Le travail décidé pour corriger un constat ou atteindre la conformité, avec un propriétaire et une échéance."
+
+msgctxt "glossary : other names"
+msgid "corrective action, remediation"
+msgstr "action corrective, remédiation"
+
+msgid "Something you do or put in place to reduce a risk or meet a requirement : a backup, a rule, a training session."
+msgstr "Ce que vous faites ou mettez en place pour réduire un risque ou répondre à une exigence : une sauvegarde, une règle, une formation."
+
+msgctxt "glossary : other names"
+msgid "security measure, safeguard"
+msgstr "contrôle, mesure de sécurité, dispositif"
+
+msgid "A check that a control really works : restoring a backup to see that it can be read, for example."
+msgstr "Une vérification qu'une mesure fonctionne vraiment : restaurer une sauvegarde pour voir qu'elle est lisible, par exemple."
+
+msgid "A written rule of the organisation, a policy, a procedure or a charter, with its versions, its approval and the people who must read it."
+msgstr "Une règle écrite de l'organisation, politique, procédure ou charte, avec ses versions, son approbation et les personnes qui doivent la lire."
+
+msgctxt "glossary : other names"
+msgid "policy, procedure, documented information"
+msgstr "politique, procédure, information documentée"
+
+msgid "What proves that something was done : a report, a screenshot, an export, a signed document."
+msgstr "Ce qui prouve qu'une chose a été faite : un rapport, une capture d'écran, un export, un document signé."
+
+msgctxt "glossary : other names"
+msgid "proof, record"
+msgstr "élément de preuve, justificatif"
+
+msgid "Something that happened and harmed your information, or could have : a stolen laptop, an intrusion, a message sent to the wrong person."
+msgstr "Ce qui s'est produit et a porté atteinte à vos informations, ou aurait pu : un ordinateur volé, une intrusion, un message envoyé à la mauvaise personne."
+
+msgid "Something unusual that someone reports and that may or may not turn out to be an incident : a suspicious message, a door left open."
+msgstr "Un fait inhabituel que quelqu'un signale et qui se révélera, ou non, être un incident : un message suspect, une porte restée ouverte."
+
+msgctxt "glossary : other names"
+msgid "alert, report"
+msgstr "alerte, signalement"
+
+msgid "The person who answers for a record and decides about it."
+msgstr "La personne qui répond d'une fiche et décide à son sujet."
+
+msgctxt "glossary : other names"
+msgid "accountable person"
+msgstr "responsable, porteur"
+
+msgid "The person who runs something day to day : a scope, an action."
+msgstr "La personne qui fait vivre quelque chose au quotidien : un périmètre, une action."
+
+msgctxt "glossary : other names"
+msgid "person in charge"
+msgstr "pilote, chargé de"
+
+msgid "The person who looks after an asset in practice, on behalf of its owner : the administrator of a server."
+msgstr "La personne qui s'occupe d'un bien en pratique, pour le compte de son propriétaire : l'administrateur d'un serveur."
+
+msgctxt "glossary : other names"
+msgid "keeper, administrator"
+msgstr "dépositaire, administrateur"
+
+msgid "The steps a record goes through, from draft to archived. A record counts in reports once it has reached a validated step."
+msgstr "Les étapes par lesquelles passe une fiche, du brouillon à l'archive. Une fiche compte dans les rapports une fois arrivée à une étape validée."
+
+msgctxt "glossary : other names"
+msgid "workflow, approval circuit"
+msgstr "workflow, circuit de validation"
+
+msgid "Where a record stands in its lifecycle : draft, validated, archived. A list shows it in its Status column."
+msgstr "Là où en est une fiche dans son cycle de vie : brouillon, validée, archivée. Une liste l'affiche dans sa colonne Statut."
+
+msgctxt "glossary : other names"
+msgid "state, status, stage"
+msgstr "état, statut"
+
+msgid "Looking at a record again on a planned date, to confirm that it is still right."
+msgstr "Relire une fiche à une date prévue, pour confirmer qu'elle est toujours juste."
+
+msgctxt "glossary : other names"
+msgid "periodic check"
+msgstr "réexamen, révision"
+
+msgid "A free word you put on records to find them again."
+msgstr "Un mot libre que vous posez sur des fiches pour les retrouver."
+
+msgctxt "glossary : other names"
+msgid "label, keyword"
+msgstr "tag, mot-clé"
+
+msgctxt "glossary : acronym"
+msgid "ISMS"
+msgstr "SMSI"
+
+msgid "information security management system"
+msgstr "système de management de la sécurité de l'information"
+
+msgid "Everything your organisation does to keep its information safe, organised so that it can be checked and improved : rules, roles, risks, controls and reviews."
+msgstr "Tout ce que votre organisation fait pour protéger ses informations, organisé pour pouvoir être vérifié et amélioré : règles, rôles, risques, mesures et revues."
+
+msgctxt "glossary : acronym"
+msgid "CIA"
+msgstr "DIC"
+
+msgid "confidentiality, integrity, availability"
+msgstr "disponibilité, intégrité, confidentialité"
+
+msgid "The three security needs of an asset : that it stays secret, exact and usable."
+msgstr "Les trois besoins de sécurité d'un bien : qu'il reste utilisable, exact et secret."
+
+msgctxt "glossary : acronym"
+msgid "MTD"
+msgstr "DMT"
+
+msgid "maximum tolerable downtime"
+msgstr "durée maximale d'interruption tolérable"
+
+msgid "How long an activity may stay stopped before the damage becomes unacceptable."
+msgstr "Le temps pendant lequel une activité peut rester arrêtée avant que le dommage devienne inacceptable."
+
+msgctxt "glossary : acronym"
+msgid "RTO"
+msgstr "RTO"
+
+msgid "recovery time objective"
+msgstr "délai de reprise visé"
+
+msgid "The time within which you aim to restart an activity after it stops."
+msgstr "Le délai dans lequel vous visez de faire repartir une activité après son arrêt."
+
+msgctxt "glossary : acronym"
+msgid "RPO"
+msgstr "RPO"
+
+msgid "recovery point objective"
+msgstr "perte de données maximale admissible"
+
+msgid "How much recent data you accept to lose : an RPO of four hours means a backup at least every four hours."
+msgstr "La quantité de données récentes que vous acceptez de perdre : un RPO de quatre heures veut dire une sauvegarde au moins toutes les quatre heures."
+
+msgctxt "glossary : acronym"
+msgid "SPOF"
+msgstr "SPOF"
+
+msgid "single point of failure"
+msgstr "point de défaillance unique"
+
+msgid "Something that stops an essential asset when it fails, because nothing replaces it."
+msgstr "Ce qui arrête un bien essentiel lorsqu'il tombe en panne, parce que rien ne le remplace."
+
+msgctxt "glossary : acronym"
+msgid "KPI"
+msgstr "KPI"
+
+msgid "key performance indicator"
+msgstr "indicateur clé de performance"
+
+msgid "The figure that tells whether an objective is being reached."
+msgstr "Le chiffre qui dit si un objectif est en train d'être atteint."
+
+msgctxt "glossary : acronym"
+msgid "RACI"
+msgstr "RACI"
+
+msgid "responsible, accountable, consulted, informed"
+msgstr "réalisateur, approbateur, consulté, informé"
+
+msgid "Four ways to be involved in a task : doing it, answering for it, being asked before, being told after."
+msgstr "Quatre façons d'être impliqué dans une tâche : la réaliser, en répondre, être consulté avant, être informé après."
+
+msgctxt "glossary : acronym"
+msgid "SWOT"
+msgstr "SWOT"
+
+msgid "strengths, weaknesses, opportunities, threats"
+msgstr "forces, faiblesses, opportunités, menaces"
+
+msgid "A four-box picture of where the organisation stands, used to choose its priorities."
+msgstr "Un tableau en quatre cases de la situation de l'organisation, pour choisir ses priorités."
+
+msgctxt "glossary : acronym"
+msgid "SoA"
+msgstr "DdA"
+
+msgid "statement of applicability"
+msgstr "déclaration d'applicabilité"
+
+msgid "The list of the controls of ISO 27001 with, for each one, whether it applies to you and why."
+msgstr "La liste des mesures de l'ISO 27001 avec, pour chacune, si elle s'applique à vous et pourquoi."
+
+msgctxt "glossary : acronym"
+msgid "TLP"
+msgstr "TLP"
+
+msgid "Traffic Light Protocol"
+msgstr "Traffic Light Protocol"
+
+msgid "A colour code saying how far a piece of information may be shared, from RED (the people named only) to CLEAR (anyone)."
+msgstr "Un code couleur qui dit jusqu'où une information peut être diffusée, de RED (les seules personnes nommées) à CLEAR (tout le monde)."
+
+msgctxt "glossary : acronym"
+msgid "EBIOS RM"
+msgstr "EBIOS RM"
+
+msgid "EBIOS Risk Manager"
+msgstr "EBIOS Risk Manager"
+
+msgid "The risk assessment method of ANSSI, the French cybersecurity agency. It runs in five workshops, from what you protect to the measures you decide."
+msgstr "La méthode d'appréciation des risques de l'ANSSI, l'agence française de cybersécurité. Elle se déroule en cinq ateliers, de ce que vous protégez aux mesures que vous décidez."
+
+msgctxt "glossary : acronym"
+msgid "SR/OV"
+msgstr "SR/OV"
+
+msgid "risk source, targeted objective"
+msgstr "source de risque, objectif visé"
+
+msgid "In EBIOS RM, who could attack you and what they would be after."
+msgstr "Dans EBIOS RM, qui pourrait vous attaquer et ce qu'il chercherait à obtenir."
+
+msgctxt "glossary : acronym"
+msgid "PACS"
+msgstr "PACS"
+
+msgid "continuous security improvement plan"
+msgstr "plan d'amélioration continue de la sécurité"
+
+msgid "In EBIOS RM, the measures decided at the end of the study, with their owner and their deadline."
+msgstr "Dans EBIOS RM, les mesures décidées à la fin de l'étude, avec leur propriétaire et leur échéance."
+
+msgctxt "glossary : acronym"
+msgid "GDPR"
+msgstr "RGPD"
+
+msgid "General Data Protection Regulation"
+msgstr "règlement général sur la protection des données"
+
+msgid "The European law on personal data : what may be done with it, and what must be reported when it leaks."
+msgstr "La loi européenne sur les données personnelles : ce qu'on peut en faire, et ce qu'il faut déclarer quand elles fuient."
+
+msgctxt "glossary : acronym"
+msgid "DPO"
+msgstr "DPO"
+
+msgid "data protection officer"
+msgstr "délégué à la protection des données"
+
+msgid "The person who watches over the use of personal data in the organisation."
+msgstr "La personne qui veille à l'usage des données personnelles dans l'organisation."
+
+msgctxt "glossary : acronym"
+msgid "NIS2"
+msgstr "NIS2"
+
+msgid "directive on the security of network and information systems"
+msgstr "directive sur la sécurité des réseaux et des systèmes d'information"
+
+msgid "The European directive that asks the organisations it names to manage their risks and to report serious incidents."
+msgstr "La directive européenne qui demande aux organisations qu'elle désigne de gérer leurs risques et de déclarer les incidents graves."
+
+msgid "computer security incident response team"
+msgstr "centre de réponse aux incidents de sécurité informatique"
+
+msgid "A team that helps handle incidents; each country has a national one, which some incidents must be reported to."
+msgstr "Une équipe qui aide à traiter les incidents ; chaque pays a la sienne, à laquelle certains incidents doivent être déclarés."
+
+msgctxt "glossary : acronym"
+msgid "SOC"
+msgstr "SOC"
+
+msgid "security operations centre"
+msgstr "centre des opérations de sécurité"
+
+msgid "The team that watches the systems to spot attacks."
+msgstr "L'équipe qui surveille les systèmes pour repérer les attaques."
+
+msgctxt "glossary : acronym"
+msgid "SIEM"
+msgstr "SIEM"
+
+msgid "security information and event management"
+msgstr "gestion des informations et des événements de sécurité"
+
+msgid "The tool that gathers the logs of the systems and raises an alert on what looks wrong."
+msgstr "L'outil qui rassemble les journaux des systèmes et lève une alerte sur ce qui paraît anormal."
+
+msgctxt "glossary : acronym"
+msgid "GRC"
+msgstr "GRC"
+
+msgid "governance, risk and compliance"
+msgstr "gouvernance, risques et conformité"
+
+msgid "The work this application supports : deciding who answers for what, managing risks and meeting requirements."
+msgstr "Le travail que cette application accompagne : décider qui répond de quoi, gérer les risques et répondre aux exigences."
+
+msgctxt "glossary : acronym"
+msgid "MCP"
+msgstr "MCP"
+
+msgid "Model Context Protocol"
+msgstr "Model Context Protocol"
+
+msgid "How an AI assistant connects to this application to read and update records, with your permissions and nothing more."
+msgstr "La façon dont un assistant d'IA se connecte à cette application pour lire et mettre à jour des fiches, avec vos permissions et rien de plus."
+
+msgctxt "glossary : acronym"
+msgid "ISO 27001"
+msgstr "ISO 27001"
+
+msgid "international standard for information security management"
+msgstr "norme internationale de management de la sécurité de l'information"
+
+msgid "The standard that says how to run an ISMS. An organisation can be certified against it."
+msgstr "La norme qui dit comment faire vivre un SMSI. Une organisation peut être certifiée sur cette base."
+
+msgctxt "glossary : acronym"
+msgid "ISO 27005"
+msgstr "ISO 27005"
+
+msgid "international standard for information security risk management"
+msgstr "norme internationale de gestion des risques de sécurité de l'information"
+
+msgid "The standard that says how to assess and treat security risks."
+msgstr "La norme qui dit comment apprécier et traiter les risques de sécurité."
+
+msgctxt "glossary : acronym"
+msgid "ANSSI"
+msgstr "ANSSI"
+
+msgid "French national cybersecurity agency"
+msgstr "Agence nationale de la sécurité des systèmes d'information"
+
+msgid "The French authority for the security of information systems, which publishes the EBIOS RM method."
+msgstr "L'autorité française de la sécurité des systèmes d'information, qui publie la méthode EBIOS RM."
+
+msgctxt "glossary : acronym"
+msgid "MITRE ATT&CK"
+msgstr "MITRE ATT&CK"
+
+msgid "catalogue of attack techniques"
+msgstr "catalogue de techniques d'attaque"
+
+msgid "A public catalogue of the techniques attackers use, kept by the MITRE organisation."
+msgstr "Un catalogue public des techniques employées par les attaquants, tenu par l'organisation MITRE."
+
+msgctxt "glossary : acronym"
+msgid "CERT / CSIRT"
+msgstr "CERT / CSIRT"
+
+msgctxt "glossary : acronym"
+msgid "NDA"
+msgstr "NDA"
+
+msgid "non-disclosure agreement"
+msgstr "accord de confidentialité"
+
+msgid "A contract by which the reader of your documents promises to keep them to themselves."
+msgstr "Un contrat par lequel la personne qui lit vos documents s'engage à les garder pour elle."
+
 msgid "The installation is not progressing. Reload the page; if nothing changes, look at the server log."
 msgstr "L'installation n'avance pas. Rechargez la page ; si rien ne change, consultez le journal du serveur."
+
+msgctxt "risk"
+msgid "Assessment date"
+msgstr "Date d'appréciation"
+
+msgid "No risk assessment yet."
+msgstr "Aucune appréciation des risques pour l'instant."
+
+msgid "A risk assessment lists what could go wrong for a scope, rates each risk and decides what to do about it. Create one to start your risk register."
+msgstr "Une appréciation des risques liste ce qui pourrait mal tourner pour un périmètre, estime chaque risque et décide quoi en faire. Créez-en une pour commencer votre registre des risques."
+
+msgid "Person leading the risk assessment."
+msgstr "Personne qui mène l'appréciation des risques."
+
+msgid "Scope and purpose of the risk assessment."
+msgstr "Périmètre et objet de l'appréciation des risques."
+
+msgid "Organizational scopes this risk assessment applies to."
+msgstr "Périmètres auxquels s'applique cette appréciation des risques."
+
+msgid "Pattern - words (help of a page, definition_list)"
+msgstr "Modèle - les mots (aide d'une page, definition_list)"
+
+msgid "The help of a page says what the thing is in one sentence, gives an example and says what to do first. Hidden, it leaves a button that brings it back. A list of definitions is how the glossary shows its words."
+msgstr "L'aide d'une page dit ce qu'est la chose en une phrase, donne un exemple et dit quoi faire en premier. Masquée, elle laisse un bouton qui la fait revenir. Une liste de définitions est la façon dont le glossaire présente ses mots."
+
+msgid "A scope says what your security work covers"
+msgstr "Un périmètre dit ce que couvre votre démarche de sécurité"
+
+msgid "The whole company, one site or one activity. Every other record is filed under a scope."
+msgstr "Toute l'entreprise, un site ou une activité. Toutes les autres fiches se rangent sous un périmètre."

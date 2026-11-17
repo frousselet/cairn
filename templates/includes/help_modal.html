@@ -1,27 +1,22 @@
 {% load i18n %}
-{% if help_content and not dismissed %}
-<div class="help-banner alert border d-flex align-items-start mb-3" role="alert" data-helper-key="{{ helper_key }}" style="background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 12%,transparent) !important;border-radius:var(--radius-md)">
-  <i class="bi bi-lightbulb me-3 mt-1 text-accent" style="font-size:.9375rem" aria-hidden="true"></i>
-  <div class="flex-grow-1">
-    <strong style="color:var(--text-primary);font-size:.8125rem">{{ help_content.title }}</strong>
-    <div class="mt-1" style="color:var(--text-secondary);font-size:.78rem;line-height:1.55">{{ help_content.body }}</div>
+{% comment %}
+  The help of a page ({% help_modal "key" %}) : open until the reader hides it,
+  then a "Help on this page" button that brings it back. The two actions are
+  registered in static/js/cairn/actions.js; the choice is kept per reader.
+{% endcomment %}
+{% if help_content %}
+<div class="page-help" data-help data-helper-key="{{ helper_key }}" data-help-url="{% url "helpers:dismiss" %}">
+  <button type="button" class="page-help__open" data-on-click="showPageHelp"{% if not dismissed %} hidden{% endif %}>
+    <i class="bi bi-question-circle" aria-hidden="true"></i>{% trans "Help on this page" %}
+  </button>
+  <div class="help-banner" id="help-{{ modal_id }}" role="note" aria-labelledby="help-{{ modal_id }}-title" tabindex="-1"{% if dismissed %} hidden{% endif %}>
+    <i class="bi bi-lightbulb help-banner__icon" aria-hidden="true"></i>
+    <div class="help-banner__text">
+      <p class="help-banner__title" id="help-{{ modal_id }}-title">{{ help_content.title }}</p>
+      <div class="help-banner__body">{{ help_content.body|linebreaks }}</div>
+      <a class="help-banner__more" href="{% url "glossary" %}">{% trans "A word you do not know ? Open the glossary" %}</a>
+    </div>
+    <button type="button" class="btn-close help-banner__close" aria-label="{% trans "Hide this help" %}" data-on-click="hidePageHelp"></button>
   </div>
-  <button type="button" class="btn-close ms-3" aria-label="{% trans "Close" %}" style="font-size:.625rem"
-          data-on-click="dismissHelper"></button>
 </div>
-<script nonce="{% csp_nonce %}">
-window._dismissHelper = window.cairnActions.dismissHelper = window._dismissHelper || function(btn) {
-  var banner = btn.closest('[data-helper-key]');
-  var key = banner.getAttribute('data-helper-key');
-  banner.classList.add('fade');
-  setTimeout(function() { banner.remove(); }, 150);
-  var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
-  var token = csrf ? csrf.value : (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
-  fetch('{% url "helpers:dismiss" %}', {
-    method: 'POST',
-    headers: {'X-CSRFToken': token, 'Content-Type': 'application/json'},
-    body: JSON.stringify({key: key})
-  });
-};
-</script>
 {% endif %}

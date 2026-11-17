@@ -6,7 +6,7 @@
 
 The complete route table under `/api/v1/`. Authentication, pagination, filtering and the error contract are documented in [../rest-api.md](../rest-api.md); the field-level contract of each resource is in its [specification](../../specs/README.md).
 
-**471 routes** are published across **24 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
+**472 routes** are published across **25 groups**. Every route also answers at a `.<format>` suffix (`.json`, `.api`), which is omitted here.
 
 ## Groups
 
@@ -23,6 +23,7 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | [`dashboard-layout`](#dashboard-layout) | 1 |
 | [`dependencies`](#dependencies) | 1 |
 | [`documents`](#documents) | 24 |
+| [`glossary`](#glossary) | 1 |
 | [`groups`](#groups) | 4 |
 | [`incidents`](#incidents) | 68 |
 | [`mcp`](#mcp) | 1 |
@@ -321,6 +322,12 @@ The complete route table under `/api/v1/`. Authentication, pagination, filtering
 | `/api/v1/documents/policy-versions/<pk>/history/` | GET | `documents.api.views.PolicyVersionViewSet` | `policyversion-history` |
 | `/api/v1/documents/policy-versions/<pk>/transition/` | GET, POST | `documents.api.views.PolicyVersionViewSet` | `policyversion-transition` |
 | `/api/v1/documents/policy-versions/batch/` | POST | `documents.api.views.PolicyVersionViewSet` | `policyversion-batch-create` |
+
+## glossary
+
+| Path | Methods | View | URL name |
+| --- | --- | --- | --- |
+| `/api/v1/glossary/` | GET, OPTIONS | `accounts.api.views.GlossaryAPIView` | `api-glossary` |
 
 ## groups
 

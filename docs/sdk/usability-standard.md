@@ -8,13 +8,16 @@ breaks one is a bug.
 The rules were written from what a newcomer met on a fresh instance : a
 dashboard reading "everything is in order" with nothing in it, a creation form
 of twenty-two fields in four steps of which seven were required, an unlabelled
-round arrow to move on, a helper under *Name* reading "Name of the scope", and
-three French words for one thing.
+round arrow to move on, a helper under *Name* reading "Name of the scope",
+three French words for one thing, and a help that read "This page presents the
+selected risk criteria set" and was gone for good once closed.
 
-The standard is applied module by module. The screens that follow it are listed
-in [`core/tests/test_usability_standard.py`](../../core/tests/test_usability_standard.py),
-which holds them to it; what is not listed yet is not claimed to follow it.
-Scopes and essential assets were the first.
+The rules about forms and records are applied module by module. The screens
+that follow them are listed in
+[`core/tests/test_usability_standard.py`](../../core/tests/test_usability_standard.py),
+which holds them to it; what is not listed yet is not claimed to follow them.
+Scopes and essential assets were the first. The rules about words (W1 to W4)
+hold for the whole product.
 
 ## The idea : create short, complete on the record
 
@@ -42,9 +45,10 @@ newcomer cannot tell which, and stops.
 
 | # | Rule | How it is checked |
 | --- | --- | --- |
-| W1 | One thing, one name, everywhere : the menu, the buttons, the helpers and the documentation use the word of the [glossary](../brand/glossary.md). | The glossary is the reference; a guard over the catalogue comes with its adoption |
-| W2 | A label is made of words. An acronym follows them in brackets : *Recovery time objective (RTO)*, never *RTO* alone. | `core.usability.is_bare_acronym` |
+| W1 | One thing, one name, everywhere : the menu, the buttons, the helpers, the help and the documentation use the word of the [glossary](../brand/glossary.md). The application shows that vocabulary on its *Glossary* page, and its search answers the other names people know a thing by. | `core/tests/test_glossary.py` reads the French catalogue and refuses the spellings the glossary retires |
+| W2 | A label is made of words. An acronym follows them in brackets : *Recovery time objective (RTO)*, never *RTO* alone. An everyday word (*PDF*, *URL*) stands as it is, and an acronym that spreads through the interface is explained in the glossary. | `core.usability.is_unexplained_acronym`, over every message, field and choice; `test_glossary.py` |
 | W3 | A button says what it does : *Create* on a creation, *Save* on an edit, *Previous* / *Next* between steps, *Cancel* to leave. No button made of an icon alone moves through a form. | `core/tests/test_modal_forms.py` |
+| W4 | A page has a help that a newcomer can read : its title is one sentence saying what the thing is, its body gives an example and says what to do first or what to watch, in seventy words at most, and it spells out the acronyms it uses. The reader hides it, and brings it back with *Help on this page*. | `helpers/tests/test_help_content.py` |
 
 ### Forms
 
@@ -132,6 +136,11 @@ slot. The rows partial of the register ends on `{% list_empty %}`. See
 
 **6. Write the helpers.** Each one says what its label does not, or is removed.
 Run `core.usability.form_findings` on the forms, in English and in French.
+Write the help of the list and of the record page the same way (rule W4), in a
+data migration of `helpers` modelled on
+[`0012_plain_words_everywhere`](../../helpers/migrations/0012_plain_words_everywhere.py),
+and give a new notion its row in the [glossary](../brand/glossary.md) and its
+entry in [`core/glossary.py`](../../core/glossary.py).
 
 **7. Expose it.** `CompletenessSerializerMixin` on the serializer of a single
 record ([`core/completeness_api.py`](../../core/completeness_api.py)); the
@@ -164,4 +173,7 @@ shortened yet :
 | `core/tests/test_modal_forms.py` | The shell : buttons with words, steps as buttons, sections, named required errors |
 | `core/tests/test_completeness.py` | The declarations against the lifecycles and the forms; the refusal on every surface |
 | `core/tests/test_getting_started.py` | The first steps and the messages of an instance with nothing in it |
+| `core/tests/test_glossary.py` | The vocabulary : no retired spelling in the French catalogue, no acronym alone as a label, the glossary on its page, in the search, over REST and MCP |
+| `core/tests/test_translations.py` | Every string of the interface has its French, a sentence used with a count is filed as a plural, a translation carries the variables of its sentence |
+| `helpers/tests/test_help_content.py` | The help of every page : written for each page that asks for one, in both languages, in plain words; hidden and brought back |
 | The interface sweep and `scripts/a11y_audit.py` | Every page and dialog still renders, in both themes, with no accessibility defect |

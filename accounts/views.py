@@ -389,7 +389,7 @@ class UserCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def get(self, request):
         form = UserCreateForm()
-        return render(request, "accounts/user_form.html", _page_form_context(form, _("Create a user"), "accounts:user-list"))
+        return render(request, "accounts/user_form.html", _page_form_context(form, _("New user"), "accounts:user-list"))
 
     def post(self, request):
         form = UserCreateForm(request.POST, request.FILES)
@@ -399,7 +399,7 @@ class UserCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
             user.save()
             messages.success(request, _("User %(name)s created.") % {"name": user.display_name})
             return redirect("accounts:user-detail", pk=user.pk)
-        return render(request, "accounts/user_form.html", _page_form_context(form, _("Create a user"), "accounts:user-list"))
+        return render(request, "accounts/user_form.html", _page_form_context(form, _("New user"), "accounts:user-list"))
 
 
 class UserUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -549,7 +549,7 @@ class GroupCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def get(self, request):
         form = GroupForm()
-        return render(request, "accounts/group_form.html", _page_form_context(form, _("Create a group"), "accounts:group-list"))
+        return render(request, "accounts/group_form.html", _page_form_context(form, _("New group"), "accounts:group-list"))
 
     def post(self, request):
         form = GroupForm(request.POST)
@@ -559,7 +559,7 @@ class GroupCreateView(LoginRequiredMixin, PermissionRequiredMixin, View):
             group.save()
             messages.success(request, _("Group '%(name)s' created.") % {"name": group.name})
             return redirect("accounts:group-detail", pk=group.pk)
-        return render(request, "accounts/group_form.html", _page_form_context(form, _("Create a group"), "accounts:group-list"))
+        return render(request, "accounts/group_form.html", _page_form_context(form, _("New group"), "accounts:group-list"))
 
 
 class GroupUpdateView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -872,7 +872,7 @@ ACCESS_LOG_COLUMNS = [
     {"key": "date", "label": _lazy("Date"), "always": True},
     {"key": "email", "label": _lazy("Email")},
     {"key": "event", "label": _lazy("Event")},
-    {"key": "ip", "label": _lazy("IP")},
+    {"key": "ip", "label": _lazy("IP address")},
 ]
 ACCESS_LOG_SORTABLE_FIELDS = {
     "date": "timestamp",

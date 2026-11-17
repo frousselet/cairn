@@ -41,7 +41,7 @@ class AcknowledgementStatus(models.TextChoices):
 class AcknowledgementChannel(models.TextChoices):
     WEB = "web", _("Web")
     API = "api", _("API")
-    MCP = "mcp", _("MCP")
+    MCP = "mcp", _("MCP server")
 
 
 # ── Policy (the document) ───────────────────────────────────

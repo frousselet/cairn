@@ -42,7 +42,7 @@
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("KPI") icon="graph-up" %}
+  {% section_card _("Key performance indicator (KPI)") icon="graph-up" %}
     {% meta_list cols=2 %}
       {% meta_item _("Target value") %}{% if objective.target_value %}{{ objective.target_value }}{% if objective.unit %} {{ objective.unit }}{% endif %}{% endif %}{% endmeta_item %}
       {% meta_item _("Current value") %}{% if objective.current_value %}{{ objective.current_value }}{% if objective.unit %} {{ objective.unit }}{% endif %}{% endif %}{% endmeta_item %}

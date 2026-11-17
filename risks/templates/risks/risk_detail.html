@@ -26,7 +26,7 @@
 
   {% section_card _("General") icon="info-circle" %}
     {% meta_list cols=2 %}
-      {% meta_item _("Assessment") %}<div class="ref-links">{% url 'risks:assessment-detail' risk.assessment.pk as assessment_url %}{% ref_link risk.assessment url=assessment_url %}</div>{% endmeta_item %}
+      {% meta_item _("Risk assessment") %}<div class="ref-links">{% url 'risks:assessment-detail' risk.assessment.pk as assessment_url %}{% ref_link risk.assessment url=assessment_url %}</div>{% endmeta_item %}
       {% meta_item _("Source") risk.get_risk_source_display %}
       {% meta_item _("Owner") %}{% if risk.risk_owner %}{% user_badge risk.risk_owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Priority") %}{% choice_badge risk "priority" %}{% endmeta_item %}

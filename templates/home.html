@@ -502,10 +502,16 @@
   {% include "includes/dashboard_header_actions.html" %}
 {% endpage_header %}
 {% endif %}
+{% comment %}
+  First steps of a new instance (core/getting_started.py), which are its
+  guidance : the help of the dashboard speaks of figures a new instance does
+  not have yet, and comes once the list is done or hidden.
+{% endcomment %}
+{% if first_steps and not first_steps.hidden %}
+{% include "dashboard/first_steps.html" %}
+{% else %}
 {% help_modal "home" %}
-
-{# ── First steps of a new instance (core/getting_started.py) ── #}
-{% if first_steps and not first_steps.hidden %}{% include "dashboard/first_steps.html" %}{% endif %}
+{% endif %}
 
 {# ── Widget zones: main area + dedicated side rail ───────── #}
 <div class="dashboard-zones" id="dashboardZones" data-save-url="{% url 'dashboard-layout-save' %}" data-indicator-widget-url="{% url 'dashboard-indicator-widget' %}">

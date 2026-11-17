@@ -27,7 +27,7 @@ class DetectionSource(models.TextChoices):
     """How the event or incident came to light. Shared by both entities."""
 
     INTERNAL_MONITORING = "internal_monitoring", pgettext_lazy("incident", "Internal monitoring")
-    SOC_ALERT = "soc_alert", pgettext_lazy("incident", "SOC or SIEM alert")
+    SOC_ALERT = "soc_alert", pgettext_lazy("incident", "Security monitoring alert (SOC, SIEM)")
     EMPLOYEE_REPORT = "employee_report", pgettext_lazy("incident", "Employee report")
     CUSTOMER_REPORT = "customer_report", pgettext_lazy("incident", "Customer report")
     SUPPLIER_NOTIFICATION = "supplier_notification", pgettext_lazy("incident", "Supplier notification")
@@ -197,7 +197,7 @@ class NotificationRegime(models.TextChoices):
     CRA = "cra", "Cyber Resilience Act Art. 14"
     SECTOR_REGULATOR = "sector_regulator", pgettext_lazy("incident", "Sector regulator")
     LAW_ENFORCEMENT = "law_enforcement", pgettext_lazy("incident", "Law enforcement")
-    CERT_CSIRT = "cert_csirt", "CERT / CSIRT"
+    CERT_CSIRT = "cert_csirt", pgettext_lazy("incident", "Incident response team (CERT, CSIRT)")
     CONTRACTUAL_CUSTOMER = "contractual_customer", pgettext_lazy("incident", "Contractual - customer")
     CONTRACTUAL_SUPPLIER = "contractual_supplier", pgettext_lazy("incident", "Contractual - supplier")
     INSURER = "insurer", pgettext_lazy("incident", "Insurer")
@@ -208,7 +208,7 @@ class NotificationRegime(models.TextChoices):
 
 class NotificationRecipientKind(models.TextChoices):
     SUPERVISORY_AUTHORITY = "supervisory_authority", pgettext_lazy("incident", "Supervisory authority")
-    CSIRT = "csirt", "CSIRT"
+    CSIRT = "csirt", pgettext_lazy("incident", "Incident response team (CSIRT)")
     COMPETENT_AUTHORITY = "competent_authority", pgettext_lazy("incident", "Competent authority")
     FINANCIAL_REGULATOR = "financial_regulator", pgettext_lazy("incident", "Financial regulator")
     LAW_ENFORCEMENT = "law_enforcement", pgettext_lazy("incident", "Law enforcement")
@@ -264,7 +264,7 @@ class FilingOutcome(models.TextChoices):
 
 class AuthorityType(models.TextChoices):
     SUPERVISORY_AUTHORITY = "supervisory_authority", pgettext_lazy("incident", "Data protection supervisory authority")
-    CSIRT = "csirt", "CSIRT"
+    CSIRT = "csirt", pgettext_lazy("incident", "Incident response team (CSIRT)")
     COMPETENT_AUTHORITY = "competent_authority", pgettext_lazy("incident", "Competent authority")
     SECTOR_REGULATOR = "sector_regulator", pgettext_lazy("incident", "Sector regulator")
     FINANCIAL_REGULATOR = "financial_regulator", pgettext_lazy("incident", "Financial regulator")

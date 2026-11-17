@@ -388,7 +388,7 @@ class IncidentEvidence(BaseModel):
         ),
     )
     tlp = models.CharField(
-        _("Handling caveat"),
+        _("Sharing level (TLP)"),
         max_length=16,
         choices=TrafficLightProtocol.choices,
         default=TrafficLightProtocol.RED,

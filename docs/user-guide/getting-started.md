@@ -42,7 +42,7 @@ are locked out and cannot wait, an administrator can unlock you.
 Every screen has the same three parts.
 
 **The sidebar**, on the left, is the navigation : three everyday links, then one
-section per area of work (Governance, Assets and third parties, Risk management,
+section per area of work (Governance, Assets and suppliers, Risk management,
 Compliance, Incidents, Reference data, and Administration for those who have
 it). You only see the pages you can open.
 
@@ -82,6 +82,10 @@ header), and it disappears for good once every step is done.
 4. **Choose what to comply with** : a framework.
 5. **Assess your risks** : a risk assessment.
 6. **Bring your colleagues in** : accounts and roles.
+
+Each page you open on the way starts with a short help that says what the
+thing is and what to do first, and the [glossary](finding-your-way.md#the-words--the-help-of-a-page-and-the-glossary)
+explains any word you meet.
 
 Each of these creations fits one screen. You give a record its name and what
 it is, and you land on its page, which lists what it still needs and opens the

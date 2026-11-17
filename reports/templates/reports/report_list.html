@@ -1,10 +1,12 @@
 {% extends "base.html" %}
 {% load i18n ui table_tags %}
+{% load help_tags %}
 
 {% block title %}{% trans "Reports" %} - Cairn{% endblock %}
 
 {% block content %}
 {% page_header _("Reports") nav="reports:report-list" accent="reports" %}{% endpage_header %}
+{% help_modal "reports.report_list" %}
 
 <div class="list-layout">
   <div class="list-main">

@@ -33,7 +33,7 @@ class RiskSource(BaseModel):
         "risks.RiskAssessment",
         on_delete=models.CASCADE,
         related_name="ebios_risk_sources",
-        verbose_name=_("Assessment"),
+        verbose_name=_("Risk assessment"),
     )
     name = models.CharField(_("Name"), max_length=255)
     description = models.TextField(_("Description"), blank=True)

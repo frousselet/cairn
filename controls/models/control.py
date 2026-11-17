@@ -89,7 +89,7 @@ class Control(ScopedModel):
         "risks.RiskTreatmentPlan", blank=True, related_name="controls", verbose_name=_("Treatment plans"),
     )
     pacs_measures = models.ManyToManyField(
-        "risks.PACSMeasure", blank=True, related_name="controls", verbose_name=_("PACS measures"),
+        "risks.PACSMeasure", blank=True, related_name="controls", verbose_name=_("Measures of the security improvement plan (PACS)"),
     )
     support_assets = models.ManyToManyField(
         "assets.SupportAsset", blank=True, related_name="controls", verbose_name=_("Support assets"),

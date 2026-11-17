@@ -45,8 +45,8 @@ class AssetValuation(models.Model):
     history = HistoricalRecords()
 
     class Meta:
-        verbose_name = _("DIC valuation")
-        verbose_name_plural = _("DIC valuations")
+        verbose_name = _("Security needs assessment")
+        verbose_name_plural = _("Security needs assessments")
         ordering = ["-evaluation_date", "-created_at"]
 
     def __str__(self):

@@ -485,13 +485,13 @@ class GeneralDashboardView(LoginRequiredMixin, TemplateView):
         # Single points of failure, one entry per dependency type
         # (replaces the standalone SPOF banner)
         spof_targets = [
-            ("asset", _("Mitigate %(count)d SPOF in asset dependencies"),
+            ("asset", _("Remove %(count)d single point(s) of failure between assets"),
              "assets:dependency-list", "bi-share"),
-            ("supplier", _("Mitigate %(count)d SPOF in supplier dependencies"),
+            ("supplier", _("Remove %(count)d single point(s) of failure on suppliers"),
              "assets:supplier-dependency-list", "bi-truck"),
-            ("site_asset", _("Mitigate %(count)d SPOF in site-asset dependencies"),
+            ("site_asset", _("Remove %(count)d single point(s) of failure between sites and assets"),
              "assets:site-asset-dependency-list", "bi-building"),
-            ("site_supplier", _("Mitigate %(count)d SPOF in site-supplier dependencies"),
+            ("site_supplier", _("Remove %(count)d single point(s) of failure between sites and suppliers"),
              "assets:site-supplier-dependency-list", "bi-buildings"),
         ]
         for key, label, url_name, icon in spof_targets:
@@ -1210,7 +1210,7 @@ def get_calendar_events(user, start=None, end=None, categories=None):
     if "risk_assessment" in categories:
         qs = _filter_scoped(RiskAssessment.objects.all(), user)
         add(qs, "assessment_date", "risk_assessment", "#ef4444",
-            "risks:assessment-detail", kind=_("Assessment date"), responsible="assessor")
+            "risks:assessment-detail", kind=pgettext("risk", "Assessment date"), responsible="assessor")
         add(qs, "next_review_date", "risk_assessment", "#fca5a5",
             "risks:assessment-detail", _("Review: "), deadline=True, kind=_("Review"), responsible="assessor")
 
@@ -2020,27 +2020,28 @@ class GlobalSearchView(LoginRequiredMixin, View):
         ("incidents:incident-list", gettext_lazy("Incidents"), "bi-fire", None),
         ("incidents:event-list", gettext_lazy("Security events"), "bi-broadcast", None),
         ("incidents:notification-list", gettext_lazy("Notification obligations"), "bi-hourglass-split", None),
-        ("documents:policy-list", gettext_lazy("Policies"), "bi-file-earmark-text", None),
+        ("documents:policy-list", gettext_lazy("Documents"), "bi-file-earmark-text", None),
         ("documents:campaign-list", gettext_lazy("Acknowledgement campaigns"), "bi-patch-check", None),
         ("documents:acknowledge-list", gettext_lazy("To acknowledge"), "bi-pen", None),
         ("controls:control-list", gettext_lazy("Controls"), "bi-shield-check", None),
         ("controls:controltest-list", gettext_lazy("Control tests"), "bi-clipboard-pulse", None),
         ("calendar", gettext_lazy("Calendar"), "bi-calendar3", None),
         ("kanban", gettext_lazy("Tasks"), "bi-kanban", None),
+        ("glossary", gettext_lazy("Glossary"), "bi-book", None),
     ]
 
     ACTION_ENTRIES = [
-        ("risks:risk-create", gettext_lazy("Create a risk"), "bi-plus-circle", "risks.risk.create"),
-        ("risks:assessment-create", gettext_lazy("Create a risk assessment"), "bi-plus-circle", "risks.assessment.create"),
-        ("compliance:requirement-create", gettext_lazy("Create a requirement"), "bi-plus-circle", "compliance.requirement.create"),
-        ("compliance:assessment-create", gettext_lazy("Create a compliance assessment"), "bi-plus-circle", "compliance.assessment.create"),
-        ("compliance:action-plan-create", gettext_lazy("Create an action plan"), "bi-plus-circle", "compliance.action_plan.create"),
-        ("assets:essential-asset-create", gettext_lazy("Create an essential asset"), "bi-plus-circle", "assets.essential_asset.create"),
-        ("context:objective-create", gettext_lazy("Create an objective"), "bi-plus-circle", "context.objective.create"),
+        ("risks:risk-create", gettext_lazy("New risk"), "bi-plus-circle", "risks.risk.create"),
+        ("risks:assessment-create", gettext_lazy("New risk assessment"), "bi-plus-circle", "risks.assessment.create"),
+        ("compliance:requirement-create", gettext_lazy("New requirement"), "bi-plus-circle", "compliance.requirement.create"),
+        ("compliance:assessment-create", gettext_lazy("New compliance assessment"), "bi-plus-circle", "compliance.assessment.create"),
+        ("compliance:action-plan-create", gettext_lazy("New action plan"), "bi-plus-circle", "compliance.action_plan.create"),
+        ("assets:essential-asset-create", gettext_lazy("New essential asset"), "bi-plus-circle", "assets.essential_asset.create"),
+        ("context:objective-create", gettext_lazy("New objective"), "bi-plus-circle", "context.objective.create"),
         ("incidents:incident-create", gettext_lazy("Declare an incident"), "bi-plus-circle", "incidents.incident.create"),
         ("incidents:event-create", gettext_lazy("Report a security event"), "bi-plus-circle", "incidents.event.create"),
-        ("documents:policy-create", gettext_lazy("Create a document"), "bi-plus-circle", "documents.policy.create"),
-        ("controls:control-create", gettext_lazy("Create a control"), "bi-plus-circle", "controls.control.create"),
+        ("documents:policy-create", gettext_lazy("New document"), "bi-plus-circle", "documents.policy.create"),
+        ("controls:control-create", gettext_lazy("New control"), "bi-plus-circle", "controls.control.create"),
         ("styleguide", gettext_lazy("Open styleguide"), "bi-palette", None),
     ]
 
@@ -2052,6 +2053,27 @@ class GlobalSearchView(LoginRequiredMixin, View):
             except Exception:
                 continue
         return {"label": str(_("Navigation")), "icon": "bi-compass", "items": items} if items else None
+
+    def _glossary_group(self, q):
+        """The words of the glossary that answer ``q``, by any of their names.
+
+        Someone who types the name they know (*actif*, *audit*, *DIC*) is
+        shown the name the application uses for it. Names only : a word that
+        merely appears in a definition would bury the records.
+        """
+        from core import glossary
+
+        base = reverse("glossary")
+        items = [
+            {"title": row["name"], "url": f"{base}#term-{row['key']}", "icon": "bi-book"}
+            for row in glossary.terms(q, deep=False)
+        ] + [
+            {"title": f"{row['letters']} : {row['words']}", "url": f"{base}#acronym-{row['key']}", "icon": "bi-book"}
+            for row in glossary.acronyms(q, deep=False)
+        ]
+        if not items:
+            return None
+        return {"label": str(_("Glossary")), "icon": "bi-book", "items": items[: self.MAX_PER_CATEGORY]}
 
     def _actions_group(self, user):
         items = []
@@ -2306,7 +2328,65 @@ class GlobalSearchView(LoginRequiredMixin, View):
                     "items": items,
                 })
 
+        glossary_group = self._glossary_group(q)
+        if glossary_group:
+            grouped.append(glossary_group)
+
         return JsonResponse({"results": grouped})
+
+
+class GlossaryView(LoginRequiredMixin, TemplateView):
+    """The words the application uses, and what they mean (``core/glossary.py``).
+
+    Open to every signed-in reader : it holds no record, only the vocabulary.
+    A term links to its register when the reader may open it.
+    """
+
+    template_name = "glossary.html"
+    MAX_QUERY_LENGTH = 128
+
+    def get_context_data(self, **kwargs):
+        from django.urls import NoReverseMatch
+
+        from core import glossary
+        from core.navigation import required_permissions
+
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        query = self.request.GET.get("q", "").strip()[: self.MAX_QUERY_LENGTH]
+
+        def register_url(url_name):
+            if not url_name:
+                return ""
+            if not all(user.has_perm(codename) for codename in required_permissions(url_name)):
+                return ""
+            try:
+                return reverse(url_name)
+            except NoReverseMatch:
+                return ""
+
+        ctx["q"] = query
+        ctx["terms"] = [
+            {
+                "id": f"term-{row['key']}",
+                "term": row["name"],
+                "definition": row["definition"],
+                "also": row["also"],
+                "url": register_url(row["url_name"]),
+                "url_label": _("Open the register"),
+            }
+            for row in glossary.terms(query)
+        ]
+        ctx["acronyms"] = [
+            {
+                "id": f"acronym-{row['key']}",
+                "term": row["letters"],
+                "lead": row["words"],
+                "definition": row["definition"],
+            }
+            for row in glossary.acronyms(query)
+        ]
+        return ctx
 
 
 class StyleGuideView(LoginRequiredMixin, TemplateView):
@@ -2360,6 +2440,21 @@ class StyleGuideView(LoginRequiredMixin, TemplateView):
             items=tuple(Item(requirement, met=False) for requirement in Scope.COMPLETENESS.requirements),
             gate_label=_("Validation"),
         )
+        # Samples for the words : the help of a page and a list of definitions,
+        # from the real glossary.
+        from core import glossary
+
+        ctx["sg_help"] = {
+            "title": _("A scope says what your security work covers"),
+            "body": _("The whole company, one site or one activity. Every other record is filed under a scope."),
+        }
+        ctx["sg_definitions"] = [
+            {"term": row["name"], "definition": row["definition"], "also": row["also"], "url": "#", "url_label": _("Open the register")}
+            for row in glossary.terms()[:2]
+        ] + [
+            {"term": row["letters"], "lead": row["words"], "definition": row["definition"]}
+            for row in glossary.acronyms()[:1]
+        ]
         ctx["sg_first_steps"] = {
             "steps": [
                 {

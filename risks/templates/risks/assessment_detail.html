@@ -95,11 +95,12 @@
 </div>
 {% endif %}
 
+{% trans "Assessment date" context "risk" as assessment_date_label %}
 {% detail_layout %}
   {% slot rail %}
     {% kpi_tile _("Lifecycle stage") assessment.lifecycle_label icon="signpost-split" %}
     {% kpi_tile _("Risks") assessment.risks.count icon="exclamation-triangle" tone="neutral" %}
-    {% kpi_tile _("Assessment date") assessment.assessment_date icon="calendar-check" tone="neutral" %}
+    {% kpi_tile assessment_date_label assessment.assessment_date icon="calendar-check" tone="neutral" %}
     {% kpi_tile _("Next review") assessment.next_review_date icon="arrow-repeat" tone="neutral" %}
   {% endslot %}
 
@@ -111,7 +112,7 @@
       {% meta_item _("Risk criteria") %}{% if assessment.risk_criteria %}<div class="ref-links">{% url 'risks:criteria-detail' assessment.risk_criteria.pk as criteria_url %}{% ref_link assessment.risk_criteria url=criteria_url %}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Assessor") %}{% if assessment.assessor %}{% user_badge assessment.assessor size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Scopes") %}{% if assessment.scopes.all %}{% grouped_scope_badges assessment.scopes.all %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Assessment date") assessment.assessment_date %}
+      {% meta_item assessment_date_label assessment.assessment_date %}
       {% meta_item _("Next review") assessment.next_review_date %}
       {% meta_item _("Tags") wide=True %}{% tag_list assessment.tags.all %}{% endmeta_item %}
     {% endmeta_list %}

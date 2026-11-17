@@ -388,6 +388,15 @@
   {% with first_steps=sg_first_steps first_steps_sample=True %}{% include "dashboard/first_steps.html" %}{% endwith %}
 </section>
 
+{# ── Words : the help of a page, a list of definitions ──── #}
+<section class="sg-section">
+  <h2 class="sg-section__title">{% trans "Pattern - words (help of a page, definition_list)" %}</h2>
+  <p class="small text-muted">{% trans "The help of a page says what the thing is in one sentence, gives an example and says what to do first. Hidden, it leaves a button that brings it back. A list of definitions is how the glossary shows its words." %}</p>
+  {% include "includes/help_modal.html" with help_content=sg_help modal_id="styleguide-sample" helper_key="styleguide.sample" dismissed=False %}
+  {% include "includes/help_modal.html" with help_content=sg_help modal_id="styleguide-sample-hidden" helper_key="styleguide.sample_hidden" dismissed=True %}
+  <div class="card card-body">{% definition_list sg_definitions %}</div>
+</section>
+
 {# ── Accessibility checklist ────────────────────────────── #}
 <section class="sg-section">
   <h2 class="sg-section__title">{% trans "Accessibility - WCAG 2.2 AA" %}</h2>

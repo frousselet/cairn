@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load i18n accounts_tags ui workflow_tags table_tags %}
+{% load help_tags %}
 
 {% block title %}{% trans "Management reviews" %} - Cairn{% endblock %}
 
@@ -15,6 +16,7 @@
   </a>
   {% endif %}
 {% endpage_header %}
+{% help_modal "reports.management_review_list" %}
 
 <div class="list-layout">
   <div class="list-main">

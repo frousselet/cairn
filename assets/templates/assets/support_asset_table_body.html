@@ -31,7 +31,7 @@
   <td data-col="status">
     <span class="cell-stack">
       {% if asset.is_end_of_life %}
-      <span>{% badge variant="danger" label=_("EOL") %}</span>
+      <span>{% badge variant="danger" label=_("End of life") %}</span>
       {% else %}
       <span>{% workflow_badge asset %}</span>
       {% endif %}

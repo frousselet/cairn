@@ -335,6 +335,10 @@
               <i class="bi bi-pen"></i> <span class="sidebar-link-text">{% trans "To acknowledge" %}{% if pending_ack_count %} <span class="section-card__count tabular-nums ms-1" aria-label="{% blocktrans count counter=pending_ack_count %}{{ counter }} document to acknowledge{% plural %}{{ counter }} documents to acknowledge{% endblocktrans %}">{{ pending_ack_count }}</span>{% endif %}</span>
               <span class="sidebar-tooltip">{% trans "To acknowledge" %}</span>
             </a>
+            <a href="{% url 'glossary' %}" class="sidebar-link">
+              <i class="bi bi-book"></i> <span class="sidebar-link-text">{% trans "Glossary" %}</span>
+              <span class="sidebar-tooltip">{% trans "Glossary" %}</span>
+            </a>
             <button type="button" class="sidebar-link" data-bs-toggle="modal" data-bs-target="#aboutModal">
               <i class="bi bi-info-circle"></i> <span class="sidebar-link-text">{% trans "About" %}</span>
               <span class="sidebar-tooltip">{% trans "About" %}</span>

@@ -425,7 +425,7 @@ DASHBOARD_WIDGETS: list[DashboardWidget] = [
         sizes=("2x2", "2x3"),
         default_size="2x2",
         default_order=80,
-        description=_("Probability x impact heatmap, before treatment."),
+        description=_("Likelihood x impact heatmap, before treatment."),
     ),
     DashboardWidget(
         id="risk_matrix_residual",
@@ -436,7 +436,7 @@ DASHBOARD_WIDGETS: list[DashboardWidget] = [
         sizes=("2x2", "2x3"),
         default_size="2x2",
         default_order=81,
-        description=_("Probability x impact heatmap, after treatment."),
+        description=_("Likelihood x impact heatmap, after treatment."),
     ),
     DashboardWidget(
         id="section",

@@ -2,6 +2,7 @@
 {% load i18n ui %}
 {% load table_tags %}
 {% load accounts_tags %}
+{% load help_tags %}
 
 {% comment %}
 The A.5.24 procedures of record. A plan past its review date and a plan more
@@ -19,6 +20,7 @@ whoever reads the dates.
   <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:response-plan-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New response plan" %}</button>
   {% endif %}
 {% endpage_header %}
+{% help_modal "incidents.response_plan_list" %}
 
 <div class="list-layout">
   <div class="list-main">

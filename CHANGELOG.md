@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A *Skip to main content* link is the first stop of the keyboard on every page, and dashboard tiles gain *Move earlier* / *Move later* buttons so the layout can be rearranged without dragging.
 - The dashboard of a new instance opens on its first steps, a short ordered list of what to do first, until the instance holds its first records.
 - A record is created on one screen, then completed on its own page, which lists what it still needs and edits it one card at a time : scopes and essential assets are the first to follow the usability standard (`docs/sdk/usability-standard.md`).
+- A glossary in the application : each notion under the one name the interface gives it, a plain definition, the other names people know it by and the acronyms spelled out, on its page, in the search, over `GET /api/v1/glossary/` and the `get_glossary` MCP tool.
+- A help on the registers that had none : contracts, certificates, nonconformities, security events, response plans, management reviews, reports and lifecycles.
 
 ### Changed
 
@@ -38,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detail pages are shorter : traceability becomes a single line, an empty section a line of small print, long embedded tables show their first rows behind "Show all", and an audit folds its requirements by section.
 - A detail page with six sections or more gains a "Jump to a section" menu in its header.
 - The incident registers show their references as the clickable pill every other list uses.
+- The French interface names one thing one way, as `docs/brand/glossary.md` now settles it : *bien* and never *actif*, *partie intéressée*, *appréciation des risques*, *mesure*, *étiquette*, *cycle de vie*; the menu section becomes *Biens et fournisseurs* (*Assets and suppliers*) and the documents register is named *Documents*.
+- The help of every page is rewritten for a newcomer (what the thing is in one sentence, an example, what to do first) and, once hidden, comes back from a *Help on this page* button; a help an administrator rewrote is left as it is.
+- An acronym no longer stands alone as a label : *Sharing level (TLP)*, *Single point of failure (SPOF)*, *Recovery time objective (RTO)*, *Key performance indicator (KPI)*, *Involvement (RACI)*, and the English labels no longer carry the French *DIC*.
+- The buttons that open a creation read *New ...* everywhere, in the search palette and on the users and groups pages as on the registers.
 - The dashboard summary heads its card on one line when there is no written briefing, instead of leaving a column empty.
 - Empty selects read "Choose…" or "None" instead of a row of dashes, and on a phone the form step indicator shows the current step's name in full.
 - The container runs as an unprivileged account (uid 1000) instead of root, handing over a media volume written by an earlier image on first start.
@@ -70,6 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Risk criteria pages had no lifecycle stepper, so a criteria set could not be submitted or validated from the interface.
 - With Redis unreachable, the detection of single points of failure and the index rebuild stopped; they now take a lock of their own process, and a database lock keeps two workers from applying the migrations at once.
 - Installing a new database no longer leaves hundreds of `relation does not exist` errors in the database log, and its progress screen restarts a job that is not running instead of waiting for ever.
+- Sentences shown with a count (the evidence and the notification obligations of an incident, the requirements of a nonconformity) appeared in English in the French interface, their translation being filed as a singular, and two strings still named the product *Open GRC*.
+- The empty risk assessment register explained compliance assessments, and the risk module called its assessments *évaluations*.
 - Choosing another assessment on a new risk now reloads its likelihood and impact scales, in the dialog as on the page (it only ever worked on a fully reloaded page).
 - Opening a drawer-only delete link directly (incidents, nonconformities, supplier contacts and sub-processors) rendered a bare dialog fragment instead of a confirmation page.
 - The Trust Center hub and the semantic index pages showed a loose eyebrow (the hub's even read "Strategy") instead of their menu breadcrumb.

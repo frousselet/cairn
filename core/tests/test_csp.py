@@ -129,20 +129,34 @@ class TestNonceOutsideThePageContext:
         scripts = _inline_scripts(html)
         assert scripts and all(attributes.get("nonce") == nonce for attributes in scripts)
 
-    def test_an_inclusion_tag_script_carries_the_nonce(self):
-        """The help dialog is an inclusion tag, shown where help content exists."""
+    def test_the_help_of_a_page_names_actions_and_carries_no_script(self):
+        """The help is an inclusion tag, shown where help content exists. It used to
+        write its own inline script on every page; it now names two actions
+        registered once in ``static/js/cairn/actions.js``."""
         from helpers.models import HelpContent
 
         # Present already where the migrations ran (they seed the help content).
         HelpContent.objects.get_or_create(
             key="accounts.action_log_list", language="en",
-            defaults={"title": "Action log", "body": "<p>Help</p>"},
+            defaults={"title": "Action log", "body": "Help"},
         )
         response = _client().get(reverse("accounts:action-log-list"))
         html = response.content.decode()
-        assert "window.cairnActions.dismissHelper" in html
+        assert 'data-on-click="hidePageHelp"' in html and 'data-on-click="showPageHelp"' in html
+        assert "dismissHelper" not in html
         nonce = _nonce(response)
         assert all(attributes.get("nonce") == nonce for attributes in _inline_scripts(html))
+
+    def test_an_inclusion_tag_script_carries_the_nonce(self):
+        """The lifecycle bar is an inclusion tag that brings a script of its own."""
+        from context.tests.factories import ScopeFactory
+
+        response = _client().get(reverse("context:scope-detail", kwargs={"pk": ScopeFactory().pk}))
+        html = response.content.decode()
+        assert "lifecycle-bar" in html or "lc-step" in html
+        nonce = _nonce(response)
+        scripts = _inline_scripts(html)
+        assert scripts and all(attributes.get("nonce") == nonce for attributes in scripts)
 
     def test_no_nonce_outside_a_request(self):
         from django.template import Context, Template

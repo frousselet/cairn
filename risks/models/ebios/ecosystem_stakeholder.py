@@ -46,7 +46,7 @@ class EcosystemStakeholder(BaseModel):
         "risks.RiskAssessment",
         on_delete=models.CASCADE,
         related_name="ebios_ecosystem_stakeholders",
-        verbose_name=_("Assessment"),
+        verbose_name=_("Risk assessment"),
     )
     stakeholder = models.ForeignKey(
         "context.Stakeholder",

@@ -33,7 +33,7 @@ class OperationalScenario(BaseModel):
         "risks.RiskAssessment",
         on_delete=models.CASCADE,
         related_name="ebios_operational_scenarios",
-        verbose_name=_("Assessment"),
+        verbose_name=_("Risk assessment"),
     )
     strategic_scenario = models.ForeignKey(
         "risks.StrategicScenario",

@@ -28,7 +28,7 @@ class StudyFramework(LegacyStatusMixin, BaseModel):
         "risks.RiskAssessment",
         on_delete=models.CASCADE,
         related_name="ebios_study_framework",
-        verbose_name=_("Assessment"),
+        verbose_name=_("Risk assessment"),
     )
     mission_statement = models.TextField(_("Mission statement"), blank=True)
     business_perimeter = models.TextField(_("Business perimeter"), blank=True)

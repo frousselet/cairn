@@ -121,7 +121,7 @@ passed outranks everything else the page has to say.
     {% else %}
     {% kpi_tile _("Overdue obligations") 0 icon="hourglass-bottom" tone="neutral" %}
     {% endif %}
-    {% kpi_tile _("TLP") incident.get_tlp_display icon="eye-slash" tone=incident.tlp|badge_variant:"tlp" %}
+    {% kpi_tile _("Sharing level (TLP)") incident.get_tlp_display icon="eye-slash" tone=incident.tlp|badge_variant:"tlp" %}
   {% endslot %}
 
   {# ── Summary and impact ── #}
@@ -176,7 +176,7 @@ passed outranks everything else the page has to say.
         </div>
         {% endif %}
       {% endmeta_item %}
-      {% meta_item _("TLP") %}{% choice_badge incident "tlp" type="tlp" %}{% endmeta_item %}
+      {% meta_item _("Sharing level (TLP)") %}{% choice_badge incident "tlp" type="tlp" %}{% endmeta_item %}
       {% meta_item _("Incident manager") %}{% if incident.incident_manager %}{% user_badge incident.incident_manager size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Reporter") %}{% if incident.reporter %}{% user_badge incident.reporter size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% if incident.response_plan %}
@@ -224,8 +224,8 @@ passed outranks everything else the page has to say.
         <thead>
           <tr>
             <th>{% trans "Essential assets" %}</th>
-            <th>{% trans "RTO" %}</th>
-            <th>{% trans "MTD / Max tolerable downtime" %}</th>
+            <th>{% trans "Recovery time objective (RTO)" %}</th>
+            <th>{% trans "Maximum tolerable downtime (MTD)" %}</th>
             <th>{% trans "Outage duration" %}</th>
           </tr>
         </thead>

@@ -88,7 +88,7 @@ MENU: tuple[NavSection, ...] = (
         NavItem("Management reviews", "reports:management-review-list"),
         NavItem("Reports", "reports:report-list"),
     )),
-    NavSection("assets", "Assets and third parties", "box-seam", (
+    NavSection("assets", "Assets and suppliers", "box-seam", (
         NavItem("Essential assets", "assets:essential-asset-list"),
         NavItem("Support assets", "assets:support-asset-list"),
         NavItem("Sites", "assets:site-list"),
@@ -118,7 +118,7 @@ MENU: tuple[NavSection, ...] = (
         NavItem("Action plans", "compliance:action-plan-list"),
         NavItem("Controls", "controls:control-list"),
         NavItem("Control tests", "controls:controltest-list"),
-        NavItem("Policies", "documents:policy-list"),
+        NavItem("Documents", "documents:policy-list"),
         NavItem("Acknowledgement campaigns", "documents:campaign-list"),
         NavItem("To acknowledge", "documents:acknowledge-list", in_menu=False),
     )),

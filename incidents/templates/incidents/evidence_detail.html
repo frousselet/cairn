@@ -99,7 +99,7 @@ storage is unavailable, not that the evidence changed.
     {% else %}
     {% kpi_tile _("Seal") _("Not sealed") icon="unlock" tone="neutral" %}
     {% endif %}
-    {% kpi_tile _("Handling caveat") evidence.get_tlp_display icon="eye-slash" tone=evidence.tlp|badge_variant:"tlp" %}
+    {% kpi_tile _("Sharing level (TLP)") evidence.get_tlp_display icon="eye-slash" tone=evidence.tlp|badge_variant:"tlp" %}
   {% endslot %}
 
   {# ── What the item is ── #}
@@ -229,8 +229,8 @@ storage is unavailable, not that the evidence changed.
     </div>
   {% endsection_card %}
 
-  {# ── Handling caveat ── #}
-  {% section_card _("Handling caveat") icon="eye-slash" %}
+  {# ── Sharing level ── #}
+  {% section_card _("Sharing level (TLP)") icon="eye-slash" %}
     {% choice_badge evidence "tlp" type="tlp" %}
     <p class="text-meta mb-0 mt-2">{% trans "An artefact usually holds more than the incident summary does, so its caveat defaults stricter than the incident's. Loosen it deliberately." %}</p>
   {% endsection_card %}

@@ -429,3 +429,36 @@ class TestIsoDatetime:
     def test_anything_else_is_left_as_it_is(self):
         assert render("{{ value|iso_datetime }}", {"value": "not a date"}).strip() == "not a date"
         assert render("{{ value|iso_datetime }}", {"value": None}).strip() == "None"
+
+
+class TestDefinitionList:
+    ENTRIES = [
+        {"id": "term-scope", "term": "Scope", "definition": "What your security work covers.",
+         "also": ["perimeter", "boundary"], "url": "/context/scopes/", "url_label": "Open the register"},
+        {"id": "acronym-isms", "term": "ISMS", "lead": "information security management system",
+         "definition": "Everything you do to keep information safe."},
+    ]
+
+    def test_it_is_a_description_list(self):
+        out = render("{% definition_list entries %}", {"entries": self.ENTRIES})
+
+        assert out.count("<dt ") == 2 and out.count("<dd ") == 2
+        assert '<dl class="def-list">' in out
+        assert 'id="term-scope"' in out and 'id="acronym-isms"' in out
+
+    def test_other_names_link_and_lead_are_optional(self):
+        out = render("{% definition_list entries %}", {"entries": self.ENTRIES})
+
+        assert "Also called : perimeter, boundary" in out
+        assert 'href="/context/scopes/"' in out and "Open the register" in out
+        assert '<span class="def-list__lead">information security management system</span>' in out
+        # The second entry has neither other names nor a register.
+        assert out.count("def-list__also") == 1 and out.count("def-list__link") == 1
+
+    def test_what_it_shows_is_text(self):
+        out = render("{% definition_list entries %}", {"entries": [{"term": "<b>x</b>", "definition": "<script>1</script>"}]})
+
+        assert "<script>" not in out and "&lt;b&gt;x&lt;/b&gt;" in out
+
+    def test_an_empty_list_renders_an_empty_list(self):
+        assert "def-list__entry" not in render("{% definition_list entries %}", {"entries": []})

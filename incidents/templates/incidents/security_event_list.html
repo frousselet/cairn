@@ -2,6 +2,7 @@
 {% load i18n ui %}
 {% load table_tags %}
 {% load accounts_tags %}
+{% load help_tags %}
 
 {% comment %}
 The A.6.8 intake register. The point of the page is the reports that were NOT
@@ -19,6 +20,7 @@ the *Awaiting assessment* backlog (built by the view in `list_kpis`).
   <button type="button" class="btn btn-primary" hx-get="{% url 'incidents:event-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Report a security event" %}</button>
   {% endif %}
 {% endpage_header %}
+{% help_modal "incidents.event_list" %}
 
 <div class="list-layout">
   <div class="list-main">
