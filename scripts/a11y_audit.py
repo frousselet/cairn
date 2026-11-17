@@ -13,6 +13,11 @@ it and fails on any violation of a level A or AA rule. A dialog and a filter
 panel are opened first (a hidden one is skipped by axe), and a few pages are
 audited again at a phone's width.
 
+The same visit tells whether the page *works* : anything the browser refused
+under the Content Security Policy (``core/csp.py``) and any error a script
+threw fail the page too. An inline handler or a script without its nonce
+passes every server-side test and does nothing in a browser.
+
     python scripts/a11y_audit.py --base-url http://127.0.0.1:8001 --axe axe.min.js
     python scripts/a11y_audit.py --axe axe.min.js --theme dark --only calendar dashboard
 
@@ -68,6 +73,10 @@ OPEN_STATES: dict[str, tuple[str, str]] = {
         "document.querySelector('a[hx-target=\"#drawer-form-content\"]').click()",
     ),
     "filter-panel": ("/risks/register/", "document.querySelector('.list-filter-toggle').click()"),
+    # The icon rail, reached through a declarative action (data-on-click) :
+    # it only folds if the action dispatcher runs under the policy.
+    "sidebar-rail": ("/context/scopes/", "document.querySelector('.sidebar-collapse-toggle').click()"),
+    "calendar-year": ("/calendar/", "document.querySelector('#viewToggle [data-view=year]').click()"),
 }
 
 # Pages audited again at a phone's width, where the layout stacks and the
@@ -78,6 +87,23 @@ PHONE_PAGES: dict[str, str] = {
     "risk-register-phone": "/risks/register/",
     "calendar-phone": "/calendar/",
 }
+
+# Installed before any script of the page runs : what the browser refused
+# under the Content Security Policy (core/csp.py), and what a script threw.
+# Either one means a page that looks right and does not work.
+WATCH_PAGE = """
+window.__pageIssues = [];
+document.addEventListener('securitypolicyviolation', function (e) {
+  window.__pageIssues.push('policy : ' + e.violatedDirective + ' refused ' + (e.blockedURI || 'inline code') +
+    (e.sourceFile ? ' (' + e.sourceFile.split('/').slice(-1)[0] + ':' + e.lineNumber + ')' : ''));
+});
+window.addEventListener('error', function (e) {
+  window.__pageIssues.push('script error : ' + e.message);
+});
+window.addEventListener('unhandledrejection', function (e) {
+  window.__pageIssues.push('script error : ' + String(e.reason));
+});
+"""
 
 RUN_AXE = """
 (async () => {
@@ -145,12 +171,14 @@ def set_theme(devtools, theme: str) -> None:
     ]})
 
 
-def report(name: str, theme: str, url: str, violations: list[dict]) -> int:
-    count = sum(len(v["nodes"]) for v in violations)
+def report(name: str, theme: str, url: str, violations: list[dict], issues: list[str]) -> int:
+    count = sum(len(v["nodes"]) for v in violations) + len(issues)
     if not count:
         print(f"  ok    {name} ({theme})")
         return 0
-    print(f"  FAIL  {name} ({theme}) : {count} element(s)  {url}")
+    print(f"  FAIL  {name} ({theme}) : {count} defect(s)  {url}")
+    for issue in issues[:8]:
+        print(f"        {issue[:220]}")
     for violation in violations:
         print(f"        {violation['id']} [{violation['impact']}] {violation['help']} "
               f"x{len(violation['nodes'])}")
@@ -190,6 +218,7 @@ def main() -> int:
         devtools = shots.DevTools(shots.debugger_url())
         for method in ("Network.enable", "Page.enable", "Runtime.enable"):
             devtools.call(method)
+        devtools.call("Page.addScriptToEvaluateOnNewDocument", {"source": WATCH_PAGE})
 
         def viewport(width: int, height: int, mobile: bool) -> None:
             devtools.call("Emulation.setDeviceMetricsOverride",
@@ -212,8 +241,9 @@ def main() -> int:
                 evaluate(devtools, action)
                 time.sleep(2.0)  # the request, the swap and the opening transition
             violations = audit(devtools, axe_source, WCAG_TAGS)
-            results[f"{name}:{theme}"] = {"url": url, "violations": violations}
-            failures += report(name, theme, url, violations)
+            issues = sorted(set(json.loads(evaluate(devtools, "JSON.stringify(window.__pageIssues || [])") or "[]")))
+            results[f"{name}:{theme}"] = {"url": url, "violations": violations, "issues": issues}
+            failures += report(name, theme, url, violations, issues)
             if args.best_practice:
                 for item in audit(devtools, axe_source, ["best-practice"]):
                     advice += len(item["nodes"])
@@ -269,9 +299,10 @@ def main() -> int:
         args.report.write_text(json.dumps(results, indent=1), encoding="utf-8")
     pages = len(results)
     if failures:
-        print(f"\n{failures} element(s) fail a WCAG 2.2 A/AA rule across {pages} page renderings.")
+        print(f"\n{failures} defect(s) across {pages} page renderings "
+              "(WCAG 2.2 A/AA rules, Content Security Policy violations, script errors).")
         return 1
-    print(f"\nNo WCAG 2.2 A/AA violation across {pages} page renderings."
+    print(f"\nNo WCAG 2.2 A/AA violation, no policy violation and no script error across {pages} page renderings."
           + (f" {advice} best-practice remark(s)." if args.best_practice else ""))
     return 0
 

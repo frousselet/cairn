@@ -20566,9 +20566,6 @@ msgstr "Passer à : %(label)s"
 msgid "Back to the dashboard"
 msgstr "Retour au tableau de bord"
 
-msgid "Go back"
-msgstr "Page précédente"
-
 msgid "Page not found"
 msgstr "Page introuvable"
 
@@ -20593,8 +20590,8 @@ msgstr "Formulaire expiré"
 msgid "This form has expired"
 msgstr "Ce formulaire a expiré"
 
-msgid "The page stayed open too long, or your session ended in another tab. Nothing was saved. Go back, reload the page and submit again."
-msgstr "La page est restée ouverte trop longtemps, ou votre session s'est terminée dans un autre onglet. Rien n'a été enregistré. Revenez en arrière, rechargez la page et validez à nouveau."
+msgid "The page stayed open too long, or your session ended in another tab. Nothing was saved. Use your browser's Back button, reload the page and submit again."
+msgstr "La page est restée ouverte trop longtemps, ou votre session s'est terminée dans un autre onglet. Rien n'a été enregistré. Utilisez le bouton Précédent de votre navigateur, rechargez la page et validez à nouveau."
 
 msgid "Bad request"
 msgstr "Requête invalide"

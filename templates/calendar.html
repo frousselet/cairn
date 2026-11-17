@@ -258,7 +258,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   // ── i18n ────────────────────────────────────────────
   {% trans "Risk assessments" as t_ra %}{% trans "Compliance assessments" as t_ca %}
@@ -532,7 +532,7 @@
           if(dayEv.length) cls+=' has-events';
           var tag=dayEv.length?'button':'div';
           h += '<'+tag+' class="'+cls+'"';
-          if(dayEv.length) h+=' type="button" aria-label="'+dayNum+' '+MONTHS[m]+' : '+dayEv.length+' '+TXT_EVENTS+'" onclick="window._calGoMonth('+m+')"';
+          if(dayEv.length) h+=' type="button" aria-label="'+dayNum+' '+MONTHS[m]+' : '+dayEv.length+' '+TXT_EVENTS+'" data-on-click="calGoMonth" data-arg="'+m+'"';
           h += '>'+dayNum;
           if(dayEv.length) {
             h += '<span class="year-dot-row" aria-hidden="true">';
@@ -557,8 +557,8 @@
     });
   }
 
-  window._calGoMonth = function(m) {
-    navDate.setMonth(m); view='month'; setActiveBtn('month'); render();
+  window.cairnActions.calGoMonth = function(m) {
+    navDate.setMonth(parseInt(m, 10)); view='month'; setActiveBtn('month'); render();
   };
 
   // ── TIMELINE VIEW ───────────────────────────────────

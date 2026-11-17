@@ -260,3 +260,66 @@ class TestOAuthApplicationManagement:
             content_type="application/json",
         )
         assert response.status_code == 403
+
+
+class TestOAuthConsent:
+    """The consent page (``/authorize``) and what answering it redirects to."""
+
+    REDIRECT = "https://client.example/callback"
+
+    def _app(self, user):
+        import json
+
+        app = OAuthApplication(name="Desk client", user=user, redirect_uris=json.dumps([self.REDIRECT]))
+        app.set_secret(_generate_client_secret())
+        app.save()
+        return app
+
+    def _form(self, app, redirect_uri, action):
+        return {
+            "client_id": app.client_id, "redirect_uri": redirect_uri, "code_challenge": "c" * 43,
+            "code_challenge_method": "S256", "state": "xyz", "action": action,
+        }
+
+    def test_the_consent_page_may_be_answered_by_a_redirect_to_the_client(self, client):
+        """Its form posts to the instance and is redirected to the client's
+        own address : ``form-action 'self'`` is left out of its policy, and
+        only of its policy."""
+        user = UserFactory()
+        app = self._app(user)
+        client.force_login(user)
+        response = client.get("/authorize", {
+            "response_type": "code", "client_id": app.client_id, "redirect_uri": self.REDIRECT,
+            "code_challenge": "c" * 43, "code_challenge_method": "S256",
+        })
+        assert response.status_code == 200
+        policy = response["Content-Security-Policy"]
+        assert "form-action" not in policy
+        assert "script-src 'self' 'nonce-" in policy
+
+    def test_a_refusal_is_sent_to_the_registered_address(self, client):
+        user = UserFactory()
+        app = self._app(user)
+        client.force_login(user)
+        response = client.post("/authorize", self._form(app, self.REDIRECT, "deny"))
+        assert response.status_code == 302
+        assert response["Location"].startswith(self.REDIRECT + "?")
+        assert "error=access_denied" in response["Location"]
+
+    def test_a_refusal_is_not_sent_to_an_address_the_form_was_given(self, client):
+        """The refusal used to redirect before the address was checked : a
+        tampered consent form could send its user anywhere."""
+        user = UserFactory()
+        app = self._app(user)
+        client.force_login(user)
+        response = client.post("/authorize", self._form(app, "https://evil.example/landing", "deny"))
+        assert response.status_code == 400
+        assert "Location" not in response
+
+    def test_a_refusal_for_an_unknown_client_goes_nowhere(self, client):
+        user = UserFactory()
+        client.force_login(user)
+        form = {"client_id": "ogrc_unknown", "redirect_uri": "https://evil.example/", "action": "deny", "state": "s"}
+        response = client.post("/authorize", form)
+        assert response.status_code == 400
+        assert "Location" not in response

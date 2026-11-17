@@ -23,28 +23,28 @@
              aria-label="{% trans 'Question or comment…' %}"
              value="{{ request.GET.q|default:'' }}"
              autocomplete="off"
-             onchange="this.form.submit()">
+             data-on-change="submitForm">
     </div>
   </div>
   <div class="filter-bar-sep"></div>
   <div class="filter-bar-group">
     <span class="filter-bar-label">{% trans "Status" %}</span>
-    <a href="#" class="filter-pill{% if not request.GET.status or request.GET.status == 'open' %} active{% endif %}" onclick="setPill('status','open');return false">{% trans "Open" %}</a>
-    <a href="#" class="filter-pill{% if request.GET.status == 'resolved' %} active{% endif %}" onclick="setPill('status','resolved');return false">{% trans "Corrected" %}</a>
-    <a href="#" class="filter-pill{% if request.GET.status == 'all' %} active{% endif %}" onclick="setPill('status','all');return false">{% trans "All" %}</a>
+    <a href="#" class="filter-pill{% if not request.GET.status or request.GET.status == 'open' %} active{% endif %}" data-on-click="setPill" data-arg="status" data-arg2="open">{% trans "Open" %}</a>
+    <a href="#" class="filter-pill{% if request.GET.status == 'resolved' %} active{% endif %}" data-on-click="setPill" data-arg="status" data-arg2="resolved">{% trans "Corrected" %}</a>
+    <a href="#" class="filter-pill{% if request.GET.status == 'all' %} active{% endif %}" data-on-click="setPill" data-arg="status" data-arg2="all">{% trans "All" %}</a>
   </div>
   <div class="filter-bar-sep"></div>
   <div class="filter-bar-group">
     <span class="filter-bar-label">{% trans "Rating" %}</span>
-    <a href="#" class="filter-pill{% if not request.GET.rating %} active{% endif %}" onclick="setPill('rating','');return false">{% trans "All" %}</a>
-    <a href="#" class="filter-pill{% if request.GET.rating == 'up' %} active{% endif %}" onclick="setPill('rating','up');return false"><i class="bi bi-hand-thumbs-up" aria-hidden="true"></i> {% trans "Thumbs up" %}</a>
-    <a href="#" class="filter-pill{% if request.GET.rating == 'down' %} active{% endif %}" onclick="setPill('rating','down');return false"><i class="bi bi-hand-thumbs-down" aria-hidden="true"></i> {% trans "Thumbs down" %}</a>
+    <a href="#" class="filter-pill{% if not request.GET.rating %} active{% endif %}" data-on-click="setPill" data-arg="rating" data-arg2="">{% trans "All" %}</a>
+    <a href="#" class="filter-pill{% if request.GET.rating == 'up' %} active{% endif %}" data-on-click="setPill" data-arg="rating" data-arg2="up"><i class="bi bi-hand-thumbs-up" aria-hidden="true"></i> {% trans "Thumbs up" %}</a>
+    <a href="#" class="filter-pill{% if request.GET.rating == 'down' %} active{% endif %}" data-on-click="setPill" data-arg="rating" data-arg2="down"><i class="bi bi-hand-thumbs-down" aria-hidden="true"></i> {% trans "Thumbs down" %}</a>
   </div>
   <div class="filter-bar-sep"></div>
   <div class="filter-bar-group">
     <span class="filter-bar-label">{% trans "Period" %}</span>
-    <input type="date" name="date_from" form="filterForm" class="form-control" value="{{ request.GET.date_from|default:'' }}" onchange="this.form.submit()" aria-label="{% trans 'From' %}">
-    <input type="date" name="date_to" form="filterForm" class="form-control" value="{{ request.GET.date_to|default:'' }}" onchange="this.form.submit()" aria-label="{% trans 'To' %}">
+    <input type="date" name="date_from" form="filterForm" class="form-control" value="{{ request.GET.date_from|default:'' }}" data-on-change="submitForm" aria-label="{% trans 'From' %}">
+    <input type="date" name="date_to" form="filterForm" class="form-control" value="{{ request.GET.date_to|default:'' }}" data-on-change="submitForm" aria-label="{% trans 'To' %}">
   </div>
   {% if request.GET.q or request.GET.rating or request.GET.date_from or request.GET.date_to or request.GET.status and request.GET.status != 'open' %}
   <a href="{% url 'assistant:feedback-list' %}" class="filter-pill" title="{% trans 'Clear' %}"><i class="bi bi-x-lg" aria-hidden="true"></i> {% trans "Clear" %}</a>
@@ -54,7 +54,8 @@
     <i class="bi bi-download me-1" aria-hidden="true"></i>{% trans "Export JSON" %}
   </a>
 </div>
-<script>
+<script nonce="{% csp_nonce %}">
+window.cairnActions.setPill = setPill;
 function setPill(param, value) {
   var f = document.getElementById('filterForm');
   var input = f.querySelector('input[name="'+param+'"]');

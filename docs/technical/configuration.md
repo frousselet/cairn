@@ -166,9 +166,36 @@ provider, with its key in the URL when it needs one. Without
 the provider, the tiles are desaturated so the map stays a backdrop.
 
 Set `MAP_TILE_URL` to an empty value where browsers must not reach an outside
-service : the pages then show no map. The address lookup of the site and
-supplier forms (Photon) is a second browser-side call, made only when someone
-types an address.
+service : the pages then show no map.
+
+```bash
+MAP_GEOCODER_URL=https://photon.komoot.io/api/   # empty : no geocoding
+```
+
+A second browser-side call goes to a geocoder, a
+[Photon](https://github.com/komoot/photon)-compatible API, in two cases : when
+a map has to place a site or a supplier that has an address but no
+coordinates, and when someone types in an address field (type-ahead). **The
+address is sent to that service.** The default is Photon's public instance;
+point `MAP_GEOCODER_URL` at one you host, or set it to an empty value : the
+maps then only place what has a latitude and a longitude, and address fields
+have no type-ahead. Nothing else leaves the browser.
+
+Both origins are the only ones the [Content Security
+Policy](security.md#content-security-policy) lets a page reach, and they follow
+these settings.
+
+## Content Security Policy
+
+```bash
+CSP_MODE=enforce   # enforce (default), report or off
+```
+
+`enforce` makes the browser refuse what the policy does not allow. `report`
+sends it as report-only (nothing blocked, violations in the browser console),
+to diagnose an instance behind a proxy that rewrites pages. `off` sends no
+policy. See [security](security.md#content-security-policy) for what the
+policy contains.
 
 ## What the instance calls out to
 

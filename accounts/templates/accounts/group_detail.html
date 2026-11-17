@@ -37,11 +37,11 @@
     {% if group_users %}
     {% if can_edit %}
     <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
-      <button type="button" class="btn btn-sm btn-danger" id="bulk-remove-btn" disabled onclick="bulkRemoveUsers()">
+      <button type="button" class="btn btn-sm btn-danger" id="bulk-remove-btn" disabled data-on-click="bulkRemoveUsers">
         <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{% trans "Remove selected" %} (<span id="remove-count">0</span>)
       </button>
       <div class="form-check form-check-inline mb-0 ms-auto">
-        <input type="checkbox" class="form-check-input" id="select-all-users-remove" onchange="toggleAllUserRemove(this)">
+        <input type="checkbox" class="form-check-input" id="select-all-users-remove" data-on-change="toggleAllUserRemove">
         <label class="form-check-label text-meta" for="select-all-users-remove">{% trans "Select all" %}</label>
       </div>
     </div>
@@ -57,7 +57,7 @@
           <tr>
             {% if can_edit %}
             <td style="width:1%">
-              <input type="checkbox" class="form-check-input user-remove-cb" value="{{ u.pk }}" onchange="updateRemoveCount()" aria-label="{% blocktrans with name=u.display_name %}Select {{ name }}{% endblocktrans %}">
+              <input type="checkbox" class="form-check-input user-remove-cb" value="{{ u.pk }}" data-on-change="updateRemoveCount" aria-label="{% blocktrans with name=u.display_name %}Select {{ name }}{% endblocktrans %}">
             </td>
             {% endif %}
             <td>
@@ -99,7 +99,7 @@
         <input type="text" class="form-control form-control-sm" id="user-search"
           placeholder="{% trans 'Search by name or email...' %}"
           aria-label="{% trans 'Search by name or email...' %}"
-          onkeyup="filterAvailableUsers()">
+          data-on-keyup="filterAvailableUsers">
       </div>
       <form method="post" action="{% url 'accounts:group-users-update' group.pk %}" id="add-users-form">
         {% csrf_token %}
@@ -110,7 +110,7 @@
               {% for u in all_users %}
               <tr class="available-user-row" data-search="{{ u.display_name|lower }} {{ u.email|lower }}">
                 <td style="width:1%">
-                  <input type="checkbox" class="form-check-input user-add-cb" name="user_ids" value="{{ u.pk }}" onchange="updateAddCount()" aria-label="{% blocktrans with name=u.display_name %}Select {{ name }}{% endblocktrans %}">
+                  <input type="checkbox" class="form-check-input user-add-cb" name="user_ids" value="{{ u.pk }}" data-on-change="updateAddCount" aria-label="{% blocktrans with name=u.display_name %}Select {{ name }}{% endblocktrans %}">
                 </td>
                 <td>{{ u.display_name }}</td>
                 <td class="text-muted">{{ u.email }}</td>
@@ -123,7 +123,7 @@
           <button type="submit" class="btn btn-sm btn-primary" id="add-users-btn" disabled>
             <i class="bi bi-person-plus me-1" aria-hidden="true"></i>{% trans "Add selected" %} (<span id="add-count">0</span>)
           </button>
-          <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAllUserAdd()">{% trans "Select all visible" %}</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-on-click="toggleAllUserAdd">{% trans "Select all visible" %}</button>
         </div>
       </form>
     </div>
@@ -163,16 +163,16 @@
       {% if can_edit %}
       <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
         <span class="text-meta me-1">{% trans "Quick apply:" %}</span>
-        <button type="button" class="btn btn-sm btn-secondary" onclick="presetReadOnly()">
+        <button type="button" class="btn btn-sm btn-secondary" data-on-click="presetReadOnly">
           <i class="bi bi-eye me-1" aria-hidden="true"></i>{% trans "Read-only" %}
         </button>
-        <button type="button" class="btn btn-sm btn-secondary" onclick="presetFullCrud()">
+        <button type="button" class="btn btn-sm btn-secondary" data-on-click="presetFullCrud">
           <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{% trans "Full CRUD" %}
         </button>
-        <button type="button" class="btn btn-sm btn-secondary" onclick="presetSelectAll()">
+        <button type="button" class="btn btn-sm btn-secondary" data-on-click="presetSelectAll">
           <i class="bi bi-check-all me-1" aria-hidden="true"></i>{% trans "Select all" %}
         </button>
-        <button type="button" class="btn btn-sm btn-danger" onclick="presetClearAll()">
+        <button type="button" class="btn btn-sm btn-danger" data-on-click="presetClearAll">
           <i class="bi bi-x-lg me-1" aria-hidden="true"></i>{% trans "Clear all" %}
         </button>
       </div>
@@ -274,7 +274,7 @@
   {% record_card group %}
 {% enddetail_layout %}
 
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   // ── Permission counter ─────────────────────────────
   function updatePermCounter() {
@@ -409,14 +409,14 @@
   });
 
   // ── Presets ────────────────────────────────────────
-  window.presetReadOnly = function() {
+  window.presetReadOnly = window.cairnActions.presetReadOnly = function() {
     document.querySelectorAll('.perm-cb:not([disabled])').forEach(function(cb) {
       cb.checked = cb.value.endsWith('.read');
     });
     refreshAllToggles();
   };
 
-  window.presetFullCrud = function() {
+  window.presetFullCrud = window.cairnActions.presetFullCrud = function() {
     document.querySelectorAll('.perm-cb:not([disabled])').forEach(function(cb) {
       var v = cb.value;
       cb.checked = v.endsWith('.create') || v.endsWith('.read') || v.endsWith('.update') || v.endsWith('.delete');
@@ -424,12 +424,12 @@
     refreshAllToggles();
   };
 
-  window.presetSelectAll = function() {
+  window.presetSelectAll = window.cairnActions.presetSelectAll = function() {
     document.querySelectorAll('.perm-cb:not([disabled])').forEach(function(cb) { cb.checked = true; });
     refreshAllToggles();
   };
 
-  window.presetClearAll = function() {
+  window.presetClearAll = window.cairnActions.presetClearAll = function() {
     document.querySelectorAll('.perm-cb:not([disabled])').forEach(function(cb) { cb.checked = false; });
     refreshAllToggles();
   };
@@ -447,7 +447,7 @@
   }
 
   // ── Users: bulk add ────────────────────────────────
-  window.updateAddCount = function() {
+  window.updateAddCount = window.cairnActions.updateAddCount = function() {
     var checked = document.querySelectorAll('.user-add-cb:checked');
     var countEl = document.getElementById('add-count');
     var btn = document.getElementById('add-users-btn');
@@ -455,14 +455,14 @@
     if (btn) btn.disabled = checked.length === 0;
   };
 
-  window.toggleAllUserAdd = function() {
+  window.toggleAllUserAdd = window.cairnActions.toggleAllUserAdd = function() {
     var visibleCbs = document.querySelectorAll('.available-user-row:not([style*="display: none"]):not([style*="display:none"]) .user-add-cb');
     var allChecked = Array.from(visibleCbs).every(function(cb) { return cb.checked; });
     visibleCbs.forEach(function(cb) { cb.checked = !allChecked; });
     updateAddCount();
   };
 
-  window.filterAvailableUsers = function() {
+  window.filterAvailableUsers = window.cairnActions.filterAvailableUsers = function() {
     var query = document.getElementById('user-search').value.toLowerCase();
     document.querySelectorAll('.available-user-row').forEach(function(row) {
       var text = row.dataset.search || '';
@@ -471,7 +471,7 @@
   };
 
   // ── Users: bulk remove ─────────────────────────────
-  window.updateRemoveCount = function() {
+  window.updateRemoveCount = window.cairnActions.updateRemoveCount = function() {
     var checked = document.querySelectorAll('.user-remove-cb:checked');
     var countEl = document.getElementById('remove-count');
     var btn = document.getElementById('bulk-remove-btn');
@@ -479,14 +479,14 @@
     if (btn) btn.disabled = checked.length === 0;
   };
 
-  window.toggleAllUserRemove = function(toggle) {
+  window.toggleAllUserRemove = window.cairnActions.toggleAllUserRemove = function(toggle) {
     document.querySelectorAll('.user-remove-cb').forEach(function(cb) {
       cb.checked = toggle.checked;
     });
     updateRemoveCount();
   };
 
-  window.bulkRemoveUsers = function() {
+  window.bulkRemoveUsers = window.cairnActions.bulkRemoveUsers = function() {
     var checked = document.querySelectorAll('.user-remove-cb:checked');
     if (checked.length === 0) return;
     var form = document.createElement('form');

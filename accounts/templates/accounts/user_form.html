@@ -2,7 +2,7 @@
 
 {% block extra_js %}
 {% include "includes/image_resize.html" %}
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   var avatarInput = document.getElementById('id_avatar');
   if (!avatarInput) return;

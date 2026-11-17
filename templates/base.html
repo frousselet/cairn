@@ -6,8 +6,8 @@
 <html lang="{{ LANGUAGE_CODE }}"{% if user.is_authenticated %} data-theme-preference="{{ user.theme_preference|default:'system' }}"{% endif %}>
 <head>
   <meta charset="utf-8">
-  <script>try{if(localStorage.getItem('sidebar-collapsed')==='1')document.documentElement.classList.add('sidebar-collapsed')}catch(e){}</script>
-  <script>
+  <script nonce="{% csp_nonce %}">try{if(localStorage.getItem('sidebar-collapsed')==='1')document.documentElement.classList.add('sidebar-collapsed')}catch(e){}</script>
+  <script nonce="{% csp_nonce %}">
   (function(){
     var root = document.documentElement;
     var STORAGE_KEY = 'theme-preference';
@@ -40,7 +40,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
   {% if APP_NAME and APP_NAME != "Cairn" %}
-  <script>
+  <script nonce="{% csp_nonce %}">
   /* Custom application name: replace "Cairn" in the tab title on initial load
      and on every boosted / HTMX navigation (via a <title> mutation observer). */
   (function() {
@@ -93,21 +93,23 @@
   <link href="{% static_v 'css/cairn/08-motion.css' %}" rel="stylesheet">
   <link href="{% static_v 'css/cairn/09-components.css' %}" rel="stylesheet">
   <link href="{% static_v 'css/cairn/10-framework.css' %}" rel="stylesheet">
-  <script>
-    function scopePopToggle(btn) {
-      var panel = btn.nextElementSibling;
-      var wasOpen = panel.classList.contains('show');
+  <script src="{% static_v 'js/cairn/actions.js' %}"></script>
+  <script nonce="{% csp_nonce %}">
+    /* Scope popover (the count of scopes in a list row) : its button opens
+       it, a click inside leaves it open, a click anywhere else closes it. */
+    document.addEventListener('click', function(event) {
+      var target = event.target;
+      if (target.closest && target.closest('.scope-pop-panel')) return;
+      var btn = target.closest ? target.closest('.scope-pop-btn') : null;
+      var panel = btn ? btn.nextElementSibling : null;
+      var wasOpen = panel && panel.classList.contains('show');
       document.querySelectorAll('.scope-pop-panel.show').forEach(function(p) { p.classList.remove('show'); });
-      if (!wasOpen) {
+      if (panel && !wasOpen) {
         var r = btn.getBoundingClientRect();
         panel.style.left = r.left + 'px';
         panel.style.top = (r.bottom + 4) + 'px';
         panel.classList.add('show');
       }
-      event.stopPropagation();
-    }
-    document.addEventListener('click', function() {
-      document.querySelectorAll('.scope-pop-panel.show').forEach(function(p) { p.classList.remove('show'); });
     });
   </script>
   {% if ACCENT_LIGHT %}
@@ -152,7 +154,7 @@
     }
   </style>
   {% endif %}
-  <script>
+  <script nonce="{% csp_nonce %}">
     /* ── Lazy, idempotent Leaflet loader ─────────────────────────────
      *
      * The hero maps (supplier / scope / site detail) live in the boosted
@@ -191,7 +193,7 @@
     })();
   </script>
   {{ MAP_TILES|json_script:"cairn-map-tiles" }}
-  <script>
+  <script nonce="{% csp_nonce %}">
     /* ── Basemap of the hero maps ────────────────────────────────────
      * One place decides which tiles a map draws : the provider comes from
      * the MAP_TILE_URL settings, so a deployment can change it (or switch
@@ -206,6 +208,24 @@
       function dark() { return docEl.getAttribute('data-bs-theme') === 'dark'; }
       window.cairnBasemap = {
         enabled: !!conf.url,
+        geocoder: conf.geocoder || '',
+        /* The position of an address with no coordinates, asked of the
+           geocoder the deployment names (MAP_GEOCODER_URL). Resolves to
+           [lat, lon], or to null when there is no geocoder, no answer or no
+           match : the caller then leaves the address off the map. */
+        geocode: function (address) {
+          if (!conf.geocoder || !address) return Promise.resolve(null);
+          var url = conf.geocoder + (conf.geocoder.indexOf('?') === -1 ? '?' : '&') +
+                    'q=' + encodeURIComponent(address) + '&limit=1';
+          return fetch(url, { referrerPolicy: 'no-referrer' })
+            .then(function (r) { return r.ok ? r.json() : { features: [] }; })
+            .then(function (d) {
+              var f = (d.features || [])[0];
+              return f && f.geometry && f.geometry.coordinates
+                ? [f.geometry.coordinates[1], f.geometry.coordinates[0]] : null;
+            })
+            .catch(function () { return null; });
+        },
         addTo: function (map) {
           function url() { return dark() && conf.darkUrl ? conf.darkUrl : conf.url; }
           var layer = L.tileLayer(url(), {
@@ -255,7 +275,7 @@
   {% block layout %}
   {# ── Sidebar ────────────────────────────────────────── #}
   <a class="skip-link" href="#page-shell">{% trans "Skip to main content" %}</a>
-  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" data-on-click="toggleSidebar"></div>
   <aside class="sidebar" id="sidebar" aria-label="{% trans 'Sidebar' %}">
     <div class="sidebar-brand">
       <a href="/">
@@ -362,7 +382,7 @@
     </nav>
 
   </aside>
-  <script>
+  <script nonce="{% csp_nonce %}">
   /* Sidebar fold state.
    *
    * The menu is one accordion: every group ships folded and the group holding
@@ -461,13 +481,13 @@
     document.body.addEventListener('htmx:historyRestore', syncActiveAndExpand);
   })();
   </script>
-  <button class="sidebar-collapse-toggle" onclick="toggleSidebarCollapse()" title="{% trans 'Toggle sidebar' %}">
+  <button class="sidebar-collapse-toggle" data-on-click="toggleSidebarCollapse" title="{% trans 'Toggle sidebar' %}">
     <i class="bi bi-chevron-left"></i>
   </button>
   <div class="sidebar-flyout" id="sidebarFlyout"></div>
 
   {# ── Mobile menu toggle ──────────────────────────────── #}
-  <button type="button" class="mobile-menu-toggle" onclick="toggleSidebar()" aria-label="{% trans 'Toggle sidebar' %}" aria-controls="sidebar">
+  <button type="button" class="mobile-menu-toggle" data-on-click="toggleSidebar" aria-label="{% trans 'Toggle sidebar' %}" aria-controls="sidebar">
     <div class="hamburger-icon">
       <span></span>
       <span></span>
@@ -577,7 +597,7 @@
         {% else %}<i class="bi bi-info-circle-fill"></i>{% endif %}
       </span>
       <span class="toast-body">{{ message }}</span>
-      <button type="button" class="toast-close" onclick="dismissToast(this)">&times;</button>
+      <button type="button" class="toast-close" data-on-click="dismissToast">&times;</button>
       <span class="toast-progress"></span>
     </div>
     {% endfor %}
@@ -603,7 +623,7 @@
 
   <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
-  <script>
+  <script nonce="{% csp_nonce %}">
     /* ── HTMX history handling ───────────────────────────────────────
      *
      * historyCacheSize = 0 disables the cache. htmx 2.0's
@@ -632,6 +652,20 @@
      * and syncs document.title from it.
      */
     htmx.config.historyCacheSize = 0;
+    /* Content Security Policy (core/csp.py). A script arriving in a swapped
+       fragment is re-created by htmx : it is given this page's nonce, without
+       which the browser would refuse it. And htmx evaluates nothing written
+       in an attribute (hx-on, trigger filters) : behaviour lives in scripts. */
+    htmx.config.inlineScriptNonce = '{% csp_nonce %}';
+    htmx.config.allowEval = false;
+    /* What hx-on::after-request did : once its request has gone through, an
+       element can ask another one to refresh (data-after-request-trigger). */
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+      var el = evt.detail && evt.detail.elt;
+      if (!el || !el.getAttribute || !el.hasAttribute('data-after-request-trigger')) return;
+      var target = document.querySelector(el.getAttribute('data-after-request-target'));
+      if (target) htmx.trigger(target, el.getAttribute('data-after-request-trigger'));
+    });
     document.body.addEventListener('htmx:historyCacheMissLoad', function(evt) {
       try {
         var xhr = evt.detail && evt.detail.xhr;
@@ -643,7 +677,7 @@
     });
   </script>
   <script src="{% static 'js/split-pane.js' %}" defer></script>
-  <script>
+  <script nonce="{% csp_nonce %}">
   /* ── ARIA live announcer for HTMX swaps (WCAG 4.1.3 Status Messages) ── */
   (function() {
     var liveRegion = document.getElementById('hx-live');
@@ -676,7 +710,7 @@
   })();
   </script>
   <script src="{% static 'vendor/tom-select/tom-select.complete.min.js' %}"></script>
-  <script>
+  <script nonce="{% csp_nonce %}">
   /* ── Tag input (Tom Select) ──────────────────────── */
   (function() {
     function getCsrfToken() {
@@ -743,7 +777,7 @@
     document.body.addEventListener('htmx:afterSettle', initTagInputs);
   })();
   </script>
-  <script>
+  <script nonce="{% csp_nonce %}">
   /* Sticky page title bar: toggle the compact form once the bar is pinned.
    * The bar sits at top:-1px, so an IntersectionObserver(threshold:1) fires
    * the moment that 1px crosses the viewport edge - cheaper and smoother
@@ -774,7 +808,7 @@
   </script>
   <script src="{% static 'vendor/pell/pell.min.js' %}"></script>
   <script src="{% static 'vendor/dompurify/purify.min.js' %}"></script>
-  <script>
+  <script nonce="{% csp_nonce %}">
   /* ── Global: Rich-text (pell) + TomSelect on all forms ──── */
   (function() {
     /* Toolbar tooltips, translated server-side. */
@@ -1015,15 +1049,17 @@
   </script>
 
   {% comment %}
-    Address autocomplete via Photon (OpenStreetMap, https://photon.komoot.io):
-    free, open-source, no API key, CORS-enabled. Any text input carrying
-    data-address-autocomplete gets a debounced type-ahead. Picking a suggestion
-    fills the address (and a sibling country field when empty). Self-host Photon
-    later by overriding window.ADDRESS_AC_ENDPOINT.
+    Address autocomplete, through the geocoder the deployment names
+    (MAP_GEOCODER_URL : a Photon-compatible API, Photon's public service by
+    default). Any text input carrying data-address-autocomplete gets a
+    debounced type-ahead. Picking a suggestion fills the address (and a
+    sibling country field when empty). What is typed is sent to the geocoder :
+    with the setting empty there is no type-ahead and nothing leaves.
   {% endcomment %}
-  <script>
+  <script nonce="{% csp_nonce %}">
   (function() {
-    var ENDPOINT = window.ADDRESS_AC_ENDPOINT || 'https://photon.komoot.io/api/';
+    var ENDPOINT = window.cairnBasemap && window.cairnBasemap.geocoder;
+    if (!ENDPOINT) return;
     var LANG = (document.documentElement.lang || 'en').slice(0, 2);
     var PHOTON_LANG = (['en', 'fr', 'de', 'it'].indexOf(LANG) >= 0) ? LANG : 'en';
     var EMPTY = '{% trans "No matching address found" %}';
@@ -1132,7 +1168,7 @@
     document.body.addEventListener('htmx:afterSettle', initAll);
   })();
   </script>
-  <script>
+  <script nonce="{% csp_nonce %}">
     /* ── Boosted page transitions ──────────────────────────────────────
      *
      * <body hx-boost="true"> intercepts every internal <a> and <form>
@@ -1293,7 +1329,7 @@
 
     })();
   </script>
-  <script>
+  <script nonce="{% csp_nonce %}">
     /* ── Autofocus the first eligible input of any form on render ─────
      *
      * Brand guidelines (Forms § Accessibility): the first input of a
@@ -1345,7 +1381,9 @@
       });
     })();
   </script>
-  <script>
+  <script nonce="{% csp_nonce %}">
+    window.cairnActions.toggleSidebar = toggleSidebar;
+    window.cairnActions.toggleSidebarCollapse = toggleSidebarCollapse;
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('show');
       document.getElementById('sidebarBackdrop').classList.toggle('show');
@@ -1524,7 +1562,7 @@
       });
     })();
   </script>
-  <script>
+  <script nonce="{% csp_nonce %}">
   /* ── Notifications bell (badge, dropdown, live updates) ── */
   (function() {
     var toggle = document.getElementById('notifToggleBtn');
@@ -1654,8 +1692,9 @@
     } catch (e) { /* WebSocket unavailable: the badge still loads on page load */ }
   })();
   </script>
-  <script>
+  <script nonce="{% csp_nonce %}">
   /* ── Toast notification management ──────────────── */
+  window.cairnActions.dismissToast = dismissToast;
   function dismissToast(btn) {
     var item = btn.closest('.toast-item');
     if (!item || item.classList.contains('toast-hiding')) return;
@@ -1671,7 +1710,7 @@
     });
   })();
   </script>
-  <script>
+  <script nonce="{% csp_nonce %}">
   /* ── Persist active tab across form submissions ── */
   (function() {
     var tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
@@ -2531,7 +2570,7 @@
   })();
 
   </script>
-  <script>
+  <script nonce="{% csp_nonce %}">
   /* ── Scroll-triggered animations: count-up numbers + progress bars ── */
   (function() {
     var DURATION = 600;
@@ -2686,7 +2725,7 @@
   })();
   </script>
   {% if user.is_authenticated %}
-  <script>
+  <script nonce="{% csp_nonce %}">
   /* ── Global search overlay ───────────────────────── */
   (function() {
     var overlay = document.getElementById('searchOverlay');
@@ -3068,7 +3107,7 @@
       <div id="drawer-form-content" class="modal-content"></div>
     </div>
   </div>
-  <script>
+  <script nonce="{% csp_nonce %}">
   (function() {
     var drawerEl = document.getElementById('itemDrawer');
     var bsDrawer = null;
@@ -3176,7 +3215,7 @@
     data attributes emitted by the shared shell, so no per-entity JS is
     ever needed. Initialised whenever HTMX swaps a form into the modal.
   {% endcomment %}
-  <script>
+  <script nonce="{% csp_nonce %}">
   (function() {
     function controlsIn(scope) {
       return Array.prototype.slice.call(
@@ -3388,7 +3427,7 @@
     Generic Bootstrap-icon picker. Wires every IconPickerWidget instance
     (data-icon-picker) emitted anywhere, including inside the modal.
   {% endcomment %}
-  <script>
+  <script nonce="{% csp_nonce %}">
   (function() {
     var ICONS = [
       "bi-building","bi-buildings","bi-house-door","bi-globe","bi-globe-europe-africa",
@@ -3490,7 +3529,7 @@
     128px PNG data-URI client-side and stores it in the hidden input, so it
     works inside the modal without a multipart submit.
   {% endcomment %}
-  <script>
+  <script nonce="{% csp_nonce %}">
   (function() {
     function initUpload(root) {
       if (root.dataset.imageUploadReady) return;
@@ -3540,7 +3579,7 @@
     Used by the dashboard indicator cards and the indicators list rows.
     data-trend (up/down) and data-critical="1" tint the line.
   {% endcomment %}
-  <script>
+  <script nonce="{% csp_nonce %}">
   window.initSparklines = function(root) {
     (root || document).querySelectorAll('.sparkline-slot').forEach(function(el) {
       if (el.querySelector('svg')) return; // already initialized

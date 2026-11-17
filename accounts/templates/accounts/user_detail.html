@@ -12,7 +12,7 @@
   {% if can_impersonate and account_user.is_active and account_user.pk != request.user.pk and not request.impersonator %}
   <form method="post" action="{% url 'accounts:impersonate-start' account_user.pk %}" class="d-inline">
     {% csrf_token %}
-    <button type="submit" class="btn btn-secondary" onclick="return confirm('{% trans "Impersonate this user?" %}')">
+    <button type="submit" class="btn btn-secondary" data-confirm="{% trans 'Impersonate this user?' %}">
       <i class="bi bi-eye me-1" aria-hidden="true"></i>{% trans "Impersonate" %}
     </button>
   </form>

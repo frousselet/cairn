@@ -24,7 +24,7 @@ libraries (d3, dagre) are only loaded when the panel is first opened.
 </div>
 
 {% include "components/lifecycle_graph_lib.html" %}
-<script>
+<script nonce="{% csp_nonce %}">
 (function () {
   var root = document.getElementById('{{ lc_container_id }}-diagram');
   if (!root || root.dataset.lcInit) { return; }

@@ -18,7 +18,7 @@
              id="icalUrl"
              value="{{ request.scheme }}://{{ request.get_host }}{% url 'calendar-ical' %}">
       <button class="btn btn-secondary" type="button" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"
-              onclick="navigator.clipboard.writeText(document.getElementById('icalUrl').value);this.innerHTML='<i class=\'bi bi-check\'></i>';setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i>',1500)">
+              data-on-click="copyValue" data-arg="icalUrl">
         <i class="bi bi-clipboard" aria-hidden="true"></i>
       </button>
     </div>
@@ -31,7 +31,7 @@
              id="icalUser"
              value="{{ request.user.email }}">
       <button class="btn btn-secondary" type="button" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"
-              onclick="navigator.clipboard.writeText(document.getElementById('icalUser').value);this.innerHTML='<i class=\'bi bi-check\'></i>';setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i>',1500)">
+              data-on-click="copyValue" data-arg="icalUser">
         <i class="bi bi-clipboard" aria-hidden="true"></i>
       </button>
     </div>
@@ -44,7 +44,7 @@
              id="icalToken"
              value="{{ new_token.token }}">
       <button class="btn btn-secondary" type="button" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"
-              onclick="navigator.clipboard.writeText(document.getElementById('icalToken').value);this.innerHTML='<i class=\'bi bi-check\'></i>';setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i>',1500)">
+              data-on-click="copyValue" data-arg="icalToken">
         <i class="bi bi-clipboard" aria-hidden="true"></i>
       </button>
     </div>

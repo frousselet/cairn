@@ -51,8 +51,7 @@
       {% slot actions %}
         <button type="button" class="btn btn-sm btn-secondary" aria-label="{% trans 'New responsibility' %}" title="{% trans 'New responsibility' %}"
                 hx-get="{% url 'context:responsibility-create' role.pk %}"
-                hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset"
-                onclick="event.preventDefault();">
+                hx-target="#drawer-form-content" hx-swap="innerHTML" hx-select="unset">
           <i class="bi bi-plus-lg" aria-hidden="true"></i>
         </button>
       {% endslot %}
@@ -118,7 +117,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{% csp_nonce %}">
 document.body.addEventListener('refreshItems', function() {
   var drawerEl = document.getElementById('itemDrawer');
   var drawer = bootstrap.Modal.getInstance(drawerEl);

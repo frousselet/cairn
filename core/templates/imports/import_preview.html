@@ -122,7 +122,7 @@
 </form>
 
 {% if conflict_count %}
-<script>
+<script nonce="{% csp_nonce %}">
   (function () {
     const master = document.getElementById("replace-all");
     if (!master) return;

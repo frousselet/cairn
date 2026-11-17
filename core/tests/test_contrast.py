@@ -121,6 +121,8 @@ def test_text_is_never_drawn_with_a_fill_token():
     for name in files:
         if name.startswith(("static/vendor/", "docs/")) or "/tests/" in name:
             continue
+        if not (settings.BASE_DIR / name).is_file():
+            continue  # deleted in the working tree, not committed yet
         for number, line in enumerate((settings.BASE_DIR / name).read_text(errors="replace").splitlines(), 1):
             if pattern.search(line):
                 offenders.append(f"{name}:{number}")

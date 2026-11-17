@@ -124,6 +124,13 @@ it stands in for. `--best-practice` adds axe's advisory rules, which never fail 
 run. axe-core is fetched, not vendored : it is a development tool that is
 never served to a user, and its version is pinned in the workflow.
 
+The same visit checks that the page **works under the Content Security
+Policy** : anything the browser refused (an inline handler, a script without
+its nonce, a request to an origin the policy does not list) and any error a
+script threw fail the page. Server-side tests cannot see this, since the page
+renders either way; `core/tests/test_csp.py` covers what can be read from the
+sources (no handler, no script without nonce, every named action registered).
+
 No automated check proves a page accessible : these catch regressions on what
 a machine can measure. A new kind of page is added to the audit's page list,
 and tried once with the keyboard alone.

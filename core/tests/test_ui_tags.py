@@ -9,7 +9,7 @@ from django.test import Client, RequestFactory
 from django.urls import reverse
 
 from accounts.tests.factories import UserFactory
-from core.templatetags.ui import ILLUSTRATIONS, MODULE_ACCENTS, Step, build_steps
+from core.templatetags.ui import ILLUSTRATIONS, MODULE_ACCENTS
 
 pytestmark = pytest.mark.django_db
 
@@ -356,87 +356,6 @@ class TestBulkActionsBarTag:
         assert "hidden" in out  # starts collapsed
 
 
-# ───────────────────────── stepper ─────────────────────────────────────
-
-
-class TestStepperTag:
-    def test_renders_steps_in_order(self):
-        steps = [
-            Step("a", "Alpha", "done"),
-            Step("b", "Bravo", "current"),
-            Step("c", "Charlie", "next"),
-            Step("d", "Delta", "future"),
-        ]
-        out = render(
-            '{% stepper steps=steps next_status="c" transition_url="/go/" %}',
-            {"steps": steps},
-        )
-        assert "Alpha" in out
-        assert "Bravo" in out
-        assert "Charlie" in out
-        assert "Delta" in out
-        # Done step pill class present
-        assert "stepper__pill--done" in out
-        assert "stepper__pill--current" in out
-        # Next step renders a form
-        assert 'action="/go/"' in out
-        assert 'aria-current="step"' in out
-
-    def test_cancelled_branch_renders_inline_detached(self):
-        steps = [
-            Step("draft", "Draft", "current"),
-            Step("planned", "Planned", "next"),
-            Step("closed", "Closed", "future"),
-        ]
-        cancelled = Step("cancelled", "Cancelled", "future")
-        out = render(
-            '{% stepper steps=steps next_status="planned" transition_url="/go/" '
-            'cancelled=cancelled can_cancel=True transition_modal_callback="showM" '
-            'entity_id="1" %}',
-            {"steps": steps, "cancelled": cancelled},
-        )
-        assert "Cancelled" in out
-        # Branch state sits on the same line, detached by a gap, no connector svg
-        assert "stepper__gap" in out
-        assert "data-stepper-svg" not in out
-        assert "showM(" in out  # JS callback wired
-
-    def test_branch_hidden_when_future_and_no_stepper_action(self):
-        # Off-ramp action lives elsewhere (no can_cancel): a not-yet-reached
-        # branch state must not render at all.
-        steps = [Step("a", "Alpha", "current")]
-        cancelled = Step("cancelled", "Cancelled", "future")
-        out = render(
-            '{% stepper steps=steps cancelled=cancelled %}',
-            {"steps": steps, "cancelled": cancelled},
-        )
-        assert "Cancelled" not in out
-
-    def test_branch_shown_when_current(self):
-        # Once the item is on the branch, the state pill renders (detached).
-        steps = [Step("a", "Alpha", "done")]
-        cancelled = Step("cancelled", "Cancelled", "current")
-        out = render(
-            '{% stepper steps=steps cancelled=cancelled %}',
-            {"steps": steps, "cancelled": cancelled},
-        )
-        assert "Cancelled" in out
-        assert "stepper__pill--cancelled-current" in out
-        assert "data-stepper-svg" not in out
-
-    def test_build_steps_helper_marks_current_and_next(self):
-        defs = [("a", "Alpha"), ("b", "Bravo"), ("c", "Charlie"), ("closed", "Closed")]
-        steps = build_steps(defs, current_value="b", terminal_values={"closed"})
-        assert [s.state for s in steps] == ["done", "current", "next", "future"]
-
-    def test_build_steps_handles_unknown_current(self):
-        defs = [("a", "Alpha"), ("b", "Bravo")]
-        steps = build_steps(defs, current_value="zzz")
-        # Unknown current → no "done" pills, first is promoted to next
-        assert steps[0].state == "next"
-        assert steps[1].state == "future"
-
-
 # ───────────────────────── /styleguide/ ────────────────────────────────
 
 
@@ -458,7 +377,6 @@ class TestStyleGuideView:
         assert b"kpi-card" in resp.content
         assert b"sidebar-card" in resp.content
         assert b"filter-chip" in resp.content
-        assert b"stepper__pill" in resp.content
         assert b"bulk-actions-bar" in resp.content
         # Layout and content primitives (detail anatomy)
         for marker in (b"detail-layout", b"kpi-tile__value", b"section-card__title", b"ov-row",

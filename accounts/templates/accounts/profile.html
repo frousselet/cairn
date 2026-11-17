@@ -47,7 +47,7 @@
           <div class="text-meta text-break">{{ user.email }}</div>
           {% if user.avatar %}
           <button type="button" id="remove-avatar-btn" class="btn btn-link btn-sm p-0 mt-1 text-meta link-inherit"
-                  onclick="removeAvatar()">
+                  data-on-click="removeAvatar">
             <i class="bi bi-x me-1" aria-hidden="true"></i>{% trans "Remove photo" %}
           </button>
           {% endif %}
@@ -121,7 +121,7 @@
   <div id="passkey-card" style="display:none">
     {% section_card _("Passkeys") icon="fingerprint" %}
       {% slot actions %}
-      <button type="button" class="btn btn-sm btn-secondary" id="register-passkey-btn" onclick="registerPasskey()">
+      <button type="button" class="btn btn-sm btn-secondary" id="register-passkey-btn" data-on-click="registerPasskey">
         <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add" %}
       </button>
       {% endslot %}
@@ -135,7 +135,7 @@
   {% if can_create_oauth or oauth_apps %}
   {% section_card _("OAuth credentials") icon="plug" id="oauth-card" %}
     {% slot actions %}{% if can_create_oauth %}
-    <button type="button" class="btn btn-sm btn-secondary" id="create-oauth-btn" onclick="createOAuthApp()">
+    <button type="button" class="btn btn-sm btn-secondary" id="create-oauth-btn" data-on-click="createOAuthApp">
       <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add" %}
     </button>
     {% endif %}{% endslot %}
@@ -143,7 +143,7 @@
       <label class="form-label" for="mcp-endpoint-url">{% trans "MCP server URL" %}</label>
       <div class="input-group">
         <input type="text" class="form-control form-control-sm" id="mcp-endpoint-url" value="{{ request.scheme }}://{{ request.get_host }}/api/v1/mcp" readonly>
-        <button class="btn btn-secondary btn-sm" type="button" onclick="copyToClipboard('mcp-endpoint-url')" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"><i class="bi bi-clipboard" aria-hidden="true"></i></button>
+        <button class="btn btn-secondary btn-sm" type="button" data-on-click="copyToClipboard" data-arg="mcp-endpoint-url" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"><i class="bi bi-clipboard" aria-hidden="true"></i></button>
       </div>
       <div class="form-text">
         {% trans "Paste this URL into your MCP client (Claude Desktop, Claude Code). Claude registers itself automatically via PKCE. The credentials below are only needed for server-to-server scripts using the client_credentials grant." %}
@@ -171,21 +171,21 @@
             <label class="form-label" for="oauth-mcp-url">{% trans "MCP server URL" %}</label>
             <div class="input-group">
               <input type="text" class="form-control form-control-sm" id="oauth-mcp-url" value="{{ request.scheme }}://{{ request.get_host }}/api/v1/mcp" readonly>
-              <button class="btn btn-secondary btn-sm" type="button" onclick="copyToClipboard('oauth-mcp-url')" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"><i class="bi bi-clipboard" aria-hidden="true"></i></button>
+              <button class="btn btn-secondary btn-sm" type="button" data-on-click="copyToClipboard" data-arg="oauth-mcp-url" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"><i class="bi bi-clipboard" aria-hidden="true"></i></button>
             </div>
           </div>
           <div class="mb-3">
             <label class="form-label" for="oauth-client-id">{% trans "Client ID" %}</label>
             <div class="input-group">
               <input type="text" class="form-control form-control-sm" id="oauth-client-id" readonly>
-              <button class="btn btn-secondary btn-sm" type="button" onclick="copyToClipboard('oauth-client-id')" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"><i class="bi bi-clipboard" aria-hidden="true"></i></button>
+              <button class="btn btn-secondary btn-sm" type="button" data-on-click="copyToClipboard" data-arg="oauth-client-id" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"><i class="bi bi-clipboard" aria-hidden="true"></i></button>
             </div>
           </div>
           <div>
             <label class="form-label" for="oauth-client-secret">{% trans "Client Secret" %}</label>
             <div class="input-group">
               <input type="text" class="form-control form-control-sm" id="oauth-client-secret" readonly>
-              <button class="btn btn-secondary btn-sm" type="button" onclick="copyToClipboard('oauth-client-secret')" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"><i class="bi bi-clipboard" aria-hidden="true"></i></button>
+              <button class="btn btn-secondary btn-sm" type="button" data-on-click="copyToClipboard" data-arg="oauth-client-secret" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"><i class="bi bi-clipboard" aria-hidden="true"></i></button>
             </div>
           </div>
         </div>
@@ -204,7 +204,7 @@
 
 {% block extra_js %}
 {% include "includes/image_resize.html" %}
-<script>
+<script nonce="{% csp_nonce %}">
 document.getElementById('{{ form.avatar.id_for_label }}').addEventListener('change', function(e) {
   var file = e.target.files[0];
   if (!file) return;
@@ -225,6 +225,8 @@ document.getElementById('{{ form.avatar.id_for_label }}').addEventListener('chan
     hideSpinner();
   });
 });
+
+window.cairnActions.removeAvatar = removeAvatar;
 
 function removeAvatar() {
   document.getElementById('id_remove_avatar').value = 'True';
@@ -284,6 +286,8 @@ function getCsrfTokenPasskey() {
   return m ? m[1] : '';
 }
 
+window.cairnActions.registerPasskey = registerPasskey;
+
 async function registerPasskey() {
   var name = prompt(TR_PASSKEY_NAME, 'Passkey');
   if (!name) return;
@@ -341,6 +345,8 @@ async function registerPasskey() {
   }
 }
 
+window.cairnActions.deletePasskey = deletePasskey;
+
 async function deletePasskey(id, name) {
   if (!confirm(TR_DELETE_PASSKEY + ' "' + name + '" ?')) return;
 
@@ -388,6 +394,8 @@ function getCsrfToken() {
   return m ? m[1] : '';
 }
 
+window.cairnActions.createOAuthApp = createOAuthApp;
+
 async function createOAuthApp() {
   var name = prompt(TR_OAUTH_NAME, 'MCP');
   if (!name) return;
@@ -418,6 +426,8 @@ async function createOAuthApp() {
   }
 }
 
+window.cairnActions.deleteOAuthApp = deleteOAuthApp;
+
 async function deleteOAuthApp(id, name) {
   if (!confirm(TR_OAUTH_DELETE + ' "' + name + '" ?')) return;
 
@@ -447,6 +457,8 @@ async function refreshOAuthAppList() {
     window.location.reload();
   }
 }
+
+window.cairnActions.copyToClipboard = copyToClipboard;
 
 function copyToClipboard(inputId) {
   var input = document.getElementById(inputId);

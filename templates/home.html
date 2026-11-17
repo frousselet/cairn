@@ -584,7 +584,7 @@
 {# ── Dashboard widget editor (Apple-style edit mode) ─────── #}
 {% trans "Edit" as dash_edit_label %}
 {% trans "Done" as dash_done_label %}
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   var zones = document.getElementById('dashboardZones');
   var mainZone = document.getElementById('dashboardMain');
@@ -1330,7 +1330,7 @@
 </script>
 
 {# ── Ask Cairn briefing (async LLM synthesis) ────────── #}
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   var card = document.querySelector('.dash-widget[data-widget-id="ask_cairn"] .ask-cairn');
   if (!card || card.getAttribute('data-ai-enabled') !== '1') return;
@@ -1375,7 +1375,7 @@
 
 {# ── Risk treatment flow (Sankey) ────────────────────── #}
 {% if risk_treatment_flow %}
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   var el = document.getElementById('risk-treatment-flow');
   var dataEl = document.getElementById('risk-flow-data');
@@ -1485,7 +1485,7 @@
 {% endif %}
 
 {% if changelog_entries %}
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   var dismissed = false;
   function dismiss() {
@@ -1505,7 +1505,7 @@
 {% endif %}
 
 {# ── WebSocket real-time dashboard ───────────────────── #}
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   var ws = null;
   var retryDelay = 1000;

@@ -166,7 +166,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   var toggleUrl = '{% url "context:dashboard-indicator-toggle" %}';
   var chartToggleUrl = '{% url "context:dashboard-indicator-chart-toggle" %}';

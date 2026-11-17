@@ -9,7 +9,7 @@
   {% with fav=company.logo_64|default:company.logo|tc_logo_href %}{% if fav %}<link rel="icon" href="{{ fav }}">{% endif %}{% endwith %}
   <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
-  <script>
+  <script nonce="{% csp_nonce %}">
   (function(){
     var root = document.documentElement;
     var STORAGE_KEY = 'theme-preference';

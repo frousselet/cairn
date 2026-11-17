@@ -67,7 +67,7 @@
       </table>
     </div>
     {% slot footer %}
-    <button type="button" class="btn btn-sm btn-secondary" onclick="addFormsetRow('likelihood', 4)">
+    <button type="button" class="btn btn-sm btn-secondary" data-on-click="addFormsetRow" data-arg="likelihood" data-arg2="4">
       <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add a level" %}
     </button>
     {% endslot %}
@@ -102,7 +102,7 @@
       </table>
     </div>
     {% slot footer %}
-    <button type="button" class="btn btn-sm btn-secondary" onclick="addFormsetRow('impact', 4)">
+    <button type="button" class="btn btn-sm btn-secondary" data-on-click="addFormsetRow" data-arg="impact" data-arg2="4">
       <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add a level" %}
     </button>
     {% endslot %}
@@ -139,7 +139,7 @@
       </table>
     </div>
     {% slot footer %}
-    <button type="button" class="btn btn-sm btn-secondary" onclick="addFormsetRow('risklevel', 5)">
+    <button type="button" class="btn btn-sm btn-secondary" data-on-click="addFormsetRow" data-arg="risklevel" data-arg2="5">
       <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add a level" %}
     </button>
     {% endslot %}
@@ -153,7 +153,8 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{% csp_nonce %}">
+window.cairnActions.addFormsetRow = addFormsetRow;
 function addFormsetRow(prefix, numCols) {
   var totalInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
   var idx = parseInt(totalInput.value, 10);

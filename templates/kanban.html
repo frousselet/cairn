@@ -96,7 +96,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{% csp_nonce %}">
   (function () {
     var board = document.getElementById("kanbanBoard");
     if (!board) return;

@@ -163,7 +163,7 @@
                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                   hx-swap="none"
                   hx-disabled-elt="this"
-                  hx-on::after-request="htmx.trigger(document.getElementById('item-table-body'), 'refreshTable')"
+                  data-after-request-trigger="refreshTable" data-after-request-target="#item-table-body"
                   title="{% trans 'Select all / Deselect all for evaluation' %}"
                   aria-label="{% trans 'Select all / Deselect all for evaluation' %}">
             <i class="bi bi-ui-checks" aria-hidden="true"></i>

@@ -7,10 +7,10 @@
     <div class="mt-1" style="color:var(--text-secondary);font-size:.78rem;line-height:1.55">{{ help_content.body }}</div>
   </div>
   <button type="button" class="btn-close ms-3" aria-label="{% trans "Close" %}" style="font-size:.625rem"
-          onclick="window._dismissHelper(this)"></button>
+          data-on-click="dismissHelper"></button>
 </div>
-<script>
-window._dismissHelper = window._dismissHelper || function(btn) {
+<script nonce="{% csp_nonce %}">
+window._dismissHelper = window.cairnActions.dismissHelper = window._dismissHelper || function(btn) {
   var banner = btn.closest('[data-helper-key]');
   var key = banner.getAttribute('data-helper-key');
   banner.classList.add('fade');

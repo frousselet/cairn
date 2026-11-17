@@ -77,7 +77,7 @@
 {{ tones|json_script:"lc-tones" }}
 
 {% include "components/lifecycle_graph_lib.html" %}
-<script>
+<script nonce="{% csp_nonce %}">
 (function () {
   var form = document.getElementById('lc-edit-form');
   if (!form || form.dataset.lcInit) { return; }

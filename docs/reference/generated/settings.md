@@ -8,7 +8,7 @@ Cairn is configured entirely through the environment. This page lists every vari
 
 The **In template** column says whether `.env.example` mentions it. Copy that file to `.env` to get started; anything absent from it falls back to the default below. Setting them up is covered in [../../technical/configuration.md](../../technical/configuration.md).
 
-**56 variables** are read by the code.
+**58 variables** are read by the code.
 
 ## Variables
 
@@ -31,6 +31,7 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `AI_ASSISTANT_TIMEOUT` | `30` | yes |  |
 | `ALLOWED_HOSTS` | `localhost,127.0.0.1` | yes |  |
 | `BACKUP_DIR` | - | yes | Directory `manage.py backup` writes its archives to. In a container, mount a volume or a host directory there (default : backups/ beside the code). |
+| `CSP_MODE` | `enforce` | yes | Content Security Policy sent with every page : enforce (default), report (nothing blocked, violations in the browser console) or off. |
 | `CSRF_COOKIE_SECURE` | `False` | yes |  |
 | `CSRF_TRUSTED_ORIGINS` | - | yes | Reverse proxy: trusted origins for CSRF (include scheme) |
 | `DEBUG` | `False` | yes |  |
@@ -44,6 +45,7 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `LIFECYCLE_CACHE_TTL` | `5` | yes | Seconds a worker process trusts its in-memory lifecycle definitions before checking the table again : how long the other workers may keep applying the previous version of a lifecycle edited in the administration. |
 | `LOG_LEVEL` | `INFO` | yes | Verbosity of the application log, written to the console in production as under DEBUG : DEBUG, INFO, WARNING or ERROR. |
 | `LOG_LEVEL_SQL` | `WARNING` | yes | Set to DEBUG to log every SQL statement (verbose, for a diagnosis only). |
+| `MAP_GEOCODER_URL` | `https://photon.komoot.io/api/` | yes | Geocoder the maps and the address fields ask for the position of an address (a Photon-compatible API). The address is sent to it by the reader's browser. Empty : no geocoding, nothing leaves. |
 | `MAP_TILE_ATTRIBUTION` | `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors` | yes | Credit line shown on the map, as the provider's terms require (HTML). |
 | `MAP_TILE_URL` | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | yes | Basemap of the maps on the scope, site and supplier pages. The tiles are fetched by the reader's browser, straight from this provider. Any XYZ tile URL works, with its key when the provider needs one. Empty : no map. |
 | `MAP_TILE_URL_DARK` | - | yes | Tiles to use under the dark theme. Empty : the tiles above are dimmed. |

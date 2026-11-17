@@ -133,9 +133,9 @@
     </button>
 
     <div class="btn-group" role="group" aria-label="{% trans 'Zoom controls' %}">
-      <button class="btn btn-outline-secondary" onclick="resetZoom()" title="{% trans 'Reset zoom' %}"><i class="bi bi-arrows-fullscreen"></i></button>
-      <button class="btn btn-outline-secondary" onclick="zoomIn()" title="{% trans 'Zoom in' %}"><i class="bi bi-zoom-in"></i></button>
-      <button class="btn btn-outline-secondary" onclick="zoomOut()" title="{% trans 'Zoom out' %}"><i class="bi bi-zoom-out"></i></button>
+      <button class="btn btn-outline-secondary" data-on-click="resetZoom" title="{% trans 'Reset zoom' %}"><i class="bi bi-arrows-fullscreen"></i></button>
+      <button class="btn btn-outline-secondary" data-on-click="zoomIn" title="{% trans 'Zoom in' %}"><i class="bi bi-zoom-in"></i></button>
+      <button class="btn btn-outline-secondary" data-on-click="zoomOut" title="{% trans 'Zoom out' %}"><i class="bi bi-zoom-out"></i></button>
     </div>
   </div>
 {% endpage_header %}
@@ -146,7 +146,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{% csp_nonce %}">
 (function() {
   var nodes = {{ graph_nodes|safe }};
   var edges = {{ graph_edges|safe }};
@@ -608,13 +608,13 @@
   }
 
   // Toolbar functions
-  window.resetZoom = function() {
+  window.resetZoom = window.cairnActions.resetZoom = function() {
     fitView(500);
   };
-  window.zoomIn = function() {
+  window.zoomIn = window.cairnActions.zoomIn = function() {
     svg.transition().duration(300).call(zoom.scaleBy, 1.3);
   };
-  window.zoomOut = function() {
+  window.zoomOut = window.cairnActions.zoomOut = function() {
     svg.transition().duration(300).call(zoom.scaleBy, 0.7);
   };
 

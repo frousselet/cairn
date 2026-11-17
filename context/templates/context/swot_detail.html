@@ -135,7 +135,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{% csp_nonce %}">
 document.body.addEventListener('refreshItems', function() {
   var drawerEl = document.getElementById('itemDrawer');
   var drawer = bootstrap.Modal.getInstance(drawerEl);

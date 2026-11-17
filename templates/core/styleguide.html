@@ -244,17 +244,11 @@
   <div class="sg-card-shell" id="demo-table">
     <p class="text-muted small mb-2">{% trans "The bar is initially hidden. In a real list, JS toggles it when checkboxes are ticked." %}</p>
     {% bulk_actions_bar target_id="demo-table" actions=bulk_actions %}
-    <script>
+    <script nonce="{% csp_nonce %}">
       document.querySelector('#bulk-actions-bar-demo-table').hidden = false;
       document.querySelector('#bulk-actions-bar-demo-table [data-bulk-count]').textContent = '3';
     </script>
   </div>
-</section>
-
-{# ── Stepper ────────────────────────────────────────────── #}
-<section class="sg-section">
-  <h2 class="sg-section__title">{% trans "Component - stepper" %}</h2>
-  {% stepper steps=stepper_steps next_status="under_review" transition_url="#" cancelled=stepper_cancelled can_cancel=True transition_modal_callback="alert" entity_id="demo" %}
 </section>
 
 {# ── Confirm delete ─────────────────────────────────────── #}
