@@ -24,21 +24,26 @@ os.environ.setdefault("DEBUG", "True")
 from core.settings import *  # noqa: E402, F401, F403
 from core.settings import BASE_DIR  # noqa: E402
 
-# SQLite on disk - no Postgres needed.
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        # SQLITE_PATH points a throwaway run (the accessibility audit, a crawl)
-        # at its own file instead of the developer's database.
-        "NAME": os.environ.get("SQLITE_PATH") or BASE_DIR / "db.sqlite3",
+# SQLite on disk - no Postgres needed. LOCAL_POSTGRES=1 keeps the PostgreSQL
+# database of the main settings (POSTGRES_* variables) instead, with the rest
+# of these conveniences : it is how the browser audit of the CI gets an
+# instance built by the real migrations, on the production engine.
+if not os.environ.get("LOCAL_POSTGRES"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            # SQLITE_PATH points a throwaway run (a crawl, a quick audit) at
+            # its own file instead of the developer's database.
+            "NAME": os.environ.get("SQLITE_PATH") or BASE_DIR / "db.sqlite3",
+        }
     }
-}
 
 # SCHEMA_FROM_MODELS=1 builds the tables straight from the models
 # (`migrate --run-syncdb`) instead of replaying every migration, which takes
-# minutes on SQLite. For a throwaway instance only (the accessibility audit in
-# CI) : the reference rows the data migrations write are then created by
-# `accounts.reference_data.sync_system_permissions()`.
+# minutes on SQLite. For a throwaway instance only, to look at a page quickly :
+# the permissions and system groups are then created by
+# `accounts.reference_data.sync_system_permissions()`, but nothing else a data
+# migration writes is there (no help content, for one).
 if os.environ.get("SCHEMA_FROM_MODELS"):
     class _SchemaFromModels:
         def __contains__(self, item):
