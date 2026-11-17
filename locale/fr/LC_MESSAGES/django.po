@@ -20982,3 +20982,6 @@ msgstr "Rien à signaler pour l'instant : ce résumé se remplira à mesure que 
 
 msgid "No framework is followed yet : the rate appears once you follow a standard or a regulation."
 msgstr "Aucun référentiel n'est encore suivi : le taux apparaîtra dès que vous suivrez une norme ou un règlement."
+
+msgid "The installation is not progressing. Reload the page; if nothing changes, look at the server log."
+msgstr "L'installation n'avance pas. Rechargez la page ; si rien ne change, consultez le journal du serveur."

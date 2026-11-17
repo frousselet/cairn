@@ -481,6 +481,10 @@ def _db_lifecycle(name: str) -> "Lifecycle | None":
     Resilient to the table not existing yet (initial migrate, ``--run-syncdb``)
     and to an invalid stored JSON : both fall through to the code default.
     """
+    from core.onboarding.state import has_table
+
+    if not has_table("core_lifecycledefinition"):
+        return None  # a new database, before its migrations : the code default
     _revalidate_lifecycle_cache()
     if name in _DB_LIFECYCLE_CACHE:
         return _DB_LIFECYCLE_CACHE[name]

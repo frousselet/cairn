@@ -22,7 +22,7 @@ from accounts.forms import CompanySettingsForm
 from accounts.models import CompanySettings, User
 
 from .forms import FirstAdminForm
-from .runner import is_running, progress_snapshot, start_migrations, start_seed
+from .runner import is_running, progress_report, progress_snapshot, start_migrations, start_seed
 from .state import is_first_run, mark_initialised, migration_status
 
 # The first super-admin is logged in without going through ``authenticate``, so
@@ -89,10 +89,16 @@ class OnboardingProgressView(View):
     Deliberately touches neither the database nor the session so it works during
     the migration phase (before any table exists). Exempt from the middleware's
     "redirect away once initialised" rule.
+
+    ``alive`` says whether a job holds the lock : the screen uses it to go
+    back to the landing page when the job it watches never started or died,
+    rather than wait for ever (``runner.progress_report``).
     """
 
     def get(self, request):
-        return JsonResponse(progress_snapshot())
+        response = JsonResponse(progress_report())
+        response["Cache-Control"] = "no-store"
+        return response
 
 
 class OnboardingScratchView(View):

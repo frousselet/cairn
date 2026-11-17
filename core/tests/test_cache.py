@@ -71,3 +71,100 @@ def test_the_update_check_survives_a_cache_outage(client, dead_cache, monkeypatc
     client.force_login(UserFactory(is_superuser=True))
     response = client.get("/update-check/")
     assert response.status_code == 200
+
+
+# ── Locks : "not stored" must not read as "someone else holds it" ──────────
+
+
+@pytest.fixture
+def no_local_locks():
+    from core.cache import reset_local_locks
+
+    reset_local_locks()
+    caches["default"].clear()
+    yield
+    reset_local_locks()
+    caches["default"].clear()
+
+
+def test_the_backend_can_be_asked_without_its_guard(dead_cache):
+    """What lets a caller tell an unreachable cache from an empty one."""
+    with pytest.raises(Exception) as failure:
+        dead_cache.unguarded("add")("key", "1", 60)
+
+    assert "refused" in str(failure.value).lower() or "connect" in str(failure.value).lower()
+
+
+def test_a_lock_is_shared_when_the_cache_answers(no_local_locks):
+    from core.cache import acquire_lock, lock_held, release_lock
+
+    assert acquire_lock("job", 60) is True
+    assert acquire_lock("job", 60) is False
+    assert lock_held("job") is True
+
+    release_lock("job")
+
+    assert lock_held("job") is False
+    assert acquire_lock("job", 60) is True
+
+
+def test_a_lock_falls_back_to_this_process_when_the_cache_is_unreachable(dead_cache, no_local_locks):
+    """Nobody holds a lock nobody can reach : the job still runs, once per process."""
+    from core.cache import acquire_lock, lock_held, release_lock
+
+    assert dead_cache.add("job", "1", 60) is False  # what the backend alone answers
+    assert acquire_lock("job", 60) is True
+    assert acquire_lock("job", 60) is False
+    assert lock_held("job") is True
+
+    release_lock("job")
+
+    assert lock_held("job") is False
+    assert acquire_lock("job", 60) is True
+
+
+def test_a_lock_of_this_process_expires(dead_cache, no_local_locks, monkeypatch):
+    import core.cache as cache_module
+
+    now = [1000.0]
+    monkeypatch.setattr(cache_module.time, "monotonic", lambda: now[0])
+
+    assert cache_module.acquire_lock("job", 300) is True
+    now[0] += 299
+    assert cache_module.acquire_lock("job", 300) is False
+    now[0] += 2
+    assert cache_module.lock_held("job") is False
+    assert cache_module.acquire_lock("job", 300) is True
+
+
+def test_the_semantic_index_is_still_rebuilt_without_a_shared_cache(dead_cache, no_local_locks, settings):
+    import threading
+
+    from assistant import semantic
+
+    settings.AI_ASSISTANT_SEMANTIC_ENABLED = True
+    ran = threading.Event()
+
+    def rebuild(**kwargs):
+        ran.set()
+        return {"embedded": 0, "pruned": 0}
+
+    from unittest.mock import patch
+
+    from django.db import connections
+
+    with patch.object(semantic, "rebuild_index", rebuild), patch.object(connections, "close_all"):
+        assert semantic.rebuild_index_async() is True
+        assert ran.wait(5), "the rebuild never ran"
+
+
+def test_the_spof_detection_takes_its_turn_through_the_same_lock():
+    """The scheduler must not read an unreachable cache as "another worker runs it"."""
+    import inspect
+
+    from assets.services import spof_scheduler
+
+    source = inspect.getsource(spof_scheduler._run_spof_loop)
+
+    assert "acquire_lock(_RUN_LOCK_KEY, SPOF_REFRESH_INTERVAL)" in source
+    assert "cache.add(" not in source

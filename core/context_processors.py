@@ -91,13 +91,17 @@ def company(request):
     from django.db import DatabaseError
 
     from accounts.models import CompanySettings
+    from core.onboarding.state import has_table
 
-    try:
-        settings_obj = CompanySettings.objects.first()
-    except DatabaseError:
-        # Fresh database (tables not migrated yet): the onboarding screen renders
-        # before any table exists, so fall back to defaults instead of crashing.
-        settings_obj = None
+    # Fresh database (tables not migrated yet): the onboarding screen renders
+    # before any table exists, so fall back to defaults instead of crashing,
+    # and without sending a query the database can only answer with an error.
+    settings_obj = None
+    if has_table(CompanySettings._meta.db_table):
+        try:
+            settings_obj = CompanySettings.objects.first()
+        except DatabaseError:
+            settings_obj = None
     app_name = (settings_obj.app_name if settings_obj and settings_obj.app_name else "Cairn")
     assistant_name = (
         settings_obj.assistant_name

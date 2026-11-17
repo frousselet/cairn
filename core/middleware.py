@@ -6,13 +6,14 @@ import logging
 from functools import cached_property
 
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from django.db import connection
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import NoReverseMatch, reverse
 
 from core.onboarding import runner
-from core.onboarding.state import is_first_run, schema_ready
+from core.onboarding.state import has_table, is_first_run, schema_ready
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,15 @@ class OnboardingMiddleware:
 
         path = request.path
 
+        # A new database has no session table yet. Until it does, nobody is
+        # signed in : a browser that kept a session cookie from an earlier
+        # instance would otherwise make the middlewares below look that
+        # session up on every request, static files and progress polls
+        # included, each lookup failing in the database log. One catalogue
+        # query per request until the table exists, nothing afterwards.
+        if not has_table(self._session_table):
+            request.user = AnonymousUser()
+
         if self._is_asset(path):
             return self.get_response(request)
 
@@ -87,7 +97,14 @@ class OnboardingMiddleware:
         # Both checks are process-sticky once confirmed, so this costs nothing
         # after the first request and, crucially, avoids a shared-cache round
         # trip (runner.is_running) on every request once onboarding is over.
-        if schema_ready() and not is_first_run():
+        ready = schema_ready()
+        if not ready:
+            # The tables are being created or altered (an installation, an
+            # upgrade) : nothing past this point may read the session or the
+            # user tables, which the background job owns. The only screens
+            # served in this window are the onboarding ones, which know nobody.
+            request.user = AnonymousUser()
+        if ready and not is_first_run():
             # Initialised: hide the bootstrap screens, but let the post-seed
             # auto-login completion and the progress poll run (the latter covers
             # the brief window where the seed has just created users).
@@ -114,6 +131,12 @@ class OnboardingMiddleware:
         if not on_onboarding:
             return redirect("onboarding:landing")
         return self.get_response(request)
+
+    @cached_property
+    def _session_table(self):
+        from django.contrib.sessions.models import Session
+
+        return Session._meta.db_table
 
     def _is_asset(self, path):
         for prefix in (settings.STATIC_URL, settings.MEDIA_URL, "/i18n/"):
