@@ -95,7 +95,11 @@ deletable step, which is how a validated risk cannot quietly disappear.
 Transitions are the only way a state changes. `workflow_state` is read-only on
 the API : there is no `PATCH` that moves a record, because the transition
 endpoint is where the permission gate, the mandatory comment and the recorded
-lifecycle event live. Three incident registers go further and are append-only at
+lifecycle event live. That gate is decided in one place for every surface
+(`core.lifecycle.user_can_perform`) : the permission the transition names, or
+the roles and users it is restricted to, and for a transition that declares
+nothing, the permission to change the record. No transition is open to a
+reader. Three incident registers go further and are append-only at
 the router level : `PUT`, `PATCH` and `DELETE` generate no route at all and
 answer `405`. Correcting one means appending a correction, not rewriting
 history.

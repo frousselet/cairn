@@ -105,7 +105,9 @@ class SupplierAttestation(ScopedModel):
 `lifecycle_from_state_flags` auto-wires a `draft` entry and an `archived` exit
 when you leave them out. The edges it generates carry **no**
 `permission_action` and **no** `requires_comment`, and any transition with an
-empty `permission_action` is open to anyone who can update the record.
+empty `permission_action` is open to anyone who can update the record
+(`core.lifecycle.user_can_perform` asks for the entity's `.update` permission,
+or `.approve`, when a transition declares nothing : never to a mere reader).
 
 Left generated, a lifecycle therefore exposes an
 `archive -> restore -> delete` path out of its deletable draft step. On a sealed

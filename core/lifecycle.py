@@ -183,8 +183,12 @@ class Transition:
     transition to users assigned to an ISO 27001 role of one of those
     :class:`~context.constants.RoleType` values (scoped to the instance);
     ``allowed_users`` is an optional callable ``(instance) -> iterable[user]``
-    for dynamic person restriction (e.g. the owner). When both restriction
-    fields are empty the transition is open.
+    for dynamic person restriction (e.g. the owner). ``permission_action``
+    names the permission the move asks for (``"approve"`` to validate).
+
+    A transition that declares none of the three is **not open to everyone** :
+    it is a change of the record, and asks for the permission to change it
+    (:data:`DEFAULT_PERMISSION_ACTIONS`, see :func:`user_can_perform`).
     """
 
     target: str
@@ -194,10 +198,10 @@ class Transition:
     allowed_roles: tuple = ()
     allowed_users: Callable | None = field(default=None, compare=False)
     requires_comment: bool = False
-    # Optional Django-permission suffix (e.g. "approve") required to perform the
-    # transition, built against the instance's ``workflow_perm_namespace``. Empty
-    # for the common case (gating is by role / open); set by publishing surfaces
-    # that keep a per-transition permission (e.g. the trust center).
+    # Permission suffix (e.g. "approve") required to perform the transition,
+    # built against the instance's ``workflow_perm_namespace``. Left empty, a
+    # transition that no role or user restricts asks for the permission to
+    # change the record (``DEFAULT_PERMISSION_ACTIONS``).
     permission_action: str = field(default="", compare=False)
 
     @property
@@ -654,25 +658,38 @@ def _user_in_roles(user, role_types: tuple, instance) -> bool:
     return qs.exists()
 
 
+#: What a transition asks for when its lifecycle declared nothing : the
+#: permission to change the record, which the permission to approve it implies.
+DEFAULT_PERMISSION_ACTIONS = ("update", "approve")
+
+
 def user_can_perform(transition: Transition, instance, user) -> bool:
     """Whether ``user`` may perform ``transition`` on ``instance``.
 
-    Open transitions (no role/user restriction) are allowed for any user;
-    superusers always pass. A restricted transition is allowed when the user
-    matches an allowed ISO role (scoped) or is among the resolved allowed users.
+    Superusers always pass. Otherwise, in this order :
+
+    - a transition that names a ``permission_action`` asks for
+      ``<workflow_perm_namespace>.<permission_action>``;
+    - a transition restricted to roles or users is allowed when the user
+      matches an allowed ISO role (scoped) or is among the resolved users;
+    - a transition that declares **nothing** asks for the permission to change
+      the record (``.update``, or ``.approve`` which implies it). It used to
+      be allowed to anyone who could reach the record : the lifecycles ported
+      without a permission then let a reader, on the generic transition
+      endpoint and the MCP tools, activate an asset or put a scope in force.
     """
     if user is None:
         return False
     if getattr(user, "is_superuser", False):
         return True
-    # Optional per-transition Django permission (publishing surfaces): the user
-    # must hold ``<workflow_perm_namespace>.<permission_action>``.
+    namespace = getattr(instance, "workflow_perm_namespace", None)
     action = getattr(transition, "permission_action", "")
     if action:
-        namespace = getattr(instance, "workflow_perm_namespace", None)
         if namespace and not user.has_perm(f"{namespace}.{action}"):
             return False
     if not transition.is_restricted:
+        if not action and namespace:
+            return any(user.has_perm(f"{namespace}.{default}") for default in DEFAULT_PERMISSION_ACTIONS)
         return True
     if transition.allowed_roles and _user_in_roles(user, transition.allowed_roles, instance):
         return True

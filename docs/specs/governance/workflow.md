@@ -154,7 +154,10 @@ Decisions recorded during the rollout:
   `email_notifications` opt-out) + a per-user WebSocket badge push
   (`/ws/notifications/`).
 - **RG-LC-07** : each transition requires its declared permission action, resolved
-  against the entity's `module.feature` namespace.
+  against the entity's `module.feature` namespace. A transition that declares no
+  permission and is restricted to no role or user requires the permission to
+  change the record (`.update`, or `.approve` which implies it) : no transition
+  is open to a reader, on the web endpoint, the REST API or the MCP tools.
 
 ## Surfaces
 
