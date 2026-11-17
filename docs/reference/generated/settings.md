@@ -8,7 +8,7 @@ Cairn is configured entirely through the environment. This page lists every vari
 
 The **In template** column says whether `.env.example` mentions it. Copy that file to `.env` to get started; anything absent from it falls back to the default below. Setting them up is covered in [../../technical/configuration.md](../../technical/configuration.md).
 
-**58 variables** are read by the code.
+**59 variables** are read by the code.
 
 ## Variables
 
@@ -50,6 +50,7 @@ The **In template** column says whether `.env.example` mentions it. Copy that fi
 | `MAP_TILE_URL` | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | yes | Basemap of the maps on the scope, site and supplier pages. The tiles are fetched by the reader's browser, straight from this provider. Any XYZ tile URL works, with its key when the provider needs one. Empty : no map. |
 | `MAP_TILE_URL_DARK` | - | yes | Tiles to use under the dark theme. Empty : the tiles above are dimmed. |
 | `MEDIA_ROOT` | - | yes | Directory of the uploaded files (evidence artefacts, filed documents). Mount a volume there : it must outlive the container (default : media/ beside the code). |
+| `OAUTH_ACCESS_TOKEN_LIFETIME_DAYS` | `90` | yes | Days an OAuth access token (MCP clients, API scripts) stays valid. |
 | `POSTGRES_DB` | `open_grc` | yes |  |
 | `POSTGRES_HOST` | `db` | yes |  |
 | `POSTGRES_PASSWORD` | `postgres` | yes |  |

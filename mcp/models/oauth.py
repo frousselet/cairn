@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 François Rousselet
 import hashlib
+import hmac
 import secrets
 import uuid
+from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.db import models
@@ -16,6 +18,50 @@ def _generate_client_id():
 
 def _generate_client_secret():
     return secrets.token_urlsafe(48)
+
+
+# Hosts a native application may be redirected to over plain http (RFC 8252,
+# section 7.3) : the loopback interface of the user's own machine.
+LOOPBACK_HOSTS = ("localhost", "127.0.0.1", "::1")
+# Schemes that run or read something in the browser instead of handing the
+# authorization code to an application.
+FORBIDDEN_REDIRECT_SCHEMES = ("javascript", "data", "vbscript", "file", "blob", "about", "view-source")
+MAX_REDIRECT_URIS = 10
+
+
+def redirect_uri_problem(uri):
+    """Why ``uri`` cannot be registered as a redirect address, or ``None``.
+
+    An authorization code is as good as the account it was issued for, and it
+    is sent to this address. Accepted : ``https``, ``http`` on the loopback
+    interface (a desktop client listening locally), or a private scheme an
+    installed application registered (``cursor://``...). Refused : plain http
+    to another machine, a scheme the browser itself interprets, a fragment,
+    embedded credentials.
+    """
+    if not isinstance(uri, str) or not uri or len(uri) > 2000:
+        return "must be a non-empty string of at most 2000 characters"
+    if any(character.isspace() for character in uri):
+        return "must not contain whitespace"
+    try:
+        parts = urlsplit(uri)
+        host = parts.hostname
+    except ValueError:
+        return "is not a valid URI"
+    scheme = parts.scheme.lower()
+    if not scheme:
+        return "must be an absolute URI"
+    if scheme in FORBIDDEN_REDIRECT_SCHEMES:
+        return f"uses the {scheme}: scheme, which a browser interprets itself"
+    if parts.fragment:
+        return "must not contain a fragment"
+    if parts.username or parts.password:
+        return "must not embed credentials"
+    if scheme == "https":
+        return None if host else "has no host"
+    if scheme == "http":
+        return None if host in LOOPBACK_HOSTS else "uses plain http to a host other than the loopback interface"
+    return None
 
 
 class OAuthApplication(models.Model):
@@ -73,7 +119,10 @@ class OAuthApplication(models.Model):
         self.client_secret_hash = self.hash_secret(raw_secret)
 
     def verify_secret(self, raw_secret):
-        return self.client_secret_hash == self.hash_secret(raw_secret)
+        # Constant time : the comparison must not tell how much of it matched.
+        return bool(self.client_secret_hash) and hmac.compare_digest(
+            self.client_secret_hash, self.hash_secret(raw_secret or ""),
+        )
 
     @property
     def is_public_client(self):
@@ -89,10 +138,16 @@ class OAuthApplication(models.Model):
             return []
 
     def validate_redirect_uri(self, uri):
+        """Whether an authorization code may be sent to ``uri``.
+
+        Exact match against the addresses the application registered. An
+        application that registered none (a client-credentials application,
+        created from a profile) has no authorization-code flow at all : it
+        used to accept any address, which let anyone have a code sent wherever
+        they liked.
+        """
         allowed = self.get_redirect_uris()
-        if not allowed:
-            return True  # No restriction for legacy apps
-        return uri in allowed
+        return isinstance(uri, str) and uri in allowed and redirect_uri_problem(uri) is None
 
 
 class OAuthAccessToken(models.Model):
@@ -111,6 +166,18 @@ class OAuthAccessToken(models.Model):
         unique=True,
         db_index=True,
     )
+    # Who the token acts as : the person who consented (authorization code),
+    # or the owner of the application (client credentials). Never inferred
+    # from the application alone : a public client is shared by everyone who
+    # authorizes it, and its tokens used to act as whoever authorized it first.
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="oauth_access_tokens",
+        verbose_name=_("User"),
+    )
     expires_at = models.DateTimeField(_("Expires at"))
     created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
 
@@ -124,8 +191,14 @@ class OAuthAccessToken(models.Model):
 
     @property
     def is_expired(self):
-        # MCP tokens never expire; they remain valid until explicitly revoked.
-        return False
+        return timezone.now() >= self.expires_at
+
+    @property
+    def acting_user(self):
+        """The account the token acts as (see ``user``). A token issued before
+        tokens carried their user belongs to a confidential application, and
+        acts as its owner."""
+        return self.user or self.application.user
 
     @staticmethod
     def hash_token(raw_token):
@@ -141,22 +214,27 @@ class OAuthAccessToken(models.Model):
         return dk.hex()
 
     @classmethod
-    def create_token(cls, application):
-        """Create a new access token and return (instance, raw_token).
+    def create_token(cls, application, user=None):
+        """Create an access token acting as ``user`` and return (instance, raw_token).
 
-        Tokens do not expire; they remain valid until explicitly revoked.
+        ``user`` defaults to the owner of the application (client credentials).
+        The token lives ``OAUTH_ACCESS_TOKEN_LIFETIME_DAYS`` days : a bearer
+        token that never expires stays usable for ever by whoever copied it.
         """
         raw_token = secrets.token_urlsafe(48)
-        # Set expires_at to a far-future sentinel value since the column is
-        # non-nullable.  Expiration is never enforced.
-        far_future = timezone.now() + timezone.timedelta(days=365 * 100)
         token = cls(
             application=application,
+            user=user or application.user,
             token_hash=cls.hash_token(raw_token),
-            expires_at=far_future,
+            expires_at=timezone.now() + timezone.timedelta(days=settings.OAUTH_ACCESS_TOKEN_LIFETIME_DAYS),
         )
         token.save()
         return token, raw_token
+
+    @property
+    def expires_in(self):
+        """Seconds left, for the token response."""
+        return max(0, int((self.expires_at - timezone.now()).total_seconds()))
 
 
 class OAuthAuthorizationCode(models.Model):

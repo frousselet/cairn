@@ -19,7 +19,7 @@ by hand.
 | `GET /.well-known/oauth-authorization-server` | Authorization-server metadata (RFC 8414) |
 | `GET /authorize` | Authorization endpoint (authorization code + PKCE) |
 | `POST /api/v1/oauth/register/` | Dynamic client registration |
-| `POST /api/v1/oauth/token/` | Token endpoint (authorization code and refresh grants) |
+| `POST /api/v1/oauth/token/` | Token endpoint (authorization code and client credentials grants) |
 | `GET`, `POST /api/v1/oauth/applications/` | Manage your registered applications |
 
 The two `.well-known` documents sit where the specifications require them : the
@@ -46,7 +46,21 @@ and revocable under the account's OAuth applications.
 
 Tokens carry the granting user's identity. Every tool call runs **as that user**,
 which is what makes the permission and scope checks meaningful : an assistant
-connected with your token can do exactly what you can do, and nothing else.
+connected with your token can do exactly what you can do, and nothing else. A
+token obtained through the consent screen acts as the person who approved it;
+a token obtained with client credentials acts as the owner of the application.
+A public client is shared by everyone who authorizes it, so a token is never
+attributed from the application alone.
+
+What bounds the flow :
+
+| Rule | Detail |
+| --- | --- |
+| Redirect addresses | Registered at registration, between 1 and 10. `https`, `http` on the loopback interface only (`localhost`, `127.0.0.1`, `[::1]`), or a private scheme of an installed application. No fragment, no embedded credentials, no scheme a browser interprets itself (`javascript:`, `data:`...). A code is only ever sent to an exact registered address : an application that registered none has no authorization-code flow. |
+| Consent | Offered to accounts holding `system.mcp.access` only. The screen shows the application's name **and the address that will receive the access** : the name is chosen by the application. |
+| Authorization code | Single use, ten minutes, bound to the client, the redirect address and the PKCE challenge. |
+| Access token | Valid `OAUTH_ACCESS_TOKEN_LIFETIME_DAYS` days (90 by default), then refused. `expires_in` is in the token response. There is no refresh token : a script asks for a new token with its credentials, an interactive client sends its user through the consent screen again. Revocable at any time under the account's OAuth applications. |
+| Rate limits | Registration : 30 per hour and per address. Token endpoint : 300 per hour and per address. |
 
 ## Protocol
 

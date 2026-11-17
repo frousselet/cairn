@@ -20684,3 +20684,9 @@ msgstr "Tout déplier"
 
 msgid "Collapse all"
 msgstr "Tout replier"
+
+msgid "It will receive access at"
+msgstr "L'accès sera transmis à"
+
+msgid "The application names itself : approve only if you started this connection and recognise this address."
+msgstr "L'application choisit elle-même son nom : n'approuvez que si vous êtes à l'origine de cette connexion et reconnaissez cette adresse."

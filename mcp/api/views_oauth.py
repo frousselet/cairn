@@ -2,16 +2,30 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 import base64
 import hashlib
+import hmac
 import json
 
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 from mcp.models import OAuthAccessToken, OAuthApplication, OAuthAuthorizationCode
-from mcp.models.oauth import _generate_client_secret
+from mcp.models.oauth import MAX_REDIRECT_URIS, _generate_client_secret, redirect_uri_problem
+
+
+class OAuthRegisterThrottle(AnonRateThrottle):
+    """Client registration is open to anyone and writes a row : bounded per address."""
+
+    scope = "oauth_register"
+
+
+class OAuthTokenThrottle(AnonRateThrottle):
+    """The token endpoint checks a secret or a code : bounded per address."""
+
+    scope = "oauth_token"
 
 
 class OAuthTokenView(APIView):
@@ -19,6 +33,7 @@ class OAuthTokenView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_classes = [OAuthTokenThrottle]
     renderer_classes = [JSONRenderer]  # Bypass StandardJSONRenderer wrapping
 
     def post(self, request):
@@ -85,9 +100,12 @@ class OAuthTokenView(APIView):
 
         # Verify PKCE code_verifier against code_challenge
         if auth_code.code_challenge_method == "S256":
-            digest = hashlib.sha256(code_verifier.encode("ascii")).digest()
+            try:
+                digest = hashlib.sha256(code_verifier.encode("ascii")).digest()
+            except (UnicodeEncodeError, AttributeError):
+                digest = b""
             computed_challenge = base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
-            if computed_challenge != auth_code.code_challenge:
+            if not hmac.compare_digest(computed_challenge, auth_code.code_challenge or ""):
                 return Response(
                     {"error": "invalid_grant", "error_description": "PKCE verification failed."},
                     status=status.HTTP_400_BAD_REQUEST,
@@ -98,11 +116,6 @@ class OAuthTokenView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Mark the code as used
-        auth_code.used = True
-        auth_code.save(update_fields=["used"])
-
-        # Find or create the application for token tracking
         try:
             app = OAuthApplication.objects.get(client_id=client_id, is_active=True)
         except OAuthApplication.DoesNotExist:
@@ -111,12 +124,35 @@ class OAuthTokenView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        # Issue access token (never expires)
-        token_obj, raw_token = OAuthAccessToken.create_token(app)
+        user = auth_code.user
+        if not user.is_active:
+            return Response(
+                {"error": "invalid_grant", "error_description": "User account is disabled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not user.is_superuser and not user.has_perm("system.mcp.access"):
+            return Response(
+                {"error": "access_denied", "error_description": "User does not have MCP access."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # A code is spent once, whatever arrives at the same instant : the
+        # update only succeeds for the request that finds it unused.
+        spent = OAuthAuthorizationCode.objects.filter(pk=auth_code.pk, used=False).update(used=True)
+        if not spent:
+            return Response(
+                {"error": "invalid_grant", "error_description": "Authorization code already used."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # The token acts as the person who consented, not as the owner of the
+        # application.
+        token_obj, raw_token = OAuthAccessToken.create_token(app, user=user)
 
         return Response({
             "access_token": raw_token,
             "token_type": "Bearer",
+            "expires_in": token_obj.expires_in,
         })
 
     def _handle_client_credentials(self, request):
@@ -158,12 +194,12 @@ class OAuthTokenView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # Issue access token (never expires)
         token_obj, raw_token = OAuthAccessToken.create_token(app)
 
         return Response({
             "access_token": raw_token,
             "token_type": "Bearer",
+            "expires_in": token_obj.expires_in,
         })
 
 
@@ -172,6 +208,7 @@ class OAuthRegisterView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_classes = [OAuthRegisterThrottle]
     renderer_classes = [JSONRenderer]
 
     def post(self, request):
@@ -185,10 +222,29 @@ class OAuthRegisterView(APIView):
                 {"error": "invalid_client_metadata", "error_description": "redirect_uris must be a list."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        # Registration is open to anyone, and an authorization code is sent to
+        # these addresses : at least one, each of a kind a code may go to.
+        if not redirect_uris or len(redirect_uris) > MAX_REDIRECT_URIS:
+            return Response(
+                {"error": "invalid_redirect_uri",
+                 "error_description": f"Between 1 and {MAX_REDIRECT_URIS} redirect_uris are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        for uri in redirect_uris:
+            problem = redirect_uri_problem(uri)
+            if problem:
+                return Response(
+                    {"error": "invalid_redirect_uri", "error_description": f"A redirect URI {problem}."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        if not isinstance(client_name, str) or not client_name.strip():
+            client_name = "MCP Client"
+        # A public client : it authenticates with PKCE, never with a secret.
+        token_endpoint_auth_method = "none"
 
         # Create a public client (no secret needed for PKCE flow)
         app = OAuthApplication(
-            name=client_name,
+            name=client_name.strip()[:255],
             # Assign to a default system user - will be overridden at authorization time
             user_id=self._get_default_user_id(),
             client_secret_hash="",

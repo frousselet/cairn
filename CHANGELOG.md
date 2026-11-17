@@ -98,6 +98,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nonconformities raised by an incident were visible to every finding reader whatever their scopes, and the MCP finding update and delete tools did not check the caller's scopes.
 - Every page is served with a Content Security Policy : only the instance's own scripts run (inline ones by a per-response nonce), no inline event handler, no `eval`, no other origin than the map services (`CSP_MODE`).
 - Refusing an OAuth consent redirected to the address carried by the form before checking it was one the application registered.
+- An OAuth token obtained through the consent screen acted as whoever had authorized the client first, not as the person who consented : tokens now carry their user, and those issued to public clients before this release are revoked (their users approve the client once more).
+- OAuth client registration accepted any redirect address, including none (then any address was accepted at consent) : it requires `https`, loopback `http` or an application's private scheme, matched exactly, and the consent screen shows where the access goes.
+- OAuth access tokens expire (`OAUTH_ACCESS_TOKEN_LIFETIME_DAYS`, 90 days by default) instead of living for ever; existing ones are brought back to that lifetime.
+- The open OAuth endpoints (registration, token) are rate limited, an authorization code is spent atomically, and consent is only offered to accounts allowed to use MCP.
 
 ## [0.36.1] - 2026-11-03
 

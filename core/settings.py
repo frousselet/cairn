@@ -8,6 +8,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get(
@@ -29,8 +31,6 @@ _PLACEHOLDER_SECRET_KEYS = {
     "change-me-to-a-random-secret-key",
 }
 if not DEBUG and SECRET_KEY in _PLACEHOLDER_SECRET_KEYS:
-    from django.core.exceptions import ImproperlyConfigured
-
     raise ImproperlyConfigured(
         "SECRET_KEY is still the public placeholder while DEBUG is off. Set "
         "SECRET_KEY to a long random value (for example : python -c \"import "
@@ -409,8 +409,20 @@ REST_FRAMEWORK = {
     # gated-request form is a Django view rate-limited separately in its view.
     "DEFAULT_THROTTLE_RATES": {
         "anon": "120/hour",
+        # The two OAuth endpoints anyone can call : registering a client
+        # writes a row, the token endpoint checks a secret or a code.
+        "oauth_register": "30/hour",
+        "oauth_token": "300/hour",
     },
 }
+
+# Days an OAuth access token (MCP clients, API scripts) stays valid. A bearer
+# token works for whoever holds it : it has to end. A client simply asks for a
+# new one (client credentials), or sends its user through the consent page
+# again (authorization code).
+OAUTH_ACCESS_TOKEN_LIFETIME_DAYS = int(os.environ.get("OAUTH_ACCESS_TOKEN_LIFETIME_DAYS", "90"))
+if OAUTH_ACCESS_TOKEN_LIFETIME_DAYS < 1:
+    raise ImproperlyConfigured("OAUTH_ACCESS_TOKEN_LIFETIME_DAYS must be at least 1.")
 
 # Email (notifications)
 # Defaults to the console backend in DEBUG so no SMTP setup is needed in dev.
