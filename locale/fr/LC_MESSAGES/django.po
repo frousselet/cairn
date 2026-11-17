@@ -20690,3 +20690,6 @@ msgstr "L'accès sera transmis à"
 
 msgid "The application names itself : approve only if you started this connection and recognise this address."
 msgstr "L'application choisit elle-même son nom : n'approuvez que si vous êtes à l'origine de cette connexion et reconnaissez cette adresse."
+
+msgid "This page was opened over an unencrypted connection. Signing in requires HTTPS : open this address with https://, or ask your administrator."
+msgstr "Cette page a été ouverte sur une connexion non chiffrée. La connexion exige HTTPS : ouvrez cette adresse en https://, ou contactez votre administrateur."

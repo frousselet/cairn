@@ -50,6 +50,9 @@ services:
       # with a placeholder. python -c "import secrets; print(secrets.token_urlsafe(64))"
       SECRET_KEY: "<paste your own random value>"
       ALLOWED_HOSTS: localhost,127.0.0.1
+      # Maps are off until you name a tile provider : the reader's browser
+      # fetches the tiles from it. See Configuration, Maps.
+      # MAP_TILE_URL: "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       POSTGRES_DB: open_grc
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -92,13 +95,18 @@ volumes:
   media_data:
 ```
 
-Four things in this file are not optional.
+Five things about this file are not optional.
 
 - **`SECRET_KEY`** must be your own. `DEBUG` is off unless you turn it on, and
   with it off Cairn refuses to start on a placeholder key.
 - **The `media_data` volume** holds every uploaded file : audit evidence,
   document versions, incident artefacts. A deployment without it loses them
   when the container is recreated, which is what every upgrade does.
+- **It is meant to be reached over HTTPS.** Session cookies are only sent over
+  an encrypted connection, so put a reverse proxy terminating TLS in front of
+  it. `http://localhost:8000` works for a first look in Chrome and Firefox,
+  which treat localhost as secure. See
+  [Configuration](configuration.md#https-hardening).
 - **Backups are yours to schedule.** `docker compose exec web python manage.py
   backup` writes the database and the uploaded files into one verified archive
   under `./backups`; nothing runs it for you. See

@@ -98,13 +98,28 @@ def build_policy(request, nonce=None, exclude=()):
         "form-action": ["'self'"],
         "frame-ancestors": [frame_ancestors],
     }
+    # Where the instance only answers over HTTPS, a stray http:// reference
+    # is fetched over HTTPS too instead of being sent in clear.
+    if getattr(settings, "SECURE_SSL_REDIRECT", False):
+        policy["upgrade-insecure-requests"] = []
     for directive in exclude:
         policy.pop(directive, None)
     return policy
 
 
 def serialize(policy):
-    return "; ".join(f"{directive} {' '.join(sources)}" for directive, sources in policy.items())
+    return "; ".join(" ".join([directive, *sources]) for directive, sources in policy.items())
+
+
+# Browser features no page of the application uses, switched off for the page
+# and for anything it might be made to embed. Passkeys and the clipboard are
+# not listed : they keep their default, which is this origin only.
+PERMISSIONS_POLICY = ", ".join(
+    f"{feature}=()" for feature in (
+        "accelerometer", "browsing-topics", "camera", "display-capture", "geolocation",
+        "gyroscope", "magnetometer", "microphone", "midi", "payment", "usb",
+    )
+)
 
 
 class ContentSecurityPolicyMiddleware:
@@ -146,4 +161,9 @@ class ContentSecurityPolicyMiddleware:
         if header not in response:
             policy = build_policy(request, request._csp_nonce, getattr(response, "csp_exclude", ()))
             response[header] = serialize(policy)
+        # No other site may read a page, an API answer or a download of this
+        # one by embedding it (static files are served before this middleware
+        # and stay loadable, for an e-mail that shows the logo).
+        response.setdefault("Cross-Origin-Resource-Policy", "same-origin")
+        response.setdefault("Permissions-Policy", PERMISSIONS_POLICY)
         return response

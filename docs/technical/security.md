@@ -150,8 +150,23 @@ What keeps it that way :
   browser reports (see [testing](testing.md#accessibility)).
 
 Styles are allowed inline (`style-src 'unsafe-inline'`). A style cannot run
-code, and the libraries in use position their elements with style attributes;
-the residual risk is content restyling, not script execution.
+code, and the libraries in use position their elements with style attributes.
+What an injected style could do is leak a value through a request to another
+site, and the policy leaves it nowhere to send one : images, fonts and
+connections are limited to the instance (and to the map services, when the
+operator names some).
+
+Three more headers go with every page and API answer.
+`Cross-Origin-Resource-Policy: same-origin` keeps another site from reading
+one by embedding it. `Permissions-Policy` switches off the browser features
+the application never uses (camera, microphone, geolocation, payment, USB and
+sensors), for the page and for anything it could be made to embed. With
+`SECURE_SSL_REDIRECT` on, the policy adds `upgrade-insecure-requests`.
+
+A stored file is never served with the type its uploader declared unless that
+type is inert (`core/downloads.py`) : a contract uploaded as `text/javascript`
+or `text/html` goes out as `application/octet-stream`, always as an
+attachment, so it can be neither run nor rendered from the instance's origin.
 
 `CSP_MODE=report` sends the policy as `Content-Security-Policy-Report-Only` :
 nothing is blocked, violations appear in the browser console. It is there to
@@ -179,12 +194,16 @@ the `ollama` provider keeps everything on your own infrastructure.
 
 ## What the operator still has to do
 
-The platform cannot do these for you, and none of them are on by default because
-turning them on blindly breaks an HTTP-only deployment.
+What can be safe by default is : cookies only travel over HTTPS, a session
+ends after twelve hours, no browser is sent to an outside service, access
+tokens expire, pages run under a Content Security Policy. The rest the
+platform cannot do for you.
 
-1. **Serve over HTTPS and turn on the hardening flags** : `SESSION_COOKIE_SECURE`,
-   `CSRF_COOKIE_SECURE`, `SECURE_SSL_REDIRECT`, then HSTS. The order and the
-   HSTS caveat are in [configuration.md](configuration.md#https-hardening).
+1. **Serve over HTTPS**, then turn on `SECURE_SSL_REDIRECT` and HSTS, which
+   stay opt-in because they lock a host out when turned on too early. The order
+   and the HSTS caveat are in [configuration.md](configuration.md#https-hardening).
+   Set `FORWARDED_ALLOW_IPS` to your proxy's address if the application's port
+   can be reached without going through it.
 2. **Set a real `SECRET_KEY`** and keep it out of the image. With `DEBUG` off,
    Cairn refuses to start while the key is one of the public placeholders.
 3. **Leave `DEBUG` off** (it is the default) and set a specific `ALLOWED_HOSTS`.
@@ -196,6 +215,9 @@ turning them on blindly breaks an HTTP-only deployment.
    store its copies encrypted. See [operations.md](operations.md#backups).
 6. **Review the group assignments.** The default groups are a starting point;
    who is in them is your decision and your audit finding.
+7. **Decide what may leave a browser.** Maps (`MAP_TILE_URL`) and address
+   lookup (`MAP_GEOCODER_URL`) are off until you name a provider, because
+   each tells a third party something about what your users look at.
 
 ## Reporting a vulnerability
 

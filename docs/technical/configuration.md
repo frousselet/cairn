@@ -39,6 +39,16 @@ Cairn trusts `X-Forwarded-Proto` (`SECURE_PROXY_SSL_HEADER`), so the proxy must
 set it and must not let a client forge it.
 
 ```bash
+FORWARDED_ALLOW_IPS=*   # whose X-Forwarded-* headers the server believes
+```
+
+The image believes the forwarding headers of whoever connects (`*`), which is
+right when only the proxy can reach the container. If the application's port
+is reachable any other way, set `FORWARDED_ALLOW_IPS` to the proxy's address :
+otherwise a direct caller chooses the client address written in the access log
+and whether its request counts as HTTPS.
+
+```bash
 ALLOWED_HOSTS=grc.example.com
 CSRF_TRUSTED_ORIGINS=https://grc.example.com
 SITE_URL=https://grc.example.com
@@ -50,23 +60,44 @@ mail client.
 
 ## HTTPS hardening
 
-Every hardening flag defaults to off, so upgrading an HTTP-only deployment never
-breaks it. Turn them on once TLS terminates in front of the application, in this
-order, checking that you can still sign in between each step.
+An instance is meant to be reached over HTTPS, and with `DEBUG` off it assumes
+so : the session and CSRF cookies are only sent over an encrypted connection.
+A reverse proxy terminating TLS in front of the application is enough. Opened
+over plain http, the sign-in page says that signing in requires HTTPS, since
+the browser would otherwise drop the session cookie without a word.
 
 ```bash
-SESSION_COOKIE_SECURE=True
-CSRF_COOKIE_SECURE=True
+SESSION_COOKIE_SECURE=True    # default outside DEBUG
+CSRF_COOKIE_SECURE=True       # default outside DEBUG
+SESSION_COOKIE_AGE=43200      # seconds a session lasts from sign-in (12 hours)
+```
+
+Set the two cookie flags to `False` only for an instance deliberately reached
+without TLS, on a network you answer for : a session cookie sent in clear can
+be taken over by anyone on the path. (`http://localhost` is treated as secure
+by Chrome and Firefox, so a local trial of the image works as is; Safari needs
+the flags off or a certificate.)
+
+A session ends twelve hours after sign-in, whatever the activity : a working
+day, so that a forgotten or stolen session closes by itself. Raise
+`SESSION_COOKIE_AGE` if that is too short for you; passkeys make signing in
+again a matter of seconds.
+
+Two more flags stay opt-in, because turned on too early they lock a host out :
+
+```bash
 SECURE_SSL_REDIRECT=True
 SECURE_HSTS_SECONDS=31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS=True
 SECURE_HSTS_PRELOAD=True
 ```
 
-HSTS is last and deserves a pause : a browser remembers it for the whole
-`max-age` even after you unset the header, so a wrong value locks your own users
-out of an HTTP fallback for a year. Start with a short `SECURE_HSTS_SECONDS`
-(say 300), confirm, then raise it.
+Turn the redirect on once the proxy forwards `X-Forwarded-Proto` (otherwise it
+loops), then HSTS, checking that you can still sign in between each step. HSTS
+deserves a pause : a browser remembers it for the whole `max-age` even after
+you unset the header, so a wrong value locks your own users out of an HTTP
+fallback for a year. Start with a short `SECURE_HSTS_SECONDS` (say 300),
+confirm, then raise it.
 
 Run `python manage.py check --deploy` to have Django audit the result.
 
@@ -151,35 +182,32 @@ The backup and restore procedure is in [Operations](operations.md#backups).
 ## Maps
 
 ```bash
-MAP_TILE_URL=https://tile.openstreetmap.org/{z}/{x}/{y}.png   # empty : no map
-MAP_TILE_URL_DARK=                                            # tiles for the dark theme
-MAP_TILE_ATTRIBUTION=...                                      # credit line (HTML)
+MAP_TILE_URL=             # empty (default) : no map. e.g. https://tile.openstreetmap.org/{z}/{x}/{y}.png
+MAP_TILE_URL_DARK=        # tiles for the dark theme
+MAP_TILE_ATTRIBUTION=...  # credit line (HTML)
 ```
 
-The scope, site and supplier pages show their location on a map. The tiles are
-fetched **by the reader's browser**, straight from the provider : the instance
-itself makes no call. The default is OpenStreetMap's own tile service, which
-needs no account and is meant for moderate use with visible attribution. For
-heavier use, or for another style, point `MAP_TILE_URL` at any XYZ tile
-provider, with its key in the URL when it needs one. Without
-`MAP_TILE_URL_DARK` the same tiles are dimmed under the dark theme. Whatever
-the provider, the tiles are desaturated so the map stays a backdrop.
-
-Set `MAP_TILE_URL` to an empty value where browsers must not reach an outside
-service : the pages then show no map.
+The scope, site and supplier pages can show their location on a map. **Maps
+are off by default** : the tiles are fetched by the reader's browser straight
+from the provider, which therefore learns who is looking at which place.
+Nothing leaves a browser until you name a provider. OpenStreetMap's own tile
+service (`https://tile.openstreetmap.org/{z}/{x}/{y}.png`) needs no account and
+suits moderate use with visible attribution; any XYZ tile provider works, with
+its key in the URL when it needs one. Without `MAP_TILE_URL_DARK` the same
+tiles are dimmed under the dark theme. Whatever the provider, the tiles are
+desaturated so the map stays a backdrop.
 
 ```bash
-MAP_GEOCODER_URL=https://photon.komoot.io/api/   # empty : no geocoding
+MAP_GEOCODER_URL=         # empty (default) : no geocoding. e.g. https://photon.komoot.io/api/
 ```
 
-A second browser-side call goes to a geocoder, a
-[Photon](https://github.com/komoot/photon)-compatible API, in two cases : when
-a map has to place a site or a supplier that has an address but no
-coordinates, and when someone types in an address field (type-ahead). **The
-address is sent to that service.** The default is Photon's public instance;
-point `MAP_GEOCODER_URL` at one you host, or set it to an empty value : the
-maps then only place what has a latitude and a longitude, and address fields
-have no type-ahead. Nothing else leaves the browser.
+A geocoder, a [Photon](https://github.com/komoot/photon)-compatible API, can be
+called by the browser in two cases : when a map has to place a site or a
+supplier that has an address but no coordinates, and when someone types in an
+address field (type-ahead). **The address is sent to that service**, so it is
+off by default : the maps then only place what has a latitude and a longitude,
+and address fields have no type-ahead. Point `MAP_GEOCODER_URL` at an instance
+you host, or at Photon's public one, to turn it on.
 
 Both origins are the only ones the [Content Security
 Policy](security.md#content-security-policy) lets a page reach, and they follow

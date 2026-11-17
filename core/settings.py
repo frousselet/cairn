@@ -60,13 +60,25 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(","
 # original request was HTTPS (required for secure cookies, CSRF, etc.).
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# HTTPS hardening. Every one of these defaults to off so an existing HTTP-only
-# deployment keeps working on upgrade: turning them on before TLS terminates in
-# front of the app would drop every session cookie or loop the redirect. Set
-# them once the deployment is served over HTTPS - the security documentation
-# spells out which ones and in what order.
-SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "False").lower() in ("true", "1", "yes")
-CSRF_COOKIE_SECURE = os.environ.get("CSRF_COOKIE_SECURE", "False").lower() in ("true", "1", "yes")
+# HTTPS hardening.
+#
+# The session and CSRF cookies are only sent over HTTPS, outside DEBUG : a
+# session cookie that travels in clear is a session anyone on the path can
+# take over. An instance has to be reached over HTTPS (a reverse proxy
+# terminating TLS is enough); the sign-in page says so when it is opened over
+# plain http. Set them to False only for an instance that is deliberately
+# reached without TLS, on a network you answer for.
+#
+# The redirect and HSTS stay opt-in : turned on before TLS terminates in front
+# of the application they loop or lock a host out, and HSTS cannot be taken
+# back. The security documentation gives the order.
+_secure_cookies = "False" if DEBUG else "True"
+SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", _secure_cookies).lower() in ("true", "1", "yes")
+CSRF_COOKIE_SECURE = os.environ.get("CSRF_COOKIE_SECURE", _secure_cookies).lower() in ("true", "1", "yes")
+# Seconds a session lasts from sign-in, whatever the activity (12 hours) : a
+# working day, not the two weeks Django defaults to. A stolen or forgotten
+# session ends by itself.
+SESSION_COOKIE_AGE = int(os.environ.get("SESSION_COOKIE_AGE", str(12 * 60 * 60)))
 SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "False").lower() in ("true", "1", "yes")
 SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = os.environ.get("SECURE_HSTS_INCLUDE_SUBDOMAINS", "False").lower() in ("true", "1", "yes")
@@ -332,23 +344,22 @@ UPDATE_CHECK_ENABLED = os.environ.get(
     "UPDATE_CHECK_ENABLED", "True"
 ).lower() in ("true", "1", "yes")
 
-# Basemap of the maps on the scope, site and supplier pages. The tiles are
-# fetched by the reader's browser, straight from this provider. The default is
-# OpenStreetMap's own tile service, which needs no account; point it at any
-# other XYZ provider (with its key in the URL) for heavier use or another
-# style. An empty value switches the maps off, for an instance whose browsers
-# must not reach an outside service.
-MAP_TILE_URL = os.environ.get(
-    "MAP_TILE_URL", "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-).strip()
+# Basemap of the maps on the scope, site and supplier pages. Off by default :
+# the tiles are fetched by the reader's browser straight from the provider,
+# which learns who looks at which place. Nothing leaves a browser unless the
+# operator names a provider here : any XYZ tile URL, with its key when it
+# needs one (OpenStreetMap's own service, which needs no account, is
+# https://tile.openstreetmap.org/{z}/{x}/{y}.png).
+MAP_TILE_URL = os.environ.get("MAP_TILE_URL", "").strip()
 # Tiles to use under the dark theme. Empty : the tiles above are dimmed.
 MAP_TILE_URL_DARK = os.environ.get("MAP_TILE_URL_DARK", "").strip()
-# Geocoder the maps ask for the position of an address that has no
-# coordinates : a Photon-compatible API, called by the reader's browser with
-# the address as its query. The address of a site or a supplier therefore
-# leaves the instance. An empty value switches it off : the maps then only
-# place what has a latitude and a longitude.
-MAP_GEOCODER_URL = os.environ.get("MAP_GEOCODER_URL", "https://photon.komoot.io/api/").strip()
+# Geocoder the maps and the address fields ask for the position of an address
+# (a Photon-compatible API, such as https://photon.komoot.io/api/ or one you
+# host). Off by default : it is called by the reader's browser with the
+# address as its query, so the address of a site or a supplier leaves the
+# instance. Without it the maps only place what has a latitude and a
+# longitude, and address fields have no type-ahead.
+MAP_GEOCODER_URL = os.environ.get("MAP_GEOCODER_URL", "").strip()
 # Credit line shown on the map, as the provider's terms require (HTML).
 MAP_TILE_ATTRIBUTION = os.environ.get(
     "MAP_TILE_ATTRIBUTION",

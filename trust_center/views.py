@@ -23,6 +23,7 @@ from django.views.generic import FormView, TemplateView
 
 from accounts.models import CompanySettings
 from accounts.notifications import notify_document_requested
+from core.downloads import safe_content_type
 from trust_center.constants import DocumentAccess, DocumentRequestState
 from trust_center.forms import PublicDocumentRequestForm
 from trust_center.models import (
@@ -103,7 +104,7 @@ class TrustCenterPublicDocumentDownloadView(View):
         data = doc.get_file_bytes()
         if not data:
             raise Http404()
-        resp = HttpResponse(data, content_type=doc.effective_content_type)
+        resp = HttpResponse(data, content_type=safe_content_type(doc.effective_content_type))
         resp["Content-Disposition"] = _attachment_disposition(doc.effective_file_name)
         return resp
 
@@ -226,6 +227,6 @@ class TrustCenterGatedDownloadView(View):
         DocumentRequest.objects.filter(pk=req.pk).update(
             download_count=F("download_count") + 1
         )
-        resp = HttpResponse(data, content_type=req.document.effective_content_type)
+        resp = HttpResponse(data, content_type=safe_content_type(req.document.effective_content_type))
         resp["Content-Disposition"] = _attachment_disposition(req.document.effective_file_name)
         return resp

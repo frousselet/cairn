@@ -20,6 +20,9 @@ import os
 # runserver, the console email backend. Set DEBUG=False in the environment to
 # try the production behaviour locally (it then needs a real SECRET_KEY).
 os.environ.setdefault("DEBUG", "True")
+# Maps are off unless a deployment names a tile provider (the browser fetches
+# the tiles from it). A development instance shows them, on demo data.
+os.environ.setdefault("MAP_TILE_URL", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
 
 from core.settings import *  # noqa: E402, F401, F403
 from core.settings import BASE_DIR  # noqa: E402

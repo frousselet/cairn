@@ -301,6 +301,20 @@
       {% endfor %}
       {% endif %}
 
+      {% if HTTPS_ONLY_SESSIONS %}
+      {# Shown by the script below when the page was opened over plain http : the session cookie is HTTPS-only, so signing in would fail without a word. #}
+      <div class="alert alert-warning small" id="insecure-transport-notice" role="alert" hidden>
+        {% trans "This page was opened over an unencrypted connection. Signing in requires HTTPS : open this address with https://, or ask your administrator." %}
+      </div>
+      <script nonce="{% csp_nonce %}">
+        (function () {
+          var local = ['localhost', '127.0.0.1', '[::1]'].indexOf(location.hostname) !== -1;
+          if (location.protocol !== 'https:' && !local) {
+            document.getElementById('insecure-transport-notice').hidden = false;
+          }
+        })();
+      </script>
+      {% endif %}
       <form method="post">
         {% csrf_token %}
         <div class="mb-3">

@@ -52,9 +52,19 @@ class TestSupplierAddressField:
         assert s.longitude == pytest.approx(2.3199)
 
 
+def _map_settings(html):
+    """The map configuration the page hands its scripts (``cairn-map-tiles``)."""
+    import json
+
+    payload = re.search(r'<script id="cairn-map-tiles" type="application/json">(.*?)</script>', html, re.S)
+    return json.loads(payload.group(1))
+
+
 @pytest.mark.django_db
 class TestSupplierMap:
-    def test_map_rendered_with_coords(self, client):
+    def test_map_rendered_with_coords(self, client, settings):
+        # A deployment that named a tile provider : maps are off without one.
+        settings.MAP_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         client.force_login(UserFactory(is_superuser=True, is_staff=True))
         s = SupplierFactory(address="17 Rue de Surene", latitude=48.87, longitude=2.32)
         html = client.get(reverse("assets:supplier-detail", kwargs={"pk": s.pk})).content.decode()
@@ -64,9 +74,19 @@ class TestSupplierMap:
         assert "/static/vendor/leaflet/leaflet.js" in html
         # The basemap comes from the MAP_TILE_URL setting, never from a
         # provider written into the template.
-        assert "tile.openstreetmap.org" in html
-        assert "cartocdn" not in html
+        assert _map_settings(html)["url"] == settings.MAP_TILE_URL
+        assert html.count("cartocdn") == 0
         assert "window.cairnBasemap.addTo(map)" in html
+
+    def test_no_provider_is_contacted_unless_one_is_named(self, client):
+        """Out of the box the page names no outside service : nothing tells a
+        third party which site or supplier is being looked at."""
+        client.force_login(UserFactory(is_superuser=True, is_staff=True))
+        s = SupplierFactory(address="17 Rue de Surene", latitude=48.87, longitude=2.32)
+        html = client.get(reverse("assets:supplier-detail", kwargs={"pk": s.pk})).content.decode()
+        assert _map_settings(html) == {"url": "", "darkUrl": "", "attribution": "", "geocoder": ""}
+        # And no provider is written into the page itself.
+        assert html.count("openstreetmap") == 0 and html.count("komoot") == 0
 
     def test_the_basemap_provider_is_a_deployment_setting(self, client, settings):
         settings.MAP_TILE_URL = "https://tiles.example.org/{z}/{x}/{y}.png?key=abc"
@@ -75,9 +95,11 @@ class TestSupplierMap:
         client.force_login(UserFactory(is_superuser=True, is_staff=True))
         s = SupplierFactory(address="17 Rue de Surene", latitude=48.87, longitude=2.32)
         html = client.get(reverse("assets:supplier-detail", kwargs={"pk": s.pk})).content.decode()
-        assert "tiles.example.org/dark/" in html
-        assert "Example Maps" in html
-        assert "tile.openstreetmap.org" not in html
+        assert _map_settings(html) == {
+            "url": settings.MAP_TILE_URL, "darkUrl": settings.MAP_TILE_URL_DARK,
+            "attribution": "Example Maps", "geocoder": "",
+        }
+        assert html.count("openstreetmap") == 0
 
     def test_an_empty_setting_switches_the_maps_off(self, client, settings):
         """An instance whose browsers must not reach an outside service."""
