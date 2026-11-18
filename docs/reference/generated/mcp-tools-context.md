@@ -291,7 +291,7 @@ Requires `context.objective.create`.
 | `target_value` | `string` | - | Target value (free-form, e.g. '95%' or '< 30 days') |
 | `current_value` | `string` | - | Current value (free-form, same format as target_value) |
 | `unit` | `string` | - | Unit of measure (e.g. '%', 'days') |
-| `measurement_method` | `string` | - | How the objective is measured. |
+| `measurement_method` | `string` | - | How the objective is measured (HTML rich text) |
 | `measurement_frequency` | `string` | - | How often the objective is measured. |
 | `status` | `string` | - | Objective status. To set 'achieved' you must also pass progress_percentage=100. |
 | `progress_percentage` | `integer` | - | Progress percentage (0-100). Required to be 100 when status=achieved. |
@@ -1529,7 +1529,7 @@ Requires `context.objective.update`.
 | `target_value` | `string` | - | Target value (free-form, e.g. '95%' or '< 30 days') |
 | `current_value` | `string` | - | Current value (free-form, same format as target_value) |
 | `unit` | `string` | - | Unit of measure (e.g. '%', 'days') |
-| `measurement_method` | `string` | - | How the objective is measured. |
+| `measurement_method` | `string` | - | How the objective is measured (HTML rich text) |
 | `measurement_frequency` | `string` | - | How often the objective is measured. |
 | `status` | `string` | - | Objective status. To set 'achieved' you must also pass progress_percentage=100. |
 | `progress_percentage` | `integer` | - | Progress percentage (0-100). Required to be 100 when status=achieved. |

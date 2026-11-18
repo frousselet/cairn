@@ -50,6 +50,19 @@
     {% endmeta_list %}
   {% endsection_card %}
 
+  {# ── 3. Relations : who it concerns, and what answers it ── #}
+  {% comment %} An issue nobody acts on is only a remark : once it can be
+     linked (its lifecycle says when), an objective is opened on it. {% endcomment %}
+  {% url 'context:objective-create' as objective_create_url %}
+  {% section_card _("Relations") icon="diagram-3" %}
+    {% slot actions %}{% if can_create_objective and issue.is_linkable %}<a href="{{ objective_create_url }}?issue={{ issue.pk }}" hx-get="{{ objective_create_url }}?issue={{ issue.pk }}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-secondary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "New objective" %}</a>{% endif %}{% section_edit edit_url "relations" _("Relations") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Stakeholders") %}{% if related_stakeholders %}<div class="ref-links">{% for stakeholder in related_stakeholders %}{% ref_link stakeholder url=stakeholder.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Objectives that answer it") %}{% if answering_objectives %}<div class="ref-links">{% for objective in answering_objectives %}{% ref_link objective url=objective.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+    {% if not issue.is_linkable %}<p class="text-meta mt-2 mb-0">{% trans "An objective can answer this issue once it is validated." %}</p>{% endif %}
+  {% endsection_card %}
+
   {% record_card issue %}
 {% enddetail_layout %}
 {% endblock %}

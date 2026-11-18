@@ -61,6 +61,8 @@ def _forms():
     from context.forms import (
         IssueCreateForm,
         IssueUpdateForm,
+        ObjectiveCreateForm,
+        ObjectiveUpdateForm,
         ScopeCreateForm,
         ScopeUpdateForm,
         StakeholderCreateForm,
@@ -94,6 +96,8 @@ def _forms():
         (StakeholderUpdateForm, False),
         # A row of an interested party, added and edited from its page.
         (StakeholderExpectationForm, True),
+        (ObjectiveCreateForm, True),
+        (ObjectiveUpdateForm, False),
         (EssentialAssetCreateForm, True),
         (EssentialAssetUpdateForm, False),
         (SupportAssetCreateForm, True),
@@ -179,6 +183,8 @@ def _pages():
     from context.views import (
         IssueCreateView,
         IssueDetailView,
+        ObjectiveCreateView,
+        ObjectiveDetailView,
         ScopeCreateView,
         ScopeDetailView,
         StakeholderCreateView,
@@ -206,6 +212,8 @@ def _pages():
          "context/templates/context/issue_table_body.html"),
         (StakeholderCreateView, StakeholderDetailView, "context/templates/context/stakeholder_detail.html",
          "context/templates/context/stakeholder_table_body.html"),
+        (ObjectiveCreateView, ObjectiveDetailView, "context/templates/context/objective_detail.html",
+         "context/templates/context/objective_table_body.html"),
         (EssentialAssetCreateView, EssentialAssetDetailView, "assets/templates/assets/essential_asset_detail.html",
          "assets/templates/assets/essential_asset_table_body.html"),
         (SupportAssetCreateView, SupportAssetDetailView, "assets/templates/assets/support_asset_detail.html",

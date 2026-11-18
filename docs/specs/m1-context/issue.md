@@ -48,8 +48,16 @@ take both fields, and the model still checks them against each other.
 
 **The page** lists what would make the record useful, then shows one card per
 section of its form, each with its own *Edit* : identity (title, category,
-source, description, scopes, tags) and impact and follow-up (impact level,
-trend, next review, status).
+source, description, scopes, tags), impact and follow-up (impact level, trend,
+next review, status) and relations (the stakeholders it concerns).
+
+**Relations.** `related_stakeholders` was set over the REST API, the MCP server
+and the administration only. Its card picks the stakeholders among those their
+lifecycle makes linkable (plus those already linked), and lists the objectives
+that answer the issue, which are linked from the objective. Once the issue is
+linkable, the card offers *New objective*, which opens the creation of an
+objective answering it (see [objective](objective.md)); before that it says
+that an objective can answer the issue once it is validated.
 
 | Requirement | Met when | Blocking |
 | --- | --- | --- |

@@ -118,7 +118,7 @@ class StakeholderListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
 
 
-class ObjectiveSerializer(serializers.ModelSerializer):
+class ObjectiveSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Objective
         fields = [
@@ -129,6 +129,7 @@ class ObjectiveSerializer(serializers.ModelSerializer):
             "related_issues", "related_stakeholders", "parent_objective",
             "review_date", "version", "tags",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = ["id", "reference", "created_by", "created_at", "updated_at", "version"]
 

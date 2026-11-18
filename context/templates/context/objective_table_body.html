@@ -48,5 +48,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No security objective defined yet.") message=_("Objectives translate strategy into measurable security commitments. Tie each one to scopes and indicators.") colspan=8 %}
+{% url 'context:objective-create' as objective_create_url %}
+{% list_empty title=_("No objective yet.") message=_("An objective is a measurable aim of your security work : train every newcomer within a month, restore any server in under four hours. Give each one an owner, a date and a figure that says whether it is reached.") colspan=8 create_url=objective_create_url create_label=_("New objective") permission="context.objective.create" %}
 {% endfor %}

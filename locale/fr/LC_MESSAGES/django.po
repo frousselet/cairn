@@ -22405,3 +22405,87 @@ msgstr "Signaler un obstacle d'accessibilité"
 
 msgid "Accessibility"
 msgstr "Accessibilité"
+
+msgid "Whoever this issue concerns, or who raised it. Only validated stakeholders can be linked."
+msgstr "Celles que cet enjeu concerne, ou qui l'ont soulevé. Seules les parties intéressées validées peuvent être liées."
+
+msgid "An objective is reached or it is not : say which figure tells, and how it is read."
+msgstr "Un objectif est atteint ou ne l'est pas : indiquez quel chiffre le dit, et comment il est relevé."
+
+msgid "Progress and dates"
+msgstr "Avancement et dates"
+
+msgid "What you want to reach, for example \"Every newcomer is trained within a month\"."
+msgstr "Ce que vous voulez atteindre, par exemple « Chaque nouvel arrivant est formé dans le mois »."
+
+msgid "What it serves first : restoring a server in four hours is about availability."
+msgstr "Ce qu'il sert d'abord : restaurer un serveur en quatre heures relève de la disponibilité."
+
+msgid "Where it comes from : your security work, a rule to comply with, or the business."
+msgstr "D'où il vient : votre démarche de sécurité, une règle à respecter, ou le métier."
+
+msgid "Whoever answers for reaching it."
+msgstr "La personne qui répond de son atteinte."
+
+msgid "Why it matters, and what reaching it changes."
+msgstr "Pourquoi il compte, et ce que son atteinte change."
+
+msgid "The figure that says it is reached, for example \"95\"."
+msgstr "Le chiffre qui dit qu'il est atteint, par exemple « 95 »."
+
+msgid "What the figure counts, for example \"%\" or \"hours\"."
+msgstr "Ce que le chiffre compte, par exemple « % » ou « heures »."
+
+msgid "Where the figure comes from, for example \"Trained newcomers over arrivals, from the HR system\"."
+msgstr "D'où vient le chiffre, par exemple « Nouveaux arrivants formés sur le nombre d'arrivées, d'après le système RH »."
+
+msgid "What you read last."
+msgstr "Ce que vous avez relevé en dernier."
+
+msgid "An objective marked as achieved must be at 100."
+msgstr "Un objectif marqué comme atteint doit être à 100."
+
+msgid "The day you will say whether it is reached."
+msgstr "Le jour où vous direz s'il est atteint."
+
+msgid "When to check that it still makes sense."
+msgstr "Quand vérifier qu'il a toujours du sens."
+
+msgid "Where it stands. Marking it achieved asks for a progress of 100 %."
+msgstr "Où il en est. Le marquer comme atteint demande un avancement de 100 %."
+
+msgid "The issues this objective answers. Only validated issues can be linked."
+msgstr "Les enjeux auxquels cet objectif répond. Seuls les enjeux validés peuvent être liés."
+
+msgid "Whoever expects it of you. Only validated stakeholders can be linked."
+msgstr "Celles qui l'attendent de vous. Seules les parties intéressées validées peuvent être liées."
+
+msgid "The wider objective this one contributes to. It must share a scope with it."
+msgstr "L'objectif plus large auquel celui-ci contribue. Il doit partager un périmètre avec lui."
+
+msgid "say which figure tells whether it is reached"
+msgstr "indiquer quel chiffre dit s'il est atteint"
+
+msgid "give it a date"
+msgstr "lui donner une échéance"
+
+msgid "link the issues it answers"
+msgstr "relier les enjeux auxquels il répond"
+
+msgid "Objectives that answer it"
+msgstr "Objectifs qui y répondent"
+
+msgid "An objective can answer this issue once it is validated."
+msgstr "Un objectif pourra répondre à cet enjeu une fois celui-ci validé."
+
+msgid "Sub-objectives"
+msgstr "Sous-objectifs"
+
+msgid "No objective yet."
+msgstr "Aucun objectif pour l'instant."
+
+msgid "An objective is a measurable aim of your security work : train every newcomer within a month, restore any server in under four hours. Give each one an owner, a date and a figure that says whether it is reached."
+msgstr "Un objectif est un but mesurable de votre démarche de sécurité : former chaque nouvel arrivant dans le mois, restaurer n'importe quel serveur en moins de quatre heures. Donnez à chacun un propriétaire, une échéance et un chiffre qui dit s'il est atteint."
+
+msgid "Issues that concern it"
+msgstr "Enjeux qui la concernent"

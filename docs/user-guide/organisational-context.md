@@ -94,6 +94,13 @@ achieved, cancelled). Its **lifecycle state** says whether the objective itself
 is a validated commitment or a draft. An objective can be validated and not yet
 achieved; that is the normal case.
 
+Creating an objective takes one screen : what you aim at, what it serves, who
+answers for it and for when. Its page then asks for the figure that says
+whether it is reached, and for the issues it answers. You can also start from
+an issue : once it is validated, its *Relations* card offers *New objective*,
+and the objective you create there is linked to it. The pages of an issue and
+of a stakeholder list the objectives linked to them.
+
 ## SWOT
 
 Strengths, weaknesses, opportunities and threats, structured with impact levels

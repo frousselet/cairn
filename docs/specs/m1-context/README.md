@@ -283,7 +283,8 @@ The module is accessible through a main navigation item "Context & Organization"
 - **List:** Table with a visual progress bar, filterable by category, type, status, owner.
 - **Tree:** Hierarchical tree view of parent/child objectives.
 - **Dashboard:** Charts of overall progress, breakdown by category, overdue objectives.
-- **Detail / Edit:** Form with a KPI section (target value, current value, measurement method).
+- **Creation:** One screen : title, category, type, owner, target date, and the scopes when there is a choice. Opened from an issue, the objective answers it. The user lands on the new objective.
+- **Detail / Edit:** The page opens on what the objective still needs, then one card per section of its form (identity, measurement, progress and dates, relations). Each card opens the dialog of its section; the header opens the whole form.
 
 ### "SWOT" view
 

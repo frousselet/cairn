@@ -8,7 +8,7 @@
 {% block content %}
 {% page_header objective.name reference=objective.reference nav="context:objective-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:objective-update' objective.pk %}" class="btn btn-primary" hx-get="{% url 'context:objective-update' objective.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.objective_detail" %}
@@ -26,29 +26,54 @@
     {% kpi_tile _("Next review") objective.review_date icon="arrow-repeat" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if objective.description %}<div class="ov-rich">{{ objective.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card with an Edit button is one section of
+     the objective form : the button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("General") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="bullseye" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if objective.description %}<div class="ov-rich">{{ objective.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Category") objective.get_category_display %}
       {% meta_item _("Type") objective.get_type_display %}
-      {% meta_item _("Status") %}{% choice_badge objective "status" type="objective_status" %}{% endmeta_item %}
       {% meta_item _("Owner") %}{% if objective.owner %}{% user_badge objective.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% if objective.parent_objective %}{% meta_item _("Parent objective") %}<div class="ref-links">{% url 'context:objective-detail' objective.parent_objective.pk as parent_url %}{% ref_link objective.parent_objective url=parent_url %}</div>{% endmeta_item %}{% endif %}
-      {% meta_item _("Target date") objective.target_date %}
-      {% meta_item _("Next review") objective.review_date %}
       {% meta_item _("Tags") %}{% tag_list objective.tags.all %}{% endmeta_item %}
-      {% meta_item _("Scopes") wide=True %}{% grouped_scope_badges objective.scopes.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") wide=True %}{% if objective.scopes.all %}{% grouped_scope_badges objective.scopes.all %}{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Key performance indicator (KPI)") icon="graph-up" %}
+  {# ── 2. Measurement ── #}
+  {% section_card _("Measurement") icon="rulers" %}
+    {% slot actions %}{% section_edit edit_url "measurement" _("Measurement") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Target value") %}{% if objective.target_value %}{{ objective.target_value }}{% if objective.unit %} {{ objective.unit }}{% endif %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Measurement frequency") objective.get_measurement_frequency_display %}
+      {% meta_item _("Measurement method") wide=True %}{% if objective.measurement_method %}<div class="ov-rich">{{ objective.measurement_method|rich }}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 3. Progress and dates ── #}
+  {% section_card _("Progress and dates") icon="graph-up" %}
+    {% slot actions %}{% section_edit edit_url "progress" _("Progress and dates") %}{% endslot %}
+    {% meta_list cols=2 %}
       {% meta_item _("Current value") %}{% if objective.current_value %}{{ objective.current_value }}{% if objective.unit %} {{ objective.unit }}{% endif %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Measurement method") objective.measurement_method %}
-      {% meta_item _("Frequency") objective.get_measurement_frequency_display %}
-      {% meta_item _("Progress") wide=True %}{% if objective.progress_percentage is not None %}{% progress_bar objective.progress_percentage %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Progress") %}{% if objective.progress_percentage is not None %}{% progress_bar objective.progress_percentage %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Target date") objective.target_date %}
+      {% meta_item _("Next review") objective.review_date %}
+      {% meta_item _("Status") %}{% choice_badge objective "status" type="objective_status" %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 4. Relations ── #}
+  {% section_card _("Relations") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "relations" _("Relations") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Addressed issues") %}{% if related_issues %}<div class="ref-links">{% for issue in related_issues %}{% ref_link issue url=issue.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Stakeholders") %}{% if related_stakeholders %}<div class="ref-links">{% for stakeholder in related_stakeholders %}{% ref_link stakeholder url=stakeholder.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Parent objective") %}{% if parent_objective %}<div class="ref-links">{% ref_link parent_objective url=parent_objective.get_absolute_url %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Sub-objectives") %}{% if sub_objectives %}<div class="ref-links">{% for child in sub_objectives %}{% ref_link child url=child.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
