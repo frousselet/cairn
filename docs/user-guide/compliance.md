@@ -19,6 +19,11 @@ text it is, and who answers for it. You land on its page, which lists what it
 still needs (its requirements first) and lets you complete it one card at a
 time : each card has its own *Edit*.
 
+A requirement typed by hand works the same way : where it comes from, how it is
+numbered and what it asks, then its page for whether it applies, who answers
+for it and what it is linked to. Added from the page of a framework, it is
+already on that framework.
+
 Each requirement carries a compliance status from an eleven-value scale, richer
 than compliant / non-compliant because an audit finding is not binary :
 not assessed, evaluated, non-compliant, partially compliant, major
@@ -73,6 +78,11 @@ raised during an audit and nonconformities raised by a post-incident review are
 the same kind of object with the same lifecycle, and keeping them in one place
 is what lets you answer "what is open against us" in one screen rather than
 three.
+
+Raising one takes four answers : how it came to light, what kind of finding it
+is, what was noticed, and the requirements it was noticed against. Its page
+then takes what is recommended, lists the action plans that correct it, and
+waits for the last word.
 
 Each nonconformity carries its corrective action and, crucially, an
 **effectiveness verdict** : did the correction actually work. A corrective

@@ -67,7 +67,7 @@ class SectionSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "reference", "created_at", "updated_at", "compliance_level"]
 
 
-class RequirementSerializer(serializers.ModelSerializer):
+class RequirementSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Requirement
         fields = [
@@ -82,6 +82,7 @@ class RequirementSerializer(serializers.ModelSerializer):
             "linked_assets", "linked_stakeholder_expectations", "linked_risks",
             "status", "version", "tags",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
@@ -145,7 +146,7 @@ class AssessmentResultSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
-class FindingSerializer(serializers.ModelSerializer):
+class FindingSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     finding_type_display = serializers.CharField(
         source="get_finding_type_display", read_only=True
     )
@@ -170,6 +171,7 @@ class FindingSerializer(serializers.ModelSerializer):
             "effectiveness_reviewed_at", "effectiveness_reviewed_by",
             "effectiveness_reviewed_by_name", "effectiveness_verdict",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "control_test_run", "created_by", "created_at", "updated_at",

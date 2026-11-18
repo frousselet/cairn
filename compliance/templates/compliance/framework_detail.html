@@ -98,7 +98,7 @@
   {% endsection_card %}
 
   {% section_card _("Requirements") icon="list-check" count=requirements|length flush=requirements|length clamp=True %}
-    {% slot actions %}<a href="{% url 'compliance:requirement-create' %}?framework={{ framework.pk }}" class="btn btn-secondary btn-sm"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add" %}</a>{% endslot %}
+    {% slot actions %}<a href="{% url 'compliance:requirement-create' %}?framework={{ framework.pk }}" hx-get="{% url 'compliance:requirement-create' %}?framework={{ framework.pk }}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-secondary btn-sm"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans "Add" %}</a>{% endslot %}
     {% if requirements %}
     <div class="table-responsive">
       <table class="table table-hover mb-0">
@@ -128,7 +128,7 @@
             <td>{% choice_badge req "priority" %}</td>
             <td>{% if req.owner %}{% user_badge req.owner size=24 %}{% else %}{% dash %}{% endif %}</td>
             <td class="text-end">
-              <a href="{% url 'compliance:requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+              <a href="{% url 'compliance:requirement-update' req.pk %}" hx-get="{% url 'compliance:requirement-update' req.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
             </td>
           </tr>
           {% endfor %}

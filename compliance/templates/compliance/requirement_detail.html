@@ -6,7 +6,7 @@
 {% block content %}
 {% page_header requirement.name reference=requirement.reference nav="compliance:requirement-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'compliance:requirement-update' requirement.pk %}" class="btn btn-primary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "compliance.requirement_detail" %}
@@ -21,31 +21,52 @@
     {% kpi_tile _("Priority") requirement.get_priority_display icon="flag" tone=requirement.priority|badge_variant:"level" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if requirement.description %}<div class="ov-rich">{{ requirement.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card below is one section of the requirement
+     form : its Edit button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("Implementation recommendations") icon="lightbulb" hide_empty=True %}{% if requirement.guidance %}<div class="ov-rich">{{ requirement.guidance|rich }}</div>{% endif %}{% endsection_card %}
-
-  {% section_card _("General") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="card-text" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
       {% meta_item _("Framework") %}<a href="{% url 'compliance:framework-detail' requirement.framework.pk %}" class="cell-link">{{ requirement.framework }}</a>{% endmeta_item %}
       {% meta_item _("Section") requirement.section %}
       {% meta_item _("Requirement number") requirement.requirement_number %}
       {% meta_item _("Type") requirement.get_type_display %}
       {% meta_item _("Category") requirement.get_category_display %}
-      {% meta_item _("Status") %}{% choice_badge requirement "status" type="status" %}{% endmeta_item %}
-      {% meta_item _("Priority") %}{% choice_badge requirement "priority" %}{% endmeta_item %}
-      {% meta_item _("Responsible") %}{% if requirement.owner %}{% user_badge requirement.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Target date") requirement.target_date %}
       {% meta_item _("Tags") %}{% tag_list requirement.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
+  {# ── 2. Content ── #}
+  {% section_card _("Content") icon="text-paragraph" %}
+    {% slot actions %}{% section_edit edit_url "content" _("Content") %}{% endslot %}
+    {% meta_list %}
+      {% meta_item _("Description") %}{% if requirement.description %}<div class="ov-rich">{{ requirement.description|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Implementation recommendations") %}{% if requirement.guidance %}<div class="ov-rich">{{ requirement.guidance|rich }}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 3. Applicability ── #}
   {% section_card _("Applicability") icon="check2-circle" %}
+    {% slot actions %}{% section_edit edit_url "applicability" _("Applicability") %}{% endslot %}
     {% meta_list cols=2 %}
-      {% meta_item _("Applicable") %}{% if requirement.is_applicable %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if requirement.framework.applicability_managed_by_risks %} <span title="{% trans 'Applicability is derived automatically from linked risks for this framework.' %}">{% badge variant="info" icon="shield-check" label=_("Risk-driven") %}</span>{% endif %}{% endmeta_item %}
+      {% meta_item _("Applicable") %}{% if requirement.is_applicable %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% if requirement.framework.applicability_managed_by_risks %} <span title="{% trans 'Applicability is derived automatically from linked risks for this framework.' %}"><i class="bi bi-shield-check text-meta" aria-hidden="true"></i></span>{% endif %}{% endmeta_item %}
       {% if requirement.framework.applicability_managed_by_risks or not requirement.is_applicable %}
       {% meta_item _("Justification") wide=True %}{% if requirement.applicability_justification %}<div class="ov-rich">{{ requirement.applicability_justification|rich }}</div>{% endif %}{% endmeta_item %}
       {% endif %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 4. Follow-up ── #}
+  {% section_card _("Follow-up") icon="person-check" %}
+    {% slot actions %}{% section_edit edit_url "follow_up" _("Follow-up") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Responsible") %}{% if requirement.owner %}{% user_badge requirement.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Priority") %}{% choice_badge requirement "priority" %}{% endmeta_item %}
+      {% meta_item _("Target date") requirement.target_date %}
+      {% meta_item _("Status") %}{% choice_badge requirement "status" type="status" %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
@@ -62,8 +83,10 @@
 
   {% include "controls/includes/controls_card.html" %}
 
+  {# ── 5. Relationships : the risks, then what it protects and who expects it ── #}
   {% with risks=requirement.linked_risks.all %}
   {% section_card _("Linked risks") icon="shield-exclamation" count=risks|length flush=risks|length %}
+    {% slot actions %}{% section_edit edit_url "relationships" _("Relationships") %}{% endslot %}
     {% if risks %}
     <div class="table-responsive">
       <table class="table table-hover mb-0">
@@ -89,6 +112,14 @@
     {% endif %}
   {% endsection_card %}
   {% endwith %}
+
+  {% section_card _("Relationships") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "relationships" _("Relationships") %}{% endslot %}
+    {% meta_list %}
+      {% meta_item _("Linked essential assets") %}{% if requirement.linked_assets.all %}<div class="ref-links">{% for asset in requirement.linked_assets.all %}{% url 'assets:essential-asset-detail' asset.pk as asset_url %}{% ref_link asset url=asset_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Linked stakeholder expectations") %}{% if requirement.linked_stakeholder_expectations.all %}<ul class="list-unstyled mb-0">{% for expectation in requirement.linked_stakeholder_expectations.all %}<li><span class="fw-semibold">{{ expectation.stakeholder.name }}</span> : {{ expectation.description|striptags|truncatechars:140 }}</li>{% endfor %}</ul>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
   {% section_card _("Mapped requirements") icon="arrow-left-right" count=mappings_source.count|add:mappings_target.count flush=mappings_source.count|add:mappings_target.count %}
     {% if mappings_source or mappings_target %}

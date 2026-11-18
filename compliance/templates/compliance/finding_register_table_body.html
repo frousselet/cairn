@@ -30,5 +30,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No nonconformity recorded yet.") message=_("The register holds every departure from a requirement, a control or your own procedure, whether it came from an audit, an incident, a management review, monitoring or a complaint.") colspan=8 %}
+{% url 'compliance:finding-register-create' as finding_create_url %}
+{% list_empty title=_("No nonconformity yet.") message=_("A nonconformity is a requirement, a control or one of your own rules that is not met, whether an audit, an incident, a management review, monitoring or a complaint brought it to light. Raise one when you notice it : its correction is then followed in an action plan.") colspan=8 create_url=finding_create_url create_label=_("Raise a nonconformity") permission="compliance.finding.create" %}
 {% endfor %}

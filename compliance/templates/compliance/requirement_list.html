@@ -8,7 +8,7 @@
 
 {% block content %}
 {% page_header _("Requirements") nav="compliance:requirement-list" accent="compliance" %}
-  <a href="{% url 'compliance:requirement-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New requirement' %}</a>
+  <button type="button" class="btn btn-primary" hx-get="{% url 'compliance:requirement-create' %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{% trans 'New requirement' %}</button>
 {% endpage_header %}
 {% help_modal "compliance.requirement_list" %}
 
