@@ -76,7 +76,7 @@ and none raises.
 |---|---|---|---|
 | `id` | UUID | PK, auto-generated | Unique identifier |
 | `treatment_plan_id` | relation | FK → RiskTreatmentPlan, required | Parent treatment plan |
-| `description` | text | required | Description of the action |
+| `description` | rich text | required | Description of the action. Typed in the rich-text editor, stored as submitted and sanitised when shown (`\|rich`) |
 | `owner_id` | relation | FK → User, required | Action owner |
 | `target_date` | date | required | Target date |
 | `completion_date` | date | optional | Completion date |

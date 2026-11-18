@@ -159,6 +159,30 @@ class TestAnActionOfAPlan:
         assert form.fields["treatment_plan"].widget.is_hidden
         assert f'<input type="hidden" name="treatment_plan" value="{plan.pk}"' in html
 
+    def test_what_was_typed_in_the_editor_is_shown_formatted_not_as_markup(self, client, admin):
+        """The description is typed in the rich-text editor, which stores
+        markup : the row printed it as text, tags included."""
+        plan = RiskTreatmentPlanFactory()
+        TreatmentActionFactory(treatment_plan=plan, description="<p>Order the <strong>firewalls</strong>.</p>")
+
+        html = client.get(plan.get_absolute_url()).content.decode()
+
+        assert "<p>Order the <strong>firewalls</strong>.</p>" in html
+        assert "&lt;p&gt;" not in html
+        # Its deletion is confirmed in words.
+        assert "This will permanently delete <strong>Order the firewalls.</strong>" in html
+
+    def test_markup_the_editor_cannot_produce_is_dropped(self, client, admin):
+        plan = RiskTreatmentPlanFactory()
+        TreatmentActionFactory(
+            treatment_plan=plan, description='<p onclick="steal()">Do it</p><script>alert(1)</script>',
+        )
+
+        html = client.get(plan.get_absolute_url()).content.decode()
+
+        assert "<p>Do it</p>" in html
+        assert "<p onclick" not in html and "<script>alert(1)" not in html
+
     def test_it_starts_as_planned(self, client, admin):
         plan = RiskTreatmentPlanFactory()
 

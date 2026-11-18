@@ -71,7 +71,7 @@
           {% for action in actions %}
           <tr>
             <td class="tabular-nums">{{ action.order }}</td>
-            <td>{{ action.description }}</td>
+            <td class="cell-text cell-rich">{{ action.description|rich }}</td>
             <td>{% if action.owner %}{% user_badge action.owner size=20 %}{% else %}{% dash %}{% endif %}</td>
             <td>{{ action.target_date|or_dash }}</td>
             <td>{% choice_badge action "status" type="status" %}</td>
@@ -85,7 +85,7 @@
                 <i class="bi bi-pencil" aria-hidden="true"></i>
               </a>
               {% url 'risks:treatment-action-delete' action.pk as action_delete_url %}
-              {% confirm_delete url=action_delete_url name=action.description|truncatechars:60 %}
+              {% confirm_delete url=action_delete_url name=action.description|rich|striptags|truncatechars:60 %}
               {% endif %}
             </td>
           </tr>
