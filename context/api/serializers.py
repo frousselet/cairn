@@ -192,7 +192,7 @@ class ResponsibilitySerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
-class RoleSerializer(serializers.ModelSerializer):
+class RoleSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     responsibilities = ResponsibilitySerializer(many=True, read_only=True)
     compliance_alert = serializers.CharField(read_only=True)
 
@@ -204,6 +204,7 @@ class RoleSerializer(serializers.ModelSerializer):
             "status", "responsibilities", "compliance_alert",
             "version", "tags",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 
@@ -222,7 +223,7 @@ class RoleListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
 
 
-class ActivitySerializer(serializers.ModelSerializer):
+class ActivitySerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Activity
         fields = [
@@ -231,6 +232,7 @@ class ActivitySerializer(serializers.ModelSerializer):
             "related_stakeholders", "related_objectives",
             "status", "version", "tags",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = ["id", "reference", "created_by", "created_at", "updated_at", "version"]
 

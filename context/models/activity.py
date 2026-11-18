@@ -3,9 +3,11 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
+from core.completeness import Completeness, Requirement
 from context.constants import ActivityStatus, ActivityType, Criticality
 from .base import ScopedModel
 
@@ -56,12 +58,27 @@ class Activity(ScopedModel):
 
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "description", _("say what it covers"),
+            fields=["description"], section="identity", blocking=False,
+        ),
+        Requirement(
+            "objectives", _("link the objectives it helps to reach"),
+            fields=["related_objectives"], section="relations", blocking=False,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Activity")
         verbose_name_plural = _("Activities")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("context:activity-detail", args=[self.pk])
 
     @property
     def owner_name(self):

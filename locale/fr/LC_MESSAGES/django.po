@@ -22489,3 +22489,84 @@ msgstr "Un objectif est un but mesurable de votre démarche de sécurité : form
 
 msgid "Issues that concern it"
 msgstr "Enjeux qui la concernent"
+
+msgid "Who holds it"
+msgstr "Qui le tient"
+
+msgid "What the role is called in your organisation, for example \"Information security officer\"."
+msgstr "Le nom du rôle dans votre organisation, par exemple « Responsable de la sécurité de l'information »."
+
+msgid "Governance decides, operational carries out, support helps, and \"Control\" checks what the others do."
+msgstr "La gouvernance décide, l'opérationnel exécute, le support aide, et « Contrôler » vérifie ce que font les autres."
+
+msgid "The text that asks for this role, for example \"ISO 27001, clause 5.3\"."
+msgstr "Le texte qui demande ce rôle, par exemple « ISO 27001, chapitre 5.3 »."
+
+msgid "What whoever holds it answers for, in a sentence or two."
+msgstr "Ce dont répond la personne qui le tient, en une phrase ou deux."
+
+msgid "One or several people. A mandatory role nobody holds is flagged on its page."
+msgstr "Une ou plusieurs personnes. Un rôle obligatoire que personne ne tient est signalé sur sa page."
+
+msgid "Tick when a standard or a law asks for it : the role is then flagged while nobody holds it."
+msgstr "À cocher lorsqu'une norme ou une loi le demande : le rôle est alors signalé tant que personne ne le tient."
+
+msgid "Whether the role is still in use. It only filters this register : the lifecycle says whether this record is validated."
+msgstr "Si le rôle est toujours en usage. Ce statut ne sert qu'à filtrer ce registre : c'est le cycle de vie qui dit si cette fiche est validée."
+
+msgid "What your organisation does, for example \"Billing customers\" or \"Running the plants\"."
+msgstr "Ce que fait votre organisation, par exemple « Facturer les clients » ou « Exploiter les centrales »."
+
+msgid "Core business earns the revenue, support makes it possible, management steers."
+msgstr "Le cœur de métier produit la valeur, le support le rend possible, la gestion pilote."
+
+msgid "How much the organisation suffers when it stops."
+msgstr "À quel point l'organisation souffre lorsqu'elle s'arrête."
+
+msgid "Whoever answers for it running."
+msgstr "La personne qui répond de son bon fonctionnement."
+
+msgid "What it covers, from where it starts to what it delivers."
+msgstr "Ce qu'elle couvre, de son point de départ à ce qu'elle livre."
+
+msgid "The wider activity this one is a part of. Only a validated activity can be chosen."
+msgstr "L'activité plus large dont celle-ci fait partie. Seule une activité validée peut être choisie."
+
+msgid "The objectives it helps to reach. Only validated objectives can be linked."
+msgstr "Les objectifs qu'elle aide à atteindre. Seuls les objectifs validés peuvent être liés."
+
+msgid "Whoever it serves or depends on. Only validated stakeholders can be linked."
+msgstr "Celles qu'elle sert ou dont elle dépend. Seules les parties intéressées validées peuvent être liées."
+
+msgid "Whether it is carried out today. It only filters this register : the lifecycle says whether this record is validated."
+msgstr "Si elle est exercée aujourd'hui. Ce statut ne sert qu'à filtrer ce registre : c'est le cycle de vie qui dit si cette fiche est validée."
+
+msgid "say what it covers"
+msgstr "indiquer ce qu'elle couvre"
+
+msgid "link the objectives it helps to reach"
+msgstr "relier les objectifs qu'elle aide à atteindre"
+
+msgid "give it to a person"
+msgstr "le confier à une personne"
+
+msgid "say what it answers for"
+msgstr "indiquer ce dont il répond"
+
+msgid "Essential assets it relies on"
+msgstr "Biens essentiels sur lesquels elle repose"
+
+msgid "No activity yet."
+msgstr "Aucune activité pour l'instant."
+
+msgid "An activity is something your organisation does : billing its customers, running its plants, hiring. Listing the main ones says what your security protects, and how much each one matters."
+msgstr "Une activité est quelque chose que fait votre organisation : facturer ses clients, exploiter ses centrales, recruter. Lister les principales dit ce que votre sécurité protège, et le poids de chacune."
+
+msgid "Nobody holds this role yet."
+msgstr "Personne ne tient encore ce rôle."
+
+msgid "No role yet."
+msgstr "Aucun rôle pour l'instant."
+
+msgid "A role says who does what for security : who decides, who carries out, who checks. Describe the few your organisation needs, then give each one to a person."
+msgstr "Un rôle dit qui fait quoi pour la sécurité : qui décide, qui exécute, qui vérifie. Décrivez les quelques-uns dont votre organisation a besoin, puis confiez chacun à une personne."

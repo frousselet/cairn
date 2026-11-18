@@ -8,7 +8,7 @@
 {% block content %}
 {% page_header activity.name reference=activity.reference nav="context:activity-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:activity-update' activity.pk %}" class="btn btn-primary" hx-get="{% url 'context:activity-update' activity.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.activity_detail" %}
@@ -19,37 +19,39 @@
     {% kpi_tile _("Lifecycle stage") activity.lifecycle_label icon="signpost-split" %}
     {% kpi_tile _("Criticality") activity.get_criticality_display icon="exclamation-diamond" tone=activity.criticality|badge_variant:"level" %}
     {% kpi_tile _("Type") activity.get_type_display icon="diagram-2" tone="neutral" %}
-    {% kpi_tile _("Sub-activities") activity.children.count icon="diagram-3" tone="info" %}
+    {% kpi_tile _("Sub-activities") sub_activities|length icon="diagram-3" tone="info" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if activity.description %}<div class="ov-rich">{{ activity.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card with an Edit button is one section of
+     the activity form : the button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("General") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="activity" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if activity.description %}<div class="ov-rich">{{ activity.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Type") activity.get_type_display %}
       {% meta_item _("Criticality") %}{% choice_badge activity "criticality" %}{% endmeta_item %}
-      {% meta_item _("Status") %}{% choice_badge activity "status" type="status" %}{% endmeta_item %}
       {% meta_item _("Owner") %}{% if activity.owner %}{% user_badge activity.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-      {% if activity.parent_activity %}{% meta_item _("Parent activity") %}<div class="ref-links">{% url 'context:activity-detail' activity.parent_activity.pk as parent_url %}{% ref_link activity.parent_activity url=parent_url %}</div>{% endmeta_item %}{% endif %}
+      {% meta_item _("Status") %}{% choice_badge activity "status" type="status" %}{% endmeta_item %}
       {% meta_item _("Tags") %}{% tag_list activity.tags.all %}{% endmeta_item %}
-      {% meta_item _("Scopes") wide=True %}{% grouped_scope_badges activity.scopes.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if activity.scopes.all %}{% grouped_scope_badges activity.scopes.all %}{% endif %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% with children=activity.children.all %}
-  {% if children %}
-  {% section_card _("Sub-activities") icon="diagram-3" count=children|length %}
-    <div class="ref-links">
-      {% for child in children %}
-      <div class="d-flex justify-content-between align-items-center gap-2">
-        {% url 'context:activity-detail' child.pk as child_url %}{% ref_link child url=child_url %}
-        {% choice_badge child "criticality" %}
-      </div>
-      {% endfor %}
-    </div>
+  {# ── 2. Relations ── #}
+  {% section_card _("Relations") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "relations" _("Relations") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Parent activity") %}{% if parent_activity %}<div class="ref-links">{% ref_link parent_activity url=parent_activity.get_absolute_url %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Sub-activities") %}{% if sub_activities %}<div class="ref-links">{% for child in sub_activities %}{% ref_link child url=child.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Contributing objectives") %}{% if related_objectives %}<div class="ref-links">{% for objective in related_objectives %}{% ref_link objective url=objective.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Stakeholders") %}{% if related_stakeholders %}<div class="ref-links">{% for stakeholder in related_stakeholders %}{% ref_link stakeholder url=stakeholder.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Essential assets it relies on") wide=True %}{% if essential_assets %}<div class="ref-links">{% for asset in essential_assets %}{% ref_link asset url=asset.get_absolute_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
   {% endsection_card %}
-  {% endif %}
-  {% endwith %}
 
   {% record_card activity %}
 {% enddetail_layout %}

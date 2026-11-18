@@ -118,6 +118,11 @@ Roles also matter operationally : some lifecycle transitions are restricted to
 whoever holds a given role for that record's perimeter. Assigning roles is what
 makes those gates work.
 
+Creating a role takes one screen : what it is called, what kind it is, and who
+holds it. Its page then asks what it answers for : each responsibility is a row
+you add there. Someone whose account was deactivated stays on the roles they
+hold until you take them off.
+
 ## Activities
 
 The business processes, hierarchical, classified as core, support or management,
@@ -126,6 +131,11 @@ activities with no owner, for the same reason as mandatory roles.
 
 Activities are what essential assets attach to, so a well-built activity map
 makes the asset inventory follow naturally.
+
+Creating an activity takes one screen : what is done, how much it matters and
+who answers for it. Its *Relations* card links it to the objectives it helps to
+reach and the stakeholders it serves, and lists the essential assets it relies
+on.
 
 ## Indicators
 

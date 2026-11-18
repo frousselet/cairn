@@ -4,9 +4,11 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
+from core.completeness import Completeness, Requirement
 from context.constants import RaciType, RoleStatus, RoleType
 from .base import ScopedModel
 
@@ -33,12 +35,31 @@ class Role(ScopedModel):
 
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back
+    # (a mandatory role nobody holds is flagged on its page, rule RS-06).
+    COMPLETENESS = Completeness(
+        Requirement(
+            "holder", _("give it to a person"),
+            fields=["assigned_users"], section="assignment", blocking=False,
+        ),
+        Requirement(
+            "responsibilities", _("say what it answers for"),
+            check=lambda role: role.responsibilities.exists(),
+            # Its responsibilities are rows of its page : the line leads to their card.
+            href=lambda role: reverse("context:role-detail", args=[role.pk]) + "#responsibilities-section",
+            blocking=False,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Role")
         verbose_name_plural = _("Roles")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("context:role-detail", args=[self.pk])
 
     @property
     def compliance_alert(self):

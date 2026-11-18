@@ -8,7 +8,7 @@
 {% block content %}
 {% page_header role.name reference=role.reference nav="context:role-list" accent="context" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'context:role-update' role.pk %}" class="btn btn-primary" hx-get="{% url 'context:role-update' role.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "context.role_detail" %}
@@ -27,17 +27,35 @@
     {% kpi_tile _("Users") assigned_users|length icon="people" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if role.description %}<div class="ov-rich">{{ role.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card with an Edit button is one section of
+     the role form : the button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("Information") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="shield-check" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if role.description %}<div class="ov-rich">{{ role.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Type") role.get_type_display %}
-      {% meta_item _("Mandatory") %}{% if role.is_mandatory %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
       {% meta_item _("Source standard") role.source_standard %}
+      {% meta_item _("Mandatory role") %}{% if role.is_mandatory %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}{% endmeta_item %}
       {% meta_item _("Status") %}{% choice_badge role "status" type="status" %}{% endmeta_item %}
       {% meta_item _("Tags") %}{% tag_list role.tags.all %}{% endmeta_item %}
-      {% meta_item _("Scopes") %}{% grouped_scope_badges role.scopes.all %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if role.scopes.all %}{% grouped_scope_badges role.scopes.all %}{% endif %}{% endmeta_item %}
     {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 2. Who holds it ── #}
+  {% section_card _("Who holds it") icon="people" count=assigned_users|length %}
+    {% slot actions %}{% section_edit edit_url "assignment" _("Who holds it") %}{% endslot %}
+    {% if assigned_users %}
+    <div class="d-flex flex-column gap-2">
+      {% for user in assigned_users %}{% user_badge user size=28 link=True block=True %}{% endfor %}
+    </div>
+    {% else %}
+    {% empty_state icon="person" message=_("Nobody holds this role yet.") %}
+    {% endif %}
   {% endsection_card %}
 
   {# Re-fetched in place (hx-select on its own id) when a responsibility is added, edited or deleted. #}
@@ -100,16 +118,6 @@
       {% endif %}
     {% endsection_card %}
   </div>
-
-  {% section_card _("Users") icon="people" count=assigned_users|length collapsible=True open=False %}
-    {% if assigned_users %}
-    <div class="d-flex flex-column gap-2">
-      {% for user in assigned_users %}{% user_badge user size=28 link=True block=True %}{% endfor %}
-    </div>
-    {% else %}
-    {% empty_state icon="person" message=_("No assigned user.") %}
-    {% endif %}
-  {% endsection_card %}
 
   {% record_card role %}
 {% enddetail_layout %}
