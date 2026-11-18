@@ -121,10 +121,10 @@ Contrast on a tinted row, the name of a control drawn by a script, the size of
 a target : only a browser knows. The script opens every page of the screenshot
 set plus the sign-in page, a form and the component catalogue, in both themes,
 runs [axe-core](https://github.com/dequelabs/axe-core) on each and fails on
-any violation of a level A or AA rule. It also opens an edit dialog and a
-filter panel before auditing them (axe skips what is hidden), and audits the
-dashboard, a list, a record and the calendar again at a phone's width : about
-ninety renderings in three minutes. To run it locally :
+any violation of a level A or AA rule. It also opens an edit dialog, a filter
+panel and the About dialog before auditing them (axe skips what is hidden),
+and audits the dashboard, a list, a record and the calendar again at a phone's
+width : about a hundred and ten renderings in four minutes. To run it locally :
 
 ```bash
 npm pack axe-core@4.10.3 && tar -xzf axe-core-4.10.3.tgz package/axe.min.js
@@ -169,6 +169,16 @@ sources (no handler, no script without nonce, every named action registered).
 No automated check proves a page accessible : these catch regressions on what
 a machine can measure. A new kind of page is added to the audit's page list,
 and tried once with the keyboard alone.
+
+**What the product says of itself** (`core/accessibility.py`). The About
+dialog, `GET /api/v1/accessibility/` and the `get_accessibility_statement` MCP
+tool give one statement : the level the product is built to meet, these three
+checks, and a conformance of `not_assessed`, since nobody has evaluated the
+product against every criterion. `core/tests/test_accessibility.py` holds the
+statement to the checks (the level it names is the one the browser audit
+fails on, every check it lists is a file the workflow runs) and pins the
+status : the day an evaluation exists, the status, the test and the record of
+who made it change together.
 
 ## Usability
 

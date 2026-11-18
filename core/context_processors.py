@@ -28,6 +28,17 @@ def third_party_dependencies(request):
     return {"THIRD_PARTY_DEPENDENCIES": SimpleLazyObject(dependencies_by_group)}
 
 
+def accessibility_statement(request):
+    """Expose what the product states about its accessibility to the About modal.
+
+    Built lazily, like the component registry : only base.html reads it."""
+    from django.utils.functional import SimpleLazyObject
+
+    from core.accessibility import statement
+
+    return {"ACCESSIBILITY": SimpleLazyObject(statement)}
+
+
 def _parse_hex(hex_color):
     """Parse ``#RRGGBB`` to ``(hue, lightness, saturation)`` or ``None``."""
     h = hex_color.lstrip("#")

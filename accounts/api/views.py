@@ -418,6 +418,24 @@ class DependenciesAPIView(APIView):
         return Response({"status": "success", "count": len(data), "data": data})
 
 
+class AccessibilityAPIView(APIView):
+    """What Cairn states about its own accessibility.
+
+    Same statement as the About dialog (``core.accessibility``), in the language
+    of the request : the standard, its version and its level, the conformance
+    status (``not_assessed`` until a person has evaluated the product against
+    every criterion), the automated checks it rests on and where to report a
+    barrier.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from core.accessibility import statement
+
+        return Response({"status": "success", "data": statement()})
+
+
 class GlossaryAPIView(APIView):
     """The vocabulary of the application : its terms and its acronyms.
 

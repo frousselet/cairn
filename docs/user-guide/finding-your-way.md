@@ -157,6 +157,15 @@ your organisation has chosen.
 **About**, at the foot of the sidebar, opens a small dialog stating the version
 you are running, the licence (AGPL-3.0-or-later) and where the source code is.
 
+Under **Accessibility**, the same dialog says what Cairn claims and what it
+does not : it is built to meet WCAG 2.2 at level AA, three automated checks
+hold that on every change, and its conformance has not been assessed by a
+person against every criterion, so full conformance is not claimed. If you
+meet a barrier, the link below the statement is where to report it. If your
+organisation must publish an accessibility declaration for the service it runs
+(the RGAA in France asks for one), that declaration is yours to make after your
+own audit : this statement is not it.
+
 Expand **Open source libraries** to see the third-party components Cairn is
 built on, grouped into backend, frontend and development tooling. Each one
 carries the version this instance actually runs and links to its official

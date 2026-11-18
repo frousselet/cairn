@@ -10667,6 +10667,25 @@ def _register_accounts_tools(server):
         list_dependencies,
     )
 
+    def get_accessibility_statement(user, arguments):
+        from core.accessibility import statement
+
+        return statement()
+
+    server.register_tool(
+        "get_accessibility_statement",
+        "Read what Cairn states about its own accessibility, as the About dialog shows it : "
+        "'standard', 'version' and 'level' (the level the product is built to meet), 'conformance' "
+        "('not_assessed' until a person has evaluated the product against every criterion; otherwise "
+        "'fully_conformant', 'partially_conformant' or 'non_conformant'), 'target' and 'limits' (the two "
+        "sentences of the statement), 'checks' (the automated checks run on every change, each with the "
+        "file of the repository that runs it) and 'report_url' (where to report a barrier). "
+        "Automated checks never prove conformance : do not report the product as conformant unless "
+        "'conformance' says so.",
+        {"type": "object", "properties": {}},
+        get_accessibility_statement,
+    )
+
     def check_for_updates(user, arguments):
         from core.updates import update_status
 

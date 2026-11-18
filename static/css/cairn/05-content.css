@@ -836,7 +836,7 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
     padding-top: .75rem;
   }
 }
-.about-libraries__title {
+.about-section-title {
   display: flex;
   align-items: center;
   gap: .5rem;
@@ -845,6 +845,25 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
   font-weight: 600;
   color: var(--text-secondary);
 }
+/* What the product states about its accessibility (core/accessibility.py),
+   above the inventory : the level it is built to meet, what is checked, what
+   is not claimed. Sentences, so they take a line height the inventory below
+   does not need; the column bounds their length. */
+.about-statement {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--border-light);
+  font-size: .8125rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.about-statement p { margin: .5rem 0 0; }
+.about-statement .about-statement__target { color: var(--text-primary); font-weight: 600; }
+.about-statement .about-statement__lead { margin-top: .75rem; }
+.about-statement__checks { margin: .25rem 0 0; padding-left: 1.1rem; }
+.about-statement__checks li { margin-top: .15rem; }
+.about-statement a { color: var(--accent-text); text-decoration: underline; text-underline-offset: 2px; }
+.about-statement a:hover { text-decoration-thickness: 2px; }
 .about-lib-group { margin-top: .85rem; }
 .about-lib-group__title {
   font-size: .6875rem;
@@ -870,7 +889,11 @@ a.avatar-stack-item:hover { transform: translateY(-2px); position: relative; z-i
   /* An entry split across two columns would be unreadable. */
   break-inside: avoid;
 }
+/* A link of the list is a target 24 px tall (WCAG 2.5.8) : at the height of
+   its text alone, a row sat closer to the next than a finger needs. */
 .about-lib-list a {
+  display: inline-block;
+  padding-block: .15rem;
   color: var(--text-secondary);
   text-decoration: none;
   overflow-wrap: anywhere;

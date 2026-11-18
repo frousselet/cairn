@@ -199,8 +199,9 @@ nothing.
 ## Accessibility
 
 The commitment is WCAG 2.2 AA, and three checks hold it (see
-[testing](../technical/testing.md#accessibility)). In practice, on a new
-screen :
+[testing](../technical/testing.md#accessibility)). The product states as much
+and no more in its About dialog (`core/accessibility.py`) : built to meet the
+level, conformance not assessed. In practice, on a new screen :
 
 - **Text colour** : `--text-primary`, `--text-secondary` or `--text-muted`,
   and for a colour the *ink* token (`--accent-text`, `--success-text`,

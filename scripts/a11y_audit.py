@@ -88,6 +88,9 @@ OPEN_STATES: dict[str, tuple[str, str]] = {
     # it only folds if the action dispatcher runs under the policy.
     "sidebar-rail": ("/context/scopes/", "document.querySelector('.sidebar-collapse-toggle').click()"),
     "calendar-year": ("/calendar/", "document.querySelector('#viewToggle [data-view=year]').click()"),
+    # Where the product states its own accessibility : the statement is held
+    # to what it says.
+    "about-dialog": ("/context/scopes/", "document.querySelector('[data-bs-target=\"#aboutModal\"]').click()"),
 }
 
 # Pages audited again at a phone's width, where the layout stacks and the

@@ -546,13 +546,33 @@
           </div>
           </div>
 
-          {% comment %}
-            Third-party components, from the curated registry in core/dependencies.py.
-            Versions of the Python distributions are read from the installed metadata,
-            front-end ones from the pins the libraries are mirrored with.
-          {% endcomment %}
           <div class="about-libraries">
-            <h6 class="about-libraries__title">
+            {% comment %}
+              What the product states about its accessibility, from
+              core/accessibility.py : the level it is built to meet, what is
+              checked on every change, and what is not claimed. The REST API
+              and the MCP server return the same statement.
+            {% endcomment %}
+            <section class="about-statement" id="aboutAccessibility" aria-labelledby="aboutAccessibilityTitle">
+              <h6 class="about-section-title" id="aboutAccessibilityTitle">
+                <i class="bi bi-universal-access" aria-hidden="true"></i>
+                <span>{% trans "Accessibility" %}</span>
+              </h6>
+              <p class="about-statement__target">{{ ACCESSIBILITY.target }}</p>
+              <p class="about-statement__lead">{% trans "Checked on every change :" %}</p>
+              <ul class="about-statement__checks">
+                {% for check in ACCESSIBILITY.checks %}<li>{{ check.label }}</li>{% endfor %}
+              </ul>
+              <p>{{ ACCESSIBILITY.limits }}</p>
+              <p><a href="{{ ACCESSIBILITY.report_url }}" target="_blank" rel="noopener noreferrer">{% trans "Report an accessibility barrier" %}</a></p>
+            </section>
+
+            {% comment %}
+              Third-party components, from the curated registry in core/dependencies.py.
+              Versions of the Python distributions are read from the installed metadata,
+              front-end ones from the pins the libraries are mirrored with.
+            {% endcomment %}
+            <h6 class="about-section-title">
               <i class="bi bi-boxes" aria-hidden="true"></i>
               <span>{% trans "Open source libraries" %}</span>
             </h6>

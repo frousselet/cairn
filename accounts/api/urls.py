@@ -29,6 +29,8 @@ urlpatterns = [
     # Third-party components the instance is built on
     path("dependencies/", views.DependenciesAPIView.as_view(), name="api-dependencies"),
     path("update-check/", views.UpdateCheckAPIView.as_view(), name="api-update-check"),
+    # What the product states about its accessibility
+    path("accessibility/", views.AccessibilityAPIView.as_view(), name="api-accessibility"),
 
     # The vocabulary of the application (terms and acronyms)
     path("glossary/", views.GlossaryAPIView.as_view(), name="api-glossary"),

@@ -173,6 +173,7 @@ TEMPLATES = [
                 "django.template.context_processors.i18n",
                 "core.context_processors.app_version",
                 "core.context_processors.third_party_dependencies",
+                "core.context_processors.accessibility_statement",
                 "core.context_processors.assistant_enabled",
                 "core.context_processors.map_tiles",
                 "core.context_processors.company",

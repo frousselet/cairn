@@ -22381,3 +22381,27 @@ msgstr "Une partie intéressée est quelqu'un qui attend quelque chose de votre 
 
 msgid "The requirements and the feedback linked to it lose that link. To set it aside and keep its trace, edit it and untick Applicable."
 msgstr "Les exigences et les retours qui y sont liés perdent ce lien. Pour l'écarter en gardant sa trace, modifiez-la et décochez Applicable."
+
+msgid "Cairn is built to meet the Web Content Accessibility Guidelines (WCAG) %(version)s at level %(level)s."
+msgstr "Cairn est conçu pour respecter les règles pour l'accessibilité des contenus Web (WCAG) %(version)s au niveau %(level)s."
+
+msgid "Its conformance has not been assessed : automated checks see only part of the criteria, and nobody has evaluated Cairn against all of them yet. Full conformance is not claimed."
+msgstr "Sa conformité n'a pas été évaluée : les vérifications automatiques ne voient qu'une partie des critères, et personne n'a encore évalué Cairn sur leur totalité. La conformité totale n'est pas revendiquée."
+
+msgid "The contrast of every text colour, in the light and the dark theme."
+msgstr "Le contraste de chaque couleur de texte, en thème clair comme en thème sombre."
+
+msgid "The markup of every page : a name for each control and each image, a label for each field, links the keyboard reaches."
+msgstr "Le balisage de chaque page : un nom pour chaque commande et chaque image, un libellé pour chaque champ, des liens que le clavier atteint."
+
+msgid "A reference set of pages opened in a browser and audited with axe-core, in both themes."
+msgstr "Un jeu de pages de référence ouvertes dans un navigateur et auditées avec axe-core, dans les deux thèmes."
+
+msgid "Checked on every change :"
+msgstr "Vérifié à chaque modification :"
+
+msgid "Report an accessibility barrier"
+msgstr "Signaler un obstacle d'accessibilité"
+
+msgid "Accessibility"
+msgstr "Accessibilité"
