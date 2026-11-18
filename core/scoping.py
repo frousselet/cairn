@@ -52,6 +52,13 @@ def filter_queryset_by_scopes(qs, scope_ids, explicit=None):
         return qs
     if lookup == "id":
         return qs.filter(id__in=scope_ids)
+    if _requires_every_scope(qs.model, lookup, explicit):
+        # Filed under at least one scope, and under none the user is not given.
+        Scope = apps.get_model("context", "Scope")
+        beyond = qs.model._base_manager.filter(
+            **{f"{lookup}__in": Scope._base_manager.exclude(id__in=scope_ids)}
+        ).values("pk")
+        return qs.filter(**{f"{lookup}__isnull": False}).exclude(pk__in=beyond).distinct()
     alternates = _alternate_lookups(qs.model, explicit)
     matches = Q(**{f"{lookup}__id__in": scope_ids})
     for alternate in alternates:
@@ -65,6 +72,19 @@ def filter_queryset_by_scopes(qs, scope_ids, explicit=None):
             orphan &= Q(**{f"{alternate}__isnull": True})
         matches |= orphan
     return qs.filter(matches).distinct()
+
+
+def _requires_every_scope(model, lookup, explicit=None):
+    """Whether a row of `model` is reached only by who is given **every** scope it is filed under.
+
+    The usual rule is "one scope in common" : a record filed under two scopes
+    belongs to both. A model sets ``scope_requires_every_scope = True`` when
+    its rows are *made from* what several scopes hold (a generated report) :
+    sharing one scope must not open what was drawn from the other. Such a row
+    filed under no scope covers everything, and is reached by nobody the
+    scopes restrict.
+    """
+    return bool(not explicit and lookup == "scopes" and getattr(model, "scope_requires_every_scope", False))
 
 
 def _alternate_lookups(model, explicit=None):
@@ -201,6 +221,9 @@ def object_in_scopes(obj, scope_ids):
     An object that carries no scope at all stays visible. That is deliberate
     and matches the guard this replaces : scoping restricts what has been
     filed under a perimeter, it does not hide records nobody has filed yet.
+    The exception is a model whose rows are made from what several scopes
+    hold (`_requires_every_scope`) : every scope of the row is needed, and a
+    row filed under none is out of reach.
     """
     model = type(obj)
     lookup = resolve_scope_lookup(model)
@@ -209,6 +232,9 @@ def object_in_scopes(obj, scope_ids):
     base = model._default_manager.filter(pk=obj.pk)
     if lookup == "id":
         return base.filter(id__in=scope_ids).exists()
+    if _requires_every_scope(model, lookup):
+        filed = set(getattr(obj, lookup).values_list("pk", flat=True))
+        return bool(filed) and filed <= set(scope_ids)
     lookups = (lookup, *_alternate_lookups(model))
     filed = Q()
     for path in lookups:

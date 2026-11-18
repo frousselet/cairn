@@ -21515,3 +21515,6 @@ msgstr "Un bien support est ce sur quoi reposent vos biens essentiels : un serve
 
 msgid "Not filled in yet"
 msgstr "Pas encore renseigné"
+
+msgid "The scopes its content was drawn from. Empty : the whole instance."
+msgstr "Les périmètres dont son contenu est tiré. Vide : toute l'instance."

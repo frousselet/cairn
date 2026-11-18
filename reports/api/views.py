@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from accounts.api.permissions import ModulePermission
 from compliance.constants import ActionPlanStatus, AssessmentStatus
 from compliance.models import ComplianceActionPlan, ComplianceAssessment, Framework
-from core.scoping import get_scoped_object_or_none, scoped_queryset
+from core.scoping import get_scoped_object_or_none, narrow_scope_ids, scoped_queryset
 from core.transition_messages import transition_error_detail
 from reports.constants import ManagementReviewStatus, ReportStatus, ReportType
 from reports.generators import generate_audit_report_pdf, generate_soa_pdf
@@ -74,22 +74,22 @@ class ReportViewSet(ScopeFilterAPIMixin, viewsets.ReadOnlyModelViewSet):
 
         try:
             filename, pdf_bytes = generate_soa_pdf(frameworks, request.user)
-            report = Report.objects.create(
+            report = Report.objects.record(
+                request.user, sources=frameworks,
                 report_type=ReportType.SOA,
                 name=report_name,
                 status=ReportStatus.COMPLETED,
-                created_by=request.user,
                 file_content=pdf_bytes,
                 file_name=filename,
             )
             report.frameworks.set(frameworks)
         except Exception:
             logging.getLogger(__name__).exception("SoA PDF generation failed")
-            report = Report.objects.create(
+            report = Report.objects.record(
+                request.user, sources=frameworks,
                 report_type=ReportType.SOA,
                 name=report_name,
                 status=ReportStatus.FAILED,
-                created_by=request.user,
             )
 
         return Response(ReportSerializer(report).data, status=status.HTTP_201_CREATED)
@@ -119,11 +119,11 @@ class ReportViewSet(ScopeFilterAPIMixin, viewsets.ReadOnlyModelViewSet):
 
         try:
             filename, pdf_bytes = generate_audit_report_pdf(assessment, request.user)
-            report = Report.objects.create(
+            report = Report.objects.record(
+                request.user, sources=[assessment],
                 report_type=ReportType.AUDIT_REPORT,
                 name=report_name,
                 status=ReportStatus.COMPLETED,
-                created_by=request.user,
                 assessment=assessment,
                 file_content=pdf_bytes,
                 file_name=filename,
@@ -131,11 +131,11 @@ class ReportViewSet(ScopeFilterAPIMixin, viewsets.ReadOnlyModelViewSet):
             report.frameworks.set(assessment.frameworks.all())
         except Exception:
             logging.getLogger(__name__).exception("Audit report PDF generation failed")
-            report = Report.objects.create(
+            report = Report.objects.record(
+                request.user, sources=[assessment],
                 report_type=ReportType.AUDIT_REPORT,
                 name=report_name,
                 status=ReportStatus.FAILED,
-                created_by=request.user,
                 assessment=assessment,
             )
 
@@ -167,11 +167,11 @@ class ReportViewSet(ScopeFilterAPIMixin, viewsets.ReadOnlyModelViewSet):
                 request.user, scope_ids,
                 period_start=period_start, period_end=period_end,
             )
-            report = Report.objects.create(
+            report = Report.objects.record(
+                request.user, scope_ids=narrow_scope_ids(request.user, scope_ids),
                 report_type=report_type,
                 name=report_name,
                 status=ReportStatus.COMPLETED,
-                created_by=request.user,
                 file_content=file_bytes,
                 file_name=filename,
             )
@@ -179,11 +179,11 @@ class ReportViewSet(ScopeFilterAPIMixin, viewsets.ReadOnlyModelViewSet):
             logging.getLogger(__name__).exception(
                 "Management review %s generation failed", fmt.upper()
             )
-            report = Report.objects.create(
+            report = Report.objects.record(
+                request.user, scope_ids=narrow_scope_ids(request.user, scope_ids),
                 report_type=report_type,
                 name=report_name,
                 status=ReportStatus.FAILED,
-                created_by=request.user,
             )
 
         return Response(ReportSerializer(report).data, status=status.HTTP_201_CREATED)

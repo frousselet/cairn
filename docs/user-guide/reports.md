@@ -29,6 +29,13 @@ Generated reports are listed under Governance -> Strategy -> Reports, so a
 deliverable you produced last quarter is retrievable rather than regenerated
 from data that has since moved.
 
+**A report is filed under the scopes it was made from.** It is listed to, and
+downloaded by, the people who are given **every** one of those scopes : a
+report drawn from two perimeters is not opened by sharing one of them. A
+report generated over the whole instance, by someone no scope restricts, is
+read by those no scope restricts. Someone limited to scopes always finds the
+reports they generated themselves, which hold what they could read.
+
 ## Management review
 
 The ISO 27001 clause 9.3 management review, structured as the clause requires

@@ -698,20 +698,20 @@ class ISO27005ReportExportView(LoginRequiredMixin, PermissionRequiredMixin, Scop
         try:
             filename, content = generate_iso27005_report_docx(assessment, user)
         except Exception:
-            Report.objects.create(
+            Report.objects.record(
+                user, sources=[assessment],
                 report_type=ReportType.ISO27005_REPORT,
                 name=f"ISO 27005 report - {assessment.reference}",
                 status=ReportStatus.FAILED,
-                created_by=user,
             )
             raise
 
-        Report.objects.create(
+        Report.objects.record(
+            user, sources=[assessment],
             report_type=ReportType.ISO27005_REPORT,
             name=f"ISO 27005 report - {assessment.reference} - "
                  f"{timezone.now().strftime('%Y-%m-%d %H:%M')}",
             status=ReportStatus.COMPLETED,
-            created_by=user,
             file_content=content,
             file_name=filename,
         )
@@ -1247,23 +1247,24 @@ class RiskRegisterExportView(LoginRequiredMixin, PermissionRequiredMixin, View):
         from reports.constants import ReportStatus, ReportType
         from reports.generators import generate_risk_register_xlsx
         from reports.models import Report
+        from reports.models.report import scopes_of_risks
 
         try:
             filename, content = generate_risk_register_xlsx(qs, user)
         except Exception:
-            Report.objects.create(
+            Report.objects.record(
+                user, scope_ids=scopes_of_risks(qs),
                 report_type=ReportType.RISK_REGISTER,
                 name="Risk register",
                 status=ReportStatus.FAILED,
-                created_by=user,
             )
             raise
 
-        Report.objects.create(
+        Report.objects.record(
+            user, scope_ids=scopes_of_risks(qs),
             report_type=ReportType.RISK_REGISTER,
             name=f"Risk register - {timezone.now().strftime('%Y-%m-%d %H:%M')}",
             status=ReportStatus.COMPLETED,
-            created_by=user,
             file_content=content,
             file_name=filename,
         )

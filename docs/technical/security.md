@@ -114,6 +114,21 @@ that takes one record, every creation form. Nothing out of reach may come
 back. It exists because a test of the filtering helper once passed while sixty
 families of MCP tools were registered with the filter switched off.
 
+**A generated report needs every scope it was drawn from.** The usual rule is
+"one scope in common" : a record filed under two scopes belongs to both. A
+report is not a record of the register, it is a copy of what one or several
+scopes held when it was generated : sharing one of them must not open what was
+drawn from the other. `Report` sets `scope_requires_every_scope`, which
+`core/scoping.py` applies on every surface : a report is reached by who is
+given every scope it is filed under, and one filed under none (the whole
+instance) by nobody the scopes restrict. `Report.objects.record(author,
+sources=..., scope_ids=...)` files it as it is created : the scopes of its
+sources, narrowed to those of an author who is limited to some, so that an
+author always reads their own report. Reports made before this rule keep the
+scopes of the assessment and of the frameworks they still point at; the others
+(management review minutes, risk registers) are left filed under nothing until
+they are generated again.
+
 A superuser bypasses scope filtering. That is the intended escape hatch, and it
 is why superuser is not a role you hand out.
 

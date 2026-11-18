@@ -1257,7 +1257,8 @@ def test_mcp_tools_read_through_the_scoped_helpers():
         if not (isinstance(node, ast.Attribute) and node.attr == "objects"):
             continue
         parent = parents.get(node)
-        if isinstance(parent, ast.Attribute) and parent.attr == "create":
+        # A write : ``create``, and ``record`` which files a report as it creates it.
+        if isinstance(parent, ast.Attribute) and parent.attr in ("create", "record"):
             continue
         scoped_on_the_spot, functions = False, []
         cursor = node
@@ -1323,3 +1324,129 @@ def test_an_api_action_restricts_the_serializer_it_builds():
                     offenders.append(f"{rel}:{node.lineno} {node.func.id}")
                     break
     assert offenders == []
+
+
+# ── A generated report : every scope it was drawn from ──────────────────────
+
+
+@pytest.mark.django_db
+class TestAReportIsFiledUnderWhatItWasMadeFrom:
+    """`Report` sets `scope_requires_every_scope` : one scope in common is not enough."""
+
+    def _report(self, author, **more):
+        from reports.models import Report
+
+        return Report.objects.record(author, report_type="management_review_docx", name="R", **more)
+
+    def test_a_report_over_two_scopes_needs_both(self, two_scopes):
+        from core.scoping import scoped_queryset, user_can_reach
+        from reports.models import Report
+
+        everything = UserFactory(is_superuser=True)
+        both = self._report(everything, scope_ids=[two_scopes["mine"].pk, two_scopes["theirs"].pk])
+        mine = self._report(everything, scope_ids=[two_scopes["mine"].pk])
+        user = two_scopes["user"]
+
+        assert not user_can_reach(user, both)
+        assert user_can_reach(user, mine)
+        assert list(scoped_queryset(user, Report.objects.all())) == [mine]
+
+    def test_a_report_over_the_whole_instance_is_for_those_nothing_restricts(self, two_scopes):
+        from core.scoping import scoped_queryset, user_can_reach
+        from reports.models import Report
+
+        whole = self._report(UserFactory(is_superuser=True))
+
+        assert list(whole.scopes.all()) == []
+        assert not user_can_reach(two_scopes["user"], whole)
+        assert not scoped_queryset(two_scopes["user"], Report.objects.all()).exists()
+        assert user_can_reach(UserFactory(is_superuser=True), whole)
+
+    def test_an_author_limited_to_scopes_files_under_what_they_saw(self, two_scopes):
+        """The source spans a scope the author is not given : the report holds what they could read."""
+        from compliance.tests.factories import ComplianceAssessmentFactory
+        from core.scoping import user_can_reach
+
+        assessment = ComplianceAssessmentFactory()
+        assessment.scopes.set([two_scopes["mine"], two_scopes["theirs"]])
+        user = two_scopes["user"]
+
+        report = self._report(user, sources=[assessment])
+
+        assert list(report.scopes.all()) == [two_scopes["mine"]]
+        assert user_can_reach(user, report)
+
+    def test_an_author_limited_to_scopes_always_reads_their_own_report(self, two_scopes):
+        """A source filed under nothing : the report falls back on the author's own scopes."""
+        from compliance.tests.factories import ComplianceAssessmentFactory
+        from core.scoping import user_can_reach
+
+        unfiled = ComplianceAssessmentFactory()
+        unfiled.scopes.clear()
+        user = two_scopes["user"]
+
+        report = self._report(user, sources=[unfiled])
+
+        assert list(report.scopes.all()) == [two_scopes["mine"]]
+        assert user_can_reach(user, report)
+
+    def test_the_register_and_the_download_follow_it(self, client, two_scopes):
+        everything = UserFactory(is_superuser=True)
+        theirs = self._report(everything, scope_ids=[two_scopes["theirs"].pk], file_content=b"x", file_name="r.docx")
+        type(theirs).objects.filter(pk=theirs.pk).update(name="REPORT-THEIRS")
+        whole = self._report(everything, file_content=b"x", file_name="r.docx")
+        type(whole).objects.filter(pk=whole.pk).update(name="REPORT-WHOLE")
+        ours = self._report(everything, scope_ids=[two_scopes["mine"].pk], file_content=b"x", file_name="r.docx")
+        type(ours).objects.filter(pk=ours.pk).update(name="REPORT-MINE")
+        client.force_login(two_scopes["user"])
+
+        html = client.get(reverse("reports:report-list")).content.decode()
+
+        assert "REPORT-MINE" in html
+        assert "REPORT-THEIRS" not in html and "REPORT-WHOLE" not in html
+        assert client.get(reverse("reports:report-download", kwargs={"pk": ours.pk})).status_code == 200
+        for hidden in (theirs, whole):
+            assert client.get(reverse("reports:report-download", kwargs={"pk": hidden.pk})).status_code == 404
+
+    def test_the_api_and_the_mcp_server_follow_it(self, two_scopes):
+        everything = UserFactory(is_superuser=True)
+        theirs = self._report(everything, scope_ids=[two_scopes["theirs"].pk])
+        whole = self._report(everything)
+        ours = self._report(everything, scope_ids=[two_scopes["mine"].pk])
+        user = two_scopes["user"]
+
+        rows = _data(_api(user).get("/api/v1/reports/reports/"))
+        rows = rows.get("results", rows) if isinstance(rows, dict) else rows
+        listed = _mcp_call(user, "list_reports", {})
+        listed = listed.get("items", listed) if isinstance(listed, dict) else listed
+
+        assert [row["id"] for row in rows] == [str(ours.pk)]
+        assert [row["id"] for row in listed] == [str(ours.pk)]
+        for hidden in (theirs, whole):
+            assert _api(user).get(f"/api/v1/reports/reports/{hidden.pk}/").status_code == 404
+            assert "error" in _mcp_call(user, "delete_report", {"id": str(hidden.pk)})
+        assert type(ours).objects.count() == 3
+
+    def test_the_migration_files_what_still_points_at_its_source(self, two_scopes):
+        import importlib
+
+        from django.apps import apps
+
+        from compliance.tests.factories import ComplianceAssessmentFactory
+        from reports.models import Report
+
+        assessment = ComplianceAssessmentFactory()
+        assessment.scopes.set([two_scopes["theirs"]])
+        audit = Report.objects.create(report_type="audit_report", name="Audit", assessment=assessment)
+        statement = Report.objects.create(report_type="soa", name="Statement")
+        framework = FrameworkFactory()
+        framework.scopes.set([two_scopes["mine"]])
+        statement.frameworks.set([framework])
+        minutes = Report.objects.create(report_type="management_review_docx", name="Minutes")
+
+        importlib.import_module("reports.migrations.0011_report_scopes").file_existing_reports(apps, None)
+
+        assert list(audit.scopes.all()) == [two_scopes["theirs"]]
+        assert list(statement.scopes.all()) == [two_scopes["mine"]]
+        # Nothing says what it was made from : the whole instance, for those nothing restricts.
+        assert list(minutes.scopes.all()) == []

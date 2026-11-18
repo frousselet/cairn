@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils import timezone
 
-from core.scoping import filter_queryset_by_scopes
+from core.scoping import filter_queryset_by_scopes, narrow_scope_ids
 from mcp.server import InvalidParamsError
 
 
@@ -11389,7 +11389,7 @@ def _register_reports_tools(server):
 
     report_fields = [
         "id", "report_type", "name", "status", "file_name",
-        "created_at", "created_by",
+        "created_at", "created_by", "scopes",
     ]
 
     # List reports
@@ -11442,21 +11442,21 @@ def _register_reports_tools(server):
 
         try:
             filename, pdf_bytes = generate_soa_pdf(frameworks, user)
-            report = Report.objects.create(
+            report = Report.objects.record(
+                user, sources=frameworks,
                 report_type=ReportType.SOA,
                 name=report_name,
                 status=ReportStatus.COMPLETED,
-                created_by=user,
                 file_content=pdf_bytes,
                 file_name=filename,
             )
             report.frameworks.set(frameworks)
         except Exception:
-            report = Report.objects.create(
+            report = Report.objects.record(
+                user, sources=frameworks,
                 report_type=ReportType.SOA,
                 name=report_name,
                 status=ReportStatus.FAILED,
-                created_by=user,
             )
 
         return _serialize_obj(report, report_fields)
@@ -11502,22 +11502,22 @@ def _register_reports_tools(server):
 
         try:
             filename, pdf_bytes = generate_audit_report_pdf(assessment, user)
-            report = Report.objects.create(
+            report = Report.objects.record(
+                user, sources=[assessment],
                 report_type=ReportType.AUDIT_REPORT,
                 name=report_name,
                 status=ReportStatus.COMPLETED,
-                created_by=user,
                 assessment=assessment,
                 file_content=pdf_bytes,
                 file_name=filename,
             )
             report.frameworks.set(assessment.frameworks.all())
         except Exception:
-            report = Report.objects.create(
+            report = Report.objects.record(
+                user, sources=[assessment],
                 report_type=ReportType.AUDIT_REPORT,
                 name=report_name,
                 status=ReportStatus.FAILED,
-                created_by=user,
                 assessment=assessment,
             )
 
@@ -11581,23 +11581,24 @@ def _register_reports_tools(server):
 
         from reports.constants import ReportStatus, ReportType
         from reports.generators import generate_risk_register_xlsx
+        from reports.models.report import scopes_of_risks
 
         try:
             filename, content = generate_risk_register_xlsx(qs, user)
-            report = Report.objects.create(
+            report = Report.objects.record(
+                user, scope_ids=scopes_of_risks(qs),
                 report_type=ReportType.RISK_REGISTER,
                 name=f"Risk register - {timezone.now().strftime('%Y-%m-%d %H:%M')}",
                 status=ReportStatus.COMPLETED,
-                created_by=user,
                 file_content=content,
                 file_name=filename,
             )
         except Exception as exc:
-            Report.objects.create(
+            Report.objects.record(
+                user, scope_ids=scopes_of_risks(qs),
                 report_type=ReportType.RISK_REGISTER,
                 name="Risk register",
                 status=ReportStatus.FAILED,
-                created_by=user,
             )
             return _error(f"Failed to generate risk register: {exc}")
 
@@ -11663,21 +11664,21 @@ def _register_reports_tools(server):
 
         try:
             filename, content = generate_iso27005_report_docx(assessment, user)
-            report = Report.objects.create(
+            report = Report.objects.record(
+                user, sources=[assessment],
                 report_type=ReportType.ISO27005_REPORT,
                 name=f"ISO 27005 report - {assessment.reference} - "
                      f"{timezone.now().strftime('%Y-%m-%d %H:%M')}",
                 status=ReportStatus.COMPLETED,
-                created_by=user,
                 file_content=content,
                 file_name=filename,
             )
         except Exception as exc:
-            Report.objects.create(
+            Report.objects.record(
+                user, sources=[assessment],
                 report_type=ReportType.ISO27005_REPORT,
                 name=f"ISO 27005 report - {assessment.reference}",
                 status=ReportStatus.FAILED,
-                created_by=user,
             )
             return _error(f"Failed to generate ISO 27005 report: {exc}")
 
@@ -11789,20 +11790,20 @@ def _register_reports_tools(server):
                 user, scope_ids,
                 period_start=period_start, period_end=period_end,
             )
-            report = Report.objects.create(
+            report = Report.objects.record(
+                user, scope_ids=narrow_scope_ids(user, scope_ids),
                 report_type=ReportType.MANAGEMENT_REVIEW_PPTX,
                 name=report_name,
                 status=ReportStatus.COMPLETED,
-                created_by=user,
                 file_content=file_bytes,
                 file_name=filename,
             )
         except Exception:
-            report = Report.objects.create(
+            report = Report.objects.record(
+                user, scope_ids=narrow_scope_ids(user, scope_ids),
                 report_type=ReportType.MANAGEMENT_REVIEW_PPTX,
                 name=report_name,
                 status=ReportStatus.FAILED,
-                created_by=user,
             )
         return _serialize_obj(report, report_fields)
 
@@ -11850,20 +11851,20 @@ def _register_reports_tools(server):
                 user, scope_ids,
                 period_start=period_start, period_end=period_end,
             )
-            report = Report.objects.create(
+            report = Report.objects.record(
+                user, scope_ids=narrow_scope_ids(user, scope_ids),
                 report_type=ReportType.MANAGEMENT_REVIEW_DOCX,
                 name=report_name,
                 status=ReportStatus.COMPLETED,
-                created_by=user,
                 file_content=file_bytes,
                 file_name=filename,
             )
         except Exception:
-            report = Report.objects.create(
+            report = Report.objects.record(
+                user, scope_ids=narrow_scope_ids(user, scope_ids),
                 report_type=ReportType.MANAGEMENT_REVIEW_DOCX,
                 name=report_name,
                 status=ReportStatus.FAILED,
-                created_by=user,
             )
         return _serialize_obj(report, report_fields)
 

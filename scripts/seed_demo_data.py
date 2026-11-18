@@ -6195,6 +6195,51 @@ with transaction.atomic():
         nda_accepted=True, nda_accepted_at=NOW,
     )
 
+    # ─────────────────────────────────────────────── generated reports
+    _phase("Generated reports...")
+    # Each is filed under the scopes its content was drawn from (the manager
+    # does it from the sources). The files are placeholders : the register,
+    # its filters and the tenancy of a report are what the demo exercises.
+    from reports.constants import ReportStatus, ReportType
+    from reports.models import Report
+
+    _pdf = b"%PDF-1.4\n% Voltara Energy demo placeholder\n%%EOF\n"
+    Report.objects.record(
+        ines, sources=[asm_iso],
+        report_type=ReportType.AUDIT_REPORT, name=f"Audit report - {asm_iso.reference} : {asm_iso.name}",
+        status=ReportStatus.COMPLETED, assessment=asm_iso, file_content=_pdf, file_name="audit-report.pdf",
+    )
+    _soa = Report.objects.record(
+        ines, sources=list(asm_iso.frameworks.all()),
+        report_type=ReportType.SOA, name="Statement of Applicability - ISO 27001",
+        status=ReportStatus.COMPLETED, file_content=_pdf, file_name="statement-of-applicability.pdf",
+    )
+    _soa.frameworks.set(asm_iso.frameworks.all())
+    Report.objects.record(
+        julien, sources=[assessment],
+        report_type=ReportType.ISO27005_REPORT, name=f"ISO 27005 report - {assessment.reference}",
+        status=ReportStatus.COMPLETED, file_content=b"PK\x03\x04 demo placeholder", file_name="iso27005-report.docx",
+    )
+    # The whole group : filed under no scope, read by those nothing restricts.
+    Report.objects.record(
+        elise,
+        report_type=ReportType.MANAGEMENT_REVIEW_DOCX, name="Management review - Minutes",
+        status=ReportStatus.COMPLETED, file_content=b"PK\x03\x04 demo placeholder", file_name="management-review.docx",
+    )
+    # One perimeter only.
+    _one_scope = Scope.objects.filter(parent_scope__isnull=False).order_by("name").first()
+    if _one_scope is not None:
+        Report.objects.record(
+            elise, scope_ids=[_one_scope.pk],
+            report_type=ReportType.MANAGEMENT_REVIEW_PPTX, name=f"Management review - Presentation ({_one_scope.name})",
+            status=ReportStatus.COMPLETED, file_content=b"PK\x03\x04 demo placeholder", file_name="management-review.pptx",
+        )
+    Report.objects.record(
+        ines, sources=[asm_gdpr],
+        report_type=ReportType.AUDIT_REPORT, name=f"Audit report - {asm_gdpr.reference} : {asm_gdpr.name}",
+        status=ReportStatus.FAILED, assessment=asm_gdpr,
+    )
+
     # ─────────────────────────────────────────────── lifecycle states
     _phase("Lifecycle states...")
     _spread_lifecycle_states(elise)
