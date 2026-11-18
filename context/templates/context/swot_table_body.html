@@ -30,5 +30,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No SWOT analysis yet.") message=_("A SWOT analysis surfaces strengths, weaknesses, opportunities and threats. One per scope or major initiative is the common cadence.") colspan=7 %}
+{% url 'context:swot-create' as swot_create_url %}
+{% list_empty title=_("No SWOT analysis yet.") message=_("A SWOT analysis is a four-box picture of where you stand : your strengths and weaknesses, the opportunities and threats around you. Filling it with your team is a quick way to find your issues and choose your objectives.") colspan=7 create_url=swot_create_url create_label=_("New SWOT analysis") permission="context.swot.create" %}
 {% endfor %}

@@ -22570,3 +22570,24 @@ msgstr "Aucun rôle pour l'instant."
 
 msgid "A role says who does what for security : who decides, who carries out, who checks. Describe the few your organisation needs, then give each one to a person."
 msgstr "Un rôle dit qui fait quoi pour la sécurité : qui décide, qui exécute, qui vérifie. Décrivez les quelques-uns dont votre organisation a besoin, puis confiez chacun à une personne."
+
+msgid "What it looks at, for example \"Security of the customer portal, 2027\"."
+msgstr "Ce qu'elle examine, par exemple « Sécurité du portail client, 2027 »."
+
+msgid "The day the four boxes were filled, with your team if you can."
+msgstr "Le jour où les quatre cases ont été remplies, avec votre équipe si possible."
+
+msgid "When to fill them again : once a year is common."
+msgstr "Quand les remplir de nouveau : une fois par an est courant."
+
+msgid "Why it was done, and who took part."
+msgstr "Pourquoi elle a été menée, et qui y a pris part."
+
+msgid "note something in each of its four boxes"
+msgstr "noter quelque chose dans chacune de ses quatre cases"
+
+msgid "plan when to do it again"
+msgstr "prévoir quand la refaire"
+
+msgid "A SWOT analysis is a four-box picture of where you stand : your strengths and weaknesses, the opportunities and threats around you. Filling it with your team is a quick way to find your issues and choose your objectives."
+msgstr "Une analyse SWOT est un tableau en quatre cases de votre situation : vos forces et vos faiblesses, les opportunités et les menaces autour de vous. La remplir avec votre équipe est un moyen rapide de trouver vos enjeux et de choisir vos objectifs."

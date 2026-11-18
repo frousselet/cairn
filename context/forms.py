@@ -540,10 +540,12 @@ class ObjectiveUpdateForm(ObjectiveBaseForm):
 
 
 class SwotAnalysisBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step, the card of the analysis page that opens it (``?section=identity``) :
+    # the four boxes and the strategies are worked on the page itself.
     steps = [
         Step(_("Identity"), "grid-3x3",
-             ["name", ["analysis_date", "review_date"], "description"]),
-        Step(_("Scope & status"), "diagram-3", ["scopes", "tags"]),
+             ["name", ["analysis_date", "review_date"], "description", "scopes", "tags"],
+             key="identity"),
     ]
 
     class Meta:
@@ -560,18 +562,30 @@ class SwotAnalysisBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "review_date": forms.DateInput(attrs={**FORM_WIDGET_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Title of the SWOT analysis."),
-            "analysis_date": _("Date the analysis was conducted."),
-            "review_date": _("Next date this analysis should be reviewed."),
-            "description": _("Purpose and context of the analysis."),
-            "scopes": _("Organizational scopes this analysis applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('What it looks at, for example "Security of the customer portal, 2027".'),
+            "analysis_date": _("The day the four boxes were filled, with your team if you can."),
+            "review_date": _("When to fill them again : once a year is common."),
+            "description": _("Why it was done, and who took part."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
 
-class SwotAnalysisCreateForm(SwotAnalysisBaseForm):
-    """SWOT analysis creation modal form."""
+class SwotAnalysisCreateForm(CreationFormMixin, SwotAnalysisBaseForm):
+    """SWOT analysis creation : what it looks at and when. Its boxes are filled on its page."""
+
+    #: An analysis is the work of a team : nobody answers for it by creating it.
+    owner_field = None
+
+    steps = [
+        Step(_("Identity"), "grid-3x3", ["name", "analysis_date", "scopes", "description"]),
+    ]
+
+    class Meta(SwotAnalysisBaseForm.Meta):
+        fields = ["scopes", "name", "description", "analysis_date"]
 
 
 class SwotAnalysisUpdateForm(SwotAnalysisBaseForm):

@@ -289,6 +289,7 @@ The module is accessible through a main navigation item "Context & Organization"
 ### "SWOT" view
 
 - **List:** Table of SWOT analyses with date, status.
+- **Creation:** One screen : name, analysis date, description, and the scopes when there is a choice. The user lands on the new analysis, whose four boxes are filled on the page.
 - **Matrix view:** Classic display in 4 quadrants (Strengths, Weaknesses, Opportunities, Threats) with drag & drop to reorder.
 - **Detail:** Each item displays its impact and its links to issues and objectives.
 - **Export:** Image (PNG/SVG), PDF.

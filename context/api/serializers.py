@@ -155,7 +155,7 @@ class SwotStrategySerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
-class SwotAnalysisSerializer(serializers.ModelSerializer):
+class SwotAnalysisSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     items = SwotItemSerializer(many=True, read_only=True)
     strategies = SwotStrategySerializer(many=True, read_only=True)
 
@@ -166,6 +166,7 @@ class SwotAnalysisSerializer(serializers.ModelSerializer):
             "workflow_state", "validated_by", "validated_at", "items", "strategies",
             "review_date", "version", "tags",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 

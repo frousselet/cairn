@@ -4,9 +4,11 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
+from core.completeness import Completeness, Requirement
 from context.constants import ImpactLevel, SwotQuadrant, SwotStrategyQuadrant
 from .base import ScopedModel
 
@@ -30,12 +32,30 @@ class SwotAnalysis(ScopedModel):
 
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "boxes", _("note something in each of its four boxes"),
+            check=lambda analysis: analysis.items.values("quadrant").distinct().count() >= 4,
+            # The boxes are filled on the page : the line leads to them.
+            href=lambda analysis: reverse("context:swot-detail", args=[analysis.pk]) + "#swot-items",
+            blocking=False,
+        ),
+        Requirement(
+            "review", _("plan when to do it again"),
+            fields=["review_date"], section="identity", blocking=False,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("SWOT analysis")
         verbose_name_plural = _("SWOT analyses")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("context:swot-detail", args=[self.pk])
 
 
 class SwotItem(models.Model):
