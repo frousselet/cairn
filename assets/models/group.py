@@ -2,11 +2,13 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from assets.constants import AssetGroupStatus, SupportAssetType
 from context.models.base import ScopedModel
+from core.completeness import Completeness, Requirement
 
 
 class AssetGroup(ScopedModel):
@@ -40,9 +42,20 @@ class AssetGroup(ScopedModel):
 
     history = HistoricalRecords()
 
+    # A group with nothing in it gathers nothing : advised, never blocking.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "members", _("add the support assets it gathers"),
+            fields=["members"], section="members", blocking=False,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Asset group")
         verbose_name_plural = _("Asset groups")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("assets:group-detail", kwargs={"pk": self.pk})

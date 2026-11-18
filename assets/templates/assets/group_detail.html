@@ -6,7 +6,7 @@
 {% block content %}
 {% page_header group.name reference=group.reference nav="assets:group-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'assets:group-update' group.pk %}" class="btn btn-primary" hx-get="{% url 'assets:group-update' group.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 {% help_modal "assets.group_detail" %}
@@ -20,18 +20,26 @@
     {% kpi_tile _("Members") members|length icon="collection" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Description") icon="text-left" hide_empty=True %}{% if group.description %}<div class="ov-rich">{{ group.description|rich }}</div>{% endif %}{% endsection_card %}
+  {% comment %} What would make the record useful. Each card below is one
+     section of the group form : its Edit button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
 
-  {% section_card _("General") icon="info-circle" %}
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="collection" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
     {% meta_list cols=2 %}
+      {% meta_item _("Description") wide=True %}{% if group.description %}<div class="ov-rich">{{ group.description|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Type") group.get_type_display %}
       {% meta_item _("Status") %}{% choice_badge group "status" type="status" %}{% endmeta_item %}
+      {% meta_item _("Owner") %}{% if group.owner %}{% user_badge group.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
       {% meta_item _("Scopes") %}{% if group.scopes.all %}{% grouped_scope_badges group.scopes.all %}{% endif %}{% endmeta_item %}
-      {% meta_item _("Tags") %}{% tag_list group.tags.all %}{% endmeta_item %}
+      {% meta_item _("Tags") wide=True %}{% tag_list group.tags.all %}{% endmeta_item %}
     {% endmeta_list %}
   {% endsection_card %}
 
-  {% section_card _("Members") icon="collection" count=members|length flush=members %}
+  {# ── 2. Members ── #}
+  {% section_card _("Members") icon="hdd-stack" count=members|length flush=members %}
+    {% slot actions %}{% section_edit edit_url "members" _("Members") %}{% endslot %}
     {% if members %}
     <div class="table-responsive">
       <table class="table table-hover mb-0">
@@ -53,14 +61,8 @@
       </table>
     </div>
     {% else %}
-    {% empty_state message=_("No members in this group.") %}
+    {% empty_state icon="hdd-stack" compact=True message=_("No support asset in this group yet.") %}
     {% endif %}
-  {% endsection_card %}
-
-  {% section_card _("People") icon="people" %}
-    {% meta_list %}
-      {% meta_item _("Owner") %}{% if group.owner %}{% user_badge group.owner size=28 link=True block=True %}{% endif %}{% endmeta_item %}
-    {% endmeta_list %}
   {% endsection_card %}
 
   {% record_card group %}

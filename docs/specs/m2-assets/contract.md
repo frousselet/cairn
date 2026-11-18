@@ -30,6 +30,26 @@ A contract is an autonomous, potentially multi-party document inside the **Docum
 | `created_by` | relation | FK -> User | |
 | `created_at` / `updated_at` | datetime | auto | |
 
+## Creation, completion, completeness
+
+A contract follows the [usability standard](../../sdk/usability-standard.md).
+
+**Creation** asks for the title (required there : the model lets an imported
+contract go without one), the suppliers, the start and end dates, the signed
+document and the scopes (not asked with a single scope). The user lands on the
+page of the new contract.
+
+**The page** shows one card per section of its form, each with its own
+*Edit* : identity (title, amended contract, replaced contract, notes, scopes,
+tags), parties (suppliers, clients), terms (dates, amount, currency) and
+document.
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Say who it binds you to | It has a supplier or a client | no |
+| Give the date it ends | `end_date` is set | no |
+| Attach the signed document | A PDF is attached | no |
+
 ## Enumerations
 
 ### `status`

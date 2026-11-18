@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from assets.constants import ContractStatus
 from context.models.base import LegacyStatusMixin, ScopedModel
+from core.completeness import Completeness, Requirement
 
 
 class Contract(LegacyStatusMixin, ScopedModel):
@@ -91,6 +93,25 @@ class Contract(LegacyStatusMixin, ScopedModel):
         # The lifecycle step codes are the ContractStatus values, so keep the
         # legacy ``status`` field coherent with ``workflow_state``.
         super().save(*args, **kwargs)
+
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "parties", _("say who it binds you to"),
+            any_of=["suppliers", "clients"], section="parties", blocking=False,
+        ),
+        Requirement(
+            "end_date", _("give the date it ends"),
+            fields=["end_date"], section="terms", blocking=False,
+        ),
+        Requirement(
+            "document", _("attach the signed document"),
+            check=lambda contract: contract.has_document, section="document", blocking=False,
+        ),
+    )
+
+    def get_absolute_url(self):
+        return reverse("assets:contract-detail", kwargs={"pk": self.pk})
 
     @property
     def is_amendment(self):

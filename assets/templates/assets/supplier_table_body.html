@@ -49,5 +49,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No supplier registered yet.") message=_("Suppliers are external parties you depend on - SaaS vendors, hosting providers, contractors. Track them to assess third-party risk.") colspan=7 %}
+{% url 'assets:supplier-create' as supplier_create_url %}
+{% list_empty title=_("No supplier yet.") message=_("A supplier is a company you rely on : your hosting provider, the publisher of your software, a maintenance contractor. Start with those the business could not run without.") colspan=7 create_url=supplier_create_url create_label=_("New supplier") permission="assets.supplier.create" %}
 {% endfor %}

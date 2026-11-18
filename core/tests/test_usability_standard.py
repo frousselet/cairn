@@ -27,8 +27,21 @@ pytestmark = pytest.mark.django_db
 def _forms():
     """The forms that follow the standard : (form class, is it a creation form)."""
     from assets.forms import (
+        AssetGroupCreateForm,
+        AssetGroupUpdateForm,
+        CertificateCreateForm,
+        CertificateUpdateForm,
+        ContractCreateForm,
+        ContractUpdateForm,
         EssentialAssetCreateForm,
         EssentialAssetUpdateForm,
+        SiteCreateForm,
+        SiteUpdateForm,
+        SupplierContactForm,
+        SupplierSubprocessorCreateForm,
+        SupplierSubprocessorForm,
+        SupplierCreateForm,
+        SupplierUpdateForm,
         SupportAssetCreateForm,
         SupportAssetUpdateForm,
     )
@@ -41,14 +54,38 @@ def _forms():
         (EssentialAssetUpdateForm, False),
         (SupportAssetCreateForm, True),
         (SupportAssetUpdateForm, False),
+        (SupplierCreateForm, True),
+        (SupplierUpdateForm, False),
+        (AssetGroupCreateForm, True),
+        (AssetGroupUpdateForm, False),
+        (SiteCreateForm, True),
+        (SiteUpdateForm, False),
+        (ContractCreateForm, True),
+        (ContractUpdateForm, False),
+        (CertificateCreateForm, True),
+        (CertificateUpdateForm, False),
+        # Rows of a supplier, created and edited from its page.
+        (SupplierContactForm, True),
+        (SupplierSubprocessorCreateForm, True),
+        (SupplierSubprocessorForm, False),
     ]
 
 
 # The detail pages that follow the standard : (view class, template).
 def _pages():
     from assets.views import (
+        CertificateCreateView,
+        CertificateDetailView,
+        ContractCreateView,
+        ContractDetailView,
+        GroupCreateView,
+        GroupDetailView,
         EssentialAssetCreateView,
         EssentialAssetDetailView,
+        SiteCreateView,
+        SiteDetailView,
+        SupplierCreateView,
+        SupplierDetailView,
         SupportAssetCreateView,
         SupportAssetDetailView,
     )
@@ -61,6 +98,16 @@ def _pages():
          "assets/templates/assets/essential_asset_table_body.html"),
         (SupportAssetCreateView, SupportAssetDetailView, "assets/templates/assets/support_asset_detail.html",
          "assets/templates/assets/support_asset_table_body.html"),
+        (SupplierCreateView, SupplierDetailView, "assets/templates/assets/supplier_detail.html",
+         "assets/templates/assets/supplier_table_body.html"),
+        (GroupCreateView, GroupDetailView, "assets/templates/assets/group_detail.html",
+         "assets/templates/assets/group_table_body.html"),
+        (SiteCreateView, SiteDetailView, "assets/templates/assets/site_detail.html",
+         "assets/templates/assets/site_table_body.html"),
+        (ContractCreateView, ContractDetailView, "assets/templates/assets/contract_detail.html",
+         "assets/templates/assets/contract_table_body.html"),
+        (CertificateCreateView, CertificateDetailView, "assets/templates/assets/certificate_detail.html",
+         "assets/templates/assets/certificate_table_body.html"),
     ]
 
 
@@ -266,6 +313,15 @@ def _snapshot(record):
     return values
 
 
+def _something_to_choose_from():
+    """A required relation needs a record to point at : a certificate, its framework."""
+    from compliance.models import Framework
+    from compliance.tests.factories import FrameworkFactory
+
+    if not Framework.objects.exists():
+        FrameworkFactory()
+
+
 def _page_ids():
     return [create.__name__.removesuffix("CreateView") for create, _detail, _template, _rows in _pages()]
 
@@ -279,6 +335,7 @@ def admin(client):
 
 def _create(client, admin, create_view):
     """Create a record through the dialog, answering only what is required."""
+    _something_to_choose_from()
     form = create_view.form_class(user=admin)
     response = client.post(reverse(_url_name(create_view)), _answer(form), **DRAWER)
     assert response.status_code == 204, response.content.decode()[:800]

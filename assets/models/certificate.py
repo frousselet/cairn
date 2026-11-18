@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from assets.constants import CertificateStatus
 from context.models.base import LegacyStatusMixin, ScopedModel
+from core.completeness import Completeness, Requirement
 
 
 class Certificate(LegacyStatusMixin, ScopedModel):
@@ -105,6 +107,25 @@ class Certificate(LegacyStatusMixin, ScopedModel):
     def is_superseded(self):
         """Whether this certificate has been renewed / replaced by another."""
         return self.superseded_by.exists()
+
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "expiry_date", _("give the date it expires"),
+            fields=["expiry_date"], section="issuance", blocking=False,
+        ),
+        Requirement(
+            "issuer", _("say who issued it"),
+            fields=["issuer"], section="issuance", blocking=False,
+        ),
+        Requirement(
+            "document", _("attach the certificate itself"),
+            check=lambda certificate: certificate.has_document, section="document", blocking=False,
+        ),
+    )
+
+    def get_absolute_url(self):
+        return reverse("assets:certificate-detail", kwargs={"pk": self.pk})
 
     @property
     def is_expired(self):

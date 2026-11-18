@@ -226,6 +226,19 @@
             })
             .catch(function () { return null; });
         },
+        /* No map can be drawn here (no basemap configured, an address the
+           geocoder does not find) : the map leaves, and its card takes the
+           layout of a card without one, instead of keeping a tall blank
+           area where the map would have been. */
+        none: function (el) {
+          if (!el) return;
+          el.style.display = 'none';
+          var card = el.closest('.supplier-card');
+          if (!card) return;
+          card.classList.add('supplier-card--nomap');
+          var overview = card.querySelector('.supplier-overview');
+          if (overview) overview.classList.add('supplier-overview--nomap');
+        },
         addTo: function (map) {
           function url() { return dark() && conf.darkUrl ? conf.darkUrl : conf.url; }
           var layer = L.tileLayer(url(), {

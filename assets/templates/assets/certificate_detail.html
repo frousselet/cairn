@@ -6,19 +6,11 @@
 {% block content %}
 {% page_header certificate.label|default:certificate.reference reference=certificate.reference nav="assets:certificate-list" accent="assets" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'assets:certificate-update' certificate.pk %}" class="btn btn-primary" hx-get="{% url 'assets:certificate-update' certificate.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 
 {% include "includes/lifecycle_stepper.html" %}
-
-{% if certificate.tags.all %}
-<div class="detail-tags">{% tag_list certificate.tags.all %}</div>
-{% endif %}
-
-{% if certificate.notes %}
-<div class="note-cartouche" role="note">{{ certificate.notes|rich }}</div>
-{% endif %}
 
 {% if certificate.is_superseded %}
 <div class="alert alert-warning">{% trans "This certificate has been renewed and replaced" %}{% for newer in superseded_by %} ({{ newer.reference }}){% if not forloop.last %},{% endif %}{% endfor %}.</div>
@@ -44,32 +36,55 @@
     {% kpi_tile _("Covered sites") sites|length icon="geo-alt" tone="neutral" %}
   {% endslot %}
 
-  {% section_card _("Overview") icon="info-circle" %}
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card below is one section of the certificate
+     form : its Edit button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. Identity ── #}
+  {% section_card _("Identity") icon="patch-check" %}
+    {% slot actions %}{% section_edit edit_url "identity" _("Identity") %}{% endslot %}
+    {% if certificate.supersedes_id or superseded_by %}
     {% overview %}
-      {% ov_row "journal-bookmark" _("Framework") %}{% if certificate.framework %}<a href="{% url 'compliance:framework-detail' certificate.framework.pk %}" class="ov-link">{{ certificate.framework.name }}</a>{% if certificate.framework.framework_version %} <span class="text-meta">({{ certificate.framework.framework_version }})</span>{% endif %}{% else %}{% dash %}{% endif %}{% endov_row %}
-      {% if certificate.issuer %}{% ov_row "award" _("Certification body") %}{{ certificate.issuer }}{% endov_row %}{% endif %}
-      {% if certificate.certificate_number %}{% ov_row "hash" _("Certificate number") %}{{ certificate.certificate_number }}{% endov_row %}{% endif %}
-      {% if certificate.supersedes_id %}{% ov_row "arrow-repeat" _("Renews / replaces") %}{% trans "Renews and replaces" %} <a href="{% url 'assets:certificate-detail' certificate.supersedes.pk %}" class="ov-link">{{ certificate.supersedes.reference }}</a> {{ certificate.supersedes.label }}{% endov_row %}{% endif %}
+      {% if certificate.supersedes_id %}{% ov_row "arrow-repeat" _("Renews / replaces") %}{% trans "Renews and replaces" %} <a href="{% url 'assets:certificate-detail' certificate.supersedes.pk %}" class="ov-link">{{ certificate.supersedes.reference }}</a>{% endov_row %}{% endif %}
       {% if superseded_by %}{% ov_row "slash-circle" _("Renewed and replaced by") %}{% trans "Renewed and replaced by" %} {% for newer in superseded_by %}<a href="{% url 'assets:certificate-detail' newer.pk %}" class="ov-link">{{ newer.reference }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}{% endov_row %}{% endif %}
-      {% if certificate.issue_date or certificate.expiry_date %}{% ov_row "calendar-range" _("Validity") %}{{ certificate.issue_date|default:"…" }} → <span{% if certificate.is_expired %} class="text-danger fw-semibold"{% endif %}>{{ certificate.expiry_date|default:"…" }}</span>{% endov_row %}{% endif %}
-      {% if certificate.scopes.all %}{% ov_row "folder" _("Scopes") %}{% grouped_scope_badges certificate.scopes.all %}{% endov_row %}{% endif %}
     {% endoverview %}
-
-    {% if certificate.scope_statement or sites %}
-    {% subhead _("Certified scope") icon="diagram-3" %}
-    {% if certificate.scope_statement %}<p class="mb-2">{{ certificate.scope_statement|linebreaksbr }}</p>{% endif %}
-    {% if sites %}
-    <div class="ref-links">
-      {% for s in sites %}{% url 'assets:site-detail' s.pk as site_url %}{% ref_link s url=site_url %}{% endfor %}
-    </div>
     {% endif %}
-    {% endif %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Framework") %}{% if certificate.framework %}<a href="{% url 'compliance:framework-detail' certificate.framework.pk %}" class="cell-link">{{ certificate.framework_label }}</a>{% endif %}{% endmeta_item %}
+      {% meta_item _("Scopes") %}{% if certificate.scopes.all %}{% grouped_scope_badges certificate.scopes.all %}{% endif %}{% endmeta_item %}
+      {% meta_item _("Notes") wide=True %}{% if certificate.notes %}<div class="ov-rich">{{ certificate.notes|rich }}</div>{% endif %}{% endmeta_item %}
+      {% meta_item _("Tags") wide=True %}{% tag_list certificate.tags.all %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
 
-    {% subhead _("Document") icon="file-earmark-pdf" %}
+  {# ── 2. Issuance ── #}
+  {% section_card _("Issuance") icon="award" %}
+    {% slot actions %}{% section_edit edit_url "issuance" _("Issuance") %}{% endslot %}
+    {% meta_list cols=2 %}
+      {% meta_item _("Certification body") certificate.issuer %}
+      {% meta_item _("Certificate number") certificate.certificate_number %}
+      {% meta_item _("Issue date") certificate.issue_date %}
+      {% meta_item _("Expiry date") %}{% if certificate.expiry_date %}<span{% if certificate.is_expired %} class="text-danger fw-semibold"{% endif %}>{{ certificate.expiry_date }}</span>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 3. Certified scope ── #}
+  {% section_card _("Certified scope") icon="diagram-3" %}
+    {% slot actions %}{% section_edit edit_url "coverage" _("Certified scope") %}{% endslot %}
+    {% meta_list %}
+      {% meta_item _("Certified scope") %}{% if certificate.scope_statement %}{{ certificate.scope_statement|linebreaksbr }}{% endif %}{% endmeta_item %}
+      {% meta_item _("Covered sites") %}{% if sites %}<div class="ref-links">{% for s in sites %}{% url 'assets:site-detail' s.pk as site_url %}{% ref_link s url=site_url %}{% endfor %}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 4. Document ── #}
+  {% section_card _("Document") icon="file-earmark-pdf" %}
+    {% slot actions %}{% section_edit edit_url "document" _("Document") %}{% endslot %}
     {% if certificate.has_document %}
     <a href="{% url 'assets:certificate-document' certificate.pk %}" class="btn btn-sm btn-secondary"><i class="bi bi-download me-1" aria-hidden="true"></i>{{ certificate.file_name|default:_("Download PDF") }}</a>
     {% else %}
-    <p class="text-meta mb-0">{% trans "No document attached. Edit the certificate to upload a PDF." %}</p>
+    {% empty_state icon="file-earmark-pdf" compact=True message=_("No document attached yet.") %}
     {% endif %}
   {% endsection_card %}
 

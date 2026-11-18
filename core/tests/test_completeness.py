@@ -142,8 +142,9 @@ class TestReport:
         assert report.missing == []
 
     def test_a_model_that_declares_nothing_has_no_report(self):
-        assert completeness_of(SiteFactory()) is None
-        assert as_payload(SiteFactory()) is None
+        # A user account : a model that says nothing of what complete means.
+        assert completeness_of(UserFactory()) is None
+        assert as_payload(UserFactory()) is None
 
     def test_an_item_done_elsewhere_carries_its_address(self):
         """Attaching support assets is not a section of the asset's own form."""

@@ -50,7 +50,7 @@ class ScopeSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
         read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 
 
-class SiteSerializer(serializers.ModelSerializer):
+class SiteSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     parent_site_name = serializers.CharField(
         source="parent_site.name", read_only=True, default=None
     )
@@ -61,6 +61,7 @@ class SiteSerializer(serializers.ModelSerializer):
             "id", "name", "type", "address", "description",
             "parent_site", "parent_site_name", "scopes", "workflow_state", "version", "tags",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = ["id", "created_by", "created_at", "updated_at", "version"]
 

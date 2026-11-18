@@ -177,10 +177,10 @@
     var el = document.getElementById('scope-map');
     if (!el || el.dataset.mapReady || !window.L) { return; }
     // No basemap configured (MAP_TILE_URL empty) : the page shows no map.
-    if (!window.cairnBasemap.enabled) { el.style.display = 'none'; return; }
+    if (!window.cairnBasemap.enabled) { window.cairnBasemap.none(el); return; }
     var sites;
     try { sites = JSON.parse(el.dataset.sites || '[]'); } catch (e) { sites = []; }
-    if (!sites.length) { el.style.display = 'none'; return; }
+    if (!sites.length) { window.cairnBasemap.none(el); return; }
     el.dataset.mapReady = '1';
 
     var map = L.map(el, {
@@ -218,7 +218,7 @@
       }
     }
     function fit() {
-      if (!latlngs.length) { el.style.display = 'none'; return; }
+      if (!latlngs.length) { window.cairnBasemap.none(el); return; }
       position();
       setTimeout(function () { map.invalidateSize(); position(); }, 120);
     }

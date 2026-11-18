@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `manage.py backup` writes the database and the uploaded files into one archive with a manifest and a checksum per file, and `manage.py restore` puts an instance back in its exact state after verifying it and saving what it replaces (`BACKUP_DIR`, `MEDIA_ROOT`).
 - A *Skip to main content* link is the first stop of the keyboard on every page, and dashboard tiles gain *Move earlier* / *Move later* buttons so the layout can be rearranged without dragging.
 - The dashboard of a new instance opens on its first steps, a short ordered list of what to do first, until the instance holds its first records.
-- A record is created on one screen, then completed on its own page, which lists what it still needs and edits it one card at a time : scopes, essential assets and support assets are the first to follow the usability standard (`docs/sdk/usability-standard.md`).
+- A record is created on one screen, then completed on its own page, which lists what it still needs and edits it one card at a time : scopes and the assets module (essential and support assets, suppliers, asset groups, sites, contracts, certificates) are the first to follow the usability standard (`docs/sdk/usability-standard.md`).
 - A glossary in the application : each notion under the one name the interface gives it, a plain definition, the other names people know it by and the acronyms spelled out, on its page, in the search, over `GET /api/v1/glossary/` and the `get_glossary` MCP tool.
 - A help on the registers that had none : contracts, certificates, nonconformities, security events, response plans, management reviews, reports and lifecycles.
 
@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Empty selects read "Choose…" or "None" instead of a row of dashes, and on a phone the form step indicator shows the current step's name in full.
 - The security needs a support asset inherits are empty (*Not assessed*, `null` over the REST API and MCP) until an essential asset that relies on it is assessed, instead of reading *Negligible*.
 - A card of a record page with nothing filled in reads as one line naming its fields, instead of a grid of dashes.
+- The criticality of a supplier and the type of a site are no longer preselected (*Medium*, *Other*) when one is created : the form asks, and waits for the answer.
 - The container runs as an unprivileged account (uid 1000) instead of root, handing over a media volume written by an earlier image on first start.
 - `DEBUG` is off unless set, instead of on : development environments set `DEBUG=True` (`.env.example` and `core.settings_local` do).
 - Outside `DEBUG`, the session and CSRF cookies are only sent over HTTPS, and a session ends twelve hours after sign-in instead of two weeks (`SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, `SESSION_COOKIE_AGE`); the sign-in page says so when opened over plain http.
@@ -103,6 +104,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The parent scopes shown in a scope pill were dimmed under the contrast threshold; they are now set apart by their weight.
 - The level name in a cell of the risk matrix was white on the default red, under the contrast threshold; the label of a cell is now chosen by its measured contrast.
 - Saving a record filed under several scopes removed, without a word, the scopes the editor was not given.
+- The members of an asset group could not be chosen from the interface, which only listed them; its page has a *Members* card that picks them.
+- The page of a site, a supplier or a scope kept a tall blank area where its map could not be drawn (no basemap configured, or an address nobody could place).
 - Filter panel fields, grid forms (risk criteria, supplier type requirements, review participants), the mobile menu button and the calendar arrows had no accessible name.
 - The public Trust Center was unreadable in places on the dark theme (navy links on charcoal, grey text and buttons).
 - On a phone, the rows of the dashboard's progress-bar tiles (frameworks, objectives) collapsed onto each other.

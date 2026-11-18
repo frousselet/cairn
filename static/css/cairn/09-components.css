@@ -784,6 +784,8 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent-tex
 }
 /* No map : plain card, no overlay. */
 .supplier-card--nomap { overflow: visible; }
+/* No map drawn (none configured, or an address nobody could place) : its layer leaves with it. */
+.supplier-card--nomap .supplier-card__map { display: none; }
 .supplier-card--nomap .supplier-overview,
 .supplier-overview--nomap { min-height: 0; display: block; }
 .supplier-card--nomap .supplier-overview__info,
@@ -814,6 +816,8 @@ a.contact-card__row:hover, a.contact-card__row:hover i { color: var(--accent-tex
 /* Drop the separator line between the merged zone and the next subsection. */
 /* Match the sibling card titles (h6.text-muted -> --bs-secondary-color) rather than the lighter eyebrow grey. */
 .supplier-overview + .detail-subhead { border-top: 0; margin-top: 0; padding-top: 0; color: var(--bs-secondary-color); }
+/* The title of the overview itself, with the button that edits it. */
+.supplier-overview__info > .detail-subhead { border-top: 0; margin: 0 0 .25rem; padding-top: 0; color: var(--bs-secondary-color); }
 .supplier-overview--nomap + .detail-subhead { margin-top: 1.25rem; }
 
 /* Note shown centered under the tags as a soft yellow cartouche. */

@@ -36,6 +36,24 @@ The `site` type of `SupportAsset` no longer exists. Existing rows were automatic
 | `created_at` | datetime | auto | Creation date |
 | `updated_at` | datetime | auto | Last modification date |
 
+## Creation, completion, completeness
+
+A site follows the [usability standard](../../sdk/usability-standard.md).
+
+**Creation** asks for the name, the type, the parent site (not asked for the
+very first site), the address, the description and the scopes (not asked with
+a single scope). The type is a decision : the model answers `other` by
+default, the form opens on no answer and requires one (rule F8). The user
+lands on the page of the new site.
+
+**The page** shows the site in one card, over the map of its address, with its
+*Edit*.
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Give its address | `address` is set | no |
+| Say which support assets it hosts | A support asset is attached to it | no |
+
 ## Tenancy
 
 A site is reached through the scopes it is filed under (`scopes`) **and**
