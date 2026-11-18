@@ -129,9 +129,65 @@ def test_text_is_never_drawn_with_a_fill_token():
     assert not offenders, "text drawn with a fill token (use the -text ink) :\n  " + "\n  ".join(offenders)
 
 
+# ── Opacity ───────────────────────────────────────────────────────────────
+
+#: The rules of the design system that draw something at a partial opacity,
+#: and why none of them is a text made quieter. A text takes a text token
+#: (``--text-secondary``, ``--text-muted``) or a lighter weight : an opacity
+#: lowers its contrast by an amount nobody computed (the ancestors of a scope
+#: pill stood at 2.6:1 on their own tint).
+PARTIAL_OPACITY = {
+    ".sidebar-body > .collapse::before": "the guide line of an open menu section, drawn by a pseudo-element",
+    ".sidebar-collapsed .sidebar-collapse-btn:hover::after": "the arrow hinting at a sub-menu : an icon glyph",
+    '.btn.htmx-request, form.htmx-request button[type="submit"], button[type="submit"].btn-loading':
+        "a button while its request runs : an inactive control",
+    ".toast-stack .toast-item .toast-close": "the close cross of a toast : an icon, full strength on hover and focus",
+    ".page-item.disabled .page-link": "a disabled control",
+    ".search-empty i": "a decorative icon",
+    ".assistant-feedback-btn:disabled": "a disabled control",
+    ".assistant-thinking .dots span": "the dots of the waiting animation",
+    ".scope-tree-locked .scope-tree-label": "a scope that cannot be chosen : an inactive control",
+    "#itemDrawer .modal-header .btn-close": "the close cross of the dialog : an icon, full strength on hover",
+    ".drawer-section-title i": "a decorative icon",
+    ".page-header__crumb-sep": "the separator of the breadcrumb, hidden from assistive technology",
+    ".page-btn:disabled": "a disabled control",
+}
+
+
+def _partial_opacity_rules():
+    """``(file, selector)`` of every rule drawing at an opacity strictly between 0 and 1."""
+    found = []
+    for path in sorted((settings.BASE_DIR / "static" / "css" / "cairn").glob("*.css")):
+        css = re.sub(r"/\*.*?\*/", "", path.read_text(), flags=re.S)
+        for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css):
+            selector = " ".join(selector.split())
+            if re.fullmatch(r"(?:from|to|[\d.]+%)(?:\s*,\s*(?:from|to|[\d.]+%))*", selector):
+                continue  # a step of an animation
+            for value in re.findall(r"(?<![-\w])opacity\s*:\s*([\d.]+)", body):
+                if 0 < float(value) < 1:
+                    found.append((path.name, selector))
+    return found
+
+
+def test_no_text_is_made_quieter_by_an_opacity():
+    """A partial opacity in the style sheets is a listed exception, with its reason."""
+    unlisted = sorted({f"{name} : {selector}" for name, selector in _partial_opacity_rules() if selector not in PARTIAL_OPACITY})
+    assert not unlisted, (
+        "a rule draws at a partial opacity. Quieten a text with a text token or a weight; "
+        "if it is not a text, list the selector in PARTIAL_OPACITY with its reason :\n  " + "\n  ".join(unlisted)
+    )
+
+
+def test_the_opacity_exceptions_still_exist():
+    """An exception whose rule is gone is removed : the list says what the product does."""
+    present = {selector for _name, selector in _partial_opacity_rules()}
+    assert sorted(set(PARTIAL_OPACITY) - present) == []
+
+
 # ── Colours typed by an administrator ─────────────────────────────────────
 
-ANY_COLOUR = ["#1E3A8A", "#0E9F6E", "#FFD400", "#FF0000", "#3B82F6", "#808080", "#000000", "#FFFFFF", "#F5E6FF"]
+# #E53935, the default red of the risk scale : white reads best on it, and not enough.
+ANY_COLOUR = ["#1E3A8A", "#0E9F6E", "#FFD400", "#FF0000", "#E53935", "#3B82F6", "#808080", "#000000", "#FFFFFF", "#F5E6FF"]
 
 
 @pytest.mark.parametrize("colour", ANY_COLOUR)
@@ -147,6 +203,14 @@ def test_any_accent_gets_a_readable_ink_in_both_themes(colour):
 def test_any_accent_gets_a_readable_label_and_banner(colour):
     assert colors.contrast_ratio(colour, colors.label_on(colour)) >= colors.TEXT_CONTRAST
     assert colors.contrast_ratio(colors.fill_under_white(colour), "#FFFFFF") >= colors.TEXT_CONTRAST
+
+
+@pytest.mark.parametrize("colour", ANY_COLOUR)
+def test_a_cell_of_the_risk_matrix_reads_whatever_the_colour_of_its_level(colour):
+    """The label was chosen on the brightness of the fill : white on the default red, at 4.2:1."""
+    from risks.views import _text_color_for_bg
+
+    assert colors.contrast_ratio(colour, _text_color_for_bg(colour)) >= colors.TEXT_CONTRAST
 
 
 def test_a_colour_that_already_reads_is_left_alone():

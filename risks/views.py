@@ -90,11 +90,16 @@ from .models import (
 
 
 def _text_color_for_bg(hex_color):
-    """Return '#fff' for dark backgrounds, '#000' for light ones."""
-    hex_color = hex_color.lstrip("#")
-    r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
-    luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-    return "#fff" if luminance < 0.55 else "#000"
+    """The label colour that reads on a cell of the risk matrix.
+
+    The colour of a level is typed by an administrator : the label is chosen
+    by its measured contrast (``core.colors.label_on``), not by a threshold on
+    the brightness of the fill. That threshold put white on the default red
+    (4.2:1 where 4.5:1 is asked), which only the near-black label clears.
+    """
+    from core.colors import label_on
+
+    return label_on(hex_color)
 
 
 def build_risk_matrix(risks_qs, criteria, likelihood_field, impact_field):

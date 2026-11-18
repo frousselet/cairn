@@ -155,10 +155,11 @@ code { color: var(--accent-text); }
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
+/* Quieter than the score by its size and weight : an opacity would eat the
+   contrast of the ink on the colour of the cell. */
 .risk-matrix-level-name {
   display: block;
   font-size: .625rem;
-  opacity: .75;
   font-weight: 500;
 }
 

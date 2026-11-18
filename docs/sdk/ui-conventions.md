@@ -199,7 +199,9 @@ screen :
   and for a colour the *ink* token (`--accent-text`, `--success-text`,
   `--warning-text`, `--danger-text`, `--info-text`). Never a fill token
   (`--accent`, `--success`...) as a text colour, never a hard-coded `#fff` on
-  an accent fill (`--accent-contrast`), never an `opacity` to quieten a text.
+  an accent fill (`--accent-contrast`), never an `opacity` to quieten a text
+  (`core/tests/test_contrast.py` lists the rules of the style sheets that use
+  one, each with the reason it is not a text).
 - **Names** : an icon-only button or link carries an `aria-label`, its icon
   `aria-hidden="true"`; an image has an `alt` (empty when decorative); a form
   control has a `<label for>` or, in a grid, an `aria-label`. An inline formset
