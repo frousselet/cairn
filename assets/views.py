@@ -123,7 +123,7 @@ ESSENTIAL_ASSET_COLUMNS = [
     {"key": "reference", "label": _l("Ref."), "always": True},
     {"key": "name", "label": _l("Name"), "always": True},
     {"key": "owner", "label": _l("Owner")},
-    {"key": "cia", "label": _l("C / I / A")},
+    {"key": "cia", "label": _l("Security needs")},
     {"key": "status", "label": _l("Status")},
     {"key": "tags", "label": _l("Tags")},
     {"key": "actions", "label": _l("Actions"), "always": True},
@@ -577,7 +577,7 @@ SUPPORT_ASSET_COLUMNS = [
     {"key": "reference", "label": _l("Ref."), "always": True},
     {"key": "name", "label": _l("Name"), "always": True},
     {"key": "owner", "label": _l("Owner")},
-    {"key": "cia", "label": _l("C / I / A")},
+    {"key": "cia", "label": _l("Security needs")},
     {"key": "status", "label": _l("Status")},
     {"key": "tags", "label": _l("Tags")},
     {"key": "actions", "label": _l("Actions"), "always": True},
@@ -612,11 +612,13 @@ class SupportAssetListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumm
         return self.filter_queryset_advanced(qs)
 
 
-class SupportAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class SupportAssetDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, CompleteOnRecordMixin, DetailView):
     model = SupportAsset
     template_name = "assets/support_asset_detail.html"
     context_object_name = "asset"
     permission_required = "assets.support_asset.read"
+    edit_url_name = "assets:support-asset-update"
+    edit_permission = "assets.support_asset.update"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -637,6 +639,7 @@ class SupportAssetCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFo
     modal_title_create = _l("New support asset")
     modal_title_update = _l("Edit support asset")
     success_url = reverse_lazy("assets:support-asset-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -653,6 +656,7 @@ class SupportAssetUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFo
     modal_title_create = _l("New support asset")
     modal_title_update = _l("Edit support asset")
     success_url = reverse_lazy("assets:support-asset-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

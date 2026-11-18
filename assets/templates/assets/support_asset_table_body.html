@@ -24,9 +24,7 @@
     {% else %}<span class="cell-empty">-</span>{% endif %}
   </td>
   <td data-col="cia">
-    <span class="d-inline-flex gap-1 align-items-center text-nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
-      {{ asset.inherited_confidentiality|dic_badge }}{{ asset.inherited_integrity|dic_badge }}{{ asset.inherited_availability|dic_badge }}
-    </span>
+    {% dic_triplet asset.inherited_confidentiality asset.inherited_integrity asset.inherited_availability %}
   </td>
   <td data-col="status">
     <span class="cell-stack">
@@ -44,5 +42,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No support asset registered yet.") message=_("Support assets are the IT components (servers, applications, network gear, data stores) that essential assets depend on.") colspan=7 %}
+{% url 'assets:support-asset-create' as asset_create_url %}
+{% list_empty title=_("No support asset yet.") message=_("A support asset is what your essential assets run on : a server, an application, a network, premises, a team or a service bought from a supplier. List those the business depends on most.") colspan=7 create_url=asset_create_url create_label=_("New support asset") permission="assets.support_asset.create" %}
 {% endfor %}

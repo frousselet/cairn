@@ -89,7 +89,7 @@ class EssentialAssetListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "reference", "created_at"]
 
 
-class SupportAssetSerializer(serializers.ModelSerializer):
+class SupportAssetSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = SupportAsset
@@ -106,6 +106,7 @@ class SupportAssetSerializer(serializers.ModelSerializer):
             "parent_asset", "status", "review_date", "tags",
             "version",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",

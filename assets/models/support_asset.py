@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Max
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
@@ -17,6 +18,7 @@ from assets.constants import (
     SupportAssetType,
 )
 from context.models.base import LegacyStatusMixin, ScopedModel
+from core.completeness import Completeness, Requirement
 
 
 class SupportAsset(LegacyStatusMixin, ScopedModel):
@@ -78,20 +80,27 @@ class SupportAsset(LegacyStatusMixin, ScopedModel):
     contract_reference = models.CharField(
         _("Contract reference"), max_length=255, blank=True, default=""
     )
+    # The security needs a support asset takes from the essential assets that
+    # rely on it (RV-03). Empty until one of them is assessed : a support asset
+    # nothing relies on has no known need, which is not the same as a
+    # negligible one. A default never stands for an assessment.
     inherited_confidentiality = models.IntegerField(
         _("Inherited confidentiality"),
         choices=DICLevel.choices,
-        default=DICLevel.NEGLIGIBLE,
+        null=True,
+        blank=True,
     )
     inherited_integrity = models.IntegerField(
         _("Inherited integrity"),
         choices=DICLevel.choices,
-        default=DICLevel.NEGLIGIBLE,
+        null=True,
+        blank=True,
     )
     inherited_availability = models.IntegerField(
         _("Inherited availability"),
         choices=DICLevel.choices,
-        default=DICLevel.NEGLIGIBLE,
+        null=True,
+        blank=True,
     )
     exposure_level = models.CharField(
         _("Exposure level"),
@@ -120,12 +129,40 @@ class SupportAsset(LegacyStatusMixin, ScopedModel):
 
     history = HistoricalRecords()
 
+    # A support asset is created with its name, what it is and who answers for
+    # it. Nothing holds its lifecycle back : what follows is what makes the
+    # record useful, listed on its page until it is done.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "essential_assets", _("say which essential assets rely on it"),
+            check=lambda asset: asset.dependencies_as_support.exists(),
+            href=lambda asset: reverse("assets:dependency-list"),
+            blocking=False,
+        ),
+        Requirement(
+            "exposure", _("say where it runs and how exposed it is"),
+            fields=["environment", "exposure_level"], section="exposure", blocking=False,
+        ),
+        Requirement(
+            "end_of_life", _("give the date it stops being supported"),
+            fields=["end_of_life_date"], section="dates", blocking=False,
+        ),
+    )
+
     class Meta(ScopedModel.Meta):
         verbose_name = _("Support asset")
         verbose_name_plural = _("Support assets")
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("assets:support-asset-detail", kwargs={"pk": self.pk})
+
+    @property
+    def inherits_security_needs(self):
+        """Whether an essential asset that relies on it has been assessed."""
+        return None not in (self.inherited_confidentiality, self.inherited_integrity, self.inherited_availability)
 
     @property
     def owner_name(self):
@@ -164,9 +201,11 @@ class SupportAsset(LegacyStatusMixin, ScopedModel):
             max_i=Max("essential_asset__integrity_level"),
             max_a=Max("essential_asset__availability_level"),
         )
-        self.inherited_confidentiality = agg["max_c"] or DICLevel.NEGLIGIBLE
-        self.inherited_integrity = agg["max_i"] or DICLevel.NEGLIGIBLE
-        self.inherited_availability = agg["max_a"] or DICLevel.NEGLIGIBLE
+        # ``Max`` ignores the levels that are not assessed : with no essential
+        # asset, or none assessed on a criterion, the need is unknown (empty).
+        self.inherited_confidentiality = agg["max_c"]
+        self.inherited_integrity = agg["max_i"]
+        self.inherited_availability = agg["max_a"]
         # Save without triggering clean/history overhead
         SupportAsset.objects.filter(pk=self.pk).update(
             inherited_confidentiality=self.inherited_confidentiality,

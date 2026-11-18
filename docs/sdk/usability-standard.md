@@ -75,8 +75,8 @@ newcomer cannot tell which, and stops.
 ## Applying it to an entity
 
 The work is the same for every entity, and short. Scopes
-([`context/forms.py`](../../context/forms.py)) and essential assets
-([`assets/forms.py`](../../assets/forms.py)) are the two examples to read.
+([`context/forms.py`](../../context/forms.py)), essential assets and support
+assets ([`assets/forms.py`](../../assets/forms.py)) are the examples to read.
 
 **1. Choose what creation asks.** What makes the record exist and be
 recognised : its name, what it is, who answers for it. Six fields at most. The
@@ -90,8 +90,25 @@ class ScopeCreateForm(ScopeBaseForm):
         fields = ["name", "description", "parent_scope", "icon"]
 ```
 
+A creation form of an entity filed under scopes puts `CreationFormMixin`
+([`core/modal_forms.py`](../../core/modal_forms.py)) first in its bases. It
+settles the two questions that often have one answer only : with a single scope
+the reader may file under, the scope is not asked and the record is filed under
+it; and whoever creates the record answers for it (`owner_field`) unless they
+say otherwise.
+
+```python
+class SupportAssetCreateForm(CreationFormMixin, SupportAssetBaseForm):
+    steps = [Step(_("Identity"), "hdd-stack", ["name", ["category", "owner"], "scopes", "description"])]
+
+    class Meta(SupportAssetBaseForm.Meta):
+        fields = ["scopes", "name", "description", "category", "owner"]
+```
+
 A field of the model that had a default standing for a decision becomes
-nullable (rule F8), with its migration.
+nullable (rule F8), with its migration. A field the reader no longer answers
+because another one settles it (the type of an asset, which follows from its
+category) is set by the form, in `clean`.
 
 **2. Make each step of the form a section.** One step per card of the record
 page, each with a `key`, and an `intro` where a notion needs explaining :
@@ -147,10 +164,11 @@ record ([`core/completeness_api.py`](../../core/completeness_api.py)); the
 generic MCP `get_` tool adds it by itself. The transition tools and endpoints
 already answer with the refusal.
 
-**8. List the entity** in `core/tests/test_usability_standard.py`, with the
-update form in `TestDeclarationsHoldTogether` of
-`core/tests/test_completeness.py`, and update its specification and its page of
-the user guide.
+**8. List the entity** in `core/tests/test_usability_standard.py` : its two
+forms in `_forms()`, its views and templates in `_pages()`. The tests then
+create a record through the dialog with what it requires alone, check where the
+reader lands, that each section of the form has its card, and that a reader is
+offered no edit. Update its specification and its page of the user guide.
 
 ## What the shared shell already gives every form
 

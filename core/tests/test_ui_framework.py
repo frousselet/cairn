@@ -146,8 +146,39 @@ class TestMetaList:
         assert "<b>Ann</b>" in out
 
     def test_empty_values_render_the_dash(self):
-        out = render('{% meta_list %}{% meta_item "A" none %}{% meta_item "B" %}{% endmeta_item %}{% endmeta_list %}')
+        out = render(
+            '{% meta_list %}{% meta_item "A" none %}{% meta_item "B" %}{% endmeta_item %}'
+            '{% meta_item "C" "set" %}{% endmeta_list %}'
+        )
         assert out.count("ui-dash") == 2
+        assert out.count("meta-list__item--blank") == 2
+        assert "<dl" in out
+
+    def test_a_list_with_no_value_at_all_reads_as_one_line(self):
+        """A record created short opens on what can be filled in, not on a wall of dashes."""
+        out = render(
+            '{% meta_list cols=2 %}{% meta_item "Serial number" none %}'
+            "{% meta_item label %}{% endmeta_item %}{% endmeta_list %}",
+            {"label": "Host <name>"},
+        )
+        assert "<dl" not in out and "ui-dash" not in out
+        assert "Not filled in yet : Serial number, Host &lt;name&gt;." in out
+        assert "empty-state--compact" in out
+
+    def test_one_value_is_enough_to_keep_the_grid(self):
+        out = render(
+            '{% meta_list %}{% meta_item "A" none %}{% meta_item "B" %}No{% endmeta_item %}{% endmeta_list %}'
+        )
+        assert "<dl" in out and "Not filled in yet" not in out
+        assert out.count("ui-dash") == 1
+
+    def test_an_item_written_by_hand_keeps_the_grid(self):
+        """Only the items of the component say they are empty : anything else stands for a value."""
+        out = render(
+            '{% meta_list %}{% meta_item "A" none %}'
+            '<div class="meta-list__item"><dt class="meta-list__label">B</dt><dd>x</dd></div>{% endmeta_list %}'
+        )
+        assert "<dl" in out and "Not filled in yet" not in out
 
     def test_inline_value_is_escaped(self):
         out = render('{% meta_list %}{% meta_item "A" v %}{% endmeta_list %}', {"v": "<script>"})

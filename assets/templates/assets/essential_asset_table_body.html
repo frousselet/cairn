@@ -24,9 +24,7 @@
     {% else %}<span class="cell-empty">-</span>{% endif %}
   </td>
   <td data-col="cia">
-    <span class="d-inline-flex gap-1 align-items-center text-nowrap" title="{% trans 'Confidentiality' %} / {% trans 'Integrity' %} / {% trans 'Availability' %}">
-      {{ asset.confidentiality_level|dic_badge }}{{ asset.integrity_level|dic_badge }}{{ asset.availability_level|dic_badge }}
-    </span>
+    {% dic_triplet asset.confidentiality_level asset.integrity_level asset.availability_level %}
   </td>
   <td data-col="status">{% workflow_badge asset %}</td>
   <td data-col="tags">{% tag_list asset.tags.all %}</td>
