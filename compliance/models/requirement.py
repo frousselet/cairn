@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
@@ -13,6 +14,8 @@ from compliance.constants import (
     RequirementType,
 )
 from context.models.base import BaseModel
+from core.completeness import Completeness, is_filled
+from core.completeness import Requirement as Needs
 
 
 class Requirement(BaseModel):
@@ -120,6 +123,19 @@ class Requirement(BaseModel):
 
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Needs(
+            "owner", _("name who answers for meeting it"),
+            fields=["owner"], section="follow_up", blocking=False,
+        ),
+        Needs(
+            "exclusion", _("say why it does not apply"),
+            check=lambda requirement: requirement.is_applicable or is_filled(requirement, "applicability_justification"),
+            section="applicability", blocking=False,
+        ),
+    )
+
     class Meta(BaseModel.Meta):
         verbose_name = _("Requirement")
         verbose_name_plural = _("Requirements")
@@ -135,3 +151,6 @@ class Requirement(BaseModel):
         if self.requirement_number:
             return f"{self.requirement_number} : {self.name}"
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("compliance:requirement-detail", args=[self.pk])

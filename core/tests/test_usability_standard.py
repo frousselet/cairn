@@ -50,8 +50,13 @@ def _forms():
         ComplianceActionPlanUpdateForm,
         ComplianceAssessmentCreateForm,
         ComplianceAssessmentUpdateForm,
+        FindingCreateForm,
+        FindingRegisterCreateForm,
+        FindingRegisterUpdateForm,
         FrameworkCreateForm,
         FrameworkUpdateForm,
+        RequirementCreateForm,
+        RequirementUpdateForm,
     )
     from context.forms import ScopeCreateForm, ScopeUpdateForm
 
@@ -78,6 +83,13 @@ def _forms():
         (ComplianceActionPlanUpdateForm, False),
         (ComplianceAssessmentCreateForm, True),
         (ComplianceAssessmentUpdateForm, False),
+        (RequirementCreateForm, True),
+        (RequirementUpdateForm, False),
+        # A finding is noted in its audit on one screen; a nonconformity is
+        # raised from its register and completed on its page.
+        (FindingCreateForm, True),
+        (FindingRegisterCreateForm, True),
+        (FindingRegisterUpdateForm, False),
         # Rows of a supplier, created and edited from its page.
         (SupplierContactForm, True),
         (SupplierSubprocessorCreateForm, True),
@@ -108,8 +120,12 @@ def _pages():
         ActionPlanDetailView,
         AssessmentCreateView,
         AssessmentDetailView,
+        FindingDetailView,
+        FindingRegisterCreateView,
         FrameworkCreateView,
         FrameworkDetailView,
+        RequirementCreateView,
+        RequirementDetailView,
     )
     from context.views import ScopeCreateView, ScopeDetailView
 
@@ -136,6 +152,10 @@ def _pages():
          "compliance/templates/compliance/action_plan_table_body.html"),
         (AssessmentCreateView, AssessmentDetailView, "compliance/templates/compliance/assessment_detail.html",
          "compliance/templates/compliance/assessment_table_body.html"),
+        (RequirementCreateView, RequirementDetailView, "compliance/templates/compliance/requirement_detail.html",
+         "compliance/templates/compliance/requirement_table_body.html"),
+        (FindingRegisterCreateView, FindingDetailView, "compliance/templates/compliance/finding_detail.html",
+         "compliance/templates/compliance/finding_register_table_body.html"),
     ]
 
 

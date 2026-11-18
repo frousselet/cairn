@@ -42,6 +42,36 @@ Individual requirement extracted from a [Framework](framework.md), the elementar
 
 > Uniqueness constraint: `(framework_id, requirement_number)` when `requirement_number` is non-empty.
 
+## Creation, completion, completeness
+
+A requirement follows the [usability standard](../../sdk/usability-standard.md) : it is created short, then completed
+on its page. Most requirements arrive with their framework when it is imported;
+this is the path of the ones typed by hand.
+
+**Creation** asks for the framework, the section, the number, the type, the
+title and the description, in the side panel like every other record (it was a
+page of its own, with eighteen fields). Opened from the page of a framework,
+the form is on that framework and offers its sections alone. Who answers for
+meeting the requirement is not asked : filing the text of a framework does not
+make its author answerable for it. The user lands on the page of the new
+requirement.
+
+**The page** lists what would make the record useful, then shows one card per
+section of its form, each with its own *Edit* : identity (framework, section,
+number, type, title, category, tags), content (description, implementation
+recommendations), applicability (applicable, justification), follow-up
+(responsible, priority, target date, status) and relationships (risks,
+essential assets, stakeholder expectations, which the page did not show).
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Name who answers for meeting it | `owner` is set | no |
+| Say why it does not apply | It applies, or `applicability_justification` holds a text | no |
+
+Nothing holds the lifecycle of a requirement back. The REST API returns the
+list in `completeness` on a single record, and the MCP `get_requirement` tool
+as well.
+
 ## Compliance statuses
 
 The `compliance_status` enumeration brings together two families of values: the simple compliance statuses (the 5 from the original ISO spec) and the audit statuses (from the Audits module, ISO 19011 and internal ISMS conventions). The two families deliberately coexist within the same enumeration: an audit produces a finding with an audit status, and that status directly serves as the `compliance_status` on the assessed requirement via the RC-06 carry-over. Maintaining two enumerations in mirror generated friction (double entry, internal mapping table, audit status invisible outside audits); a single enumeration serves both modules.
@@ -107,7 +137,8 @@ The Audits module (`audits/` on the code side) produces `Finding` records linked
 |---|---|
 | RG-REQ-01 | `(framework_id, requirement_number)` is unique when `requirement_number` is non-empty. |
 | RG-REQ-02 | Changing the `compliance_status` or the `compliance_level` of a requirement directly triggers the `post_save` signal that refreshes the owning section, its ancestors and the framework (issue #41 resolved). |
-| RG-REQ-03 | `is_applicable=false` must be accompanied by a non-empty `applicability_justification`; this rule is documented but not blocking at the model level (checked in the UI). |
+| RG-REQ-03 | `is_applicable=false` must be accompanied by a non-empty `applicability_justification`; this rule is not blocking : the page of the requirement lists it as advice (`COMPLETENESS`, *say why it does not apply*). |
 | RG-REQ-04 | During the RC-06 carry-over, a `not_assessed` result does not overwrite the existing `compliance_status` (preservation of prior assessments, issue #45 resolved). |
 | RG-REQ-05 | `compliance_finding` is the canonical name of the field (former `compliance_gaps` from the original spec, renamed to align with the audit vocabulary). |
+| RG-REQ-06 | The section of a requirement belongs to its framework. The form offers the sections of the framework alone when it is known, and refuses another one in words (*This section belongs to another framework.*). The rule is held by the form : the REST API and the MCP server do not check it yet. |
 | RG-REQ-06 | If the framework has `applicability_managed_by_risks` enabled, `is_applicable` is derived automatically: `true` as soon as at least one associated risk is in a state counted in reports (`core.workflow.reportable`), `false` otherwise. The `is_applicable` / `applicability_justification` fields are then read-only (any write is ignored) and recalculated via signals (association/dissociation of a risk, state change or deletion of a risk, enabling of the option). |

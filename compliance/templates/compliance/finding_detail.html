@@ -7,7 +7,7 @@
 {% blocktrans asvar page_title with reference=finding.reference %}Nonconformity {{ reference }}{% endblocktrans %}
 {% page_header page_title reference=finding.reference nav="compliance:finding-list" accent="compliance" %}
   {% include "includes/history_trigger.html" %}
-  <a href="{% url 'compliance:finding-register-update' finding.pk %}" class="btn btn-primary" hx-get="{% url 'compliance:finding-register-update' finding.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>
+  {% if can_edit %}<a href="{{ edit_url }}" class="btn btn-primary" hx-get="{{ edit_url }}" hx-target="#drawer-form-content" hx-swap="innerHTML"><i class="bi bi-pencil me-1" aria-hidden="true"></i>{% trans "Edit" %}</a>{% endif %}
 {% endpage_header %}
 {% include "includes/history_panel.html" %}
 
@@ -21,10 +21,24 @@
     {% kpi_tile _("Related requirements") finding.requirements.count icon="list-check" tone="info" %}
   {% endslot %}
 
+  {% comment %} What would make the record useful, each line opening the
+     dialog that fills it. Each card with an Edit button is one section of
+     the nonconformity form : the button opens that section alone. {% endcomment %}
+  {% completeness_card completeness edit_url=edit_url %}
+
+  {# ── 1. Nonconformity ── #}
   {% section_card _("Nonconformity") icon="exclamation-diamond" %}
+    {% slot actions %}{% section_edit edit_url "nonconformity" _("Nonconformity") %}{% endslot %}
     {% meta_list %}
       {% meta_item _("Type") %}{% choice_badge finding "finding_type" type="finding" %}{% endmeta_item %}
       {% meta_item _("Finding") %}{% if finding.description %}<div class="ov-rich">{{ finding.description|rich }}</div>{% endif %}{% endmeta_item %}
+    {% endmeta_list %}
+  {% endsection_card %}
+
+  {# ── 2. Treatment ── #}
+  {% section_card _("Treatment") icon="lightbulb" %}
+    {% slot actions %}{% section_edit edit_url "treatment" _("Treatment") %}{% endslot %}
+    {% meta_list %}
       {% meta_item _("Recommendation") %}{% if finding.recommendation %}<div class="ov-rich">{{ finding.recommendation|rich }}</div>{% endif %}{% endmeta_item %}
       {% meta_item _("Evidence presented") %}{% if finding.evidence %}<div class="ov-rich">{{ finding.evidence|rich }}</div>{% endif %}{% endmeta_item %}
     {% endmeta_list %}
@@ -60,7 +74,19 @@
   {% endsection_card %}
   {% endwith %}
 
+  {% with plans=finding.action_plans.all %}
+  {% section_card _("Action plans") icon="list-task" count=plans|length %}
+    {% if plans %}
+    <div class="ref-links">{% for plan in plans %}{% url 'compliance:action-plan-detail' plan.pk as plan_url %}{% ref_link plan url=plan_url %}{% endfor %}</div>
+    {% else %}
+    {% empty_state message=_("No action plan corrects this nonconformity yet. An action plan names the findings it corrects, in its Linkages card.") %}
+    {% endif %}
+  {% endsection_card %}
+  {% endwith %}
+
+  {# ── 3. Effectiveness ── #}
   {% section_card _("Corrective action effectiveness") icon="check2-circle" %}
+    {% slot actions %}{% section_edit edit_url "effectiveness" _("Effectiveness") %}{% endslot %}
     {% if finding.effectiveness_verdict %}
     {% meta_list cols=3 %}
       {% meta_item _("Effectiveness verdict") %}{% choice_badge finding "effectiveness_verdict" type="effectiveness" %}{% endmeta_item %}

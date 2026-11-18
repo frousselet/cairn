@@ -59,6 +59,33 @@ Inherited from `BaseModel` : `workflow_state` (default 4-state lifecycle, unchan
 | `partially_effective` | Partially effective |
 | `not_effective` | Not effective |
 
+## Creation, completion, completeness
+
+A finding follows the [usability standard](../../sdk/usability-standard.md).
+
+**In an audit**, a finding is noted in one dialog of five fields (type,
+requirements, finding, recommendation, evidence) : it was two steps.
+
+**From the register**, raising a nonconformity asks how it came to light, what
+kind of finding it is, what was noticed and the requirements it was noticed
+against. The source and the type are decisions : the form opens on no answer
+and requires one (rule F8; the model default, `audit`, cannot even be recorded
+from the register). The user lands on the page of the new nonconformity.
+
+**The page** lists what would make the record useful, then shows a card per
+section of its form, each with its own *Edit* : nonconformity (source, type,
+finding, requirements), treatment (recommendation, evidence presented) and
+effectiveness (verdict, date, reviewer). It also lists the action plans that
+correct it, which it did not show.
+
+| Requirement | Met when | Blocking |
+| --- | --- | --- |
+| Link the requirements it was noticed against | It has a requirement | no |
+| Say what is recommended | `recommendation` holds a text, or the finding is a strength | no |
+
+Nothing holds its lifecycle back. The REST API returns the list in
+`completeness` on a single finding, and the MCP `get_finding` tool as well.
+
 ## Why effectiveness is a field here and not a state elsewhere
 
 [ComplianceActionPlan](compliance-action-plan.md) runs a 7-state Kanban lifecycle that ends at *Done*. *Done* proves an action was **implemented**. It says nothing about whether the nonconformity stopped recurring, which is exactly what clause 10.2 d) *review the effectiveness of any corrective action taken* asks. Adding an eighth state to the action plan would answer it for action plans only, and a nonconformity can be closed by several action plans or by none. The verdict therefore belongs to the nonconformity.

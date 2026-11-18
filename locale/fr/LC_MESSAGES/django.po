@@ -21886,3 +21886,102 @@ msgstr "rédiger son contexte et ses objectifs"
 
 msgid "An assessment checks, at a given date, how far you meet the requirements of a framework : a self-assessment, an internal audit or a certification audit. Create one when you prepare such a check."
 msgstr "Une évaluation vérifie, à une date donnée, dans quelle mesure vous satisfaites les exigences d'un référentiel : une auto-évaluation, un audit interne ou un audit de certification. Créez-en une lorsque vous préparez une telle vérification."
+
+msgid "Whether this requirement concerns you, and why : an auditor asks for the reason of every exclusion."
+msgstr "Si cette exigence vous concerne, et pourquoi : un auditeur demande la raison de chaque exclusion."
+
+msgid "The part of the framework it sits in, for example \"A.5 Organizational controls\"."
+msgstr "La partie du référentiel où elle se trouve, par exemple « A.5 Mesures organisationnelles »."
+
+msgid "As the framework numbers it, for example \"A.5.1\" or \"Article 32\"."
+msgstr "Tel que le référentiel la numérote, par exemple « A.5.1 » ou « Article 32 »."
+
+msgid "As the framework words it, for example \"Policies for information security\"."
+msgstr "Tel que le référentiel la formule, par exemple « Politiques de sécurité de l'information »."
+
+msgid "Whether the framework demands it or only recommends it."
+msgstr "Si le référentiel l'impose ou se contente de la recommander."
+
+msgid "What the framework asks, in its own words or summed up."
+msgstr "Ce que demande le référentiel, dans ses propres termes ou en résumé."
+
+msgid "How to meet it in practice, and what an auditor expects to see."
+msgstr "Comment la satisfaire en pratique, et ce qu'un auditeur s'attend à voir."
+
+msgid "The person who answers for meeting it."
+msgstr "La personne qui répond de sa satisfaction."
+
+msgid "How soon it must be met, compared with the other requirements."
+msgstr "Dans quel délai elle doit être satisfaite, par rapport aux autres exigences."
+
+msgid "The day you aim to meet it by."
+msgstr "Le jour où vous visez de l'avoir satisfaite."
+
+msgid "Whether the framework still asks it. It is kept beside its lifecycle, which says whether this record is validated."
+msgstr "Si le référentiel la demande toujours. Cette information est tenue à côté de son cycle de vie, qui dit si cette fiche est validée."
+
+msgid "The risks this requirement helps to reduce."
+msgstr "Les risques que cette exigence aide à réduire."
+
+msgid "name who answers for meeting it"
+msgstr "désigner qui répond de sa satisfaction"
+
+msgid "say why it does not apply"
+msgstr "indiquer pourquoi elle ne s'applique pas"
+
+msgid "No requirement yet."
+msgstr "Aucune exigence pour l'instant."
+
+msgid "A requirement is one thing a framework asks of you : a point of a standard, an article of a law. Most arrive with their framework when it is imported; create one by hand for a text you follow that has no spreadsheet."
+msgstr "Une exigence est une chose qu'un référentiel vous demande : un point d'une norme, un article d'une loi. La plupart arrivent avec leur référentiel lors de son import ; créez-en une à la main pour un texte que vous suivez sans disposer d'un tableur."
+
+msgid "This section belongs to another framework."
+msgstr "Cette section appartient à un autre référentiel."
+
+msgid "The risks this requirement reduces, what it protects, and who expects it of you."
+msgstr "Les risques que cette exigence réduit, ce qu'elle protège, et qui l'attend de vous."
+
+msgid "A nonconformity is to be corrected, an observation or an opportunity is a remark, a strength is what works well."
+msgstr "Une non-conformité est à corriger, une observation ou une opportunité est une remarque, un point fort est ce qui fonctionne bien."
+
+msgid "What it was noticed against : the result of these requirements in this assessment follows from it."
+msgstr "Ce par rapport à quoi il a été relevé : le résultat de ces exigences dans cette évaluation en découle."
+
+msgid "What was noticed, as a fact, for example \"Three of ten leavers still had an active account\"."
+msgstr "Ce qui a été relevé, comme un fait, par exemple « Trois des dix personnes parties avaient encore un compte actif »."
+
+msgid "What the assessor suggests. Deciding what is done belongs to whoever answers for the requirement."
+msgstr "Ce que suggère l'évaluateur. Décider de ce qui est fait revient à la personne qui répond de l'exigence."
+
+msgid "What was seen or shown, for example \"Account export of 12 March, interview with the service desk\"."
+msgstr "Ce qui a été vu ou montré, par exemple « Export des comptes du 12 mars, entretien avec le centre de services »."
+
+msgid "Once the corrective action is done : did it work? A closed action plan proves the action was carried out, not that it worked."
+msgstr "Une fois l'action corrective réalisée : a-t-elle fonctionné ? Un plan d'action clôturé prouve que l'action a été menée, pas qu'elle a fonctionné."
+
+msgid "How it came to light : an incident, a management review, what monitoring showed, a complaint."
+msgstr "Comment elle est apparue : un incident, une revue de direction, ce que la surveillance a montré, une réclamation."
+
+msgid "Leave it empty when one of your own rules is broken rather than a requirement of a framework."
+msgstr "À laisser vide lorsque c'est l'une de vos propres règles qui n'est pas respectée, et non une exigence d'un référentiel."
+
+msgid "What is suggested to correct it. The work itself is followed in an action plan."
+msgstr "Ce qui est suggéré pour la corriger. Le travail lui-même est suivi dans un plan d'action."
+
+msgid "Someone other than whoever carried out the action, where you can."
+msgstr "Une autre personne que celle qui a mené l'action, lorsque c'est possible."
+
+msgid "link the requirements it was noticed against"
+msgstr "lier les exigences par rapport auxquelles il a été relevé"
+
+msgid "say what is recommended"
+msgstr "indiquer ce qui est recommandé"
+
+msgid "No action plan corrects this nonconformity yet. An action plan names the findings it corrects, in its Linkages card."
+msgstr "Aucun plan d'action ne corrige encore cette non-conformité. Un plan d'action désigne les constats qu'il corrige, dans sa carte Liens."
+
+msgid "No nonconformity yet."
+msgstr "Aucune non-conformité pour l'instant."
+
+msgid "A nonconformity is a requirement, a control or one of your own rules that is not met, whether an audit, an incident, a management review, monitoring or a complaint brought it to light. Raise one when you notice it : its correction is then followed in an action plan."
+msgstr "Une non-conformité est une exigence, une mesure ou l'une de vos propres règles qui n'est pas respectée, qu'un audit, un incident, une revue de direction, la surveillance ou une réclamation l'ait fait apparaître. Constatez-en une lorsque vous la remarquez : sa correction est ensuite suivie dans un plan d'action."

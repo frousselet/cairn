@@ -3,6 +3,7 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
@@ -13,6 +14,7 @@ from compliance.constants import (
     FINDING_REFERENCE_PREFIXES,
 )
 from context.models.base import BaseModel
+from core.completeness import Completeness, Requirement, is_filled
 
 
 class Finding(BaseModel):
@@ -131,6 +133,21 @@ class Finding(BaseModel):
 
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "requirements", _("link the requirements it was noticed against"),
+            fields=["requirements"], section="nonconformity", blocking=False,
+        ),
+        Requirement(
+            "recommendation", _("say what is recommended"),
+            # A strength calls for nothing.
+            check=lambda finding: finding.finding_type == FindingType.STRENGTH
+            or is_filled(finding, "recommendation"),
+            section="treatment", blocking=False,
+        ),
+    )
+
     class Meta(BaseModel.Meta):
         verbose_name = _("Finding")
         verbose_name_plural = _("Findings")
@@ -138,6 +155,9 @@ class Finding(BaseModel):
 
     def __str__(self):
         return f"{self.reference} - {self.get_finding_type_display()}"
+
+    def get_absolute_url(self):
+        return reverse("compliance:finding-detail", args=[self.pk])
 
     @property
     def assessment_name(self):

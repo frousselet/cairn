@@ -51,14 +51,16 @@ from .forms import (
     ComplianceAssessmentCreateForm,
     ComplianceAssessmentUpdateForm,
     FindingCreateForm,
-    FindingRegisterForm,
+    FindingRegisterCreateForm,
+    FindingRegisterUpdateForm,
     FindingUpdateForm,
     FrameworkCreateForm,
     FrameworkUpdateForm,
     FrameworkImportForm,
-    RequirementForm,
+    RequirementCreateForm,
     RequirementMappingCreateForm,
     RequirementMappingUpdateForm,
+    RequirementUpdateForm,
 )
 from .import_utils import (
     execute_import,
@@ -459,10 +461,13 @@ class RequirementListView(LoginRequiredMixin, PermissionRequiredMixin, ListSumma
 
 
 class RequirementDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
 ):
     model = Requirement
     permission_required = "compliance.requirement.read"
+    edit_url_name = "compliance:requirement-update"
+    edit_permission = "compliance.requirement.update"
     scope_parent_lookup = "framework__scopes"
     template_name = "compliance/requirement_detail.html"
     context_object_name = "requirement"
@@ -481,11 +486,21 @@ class RequirementDetailView(
         return ctx
 
 
-class RequirementCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreatedByMixin, CreateView):
+class RequirementCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
     model = Requirement
     permission_required = "compliance.requirement.create"
-    form_class = RequirementForm
+    form_class = RequirementCreateForm
     template_name = "compliance/requirement_form.html"
+    modal_template_name = "compliance/requirement_form_modal.html"
+    modal_title_create = _l("New requirement")
+    modal_title_update = _l("Edit requirement")
+    success_url = reverse_lazy("compliance:requirement-list")
+    land_on_record = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
     def get_initial(self):
         initial = super().get_initial()
@@ -498,19 +513,25 @@ class RequirementCreateView(LoginRequiredMixin, PermissionRequiredMixin, Created
             initial["framework"] = framework.pk
         return initial
 
-    def get_success_url(self):
-        return reverse("compliance:requirement-detail", kwargs={"pk": self.object.pk})
 
-
-class RequirementUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, UpdateView):
+class RequirementUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, ScopeFilterMixin, UpdateView
+):
     model = Requirement
     permission_required = "compliance.requirement.update"
     scope_parent_lookup = "framework__scopes"
-    form_class = RequirementForm
+    form_class = RequirementUpdateForm
     template_name = "compliance/requirement_form.html"
+    modal_template_name = "compliance/requirement_form_modal.html"
+    modal_title_create = _l("New requirement")
+    modal_title_update = _l("Edit requirement")
+    success_url = reverse_lazy("compliance:requirement-list")
+    land_on_record = True
 
-    def get_success_url(self):
-        return reverse("compliance:requirement-detail", kwargs={"pk": self.object.pk})
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class RequirementDeleteView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, DeleteView):
@@ -1548,10 +1569,13 @@ class FindingListView(LoginRequiredMixin, PermissionRequiredMixin, ListSummaryMi
 
 
 class FindingDetailView(
-    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
 ):
     model = Finding
     permission_required = "compliance.finding.read"
+    edit_url_name = "compliance:finding-register-update"
+    edit_permission = "compliance.finding.update"
     scope_parent_lookup = "assessment__scopes"
     template_name = "compliance/finding_detail.html"
     context_object_name = "finding"
@@ -1576,31 +1600,35 @@ class FindingRegisterCreateView(LoginRequiredMixin, PermissionRequiredMixin, Htm
 
     model = Finding
     permission_required = "compliance.finding.create"
-    form_class = FindingRegisterForm
+    form_class = FindingRegisterCreateForm
     template_name = "compliance/finding_form.html"
     modal_template_name = "compliance/finding_form_modal.html"
     modal_title_create = _("Raise a nonconformity")
+    success_url = reverse_lazy("compliance:finding-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["raised_by"] = self.request.user
+        # Whoever raises it is recorded as such, and is offered what they may reach.
+        kwargs["user"] = self.request.user
         return kwargs
-
-    def get_success_url(self):
-        return reverse("compliance:finding-detail", args=[self.object.pk])
 
 
 class FindingRegisterUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HtmxFormMixin, UpdateView):
     model = Finding
     permission_required = "compliance.finding.update"
-    form_class = FindingRegisterForm
+    form_class = FindingRegisterUpdateForm
     scope_parent_lookup = "assessment__scopes"
     template_name = "compliance/finding_form.html"
     modal_template_name = "compliance/finding_form_modal.html"
     modal_title_update = _("Edit nonconformity")
+    success_url = reverse_lazy("compliance:finding-list")
+    land_on_record = True
 
-    def get_success_url(self):
-        return reverse("compliance:finding-detail", args=[self.object.pk])
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class FindingRegisterDeleteView(LoginRequiredMixin, ConfirmDeleteShellMixin, PermissionRequiredMixin, ScopeFilterMixin, DeleteView):

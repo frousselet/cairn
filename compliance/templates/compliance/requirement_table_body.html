@@ -20,9 +20,10 @@
   <td data-col="tags">{% tag_list req.tags.all %}</td>
   <td data-col="status">{% workflow_badge req %}</td>
   <td class="text-end" data-col="actions">
-    <a href="{% url 'compliance:requirement-update' req.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+    <a href="{% url 'compliance:requirement-update' req.pk %}" hx-get="{% url 'compliance:requirement-update' req.pk %}" hx-target="#drawer-form-content" hx-swap="innerHTML" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}" aria-label="{% trans 'Edit' %}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No requirement registered yet.") message=_("Requirements are the individual clauses of a framework you must conform to. They are usually loaded with the framework itself.") colspan=7 %}
+{% url 'compliance:requirement-create' as requirement_create_url %}
+{% list_empty title=_("No requirement yet.") message=_("A requirement is one thing a framework asks of you : a point of a standard, an article of a law. Most arrive with their framework when it is imported; create one by hand for a text you follow that has no spreadsheet.") colspan=7 create_url=requirement_create_url create_label=_("New requirement") permission="compliance.requirement.create" %}
 {% endfor %}

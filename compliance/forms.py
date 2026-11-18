@@ -25,6 +25,8 @@ from .models import (
     Section,
 )
 from .models.assessment import ALLOWED_ATTACHMENT_EXTENSIONS
+from core.query_params import parse_uuid
+from core.scoping import restrict_form_relations
 from core.modal_forms import CreationFormMixin, pick_among_active_people, ScopedFormMixin, Step, SteppedFormMixin
 
 User = get_user_model()
@@ -204,13 +206,35 @@ class SectionForm(forms.ModelForm):
         }
 
 
-class RequirementForm(forms.ModelForm):
+class RequirementBaseForm(SteppedFormMixin, forms.ModelForm):
     linked_risks = forms.ModelMultipleChoiceField(
         queryset=None,
         required=False,
         label=_("Linked risks"),
         widget=forms.SelectMultiple(attrs={**SELECT_ATTRS, "data-ts-risks": "true"}),
     )
+
+    # One step per card of the requirement page : a step opens on its own from
+    # its card (``?section=<key>``), the whole form from the page header.
+    steps = [
+        Step(_("Identity"), "card-text",
+             ["framework", "section", ["requirement_number", "type"], "name", "category", "tags"],
+             key="identity"),
+        Step(_("Content"), "text-paragraph",
+             ["description", "guidance"],
+             key="content"),
+        Step(_("Applicability"), "check2-circle",
+             ["is_applicable", "applicability_justification"],
+             key="applicability",
+             intro=_("Whether this requirement concerns you, and why : an auditor asks for the reason of every exclusion.")),
+        Step(_("Follow-up"), "person-check",
+             [["owner", "priority"], ["target_date", "status"]],
+             key="follow_up"),
+        Step(_("Relationships"), "diagram-3",
+             ["linked_risks", "linked_assets", "linked_stakeholder_expectations"],
+             key="relationships",
+             intro=_("The risks this requirement reduces, what it protects, and who expects it of you.")),
+    ]
 
     class Meta:
         model = Requirement
@@ -242,25 +266,55 @@ class RequirementForm(forms.ModelForm):
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
+        help_texts = {
+            "framework": "",
+            "section": _('The part of the framework it sits in, for example "A.5 Organizational controls".'),
+            "requirement_number": _('As the framework numbers it, for example "A.5.1" or "Article 32".'),
+            "name": _('As the framework words it, for example "Policies for information security".'),
+            "type": _("Whether the framework demands it or only recommends it."),
+            "category": "",
+            "description": _("What the framework asks, in its own words or summed up."),
+            "guidance": _("How to meet it in practice, and what an auditor expects to see."),
+            "is_applicable": _("Untick when it does not concern what you do, and say why below."),
+            "applicability_justification": _("The reason it applies or not : what an auditor asks first."),
+            "linked_assets": "",
+            "linked_stakeholder_expectations": "",
+            "owner": _("The person who answers for meeting it."),
+            "priority": _("How soon it must be met, compared with the other requirements."),
+            "target_date": _("The day you aim to meet it by."),
+            "status": _("Whether the framework still asks it. It is kept beside its lifecycle, which says whether this record is validated."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
+        }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
+        #: Who fills the form : what it offers stays within their scopes.
+        self.user = user
         super().__init__(*args, **kwargs)
         from core.lifecycle import linkable_or_linked
         from risks.models import Risk
 
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
         editing = bool(self.instance and self.instance.pk)
-        self.fields["linked_risks"].queryset = linkable_or_linked(
-            Risk.objects.all(),
-            self.instance.linked_risks.all() if editing else None,
-        )
-        for fname in ("linked_assets", "linked_stakeholder_expectations"):
-            field = self.fields[fname]
-            field.queryset = linkable_or_linked(
-                field.queryset,
-                getattr(self.instance, fname).all() if editing else None,
+        if "linked_risks" in self.fields:
+            self.fields["linked_risks"].help_text = _("The risks this requirement helps to reduce.")
+            self.fields["linked_risks"].queryset = linkable_or_linked(
+                Risk.objects.all(),
+                self.instance.linked_risks.all() if editing else None,
             )
-        if editing:
-            self.fields["linked_risks"].initial = self.instance.linked_risks.all()
+            if editing:
+                self.fields["linked_risks"].initial = self.instance.linked_risks.all()
+        for fname in ("linked_assets", "linked_stakeholder_expectations"):
+            field = self.fields.get(fname)
+            if field is not None:
+                field.queryset = linkable_or_linked(
+                    field.queryset,
+                    getattr(self.instance, fname).all() if editing else None,
+                )
+        pick_among_active_people(self, ("owner",))
+        self._offer_the_sections_of_the_framework()
 
         # When the framework derives applicability from risks, the applicability
         # fields are system-controlled: disable them so they cannot be edited
@@ -272,20 +326,83 @@ class RequirementForm(forms.ModelForm):
         if self.applicability_is_managed:
             note = _("Managed automatically from linked risks for this framework.")
             for fname in ("is_applicable", "applicability_justification"):
-                self.fields[fname].disabled = True
-                self.fields[fname].help_text = note
+                if fname in self.fields:
+                    self.fields[fname].disabled = True
+                    self.fields[fname].help_text = note
+        # A requirement hangs under its framework : the frameworks, the risks
+        # and the assets offered are those the user may reach.
+        if user is not None:
+            restrict_form_relations(self, user)
+
+    def _offer_the_sections_of_the_framework(self):
+        """A section is picked within the framework of the requirement.
+
+        Shown on a known framework (the record's, or the one the form was
+        opened on) : its sections alone. Otherwise every section says which
+        framework it belongs to. :meth:`clean` refuses a mismatch in words,
+        whatever was posted.
+        """
+        section = self.fields.get("section")
+        if section is None:
+            return
+        chosen = None if self.is_bound else (self.instance.framework_id or self.initial.get("framework"))
+        framework_id = parse_uuid(getattr(chosen, "pk", chosen))
+        if framework_id:
+            section.queryset = section.queryset.filter(framework_id=framework_id)
+        else:
+            section.queryset = section.queryset.select_related("framework")
+            section.label_from_instance = lambda s: f"{s.framework.short_name or s.framework.name} : {s.name}"
+
+    def clean(self):
+        cleaned = super().clean()
+        section, framework = cleaned.get("section"), cleaned.get("framework")
+        if section and framework and section.framework_id != framework.pk:
+            self.add_error("section", _("This section belongs to another framework."))
+        return cleaned
 
     def save(self, commit=True):
         instance = super().save(commit=commit)
+        # The risks are touched only by a form that asks for them : another
+        # section (or the creation form) must not unlink the ones on file.
+        if "linked_risks" not in self.fields:
+            return instance
         if commit:
             instance.linked_risks.set(self.cleaned_data["linked_risks"])
         else:
             old_save_m2m = self.save_m2m
+
             def save_m2m():
                 old_save_m2m()
                 instance.linked_risks.set(self.cleaned_data["linked_risks"])
+
             self.save_m2m = save_m2m
         return instance
+
+
+class RequirementCreateForm(CreationFormMixin, RequirementBaseForm):
+    """Requirement creation : where it comes from, how it is numbered and what it asks.
+
+    Whether it applies, who answers for it and what it is linked to are
+    decided on its page.
+    """
+
+    #: Not asked at creation.
+    linked_risks = None
+    #: Who answers for meeting a requirement is decided on its page : filing
+    #: the text of a framework does not make its author answerable for it.
+    owner_field = None
+
+    steps = [
+        Step(_("Identity"), "card-text",
+             ["framework", "section", ["requirement_number", "type"], "name", "description"]),
+    ]
+
+    class Meta(RequirementBaseForm.Meta):
+        fields = ["framework", "section", "requirement_number", "name", "type", "description"]
+
+
+class RequirementUpdateForm(RequirementBaseForm):
+    """Requirement edition modal form."""
 
 
 class ComplianceAssessmentBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
@@ -430,10 +547,10 @@ class AssessmentResultForm(forms.ModelForm):
 
 
 class FindingBaseForm(SteppedFormMixin, forms.ModelForm):
+    # The dialog of an audit : one screen, filled in while the fact is fresh.
     steps = [
         Step(_("Finding"), "exclamation-diamond",
-             ["finding_type", "requirements", "description"]),
-        Step(_("Recommendation"), "lightbulb", ["recommendation", "evidence"]),
+             ["finding_type", "requirements", "description", "recommendation", "evidence"]),
     ]
 
     class Meta:
@@ -449,12 +566,14 @@ class FindingBaseForm(SteppedFormMixin, forms.ModelForm):
             "evidence": forms.Textarea(attrs={**FORM_WIDGET_ATTRS, "rows": 3}),
             "requirements": forms.SelectMultiple(attrs={**SELECT_ATTRS, "data-ts-requirements": "true"}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "finding_type": _("Nature of the finding."),
-            "requirements": _("Requirements this finding relates to."),
-            "description": _("What was observed."),
-            "recommendation": _("Suggested corrective action."),
-            "evidence": _("Evidence supporting the finding."),
+            "finding_type": _("A nonconformity is to be corrected, an observation or an opportunity is a remark, a strength is what works well."),
+            "requirements": _("What it was noticed against : the result of these requirements in this assessment follows from it."),
+            "description": _('What was noticed, as a fact, for example "Three of ten leavers still had an active account".'),
+            "recommendation": _("What the assessor suggests. Deciding what is done belongs to whoever answers for the requirement."),
+            "evidence": _('What was seen or shown, for example "Account export of 12 March, interview with the service desk".'),
         }
 
     def __init__(self, *args, assessment=None, raised_by=None, **kwargs):
@@ -488,13 +607,20 @@ class FindingRegisterForm(SteppedFormMixin, forms.ModelForm):
     from the whole catalogue, since there is no assessment to narrow them to.
     """
 
+    # One step per card of the nonconformity page : a step opens on its own
+    # from its card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Nonconformity"), "exclamation-diamond",
-             [["source", "finding_type"], "description", "requirements"]),
-        Step(_("Treatment"), "lightbulb", ["recommendation", "evidence"]),
+             [["source", "finding_type"], "description", "requirements"],
+             key="nonconformity"),
+        Step(_("Treatment"), "lightbulb",
+             ["recommendation", "evidence"],
+             key="treatment"),
         Step(_("Effectiveness"), "check2-circle",
              [["effectiveness_verdict", "effectiveness_reviewed_at"],
-              "effectiveness_reviewed_by"]),
+              "effectiveness_reviewed_by"],
+             key="effectiveness",
+             intro=_("Once the corrective action is done : did it work? A closed action plan proves the action was carried out, not that it worked.")),
     ]
 
     class Meta:
@@ -519,45 +645,82 @@ class FindingRegisterForm(SteppedFormMixin, forms.ModelForm):
             ),
             "effectiveness_reviewed_by": forms.Select(attrs=SELECT_ATTRS),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "source": _("What surfaced this nonconformity."),
-            "finding_type": _("Nature of the nonconformity."),
-            "description": _("What was observed."),
-            "requirements": _("Requirements this nonconformity relates to."),
-            "recommendation": _("Suggested corrective action."),
-            "evidence": _("Evidence supporting the observation."),
-            "effectiveness_verdict": _(
-                "Whether the corrective action worked, once it has been reviewed."
-            ),
-            "effectiveness_reviewed_at": _("When effectiveness was reviewed."),
-            "effectiveness_reviewed_by": _("Who reviewed effectiveness."),
+            "source": _("How it came to light : an incident, a management review, what monitoring showed, a complaint."),
+            "finding_type": _("A nonconformity is to be corrected, an observation or an opportunity is a remark, a strength is what works well."),
+            "description": _('What was noticed, as a fact, for example "Three of ten leavers still had an active account".'),
+            "requirements": _("Leave it empty when one of your own rules is broken rather than a requirement of a framework."),
+            "recommendation": _("What is suggested to correct it. The work itself is followed in an action plan."),
+            "evidence": _('What was seen or shown, for example "Account export of 12 March, interview with the service desk".'),
+            "effectiveness_verdict": "",
+            "effectiveness_reviewed_at": "",
+            "effectiveness_reviewed_by": _("Someone other than whoever carried out the action, where you can."),
         }
 
-    def __init__(self, *args, raised_by=None, **kwargs):
+    def __init__(self, *args, user=None, raised_by=None, **kwargs):
+        #: Who fills the form : what it offers stays within their scopes.
+        self.user = user
+        raised_by = raised_by or user
         super().__init__(*args, **kwargs)
-        self.fields["requirements"].queryset = Requirement.objects.select_related(
-            "framework"
-        ).order_by("framework__name", "requirement_number")
+        # A form opened on one section, or the creation form, carries a part
+        # of these fields only : each is prepared when it is there.
+        if "requirements" in self.fields:
+            self.fields["requirements"].queryset = Requirement.objects.select_related(
+                "framework"
+            ).order_by("framework__name", "requirement_number")
+        pick_among_active_people(self, ("effectiveness_reviewed_by",))
         if raised_by and self.instance.assessor_id is None:
             self.instance.assessor = raised_by
-        # RG-CTL-16 : a "control test" finding is raised from its run, never
-        # declared by hand, and keeps that source once raised.
-        source = self.fields["source"]
-        if self.instance.control_test_run_id or self.instance.source == FindingSource.CONTROL_TEST:
-            source.choices = [c for c in source.choices if c[0] == FindingSource.CONTROL_TEST]
-        else:
-            source.choices = [c for c in source.choices if c[0] != FindingSource.CONTROL_TEST]
-        # RG-FND-01 : an audit finding needs its audit, and this form carries no
-        # audit field : such a finding is raised from inside its assessment. The
-        # "Audit" source is therefore only kept for a finding that already has
-        # one (edited from the register). Offering it here let the model rule
-        # fail on a field the form does not have, which crashed the page.
-        if self.instance.assessment_id is None:
-            source.choices = [c for c in source.choices if c[0] != FindingSource.AUDIT]
-            if self.instance.pk is None and self.instance.source == FindingSource.AUDIT:
-                # The model default is "audit" : start on the first source this
-                # form can actually record.
-                source.initial = source.choices[0][0] if source.choices else None
+        source = self.fields.get("source")
+        if source is not None:
+            # RG-CTL-16 : a "control test" finding is raised from its run, never
+            # declared by hand, and keeps that source once raised.
+            if self.instance.control_test_run_id or self.instance.source == FindingSource.CONTROL_TEST:
+                source.choices = [c for c in source.choices if c[0] == FindingSource.CONTROL_TEST]
+            else:
+                source.choices = [c for c in source.choices if c[0] != FindingSource.CONTROL_TEST]
+            # RG-FND-01 : an audit finding needs its audit, and this form carries no
+            # audit field : such a finding is raised from inside its assessment. The
+            # "Audit" source is therefore only kept for a finding that already has
+            # one (edited from the register). Offering it here let the model rule
+            # fail on a field the form does not have, which crashed the page.
+            if self.instance.assessment_id is None:
+                source.choices = [c for c in source.choices if c[0] != FindingSource.AUDIT]
+                if self.instance.pk is None and self.instance.source == FindingSource.AUDIT:
+                    # The model default is "audit" : start on the first source this
+                    # form can actually record.
+                    source.initial = source.choices[0][0] if source.choices else None
+        if user is not None:
+            restrict_form_relations(self, user)
+
+
+class FindingRegisterCreateForm(CreationFormMixin, FindingRegisterForm):
+    """Raising a nonconformity : how it came to light, what it is and what it was noticed against.
+
+    What is recommended and whether the correction worked are written on its
+    page, when they are known.
+    """
+
+    #: Nobody answers for a nonconformity by filing it : who raised it is
+    #: recorded, and its correction is followed in an action plan.
+    owner_field = None
+    #: How it came to light and what kind of finding it is are decided by the
+    #: reader : the model default ("audit") cannot even be recorded here.
+    decisions = ("source", "finding_type")
+
+    steps = [
+        Step(_("Nonconformity"), "exclamation-diamond",
+             [["source", "finding_type"], "description", "requirements"]),
+    ]
+
+    class Meta(FindingRegisterForm.Meta):
+        fields = ["source", "finding_type", "description", "requirements"]
+
+
+class FindingRegisterUpdateForm(FindingRegisterForm):
+    """Nonconformity edition modal form."""
 
 
 class RequirementMappingBaseForm(SteppedFormMixin, forms.ModelForm):
