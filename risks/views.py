@@ -26,6 +26,7 @@ from controls.integrations import linked_controls
 from core.mixins import (
     AdvancedFilterMixin,
     ColumnPreferenceMixin,
+    CompleteOnRecordMixin,
     HtmxFormMixin,
     ListSummaryMixin,
     PredefinedFilterMixin,
@@ -1668,11 +1669,16 @@ class ThreatListView(
         return ctx
 
 
-class ThreatDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class ThreatDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = Threat
     template_name = "risks/threat_detail.html"
     context_object_name = "threat"
     permission_required = "risks.threat.read"
+    edit_url_name = "risks:threat-update"
+    edit_permission = "risks.threat.update"
 
 
 class ThreatCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -1684,6 +1690,7 @@ class ThreatCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixi
     modal_title_create = _l("New threat")
     modal_title_update = _l("Edit threat")
     success_url = reverse_lazy("risks:threat-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1700,6 +1707,7 @@ class ThreatUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixi
     modal_title_create = _l("New threat")
     modal_title_update = _l("Edit threat")
     success_url = reverse_lazy("risks:threat-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1796,11 +1804,16 @@ class VulnerabilityListView(
         return ctx
 
 
-class VulnerabilityDetailView(LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin, DetailView):
+class VulnerabilityDetailView(
+    LoginRequiredMixin, PermissionRequiredMixin, ScopeFilterMixin, HistoryUrlMixin, LifecycleStepperMixin,
+    CompleteOnRecordMixin, DetailView,
+):
     model = Vulnerability
     template_name = "risks/vulnerability_detail.html"
     context_object_name = "vulnerability"
     permission_required = "risks.vulnerability.read"
+    edit_url_name = "risks:vulnerability-update"
+    edit_permission = "risks.vulnerability.update"
 
 
 class VulnerabilityCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxFormMixin, CreatedByMixin, CreateView):
@@ -1812,6 +1825,7 @@ class VulnerabilityCreateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxF
     modal_title_create = _l("New vulnerability")
     modal_title_update = _l("Edit vulnerability")
     success_url = reverse_lazy("risks:vulnerability-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1828,6 +1842,7 @@ class VulnerabilityUpdateView(LoginRequiredMixin, PermissionRequiredMixin, HtmxF
     modal_title_create = _l("New vulnerability")
     modal_title_update = _l("Edit vulnerability")
     success_url = reverse_lazy("risks:vulnerability-list")
+    land_on_record = True
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

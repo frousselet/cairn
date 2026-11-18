@@ -59,6 +59,12 @@ def _forms():
         RequirementUpdateForm,
     )
     from context.forms import ScopeCreateForm, ScopeUpdateForm
+    from risks.forms import (
+        ThreatCreateForm,
+        ThreatUpdateForm,
+        VulnerabilityCreateForm,
+        VulnerabilityUpdateForm,
+    )
 
     return [
         (ScopeCreateForm, True),
@@ -90,6 +96,10 @@ def _forms():
         (FindingCreateForm, True),
         (FindingRegisterCreateForm, True),
         (FindingRegisterUpdateForm, False),
+        (ThreatCreateForm, True),
+        (ThreatUpdateForm, False),
+        (VulnerabilityCreateForm, True),
+        (VulnerabilityUpdateForm, False),
         # Rows of a supplier, created and edited from its page.
         (SupplierContactForm, True),
         (SupplierSubprocessorCreateForm, True),
@@ -128,6 +138,12 @@ def _pages():
         RequirementDetailView,
     )
     from context.views import ScopeCreateView, ScopeDetailView
+    from risks.views import (
+        ThreatCreateView,
+        ThreatDetailView,
+        VulnerabilityCreateView,
+        VulnerabilityDetailView,
+    )
 
     return [
         (ScopeCreateView, ScopeDetailView, "context/templates/context/scope_detail.html",
@@ -156,6 +172,10 @@ def _pages():
          "compliance/templates/compliance/requirement_table_body.html"),
         (FindingRegisterCreateView, FindingDetailView, "compliance/templates/compliance/finding_detail.html",
          "compliance/templates/compliance/finding_register_table_body.html"),
+        (ThreatCreateView, ThreatDetailView, "risks/templates/risks/threat_detail.html",
+         "risks/templates/risks/threat_table_body.html"),
+        (VulnerabilityCreateView, VulnerabilityDetailView, "risks/templates/risks/vulnerability_detail.html",
+         "risks/templates/risks/vulnerability_table_body.html"),
     ]
 
 

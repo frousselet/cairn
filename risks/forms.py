@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from context.models import Scope
 from context.widgets import ScopeTreeWidget
-from core.modal_forms import LabelledRowsFormSet, ScopedFormMixin, Step, SteppedFormMixin
+from core.modal_forms import CreationFormMixin, LabelledRowsFormSet, ScopedFormMixin, Step, SteppedFormMixin
 from .constants import DEFAULT_IMPACT_SCALES, DEFAULT_LIKELIHOOD_SCALES
 from .models import (
     ISO27005Risk,
@@ -426,11 +426,15 @@ class RiskAcceptanceUpdateForm(RiskAcceptanceBaseForm):
 
 
 class ThreatBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the threat page : a step opens on its own from its
+    # card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "lightning",
-             ["name", ["type", "origin"], ["category", "typical_likelihood"], "description"]),
-        Step(_("Scope & status"), "diagram-3",
-             ["is_from_catalog", "status", "scopes", "tags"]),
+             ["name", ["type", "origin"], "category", "description", "scopes", "tags"],
+             key="identity"),
+        Step(_("Likelihood and status"), "speedometer2",
+             ["typical_likelihood", "is_from_catalog", "status"],
+             key="use"),
     ]
 
     class Meta:
@@ -451,22 +455,34 @@ class ThreatBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "status": forms.Select(attrs=SELECT_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Name of the threat."),
-            "type": _("Kind of threat."),
-            "origin": _("Origin of the threat."),
-            "category": _("Category of the threat."),
-            "typical_likelihood": _("Typical likelihood of occurrence."),
-            "description": _("What the threat is."),
-            "is_from_catalog": _("Tick if taken from a catalog."),
-            "status": _("Lifecycle state of the threat."),
-            "scopes": _("Organizational scopes this threat applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('What could happen, for example "Phishing of an employee" or "Flood of the server room".'),
+            "type": _("Deliberate when somebody wants it, accidental when nobody does, environmental when nature does it."),
+            "origin": _('An employee is "human internal", an attacker "human external", a storm "natural", a breakdown "technical".'),
+            "category": "",
+            "typical_likelihood": _("How often you expect it, on the likelihood scale of your risk criteria (1 to 5 by default). Leave it empty when you cannot say."),
+            "description": _("How it would unfold, in a sentence or two."),
+            "is_from_catalog": _("Tick when it comes from a reference catalogue rather than from your own analysis."),
+            "status": _("Whether it still concerns you. It only filters this register : the lifecycle says whether this record is validated."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
 
-class ThreatCreateForm(ThreatBaseForm):
-    """Threat creation modal form."""
+class ThreatCreateForm(CreationFormMixin, ThreatBaseForm):
+    """Threat creation : what could happen, what kind of event it is and where it comes from."""
+
+    #: A threat is an entry of a shared catalogue : nobody answers for it.
+    owner_field = None
+
+    steps = [
+        Step(_("Identity"), "lightning", ["name", ["type", "origin"], "category", "scopes", "description"]),
+    ]
+
+    class Meta(ThreatBaseForm.Meta):
+        fields = ["scopes", "name", "description", "type", "origin", "category"]
 
 
 class ThreatUpdateForm(ThreatBaseForm):
@@ -474,11 +490,16 @@ class ThreatUpdateForm(ThreatBaseForm):
 
 
 class VulnerabilityBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
+    # One step per card of the vulnerability page : a step opens on its own
+    # from its card (``?section=<key>``), the whole form from the page header.
     steps = [
         Step(_("Identity"), "bug",
-             ["name", ["category", "severity"], "description", "remediation_guidance"]),
-        Step(_("Scope & status"), "diagram-3",
-             ["affected_assets", "is_from_catalog", "scopes", "tags"]),
+             ["name", ["category", "severity"], "description", "scopes", "tags"],
+             key="identity"),
+        Step(_("Exposure and remediation"), "tools",
+             ["affected_assets", "remediation_guidance", "is_from_catalog"],
+             key="exposure",
+             intro=_("Where the weakness is, and what would close it.")),
     ]
 
     class Meta:
@@ -499,21 +520,35 @@ class VulnerabilityBaseForm(SteppedFormMixin, ScopedFormMixin, forms.ModelForm):
             "is_from_catalog": forms.CheckboxInput(attrs=CHECKBOX_ATTRS),
             "tags": forms.SelectMultiple(attrs={**SELECT_ATTRS, "size": 4}),
         }
+        # A helper says what the label does not : an example, a consequence,
+        # how to answer. A field whose label says it all carries none.
         help_texts = {
-            "name": _("Name of the vulnerability."),
-            "category": _("Category of the vulnerability."),
-            "severity": _("Severity level."),
-            "description": _("What the vulnerability is."),
-            "remediation_guidance": _("How to remediate it."),
-            "affected_assets": _("Assets affected by this vulnerability."),
-            "is_from_catalog": _("Tick if taken from a catalog."),
-            "scopes": _("Organizational scopes this vulnerability applies to."),
-            "tags": _("Free-form labels for filtering and grouping."),
+            "name": _('The weakness, for example "Laptops without disk encryption".'),
+            "category": "",
+            "severity": _("How bad it would be if a threat took advantage of it."),
+            "description": _("What is weak, and why it matters."),
+            "remediation_guidance": _("What would close it : a patch, a setting, a procedure."),
+            "affected_assets": _("The support assets that have this weakness."),
+            "is_from_catalog": _("Tick when it comes from a reference catalogue rather than from your own analysis."),
+            "scopes": _("Users limited to certain scopes see only what is filed under theirs."),
+            "tags": _('Free words to find and group records, for example "ISO 27001".'),
         }
 
 
-class VulnerabilityCreateForm(VulnerabilityBaseForm):
-    """Vulnerability creation modal form."""
+class VulnerabilityCreateForm(CreationFormMixin, VulnerabilityBaseForm):
+    """Vulnerability creation : what the weakness is and how bad it would be."""
+
+    #: A vulnerability is an entry of a shared catalogue : nobody answers for it.
+    owner_field = None
+    #: Its severity has no default answer : the reader decides.
+    decisions = ("severity",)
+
+    steps = [
+        Step(_("Identity"), "bug", ["name", ["category", "severity"], "scopes", "description"]),
+    ]
+
+    class Meta(VulnerabilityBaseForm.Meta):
+        fields = ["scopes", "name", "description", "category", "severity"]
 
 
 class VulnerabilityUpdateForm(VulnerabilityBaseForm):
