@@ -22,12 +22,12 @@ class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = [
-            "id", "report_type", "name", "status", "frameworks",
+            "id", "report_type", "name", "status", "frameworks", "scopes",
             "file_name", "has_file", "created_at", "created_by",
         ]
         read_only_fields = [
             "id", "file_name", "has_file", "created_at", "created_by",
-            "status", "name",
+            "status", "name", "scopes",
         ]
 
     def get_has_file(self, obj):

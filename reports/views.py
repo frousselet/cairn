@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy as _l
 from django.views import View
 from django.views.generic import DeleteView, FormView, ListView
 
+from accounts.mixins import ScopeFilterMixin
 from accounts.views import PermissionRequiredMixin
 from core.mixins import (
     AdvancedFilterMixin,
@@ -29,7 +30,7 @@ from .management_review import (
     generate_management_review_pptx,
 )
 from .models import Report
-from core.scoping import get_scoped_object_or_404
+from core.scoping import get_scoped_object_or_404, narrow_scope_ids
 
 
 REPORT_FILTER_GROUPS = [
@@ -50,7 +51,7 @@ REPORT_COLUMNS = [
 
 class ReportListView(
     LoginRequiredMixin, PermissionRequiredMixin, PredefinedFilterMixin, AdvancedFilterMixin,
-    SavedFilterMixin, ColumnPreferenceMixin, SortableListMixin, ListView,
+    SavedFilterMixin, ColumnPreferenceMixin, ScopeFilterMixin, SortableListMixin, ListView,
 ):
     permission_required = "reports.report.read"
     model = Report
@@ -78,7 +79,7 @@ class ReportListView(
 
 class ReportTableBodyView(
     LoginRequiredMixin, PermissionRequiredMixin, TableBodyPaginatedMixin, PredefinedFilterMixin,
-    AdvancedFilterMixin, SortableListMixin, ListView,
+    AdvancedFilterMixin, ScopeFilterMixin, SortableListMixin, ListView,
 ):
     permission_required = "reports.report.read"
     model = Report
@@ -116,22 +117,22 @@ class SoaReportCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormView)
 
         try:
             filename, pdf_bytes = generate_soa_pdf(frameworks, self.request.user)
-            report = Report.objects.create(
+            report = Report.objects.record(
+                self.request.user, sources=frameworks,
                 report_type=ReportType.SOA,
                 name=report_name,
                 status=ReportStatus.COMPLETED,
-                created_by=self.request.user,
                 file_content=pdf_bytes,
                 file_name=filename,
             )
             report.frameworks.set(frameworks)
         except Exception:
             logging.getLogger(__name__).exception("SoA PDF generation failed")
-            Report.objects.create(
+            Report.objects.record(
+                self.request.user, sources=frameworks,
                 report_type=ReportType.SOA,
                 name=report_name,
                 status=ReportStatus.FAILED,
-                created_by=self.request.user,
             )
 
         return redirect("reports:report-list")
@@ -155,11 +156,11 @@ class AuditReportCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormVie
             filename, pdf_bytes = generate_audit_report_pdf(
                 assessment, self.request.user
             )
-            report = Report.objects.create(
+            report = Report.objects.record(
+                self.request.user, sources=[assessment],
                 report_type=ReportType.AUDIT_REPORT,
                 name=report_name,
                 status=ReportStatus.COMPLETED,
-                created_by=self.request.user,
                 assessment=assessment,
                 file_content=pdf_bytes,
                 file_name=filename,
@@ -167,11 +168,11 @@ class AuditReportCreateView(LoginRequiredMixin, PermissionRequiredMixin, FormVie
             report.frameworks.set(assessment.frameworks.all())
         except Exception:
             logging.getLogger(__name__).exception("Audit report PDF generation failed")
-            Report.objects.create(
+            Report.objects.record(
+                self.request.user, sources=[assessment],
                 report_type=ReportType.AUDIT_REPORT,
                 name=report_name,
                 status=ReportStatus.FAILED,
-                created_by=self.request.user,
                 assessment=assessment,
             )
 
@@ -209,11 +210,11 @@ class ManagementReviewCreateView(LoginRequiredMixin, PermissionRequiredMixin, Fo
                 self.request.user, scope_ids,
                 period_start=period_start, period_end=period_end,
             )
-            Report.objects.create(
+            Report.objects.record(
+                self.request.user, scope_ids=narrow_scope_ids(self.request.user, scope_ids),
                 report_type=report_type,
                 name=report_name,
                 status=ReportStatus.COMPLETED,
-                created_by=self.request.user,
                 file_content=file_bytes,
                 file_name=filename,
             )
@@ -221,11 +222,11 @@ class ManagementReviewCreateView(LoginRequiredMixin, PermissionRequiredMixin, Fo
             logging.getLogger(__name__).exception(
                 "Management review %s generation failed", fmt.upper()
             )
-            Report.objects.create(
+            Report.objects.record(
+                self.request.user, scope_ids=narrow_scope_ids(self.request.user, scope_ids),
                 report_type=report_type,
                 name=report_name,
                 status=ReportStatus.FAILED,
-                created_by=self.request.user,
             )
 
         return redirect("reports:report-list")

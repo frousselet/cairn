@@ -102,7 +102,7 @@ The field-by-field contract of each entity lives in its [specification](../../sp
 | reports | `ManagementReviewParticipant` | `reports_managementreviewparticipant` | - | - | - | - | 9 |
 | reports | `ManagementReviewTransition` | `reports_managementreviewtransition` | - | - | - | - | 7 |
 | reports | `ManagementReview` | `reports_managementreview` | `MRVW` | `management_review` | yes | yes | 23 |
-| reports | `Report` | `reports_report` | - | - | - | yes | 10 |
+| reports | `Report` | `reports_report` | - | - | yes | yes | 10 |
 | risks | `AttackPathStep` | `risks_attackpathstep` | `EAPS` | `default` | - | yes | 13 |
 | risks | `AttackTechnique` | `risks_attacktechnique` | `EATT` | `default` | - | yes | 15 |
 | risks | `BaselineGap` | `risks_baselinegap` | `EBGP` | `ebios_baseline_gap` | - | yes | 14 |
