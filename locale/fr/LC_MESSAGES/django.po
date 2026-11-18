@@ -21985,3 +21985,69 @@ msgstr "Aucune non-conformité pour l'instant."
 
 msgid "A nonconformity is a requirement, a control or one of your own rules that is not met, whether an audit, an incident, a management review, monitoring or a complaint brought it to light. Raise one when you notice it : its correction is then followed in an action plan."
 msgstr "Une non-conformité est une exigence, une mesure ou l'une de vos propres règles qui n'est pas respectée, qu'un audit, un incident, une revue de direction, la surveillance ou une réclamation l'ait fait apparaître. Constatez-en une lorsque vous la remarquez : sa correction est ensuite suivie dans un plan d'action."
+
+msgid "Likelihood and status"
+msgstr "Vraisemblance et statut"
+
+msgid "What could happen, for example \"Phishing of an employee\" or \"Flood of the server room\"."
+msgstr "Ce qui pourrait arriver, par exemple « Hameçonnage d'un salarié » ou « Inondation de la salle serveur »."
+
+msgid "Deliberate when somebody wants it, accidental when nobody does, environmental when nature does it."
+msgstr "Délibérée lorsque quelqu'un la veut, accidentelle lorsque personne ne la veut, environnementale lorsqu'elle vient de la nature."
+
+msgid "An employee is \"human internal\", an attacker \"human external\", a storm \"natural\", a breakdown \"technical\"."
+msgstr "Un salarié est « humain interne », un attaquant « humain externe », une tempête « naturel », une panne « technique »."
+
+msgid "How often you expect it, on the likelihood scale of your risk criteria (1 to 5 by default). Leave it empty when you cannot say."
+msgstr "À quelle fréquence vous l'attendez, sur l'échelle de vraisemblance de vos critères de risque (de 1 à 5 par défaut). À laisser vide si vous ne pouvez pas le dire."
+
+msgid "How it would unfold, in a sentence or two."
+msgstr "Comment elle se déroulerait, en une phrase ou deux."
+
+msgid "Tick when it comes from a reference catalogue rather than from your own analysis."
+msgstr "À cocher lorsqu'elle provient d'un catalogue de référence plutôt que de votre propre analyse."
+
+msgid "Whether it still concerns you. It only filters this register : the lifecycle says whether this record is validated."
+msgstr "Si elle vous concerne toujours. Ce statut ne sert qu'à filtrer ce registre : c'est le cycle de vie qui dit si cette fiche est validée."
+
+msgid "Exposure and remediation"
+msgstr "Exposition et remédiation"
+
+msgid "Where the weakness is, and what would close it."
+msgstr "Où se trouve la faiblesse, et ce qui la comblerait."
+
+msgid "The weakness, for example \"Laptops without disk encryption\"."
+msgstr "La faiblesse, par exemple « Ordinateurs portables sans chiffrement du disque »."
+
+msgid "How bad it would be if a threat took advantage of it."
+msgstr "La gravité de ce qui arriverait si une menace en tirait parti."
+
+msgid "What is weak, and why it matters."
+msgstr "Ce qui est faible, et pourquoi cela compte."
+
+msgid "What would close it : a patch, a setting, a procedure."
+msgstr "Ce qui la comblerait : un correctif, un réglage, une procédure."
+
+msgid "The support assets that have this weakness."
+msgstr "Les biens supports qui présentent cette faiblesse."
+
+msgid "say how it would unfold"
+msgstr "indiquer comment elle se déroulerait"
+
+msgid "say which assets have it"
+msgstr "indiquer quels biens la présentent"
+
+msgid "say what would close it"
+msgstr "indiquer ce qui la comblerait"
+
+msgid "No threat yet."
+msgstr "Aucune menace pour l'instant."
+
+msgid "A threat is something that could happen and do harm : an attack, a mistake, a flood. Keep them in one catalogue, so every risk names the same event the same way."
+msgstr "Une menace est une chose qui pourrait arriver et causer un dommage : une attaque, une erreur, une inondation. Tenez-les dans un seul catalogue, pour que chaque risque nomme le même événement de la même façon."
+
+msgid "No vulnerability yet."
+msgstr "Aucune vulnérabilité pour l'instant."
+
+msgid "A vulnerability is a weakness a threat could take advantage of : a missing patch, an unlocked door, an untrained team. Note the ones you know, then link them to the risks they feed."
+msgstr "Une vulnérabilité est une faiblesse dont une menace pourrait tirer parti : un correctif manquant, une porte non verrouillée, une équipe non formée. Notez celles que vous connaissez, puis liez-les aux risques qu'elles alimentent."

@@ -26,5 +26,6 @@
   </td>
 </tr>
 {% empty %}
-{% empty_state title=_("No threat catalogued yet.") message=_("Threats are the events or sources that could harm assets. Maintain a shared catalogue to keep assessments consistent.") colspan=7 %}
+{% url 'risks:threat-create' as threat_create_url %}
+{% list_empty title=_("No threat yet.") message=_("A threat is something that could happen and do harm : an attack, a mistake, a flood. Keep them in one catalogue, so every risk names the same event the same way.") colspan=7 create_url=threat_create_url create_label=_("New threat") permission="risks.threat.create" %}
 {% endfor %}

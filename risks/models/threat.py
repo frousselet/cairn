@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
 from context.models.base import ScopedModel
+from core.completeness import Completeness, Requirement
 from risks.constants import ThreatCategory, ThreatOrigin, ThreatStatus, ThreatType
 
 
@@ -34,6 +36,14 @@ class Threat(ScopedModel):
     )
     history = HistoricalRecords()
 
+    # What makes the record useful : advice, nothing holds its lifecycle back.
+    COMPLETENESS = Completeness(
+        Requirement(
+            "description", _("say how it would unfold"),
+            fields=["description"], section="identity", blocking=False,
+        ),
+    )
+
     class Meta:
         ordering = ["name"]
         verbose_name = _("Threat")
@@ -41,3 +51,6 @@ class Threat(ScopedModel):
 
     def __str__(self):
         return f"{self.reference} : {self.name}"
+
+    def get_absolute_url(self):
+        return reverse("risks:threat-detail", args=[self.pk])

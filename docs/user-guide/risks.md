@@ -52,6 +52,11 @@ Both run an approval lifecycle, so a catalog does not fill up with duplicates
 somebody added in a hurry. A draft threat cannot be linked into an analysis
 until it is validated.
 
+Adding one takes one screen : what could happen and where it comes from for a
+threat, what the weakness is and how severe for a vulnerability (the severity
+is yours to decide : nothing is preselected). Its page then takes the rest,
+one card at a time, and says what would make the entry useful.
+
 ## ISO 27005 analyses
 
 An ISO 27005 analysis is an atomic scenario : one threat exploiting one

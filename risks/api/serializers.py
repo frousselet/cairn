@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: 2026 François Rousselet
 from rest_framework import serializers
 
+from core.completeness_api import CompletenessSerializerMixin
+
 from risks.models import (
     ISO27005Risk,
     Risk,
@@ -205,7 +207,7 @@ class RiskAcceptanceSerializer(serializers.ModelSerializer):
         ]
 
 
-class ThreatSerializer(serializers.ModelSerializer):
+class ThreatSerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Threat
         fields = [
@@ -214,6 +216,7 @@ class ThreatSerializer(serializers.ModelSerializer):
             "is_from_catalog", "status", "tags",
             "version",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",
@@ -231,7 +234,7 @@ class ThreatListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "reference", "created_at"]
 
 
-class VulnerabilitySerializer(serializers.ModelSerializer):
+class VulnerabilitySerializer(CompletenessSerializerMixin, serializers.ModelSerializer):
     status = serializers.CharField(source="workflow_state", read_only=True)
     class Meta:
         model = Vulnerability
@@ -242,6 +245,7 @@ class VulnerabilitySerializer(serializers.ModelSerializer):
             "is_from_catalog", "status", "tags",
             "version",
             "created_by", "created_at", "updated_at",
+            "completeness",
         ]
         read_only_fields = [
             "id", "reference", "created_by", "created_at", "updated_at",

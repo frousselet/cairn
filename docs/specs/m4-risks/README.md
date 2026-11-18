@@ -16,6 +16,7 @@
 - [RiskTreatmentPlan](risk-treatment-plan.md) (with TreatmentAction sub-entity)
 - [RiskAcceptance](risk-acceptance.md)
 - [ISO27005Risk](iso27005-risk.md) (ISO 27005 sub-module)
+- [Threat](threat.md) and [Vulnerability](vulnerability.md) (the catalogues of the ISO 27005 sub-module)
 - [EBIOS RM sub-module](ebios-rm/README.md)
 
 ---
